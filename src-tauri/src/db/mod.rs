@@ -1,0 +1,1176 @@
+//! Database module for SQLite operations
+//!
+//! This module handles all SQLite database initialization, migrations,
+//! and provides the Database connection wrapper.
+
+pub mod connection;
+pub mod import;
+pub mod metrics;
+pub mod migrations;
+pub mod operation_pool;
+pub mod queries;
+pub mod utils;
+
+use r2d2::{Pool, PooledConnection};
+use r2d2_sqlite::SqliteConnectionManager;
+use rusqlite::{Result as SqliteResult, Row};
+use serde::{Deserialize, Serialize};
+use std::path::Path;
+use std::time::{Duration, Instant};
+use tracing::{debug, warn};
+
+// Re-export connection functions for backward compatibility
+pub use connection::{checkpoint_wal, initialize_pool};
+
+// Re-export operation pool for routing database operations
+pub use operation_pool::{OperationPoolConfig, OperationPoolManager, OperationType, PoolStats};
+
+/// Trait for types that can be constructed from a SQLite row
+pub trait FromSqlRow: Sized {
+    fn from_row(row: &Row) -> SqliteResult<Self>;
+}
+
+/// NOTE: Repository trait has been moved to repositories::base::Repository
+/// Use `use crate::repositories::base::Repository` for repository operations
+/// This module retains legacy QueryBuilder for backward compatibility
+
+/// Backward compatibility: Re-export Repository from repositories::base
+pub use crate::repositories::base::Repository;
+
+/// Query builder for complex queries
+pub struct QueryBuilder {
+    sql: String,
+    params: Vec<rusqlite::types::Value>,
+}
+
+impl QueryBuilder {
+    pub fn new(base_sql: &str) -> Self {
+        Self {
+            sql: base_sql.to_string(),
+            params: Vec::new(),
+        }
+    }
+
+    pub fn where_clause(mut self, condition: &str) -> Self {
+        self.sql.push_str(" WHERE ");
+        self.sql.push_str(condition);
+        self
+    }
+
+    pub fn and(mut self, condition: &str) -> Self {
+        self.sql.push_str(" AND ");
+        self.sql.push_str(condition);
+        self
+    }
+
+    pub fn param<T>(mut self, value: T) -> Self
+    where
+        T: rusqlite::ToSql,
+        rusqlite::types::Value: From<T>,
+    {
+        self.params.push(rusqlite::types::Value::from(value));
+        self
+    }
+
+    pub fn order_by(mut self, column: &str, direction: &str) -> Self {
+        self.sql
+            .push_str(&format!(" ORDER BY {} {}", column, direction));
+        self
+    }
+
+    pub fn limit(mut self, limit: i64) -> Self {
+        self.sql.push_str(&format!(" LIMIT {}", limit));
+        self
+    }
+
+    pub fn offset(mut self, offset: i64) -> Self {
+        self.sql.push_str(&format!(" OFFSET {}", offset));
+        self
+    }
+
+    pub fn build(self) -> (String, Vec<rusqlite::types::Value>) {
+        (self.sql, self.params)
+    }
+}
+
+/// Database connection pool wrapper
+#[derive(Clone, Debug)]
+pub struct Database {
+    pool: Pool<SqliteConnectionManager>,
+    metrics_enabled: bool,
+    query_monitor: std::sync::Arc<connection::QueryPerformanceMonitor>,
+    stmt_cache: std::sync::Arc<connection::PreparedStatementCache>,
+    dynamic_pool_manager: std::sync::Arc<connection::DynamicPoolManager>,
+}
+
+/// Async database wrapper for non-blocking database operations
+#[derive(Clone, Debug)]
+pub struct AsyncDatabase {
+    pool: Pool<SqliteConnectionManager>,
+    query_monitor: std::sync::Arc<connection::QueryPerformanceMonitor>,
+    stmt_cache: std::sync::Arc<connection::PreparedStatementCache>,
+    dynamic_pool_manager: std::sync::Arc<connection::DynamicPoolManager>,
+}
+
+/// Database result type - Legacy type using String for errors
+/// For new code, use RepoResult<T> from repositories::base which provides structured RepoError
+pub type DbResult<T> = Result<T, String>;
+
+// Re-export RepoResult and RepoError for new code
+pub use crate::repositories::base::{RepoResult, RepoError};
+
+/// Compatibility: Allow RepoError to be converted to String for legacy DbResult usage
+impl From<RepoError> for String {
+    fn from(err: RepoError) -> Self {
+        err.to_string()
+    }
+}
+
+/// Error types for intervention operations
+#[derive(Debug, thiserror::Error)]
+pub enum InterventionError {
+    #[error("Validation error: {0}")]
+    Validation(String),
+    #[error("Business rule violation: {0}")]
+    BusinessRule(String),
+    #[error("Workflow error: {0}")]
+    Workflow(String),
+    #[error("Resource not found: {0}")]
+    NotFound(String),
+    #[error("Database error: {0}")]
+    Database(String),
+}
+
+/// Result type alias for intervention operations
+pub type InterventionResult<T> = Result<T, InterventionError>;
+
+impl From<rusqlite::Error> for InterventionError {
+    fn from(err: rusqlite::Error) -> Self {
+        InterventionError::Database(err.to_string())
+    }
+}
+
+// Convert InterventionError to AppError for IPC compatibility
+impl From<InterventionError> for crate::commands::AppError {
+    fn from(error: InterventionError) -> Self {
+        match error {
+            InterventionError::Validation(msg) => {
+                // Map specific validation messages to more specific errors
+                if msg.contains("already active") || msg.contains("already exists") {
+                    crate::commands::AppError::InterventionAlreadyActive(msg)
+                } else if msg.contains("already completed") || msg.contains("invalid state") {
+                    crate::commands::AppError::InterventionInvalidState(msg)
+                } else if msg.contains("not found") && msg.contains("step") {
+                    crate::commands::AppError::InterventionStepNotFound(msg)
+                } else if msg.contains("out of order") {
+                    crate::commands::AppError::InterventionStepOutOfOrder(msg)
+                } else {
+                    crate::commands::AppError::InterventionValidationFailed(msg)
+                }
+            }
+            InterventionError::BusinessRule(msg) => {
+                // Business rule violations are typically validation issues
+                if msg.contains("concurrent") || msg.contains("modified") {
+                    crate::commands::AppError::InterventionConcurrentModification(msg)
+                } else {
+                    crate::commands::AppError::InterventionValidationFailed(msg)
+                }
+            }
+            InterventionError::Workflow(msg) => {
+                // Workflow errors are typically state-related
+                crate::commands::AppError::InterventionInvalidState(msg)
+            }
+            InterventionError::NotFound(msg) => crate::commands::AppError::NotFound(msg),
+            InterventionError::Database(msg) => {
+                if msg.contains("timeout") || msg.contains("locked") {
+                    crate::commands::AppError::InterventionTimeout(msg)
+                } else {
+                    crate::commands::AppError::Database(msg)
+                }
+            }
+        }
+    }
+}
+
+/// Convert String to InterventionError
+impl From<String> for InterventionError {
+    fn from(error: String) -> Self {
+        InterventionError::Database(error)
+    }
+}
+
+/// Type alias for pooled connection
+pub type PooledConn = PooledConnection<SqliteConnectionManager>;
+
+/// Connection pool health metrics
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PoolHealth {
+    pub connections_active: u32,
+    pub connections_idle: u32,
+    pub connections_pending: u32,
+    pub avg_wait_time_ms: f64,
+    pub max_connections: u32,
+    pub utilization_percentage: f64,
+}
+
+/// Query performance metrics
+#[derive(Debug, Clone)]
+pub struct QueryMetrics {
+    pub query: String,
+    pub duration_ms: u64,
+    pub rows_affected: Option<usize>,
+    pub _timestamp: std::time::SystemTime,
+}
+
+impl QueryMetrics {
+    pub fn new(query: String, duration_ms: u64, rows_affected: Option<usize>) -> Self {
+        Self {
+            query,
+            duration_ms,
+            rows_affected,
+            _timestamp: std::time::SystemTime::now(),
+        }
+    }
+}
+
+#[allow(dead_code)]
+impl Database {
+    /// Create new database connection pool
+    ///
+    /// # Arguments
+    /// * `path` - Path to SQLite database file
+    /// * `encryption_key` - Encryption key for database (empty string for no encryption)
+    ///
+    /// # Returns
+    /// * `DbResult<Self>` - Database instance or error
+    pub fn new<P: AsRef<Path>>(path: P, encryption_key: &str) -> DbResult<Self> {
+        let path_str = path.as_ref().to_string_lossy();
+        let pool = initialize_pool(&path_str, encryption_key).map_err(|e| e.to_string())?;
+
+        // Initialize performance monitoring components
+        let query_monitor = std::sync::Arc::new(connection::QueryPerformanceMonitor::new(
+            Duration::from_millis(100), // 100ms threshold for slow queries
+        ));
+        let stmt_cache = std::sync::Arc::new(connection::PreparedStatementCache::new());
+        let dynamic_pool_manager = std::sync::Arc::new(connection::DynamicPoolManager::new());
+
+        Ok(Database {
+            pool,
+            metrics_enabled: std::env::var("RPMA_DB_METRICS").is_ok(),
+            query_monitor,
+            stmt_cache,
+            dynamic_pool_manager,
+        })
+    }
+
+    /// Get a connection from the pool with retry logic and timing
+    pub fn get_connection(&self) -> DbResult<PooledConn> {
+        let start_time = Instant::now();
+        let mut attempts = 0;
+        let max_attempts = 3;
+
+        loop {
+            let attempt_start = Instant::now();
+            match self.pool.get() {
+                Ok(conn) => {
+                    let duration = attempt_start.elapsed();
+                    // Record wait time for dynamic pool management
+                    self.dynamic_pool_manager.record_connection_wait(duration);
+
+                    if duration > Duration::from_millis(100) {
+                        // Log slow connection acquisition
+                        warn!(
+                            connection_acquisition_ms = duration.as_millis(),
+                            attempt = attempts + 1,
+                            "Slow database connection acquisition"
+                        );
+                    }
+                    return Ok(conn);
+                }
+                Err(e) => {
+                    let duration = attempt_start.elapsed();
+                    attempts += 1;
+
+                    warn!(
+                        attempt = attempts,
+                        duration_ms = duration.as_millis(),
+                        error = %e,
+                        "Database connection acquisition failed"
+                    );
+
+                    if attempts >= max_attempts {
+                        let total_duration = start_time.elapsed().as_millis() as u64;
+                        return Err(format!(
+                            "Failed to get database connection after {} attempts ({}ms total): {}",
+                            max_attempts, total_duration, e
+                        ));
+                    }
+                    // Wait briefly before retrying
+                    std::thread::sleep(std::time::Duration::from_millis(100 * attempts as u64));
+                    debug!(
+                        "Retrying database connection (attempt {}/{})",
+                        attempts, max_attempts
+                    );
+                }
+            }
+        }
+    }
+
+    /// Get connection pool (for complex queries)
+    pub fn pool(&self) -> &Pool<SqliteConnectionManager> {
+        &self.pool
+    }
+
+    /// Get connection pool statistics
+    pub fn pool_stats(&self) -> r2d2::State {
+        self.pool.state()
+    }
+
+    /// Execute a function within a database transaction
+    ///
+    /// This method provides transactional semantics for database operations.
+    /// If the function returns an error, the transaction is rolled back.
+    /// If the function succeeds, the transaction is committed.
+    pub fn with_transaction<F, T>(&self, f: F) -> DbResult<T>
+    where
+        F: FnOnce(&rusqlite::Transaction) -> DbResult<T>,
+    {
+        let mut conn = self
+            .get_connection()
+            .map_err(|e| format!("Failed to get connection for transaction: {}", e))?;
+        let tx = conn
+            .transaction()
+            .map_err(|e| format!("Failed to start transaction: {}", e))?;
+
+        match f(&tx) {
+            Ok(result) => {
+                tx.commit()
+                    .map_err(|e| format!("Failed to commit transaction: {}", e))?;
+                Ok(result)
+            }
+            Err(e) => {
+                // Transaction will be automatically rolled back when dropped
+                Err(e)
+            }
+        }
+    }
+
+    /// Validate connection pool configuration
+    pub fn validate_pool_config(&self) -> DbResult<()> {
+        let stats = self.pool_stats();
+
+        // Check minimum requirements
+        if stats.connections < 1 {
+            return Err("No connections available in pool".to_string());
+        }
+
+        if stats.idle_connections == 0 && stats.connections > 5 {
+            warn!(
+                "Pool has {} connections but 0 idle - possible connection leak",
+                stats.connections
+            );
+        }
+
+        Ok(())
+    }
+
+    /// Get the query performance monitor
+    pub fn query_monitor(&self) -> &std::sync::Arc<connection::QueryPerformanceMonitor> {
+        &self.query_monitor
+    }
+
+    /// Get the prepared statement cache
+    pub fn stmt_cache(&self) -> &std::sync::Arc<connection::PreparedStatementCache> {
+        &self.stmt_cache
+    }
+
+    /// Get database performance statistics
+    pub fn get_performance_stats(&self) -> connection::QueryStatsSummary {
+        let slow_queries = self.query_monitor.get_slow_queries();
+        let all_stats = self.query_monitor.get_stats();
+
+        connection::QueryStatsSummary {
+            total_queries: all_stats.len() as u64,
+            slow_queries_count: slow_queries.len() as u64,
+            slow_queries,
+            cache_stats: self.stmt_cache.stats(),
+        }
+    }
+
+    /// Clear performance statistics
+    pub fn clear_performance_stats(&self) {
+        self.query_monitor.clear_stats();
+        self.stmt_cache.clear();
+    }
+
+    /// Create an async database wrapper from this database instance
+    pub fn as_async(&self) -> AsyncDatabase {
+        AsyncDatabase {
+            pool: self.pool.clone(),
+            query_monitor: self.query_monitor.clone(),
+            stmt_cache: self.stmt_cache.clone(),
+            dynamic_pool_manager: self.dynamic_pool_manager.clone(),
+        }
+    }
+
+    /// Get connection pool health metrics
+    pub fn get_pool_health(&self) -> PoolHealth {
+        let state = self.pool.state();
+        let config = self.dynamic_pool_manager.get_config();
+        let load_stats = self.dynamic_pool_manager.get_load_stats();
+
+        PoolHealth {
+            connections_active: state.connections,
+            connections_idle: state.idle_connections,
+            connections_pending: 0, // r2d2 doesn't expose pending connections
+            avg_wait_time_ms: load_stats.average_wait_time
+                .map(|d| d.as_millis() as f64)
+                .unwrap_or(0.0),
+            max_connections: config.max_connections,
+            utilization_percentage: (state.connections as f64 / config.max_connections as f64) * 100.0,
+        }
+    }
+
+    /// Get dynamic pool manager for advanced pool management
+    pub fn dynamic_pool_manager(&self) -> &std::sync::Arc<connection::DynamicPoolManager> {
+        &self.dynamic_pool_manager
+    }
+
+    /// Attempt to adjust pool size based on current load
+    pub fn adjust_pool_size(&self) -> Option<connection::PoolConfig> {
+        self.dynamic_pool_manager.adjust_pool_size()
+    }
+
+    /// Create a streaming query for large result sets
+    pub fn create_streaming_query<T, F>(
+        &self,
+        query: &str,
+        params: Vec<rusqlite::types::Value>,
+        row_mapper: F,
+    ) -> connection::ChunkedQuery<T, F>
+    where
+        F: Fn(&rusqlite::Row) -> Result<T, rusqlite::Error>,
+    {
+        connection::ChunkedQuery::new(
+            query.to_string(),
+            params,
+            row_mapper,
+            self.pool.clone(),
+        )
+    }
+
+    /// Execute a streaming query with total count
+    pub fn execute_streaming_query<T, F>(
+        &self,
+        query: &str,
+        count_query: Option<&str>,
+        params: Vec<rusqlite::types::Value>,
+        row_mapper: F,
+    ) -> DbResult<connection::ChunkedQuery<T, F>>
+    where
+        F: Fn(&rusqlite::Row) -> Result<T, rusqlite::Error>,
+    {
+        let mut streaming_query = self.create_streaming_query(query, params, row_mapper);
+
+        // If count query provided, execute it to get total
+        if let Some(count_sql) = count_query {
+            let conn = self.get_connection()?;
+            let count: i64 = conn.query_row(count_sql, [], |row| row.get(0))
+                .map_err(|e| format!("Failed to execute count query: {}", e))?;
+            streaming_query = streaming_query.with_total_count(count as usize);
+        }
+
+        Ok(streaming_query)
+    }
+}
+
+impl AsyncDatabase {
+    /// Execute a database operation asynchronously without blocking the async runtime
+    ///
+    /// This method uses tokio::task::spawn_blocking to run the database operation
+    /// on a blocking thread pool, preventing it from blocking the async runtime.
+    pub async fn execute_async<F, T>(&self, operation: F) -> DbResult<T>
+    where
+        F: FnOnce(&mut rusqlite::Connection) -> DbResult<T> + Send + 'static,
+        T: Send + 'static,
+    {
+        let pool = self.pool.clone();
+        let _monitor = self.query_monitor.clone();
+        let _cache = self.stmt_cache.clone();
+
+        let _monitor_clone = self.query_monitor.clone();
+        let pool_manager_clone = self.dynamic_pool_manager.clone();
+
+        tokio::task::spawn_blocking(move || {
+            // Get connection from pool
+            let conn_start = std::time::Instant::now();
+            let mut conn = pool
+                .get()
+                .map_err(|e| format!("Failed to get database connection: {}", e))?;
+            let conn_duration = conn_start.elapsed();
+
+            // Record connection wait time for dynamic pool management
+            pool_manager_clone.record_connection_wait(conn_duration);
+
+            // Monitor query performance if enabled
+            let start = std::time::Instant::now();
+            let result = operation(&mut conn);
+            let duration = start.elapsed();
+
+            // Log slow queries
+            if duration > std::time::Duration::from_millis(100) {
+                tracing::warn!(
+                    query_duration_ms = duration.as_millis(),
+                    "Slow database operation detected"
+                );
+            }
+
+            result
+        })
+        .await
+        .map_err(|e| format!("Database operation panicked: {:?}", e))?
+    }
+
+    /// Execute a transaction asynchronously
+    ///
+    /// This method runs the entire transaction on a blocking thread to maintain
+    /// transactional semantics while not blocking the async runtime.
+    pub async fn with_transaction_async<F, T>(&self, operation: F) -> DbResult<T>
+    where
+        F: FnOnce(&rusqlite::Transaction) -> DbResult<T> + Send + 'static,
+        T: Send + 'static,
+    {
+        let pool = self.pool.clone();
+
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool
+                .get()
+                .map_err(|e| format!("Failed to get database connection: {}", e))?;
+            let tx = conn
+                .transaction()
+                .map_err(|e| format!("Failed to start transaction: {}", e))?;
+
+            match operation(&tx) {
+                Ok(result) => {
+                    tx.commit()
+                        .map_err(|e| format!("Failed to commit transaction: {}", e))?;
+                    Ok(result)
+                }
+                Err(e) => {
+                    // Transaction will be automatically rolled back when dropped
+                    Err(e)
+                }
+            }
+        })
+        .await
+        .map_err(|e| format!("Transaction operation panicked: {:?}", e))?
+    }
+
+    /// Execute a read-only operation asynchronously
+    ///
+    /// Optimized for read operations that don't require transactions
+    pub async fn execute_read_async<F, T>(&self, operation: F) -> DbResult<T>
+    where
+        F: FnOnce(&mut rusqlite::Connection) -> DbResult<T> + Send + 'static,
+        T: Send + 'static,
+    {
+        self.execute_async(operation).await
+    }
+
+    /// Get database connection pool statistics asynchronously
+    pub async fn get_pool_stats_async(&self) -> DbResult<r2d2::State> {
+        let pool = self.pool.clone();
+        tokio::task::spawn_blocking(move || Ok(pool.state()))
+            .await
+            .map_err(|e| format!("Failed to get pool stats: {:?}", e))?
+    }
+
+    /// Vacuum database asynchronously
+    pub async fn vacuum_async(&self) -> DbResult<()> {
+        self.execute_async(|conn| {
+            conn.execute_batch("VACUUM;")
+                .map_err(|e| format!("Failed to vacuum database: {}", e))?;
+            Ok(())
+        })
+        .await
+    }
+
+    /// Checkpoint WAL asynchronously
+    pub async fn checkpoint_wal_async(&self) -> DbResult<()> {
+        self.execute_async(|conn| {
+            conn.execute_batch("PRAGMA wal_checkpoint(TRUNCATE);")
+                .map_err(|e| format!("Failed to checkpoint WAL: {}", e))?;
+            Ok(())
+        })
+        .await
+    }
+
+    /// Execute a streaming query asynchronously
+    pub async fn execute_streaming_query_async<T, F>(
+        &self,
+        query: &str,
+        count_query: Option<&str>,
+        params: Vec<rusqlite::types::Value>,
+        row_mapper: F,
+    ) -> DbResult<connection::ChunkedQuery<T, F>>
+    where
+        T: Send + 'static,
+        F: Fn(&rusqlite::Row) -> Result<T, rusqlite::Error> + Send + 'static,
+    {
+        let query_clone = query.to_string();
+        let count_query_clone = count_query.map(|s| s.to_string());
+        let pool_clone = self.pool.clone();
+
+        tokio::task::spawn_blocking(move || {
+            let mut streaming_query = connection::ChunkedQuery::new(
+                query_clone,
+                params,
+                row_mapper,
+                pool_clone.clone(),
+            );
+
+            // If count query provided, execute it to get total
+            if let Some(count_sql) = count_query_clone {
+                let conn = pool_clone.get()
+                    .map_err(|e| format!("Failed to get connection for count: {}", e))?;
+                let count: i64 = conn.query_row(&count_sql, [], |row| row.get(0))
+                    .map_err(|e| format!("Failed to execute count query: {}", e))?;
+                streaming_query = streaming_query.with_total_count(count as usize);
+            }
+
+            Ok(streaming_query)
+        })
+        .await
+        .map_err(|e| format!("Streaming query setup panicked: {:?}", e))?
+    }
+
+    /// Convert streaming query to async stream
+    pub fn streaming_query_to_stream<T, F>(
+        query: connection::ChunkedQuery<T, F>,
+        chunk_size: usize,
+    ) -> impl futures::Stream<Item = Result<Vec<T>, rusqlite::Error>> + Send
+    where
+        F: Fn(&rusqlite::Row) -> Result<T, rusqlite::Error> + Send + 'static,
+        T: Send + 'static,
+    {
+        connection::into_stream(query, chunk_size)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::NamedTempFile;
+
+    #[test]
+    fn test_database_creation() {
+        let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+        let db = Database::new(temp_file.path(), "").expect("Failed to create database");
+
+        assert!(!db.is_initialized().expect("Failed to check initialization"));
+    }
+
+    #[test]
+    fn test_database_initialization() {
+        let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+        let db = Database::new(temp_file.path(), "").expect("Failed to create database");
+
+        db.init().expect("Failed to initialize database");
+
+        assert!(db.is_initialized().expect("Failed to check initialization"));
+
+        let tables = db.list_tables().expect("Failed to list tables");
+        assert!(tables.contains(&"interventions".to_string()));
+        assert!(tables.contains(&"intervention_steps".to_string()));
+        assert!(tables.contains(&"photos".to_string()));
+        assert!(tables.contains(&"tasks".to_string()));
+        assert!(tables.contains(&"clients".to_string()));
+        assert!(tables.contains(&"users".to_string()));
+        assert!(tables.contains(&"sync_queue".to_string()));
+    }
+
+    #[test]
+    fn test_pragma_settings() {
+        let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+        let db = Database::new(temp_file.path(), "").expect("Failed to create database");
+
+        let conn = db.pool.get().expect("Failed to get connection");
+
+        // Check WAL mode
+        let journal_mode: String = conn
+            .query_row("PRAGMA journal_mode", [], |row| row.get(0))
+            .expect("Failed to query journal_mode");
+        assert_eq!(journal_mode, "wal");
+
+        // Check foreign keys enabled
+        let fk_enabled: i32 = conn
+            .query_row("PRAGMA foreign_keys", [], |row| row.get(0))
+            .expect("Failed to query foreign_keys");
+        assert_eq!(fk_enabled, 1);
+    }
+
+    #[test]
+    fn test_versioning() {
+        let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+        let db = Database::new(temp_file.path(), "").expect("Failed to create database");
+
+        assert_eq!(db.get_version().expect("Failed to get version"), 0);
+
+        db.init().expect("Failed to initialize");
+        db.migrate(11).expect("Failed to migrate");
+
+        assert_eq!(db.get_version().expect("Failed to get version"), 11);
+    }
+
+    #[test]
+    fn test_migration_11_task_id_column() {
+        let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+        let db = Database::new(temp_file.path(), "").expect("Failed to create database");
+
+        // Initialize database
+        db.init().expect("Failed to initialize");
+
+        // Check that interventions table exists and has task_id column
+        let conn = db.get_connection().expect("Failed to get connection");
+        let columns: Vec<String> = conn
+            .prepare("PRAGMA table_info(interventions)")
+            .expect("Failed to prepare pragma")
+            .query_map([], |row| {
+                let name: String = row.get(1)?;
+                Ok(name)
+            })
+            .expect("Failed to query columns")
+            .map(|r| r.expect("Failed to get column name"))
+            .collect();
+
+        assert!(
+            columns.contains(&"task_id".to_string()),
+            "task_id column should exist after init"
+        );
+
+        // Apply migration 11
+        db.migrate(11).expect("Failed to migrate to version 11");
+
+        // Verify migration completed
+        assert_eq!(db.get_version().expect("Failed to get version"), 11);
+    }
+
+    #[test]
+    fn test_migration_002_new_database() {
+        let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+        let db = Database::new(temp_file.path(), "").expect("Failed to create database");
+
+        // Initialize database (creates schema with ppf_zones already)
+        db.init().expect("Failed to initialize");
+
+        // Verify ppf_zones exists in tasks table
+        let conn = db.get_connection().expect("Failed to get connection");
+        let columns: Vec<String> = conn
+            .prepare("PRAGMA table_info(tasks)")
+            .expect("Failed to prepare pragma")
+            .query_map([], |row| {
+                let name: String = row.get(1)?;
+                Ok(name)
+            })
+            .expect("Failed to query columns")
+            .map(|r| r.expect("Failed to get column name"))
+            .collect();
+
+        assert!(
+            columns.contains(&"ppf_zones".to_string()),
+            "ppf_zones column should exist after init"
+        );
+        assert!(
+            !columns.contains(&"ppf_zone".to_string()),
+            "ppf_zone column should not exist after init"
+        );
+
+        // Apply migration 2 (should skip, already in correct state)
+        db.migrate(2).expect("Failed to migrate to version 2");
+
+        // Verify migration completed
+        assert_eq!(db.get_version().expect("Failed to get version"), 2);
+
+        // Verify ppf_zones still exists and ppf_zone doesn't
+        let columns: Vec<String> = conn
+            .prepare("PRAGMA table_info(tasks)")
+            .expect("Failed to prepare pragma")
+            .query_map([], |row| {
+                let name: String = row.get(1)?;
+                Ok(name)
+            })
+            .expect("Failed to query columns")
+            .map(|r| r.expect("Failed to get column name"))
+            .collect();
+
+        assert!(
+            columns.contains(&"ppf_zones".to_string()),
+            "ppf_zones column should still exist after migration"
+        );
+        assert!(
+            !columns.contains(&"ppf_zone".to_string()),
+            "ppf_zone column should not exist after migration"
+        );
+    }
+
+    #[test]
+    fn test_migration_002_old_database() {
+        let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+        let db = Database::new(temp_file.path(), "").expect("Failed to create database");
+
+        // Initialize database
+        db.init().expect("Failed to initialize");
+
+        // Simulate old database by renaming ppf_zones to ppf_zone
+        let conn = db.get_connection().expect("Failed to get connection");
+        conn.execute(
+            "ALTER TABLE tasks RENAME TO tasks_old",
+            []
+        ).expect("Failed to rename tasks table");
+
+        conn.execute_batch(
+            r#"
+            CREATE TABLE tasks (
+                id TEXT PRIMARY KEY,
+                task_number TEXT UNIQUE NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT,
+                vehicle_plate TEXT,
+                vehicle_model TEXT,
+                vehicle_year TEXT,
+                vehicle_make TEXT,
+                vin TEXT,
+                ppf_zone TEXT,
+                custom_ppf_zones TEXT,
+                status TEXT NOT NULL DEFAULT 'draft',
+                priority TEXT NOT NULL DEFAULT 'medium',
+                technician_id TEXT,
+                assigned_at INTEGER,
+                assigned_by TEXT,
+                scheduled_date TEXT,
+                start_time TEXT,
+                end_time TEXT,
+                date_rdv TEXT,
+                heure_rdv TEXT,
+                template_id TEXT,
+                workflow_id TEXT,
+                workflow_status TEXT,
+                current_workflow_step_id TEXT,
+                started_at INTEGER,
+                completed_at INTEGER,
+                completed_steps TEXT,
+                client_id TEXT,
+                customer_name TEXT,
+                customer_email TEXT,
+                customer_phone TEXT,
+                customer_address TEXT,
+                external_id TEXT,
+                lot_film TEXT,
+                checklist_completed INTEGER DEFAULT 0,
+                notes TEXT,
+                tags TEXT,
+                estimated_duration INTEGER,
+                actual_duration INTEGER,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL,
+                creator_id TEXT,
+                created_by TEXT,
+                updated_by TEXT,
+                synced INTEGER DEFAULT 0,
+                last_synced_at INTEGER
+            );
+
+            INSERT INTO tasks (
+                id, task_number, title, description, vehicle_plate,
+                vehicle_year, vehicle_make, vin, ppf_zone, custom_ppf_zones,
+                status, priority, technician_id, scheduled_date,
+                created_at, updated_at
+            )
+            SELECT
+                id, task_number, title, description, vehicle_plate,
+                vehicle_year, vehicle_make, vin, ppf_zones, custom_ppf_zones,
+                status, priority, technician_id, scheduled_date,
+                created_at, updated_at
+            FROM tasks_old;
+
+            DROP TABLE tasks_old;
+            "#
+        ).expect("Failed to create old schema");
+
+        // Insert test data with ppf_zone
+        conn.execute(
+            "INSERT INTO tasks (id, task_number, title, ppf_zone, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            ["test-id-1", "TASK-001", "Test Task", "[\"hood\",\"fenders\"]", "draft", 1234567890, 1234567890]
+        ).expect("Failed to insert test data");
+
+        // Verify ppf_zone exists and ppf_zones doesn't
+        let columns: Vec<String> = conn
+            .prepare("PRAGMA table_info(tasks)")
+            .expect("Failed to prepare pragma")
+            .query_map([], |row| {
+                let name: String = row.get(1)?;
+                Ok(name)
+            })
+            .expect("Failed to query columns")
+            .map(|r| r.expect("Failed to get column name"))
+            .collect();
+
+        assert!(
+            columns.contains(&"ppf_zone".to_string()),
+            "ppf_zone column should exist in old database"
+        );
+        assert!(
+            !columns.contains(&"ppf_zones".to_string()),
+            "ppf_zones column should not exist in old database"
+        );
+
+        // Apply migration 2 (should rename ppf_zone to ppf_zones)
+        db.migrate(2).expect("Failed to migrate to version 2");
+
+        // Verify migration completed
+        assert_eq!(db.get_version().expect("Failed to get version"), 2);
+
+        // Verify ppf_zones exists and ppf_zone doesn't
+        let columns: Vec<String> = conn
+            .prepare("PRAGMA table_info(tasks)")
+            .expect("Failed to prepare pragma")
+            .query_map([], |row| {
+                let name: String = row.get(1)?;
+                Ok(name)
+            })
+            .expect("Failed to query columns")
+            .map(|r| r.expect("Failed to get column name"))
+            .collect();
+
+        assert!(
+            columns.contains(&"ppf_zones".to_string()),
+            "ppf_zones column should exist after migration"
+        );
+        assert!(
+            !columns.contains(&"ppf_zone".to_string()),
+            "ppf_zone column should not exist after migration"
+        );
+
+        // Verify data was preserved
+        let ppf_zones: String = conn
+            .query_row(
+                "SELECT ppf_zones FROM tasks WHERE id = ?",
+                ["test-id-1"],
+                |row| row.get(0)
+            )
+            .expect("Failed to query ppf_zones");
+
+        assert_eq!(
+            ppf_zones,
+            "[\"hood\",\"fenders\"]",
+            "ppf_zones data should be preserved during migration"
+        );
+
+        // Verify all expected indexes exist
+        let indexes: Vec<String> = conn
+            .prepare("SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='tasks'")
+            .expect("Failed to prepare query")
+            .query_map([], |row| {
+                let name: String = row.get(0)?;
+                Ok(name)
+            })
+            .expect("Failed to query indexes")
+            .collect();
+
+        assert!(
+            indexes.contains(&"idx_tasks_status".to_string()),
+            "idx_tasks_status index should exist"
+        );
+        assert!(
+            indexes.contains(&"idx_tasks_technician_id".to_string()),
+            "idx_tasks_technician_id index should exist"
+        );
+        assert!(
+            indexes.contains(&"idx_tasks_client_id".to_string()),
+            "idx_tasks_client_id index should exist"
+        );
+        assert!(
+            indexes.contains(&"idx_tasks_priority".to_string()),
+            "idx_tasks_priority index should exist"
+        );
+        assert!(
+            indexes.contains(&"idx_tasks_scheduled_date".to_string()),
+            "idx_tasks_scheduled_date index should exist"
+        );
+    }
+
+    #[test]
+    fn test_migration_002_idempotent() {
+        let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+        let db = Database::new(temp_file.path(), "").expect("Failed to create database");
+
+        // Initialize database
+        db.init().expect("Failed to initialize");
+
+        // Apply migration 2 first time
+        db.migrate(2).expect("Failed to migrate to version 2 (first time)");
+        assert_eq!(db.get_version().expect("Failed to get version"), 2);
+
+        // Apply migration 2 again (should be idempotent)
+        db.migrate(2).expect("Failed to migrate to version 2 (second time)");
+        assert_eq!(db.get_version().expect("Failed to get version"), 2);
+
+        // Apply migration 2 third time
+        db.migrate(2).expect("Failed to migrate to version 2 (third time)");
+        assert_eq!(db.get_version().expect("Failed to get version"), 2);
+
+        // Verify schema is still correct
+        let conn = db.get_connection().expect("Failed to get connection");
+        let columns: Vec<String> = conn
+            .prepare("PRAGMA table_info(tasks)")
+            .expect("Failed to prepare pragma")
+            .query_map([], |row| {
+                let name: String = row.get(1)?;
+                Ok(name)
+            })
+            .expect("Failed to query columns")
+            .map(|r| r.expect("Failed to get column name"))
+            .collect();
+
+        assert!(
+            columns.contains(&"ppf_zones".to_string()),
+            "ppf_zones column should exist after multiple migrations"
+        );
+        assert!(
+            !columns.contains(&"ppf_zone".to_string()),
+            "ppf_zone column should not exist after multiple migrations"
+        );
+    }
+
+    #[test]
+    fn test_migration_002_data_integrity() {
+        let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+        let db = Database::new(temp_file.path(), "").expect("Failed to create database");
+
+        // Initialize database
+        db.init().expect("Failed to initialize");
+
+        // Simulate old database with ppf_zone
+        let conn = db.get_connection().expect("Failed to get connection");
+        conn.execute(
+            "ALTER TABLE tasks RENAME TO tasks_old",
+            []
+        ).expect("Failed to rename tasks table");
+
+        conn.execute_batch(
+            r#"
+            CREATE TABLE tasks (
+                id TEXT PRIMARY KEY,
+                task_number TEXT UNIQUE NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT,
+                vehicle_plate TEXT,
+                vehicle_model TEXT,
+                vehicle_year TEXT,
+                vehicle_make TEXT,
+                vin TEXT,
+                ppf_zone TEXT,
+                custom_ppf_zones TEXT,
+                status TEXT NOT NULL DEFAULT 'draft',
+                priority TEXT NOT NULL DEFAULT 'medium',
+                technician_id TEXT,
+                assigned_at INTEGER,
+                assigned_by TEXT,
+                scheduled_date TEXT,
+                start_time TEXT,
+                end_time TEXT,
+                date_rdv TEXT,
+                heure_rdv TEXT,
+                template_id TEXT,
+                workflow_id TEXT,
+                workflow_status TEXT,
+                current_workflow_step_id TEXT,
+                started_at INTEGER,
+                completed_at INTEGER,
+                completed_steps TEXT,
+                client_id TEXT,
+                customer_name TEXT,
+                customer_email TEXT,
+                customer_phone TEXT,
+                customer_address TEXT,
+                external_id TEXT,
+                lot_film TEXT,
+                checklist_completed INTEGER DEFAULT 0,
+                notes TEXT,
+                tags TEXT,
+                estimated_duration INTEGER,
+                actual_duration INTEGER,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL,
+                creator_id TEXT,
+                created_by TEXT,
+                updated_by TEXT,
+                synced INTEGER DEFAULT 0,
+                last_synced_at INTEGER
+            );
+
+            INSERT INTO tasks (
+                id, task_number, title, description, vehicle_plate,
+                vehicle_year, vehicle_make, vin, ppf_zone, custom_ppf_zones,
+                status, priority, technician_id, scheduled_date,
+                created_at, updated_at
+            )
+            SELECT
+                id, task_number, title, description, vehicle_plate,
+                vehicle_year, vehicle_make, vin, ppf_zones, custom_ppf_zones,
+                status, priority, technician_id, scheduled_date,
+                created_at, updated_at
+            FROM tasks_old;
+
+            DROP TABLE tasks_old;
+            "#
+        ).expect("Failed to create old schema");
+
+        // Insert multiple test records
+        let test_data = vec![
+            ("test-id-1", "TASK-001", "Task 1", "[\"hood\"]", "draft"),
+            ("test-id-2", "TASK-002", "Task 2", "[\"hood\",\"fenders\"]", "scheduled"),
+            ("test-id-3", "TASK-003", "Task 3", "[]", "in_progress"),
+            ("test-id-4", "TASK-004", "Task 4", "[\"full\"]", "completed"),
+        ];
+
+        for (id, number, title, ppf_zone, status) in &test_data {
+            conn.execute(
+                "INSERT INTO tasks (id, task_number, title, ppf_zone, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                [id, number, title, ppf_zone, status, 1234567890i64, 1234567890i64]
+            ).expect("Failed to insert test data");
+        }
+
+        // Count rows before migration
+        let count_before: i64 = conn
+            .query_row("SELECT COUNT(*) FROM tasks", [], |row| row.get(0))
+            .expect("Failed to count rows before migration");
+
+        assert_eq!(count_before, 4, "Should have 4 test records before migration");
+
+        // Apply migration 2
+        db.migrate(2).expect("Failed to migrate to version 2");
+
+        // Count rows after migration
+        let count_after: i64 = conn
+            .query_row("SELECT COUNT(*) FROM tasks", [], |row| row.get(0))
+            .expect("Failed to count rows after migration");
+
+        assert_eq!(count_after, 4, "Should still have 4 test records after migration");
+
+        // Verify all data was preserved correctly
+        for (id, number, title, ppf_zones_expected, status) in &test_data {
+            let (title_result, ppf_zones_result, status_result): (String, String, String) = conn
+                .query_row(
+                    "SELECT title, ppf_zones, status FROM tasks WHERE id = ?",
+                    [id],
+                    |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?))
+                )
+                .expect("Failed to query task after migration");
+
+            assert_eq!(title_result, title.to_string(), "Title should match for task {}", id);
+            assert_eq!(ppf_zones_result, ppf_zones_expected.to_string(), "ppf_zones should match for task {}", id);
+            assert_eq!(status_result, status.to_string(), "Status should match for task {}", id);
+        }
+    }
+}

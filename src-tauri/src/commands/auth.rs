@@ -1,0 +1,402 @@
+//! Authentication commands for Tauri IPC
+
+use crate::commands::{ApiResponse, AppError, AppState};
+use crate::services::validation::ValidationService;
+use serde::Deserialize;
+use sha2::{Digest, Sha256};
+use tracing::{debug, error, info, instrument, warn};
+
+#[derive(Deserialize, Debug)]
+pub struct LoginRequest {
+    pub email: String,
+    pub password: String,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct SignupRequest {
+    pub email: String,
+    pub first_name: String,
+    pub last_name: String,
+    pub password: String,
+    pub role: Option<String>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
+}
+
+/// Login command
+#[tauri::command]
+#[instrument(skip(state), fields(email = %request.email))]
+pub async fn auth_login(
+    request: LoginRequest,
+    state: AppState<'_>,
+    // Note: In a real web application, you'd get IP from request headers
+    // For desktop app, we'll use a placeholder or get from network config
+    ip_address: Option<String>,
+) -> Result<ApiResponse<crate::models::auth::UserSession>, AppError> {
+    let _correlation_id = request
+        .correlation_id
+        .unwrap_or_else(|| "test-correlation-id".to_string());
+    // let logger = RPMARequestLogger::new(correlation_id.clone(), None, LogDomain::Auth);
+
+    // let mut context = HashMap::new();
+    // context.insert("email".to_string(), Value::from(request.email.clone()));
+    // context.insert("has_password".to_string(), Value::from(!request.password.is_empty()));
+    // logger.info("User login attempt", Some(context));
+
+    // Validate input data
+    let validator = ValidationService::new();
+    let validated_email = validator
+        .validate_email_secure(&request.email)
+        .map_err(|e| AppError::Validation(format!("Email validation failed: {}", e)))?;
+    let validated_password = validator
+        .sanitize_text_input(&request.password, "password", 128)
+        .map_err(|e| AppError::Validation(format!("Password validation failed: {}", e)))?;
+
+    // Use consistent authentication pattern - clone to avoid lock issues
+    let auth_service = state.auth_service.clone();
+
+    debug!("Auth service acquired, attempting authentication");
+    let session_result = auth_service.authenticate(&validated_email, &validated_password, ip_address.as_deref());
+    let session = match session_result {
+        Ok(session) => {
+            // Update logger with user ID now that we have it
+            // let logger = RPMARequestLogger::new(correlation_id, Some(session.user_id.clone()), LogDomain::Auth);
+            // let mut context = HashMap::new();
+            // context.insert("user_id".to_string(), Value::from(session.user_id.clone()));
+            // context.insert("email".to_string(), Value::from(session.email.clone()));
+            // context.insert("role".to_string(), serde_json::to_value(&session.role).unwrap_or(Value::Null));
+            // logger.info("Authentication successful", Some(context));
+            session
+        }
+        Err(e) => {
+            // let mut context = HashMap::new();
+            // context.insert("email".to_string(), Value::from(request.email.clone()));
+            // logger.error("Authentication failed", None, Some(context));
+            // Return user-friendly error message
+            let error_msg = if e.contains("Invalid email or password") {
+                "Email ou mot de passe incorrect".to_string()
+            } else if e.contains("Account temporarily locked") {
+                e
+            } else {
+                "Erreur d'authentification. Veuillez réessayer.".to_string()
+            };
+            return Ok(ApiResponse::error(AppError::Authentication(error_msg)));
+        }
+    };
+
+    let response = ApiResponse::success(session);
+    Ok(response)
+}
+
+/// Create account command
+#[tauri::command]
+#[instrument(skip(state), fields(email = %request.email, first_name = %request.first_name, last_name = %request.last_name))]
+pub async fn auth_create_account(
+    request: SignupRequest,
+    state: AppState<'_>,
+) -> Result<ApiResponse<crate::models::auth::UserSession>, AppError> {
+    info!("Account creation attempt for email: {}", request.email);
+
+    // Validate input data
+    let validator = ValidationService::new();
+    let validated_email = validator
+        .validate_email_secure(&request.email)
+        .map_err(|e| AppError::Validation(format!("Email validation failed: {}", e)))?;
+    let validated_first_name = validator
+        .sanitize_text_input(&request.first_name, "first_name", 100)
+        .map_err(|e| AppError::Validation(format!("First name validation failed: {}", e)))?;
+    let validated_last_name = validator
+        .sanitize_text_input(&request.last_name, "last_name", 100)
+        .map_err(|e| AppError::Validation(format!("Last name validation failed: {}", e)))?;
+    let validated_password = validator
+        .validate_password_enhanced(&request.password)
+        .map_err(|e| AppError::Validation(format!("Password validation failed: {}", e)))?;
+
+    let auth_service = state.auth_service.clone();
+
+    // Create validated request for service call
+    let validated_request = SignupRequest {
+        email: validated_email.clone(),
+        first_name: validated_first_name.clone(),
+        last_name: validated_last_name.clone(),
+        password: validated_password.clone(),
+        role: request.role.clone(),
+        correlation_id: request.correlation_id.clone(),
+    };
+
+    let account = auth_service
+        .create_account_from_signup(&validated_request)
+        .map_err(|e| {
+            error!("Account creation failed for {}: {}", validated_email, e);
+            match e.as_str() {
+                "Email is required"
+                | "First name is required"
+                | "Last name is required"
+                | "Password is required" => AppError::Validation(e),
+                "An account with this email already exists" | "Username is already taken" => {
+                    AppError::Validation(e)
+                }
+                _ => AppError::Database(format!("Account creation failed: {}", e)),
+            }
+        })?;
+
+    info!(
+        "Account created successfully for {} with username {}",
+        request.email, account.username
+    );
+
+    // Auto-login after signup
+    let session = auth_service
+        .authenticate(&validated_email, &validated_password, None)
+        .map_err(|e| {
+            error!("Auto-login failed for {}: {}", validated_email, e);
+            AppError::Internal(
+                "Account created but login failed, please try logging in manually".to_string(),
+            )
+        })?;
+
+    info!("Auto-login successful for new user {}", request.email);
+    Ok(ApiResponse::success(session))
+}
+
+/// Logout command
+#[tauri::command]
+#[instrument(skip(state), fields(token_hash = %format!("{:x}", Sha256::digest(token.as_bytes()))))]
+pub async fn auth_logout(token: String, state: AppState<'_>) -> Result<(), AppError> {
+    info!("User logout attempt");
+
+    // Use consistent authentication pattern - clone to avoid lock issues
+    let auth_service = state.auth_service.clone();
+
+    auth_service.logout(&token).map_err(|e| {
+        warn!("Logout failed: {}", e);
+        AppError::Authentication(format!("Logout failed: {}", e))
+    })?;
+
+    info!("User logged out successfully");
+    Ok(())
+}
+
+/// Validate session command
+#[tauri::command]
+#[instrument(skip(state), fields(token_hash = %format!("{:x}", Sha256::digest(token.as_bytes()))))]
+pub async fn auth_validate_session(
+    token: String,
+    state: AppState<'_>,
+) -> Result<ApiResponse<crate::models::auth::UserSession>, AppError> {
+    debug!("Session validation request");
+
+    // Use consistent authentication pattern - clone to avoid lock issues
+    let auth_service = state.auth_service.clone();
+
+    let session = auth_service.validate_session(&token).map_err(|e| {
+        warn!("Session validation failed: {}", e);
+        AppError::Authentication(format!("Session validation failed: {}", e))
+    })?;
+
+    debug!("Session validation successful");
+    Ok(ApiResponse::success(session))
+}
+
+/// Refresh access token command
+#[tauri::command]
+#[instrument(skip(state), fields(refresh_token_hash = %format!("{:x}", Sha256::digest(refresh_token.as_bytes()))))]
+pub async fn auth_refresh_token(
+    refresh_token: String,
+    state: AppState<'_>,
+) -> Result<ApiResponse<crate::models::auth::UserSession>, AppError> {
+    info!("Token refresh request");
+
+    // Use consistent authentication pattern - clone to avoid lock issues
+    let auth_service = state.auth_service.clone();
+
+    let session = auth_service.refresh_session(&refresh_token).map_err(|e| {
+        warn!("Token refresh failed: {}", e);
+        AppError::Authentication(format!("Token refresh failed: {}", e))
+    })?;
+
+    info!("Token refresh successful");
+    Ok(ApiResponse::success(session))
+}
+
+
+
+/// Enable 2FA for the current user
+#[tauri::command]
+pub async fn enable_2fa(
+    session_token: String,
+    state: AppState<'_>,
+) -> Result<ApiResponse<crate::models::auth::TwoFactorSetup>, AppError> {
+    // Authenticate the user
+    let current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
+        &session_token,
+        &state,
+        None, // Any authenticated user can enable 2FA
+    )
+    .await?;
+
+    // Generate 2FA setup data
+    let setup = state
+        .two_factor_service
+        .generate_setup(&current_user.user_id)
+        .await
+        .map_err(|e| AppError::Internal(format!("Failed to generate 2FA setup: {}", e)))?;
+
+    info!("Generated 2FA setup for user: {}", current_user.username);
+    Ok(ApiResponse::success(setup))
+}
+
+/// Verify 2FA setup and enable 2FA
+#[tauri::command]
+pub async fn verify_2fa_setup(
+    verification_code: String,
+    backup_codes: Vec<String>,
+    session_token: String,
+    state: AppState<'_>,
+) -> Result<ApiResponse<String>, AppError> {
+    // Authenticate the user
+    let current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
+        &session_token,
+        &state,
+        None,
+    )
+    .await?;
+
+    // Enable 2FA for the user
+    state
+        .two_factor_service
+        .enable_2fa(&current_user.user_id, &verification_code, backup_codes)
+        .await
+        .map_err(|e| AppError::Internal(format!("Failed to enable 2FA: {}", e)))?;
+
+    info!("2FA enabled for user: {}", current_user.username);
+    Ok(ApiResponse::success(
+        "Two-factor authentication has been enabled successfully".to_string(),
+    ))
+}
+
+/// Disable 2FA for the current user
+#[tauri::command]
+pub async fn disable_2fa(
+    password: String,
+    session_token: String,
+    state: AppState<'_>,
+) -> Result<ApiResponse<String>, AppError> {
+    // Authenticate the user
+    let current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
+        &session_token,
+        &state,
+        None,
+    )
+    .await?;
+
+    // Verify password before disabling 2FA
+    let is_valid_password = state
+        .auth_service
+        .verify_password(&current_user.user_id, &password)
+        .map_err(|e| AppError::Internal(format!("Password verification failed: {}", e)))?;
+
+    if !is_valid_password {
+        return Err(AppError::Authentication("Invalid password".to_string()));
+    }
+
+    // Disable 2FA for the user
+    state
+        .two_factor_service
+        .disable_2fa(&current_user.user_id)
+        .await
+        .map_err(|e| AppError::Internal(format!("Failed to disable 2FA: {}", e)))?;
+
+    info!("2FA disabled for user: {}", current_user.username);
+    Ok(ApiResponse::success(
+        "Two-factor authentication has been disabled".to_string(),
+    ))
+}
+
+/// Regenerate backup codes for 2FA
+#[tauri::command]
+pub async fn regenerate_backup_codes(
+    session_token: String,
+    state: AppState<'_>,
+) -> Result<ApiResponse<Vec<String>>, AppError> {
+    // Authenticate the user
+    let current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
+        &session_token,
+        &state,
+        None,
+    )
+    .await?;
+
+    // Regenerate backup codes
+    let backup_codes = state
+        .two_factor_service
+        .regenerate_backup_codes(&current_user.user_id)
+        .await
+        .map_err(|e| AppError::Internal(format!("Failed to regenerate backup codes: {}", e)))?;
+
+    info!(
+        "Backup codes regenerated for user: {}",
+        current_user.username
+    );
+    Ok(ApiResponse::success(backup_codes))
+}
+
+/// Verify 2FA code (used during login or other sensitive operations)
+#[tauri::command]
+pub async fn verify_2fa_code(
+    code: String,
+    session_token: String,
+    state: AppState<'_>,
+) -> Result<ApiResponse<bool>, AppError> {
+    // Authenticate the user
+    let current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
+        &session_token,
+        &state,
+        None,
+    )
+    .await?;
+
+    // Verify the 2FA code
+    let is_valid = state
+        .two_factor_service
+        .verify_code(&current_user.user_id, &code)
+        .await
+        .map_err(|e| AppError::Internal(format!("Failed to verify 2FA code: {}", e)))?;
+
+    if is_valid {
+        info!("2FA code verified for user: {}", current_user.username);
+    } else {
+        warn!(
+            "Invalid 2FA code attempt for user: {}",
+            current_user.username
+        );
+    }
+
+    Ok(ApiResponse::success(is_valid))
+}
+
+/// Check if 2FA is enabled for the current user
+#[tauri::command]
+pub async fn is_2fa_enabled(
+    session_token: String,
+    state: AppState<'_>,
+) -> Result<ApiResponse<bool>, AppError> {
+    // Authenticate the user
+    let current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
+        &session_token,
+        &state,
+        None,
+    )
+    .await?;
+
+    // Check if 2FA is enabled
+    let is_enabled = state
+        .two_factor_service
+        .is_enabled(&current_user.user_id)
+        .await
+        .map_err(|e| AppError::Internal(format!("Failed to check 2FA status: {}", e)))?;
+
+    Ok(ApiResponse::success(is_enabled))
+}

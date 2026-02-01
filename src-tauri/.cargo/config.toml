@@ -1,0 +1,29 @@
+[build]
+# Use fewer parallel jobs to reduce memory usage
+jobs = 2
+incremental = true
+target-dir = "target"
+
+[target.x86_64-pc-windows-msvc]
+# Linker optimizations for Windows
+rustflags = ["-C", "target-cpu=native"]
+
+[profile.dev]
+# Compile faster in dev
+opt-level = 0
+debug = true
+split-debuginfo = "unpacked"
+overflow-checks = true
+lto = false
+panic = "unwind"
+incremental = true
+codegen-units = 256
+
+[profile.dev.package."*"]
+# Optimize dependencies for faster builds
+opt-level = 3
+
+[env]
+# Set reasonable limits for Rust compiler
+RUSTC_WRAPPER = ""
+CARGO_TARGET_DIR = "target"

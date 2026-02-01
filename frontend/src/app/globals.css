@@ -1,0 +1,324 @@
+@import 'leaflet/dist/leaflet.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Custom breakpoints for better mobile responsiveness */
+@layer utilities {
+  @media (min-width: 475px) {
+    .xs\:grid-cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .xs\:inline {
+      display: inline;
+    }
+  }
+}
+
+
+
+@layer base {
+  :root {
+    /* Light Mode - v2 Design System */
+    --background: 0 0% 100%;
+    /* #FFFFFF White */
+    --foreground: 217 33% 17%;
+    /* #0A1929 Dark Blue-Gray */
+
+    --card: 0 0% 100%;
+    /* #FFFFFF White */
+    --card-foreground: 217 33% 17%;
+    /* #0A1929 Dark Blue-Gray */
+
+    --popover: 0 0% 100%;
+    /* #FFFFFF White */
+    --popover-foreground: 217 33% 17%;
+    /* #0A1929 Dark Blue-Gray */
+
+    /* Primary Colors - Dark Slate */
+    --primary: 215 25% 27%;
+    /* #1E293B Primary */
+    --primary-hover: 215 20% 35%;
+    /* #334155 Primary Hover */
+    --primary-active: 222 47% 11%;
+    /* #0F172A Primary Active */
+    --primary-foreground: 210 20% 98%;
+    /* #F5F7FA Light text on primary */
+
+    /* Accent Colors - Teal */
+    --accent: 174 72% 56%;
+    /* #14B8A6 Teal */
+    --accent-hover: 174 77% 46%;
+    /* #0D9488 Teal Hover */
+    --accent-active: 174 84% 38%;
+    /* #0F766E Teal Active */
+    --accent-foreground: 0 0% 100%;
+    /* #FFFFFF White text on teal */
+
+    /* Secondary Colors */
+    --secondary: 210 40% 96.1%;
+    /* #F3F4F6 Light Gray */
+    --secondary-foreground: 215 25% 27%;
+    /* #1E293B Dark text */
+
+    /* Muted Colors */
+    --muted: 210 40% 96.1%;
+    /* #F3F4F6 Light Gray */
+    --muted-foreground: 215 16% 47%;
+    /* #6B7280 Medium Gray */
+
+    /* Status Colors */
+    --success: 142 71% 45%;
+    /* #10B981 Green */
+    --warning: 38 92% 50%;
+    /* #F59E0B Amber */
+    --error: 0 72% 51%;
+    /* #EF4444 Red */
+    --info: 221 83% 53%;
+    /* #3B82F6 Blue */
+
+    /* Destructive */
+    --destructive: 0 72% 51%;
+    /* #EF4444 Red */
+    --destructive-foreground: 0 0% 98%;
+    /* #FAFAFA White text */
+
+    /* Borders & Inputs */
+    --border: 214 32% 91%;
+    /* #E5E7EB Gray 200 */
+    --input: 214 32% 91%;
+    /* #E5E7EB Gray 200 */
+    --ring: 174 72% 56%;
+    /* #14B8A6 Teal focus ring */
+
+    /* Chart Colors */
+    --chart-1: 174 72% 56%;
+    /* #14B8A6 Teal */
+    --chart-2: 221 83% 53%;
+    /* #3B82F6 Blue */
+    --chart-3: 38 92% 50%;
+    /* #F59E0B Amber */
+    --chart-4: 142 71% 45%;
+    /* #10B981 Green */
+    --chart-5: 14 91% 62%;
+    /* #F97316 Orange */
+
+    /* Border Radius */
+    --radius: 0.5rem;
+    /* 8px default */
+
+    /* Spacing (4px base unit) */
+    --space-1: 0.25rem;
+    /* 4px */
+    --space-2: 0.5rem;
+    /* 8px */
+    --space-3: 0.75rem;
+    /* 12px */
+    --space-4: 1rem;
+    /* 16px */
+    --space-5: 1.25rem;
+    /* 20px */
+    --space-6: 1.5rem;
+    /* 24px */
+    --space-8: 2rem;
+    /* 32px */
+    --space-10: 2.5rem;
+    /* 40px */
+    --space-12: 3rem;
+    /* 48px */
+    --space-16: 4rem;
+    /* 64px */
+
+    /* Shadows (5 elevation levels) */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1), 0 10px 10px rgba(0, 0, 0, 0.04);
+    --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.25);
+
+    /* Transitions */
+    --transition-fast: 150ms ease-out;
+    --transition-base: 200ms ease-out;
+    --transition-slow: 300ms ease-out;
+  }
+
+  .dark {
+    /* Dark Mode - v2 Design System */
+    --background: 215 28% 7%;
+    /* #0A0E12 → #111827 Dark background */
+    --foreground: 210 20% 98%;
+    /* #F9FAFB Light text */
+
+    --card: 215 28% 17%;
+    /* #1F2937 Dark cards */
+    --card-foreground: 210 20% 98%;
+    /* #F9FAFB Light text */
+
+    --popover: 215 28% 17%;
+    /* #1F2937 Popover background */
+    --popover-foreground: 210 20% 98%;
+    /* #F9FAFB Light text */
+
+    /* Primary Colors - Keep same structure */
+    --primary: 215 25% 27%;
+    /* #1E293B Primary */
+    --primary-hover: 215 20% 35%;
+    /* #334155 Primary Hover */
+    --primary-active: 222 47% 11%;
+    /* #0F172A Primary Active */
+    --primary-foreground: 210 20% 98%;
+    /* #F5F7FA Light text */
+
+    /* Accent Colors - Teal (same in dark mode) */
+    --accent: 174 72% 56%;
+    /* #14B8A6 Teal */
+    --accent-hover: 174 77% 46%;
+    /* #0D9488 Teal Hover */
+    --accent-active: 174 84% 38%;
+    /* #0F766E Teal Active */
+    --accent-foreground: 0 0% 100%;
+    /* #FFFFFF White text */
+
+    /* Secondary Colors */
+    --secondary: 215 25% 27%;
+    /* #374151 Dark Gray */
+    --secondary-foreground: 210 20% 98%;
+    /* #F9FAFB Light text */
+
+    /* Muted Colors */
+    --muted: 215 28% 17%;
+    /* #1F2937 Dark Gray */
+    --muted-foreground: 220 9% 46%;
+    /* #9CA3AF Medium Gray */
+
+    /* Status Colors (same as light mode) */
+    --success: 142 71% 45%;
+    /* #10B981 Green */
+    --warning: 38 92% 50%;
+    /* #F59E0B Amber */
+    --error: 0 72% 51%;
+    /* #EF4444 Red */
+    --info: 221 83% 53%;
+    /* #3B82F6 Blue */
+
+    /* Destructive */
+    --destructive: 0 72% 51%;
+    /* #EF4444 Red */
+    --destructive-foreground: 0 0% 98%;
+    /* #FAFAFA White text */
+
+    /* Borders & Inputs */
+    --border: 215 20% 35%;
+    /* #4B5563 Gray 600 */
+    --input: 215 28% 7%;
+    /* #111827 Slightly lighter than bg */
+    --ring: 174 72% 56%;
+    /* #14B8A6 Teal focus ring */
+
+    /* Chart Colors (same as light mode) */
+    --chart-1: 174 72% 56%;
+    /* #14B8A6 Teal */
+    --chart-2: 221 83% 53%;
+    /* #3B82F6 Blue */
+    --chart-3: 38 92% 50%;
+    /* #F59E0B Amber */
+    --chart-4: 142 71% 45%;
+    /* #10B981 Green */
+    --chart-5: 14 91% 62%;
+    /* #F97316 Orange */
+
+    /* Shadows (reduced opacity for dark mode) */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.24), 0 1px 2px rgba(0, 0, 0, 0.12);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.14), 0 2px 4px rgba(0, 0, 0, 0.10);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.20), 0 4px 6px rgba(0, 0, 0, 0.10);
+    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.20), 0 10px 10px rgba(0, 0, 0, 0.08);
+    --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.40);
+  }
+}
+
+
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-background;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/20 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/40;
+  }
+
+  /* Selection color */
+  ::selection {
+    @apply bg-accent/20;
+  }
+
+  /* Focus management for accessibility - v2 Design System */
+  :focus-visible {
+    @apply ring-2 ring-ring ring-offset-4 ring-offset-background outline-none rounded-[inherit];
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    :root {
+      --border: 214 32% 80%;
+      --ring: 174 72% 50%;
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Skip link for keyboard navigation */
+  .skip-link {
+    position: absolute;
+    top: -40px;
+    left: 6px;
+    background: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+    padding: 8px 16px;
+    text-decoration: none;
+    border-radius: 4px;
+    z-index: 9999;
+    transition: top 0.3s;
+  }
+
+  .skip-link:focus {
+    top: 6px;
+  }
+}

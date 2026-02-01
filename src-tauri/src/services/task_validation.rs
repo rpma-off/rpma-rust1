@@ -1,0 +1,375 @@
+//! Task Validation Service Module
+//!
+//! This module provides validation logic for task assignments, availability checks,
+//! and conflict detection to ensure proper task management and resource allocation.
+
+use crate::db::{Database, FromSqlRow};
+use crate::models::task::{Task, TaskPriority, TaskStatus};
+use crate::services::settings::SettingsService;
+use rusqlite::params;
+use std::sync::Arc;
+
+/// Service for validating task assignments and availability
+#[derive(Debug)]
+pub struct TaskValidationService {
+    db: Arc<Database>,
+    settings: SettingsService,
+}
+
+impl TaskValidationService {
+    /// Create a new TaskValidationService instance
+    pub fn new(db: Arc<Database>) -> Self {
+        let settings = SettingsService::new(db.clone());
+        Self { db, settings }
+    }
+
+    /// Get maximum tasks per user from settings
+    fn get_max_tasks_per_user(&self) -> Result<i32, String> {
+        self.settings
+            .get_max_tasks_per_user()
+            .map_err(|e| format!("Failed to get max_tasks_per_user setting: {}", e))
+    }
+
+    /// Check if a user can be assigned to a task
+    ///
+    /// Validates assignment eligibility based on:
+    /// - User permissions and role
+    /// - Task status allowing assignment
+    /// - Technician qualifications for PPF zones
+    /// - Workload capacity limits
+    ///
+    /// # Arguments
+    /// * `task_id` - The task to check assignment for
+    /// * `user_id` - The user to check assignment eligibility for
+    ///
+    /// # Returns
+    /// * `Ok(true)` - User can be assigned to the task
+    /// * `Ok(false)` - User cannot be assigned to the task
+    /// * `Err(String)` - Error occurred during validation
+    pub fn check_assignment_eligibility(
+        &self,
+        task_id: &str,
+        user_id: &str,
+    ) -> Result<bool, String> {
+        // Get task details
+        let task = self.get_task_by_id(task_id)?;
+        let Some(task) = task else {
+            return Err(format!("Task {} not found", task_id));
+        };
+
+        // Check if task status allows assignment
+        if !self.is_task_assignable(&task.status) {
+            return Ok(false);
+        }
+
+        // Check if user is already assigned to this task
+        if task.technician_id.as_ref() == Some(&user_id.to_string()) {
+            return Ok(true); // Already assigned, so eligible
+        }
+
+        // Check technician qualifications for PPF zones
+        if !self.check_technician_qualifications(user_id, &task.ppf_zones)? {
+            return Ok(false);
+        }
+
+        // Check workload capacity
+        if !self.check_workload_capacity(user_id, &task.scheduled_date)? {
+            return Ok(false);
+        }
+
+        Ok(true)
+    }
+
+    /// Check if a task is available for assignment
+    ///
+    /// Validates task availability based on:
+    /// - Task not being locked by another user
+    /// - Task status allowing new assignments
+    /// - No scheduling conflicts
+    ///
+    /// # Arguments
+    /// * `task_id` - The task to check availability for
+    ///
+    /// # Returns
+    /// * `Ok(true)` - Task is available for assignment
+    /// * `Ok(false)` - Task is not available for assignment
+    /// * `Err(String)` - Error occurred during validation
+    pub fn check_task_availability(&self, task_id: &str) -> Result<bool, String> {
+        // Get task details
+        let task = self.get_task_by_id(task_id)?;
+        let Some(task) = task else {
+            return Err(format!("Task {} not found", task_id));
+        };
+
+        // Check if task status allows assignment
+        if !self.is_task_assignable(&task.status) {
+            return Ok(false);
+        }
+
+        // Check for scheduling conflicts
+        if self.has_scheduling_conflicts(&task)? {
+            return Ok(false);
+        }
+
+        // Check material availability (if applicable)
+        if !self.check_material_availability(&task)? {
+            return Ok(false);
+        }
+
+        Ok(true)
+    }
+
+    /// Validate a task assignment change
+    ///
+    /// Checks for conflicts when changing task assignments between users.
+    ///
+    /// # Arguments
+    /// * `task_id` - The task being reassigned
+    /// * `old_user_id` - Current assignee (None if unassigned)
+    /// * `new_user_id` - New assignee
+    ///
+    /// # Returns
+    /// * `Ok(Vec<String>)` - List of validation warnings/conflicts (empty if valid)
+    /// * `Err(String)` - Error occurred during validation
+    pub fn validate_assignment_change(
+        &self,
+        task_id: &str,
+        old_user_id: Option<&str>,
+        new_user_id: &str,
+    ) -> Result<Vec<String>, String> {
+        let mut warnings = Vec::new();
+
+        // Get task details
+        let task = self.get_task_by_id(task_id)?;
+        let Some(task) = task else {
+            return Err(format!("Task {} not found", task_id));
+        };
+
+        // Check if new user is eligible
+        if !self.check_assignment_eligibility(task_id, new_user_id)? {
+            warnings.push(format!(
+                "User {} is not eligible for this task",
+                new_user_id
+            ));
+        }
+
+        // Check for scheduling conflicts with new user
+        if self.has_user_scheduling_conflicts(
+            new_user_id,
+            &task.scheduled_date,
+            &task.start_time,
+            &task.end_time,
+        )? {
+            warnings.push(format!(
+                "User {} has scheduling conflicts for this time slot",
+                new_user_id
+            ));
+        }
+
+        // Check priority conflicts
+        if let Some(old_user) = old_user_id {
+            if task.priority == TaskPriority::Urgent && old_user != new_user_id {
+                warnings
+                    .push("Reassigning urgent priority task may impact response time".to_string());
+            }
+        }
+
+        Ok(warnings)
+    }
+
+    /// Check if a task status allows assignment
+    fn is_task_assignable(&self, status: &TaskStatus) -> bool {
+        matches!(
+            status,
+            TaskStatus::Draft
+                | TaskStatus::Scheduled
+                | TaskStatus::Pending
+                | TaskStatus::Assigned
+                | TaskStatus::OnHold
+                | TaskStatus::Paused
+        )
+    }
+
+    /// Check technician qualifications for PPF zones
+    fn check_technician_qualifications(
+        &self,
+        user_id: &str,
+        ppf_zones: &Option<Vec<String>>,
+    ) -> Result<bool, String> {
+        // For now, implement basic qualification check
+        // In a full implementation, this would check user certifications, training records, etc.
+
+        let Some(zones) = ppf_zones else {
+            return Ok(true); // No PPF zones specified, assume qualified
+        };
+
+        if zones.is_empty() {
+            return Ok(true);
+        }
+
+        // Check if user has PPF certification
+        // This is a simplified check - in production, you'd query user certifications table
+        let conn = self.db.get_connection()?;
+        let mut stmt = conn.prepare(
+            "SELECT COUNT(*) FROM users WHERE id = ? AND role IN ('technician', 'admin', 'manager')"
+        ).map_err(|e| e.to_string())?;
+        let count: i64 = stmt
+            .query_row(params![user_id], |row| row.get(0))
+            .map_err(|e| e.to_string())?;
+
+        // For now, allow any technician/admin/manager to work on PPF tasks
+        // In production, you'd check specific certifications
+        Ok(count > 0)
+    }
+
+    /// Check user workload capacity
+    fn check_workload_capacity(
+        &self,
+        user_id: &str,
+        scheduled_date: &Option<String>,
+    ) -> Result<bool, String> {
+        let Some(date) = scheduled_date else {
+            return Ok(true); // No date specified, assume capacity available
+        };
+
+        // Check concurrent tasks for the user on the same day
+        let conn = self.db.get_connection()?;
+        let mut stmt = conn
+            .prepare(
+                r#"
+            SELECT COUNT(*) FROM tasks
+            WHERE technician_id = ?
+            AND scheduled_date = ?
+            AND status IN ('scheduled', 'in_progress', 'assigned')
+            AND deleted_at IS NULL
+            "#,
+            )
+            .map_err(|e| e.to_string())?;
+        let concurrent_tasks: i64 = stmt
+            .query_row(params![user_id, date], |row| row.get(0))
+            .map_err(|e| e.to_string())?;
+
+        // Allow maximum 3 concurrent tasks per day per technician
+        Ok(concurrent_tasks < 3)
+    }
+
+    /// Check for scheduling conflicts
+    fn has_scheduling_conflicts(&self, task: &Task) -> Result<bool, String> {
+        let Some(technician_id) = &task.technician_id else {
+            return Ok(false); // No technician assigned, no conflicts
+        };
+
+        self.has_user_scheduling_conflicts(
+            technician_id,
+            &task.scheduled_date,
+            &task.start_time,
+            &task.end_time,
+        )
+    }
+
+    /// Check if a user has scheduling conflicts
+    fn has_user_scheduling_conflicts(
+        &self,
+        user_id: &str,
+        scheduled_date: &Option<String>,
+        start_time: &Option<String>,
+        end_time: &Option<String>,
+    ) -> Result<bool, String> {
+        let (Some(date), Some(start), Some(end)) = (scheduled_date, start_time, end_time) else {
+            return Ok(false); // No scheduling info, no conflicts
+        };
+
+        // Check for overlapping tasks
+        let conn = self.db.get_connection()?;
+        let mut stmt = conn
+            .prepare(
+                r#"
+            SELECT COUNT(*) FROM tasks
+            WHERE technician_id = ?
+            AND scheduled_date = ?
+            AND status IN ('scheduled', 'in_progress', 'assigned')
+            AND deleted_at IS NULL
+            AND (
+                (start_time <= ? AND end_time > ?) OR
+                (start_time < ? AND end_time >= ?) OR
+                (start_time >= ? AND end_time <= ?)
+            )
+            "#,
+            )
+            .map_err(|e| e.to_string())?;
+        let _conflicts: i64 = stmt
+            .query_row(
+                params![user_id, date, start, start, end, end, start, end],
+                |row| row.get(0),
+            )
+            .map_err(|e| e.to_string())?;
+
+        let conflicts: i64 = stmt
+            .query_row(
+                params![user_id, date, start, start, end, end, start, end],
+                |row| row.get(0),
+            )
+            .map_err(|e| e.to_string())?;
+
+        Ok(conflicts > 0)
+    }
+
+    /// Check material availability for a task
+    fn check_material_availability(&self, _task: &Task) -> Result<bool, String> {
+        // For now, assume materials are always available
+        // In a full implementation, this would check inventory levels
+        // against materials required for PPF zones
+        Ok(true)
+    }
+
+    /// Check for scheduling conflicts for a user at a specific date and duration
+    pub fn check_schedule_conflicts(
+        &self,
+        user_id: &str,
+        scheduled_date: Option<String>,
+        _duration: &Option<i32>,
+    ) -> Result<bool, String> {
+        // For now, implement basic check
+        // In full implementation, this would check calendar conflicts
+        let Some(_date) = scheduled_date else {
+            return Ok(false); // No date, no conflicts
+        };
+
+        // Check concurrent tasks
+        self.check_workload_capacity(user_id, &Some(_date))
+    }
+
+    /// Check if task dependencies are satisfied
+    pub fn check_dependencies_satisfied(&self, _task_id: &str) -> Result<bool, String> {
+        // For now, assume no dependencies or they are satisfied
+        // In full implementation, this would check task dependency graph
+        Ok(true)
+    }
+
+    /// Get a task by ID
+    fn get_task_by_id(&self, task_id: &str) -> Result<Option<Task>, String> {
+        let conn = self.db.get_connection()?;
+        let mut stmt = conn.prepare(
+            r#"
+            SELECT
+                id, task_number, title, description, vehicle_plate, vehicle_model,
+                vehicle_year, vehicle_make, vin, ppf_zones, custom_ppf_zones, status, priority, technician_id,
+                assigned_at, assigned_by, scheduled_date, start_time, end_time,
+                date_rdv, heure_rdv, template_id, workflow_id, workflow_status,
+                current_workflow_step_id, started_at, completed_at, completed_steps,
+                client_id, customer_name, customer_email, customer_phone, customer_address,
+                external_id, lot_film, checklist_completed, notes, tags, estimated_duration, actual_duration,
+                created_at, updated_at, creator_id, created_by, updated_by, deleted_at, deleted_by, synced, last_synced_at
+            FROM tasks
+            WHERE id = ? AND deleted_at IS NULL
+            "#
+        ).map_err(|e| e.to_string())?;
+        let task = stmt.query_row(params![task_id], |row| Task::from_row(row));
+
+        match task {
+            Ok(task) => Ok(Some(task)),
+            Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+            Err(e) => Err(format!("Database error: {}", e)),
+        }
+    }
+}

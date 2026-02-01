@@ -1,0 +1,1 @@
+export { SignatureCapture } from './SignatureCapture';

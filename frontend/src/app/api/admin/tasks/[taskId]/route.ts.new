@@ -1,0 +1,218 @@
+import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+
+// DELETE /api/admin/tasks/[taskId] - Delete a specific task
+export async function DELETE(
+  request: Request,
+  { params }: { params: { taskId: string } }
+) {
+  try {
+    // Create server client with proper cookie handling
+    const cookieStore = cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value;
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options });
+          },
+          remove(name: string, options: any) {
+            cookieStore.set({ name, value: '', ...options });
+          },
+        },
+      }
+    );
+
+    // Get the current user session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError || !session) {
+      console.error('Session error or no session:', sessionError);
+      return NextResponse.json(
+        { error: 'Non authentifié' },
+        { status: 401 }
+      );
+    }
+
+    // Check if user has admin or manager role in technicians table
+    const { data: userData, error: userError } = await supabase
+      .from('technicians')
+      .select('role')
+      .eq('id', session.user.id)
+      .single();
+
+    if (userError || !userData) {
+      console.error('Error fetching user role:', userError);
+      return NextResponse.json(
+        { error: 'Erreur lors de la vérification des permissions' },
+        { status: 500 }
+      );
+    }
+
+    if (userData.role !== 'admin' && userData.role !== 'manager') {
+      console.error('Unauthorized role:', userData.role);
+      return NextResponse.json(
+        { error: 'Action non autorisée' },
+        { status: 403 }
+      );
+    }
+
+    const taskId = params.taskId;
+    
+    if (!taskId) {
+      return NextResponse.json(
+        { error: 'ID de la tâche manquant' },
+        { status: 400 }
+      );
+    }
+
+    const supabaseAdmin = createClient();
+
+    // Start a transaction to ensure data consistency
+    const { error: deleteError } = await supabaseAdmin.rpc('delete_task_with_related_data', {
+      p_task_id: taskId
+    });
+
+    if (deleteError) {
+      console.error('Error deleting task:', deleteError);
+      return NextResponse.json(
+        { error: 'Erreur lors de la suppression de la tâche' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error in DELETE /api/admin/tasks/[taskId]:', error);
+    return NextResponse.json(
+      { error: 'Erreur interne du serveur' },
+      { status: 500 }
+    );
+  }
+}
+
+// GET /api/admin/tasks/[taskId] - Get a specific task with all details
+export async function GET(
+  request: Request,
+  { params }: { params: { taskId: string } }
+) {
+  try {
+    // Create server client with proper cookie handling
+    const cookieStore = cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value;
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options });
+          },
+          remove(name: string, options: any) {
+            cookieStore.set({ name, value: '', ...options });
+          },
+        },
+      }
+    );
+
+    // Get the current user session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError || !session) {
+      console.error('Session error or no session:', sessionError);
+      return NextResponse.json(
+        { error: 'Non authentifié' },
+        { status: 401 }
+      );
+    }
+
+    // Check if user has admin or manager role in technicians table
+    const { data: userData, error: userError } = await supabase
+      .from('technicians')
+      .select('role')
+      .eq('id', session.user.id)
+      .single();
+
+    if (userError || !userData) {
+      console.error('Error fetching user role:', userError);
+      return NextResponse.json(
+        { error: 'Erreur lors de la vérification des permissions' },
+        { status: 500 }
+      );
+    }
+
+    if (userData.role !== 'admin' && userData.role !== 'manager') {
+      console.error('Unauthorized role:', userData.role);
+      return NextResponse.json(
+        { error: 'Action non autorisée' },
+        { status: 403 }
+      );
+    }
+
+    const taskId = params.taskId;
+    
+    if (!taskId) {
+      return NextResponse.json(
+        { error: 'ID de la tâche manquant' },
+        { status: 400 }
+      );
+    }
+
+    // Fetch task with related data
+    const { data: task, error: taskError } = await supabase
+      .from('tasks')
+      .select(`
+        *,
+        technicians (
+          id,
+          name
+        )
+      `)
+      .eq('id', taskId)
+      .single();
+
+    if (taskError || !task) {
+      console.error('Error fetching task:', taskError);
+      return NextResponse.json(
+        { error: 'Tâche non trouvée' },
+        { status: 404 }
+      );
+    }
+
+    // Fetch photos
+    const { data: photos } = await supabase
+      .from('photos')
+      .select('*')
+      .eq('task_id', taskId);
+
+    // Fetch checklist items
+    const { data: checklist_items } = await supabase
+      .from('checklist_items')
+      .select('*')
+      .eq('task_id', taskId);
+
+    // Format the response
+    const taskWithDetails = {
+      ...task,
+      photos_before: (photos || []).filter(p => p.type === 'before'),
+      photos_after: (photos || []).filter(p => p.type === 'after'),
+      checklist_items: checklist_items || []
+    };
+
+    return NextResponse.json(taskWithDetails);
+  } catch (error) {
+    console.error('Error in GET /api/admin/tasks/[taskId]:', error);
+    return NextResponse.json(
+      { error: 'Erreur interne du serveur' },
+      { status: 500 }
+    );
+  }
+}

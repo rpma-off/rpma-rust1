@@ -1,0 +1,514 @@
+//! Sync Queue Service - PRD-07 Implementation
+//!
+//! Provides persistent queue for offline CRUD operations with retry logic
+//! and dependency management.
+
+use crate::models::sync::*;
+use rusqlite::params;
+
+use chrono::{DateTime, Utc};
+
+/// Custom error type for sync queue operations
+#[derive(Debug, thiserror::Error)]
+pub enum SyncQueueError {
+    #[error("Database error: {0}")]
+    Database(String),
+    #[error("Serialization error: {0}")]
+    Serialization(#[from] serde_json::Error),
+    #[error("DateTime parse error: {0}")]
+    DateTimeParse(#[from] chrono::ParseError),
+    #[error("Operation not found: {0}")]
+    NotFound(i64),
+    #[error("Invalid operation state")]
+    InvalidState,
+}
+
+impl From<String> for SyncQueueError {
+    fn from(s: String) -> Self {
+        Self::Database(s)
+    }
+}
+
+impl From<rusqlite::Error> for SyncQueueError {
+    fn from(e: rusqlite::Error) -> Self {
+        Self::Database(e.to_string())
+    }
+}
+
+/// Sync queue service for managing offline operations
+#[derive(Clone, Debug)]
+pub struct SyncQueue {
+    db: crate::db::Database,
+}
+
+impl SyncQueue {
+    /// Create a new sync queue service
+    pub fn new(db: crate::db::Database) -> Self {
+        Self { db }
+    }
+
+    /// Enqueue a new sync operation
+    pub fn enqueue(&self, operation: SyncOperation) -> Result<i64, SyncQueueError> {
+        let conn = self.db.get_connection().map_err(SyncQueueError::Database)?;
+
+        let data_json = serde_json::to_string(&operation.data)?;
+        let dependencies_json = serde_json::to_string(&operation.dependencies)?;
+
+        let id = conn.execute(
+            "INSERT INTO sync_queue
+             (operation_type, entity_type, entity_id, data, dependencies,
+              timestamp_utc, retry_count, max_retries, status, created_at, updated_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+            params![
+                serde_json::to_string(&operation.operation_type)?,
+                serde_json::to_string(&operation.entity_type)?,
+                operation.entity_id,
+                data_json,
+                dependencies_json,
+                operation.timestamp_utc.to_rfc3339(),
+                operation.retry_count,
+                operation.max_retries,
+                serde_json::to_string(&operation.status)?,
+                operation.created_at.to_rfc3339(),
+                operation.updated_at.to_rfc3339(),
+            ],
+        )?;
+
+        Ok(id as i64)
+    }
+
+    /// Dequeue a batch of pending operations for processing
+    pub fn dequeue_batch(&self, limit: usize) -> Result<Vec<SyncOperation>, SyncQueueError> {
+        let conn = self.db.get_connection().map_err(SyncQueueError::Database)?;
+
+        let mut stmt = conn.prepare(
+            "SELECT id, operation_type, entity_type, entity_id, data, dependencies,
+                    timestamp_utc, retry_count, max_retries, last_error, status,
+                    created_at, updated_at
+             FROM sync_queue
+             WHERE status = 'pending'
+             ORDER BY timestamp_utc ASC
+             LIMIT ?",
+        )?;
+
+        let operations: Vec<SyncOperation> = stmt
+            .query_map([limit], |row| {
+                let operation_type_str: String = row.get(1)?;
+                let entity_type_str: String = row.get(2)?;
+                let data_str: String = row.get(4)?;
+                let dependencies_str: String = row.get(5)?;
+                let timestamp_str: String = row.get(6)?;
+                let status_str: String = row.get(10)?;
+                let created_at_str: String = row.get(11)?;
+                let updated_at_str: String = row.get(12)?;
+
+                Ok(SyncOperation {
+                    id: Some(row.get(0)?),
+                    operation_type: serde_json::from_str(&operation_type_str).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            0,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
+                    entity_type: serde_json::from_str(&entity_type_str).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            0,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
+                    entity_id: row.get(3)?,
+                    data: serde_json::from_str(&data_str).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            0,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
+                    dependencies: serde_json::from_str(&dependencies_str).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            0,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
+                    timestamp_utc: DateTime::parse_from_rfc3339(&timestamp_str)
+                        .map_err(|e| {
+                            rusqlite::Error::FromSqlConversionFailure(
+                                0,
+                                rusqlite::types::Type::Text,
+                                Box::new(e),
+                            )
+                        })?
+                        .with_timezone(&Utc),
+                    retry_count: row.get(7)?,
+                    max_retries: row.get(8)?,
+                    last_error: row.get(9)?,
+                    status: serde_json::from_str(&status_str).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            0,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
+                    created_at: DateTime::parse_from_rfc3339(&created_at_str)
+                        .map_err(|e| {
+                            rusqlite::Error::FromSqlConversionFailure(
+                                0,
+                                rusqlite::types::Type::Text,
+                                Box::new(e),
+                            )
+                        })?
+                        .with_timezone(&Utc),
+                    updated_at: DateTime::parse_from_rfc3339(&updated_at_str)
+                        .map_err(|e| {
+                            rusqlite::Error::FromSqlConversionFailure(
+                                0,
+                                rusqlite::types::Type::Text,
+                                Box::new(e),
+                            )
+                        })?
+                        .with_timezone(&Utc),
+                })
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        // Mark operations as processing
+        for op in &operations {
+            if let Some(id) = op.id {
+                conn.execute(
+                    "UPDATE sync_queue SET status = 'processing', updated_at = ? WHERE id = ?",
+                    params![Utc::now().to_rfc3339(), id],
+                )?;
+            }
+        }
+
+        Ok(operations)
+    }
+
+    /// Mark an operation as completed
+    pub fn mark_completed(&self, operation_id: i64) -> Result<(), SyncQueueError> {
+        let conn = self.db.get_connection().map_err(SyncQueueError::Database)?;
+        let updated_at = Utc::now().to_rfc3339();
+
+        let rows_affected = conn.execute(
+            "UPDATE sync_queue SET status = 'completed', updated_at = ? WHERE id = ?",
+            params![updated_at, operation_id],
+        )?;
+
+        if rows_affected == 0 {
+            return Err(SyncQueueError::NotFound(operation_id));
+        }
+
+        Ok(())
+    }
+
+    /// Mark an operation as failed and handle retry logic
+    pub fn mark_failed(&self, operation_id: i64, error: &str) -> Result<(), SyncQueueError> {
+        let conn = self.db.get_connection().map_err(SyncQueueError::Database)?;
+        let updated_at = Utc::now().to_rfc3339();
+
+        // Get current retry count and max retries
+        let (retry_count, max_retries): (i32, i32) = conn.query_row(
+            "SELECT retry_count, max_retries FROM sync_queue WHERE id = ?",
+            [operation_id],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        )?;
+
+        let new_retry_count = retry_count + 1;
+        let new_status = if new_retry_count >= max_retries {
+            "abandoned"
+        } else {
+            "pending"
+        };
+
+        let rows_affected = conn.execute(
+            "UPDATE sync_queue SET
+             status = ?1,
+             retry_count = ?2,
+             last_error = ?3,
+             updated_at = ?4
+             WHERE id = ?5",
+            params![new_status, new_retry_count, error, updated_at, operation_id],
+        )?;
+
+        if rows_affected == 0 {
+            return Err(SyncQueueError::NotFound(operation_id));
+        }
+
+        Ok(())
+    }
+
+    /// Get queue metrics for monitoring
+    pub fn get_metrics(&self) -> Result<SyncQueueMetrics, SyncQueueError> {
+        let conn = self.db.get_connection().map_err(SyncQueueError::Database)?;
+
+        let (pending, processing, completed, failed, abandoned) = conn.query_row(
+            "SELECT
+             COUNT(CASE WHEN status = 'pending' THEN 1 END),
+             COUNT(CASE WHEN status = 'processing' THEN 1 END),
+             COUNT(CASE WHEN status = 'completed' THEN 1 END),
+             COUNT(CASE WHEN status = 'failed' THEN 1 END),
+             COUNT(CASE WHEN status = 'abandoned' THEN 1 END)
+             FROM sync_queue",
+            [],
+            |row| {
+                Ok((
+                    row.get(0)?,
+                    row.get(1)?,
+                    row.get(2)?,
+                    row.get(3)?,
+                    row.get(4)?,
+                ))
+            },
+        )?;
+
+        let oldest_pending_age_seconds = conn
+            .query_row(
+                "SELECT strftime('%s', 'now') - strftime('%s', timestamp_utc)
+             FROM sync_queue
+             WHERE status = 'pending'
+             ORDER BY timestamp_utc ASC
+             LIMIT 1",
+                [],
+                |row| row.get(0),
+            )
+            .ok();
+
+        let average_retry_count: f64 = conn
+            .query_row(
+                "SELECT AVG(retry_count) FROM sync_queue WHERE status IN ('failed', 'abandoned')",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap_or(0.0);
+
+        Ok(SyncQueueMetrics {
+            pending_operations: pending,
+            processing_operations: processing,
+            completed_operations: completed,
+            failed_operations: failed,
+            abandoned_operations: abandoned,
+            oldest_pending_age_seconds,
+            average_retry_count,
+        })
+    }
+
+    /// Get a specific operation by ID
+    pub fn get_operation(&self, operation_id: i64) -> Result<SyncOperation, SyncQueueError> {
+        let conn = self.db.get_connection().map_err(SyncQueueError::Database)?;
+
+        let result = conn.query_row(
+            "SELECT id, operation_type, entity_type, entity_id, data, dependencies,
+                    timestamp_utc, retry_count, max_retries, last_error, status,
+                    created_at, updated_at
+             FROM sync_queue WHERE id = ?",
+            [operation_id],
+            |row| {
+                let operation_type_str: String = row.get(1)?;
+                let entity_type_str: String = row.get(2)?;
+                let data_str: String = row.get(4)?;
+                let dependencies_str: String = row.get(5)?;
+                let timestamp_str: String = row.get(6)?;
+                let status_str: String = row.get(10)?;
+                let created_at_str: String = row.get(11)?;
+                let updated_at_str: String = row.get(12)?;
+
+                Ok(SyncOperation {
+                    id: Some(row.get(0)?),
+                    operation_type: serde_json::from_str(&operation_type_str).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            0,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
+                    entity_type: serde_json::from_str(&entity_type_str).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            0,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
+                    entity_id: row.get(3)?,
+                    data: serde_json::from_str(&data_str).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            0,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
+                    dependencies: serde_json::from_str(&dependencies_str).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            0,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
+                    timestamp_utc: DateTime::parse_from_rfc3339(&timestamp_str)
+                        .map_err(|e| {
+                            rusqlite::Error::FromSqlConversionFailure(
+                                0,
+                                rusqlite::types::Type::Text,
+                                Box::new(e),
+                            )
+                        })?
+                        .with_timezone(&Utc),
+                    retry_count: row.get(7)?,
+                    max_retries: row.get(8)?,
+                    last_error: row.get(9)?,
+                    status: serde_json::from_str(&status_str).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            0,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
+                    created_at: DateTime::parse_from_rfc3339(&created_at_str)
+                        .map_err(|e| {
+                            rusqlite::Error::FromSqlConversionFailure(
+                                0,
+                                rusqlite::types::Type::Text,
+                                Box::new(e),
+                            )
+                        })?
+                        .with_timezone(&Utc),
+                    updated_at: DateTime::parse_from_rfc3339(&updated_at_str)
+                        .map_err(|e| {
+                            rusqlite::Error::FromSqlConversionFailure(
+                                0,
+                                rusqlite::types::Type::Text,
+                                Box::new(e),
+                            )
+                        })?
+                        .with_timezone(&Utc),
+                })
+            },
+        );
+
+        match result {
+            Ok(operation) => Ok(operation),
+            Err(rusqlite::Error::QueryReturnedNoRows) => {
+                Err(SyncQueueError::NotFound(operation_id))
+            }
+            Err(other) => Err(SyncQueueError::Database(other.to_string())),
+        }
+    }
+
+    /// Get operations for a specific entity
+    pub fn get_operations_for_entity(
+        &self,
+        entity_id: &str,
+        entity_type: &str,
+    ) -> Result<Vec<SyncOperation>, SyncQueueError> {
+        let conn = self.db.get_connection().map_err(SyncQueueError::Database)?;
+
+        let mut stmt = conn.prepare(
+            "SELECT id, operation_type, entity_type, entity_id, data, dependencies,
+                    timestamp_utc, retry_count, max_retries, last_error, status,
+                    created_at, updated_at
+             FROM sync_queue
+             WHERE entity_id = ? AND entity_type = ?
+             ORDER BY timestamp_utc DESC",
+        )?;
+
+        let operations: Vec<SyncOperation> = stmt
+            .query_map([entity_id, entity_type], |row| {
+                let operation_type_str: String = row.get(1)?;
+                let entity_type_str: String = row.get(2)?;
+                let data_str: String = row.get(4)?;
+                let dependencies_str: String = row.get(5)?;
+                let timestamp_str: String = row.get(6)?;
+                let status_str: String = row.get(10)?;
+                let created_at_str: String = row.get(11)?;
+                let updated_at_str: String = row.get(12)?;
+
+                Ok(SyncOperation {
+                    id: Some(row.get(0)?),
+                    operation_type: serde_json::from_str(&operation_type_str).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            0,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
+                    entity_type: serde_json::from_str(&entity_type_str).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            0,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
+                    entity_id: row.get(3)?,
+                    data: serde_json::from_str(&data_str).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            0,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
+                    dependencies: serde_json::from_str(&dependencies_str).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            0,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
+                    timestamp_utc: DateTime::parse_from_rfc3339(&timestamp_str)
+                        .map_err(|e| {
+                            rusqlite::Error::FromSqlConversionFailure(
+                                0,
+                                rusqlite::types::Type::Text,
+                                Box::new(e),
+                            )
+                        })?
+                        .with_timezone(&Utc),
+                    retry_count: row.get(7)?,
+                    max_retries: row.get(8)?,
+                    last_error: row.get(9)?,
+                    status: serde_json::from_str(&status_str).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            0,
+                            rusqlite::types::Type::Text,
+                            Box::new(e),
+                        )
+                    })?,
+                    created_at: DateTime::parse_from_rfc3339(&created_at_str)
+                        .map_err(|e| {
+                            rusqlite::Error::FromSqlConversionFailure(
+                                0,
+                                rusqlite::types::Type::Text,
+                                Box::new(e),
+                            )
+                        })?
+                        .with_timezone(&Utc),
+                    updated_at: DateTime::parse_from_rfc3339(&updated_at_str)
+                        .map_err(|e| {
+                            rusqlite::Error::FromSqlConversionFailure(
+                                0,
+                                rusqlite::types::Type::Text,
+                                Box::new(e),
+                            )
+                        })?
+                        .with_timezone(&Utc),
+                })
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(operations)
+    }
+
+    /// Clean up old completed operations (older than specified days)
+    pub fn cleanup_old_operations(&self, days_old: i64) -> Result<i64, SyncQueueError> {
+        let conn = self.db.get_connection().map_err(SyncQueueError::Database)?;
+        let cutoff_date = Utc::now() - chrono::Duration::days(days_old);
+
+        let rows_affected = conn.execute(
+            "DELETE FROM sync_queue WHERE status = 'completed' AND updated_at < ?",
+            [cutoff_date.to_rfc3339()],
+        )?;
+
+        Ok(rows_affected as i64)
+    }
+}

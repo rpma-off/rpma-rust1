@@ -1,0 +1,88 @@
+--- a/intervention_workflow.rs
++++ b/intervention_workflow.rs
+@@ -13,6 +13,10 @@
+ use crate::services::intervention_data::InterventionDataService;
+ use crate::services::intervention_types::*;
++use crate::services::workflow_strategy::{
++    WorkflowStrategy, WorkflowStrategyFactory, WorkflowContext, EnvironmentConditions,
++};
+ 
+ use std::sync::Arc;
+ 
+@@ -135,27 +139,39 @@
+-                // Initialize workflow steps
+-                let steps = self
+-                    .data
+-                    .initialize_workflow_steps_with_tx(tx, &intervention)
+-                    .map_err(|e| e.to_string())?;
+-                let mut steps_context = std::collections::HashMap::new();
+-                steps_context.insert("step_count".to_string(), serde_json::json!(steps.len()));
+-                logger.debug("Initialized workflow steps", Some(steps_context));
++                // Create workflow context for strategy pattern
++                let workflow_context = WorkflowContext {
++                    intervention: intervention.clone(),
++                    user_id: user_id.to_string(),
++                    environment_conditions: Some(EnvironmentConditions {
++                        weather_condition: request.weather_condition.clone(),
++                        temperature_celsius: request.temperature.map(|t| t as f64),
++                        humidity_percentage: request.humidity.map(|h| h as f64),
++                        work_location: request.work_location.clone(),
++                    }),
++                };
++
++                // Get appropriate workflow strategy
++                let strategy = WorkflowStrategyFactory::create_strategy(&intervention, &workflow_context);
++                logger.debug(
++                    &format!("Using workflow strategy: {}", strategy.strategy_name()),
++                    None,
++                );
++
++                // Initialize workflow steps using the strategy
++                let runtime = tokio::runtime::Runtime::new().map_err(|e| e.to_string())?;
++                let workflow_result = runtime.block_on(async {
++                    strategy.initialize_workflow(&intervention, &workflow_context).await
++                }).map_err(|e| e.to_string())?;
++
++                let steps = workflow_result.steps;
++
++                // Store steps in database
++                for step in &steps {
++                    self.data
++                        .save_step_with_tx(tx, step)
++                        .map_err(|e| e.to_string())?;
++                }
++
++                let mut steps_context = std::collections::HashMap::new();
++                steps_context.insert("step_count".to_string(), serde_json::json!(steps.len()));
++                steps_context.insert("total_estimated_duration".to_string(), serde_json::json!(workflow_result.total_estimated_duration));
++                if let Some(instructions) = &workflow_result.special_instructions {
++                    steps_context.insert("special_instructions".to_string(), serde_json::json!(instructions));
++                }
++                logger.debug("Initialized workflow steps with strategy", Some(steps_context));
+@@ -160,7 +196,15 @@
+-                // Create response
+-                let response = StartInterventionResponse {
+-                    intervention,
+-                    steps,
+-                    initial_requirements: Vec::new(), // TODO: populate initial requirements
+-                };
++                // Convert special instructions to requirements if present
++                let initial_requirements = workflow_result.special_instructions
++                    .unwrap_or_default()
++                    .into_iter()
++                    .enumerate()
++                    .map(|(i, instruction)| StepRequirement {
++                        step_id: first_step_id.clone(),
++                        requirement_type: "instruction".to_string(),
++                        description: instruction,
++                        is_mandatory: true,
++                        is_completed: false,
++                    })
++                    .collect();
++
++                // Create response
++                let response = StartInterventionResponse {
++                    intervention,
++                    steps,
++                    initial_requirements,
++                };

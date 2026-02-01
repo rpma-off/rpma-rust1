@@ -1,0 +1,84 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "RPMA PPF Intervention",
+  "version": "0.1.0",
+  "identifier": "com.rpma.ppf-intervention",
+  "build": {
+    "beforeDevCommand": "cd frontend && npm run dev:next",
+    "beforeBuildCommand": "cd frontend && npm run build",
+    "frontendDist": "../frontend/.next",
+    "devUrl": "http://localhost:3000"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "RPMA - Gestion Interventions PPF",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": true,
+        "center": true,
+        "visible": true,
+        "transparent": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; connect-src 'self' http://localhost:3000 ws://localhost:3000 wss://localhost:3000; img-src 'self' asset: https://asset.localhost http://localhost:3000 data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app", "dmg", "msi", "appimage"],
+    "resources": [],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "publisher": "RPMA",
+    "category": "Business",
+    "shortDescription": "Gestion d'interventions PPF offline-first",
+    "longDescription": "Application desktop pour gestion complète des interventions Paint Protection Film avec support 100% offline",
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "http://timestamp.digicert.com",
+      "webviewInstallMode": {
+        "type": "embedBootstrapper"
+      }
+    },
+    "macOS": {
+      "frameworks": [],
+      "minimumSystemVersion": "10.15",
+      "providerShortName": "RPMATech",
+      "entitlements": null,
+      "signingIdentity": null
+    },
+    "linux": {
+      "deb": {
+        "depends": []
+      },
+      "appimage": {
+        "bundleMediaFramework": false
+      }
+    }
+  },
+  "plugins": {
+     "shell": {
+       "open": true
+     },
+     "updater": {
+      "active": true,
+      "endpoints": [
+        "https://releases.yourdomain.com/api/updates/{{target}}/{{current_version}}"
+      ],
+      "dialog": {},
+      "pubkey": "YOUR_PUBLIC_KEY_HERE"
+    }
+  }
+}

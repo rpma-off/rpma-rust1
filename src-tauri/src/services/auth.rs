@@ -1,0 +1,992 @@
+//! Local authentication service for secure session management
+
+use crate::commands::auth::SignupRequest;
+use crate::models::auth::{UserAccount, UserRole, UserSession};
+use crate::services::performance_monitor::PerformanceMonitorService;
+use crate::services::rate_limiter::RateLimiterService;
+use crate::services::security_monitor::SecurityMonitorService;
+use crate::services::token::TokenService;
+use crate::services::validation::ValidationService;
+use rusqlite::params;
+
+use argon2::password_hash::{rand_core::OsRng, PasswordHasher, SaltString};
+use argon2::{Argon2, PasswordHash, PasswordVerifier};
+use chrono::Utc;
+use serde_json;
+use sha2::{Digest, Sha256};
+use std::sync::Arc;
+use tracing::{debug, error, info, instrument, warn};
+
+#[derive(Clone, Debug)]
+pub struct AuthService {
+    db: crate::db::Database,
+    token_service: Arc<TokenService>,
+    rate_limiter: Arc<RateLimiterService>,
+    security_monitor: Arc<SecurityMonitorService>,
+    performance_monitor: Arc<PerformanceMonitorService>,
+    validator: ValidationService,
+}
+
+impl AuthService {
+    /// Get a reference to the security monitor service
+    pub fn security_monitor(&self) -> &Arc<SecurityMonitorService> {
+        &self.security_monitor
+    }
+
+    pub fn new(db: crate::db::Database) -> Result<Self, String> {
+        let jwt_secret = match std::env::var("JWT_SECRET") {
+            Ok(secret) => {
+                if secret.len() < 32 {
+                    error!("JWT_SECRET is too short ({} bytes). Minimum 32 bytes required for security.", secret.len());
+                    return Err("JWT_SECRET too short".to_string());
+                }
+                secret
+            }
+            Err(_) => {
+                error!("JWT_SECRET environment variable not set. This is required for security. Set JWT_SECRET to a secure random string of at least 32 characters.");
+                return Err("JWT_SECRET environment variable not set".to_string());
+            }
+        };
+
+        let rate_limiter = Arc::new(RateLimiterService::new(db.clone()));
+        let security_monitor = Arc::new(SecurityMonitorService::new(db.clone()));
+        let performance_monitor = Arc::new(PerformanceMonitorService::new(db.clone()));
+
+        Ok(Self {
+            db,
+            token_service: Arc::new(TokenService::new(&jwt_secret)),
+            rate_limiter,
+            security_monitor,
+            performance_monitor,
+            validator: ValidationService::new(),
+        })
+    }
+
+    /// Initialize auth services
+    pub fn init(&self) -> Result<(), String> {
+        // Note: users and user_sessions tables are created by main schema.sql
+
+        // Initialize rate limiter
+        self.rate_limiter.init()?;
+
+        // Initialize security monitor
+        self.security_monitor.init()?;
+
+        // Initialize performance monitor
+        self.performance_monitor.init()?;
+
+        // Clean up expired sessions on startup
+        if let Err(e) = self.cleanup_expired_sessions() {
+            warn!("Failed to cleanup expired sessions on startup: {}", e);
+        }
+
+        Ok(())
+    }
+
+    /// Get access to the rate limiter service
+    pub fn rate_limiter(&self) -> Arc<RateLimiterService> {
+        self.rate_limiter.clone()
+    }
+
+    /// Generate username from first and last name
+    /// Creates a username by combining normalized first and last names with underscores
+    /// Handles accents, special characters, length requirements, and uniqueness
+    pub fn generate_username_from_names(
+        &self,
+        first_name: &str,
+        last_name: &str,
+    ) -> Result<String, String> {
+        // 1. Normalize names (remove accents, convert to lowercase)
+        let normalized_first = self.normalize_name_for_username(first_name);
+        let normalized_last = self.normalize_name_for_username(last_name);
+
+        // 2. Combine with underscore
+        let mut username = if normalized_first.is_empty() && normalized_last.is_empty() {
+            return Err("At least one name must be provided".to_string());
+        } else if normalized_first.is_empty() {
+            normalized_last
+        } else if normalized_last.is_empty() {
+            normalized_first
+        } else {
+            format!("{}_{}", normalized_first, normalized_last)
+        };
+
+        // 3. Ensure length requirements
+        if username.len() < 3 {
+            username = format!("{}_user", username);
+        }
+        if username.len() > 50 {
+            username = username.chars().take(47).collect::<String>() + "...";
+        }
+
+        // 4. Ensure uniqueness
+        self.ensure_unique_username(username)
+    }
+
+    /// Normalize name for username generation
+    fn normalize_name_for_username(&self, name: &str) -> String {
+        name.to_lowercase()
+            .chars()
+            .map(|c| match c {
+                'á' | 'à' | 'â' | 'ä' | 'ã' | 'å' => 'a',
+                'é' | 'è' | 'ê' | 'ë' => 'e',
+                'í' | 'ì' | 'î' | 'ï' => 'i',
+                'ó' | 'ò' | 'ô' | 'ö' | 'õ' | 'ø' => 'o',
+                'ú' | 'ù' | 'û' | 'ü' => 'u',
+                'ý' | 'ÿ' => 'y',
+                'ç' => 'c',
+                'ñ' => 'n',
+                'ß' => 's',
+                ' ' | '-' | '\'' => '_',
+                c if c.is_alphanumeric() => c,
+                _ => '_',
+            })
+            .collect::<String>()
+            .split('_')
+            .filter(|s| !s.is_empty())
+            .collect::<Vec<&str>>()
+            .join("_")
+    }
+
+    /// Ensure username is unique by adding numbers if needed
+    fn ensure_unique_username(&self, base_username: String) -> Result<String, String> {
+        let conn = self
+            .db
+            .get_connection()
+            .map_err(|e| format!("Failed to get database connection: {}", e))?;
+
+        // Check if base username is available
+        let count: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM users WHERE username = ?",
+                [&base_username],
+                |row| row.get(0),
+            )
+            .map_err(|e| format!("Failed to check username uniqueness: {}", e))?;
+
+        if count == 0 {
+            return Ok(base_username);
+        }
+
+        // Try with numbers
+        for i in 1..1000 {
+            let candidate = format!("{}_{}", base_username, i);
+            let count: i64 = conn
+                .query_row(
+                    "SELECT COUNT(*) FROM users WHERE username = ?",
+                    [&candidate],
+                    |row| row.get(0),
+                )
+                .map_err(|e| format!("Failed to check username uniqueness: {}", e))?;
+
+            if count == 0 {
+                return Ok(candidate);
+            }
+        }
+
+        Err("Unable to generate unique username".to_string())
+    }
+
+    /// Create new user account
+    #[instrument(skip(self, password), fields(email = %email, username = %username, role = ?role))]
+    pub fn create_account(
+        &self,
+        email: &str,
+        username: &str,
+        first_name: &str,
+        last_name: &str,
+        role: UserRole,
+        password: &str,
+    ) -> Result<UserAccount, String> {
+        debug!("Validating account creation data for email: {}", email);
+
+        // Validate all input data
+        let (
+            validated_email,
+            validated_username,
+            validated_first_name,
+            _validated_last_name,
+            validated_password,
+            _,
+        ) = self
+            .validator
+            .validate_signup_data(
+                email,
+                username,
+                first_name,
+                last_name,
+                password,
+                Some(&role.to_string()),
+            )
+            .map_err(|e| {
+                warn!("Account validation failed for {}: {}", email, e);
+                format!("Validation error: {}", e)
+            })?;
+
+        debug!(
+            "Validation passed, creating account for username: {}",
+            validated_username
+        );
+
+        let password_hash = self.hash_password(&validated_password).map_err(|e| {
+            error!("Password hashing failed for {}: {}", email, e);
+            format!("Failed to process password: {}", e)
+        })?;
+
+        let account = UserAccount::new(
+            validated_email.clone(),
+            validated_username.clone(),
+            validated_first_name.clone(),
+            role.clone(),
+            password_hash.clone(),
+        );
+
+        let conn = self.db.get_connection().map_err(|e| {
+            error!("Database connection failed for account creation: {}", e);
+            "Database connection failed".to_string()
+        })?;
+
+        debug!("Inserting user account into database");
+        match conn.execute(
+            "INSERT INTO users
+              (id, email, username, password_hash, salt, first_name, last_name, role, phone, is_active, last_login_at, login_count, preferences, synced, last_synced_at, created_at, updated_at)
+              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)",
+            params![
+                account.id,
+                account.email,
+                account.username,
+                account.password_hash,
+                account.salt,
+                account.first_name,
+                account.last_name,
+                role.to_string(),
+                account.phone,
+                account.is_active as i32,
+                account.last_login,
+                account.login_count,
+                account.preferences,
+                account.synced as i32,
+                account.last_synced_at,
+                account.created_at,
+                account.updated_at,
+            ],
+        ) {
+            Ok(_) => {
+                info!("Account created successfully for {} with username {}", email, username);
+                Ok(account)
+            }
+            Err(e) => {
+                error!("Database error creating account for {}: {}", email, e);
+                let error_msg = match e {
+                    rusqlite::Error::SqliteFailure(sqlite_err, _) => {
+                        if sqlite_err.code == rusqlite::ErrorCode::ConstraintViolation {
+                            if e.to_string().contains("email") {
+                                "An account with this email already exists".to_string()
+                            } else if e.to_string().contains("username") {
+                                "Username is already taken".to_string()
+                            } else {
+                                "Account creation failed due to constraint violation".to_string()
+                            }
+                        } else {
+                            format!("Database constraint error: {}", e)
+                        }
+                    }
+                    _ => {
+                        format!("Failed to create account: {}", e)
+                    }
+                };
+                Err(error_msg)
+            }
+        }
+    }
+
+    /// Create new user account from signup request (handles validation, role mapping, username generation)
+    #[instrument(skip(self, request), fields(email = %request.email, first_name = %request.first_name, last_name = %request.last_name))]
+    pub fn create_account_from_signup(
+        &self,
+        request: &SignupRequest,
+    ) -> Result<UserAccount, String> {
+        debug!("Processing signup request for email: {}", request.email);
+
+        // Validate input
+        if request.email.trim().is_empty() {
+            return Err("Email is required".to_string());
+        }
+        if request.first_name.trim().is_empty() {
+            return Err("First name is required".to_string());
+        }
+        if request.last_name.trim().is_empty() {
+            return Err("Last name is required".to_string());
+        }
+        if request.password.trim().is_empty() {
+            return Err("Password is required".to_string());
+        }
+
+        // New users always start with 'viewer' role - admin must approve
+        let role = UserRole::Viewer;
+
+        // Generate username
+        let username = self
+            .generate_username_from_names(&request.first_name, &request.last_name)
+            .map_err(|e| format!("Failed to generate username: {}", e))?;
+
+        debug!(
+            "Generated username: {} for email: {}",
+            username, request.email
+        );
+
+        // Create account
+        self.create_account(
+            &request.email,
+            &username,
+            &request.first_name,
+            &request.last_name,
+            role,
+            &request.password,
+        )
+    }
+
+    /// Authenticate user
+    #[instrument(skip(self, password), fields(email = %email))]
+    pub fn authenticate(
+        &self,
+        email: &str,
+        password: &str,
+        ip_address: Option<&str>,
+    ) -> Result<UserSession, String> {
+        debug!(
+            "Authentication attempt for user {} with password length {}",
+            email,
+            password.len()
+        );
+
+        // Validate input
+        let (validated_email, validated_password) = self
+            .validator
+            .validate_login_data(email, password)
+            .map_err(|e| {
+                warn!("Login validation failed for {}: {}", email, e);
+                format!("Validation error: {}", e)
+            })?;
+
+        // Check rate limiting for both email and IP
+        if self.rate_limiter.is_locked_out(&validated_email)? {
+            return Err(format!(
+                "Account temporarily locked due to too many failed attempts. Try again in {}.",
+                self.rate_limiter
+                    .get_lockout_remaining_time(&validated_email)?
+                    .map(|d| format!("{} minutes", d.num_minutes()))
+                    .unwrap_or_else(|| "a few minutes".to_string())
+            ));
+        }
+
+        // Also check IP-based rate limiting if IP is provided
+        if let Some(ip) = ip_address {
+            if self.rate_limiter.is_locked_out(ip)? {
+                return Err(format!(
+                    "IP address temporarily locked due to too many failed attempts. Try again in {}.",
+                    self.rate_limiter
+                        .get_lockout_remaining_time(ip)?
+                        .map(|d| format!("{} minutes", d.num_minutes()))
+                        .unwrap_or_else(|| "a few minutes".to_string())
+                ));
+            }
+        }
+
+        let conn = self.db.get_connection()?;
+
+        let account = conn.query_row(
+            "SELECT id, email, username, password_hash, salt, first_name, last_name, role, phone, is_active, last_login_at, login_count, preferences, synced, last_synced_at, created_at, updated_at
+              FROM users WHERE email = ? AND is_active = 1",
+            [&validated_email],
+            |row| {
+                let role_str: String = row.get(7)?;
+                let role = match role_str.as_str() {
+                    "admin" => UserRole::Admin,
+                    "technician" => UserRole::Technician,
+                    "supervisor" => UserRole::Supervisor,
+                    "viewer" => UserRole::Viewer,
+                    _ => UserRole::Viewer,
+                };
+
+                Ok(UserAccount {
+                    id: row.get(0)?,
+                    email: row.get(1)?,
+                    username: row.get(2)?,
+                    password_hash: row.get(3)?,
+                    salt: row.get(4)?,
+                    first_name: row.get(5)?,
+                    last_name: row.get(6)?,
+                    role,
+                    phone: row.get(8)?,
+                    is_active: row.get::<_, i32>(9)? != 0,
+                    last_login: row.get(10)?,
+                    login_count: row.get(11)?,
+                    preferences: row.get(12)?,
+                    synced: row.get::<_, i32>(13)? != 0,
+                    last_synced_at: row.get(14)?,
+                    created_at: row.get(15)?,
+                    updated_at: row.get(16)?,
+                })
+            },
+        ).map_err(|e| {
+            match e {
+                rusqlite::Error::QueryReturnedNoRows => {
+                    warn!("User not found or inactive: {}", validated_email);
+                    // Log security event for invalid email attempt
+                    //                     // let _ = self.security_monitor.log_auth_failure(None, None, "user_not_found");
+                    "Invalid email or password".to_string()
+                },
+                _ => {
+                    error!("Database error during authentication for {}: {}", validated_email, e);
+                    format!("Database error: {}", e)
+                },
+            }
+        })?;
+
+        // Verify password
+        let password_valid = self.verify_password(&validated_password, &account.password_hash)?;
+        if !password_valid {
+            // Record failed attempt for both email and IP
+            self.rate_limiter.record_failed_attempt(&validated_email)?;
+            if let Some(ip) = ip_address {
+                self.rate_limiter.record_failed_attempt(ip)?;
+            }
+
+            // Log security event
+            let _ =
+                self.security_monitor
+                    .log_auth_failure(Some(&account.id), None, "invalid_password");
+
+            warn!("Invalid password for user {}", validated_email);
+            return Err("Invalid email or password".to_string());
+        }
+
+        // Clear failed attempts on successful authentication
+        self.rate_limiter.clear_failed_attempts(&validated_email)?;
+        if let Some(ip) = ip_address {
+            self.rate_limiter.clear_failed_attempts(ip)?;
+        }
+
+        // Log successful authentication
+        let _ = self.security_monitor.log_auth_success(&account.id, None);
+
+        // Update last login
+        conn.execute(
+            "UPDATE users SET last_login_at = ?, login_count = login_count + 1, updated_at = ? WHERE id = ?",
+            params![Utc::now().timestamp_millis(), Utc::now().timestamp_millis(), account.id],
+        ).map_err(|e| {
+            error!("Failed to update last login for {}: {}", validated_email, e);
+            format!("Failed to update last login: {}", e)
+        })?;
+
+        // Invalidate all previous refresh tokens for this user to prevent session fixation
+        conn.execute(
+            "UPDATE user_sessions SET refresh_token = NULL, updated_at = ? WHERE user_id = ? AND refresh_token IS NOT NULL",
+            params![Utc::now().timestamp_millis(), account.id],
+        ).map_err(|e| {
+            error!("Failed to invalidate previous refresh tokens for {}: {}", validated_email, e);
+            format!("Failed to invalidate previous refresh tokens: {}", e)
+        })?;
+
+        // Create session with JWT tokens
+        let session_id = uuid::Uuid::new_v4().to_string();
+
+        let access_token = self
+            .token_service
+            .generate_access_token(
+                &account.id,
+                &account.email,
+                &account.username,
+                &account.role,
+                &session_id,
+            )
+            .map_err(|e| {
+                error!(
+                    "Failed to generate access token for {}: {}",
+                    validated_email, e
+                );
+                format!("Failed to generate access token: {}", e)
+            })?;
+
+        let refresh_token = self
+            .token_service
+            .generate_refresh_token(&account.id, &session_id)
+            .map_err(|e| {
+                error!(
+                    "Failed to generate refresh token for {}: {}",
+                    validated_email, e
+                );
+                format!("Failed to generate refresh token: {}", e)
+            })?;
+
+        let session = UserSession::new(
+            account.id,
+            account.username,
+            account.email,
+            account.role,
+            access_token,
+            Some(refresh_token),
+            7200, // 2 hours (matches JWT access token duration)
+        );
+
+        // Store session
+        conn.execute(
+            "INSERT INTO user_sessions
+             (id, user_id, username, email, role, token, refresh_token, expires_at, last_activity, created_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+            params![
+                uuid::Uuid::new_v4().to_string(),
+                session.user_id,
+                session.username,
+                session.email,
+                session.role.to_string(),
+                session.token,
+                session.refresh_token,
+                session.expires_at,
+                session.last_activity,
+                session.created_at,
+            ],
+        ).map_err(|e| {
+            error!("Failed to store session for {}: {}", validated_email, e);
+            format!("Failed to create session: {}", e)
+        })?;
+
+        info!("User {} authenticated successfully", validated_email);
+        Ok(session)
+    }
+
+    /// Validate session token
+    #[instrument(skip(self, token), fields(token_hash = %format!("{:x}", Sha256::digest(token.as_bytes()))))]
+    pub fn validate_session(&self, token: &str) -> Result<UserSession, String> {
+        debug!("Session validation request");
+
+        // First validate JWT token
+        let claims = self
+            .token_service
+            .validate_access_token(token)
+            .map_err(|e| {
+                warn!("JWT token validation failed: {}", e);
+                format!("Invalid token: {}", e)
+            })?;
+
+        let conn = self.db.get_connection()?;
+
+        let mut session = conn.query_row(
+            "SELECT id, user_id, username, email, role, token, refresh_token, expires_at, last_activity, created_at
+             FROM user_sessions WHERE token = ? AND user_id = ?",
+            [token, &claims.sub],
+            |row| {
+                let role_str: String = row.get(4)?;
+                let role = match role_str.as_str() {
+                    "admin" => UserRole::Admin,
+                    "technician" => UserRole::Technician,
+                    "supervisor" => UserRole::Supervisor,
+                    "viewer" => UserRole::Viewer,
+                    _ => UserRole::Viewer,
+                };
+
+                let token: String = row.get(5)?;
+                Ok(UserSession {
+                    id: row.get(1)?,        // database user ID
+                    user_id: row.get(1)?,   // database user ID
+                    username: row.get(2)?,
+                    email: row.get(3)?,
+                    role,
+                    token,
+                    refresh_token: row.get(6)?,
+                    expires_at: row.get(7)?,
+                    last_activity: row.get(8)?,
+                    created_at: row.get(9)?,
+                    device_info: None,
+                    ip_address: None,
+                    user_agent: None,
+                    location: None,
+                    two_factor_verified: false,
+                    session_timeout_minutes: None,
+                })
+            },
+        ).map_err(|e| match e {
+            rusqlite::Error::QueryReturnedNoRows => "Invalid session".to_string(),
+            _ => format!("Database error: {}", e),
+        })?;
+
+        // Check if session is expired
+        if session.is_expired() {
+            // Clean up expired session
+            conn.execute("DELETE FROM user_sessions WHERE token = ?", [token])
+                .map_err(|e| format!("Failed to clean up expired session: {}", e))?;
+            return Err("Session expired".to_string());
+        }
+
+        // Update last activity
+        conn.execute(
+            "UPDATE user_sessions SET last_activity = ? WHERE token = ?",
+            params![Utc::now().to_rfc3339(), token],
+        )
+        .map_err(|e| format!("Failed to update session activity: {}", e))?;
+
+        session.update_activity();
+        Ok(session)
+    }
+
+    /// Logout (invalidate session)
+    pub fn logout(&self, token: &str) -> Result<(), String> {
+        let conn = self.db.get_connection()?;
+
+        conn.execute("DELETE FROM user_sessions WHERE token = ?", [token])
+            .map_err(|e| format!("Failed to logout: {}", e))?;
+
+        Ok(())
+    }
+
+    /// Hash password using Argon2
+    fn hash_password(&self, password: &str) -> Result<String, String> {
+        let salt = SaltString::generate(&mut OsRng);
+        let argon2 = Argon2::default();
+
+        let password_hash = argon2
+            .hash_password(password.as_bytes(), &salt)
+            .map_err(|e| format!("Failed to hash password: {}", e))?
+            .to_string();
+
+        Ok(password_hash)
+    }
+
+    /// Verify password against hash
+    pub fn verify_password(&self, password: &str, hash: &str) -> Result<bool, String> {
+        let parsed_hash =
+            PasswordHash::new(hash).map_err(|e| format!("Invalid password hash: {}", e))?;
+
+        let argon2 = Argon2::default();
+        let result = argon2.verify_password(password.as_bytes(), &parsed_hash);
+
+        Ok(result.is_ok())
+    }
+
+    /// List all users with optional filters
+    pub fn list_users(
+        &self,
+        limit: Option<i32>,
+        offset: Option<i32>,
+    ) -> Result<Vec<UserAccount>, String> {
+        let conn = self.db.get_connection()?;
+        let limit = limit.unwrap_or(50);
+        let offset = offset.unwrap_or(0);
+
+        let mut stmt = conn.prepare(
+            "SELECT id, email, username, password_hash, salt, first_name, last_name, role, phone, is_active, last_login_at, login_count, preferences, synced, last_synced_at, created_at, updated_at
+              FROM users ORDER BY created_at DESC LIMIT ? OFFSET ?"
+        ).map_err(|e| format!("Failed to prepare statement: {}", e))?;
+
+        let users = stmt
+            .query_map(params![limit, offset], |row| {
+                let role_str: String = row.get(7)?;
+                let role = match role_str.as_str() {
+                    "admin" => UserRole::Admin,
+                    "technician" => UserRole::Technician,
+                    "supervisor" => UserRole::Supervisor,
+                    "viewer" => UserRole::Viewer,
+                    _ => UserRole::Viewer,
+                };
+
+                Ok(UserAccount {
+                    id: row.get(0)?,
+                    email: row.get(1)?,
+                    username: row.get(2)?,
+                    password_hash: row.get(3)?,
+                    salt: row.get(4)?,
+                    first_name: row.get(5)?,
+                    last_name: row.get(6)?,
+                    role,
+                    phone: row.get(8)?,
+                    is_active: row.get::<_, i32>(9)? != 0,
+                    last_login: row.get(10)?,
+                    login_count: row.get(11)?,
+                    preferences: row.get(12)?,
+                    synced: row.get::<_, i32>(13)? != 0,
+                    last_synced_at: row.get(14)?,
+                    created_at: row.get(15)?,
+                    updated_at: row.get(16)?,
+                })
+            })
+            .map_err(|e| format!("Failed to query users: {}", e))?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| format!("Failed to collect users: {}", e))?;
+
+        Ok(users)
+    }
+
+    /// Get user by ID
+    pub fn get_user(&self, user_id: &str) -> Result<Option<UserAccount>, String> {
+        let conn = self.db.get_connection()?;
+
+        let user = conn.query_row(
+            "SELECT id, email, username, password_hash, salt, first_name, last_name, role, phone, is_active, last_login_at, login_count, preferences, synced, last_synced_at, created_at, updated_at
+              FROM users WHERE id = ?",
+            [user_id],
+            |row| {
+                let role_str: String = row.get(7)?;
+                let role = match role_str.as_str() {
+                    "admin" => UserRole::Admin,
+                    "technician" => UserRole::Technician,
+                    "supervisor" => UserRole::Supervisor,
+                    "viewer" => UserRole::Viewer,
+                    _ => UserRole::Viewer,
+                };
+
+                Ok(UserAccount {
+                    id: row.get(0)?,
+                    email: row.get(1)?,
+                    username: row.get(2)?,
+                    password_hash: row.get(3)?,
+                    salt: row.get(4)?,
+                    first_name: row.get(5)?,
+                    last_name: row.get(6)?,
+                    role,
+                    phone: row.get(8)?,
+                    is_active: row.get::<_, i32>(9)? != 0,
+                    last_login: row.get(10)?,
+                    login_count: row.get(11)?,
+                    preferences: row.get(12)?,
+                    synced: row.get::<_, i32>(13)? != 0,
+                    last_synced_at: row.get(14)?,
+                    created_at: row.get(15)?,
+                    updated_at: row.get(16)?,
+                })
+            },
+        );
+
+        match user {
+            Ok(user) => Ok(Some(user)),
+            Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+            Err(e) => Err(format!("Database error: {}", e)),
+        }
+    }
+
+    /// Update user account
+    pub fn update_user(
+        &self,
+        user_id: &str,
+        email: Option<&str>,
+        first_name: Option<&str>,
+        last_name: Option<&str>,
+        role: Option<UserRole>,
+        is_active: Option<bool>,
+    ) -> Result<UserAccount, String> {
+        let conn = self.db.get_connection()?;
+
+        // Get current user
+        let mut current_user = self
+            .get_user(user_id)?
+            .ok_or_else(|| "User not found".to_string())?;
+
+        // Update fields
+        if let Some(email) = email {
+            current_user.email = email.to_string();
+        }
+        if let Some(first_name) = first_name {
+            current_user.first_name = first_name.to_string();
+        }
+        if let Some(last_name) = last_name {
+            current_user.last_name = last_name.to_string();
+        }
+        if let Some(role) = role {
+            current_user.role = role;
+        }
+        if let Some(is_active) = is_active {
+            current_user.is_active = is_active;
+        }
+
+        current_user.updated_at = Utc::now().timestamp_millis();
+
+        // Update in database
+        conn.execute(
+            "UPDATE users SET email = ?, first_name = ?, last_name = ?, role = ?, phone = ?, is_active = ?, preferences = ?, synced = ?, last_synced_at = ?, updated_at = ? WHERE id = ?",
+            params![
+                current_user.email,
+                current_user.first_name,
+                current_user.last_name,
+                current_user.role.to_string(),
+                current_user.phone,
+                current_user.is_active as i32,
+                current_user.preferences,
+                current_user.synced as i32,
+                current_user.last_synced_at,
+                current_user.updated_at,
+                user_id,
+            ],
+        ).map_err(|e| format!("Failed to update user: {}", e))?;
+
+        Ok(current_user)
+    }
+
+    /// Delete user (soft delete by setting inactive)
+    pub fn delete_user(&self, user_id: &str) -> Result<(), String> {
+        let conn = self.db.get_connection()?;
+
+        conn.execute(
+            "UPDATE users SET is_active = 0, updated_at = ? WHERE id = ?",
+            params![Utc::now().timestamp_millis(), user_id],
+        )
+        .map_err(|e| format!("Failed to delete user: {}", e))?;
+
+        Ok(())
+    }
+
+    /// Change user password
+    pub fn change_password(&self, user_id: &str, new_password: &str) -> Result<(), String> {
+        let password_hash = self.hash_password(new_password)?;
+        let conn = self.db.get_connection()?;
+
+        conn.execute(
+            "UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?",
+            params![password_hash, Utc::now().timestamp_millis(), user_id],
+        )
+        .map_err(|e| format!("Failed to change password: {}", e))?;
+
+        Ok(())
+    }
+
+    /// Clean up expired sessions from database
+    pub fn cleanup_expired_sessions(&self) -> Result<usize, String> {
+        let conn = self.db.get_connection()?;
+        let now = Utc::now().timestamp_millis();
+
+        // Delete sessions that have expired
+        let deleted_count = conn
+            .execute(
+                "DELETE FROM user_sessions WHERE expires_at < ?",
+                params![now],
+            )
+            .map_err(|e| format!("Failed to cleanup expired sessions: {}", e))?;
+
+        if deleted_count > 0 {
+            // Log security event
+            let mut details = std::collections::HashMap::new();
+            details.insert(
+                "sessions_cleaned".to_string(),
+                serde_json::json!(deleted_count),
+            );
+            let _ = self
+                .security_monitor
+                .log_suspicious_activity(None, "session_cleanup", details);
+        }
+
+        Ok(deleted_count)
+    }
+
+    /// Refresh session using refresh token
+    pub fn refresh_session(&self, refresh_token: &str) -> Result<UserSession, String> {
+        // Validate refresh token
+        let claims = self
+            .token_service
+            .validate_refresh_token(refresh_token)
+            .map_err(|e| format!("Invalid refresh token: {}", e))?;
+
+        let conn = self.db.get_connection()?;
+
+        // Get user information
+        let account_result = conn.query_row(
+            "SELECT id, email, username, password_hash, salt, first_name, last_name, role, phone, is_active, last_login_at, login_count, preferences, synced, last_synced_at, created_at, updated_at
+              FROM users WHERE id = ? AND is_active = 1",
+            [&claims.sub],
+            |row| {
+                let role_str: String = row.get(7)?;
+                let role = match role_str.as_str() {
+                    "admin" => UserRole::Admin,
+                    "technician" => UserRole::Technician,
+                    "supervisor" => UserRole::Supervisor,
+                    "viewer" => UserRole::Viewer,
+                    _ => UserRole::Viewer,
+                };
+
+                Ok(UserAccount {
+                    id: row.get(0)?,
+                    email: row.get(1)?,
+                    username: row.get(2)?,
+                    password_hash: row.get(3)?,
+                    salt: row.get(4)?,
+                    first_name: row.get(5)?,
+                    last_name: row.get(6)?,
+                    role,
+                    phone: row.get(8)?,
+                    is_active: row.get::<_, i32>(9)? != 0,
+                    last_login: row.get(10)?,
+                    login_count: row.get(11)?,
+                    preferences: row.get(12)?,
+                    synced: row.get::<_, i32>(13)? != 0,
+                    last_synced_at: row.get(14)?,
+                    created_at: row.get(15)?,
+                    updated_at: row.get(16)?,
+                })
+            },
+        );
+
+        let account = match account_result {
+            Ok(user) => user,
+            Err(rusqlite::Error::QueryReturnedNoRows) => {
+                error!("User not found for refresh: {}", claims.sub);
+                return Err("User not found".to_string());
+            }
+            Err(e) => return Err(format!("Database error: {}", e)),
+        };
+
+        // Generate new session with fresh tokens
+        let session_id = uuid::Uuid::new_v4().to_string();
+
+        let new_access_token = self
+            .token_service
+            .generate_access_token(
+                &account.id,
+                &account.email,
+                &account.username,
+                &account.role,
+                &session_id,
+            )
+            .map_err(|e| format!("Failed to generate new access token: {}", e))?;
+
+        let new_refresh_token = self
+            .token_service
+            .generate_refresh_token(&account.id, &session_id)
+            .map_err(|e| format!("Failed to generate new refresh token: {}", e))?;
+
+        let new_session = UserSession::new(
+            account.id,
+            account.username,
+            account.email,
+            account.role,
+            new_access_token,
+            Some(new_refresh_token),
+            7200, // 2 hours
+        );
+
+        // Invalidate old refresh token
+        conn.execute(
+            "DELETE FROM user_sessions WHERE refresh_token = ?",
+            [refresh_token],
+        )
+        .map_err(|e| format!("Failed to invalidate old refresh token: {}", e))?;
+
+        // Store new session
+        conn.execute(
+            "INSERT INTO user_sessions
+             (id, user_id, username, email, role, token, refresh_token, expires_at, last_activity, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            params![
+                uuid::Uuid::new_v4().to_string(),
+                new_session.user_id,
+                new_session.username,
+                new_session.email,
+                new_session.role.to_string(),
+                new_session.token,
+                new_session.refresh_token,
+                new_session.expires_at,
+                new_session.last_activity,
+                new_session.created_at,
+            ],
+        ).map_err(|e| format!("Failed to create new session: {}", e))?;
+
+        Ok(new_session)
+    }
+}

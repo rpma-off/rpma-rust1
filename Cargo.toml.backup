@@ -1,0 +1,29 @@
+[workspace]
+members = [
+    "src-tauri",
+    "rpma-admin-tui"
+]
+members = [
+    "src-tauri",
+    
+]
+members = [
+    "src-tauri",
+    
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+authors = ["RPMA Team"]
+license = "MIT"
+edition = "2021"
+rust-version = "1.77"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "z"
+strip = true
+overflow-checks = false

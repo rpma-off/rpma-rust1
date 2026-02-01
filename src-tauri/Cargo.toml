@@ -1,0 +1,164 @@
+[package]
+name = "rpma-ppf-intervention"
+version = "0.1.0"
+description = "Application desktop de gestion d'interventions PPF"
+authors = ["RPMA Team"]
+license = "MIT"
+repository = "https://github.com/your-org/rpma-v2"
+edition = "2021"
+rust-version = "1.77"
+default-run = "main"
+
+[lib]
+name = "rpma_ppf_intervention"
+path = "src/lib.rs"
+
+[[bin]]
+name = "main"
+path = "src/main.rs"
+
+[[bin]]
+name = "export-types"
+path = "src/bin/export-types.rs"
+required-features = ["ts-rs"]
+
+[[bench]]
+name = "task_benchmarks"
+harness = false
+
+[[bench]]
+name = "intervention_benchmarks"
+harness = false
+
+[[bench]]
+name = "audit_benchmarks"
+harness = false
+
+[build-dependencies]
+tauri-build = { version = "2.0", features = [] }
+
+[dependencies]
+tauri = { version = "2.1", features = ["specta"] }
+tauri-plugin-shell = "2.0"
+tauri-plugin-dialog = "2.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Database
+# Note: For full SQLCipher encryption, replace with sqlcipher-compatible rusqlite
+# rusqlite = { version = "0.32", features = ["bundled-sqlcipher"] }
+rusqlite = { version = "0.32", features = ["bundled"] }
+r2d2 = "0.8"
+r2d2_sqlite = "0.25"
+
+# Utilities
+uuid = { version = "1.11", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+chrono-tz = "0.10"
+thiserror = "1.0"
+regex = "1.11"
+open = "5.3"
+lazy_static = "1.5"
+include_dir = "0.7"
+
+# Compression
+flate2 = "1.0"
+
+# MessagePack serialization for faster IPC
+rmp-serde = "1.1"
+
+# Efficient locking primitives
+parking_lot = "0.12"
+
+# LRU cache implementation
+lru = "0.12"
+
+# System information for memory monitoring
+sysinfo = "0.30"
+
+# Futures utilities for async streams
+futures = "0.3"
+
+# CPU core detection
+num_cpus = "1.16"
+
+# PDF generation
+genpdf = "0.2"
+
+# Directory operations
+dirs = "5.0"
+
+# File system operations
+fs2 = "0.4"
+
+# TypeScript generation for IPC
+specta = { version = "2.0.0-rc.22", optional = true }
+
+# Async runtime
+tokio = { version = "1.42", features = ["rt-multi-thread", "macros", "sync", "time", "net"] }
+async-trait = "0.1"
+
+# WebSocket support
+tokio-tungstenite = "0.21"
+futures-util = "0.3"
+async-stream = "0.3"
+
+
+
+# Password hashing
+argon2 = { version = "0.5", features = ["std"] }
+jsonwebtoken = "9.3"
+hmac = "0.12"
+sha2 = "0.10"
+base64 = "0.22"
+
+# HTTP client for external APIs (email/SMS services)
+reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
+
+# Redis for caching
+redis = { version = "0.32", features = ["tokio-comp", "connection-manager"] }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+rand = "0.8"
+dotenvy = "0.15"
+
+# Type generation
+tauri-specta = "2.0.0-rc"
+specta-typescript = "0.0"
+ts-rs = { version = "10.1", optional = true, features = ["no-serde-warnings"] }
+
+# Utilities
+md5 = "0.7"
+
+# Image processing
+image = { version = "0.25", default-features = false, features = ["jpeg", "png"] }
+
+# PDF generation
+printpdf = "0.7"
+
+# Geospatial operations
+geo = "0.28"
+
+# Two-factor authentication
+totp-rs = { version = "5.5", features = ["qr"] }
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+ts-rs = ["dep:ts-rs"]
+specta = ["dep:specta"]
+sqlcipher = []  # Optional feature for SQLCipher encryption support
+
+[dev-dependencies]
+# Testing framework
+tokio-test = "0.4"
+mockall = "0.12"          # Mocking framework
+tempfile = "3.8"          # Test database
+serial_test = "3.0"      # Test isolation
+criterion = "0.5"         # Performance testing
+proptest = "1.4"         # Property-based testing
+pretty_assertions = "1.4" # Better error messages in tests
+
+

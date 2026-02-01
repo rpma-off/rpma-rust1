@@ -1,0 +1,211 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  # Test job with multiple Rust versions
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust:
+          - stable
+          - beta
+          - 1.75.0  # Minimum supported version
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Cache Rust dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
+          
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: ${{ matrix.rust }}
+        components: rustfmt, clippy
+        
+    - name: Check formatting
+      run: cargo fmt --all -- --check
+      
+    - name: Run clippy
+      run: cargo clippy --all-targets --all-features -- -D warnings
+      
+    - name: Run unit tests
+      run: cargo test --lib --verbose
+      
+    - name: Run integration tests
+      run: cargo test --test '*' --verbose
+      
+    - name: Run property-based tests
+      run: cargo test --test proptest --verbose
+      
+    - name: Generate test coverage
+      run: |
+        cargo install cargo-tarpaulin
+        cargo tarpaulin --out xml --output-dir target/coverage --skip-clean
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: target/coverage/tarpaulin-report.xml
+        flags: unittests
+        name: codecov-umbrella
+        
+    - name: Run benchmarks
+      run: |
+        if [ "${{ matrix.rust }}" = "stable" ]; then
+          cargo bench --bench task_benchmarks
+          cargo bench --bench intervention_benchmarks
+          cargo bench --bench audit_benchmarks
+        fi
+        
+    - name: Upload benchmark results
+      if: matrix.rust == 'stable'
+      uses: actions/upload-artifact@v3
+      with:
+        name: benchmark-results-${{ matrix.rust }}
+        path: |
+          target/criterion/
+        retention-days: 30
+
+  # Security audit job
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Cache Rust dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: stable
+        components: rustfmt, clippy
+        
+    - name: Run cargo audit
+      run: |
+        cargo install cargo-audit
+        cargo audit --deny warnings
+        
+    - name: Run cargo-deny
+      uses: EmbarkStudios/cargo-deny-action@v1
+      with:
+        command: check
+
+  # Build job for multiple platforms
+  build:
+    name: Build
+    needs: [test, security]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+          - os: macos-latest
+            target: x86_64-apple-darwin
+          - os: macos-latest
+            target: aarch64-apple-darwin
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Cache Rust dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
+        
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: stable
+        target: ${{ matrix.target }}
+        
+    - name: Install Node.js (for Tauri)
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install npm dependencies
+      run: |
+        cd frontend
+        npm ci
+        
+    - name: Build frontend
+      run: |
+        cd frontend
+        npm run build
+        
+    - name: Build Tauri app
+      run: |
+        cargo tauri build --target ${{ matrix.target }}
+        
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-${{ matrix.target }}
+        path: |
+          src-tauri/target/${{ matrix.target }}/release/bundle/
+        retention-days: 30
+
+  # Release job (only on tags)
+  release:
+    name: Release
+    needs: [build]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download all build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: release-artifacts
+        
+    - name: Create release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: release-artifacts/**
+        draft: false
+        prerelease: contains(github.ref, 'beta') || contains(github.ref, 'alpha')
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

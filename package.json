@@ -1,0 +1,51 @@
+{
+  "name": "rpma-rust",
+  "version": "0.1.0",
+  "description": "RPMA v2 - Application desktop de gestion d'interventions PPF",
+  "private": true,
+  "scripts": {
+    "dev": "npm run types:sync && set JWT_SECRET=dfc3d7f5c295d19b42e9b3d7eaa9602e45f91a9e5e95cbaa3230fc17e631c74b && npm run tauri dev",
+    "build": "npm run types:sync && npm run tauri build",
+    "tauri": "tauri",
+    "types:sync": "cd src-tauri && cargo run --bin export-types --features=\"ts-rs\" | node ../scripts/write-types.js",
+    "frontend:dev": "cd frontend && npm run dev",
+    "frontend:build": "cd frontend && npm run build",
+    "frontend:install": "cd frontend && npm install",
+    "frontend:lint": "cd frontend && npm run lint",
+    "frontend:type-check": "cd frontend && npm run type-check",
+    "backend:build": "cd src-tauri && cargo build",
+    "backend:build:release": "cd src-tauri && cargo build --release",
+    "backend:check": "cd src-tauri && cargo check",
+    "backend:clippy": "cd src-tauri && cargo clippy",
+    "backend:fmt": "cd src-tauri && cargo fmt",
+    "types:validate": "node scripts/validate-types.js",
+    "types:drift-check": "node scripts/check-type-drift.js",
+    "types:ci-drift-check": "node scripts/ci-type-drift-check.js",
+    "types:generate-docs": "node scripts/generate-type-docs.js",
+    "ci:validate": "bash scripts/ci-type-check.sh",
+    "bundle:analyze": "cd frontend && ANALYZE=true npm run build",
+    "bundle:check-size": "node scripts/check-bundle-size.js",
+    "performance:test": "node scripts/performance-regression-test.js",
+    "performance:update-baseline": "node scripts/performance-regression-test.js --update-baseline",
+    "security:audit": "node scripts/security-audit.js",
+    "code-review:check": "node scripts/code-review-check.js",
+    "install": "npm run frontend:install",
+    "clean": "npm run frontend:clean && cd src-tauri && cargo clean",
+    "frontend:clean": "cd frontend && rm -rf node_modules .next out",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.1.0",
+    "husky": "^9.1.7"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.9.1",
+    "argon2": "^0.44.0",
+    "better-sqlite3": "^12.6.2",
+    "jsdom": "^27.1.0"
+  }
+}
