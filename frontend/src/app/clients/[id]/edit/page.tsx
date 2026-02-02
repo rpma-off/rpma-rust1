@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth/compatibility';
 import { clientService } from '@/lib/services/entities/client.service';
 import { ArrowLeft, Save, X, Edit, User, Building } from 'lucide-react';
@@ -92,7 +93,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
     e.preventDefault();
 
     if (!params?.id || !user) {
-      alert('Invalid request');
+      toast.error('Invalid request');
       return;
     }
 

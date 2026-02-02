@@ -1,0 +1,76 @@
+{
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:ci": "jest --coverage --watchAll=false --passWithNoTests",
+    "test:debug": "node --inspect-brk node_modules/.bin/jest --runInBand",
+    "test:components": "jest --testPathPattern=src/components/**/__tests__",
+    "test:hooks": "jest --testPathPattern=src/hooks/**/__tests__",
+    "test:integration": "jest --testPathPattern=src/**/integration.test.{ts,tsx}",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:codegen": "playwright codegen",
+    "lint": "npm run lint:js && npm run lint:css",
+    "lint:js": "eslint src --ext .js,.jsx,.ts,.tsx",
+    "lint:css": "stylelint 'src/**/*.{css,scss}'",
+    "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix",
+    "type-check": "tsc --noEmit",
+    "validate": "npm run type-check && npm run lint",
+    "pre-commit": "npm run validate && npm run test",
+    "prepare": "husky install",
+    "prepush": "npm run test:ci",
+    "analyze": "npm run build && npx @next/bundle-analyzer",
+    "clean": "rm -rf .next dist coverage",
+    "clean:deps": "rm -rf node_modules package-lock.json",
+    "deps": "npm ci",
+    "deps:update": "npm update && npm audit fix",
+    "security:audit": "npm audit --audit-level=moderate",
+    "bundle:size": "npm run build && npx bundlesize",
+    "perf:debug": "NODE_ENV=development npm run dev",
+    "perf:lighthouse": "npm run build && npx lighthouse http://localhost:3000",
+    "docker:build": "docker build -t rpma-frontend .",
+    "docker:run": "docker run -p 3000:3000 rpma-frontend",
+    "storybook": "start-storybook -p 6006",
+    "storybook:build": "build-storybook",
+    "build:analyze": "ANALYZE=true npm run build",
+    "build:production": "NODE_ENV=production npm run build",
+    "deploy:staging": "npm run build:production && npm run deploy:staging:script",
+    "deploy:production": "npm run build:production && npm run deploy:production:script"
+  },
+  "devDependencies": {
+    "@next/bundle-analyzer": "^13.0.0",
+    "@playwright/test": "^1.35.0",
+    "@storybook/addon-essentials": "^6.5.0",
+    "@storybook/nextjs": "^0.0.7",
+    "@storybook/react": "^6.5.0",
+    "@storybook/testing-library": "^0.0.14-next.2",
+    "@testing-library/jest-dom": "^5.16.4",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "@types/jest": "^27.4.0",
+    "bundlesize": "^0.18.1",
+    "eslint": "^8.0.0",
+    "eslint-config-next": "^13.0.0",
+    "jest": "^27.4.0",
+    "jest-environment-jsdom": "^22.1.0",
+    "lint-staged": "^13.0.0",
+    "prettier": "^2.8.0",
+    "stylelint": "^14.8.0",
+    "ts-jest": "^27.1.0",
+    "typescript": "^4.9.0"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run pre-commit",
+      "pre-push": "npm run prepush"
+    }
+  },
+  "lint-staged": {
+    "src/**/*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "jest --bail --passWithNoTests --findRelatedTests"
+    ]
+  }
+}

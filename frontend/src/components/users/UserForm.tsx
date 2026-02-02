@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { UserAccount, UserRole } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { ipcClient } from '@/lib/ipc';
@@ -79,9 +80,9 @@ export function UserForm({ user, onClose, onSuccess }: UserFormProps) {
 
     try {
       setLoading(true);
-      
+
       if (!authUser || !authUser.token) {
-        alert('Not authenticated');
+        toast.error('Not authenticated');
         return;
       }
 
@@ -106,8 +107,9 @@ export function UserForm({ user, onClose, onSuccess }: UserFormProps) {
       }
 
       onSuccess();
+      toast.success(isEditing ? 'User updated successfully' : 'User created successfully');
     } catch (error) {
-      alert('Failed to save user: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      toast.error('Failed to save user: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setLoading(false);
     }

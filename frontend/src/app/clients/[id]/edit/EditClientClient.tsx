@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth/compatibility';
 import { ArrowLeft, Save, X } from 'lucide-react';
 import Link from 'next/link';
@@ -84,7 +85,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
     e.preventDefault();
 
     if (!params?.id || !user) {
-      alert('Invalid request');
+      toast.error('Invalid request');
       return;
     }
 

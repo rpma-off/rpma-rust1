@@ -1,16 +1,6 @@
 'use client';
 
-// Define shimmer animation keyframes
-const shimmerAnimation = `
-  @keyframes shimmer {
-    0% {
-      transform: translateX(-100%);
-    }
-    100% {
-      transform: translateX(100%);
-    }
-  }
-`;
+import styles from './PhotoUpload.module.css';
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Upload, CheckCircle2, AlertCircle, Clock, WifiOff, Camera, X, Eye, Trash2 } from 'lucide-react';
@@ -261,8 +251,7 @@ export function PhotoUpload({
 
   return (
     <>
-      {/* Add shimmer animation styles */}
-      <style dangerouslySetInnerHTML={{ __html: shimmerAnimation }} />
+      {/* Shimmer animation styles are now in CSS module */}
 
     <div className={cn('w-full', className)}>
       {/* Header */}

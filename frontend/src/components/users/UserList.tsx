@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { UserAccount } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { bigintToNumber } from '@/lib/utils/timestamp-conversion';
 import { ipcClient } from '@/lib/ipc';
 import { ChangeRoleDialog } from '@/app/admin/users/components/ChangeRoleDialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface UserListProps {
   users: UserAccount[];
@@ -22,28 +24,36 @@ export function UserList({ users, onEdit, onRefresh }: UserListProps) {
     email: string;
     role: string;
   } | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<UserAccount | null>(null);
 
-  const handleDelete = async (userId: string) => {
-    if (!confirm('Are you sure you want to deactivate this user?')) {
-      return;
-    }
+  const handleDelete = async () => {
+    if (!userToDelete) return;
 
     try {
-      setDeletingId(userId);
-      
+      setDeletingId(userToDelete.id);
+
       if (!user || !user.token) {
-        alert('Not authenticated');
+        toast.error('Not authenticated');
         return;
       }
 
-      await ipcClient.users.delete(userId, user.token);
+      await ipcClient.users.delete(userToDelete.id, user.token);
 
       onRefresh();
+      toast.success('User deactivated successfully');
+      setDeleteConfirmOpen(false);
+      setUserToDelete(null);
     } catch (error) {
-      alert('Failed to delete user: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      toast.error('Failed to delete user: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const confirmDeleteUser = (user: UserAccount) => {
+    setUserToDelete(user);
+    setDeleteConfirmOpen(true);
   };
 
   const formatDate = (timestamp: bigint | string | null | undefined) => {
@@ -132,7 +142,7 @@ export function UserList({ users, onEdit, onRefresh }: UserListProps) {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-border">
                     {formatDate(user.created_at)}
                   </td>
-                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                      <button
                        onClick={() => onEdit(user)}
                        className="text-indigo-600 hover:text-indigo-900 mr-4"
@@ -151,7 +161,7 @@ export function UserList({ users, onEdit, onRefresh }: UserListProps) {
                        Change Role
                      </button>
                      <button
-                       onClick={() => handleDelete(user.id)}
+                       onClick={() => confirmDeleteUser(user)}
                        disabled={deletingId === user.id}
                        className="text-red-600 hover:text-red-900 disabled:opacity-50"
                      >
@@ -181,6 +191,17 @@ export function UserList({ users, onEdit, onRefresh }: UserListProps) {
            onOpenChange={(open: boolean) => !open && setRoleChangeUser(null)}
         />
       )}
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="Deactivate User"
+        description={`Are you sure you want to deactivate ${userToDelete?.first_name} ${userToDelete?.last_name}? This action cannot be undone.`}
+        confirmText="Deactivate"
+        cancelText="Cancel"
+        variant="destructive"
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

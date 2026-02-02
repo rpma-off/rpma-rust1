@@ -16,9 +16,10 @@ import {
   User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
 import { Photo, PhotoType } from '@/lib/backend';
 import { PhotoGalleryProps } from '@/types/photo.types';
+import { useFocusableList } from '@/hooks/useKeyboardNavigation';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 
 export function PhotoGallery({
   photos,
@@ -44,7 +45,7 @@ export function PhotoGallery({
 }: PhotoGalleryProps) {
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
-
+  
   // Filter and sort photos
   const filteredAndSortedPhotos = React.useMemo(() => {
     let filtered = photos;
@@ -89,14 +90,26 @@ export function PhotoGallery({
     return counts;
   }, [photos]);
 
+  const handleCloseModal = () => {
+    setSelectedPhoto(null);
+  };
+  
+  // Keyboard navigation for photo grid
+  const {
+    selectedIndex,
+    setSelectedIndex,
+    getItemProps,
+    keyHandlers,
+  } = useFocusableList(filteredAndSortedPhotos, {
+    loop: true,
+    orientation: 'horizontal',
+    onEscape: handleCloseModal,
+  });
+
   const handlePhotoClick = (photo: Photo) => {
     setSelectedPhoto(photo);
     setCurrentPhotoIndex(filteredAndSortedPhotos.findIndex(p => p.id === photo.id));
     onPhotoClick?.(photo);
-  };
-
-  const handleCloseModal = () => {
-    setSelectedPhoto(null);
   };
 
   const handlePreviousPhoto = () => {
@@ -186,86 +199,107 @@ export function PhotoGallery({
             gridCols === 4 && 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4',
             gridCols === 6 && 'grid-cols-3 md:grid-cols-4 lg:grid-cols-6'
           )}
+          role="grid"
+          aria-label="Photo gallery"
+          {...keyHandlers}
         >
-          {filteredAndSortedPhotos.map((photo) => (
-            <div key={photo.id} className="relative group">
-              <div className="relative w-full h-32 rounded-lg overflow-hidden">
-                <Image
-                  src={photo.storage_url || photo.file_path}
-                  alt={photo.file_name || 'Photo'}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  className="object-cover rounded-lg"
-                  unoptimized={(photo.storage_url || photo.file_path).startsWith('data:')}
-                />
-                
-                {/* Overlay Actions */}
-                {showActions && (
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center">
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => handlePhotoClick(photo)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      {onPhotoDownload && (
+          {filteredAndSortedPhotos.map((photo, index) => (
+            <Card 
+              key={photo.id}
+              className={cn(
+                'group relative overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-lg',
+                selectedPhoto?.id === photo.id && 'ring-2 ring-blue-500'
+              )}
+              onClick={() => handlePhotoClick(photo)}
+              {...(() => {
+                const props = getItemProps(index);
+                const { onClick, ...rest } = props;
+                return rest;
+              })()}
+            >
+              <CardContent className="p-0">
+                {/* Photo */}
+                <div className="relative aspect-square">
+                  <OptimizedImage
+                    src={photo.storage_url || photo.file_path}
+                    alt={photo.file_name || 'Photo'}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                  
+                  {/* Overlay Actions */}
+                  {showActions && (
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center">
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-2">
                         <Button
                           size="sm"
                           variant="secondary"
-                          onClick={() => handleDownload(photo)}
+                          onClick={() => handlePhotoClick(photo)}
+                          aria-label="View photo"
                         >
-                          <Download className="h-4 w-4" />
+                          <Eye className="h-4 w-4" />
                         </Button>
-                      )}
-                      {onPhotoDelete && (
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleDelete(photo.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Photo Type Badge */}
-                {photo.photo_type && (
-                  <div className="absolute top-2 left-2">
-                    <Badge 
-                      variant="secondary" 
-                      className={cn(
-                        'text-xs',
-                        photo.photo_type === 'before' && 'bg-red-100 text-red-800',
-                        photo.photo_type === 'after' && 'bg-green-100 text-green-800',
-                        photo.photo_type === 'during' && 'bg-yellow-100 text-yellow-800'
-                      )}>
-                      {photo.photo_type}
-                    </Badge>
-                  </div>
-                )}
-              </div>
-              
-              {/* Photo Metadata */}
-              {showMetadata && (photo.uploaded_at || photo.approved_by) && (
-                <div className="mt-2 text-xs text-gray-500">
-                  {photo.uploaded_at && (
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="h-3 w-3" />
-                      <span>{new Date(photo.uploaded_at).toLocaleDateString()}</span>
+                        {onPhotoDownload && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => handleDownload(photo)}
+                            aria-label="Download photo"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        )}
+                         {onPhotoDelete && (
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDelete(photo.id)}
+                            aria-label="Delete photo"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   )}
-                  {photo.approved_by && (
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Calendar className="h-3 w-3" />
-                      <span>{new Date(Number(photo.uploaded_at)).toLocaleDateString()}</span>
+                  
+                  {/* Photo Type Badge */}
+                  {photo.photo_type && (
+                    <div className="absolute top-2 left-2">
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          'text-xs',
+                          photo.photo_type === 'before' && 'bg-red-100 text-red-800',
+                          photo.photo_type === 'after' && 'bg-green-100 text-green-800',
+                          photo.photo_type === 'during' && 'bg-yellow-100 text-yellow-800'
+                        )}>
+                        {photo.photo_type}
+                      </Badge>
                     </div>
                   )}
                 </div>
-              )}
-            </div>
+                
+                {/* Photo Metadata */}
+                {showMetadata && (photo.uploaded_at || photo.approved_by) && (
+                  <div className="mt-2 text-xs text-gray-500">
+                    {photo.uploaded_at && (
+                      <div className="flex items-center space-x-1">
+                        <Calendar className="h-3 w-3" />
+                        <span>{new Date(photo.uploaded_at).toLocaleDateString()}</span>
+                      </div>
+                    )}
+                    {photo.approved_by && (
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Calendar className="h-3 w-3" />
+                        <span>{new Date(Number(photo.uploaded_at)).toLocaleDateString()}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}

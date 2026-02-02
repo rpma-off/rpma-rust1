@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
+import { displayError } from '@/lib/utils/errorHandling';
 
 // Global type declarations
 declare global {
@@ -62,10 +63,20 @@ export const usePerformanceMonitor = (
 
     // Log performance warnings
     if (logToConsole && currentRenderTime > threshold) {
-      console.warn(
-        `🚨 Performance Warning: ${componentName} took ${currentRenderTime.toFixed(2)}ms to render ` +
-        `(threshold: ${threshold}ms). Consider optimizing this component.`
-      );
+      const warning = `Performance Warning: ${componentName} took ${currentRenderTime.toFixed(2)}ms to render (threshold: ${threshold}ms)`;
+      console.warn(`🚨 ${warning}`);
+      
+      // Also use standardized error display
+      displayError({
+        message: warning,
+        category: 'performance',
+        severity: 'medium',
+        details: {
+          componentName,
+          renderTime: currentRenderTime,
+          threshold,
+        },
+      });
     }
 
     // Log detailed metrics in development

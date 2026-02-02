@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { toast } from "sonner";
 import {
   Shield,
   Plus,
@@ -90,13 +91,13 @@ export const PPFStep: React.FC<FormStepProps> = ({
     ];
 
     if (allZones.includes(customZoneInput.toLowerCase().trim())) {
-      alert("Cette zone existe déjà");
+      toast.error("Cette zone existe déjà");
       return;
     }
 
     // Limit custom zones
     if ((formData.custom_ppf_zones?.length || 0) >= 10) {
-      alert("Vous ne pouvez pas ajouter plus de 10 zones personnalisées");
+      toast.error("Vous ne pouvez pas ajouter plus de 10 zones personnalisées");
       return;
     }
 

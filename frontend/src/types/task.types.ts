@@ -31,11 +31,9 @@ export interface TaskWithDetails extends Task {
    // Additional fields for compatibility
    note?: string | null; // Alias for notes
 
-    // Customer information (already in base Task)
-    customer_name: string | null;
-    customer_email: string | null;
-    customer_phone: string | null;
-    customer_address: string | null;
+   // New fields not in base Task
+   assigned_user_name?: string;
+   client_name?: string;
    is_available?: boolean | null;
    estimated_duration_minutes?: number | null; // Alias for estimated_duration
 
@@ -45,10 +43,6 @@ export interface TaskWithDetails extends Task {
    duration?: string | null;
    is_overdue: boolean;
    estimated_completion?: string | null;
-
-   // Aliases for compatibility (remove these since base Task has the correct names)
-   // createdAt: string;
-   // updatedAt: string;
 }
 
 /**

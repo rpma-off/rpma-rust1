@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getCalendarTasks, checkCalendarConflicts, rescheduleTask, createCalendarFilter } from '@/lib/ipc/calendar';
 import type { CalendarTask, CalendarFilter, ConflictDetection } from '@/lib/backend';
 
@@ -91,19 +91,26 @@ export function useCalendar(initialDate?: Date, initialViewMode?: CalendarViewMo
     }
   }, []);
 
+  // Memoize date range to prevent unnecessary re-fetches
+  const dateRange = useMemo(() => {
+    return getDateRangeForView(state.currentDate, state.viewMode);
+  }, [state.currentDate, state.viewMode]);
+
+  // Memoize filter to prevent unnecessary re-fetches
+  const calendarFilter = useMemo(() => {
+    return createCalendarFilter(
+      dateRange.start,
+      dateRange.end,
+      state.filters.technicianIds,
+      state.filters.statuses
+    );
+  }, [dateRange, state.filters.technicianIds, state.filters.statuses]);
+
   const fetchTasks = useCallback(async () => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      const { start, end } = getDateRangeForView(state.currentDate, state.viewMode);
-      const filter: CalendarFilter = createCalendarFilter(
-        start,
-        end,
-        state.filters.technicianIds,
-        state.filters.statuses
-      );
-
-      const tasks = await getCalendarTasks(filter);
+      const tasks = await getCalendarTasks(calendarFilter);
       setState(prev => ({ ...prev, tasks, isLoading: false }));
     } catch (error) {
       console.error('Failed to fetch calendar tasks:', error);
@@ -113,7 +120,7 @@ export function useCalendar(initialDate?: Date, initialViewMode?: CalendarViewMo
         error: error instanceof Error ? error.message : 'Failed to load calendar tasks',
       }));
     }
-  }, [state.currentDate, state.viewMode, state.filters, getDateRangeForView]);
+  }, [calendarFilter]);
 
   const setCurrentDate = useCallback((date: Date) => {
     setState(prev => ({ ...prev, currentDate: date }));

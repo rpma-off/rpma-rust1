@@ -2,29 +2,48 @@
 
 ## Project Structure
 
+### Root Directory Layout
 ```
 rpma-rust/
-├── frontend/src/
-│   ├── app/                    # Next.js pages (App Router)
-│   │   ├── dashboard/         # Main dashboard
-│   │   ├── tasks/             # Task management
-│   │   ├── clients/           # Client management
-│   │   └── admin/             # Admin features
-│   ├── components/            # Reusable components
-│   │   ├── tasks/             # Task-specific components
-│   │   ├── dashboard/         # Dashboard widgets
-│   │   ├── ui/                # Base UI components
-│   │   └── workflow/          # Workflow components
-│   └── lib/
-│       ├── backend.ts         # Backend type definitions
-│       └── services/          # API services
+├── frontend/              # Next.js frontend application
+│   ├── src/
+│   │   ├── app/          # Next.js App Router pages
+│   │   ├── components/   # React components
+│   │   ├── hooks/        # Custom hooks
+│   │   ├── lib/          # Utilities, API clients
+│   │   ├── types/        # TypeScript types
+│   │   ├── ui/           # shadcn/ui components
+│   │   └── store/        # Zustand state stores
+│   ├── public/           # Static assets
+│   ├── package.json
+│   └── next.config.js
 │
-└── src-tauri/src/
-    ├── commands/              # IPC command handlers
-    ├── models/                # Data models (Rust)
-    ├── services/              # Business logic
-    ├── db/                    # Database layer
-    └── sync/                  # Sync system
+├── src-tauri/            # Rust backend application
+│   ├── src/
+│   │   ├── commands/     # Tauri IPC command handlers
+│   │   ├── services/     # Business logic layer
+│   │   ├── repositories/ # Data access layer
+│   │   ├── models/       # Domain models & DTOs
+│   │   ├── db/           # Database management
+│   │   ├── logging/      # Logging infrastructure
+│   │   ├── sync/         # Sync engine
+│   │   ├── menu/         # Application menus
+│   │   ├── bin/          # Binary executables
+│   │   ├── main.rs       # Application entry point
+│   │   └── lib.rs        # Library root
+│   ├── migrations/       # Database migrations
+│   ├── benches/          # Performance benchmarks
+│   ├── tests/            # Integration tests
+│   ├── Cargo.toml        # Rust dependencies
+│   └── tauri.conf.json   # Tauri configuration
+│
+├── scripts/              # Build & validation scripts
+├── migrations/           # Additional migrations
+├── docs/                 # Documentation PRDs
+├── .github/              # GitHub workflows
+├── package.json          # Root package.json (monorepo)
+├── .env                  # Environment variables
+└── Cargo.toml            # Workspace configuration
 ```
 ## Architecture
 
@@ -92,7 +111,7 @@ All backend types: `frontend/src/lib/backend.ts`
 
 ## Documentation References
 
-For comprehensive project understanding, refer to these documentation files in the `docs/prd` 
+For comprehensive project understanding, refer to these documentation files in the `docs` 
 
 
 ## Key Principles
@@ -127,5 +146,6 @@ For comprehensive project understanding, refer to these documentation files in t
 - Query preparation and parameter binding
 
 
-What You Should NOT Do
+### What You Should NOT Do :
+
 ❌ DO NOT add new features - Work only with existing functionality ❌ DO NOT change the overall architecture - Keep the layered structure ❌ DO NOT introduce new libraries - Use existing dependencies only ❌ DO NOT over-engineer - Keep solutions simple and pragmatic ❌ DO NOT rewrite working code - If it works well, leave it alone ❌ DO NOT change the database schema - Work within current structure ❌ DO NOT modify the migration system - It's already comprehensive ❌ DO NOT add unnecessary abstractions - Keep it straightforward

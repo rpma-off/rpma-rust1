@@ -1,4 +1,5 @@
 import React from 'react';
+import { toast } from 'sonner';
 import { DragDropContext } from '@hello-pangea/dnd';
 import { CalendarHeader } from './CalendarHeader';
 import { MonthView } from './MonthView';
@@ -67,13 +68,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       if (result.success) {
         onTaskReschedule(taskId, newDate, newStartTime);
       } else {
-        // Show error toast or alert
-        console.error('Failed to reschedule task:', result.error);
-        alert(`Cannot reschedule task: ${result.error}`);
+        toast.error(`Cannot reschedule task: ${result.error}`);
       }
     } catch (error) {
-      console.error('Error during task rescheduling:', error);
-      alert('An error occurred while rescheduling the task.');
+      toast.error('An error occurred while rescheduling the task.');
     }
   };
 

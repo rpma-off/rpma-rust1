@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -42,9 +43,9 @@ export function ChangeRoleDialog({
     try {
       await ipcClient.users.changeRole(userId, selectedRole, user.token);
       onOpenChange(false);
-      // Refresh might be needed, but handled by parent
+      toast.success('Role updated successfully');
     } catch (error) {
-      alert('Failed to update role: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      toast.error('Failed to update role: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setIsLoading(false);
     }

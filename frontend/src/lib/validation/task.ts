@@ -9,7 +9,7 @@ export const createTaskRequestSchema = z.object({
   // Required fields
   vehicle_plate: z.string().min(1, 'Vehicle plate is required'),
   vehicle_model: z.string().min(1, 'Vehicle model is required'),
-  ppf_zone: z.string().min(1, 'PPF zone is required'),
+  ppf_zones: z.array(z.string()).min(1, 'At least one PPF zone is required'),
   scheduled_date: z.string().min(1, 'Scheduled date is required'),
 
   // Optional fields
@@ -25,7 +25,6 @@ export const createTaskRequestSchema = z.object({
   title: z.string().optional(),
   vehicle_make: z.string().optional(),
   vehicle_year: z.number().int().min(1900).max(2100).optional(),
-  ppf_zones: z.array(z.string()).optional(),
   scheduled_time: z.string().optional(),
   vin: z.string().optional(),
   date_rdv: z.string().optional(),
@@ -62,7 +61,7 @@ export const updateTaskRequestSchema = z.object({
   vehicle_year: z.number().int().min(1900).max(2100).optional(),
   vehicle_make: z.string().optional(),
   vin: z.string().optional(),
-  ppf_zone: z.string().optional(),
+  ppf_zones: z.array(z.string()).optional(),
   custom_ppf_zones: z.array(z.string()).optional(),
   client_id: z.string().uuid().optional(),
   customer_name: z.string().optional(),

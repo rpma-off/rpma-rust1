@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Home,
@@ -128,6 +129,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   // Styling
   className
 }) => {
+  const router = useRouter();
+
   // State management
   const [sidebarOpen, setSidebarOpen] = useState(true); // Open by default for desktop
   const [currentViewMode, setCurrentViewMode] = useState<ViewMode>(viewMode);
@@ -575,7 +578,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <SidebarItem
                 icon={UserCheck}
                 isActive={false}
-                onClick={() => window.location.href = '/clients'}
+                onClick={() => router.push('/clients')}
               >
                 Clients
               </SidebarItem>

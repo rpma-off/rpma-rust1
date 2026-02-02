@@ -52,11 +52,31 @@ export function useTaskState(options: UseTaskStateOptions = {}) {
   });
 
   // State update helpers
-  const updateTasks = useCallback((newTasks: TaskWithDetails[]) => {
+  const updateTasks = useCallback((newTasks: TaskWithDetails[] | null | undefined) => {
+    // Handle null/undefined inputs gracefully
+    if (!newTasks) {
+      setTasks([]);
+      setPagination(prev => ({ ...prev, total: 0, totalPages: 0 }));
+      return;
+    }
+    
+    // Handle non-array inputs
+    if (!Array.isArray(newTasks)) {
+      console.warn('useTaskState: updateTasks called with non-array input, resetting to empty array');
+      setTasks([]);
+      setPagination(prev => ({ ...prev, total: 0, totalPages: 0 }));
+      return;
+    }
+    
     setTasks(newTasks);
   }, []);
 
-  const addTask = useCallback((task: TaskWithDetails) => {
+  const addTask = useCallback((task: TaskWithDetails | null | undefined) => {
+    if (!task) {
+      console.warn('useTaskState: addTask called with undefined/null task, skipping');
+      return;
+    }
+    
     setTasks(prev => [task, ...prev]);
     setPagination(prev => ({
       ...prev,
@@ -74,18 +94,16 @@ export function useTaskState(options: UseTaskStateOptions = {}) {
   const removeTask = useCallback((taskId: string) => {
     setTasks(prev => {
       const filtered = prev.filter(task => task.id !== taskId);
-      // Adjust pagination if needed
-      if (filtered.length === 0 && pagination.page > 1) {
-        setPagination(prev => ({ ...prev, page: prev.page - 1 }));
-      }
+      const newTotal = filtered.length;
+      // Update pagination based on new total
+      setPagination(paginationPrev => ({
+        ...paginationPrev,
+        total: newTotal,
+        totalPages: Math.ceil(newTotal / paginationPrev.limit)
+      }));
       return filtered;
     });
-    setPagination(prev => ({
-      ...prev,
-      total: Math.max(0, prev.total - 1),
-      totalPages: Math.ceil(Math.max(0, prev.total - 1) / prev.limit)
-    }));
-  }, [pagination.page, pagination.limit]);
+  }, []);
 
   const setLoadingState = useCallback((isLoading: boolean) => {
     setLoading(isLoading);
@@ -96,7 +114,14 @@ export function useTaskState(options: UseTaskStateOptions = {}) {
   }, []);
 
   const updatePagination = useCallback((newPagination: Partial<TaskPagination>) => {
-    setPagination(prev => ({ ...prev, ...newPagination }));
+    setPagination(prev => {
+      const updated = { ...prev, ...newPagination };
+      // Recalculate totalPages if total changed
+      if ('total' in newPagination && newPagination.total !== undefined) {
+        updated.totalPages = Math.ceil(newPagination.total / prev.limit);
+      }
+      return updated;
+    });
   }, []);
 
   const updateFilters = useCallback((newFilters: Partial<TaskFilters>) => {
@@ -139,9 +164,9 @@ export function useTaskState(options: UseTaskStateOptions = {}) {
     updateFilters,
     reset,
 
-    // Computed
-    hasNextPage: pagination.page < pagination.totalPages,
-    hasPreviousPage: pagination.page > 1,
-    isEmpty: tasks.length === 0,
+    // Computed (with null safety and edge case handling)
+    hasNextPage: pagination.page < pagination.totalPages && pagination.page > 0,
+    hasPreviousPage: pagination.page > 1 || pagination.page < 0, // Handle negative values as having previous pages
+    isEmpty: (tasks || []).length === 0,
   };
 }

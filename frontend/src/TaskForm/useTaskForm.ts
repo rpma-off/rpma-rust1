@@ -11,7 +11,7 @@ import { useApi } from '@/lib/utils/use-api';
 
 const logger = createLogger();
 
-export const useTaskForm = (userId?: string, initialData?: Partial<TaskFormData>) => {
+export const useTaskForm = (userId?: string, initialData?: Partial<TaskFormData>, onTaskCreate?: (task: any) => void) => {
   const isAuthenticated = useIsAuthenticated();
   const { apiGet, apiPost } = useApi();
   const [formData, setFormData] = useState<TaskFormData>(() => ({
@@ -452,13 +452,26 @@ export const useTaskForm = (userId?: string, initialData?: Partial<TaskFormData>
         throw new Error(errorData.error || 'Erreur lors de la création de la tâche');
       }
 
-      // Show success message
-      toast.success('Tâche créée avec succès !');
+      // Optimistic UI: Show success message immediately
+      const tempId = `temp-${Date.now()}`;
+      const optimisticTask = {
+        ...taskData,
+        id: tempId,
+        created_at: new Date().toISOString(),
+        status: 'pending' as const
+      };
 
+      // Trigger immediate success feedback
+      toast.success('Tâche créée (synchronisation en cours...)');
       setIsDirty(false);
       setLastSaved(new Date());
       
-      return { success: true };
+      // Add optimistic task to local state if callback provided
+      if (onTaskCreate) {
+        onTaskCreate(optimisticTask);
+      }
+      
+      return { success: true, optimisticTask };
     } catch (error) {
       console.error('Error submitting form:', error);
       

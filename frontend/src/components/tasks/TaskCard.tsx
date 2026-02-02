@@ -9,18 +9,18 @@ interface TaskCardProps {
 }
 
 const statusColors = {
-  quote: 'bg-gray-500',
-  scheduled: 'bg-blue-500',
-  in_progress: 'bg-yellow-500',
-  paused: 'bg-purple-500',
-  completed: 'bg-green-500',
-  cancelled: 'bg-red-500',
+  quote: 'var(--status-muted)',
+  scheduled: 'var(--status-primary)',
+  in_progress: 'var(--status-warning)',
+  paused: 'var(--status-accent)',
+  completed: 'var(--status-success)',
+  cancelled: 'var(--status-destructive)',
 };
 
 const priorityColors = {
-  high: 'border-red-500',
-  medium: 'border-yellow-500',
-  low: 'border-green-500',
+  high: 'var(--priority-high)',
+  medium: 'var(--priority-medium)',
+  low: 'var(--priority-low)',
 };
 
 export function TaskCard({ task, onClick }: TaskCardProps) {

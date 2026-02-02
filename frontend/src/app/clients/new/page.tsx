@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth/compatibility';
 import { clientService } from '@/lib/services/entities/client.service';
 import { ArrowLeft, Save, X, UserPlus, Building, User } from 'lucide-react';
@@ -32,7 +33,7 @@ export default function NewClientPage() {
     e.preventDefault();
 
     if (!user) {
-      alert('You must be logged in to create a client');
+      toast.error('You must be logged in to create a client');
       return;
     }
 

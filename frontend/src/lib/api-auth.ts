@@ -13,7 +13,7 @@ export interface AuthenticatedRequest {
 type RequestWithAuth = Request & { auth: AuthenticatedRequest };
 
 // JWT secret - must match the one used in Rust backend
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 interface JwtClaims {
   sub: string;        // User ID
@@ -40,6 +40,11 @@ export const authenticateRequest = async (request: Request): Promise<Authenticat
     console.log('Token length:', token.length);
 
     // Validate JWT token
+    if (!JWT_SECRET) {
+      console.error('JWT_SECRET is not defined');
+      return null;
+    }
+
     const decoded = jwt.verify(token, JWT_SECRET) as JwtClaims;
     console.log('JWT decoded successfully:', { sub: decoded.sub, email: decoded.email, role: decoded.role });
 

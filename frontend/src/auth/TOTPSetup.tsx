@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { toast } from 'sonner';
 import { mfaService } from '@/lib/services/auth/mfa.service';
 
 interface TOTPSetupProps {
@@ -117,7 +118,7 @@ const TOTPSetup: React.FC<TOTPSetupProps> = ({ sessionToken, onSetupComplete }) 
             onClick={() => {
               // Copy to clipboard
               navigator.clipboard.writeText(recoveryCodes.join('\n'));
-              alert('Recovery codes copied to clipboard');
+              toast.success('Recovery codes copied to clipboard');
             }}
           >
             Copy codes to clipboard
@@ -184,7 +185,7 @@ const TOTPSetup: React.FC<TOTPSetupProps> = ({ sessionToken, onSetupComplete }) 
                   className="text-xs text-blue-600 hover:text-blue-800 mt-1"
                   onClick={() => {
                     navigator.clipboard.writeText(secret);
-                    alert('Secret code copied to clipboard');
+                    toast.success('Secret code copied to clipboard');
                   }}
                 >
                   Copy to clipboard

@@ -9,26 +9,26 @@ import { CheckCircle2, Clock, Clock3, AlertCircle, Car, UserCircle, Calendar, Mo
 // Status configuration for consistent display across all card types
 export const STATUS_CONFIG = {
   pending: {
-    color: 'bg-blue-500/20 text-blue-400 border-blue-500/40',
-    dot: 'bg-blue-500',
+    color: 'bg-[var(--status-primary)]/20 text-[var(--status-primary-foreground)] border-[var(--status-primary)]/40',
+    dot: 'bg-[var(--status-primary)]',
     icon: Clock3,
     label: 'En attente'
   },
   in_progress: {
-    color: 'bg-amber-500/20 text-amber-400 border-amber-500/40',
-    dot: 'bg-amber-500',
+    color: 'bg-[var(--status-warning)]/20 text-[var(--status-warning-foreground)] border-[var(--status-warning)]/40',
+    dot: 'bg-[var(--status-warning)]',
     icon: Clock,
     label: 'En cours'
   },
   completed: {
-    color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40',
-    dot: 'bg-emerald-500',
+    color: 'bg-[var(--status-success)]/20 text-[var(--status-success-foreground)] border-[var(--status-success)]/40',
+    dot: 'bg-[var(--status-success)]',
     icon: CheckCircle2,
     label: 'Terminée'
   },
   cancelled: {
-    color: 'bg-red-500/20 text-red-400 border-red-500/40',
-    dot: 'bg-red-500',
+    color: 'bg-[var(--status-destructive)]/20 text-[var(--status-destructive-foreground)] border-[var(--status-destructive)]/40',
+    dot: 'bg-[var(--status-destructive)]',
     icon: AlertCircle,
     label: 'Annulée'
   }
