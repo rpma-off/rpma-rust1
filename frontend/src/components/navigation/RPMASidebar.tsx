@@ -1,0 +1,280 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useAuth } from '@/lib/auth/compatibility';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  Users,
+  Package,
+  Settings as SettingsIcon,
+  Workflow,
+  Activity,
+  BarChart3,
+  Moon,
+  MessageSquare,
+  X,
+  ChevronRight,
+} from 'lucide-react';
+
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+}
+
+const navItems: NavItem[] = [
+  { href: '/team', label: 'Employees/Resources', icon: <Users className="w-5 h-5" /> },
+  { href: '/inventory', label: 'Inventory', icon: <Package className="w-5 h-5" /> },
+  { href: '/configuration', label: 'Integrations', icon: <Workflow className="w-5 h-5" /> },
+  { href: '/settings', label: 'Preferences', icon: <SettingsIcon className="w-5 h-5" /> },
+  { href: '/tasks', label: 'Workflows', icon: <Workflow className="w-5 h-5" /> },
+  { href: '/interventions', label: 'Activity', icon: <Activity className="w-5 h-5" /> },
+  { href: '/analytics', label: 'Analytics', icon: <BarChart3 className="w-5 h-5" /> },
+];
+
+export function RPMASidebar({ onMobileClose, isOpen, onToggle }: { onMobileClose?: () => void; isOpen: boolean; onToggle: () => void }) {
+  const pathname = usePathname();
+  const { user, profile } = useAuth();
+
+  const isActive = (href: string) => {
+    if (href === '/tasks' && pathname === '/interventions') return true;
+    if (href === '/settings' && pathname.startsWith('/configuration')) return true;
+    if (href === '/tasks' && pathname.startsWith('/tasks')) return true;
+    if (href === '/team' && pathname.startsWith('/team')) return true;
+    if (href === '/technicians' && pathname.startsWith('/technicians')) return true;
+    return pathname === href;
+  };
+
+  const NavButton = ({ item }: { item: NavItem }) => {
+    return (
+      <Button
+        variant="ghost"
+        className={cn(
+          'w-full justify-start h-12 transition-all duration-200 px-2',
+          isActive(item.href)
+            ? 'bg-gray-100 text-gray-900 font-medium'
+            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+        )}
+        onClick={() => onMobileClose?.()}
+      >
+        <span className="flex-shrink-0">{item.icon}</span>
+        <span className="ml-3 text-sm">{item.label}</span>
+      </Button>
+    );
+  };
+
+  return (
+    <TooltipProvider delayDuration={0}>
+      {isOpen && (
+        <aside className="hidden lg:flex flex-col bg-white border-r border-gray-200 flex-shrink-0 h-full overflow-y-auto w-72">
+          <div className="h-16 flex items-center justify-between px-4 border-b border-gray-50">
+            <div className="text-2xl font-bold text-gray-400 tracking-tight">
+              rpma
+            </div>
+            <div className="flex items-center gap-2">
+              <button className="text-gray-400 hover:text-gray-600">
+                <Moon className="h-5 w-5" />
+              </button>
+              <button
+                onClick={onToggle}
+                className="p-2 hover:bg-gray-100 rounded transition-colors"
+              >
+                <X className="w-4 h-4 text-gray-600" />
+              </button>
+            </div>
+          </div>
+
+        <div className="flex flex-col border-b border-gray-100">
+          <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer bg-gray-50/50">
+            <div className="flex items-center space-x-3">
+              <div className="bg-gray-200 rounded text-gray-500 font-bold h-8 w-8 flex items-center justify-center text-xs">R</div>
+              <div>
+                <p className="text-xs text-gray-400">Business</p>
+                <p className="text-sm font-semibold text-gray-700">RPMA</p>
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-gray-400" />
+          </div>
+          <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer border-t border-gray-100">
+            <div className="flex items-center space-x-3">
+              <div className="relative bg-gray-200 rounded text-gray-500 font-bold h-8 w-8 flex items-center justify-center text-xs">
+                A
+                <span className="absolute bottom-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-1 ring-white"></span>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400">Employee</p>
+                <p className="text-sm font-semibold text-gray-700">{profile?.first_name} {profile?.last_name}</p>
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-gray-400" />
+          </div>
+        </div>
+
+        <nav className="flex-1 px-4 py-4 space-y-1">
+          <Link href="/messages">
+            <Button
+              className={cn(
+                'w-full flex items-center justify-center space-x-2 border border-gray-400 text-gray-700 rounded-lg py-2 mb-6 hover:bg-gray-50 font-medium transition-colors',
+                isActive('/messages') ? 'bg-gray-100' : ''
+              )}
+              onClick={() => onMobileClose?.()}
+            >
+              <MessageSquare className="h-5 w-5" />
+              <span>Message Center</span>
+            </Button>
+          </Link>
+
+          {navItems.map((item) => (
+            <Link key={item.href} href={item.href}>
+              <NavButton item={item} />
+            </Link>
+          ))}
+        </nav>
+
+        <div className="border-t border-gray-200 p-4">
+          <Link href="/settings">
+            <Button
+              variant="ghost"
+              className={cn(
+                'w-full justify-start h-10 transition-all duration-200 px-2',
+                isActive('/settings') || isActive('/configuration')
+                  ? 'bg-gray-100 text-gray-900 font-medium'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              )}
+            >
+              <SettingsIcon className="w-5 h-5 flex-shrink-0" />
+              <span className="ml-3 text-sm">Settings</span>
+            </Button>
+          </Link>
+        </div>
+        </aside>
+      )}
+    </TooltipProvider>
+  );
+}
+
+export function RPMAMobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const pathname = usePathname();
+  const { user, profile } = useAuth();
+
+  const isActive = (href: string) => {
+    if (href === '/tasks' && pathname === '/interventions') return true;
+    if (href === '/settings' && pathname.startsWith('/configuration')) return true;
+    if (href === '/tasks' && pathname.startsWith('/tasks')) return true;
+    if (href === '/team' && pathname.startsWith('/team')) return true;
+    if (href === '/technicians' && pathname.startsWith('/technicians')) return true;
+    return pathname === href;
+  };
+
+  return (
+    <>
+      {isOpen && (
+        <div className="lg:hidden fixed inset-0 z-50">
+          <div
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm"
+            onClick={onClose}
+          />
+          <div className="fixed left-0 top-0 bottom-0 w-72 bg-white overflow-y-auto transform transition-transform duration-300 ease-in-out">
+            <div className="h-16 flex items-center justify-between px-4 border-b border-gray-50 bg-white">
+              <div className="text-2xl font-bold text-gray-400 tracking-tight">
+                rpma
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-gray-100 rounded transition-colors"
+              >
+                <X className="w-4 h-4 text-gray-600" />
+              </button>
+            </div>
+
+            <div className="flex flex-col border-b border-gray-100">
+              <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer bg-gray-50/50">
+                <div className="flex items-center space-x-3">
+                  <div className="bg-gray-200 rounded text-gray-500 font-bold h-8 w-8 flex items-center justify-center text-xs">R</div>
+                  <div>
+                    <p className="text-xs text-gray-400">Business</p>
+                    <p className="text-sm font-semibold text-gray-700">RPMA</p>
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-gray-400" />
+              </div>
+              <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer border-t border-gray-100">
+                <div className="flex items-center space-x-3">
+                  <div className="relative bg-gray-200 rounded text-gray-500 font-bold h-8 w-8 flex items-center justify-center text-xs">
+                    A
+                    <span className="absolute bottom-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-1 ring-white"></span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">Employee</p>
+                    <p className="text-sm font-semibold text-gray-700">{profile?.first_name} {profile?.last_name}</p>
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-gray-400" />
+              </div>
+            </div>
+
+            <nav className="flex-1 px-4 py-4 space-y-1">
+              <Link href="/messages">
+                <Button
+                  className={cn(
+                    'w-full flex items-center justify-center space-x-2 border border-gray-400 text-gray-700 rounded-lg py-2 mb-6 hover:bg-gray-50 font-medium transition-colors',
+                    isActive('/messages') ? 'bg-gray-100' : ''
+                  )}
+                  onClick={onClose}
+                >
+                  <MessageSquare className="h-5 w-5" />
+                  <span>Message Center</span>
+                </Button>
+              </Link>
+
+              {navItems.map((item) => (
+                <Link key={item.href} href={item.href}>
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      'w-full justify-start h-12 transition-all duration-200 px-2',
+                      isActive(item.href)
+                        ? 'bg-gray-100 text-gray-900 font-medium'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    )}
+                    onClick={onClose}
+                  >
+                    <span className="flex-shrink-0">{item.icon}</span>
+                    <span className="ml-3 text-sm">{item.label}</span>
+                  </Button>
+                </Link>
+              ))}
+            </nav>
+
+            <div className="border-t border-gray-200 p-4">
+              <Link href="/settings">
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    'w-full justify-start h-10 transition-all duration-200 px-2',
+                    isActive('/settings') || isActive('/configuration')
+                      ? 'bg-gray-100 text-gray-900 font-medium'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  )}
+                  onClick={onClose}
+                >
+                  <SettingsIcon className="w-5 h-5 flex-shrink-0" />
+                  <span className="ml-3 text-sm">Settings</span>
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

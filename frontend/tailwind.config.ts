@@ -41,6 +41,12 @@ const config: Config = {
           active: 'hsl(var(--accent-active))',
           foreground: 'hsl(var(--accent-foreground))',
         },
+        rpma: {
+          DEFAULT: 'hsl(var(--rpma-primary))',
+          hover: 'hsl(var(--rpma-hover))',
+          active: 'hsl(var(--rpma-active))',
+          foreground: 'hsl(var(--rpma-foreground))',
+        },
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',

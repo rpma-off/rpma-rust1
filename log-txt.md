@@ -1,4 +1,4 @@
-﻿﻿<!DOCTYPE html>
+﻿﻿replace our existant layout by : <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -192,4 +192,4 @@
     </main>
 
 </body>
-</html>
+</html>  , think harder steos by steps, use our existant pages adapt it to our codebase. 

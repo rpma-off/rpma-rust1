@@ -1,9 +1,8 @@
 'use client';
 
 import { useAuth } from '@/lib/auth/compatibility';
-import { usePathname, useRouter } from 'next/navigation';
-import { TopNav } from '@/components/navigation/TopNav';
-import { SimpleSidebar } from '@/components/navigation/SimpleSidebar';
+import { usePathname } from 'next/navigation';
+import { RPMALayout } from '@/components/RPMALayout';
 
 export default function AppNavigation({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -18,20 +17,8 @@ export default function AppNavigation({ children }: { children: React.ReactNode 
   }
 
   return (
-    <div className="flex h-screen bg-background">
-      {/* Left Sidebar - New SimpleSidebar */}
-      <SimpleSidebar />
-      
-      {/* Main Content Area with TopNav */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Top Navigation Bar */}
-        <TopNav />
-        
-        {/* Main Content */}
-        <main className="flex-1 overflow-auto">
-          {children}
-        </main>
-      </div>
-    </div>
+    <RPMALayout>
+      {children}
+    </RPMALayout>
   );
 }

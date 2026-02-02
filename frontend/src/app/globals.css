@@ -63,6 +63,16 @@
     --accent-foreground: 0 0% 100%;
     /* #FFFFFF White text on teal */
 
+    /* RPMA Primary Colors - Green */
+    --rpma-primary: 147 71% 52%;
+    /* #3cd4a0 RPMA Green */
+    --rpma-hover: 147 71% 42%;
+    /* #3cd4a0 Hover */
+    --rpma-active: 147 71% 32%;
+    /* #3cd4a0 Active */
+    --rpma-foreground: 0 0% 100%;
+    /* #FFFFFF White text on RPMA green */
+
     /* Secondary Colors */
     --secondary: 210 40% 96.1%;
     /* #F3F4F6 Light Gray */
@@ -186,6 +196,16 @@
     /* #0F766E Teal Active */
     --accent-foreground: 0 0% 100%;
     /* #FFFFFF White text */
+
+    /* RPMA Primary Colors - Green (same in dark mode) */
+    --rpma-primary: 147 71% 52%;
+    /* #3cd4a0 RPMA Green */
+    --rpma-hover: 147 71% 42%;
+    /* #3cd4a0 Hover */
+    --rpma-active: 147 71% 32%;
+    /* #3cd4a0 Active */
+    --rpma-foreground: 0 0% 100%;
+    /* #FFFFFF White text on RPMA green */
 
     /* Secondary Colors */
     --secondary: 215 25% 27%;
