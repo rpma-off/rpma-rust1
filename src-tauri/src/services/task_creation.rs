@@ -255,6 +255,38 @@ impl TaskCreationService {
             AppError::Database(format!("Failed to create task: {}", e))
         })?;
 
+        // Add task to sync queue for offline/remote synchronization
+        let task_json = serde_json::to_string(&task).map_err(|e| {
+            error!("Failed to serialize task for sync queue: {}", e);
+            AppError::Database(format!("Failed to serialize task for sync: {}", e))
+        })?;
+
+        conn.execute(
+            r#"
+            INSERT INTO sync_queue (
+                operation_type, entity_type, entity_id, data, status, 
+                priority, user_id, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            "#,
+            params![
+                "create",
+                "task",
+                task.id,
+                task_json,
+                "pending",
+                5,
+                user_id,
+                now_millis,
+            ],
+        ).map_err(|e| {
+            error!("Failed to add task {} to sync queue: {}", task.id, e);
+            // Non-fatal error - task was created successfully, just log the error
+            warn!("Task created but not added to sync queue: {}", e);
+            e
+        })?;
+
+        debug!("Task {} added to sync queue", task.id);
+
         Ok(task)
     }
 

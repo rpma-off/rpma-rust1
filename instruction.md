@@ -1,123 +1,253 @@
-﻿﻿ RPMA Frontend Architecture Audit
+﻿﻿# Backend Services & Business Logic Audit
 
-**Role:** You are a Senior Frontend Architect and Security Auditor specializing in Next.js, React, Tauri, and TypeScript.
+## Context
+Audit 45+ Rust services implementing complex business logic including authentication, PPF workflows, inventory management, and real-time synchronization.
 
-**Context:** You are auditing the **RPMA PPF Intervention v2** application. This is an offline-first desktop application using a Tauri (Rust) backend and a Next.js 14 frontend.
+## Audit Objectives
 
-**Objective:** Perform a comprehensive audit of the `frontend/` directory. You must verify that the implementation aligns with the provided documentation (`API.md`, `ARCHITECTURE.md`, `DESIGN.md`, `REQUIREMENTS.md`, etc.) and identify code quality, security, and architectural issues.
+1. **Service Architecture Quality**
+   - Service layer organization (45+ services across 9 domains)
+   - Dependency injection implementation
+   - Service interface design
+   - Business logic encapsulation
 
-**Provided Documentation for Reference:**
-1.  `ARCHITECTURE.md` (4-Tier Architecture, Module Structure)
-2.  `API.md` (Tauri IPC Endpoints & Data Models)
-3.  `DESIGN.md` (Design System, Component Library, Theming)
-4.  `DATABASE.md` & `REQUIREMENTS.md` (Data Models & Business Logic)
-5.  `USER-FLOWS.md` (Expected User Journeys)
-6.  `SCRIPTS_DOCUMENTATION.md` (Type Sync & Validation Scripts)
+2. **Business Rule Implementation**
+   - Task lifecycle management
+   - 4-step PPF intervention workflow
+   - Material consumption tracking
+   - Photo quality validation
+   - Client-task relationship integrity
 
----
+3. **Error Handling & Validation**
+   - Input validation comprehensiveness (validation.rs - 34KB)
+   - Error type hierarchy (AppError enum)
+   - Error context preservation
+   - Recovery mechanisms
 
-## 🕵️‍♂️ Audit Instructions
+4. **Transaction Management**
+   - ACID compliance verification
+   - Savepoint usage
+   - Rollback handling
+   - Concurrent modification prevention
 
-Please analyze the `frontend/` source code and execute the following audit phases.
+## Service-by-Service Review
 
-### Phase 1: Architecture & Structure Consistency
-**Goal:** Verify the code structure matches the documented 4-tier architecture and Next.js App Router conventions.
+### Authentication & Security Services (6 services)
 
-1.  **Directory Structure:** Check if `frontend/src/` is organized correctly into `app`, `components`, `hooks`, `lib`, `store`, and `types`.
-2.  **Routing Strategy:** Verify that routes in `app/` (e.g., `/tasks/[id]`, `/interventions/[id]`) align with the flows defined in `USER-FLOWS.md`.
-3.  **Component Separation:** Are domain components (Task, Intervention, Client) clearly separated from reusable UI primitives (`components/ui`)?
-4.  **API Integration:** How are Tauri commands invoked? Check if `lib/api/` or `hooks` properly use `invoke()` from `@tauri-apps/api/core`.
+**auth.rs (36KB) - Core Authentication**
+- Argon2 password hashing configuration
+- Credential validation logic
+- Session creation workflow
+- Rate limiting effectiveness
 
-### Phase 2: Type Safety & API Drift Detection
-**Goal:** Ensure the frontend types match the Rust backend models.
+**token.rs - JWT Management**
+- Token generation security
+- Signature validation
+- Refresh token handling
+- Expiration policies (default 24h)
 
-1.  **Type Generation:** Check the contents of `frontend/src/lib/backend.ts`. Does it contain all interfaces defined in `API.md` (e.g., `User`, `Task`, `Intervention`, `Material`)?
-2.  **Drift Analysis:** Compare the types used in `frontend/src/types/` or `hooks/` with the generated `backend.ts`.
-    *   Are developers manually defining types that should be imported from `backend.ts`?
-    *   Are there obvious type mismatches (e.g., String vs Number for IDs)?
-3.  **Zod Schemas:** Check if forms (`components/forms/` or specific pages) use Zod schemas that align with the API Request/Response structures defined in `API.md`.
+**two_factor.rs - 2FA Implementation**
+- TOTP algorithm correctness
+- Backup code security
+- QR code generation
+- Recovery procedures
 
-### Phase 3: UI/UX & Design System Compliance
-**Goal:** Verify adherence to the design system defined in `DESIGN.md`.
+**session.rs - Session Management**
+- Lifecycle management
+- Activity tracking accuracy
+- Cleanup mechanisms
+- Concurrent session handling
 
-1.  **Tailwind Usage:** Are utility classes being used consistently, or are there arbitrary pixel values?
-2.  **Component Library:** Are components imported from `@/components/ui` (shadcn/ui) instead of native HTML elements where applicable?
-3.  **Theming:** Check implementation of `next-themes`. Is the dark mode toggle functioning correctly? Do all components respect CSS variables (`--background`, `--foreground`)?
-4.  **Responsive Design:** Are layouts responsive? Check for `md:`, `lg:` classes in page layouts.
-5.  **Accessibility (WCAG):**
-    *   Are interactive elements accessible via keyboard?
-    *   Do forms have associated `<Label>` components?
-    *   Are ARIA labels used for icon-only buttons?
+**security_monitor.rs - Security Monitoring**
+- Event detection completeness
+- Threat pattern recognition
+- Audit trail integration
+- Alert routing logic
 
-### Phase 4: State Management & Data Fetching
-**Goal:** Ensure efficient data handling.
+**rate_limiter.rs - Abuse Prevention**
+- Rate limit algorithms
+- Progressive delay implementation
+- Whitelist/blacklist management
+- Distributed rate limiting readiness
 
-1.  **TanStack Query:** Is it used for server state? Check for proper usage of `useQuery` and `useMutation`.
-    *   Are cache keys consistent?
-    *   Is invalidation handled correctly after mutations?
-2.  **Zustand (Client State):** Is it used sparingly and only for UI-specific state (e.g., Sidebar open/close) or complex client-side logic?
-3.  **Prop Drilling:** Identify any deep prop drilling that could be replaced by Context or Zustand.
+### Task Management Services (9 services)
 
-### Phase 5: Security & Offline-First Resilience
-**Goal:** Identify security risks and offline handling gaps.
+**task.rs - Orchestration**
+- CRUD coordination
+- Business rule enforcement
+- Event publishing
+- Cross-service integration
 
-1.  **Environment Variables:** Check for hardcoded secrets in `frontend/`. Ensure sensitive values (JWT_SECRET) are NOT stored here.
-2.  **IPC Safety:** Review how `invoke()` is called. Is user input validated before sending to Rust? Are there any commands exposed that shouldn't be?
-3.  **Offline Handling:** Does the UI handle connection loss gracefully? Is there an "Offline Mode" indicator as mentioned in `REQUIREMENTS.md`?
-4.  **Authentication:**
-    *   Check `hooks/useAuth.ts` (or equivalent).
-    *   Is the token stored securely (e.g., secure local storage)?
-    *   Is the user redirected correctly on 401/403 errors?
+**task_crud.rs - Data Operations**
+- Create/update/delete logic
+- Transaction handling
+- Validation integration
+- Error propagation
 
-### Phase 6: User Flow Validation
-**Goal:** Trace critical user journeys.
+**task_queries.rs - Query Operations**
+- Filter implementation correctness
+- Pagination efficiency
+- Sorting logic
+- Performance optimization
 
-1.  **Authentication:** Trace the flow from `/login` → `/dashboard`. Does it handle 2FA if enabled? (Refer to `USER-FLOWS.md`).
-2.  **Task Creation:** Trace `/tasks/new`. Does the `TaskForm` validate against Zod schemas? Does it handle file uploads or photos correctly?
-3.  **Intervention Wizard:** Trace `/interventions/[id]`. Does the multi-step wizard (Inspection → Preparation → Installation → Finalization) match the logic in `API.md` (`intervention_advance_step`)?
+**task_statistics.rs - Analytics**
+- Metric calculation accuracy
+- Aggregation efficiency
+- Real-time vs batch processing
+- Caching strategy
 
-### Phase 7: Code Quality & Performance
-**Goal:** Identify technical debt.
+**task_validation.rs - Business Rules**
+- Rule completeness
+- Validation message quality
+- Edge case coverage
+- Custom validation extensibility
 
-1.  **Performance:** Look for `useEffect` dependencies that could cause infinite loops. Check for unnecessary re-renders (missing `useMemo`/`useCallback`).
-2.  **Error Handling:** Are Error Boundaries implemented? Is the `error.tsx` page customized?
-3.  **TODOs & FIXMEs:** List any `TODO` or `FIXME` comments found in the frontend code.
+**task_client_integration.rs - Relationship Management**
+- Statistics synchronization accuracy
+- Trigger coordination
+- Referential integrity
+- Performance impact
 
----
+**task_new.rs - Task Creation**
+- Default value logic
+- Workflow initialization
+- Notification triggering
+- Audit logging
 
-## 📋 Expected Output Format
+**task_clean.rs - Maintenance**
+- Cleanup criteria appropriateness
+- Archival strategy
+- Data retention compliance
+- Performance impact
 
-Please generate a structured report in Markdown format with the following sections:
+### Intervention Workflow Services (7 services)
 
-### 1. Executive Summary
-*   Overall health score (1-10).
-*   Critical blocking issues (if any).
+**intervention_workflow.rs (31KB) - State Machine**
+- State transition validation
+- Step ordering enforcement
+- Photo requirement checking
+- GPS metadata validation
+- Quality control gates
 
-### 2. Critical Findings
-*   Security vulnerabilities.
-*   Breaking type mismatches between Frontend and Backend.
-*   Major architectural violations.
+**intervention.rs - Orchestration**
+- Service coordination
+- Business rule application
+- Event publishing
+- Error recovery
 
-### 3. Architecture & Design System
-*   Compliance with `DESIGN.md` (Colors, Typography, Components).
-*   Inconsistencies in UI patterns.
+**intervention_data.rs - Data Management**
+- CRUD operations
+- Complex query handling
+- Data transformation
+- Persistence strategy
 
-### 4. Type Safety & API Integration
-*   Status of `backend.ts` generation.
-*   List of mismatches between `API.md` definitions and actual implementation.
+**intervention_validation.rs - Business Rules**
+- Step completion criteria
+- Photo quality thresholds
+- Material consumption limits
+- Environmental condition validation
 
-### 5. Code Quality & Best Practices
-*   React patterns (Hooks, Performance).
-*   State management issues.
-*   Accessibility gaps.
+**intervention_calculation.rs - Computations**
+- Progress calculation accuracy
+- Duration tracking logic
+- Cost estimation algorithms
+- Quality scoring formulas
 
-### 6. User Flow Verification
-*   Status of key flows (Login, Task Create, Intervention).
-*   Any missing steps compared to `USER-FLOWS.md`.
+### Photo Management (1 service with 6 modules)
 
-### 7. Recommendations
-*   Prioritized list of actions to take (e.g., "Refactor Auth Hook", "Update Type Generation", "Fix CSS Variable").
+**photo/facade.rs - Coordination**
+- Service orchestration
+- Error handling consolidation
+- Transaction management
 
----
+**photo/metadata.rs - EXIF Processing**
+- GPS coordinate extraction
+- EXIF data parsing completeness
+- Metadata validation
+- Privacy considerations (GPS sanitization)
 
-**Begin Audit.**
+**photo/processing.rs - Image Operations**
+- Quality analysis algorithms (blur, exposure, composition)
+- Compression strategy
+- Format conversion
+- Optimization effectiveness
+
+**photo/statistics.rs - Analytics**
+- Upload metrics
+- Quality score aggregation
+- Storage utilization
+- Performance tracking
+
+**photo/storage.rs - File Management**
+- Secure storage implementation
+- Access control enforcement
+- Cleanup mechanisms
+- Encryption readiness
+
+**photo/upload.rs - Upload Handling**
+- Multi-format support
+- Validation rules
+- Progress tracking
+- Error recovery
+
+## Code Quality Metrics
+
+For each service, assess:
+
+1. **Complexity Analysis**
+   - Cyclomatic complexity (target: < 10)
+   - Function length (target: < 50 lines)
+   - Module cohesion
+   - Coupling metrics
+
+2. **Error Handling Patterns**
+   - Error type usage consistency
+   - Context preservation
+   - Recovery strategies
+   - User-facing error messages
+
+3. **Testing Coverage**
+   - Unit test presence
+   - Integration test coverage
+   - Edge case testing
+   - Mock quality
+
+4. **Documentation Quality**
+   - Doc comments completeness
+   - API documentation
+   - Business logic explanation
+   - Example code
+
+## Performance Profiling
+
+Identify:
+- CPU-intensive operations
+- Memory allocation patterns
+- Database query frequency
+- Lock contention points
+- Async/await usage effectiveness
+
+## Deliverables Required
+
+1. **Service Quality Matrix**
+   - Each service scored on: Complexity, Testing, Documentation, Performance
+   - Heat map of problem areas
+   - Best practice examples
+
+2. **Business Logic Validation Report**
+   - Workflow correctness verification
+   - Edge case handling assessment
+   - Rule completeness analysis
+
+3. **Refactoring Recommendations**
+   - High-priority code smells
+   - Duplication elimination opportunities
+   - Abstraction improvement suggestions
+   - Performance optimization targets
+
+4. **Testing Strategy Enhancement**
+   - Coverage gap identification
+   - Missing test scenarios
+   - Integration test expansion needs
+   - Performance test requirements
+

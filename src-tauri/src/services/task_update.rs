@@ -115,8 +115,33 @@ impl TaskUpdateService {
             task.priority = priority.clone();
         }
 
-        if let Some(status) = &req.status {
-            task.status = status.clone();
+        if let Some(new_status) = &req.status {
+            let old_status = task.status.clone();
+            
+            if let Err(e) = self.validate_status_transition(&old_status, new_status) {
+                return Err(AppError::Validation(format!(
+                    "Invalid status transition from {:?} to {:?}: {}", old_status, new_status, e
+                )));
+            }
+            
+            task.status = new_status.clone();
+            
+            match (&old_status, new_status) {
+                (crate::models::task::TaskStatus::Pending | crate::models::task::TaskStatus::Scheduled | crate::models::task::TaskStatus::Assigned, crate::models::task::TaskStatus::InProgress) => {
+                    if task.started_at.is_none() {
+                        task.started_at = Some(Utc::now().timestamp_millis());
+                    }
+                }
+                (_, crate::models::task::TaskStatus::Completed) => {
+                    if task.completed_at.is_none() {
+                        task.completed_at = Some(Utc::now().timestamp_millis());
+                    }
+                }
+                (crate::models::task::TaskStatus::Completed, _) => {
+                    task.completed_at = None;
+                }
+                _ => {}
+            }
         }
 
         if let Some(vehicle_plate) = &req.vehicle_plate {
@@ -150,8 +175,27 @@ impl TaskUpdateService {
             task.vin = req.vin.clone();
         }
 
-        if let Some(client_id) = &req.client_id {
-            task.client_id = req.client_id.clone();
+        if let Some(new_client_id) = &req.client_id {
+            if let Some(cid) = new_client_id {
+                let exists: i64 = self.db.query_single_value(
+                    "SELECT COUNT(*) FROM clients WHERE id = ? AND deleted_at IS NULL",
+                    params![cid],
+                )
+                .map_err(|e| AppError::Database(format!("Failed to check client existence: {}", e)))?;
+                
+                if exists == 0 {
+                    return Err(AppError::Validation(format!(
+                        "Client with ID {} does not exist", cid
+                    )));
+                }
+                
+                if let Some(old_client_id) = &task.client_id {
+                    if old_client_id != cid {
+                        warn!("Moving task {} from client {} to {}", task.id, old_client_id, cid);
+                    }
+                }
+            }
+            task.client_id = new_client_id.clone();
         }
 
         if let Some(scheduled_date) = &req.scheduled_date {
@@ -322,5 +366,75 @@ impl TaskUpdateService {
         self.db
             .query_single_as::<Task>(sql, params![id])
             .map_err(|e| AppError::Database(format!("Failed to get task: {}", e)))
+    }
+
+    /// Validate status transition
+    ///
+    /// Ensures that status changes follow business rules and prevent invalid state transitions.
+    ///
+    /// # Arguments
+    /// * `current` - The current status of the task
+    /// * `new` - The new status being requested
+    ///
+    /// # Returns
+    /// * `Ok(())` - Transition is valid
+    /// * `Err(String)` - Transition is invalid with reason
+    fn validate_status_transition(
+        &self,
+        current: &crate::models::task::TaskStatus,
+        new: &crate::models::task::TaskStatus,
+    ) -> Result<(), String> {
+        use crate::models::task::TaskStatus;
+
+        match (current, new) {
+            // Valid transitions
+            (TaskStatus::Draft, TaskStatus::Pending) => Ok(()),
+            (TaskStatus::Draft, TaskStatus::Scheduled) => Ok(()),
+            (TaskStatus::Draft, TaskStatus::Cancelled) => Ok(()),
+            
+            (TaskStatus::Pending, TaskStatus::InProgress) => Ok(()),
+            (TaskStatus::Pending, TaskStatus::Scheduled) => Ok(()),
+            (TaskStatus::Pending, TaskStatus::Cancelled) => Ok(()),
+            (TaskStatus::Pending, TaskStatus::OnHold) => Ok(()),
+            (TaskStatus::Pending, TaskStatus::Assigned) => Ok(()),
+            
+            (TaskStatus::Scheduled, TaskStatus::InProgress) => Ok(()),
+            (TaskStatus::Scheduled, TaskStatus::OnHold) => Ok(()),
+            (TaskStatus::Scheduled, TaskStatus::Cancelled) => Ok(()),
+            (TaskStatus::Scheduled, TaskStatus::Assigned) => Ok(()),
+            
+            (TaskStatus::Assigned, TaskStatus::InProgress) => Ok(()),
+            (TaskStatus::Assigned, TaskStatus::OnHold) => Ok(()),
+            (TaskStatus::Assigned, TaskStatus::Cancelled) => Ok(()),
+            
+            (TaskStatus::InProgress, TaskStatus::Completed) => Ok(()),
+            (TaskStatus::InProgress, TaskStatus::OnHold) => Ok(()),
+            (TaskStatus::InProgress, TaskStatus::Paused) => Ok(()),
+            (TaskStatus::InProgress, TaskStatus::Cancelled) => Ok(()),
+            
+            (TaskStatus::Paused, TaskStatus::InProgress) => Ok(()),
+            (TaskStatus::Paused, TaskStatus::Cancelled) => Ok(()),
+            
+            (TaskStatus::OnHold, TaskStatus::Pending) => Ok(()),
+            (TaskStatus::OnHold, TaskStatus::Scheduled) => Ok(()),
+            (TaskStatus::OnHold, TaskStatus::InProgress) => Ok(()),
+            (TaskStatus::OnHold, TaskStatus::Cancelled) => Ok(()),
+            
+            (TaskStatus::Completed, TaskStatus::Archived) => Ok(()),
+            
+            // Invalid transitions
+            (TaskStatus::Completed, TaskStatus::Pending) => Err("Cannot move completed task back to pending".to_string()),
+            (TaskStatus::Completed, TaskStatus::InProgress) => Err("Cannot move completed task back to in progress".to_string()),
+            (TaskStatus::Completed, TaskStatus::Scheduled) => Err("Cannot move completed task back to scheduled".to_string()),
+            
+            (TaskStatus::Cancelled, TaskStatus::Pending) => Err("Cannot move cancelled task back to pending".to_string()),
+            (TaskStatus::Cancelled, TaskStatus::InProgress) => Err("Cannot move cancelled task back to in progress".to_string()),
+            (TaskStatus::Cancelled, TaskStatus::Scheduled) => Err("Cannot move cancelled task back to scheduled".to_string()),
+            
+            (TaskStatus::Archived, TaskStatus::Pending) => Err("Cannot move archived task back to pending".to_string()),
+            (TaskStatus::Archived, TaskStatus::InProgress) => Err("Cannot move archived task back to in progress".to_string()),
+            
+            _ => Err(format!("Invalid status transition from {:?} to {:?}", current, new)),
+        }
     }
 }
