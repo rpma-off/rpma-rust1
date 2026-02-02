@@ -24,7 +24,7 @@ export function RPMALayout({ children, tasks, onRefresh, isRefreshing }: RPMALay
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-gray-100">
+    <div className="h-screen flex flex-col overflow-hidden bg-background">
       <RPMAMobileSidebar
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
@@ -45,7 +45,7 @@ export function RPMALayout({ children, tasks, onRefresh, isRefreshing }: RPMALay
           onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
         />
 
-        <main className="flex-1 overflow-auto bg-gray-100">
+        <main className="flex-1 overflow-auto bg-muted/30">
           <div className="p-6">
             {children}
           </div>

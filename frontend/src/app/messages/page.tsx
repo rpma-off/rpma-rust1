@@ -33,30 +33,32 @@ export default function MessagesPage() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-gradient-to-r from-zinc-900/80 to-zinc-800/80 rounded-xl p-4 sm:p-6 mb-6 border border-zinc-700/50 shadow-lg backdrop-blur-sm"
+          className="border-b border-border/20 bg-background rounded-xl mb-6"
         >
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
+          <div className="px-4 py-4 sm:px-6 sm:py-6">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent/10 border border-accent/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
+                </div>
+                <div>
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">Messages</h1>
+                  <p className="text-muted-foreground text-sm sm:text-base mt-1">
+                    Communication et notifications
+                  </p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">Messages</h1>
-                <p className="text-zinc-400 text-sm sm:text-base mt-1">
-                  Communication et notifications
-                </p>
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setActiveTab('compose')}
+                  className="flex items-center gap-2 border-border/60 text-foreground hover:bg-muted/10"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Nouveau message</span>
+                </Button>
               </div>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setActiveTab('compose')}
-                className="flex items-center gap-2 border-zinc-600 text-zinc-300 hover:bg-zinc-800 hover:text-white"
-              >
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Nouveau message</span>
-              </Button>
             </div>
           </div>
         </motion.div>
@@ -66,10 +68,10 @@ export default function MessagesPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="bg-gradient-to-r from-zinc-900/50 to-zinc-800/50 rounded-xl border border-zinc-700/30 backdrop-blur-sm overflow-hidden"
+          className="border border-border/20 bg-background rounded-xl overflow-hidden"
         >
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-zinc-800/50">
+            <TabsList className="grid w-full grid-cols-3 bg-muted/50 border-b border-border/10">
               <TabsTrigger value="inbox" className="flex items-center gap-2">
                 <Inbox className="h-4 w-4" />
                 <span className="hidden sm:inline">Boîte de réception</span>

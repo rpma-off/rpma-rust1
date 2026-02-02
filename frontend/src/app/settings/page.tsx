@@ -19,6 +19,7 @@ import {
 import { useLogger } from '@/hooks/useLogger';
 import { LogDomain } from '@/lib/logging/types';
 import { useAuth } from '@/contexts/AuthContext';
+import { PageHeader } from '@/components/ui/page-header';
 
 // Lazy load tab components to reduce initial bundle size
 const ProfileSettingsTab = dynamic(() => import('@/components/settings/ProfileSettingsTab').then(mod => ({ default: mod.ProfileSettingsTab })), {
@@ -49,17 +50,17 @@ const NotificationsTab = dynamic(() => import('@/components/settings/Notificatio
 const tabConfig = [
   {
     id: 'profile',
-    label: 'Profile',
+    label: 'Profil',
     icon: User
   },
   {
     id: 'preferences',
-    label: 'Preferences',
+    label: 'Préférences',
     icon: Bell
   },
   {
     id: 'security',
-    label: 'Security',
+    label: 'Sécurité',
     icon: Shield
   },
   {
@@ -69,7 +70,7 @@ const tabConfig = [
   },
   {
     id: 'accessibility',
-    label: 'Accessibility',
+    label: 'Accessibilité',
     icon: Eye
   },
   {
@@ -175,56 +176,28 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Enhanced Header */}
-        <div className="bg-gradient-to-r from-border/10 to-border/5 rounded-xl p-4 md:p-6 border border-border/20">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-accent/20 rounded-lg">
-                  <Settings className="h-5 w-5 text-accent" />
-                </div>
-                <div>
-                  <h1 className="text-xl md:text-2xl font-bold text-foreground">Paramètres</h1>
-                  <p className="text-border-light text-sm md:text-base">
-                    Gérez vos paramètres de compte et préférences
-                  </p>
-                </div>
+        {/* Header */}
+        <PageHeader
+          title="Paramètres"
+          subtitle="Gérez vos paramètres de compte et préférences"
+          icon={<Settings className="h-5 w-5 text-accent" />}
+          actions={
+            <>
+              <div className="hidden lg:flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded">
+                <kbd className="px-1.5 py-0.5 text-xs bg-border/20 rounded">Ctrl</kbd>
+                <span>+</span>
+                <kbd className="px-1.5 py-0.5 text-xs bg-border/20 rounded">1-6</kbd>
+                <span>pour naviguer</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="hidden lg:flex items-center gap-1 text-xs text-border-light bg-background/50 px-2 py-1 rounded">
-                  <kbd className="px-1.5 py-0.5 text-xs bg-border/20 rounded">Ctrl</kbd>
-                  <span>+</span>
-                  <kbd className="px-1.5 py-0.5 text-xs bg-border/20 rounded">1-6</kbd>
-                  <span>pour naviguer</span>
-                </div>
-                <Button variant="ghost" size="sm" className="text-border-light hover:text-foreground hover:bg-border/20">
-                  <HelpCircle className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-muted/10">
+                <HelpCircle className="h-4 w-4" />
+              </Button>
+            </>
+          }
+        />
 
-            {/* Quick Stats - Mobile */}
-            <div className="block lg:hidden">
-              <div className="grid grid-cols-3 gap-3">
-                <div className="text-center p-3 bg-background/50 rounded-lg border border-border/30">
-                  <div className="text-lg font-bold text-foreground">6</div>
-                  <div className="text-xs text-border-light">Sections</div>
-                </div>
-                <div className="text-center p-3 bg-background/50 rounded-lg border border-border/30">
-                  <div className="text-lg font-bold text-accent">Actif</div>
-                  <div className="text-xs text-border-light">Profil</div>
-                </div>
-                <div className="text-center p-3 bg-background/50 rounded-lg border border-border/30">
-                  <div className="text-lg font-bold text-foreground">✓</div>
-                  <div className="text-xs text-border-light">Sécurisé</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Enhanced Main Settings Card */}
-        <Card className="border-border/20 bg-border/5 shadow-xl">
+        {/* Main Settings Card */}
+        <Card className="border-border/20 bg-background shadow-lg">
           <CardHeader className="pb-4 border-b border-border/20">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-accent/20 rounded-lg">

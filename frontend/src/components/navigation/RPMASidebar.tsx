@@ -61,8 +61,8 @@ export function RPMASidebar({ onMobileClose, isOpen, onToggle }: { onMobileClose
         className={cn(
           'w-full justify-start h-12 transition-all duration-200 px-2',
           isActive(item.href)
-            ? 'bg-gray-100 text-gray-900 font-medium'
-            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            ? 'bg-accent/10 text-accent font-medium'
+            : 'text-muted-foreground hover:bg-muted/10 hover:text-foreground'
         )}
         onClick={() => onMobileClose?.()}
       >
@@ -123,8 +123,8 @@ export function RPMASidebar({ onMobileClose, isOpen, onToggle }: { onMobileClose
           <Link href="/messages">
             <Button
               className={cn(
-                'w-full flex items-center justify-center space-x-2 border border-gray-400 text-gray-700 rounded-lg py-2 mb-6 hover:bg-gray-50 font-medium transition-colors',
-                isActive('/messages') ? 'bg-gray-100' : ''
+                'w-full flex items-center justify-center space-x-2 border border-border text-foreground rounded-lg py-2 mb-6 hover:bg-muted/10 font-medium transition-colors',
+                isActive('/messages') ? 'bg-muted/10' : ''
               )}
               onClick={() => onMobileClose?.()}
             >
@@ -140,15 +140,15 @@ export function RPMASidebar({ onMobileClose, isOpen, onToggle }: { onMobileClose
           ))}
         </nav>
 
-        <div className="border-t border-gray-200 p-4">
+        <div className="border-t border-border p-4">
           <Link href="/settings">
             <Button
               variant="ghost"
               className={cn(
                 'w-full justify-start h-10 transition-all duration-200 px-2',
                 isActive('/settings') || isActive('/configuration')
-                  ? 'bg-gray-100 text-gray-900 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  ? 'bg-accent/10 text-accent font-medium'
+                  : 'text-muted-foreground hover:bg-muted/10 hover:text-foreground'
               )}
             >
               <SettingsIcon className="w-5 h-5 flex-shrink-0" />
@@ -226,8 +226,8 @@ export function RPMAMobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClos
               <Link href="/messages">
                 <Button
                   className={cn(
-                    'w-full flex items-center justify-center space-x-2 border border-gray-400 text-gray-700 rounded-lg py-2 mb-6 hover:bg-gray-50 font-medium transition-colors',
-                    isActive('/messages') ? 'bg-gray-100' : ''
+                    'w-full flex items-center justify-center space-x-2 border border-border text-foreground rounded-lg py-2 mb-6 hover:bg-muted/10 font-medium transition-colors',
+                    isActive('/messages') ? 'bg-muted/10' : ''
                   )}
                   onClick={onClose}
                 >
@@ -243,8 +243,8 @@ export function RPMAMobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClos
                     className={cn(
                       'w-full justify-start h-12 transition-all duration-200 px-2',
                       isActive(item.href)
-                        ? 'bg-gray-100 text-gray-900 font-medium'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        ? 'bg-accent/10 text-accent font-medium'
+                        : 'text-muted-foreground hover:bg-muted/10 hover:text-foreground'
                     )}
                     onClick={onClose}
                   >
@@ -255,15 +255,15 @@ export function RPMAMobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClos
               ))}
             </nav>
 
-            <div className="border-t border-gray-200 p-4">
+            <div className="border-t border-border p-4">
               <Link href="/settings">
                 <Button
                   variant="ghost"
                   className={cn(
                     'w-full justify-start h-10 transition-all duration-200 px-2',
                     isActive('/settings') || isActive('/configuration')
-                      ? 'bg-gray-100 text-gray-900 font-medium'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-accent/10 text-accent font-medium'
+                      : 'text-muted-foreground hover:bg-muted/10 hover:text-foreground'
                   )}
                   onClick={onClose}
                 >

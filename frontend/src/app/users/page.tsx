@@ -8,6 +8,8 @@ import { convertTimestamps } from '@/lib/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { logger, LogContext } from '@/lib/logger';
 import { ipcClient } from '@/lib/ipc/client';
+import { PageHeader, HeaderActionButton } from '@/components/ui/page-header';
+import { Users, UserPlus } from 'lucide-react';
 
 export default function UsersPage() {
   const { user, loading: authLoading } = useAuth();
@@ -104,15 +106,18 @@ export default function UsersPage() {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">User Management</h1>
-        <button
-          onClick={handleCreateUser}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          Add User
-        </button>
-      </div>
+      <PageHeader
+        title="Gestion des Utilisateurs"
+        subtitle="Gérer les comptes utilisateurs et les permissions"
+        icon={<Users className="w-6 h-6 text-accent" />}
+        actions={
+          <HeaderActionButton
+            label="Ajouter un utilisateur"
+            icon={<UserPlus className="w-4 h-4" />}
+            onClick={handleCreateUser}
+          />
+        }
+      />
 
       <UserList
         users={users}
