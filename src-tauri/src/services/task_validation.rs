@@ -6,8 +6,131 @@
 use crate::db::{Database, FromSqlRow};
 use crate::models::task::{Task, TaskPriority, TaskStatus};
 use crate::services::settings::SettingsService;
+use crate::services::task_constants::TASK_QUERY_COLUMNS;
 use rusqlite::params;
 use std::sync::Arc;
+
+/// Validate that a task status transition is allowed according to business rules.
+///
+/// This function enforces the task lifecycle state machine, preventing invalid
+/// transitions and ensuring proper workflow progression.
+///
+/// # Valid Transitions
+///
+/// - **Draft** → Pending, Scheduled, Cancelled
+/// - **Pending** → InProgress, Scheduled, OnHold, Cancelled, Assigned
+/// - **Scheduled** → InProgress, OnHold, Cancelled, Assigned
+/// - **Assigned** → InProgress, OnHold, Cancelled
+/// - **InProgress** → Completed, OnHold, Paused, Cancelled
+/// - **Paused** → InProgress, Cancelled
+/// - **OnHold** → Pending, Scheduled, InProgress, Cancelled
+/// - **Completed** → Archived
+///
+/// # Terminal States
+///
+/// Tasks in the following states cannot transition further:
+/// - **Cancelled** - Terminal state
+/// - **Archived** - Terminal state (read-only)
+///
+/// # Arguments
+///
+/// * `current` - The current status of the task
+/// * `new` - The proposed new status
+///
+/// # Returns
+///
+/// * `Ok(())` - Transition is valid
+/// * `Err(String)` - Transition is invalid with explanation
+///
+/// # Examples
+///
+/// ```
+/// use crate::models::task::TaskStatus;
+///
+/// assert!(validate_status_transition(&TaskStatus::Draft, &TaskStatus::Pending).is_ok());
+/// assert!(validate_status_transition(&TaskStatus::Completed, &TaskStatus::Pending).is_err());
+/// ```
+pub fn validate_status_transition(current: &TaskStatus, new: &TaskStatus) -> Result<(), String> {
+    match (current, new) {
+        // Valid transitions from Draft
+        (TaskStatus::Draft, TaskStatus::Pending) => Ok(()),
+        (TaskStatus::Draft, TaskStatus::Scheduled) => Ok(()),
+        (TaskStatus::Draft, TaskStatus::Cancelled) => Ok(()),
+
+        // Valid transitions from Pending
+        (TaskStatus::Pending, TaskStatus::InProgress) => Ok(()),
+        (TaskStatus::Pending, TaskStatus::Scheduled) => Ok(()),
+        (TaskStatus::Pending, TaskStatus::Cancelled) => Ok(()),
+        (TaskStatus::Pending, TaskStatus::OnHold) => Ok(()),
+        (TaskStatus::Pending, TaskStatus::Assigned) => Ok(()),
+
+        // Valid transitions from Scheduled
+        (TaskStatus::Scheduled, TaskStatus::InProgress) => Ok(()),
+        (TaskStatus::Scheduled, TaskStatus::OnHold) => Ok(()),
+        (TaskStatus::Scheduled, TaskStatus::Cancelled) => Ok(()),
+        (TaskStatus::Scheduled, TaskStatus::Assigned) => Ok(()),
+
+        // Valid transitions from Assigned
+        (TaskStatus::Assigned, TaskStatus::InProgress) => Ok(()),
+        (TaskStatus::Assigned, TaskStatus::OnHold) => Ok(()),
+        (TaskStatus::Assigned, TaskStatus::Cancelled) => Ok(()),
+
+        // Valid transitions from InProgress
+        (TaskStatus::InProgress, TaskStatus::Completed) => Ok(()),
+        (TaskStatus::InProgress, TaskStatus::OnHold) => Ok(()),
+        (TaskStatus::InProgress, TaskStatus::Paused) => Ok(()),
+        (TaskStatus::InProgress, TaskStatus::Cancelled) => Ok(()),
+
+        // Valid transitions from Paused
+        (TaskStatus::Paused, TaskStatus::InProgress) => Ok(()),
+        (TaskStatus::Paused, TaskStatus::Cancelled) => Ok(()),
+
+        // Valid transitions from OnHold
+        (TaskStatus::OnHold, TaskStatus::Pending) => Ok(()),
+        (TaskStatus::OnHold, TaskStatus::Scheduled) => Ok(()),
+        (TaskStatus::OnHold, TaskStatus::InProgress) => Ok(()),
+        (TaskStatus::OnHold, TaskStatus::Cancelled) => Ok(()),
+
+        // Valid transition from Completed
+        (TaskStatus::Completed, TaskStatus::Archived) => Ok(()),
+
+        // Invalid transitions from Completed (can only go to Archived)
+        (TaskStatus::Completed, TaskStatus::Pending) => {
+            Err("Cannot move completed task back to pending".to_string())
+        }
+        (TaskStatus::Completed, TaskStatus::InProgress) => {
+            Err("Cannot move completed task back to in progress".to_string())
+        }
+        (TaskStatus::Completed, TaskStatus::Scheduled) => {
+            Err("Cannot move completed task back to scheduled".to_string())
+        }
+
+        // Invalid transitions from Cancelled (terminal state)
+        (TaskStatus::Cancelled, TaskStatus::Pending) => {
+            Err("Cannot move cancelled task back to pending".to_string())
+        }
+        (TaskStatus::Cancelled, TaskStatus::InProgress) => {
+            Err("Cannot move cancelled task back to in progress".to_string())
+        }
+        (TaskStatus::Cancelled, TaskStatus::Scheduled) => {
+            Err("Cannot move cancelled task back to scheduled".to_string())
+        }
+
+        // Invalid transitions from Archived (terminal state)
+        (TaskStatus::Archived, TaskStatus::Pending) => {
+            Err("Cannot move archived task back to pending".to_string())
+        }
+        (TaskStatus::Archived, TaskStatus::InProgress) => {
+            Err("Cannot move archived task back to in progress".to_string())
+        }
+
+        // Catch-all for undefined transitions
+        _ => Err(format!(
+            "Invalid status transition from {:?} to {:?}",
+            current, new
+        )),
+    }
+}
 
 /// Service for validating task assignments and availability
 #[derive(Debug)]
@@ -414,13 +537,6 @@ impl TaskValidationService {
             "#,
             )
             .map_err(|e| e.to_string())?;
-        let _conflicts: i64 = stmt
-            .query_row(
-                params![user_id, date, start, start, end, end, start, end],
-                |row| row.get(0),
-            )
-            .map_err(|e| e.to_string())?;
-
         let conflicts: i64 = stmt
             .query_row(
                 params![user_id, date, start, start, end, end, start, end],
@@ -466,21 +582,16 @@ impl TaskValidationService {
     /// Get a task by ID
     fn get_task_by_id(&self, task_id: &str) -> Result<Option<Task>, String> {
         let conn = self.db.get_connection()?;
-        let mut stmt = conn.prepare(
-            r#"
-            SELECT
-                id, task_number, title, description, vehicle_plate, vehicle_model,
-                vehicle_year, vehicle_make, vin, ppf_zones, custom_ppf_zones, status, priority, technician_id,
-                assigned_at, assigned_by, scheduled_date, start_time, end_time,
-                date_rdv, heure_rdv, template_id, workflow_id, workflow_status,
-                current_workflow_step_id, started_at, completed_at, completed_steps,
-                client_id, customer_name, customer_email, customer_phone, customer_address,
-                external_id, lot_film, checklist_completed, notes, tags, estimated_duration, actual_duration,
-                created_at, updated_at, creator_id, created_by, updated_by, deleted_at, deleted_by, synced, last_synced_at
+        let mut stmt = conn
+            .prepare(&format!(
+                r#"
+            SELECT{}
             FROM tasks
             WHERE id = ? AND deleted_at IS NULL
-            "#
-        ).map_err(|e| e.to_string())?;
+            "#,
+                TASK_QUERY_COLUMNS
+            ))
+            .map_err(|e| e.to_string())?;
         let task = stmt.query_row(params![task_id], |row| Task::from_row(row));
 
         match task {

@@ -5,6 +5,7 @@
 use crate::commands::AppError;
 use crate::db::Database;
 use crate::models::task::Task;
+use crate::services::task_constants::{SINGLE_TASK_TIMEOUT_SECS, TASK_QUERY_COLUMNS};
 use rusqlite::params;
 use std::sync::Arc;
 use tokio::time::timeout;
@@ -28,7 +29,7 @@ impl TaskDeletionService {
         let id = id.to_string();
 
         // Add timeout to prevent hanging
-        let timeout_duration = std::time::Duration::from_secs(5);
+        let timeout_duration = std::time::Duration::from_secs(SINGLE_TASK_TIMEOUT_SECS);
 
         let user_id = user_id.to_string();
         let result = timeout(
@@ -137,21 +138,16 @@ impl TaskDeletionService {
 
     /// Get a single task by ID (sync version)
     pub fn get_task_sync(&self, id: &str) -> Result<Option<Task>, AppError> {
-        let sql = r#"
-            SELECT
-                id, task_number, title, description, vehicle_plate, vehicle_model,
-                vehicle_year, vehicle_make, vin, ppf_zones, custom_ppf_zones, status, priority, technician_id,
-                assigned_at, assigned_by, scheduled_date, start_time, end_time,
-                date_rdv, heure_rdv, template_id, workflow_id, workflow_status,
-                current_workflow_step_id, started_at, completed_at, completed_steps,
-                client_id, customer_name, customer_email, customer_phone, customer_address,
-                external_id, lot_film, checklist_completed, notes, tags, estimated_duration, actual_duration,
-                created_at, updated_at, creator_id, created_by, updated_by, deleted_at, deleted_by, synced, last_synced_at
+        let sql = format!(
+            r#"
+            SELECT{}
             FROM tasks WHERE id = ? AND deleted_at IS NULL
-        "#;
+        "#,
+            TASK_QUERY_COLUMNS
+        );
 
         self.db
-            .query_single_as::<Task>(sql, params![id])
+            .query_single_as::<Task>(&sql, params![id])
             .map_err(|e| AppError::Database(format!("Failed to get task: {}", e)))
     }
 

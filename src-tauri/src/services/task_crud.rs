@@ -5,6 +5,7 @@
 use crate::commands::AppError;
 use crate::db::{checkpoint_wal, AsyncDatabase, Database};
 use crate::models::task::*;
+use crate::services::task_constants::*;
 use chrono::Utc;
 use rusqlite::params;
 use std::sync::Arc;
@@ -246,7 +247,7 @@ impl SyncTaskCrudService<'_> {
     fn generate_task_number(&self) -> Result<String, AppError> {
         // Generate a unique task number
         let now = Utc::now();
-        let date_part = now.format("%Y%m%d").to_string();
+        let date_part = now.format(TASK_NUMBER_DATE_FORMAT).to_string();
 
         // Start IMMEDIATE transaction to prevent race conditions
         self.conn.execute("BEGIN IMMEDIATE", [])

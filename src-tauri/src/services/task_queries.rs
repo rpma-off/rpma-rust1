@@ -2,8 +2,10 @@
 //!
 //! This module handles complex query building and task retrieval operations.
 
+use crate::commands::{AppError, AppResult};
 use crate::db::Database;
 use crate::models::task::*;
+use crate::services::task_constants::{apply_query_filters, calculate_offset, calculate_pagination, DEFAULT_PAGE_SIZE, SINGLE_TASK_TIMEOUT_SECS, TASK_LIST_TIMEOUT_SECS, TASK_QUERY_COLUMNS};
 use rusqlite::params;
 use std::sync::Arc;
 
@@ -23,54 +25,31 @@ impl TaskQueriesService {
 
     /// Get tasks with complex filtering and pagination (sync version)
     pub fn get_tasks_sync(&self, query: TaskQuery) -> Result<TaskListResponse, String> {
-        let mut sql = r#"
-            SELECT
-                id, task_number, title, description, vehicle_plate, vehicle_model,
-                vehicle_year, vehicle_make, vin, ppf_zones, custom_ppf_zones, status, priority, technician_id,
-                assigned_at, assigned_by, scheduled_date, start_time, end_time,
-                date_rdv, heure_rdv, template_id, workflow_id, workflow_status,
-                current_workflow_step_id, started_at, completed_at, completed_steps,
-                client_id, customer_name, customer_email, customer_phone, customer_address,
-                external_id, lot_film, checklist_completed, notes, tags, estimated_duration, actual_duration,
-                created_at, updated_at, creator_id, created_by, updated_by, deleted_at, deleted_by, synced, last_synced_at
+        let mut sql = format!(
+            r#"
+            SELECT{}
             FROM tasks
             WHERE deleted_at IS NULL
-        "#.to_string();
+        "#,
+            TASK_QUERY_COLUMNS
+        ).to_string();
 
         let mut params_vec: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
 
-        // Apply filters
-        if let Some(status) = &query.status {
-            sql.push_str(" AND status = ?");
-            params_vec.push(Box::new(status.to_string()));
-        }
-
-        if let Some(technician_id) = &query.technician_id {
-            sql.push_str(" AND technician_id = ?");
-            params_vec.push(Box::new(technician_id.clone()));
-        }
-
-        if let Some(client_id) = &query.client_id {
-            sql.push_str(" AND client_id = ?");
-            params_vec.push(Box::new(client_id.clone()));
-        }
-
-        if let Some(search) = &query.search {
-            sql.push_str(" AND (title LIKE ? OR description LIKE ? OR vehicle_plate LIKE ? OR customer_name LIKE ?)");
-            let search_pattern = format!("%{}%", search);
-            params_vec.push(Box::new(search_pattern.clone()));
-            params_vec.push(Box::new(search_pattern.clone()));
-            params_vec.push(Box::new(search_pattern.clone()));
-            params_vec.push(Box::new(search_pattern));
+        // Apply filters using utility function
+        let (filters, filter_params) = apply_query_filters(&query, None);
+        sql.push_str(&filters);
+        for param in filter_params {
+            params_vec.push(Box::new(param));
         }
 
         // Add ordering
         sql.push_str(" ORDER BY created_at DESC");
 
         // Add pagination
-        let page = query.page.unwrap_or(1);
-        let limit = query.limit.unwrap_or(20);
-        let offset = (page - 1) * limit;
+        let page = query.page.unwrap_or(DEFAULT_PAGE_SIZE);
+        let limit = query.limit.unwrap_or(DEFAULT_PAGE_SIZE);
+        let offset = calculate_offset(page, limit);
 
         sql.push_str(" LIMIT ? OFFSET ?");
         params_vec.push(Box::new(limit));
@@ -154,29 +133,11 @@ impl TaskQueriesService {
         let mut count_sql = "SELECT COUNT(*) FROM tasks WHERE deleted_at IS NULL".to_string();
         let mut count_params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
 
-        // Apply same filters for count
-        if let Some(status) = &query.status {
-            count_sql.push_str(" AND status = ?");
-            count_params.push(Box::new(status.to_string()));
-        }
-
-        if let Some(technician_id) = &query.technician_id {
-            count_sql.push_str(" AND technician_id = ?");
-            count_params.push(Box::new(technician_id.clone()));
-        }
-
-        if let Some(client_id) = &query.client_id {
-            count_sql.push_str(" AND client_id = ?");
-            count_params.push(Box::new(client_id.clone()));
-        }
-
-        if let Some(search) = &query.search {
-            count_sql.push_str(" AND (title LIKE ? OR description LIKE ? OR vehicle_plate LIKE ? OR customer_name LIKE ?)");
-            let search_pattern = format!("%{}%", search);
-            count_params.push(Box::new(search_pattern.clone()));
-            count_params.push(Box::new(search_pattern.clone()));
-            count_params.push(Box::new(search_pattern.clone()));
-            count_params.push(Box::new(search_pattern));
+        // Apply same filters for count using utility function
+        let (count_filters, count_filter_params) = apply_query_filters(&query, None);
+        count_sql.push_str(&count_filters);
+        for param in count_filter_params {
+            count_params.push(Box::new(param));
         }
 
         let count_params_refs: Vec<&dyn rusqlite::ToSql> = count_params.iter().map(|p| p.as_ref()).collect();
@@ -189,14 +150,7 @@ impl TaskQueriesService {
             }
         };
 
-        let total_pages = ((total_count as f64) / (limit as f64)).ceil() as i32;
-
-        let pagination = PaginationInfo {
-            page,
-            limit,
-            total: total_count,
-            total_pages,
-        };
+        let pagination = calculate_pagination(total_count, Some(page), Some(limit));
 
         Ok(TaskListResponse {
             data: tasks
@@ -219,18 +173,10 @@ impl TaskQueriesService {
 
         let sql = format!(
             r#"
-            SELECT
-                id, task_number, title, description, vehicle_plate, vehicle_model,
-                vehicle_year, vehicle_make, vin, ppf_zones, custom_ppf_zones, status, priority, technician_id,
-                assigned_at, assigned_by, scheduled_date, start_time, end_time,
-                date_rdv, heure_rdv, template_id, workflow_id, workflow_status,
-                current_workflow_step_id, started_at, completed_at, completed_steps,
-                client_id, customer_name, customer_email, customer_phone, customer_address,
-                external_id, lot_film, checklist_completed, notes, tags, estimated_duration, actual_duration,
-                created_at, updated_at, creator_id, created_by, updated_by, deleted_at, deleted_by, synced, last_synced_at
+            SELECT{}
             FROM tasks WHERE {} = ? AND deleted_at IS NULL
             "#,
-            column
+            TASK_QUERY_COLUMNS, column
         );
 
         self.db
@@ -246,7 +192,7 @@ impl TaskQueriesService {
         let id = id.to_string();
 
         let result = timeout(
-            Duration::from_secs(5),
+            Duration::from_secs(SINGLE_TASK_TIMEOUT_SECS),
             tokio::task::spawn_blocking(move || {
                 let service = TaskQueriesService { db };
                 service.get_task_sync(&id)
@@ -269,7 +215,7 @@ impl TaskQueriesService {
         let db = self.db.clone();
 
         let result = timeout(
-            Duration::from_secs(30),
+            Duration::from_secs(TASK_LIST_TIMEOUT_SECS),
             tokio::task::spawn_blocking(move || {
                 let service = TaskQueriesService { db };
                 service.get_tasks_sync(query)
@@ -315,20 +261,15 @@ impl TaskQueriesService {
         status_filter: Option<TaskStatus>,
         date_from: Option<&str>,
         date_to: Option<&str>,
-    ) -> Result<Vec<Task>, String> {
-        let mut sql = r#"
-            SELECT
-                id, task_number, title, description, vehicle_plate, vehicle_model,
-                vehicle_year, vehicle_make, vin, ppf_zones, custom_ppf_zones, status, priority, technician_id,
-                assigned_at, assigned_by, scheduled_date, start_time, end_time,
-                date_rdv, heure_rdv, template_id, workflow_id, workflow_status,
-                current_workflow_step_id, started_at, completed_at, completed_steps,
-                client_id, customer_name, customer_email, customer_phone, customer_address,
-                external_id, lot_film, checklist_completed, notes, tags, estimated_duration, actual_duration,
-                created_at, updated_at, creator_id, created_by, updated_by, deleted_at, deleted_by, synced, last_synced_at
+    ) -> AppResult<Vec<Task>> {
+        let mut sql = format!(
+            r#"
+            SELECT{}
             FROM tasks
             WHERE technician_id = ? AND deleted_at IS NULL
-        "#.to_string();
+        "#,
+            TASK_QUERY_COLUMNS
+        ).to_string();
 
         let mut params_vec = vec![user_id.to_string()];
 
@@ -359,6 +300,6 @@ impl TaskQueriesService {
 
         self.db
             .query_as::<Task>(&sql, params.as_slice())
-            .map_err(|e| format!("Failed to get user assigned tasks: {}", e))
+            .map_err(|e| AppError::Database(format!("Failed to get user assigned tasks: {}", e)))
     }
 }

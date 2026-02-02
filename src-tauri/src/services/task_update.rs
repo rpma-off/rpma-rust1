@@ -5,7 +5,8 @@
 use crate::commands::AppError;
 use crate::db::Database;
 use crate::models::task::{UpdateTaskRequest, Task};
-use crate::services::task_validation::TaskValidationService;
+use crate::services::task_constants::{MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH, MAX_VEHICLE_YEAR, MIN_VEHICLE_YEAR, SINGLE_TASK_TIMEOUT_SECS, TASK_NUMBER_DATE_FORMAT, TASK_QUERY_COLUMNS};
+use crate::services::task_validation::{validate_status_transition, TaskValidationService};
 use chrono::Utc;
 use rusqlite::params;
 use std::sync::Arc;
@@ -39,7 +40,7 @@ impl TaskUpdateService {
         let db = self.db.clone();
 
         // Add timeout to prevent hanging
-        let timeout_duration = std::time::Duration::from_secs(5);
+        let timeout_duration = std::time::Duration::from_secs(SINGLE_TASK_TIMEOUT_SECS);
 
         let user_id = user_id.to_string();
         let result = timeout(
@@ -67,66 +68,65 @@ impl TaskUpdateService {
         }
     }
 
-    /// Update an existing task (sync version)
-    pub fn update_task_sync(
-        &self,
-        req: UpdateTaskRequest,
-        user_id: &str,
-    ) -> Result<Task, AppError> {
-        let task_id = req
-            .id
-            .as_ref()
-            .ok_or_else(|| AppError::Validation("Task ID is required for update".to_string()))?;
-
-        // Get existing task
-        let mut task = self
-            .get_task_sync(task_id)?
-            .ok_or_else(|| format!("Task with id {} not found", task_id))?;
-
-        // Check ownership
+    /// Check if user owns the task
+    fn check_task_ownership(&self, task: &Task, user_id: &str) -> Result<(), AppError> {
         if task.created_by.as_ref() != Some(&user_id.to_string()) {
             return Err(AppError::Authorization(
                 "You can only update tasks you created".to_string(),
             ));
         }
+        Ok(())
+    }
 
-        // Apply updates
+    /// Apply title updates with validation
+    fn apply_title_updates(task: &mut Task, req: &UpdateTaskRequest) -> Result<(), AppError> {
         if let Some(title) = &req.title {
             if title.trim().is_empty() {
                 return Err(AppError::Validation("Title cannot be empty".to_string()));
             }
-            if title.len() > 100 {
+            if title.len() > MAX_TITLE_LENGTH {
                 return Err(AppError::Validation(
-                    "Title must be 100 characters or less".to_string(),
+                    format!("Title must be {} characters or less", MAX_TITLE_LENGTH),
                 ));
             }
             task.title = title.clone();
         }
+        Ok(())
+    }
 
+    /// Apply description updates with validation
+    fn apply_description_updates(task: &mut Task, req: &UpdateTaskRequest) -> Result<(), AppError> {
         if let Some(description) = &req.description {
-            if description.len() > 1000 {
+            if description.len() > MAX_DESCRIPTION_LENGTH {
                 return Err(AppError::Validation(
-                    "Description must be 1000 characters or less".to_string(),
+                    format!("Description must be {} characters or less", MAX_DESCRIPTION_LENGTH),
                 ));
             }
             task.description = req.description.clone();
         }
+        Ok(())
+    }
 
+    /// Apply priority updates
+    fn apply_priority_updates(task: &mut Task, req: &UpdateTaskRequest) {
         if let Some(priority) = &req.priority {
             task.priority = priority.clone();
         }
+    }
 
+    /// Apply status updates with timestamp management
+    fn apply_status_updates(service: &TaskUpdateService, task: &mut Task, req: &UpdateTaskRequest) -> Result<(), AppError> {
         if let Some(new_status) = &req.status {
             let old_status = task.status.clone();
-            
-            if let Err(e) = self.validate_status_transition(&old_status, new_status) {
+
+            if let Err(e) = validate_status_transition(&old_status, new_status) {
                 return Err(AppError::Validation(format!(
                     "Invalid status transition from {:?} to {:?}: {}", old_status, new_status, e
                 )));
             }
-            
+
             task.status = new_status.clone();
-            
+
             match (&old_status, new_status) {
                 (crate::models::task::TaskStatus::Pending | crate::models::task::TaskStatus::Scheduled | crate::models::task::TaskStatus::Assigned, crate::models::task::TaskStatus::InProgress) => {
                     if task.started_at.is_none() {
@@ -144,7 +144,11 @@ impl TaskUpdateService {
                 _ => {}
             }
         }
+        Ok(())
+    }
 
+    /// Apply vehicle information updates with validation
+    fn apply_vehicle_updates(task: &mut Task, req: &UpdateTaskRequest) -> Result<(), AppError> {
         if let Some(vehicle_plate) = &req.vehicle_plate {
             task.vehicle_plate = Some(vehicle_plate.clone());
         }
@@ -155,9 +159,9 @@ impl TaskUpdateService {
 
         if let Some(vehicle_year_str) = &req.vehicle_year {
             if let Ok(vehicle_year) = vehicle_year_str.parse::<i32>() {
-                if !(1900..=2100).contains(&vehicle_year) {
+                if !(MIN_VEHICLE_YEAR..=MAX_VEHICLE_YEAR).contains(&vehicle_year) {
                     return Err(AppError::Validation(
-                        "Vehicle year must be between 1900 and 2100".to_string(),
+                        format!("Vehicle year must be between {} and {}", MIN_VEHICLE_YEAR, MAX_VEHICLE_YEAR),
                     ));
                 }
             } else {
@@ -176,19 +180,24 @@ impl TaskUpdateService {
             task.vin = req.vin.clone();
         }
 
+        Ok(())
+    }
+
+    /// Apply client updates with existence validation
+    fn apply_client_updates(service: &TaskUpdateService, task: &mut Task, req: &UpdateTaskRequest) -> Result<(), AppError> {
         if let Some(new_client_id) = &req.client_id {
-            let exists: i64 = self.db.query_single_value(
+            let exists: i64 = service.db.query_single_value(
                 "SELECT COUNT(*) FROM clients WHERE id = ? AND deleted_at IS NULL",
                 params![new_client_id],
             )
             .map_err(|e| AppError::Database(format!("Failed to check client existence: {}", e)))?;
-            
+
             if exists == 0 {
                 return Err(AppError::Validation(format!(
                     "Client with ID {} does not exist", new_client_id
                 )));
             }
-            
+
             if let Some(old_client_id) = &task.client_id {
                 if old_client_id != new_client_id {
                     warn!("Moving task {} from client {} to {}", task.id, old_client_id, new_client_id);
@@ -196,7 +205,24 @@ impl TaskUpdateService {
             }
             task.client_id = Some(new_client_id.clone());
         }
+        Ok(())
+    }
 
+    /// Apply technician assignment updates with validation
+    fn apply_technician_updates(service: &TaskUpdateService, task: &mut Task, req: &UpdateTaskRequest) -> Result<(), AppError> {
+        if let Some(technician_id) = &req.technician_id {
+            let validation_service = TaskValidationService::new(service.db.clone());
+            validation_service
+                .validate_technician_assignment(technician_id, &task.ppf_zones)
+                .map_err(|e| AppError::Validation(format!("Technician validation failed: {}", e)))?;
+
+            task.technician_id = Some(technician_id.clone());
+        }
+        Ok(())
+    }
+
+    /// Apply simple field updates (scheduling, notes, tags, etc.)
+    fn apply_simple_updates(task: &mut Task, req: &UpdateTaskRequest) {
         if let Some(scheduled_date) = &req.scheduled_date {
             task.scheduled_date = req.scheduled_date.clone();
         }
@@ -245,16 +271,6 @@ impl TaskUpdateService {
             task.lot_film = Some(lot_film.clone());
         }
 
-        if let Some(technician_id) = &req.technician_id {
-            // Validate technician assignment
-            let validation_service = TaskValidationService::new(self.db.clone());
-            validation_service
-                .validate_technician_assignment(technician_id, &task.ppf_zones)
-                .map_err(|e| AppError::Validation(format!("Technician validation failed: {}", e)))?;
-            
-            task.technician_id = Some(technician_id.clone());
-        }
-
         if let Some(checklist_completed) = req.checklist_completed {
             task.checklist_completed = checklist_completed;
         }
@@ -282,14 +298,12 @@ impl TaskUpdateService {
         if let Some(workflow_id) = &req.workflow_id {
             task.workflow_id = Some(workflow_id.clone());
         }
+    }
 
-        // Update timestamp
-        task.updated_at = Utc::now().timestamp_millis();
-
-        // Update in database
+    /// Save the updated task to the database
+    fn save_task_to_database(&self, task: &Task) -> Result<(), AppError> {
         let conn = self.db.get_connection()?;
 
-        // Convert enums to strings
         let status_str = task.status.to_string();
         let priority_str = task.priority.to_string();
 
@@ -350,96 +364,53 @@ impl TaskUpdateService {
             format!("Failed to update task: {}", e)
         })?;
 
+        Ok(())
+    }
+
+    /// Update an existing task (sync version)
+    pub fn update_task_sync(
+        &self,
+        req: UpdateTaskRequest,
+        user_id: &str,
+    ) -> Result<Task, AppError> {
+        let task_id = req
+            .id
+            .as_ref()
+            .ok_or_else(|| AppError::Validation("Task ID is required for update".to_string()))?;
+
+        let mut task = self
+            .get_task_sync(task_id)?
+            .ok_or_else(|| format!("Task with id {} not found", task_id))?;
+
+        self.check_task_ownership(&task, user_id)?;
+        Self::apply_title_updates(&mut task, &req)?;
+        Self::apply_description_updates(&mut task, &req)?;
+        Self::apply_priority_updates(&mut task, &req);
+        Self::apply_status_updates(self, &mut task, &req)?;
+        Self::apply_vehicle_updates(&mut task, &req)?;
+        Self::apply_client_updates(self, &mut task, &req)?;
+        Self::apply_technician_updates(self, &mut task, &req)?;
+        Self::apply_simple_updates(&mut task, &req);
+
+        task.updated_at = Utc::now().timestamp_millis();
+        self.save_task_to_database(&task)?;
+
         Ok(task)
     }
 
     /// Get a single task by ID (sync version)
     pub fn get_task_sync(&self, id: &str) -> Result<Option<Task>, AppError> {
-        let sql = r#"
-            SELECT
-                id, task_number, title, description, vehicle_plate, vehicle_model,
-                vehicle_year, vehicle_make, vin, ppf_zones, custom_ppf_zones, status, priority, technician_id,
-                assigned_at, assigned_by, scheduled_date, start_time, end_time,
-                date_rdv, heure_rdv, template_id, workflow_id, workflow_status,
-                current_workflow_step_id, started_at, completed_at, completed_steps,
-                client_id, customer_name, customer_email, customer_phone, customer_address,
-                external_id, lot_film, checklist_completed, notes, tags, estimated_duration, actual_duration,
-                created_at, updated_at, creator_id, created_by, updated_by, deleted_at, deleted_by, synced, last_synced_at
+        let sql = format!(
+            r#"
+            SELECT{}
             FROM tasks WHERE id = ? AND deleted_at IS NULL
-        "#;
+        "#,
+            TASK_QUERY_COLUMNS
+        );
 
         self.db
-            .query_single_as::<Task>(sql, params![id])
+            .query_single_as::<Task>(&sql, params![id])
             .map_err(|e| AppError::Database(format!("Failed to get task: {}", e)))
     }
 
-    /// Validate status transition
-    ///
-    /// Ensures that status changes follow business rules and prevent invalid state transitions.
-    ///
-    /// # Arguments
-    /// * `current` - The current status of the task
-    /// * `new` - The new status being requested
-    ///
-    /// # Returns
-    /// * `Ok(())` - Transition is valid
-    /// * `Err(String)` - Transition is invalid with reason
-    fn validate_status_transition(
-        &self,
-        current: &crate::models::task::TaskStatus,
-        new: &crate::models::task::TaskStatus,
-    ) -> Result<(), String> {
-        use crate::models::task::TaskStatus;
-
-        match (current, new) {
-            // Valid transitions
-            (TaskStatus::Draft, TaskStatus::Pending) => Ok(()),
-            (TaskStatus::Draft, TaskStatus::Scheduled) => Ok(()),
-            (TaskStatus::Draft, TaskStatus::Cancelled) => Ok(()),
-            
-            (TaskStatus::Pending, TaskStatus::InProgress) => Ok(()),
-            (TaskStatus::Pending, TaskStatus::Scheduled) => Ok(()),
-            (TaskStatus::Pending, TaskStatus::Cancelled) => Ok(()),
-            (TaskStatus::Pending, TaskStatus::OnHold) => Ok(()),
-            (TaskStatus::Pending, TaskStatus::Assigned) => Ok(()),
-            
-            (TaskStatus::Scheduled, TaskStatus::InProgress) => Ok(()),
-            (TaskStatus::Scheduled, TaskStatus::OnHold) => Ok(()),
-            (TaskStatus::Scheduled, TaskStatus::Cancelled) => Ok(()),
-            (TaskStatus::Scheduled, TaskStatus::Assigned) => Ok(()),
-            
-            (TaskStatus::Assigned, TaskStatus::InProgress) => Ok(()),
-            (TaskStatus::Assigned, TaskStatus::OnHold) => Ok(()),
-            (TaskStatus::Assigned, TaskStatus::Cancelled) => Ok(()),
-            
-            (TaskStatus::InProgress, TaskStatus::Completed) => Ok(()),
-            (TaskStatus::InProgress, TaskStatus::OnHold) => Ok(()),
-            (TaskStatus::InProgress, TaskStatus::Paused) => Ok(()),
-            (TaskStatus::InProgress, TaskStatus::Cancelled) => Ok(()),
-            
-            (TaskStatus::Paused, TaskStatus::InProgress) => Ok(()),
-            (TaskStatus::Paused, TaskStatus::Cancelled) => Ok(()),
-            
-            (TaskStatus::OnHold, TaskStatus::Pending) => Ok(()),
-            (TaskStatus::OnHold, TaskStatus::Scheduled) => Ok(()),
-            (TaskStatus::OnHold, TaskStatus::InProgress) => Ok(()),
-            (TaskStatus::OnHold, TaskStatus::Cancelled) => Ok(()),
-            
-            (TaskStatus::Completed, TaskStatus::Archived) => Ok(()),
-            
-            // Invalid transitions
-            (TaskStatus::Completed, TaskStatus::Pending) => Err("Cannot move completed task back to pending".to_string()),
-            (TaskStatus::Completed, TaskStatus::InProgress) => Err("Cannot move completed task back to in progress".to_string()),
-            (TaskStatus::Completed, TaskStatus::Scheduled) => Err("Cannot move completed task back to scheduled".to_string()),
-            
-            (TaskStatus::Cancelled, TaskStatus::Pending) => Err("Cannot move cancelled task back to pending".to_string()),
-            (TaskStatus::Cancelled, TaskStatus::InProgress) => Err("Cannot move cancelled task back to in progress".to_string()),
-            (TaskStatus::Cancelled, TaskStatus::Scheduled) => Err("Cannot move cancelled task back to scheduled".to_string()),
-            
-            (TaskStatus::Archived, TaskStatus::Pending) => Err("Cannot move archived task back to pending".to_string()),
-            (TaskStatus::Archived, TaskStatus::InProgress) => Err("Cannot move archived task back to in progress".to_string()),
-            
-            _ => Err(format!("Invalid status transition from {:?} to {:?}", current, new)),
-        }
-    }
 }

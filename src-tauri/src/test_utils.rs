@@ -7,6 +7,7 @@ use crate::commands::AppResult;
 use crate::db::Database;
 use crate::models::client::*;
 use crate::models::intervention::*;
+use crate::models::step::*;
 use crate::models::task::*;
 
 use chrono::Utc;

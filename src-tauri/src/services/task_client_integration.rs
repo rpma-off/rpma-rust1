@@ -2,8 +2,14 @@
 //!
 //! This module handles operations that integrate tasks with client data.
 
+use crate::commands::AppError;
+use crate::commands::AppResult;
 use crate::db::Database;
 use crate::models::task::*;
+use crate::services::task_constants::{
+    apply_query_filters, calculate_offset, calculate_pagination, DEFAULT_PAGE_SIZE,
+    TASK_QUERY_COLUMNS_ALIASED,
+};
 
 use serde::Serialize;
 use std::sync::Arc;
@@ -48,66 +54,43 @@ impl TaskClientIntegrationService {
     pub fn get_tasks_with_clients(
         &self,
         query: TaskQuery,
-    ) -> Result<TaskWithClientListResponse, String> {
+    ) -> AppResult<TaskWithClientListResponse> {
         debug!("TaskClientIntegrationService: getting tasks with client data");
 
-        let mut sql = r#"
-            SELECT
-                t.id, t.task_number, t.title, t.description, t.vehicle_plate, t.vehicle_model,
-                t.vehicle_year, t.vehicle_make, t.vin, t.ppf_zones, t.custom_ppf_zones, t.status, t.priority, t.technician_id,
-                t.assigned_at, t.assigned_by, t.scheduled_date, t.start_time, t.end_time,
-                t.date_rdv, t.heure_rdv, t.template_id, t.workflow_id, t.workflow_status,
-                t.current_workflow_step_id, t.started_at, t.completed_at, t.completed_steps,
-                t.client_id, t.customer_name, t.customer_email, t.customer_phone, t.customer_address,
-                t.external_id, t.lot_film, t.checklist_completed, t.notes, t.tags, t.estimated_duration, t.actual_duration,
-                t.created_at, t.updated_at, t.creator_id, t.created_by, t.updated_by, t.deleted_at, t.deleted_by, t.synced, t.last_synced_at,
+        let mut sql = format!(
+            r#"
+            SELECT{},
                 c.id as client_id, c.name as client_name, c.email as client_email, c.phone as client_phone
             FROM tasks t
             LEFT JOIN clients c ON t.client_id = c.id
             WHERE t.deleted_at IS NULL
-        "#.to_string();
+        "#,
+            TASK_QUERY_COLUMNS_ALIASED
+        ).to_string();
 
         let mut params_vec = Vec::new();
 
-        // Apply same filters as get_tasks method
-        if let Some(status) = &query.status {
-            sql.push_str(" AND t.status = ?");
-            params_vec.push(status.to_string());
-        }
-
-        if let Some(technician_id) = &query.technician_id {
-            sql.push_str(" AND t.technician_id = ?");
-            params_vec.push(technician_id.clone());
-        }
-
-        if let Some(client_id) = &query.client_id {
-            sql.push_str(" AND t.client_id = ?");
-            params_vec.push(client_id.clone());
-        }
-
-        if let Some(search) = &query.search {
-            sql.push_str(" AND (t.title LIKE ? OR t.description LIKE ? OR t.vehicle_plate LIKE ? OR t.customer_name LIKE ?)");
-            let search_pattern = format!("%{}%", search);
-            params_vec.push(search_pattern.clone());
-            params_vec.push(search_pattern.clone());
-            params_vec.push(search_pattern.clone());
-            params_vec.push(search_pattern);
+        // Apply same filters as get_tasks method using utility function
+        let (filters, filter_params) = apply_query_filters(&query, Some("t."));
+        sql.push_str(&filters);
+        for param in filter_params {
+            params_vec.push(param);
         }
 
         // Add ordering
         sql.push_str(" ORDER BY t.created_at DESC");
 
         // Add pagination
-        let page = query.page.unwrap_or(1);
-        let limit = query.limit.unwrap_or(20);
-        let offset = (page - 1) * limit;
+        let page = query.page.unwrap_or(DEFAULT_PAGE_SIZE);
+        let limit = query.limit.unwrap_or(DEFAULT_PAGE_SIZE);
+        let offset = calculate_offset(page, limit);
 
         sql.push_str(" LIMIT ? OFFSET ?");
         params_vec.push(limit.to_string());
         params_vec.push(offset.to_string());
 
         let conn = self.db.get_connection()?;
-        let mut stmt = conn.prepare(&sql).map_err(|e| e.to_string())?;
+        let mut stmt = conn.prepare(&sql)?;
         let tasks_with_clients: Result<Vec<TaskWithClient>, _> = stmt
             .query_map(rusqlite::params_from_iter(params_vec), |row| {
                 // Parse task data
@@ -189,8 +172,8 @@ impl TaskClientIntegrationService {
             })
             .map_err(|e| e.to_string())?
             .collect();
-        let tasks_with_clients =
-            tasks_with_clients.map_err(|e| format!("Failed to get tasks with clients: {}", e))?;
+        let tasks_with_clients = tasks_with_clients
+            .map_err(|e| AppError::Database(format!("Failed to get tasks with clients: {}", e)))?;
 
         // Get total count for pagination
         let mut count_sql = r#"
@@ -203,29 +186,11 @@ impl TaskClientIntegrationService {
 
         let mut count_params = Vec::new();
 
-        // Apply same filters for count
-        if let Some(status) = &query.status {
-            count_sql.push_str(" AND t.status = ?");
-            count_params.push(status.to_string());
-        }
-
-        if let Some(technician_id) = &query.technician_id {
-            count_sql.push_str(" AND t.technician_id = ?");
-            count_params.push(technician_id.clone());
-        }
-
-        if let Some(client_id) = &query.client_id {
-            count_sql.push_str(" AND t.client_id = ?");
-            count_params.push(client_id.clone());
-        }
-
-        if let Some(search) = &query.search {
-            count_sql.push_str(" AND (t.title LIKE ? OR t.description LIKE ? OR t.vehicle_plate LIKE ? OR t.customer_name LIKE ?)");
-            let search_pattern = format!("%{}%", search);
-            count_params.push(search_pattern.clone());
-            count_params.push(search_pattern.clone());
-            count_params.push(search_pattern.clone());
-            count_params.push(search_pattern);
+        // Apply same filters for count using utility function
+        let (count_filters, count_filter_params) = apply_query_filters(&query, Some("t."));
+        count_sql.push_str(&count_filters);
+        for param in count_filter_params {
+            count_params.push(param);
         }
 
         let total_count: i64 = self
@@ -233,14 +198,7 @@ impl TaskClientIntegrationService {
             .query_single_value(&count_sql, rusqlite::params_from_iter(count_params))
             .unwrap_or(0);
 
-        let total_pages = ((total_count as f64) / (limit as f64)).ceil() as i32;
-
-        let pagination = PaginationInfo {
-            page,
-            limit,
-            total: total_count,
-            total_pages,
-        };
+        let pagination = calculate_pagination(total_count, Some(page), Some(limit));
 
         Ok(TaskWithClientListResponse {
             data: tasks_with_clients,

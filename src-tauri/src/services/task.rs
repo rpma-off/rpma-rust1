@@ -38,10 +38,11 @@ use crate::commands::AppResult;
 use crate::db::Database;
 use crate::models::task::*;
 use crate::services::task_client_integration::TaskClientIntegrationService;
+use crate::services::task_constants::convert_to_app_error;
 use crate::services::task_crud::TaskCrudService;
 use crate::services::task_queries::TaskQueriesService;
 use crate::services::task_statistics::TaskStatisticsService;
-use crate::services::task_validation::TaskValidationService;
+use crate::services::task_validation::{validate_status_transition, TaskValidationService};
 
 use std::sync::Arc;
 
@@ -163,7 +164,7 @@ impl TaskService {
     ///
     /// # Returns
     /// * `Ok(TaskListResponse)` - Paginated list of tasks matching criteria
-    /// * `Err(String)` - Error message if query fails
+    /// * `Err(AppError)` - Error if query fails
     ///
     /// # Query Capabilities
     /// - Status filtering (pending, in_progress, completed, etc.)
@@ -171,23 +172,14 @@ impl TaskService {
     /// - Technician assignment filtering
     /// - Text search across multiple fields
     /// - Pagination with configurable page size
-    pub async fn get_tasks_async(&self, query: TaskQuery) -> Result<TaskListResponse, String> {
+    pub async fn get_tasks_async(&self, query: TaskQuery) -> AppResult<TaskListResponse> {
         self.queries.get_tasks_async(query).await
+            .map_err(convert_to_app_error)
     }
 
-    /// Get a single task by ID (async version)
-    ///
-    /// Retrieves complete task details by unique identifier.
-    ///
-    /// # Arguments
-    /// * `id` - Unique task identifier
-    ///
-    /// # Returns
-    /// * `Ok(Some(Task))` - Task details if found
-    /// * `Ok(None)` - Task not found (soft-deleted or doesn't exist)
-    /// * `Err(String)` - Error message if query fails
-    pub async fn get_task_async(&self, id: &str) -> Result<Option<Task>, String> {
+    pub async fn get_task_async(&self, id: &str) -> AppResult<Option<Task>> {
         self.queries.get_task_async(id).await
+            .map_err(convert_to_app_error)
     }
 
     /// Delete a task (async version)
@@ -220,7 +212,7 @@ impl TaskService {
     ///
     /// # Returns
     /// * `Ok(TaskWithClientListResponse)` - Tasks with embedded client information
-    /// * `Err(String)` - Error message if query fails
+    /// * `Err(AppError)` - Error if query fails
     ///
     /// # Performance Notes
     /// This method performs JOIN operations and may be slower than basic task queries.
@@ -228,7 +220,7 @@ impl TaskService {
     pub fn get_tasks_with_clients(
         &self,
         query: TaskQuery,
-    ) -> Result<TaskWithClientListResponse, String> {
+    ) -> AppResult<TaskWithClientListResponse> {
         self.client_integration.get_tasks_with_clients(query)
     }
 
@@ -239,7 +231,7 @@ impl TaskService {
     ///
     /// # Returns
     /// * `Ok(TaskStatistics)` - Complete statistics overview
-    /// * `Err(String)` - Error message if calculation fails
+    /// * `Err(AppError)` - Error if calculation fails
     ///
     /// # Included Metrics
     /// - Total task counts by status
@@ -247,68 +239,24 @@ impl TaskService {
     /// - Completion rates
     /// - Average durations
     /// - Overdue task counts
-    pub fn get_task_statistics(&self) -> Result<TaskStatistics, String> {
+    pub fn get_task_statistics(&self) -> AppResult<TaskStatistics> {
         self.statistics.get_task_statistics()
+            .map_err(convert_to_app_error)
     }
 
-    /// Get task completion rate over time
-    ///
-    /// Calculates the percentage of tasks completed within the specified time window.
-    ///
-    /// # Arguments
-    /// * `days` - Number of days to look back for completion rate calculation
-    ///
-    /// # Returns
-    /// * `Ok(f64)` - Completion rate as a percentage (0.0 to 100.0)
-    /// * `Err(String)` - Error message if calculation fails
-    ///
-    /// # Example
-    /// ```rust
-    /// let completion_rate = task_service.get_completion_rate(30)?;
-    /// println!("30-day completion rate: {:.1}%", completion_rate);
-    /// ```
-    pub fn get_completion_rate(&self, days: i32) -> Result<f64, String> {
+    pub fn get_completion_rate(&self, days: i32) -> AppResult<f64> {
         self.statistics.get_completion_rate(days)
+            .map_err(convert_to_app_error)
     }
 
-    /// Get average task duration by status
-    ///
-    /// Calculates the average time tasks spend in each status.
-    /// Useful for workflow optimization and performance monitoring.
-    ///
-    /// # Returns
-    /// * `Ok(Vec<(String, f64)>)` - Vector of (status_name, average_duration_seconds) pairs
-    /// * `Err(String)` - Error message if calculation fails
-    ///
-    /// # Example
-    /// ```rust
-    /// let durations = task_service.get_average_duration_by_status()?;
-    /// for (status, avg_duration) in durations {
-    ///     println!("{}: {:.0} seconds average", status, avg_duration);
-    /// }
-    /// ```
-    pub fn get_average_duration_by_status(&self) -> Result<Vec<(String, f64)>, String> {
+    pub fn get_average_duration_by_status(&self) -> AppResult<Vec<(String, f64)>> {
         self.statistics.get_average_duration_by_status()
+            .map_err(convert_to_app_error)
     }
 
-    /// Get tasks by priority distribution
-    ///
-    /// Returns the count of tasks for each priority level.
-    /// Useful for workload balancing and priority management.
-    ///
-    /// # Returns
-    /// * `Ok(Vec<(String, i64)>)` - Vector of (priority_name, task_count) pairs
-    /// * `Err(String)` - Error message if calculation fails
-    ///
-    /// # Example
-    /// ```rust
-    /// let distribution = task_service.get_priority_distribution()?;
-    /// for (priority, count) in distribution {
-    ///     println!("{} priority tasks: {}", priority, count);
-    /// }
-    /// ```
-    pub fn get_priority_distribution(&self) -> Result<Vec<(String, i64)>, String> {
+    pub fn get_priority_distribution(&self) -> AppResult<Vec<(String, i64)>> {
         self.statistics.get_priority_distribution()
+            .map_err(convert_to_app_error)
     }
 
     /// Check if a user can be assigned to a task
@@ -323,10 +271,11 @@ impl TaskService {
     /// # Returns
     /// * `Ok(true)` - User can be assigned to the task
     /// * `Ok(false)` - User cannot be assigned to the task
-    /// * `Err(String)` - Error occurred during validation
-    pub fn check_task_assignment(&self, task_id: &str, user_id: &str) -> Result<bool, String> {
+    /// * `Err(AppError)` - Error occurred during validation
+    pub fn check_task_assignment(&self, task_id: &str, user_id: &str) -> AppResult<bool> {
         self.validation
             .check_assignment_eligibility(task_id, user_id)
+            .map_err(convert_to_app_error)
     }
 
     /// Check if a task is available for assignment
@@ -339,9 +288,10 @@ impl TaskService {
     /// # Returns
     /// * `Ok(true)` - Task is available for assignment
     /// * `Ok(false)` - Task is not available for assignment
-    /// * `Err(String)` - Error occurred during validation
-    pub fn check_task_availability(&self, task_id: &str) -> Result<bool, String> {
+    /// * `Err(AppError)` - Error occurred during validation
+    pub fn check_task_availability(&self, task_id: &str) -> AppResult<bool> {
         self.validation.check_task_availability(task_id)
+            .map_err(convert_to_app_error)
     }
 
     /// Get all tasks assigned to a specific user
@@ -356,14 +306,14 @@ impl TaskService {
     ///
     /// # Returns
     /// * `Ok(Vec<Task>)` - List of tasks assigned to the user
-    /// * `Err(String)` - Error occurred during query
+    /// * `Err(AppError)` - Error occurred during query
     pub fn get_user_assigned_tasks(
         &self,
         user_id: &str,
         status_filter: Option<TaskStatus>,
         date_from: Option<&str>,
         date_to: Option<&str>,
-    ) -> Result<Vec<Task>, String> {
+    ) -> AppResult<Vec<Task>> {
         self.queries
             .get_user_assigned_tasks(user_id, status_filter, date_from, date_to)
     }
@@ -379,15 +329,16 @@ impl TaskService {
     ///
     /// # Returns
     /// * `Ok(Vec<String>)` - List of validation warnings/conflicts (empty if valid)
-    /// * `Err(String)` - Error occurred during validation
+    /// * `Err(AppError)` - Error occurred during validation
     pub fn validate_task_assignment_change(
         &self,
         task_id: &str,
         old_user_id: Option<&str>,
         new_user_id: &str,
-    ) -> Result<Vec<String>, String> {
+    ) -> AppResult<Vec<String>> {
         self.validation
             .validate_assignment_change(task_id, old_user_id, new_user_id)
+            .map_err(convert_to_app_error)
     }
 
     /// Check for scheduling conflicts
@@ -396,47 +347,40 @@ impl TaskService {
         user_id: &str,
         scheduled_date: Option<String>,
         duration: &Option<i32>,
-    ) -> Result<bool, String> {
+    ) -> AppResult<bool> {
         self.validation
             .check_schedule_conflicts(user_id, scheduled_date, duration)
+            .map_err(convert_to_app_error)
     }
 
     /// Check if task dependencies are satisfied
-    pub fn check_dependencies_satisfied(&self, task_id: &str) -> Result<bool, String> {
+    pub fn check_dependencies_satisfied(&self, task_id: &str) -> AppResult<bool> {
         self.validation.check_dependencies_satisfied(task_id)
+            .map_err(convert_to_app_error)
     }
 
     /// Validate task assignment eligibility
-    pub fn validate_assignment(&self, task_id: &str, user_id: &str) -> Result<bool, String> {
+    pub fn validate_assignment(&self, task_id: &str, user_id: &str) -> AppResult<bool> {
         self.validation.check_assignment_eligibility(task_id, user_id)
+            .map_err(convert_to_app_error)
     }
 
     /// Validate status transition
+    ///
+    /// Delegates to the centralized validation logic in task_validation module.
+    /// See [`validate_status_transition`] for the complete transition rules.
     pub fn validate_status_transition(
         &self,
         current: &TaskStatus,
         new: &TaskStatus,
     ) -> Result<(), String> {
-        match (current, new) {
-            // Valid transitions
-            (TaskStatus::Pending, TaskStatus::InProgress) => Ok(()),
-            (TaskStatus::Pending, TaskStatus::Cancelled) => Ok(()),
-            (TaskStatus::Pending, TaskStatus::OnHold) => Ok(()),
-            (TaskStatus::InProgress, TaskStatus::Completed) => Ok(()),
-            (TaskStatus::InProgress, TaskStatus::OnHold) => Ok(()),
-            (TaskStatus::InProgress, TaskStatus::Cancelled) => Ok(()),
-            (TaskStatus::OnHold, TaskStatus::InProgress) => Ok(()),
-            (TaskStatus::OnHold, TaskStatus::Cancelled) => Ok(()),
-            // Invalid transitions
-            (TaskStatus::Completed, _) => Err("Cannot change status of completed task".to_string()),
-            (TaskStatus::Cancelled, _) => Err("Cannot change status of cancelled task".to_string()),
-            _ => Err(format!("Invalid status transition from {:?} to {:?}", current, new)),
-        }
+        validate_status_transition(current, new)
     }
 
     /// Validate task availability
-    pub fn validate_availability(&self, task_id: &str) -> Result<bool, String> {
+    pub fn validate_availability(&self, task_id: &str) -> AppResult<bool> {
         self.validation.check_task_availability(task_id)
+            .map_err(convert_to_app_error)
     }
 
     /// Apply role-based filters to task query

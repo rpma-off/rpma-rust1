@@ -40,6 +40,7 @@ pub mod session;
 pub mod settings;
 pub mod task;
 pub mod task_client_integration;
+pub mod task_constants;
 pub mod task_creation;
 pub mod task_crud;
 pub mod task_deletion;
