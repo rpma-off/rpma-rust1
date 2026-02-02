@@ -5,10 +5,11 @@
 use crate::commands::AppError;
 use crate::db::Database;
 use crate::models::task::{CreateTaskRequest, Task, TaskStatus, TaskPriority};
+use crate::services::task_validation::TaskValidationService;
 use chrono::Utc;
 use rusqlite::params;
 use std::sync::Arc;
-use tracing::{error, warn};
+use tracing::{debug, error, warn};
 use uuid::Uuid;
 
 /// Service for handling task creation operations
@@ -53,6 +54,14 @@ impl TaskCreationService {
     ) -> Result<Task, AppError> {
         // Validate request
         self.validate_create_request(&req)?;
+
+        // Validate technician assignment if specified
+        if let Some(ref technician_id) = req.technician_id {
+            let validation_service = TaskValidationService::new(self.db.clone());
+            validation_service
+                .validate_technician_assignment(technician_id, &Some(req.ppf_zones.clone()))
+                .map_err(|e| AppError::Validation(format!("Technician validation failed: {}", e)))?;
+        }
 
         // Generate unique task number if not provided
         let task_number = req.task_number.clone().unwrap_or_else(|| {

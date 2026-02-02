@@ -222,6 +222,123 @@ impl TaskValidationService {
         Ok(count > 0)
     }
 
+    /// Validate technician assignment for a task
+    ///
+    /// Public method to validate if a technician can be assigned to a task based on:
+    /// - User role (must be technician, admin, or manager)
+    /// - User must be active
+    /// - PPF zone complexity (logs warnings for complex zones)
+    ///
+    /// # Arguments
+    /// * `technician_id` - The technician user ID to validate
+    /// * `ppf_zones` - Optional list of PPF zones for the task
+    ///
+    /// # Returns
+    /// * `Ok(())` - Technician is qualified for the task
+    /// * `Err(String)` - Validation error with details
+    pub fn validate_technician_assignment(
+        &self,
+        technician_id: &str,
+        ppf_zones: &Option<Vec<String>>,
+    ) -> Result<(), String> {
+        let conn = self.db.get_connection()?;
+
+        // Check if user exists and is active
+        let mut stmt = conn
+            .prepare("SELECT role, is_active FROM users WHERE id = ?")
+            .map_err(|e| format!("Failed to query user: {}", e))?;
+
+        let (role, is_active): (String, i32) = stmt
+            .query_row(params![technician_id], |row| Ok((row.get(0)?, row.get(1)?)))
+            .map_err(|_| format!("Technician with ID {} not found", technician_id))?;
+
+        // Check if user is active
+        if is_active == 0 {
+            return Err(format!("Technician {} is not active", technician_id));
+        }
+
+        // Check if user has valid role
+        let valid_roles = ["technician", "admin", "manager", "supervisor"];
+        if !valid_roles.contains(&role.as_str()) {
+            return Err(format!(
+                "User {} has role '{}' which cannot be assigned to tasks. Valid roles: {:?}",
+                technician_id, role, valid_roles
+            ));
+        }
+
+        // Check PPF zone complexity
+        if let Some(zones) = ppf_zones {
+            if !zones.is_empty() {
+                self.validate_ppf_zone_complexity(technician_id, zones)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Validate PPF zone complexity and log warnings for complex zones
+    ///
+    /// # Arguments
+    /// * `technician_id` - The technician being assigned
+    /// * `zones` - List of PPF zones to validate
+    ///
+    /// # Returns
+    /// * `Ok(())` - Zones are valid
+    /// * `Err(String)` - Validation error
+    fn validate_ppf_zone_complexity(
+        &self,
+        technician_id: &str,
+        zones: &[String],
+    ) -> Result<(), String> {
+        // Define complex zones that require special training
+        let complex_zones = vec![
+            "hood",
+            "fenders",
+            "bumper",
+            "mirror",
+            "door",
+            "door_cups",
+            "a_pillar",
+            "c_pillar",
+            "quarter_panel",
+            "rocker_panel",
+            "roof",
+        ];
+
+        // Check for complex zones
+        let mut complex_count = 0;
+        for zone in zones {
+            let zone_lower = zone.to_lowercase();
+            if complex_zones.iter().any(|cz| zone_lower.contains(cz)) {
+                complex_count += 1;
+            }
+        }
+
+        // If there are many complex zones, log a warning
+        if complex_count >= 3 {
+            tracing::warn!(
+                "Technician {} assigned to task with {} complex PPF zones. Ensure proper training.",
+                technician_id,
+                complex_count
+            );
+        }
+
+        // Validate zone names (basic check)
+        for zone in zones {
+            if zone.trim().is_empty() {
+                return Err("PPF zone cannot be empty".to_string());
+            }
+            if zone.len() > 100 {
+                return Err(format!(
+                    "PPF zone '{}' exceeds maximum length (100 characters)",
+                    zone
+                ));
+            }
+        }
+
+        Ok(())
+    }
+
     /// Check user workload capacity
     fn check_workload_capacity(
         &self,

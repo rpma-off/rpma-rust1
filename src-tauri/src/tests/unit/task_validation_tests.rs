@@ -382,4 +382,250 @@ mod tests {
 
         Ok(())
     }
+
+    // Phase 2: New technician qualification tests
+
+    #[test]
+    fn test_validate_technician_assignment_valid() -> AppResult<()> {
+        let test_db = test_db!();
+
+        // Create a valid technician user
+        let conn = test_db.db().get_connection()?;
+        conn.execute(
+            "INSERT INTO users (id, email, username, password_hash, first_name, last_name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            params!["tech-1", "tech1@test.com", "tech1", "hash", "Test", "Technician", "technician", 1]
+        )?;
+
+        let service = TaskValidationService::new(test_db.db());
+        let ppf_zones = Some(vec!["hood".to_string(), "fenders".to_string()]);
+
+        // Should succeed - valid technician
+        let result = service.validate_technician_assignment("tech-1", &ppf_zones);
+        assert!(result.is_ok(), "Valid technician should pass validation");
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_validate_technician_assignment_inactive() {
+        let test_db = test_db!();
+
+        // Create an inactive technician
+        let conn = test_db.db().get_connection()?;
+        conn.execute(
+            "INSERT INTO users (id, email, username, password_hash, first_name, last_name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            params!["tech-1", "tech1@test.com", "tech1", "hash", "Test", "Technician", "technician", 0]
+        )?;
+
+        let service = TaskValidationService::new(test_db.db());
+        let ppf_zones = Some(vec!["hood".to_string()]);
+
+        // Should fail - inactive technician
+        let result = service.validate_technician_assignment("tech-1", &ppf_zones);
+        assert!(
+            result.is_err(),
+            "Inactive technician should fail validation"
+        );
+        assert!(
+            result.unwrap_err().contains("not active"),
+            "Error should mention not active"
+        );
+    }
+
+    #[test]
+    fn test_validate_technician_assignment_invalid_role() {
+        let test_db = test_db!();
+
+        // Create a viewer user
+        let conn = test_db.db().get_connection()?;
+        conn.execute(
+            "INSERT INTO users (id, email, username, password_hash, first_name, last_name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            params!["viewer-1", "viewer1@test.com", "viewer1", "hash", "Test", "Viewer", "viewer", 1]
+        )?;
+
+        let service = TaskValidationService::new(test_db.db());
+        let ppf_zones = Some(vec!["hood".to_string()]);
+
+        // Should fail - invalid role
+        let result = service.validate_technician_assignment("viewer-1", &ppf_zones);
+        assert!(result.is_err(), "Viewer role should fail validation");
+        assert!(
+            result.unwrap_err().contains("role"),
+            "Error should mention role"
+        );
+    }
+
+    #[test]
+    fn test_validate_technician_assignment_non_existent() {
+        let test_db = test_db!();
+
+        let service = TaskValidationService::new(test_db.db());
+        let ppf_zones = Some(vec!["hood".to_string()]);
+
+        // Should fail - user not found
+        let result = service.validate_technician_assignment("non-existent", &ppf_zones);
+        assert!(result.is_err(), "Non-existent user should fail validation");
+        assert!(
+            result.unwrap_err().contains("not found"),
+            "Error should mention not found"
+        );
+    }
+
+    #[test]
+    fn test_ppf_zone_complexity_empty_zone() {
+        let test_db = test_db!();
+
+        // Create technician
+        let conn = test_db.db().get_connection()?;
+        conn.execute(
+            "INSERT INTO users (id, email, username, password_hash, first_name, last_name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            params!["tech-1", "tech1@test.com", "tech1", "hash", "Test", "Technician", "technician", 1]
+        )?;
+
+        let service = TaskValidationService::new(test_db.db());
+        let zones_with_empty = vec!["hood".to_string(), "".to_string()];
+
+        // Should fail - empty zone name
+        let result = service.validate_technician_assignment("tech-1", &Some(zones_with_empty));
+        assert!(result.is_err(), "Empty zone name should fail validation");
+    }
+
+    #[test]
+    fn test_ppf_zone_complexity_long_zone_name() {
+        let test_db = test_db!();
+
+        // Create technician
+        let conn = test_db.db().get_connection()?;
+        conn.execute(
+            "INSERT INTO users (id, email, username, password_hash, first_name, last_name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            params!["tech-1", "tech1@test.com", "tech1", "hash", "Test", "Technician", "technician", 1]
+        )?;
+
+        let service = TaskValidationService::new(test_db.db());
+        let long_zone = "a".repeat(101); // 101 characters, exceeds max 100
+        let zones_with_long = vec![long_zone];
+
+        // Should fail - zone name too long
+        let result = service.validate_technician_assignment("tech-1", &Some(zones_with_long));
+        assert!(result.is_err(), "Zone name too long should fail validation");
+    }
+
+    #[test]
+    fn test_validate_technician_assignment_no_zones() -> AppResult<()> {
+        let test_db = test_db!();
+
+        // Create technician
+        let conn = test_db.db().get_connection()?;
+        conn.execute(
+            "INSERT INTO users (id, email, username, password_hash, first_name, last_name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            params!["tech-1", "tech1@test.com", "tech1", "hash", "Test", "Technician", "technician", 1]
+        )?;
+
+        let service = TaskValidationService::new(test_db.db());
+        let no_zones = Some(vec![]);
+
+        // Should succeed - no zones to check
+        let result = service.validate_technician_assignment("tech-1", &no_zones);
+        assert!(result.is_ok(), "No zones should pass validation");
+
+        // Should also succeed with None
+        let result = service.validate_technician_assignment("tech-1", &None);
+        assert!(result.is_ok(), "None zones should pass validation");
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_validate_technician_assignment_admin() -> AppResult<()> {
+        let test_db = test_db!();
+
+        // Create admin
+        let conn = test_db.db().get_connection()?;
+        conn.execute(
+            "INSERT INTO users (id, email, username, password_hash, first_name, last_name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            params!["admin-1", "admin1@test.com", "admin1", "hash", "Test", "Admin", "admin", 1]
+        )?;
+
+        let service = TaskValidationService::new(test_db.db());
+        let ppf_zones = Some(vec!["hood".to_string(), "fenders".to_string()]);
+
+        // Should succeed - admin role is valid
+        let result = service.validate_technician_assignment("admin-1", &ppf_zones);
+        assert!(result.is_ok(), "Admin role should pass validation");
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_assignment_eligibility_task_not_found() {
+        let test_db = test_db!();
+
+        // Create technician
+        let conn = test_db.db().get_connection()?;
+        conn.execute(
+            "INSERT INTO users (id, email, username, password_hash, first_name, last_name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            params!["tech-1", "tech1@test.com", "tech1", "hash", "Test", "Technician", "technician", 1]
+        )?;
+
+        let service = TaskValidationService::new(test_db.db());
+
+        // Should fail - task not found
+        let result = service.check_assignment_eligibility("non-existent-task", "tech-1");
+        assert!(
+            result.is_err(),
+            "Non-existent task should fail eligibility check"
+        );
+    }
+
+    #[test]
+    fn test_task_availability_unassignable_status() -> AppResult<()> {
+        let test_db = test_db!();
+
+        // Create technician
+        let conn = test_db.db().get_connection()?;
+        conn.execute(
+            "INSERT INTO users (id, email, username, password_hash, first_name, last_name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            params!["tech-1", "tech1@test.com", "tech1", "hash", "Test", "Technician", "technician", 1]
+        )?;
+
+        // Create a task
+        let task_id = TestDataFactory::create_test_task(None).id;
+
+        // Set task to completed status
+        conn.execute(
+            "UPDATE tasks SET status = ? WHERE id = ?",
+            params!["completed", task_id],
+        )?;
+
+        let service = TaskValidationService::new(test_db.db());
+
+        // Should fail - completed task is not available
+        let result = service.check_task_availability(&task_id)?;
+        assert!(!result, "Completed task should not be available");
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_task_availability_assignable_status() -> AppResult<()> {
+        let test_db = test_db!();
+
+        // Create technician
+        let conn = test_db.db().get_connection()?;
+        conn.execute(
+            "INSERT INTO users (id, email, username, password_hash, first_name, last_name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            params!["tech-1", "tech1@test.com", "tech1", "hash", "Test", "Technician", "technician", 1]
+        )?;
+
+        // Create a task
+        let task_id = TestDataFactory::create_test_task(None).id;
+
+        let service = TaskValidationService::new(test_db.db());
+
+        // Should succeed - pending task is available
+        let result = service.check_task_availability(&task_id)?;
+        assert!(result, "Pending task should be available");
+
+        Ok(())
+    }
 }

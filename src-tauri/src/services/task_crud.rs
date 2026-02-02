@@ -55,7 +55,41 @@ impl TaskCrudService {
             })
     }
 
- impl SyncTaskCrudService<'_> {
+    /// Update a task (async version) - delegates to TaskUpdateService
+    pub async fn update_task_async(
+        &self,
+        req: UpdateTaskRequest,
+        user_id: &str,
+    ) -> Result<Task, AppError> {
+        use crate::services::task_update::TaskUpdateService;
+        let update_service = TaskUpdateService::new(self.db.clone());
+        update_service.update_task_async(req, user_id).await
+    }
+
+    /// Delete a task (async version) - delegates to TaskDeletionService (soft delete by default)
+    pub async fn delete_task_async(
+        &self,
+        id: &str,
+        user_id: &str,
+    ) -> Result<(), AppError> {
+        use crate::services::task_deletion::TaskDeletionService;
+        let deletion_service = TaskDeletionService::new(self.db.clone());
+        deletion_service.delete_task_async(id, user_id, false).await
+    }
+
+    /// Hard delete a task (async version) - permanently removes from database
+    pub async fn hard_delete_task_async(
+        &self,
+        id: &str,
+        user_id: &str,
+    ) -> Result<(), AppError> {
+        use crate::services::task_deletion::TaskDeletionService;
+        let deletion_service = TaskDeletionService::new(self.db.clone());
+        deletion_service.delete_task_async(id, user_id, true).await
+    }
+}
+
+impl SyncTaskCrudService<'_> {
     fn create_task_sync(&self, req: CreateTaskRequest, user_id: &str) -> Result<Task, AppError> {
         // Validate request
         self.validate_create_request(&req)?;

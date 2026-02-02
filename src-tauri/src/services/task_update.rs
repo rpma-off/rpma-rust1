@@ -5,6 +5,7 @@
 use crate::commands::AppError;
 use crate::db::Database;
 use crate::models::task::{UpdateTaskRequest, Task};
+use crate::services::task_validation::TaskValidationService;
 use chrono::Utc;
 use rusqlite::params;
 use std::sync::Arc;
@@ -176,26 +177,24 @@ impl TaskUpdateService {
         }
 
         if let Some(new_client_id) = &req.client_id {
-            if let Some(cid) = new_client_id {
-                let exists: i64 = self.db.query_single_value(
-                    "SELECT COUNT(*) FROM clients WHERE id = ? AND deleted_at IS NULL",
-                    params![cid],
-                )
-                .map_err(|e| AppError::Database(format!("Failed to check client existence: {}", e)))?;
-                
-                if exists == 0 {
-                    return Err(AppError::Validation(format!(
-                        "Client with ID {} does not exist", cid
-                    )));
-                }
-                
-                if let Some(old_client_id) = &task.client_id {
-                    if old_client_id != cid {
-                        warn!("Moving task {} from client {} to {}", task.id, old_client_id, cid);
-                    }
+            let exists: i64 = self.db.query_single_value(
+                "SELECT COUNT(*) FROM clients WHERE id = ? AND deleted_at IS NULL",
+                params![new_client_id],
+            )
+            .map_err(|e| AppError::Database(format!("Failed to check client existence: {}", e)))?;
+            
+            if exists == 0 {
+                return Err(AppError::Validation(format!(
+                    "Client with ID {} does not exist", new_client_id
+                )));
+            }
+            
+            if let Some(old_client_id) = &task.client_id {
+                if old_client_id != new_client_id {
+                    warn!("Moving task {} from client {} to {}", task.id, old_client_id, new_client_id);
                 }
             }
-            task.client_id = new_client_id.clone();
+            task.client_id = Some(new_client_id.clone());
         }
 
         if let Some(scheduled_date) = &req.scheduled_date {
@@ -247,6 +246,12 @@ impl TaskUpdateService {
         }
 
         if let Some(technician_id) = &req.technician_id {
+            // Validate technician assignment
+            let validation_service = TaskValidationService::new(self.db.clone());
+            validation_service
+                .validate_technician_assignment(technician_id, &task.ppf_zones)
+                .map_err(|e| AppError::Validation(format!("Technician validation failed: {}", e)))?;
+            
             task.technician_id = Some(technician_id.clone());
         }
 

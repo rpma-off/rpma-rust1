@@ -22,8 +22,8 @@ impl TaskDeletionService {
         Self { db }
     }
 
-    /// Delete a task (async version)
-    pub async fn delete_task_async(&self, id: &str, user_id: &str) -> Result<(), AppError> {
+    /// Delete a task (async version) - uses soft delete by default
+    pub async fn delete_task_async(&self, id: &str, user_id: &str, force: bool) -> Result<(), AppError> {
         let db = self.db.clone();
         let id = id.to_string();
 
@@ -35,7 +35,11 @@ impl TaskDeletionService {
             timeout_duration,
             tokio::task::spawn_blocking(move || {
                 let service = TaskDeletionService::new(db);
-                service.delete_task_sync(&id, &user_id)
+                if force {
+                    service.hard_delete_task_sync(&id, &user_id)
+                } else {
+                    service.soft_delete_task(&id, &user_id)
+                }
             }),
         )
         .await;
@@ -56,14 +60,19 @@ impl TaskDeletionService {
         }
     }
 
-    /// Delete a task (sync version)
-    pub fn delete_task_sync(&self, id: &str, user_id: &str) -> Result<(), AppError> {
+    /// Hard delete a task (permanent removal from database)
+    pub async fn hard_delete_task_async(&self, id: &str, user_id: &str) -> Result<(), AppError> {
+        self.delete_task_async(id, user_id, true).await
+    }
+
+    /// Hard delete a task (sync version) - permanently removes task from database
+    pub fn hard_delete_task_sync(&self, id: &str, user_id: &str) -> Result<(), AppError> {
         // Check if task exists and get it for ownership check
         let task = self.get_task_sync(id)?;
         let task = match task {
             Some(t) => t,
             None => {
-                warn!("TaskDeletionService: task {} not found for deletion", id);
+                warn!("TaskDeletionService: task {} not found for hard deletion", id);
                 return Err(AppError::NotFound(format!("Task with id {} not found", id)));
             }
         };
@@ -79,8 +88,8 @@ impl TaskDeletionService {
         let conn = self.db.get_connection()?;
         conn.execute("DELETE FROM tasks WHERE id = ?", params![id])
             .map_err(|e| {
-                error!("TaskDeletionService: failed to delete task {}: {}", id, e);
-                AppError::Database(format!("Failed to delete task: {}", e))
+                error!("TaskDeletionService: failed to hard delete task {}: {}", id, e);
+                AppError::Database(format!("Failed to hard delete task: {}", e))
             })?;
 
         Ok(())
