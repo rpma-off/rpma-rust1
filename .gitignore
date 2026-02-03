@@ -2,7 +2,7 @@
 /target
 /node_modules
 /.next
-
+_tmp_
 Cargo.lock
 
 # Tauri generated
@@ -12,9 +12,11 @@ Cargo.lock
 .DS_Store
 
 .env
-.env.local 
+.env.local
 
+# Backup files
+*.backup
+*.patch
 
-  
 start_dev.bat
 stop_dev.bat

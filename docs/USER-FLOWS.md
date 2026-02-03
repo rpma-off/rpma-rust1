@@ -973,26 +973,30 @@ Show sync status in UI:
 
 ```
 [CREATED]
-    │
-    ▼ assign technician
-[DRAFT] ─────────────────────────────────────► [CANCELLED]
-    │                                               ▲
-    ▼ schedule                                      │
-[SCHEDULED] ─────────────────────────────────────► │
-    │                                               │
-    ▼ start intervention                            │
-[IN_PROGRESS] ──────────────────────────────────► │
-    │         │                                     │
-    │         ▼ pause                               │
-    │     [PAUSED] ────────────────────────────────►│
-    │         │                                     │
-    │         ▼ resume                              │
-    │     [IN_PROGRESS]                             │
-    │                                               │
-    ▼ complete                                      │
-[COMPLETED] ────────────────────────────────────────
-    │
-    ▼ archive
+     │
+     ▼
+ assign technician
+[ASSIGNED]
+     │
+     ▼
+ schedule                                      │
+[SCHEDULED] ─────────────────────────────────────►
+     │                                               │
+     ▼                                               │
+ start intervention                            │
+[IN_PROGRESS]                                    │
+     │                                               │
+     │         ▲                                     │
+     │         │ pause                                │
+     │         ▼                                     │
+     │     [PAUSED] ───────────────────────────────────►
+     │
+     ▼
+ complete
+[COMPLETED]
+     │
+     ▼
+ archive
 [ARCHIVED]
 ```
 
@@ -1000,25 +1004,482 @@ Show sync status in UI:
 
 ```
 [NOT_STARTED]
-    │
-    ▼ start_intervention()
+     │
+     ▼
+ start_intervention()
 [PENDING]
-    │
-    ▼ advance_step()
+     │
+     ▼
+ advance_step()
 [IN_PROGRESS]
-    │         │
-    │         ▼ pause
-    │     [PAUSED]
-    │         │
-    │         ▼ resume
-    │     [IN_PROGRESS]
-    │
-    ▼ finalize()
+     │         │
+     │         ▼ pause
+     │     [PAUSED]
+     │         │
+     │         ▼ resume
+     │         │
+[IN_PROGRESS]
+     │
+     ▼
+ finalize()
 [COMPLETED]
 ```
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2026-02-01  
+## Page Navigation Structure
+
+### Complete Page Inventory (20+ pages)
+
+```
+RPMA Application
+├── / (Root)
+│   ├── /login (Authentication)
+│   ├── /signup (Registration)
+│   ├── /bootstrap-admin (First-time setup)
+│   ├── /unauthorized (Access denied)
+│   │
+│   ├── /dashboard (Main dashboard)
+│   │
+│   ├── /tasks (Task management)
+│   │   ├── /tasks/[id] (Task detail)
+│   │   └── /tasks/[id]/workflow/ppf (PPF workflow)
+│   │
+│   ├── /clients (Client management)
+│   │   ├── /clients/new (Create client)
+│   │   ├── /clients/[id] (Client detail)
+│   │   └── /clients/[id]/edit (Edit client)
+│   │
+│   ├── /interventions (Intervention workflows)
+│   │   └── /interventions/[id] (Intervention detail)
+│   │
+│   ├── /schedule (Calendar & scheduling)
+│   │
+│   ├── /inventory (Material inventory)
+│   │
+│   ├── /messages (Messaging center)
+│   │
+│   ├── /reports (Reports & analytics)
+│   │
+│   ├── /analytics (Analytics dashboard)
+│   │   ├── /analytics/system-health
+│   │   ├── /analytics/task-statistics
+│   │   ├── /analytics/technician-performance
+│   │   └── /analytics/workflow-analytics
+│   │
+│   ├── /team (Team management)
+│   ├── /technicians (Technician management)
+│   ├── /users (User management)
+│   │
+│   ├── /data-explorer (Data search & exploration)
+│   │
+│   ├── /configuration (System configuration)
+│   │
+│   ├── /settings (User settings)
+│   │
+│   ├── /audit (Audit log viewer)
+│   │
+│   └── /admin (Admin panel)
+```
+
+---
+
+## Navigation Flows
+
+### 1. Dashboard Navigation
+
+```typescript
+User lands on /dashboard
+    │
+    ├─→ Shows calendar view with scheduled tasks
+    ├─→ Quick action cards (Create Task, Create Client)
+    ├─→ Statistics widgets (Interventions, Tasks, Performance)
+    ├─→ Recent activity feed
+    └─→ Upcoming tasks list
+
+User can navigate to:
+    - /tasks (from quick actions)
+    - /schedule (from calendar widget)
+    - /interventions (from active interventions)
+    - /clients (from quick actions)
+    - /reports (from statistics)
+```
+
+### 2. Task List Navigation
+
+```typescript
+User navigates to /tasks
+    │
+    ├─→ Shows task table with filters
+    │   - Status filter (all statuses)
+    │   - Technician filter
+    │   - Date range filter
+    │   - Priority filter
+    │   - Search input
+    │
+    ├─→ User clicks "Create Task" → /tasks/new (inline modal)
+    ├─→ User clicks task row → /tasks/[id]
+    ├─→ User clicks "Start Intervention" → /tasks/[id]/workflow/ppf
+    ├─→ User clicks "Assign" → Assignment dialog
+    └─→ User clicks "Export" → CSV download
+```
+
+### 3. Task Detail Navigation
+
+```typescript
+User opens /tasks/[id]
+    │
+    ├─→ Shows task information
+    │   - Vehicle details
+    │   - Client card (with link to /clients/[id])
+    │   - Technician assignment
+    │   - Scheduling information
+    │   - PPF zones configuration
+    │   - Status timeline
+    │
+    ├─→ Action buttons:
+    │   - "Edit Task" → Edit modal
+    │   - "Start Intervention" → /tasks/[id]/workflow/ppf
+    │   - "Assign Technician" → Assignment dialog
+    │   - "Change Status" → Status change dropdown
+    │   - "Delete Task" → Confirmation dialog
+    │
+    └─→ Related sections:
+        - Client tasks history
+        - Related interventions
+        - Task comments/notes
+```
+
+### 4. PPF Intervention Workflow Navigation
+
+```typescript
+User starts intervention from /tasks/[id]/workflow/ppf
+    │
+    ├─→ Shows multi-step wizard:
+    │
+    │   Step 1: Inspection
+    │   ├─→ Vehicle condition form
+    │   ├─→ Defect documentation (scratch, dent, chip, paint_issue, crack)
+    │   ├─→ Before photos upload
+    │   ├─→ GPS location capture
+    │   └─→ "Next" → Step 2
+    │
+    │   Step 2: Preparation
+    │   ├─→ Environment form (weather, lighting, temp, humidity)
+    │   ├─→ Surface preparation checklist
+    │   ├─→ Materials preparation
+    │   ├─→ During photos
+    │   └─→ "Next" → Step 3
+    │
+    │   Step 3: Installation
+    │   ├─→ PPF zone selection
+    │   ├─→ Film type/brand selection
+    │   ├─→ Application per zone
+    │   ├─→ Material consumption logging
+    │   ├─→ Quality checkpoints
+    │   ├─→ In-progress photos per zone
+    │   └─→ "Next" → Step 4
+    │
+    │   Step 4: Finalization
+    │   ├─→ Final inspection checklist
+    │   ├─→ After photos
+    │   ├─→ Quality score input
+    │   ├─→ Customer signature capture
+    │   ├─→ Satisfaction rating (1-10)
+    │   ├─→ Final observations
+    │   ├─→ "Finalize" → Complete intervention
+    │   └─→ "Back" → Previous step
+    │
+    └─→ Actions available:
+        - "Pause" → Pauses workflow
+        - "Save Progress" → Saves current state
+        - "Cancel" → Cancels intervention
+        - Navigation progress indicator
+        - Step breadcrumbs
+```
+
+### 5. Calendar Navigation
+
+```typescript
+User navigates to /schedule
+    │
+    ├─→ Calendar view switcher:
+    │   - Month view (default)
+    │   - Week view
+    │   - Day view
+    │   - Agenda view
+    │
+    ├─→ Calendar toolbar:
+    │   - Today button
+    │   - Previous/Next navigation
+    │   - Date range picker
+    │   - View switcher
+    │
+    ├─→ Calendar display:
+    │   - Tasks/events as calendar items
+    │   - Color-coded by status
+    │   - Technician assignment
+    │   - Drag-and-drop to reschedule
+    │   - Click to view details
+    │
+    ├─→ Side panel filters:
+    │   - Technician filter
+    │   - Status filter
+    │   - Client filter
+    │   - Task type filter
+    │
+    └─→ Actions:
+        - Click empty slot → "Create Event" dialog
+        - Click task → Task details
+        - Drag event → Reschedule
+        - Right-click → Context menu
+```
+
+### 6. Client Management Navigation
+
+```typescript
+Client list: /clients
+    │
+    ├─→ Client cards/table
+    ├─→ Search bar
+    ├─→ Filters (type, tags)
+    ├─→ Sort options
+    ├─→ "Create Client" → /clients/new
+    └─→ Click client → /clients/[id]
+
+Client detail: /clients/[id]
+    │
+    ├─→ Client information card
+    │   - Contact details
+    │   - Address
+    │   - Business info
+    │   - Tags
+    │
+    ├─→ Statistics:
+    │   - Total tasks
+    │   - Active tasks
+    │   - Completed tasks
+    │   - Last task date
+    │   - Task timeline
+    │
+    ├─→ Related tasks list
+    ├─→ Related interventions
+    ├─→ "Edit Client" → /clients/[id]/edit
+    ├─→ "Create Task" → Pre-fill client form
+    └─→ "Delete Client" → Confirmation
+```
+
+### 7. Analytics Navigation
+
+```typescript
+Analytics dashboard: /analytics
+    │
+    ├─→ KPI cards grid:
+    │   - Total interventions
+    │   - Completion rate
+    │   - Quality score
+    │   - Customer satisfaction
+    │   - Material usage
+    │
+    ├─→ Chart sections:
+    │   - Trend charts (line/area)
+    │   - Distribution charts (bar/pie)
+    │   - Performance comparisons
+    │   - Geographic heat map
+    │
+    ├─→ Time range selector
+    │   - Last 7 days
+    │   - Last 30 days
+    │   - Last 90 days
+    │   - Custom range
+    │
+    ├─→ Filters:
+    │   - Technician
+    │   - Client
+    │   - Status
+    │   - PPF type
+    │
+    └─→ Actions:
+        - "View Details" → Drill down
+        - "Export Report" → PDF/CSV
+        - "Compare Periods" → Comparison view
+```
+
+### 8. Settings Navigation
+
+```typescript
+Settings page: /settings
+    │
+    ├─→ Tabs navigation:
+    │
+    │   Profile Tab:
+    │   ├─→ Name, email, phone
+    │   ├─→ Avatar upload
+    │   ├─→ Notes
+    │   └─→ Save button
+    │
+    │   Security Tab:
+    │   ├─→ Password change form
+    │   ├─→ 2FA management
+    │   │   - Enable/Disable
+    │   │   - View backup codes
+    │   │   - Regenerate codes
+    │   ├─→ Session settings
+    │   └─→ Active sessions list
+    │
+    │   Notifications Tab:
+    │   ├─→ Email notifications toggle
+    │   ├─→ Push notifications toggle
+    │   ├─→ In-app notifications toggle
+    │   ├── Notification type preferences
+    │   ├─→ Quiet hours configuration
+    │   └─→ Digest frequency
+    │
+    │   Appearance Tab:
+    │   ├─→ Theme selector (light/dark/system)
+    │   ├─→ Font size slider
+    │   ├─→ Accent color picker
+    │   ├─→ Compact view toggle
+    │   └─→ Language selector
+    │
+    │   Performance Tab:
+    │   ├─→ Cache settings
+    │   ├─→ Offline mode toggle
+    │   ├─→ Sync preferences
+    │   ├─→ Image compression toggle
+    │   └─→ Preload data toggle
+    │
+    │   Accessibility Tab:
+    │   ├─→ High contrast toggle
+    │   ├─→ Large text toggle
+    │   ├─→ Reduce motion toggle
+    │   ├─→ Screen reader support
+    │   └─→ Keyboard navigation indicators
+    │
+    └─→ Save on each tab change
+```
+
+### 9. Admin Panel Navigation
+
+```typescript
+Admin dashboard: /admin
+    │
+    ├─→ Overview section:
+    │   - System statistics
+    │   - User counts
+    │   - Recent activity
+    │
+    ├─→ User Management:
+    │   ├─→ User list with filters
+    │   ├─→ "Create User" → User form
+    │   ├─→ Click user → User details
+    │   ├─→ "Change Role" → Role change dialog
+    │   ├─→ "Disable/Enable" → Toggle status
+    │   └─→ "Delete User" → Confirmation
+    │
+    ├─→ Configuration:
+    │   ├─→ Business rules
+    │   ├─→ System settings
+    │   ├─→ Configuration history
+    │   └─→ Validation
+    │
+    ├─→ Integrations:
+    │   ├─→ External services list
+    │   ├─→ API key management
+    │   └─→ Service configuration
+    │
+    └─→ Maintenance:
+        - Database operations
+        - Cache management
+        - Log viewer
+```
+
+### 10. Offline Mode Flows
+
+```typescript
+App detects no network connection
+    │
+    ├─→ Show "Offline Mode" banner (persistent)
+    ├─→ All data continues to work from local SQLite
+    ├─→ Operations queue in sync_queue table
+    ├─→ Show sync status indicator
+    │   - Green: All synced
+    │   - Yellow: Pending sync
+    │   - Red: Sync failed
+    │
+    └─→ When connection restored:
+        ├─→ Background sync service activates
+        ├─→ Process queue in batches
+        ├─→ Handle conflicts (last-write-wins)
+        └─→ Update sync status indicator
+```
+
+---
+
+## Cross-Page Navigation
+
+### Quick Actions Pattern
+
+```typescript
+From any page, user can access:
+    ├─→ Global search (Ctrl+K) → Command palette
+    ├─→ Quick create (Ctrl+N) → New task modal
+    ├─→ Calendar (Ctrl+D) → /schedule
+    ├─→ Dashboard (Ctrl+H) → /
+    ├─→ Tasks (Ctrl+T) → /tasks
+    ├─→ Clients (Ctrl+C) → /clients
+    └─→ Settings (Ctrl+,) → /settings
+```
+
+### Breadcrumb Navigation
+
+```typescript
+Example: Dashboard → Tasks → Task Detail
+
+/tasks/[id]
+    │
+    ├─→ Breadcrumbs: [Dashboard] [Tasks] [Task #123]
+    ├─→ Click "Dashboard" → /
+    ├─→ Click "Tasks" → /tasks
+    └─→ Current page indicator
+```
+
+---
+
+## Role-Based Access
+
+### Access Control Matrix
+
+```
+Page/Feature          Admin  Supervisor  Technician  Viewer
+─────────────────────────────────────────────────────
+Dashboard             ✓      ✓          ✓         ✓
+Tasks                 ✓      ✓          ✓         ✓
+- Create/Edit           ✓      ✓          ✗         ✗
+- Delete               ✓      ✓          ✗         ✗
+- Assign               ✓      ✓          ✓         ✗
+Interventions         ✓      ✓          ✓         ✓
+- Start                ✓      ✓          ✓         ✓
+- Pause                ✓      ✓          ✓         ✗
+- Finalize            ✓      ✓          ✓         ✗
+Clients               ✓      ✓          ✓         ✓
+- Create/Edit/Delete   ✓      ✓          ✓         ✗
+Calendar              ✓      ✓          ✓         ✓
+Schedule              ✓      ✓          ✓         ✗
+Inventory             ✓      ✓          ✗         ✗
+- Material Adjust      ✓      ✓          ✗         ✗
+Reports               ✓      ✓          ✓         ✓
+Analytics             ✓      ✓          ✓         ✓
+Settings (Profile)    ✓      ✓          ✓         ✓
+Settings (Security)    ✓      ✓          ✗         ✗
+Admin Panel            ✓      ✗          ✗         ✗
+Audit Logs            ✓      ✓          ✓         ✓
+```
+
+---
+
+---
+
+**Document Version**: 2.0
+**Last Updated**: 2026-02-03
 **Maintained By**: RPMA Team

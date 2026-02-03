@@ -38,12 +38,6 @@ pub async fn auth_login(
     let _correlation_id = request
         .correlation_id
         .unwrap_or_else(|| "test-correlation-id".to_string());
-    // let logger = RPMARequestLogger::new(correlation_id.clone(), None, LogDomain::Auth);
-
-    // let mut context = HashMap::new();
-    // context.insert("email".to_string(), Value::from(request.email.clone()));
-    // context.insert("has_password".to_string(), Value::from(!request.password.is_empty()));
-    // logger.info("User login attempt", Some(context));
 
     // Validate input data
     let validator = ValidationService::new();
@@ -61,19 +55,10 @@ pub async fn auth_login(
     let session_result = auth_service.authenticate(&validated_email, &validated_password, ip_address.as_deref());
     let session = match session_result {
         Ok(session) => {
-            // Update logger with user ID now that we have it
-            // let logger = RPMARequestLogger::new(correlation_id, Some(session.user_id.clone()), LogDomain::Auth);
-            // let mut context = HashMap::new();
-            // context.insert("user_id".to_string(), Value::from(session.user_id.clone()));
-            // context.insert("email".to_string(), Value::from(session.email.clone()));
-            // context.insert("role".to_string(), serde_json::to_value(&session.role).unwrap_or(Value::Null));
-            // logger.info("Authentication successful", Some(context));
+            debug!("Authentication successful for user: {}", session.user_id);
             session
         }
         Err(e) => {
-            // let mut context = HashMap::new();
-            // context.insert("email".to_string(), Value::from(request.email.clone()));
-            // logger.error("Authentication failed", None, Some(context));
             // Return user-friendly error message
             let error_msg = if e.contains("Invalid email or password") {
                 "Email ou mot de passe incorrect".to_string()

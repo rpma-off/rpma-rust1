@@ -127,51 +127,6 @@ pub fn dashboard_get_stats(
     Ok(super::ApiResponse::success(stats))
 }
 
-/// Get client statistics from database
-#[allow(dead_code)]
-fn get_client_statistics(db: &crate::db::Database) -> Result<serde_json::Value, super::AppError> {
-    let mut stats = serde_json::Map::new();
-
-    // Total clients
-    let total_clients = db
-        .count_rows("clients")
-        .map_err(|e| super::AppError::Database(format!("Failed to count clients: {}", e)))?;
-    stats.insert(
-        "total".to_string(),
-        serde_json::Value::Number(total_clients.into()),
-    );
-
-    // For now, use mock data for active clients
-    stats.insert("active".to_string(), serde_json::Value::Number(35.into()));
-
-    Ok(serde_json::Value::Object(stats))
-}
-
-/// Get user statistics from database
-#[allow(dead_code)]
-fn get_user_statistics(db: &crate::db::Database) -> Result<serde_json::Value, super::AppError> {
-    let mut stats = serde_json::Map::new();
-
-    // Total users
-    let total_users = db
-        .count_rows("users")
-        .map_err(|e| super::AppError::Database(format!("Failed to count users: {}", e)))?;
-    stats.insert(
-        "total".to_string(),
-        serde_json::Value::Number(total_users.into()),
-    );
-
-    // For now, use mock data for user breakdown
-    stats.insert("active".to_string(), serde_json::Value::Number(12.into()));
-    stats.insert("admins".to_string(), serde_json::Value::Number(2.into()));
-    stats.insert(
-        "technicians".to_string(),
-        serde_json::Value::Number(8.into()),
-    );
-
-    Ok(serde_json::Value::Object(stats))
-}
-
 /// Get recent activities for admin dashboard
 #[command]
 pub async fn get_recent_activities(

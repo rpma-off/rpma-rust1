@@ -599,92 +599,262 @@ PORT=3001 npm run dev
 
 ## Scripts Reference
 
-### Root Package Scripts
+### Root Package Scripts (30+ scripts)
+
+#### Development Scripts
 
 ```json
 {
   "dev": "Export types + start Tauri dev",
-  "build": "Build production bundle",
-  "types:sync": "Generate TypeScript types from Rust",
   "frontend:dev": "Start frontend dev server",
-  "frontend:build": "Build frontend",
-  "backend:build": "Build Rust backend",
-  "backend:build:release": "Build optimized Rust",
-  "backend:clippy": "Run Rust linter",
-  "backend:fmt": "Format Rust code",
-  "types:validate": "Validate type consistency",
-  "types:drift-check": "Check for type drift",
-  "bundle:analyze": "Analyze bundle size",
-  "security:audit": "Security audit",
-  "clean": "Clean build artifacts"
+  "frontend:dev": "Start frontend dev server with Next.js"
 }
 ```
 
-### Helper Scripts
-
-**Windows:**
-- `start_dev.bat` - Start development environment
-- `stop_dev.bat` - Stop all dev processes
-
-**Validation Scripts (scripts/*):**
-- `validate-types.js` - Ensure Rust/TS type consistency
-- `check-type-drift.js` - Detect type mismatches
-- `security-audit.js` - Security checks
-- `migration-health-check.js` - Validate migrations
-
-## Continuous Integration (Future)
-
-**Planned CI/CD Pipeline:**
-
-```yaml
-# .github/workflows/build.yml (not yet created)
-name: Build and Release
-
-on:
-  push:
-    tags:
-      - 'v*'
-
-jobs:
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup Node
-      - name: Setup Rust
-      - name: Build
-      - name: Upload artifacts
-
-  build-macos:
-    runs-on: macos-latest
-    # Similar steps
-
-  build-linux:
-    runs-on: ubuntu-latest
-    # Similar steps
+**Usage**:
+```bash
+npm run dev                      # Full stack dev (types + Tauri)
+npm run frontend:dev              # Frontend only
+npm run dev:next                   # Frontend Next.js only
 ```
 
-## Distribution Checklist
+#### Build Scripts
 
-Before releasing a new version:
+```json
+{
+  "build": "Build production bundle",
+  "frontend:build": "Build frontend only",
+  "backend:build": "Build Rust backend",
+  "backend:build:release": "Build optimized Rust backend"
+}
+```
 
-- [ ] Update version in `package.json`
-- [ ] Update version in `src-tauri/Cargo.toml`
-- [ ] Update version in `src-tauri/tauri.conf.json`
-- [ ] Run `npm run types:validate`
-- [ ] Run `npm run security:audit`
-- [ ] Test on target platforms
-- [ ] Generate new JWT_SECRET and RPMA_DB_KEY for production
-- [ ] Update CHANGELOG.md
-- [ ] Create git tag
-- [ ] Build production bundles
-- [ ] Sign binaries (if applicable)
-- [ ] Test installation on clean systems
-- [ ] Upload to distribution platform
-- [ ] Update documentation
+**Usage**:
+```bash
+npm run build                      # Full production build
+npm run frontend:build              # Frontend Next.js build
+npm run backend:build               # Rust debug build
+npm run backend:build:release       # Rust optimized build
+```
+
+#### Type System Scripts
+
+```json
+{
+  "types:sync": "Generate TypeScript types from Rust",
+  "types:validate": "Validate type consistency",
+  "types:drift-check": "Check for type drift",
+  "types:ci-drift-check": "CI type drift check",
+  "types:generate-docs": "Generate type documentation"
+}
+```
+
+**Usage**:
+```bash
+npm run types:sync                # Export types from Rust to TypeScript
+npm run types:validate             # Validate types are consistent
+npm run types:drift-check          # Check for type mismatches
+npm run types:generate-docs        # Generate TypeScript documentation
+```
+
+#### Testing Scripts
+
+```json
+{
+  "frontend:lint": "Lint frontend code",
+  "frontend:type-check": "TypeScript type checking",
+  "test": "Run Jest tests",
+  "test:watch": "Run tests in watch mode",
+  "test:coverage": "Generate coverage report",
+  "test:coverage:check": "Check coverage thresholds",
+  "test:ci": "Run CI tests",
+  "test:e2e": "Run Playwright end-to-end tests",
+  "test:e2e:ui": "Run E2E tests with UI",
+  "test:e2e:debug": "Debug E2E tests",
+  "test:e2e:codegen": "Generate E2E tests",
+  "test:components": "Test components",
+  "test:hooks": "Test hooks",
+  "test:integration": "Run integration tests"
+}
+```
+
+**Usage**:
+```bash
+npm test                          # Run all tests
+npm run test:watch                # Watch mode
+npm run test:coverage              # Generate coverage
+npm run test:e2e                   # Playwright E2E
+npm run test:e2e:ui               # E2E with UI
+npm run test:components             # Component tests
+npm run test:hooks                 # Hook tests
+```
+
+#### Backend Scripts
+
+```json
+{
+  "backend:check": "Check Rust code without building",
+  "backend:clippy": "Run Rust linter",
+  "backend:fmt": "Format Rust code"
+}
+```
+
+**Usage**:
+```bash
+npm run backend:check               # Quick syntax/type check
+npm run backend:clippy              # Full linting with Clippy
+npm run backend:fmt                  # Format with rustfmt
+```
+
+#### Performance & Quality Scripts
+
+```json
+{
+  "bundle:analyze": "Analyze bundle size",
+  "bundle:check-size": "Check bundle size limits",
+  "performance:test": "Run performance regression tests",
+  "performance:update-baseline": "Update performance baselines",
+  "security:audit": "Run security audit",
+  "code-review:check": "Run code review checks"
+}
+```
+
+**Usage**:
+```bash
+npm run bundle:analyze             # Analyze frontend bundle
+npm run bundle:check-size          # Check size limits
+npm run performance:test            # Run performance tests
+npm run performance:update-baseline  # Update baselines
+npm run security:audit              # Run security vulnerability scan
+npm run code-review:check           # Run code review analysis
+```
+
+#### Maintenance Scripts
+
+```json
+{
+  "install": "Install frontend dependencies",
+  "clean": "Clean all build artifacts",
+  "frontend:clean": "Clean frontend build artifacts",
+  "prepare": "Setup git hooks (husky)"
+}
+```
+
+**Usage**:
+```bash
+npm install                       # Install root dependencies
+npm run install                     # Install frontend dependencies
+npm run clean                        # Clean all artifacts
+npm run frontend:clean              # Clean frontend artifacts
+```
+
+### Frontend Package Scripts (25+ scripts)
+
+```json
+{
+  "dev": "Next.js development server",
+  "dev:next": "Next.js dev server",
+  "predev": "Run type sync before dev",
+  "build": "Next.js production build",
+  "prebuild": "Run type sync before build",
+  "build:analyze": "Bundle analysis with webpack-bundle-analyzer",
+  "start": "Start production server",
+  "lint": "ESLint linting",
+  "type-check": "TypeScript type checking",
+  "types:sync": "Sync types from Rust",
+  "test": "Run Jest tests",
+  "test:watch": "Watch mode",
+  "test:coverage": "Coverage report",
+  "test:coverage:check": "Check coverage thresholds",
+  "test:ci": "CI tests with coverage",
+  "test:debug": "Debug tests",
+  "test:e2e": "Playwright E2E tests",
+  "test:e2e:ui": "E2E with UI",
+  "test:e2e:debug": "Debug E2E tests",
+  "test:e2e:codegen": "Generate E2E tests",
+  "analyze": "Bundle analysis"
+}
+```
+
+**Key Features**:
+- Auto type sync before dev/build
+- Multiple test runners (Jest, Playwright)
+- Bundle size analysis
+- Coverage reporting with thresholds
+
+### Helper Scripts
+
+**Windows Batch Files:**
+- `start_dev.bat` - Start development (types:sync + tauri dev)
+- `stop_dev.bat` - Stop all processes
+
+**Validation Scripts (scripts/*):**
+- `validate-types.js` - Validate Rust/TS type consistency
+- `check-type-drift.js` - Detect type drift between Rust and TS
+- `ci-type-drift-check.js` - CI-compatible type drift check
+- `generate-type-docs.js` - Generate TypeScript documentation
+- `check-bundle-size.js` - Verify bundle size limits
+- `performance-regression-test.js` - Run performance benchmarks
+- `security-audit.js` - Run security vulnerability scan
+- `code-review-check.js` - Run code quality analysis
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2026-02-01  
+## Command Reference Summary
+
+### Quick Start Commands
+
+**For Development:**
+```bash
+# Clone and setup
+git clone <repository>
+cd rpma-rust
+npm install                      # Install all dependencies
+
+# Start development
+npm run dev
+
+# Type check
+npm run types:sync
+npm run frontend:type-check
+
+# Lint
+npm run frontend:lint
+npm run backend:clippy
+
+# Test
+npm test
+npm run test:e2e
+```
+
+**For Building:**
+```bash
+# Full production build
+npm run build
+
+# Backend only
+npm run backend:build:release
+
+# Type validation
+npm run types:validate
+npm run types:drift-check
+```
+
+**For Quality:**
+```bash
+# Security check
+npm run security:audit
+
+# Bundle analysis
+npm run bundle:analyze
+npm run bundle:check-size
+
+# Performance tests
+npm run performance:test
+```
+
+---
+
+**Document Version**: 2.0
+**Last Updated**: 2026-02-03
 **Maintained By**: RPMA Team

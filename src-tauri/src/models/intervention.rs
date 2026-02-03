@@ -1,7 +1,6 @@
 //! Intervention model - Main entity for PPF interventions
 
 use super::common::*;
-use crate::db::FromSqlRow;
 use rusqlite::{Result as SqliteResult, Row};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;

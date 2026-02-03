@@ -327,13 +327,11 @@ struct LocationRow {
     pub client_id: Option<String>,
     pub started_at: Option<i64>,
     pub completed_at: Option<i64>,
-    #[allow(dead_code)]
     pub created_at: i64,
 }
 
 #[derive(Debug, Clone)]
 struct CoverageRow {
-    #[allow(dead_code)]
     pub id: String,
     pub client_id: Option<String>,
     pub start_location_lat: Option<f64>,

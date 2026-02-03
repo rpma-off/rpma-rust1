@@ -1,5 +1,4 @@
 // We only compile this file for the export-types binary, not the main app
-#![allow(dead_code)]
 
 // Note: serde_json::Value is handled via #[ts(type = "any")] attributes in the model definitions
 #[cfg(feature = "ts-rs")]

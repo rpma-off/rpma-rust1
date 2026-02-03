@@ -81,12 +81,10 @@ pub struct CacheConfig {
 /// Comprehensive cache manager supporting multiple cache types and backends
 #[derive(Debug)]
 pub struct CacheManager {
-    #[allow(dead_code)]
     backend: CacheBackend,
     redis_client: Option<Client>,
     config: CacheConfig,
     stats: Arc<Mutex<CacheStats>>,
-    #[allow(dead_code)]
     compression_threshold: usize,
     memory_cache: Arc<Mutex<HashMap<String, (CacheEntry, Vec<u8>)>>>,
     disk_cache_path: Option<PathBuf>,
@@ -447,7 +445,6 @@ impl CacheManager {
     }
 
     /// Decompress data
-    #[allow(dead_code)]
     fn decompress_data(&self, data: &str) -> Result<String, AppError> {
         use flate2::read::GzDecoder;
         use std::io::Read;

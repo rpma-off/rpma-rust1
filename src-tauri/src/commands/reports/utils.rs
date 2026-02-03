@@ -3,8 +3,6 @@
 //! This module contains shared utility functions used across
 //! different report operations.
 
-#![allow(dead_code)]
-
 use crate::models::reports::CompleteInterventionData;
 use std::io::Read;
 use std::path::Path;

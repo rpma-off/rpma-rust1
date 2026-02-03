@@ -4,7 +4,7 @@
 //! asynchronously without blocking the main IPC thread.
 
 use std::sync::Arc;
-use tokio::sync::{mpsc, Semaphore};
+ use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 use tracing::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
@@ -87,8 +87,6 @@ pub struct WorkerPool {
     task_sender: BroadcastSender,
     result_receiver: mpsc::UnboundedReceiver<TaskResult>,
     handles: Vec<JoinHandle<()>>,
-    #[allow(dead_code)]
-    semaphore: Arc<Semaphore>,
     stats: Arc<parking_lot::Mutex<PoolStats>>,
 }
 
@@ -102,7 +100,6 @@ impl WorkerPool {
     pub fn with_config(config: WorkerPoolConfig) -> Self {
         let (result_sender, result_receiver) = mpsc::unbounded_channel();
 
-        let semaphore = Arc::new(Semaphore::new(config.num_workers));
         let stats = Arc::new(parking_lot::Mutex::new(PoolStats::new(config.pool_name.clone())));
 
         let mut task_senders = Vec::new();
@@ -113,36 +110,33 @@ impl WorkerPool {
             let (task_sender, task_receiver) = mpsc::unbounded_channel();
             task_senders.push(task_sender);
 
-            let semaphore_clone = semaphore.clone();
             let result_sender_clone = result_sender.clone();
             let stats_clone = stats.clone();
             let config_clone = config.clone();
 
-            let handle = tokio::spawn(async move {
-                Self::worker_loop(
-                    worker_id,
-                    semaphore_clone,
-                    task_receiver,
-                    result_sender_clone,
-                    stats_clone,
-                    config_clone,
-                ).await;
-            });
+             let handle = tokio::spawn(async move {
+                 Self::worker_loop(
+                     worker_id,
+                     task_receiver,
+                     result_sender_clone,
+                     stats_clone,
+                     config_clone,
+                 ).await;
+             });
 
-            handles.push(handle);
-        }
+             handles.push(handle);
+         }
 
-        // Create a broadcast sender that sends to all worker channels
-        let task_sender = BroadcastSender { senders: task_senders };
+         // Create a broadcast sender that sends to all worker channels
+         let task_sender = BroadcastSender { senders: task_senders };
 
-        Self {
-            config,
-            task_sender,
-            result_receiver,
-            handles,
-            semaphore,
-            stats,
-        }
+         Self {
+             config,
+             task_sender,
+             result_receiver,
+             handles,
+             stats,
+         }
     }
 
     /// Submit a task to the worker pool
@@ -196,7 +190,6 @@ impl WorkerPool {
     /// Worker loop that processes tasks
     async fn worker_loop(
         worker_id: usize,
-        semaphore: Arc<Semaphore>,
         mut task_receiver: mpsc::UnboundedReceiver<WorkerTask>,
         result_sender: mpsc::UnboundedSender<TaskResult>,
         stats: Arc<parking_lot::Mutex<PoolStats>>,
@@ -205,8 +198,7 @@ impl WorkerPool {
         debug!("Worker {} starting in pool '{}'", worker_id, config.pool_name);
 
         while let Some(task) = task_receiver.recv().await {
-            // Acquire semaphore permit
-            let _permit = semaphore.acquire().await.unwrap();
+        // Continue with task
 
             let start_time = std::time::Instant::now();
 
