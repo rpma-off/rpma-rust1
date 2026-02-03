@@ -740,6 +740,7 @@ export const ipcClient = {
           const result = await safeInvoke<unknown>('intervention_workflow', {
             action: { action: 'Start', data },
             session_token: sessionToken,
+            sessionToken: sessionToken,
             task_id: data.task_id
           });
           // Extract Started response from InterventionWorkflowResponse
@@ -755,7 +756,8 @@ export const ipcClient = {
     get: async (id: string, sessionToken: string) => {
       const result = await safeInvoke<unknown>('intervention_workflow', {
         action: { action: 'Get', id },
-        session_token: sessionToken
+        session_token: sessionToken,
+        sessionToken: sessionToken
       });
       // Extract intervention from Retrieved response
       if (result && typeof result === 'object' && 'type' in result) {
@@ -774,6 +776,7 @@ export const ipcClient = {
           const result = await safeInvoke<unknown>('intervention_workflow', {
             action: { action: 'GetActiveByTask', task_id: taskId },
             session_token: sessionToken,
+            sessionToken: sessionToken,
             task_id: taskId
           });
 
@@ -842,7 +845,8 @@ export const ipcClient = {
             quality_check_passed: stepData.quality_check_passed,
             issues: stepData.issues
           },
-          session_token: sessionToken
+          session_token: sessionToken,
+          sessionToken: sessionToken
         });
         // Return the full StepAdvanced response
         if (result && typeof result === 'object' && 'type' in result) {
@@ -857,7 +861,8 @@ export const ipcClient = {
     getStep: async (stepId: string, sessionToken: string) => {
       const result = await safeInvoke<unknown>('intervention_get_step', {
         step_id: stepId,
-        session_token: sessionToken
+        session_token: sessionToken,
+        sessionToken: sessionToken
       });
       return extractAndValidate(result, validateInterventionStep) as InterventionStep;
     },
@@ -865,7 +870,8 @@ export const ipcClient = {
     getProgress: async (interventionId: string, sessionToken: string) => {
       const result = await safeInvoke<unknown>('intervention_progress', {
         action: { action: 'Get', intervention_id: interventionId },
-        session_token: sessionToken
+        session_token: sessionToken,
+        sessionToken: sessionToken
       });
       // Extract progress data from Retrieved response
       if (result && typeof result === 'object' && 'type' in result) {
@@ -888,7 +894,8 @@ export const ipcClient = {
           step_id: stepData.step_id,
           progress_data: stepData.collected_data ?? {}
         },
-        session_token: sessionToken
+        session_token: sessionToken,
+        sessionToken: sessionToken
       });
       // Extract message from ProgressSaved response
       if (result && typeof result === 'object' && 'type' in result) {
@@ -903,7 +910,8 @@ export const ipcClient = {
     updateWorkflow: async (id: string, data: Record<string, unknown>, sessionToken: string) => {
       const result = await safeInvoke<unknown>('intervention_workflow', {
         action: { action: 'Update', id, data },
-        session_token: sessionToken
+        session_token: sessionToken,
+        sessionToken: sessionToken
       });
       // Extract response from Updated response
       if (result && typeof result === 'object' && 'type' in result) {
@@ -918,7 +926,8 @@ export const ipcClient = {
     finalize: async (data: FinalizeInterventionRequest, sessionToken: string) => {
       const result = await safeInvoke<unknown>('intervention_workflow', {
         action: { action: 'Finalize', data },
-        session_token: sessionToken
+        session_token: sessionToken,
+        sessionToken: sessionToken
       });
       // Return the full Finalized response
       if (result && typeof result === 'object' && 'type' in result) {
