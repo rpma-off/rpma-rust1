@@ -76,6 +76,7 @@ export class RPMAFrontendLogger {
     metadata?: Record<string, unknown>
   ): LogEntry {
     const context = CorrelationContext.get();
+    const error = metadata?.error as LogEntry['error'] | undefined;
 
     return {
       id: this.generateUniqueId(),
@@ -87,6 +88,7 @@ export class RPMAFrontendLogger {
       operation,
       user_id: context.user_id,
       context_data,
+      error,
       metadata: {
         component: context.component,
         userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
@@ -127,6 +129,10 @@ export class RPMAFrontendLogger {
 
     if (entry.error) {
       formatted += ` | error: ${entry.error.name}: ${entry.error.message}`;
+    }
+    const errorDetails = entry.metadata?.error_details as { message?: string } | undefined;
+    if (!entry.error && errorDetails?.message) {
+      formatted += ` | error: ${errorDetails.message}`;
     }
 
     return formatted;

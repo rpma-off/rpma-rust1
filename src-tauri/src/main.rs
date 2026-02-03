@@ -351,6 +351,11 @@ fn main() {
                     } else {
                         info!("Database is already at latest version {}", current_version);
                     }
+
+                    if let Err(e) = db_instance.ensure_required_views() {
+                        error!("Failed to ensure required views: {}", e);
+                        return Err(e.into());
+                    }
                 }
                 Ok(false) => {
                     info!("Initializing database schema from schema.sql (version 25)");
@@ -360,6 +365,11 @@ fn main() {
                     }
                     // schema.sql initializes schema_version to 25, so no migrations needed
                     info!("Database schema initialized at version 25");
+
+                    if let Err(e) = db_instance.ensure_required_views() {
+                        error!("Failed to ensure required views: {}", e);
+                        return Err(e.into());
+                    }
                 }
                 Err(e) => {
                     error!("Failed to check database initialization status: {}", e);

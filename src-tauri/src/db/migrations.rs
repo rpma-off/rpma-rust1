@@ -21,6 +21,33 @@ impl Database {
         Ok(())
     }
 
+    /// Ensure views that older schemas might be missing exist
+    pub fn ensure_required_views(&self) -> DbResult<()> {
+        let conn = self.get_connection()?;
+
+        conn.execute_batch(
+            r#"
+            CREATE VIEW IF NOT EXISTS client_statistics AS
+            SELECT
+              c.id,
+              c.name,
+              c.customer_type,
+              c.created_at,
+              COUNT(DISTINCT t.id) as total_tasks,
+              COUNT(DISTINCT CASE WHEN t.status = 'in_progress' THEN t.id END) as active_tasks,
+              COUNT(DISTINCT CASE WHEN t.status = 'completed' THEN t.id END) as completed_tasks,
+              MAX(CASE WHEN t.status IN ('completed', 'in_progress') THEN t.updated_at END) as last_task_date
+            FROM clients c
+            LEFT JOIN tasks t ON t.client_id = c.id AND t.deleted_at IS NULL
+            WHERE c.deleted_at IS NULL
+            GROUP BY c.id, c.name, c.customer_type, c.created_at;
+            "#,
+        )
+        .map_err(|e| e.to_string())?;
+
+        Ok(())
+    }
+
     /// Check if database is initialized (critical tables exist)
     pub fn is_initialized(&self) -> DbResult<bool> {
         let conn = self.get_connection()?;

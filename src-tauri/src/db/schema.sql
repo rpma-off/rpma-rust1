@@ -1007,6 +1007,23 @@ CREATE INDEX IF NOT EXISTS idx_events_technician_date ON calendar_events(technic
 CREATE INDEX IF NOT EXISTS idx_events_date_range ON calendar_events(start_datetime, end_datetime);
 CREATE INDEX IF NOT EXISTS idx_events_status_technician ON calendar_events(status, technician_id);
 
+-- Views
+-- View for optimized client statistics (kept in sync with migration 021)
+CREATE VIEW IF NOT EXISTS client_statistics AS
+SELECT
+  c.id,
+  c.name,
+  c.customer_type,
+  c.created_at,
+  COUNT(DISTINCT t.id) as total_tasks,
+  COUNT(DISTINCT CASE WHEN t.status = 'in_progress' THEN t.id END) as active_tasks,
+  COUNT(DISTINCT CASE WHEN t.status = 'completed' THEN t.id END) as completed_tasks,
+  MAX(CASE WHEN t.status IN ('completed', 'in_progress') THEN t.updated_at END) as last_task_date
+FROM clients c
+LEFT JOIN tasks t ON t.client_id = c.id AND t.deleted_at IS NULL
+WHERE c.deleted_at IS NULL
+GROUP BY c.id, c.name, c.customer_type, c.created_at;
+
 -- Schema Version Management
 -- This table tracks which database migrations have been applied
 -- The current schema.sql represents version 25 of the database schema
