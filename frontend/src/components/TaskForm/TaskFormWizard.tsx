@@ -60,7 +60,9 @@ const TaskFormWizard: React.FC<TaskFormProps> = React.memo(({
     validateStep,
     canProceedToNextStep,
     isDirty,
+    lastSaved,
     autoSave,
+    clearDraft,
   } = useTaskForm(user?.user_id, mergedInitialData);
 
   // Memoized step configuration to prevent unnecessary re-renders
@@ -98,7 +100,10 @@ const TaskFormWizard: React.FC<TaskFormProps> = React.memo(({
     setLoading,
     setError,
     setCurrentStep,
-    onSuccess
+    onSuccess: (task) => {
+      clearDraft?.();
+      onSuccess?.(task);
+    }
   });
 
   // Use the steps hook
@@ -213,6 +218,7 @@ const TaskFormWizard: React.FC<TaskFormProps> = React.memo(({
         <TaskFormAutoSaveStatus
           autoSaveEnabled={autoSaveEnabled}
           isDirty={isDirty}
+          lastSaved={lastSaved}
         />
       </form>
     </div>

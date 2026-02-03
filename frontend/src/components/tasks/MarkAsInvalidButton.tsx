@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { taskService } from '@/lib/services/entities/task.service';
 import {
   Dialog,
   DialogContent,
@@ -57,21 +58,10 @@ export function MarkAsInvalidButton({
     setError(null);
 
     try {
-      const response = await fetch('/api/tasks/mark-invalid', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          taskId,
-          reason: reason || undefined,
-        }),
-      });
+      const result = await taskService.markTaskInvalid(taskId, reason || undefined);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors du marquage de la tâche comme invalide');
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur lors du marquage de la tâche comme invalide');
       }
 
       toast.success('Tâche marquée comme invalide avec succès');
@@ -165,3 +155,4 @@ export function MarkAsInvalidButton({
     </>
   );
 }
+

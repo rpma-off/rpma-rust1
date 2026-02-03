@@ -22,6 +22,7 @@ type TaskFiltersProps = {
 };
 
 export function TaskFilters({ filters, onFilterChange }: TaskFiltersProps) {
+  const isMockedData = true;
   // These would typically come from your API or context
   const statusOptions: { value: string; label: string }[] = [
     { value: 'all', label: 'All Statuses' },
@@ -35,21 +36,21 @@ export function TaskFilters({ filters, onFilterChange }: TaskFiltersProps) {
 
   // Mock data - replace with actual data from your API
   const technicianOptions = [
-    { id: '1', name: 'John Doe' },
-    { id: '2', name: 'Jane Smith' },
-    { id: '3', name: 'Mike Johnson' },
+    { id: '1', name: 'John Doe (exemple)' },
+    { id: '2', name: 'Jane Smith (exemple)' },
+    { id: '3', name: 'Mike Johnson (exemple)' },
   ];
 
   const ppfZoneOptions = [
-    'Front Bumper',
-    'Full Front',
-    'Full Car',
-    'Hood',
-    'Fenders',
-    'Mirrors',
-    'A-Pillars',
-    'Rockers',
-    'Door Cups',
+    'Front Bumper (exemple)',
+    'Full Front (exemple)',
+    'Full Car (exemple)',
+    'Hood (exemple)',
+    'Fenders (exemple)',
+    'Mirrors (exemple)',
+    'A-Pillars (exemple)',
+    'Rockers (exemple)',
+    'Door Cups (exemple)',
   ];
 
   return (
@@ -118,6 +119,11 @@ export function TaskFilters({ filters, onFilterChange }: TaskFiltersProps) {
           </SelectContent>
         </Select>
       </div>
+      {isMockedData && (
+        <div className="md:col-span-3 text-xs text-muted-foreground">
+          Options de techniciens et zones PPF affichées en mode exemple.
+        </div>
+      )}
     </div>
   );
 }

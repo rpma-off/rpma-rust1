@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { taskService } from '@/lib/services/entities/task.service';
 
 export interface AutoSaveOptions<T = Record<string, unknown>> {
   delay?: number; // Délai en ms avant sauvegarde (défaut: 30s)
@@ -144,23 +145,16 @@ export function useWorkflowStepAutoSave(
   options: Omit<AutoSaveOptions<Record<string, unknown>>, 'delay'> & { delay?: number } = {}
 ) {
   const saveStepData = async (data: Record<string, unknown>) => {
-    const response = await fetch(`/api/tasks/${taskId}/steps/${stepId}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        step_data: data,
-        updated_at: new Date().toISOString()
-      }),
+    const result = await taskService.updateTaskStepData(taskId, stepId, {
+      ...data,
+      updated_at: new Date().toISOString()
     });
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Erreur sauvegarde étape: ${error}`);
+    if (!result.success) {
+      throw new Error(`Erreur sauvegarde étape: ${result.error ?? 'Erreur inconnue'}`);
     }
 
-    return response.json();
+    return result.data;
   };
 
   return useAutoSave(stepData, saveStepData, {
@@ -179,7 +173,6 @@ export function useWorkflowStepAutoSave(
     ...options
   });
 }
-
 // Hook pour sauvegarder avant fermeture de page
 export function useBeforeUnloadSave<T>(
   data: T,
@@ -212,3 +205,5 @@ export function useBeforeUnloadSave<T>(
     };
   }, [data, hasUnsavedChanges, saveFunction]);
 }
+
+

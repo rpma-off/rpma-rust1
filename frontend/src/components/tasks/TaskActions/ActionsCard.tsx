@@ -275,6 +275,8 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
       const interventionData = {
         task_id: task.id,
         intervention_number: null,
+        intervention_type: 'ppf',
+        priority: task.priority || 'medium',
         ppf_zones: task.ppf_zones || [],
         custom_ppf_zones: task.custom_ppf_zones || null,
         film_type: 'standard', // Default
@@ -341,48 +343,6 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
     router.push(`/tasks/${task.id}/completed`);
   };
 
-  // Primary action button based on task status
-  const renderPrimaryAction = () => {
-    if (isCompleted) {
-      return (
-        <Button
-          onClick={handleViewCompleted}
-          className="w-full bg-green-600 hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-        >
-          <CheckCircle className="h-5 w-5 mr-2" />
-          Voir le rapport final
-        </Button>
-      );
-    }
-
-    if (isInProgress) {
-      return (
-        <Button
-          onClick={handleViewWorkflow}
-          className="w-full bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        >
-          <ArrowRight className="h-5 w-5 mr-2" />
-          Continuer l&apos;intervention
-        </Button>
-      );
-    }
-
-    return (
-      <Button
-        onClick={handleStartWorkflow}
-        disabled={!canStartTask || startInterventionMutation.isPending}
-        className={cn(
-          "w-full transition-colors duration-200",
-          canStartTask && !startInterventionMutation.isPending
-            ? "bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            : "bg-gray-300 cursor-not-allowed"
-        )}
-      >
-        <Play className="h-5 w-5 mr-2" />
-        {startInterventionMutation.isPending ? 'Démarrage...' : 'Démarrer l\'intervention'}
-      </Button>
-    );
-  };
 
   // Secondary actions (photos, checklist, etc.)
   const secondaryActions = [
@@ -485,135 +445,46 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
         <div className="space-y-4">
           {/* Primary Action Button */}
           <div>
-            {renderPrimaryAction()}
+            <PrimaryActionButton
+              isCompleted={isCompleted}
+              isInProgress={isInProgress}
+              canStartTask={canStartTask}
+              isPending={startInterventionMutation.isPending}
+              onViewCompleted={handleViewCompleted}
+              onViewWorkflow={handleViewWorkflow}
+              onStartWorkflow={handleStartWorkflow}
+            />
           </div>
 
           {/* Quick Actions Grid */}
-          <div className="grid grid-cols-2 gap-3">
-            {secondaryActions.map((action) => (
-              <button
-                key={action.id}
-                onClick={() => handleActionClick(action.onClick)}
-                disabled={action.disabled}
-                className={cn(
-                  "flex flex-col items-center justify-center p-4 rounded-lg border transition-all duration-200 hover:scale-105",
-                  action.disabled
-                    ? "border-border/50 bg-background/30 cursor-not-allowed opacity-50"
-                    : "border-border bg-background/50 hover:border-accent hover:bg-border"
-                )}
-              >
-                <div className="relative">
-                  <action.icon className={cn(
-                    "h-6 w-6 mb-2",
-                    action.disabled ? "text-border" : "text-accent"
-                  )} />
-                  {action.count && action.count > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-accent text-background text-xs font-bold px-2 py-1 rounded-full min-w-[20px] h-5 flex items-center justify-center">
-                      {action.count}
-                    </span>
-                  )}
-                </div>
-                <span className={cn(
-                  "text-xs font-medium text-center",
-                  action.disabled ? "text-border" : "text-border-light"
-                )}>
-                  {action.label}
-                </span>
-              </button>
-            ))}
-          </div>
+          <SecondaryActionsGrid
+            actions={secondaryActions}
+            onActionClick={handleActionClick}
+          />
 
           {/* Additional Actions */}
-          <div className="pt-4 border-t border-border">
-            <button
-              onClick={toggleMoreActions}
-              className="w-full flex items-center justify-center p-3 rounded-lg border border-border bg-background/30 hover:bg-border transition-colors duration-200"
-            >
-              <Settings className="h-4 w-4 mr-2 text-border-light" />
-              <span className="text-sm font-medium text-border-light">Plus d&apos;actions</span>
-              <MoreVertical className="h-4 w-4 ml-2 text-border-light" />
-            </button>
-
-            {/* Expanded Actions */}
-            {showMoreActions && (
-              <div className="mt-3 space-y-2">
-                {moreActions.map((action) => (
-                  <button
-                    key={action.id}
-                    onClick={() => handleActionClick(action.onClick)}
-                    disabled={action.disabled}
-                    className={cn(
-                      "w-full flex items-center p-3 rounded-lg border transition-colors duration-200",
-                      action.disabled
-                        ? "border-border/50 bg-background/30 cursor-not-allowed opacity-50"
-                        : "border-border bg-background/50 hover:border-accent hover:bg-border"
-                    )}
-                  >
-                    <action.icon className={cn(
-                      "h-4 w-4 mr-3",
-                      action.disabled ? "text-border" : "text-accent"
-                    )} />
-                    <span className={cn(
-                      "text-sm font-medium",
-                      action.disabled ? "text-border" : "text-foreground"
-                    )}>
-                      {action.label}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <MoreActionsSection
+            showMoreActions={showMoreActions}
+            toggleMoreActions={toggleMoreActions}
+            actions={moreActions}
+            onActionClick={handleActionClick}
+          />
 
            {/* Status Warnings */}
-           {!isAvailable && !isAssignedToCurrentUser && (
-             <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-               <div className="flex items-start">
-                 <AlertCircle className="h-4 w-4 text-yellow-400 mr-2 mt-0.5 flex-shrink-0" />
-                 <p className="text-xs text-yellow-200">
-                   Cette tâche est déjà assignée à un autre technicien.
-                 </p>
-               </div>
-             </div>
-           )}
-
-           {/* Intervention Status Warning */}
-           {!canStartTask && !isInProgress && task.status !== 'completed' && (
-             <div className="mt-4 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
-               <div className="flex items-start">
-                 <AlertCircle className="h-4 w-4 text-orange-400 mr-2 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-orange-200">
-                    Statut de tâche incompatible avec le démarrage d&apos;intervention: {task.status}
-                  </p>
-               </div>
-             </div>
-           )}
+           <StatusWarnings
+             isAvailable={isAvailable}
+             isAssignedToCurrentUser={isAssignedToCurrentUser}
+             canStartTask={canStartTask}
+             isInProgress={isInProgress}
+             taskStatus={task.status}
+           />
 
           {/* Priority Selector */}
-          <div className="mt-4 pt-4 border-t border-border">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-foreground">Priorité</span>
-              <Select
-                value={task.priority || 'medium'}
-                onValueChange={(value: string) => {
-                  // Convert string value back to TaskPriority enum
-                  const priorityValue = ['low', 'medium', 'high', 'urgent'].find(p => p === value) as TaskPriority;
-                  if (priorityValue) updatePriorityMutation.mutate(priorityValue);
-                }}
-                disabled={updatePriorityMutation.isPending}
-              >
-                <SelectTrigger className="w-32 border-border bg-muted text-foreground hover:bg-border">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-muted border-border">
-                  <SelectItem value="low" className="text-foreground hover:bg-border focus:bg-border">Basse</SelectItem>
-                  <SelectItem value="medium" className="text-foreground hover:bg-border focus:bg-border">Moyenne</SelectItem>
-                  <SelectItem value="high" className="text-foreground hover:bg-border focus:bg-border">Haute</SelectItem>
-                  <SelectItem value="urgent" className="text-foreground hover:bg-border focus:bg-border">Urgente</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <PrioritySelector
+            value={task.priority || 'medium'}
+            onChange={(value) => updatePriorityMutation.mutate(value)}
+            isPending={updatePriorityMutation.isPending}
+          />
         </div>
 
         {/* Status Update Dialog */}
@@ -750,3 +621,246 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
 };
 
 export default memo(ActionsCard);
+
+interface PrimaryActionButtonProps {
+  isCompleted: boolean;
+  isInProgress: boolean;
+  canStartTask: boolean;
+  isPending: boolean;
+  onViewCompleted: () => void;
+  onViewWorkflow: () => void;
+  onStartWorkflow: () => void;
+}
+
+const PrimaryActionButton: React.FC<PrimaryActionButtonProps> = ({
+  isCompleted,
+  isInProgress,
+  canStartTask,
+  isPending,
+  onViewCompleted,
+  onViewWorkflow,
+  onStartWorkflow,
+}) => {
+  if (isCompleted) {
+    return (
+      <Button
+        onClick={onViewCompleted}
+        className="w-full bg-green-600 hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+      >
+        <CheckCircle className="h-5 w-5 mr-2" />
+        Voir le rapport final
+      </Button>
+    );
+  }
+
+  if (isInProgress) {
+    return (
+      <Button
+        onClick={onViewWorkflow}
+        className="w-full bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      >
+        <ArrowRight className="h-5 w-5 mr-2" />
+        Continuer l&apos;intervention
+      </Button>
+    );
+  }
+
+  return (
+    <Button
+      onClick={onStartWorkflow}
+      disabled={!canStartTask || isPending}
+      className={cn(
+        "w-full transition-colors duration-200",
+        canStartTask && !isPending
+          ? "bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          : "bg-gray-300 cursor-not-allowed"
+      )}
+    >
+      <Play className="h-5 w-5 mr-2" />
+      {isPending ? 'Démarrage...' : 'Démarrer l\'intervention'}
+    </Button>
+  );
+};
+
+type ActionItem = {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  count?: number;
+  onClick: () => void;
+  disabled?: boolean;
+};
+
+interface SecondaryActionsGridProps {
+  actions: ActionItem[];
+  onActionClick: (action: () => void) => void;
+}
+
+const SecondaryActionsGrid: React.FC<SecondaryActionsGridProps> = ({
+  actions,
+  onActionClick,
+}) => (
+  <div className="grid grid-cols-2 gap-3">
+    {actions.map((action) => (
+      <button
+        key={action.id}
+        onClick={() => onActionClick(action.onClick)}
+        disabled={action.disabled}
+        className={cn(
+          "flex flex-col items-center justify-center p-4 rounded-lg border transition-all duration-200 hover:scale-105",
+          action.disabled
+            ? "border-border/50 bg-background/30 cursor-not-allowed opacity-50"
+            : "border-border bg-background/50 hover:border-accent hover:bg-border"
+        )}
+      >
+        <div className="relative">
+          <action.icon className={cn(
+            "h-6 w-6 mb-2",
+            action.disabled ? "text-border" : "text-accent"
+          )} />
+          {action.count && action.count > 0 && (
+            <span className="absolute -top-2 -right-2 bg-accent text-background text-xs font-bold px-2 py-1 rounded-full min-w-[20px] h-5 flex items-center justify-center">
+              {action.count}
+            </span>
+          )}
+        </div>
+        <span className={cn(
+          "text-xs font-medium text-center",
+          action.disabled ? "text-border" : "text-border-light"
+        )}>
+          {action.label}
+        </span>
+      </button>
+    ))}
+  </div>
+);
+
+interface MoreActionsSectionProps {
+  showMoreActions: boolean;
+  toggleMoreActions: () => void;
+  actions: ActionItem[];
+  onActionClick: (action: () => void) => void;
+}
+
+const MoreActionsSection: React.FC<MoreActionsSectionProps> = ({
+  showMoreActions,
+  toggleMoreActions,
+  actions,
+  onActionClick,
+}) => (
+  <div className="pt-4 border-t border-border">
+    <button
+      onClick={toggleMoreActions}
+      className="w-full flex items-center justify-center p-3 rounded-lg border border-border bg-background/30 hover:bg-border transition-colors duration-200"
+    >
+      <Settings className="h-4 w-4 mr-2 text-border-light" />
+      <span className="text-sm font-medium text-border-light">Plus d&apos;actions</span>
+      <MoreVertical className="h-4 w-4 ml-2 text-border-light" />
+    </button>
+
+    {showMoreActions && (
+      <div className="mt-3 space-y-2">
+        {actions.map((action) => (
+          <button
+            key={action.id}
+            onClick={() => onActionClick(action.onClick)}
+            disabled={action.disabled}
+            className={cn(
+              "w-full flex items-center p-3 rounded-lg border transition-colors duration-200",
+              action.disabled
+                ? "border-border/50 bg-background/30 cursor-not-allowed opacity-50"
+                : "border-border bg-background/50 hover:border-accent hover:bg-border"
+            )}
+          >
+            <action.icon className={cn(
+              "h-4 w-4 mr-3",
+              action.disabled ? "text-border" : "text-accent"
+            )} />
+            <span className={cn(
+              "text-sm font-medium",
+              action.disabled ? "text-border" : "text-foreground"
+            )}>
+              {action.label}
+            </span>
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+);
+
+interface StatusWarningsProps {
+  isAvailable: boolean;
+  isAssignedToCurrentUser: boolean;
+  canStartTask: boolean;
+  isInProgress: boolean;
+  taskStatus: TaskStatus;
+}
+
+const StatusWarnings: React.FC<StatusWarningsProps> = ({
+  isAvailable,
+  isAssignedToCurrentUser,
+  canStartTask,
+  isInProgress,
+  taskStatus,
+}) => (
+  <>
+    {!isAvailable && !isAssignedToCurrentUser && (
+      <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+        <div className="flex items-start">
+          <AlertCircle className="h-4 w-4 text-yellow-400 mr-2 mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-yellow-200">
+            Cette tâche est déjà assignée à un autre technicien.
+          </p>
+        </div>
+      </div>
+    )}
+
+    {!canStartTask && !isInProgress && taskStatus !== 'completed' && (
+      <div className="mt-4 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+        <div className="flex items-start">
+          <AlertCircle className="h-4 w-4 text-orange-400 mr-2 mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-orange-200">
+            Statut de tâche incompatible avec le démarrage d&apos;intervention: {taskStatus}
+          </p>
+        </div>
+      </div>
+    )}
+  </>
+);
+
+interface PrioritySelectorProps {
+  value: TaskPriority;
+  onChange: (value: TaskPriority) => void;
+  isPending: boolean;
+}
+
+const PrioritySelector: React.FC<PrioritySelectorProps> = ({
+  value,
+  onChange,
+  isPending,
+}) => (
+  <div className="mt-4 pt-4 border-t border-border">
+    <div className="flex items-center justify-between">
+      <span className="text-sm font-medium text-foreground">Priorité</span>
+      <Select
+        value={value}
+        onValueChange={(value: string) => {
+          const priorityValue = ['low', 'medium', 'high', 'urgent'].find(p => p === value) as TaskPriority;
+          if (priorityValue) onChange(priorityValue);
+        }}
+        disabled={isPending}
+      >
+        <SelectTrigger className="w-32 border-border bg-muted text-foreground hover:bg-border">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="bg-muted border-border">
+          <SelectItem value="low" className="text-foreground hover:bg-border focus:bg-border">Basse</SelectItem>
+          <SelectItem value="medium" className="text-foreground hover:bg-border focus:bg-border">Moyenne</SelectItem>
+          <SelectItem value="high" className="text-foreground hover:bg-border focus:bg-border">Haute</SelectItem>
+          <SelectItem value="urgent" className="text-foreground hover:bg-border focus:bg-border">Urgente</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  </div>
+);

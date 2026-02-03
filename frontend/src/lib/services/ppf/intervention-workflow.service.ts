@@ -70,9 +70,11 @@ export class InterventionWorkflowService {
 
     try {
       // CRITICAL FIX: Include taskId in the data payload as task_id
-      const requestData = {
+    const requestData = {
         ...data,
-        task_id: taskId
+        task_id: taskId,
+        intervention_type: data.intervention_type ?? 'ppf',
+        priority: data.priority ?? 'medium',
       };
       
       const validatedResponse = await ipcClient.interventions.start(requestData, sessionToken);

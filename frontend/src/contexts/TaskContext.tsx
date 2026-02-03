@@ -32,15 +32,14 @@ export const TaskProvider: React.FC<TaskProviderProps> = ({
 
   const fetchTaskById = useCallback(async (id: string): Promise<TaskWithDetails | null> => {
     try {
-      const response = await fetch(`/api/tasks/${id}`);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch task');
+      const taskService = TaskService.getInstance();
+      const result = await taskService.getTaskById(id);
+
+      if (!result.success || !result.data) {
+        throw new Error(result.error || 'Failed to fetch task');
       }
-      
-      const data = await response.json();
-      return data;
+
+      return result.data;
     } catch (err) {
       console.error('Failed to fetch task by ID:', err);
       return null;

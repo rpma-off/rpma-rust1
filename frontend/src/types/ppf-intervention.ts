@@ -137,6 +137,8 @@ export interface StartInterventionDTO {
   taskId: string;
   task_id?: string;
   intervention_number?: string;
+  intervention_type?: string;
+  priority?: string;
   technicianId?: string;
   technician_id?: string;
   scheduled_start?: string;

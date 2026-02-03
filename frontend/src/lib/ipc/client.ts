@@ -64,6 +64,7 @@ import {
   validateIntervention,
   validateInterventionStep,
   validateStartInterventionResponse,
+  validateTaskListResponse,
 } from '@/lib/validation/backend-type-guards';
 
 interface BackendResponse<T = unknown> {
@@ -264,7 +265,15 @@ export const ipcClient = {
           },
           session_token: sessionToken
         }
-      }).then(result => extractAndValidate(result) as TaskListResponse),
+      }).then(result => {
+        // task_crud returns TaskListResponse which itself has a `data` field,
+        // so avoid extractAndValidate (it would strip pagination).
+        const data = result as TaskListResponse;
+        if (!validateTaskListResponse(data)) {
+          throw new Error('Invalid response format for task list');
+        }
+        return data;
+      }),
 
     /**
      * Deletes a task by ID
@@ -729,11 +738,9 @@ export const ipcClient = {
   interventions: {
         start: async (data: StartInterventionRequest, sessionToken: string) => {
           const result = await safeInvoke<unknown>('intervention_workflow', {
-            request: {
-              action: { action: 'Start', data },
-              session_token: sessionToken,
-              task_id: data.task_id
-            }
+            action: { action: 'Start', data },
+            session_token: sessionToken,
+            task_id: data.task_id
           });
           // Extract Started response from InterventionWorkflowResponse
           if (result && typeof result === 'object' && 'type' in result) {
@@ -747,10 +754,8 @@ export const ipcClient = {
 
     get: async (id: string, sessionToken: string) => {
       const result = await safeInvoke<unknown>('intervention_workflow', {
-        request: {
-          action: { action: 'Get', id },
-          session_token: sessionToken
-        }
+        action: { action: 'Get', id },
+        session_token: sessionToken
       });
       // Extract intervention from Retrieved response
       if (result && typeof result === 'object' && 'type' in result) {
@@ -767,11 +772,9 @@ export const ipcClient = {
           console.debug('[IPC] getActiveByTask called for task:', taskId);
 
           const result = await safeInvoke<unknown>('intervention_workflow', {
-            request: {
-              action: { action: 'GetActiveByTask', task_id: taskId },
-              session_token: sessionToken,
-              task_id: taskId
-            }
+            action: { action: 'GetActiveByTask', task_id: taskId },
+            session_token: sessionToken,
+            task_id: taskId
           });
 
           console.debug('[IPC] getActiveByTask raw result:', result);
@@ -782,7 +785,7 @@ export const ipcClient = {
             const workflowResponse = result as { type: string; intervention: any };
             console.debug('[IPC] getActiveByTask workflow response:', workflowResponse);
 
-            if (workflowResponse.type === 'ActiveRetrieved') {
+            if (workflowResponse.type === 'ActiveByTask') {
               return workflowResponse;
             }
           }
@@ -829,19 +832,17 @@ export const ipcClient = {
 
       advanceStep: async (stepData: AdvanceStepRequest, sessionToken: string) => {
         const result = await safeInvoke<unknown>('intervention_progress', {
-          request: {
-            action: {
-              action: 'AdvanceStep',
-              intervention_id: stepData.intervention_id,
-              step_id: stepData.step_id,
-              collected_data: stepData.collected_data,
-              notes: stepData.notes,
-              photos: stepData.photos,
-              quality_check_passed: stepData.quality_check_passed,
-              issues: stepData.issues
-            },
-            session_token: sessionToken
-          }
+          action: {
+            action: 'AdvanceStep',
+            intervention_id: stepData.intervention_id,
+            step_id: stepData.step_id,
+            collected_data: stepData.collected_data,
+            notes: stepData.notes,
+            photos: stepData.photos,
+            quality_check_passed: stepData.quality_check_passed,
+            issues: stepData.issues
+          },
+          session_token: sessionToken
         });
         // Return the full StepAdvanced response
         if (result && typeof result === 'object' && 'type' in result) {
@@ -854,36 +855,25 @@ export const ipcClient = {
       },
 
     getStep: async (stepId: string, sessionToken: string) => {
-      const result = await safeInvoke<unknown>('intervention_progress', {
-        request: {
-          action: { action: 'GetStep', step_id: stepId },
-          session_token: sessionToken
-        }
+      const result = await safeInvoke<unknown>('intervention_get_step', {
+        step_id: stepId,
+        session_token: sessionToken
       });
-      // Extract step from StepRetrieved response
-      if (result && typeof result === 'object' && 'type' in result) {
-        const progressResponse = result as { type: string; step: any };
-        if (progressResponse.type === 'StepRetrieved') {
-          return validateInterventionStep(progressResponse.step);
-        }
-      }
-      throw new Error('Invalid response format for get step');
+      return extractAndValidate(result, validateInterventionStep) as InterventionStep;
     },
 
     getProgress: async (interventionId: string, sessionToken: string) => {
       const result = await safeInvoke<unknown>('intervention_progress', {
-        request: {
-          action: { action: 'GetProgress', intervention_id: interventionId },
-          session_token: sessionToken
-        }
+        action: { action: 'Get', intervention_id: interventionId },
+        session_token: sessionToken
       });
-      // Extract progress data from ProgressRetrieved response
+      // Extract progress data from Retrieved response
       if (result && typeof result === 'object' && 'type' in result) {
-        const progressResponse = result as { type: string; steps: any; progress_percentage: number };
-        if (progressResponse.type === 'ProgressRetrieved') {
+        const progressResponse = result as { type: string; steps: any; progress: { completion_percentage?: number } };
+        if (progressResponse.type === 'Retrieved') {
           return {
             steps: progressResponse.steps,
-            progress_percentage: progressResponse.progress_percentage
+            progress_percentage: progressResponse.progress?.completion_percentage ?? 0
           };
         }
       }
@@ -892,16 +882,19 @@ export const ipcClient = {
 
     saveStepProgress: async (stepData: SaveStepProgressRequest, sessionToken: string) => {
       const result = await safeInvoke<unknown>('intervention_progress', {
-        request: {
-          action: { action: 'SaveStepProgress', ...stepData },
-          session_token: sessionToken
-        }
+        action: {
+          action: 'SaveProgress',
+          intervention_id: stepData.intervention_id,
+          step_id: stepData.step_id,
+          progress_data: stepData.collected_data ?? {}
+        },
+        session_token: sessionToken
       });
-      // Extract step from StepProgressSaved response
+      // Extract message from ProgressSaved response
       if (result && typeof result === 'object' && 'type' in result) {
-        const progressResponse = result as { type: string; step: any };
-        if (progressResponse.type === 'StepProgressSaved') {
-          return validateInterventionStep(progressResponse.step);
+        const progressResponse = result as { type: string; message?: string };
+        if (progressResponse.type === 'ProgressSaved') {
+          return progressResponse;
         }
       }
       throw new Error('Invalid response format for save step progress');
@@ -909,16 +902,14 @@ export const ipcClient = {
 
     updateWorkflow: async (id: string, data: Record<string, unknown>, sessionToken: string) => {
       const result = await safeInvoke<unknown>('intervention_workflow', {
-        request: {
-          action: { action: 'Update', id, _data: data },
-          session_token: sessionToken
-        }
+        action: { action: 'Update', id, data },
+        session_token: sessionToken
       });
-      // Extract intervention from Updated response
+      // Extract response from Updated response
       if (result && typeof result === 'object' && 'type' in result) {
-        const workflowResponse = result as { type: string; intervention: any };
+        const workflowResponse = result as { type: string; id: string; message: string };
         if (workflowResponse.type === 'Updated') {
-          return validateIntervention(workflowResponse.intervention);
+          return workflowResponse;
         }
       }
       throw new Error('Invalid response format for update workflow');
@@ -926,10 +917,8 @@ export const ipcClient = {
 
     finalize: async (data: FinalizeInterventionRequest, sessionToken: string) => {
       const result = await safeInvoke<unknown>('intervention_workflow', {
-        request: {
-          action: { action: 'Finalize', data },
-          session_token: sessionToken
-        }
+        action: { action: 'Finalize', data },
+        session_token: sessionToken
       });
       // Return the full Finalized response
       if (result && typeof result === 'object' && 'type' in result) {

@@ -21,6 +21,39 @@ import {
 const logger = createLogger('useTaskForm');
 
 export const useTaskForm = (userId?: string, initialData?: Partial<TaskFormData>) => {
+  const getDraftStorageKey = useCallback(() => `task-form-draft:${userId || 'anonymous'}`, [userId]);
+
+  const loadDraftFromStorage = useCallback(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = window.localStorage.getItem(getDraftStorageKey());
+      if (!raw) return null;
+      return JSON.parse(raw) as { data: Partial<TaskFormData>; lastSaved?: string };
+    } catch (error) {
+      logger.warn('Failed to load task draft from storage', error);
+      return null;
+    }
+  }, [getDraftStorageKey]);
+
+  const saveDraftToStorage = useCallback((data: TaskFormData, lastSaved: string) => {
+    if (typeof window === 'undefined') return;
+    try {
+      const payload = { data, lastSaved };
+      window.localStorage.setItem(getDraftStorageKey(), JSON.stringify(payload));
+    } catch (error) {
+      logger.warn('Failed to save task draft to storage', error);
+    }
+  }, [getDraftStorageKey]);
+
+  const clearDraftFromStorage = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.removeItem(getDraftStorageKey());
+    } catch (error) {
+      logger.warn('Failed to clear task draft from storage', error);
+    }
+  }, [getDraftStorageKey]);
+
   const [formData, setFormData] = useState<TaskFormData>(() => ({
     // Core fields
     task_number: '',
@@ -106,6 +139,21 @@ export const useTaskForm = (userId?: string, initialData?: Partial<TaskFormData>
       setTaskNumber(initialData.task_number);
     }
   }, [generateTaskTitle, initialData, taskNumber]);
+
+  // Load local draft for new tasks only
+  useEffect(() => {
+    if (initialData && Object.keys(initialData).length > 0) return;
+    const draft = loadDraftFromStorage();
+    if (!draft?.data) return;
+
+    setFormData(prev => ({
+      ...prev,
+      ...draft.data,
+      updated_at: new Date().toISOString()
+    }));
+    setIsDirty(false);
+    setLastSaved(draft.lastSaved ? new Date(draft.lastSaved) : null);
+  }, [initialData?.id, loadDraftFromStorage]);
 
   const updateFormData = useCallback((updates: Partial<TaskFormData>) => {
     setFormData(prev => {
@@ -295,17 +343,23 @@ export const useTaskForm = (userId?: string, initialData?: Partial<TaskFormData>
     
     try {
       setLoading(true);
-      // Implement auto-save logic here if needed
-      // For now, just mark as saved
+      const now = new Date();
+      saveDraftToStorage(
+        {
+          ...formData,
+          updated_at: now.toISOString()
+        },
+        now.toISOString()
+      );
       setIsDirty(false);
-      setLastSaved(new Date());
+      setLastSaved(now);
       logger.info('Auto-save completed');
     } catch (error) {
       logger.error('Auto-save failed:', error);
     } finally {
       setLoading(false);
     }
-  }, [isDirty, loading]);
+  }, [formData, isDirty, loading, saveDraftToStorage, setLoading]);
 
 
 
@@ -324,5 +378,6 @@ export const useTaskForm = (userId?: string, initialData?: Partial<TaskFormData>
     isDirty,
     lastSaved,
     autoSave,
+    clearDraft: clearDraftFromStorage,
   };
 };

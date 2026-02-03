@@ -131,11 +131,12 @@ export function useTaskSync({
         requestId,
       });
 
+      const paginationSource = data.pagination;
       const pagination: TaskPagination = {
-        page: data.pagination.page,
-        total: data.pagination.total,
-        totalPages: data.pagination.totalPages,
-        limit: data.pagination.pageSize,
+        page: paginationSource?.page ?? page,
+        total: Number(paginationSource?.total ?? 0),
+        totalPages: (paginationSource as any)?.totalPages ?? (paginationSource as any)?.total_pages ?? 1,
+        limit: (paginationSource as any)?.pageSize ?? (paginationSource as any)?.limit ?? pageSize,
       };
 
       onTasksLoaded?.(data.data, pagination);

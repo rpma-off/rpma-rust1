@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, memo, useRef, useState } from 'react';
+﻿import React, { useMemo, useCallback, memo, useRef, useState, useEffect } from 'react';
 // Removed pose dependency - now works independently
 import { TaskWithDetails, TaskDisplay, ChecklistItem } from '@/types/task.types';
 import { useInterventionData } from '@/hooks/useInterventionData';
@@ -16,7 +16,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { useInView } from '@/hooks/useInView';
 // import { useVirtualizer } from '@tanstack/react-virtual'; // Uncomment when needed for virtual scrolling
 import { useDebounce } from '@/hooks/useDebounce';
-// Removed TaskService import - now using API routes
+import { taskService } from '@/lib/services/entities/task.service';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth/compatibility';
 import { ipcClient } from '@/lib/ipc';
@@ -65,67 +65,9 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
   const debouncedIsExpanded = useDebounce(isExpanded, 300);
 
   // Memoize task data with deep comparison to prevent unnecessary re-renders
-  const safeTask = useMemo((): TaskWithDetails => {
+  const safeTask = useMemo((): TaskWithDetails | null => {
     if (!task) {
-      // Return a default TaskDisplay object when no task is provided
-      return {
-        id: '',
-        task_number: '',
-        title: 'Aucune tâche sélectionnée',
-        vehicle_plate: 'Non spécifiée',
-        vehicle_model: 'Non spécifié',
-        vehicle_year: null,
-        vehicle_make: null,
-         status: 'pending',
-         priority: 'medium',
-        ppf_zones: [],
-        lot_film: null,
-        vin: null,
-        date_rdv: null,
-        heure_rdv: null,
-        scheduled_date: null,
-        start_time: null,
-        end_time: null,
-        assigned_at: null,
-        assigned_by: null,
-        technician_id: null,
-        is_available: false,
-        workflow_status: null,
-        workflow_id: null,
-        completed_at: null,
-        client_id: null,
-        checklist_items: [],
-
-        photos: { before: [], after: [], during: [] },
-        checklist_completed: false,
-        progress: 0,
-        is_overdue: false,
-        created_at: new Date().toISOString() as unknown as any,
-        updated_at: new Date().toISOString() as unknown as any,
-        synced: false,
-        description: null,
-        current_workflow_step_id: null,
-        created_by: null,
-        external_id: null,
-        started_at: null,
-        completed_steps: '[]',
-        custom_ppf_zones: null,
-        customer_name: null,
-        deleted_at: null,
-        deleted_by: null,
-        customer_email: null,
-        customer_phone: null,
-        customer_address: null,
-        notes: null,
-        tags: null,
-        estimated_duration: null,
-        actual_duration: null,
-
-        template_id: null,
-        creator_id: null,
-        updated_by: null,
-        last_synced_at: null,
-      };
+      return null;
     }
 
     return {
@@ -191,8 +133,59 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
     };
   }, [task, currentStatus]);
 
+  const getChecklistStorageKey = useCallback((taskId: string) => `task-checklist:${taskId}`, []);
+
+  const loadChecklistOverrides = useCallback((taskId: string) => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = window.localStorage.getItem(getChecklistStorageKey(taskId));
+      if (!raw) return null;
+      return JSON.parse(raw) as Record<string, boolean>;
+    } catch (error) {
+      console.warn('Failed to load checklist overrides', error);
+      return null;
+    }
+  }, [getChecklistStorageKey]);
+
+  const saveChecklistOverrides = useCallback((taskId: string, items: ChecklistItem[]) => {
+    if (typeof window === 'undefined') return;
+    try {
+      const map = items.reduce<Record<string, boolean>>((acc, item) => {
+        acc[item.id] = item.is_completed;
+        return acc;
+      }, {});
+      window.localStorage.setItem(getChecklistStorageKey(taskId), JSON.stringify(map));
+    } catch (error) {
+      console.warn('Failed to save checklist overrides', error);
+    }
+  }, [getChecklistStorageKey]);
+
+  const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>(() => safeTask?.checklist_items || []);
+
+  useEffect(() => {
+    if (!safeTask?.id) {
+      setChecklistItems([]);
+      return;
+    }
+
+    const baseItems = safeTask.checklist_items || [];
+    const overrides = loadChecklistOverrides(safeTask.id);
+
+    if (!overrides) {
+      setChecklistItems(baseItems);
+      return;
+    }
+
+    const merged = baseItems.map(item => (
+      overrides[item.id] !== undefined
+        ? { ...item, is_completed: overrides[item.id] }
+        : item
+    ));
+    setChecklistItems(merged);
+  }, [safeTask?.id, safeTask?.checklist_items, loadChecklistOverrides]);
+
   // Get intervention data for progress tracking
-  const { data: interventionData } = useInterventionData(safeTask.id);
+  const { data: interventionData } = useInterventionData(safeTask?.id ?? '');
 
   // Memoize status information with stable reference
   const statusInfo = useMemo(() => {
@@ -210,13 +203,24 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
 
   // Memoize derived state with stable references
   const derivedState = useMemo(() => {
+    if (!safeTask) {
+      return {
+        isAssignedToCurrentUser: false,
+        isAvailable: false,
+        canStartTask: false,
+        progress: 0,
+        hasChecklist: false,
+        hasPhotos: false,
+      };
+    }
+
     const isAssignedToCurrentUser = safeTask.technician_id === currentUserId;
     const isAvailable = Boolean(safeTask.is_available && !safeTask.technician_id);
     const canStartTask = safeTask.is_available || isAssignedToCurrentUser;
 
     // Calculate task progress efficiently
-    const progress = safeTask.checklist_items?.length
-      ? Math.round((safeTask.checklist_items.filter((item: ChecklistItem) => item.is_completed).length / safeTask.checklist_items.length) * 100)
+    const progress = checklistItems.length
+      ? Math.round((checklistItems.filter((item: ChecklistItem) => item.is_completed).length / checklistItems.length) * 100)
       : 0;
 
     return {
@@ -224,41 +228,36 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
       isAvailable,
       canStartTask,
       progress,
-      hasChecklist: Boolean(safeTask.checklist_items?.length),
+      hasChecklist: checklistItems.length > 0,
       hasPhotos: Boolean(safeTask.photos?.before?.length || safeTask.photos?.after?.length || safeTask.photos?.during?.length),
     };
-  }, [safeTask, currentUserId]);
+  }, [safeTask, currentUserId, checklistItems]);
 
   // Event handlers with stable references
   const _handleStartTask = useCallback(async () => {
+    if (!safeTask?.id) {
+      console.warn('Cannot start task: missing task ID');
+      return;
+    }
+
     try {
       if (onStartTask) {
         onStartTask();
-      } else if (currentUserId) {
-        // Assign the task using API route
-        const response = await fetch(`/api/tasks/${safeTask.id}/assign`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ technicianId: currentUserId }),
-        });
+            } else if (currentUserId) {
+        const result = await taskService.assignTask(safeTask.id, currentUserId);
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error('[PoseDetail] Assignment error:', errorData.error);
-          throw new Error(errorData.error || 'Failed to assign task');
+        if (!result.success) {
+          console.error('[PoseDetail] Assignment error:', result.error);
+          throw new Error(result.error || 'Failed to assign task');
         }
 
-        const data = await response.json();
-        console.log('[PoseDetail] Task assigned successfully:', data);
+        console.log('[PoseDetail] Task assigned successfully:', result.data);
         toast.success('Intervention assignée avec succès');
-      }
-    } catch (error) {
+      }    } catch (error) {
       console.error('Failed to start task:', error);
       toast.error(error instanceof Error ? error.message : 'Erreur lors du démarrage de l\'intervention');
     }
-  }, [onStartTask, currentUserId, safeTask.id]);
+  }, [onStartTask, currentUserId, safeTask?.id]);
 
   const _handleCompleteTask = useCallback(() => {
     if (onCompleteTask) {
@@ -280,6 +279,11 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
     }
 
     try {
+      const updatedItems = checklistItems.map(item =>
+        item.id === itemId ? { ...item, is_completed: completed } : item
+      );
+      setChecklistItems(updatedItems);
+
       // For now, update the task's checklist_completed status
       // In a full implementation, this would update individual checklist items
       // and potentially workflow step data if this is part of a workflow
@@ -311,6 +315,7 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
             photos: currentStep.photo_urls
           }, user.token);
 
+          saveChecklistOverrides(safeTask.id, updatedItems);
           toast.success('Élément de checklist mis à jour');
           return;
         }
@@ -318,11 +323,9 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
 
       // Fallback: Update task-level checklist completion status
       // This is a simplified implementation - in production you'd want individual item tracking
-      const currentChecklistItems = safeTask.checklist_items || [];
-      const totalItems = currentChecklistItems.length;
-      const completedItems = currentChecklistItems.filter(item => item.is_completed).length;
-      const newCompletedCount = completed ? completedItems + 1 : completedItems - 1;
-      const newChecklistCompleted = totalItems > 0 && newCompletedCount === totalItems;
+      const totalItems = updatedItems.length;
+      const completedItems = updatedItems.filter(item => item.is_completed).length;
+      const newChecklistCompleted = totalItems > 0 && completedItems === totalItems;
 
       // Update the task's checklist completion status
       const updateData: UpdateTaskRequest = {
@@ -360,16 +363,17 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
       };
       await ipcClient.tasks.update(safeTask.id, updateData, user.token);
 
+      saveChecklistOverrides(safeTask.id, updatedItems);
       toast.success('Statut de checklist mis à jour');
 
     } catch (error) {
       console.error('Failed to update checklist item:', error);
       toast.error('Erreur lors de la mise à jour de l\'élément de checklist');
     }
-  }, [safeTask?.id, user?.token, interventionData]);
+  }, [safeTask?.id, user?.token, interventionData, checklistItems, saveChecklistOverrides]);
 
   // Lazy load components only when in view
-  const _shouldLoadHeavyComponents = isInView && !isLoading && safeTask;
+  const _shouldLoadHeavyComponents = isInView && !isLoading && !!safeTask;
 
   // Loading state with improved skeleton
   if (isLoading) {
@@ -498,7 +502,7 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
                    <Suspense fallback={<Skeleton className="h-32 w-full" />}>
                      <ChecklistProgress
                        taskId={safeTask.id}
-                       checklistItems={safeTask.checklist_items || []}
+                       checklistItems={checklistItems}
                        onItemUpdate={handleChecklistItemUpdate}
                      />
                    </Suspense>
@@ -569,3 +573,7 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
 };
 
 export default memo(PoseDetail);
+
+
+
+

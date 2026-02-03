@@ -1,9 +1,10 @@
- import type { Task, UpdateTaskRequest, TaskQuery, CreateTaskRequest } from '@/lib/backend';
+import type { Task, UpdateTaskRequest, TaskQuery, CreateTaskRequest } from '@/lib/backend';
 import type { TaskWithDetails } from '@/types/task.types';
 import type { ServiceResponse } from '@/types/unified.types';
 import { TaskStatus, TaskPriority } from '@/lib/backend';
 import { ipcClient } from '@/lib/ipc';
 import { AuthSecureStorage } from '@/lib/secureStorage';
+import type { CreateTaskInput, UpdateTaskInput, TaskQueryInput } from '@/lib/validation/api-schemas';
 
 /**
  * Frontend Task Service - Client-side task management
@@ -172,6 +173,71 @@ export class TaskService {
 
       await ipcClient.tasks.update(id, data, session.token);
       return { success: true, data: { id }, status: 200 };
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return { success: false, error: err.message, status: 500 };
+    }
+  }
+
+  /**
+   * Assigns a task to a technician via API route (web backend flow)
+   *
+   * @param taskId - Task ID to assign
+   * @param technicianId - Technician user ID to assign
+   * @returns Promise resolving to service response with updated task
+   */
+  async assignTask(taskId: string, technicianId: string): Promise<ServiceResponse<TaskWithDetails>> {
+    try {
+      const response = await fetch(`/api/tasks/${taskId}/assign`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ technicianId }),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const errorMessage = (data as { error?: string } | null)?.error || 'Failed to assign task';
+        return { success: false, error: errorMessage, status: response.status };
+      }
+
+      return { success: true, data: data as TaskWithDetails, status: response.status };
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return { success: false, error: err.message, status: 500 };
+    }
+  }
+
+  /**
+   * Marks a task as invalid via API route (web backend flow)
+   *
+   * @param taskId - Task ID to mark as invalid
+   * @param reason - Optional reason
+   * @returns Promise resolving to service response
+   */
+  async markTaskInvalid(taskId: string, reason?: string): Promise<ServiceResponse<unknown>> {
+    try {
+      const response = await fetch('/api/tasks/mark-invalid', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          taskId,
+          reason: reason || undefined,
+        }),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const errorMessage = (data as { error?: string } | null)?.error || 'Erreur lors du marquage de la tÃ¢che comme invalide';
+        return { success: false, error: errorMessage, status: response.status };
+      }
+
+      return { success: true, data, status: response.status };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       return { success: false, error: err.message, status: 500 };
@@ -360,6 +426,255 @@ export class TaskService {
       }
 
       return { success: true, data: result as TaskWithDetails, status: 200 };
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return { success: false, error: err.message, status: 500 };
+    }
+  }
+
+  /**
+   * Generates a unique task number using API route (web backend flow)
+   */
+  async generateTaskNumber(): Promise<ServiceResponse<{ task_number: string }>> {
+    try {
+      const response = await fetch('/api/tasks/generate-number', {
+        method: 'GET',
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const errorMessage = (data as { error?: string } | null)?.error || 'Failed to generate task number';
+        return { success: false, error: errorMessage, status: response.status };
+      }
+
+      return { success: true, data: data as { task_number: string }, status: response.status };
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return { success: false, error: err.message, status: 500 };
+    }
+  }
+
+  /**
+   * Validates a task number format using API route (web backend flow)
+   */
+  async validateTaskNumber(taskNumber: string): Promise<ServiceResponse<{ task_number: string; is_valid: boolean }>> {
+    try {
+      const response = await fetch('/api/tasks/generate-number', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ task_number: taskNumber }),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const errorMessage = (data as { error?: string } | null)?.error || 'Failed to validate task number';
+        return { success: false, error: errorMessage, status: response.status };
+      }
+
+      return { success: true, data: data as { task_number: string; is_valid: boolean }, status: response.status };
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return { success: false, error: err.message, status: 500 };
+    }
+  }
+
+  /**
+   * Retrieves tasks from validated API route (web backend flow)
+   */
+  async getValidatedTasks(query: Partial<TaskQueryInput> = {}): Promise<ServiceResponse<unknown>> {
+    try {
+      const session = await AuthSecureStorage.getSession();
+      if (!session.token) {
+        return { success: false, error: 'Authentication required', status: 401 };
+      }
+
+      const params = new URLSearchParams();
+      Object.entries(query).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === '') {
+          return;
+        }
+        params.set(key, String(value));
+      });
+
+      const url = params.toString() ? `/api/tasks/validated?${params.toString()}` : '/api/tasks/validated';
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${session.token}`,
+        },
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const errorMessage = (data as { error?: string } | null)?.error || 'Failed to fetch tasks';
+        return { success: false, error: errorMessage, status: response.status };
+      }
+
+      return { success: true, data, status: response.status };
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return { success: false, error: err.message, status: 500 };
+    }
+  }
+
+  /**
+   * Creates a task through validated API route (web backend flow)
+   */
+  async createValidatedTask(data: CreateTaskInput): Promise<ServiceResponse<unknown>> {
+    try {
+      const session = await AuthSecureStorage.getSession();
+      if (!session.token) {
+        return { success: false, error: 'Authentication required', status: 401 };
+      }
+
+      const response = await fetch('/api/tasks/validated', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const errorMessage = (result as { error?: string } | null)?.error || 'Failed to create task';
+        return { success: false, error: errorMessage, status: response.status };
+      }
+
+      return { success: true, data: result, status: response.status };
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return { success: false, error: err.message, status: 500 };
+    }
+  }
+
+  /**
+   * Updates a task through validated API route (web backend flow)
+   */
+  async updateValidatedTask(taskId: string, data: UpdateTaskInput): Promise<ServiceResponse<unknown>> {
+    try {
+      const session = await AuthSecureStorage.getSession();
+      if (!session.token) {
+        return { success: false, error: 'Authentication required', status: 401 };
+      }
+
+      const response = await fetch(`/api/tasks/validated?id=${encodeURIComponent(taskId)}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const errorMessage = (result as { error?: string } | null)?.error || 'Failed to update task';
+        return { success: false, error: errorMessage, status: response.status };
+      }
+
+      return { success: true, data: result, status: response.status };
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return { success: false, error: err.message, status: 500 };
+    }
+  }
+
+  /**
+   * Syncs a task with workflow via API route (web backend flow)
+   */
+  async syncTaskWorkflow(taskId: string): Promise<ServiceResponse<unknown>> {
+    try {
+      const session = await AuthSecureStorage.getSession();
+      if (!session.token) {
+        return { success: false, error: 'Authentication required', status: 401 };
+      }
+
+      const response = await fetch(`/api/tasks/${taskId}/sync-workflow`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.token}`,
+        },
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const errorMessage = (data as { error?: string } | null)?.error || 'Failed to sync task workflow';
+        return { success: false, error: errorMessage, status: response.status };
+      }
+
+      return { success: true, data, status: response.status };
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return { success: false, error: err.message, status: 500 };
+    }
+  }
+
+  /**
+   * Retrieves task with workflow progress via API route (web backend flow)
+   */
+  async getTaskWorkflowProgress(taskId: string): Promise<ServiceResponse<unknown>> {
+    try {
+      const session = await AuthSecureStorage.getSession();
+      if (!session.token) {
+        return { success: false, error: 'Authentication required', status: 401 };
+      }
+
+      const response = await fetch(`/api/tasks/${taskId}/sync-workflow`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${session.token}`,
+        },
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const errorMessage = (data as { error?: string } | null)?.error || 'Failed to fetch workflow progress';
+        return { success: false, error: errorMessage, status: response.status };
+      }
+
+      return { success: true, data, status: response.status };
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return { success: false, error: err.message, status: 500 };
+    }
+  }
+
+  /**
+   * Syncs all tasks with workflows via API route (web backend flow)
+   */
+  async syncAllTaskWorkflows(): Promise<ServiceResponse<unknown>> {
+    try {
+      const session = await AuthSecureStorage.getSession();
+      if (!session.token) {
+        return { success: false, error: 'Authentication required', status: 401 };
+      }
+
+      const response = await fetch('/api/tasks/sync-all-workflows', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.token}`,
+        },
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const errorMessage = (data as { error?: string } | null)?.error || 'Failed to sync workflows';
+        return { success: false, error: errorMessage, status: response.status };
+      }
+
+      return { success: true, data, status: response.status };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       return { success: false, error: err.message, status: 500 };

@@ -1,5 +1,6 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { useAutoSave, useWorkflowStepAutoSave, useBeforeUnloadSave } from './useAutoSave'
+import { taskService } from '@/lib/services/entities/task.service'
 
 // Mock sonner
 jest.mock('sonner', () => ({
@@ -9,8 +10,11 @@ jest.mock('sonner', () => ({
   }
 }))
 
-// Mock fetch for workflow hook
-global.fetch = jest.fn()
+jest.mock('@/lib/services/entities/task.service', () => ({
+  taskService: {
+    updateTaskStepData: jest.fn()
+  }
+}))
 
 describe('useAutoSave', () => {
   let mockSaveFunction: jest.Mock
@@ -334,16 +338,16 @@ describe('useAutoSave', () => {
 })
 
 describe('useWorkflowStepAutoSave', () => {
-  const mockFetch = global.fetch as jest.Mock
+  const mockUpdateTaskStepData = taskService.updateTaskStepData as jest.Mock
 
   beforeEach(() => {
-    mockFetch.mockClear()
+    mockUpdateTaskStepData.mockClear()
   })
 
   it('saves workflow step data', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ success: true })
+    mockUpdateTaskStepData.mockResolvedValue({
+      success: true,
+      data: { success: true }
     })
 
     const { result } = renderHook(() =>
@@ -354,19 +358,20 @@ describe('useWorkflowStepAutoSave', () => {
       await result.current.forceSave()
     })
 
-    expect(mockFetch).toHaveBeenCalledWith('/api/tasks/task-1/steps/step-1', {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: expect.stringContaining('"step_data":{"stepData":"test"}')
-    })
+    expect(mockUpdateTaskStepData).toHaveBeenCalledWith(
+      'task-1',
+      'step-1',
+      expect.objectContaining({
+        stepData: 'test',
+        updated_at: expect.any(String)
+      })
+    )
   })
 
   it('handles workflow save errors', async () => {
-    mockFetch.mockResolvedValue({
-      ok: false,
-      text: () => Promise.resolve('Server error')
+    mockUpdateTaskStepData.mockResolvedValue({
+      success: false,
+      error: 'Server error'
     })
 
     const { result } = renderHook(() =>
@@ -380,7 +385,6 @@ describe('useWorkflowStepAutoSave', () => {
     expect(result.current.error).toContain('Erreur sauvegarde étape')
   })
 })
-
 describe('useBeforeUnloadSave', () => {
   let mockSaveFunction: jest.Mock
   let addEventListenerSpy: jest.SpyInstance
@@ -437,3 +441,4 @@ describe('useBeforeUnloadSave', () => {
     expect(mockSaveFunction).not.toHaveBeenCalled()
   })
 })
+

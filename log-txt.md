@@ -1,155 +1,565 @@
-﻿﻿Mission: Comprehensive PRD Documentation Synchronization
-You are a technical documentation expert specialized in maintaining consistency across multiple interconnected technical documents. Your mission is to synchronically update ALL RPMA v2 project PRD documents to reflect the actual codebase, ensuring cross-document consistency and completeness.
-Project Context
-RPMA v2 is a Tauri + Next.js desktop application for managing PPF (Paint Protection Film) interventions with an offline-first architecture.
-Core Challenge
-The current approach causes context loss - after updating one document, details needed for subsequent documents are forgotten. We must maintain full project context throughout the entire process.
-Documents to Analyze and Update
-All documents are in the project root directory:
-API.md
-ARCHITECTURE.md
-DATABASE.md
-DEPLOYMENT.md
-DESIGN.md
-README.md
-REQUIREMENTS.md
-USER-FLOWS.md
-MIGRATION_SYSTEM_GUIDE.md
-Enhanced Work Process
-Phase 1: Complete Project Analysis (DO THIS ONCE, USE FOR ALL DOCUMENTS)
-Create a master analysis document that will guide ALL subsequent updates:
-Codebase Inventory
-
-
-List ALL files in src-tauri/src/ (commands, models, database, services)
-List ALL files in frontend/src/ (components, pages, hooks, utils)
-Catalog ALL IPC commands found
-Catalog ALL database tables and their schemas
-Catalog ALL UI components
-Catalog ALL API endpoints/functions
-Document the actual tech stack used
-Note ALL configuration files (package.json, tauri.conf.json, etc.)
-Cross-Reference Matrix Create a mapping showing what code elements relate to which documents:
-
- Commands in commands/ → API.md, ARCHITECTURE.md
-Models in models/ → API.md, DATABASE.md, REQUIREMENTS.md
-schema.sql → DATABASE.md, ARCHITECTURE.md
-Components → DESIGN.md, USER-FLOWS.md
-Package.json scripts → DEPLOYMENT.md, README.md
-Routes/Pages → USER-FLOWS.md, ARCHITECTURE.md
-
-
-Gap Analysis Per Document For each document, list:
-
-
-❌ Missing information (exists in code, not in doc)
-⚠️ Outdated information (doc doesn't match code)
-✓ Correct information (to preserve)
-🔗 Cross-document dependencies (info needed from other docs)
-Phase 2: Document-Specific Update Guidelines
-Before updating each document, refer back to your master analysis. Each update should consider:
-API.md
-Check against: All files in src-tauri/src/commands/, all models in src-tauri/src/models/
-Must include: Every IPC command signature, request/response types, error handling
-Cross-ref: Database.md for data types, Architecture.md for command flow
-Preserve: API versioning info, authentication patterns
-ARCHITECTURE.md
-Check against: Entire src-tauri/src/ and frontend/src/ directory structure
-Must include: All layers (frontend, IPC, commands, services, database), module boundaries, data flow
-Cross-ref: API.md for command layer, Database.md for data layer, Design.md for UI layer
-Preserve: Architecture decisions, patterns used, offline-first strategy
-DATABASE.md
-Check against: src-tauri/src/db/schema.sql, all files in src-tauri/src/models/
-Must include: Every table, column with exact types, indexes, foreign keys, migrations approach
-Cross-ref: API.md for data structures used in commands, Requirements.md for data requirements
-Preserve: Database choice rationale, migration strategy
-DEPLOYMENT.md
-Check against: package.json, tauri.conf.json, all build/config files
-Must include: Every npm script, build commands, environment setup, platform-specific configs
-Cross-ref: README.md for getting started steps, Architecture.md for build outputs
-Preserve: Deployment strategies, release process
-DESIGN.md
-Check against: All files in frontend/src/components/, style files, UI libraries used
-Must include: All component categories, design system elements, styling approach
-Cross-ref: User-Flows.md for component usage, Architecture.md for frontend structure
-Preserve: Design principles, accessibility guidelines
-README.md
-Check against: Root package.json scripts, actual project structure, all config files
-Must include: Correct install steps, accurate tech stack, working commands
-Cross-ref: ALL other docs for high-level consistency, Deployment.md for setup steps
-Preserve: Project vision, quick start simplicity
-REQUIREMENTS.md
-Check against: All implemented features in codebase, models, UI screens
-Must include: All implemented features, current data models, actual user stories
-Cross-ref: Database.md for data models, User-Flows.md for features, API.md for capabilities
-Preserve: Business requirements, feature priorities
-USER-FLOWS.md
-Check against: All pages/routes in frontend/src/, actual UI implementations
-Must include: All implemented user journeys, screen transitions, actions available
-Cross-ref: Design.md for UI components used, API.md for backend actions, Requirements.md for features
-Preserve: User perspective, flow logic
-Phase 3: Update Execution Rules
-✅ DO:
-Keep your master analysis visible/accessible for ALL document updates
-Update documents in logical order (Architecture → Database → API → others)
-Cross-reference between documents as you update
-Maintain consistent terminology across ALL documents
-Integrate new information naturally into existing structure
-Preserve the original writing style and tone
-Add technical depth where code reveals implementation details
-Fix errors silently and completely
-❌ DO NOT:
-Start updating documents without completing Phase 1
-Update documents in isolation without checking cross-references
-Add any metadata about updates (dates, changelogs, "updated" markers)
-Make radical structural changes unless necessary for clarity
-Remove valid content that still applies
-Use inconsistent terminology between documents
-Leave placeholders or TODOs
-Phase 4: Consistency Validation
-After updating all documents, perform a final check:
-[ ] All IPC commands in code are documented in API.md
-[ ] All tables in schema.sql appear in DATABASE.md
-[ ] All components in code appear in DESIGN.md
-[ ] Tech stack is identical across README.md, ARCHITECTURE.md, DEPLOYMENT.md
-[ ] User flows reference actual UI components from DESIGN.md
-[ ] Requirements match implemented features in code
-[ ] No conflicting information between any two documents
-Output Format
-First, provide your Phase 1 Master Analysis:
-=== MASTER ANALYSIS ===
-
-## Codebase Inventory
-[Complete inventory]
-
-## Cross-Reference Matrix
-[Mapping of code to documents]
-
-## Gap Analysis
-### API.md
-- Missing: [...]
-- Outdated: [...]
-- Correct: [...]
-
-[Repeat for each document]
-
-=== END MASTER ANALYSIS ===
-
-Then, for EACH document:
-File: [document name]
-Referenced from master analysis: [Key findings from Phase 1 relevant to this doc]
-Cross-document dependencies: [What other docs were checked]
-Action: Complete replacement
-
-[Complete updated document content]
-
----
-
-Execution Instructions
-Start by scanning the ENTIRE codebase - don't update anything yet
-Create your master analysis - this is your reference for all updates
-Update documents systematically - always referring back to your analysis
-Validate cross-document consistency - before finalizing
-Output must be seamless - as if documentation was always perfect
-Begin with Phase 1: Complete Project Analysis now.
-
+﻿﻿main-app.js?v=1770154007706:1847 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+logger.ts:158 03/02/2026, 22:26:49 [CORR:req-ml73zr05-0000-hwjj9j] [FRONTEND] [SYSTEM] [INFO] Application started | data: {"user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0","url":"http://localhost:3000/tasks/b3fbfdab-74d6-4fac-8dc2-f9c7f2b7ff85","timestamp":"2026-02-03T21:26:49.204Z"} {id: '1770154009205-lyz00s8atb', timestamp: '2026-02-03T21:26:49.205Z', correlation_id: 'req-ml73zr05-0000-hwjj9j', layer: 'FRONTEND', domain: 'SYSTEM', …}
+logger.ts:158 03/02/2026, 22:26:49 [CORR:req-ml73zr16-0001-usqpnc] [FRONTEND] [SYSTEM] [INFO] Application started | data: {"user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0","url":"http://localhost:3000/tasks/b3fbfdab-74d6-4fac-8dc2-f9c7f2b7ff85","timestamp":"2026-02-03T21:26:49.242Z"} {id: '1770154009242-kcyugp68qs', timestamp: '2026-02-03T21:26:49.242Z', correlation_id: 'req-ml73zr16-0001-usqpnc', layer: 'FRONTEND', domain: 'SYSTEM', …}
+cache.ts:132 [IPC Cache] auth_validate_session -> cache miss for key: auth:session:eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzAxNDgxNDQsImV4cCI6MTc3MDE1NTM0NCwianRpIjoiYTQ2MzQyZmYtNzU3NS00NzJmLThmMjEtZjM1ZTg2MjIwNGQyIiwic2Vzc2lvbl9pZCI6IjdiYTFhZGFiLTEyNTMtNGE1ZS1iMjAwLWI5OTJhNWNkYjY3NCJ9.BLNCPlaVo4NXviPBSQiwdyygGEIjpI9FilKfCdg4thw, invoking...
+logger.ts:155 03/02/2026, 22:26:49 [CORR:req-ml73zr70-0002-act7jq] [FRONTEND] [API] [DEBUG] IPC call started: user_crud | data: {"command":"user_crud","args":{"request":{"action":{"action":"Get","id":"a2975c76-eeda-41f8-9efe-d0741c9785a5"},"session_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzAxNDgxNDQsImV4cCI6MTc3MDE1NTM0NCwianRpIjoiYTQ2MzQyZmYtNzU3NS00NzJmLThmMjEtZjM1ZTg2MjIwNGQyIiwic2Vzc2lvbl9pZCI6IjdiYTFhZGFiLTEyNTMtNGE1ZS1iMjAwLWI5OTJhNWNkYjY3NCJ9.BLNCPlaVo4NXviPBSQiwdyygGEIjpI9FilKfCdg4thw"}},"timeout_ms":120000} {id: '1770154009452-46lq2ts7prf', timestamp: '2026-02-03T21:26:49.452Z', correlation_id: 'req-ml73zr70-0002-act7jq', layer: 'FRONTEND', domain: 'API', …}
+cache.ts:132 [IPC Cache] sync_get_status -> cache miss for key: sync:status, invoking...
+logger.ts:235 [03/02/2026, 22:26:49] DEBUG [system] useTaskSync: fetchTasks called | Data: {"page":1,"filters":{"status":"all","priority":"all","search":""},"requestId":"kerqym"} {id: '1770154009530-1aodwieem5z', timestamp: '2026-02-03T21:26:49.530Z', level: 0, context: 'system', message: 'useTaskSync: fetchTasks called', …}
+logger.ts:238 [03/02/2026, 22:26:49] INFO [system] useTaskSync: calling taskService.getTasks | Data: {"filters":{"page":1,"limit":10,"sort_by":"created_at","sort_order":"desc"},"requestId":"kerqym"} {id: '1770154009539-wuaozfja8p', timestamp: '2026-02-03T21:26:49.539Z', level: 1, context: 'system', message: 'useTaskSync: calling taskService.getTasks', …}
+logger.ts:158 03/02/2026, 22:26:49 [CORR:req-ml73zr70-0002-act7jq] [FRONTEND] [AUTH] [INFO] User authenticated | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"user_id":"a2975c76-eeda-41f8-9efe-d0741c9785a5","email":"rayepasmonauto@gmail.com"} {id: '1770154009560-wrl9s3jmqie', timestamp: '2026-02-03T21:26:49.560Z', correlation_id: 'req-ml73zr70-0002-act7jq', layer: 'FRONTEND', domain: 'AUTH', …}
+RootClientLayout.tsx:76 checkAdminRedirect running {pathname: '/tasks/b3fbfdab-74d6-4fac-8dc2-f9c7f2b7ff85', user: 'a2975c76-eeda-41f8-9efe-d0741c9785a5'}
+logger.ts:235 [03/02/2026, 22:26:49] DEBUG [system] useTaskSync: Fetch already in progress, skipping | Data: {"page":1,"filters":{"status":"all","priority":"all","search":""}} {id: '1770154009579-t1rfbgb4fu', timestamp: '2026-02-03T21:26:49.579Z', level: 0, context: 'system', message: 'useTaskSync: Fetch already in progress, skipping', …}
+logger.ts:155 03/02/2026, 22:26:49 [CORR:req-ml73zr70-0002-act7jq] [FRONTEND] [API] [DEBUG] IPC call started: has_admins | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"has_admins","timeout_ms":120000} {id: '1770154009592-gd1aarptsxk', timestamp: '2026-02-03T21:26:49.592Z', correlation_id: 'req-ml73zr70-0002-act7jq', layer: 'FRONTEND', domain: 'API', …}
+logger.ts:158 03/02/2026, 22:26:49 [CORR:req-ml73zr70-0002-act7jq] [FRONTEND] [API] [INFO] IPC call completed: user_crud | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"user_crud","duration_ms":174,"response_type":"object"} {id: '1770154009627-te6whar0ob9', timestamp: '2026-02-03T21:26:49.627Z', correlation_id: 'req-ml73zr70-0002-act7jq', layer: 'FRONTEND', domain: 'API', …}
+logger.ts:235 [03/02/2026, 22:26:49] DEBUG [system] auth | Data: "Profile loaded successfully" {id: '1770154009644-3hv38bqxu3u', timestamp: '2026-02-03T21:26:49.644Z', level: 0, context: 'system', message: 'auth', …}
+cache.ts:127 [IPC Cache] auth_validate_session -> cache hit for key: auth:session:eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzAxNDgxNDQsImV4cCI6MTc3MDE1NTM0NCwianRpIjoiYTQ2MzQyZmYtNzU3NS00NzJmLThmMjEtZjM1ZTg2MjIwNGQyIiwic2Vzc2lvbl9pZCI6IjdiYTFhZGFiLTEyNTMtNGE1ZS1iMjAwLWI5OTJhNWNkYjY3NCJ9.BLNCPlaVo4NXviPBSQiwdyygGEIjpI9FilKfCdg4thw
+logger.ts:155 03/02/2026, 22:26:49 [CORR:req-ml73zr70-0002-act7jq] [FRONTEND] [API] [DEBUG] IPC call started: user_crud | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"user_crud","args":{"request":{"action":{"action":"Get","id":"a2975c76-eeda-41f8-9efe-d0741c9785a5"},"session_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzAxNDgxNDQsImV4cCI6MTc3MDE1NTM0NCwianRpIjoiYTQ2MzQyZmYtNzU3NS00NzJmLThmMjEtZjM1ZTg2MjIwNGQyIiwic2Vzc2lvbl9pZCI6IjdiYTFhZGFiLTEyNTMtNGE1ZS1iMjAwLWI5OTJhNWNkYjY3NCJ9.BLNCPlaVo4NXviPBSQiwdyygGEIjpI9FilKfCdg4thw"}},"timeout_ms":120000} {id: '1770154009712-xuy75zd0xyq', timestamp: '2026-02-03T21:26:49.712Z', correlation_id: 'req-ml73zr70-0002-act7jq', layer: 'FRONTEND', domain: 'API', …}
+logger.ts:158 03/02/2026, 22:26:49 [CORR:req-ml73zr70-0002-act7jq] [FRONTEND] [API] [INFO] IPC call completed: has_admins | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"has_admins","duration_ms":153,"response_type":"boolean"} {id: '1770154009745-458ll210132', timestamp: '2026-02-03T21:26:49.745Z', correlation_id: 'req-ml73zr70-0002-act7jq', layer: 'FRONTEND', domain: 'API', …}
+RootClientLayout.tsx:80 hasAdmins result true
+RootClientLayout.tsx:95 No redirect needed {hasAdmins: true, pathname: '/tasks/b3fbfdab-74d6-4fac-8dc2-f9c7f2b7ff85'}
+logger.ts:158 03/02/2026, 22:26:49 [CORR:req-ml73zr70-0002-act7jq] [FRONTEND] [API] [INFO] IPC call completed: user_crud | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"user_crud","duration_ms":68,"response_type":"object"} {id: '1770154009781-nmm09pah6rn', timestamp: '2026-02-03T21:26:49.781Z', correlation_id: 'req-ml73zr70-0002-act7jq', layer: 'FRONTEND', domain: 'API', …}
+logger.ts:235 [03/02/2026, 22:26:49] DEBUG [system] auth | Data: "Profile loaded successfully" {id: '1770154009788-fmh1im8y2aa', timestamp: '2026-02-03T21:26:49.788Z', level: 0, context: 'system', message: 'auth', …}
+logger.ts:155 03/02/2026, 22:26:49 [CORR:req-ml73zr70-0002-act7jq] [FRONTEND] [API] [DEBUG] IPC call started: task_crud | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"task_crud","args":{"request":{"action":{"action":"List","filters":{"page":1,"limit":10,"status":null,"technician_id":null,"client_id":null,"priority":null,"search":null,"from_date":null,"to_date":null,"sort_by":"created_at","sort_order":"desc"}},"session_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzAxNDgxNDQsImV4cCI6MTc3MDE1NTM0NCwianRpIjoiYTQ2MzQyZmYtNzU3NS00NzJmLThmMjEtZjM1ZTg2MjIwNGQyIiwic2Vzc2lvbl9pZCI6IjdiYTFhZGFiLTEyNTMtNGE1ZS1iMjAwLWI5OTJhNWNkYjY3NCJ9.BLNCPlaVo4NXviPBSQiwdyygGEIjpI9FilKfCdg4thw"}},"timeout_ms":120000} {id: '1770154009889-jkf4xn5eszp', timestamp: '2026-02-03T21:26:49.889Z', correlation_id: 'req-ml73zr70-0002-act7jq', layer: 'FRONTEND', domain: 'API', …}
+logger.ts:158 03/02/2026, 22:26:49 [CORR:req-ml73zr70-0002-act7jq] [FRONTEND] [API] [INFO] IPC call completed: task_crud | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"task_crud","duration_ms":34,"response_type":"object"} {id: '1770154009923-fkvjpqtkt2s', timestamp: '2026-02-03T21:26:49.923Z', correlation_id: 'req-ml73zr70-0002-act7jq', layer: 'FRONTEND', domain: 'API', …}
+logger.ts:235 [03/02/2026, 22:26:49] DEBUG [system] useTaskSync: TaskService result received | Data: {"success":true,"hasData":true,"hasError":false,"requestId":"kerqym"} {id: '1770154009935-tykq0t3dkoi', timestamp: '2026-02-03T21:26:49.935Z', level: 0, context: 'system', message: 'useTaskSync: TaskService result received', …}
+logger.ts:238 [03/02/2026, 22:26:49] INFO [system] useTaskSync: tasks fetched successfully | Data: {"taskCount":5,"total":5,"page":1,"requestId":"kerqym"} {id: '1770154009944-b6wdbyyjo8t', timestamp: '2026-02-03T21:26:49.944Z', level: 1, context: 'system', message: 'useTaskSync: tasks fetched successfully', …}
+logger.ts:235 [03/02/2026, 22:26:49] DEBUG [system] useTaskSync: fetchTasks completed | Data: {"requestId":"kerqym"} {id: '1770154009951-xyqxeght2q', timestamp: '2026-02-03T21:26:49.951Z', level: 0, context: 'system', message: 'useTaskSync: fetchTasks completed', …}
+cache.ts:132 [IPC Cache] task_crud -> cache miss for key: task:b3fbfdab-74d6-4fac-8dc2-f9c7f2b7ff85, invoking...
+logger.ts:155 03/02/2026, 22:26:50 [CORR:req-ml73zr70-0002-act7jq] [FRONTEND] [API] [DEBUG] IPC call started: check_task_assignment | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"check_task_assignment","args":{"request":{"task_id":"b3fbfdab-74d6-4fac-8dc2-f9c7f2b7ff85","user_id":"a2975c76-eeda-41f8-9efe-d0741c9785a5","session_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzAxNDgxNDQsImV4cCI6MTc3MDE1NTM0NCwianRpIjoiYTQ2MzQyZmYtNzU3NS00NzJmLThmMjEtZjM1ZTg2MjIwNGQyIiwic2Vzc2lvbl9pZCI6IjdiYTFhZGFiLTEyNTMtNGE1ZS1iMjAwLWI5OTJhNWNkYjY3NCJ9.BLNCPlaVo4NXviPBSQiwdyygGEIjpI9FilKfCdg4thw"}},"timeout_ms":120000} {id: '1770154010104-mslblnsv52k', timestamp: '2026-02-03T21:26:50.104Z', correlation_id: 'req-ml73zr70-0002-act7jq', layer: 'FRONTEND', domain: 'API', …}
+logger.ts:158 03/02/2026, 22:26:50 [CORR:req-ml73zr70-0002-act7jq] [FRONTEND] [API] [INFO] IPC call completed: check_task_assignment | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"check_task_assignment","duration_ms":37,"response_type":"object"} {id: '1770154010141-dkotu7tcrvt', timestamp: '2026-02-03T21:26:50.141Z', correlation_id: 'req-ml73zr70-0002-act7jq', layer: 'FRONTEND', domain: 'API', …}
+logger.ts:155 03/02/2026, 22:26:50 [CORR:req-ml73zr70-0002-act7jq] [FRONTEND] [API] [DEBUG] IPC call started: check_task_availability | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"check_task_availability","args":{"request":{"task_id":"b3fbfdab-74d6-4fac-8dc2-f9c7f2b7ff85","session_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzAxNDgxNDQsImV4cCI6MTc3MDE1NTM0NCwianRpIjoiYTQ2MzQyZmYtNzU3NS00NzJmLThmMjEtZjM1ZTg2MjIwNGQyIiwic2Vzc2lvbl9pZCI6IjdiYTFhZGFiLTEyNTMtNGE1ZS1iMjAwLWI5OTJhNWNkYjY3NCJ9.BLNCPlaVo4NXviPBSQiwdyygGEIjpI9FilKfCdg4thw"}},"timeout_ms":120000} {id: '1770154010152-rljmvz6df2', timestamp: '2026-02-03T21:26:50.152Z', correlation_id: 'req-ml73zr70-0002-act7jq', layer: 'FRONTEND', domain: 'API', …}
+logger.ts:158 03/02/2026, 22:26:50 [CORR:req-ml73zr70-0002-act7jq] [FRONTEND] [API] [INFO] IPC call completed: check_task_availability | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"check_task_availability","duration_ms":33,"response_type":"object"} {id: '1770154010185-hm41o9dv0ih', timestamp: '2026-02-03T21:26:50.185Z', correlation_id: 'req-ml73zr70-0002-act7jq', layer: 'FRONTEND', domain: 'API', …}
+client.ts:772 [IPC] getActiveByTask called for task: b3fbfdab-74d6-4fac-8dc2-f9c7f2b7ff85
+logger.ts:155 03/02/2026, 22:26:50 [CORR:req-ml73zr70-0002-act7jq] [FRONTEND] [API] [DEBUG] IPC call started: intervention_workflow | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"intervention_workflow","args":{"action":{"action":"GetActiveByTask","task_id":"b3fbfdab-74d6-4fac-8dc2-f9c7f2b7ff85"},"session_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJ...[truncated]","task_id":"b3fbfdab-74d6-4fac-8dc2-f9c7f2b7ff85"},"timeout_ms":120000} {id: '1770154010264-y9hozlhre3o', timestamp: '2026-02-03T21:26:50.264Z', correlation_id: 'req-ml73zr70-0002-act7jq', layer: 'FRONTEND', domain: 'API', …}
+cache.ts:127 [IPC Cache] task_crud -> cache hit for key: task:b3fbfdab-74d6-4fac-8dc2-f9c7f2b7ff85
+logger.ts:155 03/02/2026, 22:26:50 [CORR:req-ml73zr70-0002-act7jq] [FRONTEND] [API] [DEBUG] IPC call started: check_task_assignment | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"check_task_assignment","args":{"request":{"task_id":"b3fbfdab-74d6-4fac-8dc2-f9c7f2b7ff85","user_id":"a2975c76-eeda-41f8-9efe-d0741c9785a5","session_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzAxNDgxNDQsImV4cCI6MTc3MDE1NTM0NCwianRpIjoiYTQ2MzQyZmYtNzU3NS00NzJmLThmMjEtZjM1ZTg2MjIwNGQyIiwic2Vzc2lvbl9pZCI6IjdiYTFhZGFiLTEyNTMtNGE1ZS1iMjAwLWI5OTJhNWNkYjY3NCJ9.BLNCPlaVo4NXviPBSQiwdyygGEIjpI9FilKfCdg4thw"}},"timeout_ms":120000} {id: '1770154010337-x2f804mvbqk', timestamp: '2026-02-03T21:26:50.337Z', correlation_id: 'req-ml73zr70-0002-act7jq', layer: 'FRONTEND', domain: 'API', …}
+app-index.tsx:25  03/02/2026, 22:26:50 [CORR:req-ml73zr70-0002-act7jq] [FRONTEND] [API] [ERROR] IPC call error: intervention_workflow | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 {id: '1770154010373-b7gvxitue75', timestamp: '2026-02-03T21:26:50.373Z', correlation_id: 'req-ml73zr70-0002-act7jq', layer: 'FRONTEND', domain: 'API', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:165
+error @ logger.ts:267
+safeInvoke @ utils.ts:218
+await in safeInvoke
+getActiveByTask @ client.ts:774
+queryFn @ TaskAttachments.tsx:22
+fetchFn @ query.js:225
+run @ retryer.js:77
+start @ retryer.js:119
+fetch @ query.js:272
+#executeFetch @ queryObserver.js:179
+onSubscribe @ queryObserver.js:52
+subscribe @ subscribable.js:9
+eval @ useBaseQuery.ts:100
+subscribeToStore @ react-dom.development.js:12033
+commitHookEffectListMount @ react-dom.development.js:21102
+commitHookPassiveMountEffects @ react-dom.development.js:23154
+commitPassiveMountOnFiber @ react-dom.development.js:23259
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23334
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+app-index.tsx:25  [IPC] getActiveByTask error: invalid args `sessionToken` for command `intervention_workflow`: command intervention_workflow missing required key sessionToken
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+getActiveByTask @ client.ts:797
+await in getActiveByTask
+queryFn @ TaskAttachments.tsx:22
+fetchFn @ query.js:225
+run @ retryer.js:77
+start @ retryer.js:119
+fetch @ query.js:272
+#executeFetch @ queryObserver.js:179
+onSubscribe @ queryObserver.js:52
+subscribe @ subscribable.js:9
+eval @ useBaseQuery.ts:100
+subscribeToStore @ react-dom.development.js:12033
+commitHookEffectListMount @ react-dom.development.js:21102
+commitHookPassiveMountEffects @ react-dom.development.js:23154
+commitPassiveMountOnFiber @ react-dom.development.js:23259
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23334
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+logger.ts:158 03/02/2026, 22:26:50 [CORR:req-ml73zr70-0002-act7jq] [FRONTEND] [API] [INFO] IPC call completed: check_task_assignment | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"check_task_assignment","duration_ms":64,"response_type":"object"} {id: '1770154010401-pbji4zkltwb', timestamp: '2026-02-03T21:26:50.401Z', correlation_id: 'req-ml73zr70-0002-act7jq', layer: 'FRONTEND', domain: 'API', …}
+logger.ts:155 03/02/2026, 22:26:50 [CORR:req-ml73zr70-0002-act7jq] [FRONTEND] [API] [DEBUG] IPC call started: check_task_availability | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"check_task_availability","args":{"request":{"task_id":"b3fbfdab-74d6-4fac-8dc2-f9c7f2b7ff85","session_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzAxNDgxNDQsImV4cCI6MTc3MDE1NTM0NCwianRpIjoiYTQ2MzQyZmYtNzU3NS00NzJmLThmMjEtZjM1ZTg2MjIwNGQyIiwic2Vzc2lvbl9pZCI6IjdiYTFhZGFiLTEyNTMtNGE1ZS1iMjAwLWI5OTJhNWNkYjY3NCJ9.BLNCPlaVo4NXviPBSQiwdyygGEIjpI9FilKfCdg4thw"}},"timeout_ms":120000} {id: '1770154010413-xf8epegnc9', timestamp: '2026-02-03T21:26:50.413Z', correlation_id: 'req-ml73zr70-0002-act7jq', layer: 'FRONTEND', domain: 'API', …}
+logger.ts:158 03/02/2026, 22:26:50 [CORR:req-ml73zr70-0002-act7jq] [FRONTEND] [API] [INFO] IPC call completed: check_task_availability | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"check_task_availability","duration_ms":28,"response_type":"object"} {id: '1770154010441-8x9cm5fxqmp', timestamp: '2026-02-03T21:26:50.441Z', correlation_id: 'req-ml73zr70-0002-act7jq', layer: 'FRONTEND', domain: 'API', …}
+cache.ts:127 [IPC Cache] task_crud -> cache hit for key: task:b3fbfdab-74d6-4fac-8dc2-f9c7f2b7ff85
+ActionsCard.tsx:326 Starting intervention for task: b3fbfdab-74d6-4fac-8dc2-f9c7f2b7ff85 status: pending
+intervention-workflow.service.ts:64 [InterventionWorkflow] {timestamp: '2026-02-03T21:26:51.900Z', operation: 'startIntervention', taskId: 'b3fbfdab-74d6-4fac-8dc2-f9c7f2b7ff85', dataKeys: Array(23)}
+logger.ts:155 03/02/2026, 22:26:51 [CORR:req-ml73zr70-0002-act7jq] [FRONTEND] [API] [DEBUG] IPC call started: intervention_workflow | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"intervention_workflow","args":{"action":{"action":"Start","data":{"task_id":"b3fbfdab-74d6-4fac-8dc2-f9c7f2b7ff85","intervention_number":null,"intervention_type":"ppf","priority":"medium","ppf_zones":["full_vehicle"],"custom_ppf_zones":[],"film_type":"standard","film_brand":null,"film_model":null,"weather_condition":"sunny","lighting_condition":"natural","work_location":"outdoor","temperature":null,"humidity":null,"technician_id":"a2975c76-eeda-41f8-9efe-d0741c9785a5","assistant_ids":null,"scheduled_start":"2026-02-03T21:26:51.899Z","estimated_duration":120,"gps_coordinates":null,"address":".","notes":"LKJ","customer_requirements":null,"special_instructions":null}},"session_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJ...[truncated]","task_id":"b3fbfdab-74d6-4fac-8dc2-f9c7f2b7ff85"},"timeout_ms":120000} {id: '1770154011900-bu7vpmwnk2t', timestamp: '2026-02-03T21:26:51.900Z', correlation_id: 'req-ml73zr70-0002-act7jq', layer: 'FRONTEND', domain: 'API', …}
+app-index.tsx:25  03/02/2026, 22:26:51 [CORR:req-ml73zr70-0002-act7jq] [FRONTEND] [API] [ERROR] IPC call error: intervention_workflow | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 {id: '1770154011934-39acna85y2i', timestamp: '2026-02-03T21:26:51.934Z', correlation_id: 'req-ml73zr70-0002-act7jq', layer: 'FRONTEND', domain: 'API', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:165
+error @ logger.ts:267
+safeInvoke @ utils.ts:218
+await in safeInvoke
+start @ client.ts:740
+startIntervention @ intervention-workflow.service.ts:80
+mutationFn @ ActionsCard.tsx:301
+fn @ mutation.js:74
+run @ retryer.js:77
+start @ retryer.js:119
+execute @ mutation.js:113
+await in execute
+mutate @ mutationObserver.js:61
+eval @ useMutation.ts:56
+handleStartWorkflow @ ActionsCard.tsx:327
+callCallback @ react-dom.development.js:20565
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20703
+executeDispatch @ react-dom.development.js:32128
+processDispatchQueueItemsInOrder @ react-dom.development.js:32160
+processDispatchQueue @ react-dom.development.js:32173
+dispatchEventsForPlugins @ react-dom.development.js:32184
+eval @ react-dom.development.js:32374
+batchedUpdates$1 @ react-dom.development.js:24953
+batchedUpdates @ react-dom.development.js:28844
+dispatchEventForPluginEventSystem @ react-dom.development.js:32373
+dispatchEvent @ react-dom.development.js:30141
+dispatchDiscreteEvent @ react-dom.development.js:30112
+app-index.tsx:25  Detailed intervention start error: invalid args `sessionToken` for command `intervention_workflow`: command intervention_workflow missing required key sessionToken
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+startIntervention @ intervention-workflow.service.ts:98
+await in startIntervention
+mutationFn @ ActionsCard.tsx:301
+fn @ mutation.js:74
+run @ retryer.js:77
+start @ retryer.js:119
+execute @ mutation.js:113
+await in execute
+mutate @ mutationObserver.js:61
+eval @ useMutation.ts:56
+handleStartWorkflow @ ActionsCard.tsx:327
+callCallback @ react-dom.development.js:20565
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20703
+executeDispatch @ react-dom.development.js:32128
+processDispatchQueueItemsInOrder @ react-dom.development.js:32160
+processDispatchQueue @ react-dom.development.js:32173
+dispatchEventsForPlugins @ react-dom.development.js:32184
+eval @ react-dom.development.js:32374
+batchedUpdates$1 @ react-dom.development.js:24953
+batchedUpdates @ react-dom.development.js:28844
+dispatchEventForPluginEventSystem @ react-dom.development.js:32373
+dispatchEvent @ react-dom.development.js:30141
+dispatchDiscreteEvent @ react-dom.development.js:30112
+app-index.tsx:25  [InterventionWorkflow] {timestamp: '2026-02-03T21:26:51.943Z', operation: 'startIntervention.error', taskId: 'b3fbfdab-74d6-4fac-8dc2-f9c7f2b7ff85', error: 'Unknown error', errorDetails: 'invalid args `sessionToken` for command `intervent…ention_workflow missing required key sessionToken'}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ intervention-workflow.service.ts:58
+startIntervention @ intervention-workflow.service.ts:99
+await in startIntervention
+mutationFn @ ActionsCard.tsx:301
+fn @ mutation.js:74
+run @ retryer.js:77
+start @ retryer.js:119
+execute @ mutation.js:113
+await in execute
+mutate @ mutationObserver.js:61
+eval @ useMutation.ts:56
+handleStartWorkflow @ ActionsCard.tsx:327
+callCallback @ react-dom.development.js:20565
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20703
+executeDispatch @ react-dom.development.js:32128
+processDispatchQueueItemsInOrder @ react-dom.development.js:32160
+processDispatchQueue @ react-dom.development.js:32173
+dispatchEventsForPlugins @ react-dom.development.js:32184
+eval @ react-dom.development.js:32374
+batchedUpdates$1 @ react-dom.development.js:24953
+batchedUpdates @ react-dom.development.js:28844
+dispatchEventForPluginEventSystem @ react-dom.development.js:32373
+dispatchEvent @ react-dom.development.js:30141
+dispatchDiscreteEvent @ react-dom.development.js:30112
+app-index.tsx:25  Start intervention error: Error: Failed to start intervention
+    at Object.mutationFn (ActionsCard.tsx:303:15)
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+onError @ ActionsCard.tsx:321
+execute @ mutation.js:153
+await in execute
+mutate @ mutationObserver.js:61
+eval @ useMutation.ts:56
+handleStartWorkflow @ ActionsCard.tsx:327
+callCallback @ react-dom.development.js:20565
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20703
+executeDispatch @ react-dom.development.js:32128
+processDispatchQueueItemsInOrder @ react-dom.development.js:32160
+processDispatchQueue @ react-dom.development.js:32173
+dispatchEventsForPlugins @ react-dom.development.js:32184
+eval @ react-dom.development.js:32374
+batchedUpdates$1 @ react-dom.development.js:24953
+batchedUpdates @ react-dom.development.js:28844
+dispatchEventForPluginEventSystem @ react-dom.development.js:32373
+dispatchEvent @ react-dom.development.js:30141
+dispatchDiscreteEvent @ react-dom.development.js:30112

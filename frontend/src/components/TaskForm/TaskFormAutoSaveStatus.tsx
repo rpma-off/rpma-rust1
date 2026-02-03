@@ -1,16 +1,22 @@
-import React from 'react';
+﻿import React from 'react';
 import { CheckCircle, Clock } from 'lucide-react';
 
 interface TaskFormAutoSaveStatusProps {
   autoSaveEnabled: boolean;
   isDirty: boolean;
+  lastSaved?: Date | null;
 }
 
 export const TaskFormAutoSaveStatus: React.FC<TaskFormAutoSaveStatusProps> = React.memo(({
   autoSaveEnabled,
-  isDirty
+  isDirty,
+  lastSaved
 }) => {
   if (!autoSaveEnabled) return null;
+
+  const lastSavedLabel = lastSaved
+    ? `Dernière sauvegarde à ${lastSaved.toLocaleTimeString()}`
+    : 'Aucune sauvegarde';
 
   return (
     <div className="mt-4 text-center text-xs sm:text-sm text-border-light">
@@ -23,6 +29,11 @@ export const TaskFormAutoSaveStatus: React.FC<TaskFormAutoSaveStatusProps> = Rea
         <div className="flex items-center justify-center space-x-2">
           <CheckCircle className="w-4 h-4 text-accent" />
           <span>Toutes les modifications sont sauvegardées</span>
+        </div>
+      )}
+      {!isDirty && (
+        <div className="mt-1 text-xs text-border-light/80">
+          {lastSavedLabel}
         </div>
       )}
     </div>
