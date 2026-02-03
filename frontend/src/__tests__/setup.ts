@@ -29,11 +29,25 @@ global.ResizeObserver = class ResizeObserver {
 };
 
 // Mock IntersectionObserver
-global.IntersectionObserver = class IntersectionObserver {
+class IntersectionObserverMock implements IntersectionObserver {
+  readonly root: Element | null = null;
+  readonly rootMargin = '';
+  readonly thresholds: ReadonlyArray<number> = [];
+  private readonly callback: IntersectionObserverCallback;
+
+  constructor(callback: IntersectionObserverCallback) {
+    this.callback = callback;
+  }
+
   observe() {}
-  disconnect() {}
   unobserve() {}
-};
+  disconnect() {}
+  takeRecords(): IntersectionObserverEntry[] {
+    return [];
+  }
+}
+
+global.IntersectionObserver = IntersectionObserverMock as unknown as typeof IntersectionObserver;
 
 // Suppress console warnings in tests
 if (process.env.NODE_ENV === 'test') {

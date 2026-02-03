@@ -155,7 +155,7 @@ impl UserRepository {
             .query_as::<User>(
                 r#"
                 SELECT
-                    id, email, password_hash, full_name, role, phone, is_active,
+                    id, email, username, password_hash, full_name, role, phone, is_active,
                     last_login_at, login_count, preferences, synced, last_synced_at,
                     created_at, updated_at, deleted_at
                 FROM users
@@ -185,7 +185,7 @@ impl UserRepository {
             .query_as::<User>(
                 r#"
                 SELECT
-                    id, email, password_hash, full_name, role, phone, is_active,
+                    id, email, username, password_hash, full_name, role, phone, is_active,
                     last_login_at, login_count, preferences, synced, last_synced_at,
                     created_at, updated_at, deleted_at
                 FROM users
@@ -208,9 +208,9 @@ impl UserRepository {
             .execute(
                 r#"
                 UPDATE users SET
-                    last_login_at = datetime('now'),
+                    last_login_at = (unixepoch() * 1000),
                     login_count = login_count + 1,
-                    updated_at = datetime('now')
+                    updated_at = (unixepoch() * 1000)
                 WHERE id = ? AND deleted_at IS NULL
                 "#,
                 params![user_id],
@@ -243,7 +243,7 @@ impl UserRepository {
         let sql = format!(
             r#"
             SELECT
-                id, email, password_hash, full_name, role, phone, is_active,
+                id, email, username, password_hash, full_name, role, phone, is_active,
                 last_login_at, login_count, preferences, synced, last_synced_at,
                 created_at, updated_at, deleted_at
             FROM users
@@ -337,7 +337,7 @@ impl Repository<User, String> for UserRepository {
             .query_as::<User>(
                 r#"
                 SELECT
-                    id, email, password_hash, full_name, role, phone, is_active,
+                    id, email, username, password_hash, full_name, role, phone, is_active,
                     last_login_at, login_count, preferences, synced, last_synced_at,
                     created_at, updated_at, deleted_at
                 FROM users
@@ -368,12 +368,13 @@ impl Repository<User, String> for UserRepository {
                 .execute(
                     r#"
                     UPDATE users SET
-                        email = ?, password_hash = ?, full_name = ?, role = ?, phone = ?, is_active = ?,
-                        preferences = ?, updated_at = datetime('now')
+                        email = ?, username = ?, password_hash = ?, full_name = ?, role = ?, phone = ?, is_active = ?,
+                        preferences = ?, updated_at = (unixepoch() * 1000)
                     WHERE id = ?
                     "#,
                     params![
                         entity.email,
+                        entity.username,
                         entity.password_hash,
                         entity.full_name,
                         entity.role.to_string(),
@@ -390,13 +391,14 @@ impl Repository<User, String> for UserRepository {
                 .execute(
                     r#"
                     INSERT INTO users (
-                        id, email, password_hash, full_name, role, phone, is_active,
+                        id, email, username, password_hash, full_name, role, phone, is_active,
                         preferences, created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, (unixepoch() * 1000), (unixepoch() * 1000))
                     "#,
                     params![
                         entity.id,
                         entity.email,
+                        entity.username,
                         entity.password_hash,
                         entity.full_name,
                         entity.role.to_string(),
@@ -421,7 +423,7 @@ impl Repository<User, String> for UserRepository {
         let rows_affected = self
             .db
             .execute(
-                "UPDATE users SET deleted_at = datetime('now'), updated_at = datetime('now') WHERE id = ? AND deleted_at IS NULL",
+                "UPDATE users SET deleted_at = (unixepoch() * 1000), updated_at = (unixepoch() * 1000) WHERE id = ? AND deleted_at IS NULL",
                 params![id],
             )
             .map_err(|e| RepoError::Database(format!("Failed to delete user: {}", e)))?;
@@ -466,6 +468,7 @@ mod tests {
         let user = User {
             id: "test-1".to_string(),
             email: "test@example.com".to_string(),
+            username: "testuser".to_string(),
             password_hash: "hashed".to_string(),
             full_name: "Test User".to_string(),
             role: UserRole::Technician,
@@ -498,6 +501,7 @@ mod tests {
         let user = User {
             id: "email-test".to_string(),
             email: "email@example.com".to_string(),
+            username: "emailuser".to_string(),
             password_hash: "hashed".to_string(),
             full_name: "Email Test User".to_string(),
             role: UserRole::Technician,
@@ -531,6 +535,7 @@ mod tests {
             let user = User {
                 id: format!("role-test-{}", i),
                 email: format!("role{}@example.com", i),
+                username: format!("roleuser{}", i),
                 password_hash: "hashed".to_string(),
                 full_name: format!("Role Test User {}", i),
                 role: UserRole::Admin,
@@ -562,6 +567,7 @@ mod tests {
         let active_user = User {
             id: "active-test".to_string(),
             email: "active@example.com".to_string(),
+            username: "activeuser".to_string(),
             password_hash: "hashed".to_string(),
             full_name: "Active User".to_string(),
             role: UserRole::Technician,
@@ -581,6 +587,7 @@ mod tests {
         let inactive_user = User {
             id: "inactive-test".to_string(),
             email: "inactive@example.com".to_string(),
+            username: "inactiveuser".to_string(),
             password_hash: "hashed".to_string(),
             full_name: "Inactive User".to_string(),
             role: UserRole::Technician,
@@ -611,6 +618,7 @@ mod tests {
         let user = User {
             id: "login-test".to_string(),
             email: "login@example.com".to_string(),
+            username: "loginuser".to_string(),
             password_hash: "hashed".to_string(),
             full_name: "Login Test User".to_string(),
             role: UserRole::Technician,
@@ -645,6 +653,7 @@ mod tests {
         let user = User {
             id: "cache-test".to_string(),
             email: "cache@example.com".to_string(),
+            username: "cacheuser".to_string(),
             password_hash: "hashed".to_string(),
             full_name: "Cache Test User".to_string(),
             role: UserRole::Technician,
@@ -681,6 +690,7 @@ mod tests {
             let user = User {
                 id: format!("search-{}", i),
                 email: format!("search{}@example.com", i),
+                username: format!("searchuser{}", i),
                 password_hash: "hashed".to_string(),
                 full_name: format!("Search User {}", i),
                 role: UserRole::Technician,
@@ -741,7 +751,7 @@ impl UserRepository {
         let rows_affected = self
             .db
             .execute(
-                "UPDATE users SET role = 'admin', updated_at = datetime('now') WHERE id = ? AND deleted_at IS NULL",
+                "UPDATE users SET role = 'admin', updated_at = (unixepoch() * 1000) WHERE id = ? AND deleted_at IS NULL",
                 params![user_id],
             )
             .map_err(|e| RepoError::Database(format!("Failed to update user role: {}", e)))?;
@@ -757,8 +767,8 @@ impl UserRepository {
     pub async fn create_admin_bootstrap_audit_log(&self, user_id: &str, user_email: &str) -> RepoResult<()> {
         self.db
             .execute(
-                "INSERT INTO audit_logs (user_id, user_email, action, entity_type, entity_id, old_values, new_values, created_at) 
-                 VALUES (?, ?, 'bootstrap_admin', 'user', ?, 'viewer', 'admin', datetime('now'))",
+                "INSERT INTO audit_logs (user_id, user_email, action, entity_type, entity_id, old_values, new_values, created_at)
+                 VALUES (?, ?, 'bootstrap_admin', 'user', ?, 'viewer', 'admin', (unixepoch() * 1000))",
                 params![user_id, user_email, user_id],
             )
             .map_err(|e| RepoError::Database(format!("Failed to create audit log: {}", e)))?;

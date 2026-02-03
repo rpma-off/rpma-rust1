@@ -40,7 +40,7 @@ export { useToast } from './use-toast';
 export { toast } from './use-toast';
 
 // Utility Components
-export { AccessibleCard } from '@/ui/AccessibleCard';
+export { AccessibleCard } from './AccessibleCard';
 export { 
   Breadcrumb,
   BreadcrumbList,

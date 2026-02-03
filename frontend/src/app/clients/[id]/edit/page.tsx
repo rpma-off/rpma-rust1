@@ -7,11 +7,11 @@ import { useAuth } from '@/lib/auth/compatibility';
 import { clientService } from '@/lib/services/entities/client.service';
 import { ArrowLeft, Save, X, Edit, User, Building } from 'lucide-react';
 import Link from 'next/link';
-import { Button } from '@/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/ui/card';
-import { Input } from '@/ui/input';
-import { Textarea } from '@/ui/textarea';
-import { Badge } from '@/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import type { Client } from '@/lib/backend';
 import type { UpdateClientDTO, ClientType } from '@/types/client.types';
 

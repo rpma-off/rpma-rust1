@@ -168,7 +168,7 @@ mod tests {
     fn test_cache_set_get() {
         let cache = Cache::new(10);
 
-        cache.set("test_key", "test_value", ttl::MEDIUM);
+        cache.set("test_key", "test_value".to_string(), ttl::MEDIUM);
         let result = cache.get::<String>("test_key");
 
         assert_eq!(result, Some("test_value".to_string()));
@@ -186,7 +186,11 @@ mod tests {
     fn test_cache_expiration() {
         let cache = Cache::new(10);
 
-        cache.set("expiring_key", "value", Duration::from_millis(100));
+        cache.set(
+            "expiring_key",
+            "value".to_string(),
+            Duration::from_millis(100),
+        );
 
         // Should exist immediately
         assert!(cache.get::<String>("expiring_key").is_some());
@@ -202,7 +206,7 @@ mod tests {
     fn test_cache_remove() {
         let cache = Cache::new(10);
 
-        cache.set("to_remove", "value", ttl::MEDIUM);
+        cache.set("to_remove", "value".to_string(), ttl::MEDIUM);
         assert!(cache.get::<String>("to_remove").is_some());
 
         cache.remove("to_remove");
@@ -213,9 +217,9 @@ mod tests {
     fn test_cache_clear() {
         let cache = Cache::new(10);
 
-        cache.set("key1", "value1", ttl::MEDIUM);
-        cache.set("key2", "value2", ttl::MEDIUM);
-        cache.set("key3", "value3", ttl::MEDIUM);
+        cache.set("key1", "value1".to_string(), ttl::MEDIUM);
+        cache.set("key2", "value2".to_string(), ttl::MEDIUM);
+        cache.set("key3", "value3".to_string(), ttl::MEDIUM);
 
         assert_eq!(cache.size(), 3);
 
@@ -243,7 +247,7 @@ mod tests {
     fn test_cache_different_types() {
         let cache = Cache::new(10);
 
-        cache.set("string_key", "string_value", ttl::MEDIUM);
+        cache.set("string_key", "string_value".to_string(), ttl::MEDIUM);
         cache.set("int_key", 42i64, ttl::MEDIUM);
         cache.set("bool_key", true, ttl::MEDIUM);
 

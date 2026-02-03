@@ -198,7 +198,7 @@ impl Repository<Task, String> for TaskRepository {
 
     async fn delete_by_id(&self, id: String) -> RepoResult<bool> {
         let rows_affected = self.db.execute(
-            "UPDATE tasks SET deleted_at = datetime('now'), updated_at = datetime('now') WHERE id = ? AND deleted_at IS NULL",
+            "UPDATE tasks SET deleted_at = (unixepoch() * 1000), updated_at = (unixepoch() * 1000) WHERE id = ? AND deleted_at IS NULL",
             params![id]
         ).map_err(|e| RepoError::Database(format!("Failed to delete task: {}", e)))?;
 

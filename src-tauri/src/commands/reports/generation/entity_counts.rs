@@ -1,13 +1,12 @@
 //! Entity counting functionality
 //!
-//! This module provides commands for retrieving entity counts
+//! This module provides implementations for retrieving entity counts
 //! used in dashboard and data explorer functionality.
 
 use crate::commands::{authenticate, AppError, AppResult, AppState};
 use tracing::{info, instrument};
 
 /// Get entity counts for dashboard
-#[tauri::command]
 #[instrument(skip(state))]
 pub async fn get_entity_counts(
     session_token: String,

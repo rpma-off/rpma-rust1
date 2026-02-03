@@ -97,7 +97,6 @@ pub async fn submit_task_completion_report_job(
 }
 
 /// Get status of a background report job
-#[tauri::command]
 #[instrument(skip(state))]
 pub async fn get_report_job_status(
     job_id: String,
@@ -112,7 +111,6 @@ pub async fn get_report_job_status(
 }
 
 /// Cancel a background report job
-#[tauri::command]
 #[instrument(skip(state))]
 pub async fn cancel_report_job(
     job_id: String,

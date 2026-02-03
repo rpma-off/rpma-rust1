@@ -15,8 +15,6 @@ use tracing::{debug, error, info, instrument};
 use super::{auth, file_operations, validation};
 
 /// Export individual intervention report
-
-#[tauri::command]
 #[instrument(skip(state))]
 pub async fn export_intervention_report(
     intervention_id: String,
@@ -72,8 +70,6 @@ pub async fn export_intervention_report(
 }
 
 /// Save intervention report to specified file path
-#[allow(dead_code)]
-#[tauri::command]
 #[instrument(skip(state))]
 pub async fn save_intervention_report(
     intervention_id: String,

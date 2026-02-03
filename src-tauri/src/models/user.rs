@@ -46,6 +46,7 @@ impl std::fmt::Display for UserRole {
 pub struct User {
     pub id: String,
     pub email: String,
+    pub username: String,
     #[serde(skip_serializing)]
     pub password_hash: String,
     pub full_name: String,
@@ -66,6 +67,7 @@ impl FromSqlRow for User {
         Ok(User {
             id: row.get("id")?,
             email: row.get("email")?,
+            username: row.get("username")?,
             password_hash: row.get("password_hash")?,
             full_name: row.get("full_name")?,
             role: match row.get::<_, String>("role")?.as_str() {

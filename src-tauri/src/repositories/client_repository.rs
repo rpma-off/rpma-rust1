@@ -313,7 +313,7 @@ impl ClientRepository {
                         SELECT MAX(completed_at) FROM tasks
                         WHERE client_id = ? AND deleted_at IS NULL
                     ),
-                    updated_at = datetime('now')
+                    updated_at = (unixepoch() * 1000)
                 WHERE id = ?
                 "#,
                 params![client_id, client_id, client_id, client_id, client_id],
@@ -483,7 +483,7 @@ impl Repository<Client, String> for ClientRepository {
                         name = ?, email = ?, phone = ?, customer_type = ?,
                         address_street = ?, address_city = ?, address_state = ?, address_zip = ?, address_country = ?,
                         tax_id = ?, company_name = ?, contact_person = ?, notes = ?, tags = ?,
-                        updated_at = datetime('now')
+                        updated_at = (unixepoch() * 1000)
                     WHERE id = ?
                     "#,
                     params![
@@ -515,7 +515,7 @@ impl Repository<Client, String> for ClientRepository {
                         address_street, address_city, address_state, address_zip, address_country,
                         tax_id, company_name, contact_person, notes, tags,
                         created_at, updated_at, created_by
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'), ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (unixepoch() * 1000), (unixepoch() * 1000), ?)
                     "#,
                     params![
                         entity.id,
@@ -552,7 +552,7 @@ impl Repository<Client, String> for ClientRepository {
         let rows_affected = self
             .db
             .execute(
-                "UPDATE clients SET deleted_at = datetime('now'), updated_at = datetime('now') WHERE id = ? AND deleted_at IS NULL",
+                "UPDATE clients SET deleted_at = (unixepoch() * 1000), updated_at = (unixepoch() * 1000) WHERE id = ? AND deleted_at IS NULL",
                 params![id],
             )
             .map_err(|e| RepoError::Database(format!("Failed to delete client: {}", e)))?;

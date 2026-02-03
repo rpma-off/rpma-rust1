@@ -122,30 +122,3 @@ For comprehensive project understanding, refer to these documentation files in t
 4. **Measurable Impact**: Focus on changes that make a real difference
 5. **Maintainability**: Code should be easier to understand after your changes
 
-## Context-Specific Guidelines
-
-### For Rust Backend
-- Follow Rust idioms and best practices
-- Use `Result<T, E>` consistently for error handling
-- Leverage Rust's type system for safety
-- Keep async code clean with proper error propagation
-- Use Clippy suggestions where applicable
-
-### For TypeScript Frontend
-- Eliminate `any` types progressively
-- Use proper React hooks dependencies
-- Implement proper TypeScript interfaces
-- Follow React best practices (no prop drilling, proper memoization)
-- Keep components focused and single-purpose
-
-### For Database Layer
-- Optimize queries with appropriate indexes
-- Use transactions where needed
-- Proper error handling for DB operations
-- Connection pool management
-- Query preparation and parameter binding
-
-
-### What You Should NOT Do :
-
-❌ DO NOT add new features - Work only with existing functionality ❌ DO NOT change the overall architecture - Keep the layered structure ❌ DO NOT introduce new libraries - Use existing dependencies only ❌ DO NOT over-engineer - Keep solutions simple and pragmatic ❌ DO NOT rewrite working code - If it works well, leave it alone ❌ DO NOT change the database schema - Work within current structure ❌ DO NOT modify the migration system - It's already comprehensive ❌ DO NOT add unnecessary abstractions - Keep it straightforward

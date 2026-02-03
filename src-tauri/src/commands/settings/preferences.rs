@@ -24,16 +24,6 @@ pub struct UpdateGeneralSettingsRequest {
 }
 
 #[derive(Deserialize)]
-pub struct UpdateAppearanceSettingsRequest {
-    pub session_token: String,
-    pub theme: Option<String>,
-    pub font_size: Option<String>,
-    pub color_scheme: Option<String>,
-    pub sidebar_position: Option<String>,
-    pub compact_mode: Option<bool>,
-}
-
-#[derive(Deserialize)]
 pub struct UpdateUserPreferencesRequest {
     pub session_token: String,
     pub email_notifications: Option<bool>,
@@ -91,43 +81,6 @@ pub async fn update_general_settings(
 
     update_app_settings(app_settings)
         .map(|_| ApiResponse::success("General settings updated successfully".to_string()))
-        .map_err(|e| AppError::Database(e))
-}
-
-/// Update appearance settings
-#[tauri::command]
-
-pub async fn update_appearance_settings(
-    request: UpdateAppearanceSettingsRequest,
-    state: AppState<'_>,
-) -> Result<ApiResponse<String>, AppError> {
-    info!("Updating appearance settings");
-
-    let user = authenticate!(&request.session_token, &state);
-
-    // Only admins can update system-wide appearance settings
-    if !matches!(user.role, crate::models::auth::UserRole::Admin) {
-        return Err(AppError::Authorization("Only administrators can update appearance settings".to_string()));
-    }
-
-    let mut app_settings = get_app_settings()
-        .map_err(|e| AppError::Database(e))?;
-
-    if let Some(theme) = request.theme {
-        app_settings.appearance.dark_mode = theme == "dark";
-    }
-    if let Some(color_scheme) = request.color_scheme {
-        app_settings.appearance.primary_color = color_scheme;
-    }
-    if let Some(font_size) = request.font_size {
-        app_settings.appearance.font_size = font_size;
-    }
-    if let Some(compact_mode) = request.compact_mode {
-        app_settings.appearance.compact_view = compact_mode;
-    }
-
-    update_app_settings(app_settings)
-        .map(|_| ApiResponse::success("Appearance settings updated successfully".to_string()))
         .map_err(|e| AppError::Database(e))
 }
 

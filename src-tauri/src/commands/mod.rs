@@ -79,15 +79,10 @@ pub use calendar::{
 };
 
 // Re-export material commands
-#[allow(unused_imports)]
 pub use material::{
-    inventory_get_movement_summary, inventory_get_stats, inventory_transaction_create,
-    inventory_transaction_list_by_material, inventory_transaction_list_recent,
-    material_category_create, material_category_get, material_category_list, material_category_update,
     material_create, material_get, material_get_by_sku, material_get_expired, material_get_intervention_consumption,
     material_get_intervention_summary, material_get_low_stock, material_get_stats, material_list,
     material_record_consumption, material_update, material_update_stock,
-    supplier_create, supplier_get, supplier_list, supplier_update,
 };
 
 // Re-export system commands
@@ -98,11 +93,8 @@ pub use system::{
 };
 
 // Re-export analytics commands
-#[allow(unused_imports)]
 pub use analytics::{
-    analytics_calculate_kpi, analytics_calculate_kpis, analytics_create_default_dashboard,
-    analytics_get_dashboard, analytics_get_dashboard_data, analytics_get_kpi, analytics_get_kpis,
-    analytics_get_summary, analytics_get_time_series,
+    analytics_get_summary,
 };
 
 use crate::db::Database;

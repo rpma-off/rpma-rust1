@@ -11,8 +11,6 @@ use tracing::{debug, error, info, instrument};
 use super::auth;
 
 /// Export report data in various formats
-
-#[tauri::command]
 #[instrument(skip(state))]
 pub async fn export_report_data(
     report_type: ReportType,

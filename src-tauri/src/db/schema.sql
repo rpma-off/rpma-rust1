@@ -259,11 +259,11 @@ CREATE TABLE IF NOT EXISTS photos (
   capture_datetime TEXT,
 
   -- GPS
-  gps_lat REAL
-    CHECK(gps_lat IS NULL OR (gps_lat >= -90 AND gps_lat <= 90)),
-  gps_lon REAL
-    CHECK(gps_lon IS NULL OR (gps_lon >= -180 AND gps_lon <= 180)),
-  gps_accuracy REAL,
+  gps_location_lat REAL
+    CHECK(gps_location_lat IS NULL OR (gps_location_lat >= -90 AND gps_location_lat <= 90)),
+  gps_location_lon REAL
+    CHECK(gps_location_lon IS NULL OR (gps_location_lon >= -180 AND gps_location_lon <= 180)),
+  gps_location_accuracy REAL,
   gps_altitude REAL,
 
   -- Qualité automatique
@@ -630,8 +630,7 @@ CREATE TABLE IF NOT EXISTS users (
   salt TEXT,
 
   -- Profil
-  first_name TEXT NOT NULL,
-  last_name TEXT NOT NULL,
+  full_name TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'technician'
     CHECK(role IN ('admin', 'technician', 'supervisor', 'viewer')),
 
@@ -652,7 +651,8 @@ CREATE TABLE IF NOT EXISTS users (
 
   -- Audit
   created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
-  updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  deleted_at INTEGER
 );
 
 -- Indexes for users

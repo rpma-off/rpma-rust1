@@ -93,24 +93,3 @@ pub async fn update_user_security(
         .map(|_| ApiResponse::success("Security settings updated successfully".to_string()))
         .map_err(|e| handle_settings_error(e, "Update user security"))
 }
-
-/// Get app settings (for admin users)
-#[tauri::command]
-
-pub async fn get_admin_app_settings(
-    session_token: String,
-    state: AppState<'_>,
-) -> Result<ApiResponse<crate::models::settings::AppSettings>, AppError> {
-    info!("Getting app settings");
-
-    let user = authenticate_user(&session_token, &state)?;
-
-    // Only admins can view app settings
-    if !matches!(user.role, crate::models::auth::UserRole::Admin) {
-        return Err(AppError::Authorization("Only administrators can view app settings".to_string()));
-    }
-
-    get_app_settings()
-        .map(ApiResponse::success)
-        .map_err(|e| AppError::Database(e))
-}

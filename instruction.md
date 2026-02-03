@@ -1,152 +1,291 @@
-﻿﻿AI Agent Code Audit Prompt
-You are an expert code auditor specializing in Rust/Tauri desktop applications with Next.js frontends. Your task is to perform a comprehensive audit of the RPMA v2 codebase to identify and fix issues while improving code quality WITHOUT adding new features or over-complicating the existing architecture.
-Your Objectives
-Fix Bugs & Issues: Identify and fix actual bugs, logic errors, and broken functionality
-Improve Code Quality: Refactor for clarity, maintainability, and best practices
-Optimize Performance: Find and fix performance bottlenecks
-Enhance Type Safety: Strengthen type definitions and eliminate any types
-Remove Dead Code: Eliminate unused code, imports, and dependencies
-What You Should Do
-Code Quality Improvements
-Fix inconsistent naming conventions
-Improve error handling patterns
-Simplify overly complex logic
-Extract reusable functions from duplicated code
-Add missing null/undefined checks
-Fix TypeScript/Rust type issues
-Improve code comments where logic is unclear
-Bug Fixes
-Fix race conditions and async/await issues
-Correct data validation logic
-Fix state management bugs
-Resolve memory leaks
-Fix database query issues
-Correct IPC command implementations
-Performance Optimization
-Optimize database queries with proper indexes
-Fix inefficient algorithms
-Reduce unnecessary re-renders in React
-Optimize bundle size by removing unused dependencies
-Fix memory inefficiencies
-Optimize image loading and caching
-Architecture Cleanup
-Consolidate duplicate service methods
-Remove circular dependencies
-Fix layering violations (e.g., UI calling repositories directly)
-Improve separation of concerns
-Standardize error handling across layers
-What You Should NOT Do
-❌ DO NOT add new features - Work only with existing functionality ❌ DO NOT change the overall architecture - Keep the layered structure ❌ DO NOT introduce new libraries - Use existing dependencies only ❌ DO NOT over-engineer - Keep solutions simple and pragmatic ❌ DO NOT rewrite working code - If it works well, leave it alone ❌ DO NOT change the database schema - Work within current structure ❌ DO NOT modify the migration system - It's already comprehensive ❌ DO NOT add unnecessary abstractions - Keep it straightforward
-Focus Areas
-High Priority
-Database Operations: Query optimization, connection pooling, transactions
-Synchronization Logic: Offline sync, conflict resolution, data consistency
-Error Handling: Consistent error patterns, user-friendly messages
-Type Safety: Remove any, fix type mismatches, strengthen interfaces
-Medium Priority
-Component Optimization: React performance, unnecessary re-renders
-State Management: Context usage, state updates, data flow
-Form Validation: Input validation, business rule checks
-API Command Structure: IPC command consistency, response formats
-Low Priority
-Code Style: Formatting consistency, naming conventions
-Comments & Documentation: Inline code documentation
-Test Coverage: Identify untested critical paths
-Dependency Audit: Remove unused packages
-Audit Process
-Phase 1: Analysis (Don't make changes yet)
-Review the codebase structure and key modules
-Identify critical issues, bugs, and security vulnerabilities
-Find performance bottlenecks and optimization opportunities
-Locate code duplication and refactoring candidates
-Check type safety and error handling patterns
-Phase 2: Prioritization
-Categorize findings by severity (Critical, High, Medium, Low)
-Group related issues together
-Identify quick wins vs. complex fixes
-Create a prioritized fix list
-Phase 3: Implementation
-Critical Issues First: data loss risks
-High Priority: Bugs affecting core functionality
-Medium Priority: Performance optimizations, code quality
-Low Priority: Style issues, minor improvements
-Phase 4: Validation
-Ensure fixes don't break existing functionality
-Verify type safety improvements compile correctly
-Test error handling improvements
-Validate performance improvements
-Reporting Format
-For each issue found, provide:
-### [SEVERITY] Issue Title
+﻿﻿# Frontend Component Architecture & UX Audit
 
-**Location**: `path/to/file.ts:line`
+## Context
+Audit 179+ React components, 38 custom hooks, 25 routes, and comprehensive UI/UX implementation across 8 specialized directories.
 
-**Problem**: 
-Clear description of what's wrong
+## Audit Objectives
 
-**Impact**: 
-What happens if not fixed (security risk, performance issue, etc.)
+1. **Component Architecture**
+   - Atomic design pattern adherence
+   - Component reusability analysis
+   - Props interface design quality
+   - Composition pattern effectiveness
 
-**Current Code**:
-```typescript
-// Show the problematic code
+2. **State Management**
+   - TanStack Query usage patterns
+   - Zustand store structure
+   - React Hook Form integration
+   - Local vs global state decisions
 
-Fixed Code:
-// Show the corrected code
+3. **User Experience Quality**
+   - Accessibility compliance (WCAG 2.1 AA)
+   - Responsive design implementation
+   - Loading state handling
+   - Error boundary coverage
 
-Explanation: Why this fix is better and what it improves
+4. **Performance Optimization**
+   - React.memo usage appropriateness
+   - useMemo/useCallback effectiveness
+   - Code splitting strategy
+   - Virtual scrolling implementation
 
-## Success Criteria
+## Component Library Review (179+ Components)
 
-Your audit is successful if:
-- ✅ All critical security vulnerabilities are fixed
-- ✅ Major bugs are identified and resolved
-- ✅ Code is more maintainable without being over-engineered
-- ✅ Performance is improved measurably
-- ✅ Type safety is strengthened throughout
-- ✅ No existing functionality is broken
-- ✅ The architecture remains simple and understandable
+### UI Primitives (61 Radix UI Components)
 
-## Key Principles
+Review base components:
+- **Button**: Variants, accessibility, loading states
+- **Input**: Validation feedback, error states, icons
+- **Dialog**: Focus trapping, escape handling, animations
+- **Table**: Sorting, filtering, virtualization
+- **Form Elements**: Accessibility, validation integration
 
-1. **Simplicity First**: The simplest solution that works is the best
-2. **Don't Break Things**: Preserve existing functionality
-3. **Pragmatic Fixes**: Practical improvements over theoretical perfection
-4. **Measurable Impact**: Focus on changes that make a real difference
-5. **Maintainability**: Code should be easier to understand after your changes
+Check:
+- Consistent prop interfaces
+- Accessible markup (ARIA attributes)
+- Keyboard navigation
+- Theme integration
 
-## Context-Specific Guidelines
+### Task Management (33 Components)
 
-### For Rust Backend
-- Follow Rust idioms and best practices
-- Use `Result<T, E>` consistently for error handling
-- Leverage Rust's type system for safety
-- Keep async code clean with proper error propagation
-- Use Clippy suggestions where applicable
+**TaskCard.tsx**
+- Information display completeness
+- Action button functionality
+- Status indicator clarity
+- Performance with large lists
 
-### For TypeScript Frontend
-- Eliminate `any` types progressively
-- Use proper React hooks dependencies
-- Implement proper TypeScript interfaces
-- Follow React best practices (no prop drilling, proper memoization)
-- Keep components focused and single-purpose
+**TaskList.tsx**
+- Virtual scrolling effectiveness
+- Filter implementation
+- Bulk selection UX
+- Empty state handling
 
-### For Database Layer
-- Optimize queries with appropriate indexes
-- Use transactions where needed
-- Proper error handling for DB operations
-- Connection pool management
-- Query preparation and parameter binding
+**TaskDetail.tsx**
+- Information hierarchy
+- Action availability
+- Related data loading
+- Navigation patterns
 
-## Start Your Audit
+**TaskFormWizard (17 components)**
+- Step progression logic
+- Validation timing
+- Auto-save functionality
+- Error handling per step
 
-Begin by examining the most critical components first:
-1. Authentication system (`src-tauri/src/commands/auth.rs`, `frontend/src/contexts/AuthContext.tsx`)
-2. Database layer (`src-tauri/src/db/`, `src-tauri/src/repositories/`)
-3. Synchronization logic (`src-tauri/src/sync/`)
-4. Core business services (`src-tauri/src/services/`)
-5. IPC commands (`src-tauri/src/commands/`)
+### Dashboard Widgets (23 Components)
 
-Focus on **fixing what's broken**, **improving what's messy**, and **optimizing what's slow**. Keep it simple, practical, and maintainable.
+**StatCard.tsx**
+- Data visualization clarity
+- Trend indicators
+- Responsive behavior
+- Loading states
 
+**PerformanceChart.tsx**
+- Chart library integration
+- Data refresh strategy
+- Interaction responsiveness
+- Accessibility of visualizations
+
+**QuickActions.tsx**
+- Action discoverability
+- Permission-based visibility
+- Click target sizes
+- Feedback mechanisms
+
+### Workflow Components (15 Components)
+
+**InterventionWorkflow.tsx**
+- 4-step process clarity
+- Progress visualization
+- Error recovery UX
+- Mobile responsiveness
+
+**StepProgress.tsx**
+- Step completion indicators
+- Navigation constraints
+- Status communication
+- Accessibility
+
+**QualityChecklist.tsx**
+- Checklist item clarity
+- Validation feedback
+- Completion tracking
+- Data persistence
+
+### Photo Management (8 Components)
+
+**PhotoUpload.tsx**
+- Drag-and-drop UX
+- Multiple file handling
+- Progress indicators
+- Error messaging
+
+**PhotoGallery.tsx**
+- Grid layout responsiveness
+- Lazy loading implementation
+- Selection UX
+- Zoom/preview functionality
+
+**PhotoViewer.tsx**
+- Full-screen experience
+- Metadata display
+- Navigation controls
+- Keyboard shortcuts
+
+### Settings Panels (12 Components)
+
+**ProfileSettings.tsx**
+- Form organization
+- Validation feedback
+- Save/cancel UX
+- Change tracking
+
+**AccessibilitySettings.tsx (60+ options)**
+- Option organization
+- Default values
+- Preview functionality
+- Help text clarity
+
+## Custom Hooks Analysis (38 Hooks)
+
+### Workflow Hooks
+
+**useInterventionWorkflow.ts (27KB)**
+- State machine complexity
+- Side effect handling
+- Error recovery
+- Memoization strategy
+
+**useTasks.ts (15KB)**
+- Data fetching patterns
+- Cache invalidation
+- Optimistic updates
+- Filter state management
+
+### Data Management Hooks
+
+**useDashboardData.ts**
+- Query orchestration
+- Refresh strategy
+- Error handling
+- Loading state coordination
+
+**usePhotoUpload.ts**
+- Upload queue management
+- Progress tracking
+- Retry logic
+- Cleanup on unmount
+
+### UX Enhancement Hooks
+
+**useAutoSave.ts**
+- Debounce effectiveness
+- Conflict handling
+- User feedback
+- Error recovery
+
+**useAccessibility.ts**
+- Preference application
+- Screen reader support
+- Keyboard navigation
+- Focus management
+
+## User Experience Evaluation
+
+### Critical User Flows
+
+1. **Task Creation Flow**
+   - Multi-step wizard UX
+   - Form validation timing
+   - Auto-save feedback
+   - Success confirmation
+
+2. **Intervention Execution Flow**
+   - 4-step progression clarity
+   - Photo upload experience
+   - GPS capture UX
+   - Completion celebration
+
+3. **Dashboard Experience**
+   - Information density
+   - Widget customization
+   - Real-time updates
+   - Drill-down navigation
+
+4. **Search & Filter Experience**
+   - Search result relevance
+   - Filter discoverability
+   - Result visualization
+   - Empty state handling
+
+### Accessibility Audit
+
+Test with:
+- Screen readers (NVDA, JAWS, VoiceOver)
+- Keyboard navigation only
+- High contrast mode
+- Reduced motion preference
+- Large text (200% zoom)
+
+Check:
+- Focus indicators visibility
+- ARIA labels completeness
+- Heading hierarchy
+- Form error announcements
+- Interactive element accessibility
+
+### Performance Metrics
+
+Measure:
+- First Contentful Paint (target: < 1.5s)
+- Time to Interactive (target: < 3.5s)
+- Largest Contentful Paint (target: < 2.5s)
+- Cumulative Layout Shift (target: < 0.1)
+- First Input Delay (target: < 100ms)
+
+Component-level:
+- Re-render frequency
+- Memo effectiveness
+- Bundle size contribution
+- Memory leaks
+
+## Responsive Design Review
+
+Test breakpoints:
+- Mobile: 320px - 767px
+- Tablet: 768px - 1023px
+- Desktop: 1024px - 1919px
+- Large Desktop: 1920px+
+
+Check:
+- Touch target sizes (min 44px)
+- Readable text sizes
+- Navigation accessibility
+- Layout stability
+
+## Deliverables Required
+
+1. **Component Quality Report**
+   - Reusability score per component
+   - Accessibility compliance matrix
+   - Performance profile
+   - Design pattern adherence
+
+2. **UX Improvement Roadmap**
+   - Friction points identification
+   - Quick wins (< 1 day)
+   - Medium improvements (1-5 days)
+   - Major enhancements (> 1 week)
+
+3. **Accessibility Compliance Report**
+   - WCAG 2.1 AA violations
+   - Screen reader issues
+   - Keyboard navigation gaps
+   - Remediation priorities
+
+4. **Performance Optimization Plan**
+   - Component-level optimizations
+   - Code splitting opportunities
+   - Asset optimization needs
+   - Rendering bottlenecks
 

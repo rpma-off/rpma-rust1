@@ -164,6 +164,8 @@ fn main() {
             commands::auth::disable_2fa,
             commands::auth::verify_2fa_code,
             commands::auth::is_2fa_enabled,
+            commands::auth::regenerate_backup_codes,
+            commands::analytics::analytics_get_summary,
             commands::ui::dashboard_get_stats,
             // commands::settings::get_app_settings, // TODO: check export
             commands::settings::update_general_settings,
@@ -226,13 +228,13 @@ fn main() {
             commands::reports::get_geographic_report,
             commands::reports::get_overview_report,
             commands::reports::search_records,
-            // commands::reports::get_entity_counts, // TODO: check export
-            // commands::reports::export_report_data, // TODO: check export
-            // commands::reports::export_intervention_report, // TODO: check export
-            // commands::reports::save_intervention_report, // TODO: check export
+            commands::reports::get_entity_counts,
+            commands::reports::export_report_data,
+            commands::reports::export_intervention_report,
+            commands::reports::save_intervention_report,
             commands::reports::get_available_report_types,
-            // commands::reports::get_report_status, // TODO: Fix export conflict between core and generation modules
-            // commands::reports::cancel_report, // TODO: Fix export conflict
+            commands::reports::get_report_status,
+            commands::reports::cancel_report,
             commands::reports::get_seasonal_report,
             commands::reports::get_operational_intelligence_report,
             commands::task::check_task_assignment,

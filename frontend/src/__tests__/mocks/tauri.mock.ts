@@ -1,4 +1,5 @@
 // Mock Tauri API for testing
+export {};
 
 // Mock Tauri core API
 const mockTauriCore = {
@@ -15,8 +16,13 @@ const mockTauriEvent = {
   unlisten: jest.fn(),
 };
 
+declare global {
+  // eslint-disable-next-line no-var
+  var __TAURI_INTERNALS__: typeof mockTauriCore;
+}
+
 // Setup global mocks
-global.__TAURI_INTERNALS__ = mockTauriCore;
+globalThis.__TAURI_INTERNALS__ = mockTauriCore;
 
 // Mock Tauri modules
 jest.mock('@tauri-apps/api/core', () => mockTauriCore);

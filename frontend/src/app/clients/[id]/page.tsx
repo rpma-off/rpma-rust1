@@ -6,10 +6,10 @@ import { useAuth } from '@/lib/auth/compatibility';
 import { clientService } from '@/lib/services/entities/client.service';
 import { Plus, Edit, Trash2, ArrowLeft, Mail, Phone, MapPin, Building2, User, Building } from 'lucide-react';
 import Link from 'next/link';
-import { Avatar, AvatarFallback } from '@/ui/avatar';
-import { Button } from '@/ui/button';
-import { Badge } from '@/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/ui/card';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ClientWithTasks, Task } from '@/types';
 import { convertTimestamps } from '@/lib/types';
 

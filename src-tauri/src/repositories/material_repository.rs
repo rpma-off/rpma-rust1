@@ -254,7 +254,7 @@ impl MaterialRepository {
                 r#"
                 UPDATE materials SET
                     current_stock = current_stock + ?,
-                    updated_at = datetime('now')
+                    updated_at = (unixepoch() * 1000)
                 WHERE id = ?
                 "#,
                 params![quantity_adjustment, material_id],
@@ -455,7 +455,7 @@ impl Repository<Material, String> for MaterialRepository {
                         quality_grade = ?, certification = ?, expiry_date = ?, batch_number = ?, serial_numbers = ?,
                         is_active = ?, is_discontinued = ?,
                         storage_location = ?, warehouse_id = ?,
-                        updated_at = datetime('now'), updated_by = ?
+                        updated_at = (unixepoch() * 1000), updated_by = ?
                     WHERE id = ?
                     "#,
                     params![
@@ -508,7 +508,7 @@ impl Repository<Material, String> for MaterialRepository {
                         storage_location, warehouse_id,
                         created_at, updated_at, created_by, updated_by,
                         synced
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'), ?, ?, 0)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (unixepoch() * 1000), (unixepoch() * 1000), ?, ?, 0)
                     "#,
                     params![
                         entity.id,
@@ -561,7 +561,7 @@ impl Repository<Material, String> for MaterialRepository {
         let rows_affected = self
             .db
             .execute(
-                "UPDATE materials SET is_discontinued = 1, updated_at = datetime('now') WHERE id = ?",
+                "UPDATE materials SET is_discontinued = 1, updated_at = (unixepoch() * 1000) WHERE id = ?",
                 params![id],
             )
             .map_err(|e| RepoError::Database(format!("Failed to delete material: {}", e)))?;
