@@ -603,7 +603,8 @@ export const ipcClient = {
       const result = await safeInvoke<unknown>('client_crud', {
         request: {
           action: { action: 'Create', data },
-          session_token: sessionToken
+          session_token: sessionToken,
+          sessionToken: sessionToken
         }
       });
       invalidatePattern('client:');
@@ -614,7 +615,8 @@ export const ipcClient = {
       cachedInvoke(`client:${id}`, 'client_crud', {
         request: {
           action: { action: 'Get', id },
-          session_token: sessionToken
+          session_token: sessionToken,
+          sessionToken: sessionToken
         }
       }, (data: unknown) => extractAndValidate(data, validateClient, true) as Client | null),
 
@@ -622,7 +624,8 @@ export const ipcClient = {
       cachedInvoke(`client-with-tasks:${id}`, 'client_crud', {
         request: {
           action: { action: 'GetWithTasks', id },
-          session_token: sessionToken
+          session_token: sessionToken,
+          sessionToken: sessionToken
         }
       }, (data: unknown) => extractAndValidate(data, validateClient, true) as Client | null),
 
@@ -630,7 +633,8 @@ export const ipcClient = {
       safeInvoke<unknown>('client_crud', {
         request: {
           action: { action: 'Search', query, limit },
-          session_token: sessionToken
+          session_token: sessionToken,
+          sessionToken: sessionToken
         }
       }).then(result => extractAndValidate(result) as Client[]),
 
@@ -648,7 +652,8 @@ export const ipcClient = {
               sort_order: filters.sort_order ?? 'desc'
             }
           },
-          session_token: sessionToken
+          session_token: sessionToken,
+          sessionToken: sessionToken
         }
       });
       return extractAndValidate(result) as ClientListResponse;
@@ -669,7 +674,8 @@ export const ipcClient = {
             },
             limit_tasks: limitTasks
           },
-          session_token: sessionToken
+          session_token: sessionToken,
+          sessionToken: sessionToken
         }
       });
       return extractAndValidate(result) as ClientWithTasks[];
@@ -679,7 +685,8 @@ export const ipcClient = {
       safeInvoke<unknown>('client_crud', {
         request: {
           action: { action: 'Stats' },
-          session_token: sessionToken
+          session_token: sessionToken,
+          sessionToken: sessionToken
         }
       }).then(result => extractAndValidate(result) as ClientStatistics),
 
@@ -687,7 +694,8 @@ export const ipcClient = {
       const result = await safeInvoke<unknown>('client_crud', {
         request: {
           action: { action: 'Update', id, data },
-          session_token: sessionToken
+          session_token: sessionToken,
+          sessionToken: sessionToken
         }
       });
       invalidatePattern('client:');
@@ -698,7 +706,8 @@ export const ipcClient = {
       await safeInvoke<void>('client_crud', {
         request: {
           action: { action: 'Delete', id },
-          session_token: sessionToken
+          session_token: sessionToken,
+          sessionToken: sessionToken
         }
       });
       invalidatePattern('client:');

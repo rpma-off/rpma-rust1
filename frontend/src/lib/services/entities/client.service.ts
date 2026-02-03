@@ -114,12 +114,13 @@ export class ClientService {
             customer_type: query?.customer_type as 'individual' | 'business' | null | undefined,
             sort_order: query?.sort_order as 'asc' | 'desc' | undefined
           };
-          const clients = await ipcClient.clients.listWithTasks(clientQuery, limitTasks || 5, sessionToken);
-          // Wrap in ListResponse structure as expected by ApiResponse<T[]> conditional type
-          const page = query?.page || 1;
-          const limit = query?.limit || 20;
-          const total = clients.length;
-          const totalPages = Math.ceil(total / limit);
+          try {
+            const clients = await ipcClient.clients.listWithTasks(clientQuery, limitTasks || 5, sessionToken);
+            // Wrap in ListResponse structure as expected by ApiResponse<T[]> conditional type
+            const page = query?.page || 1;
+            const limit = query?.limit || 20;
+            const total = clients.length;
+            const totalPages = Math.ceil(total / limit);
             const listResponse = {
               data: clients,
               pagination: {
@@ -129,7 +130,23 @@ export class ClientService {
                 total_pages: totalPages
               }
             };
-          return { success: true, data: listResponse };
+            return { success: true, data: listResponse };
+          } catch (error) {
+            // Fallback: use basic client list without tasks if ListWithTasks fails
+            const listResponse = await ipcClient.clients.list(clientQuery, sessionToken);
+            const clientsWithTasks: ClientWithTasks[] = listResponse.data.map((client: Client) => ({
+              ...client,
+              tasks: []
+            }));
+
+            return {
+              success: true,
+              data: {
+                data: clientsWithTasks,
+                pagination: listResponse.pagination
+              }
+            };
+          }
         } catch (error) {
           return { success: false, error: new ApiError(error instanceof Error ? error.message : 'Failed to fetch clients with tasks', 500, 'CLIENTS_FETCH_FAILED'), data: undefined };
         }
