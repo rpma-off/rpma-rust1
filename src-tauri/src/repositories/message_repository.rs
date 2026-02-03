@@ -88,11 +88,27 @@ impl MessageQuery {
         (where_clause, params)
     }
 
-    fn build_order_by_clause(&self) -> Option<String> {
-        let sort_by = self.sort_by.as_deref().unwrap_or("created_at");
-        let sort_order = self.sort_order.as_deref().unwrap_or("DESC");
+    fn validate_sort_column(sort_by: &str) -> Result<String, RepoError> {
+        let allowed_columns = [
+            "created_at", "updated_at", "message_type", "status", "priority",
+            "scheduled_at", "sent_at", "read_at", "subject"
+        ];
+        allowed_columns.iter()
+            .find(|&&col| col == sort_by)
+            .map(|s| s.to_string())
+            .ok_or_else(|| RepoError::Validation(format!("Invalid sort column: {}", sort_by)))
+    }
 
-        Some(format!("ORDER BY {} {}", sort_by, sort_order))
+    fn build_order_by_clause(&self) -> Result<String, RepoError> {
+        let sort_by = Self::validate_sort_column(
+            self.sort_by.as_deref().unwrap_or("created_at")
+        )?;
+        let sort_order = match self.sort_order.as_deref() {
+            Some("ASC") => "ASC",
+            Some("DESC") => "DESC",
+            _ => "DESC",
+        };
+        Ok(format!("ORDER BY {} {}", sort_by, sort_order))
     }
 
     fn build_limit_offset(&self) -> Option<(i64, Option<i64>)> {
@@ -295,7 +311,10 @@ impl MessageRepository {
         }
 
         let (where_clause, params) = query.build_where_clause();
-        let order_clause = query.build_order_by_clause().unwrap_or_default();
+        let order_clause = query.build_order_by_clause().unwrap_or_else(|e| {
+            eprintln!("Invalid order clause, using default: {}", e);
+            "ORDER BY created_at DESC".to_string()
+        });
         let (limit, _offset) = query.build_limit_offset().unwrap_or((100, None));
 
         let sql = format!(

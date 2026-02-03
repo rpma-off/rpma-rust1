@@ -51,10 +51,24 @@ impl TaskHistoryQuery {
         (where_clause, params)
     }
 
-    fn build_order_by_clause(&self) -> Option<String> {
-        let sort_by = self.sort_by.as_deref().unwrap_or("changed_at");
-        let sort_order = self.sort_order.as_deref().unwrap_or("DESC");
-        Some(format!("ORDER BY {} {}", sort_by, sort_order))
+    fn validate_sort_column(sort_by: &str) -> Result<String, RepoError> {
+        let allowed_columns = ["created_at", "changed_at", "new_status", "changed_by"];
+        allowed_columns.iter()
+            .find(|&&col| col == sort_by)
+            .map(|s| s.to_string())
+            .ok_or_else(|| RepoError::Validation(format!("Invalid sort column: {}", sort_by)))
+    }
+
+    fn build_order_by_clause(&self) -> Result<String, RepoError> {
+        let sort_by = Self::validate_sort_column(
+            self.sort_by.as_deref().unwrap_or("changed_at")
+        )?;
+        let sort_order = match self.sort_order.as_deref() {
+            Some("ASC") => "ASC",
+            Some("DESC") => "DESC",
+            _ => "DESC",
+        };
+        Ok(format!("ORDER BY {} {}", sort_by, sort_order))
     }
 
     fn build_limit_offset(&self) -> Option<(i64, Option<i64>)> {
@@ -181,7 +195,10 @@ impl TaskHistoryRepository {
     /// Search history with query
     pub async fn search(&self, query: TaskHistoryQuery) -> RepoResult<Vec<TaskHistory>> {
         let (where_clause, where_params) = query.build_where_clause();
-        let order_by = query.build_order_by_clause().unwrap_or_default();
+        let order_by = query.build_order_by_clause().unwrap_or_else(|e| {
+            eprintln!("Invalid order clause, using default: {}", e);
+            "ORDER BY changed_at DESC".to_string()
+        });
         let limit_offset = query.build_limit_offset();
 
         let sql = format!(
