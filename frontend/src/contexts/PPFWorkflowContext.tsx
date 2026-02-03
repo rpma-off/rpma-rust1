@@ -1,20 +1,94 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ipcClient } from '@/lib/ipc';
 import { useAuth } from '@/contexts/AuthContext';
 import { interventionKeys } from '@/lib/query-keys';
+import type { Intervention, InterventionStep, Task } from '@/lib/backend';
+import type { StepType } from '@/lib/StepType';
 
 
 interface PPFStep {
-  id: string;
+  id: StepType;
   title: string;
   description: string;
   status: 'pending' | 'in_progress' | 'completed';
   order: number;
 }
+
+type PPFStepId = StepType;
+
+type PPFStepsData = {
+  steps: InterventionStep[];
+  progress_percentage: number;
+};
+
+type PPFInterventionData = {
+  intervention: Intervention;
+};
+
+type InspectionDefectData = {
+  id: string;
+  zone: string;
+  type: 'scratch' | 'dent' | 'chip' | 'paint_issue' | 'crack';
+  severity?: 'low' | 'medium' | 'high';
+  notes?: string | null;
+};
+
+type InspectionCollectedData = {
+  defects?: InspectionDefectData[];
+  meta?: {
+    photos_count?: number;
+  };
+};
+
+type PreparationCollectedData = {
+  checklist?: Record<string, boolean>;
+  environment?: {
+    temp_celsius?: number | null;
+    humidity_percent?: number | null;
+  };
+};
+
+type InstallationCollectedData = {
+  zones?: Array<{
+    name: string;
+    status?: 'pending' | 'in_progress' | 'completed';
+    duration_min?: number;
+    material_lot?: string;
+  }>;
+};
+
+type FinalizationCollectedData = {
+  qc_checklist?: Record<string, boolean>;
+  customer_signature?: {
+    svg_data?: string | null;
+    signatory?: string | null;
+    customer_comments?: string | null;
+  };
+  customer_satisfaction?: number | null;
+  quality_score?: number | null;
+  final_observations?: string[] | null;
+};
+
+type PPFCollectedDataByStep = {
+  inspection: InspectionCollectedData;
+  preparation: PreparationCollectedData;
+  installation: InstallationCollectedData;
+  finalization: FinalizationCollectedData;
+};
+
+type PPFStepCollectedData = PPFCollectedDataByStep[PPFStepId];
+
+type AdvanceStepVariables = {
+  stepId: PPFStepId;
+  collectedData?: PPFStepCollectedData;
+  photos?: string[];
+};
+
+type CompleteStepVariables = AdvanceStepVariables;
 
 interface PPFWorkflowContextType {
   taskId: string;
@@ -22,13 +96,21 @@ interface PPFWorkflowContextType {
   currentStep: PPFStep | null;
   isLoading: boolean;
   error: Error | null;
-  interventionData: { intervention: any } | null;
-  stepsData: { steps: any[]; progress_percentage: number } | null;
-  task: any | null;
-   canAdvanceToStep: (stepId: string) => boolean;
-   advanceToStep: (stepId: string, collectedData?: any, photos?: string[]) => Promise<void>;
-   completeStep: (stepId: string, collectedData?: any, photos?: string[]) => Promise<void>;
-    finalizeIntervention: (collectedData?: any, photos?: string[]) => Promise<void>;
+  interventionData: PPFInterventionData | null;
+  stepsData: PPFStepsData | null;
+  task: Task | null;
+  canAdvanceToStep: (stepId: PPFStepId) => boolean;
+  advanceToStep: <TStep extends PPFStepId>(
+    stepId: TStep,
+    collectedData?: PPFCollectedDataByStep[TStep],
+    photos?: string[]
+  ) => Promise<void>;
+  completeStep: <TStep extends PPFStepId>(
+    stepId: TStep,
+    collectedData?: PPFCollectedDataByStep[TStep],
+    photos?: string[]
+  ) => Promise<void>;
+  finalizeIntervention: (collectedData?: FinalizationCollectedData, photos?: string[]) => Promise<void>;
 }
 
 const PPFWorkflowContext = createContext<PPFWorkflowContextType | undefined>(undefined);
@@ -77,7 +159,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
   // Get intervention for this task
   const { data: interventionData, isLoading: interventionLoading, error: interventionError } = useQuery({
     queryKey: interventionKeys.ppfIntervention(taskId),
-    queryFn: async (): Promise<{ intervention: any } | null> => {
+    queryFn: async (): Promise<PPFInterventionData | null> => {
       if (!session?.token) {
         console.warn('No session token available for intervention lookup');
         return null;
@@ -90,17 +172,30 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
 
         try {
           // First try to get active intervention
-          let result = await ipcClient.interventions.getActiveByTask(taskId, session.token);
+          let result: unknown = await ipcClient.interventions.getActiveByTask(taskId, session.token);
 
-         let intervention = null;
+         let intervention: Intervention | null = null;
 
          // Check if we got an active intervention
-         if (result && typeof result === 'object' && 'type' in result) {
-           const typedResult = result as { type: string; intervention?: any };
-
-            if (typedResult.type === 'ActiveRetrieved' && typedResult.intervention) {
-              intervention = typedResult.intervention;
-            }
+         if (result && typeof result === 'object') {
+           if ('intervention' in result) {
+             const directResult = result as { intervention?: Intervention | null };
+             if (directResult.intervention) {
+               intervention = directResult.intervention;
+             }
+           } else if ('interventions' in result) {
+             const listResult = result as { interventions?: Intervention[] };
+             if (listResult.interventions && listResult.interventions.length > 0) {
+               intervention = listResult.interventions[0];
+             }
+           } else if ('type' in result) {
+             const typedResult = result as { type: string; intervention?: Intervention; interventions?: Intervention[] };
+             if (typedResult.type === 'ActiveRetrieved' && typedResult.intervention) {
+               intervention = typedResult.intervention;
+             } else if (typedResult.type === 'ActiveByTask' && typedResult.interventions && typedResult.interventions.length > 0) {
+               intervention = typedResult.interventions[0];
+             }
+           }
          }
 
           // If no active intervention, try to get the latest (including completed)
@@ -108,7 +203,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
             result = await ipcClient.interventions.getLatestByTask(taskId, session.token);
 
            if (result && typeof result === 'object' && 'intervention' in result) {
-             const typedResult = result as { intervention?: any };
+             const typedResult = result as { intervention?: Intervention };
               if (typedResult.intervention) {
                 intervention = typedResult.intervention;
               }
@@ -153,10 +248,10 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
   // Get steps for the intervention
   const { data: stepsData, isLoading: stepsLoading, error: stepsError } = useQuery({
     queryKey: interventionKeys.ppfInterventionSteps(interventionData?.intervention?.id || ''),
-    queryFn: async (): Promise<{ steps: any[]; progress_percentage: number } | null> => {
+    queryFn: async (): Promise<PPFStepsData | null> => {
       if (!session?.token || !interventionData?.intervention?.id) return null;
       const result = await ipcClient.interventions.getProgress(interventionData.intervention.id, session.token);
-      return result;
+      return result as PPFStepsData;
     },
     enabled: !!session?.token && !!interventionData?.intervention?.id
   });
@@ -164,10 +259,10 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
   // Get task data for ppf_zones
   const { data: taskData, isLoading: taskLoading, error: taskError } = useQuery({
     queryKey: ['task', taskId],
-    queryFn: async () => {
+    queryFn: async (): Promise<Task | null> => {
       if (!session?.token || !taskId) return null;
       const result = await ipcClient.tasks.get(taskId, session.token);
-      return result;
+      return result as Task;
     },
     enabled: !!session?.token && !!taskId
   });
@@ -181,11 +276,11 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
       }
       
       const currentStepNum = interventionData.intervention.current_step || 0;
-      const stepTypes = ['inspection', 'preparation', 'installation', 'finalization'];
+      const stepTypes: StepType[] = ['inspection', 'preparation', 'installation', 'finalization'];
       return stepTypes[currentStepNum] || 'inspection';
     })(),
     stepStatuses: (() => {
-      const statuses: Record<string, PPFStep['status']> = {
+      const statuses: Record<PPFStepId, PPFStep['status']> = {
         inspection: 'pending',
         preparation: 'pending',
         installation: 'pending',
@@ -193,7 +288,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
       };
 
       if (stepsData?.steps) {
-        stepsData.steps.forEach((step: any) => {
+        stepsData.steps.forEach((step) => {
           const stepType = step.step_type;
           if (step.step_status === 'completed') {
             statuses[stepType] = 'completed';
@@ -221,7 +316,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
 
    const currentStep = updatedSteps.find(step => step.id === workflowData?.currentStepId) || null;
 
-  const canAdvanceToStep = (stepId: string): boolean => {
+  const canAdvanceToStep = (stepId: PPFStepId): boolean => {
     const step = updatedSteps.find(s => s.id === stepId);
     if (!step) return false;
 
@@ -233,20 +328,24 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     return previousStep?.status === 'completed';
   };
 
-  const advanceToStepMutation = useMutation({
-    mutationFn: async ({ stepId, collectedData, photos }: { stepId: string; collectedData?: any; photos?: string[] }) => {
+  const advanceToStepMutation = useMutation<
+    { success: boolean; stepId: PPFStepId },
+    Error,
+    AdvanceStepVariables
+  >({
+    mutationFn: async ({ stepId, collectedData, photos }) => {
       if (!session?.token) throw new Error('No session token');
       if (!interventionData?.intervention) throw new Error('No active intervention');
 
       // Ensure steps data is fresh
-      await queryClient.refetchQueries({ queryKey: ['ppf-intervention-steps', interventionData.intervention.id] });
+      await queryClient.refetchQueries({ queryKey: interventionKeys.ppfInterventionSteps(interventionData.intervention.id) });
 
       // Get the updated steps data
-      const updatedStepsData = queryClient.getQueryData(['ppf-intervention-steps', interventionData.intervention.id]) as { steps: any[] } | undefined;
+      const updatedStepsData = queryClient.getQueryData<PPFStepsData>(interventionKeys.ppfInterventionSteps(interventionData.intervention.id));
 
       // Find the CURRENT step (the one that should be completed)
       // stepId here is the CURRENT step to advance, not the target step
-      const currentStep = updatedStepsData?.steps?.find((s: any) => s.step_type === stepId);
+      const currentStep = updatedStepsData?.steps?.find((s) => s.step_type === stepId);
        if (!currentStep) throw new Error(`Current step ${stepId} not found in intervention`);
 
        // Advance current step (this will complete it and move to next)
@@ -276,19 +375,23 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     }
   });
 
-  const completeStepMutation = useMutation({
-    mutationFn: async ({ stepId, collectedData, photos }: { stepId: string; collectedData?: any; photos?: string[] }) => {
+  const completeStepMutation = useMutation<
+    { success: boolean; stepId: PPFStepId; savedStep: InterventionStep },
+    Error,
+    CompleteStepVariables
+  >({
+    mutationFn: async ({ stepId, collectedData, photos }) => {
       if (!session?.token) throw new Error('No session token');
       if (!interventionData?.intervention) throw new Error('No active intervention');
 
       // Ensure steps data is fresh
-      await queryClient.refetchQueries({ queryKey: ['ppf-intervention-steps', interventionData.intervention.id] });
+      await queryClient.refetchQueries({ queryKey: interventionKeys.ppfInterventionSteps(interventionData.intervention.id) });
 
       // Get the updated steps data
-      const updatedStepsData = queryClient.getQueryData(['ppf-intervention-steps', interventionData.intervention.id]) as { steps: any[] } | undefined;
+      const updatedStepsData = queryClient.getQueryData<PPFStepsData>(interventionKeys.ppfInterventionSteps(interventionData.intervention.id));
 
       // Find the step in the intervention
-      const step = updatedStepsData?.steps?.find((s: any) => s.step_type === stepId);
+      const step = updatedStepsData?.steps?.find((s) => s.step_type === stepId);
        if (!step) throw new Error(`Step ${stepId} not found in intervention`);
 
        // Save step progress using direct IPC call
@@ -321,7 +424,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
   });
 
   const finalizeInterventionMutation = useMutation({
-    mutationFn: async ({ collectedData, photos }: { collectedData?: any; photos?: string[] }) => {
+    mutationFn: async ({ collectedData, photos }: { collectedData?: FinalizationCollectedData; photos?: string[] }) => {
       if (!session?.token) throw new Error('No session token');
       if (!interventionData?.intervention) throw new Error('No active intervention');
 
@@ -357,7 +460,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     }
   });
 
-  const advanceToStep = async (stepId: string, collectedData?: any, photos?: string[]) => {
+  const advanceToStep = async <TStep extends PPFStepId>(stepId: TStep, collectedData?: PPFCollectedDataByStep[TStep], photos?: string[]) => {
     if (!canAdvanceToStep(stepId)) {
       toast.error('Impossible d\'accéder à cette étape');
       return;
@@ -373,11 +476,11 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     await advanceToStepMutation.mutateAsync({ stepId, collectedData, photos });
   };
 
-  const completeStep = async (stepId: string, collectedData?: any, photos?: string[]) => {
+  const completeStep = async <TStep extends PPFStepId>(stepId: TStep, collectedData?: PPFCollectedDataByStep[TStep], photos?: string[]) => {
     await completeStepMutation.mutateAsync({ stepId, collectedData, photos });
   };
 
-  const finalizeIntervention = async (collectedData?: any, photos?: string[]) => {
+  const finalizeIntervention = async (collectedData?: FinalizationCollectedData, photos?: string[]) => {
     await finalizeInterventionMutation.mutateAsync({ collectedData, photos });
   };
 

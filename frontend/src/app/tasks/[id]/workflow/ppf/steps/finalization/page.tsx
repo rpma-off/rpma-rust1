@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CheckCircle, FileCheck, PenTool, User, Award, Camera, MessageSquare, Trophy } from 'lucide-react';
+import { CheckCircle, PenTool, User, Award, Camera, MessageSquare, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePPFWorkflow } from '@/contexts/PPFWorkflowContext';
 import { SignatureCapture } from '@/components/SignatureCapture';
@@ -20,6 +20,15 @@ interface QCItem {
   description: string;
   completed: boolean;
 }
+
+type FinalizationCollectedData = {
+  qc_checklist?: Record<string, boolean>;
+  customer_signature?: {
+    svg_data?: string | null;
+    signatory?: string | null;
+    customer_comments?: string | null;
+  };
+};
 
 const defaultQCChecklist: QCItem[] = [
   {
@@ -62,7 +71,7 @@ const defaultQCChecklist: QCItem[] = [
 
 export default function FinalizationStepPage() {
   const router = useRouter();
-  const { taskId, completeStep, advanceToStep, finalizeIntervention, stepsData } = usePPFWorkflow();
+  const { taskId, finalizeIntervention, stepsData } = usePPFWorkflow();
   const [isCompleting, setIsCompleting] = useState(false);
 
 
@@ -75,27 +84,28 @@ export default function FinalizationStepPage() {
   // Load existing data when component mounts
   useEffect(() => {
     // Find the finalization step data
-    const finalizationStep = stepsData?.steps?.find((step: any) => step.step_type === 'finalization');
-    if (finalizationStep?.collected_data) {
+    const finalizationStep = stepsData?.steps?.find((step) => step.step_type === 'finalization');
+    const collectedData = finalizationStep?.collected_data as FinalizationCollectedData | undefined;
+    if (collectedData) {
       // Restore QC checklist from collected_data
-      if (finalizationStep.collected_data.qc_checklist) {
+      if (collectedData.qc_checklist) {
         const restoredQCChecklist = defaultQCChecklist.map(item => ({
           ...item,
-          completed: finalizationStep.collected_data.qc_checklist[item.id] || false
+          completed: collectedData.qc_checklist?.[item.id] || false
         }));
         setQcChecklist(restoredQCChecklist);
       }
 
       // Restore signature data
-      if (finalizationStep.collected_data.customer_signature) {
-        const signature = finalizationStep.collected_data.customer_signature;
+      if (collectedData.customer_signature) {
+        const signature = collectedData.customer_signature;
         setSignatureData(signature.svg_data || '');
         setSignatoryName(signature.signatory || '');
         setCustomerComments(signature.customer_comments || '');
       }
 
       // Restore photos from photo_urls if available
-      if (finalizationStep.photo_urls && Array.isArray(finalizationStep.photo_urls)) {
+      if (finalizationStep?.photo_urls && Array.isArray(finalizationStep.photo_urls)) {
         setUploadedPhotos(finalizationStep.photo_urls);
       }
     }

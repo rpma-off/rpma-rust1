@@ -21,9 +21,18 @@ interface ZoneTimer {
   materialLot: string;
 }
 
+type InstallationCollectedData = {
+  zones?: Array<{
+    name: string;
+    status?: ZoneTimer['status'];
+    duration_min?: number;
+    material_lot?: string;
+  }>;
+};
+
 export default function InstallationStepPage() {
   const router = useRouter();
-  const { taskId, completeStep, advanceToStep, task, stepsData } = usePPFWorkflow();
+  const { taskId, advanceToStep, task, stepsData } = usePPFWorkflow();
   const [isCompleting, setIsCompleting] = useState(false);
 
   const [zones, setZones] = useState<ZoneTimer[]>([]);
@@ -49,11 +58,12 @@ export default function InstallationStepPage() {
   // Load existing data when component mounts
   useEffect(() => {
     // Find the installation step data
-    const installationStep = stepsData?.steps?.find((step: any) => step.step_type === 'installation');
-    if (installationStep?.collected_data) {
+    const installationStep = stepsData?.steps?.find((step) => step.step_type === 'installation');
+    const collectedData = installationStep?.collected_data as InstallationCollectedData | undefined;
+    if (collectedData) {
       // Restore zones data from collected_data
-      if (installationStep.collected_data.zones) {
-        const restoredZones = installationStep.collected_data.zones.map((zoneData: any) => ({
+      if (collectedData.zones) {
+        const restoredZones = collectedData.zones.map((zoneData) => ({
           name: zoneData.name,
           status: zoneData.status || 'pending',
           startTime: null,
@@ -65,7 +75,7 @@ export default function InstallationStepPage() {
       }
 
       // Restore photos from photo_urls if available
-      if (installationStep.photo_urls && Array.isArray(installationStep.photo_urls)) {
+      if (installationStep?.photo_urls && Array.isArray(installationStep.photo_urls)) {
         setUploadedPhotos(installationStep.photo_urls);
       }
     }

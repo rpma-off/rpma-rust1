@@ -34,14 +34,20 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
       setLoading(true);
       setError(null);
 
-      const clientData = await clientService.getClientWithTasks(params.id, user.token);
-      if (clientData) {
-        const convertedClient = convertTimestamps(clientData) as ClientWithTasks;
-        if (convertedClient.tasks) {
-          convertedClient.tasks = convertedClient.tasks.map(task => convertTimestamps(task) as Task);
-        }
-        setClient(convertedClient);
+      const response = await clientService.getClientWithTasks(params.id, user.token);
+      if (!response.success || !response.data) {
+        const errorMessage = typeof response.error === 'string'
+          ? response.error
+          : response.error?.message || 'Client not found';
+        setError(errorMessage);
+        return;
       }
+
+      const convertedClient = convertTimestamps(response.data) as ClientWithTasks;
+      if (convertedClient.tasks) {
+        convertedClient.tasks = convertedClient.tasks.map(task => convertTimestamps(task) as Task);
+      }
+      setClient(convertedClient);
     } catch (err) {
       setError('An unexpected error occurred');
       console.error('Error loading client:', err);

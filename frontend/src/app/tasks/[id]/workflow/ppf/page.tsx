@@ -7,8 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight, CheckCircle, Clock, AlertCircle, Shield, Sparkles } from 'lucide-react';
 import { usePPFWorkflow } from '@/contexts/PPFWorkflowContext';
+import type { StepType } from '@/lib/StepType';
 
-const stepConfigs = [
+type StepConfig = {
+  id: StepType;
+  title: string;
+  description: string;
+  path: string;
+};
+
+const stepConfigs: StepConfig[] = [
   {
     id: 'inspection',
     title: 'Inspection',
@@ -49,7 +57,7 @@ export default function PPFWorkflowPage() {
     }
   }, [currentStep, router, taskId]);
 
-  const getStepStatus = (stepId: string) => {
+  const getStepStatus = (stepId: StepType) => {
     const step = steps.find(s => s.id === stepId);
     if (!step) return 'locked';
 

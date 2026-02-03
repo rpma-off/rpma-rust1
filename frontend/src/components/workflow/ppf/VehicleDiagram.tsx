@@ -18,6 +18,8 @@ export interface Defect {
   notes?: string;
 }
 
+type DefectSeverity = NonNullable<Defect['severity']>;
+
 interface VehicleDiagramProps {
   defects: Defect[];
   onDefectAdd: (defect: Defect) => void;
@@ -71,7 +73,7 @@ export function VehicleDiagram({ defects, onDefectAdd, onDefectRemove, readOnly 
       id: `${selectedZone}-${Date.now()}`,
       zone: selectedZone,
       type: newDefect.type,
-      severity: newDefect.severity as 'low' | 'medium' | 'high',
+      severity: newDefect.severity ?? 'low',
       notes: newDefect.notes
     };
 
@@ -297,10 +299,10 @@ export function VehicleDiagram({ defects, onDefectAdd, onDefectRemove, readOnly 
             <div className="grid gap-2">
               <Label className="text-zinc-400">Gravité</Label>
               <div className="flex gap-2">
-                {['low', 'medium', 'high'].map((sev) => (
+                {(['low', 'medium', 'high'] as const).map((sev: DefectSeverity) => (
                   <button
                     key={sev}
-                    onClick={() => setNewDefect({ ...newDefect, severity: sev as any })}
+                    onClick={() => setNewDefect({ ...newDefect, severity: sev })}
                     className={cn(
                       "flex-1 py-2 text-xs uppercase tracking-wider rounded border transition-colors",
                       newDefect.severity === sev 

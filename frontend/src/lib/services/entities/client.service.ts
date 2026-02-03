@@ -11,12 +11,20 @@ export type ClientWithStats = Client;
 
 // Client service class
 export class ClientService {
-  static async getClientWithTasks(id: string, sessionToken: string): Promise<ClientWithTasks | null> {
+  static async getClientWithTasks(id: string, sessionToken?: string): Promise<ApiResponse<ClientWithTasks>> {
+    if (!sessionToken) {
+      return { success: false, error: new ApiError('Session token required', 401, 'CLIENT_FETCH_FAILED'), data: undefined };
+    }
+
     try {
       const client = await ipcClient.clients.getWithTasks(id, sessionToken);
-      return client as ClientWithTasks;
+      return { success: true, data: client as ClientWithTasks };
     } catch (error) {
-      return null;
+      return {
+        success: false,
+        error: new ApiError(error instanceof Error ? error.message : 'Failed to fetch client', 500, 'CLIENT_FETCH_FAILED'),
+        data: undefined
+      };
     }
   }
 

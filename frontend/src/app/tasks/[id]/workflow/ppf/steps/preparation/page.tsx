@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowRight, CheckCircle, Thermometer, Droplets, Wrench, AlertTriangle, Camera, Sparkles } from 'lucide-react';
+import { ArrowRight, CheckCircle, Thermometer, Droplets, Wrench, AlertTriangle, Camera } from 'lucide-react';
 import { usePPFWorkflow } from '@/contexts/PPFWorkflowContext';
 import { PhotoUpload } from '@/components/PhotoUpload/PhotoUpload';
 
@@ -24,37 +24,45 @@ interface EnvironmentData {
   humidityPercent: number | null;
 }
 
+type PreparationCollectedData = {
+  checklist?: Record<string, boolean>;
+  environment?: {
+    temp_celsius?: number | null;
+    humidity_percent?: number | null;
+  };
+};
+
+const defaultChecklist: PreparationChecklistItem[] = [
+  {
+    id: 'wash',
+    label: 'Lavage du véhicule',
+    description: 'Nettoyage complet de la surface avec shampooing pH neutre',
+    completed: false
+  },
+  {
+    id: 'clay_bar',
+    label: 'Clay Bar',
+    description: 'Traitement avec clay bar pour éliminer les contaminants',
+    completed: false
+  },
+  {
+    id: 'degrease',
+    label: 'Dégraissage',
+    description: 'Application de dégraissant pour préparation de surface',
+    completed: false
+  },
+  {
+    id: 'masking',
+    label: 'Masquage',
+    description: 'Protection des zones non traitées (joints, poignées, etc.)',
+    completed: false
+  }
+];
+
 export default function PreparationStepPage() {
   const router = useRouter();
-  const { taskId, completeStep, advanceToStep, stepsData } = usePPFWorkflow();
+  const { taskId, advanceToStep, stepsData } = usePPFWorkflow();
   const [isCompleting, setIsCompleting] = useState(false);
-
-  const defaultChecklist: PreparationChecklistItem[] = [
-    {
-      id: 'wash',
-      label: 'Lavage du véhicule',
-      description: 'Nettoyage complet de la surface avec shampooing pH neutre',
-      completed: false
-    },
-    {
-      id: 'clay_bar',
-      label: 'Clay Bar',
-      description: 'Traitement avec clay bar pour éliminer les contaminants',
-      completed: false
-    },
-    {
-      id: 'degrease',
-      label: 'Dégraissage',
-      description: 'Application de dégraissant pour préparation de surface',
-      completed: false
-    },
-    {
-      id: 'masking',
-      label: 'Masquage',
-      description: 'Protection des zones non traitées (joints, poignées, etc.)',
-      completed: false
-    }
-  ];
 
   const [checklist, setChecklist] = useState<PreparationChecklistItem[]>(defaultChecklist);
   const [environment, setEnvironment] = useState<EnvironmentData>({
@@ -66,27 +74,28 @@ export default function PreparationStepPage() {
   // Load existing data when component mounts
   useEffect(() => {
     // Find preparation step data
-    const preparationStep = stepsData?.steps?.find((step: any) => step.step_type === 'preparation');
-    if (preparationStep?.collected_data) {
+    const preparationStep = stepsData?.steps?.find((step) => step.step_type === 'preparation');
+    const collectedData = preparationStep?.collected_data as PreparationCollectedData | undefined;
+    if (collectedData) {
       // Restore checklist from collected_data
-      if (preparationStep.collected_data.checklist) {
+      if (collectedData.checklist) {
         const restoredChecklist = defaultChecklist.map(item => ({
           ...item,
-          completed: preparationStep.collected_data.checklist[item.id] || false
+          completed: collectedData.checklist?.[item.id] || false
         }));
         setChecklist(restoredChecklist);
       }
 
       // Restore environment data
-      if (preparationStep.collected_data.environment) {
+      if (collectedData.environment) {
         setEnvironment({
-          temperatureCelsius: preparationStep.collected_data.environment.temp_celsius || null,
-          humidityPercent: preparationStep.collected_data.environment.humidity_percent || null
+          temperatureCelsius: collectedData.environment.temp_celsius || null,
+          humidityPercent: collectedData.environment.humidity_percent || null
         });
       }
 
       // Restore photos from photo_urls if available
-      if (preparationStep.photo_urls && Array.isArray(preparationStep.photo_urls)) {
+      if (preparationStep?.photo_urls && Array.isArray(preparationStep.photo_urls)) {
         setUploadedPhotos(preparationStep.photo_urls);
       }
     }

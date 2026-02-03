@@ -10,9 +10,24 @@ import { usePPFWorkflow } from '@/contexts/PPFWorkflowContext';
 import { VehicleDiagram, Defect } from '@/components/workflow/ppf/VehicleDiagram';
 import { PhotoUpload } from '@/components/PhotoUpload/PhotoUpload';
 
+type InspectionDefectPayload = {
+  id: string;
+  zone: string;
+  type: Defect['type'];
+  severity?: Defect['severity'];
+  notes?: string | null;
+};
+
+type InspectionCollectedData = {
+  defects?: InspectionDefectPayload[];
+  meta?: {
+    photos_count?: number;
+  };
+};
+
 export default function InspectionStepPage() {
   const router = useRouter();
-  const { taskId, completeStep, advanceToStep, stepsData } = usePPFWorkflow();
+  const { taskId, advanceToStep, stepsData } = usePPFWorkflow();
   const [defects, setDefects] = useState<Array<Defect>>([]);
   const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
   const [isCompleting, setIsCompleting] = useState(false);
@@ -20,22 +35,23 @@ export default function InspectionStepPage() {
   // Load existing data when component mounts
   useEffect(() => {
     // Find the inspection step data
-    const inspectionStep = stepsData?.steps?.find((step: any) => step.step_type === 'inspection');
-    if (inspectionStep?.collected_data) {
+    const inspectionStep = stepsData?.steps?.find((step) => step.step_type === 'inspection');
+    const collectedData = inspectionStep?.collected_data as InspectionCollectedData | undefined;
+    if (collectedData) {
       // Restore defects from collected_data
-      if (inspectionStep.collected_data.defects) {
-        const restoredDefects: Defect[] = inspectionStep.collected_data.defects.map((defect: any) => ({
+      if (collectedData.defects) {
+        const restoredDefects: Defect[] = collectedData.defects.map((defect) => ({
           id: defect.id,
           zone: defect.zone,
           type: defect.type,
           severity: defect.severity || 'low',
-          notes: defect.notes || null
+          notes: defect.notes ?? undefined
         }));
         setDefects(restoredDefects);
       }
 
       // Restore photos from photo_urls if available
-      if (inspectionStep.photo_urls && Array.isArray(inspectionStep.photo_urls)) {
+      if (inspectionStep?.photo_urls && Array.isArray(inspectionStep.photo_urls)) {
         setUploadedPhotos(inspectionStep.photo_urls);
       }
     }
@@ -71,8 +87,6 @@ export default function InspectionStepPage() {
       setIsCompleting(false);
     }
   };
-
-  const requiredPhotosCount = 0; // Photos are now optional for desktop users
 
   const containerVariants = {
     hidden: { opacity: 0 },

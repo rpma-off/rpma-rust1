@@ -220,18 +220,33 @@ export class TaskService {
       }
 
       // First, get the active intervention for this task
-      const interventionResponse = await ipcClient.interventions.getActiveByTask(taskId, session.token) as { type: string; intervention: any };
+      const interventionResponse = await ipcClient.interventions.getActiveByTask(taskId, session.token);
+      let interventionId: string | null = null;
 
-      if (!interventionResponse || interventionResponse.type !== 'ActiveRetrieved' || !interventionResponse.intervention) {
+      if (interventionResponse && typeof interventionResponse === 'object') {
+        if ('intervention' in interventionResponse) {
+          const intervention = (interventionResponse as { intervention?: { id?: string } }).intervention;
+          interventionId = intervention?.id ?? null;
+        } else if ('interventions' in interventionResponse && Array.isArray((interventionResponse as { interventions?: unknown }).interventions)) {
+          const interventions = (interventionResponse as { interventions: Array<{ id?: string }> }).interventions;
+          interventionId = interventions[0]?.id ?? null;
+        } else if ('type' in interventionResponse) {
+          const typedResponse = interventionResponse as { type?: string; intervention?: { id?: string }; interventions?: Array<{ id?: string }> };
+          if (typedResponse.type === 'ActiveRetrieved' && typedResponse.intervention?.id) {
+            interventionId = typedResponse.intervention.id;
+          } else if (typedResponse.type === 'ActiveByTask' && typedResponse.interventions?.length) {
+            interventionId = typedResponse.interventions[0]?.id ?? null;
+          }
+        }
+      }
+
+      if (!interventionId) {
         return {
           success: false,
           error: `No active intervention found for task ${taskId}. Please start the intervention first.`,
           status: 404
         };
       }
-
-      // Extract intervention ID from the response
-      const interventionId = interventionResponse.intervention.id;
 
       // Prepare step progress data
       const stepProgressData = {
