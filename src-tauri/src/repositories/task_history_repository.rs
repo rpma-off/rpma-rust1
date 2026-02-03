@@ -341,7 +341,7 @@ mod tests {
     #[tokio::test]
     async fn test_find_by_id() {
         let db = setup_test_db().await;
-        let cache = Arc::new(Cache::new());
+        let cache = Arc::new(Cache::new(100));
         let repo = TaskHistoryRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let task_id = uuid::Uuid::new_v4().to_string();
@@ -357,7 +357,7 @@ mod tests {
     #[tokio::test]
     async fn test_find_by_id_not_found() {
         let db = setup_test_db().await;
-        let cache = Arc::new(Cache::new());
+        let cache = Arc::new(Cache::new(100));
         let repo = TaskHistoryRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let found = repo.find_by_id("nonexistent".to_string()).await.unwrap();
@@ -367,7 +367,7 @@ mod tests {
     #[tokio::test]
     async fn test_find_all() {
         let db = setup_test_db().await;
-        let cache = Arc::new(Cache::new());
+        let cache = Arc::new(Cache::new(100));
         let repo = TaskHistoryRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let task_id = uuid::Uuid::new_v4().to_string();
@@ -384,7 +384,7 @@ mod tests {
     #[tokio::test]
     async fn test_save_create() {
         let db = setup_test_db().await;
-        let cache = Arc::new(Cache::new());
+        let cache = Arc::new(Cache::new(100));
         let repo = TaskHistoryRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let task_id = uuid::Uuid::new_v4().to_string();
@@ -398,7 +398,7 @@ mod tests {
     #[tokio::test]
     async fn test_save_update_fails() {
         let db = setup_test_db().await;
-        let cache = Arc::new(Cache::new());
+        let cache = Arc::new(Cache::new(100));
         let repo = TaskHistoryRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let task_id = uuid::Uuid::new_v4().to_string();
@@ -414,7 +414,7 @@ mod tests {
     #[tokio::test]
     async fn test_delete_by_id() {
         let db = setup_test_db().await;
-        let cache = Arc::new(Cache::new());
+        let cache = Arc::new(Cache::new(100));
         let repo = TaskHistoryRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let task_id = uuid::Uuid::new_v4().to_string();
@@ -429,7 +429,7 @@ mod tests {
     #[tokio::test]
     async fn test_find_by_task_id() {
         let db = setup_test_db().await;
-        let cache = Arc::new(Cache::new());
+        let cache = Arc::new(Cache::new(100));
         let repo = TaskHistoryRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let task_id = uuid::Uuid::new_v4().to_string();
@@ -446,7 +446,7 @@ mod tests {
     #[tokio::test]
     async fn test_count_for_task() {
         let db = setup_test_db().await;
-        let cache = Arc::new(Cache::new());
+        let cache = Arc::new(Cache::new(100));
         let repo = TaskHistoryRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let task_id = uuid::Uuid::new_v4().to_string();
@@ -461,7 +461,7 @@ mod tests {
     #[tokio::test]
     async fn test_find_recent() {
         let db = setup_test_db().await;
-        let cache = Arc::new(Cache::new());
+        let cache = Arc::new(Cache::new(100));
         let repo = TaskHistoryRepository::new(Arc::new(db), Arc::clone(&cache));
 
         for i in 0..10 {
@@ -474,3 +474,4 @@ mod tests {
         assert_eq!(recent.len(), 5);
     }
 }
+

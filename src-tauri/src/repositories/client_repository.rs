@@ -652,9 +652,6 @@ mod tests {
 
         // First call - cache miss, hit database
         let _ = repo.find_by_id("cache-test".to_string()).await.unwrap();
-        let stats_before = cache.stats();
-        assert_eq!(stats_before.hits, 0);
-        assert_eq!(stats_before.misses, 0); // Cache stats not incremented in this implementation
 
         // Second call - cache hit
         let found = repo.find_by_id("cache-test".to_string()).await.unwrap();

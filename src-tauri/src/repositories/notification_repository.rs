@@ -442,7 +442,7 @@ mod tests {
     #[tokio::test]
     async fn test_find_by_id() {
         let db = setup_test_db().await;
-        let cache = Arc::new(Cache::new());
+        let cache = Arc::new(Cache::new(100));
         let repo = NotificationTemplateRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let template = NotificationTemplate::new(
@@ -465,7 +465,7 @@ mod tests {
     #[tokio::test]
     async fn test_find_by_id_not_found() {
         let db = setup_test_db().await;
-        let cache = Arc::new(Cache::new());
+        let cache = Arc::new(Cache::new(100));
         let repo = NotificationTemplateRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let found = repo.find_by_id("nonexistent".to_string()).await.unwrap();
@@ -475,7 +475,7 @@ mod tests {
     #[tokio::test]
     async fn test_find_all() {
         let db = setup_test_db().await;
-        let cache = Arc::new(Cache::new());
+        let cache = Arc::new(Cache::new(100));
         let repo = NotificationTemplateRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let template1 = NotificationTemplate::new(
@@ -497,7 +497,7 @@ mod tests {
             vec!["var2".to_string()],
         );
 
-        repo.save(template1).await.unwrap();
+        repo.save(template1.clone()).await.unwrap();
         repo.save(template2).await.unwrap();
 
         let all = repo.find_all().await.unwrap();
@@ -507,7 +507,7 @@ mod tests {
     #[tokio::test]
     async fn test_save_create() {
         let db = setup_test_db().await;
-        let cache = Arc::new(Cache::new());
+        let cache = Arc::new(Cache::new(100));
         let repo = NotificationTemplateRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let template = NotificationTemplate::new(
@@ -528,7 +528,7 @@ mod tests {
     #[tokio::test]
     async fn test_save_update() {
         let db = setup_test_db().await;
-        let cache = Arc::new(Cache::new());
+        let cache = Arc::new(Cache::new(100));
         let repo = NotificationTemplateRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let mut template = NotificationTemplate::new(
@@ -550,7 +550,7 @@ mod tests {
     #[tokio::test]
     async fn test_delete_by_id() {
         let db = setup_test_db().await;
-        let cache = Arc::new(Cache::new());
+        let cache = Arc::new(Cache::new(100));
         let repo = NotificationTemplateRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let template = NotificationTemplate::new(
@@ -572,7 +572,7 @@ mod tests {
     #[tokio::test]
     async fn test_find_by_type() {
         let db = setup_test_db().await;
-        let cache = Arc::new(Cache::new());
+        let cache = Arc::new(Cache::new(100));
         let repo = NotificationTemplateRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let template1 = NotificationTemplate::new(
@@ -603,7 +603,7 @@ mod tests {
             vec!["var3".to_string()],
         );
 
-        repo.save(template1).await.unwrap();
+        repo.save(template1.clone()).await.unwrap();
         repo.save(template2).await.unwrap();
         repo.save(template3).await.unwrap();
 
@@ -614,7 +614,7 @@ mod tests {
     #[tokio::test]
     async fn test_find_active() {
         let db = setup_test_db().await;
-        let cache = Arc::new(Cache::new());
+        let cache = Arc::new(Cache::new(100));
         let repo = NotificationTemplateRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let template1 = NotificationTemplate::new(
@@ -626,7 +626,7 @@ mod tests {
             "Test Body 1".to_string(),
             vec!["var1".to_string()],
         );
-        repo.save(template1).await.unwrap();
+        repo.save(template1.clone()).await.unwrap();
 
         let all = repo.find_active().await.unwrap();
         assert_eq!(all.len(), 1);
@@ -636,3 +636,4 @@ mod tests {
         assert_eq!(active.len(), 0);
     }
 }
+

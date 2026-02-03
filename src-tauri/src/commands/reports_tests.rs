@@ -6,7 +6,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_task_completion_report_generation() {
-        let db = crate::db::Database::new(":memory:").await.expect("Failed to create test database");
+        let db =
+            crate::db::Database::new(":memory:", "test_encryption_key_32_bytes_long!")
+                .expect("Failed to create test database");
+        db.init().expect("Failed to initialize test database");
         
         let date_range = DateRange {
             start: Utc::now() - chrono::Duration::days(30),
@@ -26,7 +29,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_overview_report_generation() {
-        let db = crate::db::Database::new(":memory:").await.expect("Failed to create test database");
+        let db =
+            crate::db::Database::new(":memory:", "test_encryption_key_32_bytes_long!")
+                .expect("Failed to create test database");
+        db.init().expect("Failed to initialize test database");
         
         let date_range = DateRange {
             start: Utc::now() - chrono::Duration::days(30),

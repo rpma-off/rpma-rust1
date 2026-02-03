@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 #[cfg(any(feature = "specta", feature = "ts-rs"))]
 use ts_rs::TS;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
 #[cfg_attr(feature = "ts-rs", ts(export))]
 pub enum TaskStatus {

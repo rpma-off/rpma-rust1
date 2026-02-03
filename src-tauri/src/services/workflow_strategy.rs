@@ -417,8 +417,8 @@ mod tests {
         }
     }
 
-    #[tokio::test]
-    async fn test_standard_ppf_strategy() {
+    #[test]
+    fn test_standard_ppf_strategy() {
         let strategy = StandardPPFStrategy::new();
         let context = create_test_context();
 
@@ -427,13 +427,15 @@ mod tests {
         let steps_config = strategy.get_workflow_steps(&context);
         assert_eq!(steps_config.len(), 4);
 
-        let result = strategy.initialize_workflow(&context.intervention, &context).await.unwrap();
+        let result = strategy
+            .initialize_workflow_sync(&context.intervention, &context)
+            .unwrap();
         assert_eq!(result.steps.len(), 4);
         assert_eq!(result.total_estimated_duration, 7200); // 2 hours total
     }
 
-    #[tokio::test]
-    async fn test_express_ppf_strategy() {
+    #[test]
+    fn test_express_ppf_strategy() {
         let strategy = ExpressPPFStrategy::new();
         let context = create_test_context();
 
@@ -442,7 +444,9 @@ mod tests {
         let steps_config = strategy.get_workflow_steps(&context);
         assert_eq!(steps_config.len(), 3);
 
-        let result = strategy.initialize_workflow(&context.intervention, &context).await.unwrap();
+        let result = strategy
+            .initialize_workflow_sync(&context.intervention, &context)
+            .unwrap();
         assert_eq!(result.steps.len(), 3);
         assert_eq!(result.total_estimated_duration, 2400); // 40 minutes total
     }

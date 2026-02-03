@@ -263,6 +263,13 @@ impl Database {
         })
     }
 
+    #[cfg(test)]
+    pub async fn new_in_memory() -> DbResult<Self> {
+        let db = Database::new(":memory:", "test_encryption_key_32_bytes_long!")?;
+        db.init()?;
+        Ok(db)
+    }
+
     /// Get a connection from the pool with retry logic and timing
     pub fn get_connection(&self) -> DbResult<PooledConn> {
         let start_time = Instant::now();
@@ -900,7 +907,15 @@ mod tests {
         // Insert test data with ppf_zone
         conn.execute(
             "INSERT INTO tasks (id, task_number, title, ppf_zone, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            ["test-id-1", "TASK-001", "Test Task", "[\"hood\",\"fenders\"]", "draft", 1234567890, 1234567890]
+            rusqlite::params![
+                "test-id-1",
+                "TASK-001",
+                "Test Task",
+                "[\"hood\",\"fenders\"]",
+                "draft",
+                1234567890i64,
+                1234567890i64
+            ]
         ).expect("Failed to insert test data");
 
         // Verify ppf_zone exists and ppf_zones doesn't
@@ -975,6 +990,7 @@ mod tests {
                 Ok(name)
             })
             .expect("Failed to query indexes")
+            .map(|r| r.expect("Failed to get index name"))
             .collect();
 
         assert!(
@@ -1137,7 +1153,15 @@ mod tests {
         for (id, number, title, ppf_zone, status) in &test_data {
             conn.execute(
                 "INSERT INTO tasks (id, task_number, title, ppf_zone, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                [id, number, title, ppf_zone, status, 1234567890i64, 1234567890i64]
+                rusqlite::params![
+                    id,
+                    number,
+                    title,
+                    ppf_zone,
+                    status,
+                    1234567890i64,
+                    1234567890i64
+                ]
             ).expect("Failed to insert test data");
         }
 

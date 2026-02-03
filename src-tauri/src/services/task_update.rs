@@ -318,11 +318,14 @@ impl TaskUpdateService {
             UPDATE tasks SET
                 title = ?, description = ?, vehicle_plate = ?, vehicle_model = ?,
                 vehicle_year = ?, vehicle_make = ?, vin = ?, ppf_zones = ?, custom_ppf_zones = ?,
-                status = ?, priority = ?, scheduled_date = ?, start_time = ?, end_time = ?,
+                status = ?, priority = ?, technician_id = ?, assigned_at = ?, assigned_by = ?,
+                scheduled_date = ?, start_time = ?, end_time = ?,
                 date_rdv = ?, heure_rdv = ?, template_id = ?, workflow_id = ?,
+                workflow_status = ?, current_workflow_step_id = ?,
+                started_at = ?, completed_at = ?, completed_steps = ?,
                 client_id = ?, customer_name = ?, customer_email = ?, customer_phone = ?,
                 customer_address = ?, external_id = ?, lot_film = ?, checklist_completed = ?,
-                notes = ?, tags = ?, estimated_duration = ?, updated_at = ?
+                notes = ?, tags = ?, estimated_duration = ?, actual_duration = ?, updated_at = ?
             WHERE id = ?
             "#,
             params![
@@ -337,6 +340,9 @@ impl TaskUpdateService {
                 custom_ppf_zones_json,
                 status_str,
                 priority_str,
+                task.technician_id,
+                task.assigned_at,
+                task.assigned_by,
                 task.scheduled_date,
                 task.start_time,
                 task.end_time,
@@ -344,6 +350,11 @@ impl TaskUpdateService {
                 task.heure_rdv,
                 task.template_id,
                 task.workflow_id,
+                task.workflow_status,
+                task.current_workflow_step_id,
+                task.started_at,
+                task.completed_at,
+                task.completed_steps,
                 task.client_id,
                 task.customer_name,
                 task.customer_email,
@@ -355,6 +366,7 @@ impl TaskUpdateService {
                 task.notes,
                 task.tags,
                 task.estimated_duration,
+                task.actual_duration,
                 task.updated_at,
                 task.id
             ],

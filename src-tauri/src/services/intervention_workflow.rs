@@ -17,6 +17,7 @@ use crate::services::intervention_types::*;
 use crate::services::workflow_strategy::{
      WorkflowStrategyFactory, WorkflowContext, EnvironmentConditions,
 };
+use crate::services::workflow_validation::WorkflowValidationService;
 
 use std::sync::Arc;
 
@@ -25,6 +26,7 @@ use std::sync::Arc;
 pub struct InterventionWorkflowService {
     db: Arc<Database>,
     data: InterventionDataService,
+    validation: WorkflowValidationService,
 }
 
 impl InterventionWorkflowService {
@@ -32,6 +34,7 @@ impl InterventionWorkflowService {
     pub fn new(db: Arc<Database>) -> Self {
         Self {
             data: InterventionDataService::new(db.clone()),
+            validation: WorkflowValidationService::new(db.clone()),
             db,
         }
     }
@@ -100,7 +103,14 @@ impl InterventionWorkflowService {
             }
             Err(e) => {
                 // Cleanup on failure - attempt to rollback any partial state
-                self.cleanup_failed_start(&request.task_id, &logger);
+                if let Err(cleanup_err) = self.cleanup_failed_start(&request.task_id, &logger) {
+                    // Log cleanup error but return original operation error
+                    let mut cleanup_error_context = std::collections::HashMap::new();
+                    cleanup_error_context.insert("task_id".to_string(), serde_json::json!(request.task_id));
+                    cleanup_error_context.insert("cleanup_error".to_string(), serde_json::json!(cleanup_err.to_string()));
+                    logger.warn("Cleanup also failed", Some(cleanup_error_context));
+                }
+
                 let mut error_context = std::collections::HashMap::new();
                 error_context.insert("task_id".to_string(), serde_json::json!(request.task_id));
                 logger.error(
@@ -217,13 +227,15 @@ impl InterventionWorkflowService {
             .map_err(InterventionError::Database)
     }
     /// Cleanup partial state on failed intervention start
-    fn cleanup_failed_start(&self, task_id: &str, logger: &RPMARequestLogger) {
+    fn cleanup_failed_start(&self, task_id: &str, logger: &RPMARequestLogger) -> InterventionResult<()> {
         let mut cleanup_context = std::collections::HashMap::new();
         cleanup_context.insert("task_id".to_string(), serde_json::json!(task_id));
         logger.warn(
             "Cleaning up failed intervention start",
             Some(cleanup_context),
         );
+
+        let mut cleanup_errors = Vec::new();
 
         // Reset task workflow state if it was partially set
         if let Err(e) = self.db.get_connection().and_then(|conn| {
@@ -236,6 +248,7 @@ impl InterventionWorkflowService {
             cleanup_error_context.insert("task_id".to_string(), serde_json::json!(task_id));
             cleanup_error_context.insert("error".to_string(), serde_json::json!(e));
             logger.error("Failed to cleanup task workflow state", None, Some(cleanup_error_context));
+            cleanup_errors.push(format!("Failed to reset task: {}", e));
         }
 
         // Delete any orphaned intervention and steps for this task
@@ -255,149 +268,25 @@ impl InterventionWorkflowService {
             cleanup_error_context.insert("task_id".to_string(), serde_json::json!(task_id));
             cleanup_error_context.insert("error".to_string(), serde_json::json!(e));
             logger.error("Failed to cleanup orphaned intervention", None, Some(cleanup_error_context));
+            cleanup_errors.push(format!("Failed to delete orphaned intervention: {}", e));
         } else {
             let mut success_context = std::collections::HashMap::new();
             success_context.insert("task_id".to_string(), serde_json::json!(task_id));
             logger.info("Successfully cleaned up orphaned intervention", Some(success_context));
         }
-    }
 
-    /// Validate that a step advancement is allowed based on current workflow state
-    fn validate_step_advancement(
-        &self,
-        intervention: &Intervention,
-        current_step: &InterventionStep,
-        logger: &RPMARequestLogger,
-    ) -> InterventionResult<()> {
-        // Check intervention status
-        if intervention.status != InterventionStatus::InProgress {
-            let mut error_context = std::collections::HashMap::new();
-            error_context.insert(
-                "intervention_status".to_string(),
-                serde_json::json!(intervention.status),
-            );
-            error_context.insert(
-                "expected_status".to_string(),
-                serde_json::json!("InProgress"),
-            );
-            logger.error(
-                "Invalid intervention status for step advancement",
-                None,
-                Some(error_context),
-            );
-            return Err(InterventionError::Workflow(format!(
-                "Intervention is not in progress (status: {:?})",
-                intervention.status
+        // Return cleanup errors if any occurred
+        if !cleanup_errors.is_empty() {
+            return Err(InterventionError::Database(format!(
+                "Cleanup completed with errors: {}",
+                cleanup_errors.join("; ")
             )));
-        }
-
-        // Check step status
-        if current_step.step_status == StepStatus::Completed {
-            let mut error_context = std::collections::HashMap::new();
-            error_context.insert(
-                "step_number".to_string(),
-                serde_json::json!(current_step.step_number),
-            );
-            error_context.insert(
-                "step_status".to_string(),
-                serde_json::json!(current_step.step_status),
-            );
-            logger.error(
-                "Attempted to advance already completed step",
-                None,
-                Some(error_context),
-            );
-            return Err(InterventionError::Workflow(format!(
-                "Step {} is already completed",
-                current_step.step_number
-            )));
-        }
-
-        // Check step order - ensure previous steps are completed
-        if current_step.step_number > 1 {
-            let previous_step_number = current_step.step_number - 1;
-            match self
-                .data
-                .get_step_by_number(&intervention.id, previous_step_number)
-            {
-                Ok(Some(prev_step)) => {
-                    if prev_step.step_status != StepStatus::Completed {
-                        let mut error_context = std::collections::HashMap::new();
-                        error_context.insert(
-                            "current_step".to_string(),
-                            serde_json::json!(current_step.step_number),
-                        );
-                        error_context.insert(
-                            "previous_step".to_string(),
-                            serde_json::json!(previous_step_number),
-                        );
-                        error_context.insert(
-                            "previous_status".to_string(),
-                            serde_json::json!(prev_step.step_status),
-                        );
-                        logger.error(
-                            "Attempted to advance step before completing previous step",
-                            None,
-                            Some(error_context),
-                        );
-                        return Err(InterventionError::Workflow(format!(
-                            "Cannot advance to step {}: previous step {} is not completed (status: {:?})",
-                            current_step.step_number, previous_step_number, prev_step.step_status
-                        )));
-                    }
-                }
-                Ok(None) => {
-                    let mut error_context = std::collections::HashMap::new();
-                    error_context.insert(
-                        "intervention_id".to_string(),
-                        serde_json::json!(intervention.id),
-                    );
-                    error_context.insert(
-                        "expected_step".to_string(),
-                        serde_json::json!(previous_step_number),
-                    );
-                    logger.error("Previous step not found", None, Some(error_context));
-                    return Err(InterventionError::Workflow(format!(
-                        "Previous step {} not found for intervention {}",
-                        previous_step_number, intervention.id
-                    )));
-                }
-                Err(e) => {
-                    let mut error_context = std::collections::HashMap::new();
-                    error_context.insert("error".to_string(), serde_json::json!(e.to_string()));
-                    logger.error(
-                        "Failed to validate previous step",
-                        None,
-                        Some(error_context),
-                    );
-                    return Err(InterventionError::Database(format!(
-                        "Failed to validate step order: {}",
-                        e
-                    )));
-                }
-            }
-        }
-
-        // Check if intervention is locked or paused
-        if intervention.status == InterventionStatus::Paused {
-            let mut error_context = std::collections::HashMap::new();
-            error_context.insert(
-                "intervention_id".to_string(),
-                serde_json::json!(intervention.id),
-            );
-            logger.error(
-                "Attempted to advance step on paused intervention",
-                None,
-                Some(error_context),
-            );
-            return Err(InterventionError::Workflow(
-                "Cannot advance steps on a paused intervention".to_string(),
-            ));
         }
 
         Ok(())
     }
 
+    /// Validate that a step advancement is allowed based on current workflow state
     /// Advance to the next step in the workflow
     pub async fn advance_step(
         &self,
@@ -427,7 +316,7 @@ impl InterventionWorkflowService {
         let mut current_step = self.get_step_with_retry(&request.step_id, &logger).await?;
 
         // Comprehensive workflow state validation
-        self.validate_step_advancement(&intervention, &current_step, &logger)?;
+        self.validation.validate_step_advancement(&intervention, &current_step, &logger)?;
 
         // Update step with collected data
         self.data
@@ -470,14 +359,18 @@ impl InterventionWorkflowService {
             .get_next_step(&intervention, current_step.step_number)
         {
             Ok(step) => step,
-            Err(_e) => {
+            Err(e) => {
                 let mut next_step_context = std::collections::HashMap::new();
                 next_step_context.insert(
                     "current_step".to_string(),
                     serde_json::json!(current_step.step_number),
                 );
-                logger.warn("Failed to get next step", Some(next_step_context));
-                None // Continue without next step rather than failing
+                next_step_context.insert("error".to_string(), serde_json::json!(e.to_string()));
+                logger.error("Failed to get next step", None, Some(next_step_context));
+                return Err(InterventionError::Database(format!(
+                    "Failed to get next step for step {}: {}",
+                    current_step.step_number, e
+                )));
             }
         };
 
@@ -734,104 +627,6 @@ impl InterventionWorkflowService {
     }
 
     /// Validate that an intervention can be finalized
-    fn validate_intervention_finalization(
-        &self,
-        intervention: &Intervention,
-        logger: &RPMARequestLogger,
-    ) -> InterventionResult<()> {
-        // Check intervention status
-        if intervention.status == InterventionStatus::Completed {
-            let mut error_context = std::collections::HashMap::new();
-            error_context.insert(
-                "intervention_id".to_string(),
-                serde_json::json!(intervention.id),
-            );
-            error_context.insert("status".to_string(), serde_json::json!(intervention.status));
-            logger.error(
-                "Attempted to finalize already completed intervention",
-                None,
-                Some(error_context),
-            );
-            return Err(InterventionError::Workflow(
-                "Intervention is already completed".to_string(),
-            ));
-        }
-
-        if intervention.status != InterventionStatus::InProgress {
-            let mut error_context = std::collections::HashMap::new();
-            error_context.insert(
-                "intervention_id".to_string(),
-                serde_json::json!(intervention.id),
-            );
-            error_context.insert("status".to_string(), serde_json::json!(intervention.status));
-            logger.error(
-                "Attempted to finalize intervention not in progress",
-                None,
-                Some(error_context),
-            );
-            return Err(InterventionError::Workflow(format!(
-                "Cannot finalize intervention with status {:?}",
-                intervention.status
-            )));
-        }
-
-        // Check that all mandatory steps are completed
-        let steps = self
-            .data
-            .get_intervention_steps(&intervention.id)
-            .map_err(|e| {
-                InterventionError::Database(format!("Failed to get steps for validation: {}", e))
-            })?;
-
-        let mandatory_steps = steps.iter().filter(|s| s.is_mandatory).collect::<Vec<_>>();
-        let completed_mandatory_steps = mandatory_steps
-            .iter()
-            .filter(|s| s.step_status == StepStatus::Completed)
-            .collect::<Vec<_>>();
-
-        if mandatory_steps.len() != completed_mandatory_steps.len() {
-            let incomplete_steps: Vec<i32> = mandatory_steps
-                .iter()
-                .filter(|s| s.step_status != StepStatus::Completed)
-                .map(|s| s.step_number)
-                .collect();
-
-            let mut error_context = std::collections::HashMap::new();
-            error_context.insert(
-                "intervention_id".to_string(),
-                serde_json::json!(intervention.id),
-            );
-            error_context.insert(
-                "incomplete_steps".to_string(),
-                serde_json::json!(incomplete_steps),
-            );
-            error_context.insert(
-                "total_mandatory".to_string(),
-                serde_json::json!(mandatory_steps.len()),
-            );
-            error_context.insert(
-                "completed_mandatory".to_string(),
-                serde_json::json!(completed_mandatory_steps.len()),
-            );
-            logger.error(
-                "Attempted to finalize intervention with incomplete mandatory steps",
-                None,
-                Some(error_context),
-            );
-
-            return Err(InterventionError::Workflow(format!(
-                "Cannot finalize intervention: {} mandatory steps incomplete: {:?}",
-                incomplete_steps.len(),
-                incomplete_steps
-            )));
-        }
-
-        // Note: Photos are now optional and can be added later even after intervention completion
-        // No validation required for photo counts during finalization
-
-        Ok(())
-    }
-
     /// Finalize an intervention
     pub fn finalize_intervention(
         &self,
@@ -857,7 +652,7 @@ impl InterventionWorkflowService {
             })?;
 
         // Comprehensive finalization validation
-        self.validate_intervention_finalization(&intervention, &logger)?;
+        self.validation.validate_intervention_finalization(&intervention, &logger)?;
 
         // Save collected data and photos to the finalization step if provided
         let steps = self.data.get_intervention_steps(&intervention.id)?;

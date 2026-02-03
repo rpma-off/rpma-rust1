@@ -206,23 +206,23 @@ impl ServiceBuilder {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_service_builder_creation() {
+    #[tokio::test]
+    async fn test_service_builder_creation() {
         // This test verifies that ServiceBuilder can be created
         // Actual integration would require a database connection
         // For now, we just ensure the struct compiles correctly
-        let db = Arc::new(Database::in_memory());
-        let repositories = Arc::new(Repositories::new(db.clone(), 1000));
+        let db = Arc::new(Database::new_in_memory().await.expect("create db"));
+        let repositories = Arc::new(Repositories::new(db.clone(), 1000).await);
         let app_data_dir = std::path::PathBuf::from("/tmp/test");
 
         let builder = ServiceBuilder::new(db, repositories, app_data_dir);
         assert!(builder.build().is_ok());
     }
 
-    #[test]
-    fn test_event_bus_initialization() {
-        let db = Arc::new(Database::in_memory());
-        let repositories = Arc::new(Repositories::new(db.clone(), 1000));
+    #[tokio::test]
+    async fn test_event_bus_initialization() {
+        let db = Arc::new(Database::new_in_memory().await.expect("create db"));
+        let repositories = Arc::new(Repositories::new(db.clone(), 1000).await);
         let app_data_dir = std::path::PathBuf::from("/tmp/test");
 
         let builder = ServiceBuilder::new(db, repositories, app_data_dir);
@@ -235,10 +235,10 @@ mod tests {
         assert!(app_state.event_bus.has_handlers("AuthenticationSuccess"));
     }
 
-    #[test]
-    fn test_websocket_handler_registration() {
-        let db = Arc::new(Database::in_memory());
-        let repositories = Arc::new(Repositories::new(db.clone(), 1000));
+    #[tokio::test]
+    async fn test_websocket_handler_registration() {
+        let db = Arc::new(Database::new_in_memory().await.expect("create db"));
+        let repositories = Arc::new(Repositories::new(db.clone(), 1000).await);
         let app_data_dir = std::path::PathBuf::from("/tmp/test");
 
         let builder = ServiceBuilder::new(db, repositories, app_data_dir);

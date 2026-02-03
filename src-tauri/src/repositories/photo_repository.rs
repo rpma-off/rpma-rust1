@@ -548,7 +548,7 @@ mod tests {
     #[tokio::test]
     async fn test_find_by_id() {
         let db = setup_test_db().await;
-        let cache = Arc::new(Cache::new());
+        let cache = Arc::new(Cache::new(100));
         let repo = PhotoRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let intervention_id = uuid::Uuid::new_v4().to_string();
@@ -564,7 +564,7 @@ mod tests {
     #[tokio::test]
     async fn test_find_by_id_not_found() {
         let db = setup_test_db().await;
-        let cache = Arc::new(Cache::new());
+        let cache = Arc::new(Cache::new(100));
         let repo = PhotoRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let found = repo.find_by_id("nonexistent".to_string()).await.unwrap();
@@ -574,7 +574,7 @@ mod tests {
     #[tokio::test]
     async fn test_find_all() {
         let db = setup_test_db().await;
-        let cache = Arc::new(Cache::new());
+        let cache = Arc::new(Cache::new(100));
         let repo = PhotoRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let intervention_id = uuid::Uuid::new_v4().to_string();
@@ -591,7 +591,7 @@ mod tests {
     #[tokio::test]
     async fn test_save_create() {
         let db = setup_test_db().await;
-        let cache = Arc::new(Cache::new());
+        let cache = Arc::new(Cache::new(100));
         let repo = PhotoRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let intervention_id = uuid::Uuid::new_v4().to_string();
@@ -605,7 +605,7 @@ mod tests {
     #[tokio::test]
     async fn test_save_update() {
         let db = setup_test_db().await;
-        let cache = Arc::new(Cache::new());
+        let cache = Arc::new(Cache::new(100));
         let repo = PhotoRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let intervention_id = uuid::Uuid::new_v4().to_string();
@@ -620,7 +620,7 @@ mod tests {
     #[tokio::test]
     async fn test_delete_by_id() {
         let db = setup_test_db().await;
-        let cache = Arc::new(Cache::new());
+        let cache = Arc::new(Cache::new(100));
         let repo = PhotoRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let intervention_id = uuid::Uuid::new_v4().to_string();
@@ -635,7 +635,7 @@ mod tests {
     #[tokio::test]
     async fn test_find_by_intervention() {
         let db = setup_test_db().await;
-        let cache = Arc::new(Cache::new());
+        let cache = Arc::new(Cache::new(100));
         let repo = PhotoRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let intervention_id = uuid::Uuid::new_v4().to_string();
@@ -652,7 +652,7 @@ mod tests {
     #[tokio::test]
     async fn test_find_by_category() {
         let db = setup_test_db().await;
-        let cache = Arc::new(Cache::new());
+        let cache = Arc::new(Cache::new(100));
         let repo = PhotoRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let intervention_id = uuid::Uuid::new_v4().to_string();
@@ -668,3 +668,4 @@ mod tests {
         assert_eq!(vehicle_photos.len(), 1);
     }
 }
+

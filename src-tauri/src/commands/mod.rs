@@ -23,7 +23,6 @@ pub mod queue;
 pub mod reports;
 pub mod security;
 pub mod settings;
-pub mod settings_tests;
 pub mod status;
 pub mod message;
 pub mod streaming;

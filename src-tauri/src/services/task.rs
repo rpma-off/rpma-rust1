@@ -40,6 +40,7 @@ use crate::models::task::*;
 use crate::services::task_client_integration::TaskClientIntegrationService;
 use crate::services::task_constants::convert_to_app_error;
 use crate::services::task_crud::TaskCrudService;
+use crate::services::task_creation::TaskCreationService;
 use crate::services::task_queries::TaskQueriesService;
 use crate::services::task_statistics::TaskStatisticsService;
 use crate::services::task_validation::{validate_status_transition, TaskValidationService};
@@ -126,7 +127,8 @@ impl TaskService {
         req: CreateTaskRequest,
         user_id: &str,
     ) -> AppResult<Task> {
-        self.crud.create_task_async(req, user_id).await
+        let creation_service = TaskCreationService::new(self.crud.db.clone());
+        creation_service.create_task_async(req, user_id).await
     }
 
     /// Update an existing task (async version)

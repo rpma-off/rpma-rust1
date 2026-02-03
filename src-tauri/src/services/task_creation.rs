@@ -6,6 +6,7 @@ use crate::commands::AppError;
 use crate::db::Database;
 use crate::models::task::{CreateTaskRequest, Task, TaskStatus, TaskPriority};
 use crate::services::task_validation::TaskValidationService;
+use crate::services::validation::ValidationService;
 use chrono::Utc;
 use rusqlite::params;
 use std::sync::Arc;
@@ -52,14 +53,22 @@ impl TaskCreationService {
         req: CreateTaskRequest,
         user_id: &str,
     ) -> Result<Task, AppError> {
-        // Validate request
-        self.validate_create_request(&req)?;
+        // Validate request using centralized validation rules
+        let validator = ValidationService::new();
+        let (vehicle_plate, vehicle_model, ppf_zones, scheduled_date) = validator
+            .validate_task_creation(
+                &req.vehicle_plate,
+                &req.vehicle_model,
+                &req.ppf_zones,
+                &req.scheduled_date,
+            )
+            .map_err(|e| AppError::Validation(e.to_string()))?;
 
         // Validate technician assignment if specified
         if let Some(ref technician_id) = req.technician_id {
             let validation_service = TaskValidationService::new(self.db.clone());
             validation_service
-                .validate_technician_assignment(technician_id, &Some(req.ppf_zones.clone()))
+                .validate_technician_assignment(technician_id, &Some(ppf_zones.clone()))
                 .map_err(|e| AppError::Validation(format!("Technician validation failed: {}", e)))?;
         }
 
@@ -84,25 +93,25 @@ impl TaskCreationService {
                 .unwrap_or_else(|| {
                     // Generate meaningful title based on available data
                     if let Some(make) = &req.vehicle_make {
-                        format!("{} {} ({})", make, req.vehicle_model, req.vehicle_plate)
+                        format!("{} {} ({})", make, vehicle_model, vehicle_plate)
                     } else {
-                        format!("{} ({})", req.vehicle_model, req.vehicle_plate)
+                        format!("{} ({})", vehicle_model, vehicle_plate)
                     }
                 }),
             description: req.description.clone(),
-            vehicle_plate: Some(req.vehicle_plate.clone()),
-            vehicle_model: Some(req.vehicle_model.clone()),
+            vehicle_plate: Some(vehicle_plate.clone()),
+            vehicle_model: Some(vehicle_model.clone()),
             vehicle_year: req.vehicle_year.clone(),
             vehicle_make: req.vehicle_make.clone(),
             vin: req.vin.clone(),
-            ppf_zones: Some(req.ppf_zones.clone()),
+            ppf_zones: Some(ppf_zones.clone()),
             custom_ppf_zones: req.custom_ppf_zones.clone(),
             status: req.status.unwrap_or(TaskStatus::Pending),
             priority: req.priority.unwrap_or(TaskPriority::Medium),
             technician_id: req.technician_id.clone(),
             assigned_at: None,
             assigned_by: None,
-            scheduled_date: Some(req.scheduled_date.clone()),
+            scheduled_date: Some(scheduled_date.clone()),
             start_time: req.start_time.clone(),
             end_time: req.end_time.clone(),
             date_rdv: req.date_rdv.clone(),
@@ -270,7 +279,7 @@ impl TaskCreationService {
             AppError::Database(format!("Failed to serialize task for sync: {}", e))
         })?;
 
-        conn.execute(
+        if let Err(e) = conn.execute(
             r#"
             INSERT INTO sync_queue (
                 operation_type, entity_type, entity_id, data, status, 
@@ -287,41 +296,15 @@ impl TaskCreationService {
                 user_id,
                 now_millis,
             ],
-        ).map_err(|e| {
+        ) {
             error!("Failed to add task {} to sync queue: {}", task.id, e);
             // Non-fatal error - task was created successfully, just log the error
             warn!("Task created but not added to sync queue: {}", e);
-            e
-        })?;
-
-        debug!("Task {} added to sync queue", task.id);
+        } else {
+            debug!("Task {} added to sync queue", task.id);
+        }
 
         Ok(task)
-    }
-
-    /// Validate create request
-    fn validate_create_request(&self, req: &CreateTaskRequest) -> Result<(), AppError> {
-        if req.vehicle_plate.trim().is_empty() {
-            return Err(AppError::Validation(
-                "Vehicle plate is required".to_string(),
-            ));
-        }
-        if req.vehicle_model.trim().is_empty() {
-            return Err(AppError::Validation(
-                "Vehicle model is required".to_string(),
-            ));
-        }
-        if req.scheduled_date.trim().is_empty() {
-            return Err(AppError::Validation(
-                "Scheduled date is required".to_string(),
-            ));
-        }
-        if req.ppf_zones.is_empty() {
-            return Err(AppError::Validation(
-                "At least one PPF zone must be selected".to_string(),
-            ));
-        }
-        Ok(())
     }
 
     /// Generate a unique task number

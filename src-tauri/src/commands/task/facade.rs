@@ -365,21 +365,8 @@ pub async fn edit_task(
 
 /// Validate status change
 pub fn validate_status_change(current: &crate::models::task::TaskStatus, new: &crate::models::task::TaskStatus) -> Result<(), AppError> {
-    match (current, new) {
-        // Valid transitions
-        (crate::models::task::TaskStatus::Pending, crate::models::task::TaskStatus::InProgress) => Ok(()),
-        (crate::models::task::TaskStatus::Pending, crate::models::task::TaskStatus::Cancelled) => Ok(()),
-        (crate::models::task::TaskStatus::Pending, crate::models::task::TaskStatus::OnHold) => Ok(()),
-        (crate::models::task::TaskStatus::InProgress, crate::models::task::TaskStatus::Completed) => Ok(()),
-        (crate::models::task::TaskStatus::InProgress, crate::models::task::TaskStatus::OnHold) => Ok(()),
-        (crate::models::task::TaskStatus::InProgress, crate::models::task::TaskStatus::Cancelled) => Ok(()),
-        (crate::models::task::TaskStatus::OnHold, crate::models::task::TaskStatus::InProgress) => Ok(()),
-        (crate::models::task::TaskStatus::OnHold, crate::models::task::TaskStatus::Cancelled) => Ok(()),
-        // Invalid transitions
-        (crate::models::task::TaskStatus::Completed, _) => Err(AppError::Validation("Cannot change status of completed task".to_string())),
-        (crate::models::task::TaskStatus::Cancelled, _) => Err(AppError::Validation("Cannot change status of cancelled task".to_string())),
-        _ => Err(AppError::Validation(format!("Invalid status transition from {:?} to {:?}", current, new))),
-    }
+    crate::services::task_validation::validate_status_transition(current, new)
+        .map_err(AppError::Validation)
 }
 
 /// Check permissions for task operations
@@ -577,6 +564,5 @@ pub async fn task_crud(
         }
     }
 }
-
 
 

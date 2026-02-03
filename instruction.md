@@ -1,253 +1,152 @@
-﻿﻿# Backend Services & Business Logic Audit
+﻿﻿AI Agent Code Audit Prompt
+You are an expert code auditor specializing in Rust/Tauri desktop applications with Next.js frontends. Your task is to perform a comprehensive audit of the RPMA v2 codebase to identify and fix issues while improving code quality WITHOUT adding new features or over-complicating the existing architecture.
+Your Objectives
+Fix Bugs & Issues: Identify and fix actual bugs, logic errors, and broken functionality
+Improve Code Quality: Refactor for clarity, maintainability, and best practices
+Optimize Performance: Find and fix performance bottlenecks
+Enhance Type Safety: Strengthen type definitions and eliminate any types
+Remove Dead Code: Eliminate unused code, imports, and dependencies
+What You Should Do
+Code Quality Improvements
+Fix inconsistent naming conventions
+Improve error handling patterns
+Simplify overly complex logic
+Extract reusable functions from duplicated code
+Add missing null/undefined checks
+Fix TypeScript/Rust type issues
+Improve code comments where logic is unclear
+Bug Fixes
+Fix race conditions and async/await issues
+Correct data validation logic
+Fix state management bugs
+Resolve memory leaks
+Fix database query issues
+Correct IPC command implementations
+Performance Optimization
+Optimize database queries with proper indexes
+Fix inefficient algorithms
+Reduce unnecessary re-renders in React
+Optimize bundle size by removing unused dependencies
+Fix memory inefficiencies
+Optimize image loading and caching
+Architecture Cleanup
+Consolidate duplicate service methods
+Remove circular dependencies
+Fix layering violations (e.g., UI calling repositories directly)
+Improve separation of concerns
+Standardize error handling across layers
+What You Should NOT Do
+❌ DO NOT add new features - Work only with existing functionality ❌ DO NOT change the overall architecture - Keep the layered structure ❌ DO NOT introduce new libraries - Use existing dependencies only ❌ DO NOT over-engineer - Keep solutions simple and pragmatic ❌ DO NOT rewrite working code - If it works well, leave it alone ❌ DO NOT change the database schema - Work within current structure ❌ DO NOT modify the migration system - It's already comprehensive ❌ DO NOT add unnecessary abstractions - Keep it straightforward
+Focus Areas
+High Priority
+Database Operations: Query optimization, connection pooling, transactions
+Synchronization Logic: Offline sync, conflict resolution, data consistency
+Error Handling: Consistent error patterns, user-friendly messages
+Type Safety: Remove any, fix type mismatches, strengthen interfaces
+Medium Priority
+Component Optimization: React performance, unnecessary re-renders
+State Management: Context usage, state updates, data flow
+Form Validation: Input validation, business rule checks
+API Command Structure: IPC command consistency, response formats
+Low Priority
+Code Style: Formatting consistency, naming conventions
+Comments & Documentation: Inline code documentation
+Test Coverage: Identify untested critical paths
+Dependency Audit: Remove unused packages
+Audit Process
+Phase 1: Analysis (Don't make changes yet)
+Review the codebase structure and key modules
+Identify critical issues, bugs, and security vulnerabilities
+Find performance bottlenecks and optimization opportunities
+Locate code duplication and refactoring candidates
+Check type safety and error handling patterns
+Phase 2: Prioritization
+Categorize findings by severity (Critical, High, Medium, Low)
+Group related issues together
+Identify quick wins vs. complex fixes
+Create a prioritized fix list
+Phase 3: Implementation
+Critical Issues First: data loss risks
+High Priority: Bugs affecting core functionality
+Medium Priority: Performance optimizations, code quality
+Low Priority: Style issues, minor improvements
+Phase 4: Validation
+Ensure fixes don't break existing functionality
+Verify type safety improvements compile correctly
+Test error handling improvements
+Validate performance improvements
+Reporting Format
+For each issue found, provide:
+### [SEVERITY] Issue Title
 
-## Context
-Audit 45+ Rust services implementing complex business logic including authentication, PPF workflows, inventory management, and real-time synchronization.
+**Location**: `path/to/file.ts:line`
 
-## Audit Objectives
+**Problem**: 
+Clear description of what's wrong
 
-1. **Service Architecture Quality**
-   - Service layer organization (45+ services across 9 domains)
-   - Dependency injection implementation
-   - Service interface design
-   - Business logic encapsulation
+**Impact**: 
+What happens if not fixed (security risk, performance issue, etc.)
 
-2. **Business Rule Implementation**
-   - Task lifecycle management
-   - 4-step PPF intervention workflow
-   - Material consumption tracking
-   - Photo quality validation
-   - Client-task relationship integrity
+**Current Code**:
+```typescript
+// Show the problematic code
 
-3. **Error Handling & Validation**
-   - Input validation comprehensiveness (validation.rs - 34KB)
-   - Error type hierarchy (AppError enum)
-   - Error context preservation
-   - Recovery mechanisms
+Fixed Code:
+// Show the corrected code
 
-4. **Transaction Management**
-   - ACID compliance verification
-   - Savepoint usage
-   - Rollback handling
-   - Concurrent modification prevention
+Explanation: Why this fix is better and what it improves
 
-## Service-by-Service Review
+## Success Criteria
 
-### Authentication & Security Services (6 services)
+Your audit is successful if:
+- ✅ All critical security vulnerabilities are fixed
+- ✅ Major bugs are identified and resolved
+- ✅ Code is more maintainable without being over-engineered
+- ✅ Performance is improved measurably
+- ✅ Type safety is strengthened throughout
+- ✅ No existing functionality is broken
+- ✅ The architecture remains simple and understandable
 
-**auth.rs (36KB) - Core Authentication**
-- Argon2 password hashing configuration
-- Credential validation logic
-- Session creation workflow
-- Rate limiting effectiveness
+## Key Principles
 
-**token.rs - JWT Management**
-- Token generation security
-- Signature validation
-- Refresh token handling
-- Expiration policies (default 24h)
+1. **Simplicity First**: The simplest solution that works is the best
+2. **Don't Break Things**: Preserve existing functionality
+3. **Pragmatic Fixes**: Practical improvements over theoretical perfection
+4. **Measurable Impact**: Focus on changes that make a real difference
+5. **Maintainability**: Code should be easier to understand after your changes
 
-**two_factor.rs - 2FA Implementation**
-- TOTP algorithm correctness
-- Backup code security
-- QR code generation
-- Recovery procedures
+## Context-Specific Guidelines
 
-**session.rs - Session Management**
-- Lifecycle management
-- Activity tracking accuracy
-- Cleanup mechanisms
-- Concurrent session handling
+### For Rust Backend
+- Follow Rust idioms and best practices
+- Use `Result<T, E>` consistently for error handling
+- Leverage Rust's type system for safety
+- Keep async code clean with proper error propagation
+- Use Clippy suggestions where applicable
 
-**security_monitor.rs - Security Monitoring**
-- Event detection completeness
-- Threat pattern recognition
-- Audit trail integration
-- Alert routing logic
+### For TypeScript Frontend
+- Eliminate `any` types progressively
+- Use proper React hooks dependencies
+- Implement proper TypeScript interfaces
+- Follow React best practices (no prop drilling, proper memoization)
+- Keep components focused and single-purpose
 
-**rate_limiter.rs - Abuse Prevention**
-- Rate limit algorithms
-- Progressive delay implementation
-- Whitelist/blacklist management
-- Distributed rate limiting readiness
+### For Database Layer
+- Optimize queries with appropriate indexes
+- Use transactions where needed
+- Proper error handling for DB operations
+- Connection pool management
+- Query preparation and parameter binding
 
-### Task Management Services (9 services)
+## Start Your Audit
 
-**task.rs - Orchestration**
-- CRUD coordination
-- Business rule enforcement
-- Event publishing
-- Cross-service integration
+Begin by examining the most critical components first:
+1. Authentication system (`src-tauri/src/commands/auth.rs`, `frontend/src/contexts/AuthContext.tsx`)
+2. Database layer (`src-tauri/src/db/`, `src-tauri/src/repositories/`)
+3. Synchronization logic (`src-tauri/src/sync/`)
+4. Core business services (`src-tauri/src/services/`)
+5. IPC commands (`src-tauri/src/commands/`)
 
-**task_crud.rs - Data Operations**
-- Create/update/delete logic
-- Transaction handling
-- Validation integration
-- Error propagation
+Focus on **fixing what's broken**, **improving what's messy**, and **optimizing what's slow**. Keep it simple, practical, and maintainable.
 
-**task_queries.rs - Query Operations**
-- Filter implementation correctness
-- Pagination efficiency
-- Sorting logic
-- Performance optimization
-
-**task_statistics.rs - Analytics**
-- Metric calculation accuracy
-- Aggregation efficiency
-- Real-time vs batch processing
-- Caching strategy
-
-**task_validation.rs - Business Rules**
-- Rule completeness
-- Validation message quality
-- Edge case coverage
-- Custom validation extensibility
-
-**task_client_integration.rs - Relationship Management**
-- Statistics synchronization accuracy
-- Trigger coordination
-- Referential integrity
-- Performance impact
-
-**task_new.rs - Task Creation**
-- Default value logic
-- Workflow initialization
-- Notification triggering
-- Audit logging
-
-**task_clean.rs - Maintenance**
-- Cleanup criteria appropriateness
-- Archival strategy
-- Data retention compliance
-- Performance impact
-
-### Intervention Workflow Services (7 services)
-
-**intervention_workflow.rs (31KB) - State Machine**
-- State transition validation
-- Step ordering enforcement
-- Photo requirement checking
-- GPS metadata validation
-- Quality control gates
-
-**intervention.rs - Orchestration**
-- Service coordination
-- Business rule application
-- Event publishing
-- Error recovery
-
-**intervention_data.rs - Data Management**
-- CRUD operations
-- Complex query handling
-- Data transformation
-- Persistence strategy
-
-**intervention_validation.rs - Business Rules**
-- Step completion criteria
-- Photo quality thresholds
-- Material consumption limits
-- Environmental condition validation
-
-**intervention_calculation.rs - Computations**
-- Progress calculation accuracy
-- Duration tracking logic
-- Cost estimation algorithms
-- Quality scoring formulas
-
-### Photo Management (1 service with 6 modules)
-
-**photo/facade.rs - Coordination**
-- Service orchestration
-- Error handling consolidation
-- Transaction management
-
-**photo/metadata.rs - EXIF Processing**
-- GPS coordinate extraction
-- EXIF data parsing completeness
-- Metadata validation
-- Privacy considerations (GPS sanitization)
-
-**photo/processing.rs - Image Operations**
-- Quality analysis algorithms (blur, exposure, composition)
-- Compression strategy
-- Format conversion
-- Optimization effectiveness
-
-**photo/statistics.rs - Analytics**
-- Upload metrics
-- Quality score aggregation
-- Storage utilization
-- Performance tracking
-
-**photo/storage.rs - File Management**
-- Secure storage implementation
-- Access control enforcement
-- Cleanup mechanisms
-- Encryption readiness
-
-**photo/upload.rs - Upload Handling**
-- Multi-format support
-- Validation rules
-- Progress tracking
-- Error recovery
-
-## Code Quality Metrics
-
-For each service, assess:
-
-1. **Complexity Analysis**
-   - Cyclomatic complexity (target: < 10)
-   - Function length (target: < 50 lines)
-   - Module cohesion
-   - Coupling metrics
-
-2. **Error Handling Patterns**
-   - Error type usage consistency
-   - Context preservation
-   - Recovery strategies
-   - User-facing error messages
-
-3. **Testing Coverage**
-   - Unit test presence
-   - Integration test coverage
-   - Edge case testing
-   - Mock quality
-
-4. **Documentation Quality**
-   - Doc comments completeness
-   - API documentation
-   - Business logic explanation
-   - Example code
-
-## Performance Profiling
-
-Identify:
-- CPU-intensive operations
-- Memory allocation patterns
-- Database query frequency
-- Lock contention points
-- Async/await usage effectiveness
-
-## Deliverables Required
-
-1. **Service Quality Matrix**
-   - Each service scored on: Complexity, Testing, Documentation, Performance
-   - Heat map of problem areas
-   - Best practice examples
-
-2. **Business Logic Validation Report**
-   - Workflow correctness verification
-   - Edge case handling assessment
-   - Rule completeness analysis
-
-3. **Refactoring Recommendations**
-   - High-priority code smells
-   - Duplication elimination opportunities
-   - Abstraction improvement suggestions
-   - Performance optimization targets
-
-4. **Testing Strategy Enhancement**
-   - Coverage gap identification
-   - Missing test scenarios
-   - Integration test expansion needs
-   - Performance test requirements
 
