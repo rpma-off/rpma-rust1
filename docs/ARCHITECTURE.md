@@ -190,36 +190,36 @@ src-tauri/src/
 │   ├── streaming.rs
 │   └── compression.rs
 │
-├── services/                  # Business Logic Layer
-│   ├── mod.rs
-│   ├── auth.rs               # Auth service (JWT, Argon2, 2FA)
-│   ├── session.rs, token.rs
-│   ├── two_factor.rs
-│   ├── task.rs, task_*.rs    # Task management
-│   ├── client.rs, client_*.rs
-│   ├── user.rs
-│   ├── intervention*.rs      # Intervention workflow
-│   ├── material.rs           # Material/inventory management
-│   ├── calendar*.rs
-│   ├── notification.rs
-│   ├── settings.rs
-│   ├── dashboard.rs
-│   ├── validation.rs         # Business validation rules
-│   ├── event_*.rs            # Event bus & domain events
-│   ├── reports/              # Reporting subsystem
-│   │   ├── core.rs
-│   │   ├── generation.rs
-│   │   ├── export.rs
-│   │   └── ... (multiple report types)
-│   ├── photo/                # Photo management
-│   ├── pdf_*.rs              # PDF generation
-│   ├── geo.rs                # Geospatial operations
-│   ├── cache.rs              # Application cache
-│   ├── security_monitor.rs
-│   ├── audit_service.rs
-│   ├── performance_monitor.rs
-│   ├── rate_limiter.rs
-│   └── ... (many more)
+ ├── services/                  # Business Logic Layer (83 services)
+ │   ├── mod.rs
+ │   ├── auth.rs               # Auth service (JWT, Argon2, 2FA)
+ │   ├── session.rs, token.rs
+ │   ├── two_factor.rs
+ │   ├── task.rs, task_*.rs    # Task management
+ │   ├── client.rs, client_*.rs
+ │   ├── user.rs
+ │   ├── intervention*.rs      # Intervention workflow
+ │   ├── material.rs           # Material/inventory management
+ │   ├── calendar*.rs
+ │   ├── notification.rs
+ │   ├── settings.rs
+ │   ├── dashboard.rs
+ │   ├── validation.rs         # Business validation rules
+ │   ├── event_*.rs            # Event bus & domain events
+ │   ├── reports/              # Reporting subsystem
+ │   │   ├── core.rs
+ │   │   ├── generation.rs
+ │   │   ├── export.rs
+ │   │   └── ... (multiple report types)
+ │   ├── photo/                # Photo management
+ │   ├── pdf_*.rs              # PDF generation
+ │   ├── geo.rs                # Geospatial operations
+ │   ├── cache.rs              # Application cache
+ │   ├── security_monitor.rs
+ │   ├── audit_service.rs
+ │   ├── performance_monitor.rs
+ │   ├── rate_limiter.rs
+ │   └── ... (many more)
 │
 ├── repositories/              # Data Access Layer
 │   ├── mod.rs

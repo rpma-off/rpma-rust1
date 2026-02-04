@@ -44,7 +44,7 @@ type AppError = {
 }
 ```
 
-## Complete IPC Command Catalog (215 Commands)
+## Complete IPC Command Catalog (179 Commands)
 
 ### 1. Authentication Commands (10 commands)
 

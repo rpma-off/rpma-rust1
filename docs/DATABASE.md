@@ -26,7 +26,7 @@ The RPMA PPF Intervention application uses **SQLite** as its embedded database e
 
 ### Schema Version
 
-**Current Version**: 25 (base schema) + 27 migration files in `migrations/` directory
+**Current Version**: 25 (base schema) + 25 migration files in `migrations/` directory
 **Migration System**: Sequential SQL migration files tracked by `schema_version` table
 
 ## Database Schema
@@ -842,6 +842,7 @@ CREATE TABLE materials (
   -- Material type and category
   material_type TEXT NOT NULL
     CHECK(material_type IN ('ppf_film', 'adhesive', 'cleaning_solution', 'tool', 'consumable')),
+  category_id TEXT,
   category TEXT,
   subcategory TEXT,
 
@@ -976,7 +977,341 @@ CREATE TABLE material_consumption (
 
 ---
 
-### 11. calendar_events
+### 11. task_history
+
+**Purpose**: Track task status transitions for auditing
+
+**Identified in**: `schema.sql` lines 921-947
+
+**Schema**:
+```sql
+CREATE TABLE task_history (
+  -- Identifiers
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  task_id TEXT NOT NULL,
+
+  -- Status transition
+  old_status TEXT,
+  new_status TEXT NOT NULL,
+
+  -- Change details
+  reason TEXT,
+  changed_by TEXT NOT NULL,
+  changed_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+
+  -- Metadata
+  metadata TEXT,
+
+  -- Foreign Keys
+  FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+  FOREIGN KEY (changed_by) REFERENCES users(id) ON DELETE SET NULL
+);
+```
+
+**Indexes**:
+- `idx_task_history_task_id` ON task_history(task_id)
+- `idx_task_history_changed_at` ON task_history(changed_at)
+- `idx_task_history_new_status` ON task_history(new_status)
+- `idx_task_history_changed_by` ON task_history(changed_by)
+
+**Key Features**:
+- Complete audit trail of task status changes
+- Tracks who made changes and when
+- Stores reasons for status transitions
+- Indexed for efficient historical queries
+
+---
+
+### 12. message_templates
+
+**Purpose**: Reusable templates for email/SMS/in-app messages
+
+**Identified in**: `schema.sql` lines 950-984
+
+**Schema**:
+```sql
+CREATE TABLE message_templates (
+  -- Identifiers
+  id TEXT PRIMARY KEY NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT,
+
+  -- Template configuration
+  message_type TEXT NOT NULL
+    CHECK(message_type IN ('email', 'sms', 'in_app', 'push')),
+
+  -- Channel specific
+  channel TEXT NOT NULL,
+  subject TEXT,
+  body TEXT NOT NULL,
+
+  -- Variables
+  variables TEXT, -- JSON array of variable names
+
+  -- Categorization
+  category TEXT,
+  is_active INTEGER NOT NULL DEFAULT 1,
+
+  -- Audit
+  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  created_by TEXT,
+  updated_by TEXT,
+
+  -- Foreign Keys
+  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+);
+```
+
+**Indexes**:
+- `idx_message_templates_type` ON message_templates(message_type)
+- `idx_message_templates_channel` ON message_templates(channel)
+- `idx_message_templates_category` ON message_templates(category)
+- `idx_message_templates_active` ON message_templates(is_active) WHERE is_active = 1
+
+**Key Features**:
+- Variable substitution support
+- Multi-channel support (email, SMS, in-app, push)
+- Template categorization
+- Active/inactive state management
+
+---
+
+### 13. messages
+
+**Purpose**: Store all outgoing/in-app messages
+
+**Identified in**: `schema.sql` lines 987-1061
+
+**Schema**:
+```sql
+CREATE TABLE messages (
+  -- Identifiers
+  id TEXT PRIMARY KEY NOT NULL,
+
+  -- Message type
+  message_type TEXT NOT NULL
+    CHECK(message_type IN ('email', 'sms', 'in_app', 'push')),
+
+  -- Sender/Recipient
+  sender_id TEXT,
+  recipient_id TEXT,
+  recipient_email TEXT,
+  recipient_phone TEXT,
+
+  -- Content
+  subject TEXT,
+  body TEXT NOT NULL,
+
+  -- Template reference
+  template_id TEXT,
+
+  -- Context
+  task_id TEXT,
+  client_id TEXT,
+
+  -- Status and priority
+  status TEXT NOT NULL DEFAULT 'pending'
+    CHECK(status IN ('pending', 'queued', 'sent', 'delivered', 'read', 'failed', 'cancelled')),
+  priority TEXT NOT NULL DEFAULT 'normal'
+    CHECK(priority IN ('low', 'normal', 'high', 'urgent')),
+
+  -- Scheduling
+  scheduled_at INTEGER,
+  sent_at INTEGER,
+  read_at INTEGER,
+
+  -- Error handling
+  error_message TEXT,
+  retry_count INTEGER DEFAULT 0,
+  max_retries INTEGER DEFAULT 3,
+
+  -- Metadata
+  metadata TEXT,
+
+  -- Sync
+  synced INTEGER NOT NULL DEFAULT 0,
+  last_synced_at INTEGER,
+
+  -- Audit
+  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  created_by TEXT,
+
+  -- Foreign Keys
+  FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE SET NULL,
+  FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE SET NULL,
+  FOREIGN KEY (template_id) REFERENCES message_templates(id) ON DELETE SET NULL,
+  FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE SET NULL,
+  FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,
+  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+);
+```
+
+**Indexes**:
+- `idx_messages_recipient_id` ON messages(recipient_id)
+- `idx_messages_status` ON messages(status)
+- `idx_messages_message_type` ON messages(message_type)
+- `idx_messages_task_id` ON messages(task_id)
+- `idx_messages_client_id` ON messages(client_id)
+- `idx_messages_scheduled_at` ON messages(scheduled_at)
+- `idx_messages_priority` ON messages(priority)
+- `idx_messages_synced` ON messages(synced) WHERE synced = 0
+
+**Key Features**:
+- Multi-channel messaging (email, SMS, in-app, push)
+- Priority system (low, normal, high, urgent)
+- Scheduling support
+- Retry mechanism with configurable max retries
+- Full lifecycle tracking (pending → queued → sent → delivered → read)
+- Task and client context association
+
+---
+
+### 14. notification_preferences
+
+**Purpose**: User notification settings
+
+**Identified in**: `schema.sql` lines 1064-1126
+
+**Schema**:
+```sql
+CREATE TABLE notification_preferences (
+  -- Identifiers
+  user_id TEXT PRIMARY KEY NOT NULL,
+
+  -- Channel preferences
+  email_enabled INTEGER NOT NULL DEFAULT 1,
+  sms_enabled INTEGER NOT NULL DEFAULT 0,
+  in_app_enabled INTEGER NOT NULL DEFAULT 1,
+  push_enabled INTEGER NOT NULL DEFAULT 0,
+
+  -- Event preferences
+  task_assigned INTEGER NOT NULL DEFAULT 1,
+  task_updated INTEGER NOT NULL DEFAULT 1,
+  task_completed INTEGER NOT NULL DEFAULT 1,
+  task_overdue INTEGER NOT NULL DEFAULT 1,
+  client_created INTEGER NOT NULL DEFAULT 1,
+  client_updated INTEGER NOT NULL DEFAULT 0,
+
+  -- System notifications
+  system_alerts INTEGER NOT NULL DEFAULT 1,
+  maintenance_notifications INTEGER NOT NULL DEFAULT 1,
+  security_alerts INTEGER NOT NULL DEFAULT 1,
+
+  -- Quiet hours
+  quiet_hours_enabled INTEGER NOT NULL DEFAULT 0,
+  quiet_hours_start TEXT NOT NULL DEFAULT '22:00',
+  quiet_hours_end TEXT NOT NULL DEFAULT '08:00',
+  timezone TEXT DEFAULT 'UTC',
+
+  -- Email preferences
+  email_frequency TEXT NOT NULL DEFAULT 'immediate'
+    CHECK(email_frequency IN ('immediate', 'hourly', 'daily', 'weekly', 'never')),
+  email_digest_time TEXT NOT NULL DEFAULT '08:00',
+
+  -- Audit
+  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+
+  -- Foreign Keys
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+```
+
+**Indexes**:
+- `idx_notification_preferences_user_id` ON notification_preferences(user_id)
+
+**Key Features**:
+- Granular channel control (email, SMS, in-app, push)
+- Event-based notification preferences
+- Quiet hours configuration
+- Email digest frequency options
+- User-level customization
+
+---
+
+### 15. suppliers
+
+**Purpose**: Master data for material suppliers
+
+**Identified in**: `schema.sql` lines 1129-1202
+
+**Schema**:
+```sql
+CREATE TABLE suppliers (
+  -- Identifiers
+  id TEXT PRIMARY KEY NOT NULL,
+  name TEXT NOT NULL,
+  code TEXT NOT NULL UNIQUE,
+
+  -- Contact information
+  contact_person TEXT,
+  email TEXT,
+  phone TEXT,
+  website TEXT,
+
+  -- Address
+  address_street TEXT,
+  address_city TEXT,
+  address_state TEXT,
+  address_zip TEXT,
+  address_country TEXT DEFAULT 'France',
+
+  -- Business information
+  tax_id TEXT,
+  business_license TEXT,
+  payment_terms TEXT,
+  lead_time_days INTEGER DEFAULT 7,
+
+  -- Status
+  is_active INTEGER NOT NULL DEFAULT 1,
+  is_preferred INTEGER NOT NULL DEFAULT 0,
+
+  -- Performance metrics
+  quality_rating REAL
+    CHECK(quality_rating IS NULL OR (quality_rating >= 0 AND quality_rating <= 5)),
+  delivery_rating REAL
+    CHECK(delivery_rating IS NULL OR (delivery_rating >= 0 AND delivery_rating <= 5)),
+  on_time_delivery_rate REAL
+    CHECK(on_time_delivery_rate IS NULL OR (on_time_delivery_rate >= 0 AND on_time_delivery_rate <= 100)),
+
+  -- Notes
+  notes TEXT,
+
+  -- Sync
+  synced INTEGER NOT NULL DEFAULT 0,
+  last_synced_at INTEGER,
+
+  -- Audit
+  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  created_by TEXT,
+  updated_by TEXT,
+
+  -- Foreign Keys
+  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+);
+```
+
+**Indexes**:
+- `idx_suppliers_code` ON suppliers(code)
+- `idx_suppliers_name` ON suppliers(name)
+- `idx_suppliers_active` ON suppliers(is_active)
+- `idx_suppliers_preferred` ON suppliers(is_preferred) WHERE is_preferred = 1
+- `idx_suppliers_synced` ON suppliers(synced) WHERE synced = 0
+
+**Key Features**:
+- Supplier contact and address information
+- Business details (tax ID, license, payment terms)
+- Performance tracking (quality, delivery ratings)
+- Preferred supplier flag
+- Lead time configuration
+
+---
+
+### 16. calendar_events
 
 **Purpose**: Calendar and scheduling
 
@@ -1373,12 +1708,12 @@ All foreign key constraints are enforced with appropriate actions:
 
 | Metric | Value |
 |--------|-------|
-| Total Tables | 14 |
-| Total Indexes | 40+ |
+| Total Tables | 16 |
+| Total Indexes | 98 |
 | FTS Tables | 1 |
 | Triggers | 4 |
 | Schema Version | 25 |
-| Migrations | 27 |
+| Migrations | 25 |
 | Max Table Rows (est.) | 1,000,000 (audit_logs) |
 
 ---

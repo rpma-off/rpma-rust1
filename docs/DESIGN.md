@@ -25,7 +25,7 @@ The RPMA v2 application uses a modern component-based design system built on **R
 
 ---
 
-## UI Component Catalog (192+ Components)
+## UI Component Catalog (223 Components)
 
 ### 1. shadcn/ui Base Components (39 components)
 
@@ -874,7 +874,7 @@ Located in `frontend/src/lib/design-tokens.ts`
 | Errors/Loading | 8+ components | 8+ |
 | Utilities | 15+ components | 15+ |
 | Charts | 1 component | 1 |
-| **TOTAL** | **192+ components** | **192+** |
+| **TOTAL** | **223 components** | **223** |
 
 ---
 
