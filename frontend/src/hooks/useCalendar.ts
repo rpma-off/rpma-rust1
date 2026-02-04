@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getCalendarTasks, checkCalendarConflicts, rescheduleTask, createCalendarFilter } from '@/lib/ipc/calendar';
-import type { CalendarTask, CalendarFilter, ConflictDetection } from '@/lib/backend';
+import type { CalendarTask, ConflictDetection } from '@/lib/backend';
+import { useAuth } from '@/lib/auth/compatibility';
 
 export type CalendarViewMode = 'month' | 'week' | 'day' | 'agenda';
 
@@ -33,6 +34,7 @@ export interface UseCalendarReturn extends CalendarState {
 }
 
 export function useCalendar(initialDate?: Date, initialViewMode?: CalendarViewMode): UseCalendarReturn {
+  const { user } = useAuth();
   const [state, setState] = useState<CalendarState>({
     tasks: [],
     isLoading: false,
@@ -107,10 +109,20 @@ export function useCalendar(initialDate?: Date, initialViewMode?: CalendarViewMo
   }, [dateRange, state.filters.technicianIds, state.filters.statuses]);
 
   const fetchTasks = useCallback(async () => {
+    if (!user?.token) {
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        tasks: [],
+        error: 'Authentication required to load calendar tasks',
+      }));
+      return;
+    }
+
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      const tasks = await getCalendarTasks(calendarFilter);
+      const tasks = await getCalendarTasks(calendarFilter, user.token);
       setState(prev => ({ ...prev, tasks, isLoading: false }));
     } catch (error) {
       console.error('Failed to fetch calendar tasks:', error);
@@ -144,8 +156,16 @@ export function useCalendar(initialDate?: Date, initialViewMode?: CalendarViewMo
     newStart?: string,
     newEnd?: string
   ): Promise<ConflictDetection> => {
-    return await checkCalendarConflicts(taskId, newDate, newStart, newEnd);
-  }, []);
+    if (!user?.token) {
+      return {
+        has_conflict: false,
+        conflict_type: null,
+        conflicting_tasks: [],
+        message: 'Authentication required to check conflicts',
+      };
+    }
+    return await checkCalendarConflicts(taskId, newDate, newStart, newEnd, user.token);
+  }, [user?.token]);
 
   const rescheduleTaskWithConflictCheck = useCallback(async (
     taskId: string,
@@ -155,6 +175,13 @@ export function useCalendar(initialDate?: Date, initialViewMode?: CalendarViewMo
     reason?: string
   ): Promise<{ success: boolean; error?: string }> => {
     try {
+      if (!user?.token) {
+        return {
+          success: false,
+          error: 'Authentication required to reschedule task',
+        };
+      }
+
       // First check for conflicts
       const conflictCheck = await checkConflicts(taskId, newDate, newStart, newEnd);
       if (conflictCheck.has_conflict) {
@@ -165,7 +192,7 @@ export function useCalendar(initialDate?: Date, initialViewMode?: CalendarViewMo
       }
 
       // No conflicts, proceed with rescheduling
-      await rescheduleTask(taskId, newDate, newStart, newEnd, reason);
+      await rescheduleTask(taskId, newDate, newStart, newEnd, reason, user.token);
 
       // Refresh tasks after successful rescheduling
       await refreshTasks();
@@ -178,7 +205,7 @@ export function useCalendar(initialDate?: Date, initialViewMode?: CalendarViewMo
         error: error instanceof Error ? error.message : 'Failed to reschedule task',
       };
     }
-  }, [checkConflicts, refreshTasks]);
+  }, [checkConflicts, refreshTasks, user?.token]);
 
   // Fetch tasks when dependencies change
   useEffect(() => {

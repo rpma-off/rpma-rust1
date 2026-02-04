@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { safeInvoke } from './utils';
 import type {
   CalendarTask,
   CalendarFilter,
@@ -8,9 +9,17 @@ import type {
 
 // Calendar IPC command functions
 
-export async function getCalendarTasks(filter: CalendarFilter): Promise<CalendarTask[]> {
-  return await invoke('calendar_get_tasks', {
-    filter,
+export async function getCalendarTasks(
+  filter: CalendarFilter,
+  sessionToken: string
+): Promise<CalendarTask[]> {
+  return await safeInvoke<CalendarTask[]>('calendar_get_tasks', {
+    request: {
+      session_token: sessionToken,
+      date_range: filter.date_range,
+      technician_ids: filter.technician_ids,
+      statuses: filter.statuses,
+    },
   });
 }
 
@@ -18,13 +27,17 @@ export async function checkCalendarConflicts(
   taskId: string,
   newDate: string,
   newStart?: string,
-  newEnd?: string
+  newEnd?: string,
+  sessionToken: string
 ): Promise<ConflictDetection> {
-  return await invoke('calendar_check_conflicts', {
-    taskId,
-    newDate,
-    newStart,
-    newEnd,
+  return await safeInvoke<ConflictDetection>('calendar_check_conflicts', {
+    request: {
+      session_token: sessionToken,
+      task_id: taskId,
+      new_date: newDate,
+      new_start: newStart,
+      new_end: newEnd,
+    },
   });
 }
 
@@ -33,9 +46,11 @@ export async function rescheduleTask(
   newScheduledDate: string,
   newStartTime?: string,
   newEndTime?: string,
-  reason?: string
+  reason?: string,
+  sessionToken: string
 ): Promise<void> {
   return await invoke('task_reschedule', {
+    session_token: sessionToken,
     taskId,
     newScheduledDate,
     newStartTime,

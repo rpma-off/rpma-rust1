@@ -1180,6 +1180,31 @@ LEFT JOIN tasks t ON t.client_id = c.id AND t.deleted_at IS NULL
 WHERE c.deleted_at IS NULL
 GROUP BY c.id, c.name, c.customer_type, c.created_at;
 
+-- View for calendar tasks (kept in sync with migration 020)
+CREATE VIEW IF NOT EXISTS calendar_tasks AS
+SELECT 
+  t.id,
+  t.task_number,
+  t.title,
+  t.status,
+  t.priority,
+  t.scheduled_date,
+  t.start_time,
+  t.end_time,
+  t.vehicle_plate,
+  t.vehicle_model,
+  t.technician_id,
+  u.username as technician_name,
+  t.client_id,
+  c.name as client_name,
+  t.estimated_duration,
+  t.actual_duration
+FROM tasks t
+LEFT JOIN users u ON t.technician_id = u.id
+LEFT JOIN clients c ON t.client_id = c.id
+WHERE t.scheduled_date IS NOT NULL
+  AND t.deleted_at IS NULL;
+
 -- Schema Version Management
 -- This table tracks which database migrations have been applied
 -- The current schema.sql represents version 25 of the database schema

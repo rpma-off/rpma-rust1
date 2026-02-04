@@ -40,7 +40,7 @@ export function useCalendarEvents() {
   } = useQuery({
     queryKey: ['calendar-events', calendarFilter],
     queryFn: async () => {
-      return await getCalendarTasks(calendarFilter);
+      return await getCalendarTasks(calendarFilter, user?.token ?? '');
     },
     staleTime: 5 * 60 * 1000,
     refetchInterval: 60 * 1000,

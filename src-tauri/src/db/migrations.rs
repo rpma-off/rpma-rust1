@@ -45,6 +45,35 @@ impl Database {
         )
         .map_err(|e| e.to_string())?;
 
+        conn.execute_batch(
+            r#"
+            CREATE VIEW IF NOT EXISTS calendar_tasks AS
+            SELECT 
+              t.id,
+              t.task_number,
+              t.title,
+              t.status,
+              t.priority,
+              t.scheduled_date,
+              t.start_time,
+              t.end_time,
+              t.vehicle_plate,
+              t.vehicle_model,
+              t.technician_id,
+              u.username as technician_name,
+              t.client_id,
+              c.name as client_name,
+              t.estimated_duration,
+              t.actual_duration
+            FROM tasks t
+            LEFT JOIN users u ON t.technician_id = u.id
+            LEFT JOIN clients c ON t.client_id = c.id
+            WHERE t.scheduled_date IS NOT NULL
+              AND t.deleted_at IS NULL;
+            "#,
+        )
+        .map_err(|e| e.to_string())?;
+
         Ok(())
     }
 
