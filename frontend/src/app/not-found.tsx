@@ -11,7 +11,7 @@ export default function NotFound() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-border/10">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-[hsl(var(--rpma-surface))]">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -19,7 +19,7 @@ export default function NotFound() {
         className="max-w-2xl w-full mx-4"
       >
         {/* 404 Card */}
-        <div className="bg-border/5 border border-border/20 rounded-2xl shadow-2xl p-8 md:p-12 text-center">
+        <div className="rpma-shell p-8 md:p-12 text-center">
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -80,7 +80,7 @@ export default function NotFound() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.8 }}
-            className="bg-background/50 rounded-xl p-6 border border-border/20"
+            className="bg-[hsl(var(--rpma-surface))] rounded-xl p-6 border border-[hsl(var(--rpma-border))]"
           >
             <h3 className="text-sm font-semibold text-foreground mb-4">Pages populaires</h3>
             <div className="grid grid-cols-2 gap-3">
@@ -116,7 +116,7 @@ export default function NotFound() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 1 }}
-            className="mt-8 pt-6 border-t border-border/20"
+            className="mt-8 pt-6 border-t border-[hsl(var(--rpma-border))]"
           >
             <div className="text-center">
               <p className="text-sm text-border-light mb-4">

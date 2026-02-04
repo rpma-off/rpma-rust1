@@ -84,7 +84,7 @@ export function ReportContent({ reportType, dateRange, filters, overviewData, re
       <div className="text-center py-20">
         <div className="max-w-lg mx-auto">
           <div className="relative mb-8">
-            <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <div className="w-20 h-20 bg-[hsl(var(--rpma-surface))] rounded-2xl border border-[hsl(var(--rpma-border))] flex items-center justify-center mx-auto mb-6">
               <RefreshCw className="h-10 w-10 text-blue-600 dark:text-blue-400" />
             </div>
           </div>

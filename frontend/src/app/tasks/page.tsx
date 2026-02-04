@@ -91,7 +91,7 @@ const TaskCard = React.memo(({
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.2 }}
     >
-      <Card className="hover:shadow-sm transition-all duration-200 border border-border/20 hover:border-primary/30 bg-white rounded-[6px]">
+      <Card className="hover:shadow-sm transition-all duration-200 border border-[hsl(var(--rpma-border))] hover:border-primary/30 bg-white rounded-[10px]">
         <CardContent className="p-4 md:p-5">
           <div className="flex flex-col gap-4">
             {/* Header with Title and Status */}

@@ -380,7 +380,7 @@ function MetricCard({
 // Component for step bottleneck cards
 function StepBottleneckCard({ bottleneck }: { bottleneck: StepBottleneck }) {
   return (
-    <div className="bg-gray-900/50 rounded-lg border border-red-500/20 p-4">
+    <div className="bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))] p-4">
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center space-x-2 mb-2">
@@ -416,7 +416,7 @@ function StepBottleneckCard({ bottleneck }: { bottleneck: StepBottleneck }) {
 // Component for intervention bottleneck cards
 function InterventionBottleneckCard({ bottleneck }: { bottleneck: InterventionBottleneck }) {
   return (
-    <div className="bg-gray-900/50 rounded-lg border border-orange-500/20 p-4">
+    <div className="bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))] p-4">
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center space-x-2 mb-2">
@@ -452,7 +452,7 @@ function ResourceUtilizationCard({ resource }: { resource: ResourceUtilization }
   const utilizationPercentage = Math.round(resource.utilization_percentage);
 
   return (
-    <div className="bg-gray-900/50 rounded-lg border border-gray-600 p-4">
+    <div className="bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))] p-4">
       <div className="flex items-center justify-between mb-3">
         <span className="text-white font-medium">{resource.technician_name}</span>
         <Badge variant="outline" className="text-xs">

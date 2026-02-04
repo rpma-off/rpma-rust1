@@ -238,7 +238,7 @@ export default function InstallationStepPage() {
             Étape 3 sur 4
           </div>
         </div>
-        <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-foreground to-border-light bg-clip-text text-transparent mb-3">
+        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
           Installation du PPF
         </h1>
         <p className="text-lg text-border-light max-w-2xl mx-auto leading-relaxed">
@@ -279,7 +279,7 @@ export default function InstallationStepPage() {
       >
         {/* Global Material Lot */}
         <motion.div variants={cardVariants}>
-        <Card className="group hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-300 border-border/20 hover:border-indigo-500/30">
+        <Card className="group hover:shadow-[var(--rpma-shadow-soft)] transition-all duration-300 border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))]">
           <CardHeader className="pb-4">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-indigo-500/10 rounded-lg">
@@ -301,7 +301,7 @@ export default function InstallationStepPage() {
                 placeholder="Ex: LOT-2024-001"
                 value={globalMaterialLot}
                 onChange={(e) => setGlobalMaterialLot(e.target.value)}
-                className="bg-border/10 border-border/20 h-12 text-base transition-all duration-200 focus:border-indigo-500/50"
+                className="bg-[hsl(var(--rpma-surface))] border-[hsl(var(--rpma-border))] h-12 text-base transition-all duration-200 focus:border-indigo-500/50"
               />
               <p className="text-xs text-border-light mt-2">
                 Ce numéro sera utilisé comme valeur par défaut pour toutes les zones
@@ -313,7 +313,7 @@ export default function InstallationStepPage() {
 
       {/* Zone Timers */}
       <motion.div variants={cardVariants}>
-        <Card className="group hover:shadow-2xl hover:shadow-orange-500/10 transition-all duration-300 border-border/20 hover:border-orange-500/30">
+        <Card className="group hover:shadow-[var(--rpma-shadow-soft)] transition-all duration-300 border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))]">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-3">
@@ -401,7 +401,7 @@ export default function InstallationStepPage() {
                       placeholder={globalMaterialLot || "Ex: LOT-2024-001"}
                       value={zone.materialLot}
                       onChange={(e) => updateMaterialLot(index, e.target.value)}
-                      className="bg-border/10 border-border/20 h-10 text-sm transition-all duration-200 focus:border-orange-500/50"
+                      className="bg-[hsl(var(--rpma-surface))] border-[hsl(var(--rpma-border))] h-10 text-sm transition-all duration-200 focus:border-orange-500/50"
                       disabled={zone.status === 'completed'}
                     />
                   </div>
@@ -468,7 +468,7 @@ export default function InstallationStepPage() {
 
       {/* Photo Documentation */}
       <motion.div variants={cardVariants}>
-        <Card className="group hover:shadow-2xl hover:shadow-green-500/10 transition-all duration-300 border-border/20 hover:border-green-500/30">
+        <Card className="group hover:shadow-[var(--rpma-shadow-soft)] transition-all duration-300 border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))]">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-3">
@@ -512,7 +512,7 @@ export default function InstallationStepPage() {
 
       {/* Navigation */}
       <motion.div
-        className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-8 border-t border-border/20"
+        className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-8 border-t border-[hsl(var(--rpma-border))]"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.8, duration: 0.4 }}

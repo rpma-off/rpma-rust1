@@ -14,7 +14,7 @@ import { DataExplorer } from '@/app/reports/components/data-explorer/DataExplore
 export default function DataExplorerPage() {
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[hsl(var(--rpma-surface))]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {/* Enhanced Hero Header */}
           <motion.div
@@ -23,13 +23,13 @@ export default function DataExplorerPage() {
             transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="mb-8"
           >
-            <div className="bg-gradient-to-r from-border/10 to-border/5 rounded-2xl p-6 md:p-8 border border-border/20">
+            <div className="rpma-shell p-6 md:p-8">
               <div className="text-center space-y-6">
                 <motion.div
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.5, delay: 0.2 }}
-                  className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-accent/20 to-accent/10 rounded-2xl border border-accent/30 shadow-lg"
+                  className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-[hsl(var(--rpma-surface))] rounded-2xl border border-[hsl(var(--rpma-border))] shadow-[var(--rpma-shadow-soft)]"
                 >
                   <Database className="h-8 w-8 md:h-10 md:w-10 text-accent" />
                 </motion.div>
@@ -90,7 +90,7 @@ export default function DataExplorerPage() {
             transition={{ duration: 0.5, delay: 0.6 }}
             className="mb-8"
           >
-            <div className="bg-border/5 rounded-xl p-6 border border-border/20">
+            <div className="rpma-shell p-6">
               <div className="text-center mb-6">
                 <h2 className="text-lg font-semibold text-foreground mb-2">Actions rapides</h2>
                 <p className="text-border-light text-sm">Commencez à explorer vos données</p>
@@ -129,8 +129,8 @@ export default function DataExplorerPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
-            <Card className="shadow-2xl border-border/20 bg-border/5 backdrop-blur-sm">
-              <CardHeader className="border-b border-border/20 bg-background/50">
+            <Card className="rpma-shell">
+              <CardHeader className="border-b border-[hsl(var(--rpma-border))] bg-white">
                 <CardTitle className="flex items-center justify-between text-xl">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-accent/20 rounded-lg border border-accent/30">
@@ -154,7 +154,7 @@ export default function DataExplorerPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6">
-                <div className="bg-background/30 rounded-lg border border-border/20 p-4">
+                <div className="bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))] p-4">
                   <DataExplorer />
                 </div>
               </CardContent>

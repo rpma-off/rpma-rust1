@@ -77,7 +77,7 @@ export function ResultsTable({ results, onRecordSelect, selectedRecordId }: Resu
           className={`p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md ${
             selectedRecordId === result.id
               ? 'bg-blue-500/10 border-blue-500/50 shadow-lg'
-              : 'bg-gray-900/50 border-gray-700/50 hover:bg-gray-800/50 hover:border-gray-600/50'
+              : 'bg-[hsl(var(--rpma-surface))] border-[hsl(var(--rpma-border))] hover:bg-white/70 hover:border-[hsl(var(--rpma-border))]'
           }`}
           onClick={() => onRecordSelect(result)}
         >

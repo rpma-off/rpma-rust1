@@ -114,7 +114,7 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
         <div className="flex items-center space-x-4">
           <Link
             href="/clients"
-            className="flex items-center space-x-2 text-zinc-400 hover:text-white transition-colors"
+            className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Clients</span>
@@ -124,7 +124,7 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-red-400 text-lg font-medium">{error || 'Client not found'}</p>
-              <p className="text-zinc-400 text-sm mt-2">Please check the client ID or try again later.</p>
+              <p className="text-muted-foreground text-sm mt-2">Please check the client ID or try again later.</p>
             </div>
           </CardContent>
         </Card>
@@ -135,12 +135,12 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
   return (
     <div className="max-w-7xl mx-auto space-y-8 p-6">
       {/* Header */}
-      <div className="bg-zinc-900/50 rounded-xl p-4 md:p-6 border border-zinc-800">
+      <div className="rpma-shell p-4 md:p-6">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between space-y-4 lg:space-y-0">
           <div className="flex items-start space-x-4 md:space-x-6">
             <Link
               href="/clients"
-              className="flex items-center space-x-2 text-zinc-400 hover:text-white transition-colors mt-2 flex-shrink-0"
+              className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors mt-2 flex-shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
               <span className="text-sm hidden sm:inline">Back to Clients</span>
@@ -148,17 +148,17 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
             </Link>
             <div className="flex items-center space-x-3 md:space-x-4 min-w-0 flex-1">
               <Avatar className="h-12 w-12 md:h-16 md:w-16 flex-shrink-0">
-                <AvatarFallback className="bg-zinc-700 text-white text-lg md:text-xl">
+                <AvatarFallback className="bg-[hsl(var(--rpma-surface))] text-foreground text-lg md:text-xl">
                   {client.customer_type === 'business' ? <Building className="h-6 w-6 md:h-8 md:w-8" /> : <User className="h-6 w-6 md:h-8 md:w-8" />}
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
-                <h1 className="text-2xl md:text-3xl font-bold text-white truncate">{client.name}</h1>
+                <h1 className="text-2xl md:text-3xl font-bold text-foreground truncate">{client.name}</h1>
                 <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 mt-2">
                   <Badge variant={client.customer_type === 'business' ? 'secondary' : 'default'} className="w-fit">
                     {client.customer_type === 'business' ? 'Business Client' : 'Individual Client'}
                   </Badge>
-                  <span className="text-zinc-400 text-sm">
+                  <span className="text-muted-foreground text-sm">
                     Since {client.created_at ? new Date(client.created_at as unknown as string).toLocaleDateString() : 'N/A'}
                   </span>
                 </div>
@@ -194,38 +194,38 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {client.email && (
-                  <div className="flex items-center space-x-3 p-3 bg-zinc-800/50 rounded-lg">
-                    <Mail className="h-5 w-5 text-zinc-400 flex-shrink-0" />
+                  <div className="flex items-center space-x-3 p-3 bg-[hsl(var(--rpma-surface))] rounded-lg">
+                    <Mail className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                     <div>
-                      <p className="text-xs text-zinc-400 uppercase tracking-wide">Email</p>
-                      <p className="text-zinc-200 font-medium">{client.email}</p>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Email</p>
+                      <p className="text-foreground font-medium">{client.email}</p>
                     </div>
                   </div>
                 )}
                 {client.phone && (
-                  <div className="flex items-center space-x-3 p-3 bg-zinc-800/50 rounded-lg">
-                    <Phone className="h-5 w-5 text-zinc-400 flex-shrink-0" />
+                  <div className="flex items-center space-x-3 p-3 bg-[hsl(var(--rpma-surface))] rounded-lg">
+                    <Phone className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                     <div>
-                      <p className="text-xs text-zinc-400 uppercase tracking-wide">Phone</p>
-                      <p className="text-zinc-200 font-medium">{client.phone}</p>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Phone</p>
+                      <p className="text-foreground font-medium">{client.phone}</p>
                     </div>
                   </div>
                 )}
                 {client.company_name && (
-                  <div className="flex items-center space-x-3 p-3 bg-zinc-800/50 rounded-lg">
-                    <Building2 className="h-5 w-5 text-zinc-400 flex-shrink-0" />
+                  <div className="flex items-center space-x-3 p-3 bg-[hsl(var(--rpma-surface))] rounded-lg">
+                    <Building2 className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                     <div>
-                      <p className="text-xs text-zinc-400 uppercase tracking-wide">Company</p>
-                      <p className="text-zinc-200 font-medium">{client.company_name}</p>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Company</p>
+                      <p className="text-foreground font-medium">{client.company_name}</p>
                     </div>
                   </div>
                 )}
                 {(client.address_street || client.address_city) && (
-                  <div className="flex items-center space-x-3 p-3 bg-zinc-800/50 rounded-lg">
-                    <MapPin className="h-5 w-5 text-zinc-400 flex-shrink-0" />
+                  <div className="flex items-center space-x-3 p-3 bg-[hsl(var(--rpma-surface))] rounded-lg">
+                    <MapPin className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                     <div>
-                      <p className="text-xs text-zinc-400 uppercase tracking-wide">Address</p>
-                      <p className="text-zinc-200 font-medium">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Address</p>
+                      <p className="text-foreground font-medium">
                         {[client.address_street, client.address_city, client.address_zip, client.address_country]
                           .filter(Boolean)
                           .join(', ')}
@@ -245,7 +245,7 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
                 {client.tasks && client.tasks.length > 5 && (
                   <Link
                     href={`/tasks?clientId=${params.id}`}
-                    className="text-sm text-zinc-400 hover:text-white transition-colors"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     View all ({client.tasks.length})
                   </Link>
@@ -259,12 +259,12 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
                     <Link
                       key={task.id}
                       href={`/tasks/${task.id}`}
-                      className="block p-4 bg-zinc-800/50 rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer"
+                      className="block p-4 bg-[hsl(var(--rpma-surface))] rounded-lg hover:bg-[hsl(var(--rpma-surface))] transition-colors cursor-pointer"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
-                          <p className="text-white font-medium mb-1">{task.title}</p>
-                          <div className="flex items-center space-x-4 text-sm text-zinc-400">
+                          <p className="text-foreground font-medium mb-1">{task.title}</p>
+                          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                             {task.vehicle_plate && <span>Plate: {task.vehicle_plate}</span>}
                             {task.vehicle_model && <span>Model: {task.vehicle_model}</span>}
                           </div>
@@ -279,7 +279,7 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
                           >
                             {task.status?.replace('_', ' ')}
                           </Badge>
-                          <p className="text-zinc-400 text-xs">
+                          <p className="text-muted-foreground text-xs">
                             {task.created_at ? new Date(task.created_at as unknown as string).toLocaleDateString() : 'N/A'}
                           </p>
                         </div>
@@ -289,7 +289,7 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-zinc-400 mb-4">No tasks found for this client</p>
+                  <p className="text-muted-foreground mb-4">No tasks found for this client</p>
                   <Button onClick={handleCreateTask} variant="outline" size="sm">
                     <Plus className="h-4 w-4 mr-2" />
                     Create First Task
@@ -309,33 +309,33 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
-                  <div className="text-2xl font-bold text-white">{client.tasks?.length || 0}</div>
-                  <div className="text-xs text-zinc-400 uppercase tracking-wide">Total Tasks</div>
+                <div className="text-center p-3 bg-[hsl(var(--rpma-surface))] rounded-lg">
+                  <div className="text-2xl font-bold text-foreground">{client.tasks?.length || 0}</div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide">Total Tasks</div>
                 </div>
                 <div className="text-center p-3 bg-green-900/20 rounded-lg">
                   <div className="text-2xl font-bold text-green-400">
                     {client.tasks?.filter(t => t.status === 'completed').length || 0}
                   </div>
-                  <div className="text-xs text-zinc-400 uppercase tracking-wide">Completed</div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide">Completed</div>
                 </div>
               </div>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-zinc-400 text-sm">In Progress</span>
+                  <span className="text-muted-foreground text-sm">In Progress</span>
                   <Badge variant="default">
                     {client.tasks?.filter(t => t.status === 'in_progress').length || 0}
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-zinc-400 text-sm">Pending</span>
+                  <span className="text-muted-foreground text-sm">Pending</span>
                   <Badge variant="secondary">
                     {client.tasks?.filter(t => t.status === 'pending').length || 0}
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-zinc-400 text-sm">Client Since</span>
-                  <span className="text-white text-sm font-medium">
+                  <span className="text-muted-foreground text-sm">Client Since</span>
+                  <span className="text-foreground text-sm font-medium">
                     {client.created_at ? new Date(client.created_at as unknown as string).toLocaleDateString() : 'N/A'}
                   </span>
                 </div>
@@ -352,15 +352,15 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
               {client.tasks && client.tasks.length > 0 ? (
                 <div className="space-y-3">
                   {client.tasks.slice(0, 3).map((task) => (
-                    <div key={task.id} className="flex items-center space-x-3 p-2 bg-zinc-800/30 rounded-lg">
+                    <div key={task.id} className="flex items-center space-x-3 p-2 bg-[hsl(var(--rpma-surface))] rounded-lg">
                       <div className={`w-2 h-2 rounded-full ${
                         task.status === 'completed' ? 'bg-green-500' :
                         task.status === 'in_progress' ? 'bg-blue-500' :
-                        'bg-zinc-500'
+                        'bg-[hsl(var(--rpma-teal))]'
                       }`} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-white truncate">{task.title}</p>
-                        <p className="text-xs text-zinc-400">
+                        <p className="text-sm text-foreground truncate">{task.title}</p>
+                        <p className="text-xs text-muted-foreground">
                           {task.created_at ? new Date(task.created_at as unknown as string).toLocaleDateString() : 'N/A'}
                         </p>
                       </div>
@@ -369,14 +369,14 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
                   {client.tasks.length > 3 && (
                     <Link
                       href={`/tasks?clientId=${params.id}`}
-                      className="text-sm text-zinc-400 hover:text-white transition-colors block text-center pt-2"
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors block text-center pt-2"
                     >
                       View all activity →
                     </Link>
                   )}
                 </div>
               ) : (
-                <p className="text-zinc-400 text-sm text-center py-4">No recent activity</p>
+                <p className="text-muted-foreground text-sm text-center py-4">No recent activity</p>
               )}
             </CardContent>
           </Card>
@@ -388,7 +388,7 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
                 <CardTitle>Notes</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-zinc-300 text-sm leading-relaxed">{client.notes}</p>
+                <p className="text-muted-foreground text-sm leading-relaxed">{client.notes}</p>
               </CardContent>
             </Card>
           )}

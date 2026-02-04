@@ -112,11 +112,11 @@ export default function SignupPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-border/10 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen flex items-center justify-center bg-[hsl(var(--rpma-surface))] py-8 px-4 sm:px-6 lg:px-8">
         <FadeIn>
           <div className="max-w-md w-full space-y-6">
             {/* Header Card */}
-            <div className="bg-background text-foreground p-8 rounded-2xl shadow-2xl border border-border/20">
+            <div className="rpma-shell p-8">
               <div className="text-center mb-8">
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent/20 mb-6">
                   <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,11 +169,11 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-border/10 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-[hsl(var(--rpma-surface))] py-8 px-4 sm:px-6 lg:px-8">
       <FadeIn>
         <div className="max-w-md w-full space-y-6">
           {/* Header Card */}
-          <div className="bg-background text-foreground p-8 rounded-2xl shadow-2xl border border-border/20">
+          <div className="rpma-shell p-8">
             <div className="text-center mb-8">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent/20 mb-6">
                 <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -370,7 +370,7 @@ export default function SignupPage() {
           </div>
 
           {/* Terms and Conditions */}
-          <div className="pt-4 border-t border-border/20">
+          <div className="pt-4 border-t border-[hsl(var(--rpma-border))]">
             <p className="text-center text-xs text-border-light leading-relaxed">
               En vous inscrivant, vous acceptez nos conditions d&apos;utilisation et notre politique de confidentialité.
             </p>

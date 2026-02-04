@@ -77,7 +77,7 @@ export function ReportTabs({ selectedType, onTypeChange }: ReportTabsProps) {
   ];
 
   return (
-    <div className="border-b border-gray-700/50 bg-gradient-to-r from-gray-900/80 to-gray-800/80 backdrop-blur-sm">
+    <div className="border-b border-gray-700/50 bg-white border border-[hsl(var(--rpma-border))]">
       <nav className="flex space-x-2 px-6 py-4 overflow-x-auto" aria-label="Report Categories">
         {tabs.map((tab) => (
           <button
@@ -87,13 +87,13 @@ export function ReportTabs({ selectedType, onTypeChange }: ReportTabsProps) {
               group flex items-center space-x-4 px-5 py-4 rounded-xl font-medium text-sm transition-all duration-300 relative overflow-hidden min-w-max
               ${
                 selectedType === tab.id
-                  ? 'bg-gradient-to-r from-green-500/15 to-green-600/15 text-green-400 border border-green-500/30 shadow-xl shadow-green-500/20 scale-105'
+                  ? 'bg-[hsl(var(--rpma-surface))] text-foreground border border-[hsl(var(--rpma-border))] shadow-[var(--rpma-shadow-soft)]'
                   : 'text-gray-400 hover:text-gray-300 hover:bg-gray-800/60 border border-transparent hover:border-gray-600/40 hover:shadow-lg hover:shadow-gray-500/10'
               }
             `}
           >
             {/* Background gradient effect */}
-            <div className={`absolute inset-0 bg-gradient-to-r opacity-0 group-hover:opacity-20 transition-opacity duration-300 ${
+            <div className={`absolute inset-0 bg-[hsl(var(--rpma-teal))]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
               selectedType === tab.id
                 ? 'from-green-500/30 to-green-600/30'
                 : 'from-gray-500/20 to-gray-600/20'
@@ -102,8 +102,8 @@ export function ReportTabs({ selectedType, onTypeChange }: ReportTabsProps) {
             {/* Icon with enhanced background */}
             <div className={`relative p-3 rounded-xl transition-all duration-300 shadow-lg ${
               selectedType === tab.id
-                ? 'bg-gradient-to-br from-green-500/30 to-green-600/30 text-green-400 shadow-green-500/20'
-                : 'bg-gradient-to-br from-gray-700/60 to-gray-600/60 text-gray-400 group-hover:from-gray-600/60 group-hover:to-gray-500/60 group-hover:text-gray-300 shadow-gray-500/10'
+                ? 'bg-[hsl(var(--rpma-teal))]/15 text-foreground'
+                : 'bg-[hsl(var(--rpma-surface))] text-muted-foreground'
             }`}>
               {tab.icon}
             </div>
@@ -125,8 +125,8 @@ export function ReportTabs({ selectedType, onTypeChange }: ReportTabsProps) {
             {/* Active indicator with glow */}
             {selectedType === tab.id && (
               <>
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-green-600 rounded-full shadow-lg shadow-green-500/50" />
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-green-500/5 to-green-600/5 animate-pulse" />
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-[hsl(var(--rpma-teal))] rounded-full" />
+                <div className="absolute inset-0 rounded-xl bg-[hsl(var(--rpma-teal))]/10" />
               </>
             )}
           </button>

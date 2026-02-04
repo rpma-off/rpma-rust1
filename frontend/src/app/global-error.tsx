@@ -22,8 +22,8 @@ export default function GlobalError({
 
   return (
     <html>
-      <body className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
-        <div className="bg-card p-8 rounded-xl shadow-2xl max-w-2xl w-full mx-4 text-center">
+      <body className="min-h-screen flex items-center justify-center p-4 bg-[hsl(var(--rpma-surface))]">
+        <div className="rpma-shell p-8 max-w-2xl w-full mx-4 text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Erreur Critique du Système
           </h1>

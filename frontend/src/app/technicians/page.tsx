@@ -69,7 +69,7 @@ export default function TechniciansPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-border/10 py-6 md:py-8">
+      <div className="min-h-screen bg-[hsl(var(--rpma-surface))] py-6 md:py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center py-12">
             <div className="flex items-center space-x-3">
@@ -84,9 +84,9 @@ export default function TechniciansPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-border/10 py-6 md:py-8">
+      <div className="min-h-screen bg-[hsl(var(--rpma-surface))] py-6 md:py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-border/5 rounded-xl p-4 md:p-6 border border-border/20">
+          <div className="rpma-shell p-4 md:p-6">
             <div className="text-center py-12">
               <div className="text-red-400 mb-4">
                 <svg className="w-16 h-16 mx-auto mb-4" fill="currentColor" viewBox="0 0 20 20">
@@ -106,20 +106,20 @@ export default function TechniciansPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-border/10 py-6 md:py-8">
+    <div className="min-h-screen bg-[hsl(var(--rpma-surface))] py-6 md:py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6 md:mb-8">
-          <div className="bg-border/5 rounded-xl p-4 md:p-6 border border-border/20">
+          <div className="rpma-shell p-4 md:p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-500/20 rounded-lg">
-                <Users className="w-6 h-6 text-blue-500" />
+              <div className="p-3 bg-[hsl(var(--rpma-surface))] border border-[hsl(var(--rpma-border))] rounded-full">
+                <Users className="w-6 h-6 text-[hsl(var(--rpma-teal))]" />
               </div>
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                <h1 className="text-2xl md:text-3xl font-semibold text-foreground">
                   Gestion des Techniciens
                 </h1>
-                <p className="text-border-light mt-1 text-sm md:text-base">
+                <p className="text-muted-foreground mt-1 text-sm md:text-base">
                   Gérez votre équipe de techniciens PPF et suivez leurs performances
                 </p>
               </div>
@@ -129,48 +129,48 @@ export default function TechniciansPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Card className="bg-border/5 border-border/20">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-border-light">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 Total Techniciens
               </CardTitle>
-              <Users className="h-4 w-4 text-blue-500" />
+              <Users className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-foreground">{stats.totalTechnicians}</div>
             </CardContent>
           </Card>
 
-          <Card className="bg-border/5 border-border/20">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-border-light">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 Techniciens Actifs
               </CardTitle>
-              <UserCheck className="h-4 w-4 text-accent" />
+              <UserCheck className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-foreground">{stats.activeTechnicians}</div>
             </CardContent>
           </Card>
 
-          <Card className="bg-border/5 border-border/20">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-border-light">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 Tâches Aujourd&apos;hui
               </CardTitle>
-              <Clock className="h-4 w-4 text-orange-500" />
+              <Clock className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-foreground">{stats.tasksCompletedToday}</div>
             </CardContent>
           </Card>
 
-          <Card className="bg-border/5 border-border/20">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-border-light">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 Moyenne par Technicien
               </CardTitle>
-              <TrendingUp className="h-4 w-4 text-purple-500" />
+              <TrendingUp className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-foreground">{stats.averageTasksPerTechnician}</div>
@@ -179,19 +179,19 @@ export default function TechniciansPage() {
         </div>
 
         {/* Technicians List */}
-        <Card className="bg-border/5 border-border/20">
+        <Card>
           <CardHeader>
             <CardTitle className="text-foreground">Liste des Techniciens</CardTitle>
-            <CardDescription className="text-border-light">
+            <CardDescription className="text-muted-foreground">
               {technicians.length} technicien{technicians.length !== 1 ? 's' : ''} trouvé{technicians.length !== 1 ? 's' : ''}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {technicians.length === 0 ? (
               <div className="text-center py-12">
-                <Users className="w-16 h-16 text-border mx-auto mb-4" />
+                <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-foreground mb-2">Aucun technicien trouvé</h3>
-                <p className="text-border-light">
+                <p className="text-muted-foreground">
                   Les utilisateurs avec le rôle &ldquo;technicien&rdquo; apparaîtront ici.
                 </p>
               </div>
@@ -200,11 +200,11 @@ export default function TechniciansPage() {
                 {technicians.map((technician) => (
                   <div
                     key={technician.id}
-                    className="flex items-center justify-between p-4 bg-border/10 rounded-lg border border-border/30"
+                    className="flex items-center justify-between p-4 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]"
                   >
                     <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
-                        <span className="text-blue-500 font-medium">
+                      <div className="w-10 h-10 bg-[hsl(var(--rpma-surface))] border border-[hsl(var(--rpma-border))] rounded-full flex items-center justify-center">
+                        <span className="text-[hsl(var(--rpma-teal))] font-medium">
                           {technician.first_name?.[0]}{technician.last_name?.[0]}
                         </span>
                       </div>
@@ -212,15 +212,15 @@ export default function TechniciansPage() {
                         <h3 className="text-foreground font-medium">
                           {technician.first_name} {technician.last_name}
                         </h3>
-                        <p className="text-border-light text-sm">{technician.email}</p>
+                        <p className="text-muted-foreground text-sm">{technician.email}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Badge
                         variant={technician.is_active ? "default" : "secondary"}
                         className={technician.is_active
-                          ? "bg-accent/20 text-accent border-accent/30"
-                          : "bg-border/20 text-border border-border/30"
+                          ? "bg-[hsl(var(--rpma-teal))] text-white border-transparent"
+                          : "bg-muted text-muted-foreground border-border"
                         }
                       >
                         {technician.is_active ? 'Actif' : 'Inactif'}

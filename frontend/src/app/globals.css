@@ -361,3 +361,12 @@
     top: 6px;
   }
 }
+
+@layer components {
+  .rpma-shell {
+    background-color: white;
+    border: 1px solid hsl(var(--rpma-border));
+    border-radius: 10px;
+    box-shadow: var(--rpma-shadow-soft);
+  }
+}

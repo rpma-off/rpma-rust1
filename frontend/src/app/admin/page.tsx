@@ -268,7 +268,7 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[hsl(var(--rpma-surface))]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <motion.div
@@ -276,7 +276,7 @@ export default function AdminPage() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="bg-gradient-to-r from-border/10 to-border/5 rounded-2xl p-6 border border-border/20">
+          <div className="rpma-shell p-6">
             <div className="flex items-center gap-4 mb-4">
               <div className="p-3 bg-red-500/20 rounded-lg">
                 <Shield className="h-6 w-6 text-red-400" />
@@ -340,7 +340,7 @@ export default function AdminPage() {
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* System Health */}
-              <Card className="border-border/20 bg-border/5">
+              <Card className="border-[hsl(var(--rpma-border))] bg-white">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-foreground">
                     <Activity className="h-5 w-5 text-accent" />
@@ -367,7 +367,7 @@ export default function AdminPage() {
               </Card>
 
               {/* Recent Activity */}
-              <Card className="border-border/20 bg-border/5 md:col-span-2">
+              <Card className="border-[hsl(var(--rpma-border))] bg-white md:col-span-2">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-foreground">
                     <Clock className="h-5 w-5 text-accent" />
@@ -377,7 +377,7 @@ export default function AdminPage() {
                 <CardContent>
                   <div className="space-y-3 max-h-64 overflow-y-auto">
                     {recentActivities.map((activity) => (
-                      <div key={activity.id} className="flex items-start gap-3 p-3 bg-background/50 rounded-lg border border-border/20">
+                      <div key={activity.id} className="flex items-start gap-3 p-3 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
                         <div className="flex-shrink-0 mt-0.5">
                           {getActivityIcon(activity.type)}
                         </div>
@@ -412,7 +412,7 @@ export default function AdminPage() {
 
           {/* Users Tab */}
           <TabsContent value="users" className="space-y-6">
-            <Card className="border-border/20 bg-border/5">
+            <Card className="border-[hsl(var(--rpma-border))] bg-white">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-foreground">Gestion des Utilisateurs</CardTitle>
@@ -479,7 +479,7 @@ export default function AdminPage() {
                             user.email.toLowerCase().includes(userSearchQuery.toLowerCase()))
                          )
                          .map((user) => (
-                           <div key={user.id} className="flex items-center justify-between p-4 bg-border/10 rounded-lg border border-border/20">
+                           <div key={user.id} className="flex items-center justify-between p-4 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
                              <div className="flex items-center gap-3">
                                <div className="w-10 h-10 bg-accent/20 rounded-full flex items-center justify-center">
                                  <User className="h-5 w-5 text-accent" />
@@ -529,7 +529,7 @@ export default function AdminPage() {
           {/* System Tab */}
           <TabsContent value="system" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="border-border/20 bg-border/5">
+              <Card className="border-[hsl(var(--rpma-border))] bg-white">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-foreground">
                     <Database className="h-5 w-5 text-accent" />
@@ -558,7 +558,7 @@ export default function AdminPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-border/20 bg-border/5">
+              <Card className="border-[hsl(var(--rpma-border))] bg-white">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-foreground">
                     <Server className="h-5 w-5 text-accent" />
@@ -593,7 +593,7 @@ export default function AdminPage() {
       {/* Add User Modal */}
       {showAddUserModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-border/10 border border-border/20 rounded-lg p-6 w-full max-w-md mx-4">
+          <div className="bg-[hsl(var(--rpma-surface))] border border-[hsl(var(--rpma-border))] rounded-lg p-6 w-full max-w-md mx-4">
             <h3 className="text-lg font-semibold text-foreground mb-4">Ajouter un Utilisateur</h3>
             <form onSubmit={(e) => {
               e.preventDefault();

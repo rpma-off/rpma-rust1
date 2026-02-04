@@ -129,7 +129,7 @@ export default function InspectionStepPage() {
             Étape 1 sur 4
           </div>
         </div>
-        <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-foreground to-border-light bg-clip-text text-transparent mb-3">
+        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
           Inspection du véhicule
         </h1>
         <p className="text-lg text-border-light max-w-2xl mx-auto leading-relaxed">
@@ -144,7 +144,7 @@ export default function InspectionStepPage() {
       >
         {/* Vehicle Diagram */}
         <motion.div variants={cardVariants}>
-          <Card className="group hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 border-border/20 hover:border-blue-500/30">
+          <Card className="group hover:shadow-[var(--rpma-shadow-soft)] transition-all duration-300 border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))]">
             <CardHeader className="pb-4">
               <div className="flex items-center space-x-3 mb-2">
                 <div className="p-2 bg-blue-500/10 rounded-lg">
@@ -174,7 +174,7 @@ export default function InspectionStepPage() {
 
         {/* Photos */}
         <motion.div variants={cardVariants}>
-          <Card className="group hover:shadow-2xl hover:shadow-green-500/10 transition-all duration-300 border-border/20 hover:border-green-500/30">
+          <Card className="group hover:shadow-[var(--rpma-shadow-soft)] transition-all duration-300 border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))]">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-3">
@@ -278,7 +278,7 @@ export default function InspectionStepPage() {
 
       {/* Navigation */}
       <motion.div
-        className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-8 border-t border-border/20"
+        className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-8 border-t border-[hsl(var(--rpma-border))]"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6, duration: 0.4 }}

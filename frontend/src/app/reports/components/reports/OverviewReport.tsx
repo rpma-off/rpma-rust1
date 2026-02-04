@@ -51,7 +51,7 @@ function OverviewReport({ dateRange, filters, overviewData }: OverviewReportProp
     <div className="space-y-8">
       {/* KPI Summary Cards */}
        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-muted/50 rounded-xl p-6 border border-border/20 shadow-lg backdrop-blur-sm">
+        <div className="rpma-shell p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-border-light">Tâches Terminées</p>

@@ -106,7 +106,7 @@ export function AdvancedFilters({ isOpen, onClose, filters, onFiltersChange, onA
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-900 border border-gray-700 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+      <div className="rpma-shell w-full max-w-4xl max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-700">
           <div className="flex items-center space-x-3">
@@ -317,7 +317,7 @@ export function AdvancedFilters({ isOpen, onClose, filters, onFiltersChange, onA
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-6 border-t border-gray-700 bg-gray-900/50">
+        <div className="flex items-center justify-between p-6 border-t border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))]">
           <Button
             variant="ghost"
             onClick={clearAllFilters}

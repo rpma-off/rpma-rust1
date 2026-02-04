@@ -197,7 +197,7 @@ export default function FinalizationStepPage() {
             Étape 4 sur 4
           </div>
         </div>
-        <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-foreground to-border-light bg-clip-text text-transparent mb-3">
+        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
           Finalisation
         </h1>
         <p className="text-lg text-border-light max-w-2xl mx-auto leading-relaxed">
@@ -231,7 +231,7 @@ export default function FinalizationStepPage() {
       >
         {/* Quality Control Checklist */}
         <motion.div variants={cardVariants}>
-          <Card className="group hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-300 border-border/20 hover:border-emerald-500/30 h-full">
+          <Card className="group hover:shadow-[var(--rpma-shadow-soft)] transition-all duration-300 border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))] h-full">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-3">
@@ -309,7 +309,7 @@ export default function FinalizationStepPage() {
 
         {/* Customer Information & Signature */}
         <motion.div variants={cardVariants}>
-          <Card className="group hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-300 border-border/20 hover:border-purple-500/30 h-full">
+          <Card className="group hover:shadow-[var(--rpma-shadow-soft)] transition-all duration-300 border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))] h-full">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-3">
@@ -346,7 +346,7 @@ export default function FinalizationStepPage() {
                     placeholder="Nom complet du client"
                     value={signatoryName}
                     onChange={(e) => setSignatoryName(e.target.value)}
-                    className={`bg-border/10 border-border/20 h-12 text-base transition-all duration-200 ${
+                    className={`bg-[hsl(var(--rpma-surface))] border-[hsl(var(--rpma-border))] h-12 text-base transition-all duration-200 ${
                       signatoryName.trim() ? 'border-green-500/50 focus:border-green-500' : 'focus:border-purple-500/50'
                     }`}
                   />
@@ -364,7 +364,7 @@ export default function FinalizationStepPage() {
                     value={customerComments}
                     onChange={(e) => setCustomerComments(e.target.value)}
                     rows={4}
-                    className="w-full px-4 py-3 bg-border/10 border border-border/20 rounded-lg text-foreground placeholder-border-light resize-none transition-all duration-200 focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20"
+                    className="w-full px-4 py-3 bg-[hsl(var(--rpma-surface))] border border-[hsl(var(--rpma-border))] rounded-lg text-foreground placeholder-border-light resize-none transition-all duration-200 focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20"
                   />
                 </div>
 
@@ -374,7 +374,7 @@ export default function FinalizationStepPage() {
                     <PenTool className="h-4 w-4 mr-2 text-purple-400" />
                     Signature digitale
                   </Label>
-                  <div className="border border-border/20 rounded-lg p-4 bg-border/5 hover:border-purple-500/30 transition-colors duration-200">
+                  <div className="border border-[hsl(var(--rpma-border))] rounded-lg p-4 bg-[hsl(var(--rpma-surface))] hover:border-purple-500/30 transition-colors duration-200">
                     <SignatureCapture
                       onSignatureCapture={handleSignatureCapture}
                       width={350}
@@ -401,7 +401,7 @@ export default function FinalizationStepPage() {
 
         {/* Photo Documentation */}
         <motion.div variants={cardVariants}>
-          <Card className="group hover:shadow-2xl hover:shadow-green-500/10 transition-all duration-300 border-border/20 hover:border-green-500/30 h-full">
+          <Card className="group hover:shadow-[var(--rpma-shadow-soft)] transition-all duration-300 border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))] h-full">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-3">
@@ -490,7 +490,7 @@ export default function FinalizationStepPage() {
 
       {/* Navigation */}
       <motion.div
-        className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-8 border-t border-border/20"
+        className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-8 border-t border-[hsl(var(--rpma-border))]"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.8, duration: 0.4 }}

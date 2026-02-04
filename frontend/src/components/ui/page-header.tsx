@@ -15,17 +15,17 @@ export interface PageHeaderProps {
 
 export function PageHeader({ title, subtitle, icon, actions, stats, className, children }: PageHeaderProps) {
   return (
-    <div className={cn('border-b border-border/20 bg-background', className)}>
-      <div className="px-4 py-4 sm:px-6">
+    <div className={cn('bg-white border border-[hsl(var(--rpma-border))] rounded-[10px] shadow-[var(--rpma-shadow-soft)]', className)}>
+      <div className="px-5 py-4">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div className="flex items-start gap-3 flex-1">
             {icon && (
-              <div className="shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-accent/10 border border-accent/30 rounded-[6px] flex items-center justify-center">
+              <div className="shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-[hsl(var(--rpma-surface))] border border-[hsl(var(--rpma-border))] rounded-full flex items-center justify-center">
                 {icon}
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-foreground">
                 {title}
               </h1>
               {subtitle && (
@@ -44,7 +44,7 @@ export function PageHeader({ title, subtitle, icon, actions, stats, className, c
         </div>
 
         {stats && (
-          <div className="mt-6 pt-6 border-t border-border/10">
+          <div className="mt-5 pt-5 border-t border-[hsl(var(--rpma-border))]">
             {stats}
           </div>
         )}
@@ -108,7 +108,7 @@ export function StatCard({ value, label, icon: Icon, color = 'accent', trend, cl
   };
 
   return (
-    <div className={cn('p-4 rounded-[6px] bg-muted/10 border border-border/10 hover:border-border/20 hover:shadow-sm transition-all duration-200', className)}>
+    <div className={cn('p-4 rounded-[10px] bg-white border border-[hsl(var(--rpma-border))] shadow-[var(--rpma-shadow-soft)]', className)}>
       <div className="flex items-center justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="text-xs sm:text-sm text-muted-foreground font-medium mb-1">

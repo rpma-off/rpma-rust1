@@ -136,7 +136,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
         <div className="flex items-center space-x-4">
           <Link
             href="/clients"
-            className="flex items-center space-x-2 text-zinc-400 hover:text-white transition-colors"
+            className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Clients</span>
@@ -156,20 +156,20 @@ export default function EditClientClient({ params }: EditClientClientProps) {
         <div className="flex items-center space-x-4">
           <Link
             href={`/clients/${params?.id}`}
-            className="flex items-center space-x-2 text-zinc-400 hover:text-white transition-colors"
+            className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>Back to {client.name}</span>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-white">Edit Client</h1>
-            <p className="text-zinc-400 mt-1">Update client information</p>
+            <h1 className="text-2xl font-bold text-foreground">Edit Client</h1>
+            <p className="text-muted-foreground mt-1">Update client information</p>
           </div>
         </div>
       </div>
 
       {/* Form */}
-      <div className="bg-zinc-900 rounded-lg p-6">
+      <div className="bg-white rounded-lg p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* General Error */}
           {formErrors.general && (
@@ -180,7 +180,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
 
           {/* Name */}
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-zinc-300 mb-2">
+            <label htmlFor="name" className="block text-sm font-medium text-muted-foreground mb-2">
               Name *
             </label>
             <input
@@ -188,8 +188,8 @@ export default function EditClientClient({ params }: EditClientClientProps) {
               id="name"
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
-              className={`w-full px-3 py-2 bg-zinc-800 border rounded-lg text-white placeholder-zinc-400 focus:outline-none focus:border-green-500 ${
-                formErrors.name ? 'border-red-500' : 'border-zinc-700'
+              className={`w-full px-3 py-2 bg-[hsl(var(--rpma-surface))] border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:border-green-500 ${
+                formErrors.name ? 'border-red-500' : 'border-[hsl(var(--rpma-border))]'
               }`}
               placeholder="Enter client name"
               required
@@ -199,7 +199,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
 
           {/* Customer Type */}
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-2">
+            <label className="block text-sm font-medium text-muted-foreground mb-2">
               Customer Type *
             </label>
             <div className="flex space-x-4">
@@ -212,7 +212,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
                   onChange={(e) => handleInputChange('customer_type', e.target.value as 'individual' | 'business')}
                   className="mr-2"
                 />
-                <span className="text-zinc-300">Individual</span>
+                <span className="text-muted-foreground">Individual</span>
               </label>
               <label className="flex items-center">
                 <input
@@ -223,14 +223,14 @@ export default function EditClientClient({ params }: EditClientClientProps) {
                   onChange={(e) => handleInputChange('customer_type', e.target.value as 'individual' | 'business')}
                   className="mr-2"
                 />
-                <span className="text-zinc-300">Business</span>
+                <span className="text-muted-foreground">Business</span>
               </label>
             </div>
           </div>
 
           {/* Email */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-zinc-300 mb-2">
+            <label htmlFor="email" className="block text-sm font-medium text-muted-foreground mb-2">
               Email
             </label>
             <input
@@ -238,8 +238,8 @@ export default function EditClientClient({ params }: EditClientClientProps) {
               id="email"
               value={formData.email ?? ''}
               onChange={(e) => handleInputChange('email', e.target.value)}
-              className={`w-full px-3 py-2 bg-zinc-800 border rounded-lg text-white placeholder-zinc-400 focus:outline-none focus:border-green-500 ${
-                formErrors.email ? 'border-red-500' : 'border-zinc-700'
+              className={`w-full px-3 py-2 bg-[hsl(var(--rpma-surface))] border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:border-green-500 ${
+                formErrors.email ? 'border-red-500' : 'border-[hsl(var(--rpma-border))]'
               }`}
               placeholder="Enter email address"
             />
@@ -248,7 +248,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
 
           {/* Phone */}
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-zinc-300 mb-2">
+            <label htmlFor="phone" className="block text-sm font-medium text-muted-foreground mb-2">
               Phone
             </label>
             <input
@@ -256,8 +256,8 @@ export default function EditClientClient({ params }: EditClientClientProps) {
               id="phone"
               value={formData.phone ?? ''}
               onChange={(e) => handleInputChange('phone', e.target.value)}
-              className={`w-full px-3 py-2 bg-zinc-800 border rounded-lg text-white placeholder-zinc-400 focus:outline-none focus:border-green-500 ${
-                formErrors.phone ? 'border-red-500' : 'border-zinc-700'
+              className={`w-full px-3 py-2 bg-[hsl(var(--rpma-surface))] border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:border-green-500 ${
+                formErrors.phone ? 'border-red-500' : 'border-[hsl(var(--rpma-border))]'
               }`}
               placeholder="Enter phone number"
             />
@@ -266,7 +266,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
 
           {/* Address */}
           <div>
-            <label htmlFor="address" className="block text-sm font-medium text-zinc-300 mb-2">
+            <label htmlFor="address" className="block text-sm font-medium text-muted-foreground mb-2">
               Address
             </label>
             <textarea
@@ -274,8 +274,8 @@ export default function EditClientClient({ params }: EditClientClientProps) {
               value={formData.address_street ?? ''}
               onChange={(e) => handleInputChange('address_street', e.target.value)}
               rows={3}
-              className={`w-full px-3 py-2 bg-zinc-800 border rounded-lg text-white placeholder-zinc-400 focus:outline-none focus:border-green-500 ${
-                formErrors.address_street ? 'border-red-500' : 'border-zinc-700'
+              className={`w-full px-3 py-2 bg-[hsl(var(--rpma-surface))] border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:border-green-500 ${
+                formErrors.address_street ? 'border-red-500' : 'border-[hsl(var(--rpma-border))]'
               }`}
               placeholder="Enter address"
             />
@@ -285,7 +285,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
           {/* Company Name (only for business) */}
           {formData.customer_type === 'business' && (
             <div>
-              <label htmlFor="company_name" className="block text-sm font-medium text-zinc-300 mb-2">
+              <label htmlFor="company_name" className="block text-sm font-medium text-muted-foreground mb-2">
                 Company Name
               </label>
               <input
@@ -293,8 +293,8 @@ export default function EditClientClient({ params }: EditClientClientProps) {
                 id="company_name"
                 value={formData.company_name ?? ''}
                 onChange={(e) => handleInputChange('company_name', e.target.value)}
-                className={`w-full px-3 py-2 bg-zinc-800 border rounded-lg text-white placeholder-zinc-400 focus:outline-none focus:border-green-500 ${
-                  formErrors.company_name ? 'border-red-500' : 'border-zinc-700'
+                className={`w-full px-3 py-2 bg-[hsl(var(--rpma-surface))] border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:border-green-500 ${
+                  formErrors.company_name ? 'border-red-500' : 'border-[hsl(var(--rpma-border))]'
                 }`}
                 placeholder="Enter company name"
               />
@@ -304,7 +304,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
 
           {/* Notes */}
           <div>
-            <label htmlFor="notes" className="block text-sm font-medium text-zinc-300 mb-2">
+            <label htmlFor="notes" className="block text-sm font-medium text-muted-foreground mb-2">
               Notes
             </label>
             <textarea
@@ -312,8 +312,8 @@ export default function EditClientClient({ params }: EditClientClientProps) {
               value={formData.notes ?? ''}
               onChange={(e) => handleInputChange('notes', e.target.value)}
               rows={4}
-              className={`w-full px-3 py-2 bg-zinc-800 border rounded-lg text-white placeholder-zinc-400 focus:outline-none focus:border-green-500 ${
-                formErrors.notes ? 'border-red-500' : 'border-zinc-700'
+              className={`w-full px-3 py-2 bg-[hsl(var(--rpma-surface))] border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:border-green-500 ${
+                formErrors.notes ? 'border-red-500' : 'border-[hsl(var(--rpma-border))]'
               }`}
               placeholder="Enter any additional notes"
             />
@@ -321,11 +321,11 @@ export default function EditClientClient({ params }: EditClientClientProps) {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end space-x-4 pt-6 border-t border-zinc-700">
+          <div className="flex items-center justify-end space-x-4 pt-6 border-t border-[hsl(var(--rpma-border))]">
             <button
               type="button"
               onClick={handleCancel}
-              className="px-4 py-2 text-zinc-400 hover:text-white transition-colors flex items-center space-x-2"
+              className="px-4 py-2 text-muted-foreground hover:text-foreground transition-colors flex items-center space-x-2"
             >
               <X className="h-4 w-4" />
               <span>Cancel</span>
@@ -333,7 +333,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
             <button
               type="submit"
               disabled={submitting}
-              className="bg-green-600 hover:bg-green-700 disabled:bg-zinc-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+              className="bg-[hsl(var(--rpma-teal))] hover:bg-[hsl(var(--rpma-teal))]/90 disabled:bg-muted text-foreground px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
             >
               {submitting ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>

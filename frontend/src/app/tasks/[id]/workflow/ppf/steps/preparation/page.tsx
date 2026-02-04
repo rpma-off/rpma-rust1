@@ -194,7 +194,7 @@ export default function PreparationStepPage() {
             Étape 2 sur 4
           </div>
         </div>
-        <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-foreground to-border-light bg-clip-text text-transparent mb-3">
+        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
           Préparation de surface
         </h1>
         <p className="text-lg text-border-light max-w-2xl mx-auto leading-relaxed">
@@ -235,7 +235,7 @@ export default function PreparationStepPage() {
       >
         {/* Preparation Checklist */}
         <motion.div variants={cardVariants}>
-          <Card className="group hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-300 border-border/20 hover:border-purple-500/30 h-full">
+          <Card className="group hover:shadow-[var(--rpma-shadow-soft)] transition-all duration-300 border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))] h-full">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-3">
@@ -313,7 +313,7 @@ export default function PreparationStepPage() {
 
         {/* Environment Data */}
         <motion.div variants={cardVariants}>
-          <Card className="group hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 border-border/20 hover:border-blue-500/30 h-full">
+          <Card className="group hover:shadow-[var(--rpma-shadow-soft)] transition-all duration-300 border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))] h-full">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-3">
@@ -353,7 +353,7 @@ export default function PreparationStepPage() {
                     placeholder="22.5"
                     value={environment.temperatureCelsius || ''}
                     onChange={(e) => handleEnvironmentChange('temperatureCelsius', e.target.value)}
-                    className={`bg-border/10 border-border/20 h-12 text-base transition-all duration-200 ${
+                    className={`bg-[hsl(var(--rpma-surface))] border-[hsl(var(--rpma-border))] h-12 text-base transition-all duration-200 ${
                       environment.temperatureCelsius !== null &&
                       (environment.temperatureCelsius < 15 || environment.temperatureCelsius > 25)
                         ? 'border-yellow-500/50 focus:border-yellow-500'
@@ -393,7 +393,7 @@ export default function PreparationStepPage() {
                     placeholder="45"
                     value={environment.humidityPercent || ''}
                     onChange={(e) => handleEnvironmentChange('humidityPercent', e.target.value)}
-                    className={`bg-border/10 border-border/20 h-12 text-base transition-all duration-200 ${
+                    className={`bg-[hsl(var(--rpma-surface))] border-[hsl(var(--rpma-border))] h-12 text-base transition-all duration-200 ${
                       environment.humidityPercent !== null &&
                       (environment.humidityPercent < 30 || environment.humidityPercent > 60)
                         ? 'border-yellow-500/50 focus:border-yellow-500'
@@ -446,7 +446,7 @@ export default function PreparationStepPage() {
 
         {/* Photo Documentation */}
         <motion.div variants={cardVariants}>
-          <Card className="group hover:shadow-2xl hover:shadow-green-500/10 transition-all duration-300 border-border/20 hover:border-green-500/30 h-full">
+          <Card className="group hover:shadow-[var(--rpma-shadow-soft)] transition-all duration-300 border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))] h-full">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-3">
@@ -490,7 +490,7 @@ export default function PreparationStepPage() {
 
       {/* Navigation */}
       <motion.div
-        className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-8 border-t border-border/20"
+        className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-8 border-t border-[hsl(var(--rpma-border))]"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.8, duration: 0.4 }}

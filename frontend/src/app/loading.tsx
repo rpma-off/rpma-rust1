@@ -43,7 +43,7 @@ export default function Loading() {
 
         {/* Fun facts or tips */}
         <div className="mt-8 max-w-md mx-auto">
-          <div className="bg-border/10 border border-border/20 rounded-xl p-4">
+          <div className="rpma-shell p-4">
             <div className="flex items-center gap-3">
               <div className="flex-shrink-0">
                 <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -39,11 +39,11 @@ export default function NewTaskPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-border/10 py-6 md:py-8">
+    <div className="min-h-screen bg-[hsl(var(--rpma-surface))] py-6 md:py-8">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Enhanced Header */}
         <div className="mb-6 md:mb-8">
-          <div className="bg-border/5 rounded-xl p-4 md:p-6 border border-border/20">
+          <div className="bg-[hsl(var(--rpma-surface))] rounded-xl p-4 md:p-6 border border-[hsl(var(--rpma-border))]">
             <div className="flex flex-col gap-4">
               {/* Back Button and Breadcrumbs */}
               <div className="flex items-center justify-between">
@@ -105,7 +105,7 @@ export default function NewTaskPage() {
         </div>
 
         {/* Enhanced Form Container */}
-        <div className="bg-border/5 rounded-xl border border-border/20 p-4 md:p-6 shadow-xl">
+        <div className="bg-[hsl(var(--rpma-surface))] rounded-xl border border-[hsl(var(--rpma-border))] p-4 md:p-6 shadow-xl">
           <TaskForm
             onSuccess={handleSuccess}
             onCancel={handleCancel}

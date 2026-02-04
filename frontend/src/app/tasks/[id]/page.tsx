@@ -201,9 +201,9 @@ export default function TaskDetailPage() {
 
   return (
     <TaskErrorBoundary>
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-border/10">
+      <div className="min-h-screen bg-[hsl(var(--rpma-surface))]">
        {/* Enhanced Header */}
-       <div className="bg-border/5 backdrop-blur-sm border-b border-border/20">
+       <div className="bg-[hsl(var(--rpma-surface))] backdrop-blur-sm border-b border-[hsl(var(--rpma-border))]">
          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 md:py-4">
            <div className="flex items-center gap-3 md:gap-4">
              <Button
@@ -216,7 +216,7 @@ export default function TaskDetailPage() {
                <span className="hidden sm:inline">Retour</span>
              </Button>
 
-             <div className="h-5 w-px bg-border/50 hidden sm:block" />
+             <div className="h-5 w-px bg-[hsl(var(--rpma-surface))]0 hidden sm:block" />
 
              <div className="flex-1 min-w-0">
                <TaskHeader
@@ -255,7 +255,7 @@ export default function TaskDetailPage() {
        </div>
 
        {/* Enhanced Breadcrumbs */}
-       <div className="bg-border/5 border-b border-border/20">
+       <div className="bg-[hsl(var(--rpma-surface))] border-b border-[hsl(var(--rpma-border))]">
          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-3">
            <nav className="flex items-center gap-2 text-xs md:text-sm text-border-light">
              <a href="/dashboard" className="flex items-center hover:text-foreground transition-colors p-1 rounded hover:bg-border/20">
@@ -275,7 +275,7 @@ export default function TaskDetailPage() {
        </div>
 
        {/* Enhanced Task Status Hero */}
-       <div className="bg-gradient-to-r from-border/10 to-border/5 border-b border-border/20">
+       <div className="bg-[hsl(var(--rpma-surface))] border-b border-[hsl(var(--rpma-border))]">
          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 lg:gap-6">
              {/* Enhanced Task Title and Status */}
@@ -330,18 +330,18 @@ export default function TaskDetailPage() {
              {/* Enhanced Key Metrics */}
              <div className="flex flex-wrap gap-4 sm:gap-6 lg:gap-8">
                {task.scheduled_date && (
-                 <div className="text-center min-w-0 p-3 bg-border/10 rounded-lg border border-border/20">
+                 <div className="text-center min-w-0 p-3 bg-border/10 rounded-lg border border-[hsl(var(--rpma-border))]">
                    <p className="text-xs text-border-light uppercase tracking-wide font-medium mb-1">Planifiée</p>
                    <p className="text-sm font-semibold text-foreground">{formatDate(task.scheduled_date)}</p>
                  </div>
                )}
                {task.estimated_duration_minutes && (
-                 <div className="text-center min-w-0 p-3 bg-border/10 rounded-lg border border-border/20">
+                 <div className="text-center min-w-0 p-3 bg-border/10 rounded-lg border border-[hsl(var(--rpma-border))]">
                    <p className="text-xs text-border-light uppercase tracking-wide font-medium mb-1">Durée estimée</p>
                    <p className="text-sm font-semibold text-foreground">{Math.round(task.estimated_duration_minutes / 60)}h</p>
                  </div>
                )}
-               <div className="text-center min-w-0 p-3 bg-border/10 rounded-lg border border-border/20">
+               <div className="text-center min-w-0 p-3 bg-border/10 rounded-lg border border-[hsl(var(--rpma-border))]">
                  <p className="text-xs text-border-light uppercase tracking-wide font-medium mb-1">Créée</p>
                  <p className="text-sm font-semibold text-foreground">{formatDate(task.created_at)}</p>
                </div>
@@ -366,22 +366,22 @@ export default function TaskDetailPage() {
 
             {/* Main Content */}
             <div className="xl:col-span-2 space-y-4 md:space-y-6 lg:space-y-8 order-2 xl:order-1">
-              <div className="bg-border/5 rounded-xl border border-border/20 p-4 md:p-6">
+              <div className="bg-[hsl(var(--rpma-surface))] rounded-xl border border-[hsl(var(--rpma-border))] p-4 md:p-6">
                 <TaskOverview task={task} />
               </div>
 
-              <div className="bg-border/5 rounded-xl border border-border/20 p-4 md:p-6">
+              <div className="bg-[hsl(var(--rpma-surface))] rounded-xl border border-[hsl(var(--rpma-border))] p-4 md:p-6">
                 <TaskAttachments taskId={taskId} />
               </div>
 
-              <div className="bg-border/5 rounded-xl border border-border/20 p-4 md:p-6">
+              <div className="bg-[hsl(var(--rpma-surface))] rounded-xl border border-[hsl(var(--rpma-border))] p-4 md:p-6">
                 <TaskTimeline taskId={taskId} />
               </div>
             </div>
 
             {/* Enhanced Sidebar */}
             <div className="space-y-4 md:space-y-6 order-1 xl:order-2">
-              <div className="bg-border/5 rounded-xl border border-border/20 p-4 md:p-6">
+              <div className="bg-[hsl(var(--rpma-surface))] rounded-xl border border-[hsl(var(--rpma-border))] p-4 md:p-6">
                 <ActionsCard
                   task={task}
                   isAssignedToCurrentUser={isAssignedToCurrentUser}
@@ -391,7 +391,7 @@ export default function TaskDetailPage() {
               </div>
 
               {/* Quick Stats - Mobile Enhancement */}
-              <div className="block xl:hidden bg-border/5 rounded-xl border border-border/20 p-4">
+              <div className="block xl:hidden bg-[hsl(var(--rpma-surface))] rounded-xl border border-[hsl(var(--rpma-border))] p-4">
                 <h3 className="text-sm font-semibold text-foreground mb-3">Aperçu rapide</h3>
                 <div className="grid grid-cols-2 gap-3 text-center">
                   <div className="p-3 bg-background/50 rounded-lg">

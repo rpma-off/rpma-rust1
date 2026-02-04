@@ -174,7 +174,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[hsl(var(--rpma-surface))]">
       <div className="container mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Header */}
         <PageHeader
@@ -197,8 +197,8 @@ export default function SettingsPage() {
         />
 
         {/* Main Settings Card */}
-        <Card className="border-border/20 bg-background shadow-lg">
-          <CardHeader className="pb-4 border-b border-border/20">
+        <Card className="rpma-shell">
+          <CardHeader className="pb-4 border-b border-[hsl(var(--rpma-border))]">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-accent/20 rounded-lg">
                 <User className="h-5 w-5 text-accent" />
@@ -236,7 +236,7 @@ export default function SettingsPage() {
                          </span>
                        </Button>
                      </SheetTrigger>
-                     <SheetContent side="bottom" className="h-[70vh] bg-background border-border/20">
+                     <SheetContent side="bottom" className="h-[70vh] bg-background border-[hsl(var(--rpma-border))]">
                        <SheetHeader className="text-left">
                          <SheetTitle className="text-foreground flex items-center gap-2">
                            <Settings className="h-5 w-5" />
@@ -271,7 +271,7 @@ export default function SettingsPage() {
                            );
                          })}
                        </div>
-                       <div className="mt-6 pt-4 border-t border-border/20">
+                       <div className="mt-6 pt-4 border-t border-[hsl(var(--rpma-border))]">
                          <p className="text-xs text-border-light text-center">
                            Utilisez Ctrl+1-6 pour naviguer rapidement (desktop)
                          </p>
@@ -305,7 +305,7 @@ export default function SettingsPage() {
                <div className="mt-4 md:mt-6">
                  <TabsContent value="profile" className="mt-0">
                    <Suspense fallback={
-                     <div className="flex items-center justify-center p-8 bg-border/5 rounded-lg border border-border/20">
+                     <div className="flex items-center justify-center p-8 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
                        <div className="text-center">
                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4"></div>
                          <p className="text-border-light">Chargement du profil...</p>
@@ -318,7 +318,7 @@ export default function SettingsPage() {
 
                  <TabsContent value="preferences" className="mt-0">
                    <Suspense fallback={
-                     <div className="flex items-center justify-center p-8 bg-border/5 rounded-lg border border-border/20">
+                     <div className="flex items-center justify-center p-8 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
                        <div className="text-center">
                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4"></div>
                          <p className="text-border-light">Chargement des préférences...</p>
@@ -331,7 +331,7 @@ export default function SettingsPage() {
 
                  <TabsContent value="security" className="mt-0">
                    <Suspense fallback={
-                     <div className="flex items-center justify-center p-8 bg-border/5 rounded-lg border border-border/20">
+                     <div className="flex items-center justify-center p-8 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
                        <div className="text-center">
                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4"></div>
                          <p className="text-border-light">Chargement de la sécurité...</p>
@@ -344,7 +344,7 @@ export default function SettingsPage() {
 
                  <TabsContent value="performance" className="mt-0">
                    <Suspense fallback={
-                     <div className="flex items-center justify-center p-8 bg-border/5 rounded-lg border border-border/20">
+                     <div className="flex items-center justify-center p-8 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
                        <div className="text-center">
                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4"></div>
                          <p className="text-border-light">Chargement des performances...</p>
@@ -357,7 +357,7 @@ export default function SettingsPage() {
 
                  <TabsContent value="accessibility" className="mt-0">
                    <Suspense fallback={
-                     <div className="flex items-center justify-center p-8 bg-border/5 rounded-lg border border-border/20">
+                     <div className="flex items-center justify-center p-8 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
                        <div className="text-center">
                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4"></div>
                           <p className="text-border-light">Chargement de l&apos;accessibilité...</p>
@@ -370,7 +370,7 @@ export default function SettingsPage() {
 
                  <TabsContent value="notifications" className="mt-0">
                    <Suspense fallback={
-                     <div className="flex items-center justify-center p-8 bg-border/5 rounded-lg border border-border/20">
+                     <div className="flex items-center justify-center p-8 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
                        <div className="text-center">
                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4"></div>
                          <p className="text-border-light">Chargement des notifications...</p>

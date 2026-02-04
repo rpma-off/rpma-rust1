@@ -105,7 +105,7 @@ export default function ClientDetailClient({ params }: ClientDetailClientProps) 
         <div className="flex items-center space-x-4">
           <Link
             href="/clients"
-            className="flex items-center space-x-2 text-zinc-400 hover:text-white transition-colors"
+            className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Clients</span>
@@ -125,14 +125,14 @@ export default function ClientDetailClient({ params }: ClientDetailClientProps) 
         <div className="flex items-center space-x-4">
           <Link
             href="/clients"
-            className="flex items-center space-x-2 text-zinc-400 hover:text-white transition-colors"
+            className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Clients</span>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-white">{client.name}</h1>
-            <p className="text-zinc-400 mt-1">
+            <h1 className="text-2xl font-bold text-foreground">{client.name}</h1>
+            <p className="text-muted-foreground mt-1">
               {client.customer_type === 'business' ? 'Business Client' : 'Individual Client'}
             </p>
           </div>
@@ -140,21 +140,21 @@ export default function ClientDetailClient({ params }: ClientDetailClientProps) 
         <div className="flex items-center space-x-3">
           <button
             onClick={handleCreateTask}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+            className="bg-green-600 hover:bg-green-700 text-foreground px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
           >
             <Plus className="h-4 w-4" />
             <span>New Task</span>
           </button>
           <button
             onClick={handleEdit}
-            className="bg-zinc-700 hover:bg-zinc-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+            className="bg-[hsl(var(--rpma-surface))] hover:bg-[hsl(var(--rpma-teal))]/90 text-foreground px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
           >
             <Edit className="h-4 w-4" />
             <span>Edit</span>
           </button>
           <button
             onClick={handleDelete}
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+            className="bg-red-600 hover:bg-red-700 text-foreground px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
           >
             <Trash2 className="h-4 w-4" />
             <span>Delete</span>
@@ -167,25 +167,25 @@ export default function ClientDetailClient({ params }: ClientDetailClientProps) 
         {/* Main Info */}
         <div className="lg:col-span-2 space-y-6">
           {/* Contact Information */}
-          <div className="bg-zinc-900 rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Contact Information</h2>
+          <div className="bg-white rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-foreground mb-4">Contact Information</h2>
             <div className="space-y-3">
               {client.email && (
                 <div className="flex items-center space-x-3">
-                  <Mail className="h-4 w-4 text-zinc-400" />
-                  <span className="text-zinc-300">{client.email}</span>
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">{client.email}</span>
                 </div>
               )}
               {client.phone && (
                 <div className="flex items-center space-x-3">
-                  <Phone className="h-4 w-4 text-zinc-400" />
-                  <span className="text-zinc-300">{client.phone}</span>
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">{client.phone}</span>
                 </div>
               )}
               {(client.address_street || client.address_city) && (
                 <div className="flex items-center space-x-3">
-                  <MapPin className="h-4 w-4 text-zinc-400" />
-                  <span className="text-zinc-300">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">
                     {[client.address_street, client.address_city, client.address_zip, client.address_country]
                       .filter(Boolean)
                       .join(', ')}
@@ -194,23 +194,23 @@ export default function ClientDetailClient({ params }: ClientDetailClientProps) 
               )}
               {client.company_name && (
                 <div className="flex items-center space-x-3">
-                  <Building2 className="h-4 w-4 text-zinc-400" />
-                  <span className="text-zinc-300">{client.company_name}</span>
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">{client.company_name}</span>
                 </div>
               )}
             </div>
           </div>
 
           {/* Tasks */}
-          <div className="bg-zinc-900 rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Recent Tasks</h2>
+          <div className="bg-white rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-foreground mb-4">Recent Tasks</h2>
             {tasks && tasks.length > 0 ? (
               <div className="space-y-3">
                 {tasks.slice(0, 5).map((task) => (
-                  <div key={task.id} className="flex items-center justify-between p-3 bg-zinc-800 rounded-lg">
+                  <div key={task.id} className="flex items-center justify-between p-3 bg-[hsl(var(--rpma-surface))] rounded-lg">
                     <div>
-                      <p className="text-white font-medium">{task.title}</p>
-                          <p className="text-zinc-400 text-sm">
+                      <p className="text-foreground font-medium">{task.title}</p>
+                          <p className="text-muted-foreground text-sm">
                             {task.vehicle_plate && `Plate: ${task.vehicle_plate}`}
                             {task.vehicle_model && ` • ${task.vehicle_model}`}
                           </p>
@@ -221,11 +221,11 @@ export default function ClientDetailClient({ params }: ClientDetailClientProps) 
                           ? 'bg-green-900 text-green-300'
                           : task.status === 'in_progress'
                           ? 'bg-blue-900 text-blue-300'
-                          : 'bg-zinc-700 text-zinc-300'
+                          : 'bg-[hsl(var(--rpma-surface))] text-muted-foreground'
                       }`}>
                         {task.status}
                       </span>
-                          <p className="text-zinc-400 text-xs mt-1">
+                          <p className="text-muted-foreground text-xs mt-1">
                             {task.created_at ? new Date(task.created_at).toLocaleDateString() : 'N/A'}
                           </p>
                     </div>
@@ -233,7 +233,7 @@ export default function ClientDetailClient({ params }: ClientDetailClientProps) 
                 ))}
               </div>
             ) : (
-              <p className="text-zinc-400">No tasks found for this client</p>
+              <p className="text-muted-foreground">No tasks found for this client</p>
             )}
           </div>
         </div>
@@ -241,22 +241,22 @@ export default function ClientDetailClient({ params }: ClientDetailClientProps) 
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Stats */}
-          <div className="bg-zinc-900 rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Statistics</h2>
+          <div className="bg-white rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-foreground mb-4">Statistics</h2>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-zinc-400">Total Tasks</span>
-                <span className="text-white font-semibold">{tasks?.length || 0}</span>
+                <span className="text-muted-foreground">Total Tasks</span>
+                <span className="text-foreground font-semibold">{tasks?.length || 0}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-zinc-400">Completed Tasks</span>
-                <span className="text-white font-semibold">
+                <span className="text-muted-foreground">Completed Tasks</span>
+                <span className="text-foreground font-semibold">
                   {tasks?.filter(t => t.status === 'completed').length || 0}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-zinc-400">Created</span>
-                  <span className="text-white font-semibold">
+                <span className="text-muted-foreground">Created</span>
+                  <span className="text-foreground font-semibold">
                     {client.created_at ? new Date(client.created_at).toLocaleDateString() : 'N/A'}
                   </span>
               </div>
@@ -265,9 +265,9 @@ export default function ClientDetailClient({ params }: ClientDetailClientProps) 
 
           {/* Notes */}
           {client.notes && (
-            <div className="bg-zinc-900 rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-white mb-4">Notes</h2>
-              <p className="text-zinc-300">{client.notes}</p>
+            <div className="bg-white rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-foreground mb-4">Notes</h2>
+              <p className="text-muted-foreground">{client.notes}</p>
             </div>
           )}
         </div>

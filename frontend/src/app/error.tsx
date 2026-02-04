@@ -45,10 +45,10 @@ const ErrorPage = ({ error, reset }: ErrorPageProps) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-border/10">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-[hsl(var(--rpma-surface))]">
       <div className="max-w-2xl w-full mx-4">
         {/* Error Card */}
-        <div className="bg-border/5 border border-border/20 rounded-2xl shadow-2xl p-8 md:p-12">
+        <div className="rpma-shell p-8 md:p-12">
           <div className="text-center mb-8">
             <div className="relative mb-8">
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-500/20 border border-red-500/30 mb-6">
@@ -113,7 +113,7 @@ const ErrorPage = ({ error, reset }: ErrorPageProps) => {
           </div>
 
           {/* Support Information */}
-          <div className="mt-8 pt-6 border-t border-border/20">
+          <div className="mt-8 pt-6 border-t border-[hsl(var(--rpma-border))]">
             <div className="text-center">
               <p className="text-sm text-border-light mb-4">
                 Si le problème persiste, contactez notre support technique

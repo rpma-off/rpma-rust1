@@ -112,7 +112,7 @@ export function DashboardOverviewChart({ data }: DashboardOverviewChartProps) {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
-          className="bg-background/95 backdrop-blur-md border border-border/50 rounded-xl p-4 shadow-2xl"
+          className="rpma-shell p-4"
         >
           <p className="text-foreground font-semibold mb-3 text-sm">{label}</p>
           <div className="space-y-2">
@@ -151,13 +151,13 @@ export function DashboardOverviewChart({ data }: DashboardOverviewChartProps) {
     >
       {/* Task Status Distribution */}
       <motion.div
-        className="bg-gradient-to-br from-muted/50 to-muted/30 border border-border/30 rounded-2xl p-6 md:p-8 shadow-xl backdrop-blur-sm"
+        className="rpma-shell p-6 md:p-8"
         variants={itemVariants}
         custom={0}
       >
         <div className="mb-6 md:mb-8">
           <motion.h3
-            className="text-xl md:text-2xl font-bold text-foreground mb-2 bg-gradient-to-r from-foreground to-border-light bg-clip-text text-transparent"
+            className="text-xl md:text-2xl font-bold text-foreground mb-2 text-foreground"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -214,13 +214,13 @@ export function DashboardOverviewChart({ data }: DashboardOverviewChartProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Technician Performance */}
         <motion.div
-          className="bg-gradient-to-br from-muted/50 to-muted/30 border border-border/30 rounded-2xl p-6 md:p-8 shadow-xl backdrop-blur-sm"
+          className="rpma-shell p-6 md:p-8"
           variants={itemVariants}
           custom={1}
         >
           <div className="mb-6 md:mb-8">
             <motion.h3
-              className="text-xl md:text-2xl font-bold text-foreground mb-2 bg-gradient-to-r from-foreground to-border-light bg-clip-text text-transparent"
+              className="text-xl md:text-2xl font-bold text-foreground mb-2 text-foreground"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
@@ -273,13 +273,13 @@ export function DashboardOverviewChart({ data }: DashboardOverviewChartProps) {
 
         {/* Quality Metrics */}
         <motion.div
-          className="bg-gradient-to-br from-muted/50 to-muted/30 border border-border/30 rounded-2xl p-6 md:p-8 shadow-xl backdrop-blur-sm"
+          className="rpma-shell p-6 md:p-8"
           variants={itemVariants}
           custom={2}
         >
           <div className="mb-6 md:mb-8">
             <motion.h3
-              className="text-xl md:text-2xl font-bold text-foreground mb-2 bg-gradient-to-r from-foreground to-border-light bg-clip-text text-transparent"
+              className="text-xl md:text-2xl font-bold text-foreground mb-2 text-foreground"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}

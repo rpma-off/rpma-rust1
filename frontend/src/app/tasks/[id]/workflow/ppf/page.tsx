@@ -133,7 +133,7 @@ export default function PPFWorkflowPage() {
           </div>
           <Sparkles className="h-6 w-6 text-primary animate-pulse" />
         </div>
-        <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-foreground to-border-light bg-clip-text text-transparent mb-3">
+        <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-3">
           PPF Installation Workflow
         </h1>
         <p className="text-lg text-border-light max-w-2xl mx-auto leading-relaxed">
@@ -162,7 +162,7 @@ export default function PPFWorkflowPage() {
                   getStatusColor(status)
                 } ${
                   isAccessible
-                    ? 'hover:shadow-2xl hover:shadow-accent/10 cursor-pointer border-primary/20 hover:border-primary/40'
+                    ? 'hover:shadow-[var(--rpma-shadow-soft)] cursor-pointer border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))]'
                     : 'opacity-60 cursor-not-allowed'
                 } backdrop-blur-sm`}
                 onClick={() => isAccessible && router.push(`/tasks/${taskId}/workflow/ppf/${stepConfig.path}`)}
@@ -173,7 +173,7 @@ export default function PPFWorkflowPage() {
                 </div>
 
                 {/* Background Gradient Effect */}
-                <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-[hsl(var(--rpma-surface))] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                 <CardHeader className="relative z-10 pb-4">
                   <div className="flex items-start justify-between mb-3">
@@ -222,7 +222,7 @@ export default function PPFWorkflowPage() {
 
       {/* Progress Summary */}
       <motion.div
-        className="text-center pt-8 border-t border-border/20"
+        className="text-center pt-8 border-t border-[hsl(var(--rpma-border))]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8, duration: 0.6 }}

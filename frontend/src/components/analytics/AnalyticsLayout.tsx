@@ -8,17 +8,17 @@ interface AnalyticsLayoutProps {
 
 export function AnalyticsLayout({ children }: AnalyticsLayoutProps) {
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Analytics Dashboard</h1>
-          <p className="text-border-300 mt-1">
+          <h1 className="text-2xl font-semibold text-foreground">Analytics Dashboard</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
             Monitor performance, track KPIs, and gain insights into your operations
           </p>
         </div>
       </div>
 
-      <Card className="bg-border-800 border-border-700">
+      <Card className="rpma-shell">
         <AnalyticsTabs />
       </Card>
 

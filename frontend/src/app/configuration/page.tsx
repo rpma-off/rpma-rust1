@@ -255,7 +255,7 @@ export default function ConfigurationPage() {
 
   return (
     <motion.div 
-      className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100"
+      className="min-h-screen bg-[hsl(var(--rpma-surface))]"
       variants={pageTransition}
       initial="initial"
       animate="animate"
@@ -279,7 +279,7 @@ export default function ConfigurationPage() {
               <div className="p-2 bg-blue-100 rounded-lg">
                 <Settings className="h-6 w-6 text-blue-600" />
               </div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+              <h1 className="text-4xl font-semibold text-foreground">
                 Configuration Avancée
               </h1>
             </div>

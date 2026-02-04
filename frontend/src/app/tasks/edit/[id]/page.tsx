@@ -67,7 +67,7 @@ export default function EditTaskPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-border/10 py-6 md:py-8">
+      <div className="min-h-screen bg-[hsl(var(--rpma-surface))] py-6 md:py-8">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center py-12">
             <div className="flex items-center space-x-3">
@@ -82,9 +82,9 @@ export default function EditTaskPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-border/10 py-6 md:py-8">
+      <div className="min-h-screen bg-[hsl(var(--rpma-surface))] py-6 md:py-8">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-border/5 rounded-xl p-4 md:p-6 border border-border/20">
+          <div className="bg-[hsl(var(--rpma-surface))] rounded-xl p-4 md:p-6 border border-[hsl(var(--rpma-border))]">
             <div className="text-center py-12">
               <div className="text-red-400 mb-4">
                 <svg className="w-16 h-16 mx-auto mb-4" fill="currentColor" viewBox="0 0 20 20">
@@ -105,9 +105,9 @@ export default function EditTaskPage() {
 
   if (!taskData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-border/10 py-6 md:py-8">
+      <div className="min-h-screen bg-[hsl(var(--rpma-surface))] py-6 md:py-8">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-border/5 rounded-xl p-4 md:p-6 border border-border/20">
+          <div className="bg-[hsl(var(--rpma-surface))] rounded-xl p-4 md:p-6 border border-[hsl(var(--rpma-border))]">
             <div className="text-center py-12">
               <h3 className="text-xl font-bold text-white mb-2">Tâche introuvable</h3>
               <p className="text-border-light mb-6">La tâche demandée n&apos;existe pas ou a été supprimée.</p>
@@ -122,11 +122,11 @@ export default function EditTaskPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-border/10 py-6 md:py-8">
+    <div className="min-h-screen bg-[hsl(var(--rpma-surface))] py-6 md:py-8">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Enhanced Header */}
         <div className="mb-6 md:mb-8">
-          <div className="bg-border/5 rounded-xl p-4 md:p-6 border border-border/20">
+          <div className="bg-[hsl(var(--rpma-surface))] rounded-xl p-4 md:p-6 border border-[hsl(var(--rpma-border))]">
             <div className="flex flex-col gap-4">
               {/* Back Button and Breadcrumbs */}
               <div className="flex items-center justify-between">
@@ -188,7 +188,7 @@ export default function EditTaskPage() {
         </div>
 
         {/* Enhanced Form Container */}
-        <div className="bg-border/5 rounded-xl border border-border/20 p-4 md:p-6 shadow-xl">
+        <div className="bg-[hsl(var(--rpma-surface))] rounded-xl border border-[hsl(var(--rpma-border))] p-4 md:p-6 shadow-xl">
           <TaskForm
             initialData={taskData}
             onSuccess={handleSuccess}

@@ -149,7 +149,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
         <div className="flex items-center space-x-4">
           <Link
             href="/clients"
-            className="flex items-center space-x-2 text-zinc-400 hover:text-white transition-colors"
+            className="flex items-center space-x-2 text-muted-foreground hover:text-white transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Clients</span>
@@ -159,7 +159,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-red-400 text-lg font-medium">{error || 'Client not found'}</p>
-              <p className="text-zinc-400 text-sm mt-2">Please check the client ID or try again later.</p>
+              <p className="text-muted-foreground text-sm mt-2">Please check the client ID or try again later.</p>
             </div>
           </CardContent>
         </Card>
@@ -170,12 +170,12 @@ export default function EditClientPage({ params }: EditClientPageProps) {
   return (
     <div className="max-w-4xl mx-auto space-y-8 p-6">
       {/* Header */}
-      <div className="bg-zinc-900/50 rounded-xl p-6 border border-zinc-800">
+      <div className="rpma-shell p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-6">
             <Link
               href={`/clients/${params?.id}`}
-              className="flex items-center space-x-2 text-zinc-400 hover:text-white transition-colors"
+              className="flex items-center space-x-2 text-muted-foreground hover:text-white transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
               <span className="text-sm">Back to {client.name}</span>
@@ -186,7 +186,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-white">Edit Client</h1>
-                <p className="text-zinc-400 mt-1">Update client information</p>
+                <p className="text-muted-foreground mt-1">Update client information</p>
               </div>
             </div>
           </div>
@@ -209,7 +209,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
 
             {/* Name */}
             <div className="space-y-2">
-              <label htmlFor="name" className="block text-sm font-medium text-zinc-300">
+              <label htmlFor="name" className="block text-sm font-medium text-muted-foreground">
                 Client Name *
               </label>
               <Input
@@ -226,7 +226,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
 
             {/* Customer Type */}
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-zinc-300">
+              <label className="block text-sm font-medium text-muted-foreground">
                 Customer Type *
               </label>
               <div className="flex space-x-6">
@@ -237,11 +237,11 @@ export default function EditClientPage({ params }: EditClientPageProps) {
                     value="individual"
                     checked={formData.customer_type === 'individual'}
                     onChange={(e) => handleInputChange('customer_type', e.target.value as 'individual' | 'business')}
-                    className="w-4 h-4 text-green-600 bg-zinc-800 border-zinc-600 focus:ring-green-500"
+                    className="w-4 h-4 text-green-600 bg-[hsl(var(--rpma-surface))] border-[hsl(var(--rpma-border))] focus:ring-green-500"
                   />
                   <div className="flex items-center space-x-2">
-                    <User className="h-4 w-4 text-zinc-400" />
-                    <span className="text-zinc-200">Individual</span>
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-foreground">Individual</span>
                   </div>
                 </label>
                 <label className="flex items-center space-x-2 cursor-pointer">
@@ -251,11 +251,11 @@ export default function EditClientPage({ params }: EditClientPageProps) {
                     value="business"
                     checked={formData.customer_type === 'business'}
                     onChange={(e) => handleInputChange('customer_type', e.target.value as 'individual' | 'business')}
-                    className="w-4 h-4 text-green-600 bg-zinc-800 border-zinc-600 focus:ring-green-500"
+                    className="w-4 h-4 text-green-600 bg-[hsl(var(--rpma-surface))] border-[hsl(var(--rpma-border))] focus:ring-green-500"
                   />
                   <div className="flex items-center space-x-2">
-                    <Building className="h-4 w-4 text-zinc-400" />
-                    <span className="text-zinc-200">Business</span>
+                    <Building className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-foreground">Business</span>
                   </div>
                 </label>
               </div>
@@ -263,7 +263,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
 
             {/* Email */}
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium text-zinc-300">
+              <label htmlFor="email" className="block text-sm font-medium text-muted-foreground">
                 Email Address
               </label>
               <Input
@@ -279,7 +279,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
 
             {/* Phone */}
             <div className="space-y-2">
-              <label htmlFor="phone" className="block text-sm font-medium text-zinc-300">
+              <label htmlFor="phone" className="block text-sm font-medium text-muted-foreground">
                 Phone Number
               </label>
               <Input
@@ -295,11 +295,11 @@ export default function EditClientPage({ params }: EditClientPageProps) {
 
             {/* Address */}
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-zinc-200 border-b border-zinc-700 pb-2">Address Information</h3>
+              <h3 className="text-lg font-semibold text-foreground border-b border-[hsl(var(--rpma-border))] pb-2">Address Information</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label htmlFor="address_street" className="block text-sm font-medium text-zinc-300">
+                  <label htmlFor="address_street" className="block text-sm font-medium text-muted-foreground">
                     Street Address
                   </label>
                   <Input
@@ -314,7 +314,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="address_city" className="block text-sm font-medium text-zinc-300">
+                  <label htmlFor="address_city" className="block text-sm font-medium text-muted-foreground">
                     City
                   </label>
                   <Input
@@ -331,7 +331,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
-                  <label htmlFor="address_state" className="block text-sm font-medium text-zinc-300">
+                  <label htmlFor="address_state" className="block text-sm font-medium text-muted-foreground">
                     State/Region
                   </label>
                   <Input
@@ -346,7 +346,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="address_zip" className="block text-sm font-medium text-zinc-300">
+                  <label htmlFor="address_zip" className="block text-sm font-medium text-muted-foreground">
                     Postal Code
                   </label>
                   <Input
@@ -361,7 +361,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="address_country" className="block text-sm font-medium text-zinc-300">
+                  <label htmlFor="address_country" className="block text-sm font-medium text-muted-foreground">
                     Country
                   </label>
                   <Input
@@ -380,7 +380,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
             {/* Company Name (only for business) */}
             {formData.customer_type === 'business' && (
               <div className="space-y-2">
-                <label htmlFor="company_name" className="block text-sm font-medium text-zinc-300">
+                <label htmlFor="company_name" className="block text-sm font-medium text-muted-foreground">
                   Company Name
                 </label>
                 <Input
@@ -397,7 +397,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
 
             {/* Notes */}
             <div className="space-y-2">
-              <label htmlFor="notes" className="block text-sm font-medium text-zinc-300">
+              <label htmlFor="notes" className="block text-sm font-medium text-muted-foreground">
                 Additional Notes
               </label>
               <Textarea
@@ -412,7 +412,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-end space-x-4 pt-8 border-t border-zinc-700">
+            <div className="flex items-center justify-end space-x-4 pt-8 border-t border-[hsl(var(--rpma-border))]">
               <Button
                 type="button"
                 onClick={handleCancel}
