@@ -43,25 +43,25 @@
     --popover-foreground: 217 33% 17%;
     /* #0A1929 Dark Blue-Gray */
 
-    /* Primary Colors - Dark Slate */
-    --primary: 215 25% 27%;
-    /* #1E293B Primary */
-    --primary-hover: 215 20% 35%;
-    /* #334155 Primary Hover */
-    --primary-active: 222 47% 11%;
-    /* #0F172A Primary Active */
-    --primary-foreground: 210 20% 98%;
-    /* #F5F7FA Light text on primary */
-
-    /* Accent Colors - Teal */
-    --accent: 174 72% 56%;
-    /* #14B8A6 Teal */
-    --accent-hover: 174 77% 46%;
-    /* #0D9488 Teal Hover */
-    --accent-active: 174 84% 38%;
-    /* #0F766E Teal Active */
-    --accent-foreground: 0 0% 100%;
+    /* Primary Colors - Teal (v2 Design System) */
+    --primary: 174 72% 78%;
+    /* #1ad1ba Teal - Primary brand color */
+    --primary-hover: 174 77% 68%;
+    /* #17bca9 Teal Hover */
+    --primary-active: 174 72% 58%;
+    /* #14b09c Teal Active */
+    --primary-foreground: 0 0% 100%;
     /* #FFFFFF White text on teal */
+
+    /* Secondary Colors - Dark Slate */
+    --secondary: 215 25% 27%;
+    /* #1E293B Dark Slate */
+    --secondary-hover: 215 20% 35%;
+    /* #334155 Secondary Hover */
+    --secondary-active: 222 47% 11%;
+    /* #0F172A Secondary Active */
+    --secondary-foreground: 210 20% 98%;
+    /* #F5F7FA Light text on secondary */
 
     /* RPMA Primary Colors - Green */
     --rpma-primary: 147 71% 52%;
@@ -86,8 +86,8 @@
     /* #6B7280 Medium Gray */
 
     /* Status Colors */
-    --success: 142 71% 45%;
-    /* #10B981 Green */
+    --success: 142 76% 45%;
+    /* #22c55e Green - Updated per DESIGNV2.md */
     --warning: 38 92% 50%;
     /* #F59E0B Amber */
     --error: 0 72% 51%;
@@ -146,6 +146,10 @@
     /* 48px */
     --space-16: 4rem;
     /* 64px */
+    --space-18: 4.5rem;
+    /* 72px */
+    --space-20: 5rem;
+    /* 80px */
 
     /* Shadows (5 elevation levels) */
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.06);
@@ -177,25 +181,25 @@
     --popover-foreground: 210 20% 98%;
     /* #F9FAFB Light text */
 
-    /* Primary Colors - Keep same structure */
-    --primary: 215 25% 27%;
-    /* #1E293B Primary */
-    --primary-hover: 215 20% 35%;
-    /* #334155 Primary Hover */
-    --primary-active: 222 47% 11%;
-    /* #0F172A Primary Active */
-    --primary-foreground: 210 20% 98%;
-    /* #F5F7FA Light text */
-
-    /* Accent Colors - Teal (same in dark mode) */
-    --accent: 174 72% 56%;
-    /* #14B8A6 Teal */
-    --accent-hover: 174 77% 46%;
-    /* #0D9488 Teal Hover */
-    --accent-active: 174 84% 38%;
-    /* #0F766E Teal Active */
-    --accent-foreground: 0 0% 100%;
+    /* Primary Colors - Teal (same in dark mode) */
+    --primary: 174 72% 78%;
+    /* #1ad1ba Teal - Primary brand color */
+    --primary-hover: 174 77% 68%;
+    /* #17bca9 Teal Hover */
+    --primary-active: 174 72% 58%;
+    /* #14b09c Teal Active */
+    --primary-foreground: 0 0% 100%;
     /* #FFFFFF White text */
+
+    /* Secondary Colors - Dark Slate (same in dark mode) */
+    --secondary: 215 25% 27%;
+    /* #1E293B Dark Slate */
+    --secondary-hover: 215 20% 35%;
+    /* #334155 Secondary Hover */
+    --secondary-active: 222 47% 11%;
+    /* #0F172A Secondary Active */
+    --secondary-foreground: 210 20% 98%;
+    /* #F5F7FA Light text */
 
     /* RPMA Primary Colors - Green (same in dark mode) */
     --rpma-primary: 147 71% 52%;

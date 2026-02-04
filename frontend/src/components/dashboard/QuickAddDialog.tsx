@@ -200,7 +200,7 @@ export function QuickAddDialog({ isOpen, onClose }: QuickAddDialogProps) {
               type="submit"
               disabled={isSubmitting}
               className="flex-1"
-              style={{ backgroundColor: designTokens.colors.accent }}
+              style={{ backgroundColor: designTokens.colors.primary }}
             >
               {isSubmitting ? 'Création...' : 'Créer'}
             </Button>

@@ -4,15 +4,16 @@
 export const designTokens = {
   // Color palette - v2 Design System (Teal-based)
   colors: {
-    // Primary brand colors (Dark Slate)
-    primary: '#1E293B',
-    primaryHover: '#334155',
-    primaryActive: '#0F172A',
+    // Primary brand colors (Teal - v2 Design System)
+    primary: '#1ad1ba',
+    primaryHover: '#17bca9',
+    primaryActive: '#14b09c',
 
-    // Accent colors (Teal)
-    accent: '#14B8A6',
-    accentHover: '#0D9488',
-    accentActive: '#0F766E',
+    // Secondary colors (Dark Slate)
+    secondary: '#1E293B',
+    secondaryHover: '#334155',
+    secondaryActive: '#0F172A',
+    secondaryForeground: '#F5F7FA',
 
     // Background colors
     background: '#FFFFFF', // Light mode background
@@ -27,11 +28,11 @@ export const designTokens = {
     textSecondary: '#6B7280', // Muted foreground
     textTertiary: '#9CA3AF', // Tertiary text
     
-    // Sidebar specific colors (Urable-style)
-    sidebarBackground: '#1E293B', // Dark Slate for sidebar
-    sidebarActive: '#FFFFFF', // White for active items
+    // Sidebar specific colors
+    sidebarBackground: '#FFFFFF', // White background
+    sidebarActive: '#1ad1ba', // Teal for active items
     sidebarInactive: '#94A3B8', // Light Gray for inactive items
-    sidebarActiveBg: '#334155', // Active background hover
+    sidebarActiveBg: '#e6f9f7', // Teal-light background for active items
 
     // Border colors
     border: '#E5E7EB', // Border (light mode)
@@ -78,6 +79,8 @@ export const designTokens = {
     xl: '32px',  // 8
     '2xl': '48px', // 12
     '3xl': '64px', // 16
+    '4xl': '72px', // 18 - NEW
+    '5xl': '80px', // 20 - NEW
   },
 
   // Border radius
@@ -217,8 +220,8 @@ export const getStatusBadgeVariant = (status: string) => {
 // Common component styles - v2 Design System
 export const componentStyles = {
   card: `bg-card rounded-xl border border-border shadow-md backdrop-blur-sm`,
-  cardHover: `hover:bg-card hover:border-accent hover:shadow-lg transition-all duration-200`,
-  buttonPrimary: `bg-accent hover:bg-accent-hover text-accent-foreground font-semibold shadow-md hover:shadow-lg transition-all duration-200`,
+  cardHover: `hover:bg-card hover:border-primary hover:shadow-lg transition-all duration-200`,
+  buttonPrimary: `bg-primary hover:bg-primary-hover text-primary-foreground font-semibold shadow-md hover:shadow-lg transition-all duration-200`,
   buttonSecondary: `border-border hover:bg-muted hover:text-foreground transition-all duration-200`,
-  input: `bg-background border-border rounded-xl text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-ring focus:border-accent transition-all duration-200`,
+  input: `bg-background border-border rounded-md text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-ring focus:border-primary transition-all duration-200`,
 };

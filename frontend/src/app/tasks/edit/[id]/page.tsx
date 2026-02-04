@@ -133,7 +133,7 @@ export default function EditTaskPage() {
                 <Button
                   variant="outline"
                   onClick={handleCancel}
-                  className="flex items-center gap-2 border-border/60 text-border-light hover:bg-border/20 hover:text-foreground hover:border-accent/50 transition-all duration-200"
+                  className="flex items-center gap-2 border-border/60 text-border-light hover:bg-border/20 hover:text-foreground hover:border-primary/50 transition-all duration-200"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   <span className="hidden sm:inline">Retour à la liste des tâches</span>

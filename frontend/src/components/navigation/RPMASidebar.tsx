@@ -75,7 +75,7 @@ export function RPMASidebar({ onMobileClose, isOpen, onToggle }: { onMobileClose
   return (
     <TooltipProvider delayDuration={0}>
       {isOpen && (
-        <aside className="hidden lg:flex flex-col bg-white border-r border-gray-200 flex-shrink-0 h-full overflow-y-auto w-72">
+        <aside className="hidden lg:flex flex-col bg-white border-r border-gray-200 flex-shrink-0 h-full overflow-y-auto w-[280px]">
           <div className="h-16 flex items-center justify-between px-4 border-b border-gray-50">
             <div className="text-2xl font-bold text-gray-400 tracking-tight">
               rpma
@@ -123,7 +123,7 @@ export function RPMASidebar({ onMobileClose, isOpen, onToggle }: { onMobileClose
           <Link href="/messages">
             <Button
               className={cn(
-                'w-full flex items-center justify-center space-x-2 border border-border text-foreground rounded-lg py-2 mb-6 hover:bg-muted/10 font-medium transition-colors',
+                'w-full flex items-center justify-center space-x-2 border border-border text-foreground rounded-[6px] py-2 mb-6 hover:bg-muted/10 font-medium transition-colors',
                 isActive('/messages') ? 'bg-muted/10' : ''
               )}
               onClick={() => onMobileClose?.()}
@@ -183,7 +183,7 @@ export function RPMAMobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClos
             className="fixed inset-0 bg-black/20 backdrop-blur-sm"
             onClick={onClose}
           />
-          <div className="fixed left-0 top-0 bottom-0 w-72 bg-white overflow-y-auto transform transition-transform duration-300 ease-in-out">
+            <div className="fixed left-0 top-0 bottom-0 w-[280px] bg-white overflow-y-auto transform transition-transform duration-300 ease-in-out">
             <div className="h-16 flex items-center justify-between px-4 border-b border-gray-50 bg-white">
               <div className="text-2xl font-bold text-gray-400 tracking-tight">
                 rpma
@@ -226,7 +226,7 @@ export function RPMAMobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClos
               <Link href="/messages">
                 <Button
                   className={cn(
-                    'w-full flex items-center justify-center space-x-2 border border-border text-foreground rounded-lg py-2 mb-6 hover:bg-muted/10 font-medium transition-colors',
+                    'w-full flex items-center justify-center space-x-2 border border-border text-foreground rounded-[6px] py-2 mb-6 hover:bg-muted/10 font-medium transition-colors',
                     isActive('/messages') ? 'bg-muted/10' : ''
                   )}
                   onClick={onClose}

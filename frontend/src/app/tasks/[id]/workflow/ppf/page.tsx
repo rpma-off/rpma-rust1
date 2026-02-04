@@ -128,10 +128,10 @@ export default function PPFWorkflowPage() {
         transition={{ duration: 0.6 }}
       >
         <div className="flex items-center justify-center space-x-3 mb-4">
-          <div className="p-3 bg-accent/10 rounded-full">
-            <Shield className="h-8 w-8 text-accent" />
+          <div className="p-3 bg-primary/10 rounded-full">
+            <Shield className="h-8 w-8 text-primary" />
           </div>
-          <Sparkles className="h-6 w-6 text-accent animate-pulse" />
+          <Sparkles className="h-6 w-6 text-primary animate-pulse" />
         </div>
         <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-foreground to-border-light bg-clip-text text-transparent mb-3">
           PPF Installation Workflow
@@ -162,7 +162,7 @@ export default function PPFWorkflowPage() {
                   getStatusColor(status)
                 } ${
                   isAccessible
-                    ? 'hover:shadow-2xl hover:shadow-accent/10 cursor-pointer border-accent/20 hover:border-accent/40'
+                    ? 'hover:shadow-2xl hover:shadow-accent/10 cursor-pointer border-primary/20 hover:border-primary/40'
                     : 'opacity-60 cursor-not-allowed'
                 } backdrop-blur-sm`}
                 onClick={() => isAccessible && router.push(`/tasks/${taskId}/workflow/ppf/${stepConfig.path}`)}
@@ -177,7 +177,7 @@ export default function PPFWorkflowPage() {
 
                 <CardHeader className="relative z-10 pb-4">
                   <div className="flex items-start justify-between mb-3">
-                    <CardTitle className="text-xl md:text-2xl text-foreground group-hover:text-accent transition-colors duration-300">
+                    <CardTitle className="text-xl md:text-2xl text-foreground group-hover:text-primary transition-colors duration-300">
                       {stepConfig.title}
                     </CardTitle>
                     <div className={`p-2 rounded-full transition-all duration-300 ${
@@ -199,8 +199,8 @@ export default function PPFWorkflowPage() {
                     disabled={!isAccessible}
                     className={`w-full h-12 text-base font-medium transition-all duration-300 ${
                       status === 'current'
-                        ? 'bg-accent hover:bg-accent/90 shadow-lg shadow-accent/25'
-                        : 'hover:bg-muted border-border hover:border-accent/50'
+                        ? 'bg-primary hover:bg-primary/90 shadow-lg shadow-accent/25'
+                        : 'hover:bg-muted border-border hover:border-primary/50'
                     }`}
                     variant={status === 'current' ? 'default' : 'outline'}
                   >

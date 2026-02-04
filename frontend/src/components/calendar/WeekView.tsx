@@ -89,7 +89,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
                 `}
                 style={{
                   color: day.isToday ? '#FFFFFF' : designTokens.colors.textPrimary,
-                  backgroundColor: day.isToday ? designTokens.colors.accent : ''
+                  backgroundColor: day.isToday ? designTokens.colors.primary : ''
                 }}
               >
                 {day.dayNumber}

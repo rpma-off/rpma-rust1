@@ -92,7 +92,7 @@ const TaskCard = React.memo(({
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.2 }}
     >
-      <Card className="hover:shadow-sm transition-all duration-200 border border-border/20 hover:border-accent/30 bg-white">
+      <Card className="hover:shadow-sm transition-all duration-200 border border-border/20 hover:border-primary/30 bg-white rounded-[6px]">
         <CardContent className="p-4 md:p-5">
           <div className="flex flex-col gap-4">
             {/* Header with Title and Status */}
@@ -159,7 +159,7 @@ const TaskCard = React.memo(({
                     {task.ppf_zones.slice(0, 3).map((zone, index) => (
                       <span
                         key={index}
-                        className="inline-block px-2 py-1 bg-accent/10 text-accent text-xs rounded-md border border-accent/30"
+                        className="inline-block px-2 py-1 bg-primary/10 text-primary text-xs rounded-md border border-primary/30"
                       >
                         {zone}
                       </span>
@@ -499,7 +499,7 @@ const debouncedSearchTerm = useDebounce(searchTerm, 300);
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2 }}
-      className="bg-white border border-border/20 rounded-xl p-4 mb-6"
+      className="bg-white border border-border/20 rounded-[6px] p-4 mb-6"
     >
       <div className="flex flex-col gap-4">
         {/* Search Row */}
@@ -510,13 +510,13 @@ const debouncedSearchTerm = useDebounce(searchTerm, 300);
               placeholder="Rechercher tâches, véhicules, clients..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-muted/30 border-border focus:border-accent transition-all duration-200"
+              className="pl-10 bg-muted/30 border-border focus:border-primary transition-all duration-200"
             />
           </div>
 
            {/* View Toggle */}
            <div className="flex items-center gap-2 sm:ml-auto">
-             <div className="flex items-center border border-border/40 rounded-lg p-1 bg-muted/10">
+              <div className="flex items-center border border-border/40 rounded-[6px] p-1 bg-muted/10">
                <Button
                  variant={viewMode === 'cards' ? 'secondary' : 'ghost'}
                  size="sm"
@@ -563,7 +563,7 @@ const debouncedSearchTerm = useDebounce(searchTerm, 300);
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 bg-white border border-border/20 rounded-lg focus:border-accent focus:outline-none text-foreground text-sm hover:bg-muted/10 transition-colors min-w-0"
+              className="px-3 py-2 bg-white border border-border/20 rounded-[6px] focus:border-primary focus:outline-none text-foreground text-sm hover:bg-muted/10 transition-colors min-w-0"
             >
               <option value="all">📋 Tous les statuts</option>
               <option value="pending">⏳ En attente</option>
@@ -575,7 +575,7 @@ const debouncedSearchTerm = useDebounce(searchTerm, 300);
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="px-3 py-2 bg-white border border-border/20 rounded-lg focus:border-accent focus:outline-none text-foreground text-sm hover:bg-muted/10 transition-colors min-w-0"
+              className="px-3 py-2 bg-white border border-border/20 rounded-[6px] focus:border-primary focus:outline-none text-foreground text-sm hover:bg-muted/10 transition-colors min-w-0"
             >
               <option value="all">📅 Toutes les dates</option>
                <option value="today">📆 Aujourd&apos;hui</option>
@@ -587,7 +587,7 @@ const debouncedSearchTerm = useDebounce(searchTerm, 300);
             <select
               value={technicianFilter}
               onChange={(e) => setTechnicianFilter(e.target.value)}
-              className="px-3 py-2 bg-white border border-border/20 rounded-lg focus:border-accent focus:outline-none text-foreground text-sm hover:bg-muted/10 transition-colors min-w-0"
+              className="px-3 py-2 bg-white border border-border/20 rounded-[6px] focus:border-primary focus:outline-none text-foreground text-sm hover:bg-muted/10 transition-colors min-w-0"
             >
               <option value="all">👤 Tous les techniciens</option>
               {technicians.map((tech) => (
@@ -602,15 +602,15 @@ const debouncedSearchTerm = useDebounce(searchTerm, 300);
               placeholder="🔍 Zone PPF"
               value={ppfZoneFilter === 'all' ? '' : ppfZoneFilter}
               onChange={(e) => setPpfZoneFilter(e.target.value || 'all')}
-              className="px-3 py-2 bg-white border border-border/20 rounded-lg focus:border-accent focus:outline-none text-foreground text-sm placeholder-muted-foreground hover:bg-muted/10 transition-colors min-w-0 flex-1 sm:flex-none sm:w-32"
+              className="px-3 py-2 bg-white border border-border/20 rounded-[6px] focus:border-primary focus:outline-none text-foreground text-sm placeholder-muted-foreground hover:bg-muted/10 transition-colors min-w-0 flex-1 sm:flex-none sm:w-32"
             />
           </div>
 
           {/* Actions */}
           <div className="flex items-center gap-2 flex-wrap">
             {activeFiltersCount > 0 && (
-              <div className="flex items-center gap-2 px-3 py-1 bg-accent/10 border border-accent/30 rounded-full">
-                <span className="text-xs text-accent font-medium">
+              <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 border border-primary/30 rounded-[12px]">
+                <span className="text-xs text-primary font-medium">
                   {activeFiltersCount} filtre{activeFiltersCount > 1 ? 's' : ''} actif{activeFiltersCount > 1 ? 's' : ''}
                 </span>
                 <button
@@ -621,7 +621,7 @@ const debouncedSearchTerm = useDebounce(searchTerm, 300);
                     setPpfZoneFilter('all');
                     setSearchTerm('');
                   }}
-                  className="text-accent hover:text-accent/80 text-xs font-medium ml-1"
+                  className="text-primary hover:text-primary/80 text-xs font-medium ml-1"
                   title="Réinitialiser les filtres"
                 >
                   ✕
@@ -994,7 +994,7 @@ export default function TasksPage() {
         <PageHeader
           title="Tâches"
           subtitle="Gestion des tâches de protection PPF"
-          icon={<CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />}
+          icon={<CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />}
           actions={
             <>
               <Button
@@ -1011,7 +1011,7 @@ export default function TasksPage() {
                 onClick={() => router.push('/tasks/new')}
                 variant="default"
                 size="sm"
-                className="flex items-center gap-2 bg-accent hover:bg-accent/90 text-black font-semibold"
+                className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
               >
                 <Plus className="w-4 h-4" />
                 <span className="hidden sm:inline">Nouvelle</span>
@@ -1133,12 +1133,12 @@ export default function TasksPage() {
             ) : filteredTasks.length === 0 ? (
               // Empty state
               <div className="text-center py-16">
-                <div className="bg-white border border-border/20 rounded-xl p-8 mb-8">
+                <div className="bg-white border border-border/20 rounded-[6px] p-8 mb-8">
                   <div className="relative mb-8 inline-block">
-                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-accent/10 border border-accent/30">
-                      <Shield className="h-10 w-10 text-accent" />
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 border border-primary/30">
+                      <Shield className="h-10 w-10 text-primary" />
                     </div>
-                    <div className="absolute -top-1 -right-1 w-6 h-6 bg-accent rounded-full flex items-center justify-center shadow-sm">
+                    <div className="absolute -top-1 -right-1 w-6 h-6 bg-primary rounded-full flex items-center justify-center shadow-sm">
                       <Plus className="h-3 w-3 text-black" />
                     </div>
                   </div>
@@ -1158,7 +1158,7 @@ export default function TasksPage() {
                     {!searchTerm && statusFilter === 'all' && dateFilter === 'all' && technicianFilter === 'all' && ppfZoneFilter === 'all' && (
                       <Button
                         onClick={() => router.push('/tasks/new')}
-                        className="bg-accent hover:bg-accent/90 text-black font-semibold px-6 py-3 rounded-xl hover:shadow-sm transition-all duration-200"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6 py-3 rounded-[6px] hover:shadow-sm transition-all duration-200"
                         size="lg"
                       >
                         <Plus className="w-5 h-5 mr-2" />
@@ -1175,7 +1175,7 @@ export default function TasksPage() {
                           setSearchTerm('');
                         }}
                         variant="outline"
-                        className="border-border/60 text-muted-foreground hover:bg-muted/10 hover:text-foreground px-6 py-3 rounded-xl font-medium transition-all duration-200"
+                        className="border-border/60 text-muted-foreground hover:bg-muted/10 hover:text-foreground px-6 py-3 rounded-[6px] font-medium transition-all duration-200"
                         size="lg"
                       >
                         Effacer les filtres
@@ -1184,7 +1184,7 @@ export default function TasksPage() {
                     <Button
                       onClick={() => router.push('/tasks')}
                       variant="ghost"
-                      className="text-muted-foreground hover:text-foreground hover:bg-muted/10 px-6 py-3 rounded-xl font-medium transition-all duration-200"
+                      className="text-muted-foreground hover:text-foreground hover:bg-muted/10 px-6 py-3 rounded-[6px] font-medium transition-all duration-200"
                       size="lg"
                     >
                       Voir toutes les tâches
@@ -1197,16 +1197,16 @@ export default function TasksPage() {
                   <div className="mt-12 pt-8 border-t border-border/10">
                     <p className="text-sm text-muted-foreground mb-6">💡 Comment commencer</p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
-                      <div className="bg-muted/5 rounded-lg p-4 border border-border/10 hover:border-accent/30 transition-colors">
-                        <div className="text-accent font-semibold mb-2">1. Ajouter un client</div>
-                         <p className="text-xs text-muted-foreground">Créez d&apos;abord votre base de données clients dans la section Clients.</p>
+                      <div className="bg-muted/5 rounded-[6px] p-4 border border-border/10 hover:border-primary/30 transition-colors">
+                        <div className="text-primary font-semibold mb-2">1. Ajouter un client</div>
+                        <p className="text-xs text-muted-foreground">Créez d&apos;abord un client dans l&apos;application.</p>
                       </div>
-                       <div className="bg-muted/5 rounded-lg p-4 border border-border/10 hover:border-accent/30 transition-colors">
-                        <div className="text-accent font-semibold mb-2">2. Planifier la tâche</div>
-                        <p className="text-xs text-muted-foreground">Définissez les zones PPF, la date et assignez un technicien.</p>
+                      <div className="bg-muted/5 rounded-[6px] p-4 border border-border/10 hover:border-primary/30 transition-colors">
+                        <div className="text-primary font-semibold mb-2">2. Planifier la tâche</div>
+                        <p className="text-xs text-muted-foreground">Ajoutez une nouvelle tâche et attribuez-la.</p>
                       </div>
-                      <div className="bg-muted/5 rounded-lg p-4 border border-border/10 hover:border-accent/30 transition-colors">
-                        <div className="text-accent font-semibold mb-2">3. Suivre l&apos;avancement</div>
+                      <div className="bg-muted/5 rounded-[6px] p-4 border border-border/10 hover:border-primary/30 transition-colors">
+                        <div className="text-primary font-semibold mb-2">3. Suivre l&apos;avancement</div>
                         <p className="text-xs text-muted-foreground">Utilisez les checklists et photos pour documenter le travail.</p>
                       </div>
                     </div>

@@ -110,7 +110,7 @@ export function CalendarDashboard() {
         onClick={toggleQuickAdd}
         className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg"
         style={{
-          backgroundColor: designTokens.colors.accent,
+          backgroundColor: designTokens.colors.primary,
           color: 'white',
         }}
         aria-label="Ajouter une nouvelle tâche"

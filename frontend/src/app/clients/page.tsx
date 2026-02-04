@@ -152,7 +152,7 @@ export default function ClientsPage() {
         actions={
           <Link
             href="/clients/new"
-            className="bg-accent hover:bg-accent/90 text-black px-4 sm:px-6 py-3 rounded-xl flex items-center justify-center space-x-2 transition-all duration-200 font-semibold w-full lg:w-auto hover:shadow-sm"
+            className="bg-accent hover:bg-accent/90 text-black px-4 sm:px-6 py-3 rounded-[6px] flex items-center justify-center space-x-2 transition-all duration-200 font-semibold w-full lg:w-auto hover:shadow-sm"
           >
             <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
             <span className="font-medium">Ajouter un client</span>
@@ -189,7 +189,7 @@ export default function ClientsPage() {
       />
 
       {/* Search and Filters */}
-      <div className="bg-white border border-border/20 rounded-xl p-4 mb-6">
+      <div className="bg-white border border-border/20 rounded-[6px] p-4 mb-6">
         <div className="flex flex-col gap-4">
           {/* Search Row */}
           <div className="flex flex-col sm:flex-row gap-3">
@@ -200,7 +200,7 @@ export default function ClientsPage() {
                 placeholder="Rechercher par nom, email, entreprise..."
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-muted/30 border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:border-accent transition-all duration-200"
+                className="w-full pl-12 pr-4 py-3 bg-muted/30 border border-border rounded-[6px] text-foreground placeholder-muted-foreground focus:outline-none focus:border-accent transition-all duration-200"
               />
             </div>
           </div>
@@ -215,7 +215,7 @@ export default function ClientsPage() {
                   onChange={(e) => handleFilterChange({
                     customer_type: e.target.value as 'individual' | 'business' | undefined
                   })}
-                  className="pl-10 pr-8 py-2.5 bg-white border border-border/20 rounded-lg text-foreground text-sm focus:outline-none focus:border-accent transition-all duration-200 appearance-none cursor-pointer hover:bg-muted/10"
+                  className="pl-10 pr-8 py-2.5 bg-white border border-border/20 rounded-[6px] text-foreground text-sm focus:outline-none focus:border-accent transition-all duration-200 appearance-none cursor-pointer hover:bg-muted/10"
                 >
                   <option value="">🏢 Tous les types</option>
                   <option value="individual">👤 Particuliers</option>
@@ -234,7 +234,7 @@ export default function ClientsPage() {
                       sort_order: sortOrder as 'asc' | 'desc'
                     });
                   }}
-                  className="pl-10 pr-8 py-2.5 bg-white border border-border/20 rounded-lg text-foreground text-sm focus:outline-none focus:border-accent transition-all duration-200 appearance-none cursor-pointer hover:bg-muted/10"
+                  className="pl-10 pr-8 py-2.5 bg-white border border-border/20 rounded-[6px] text-foreground text-sm focus:outline-none focus:border-accent transition-all duration-200 appearance-none cursor-pointer hover:bg-muted/10"
                 >
                   <option value="name_asc">📝 Nom A-Z</option>
                   <option value="name_desc">📝 Nom Z-A</option>
@@ -258,9 +258,9 @@ export default function ClientsPage() {
 
       {/* Error Message */}
       {error && (
-        <div className="bg-white border border-border/20 rounded-xl p-6">
+        <div className="bg-white border border-border/20 rounded-[6px] p-6">
           <div className="flex items-start gap-4">
-            <div className="p-2 bg-error/10 border border-error/30 rounded-lg">
+            <div className="p-2 bg-error/10 border border-error/30 rounded-[6px]">
               <AlertCircle className="h-5 w-5 text-error" />
             </div>
             <div className="flex-1">
@@ -273,7 +273,7 @@ export default function ClientsPage() {
 
       {/* Clients List */}
       <PullToRefresh onRefresh={handleRefresh}>
-        <div className="bg-white border border-border/20 rounded-xl p-6">
+        <div className="bg-white border border-border/20 rounded-[6px] p-6">
           {loading && clients.length === 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -304,7 +304,7 @@ export default function ClientsPage() {
       {/* Loading overlay */}
       {loading && clients.length > 0 && (
         <div className="fixed inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white border border-border/20 rounded-xl p-6 shadow-lg">
+          <div className="bg-white border border-border/20 rounded-[6px] p-6 shadow-lg">
             <div className="flex items-center gap-4">
               <div className="relative">
                 <div className="w-8 h-8 border-3 border-border rounded-full animate-spin border-t-accent"></div>

@@ -9,27 +9,27 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-accent text-accent-foreground hover:bg-accent-hover active:bg-accent-active hover:brightness-110 shadow-sm hover:shadow-md",
+        default: "bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-active hover:brightness-110 shadow-sm hover:shadow-md",
         destructive:
           "bg-destructive text-destructive-foreground hover:brightness-110 focus-visible:ring-destructive/20 shadow-sm hover:shadow-md",
         outline:
-          "border-2 border-border bg-transparent hover:bg-muted text-foreground hover:border-accent shadow-sm hover:shadow-md",
+          "border-2 border-border bg-transparent hover:bg-primary/10 text-foreground hover:border-primary shadow-sm hover:shadow-md",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-sm hover:shadow-md",
         ghost:
           "hover:bg-muted hover:text-foreground text-muted-foreground",
-        link: "text-accent underline-offset-4 hover:underline hover:text-accent-hover",
+        link: "text-primary underline-offset-4 hover:underline hover:text-primary-hover",
       },
       size: {
-        default: "h-11 px-6 py-3 has-[>svg]:px-4",
-        sm: "h-9 rounded-md gap-1.5 px-4 text-sm has-[>svg]:px-3",
-        lg: "h-12 rounded-lg px-8 has-[>svg]:px-6 text-lg",
-        xl: "h-14 rounded-xl px-10 has-[>svg]:px-8 text-xl",
-        icon: "size-11",
-        "icon-sm": "size-9",
-        "icon-lg": "size-12",
-        "touch": "min-h-[44px] px-6 py-3 has-[>svg]:px-4", // WCAG minimum touch target
-        "touch-lg": "min-h-[48px] px-8 py-4 has-[>svg]:px-6 text-lg", // Larger touch target
+        default: "px-4 py-2 rounded-[6px] has-[>svg]:px-4",
+        sm: "px-3 py-1.5 rounded-sm text-sm has-[>svg]:px-3",
+        lg: "px-6 py-3 rounded-lg has-[>svg]:px-6 text-lg",
+        xl: "px-8 py-4 rounded-xl has-[>svg]:px-8 text-xl",
+        icon: "size-10 rounded-[6px]",
+        "icon-sm": "size-8 rounded-[6px]",
+        "icon-lg": "size-12 rounded-[6px]",
+        "touch": "min-h-[44px] px-6 py-2 rounded-[6px] has-[>svg]:px-4", // WCAG minimum touch target
+        "touch-lg": "min-h-[48px] px-8 py-3 rounded-[6px] has-[>svg]:px-6 text-lg", // Larger touch target
       },
     },
     defaultVariants: {

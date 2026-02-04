@@ -103,7 +103,8 @@ const config: Config = {
       
       spacing: {
         // Existing custom spacing
-        '18': '4.5rem',
+        '18': 'var(--space-18)', // 72px - v2 Design System
+        '20': 'var(--space-20)', // 80px - v2 Design System
         '88': '22rem',
         '112': '28rem',
         '128': '32rem',

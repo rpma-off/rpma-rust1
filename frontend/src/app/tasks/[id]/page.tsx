@@ -150,7 +150,7 @@ export default function TaskDetailPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           <p className="text-foreground">Chargement des détails de la tâche...</p>
         </div>
       </div>
@@ -169,7 +169,7 @@ export default function TaskDetailPage() {
           <Button
             onClick={() => router.back()}
             variant="outline"
-            className="border-border text-border-light hover:text-foreground hover:border-accent"
+            className="border-border text-border-light hover:text-foreground hover:border-primary"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Retour
@@ -187,7 +187,7 @@ export default function TaskDetailPage() {
           <Button
             onClick={() => router.back()}
             variant="outline"
-            className="border-border text-border-light hover:text-foreground hover:border-accent"
+            className="border-border text-border-light hover:text-foreground hover:border-primary"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Retour
@@ -210,7 +210,7 @@ export default function TaskDetailPage() {
                onClick={() => router.back()}
                variant="ghost"
                size="sm"
-               className="text-border-light hover:text-foreground hover:bg-border/20 border border-border/30 hover:border-accent/50 transition-all duration-200"
+               className="text-border-light hover:text-foreground hover:bg-border/20 border border-border/30 hover:border-primary/50 transition-all duration-200"
              >
                <ArrowLeft className="w-4 h-4 mr-2" />
                <span className="hidden sm:inline">Retour</span>
@@ -347,9 +347,9 @@ export default function TaskDetailPage() {
                </div>
 
                {/* Progress Indicator - Mobile */}
-               <div className="block sm:hidden text-center min-w-0 p-3 bg-accent/10 rounded-lg border border-accent/20">
-                 <p className="text-xs text-accent uppercase tracking-wide font-medium mb-1">Statut</p>
-                 <p className="text-sm font-semibold text-accent">
+               <div className="block sm:hidden text-center min-w-0 p-3 bg-primary/10 rounded-lg border border-primary/20">
+                 <p className="text-xs text-primary uppercase tracking-wide font-medium mb-1">Statut</p>
+                 <p className="text-sm font-semibold text-primary">
                    {task.status === 'completed' ? 'Terminée' :
                     task.status === 'in_progress' ? 'En cours' :
                     task.status === 'pending' ? 'En attente' : 'Brouillon'}
@@ -401,7 +401,7 @@ export default function TaskDetailPage() {
                     <p className="text-xs text-border-light">Zones PPF</p>
                   </div>
                   <div className="p-3 bg-background/50 rounded-lg">
-                    <p className="text-lg font-bold text-accent">
+                    <p className="text-lg font-bold text-primary">
                       {task.status === 'completed' ? '100%' : '0%'}
                     </p>
                     <p className="text-xs text-border-light">Progression</p>

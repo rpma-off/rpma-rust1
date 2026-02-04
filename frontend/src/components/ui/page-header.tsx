@@ -20,7 +20,7 @@ export function PageHeader({ title, subtitle, icon, actions, stats, className, c
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
           <div className="flex items-start gap-3 flex-1">
             {icon && (
-              <div className="shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-accent/10 border border-accent/30 rounded-lg flex items-center justify-center">
+              <div className="shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-accent/10 border border-accent/30 rounded-[6px] flex items-center justify-center">
                 {icon}
               </div>
             )}
@@ -108,7 +108,7 @@ export function StatCard({ value, label, icon: Icon, color = 'accent', trend, cl
   };
 
   return (
-    <div className={cn('p-4 rounded-lg bg-muted/10 border border-border/10 hover:border-border/20 hover:shadow-sm transition-all duration-200', className)}>
+    <div className={cn('p-4 rounded-[6px] bg-muted/10 border border-border/10 hover:border-border/20 hover:shadow-sm transition-all duration-200', className)}>
       <div className="flex items-center justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="text-xs sm:text-sm text-muted-foreground font-medium mb-1">
@@ -119,7 +119,7 @@ export function StatCard({ value, label, icon: Icon, color = 'accent', trend, cl
           </div>
         </div>
         {Icon && (
-          <div className={cn('p-2 rounded-lg flex-shrink-0', colorClasses[color])}>
+          <div className={cn('p-2 rounded-[6px] flex-shrink-0', colorClasses[color])}>
             <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
         )}

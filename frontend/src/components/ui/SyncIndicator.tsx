@@ -76,82 +76,62 @@ export function SyncIndicator() {
               <button
                 onClick={handleSyncNow}
                 disabled={status?.isRunning || !status?.isOnline}
-                className="flex items-center gap-1 px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center gap-1 px-3 py-1 text-primary bg-primary/10 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <RefreshCw className={`h-3 w-3 ${status?.isRunning ? 'animate-spin' : ''}`} />
                 Synchroniser
               </button>
             </div>
 
-            <div className="space-y-3">
-              {/* Connection status */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Connexion:</span>
-                <div className="flex items-center gap-2">
-                  {status?.isOnline ? (
-                    <>
-                      <Wifi className="h-4 w-4 text-green-500" />
-                      <span className="text-sm text-green-600">En ligne</span>
-                    </>
-                  ) : (
-                    <>
-                      <WifiOff className="h-4 w-4 text-red-500" />
-                      <span className="text-sm text-red-600">Hors ligne</span>
-                    </>
-                  )}
+            {/* Last sync */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Dernière sync:</span>
+              <span className="text-sm text-foreground">
+                {status?.lastSync
+                  ? status.lastSync.toLocaleString('fr-FR')
+                  : 'Jamais'
+                }
+              </span>
+            </div>
+
+            {/* Pending operations */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Opérations en attente:</span>
+              <span className={`text-sm font-medium ${
+                (status?.pendingOperations ?? 0) > 0 ? 'text-orange-600' : 'text-green-600'
+              }`}>
+                {status?.pendingOperations ?? 0}
+              </span>
+            </div>
+
+            {/* Errors */}
+            {status?.errors && status.errors.length > 0 && (
+              <div className="border-t border-gray-200 pt-3">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-red-800 mb-1">Erreurs de synchronisation:</p>
+                    <ul className="text-xs text-red-700 space-y-1">
+                      {status.errors.map((error: string, index: number) => (
+                        <li key={index}>• {error}</li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               </div>
+            )}
 
-              {/* Last sync */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Dernière sync:</span>
-                <span className="text-sm text-foreground">
-                  {status?.lastSync
-                    ? status.lastSync.toLocaleString('fr-FR')
-                    : 'Jamais'
-                  }
-                </span>
-              </div>
-
-              {/* Pending operations */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Opérations en attente:</span>
-                <span className={`text-sm font-medium ${
-                  (status?.pendingOperations ?? 0) > 0 ? 'text-orange-600' : 'text-green-600'
-                }`}>
-                  {status?.pendingOperations ?? 0}
-                </span>
-              </div>
-
-              {/* Errors */}
-              {status?.errors && status.errors.length > 0 && (
-               <div className="border-t border-gray-200 pt-3">
-                 <div className="flex items-start gap-2">
-                   <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                   <div>
-                     <p className="text-sm font-medium text-red-800 mb-1">Erreurs de synchronisation:</p>
-                     <ul className="text-xs text-red-700 space-y-1">
-                        {status.errors.map((error: string, index: number) => (
-                         <li key={index}>• {error}</li>
-                       ))}
-                     </ul>
-                   </div>
-                 </div>
-               </div>
-             )}
-
-             {/* Success message */}
-             {status?.isOnline && status?.errors && status.errors.length === 0 && !status.isRunning && (
+            {/* Success message */}
+            {status?.isOnline && status?.errors && status.errors.length === 0 && !status.isRunning && (
               <div className="flex items-center gap-2 text-green-600">
                 <CheckCircle className="h-4 w-4" />
                 <span className="text-sm">Synchronisation active</span>
               </div>
             )}
-            </div>
 
             {/* Keyboard shortcuts hint */}
             <div className="mt-4 pt-3 border-t border-gray-200">
-              <p className="text-xs text-border">
+              <p className="text-xs text-muted-foreground">
                 💡 Cliquez sur &quot;Synchroniser&quot; ou utilisez Ctrl+S pour forcer la sync
               </p>
             </div>

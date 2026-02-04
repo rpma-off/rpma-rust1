@@ -50,7 +50,7 @@ export default function NewTaskPage() {
                 <Button
                   variant="outline"
                   onClick={handleCancel}
-                  className="flex items-center gap-2 border-border/60 text-border-light hover:bg-border/20 hover:text-foreground hover:border-accent/50 transition-all duration-200"
+                  className="flex items-center gap-2 border-border/60 text-border-light hover:bg-border/20 hover:text-foreground hover:border-primary/50 transition-all duration-200"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   <span className="hidden sm:inline">Retour à la liste des tâches</span>
@@ -69,8 +69,8 @@ export default function NewTaskPage() {
 
               {/* Title and Description */}
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-accent/20 rounded-lg">
-                  <svg className="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-3 bg-primary/20 rounded-lg">
+                  <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                 </div>

@@ -274,7 +274,7 @@ export function FilterDrawer({ isOpen, onClose }: FilterDrawerProps) {
               handleDateRangeChange();
               onClose();
             }}
-            style={{ backgroundColor: designTokens.colors.accent }}
+            style={{ backgroundColor: designTokens.colors.primary }}
           >
             Appliquer
           </Button>

@@ -140,20 +140,20 @@ export function DesktopTable<T extends Record<string, unknown>>({
       <div className="flex gap-4">
         {searchable && (
           <div className="relative flex-1">
-            <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+             <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
               placeholder="Rechercher..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+               value={searchTerm}
+               onChange={(e) => setSearchTerm(e.target.value)}
+               className="w-full pl-10 pr-4 py-2 text-xs border border-input rounded focus:ring-2 focus:ring-ring focus:border-ring"
+             />
           </div>
         )}
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto border border-gray-200 rounded-lg">
+       <div className="overflow-x-auto border border-input rounded-lg bg-card">
         <table
           ref={tableRef}
           className="min-w-full divide-y divide-gray-200"
@@ -162,10 +162,10 @@ export function DesktopTable<T extends Record<string, unknown>>({
           role="table"
           aria-label="Data table"
         >
-          <thead className="bg-gray-50">
+           <thead className="bg-muted/10">
             <tr>
               {onRowSelect && (
-                <th className="px-6 py-3 text-left text-xs font-medium text-border uppercase tracking-wider">
+                <th                    className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   <span className="sr-only">Sélection</span>
                 </th>
               )}
@@ -181,20 +181,20 @@ export function DesktopTable<T extends Record<string, unknown>>({
                     <span>{column.label}</span>
 
                     {column.sortable && (
-                      <button
-                        onClick={() => handleSort(String(column.key))}
-                        className="flex flex-col hover:text-border-light"
-                        aria-label={`Trier par ${column.label}`}
-                      >
-                        <ChevronUp
-                          size={12}
-                           className={sortColumn === String(column.key) && sortDirection === 'asc' ? 'text-blue-500' : 'text-gray-300'}
-                        />
-                        <ChevronDown
-                          size={12}
-                           className={sortColumn === String(column.key) && sortDirection === 'desc' ? 'text-blue-500' : 'text-gray-300'}
-                        />
-                      </button>
+                       <button
+                         onClick={() => handleSort(String(column.key))}
+                         className="flex flex-col hover:text-foreground"
+                         aria-label={`Trier par ${column.label}`}
+                       >
+                         <ChevronUp
+                           size={12}
+                            className={sortColumn === String(column.key) && sortDirection === 'asc' ? 'text-accent' : 'text-muted-foreground'}
+                           />
+                         <ChevronDown
+                           size={12}
+                            className={sortColumn === String(column.key) && sortDirection === 'desc' ? 'text-accent' : 'text-muted-foreground'}
+                           />
+                       </button>
                     )}
 
                     {column.filterable && (
@@ -230,11 +230,11 @@ export function DesktopTable<T extends Record<string, unknown>>({
                   data-row-index={index}
                   onClick={() => handleRowClick(item, index)}
                   className={`${
-                    onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''
+                     onRowClick ? 'cursor-pointer hover:bg-muted/10' : ''
                   } ${
-                    focusedRowIndex === index ? 'bg-blue-50 ring-2 ring-blue-500 ring-inset' : ''
+                     focusedRowIndex === index ? 'bg-accent/10 ring-2 ring-accent ring-inset' : ''
                   } ${
-                    isRowSelected(item) ? 'bg-blue-100' : ''
+                     isRowSelected(item) ? 'bg-accent' : ''
                   } transition-colors`}
                   role="row"
                   tabIndex={-1}
@@ -245,7 +245,7 @@ export function DesktopTable<T extends Record<string, unknown>>({
                         type="checkbox"
                         checked={isRowSelected(item)}
                         onChange={() => handleRowSelect(item)}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                         className="h-4 w-4 text-accent focus:ring-accent border-input rounded"
                         onClick={(e) => e.stopPropagation()}
                       />
                     </td>

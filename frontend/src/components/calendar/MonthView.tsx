@@ -115,7 +115,7 @@ export const MonthView: React.FC<MonthViewProps> = ({
                 `}
                 style={{
                   color: isToday ? '#FFFFFF' : (day.isCurrentMonth ? designTokens.colors.textPrimary : designTokens.colors.textTertiary),
-                  backgroundColor: isToday ? designTokens.colors.accent : ''
+                  backgroundColor: isToday ? designTokens.colors.primary : ''
                 }}
               >
                 {day.date.getDate()}
@@ -133,7 +133,7 @@ export const MonthView: React.FC<MonthViewProps> = ({
                 ))}
                 {day.tasks.length > 4 && (
                   <div
-                    className="text-xs text-center py-1 font-medium cursor-pointer hover:text-accent"
+                    className="text-xs text-center py-1 font-medium cursor-pointer hover:text-primary"
                     style={{ color: designTokens.colors.textSecondary }}
                     onClick={() => {
                       day.tasks.slice(4).forEach(task => onTaskClick?.(task));
