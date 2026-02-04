@@ -2810,7 +2810,7 @@ PRAGMA wal_checkpoint;
 
 ---
 
-**Database Version**: 27  
-**Last Updated**: February 2026  
-**Total Tables**: 15+  
-**Total Indexes**: 80+
+**Database Version**: 25
+**Last Updated**: February 2026
+**Total Tables**: 16
+**Total Indexes**: 98
