@@ -6,9 +6,9 @@
 use crate::commands::AppError;
 use crate::db::Database;
 use crate::models::task::{CreateTaskRequest, Task, TaskStatus, TaskPriority, TaskQuery};
-use crate::services::task_client_integration::{TaskWithClientListResponse, TaskClientIntegrationService};
+use crate::services::task_client_integration::TaskClientIntegrationService;
 use std::sync::Arc;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info};
 
 /// Service for importing and exporting tasks from various data sources
 #[derive(Clone, Debug)]

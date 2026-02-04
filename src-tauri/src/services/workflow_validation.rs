@@ -4,7 +4,7 @@
 //! logic for workflow operations in a focused, single-responsibility service.
 
 use crate::db::{InterventionError, InterventionResult};
-use crate::logging::{LogDomain, RPMARequestLogger};
+use crate::logging::RPMARequestLogger;
 use crate::models::intervention::{Intervention, InterventionStatus};
 use crate::models::step::{InterventionStep, StepStatus};
 use crate::services::intervention_data::InterventionDataService;

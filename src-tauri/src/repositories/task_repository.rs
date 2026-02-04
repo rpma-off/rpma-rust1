@@ -7,7 +7,6 @@ use crate::repositories::base::{Repository, RepoResult, RepoError};
 use crate::models::task::{
     PaginationInfo, SortOrder, Task, TaskListResponse, TaskQuery, TaskWithDetails,
 };
-use crate::repositories::base::PaginatedResult;
 use async_trait::async_trait;
 use rusqlite::params;
 use std::sync::Arc;

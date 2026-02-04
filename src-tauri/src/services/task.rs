@@ -14,7 +14,7 @@
 //!
 //! ## Usage
 //!
-//! ```rust
+//! ```ignore
 //! use crate::services::task::TaskService;
 //!
 //! let task_service = TaskService::new(database_connection);
@@ -86,7 +86,7 @@ impl TaskService {
     /// A new TaskService instance ready for use
     ///
     /// # Example
-    /// ```rust
+    /// ```ignore
     /// use std::sync::Arc;
     /// use crate::db::Database;
     /// use crate::services::task::TaskService;

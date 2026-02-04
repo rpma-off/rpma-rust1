@@ -488,9 +488,33 @@ impl Repository<NotificationPreferences, String> for NotificationPreferencesRepo
 mod tests {
     use super::*;
     use crate::db::Database;
+    use rusqlite::params;
 
     async fn setup_test_db() -> Database {
         Database::new_in_memory().await.unwrap()
+    }
+
+    fn seed_user(db: &Database, user_id: &str) {
+        db.execute(
+            r#"
+            INSERT INTO users (
+                id, email, username, password_hash, full_name, role,
+                is_active, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            "#,
+            params![
+                user_id,
+                format!("{}@example.com", user_id),
+                user_id,
+                "hash",
+                "Test User",
+                "technician",
+                1,
+                chrono::Utc::now().timestamp_millis(),
+                chrono::Utc::now().timestamp_millis(),
+            ],
+        )
+        .unwrap();
     }
 
     #[tokio::test]
@@ -500,6 +524,7 @@ mod tests {
         let repo = NotificationPreferencesRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let user_id = uuid::Uuid::new_v4().to_string();
+        seed_user(repo.db.as_ref(), &user_id);
         let prefs = NotificationPreferences::new(user_id.clone());
 
         repo.save(prefs.clone()).await.unwrap();
@@ -527,6 +552,8 @@ mod tests {
 
         let user1_id = uuid::Uuid::new_v4().to_string();
         let user2_id = uuid::Uuid::new_v4().to_string();
+        seed_user(repo.db.as_ref(), &user1_id);
+        seed_user(repo.db.as_ref(), &user2_id);
         let prefs1 = NotificationPreferences::new(user1_id);
         let prefs2 = NotificationPreferences::new(user2_id);
 
@@ -544,6 +571,7 @@ mod tests {
         let repo = NotificationPreferencesRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let user_id = uuid::Uuid::new_v4().to_string();
+        seed_user(repo.db.as_ref(), &user_id);
         let prefs = NotificationPreferences::new(user_id);
 
         let saved = repo.save(prefs.clone()).await.unwrap();
@@ -558,6 +586,7 @@ mod tests {
         let repo = NotificationPreferencesRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let user_id = uuid::Uuid::new_v4().to_string();
+        seed_user(repo.db.as_ref(), &user_id);
         let mut prefs = NotificationPreferences::new(user_id);
         repo.save(prefs.clone()).await.unwrap();
 
@@ -575,6 +604,7 @@ mod tests {
         let repo = NotificationPreferencesRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let user_id = uuid::Uuid::new_v4().to_string();
+        seed_user(repo.db.as_ref(), &user_id);
         let prefs = NotificationPreferences::new(user_id);
         repo.save(prefs.clone()).await.unwrap();
 
@@ -590,6 +620,7 @@ mod tests {
         let repo = NotificationPreferencesRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let user_id = uuid::Uuid::new_v4().to_string();
+        seed_user(repo.db.as_ref(), &user_id);
         let prefs = NotificationPreferences::new(user_id.clone());
         repo.save(prefs).await.unwrap();
 
@@ -604,6 +635,7 @@ mod tests {
         let repo = NotificationPreferencesRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let user_id = uuid::Uuid::new_v4().to_string();
+        seed_user(repo.db.as_ref(), &user_id);
 
         let prefs1 = repo.get_or_create(user_id.clone()).await.unwrap();
         assert_eq!(prefs1.user_id, user_id);
@@ -619,6 +651,7 @@ mod tests {
         let repo = NotificationPreferencesRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let user_id = uuid::Uuid::new_v4().to_string();
+        seed_user(repo.db.as_ref(), &user_id);
         let prefs = NotificationPreferences::new(user_id.clone());
         repo.save(prefs).await.unwrap();
 

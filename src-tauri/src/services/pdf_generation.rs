@@ -13,7 +13,6 @@ use chrono::Utc;
 use printpdf::*;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use tokio::fs;
 use tracing::{error, info};
 
 /// PDF generation service with worker pool for async processing

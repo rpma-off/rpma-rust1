@@ -3,10 +3,9 @@
 //! Provides streaming query capabilities for large task datasets
 //! to improve memory efficiency and responsiveness.
 
-use crate::db::connection::{ChunkedQuery, StreamingQuery};
+use crate::db::connection::ChunkedQuery;
 use crate::db::operation_pool::{OperationPoolManager, OperationType};
 use crate::models::task::Task;
-use rusqlite::params;
 use std::sync::Arc;
 
 /// Streaming task repository for handling large result sets

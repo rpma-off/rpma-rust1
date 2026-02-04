@@ -3,7 +3,7 @@
 //! Provides IPC endpoints for material inventory management and consumption tracking.
 
 use crate::commands::{ApiResponse, AppState};
-use crate::models::material::{MaterialType, InventoryTransactionType};
+use crate::models::material::MaterialType;
 use crate::services::material::{
     CreateMaterialRequest, RecordConsumptionRequest, UpdateStockRequest,
 };

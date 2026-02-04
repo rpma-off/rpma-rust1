@@ -234,7 +234,11 @@ impl FromSqlRow for Material {
             material_type,
             category: row.get("category")?,
             subcategory: row.get("subcategory")?,
-            category_id: row.get("category_id")?,
+            category_id: match row.get::<_, Option<String>>("category_id") {
+                Ok(value) => value,
+                Err(rusqlite::Error::InvalidColumnName(_)) => None,
+                Err(err) => return Err(err),
+            },
             brand: row.get("brand")?,
             model: row.get("model")?,
             specifications: row

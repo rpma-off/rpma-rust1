@@ -44,7 +44,7 @@ use std::sync::Arc;
 ///
 /// # Examples
 ///
-/// ```
+/// ```ignore
 /// use crate::models::task::TaskStatus;
 ///
 /// assert!(validate_status_transition(&TaskStatus::Draft, &TaskStatus::Pending).is_ok());

@@ -19,17 +19,16 @@ fn seed_user(db: &Database, user_id: &str) {
     conn.execute(
         r#"
         INSERT INTO users (
-            id, email, username, password_hash, first_name, last_name, role,
+            id, email, username, password_hash, full_name, role,
             is_active, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         "#,
         rusqlite::params![
             user_id,
             format!("{}@example.com", user_id),
             user_id,
             "hash",
-            "Test",
-            "User",
+            "Test User",
             "technician",
             1,
             chrono::Utc::now().timestamp_millis(),

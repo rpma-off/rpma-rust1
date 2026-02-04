@@ -206,11 +206,16 @@ impl ServiceBuilder {
 mod tests {
     use super::*;
 
+    fn set_test_jwt_secret() {
+        std::env::set_var("JWT_SECRET", "test_secret_key_that_is_long_enough");
+    }
+
     #[tokio::test]
     async fn test_service_builder_creation() {
         // This test verifies that ServiceBuilder can be created
         // Actual integration would require a database connection
         // For now, we just ensure the struct compiles correctly
+        set_test_jwt_secret();
         let db = Arc::new(Database::new_in_memory().await.expect("create db"));
         let repositories = Arc::new(Repositories::new(db.clone(), 1000).await);
         let app_data_dir = std::path::PathBuf::from("/tmp/test");
@@ -221,6 +226,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_event_bus_initialization() {
+        set_test_jwt_secret();
         let db = Arc::new(Database::new_in_memory().await.expect("create db"));
         let repositories = Arc::new(Repositories::new(db.clone(), 1000).await);
         let app_data_dir = std::path::PathBuf::from("/tmp/test");
@@ -237,6 +243,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_websocket_handler_registration() {
+        set_test_jwt_secret();
         let db = Arc::new(Database::new_in_memory().await.expect("create db"));
         let repositories = Arc::new(Repositories::new(db.clone(), 1000).await);
         let app_data_dir = std::path::PathBuf::from("/tmp/test");

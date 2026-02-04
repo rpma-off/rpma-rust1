@@ -550,9 +550,37 @@ impl Repository<Message, String> for MessageRepository {
 mod tests {
     use super::*;
     use crate::db::Database;
+    use rusqlite::params;
+
+    fn seed_user(db: &Database, user_id: &str) {
+        db.execute(
+            r#"
+            INSERT INTO users (
+                id, email, username, password_hash, full_name, role,
+                is_active, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            "#,
+            params![
+                user_id,
+                format!("{}@example.com", user_id),
+                user_id,
+                "hash",
+                "Test User",
+                "technician",
+                1,
+                chrono::Utc::now().timestamp_millis(),
+                chrono::Utc::now().timestamp_millis(),
+            ],
+        )
+        .unwrap();
+    }
 
     async fn setup_test_db() -> Database {
-        Database::new_in_memory().await.unwrap()
+        let db = Database::new_in_memory().await.unwrap();
+        seed_user(&db, "sender-1");
+        seed_user(&db, "recipient-0");
+        seed_user(&db, "recipient-1");
+        db
     }
 
     #[tokio::test]

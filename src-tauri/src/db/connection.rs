@@ -66,12 +66,16 @@ pub fn initialize_pool_with_config(
     config: &PoolConfig,
 ) -> Result<Pool<SqliteConnectionManager>, Box<dyn std::error::Error>> {
     let _encryption_key = encryption_key.to_string();
-    let manager = SqliteConnectionManager::file(db_path)
-        .with_flags(
-            OpenFlags::SQLITE_OPEN_READ_WRITE
-                | OpenFlags::SQLITE_OPEN_CREATE
-                | OpenFlags::SQLITE_OPEN_NO_MUTEX, // CRITICAL: allows concurrent access
-        )
+    let mut open_flags = OpenFlags::SQLITE_OPEN_READ_WRITE
+        | OpenFlags::SQLITE_OPEN_CREATE
+        | OpenFlags::SQLITE_OPEN_NO_MUTEX; // CRITICAL: allows concurrent access
+
+    // Allow URI filenames for shared in-memory databases in tests.
+    if db_path.starts_with("file:") {
+        open_flags |= OpenFlags::SQLITE_OPEN_URI;
+    }
+
+    let manager = SqliteConnectionManager::file(db_path).with_flags(open_flags)
         .with_init(move |conn| {
             // Set encryption key if provided and using SQLCipher
             // Note: Standard SQLite doesn't support encryption, so we skip this

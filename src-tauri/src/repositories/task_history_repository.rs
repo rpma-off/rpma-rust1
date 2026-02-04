@@ -350,9 +350,31 @@ impl Repository<TaskHistory, String> for TaskHistoryRepository {
 mod tests {
     use super::*;
     use crate::db::Database;
+    use rusqlite::params;
 
     async fn setup_test_db() -> Database {
         Database::new_in_memory().await.unwrap()
+    }
+
+    fn seed_task(db: &Database, task_id: &str) {
+        let now = chrono::Utc::now().timestamp_millis();
+        db.execute(
+            r#"
+            INSERT INTO tasks (
+                id, task_number, title, status, priority, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            "#,
+            params![
+                task_id,
+                format!("TASK-{}", &task_id[..8]),
+                "Test Task",
+                "draft",
+                "medium",
+                now,
+                now,
+            ],
+        )
+        .unwrap();
     }
 
     #[tokio::test]
@@ -362,6 +384,7 @@ mod tests {
         let repo = TaskHistoryRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let task_id = uuid::Uuid::new_v4().to_string();
+        seed_task(repo.db.as_ref(), &task_id);
         let history = TaskHistory::new(task_id, Some("draft".to_string()), "scheduled".to_string(), Some("Task scheduled".to_string()), None);
 
         repo.save(history.clone()).await.unwrap();
@@ -388,6 +411,7 @@ mod tests {
         let repo = TaskHistoryRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let task_id = uuid::Uuid::new_v4().to_string();
+        seed_task(repo.db.as_ref(), &task_id);
         let history1 = TaskHistory::new(task_id.clone(), Some("draft".to_string()), "scheduled".to_string(), Some("Reason 1".to_string()), None);
         let history2 = TaskHistory::new(task_id.clone(), Some("scheduled".to_string()), "in_progress".to_string(), Some("Reason 2".to_string()), None);
 
@@ -405,6 +429,7 @@ mod tests {
         let repo = TaskHistoryRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let task_id = uuid::Uuid::new_v4().to_string();
+        seed_task(repo.db.as_ref(), &task_id);
         let history = TaskHistory::new(task_id, Some("draft".to_string()), "scheduled".to_string(), Some("Task scheduled".to_string()), None);
 
         let saved = repo.save(history.clone()).await.unwrap();
@@ -419,6 +444,7 @@ mod tests {
         let repo = TaskHistoryRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let task_id = uuid::Uuid::new_v4().to_string();
+        seed_task(repo.db.as_ref(), &task_id);
         let mut history = TaskHistory::new(task_id, Some("draft".to_string()), "scheduled".to_string(), Some("Task scheduled".to_string()), None);
         repo.save(history.clone()).await.unwrap();
 
@@ -435,6 +461,7 @@ mod tests {
         let repo = TaskHistoryRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let task_id = uuid::Uuid::new_v4().to_string();
+        seed_task(repo.db.as_ref(), &task_id);
         let history = TaskHistory::new(task_id, Some("draft".to_string()), "scheduled".to_string(), Some("Task scheduled".to_string()), None);
         repo.save(history.clone()).await.unwrap();
 
@@ -450,6 +477,7 @@ mod tests {
         let repo = TaskHistoryRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let task_id = uuid::Uuid::new_v4().to_string();
+        seed_task(repo.db.as_ref(), &task_id);
         let history1 = TaskHistory::new(task_id.clone(), Some("draft".to_string()), "scheduled".to_string(), Some("Reason 1".to_string()), None);
         let history2 = TaskHistory::new(task_id.clone(), Some("scheduled".to_string()), "in_progress".to_string(), Some("Reason 2".to_string()), None);
 
@@ -467,6 +495,7 @@ mod tests {
         let repo = TaskHistoryRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let task_id = uuid::Uuid::new_v4().to_string();
+        seed_task(repo.db.as_ref(), &task_id);
         repo.save(TaskHistory::new(task_id.clone(), Some("draft".to_string()), "scheduled".to_string(), Some("Reason 1".to_string()), None)).await.unwrap();
         repo.save(TaskHistory::new(task_id.clone(), Some("scheduled".to_string()), "in_progress".to_string(), Some("Reason 2".to_string()), None)).await.unwrap();
         repo.save(TaskHistory::new(task_id.clone(), Some("in_progress".to_string()), "completed".to_string(), Some("Reason 3".to_string()), None)).await.unwrap();
@@ -483,6 +512,7 @@ mod tests {
 
         for i in 0..10 {
             let task_id = uuid::Uuid::new_v4().to_string();
+            seed_task(repo.db.as_ref(), &task_id);
             let history = TaskHistory::new(task_id, Some("draft".to_string()), "scheduled".to_string(), Some(format!("Entry {}", i)), None);
             repo.save(history).await.unwrap();
         }

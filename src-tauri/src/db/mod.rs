@@ -265,8 +265,33 @@ impl Database {
 
     #[cfg(test)]
     pub async fn new_in_memory() -> DbResult<Self> {
-        let db = Database::new(":memory:", "test_encryption_key_32_bytes_long!")?;
+        // Use a shared in-memory database so multiple pooled connections see the same schema/data.
+        let db_name = format!("file:rpma_test_{}?mode=memory&cache=shared", uuid::Uuid::new_v4());
+
+        let mut config = connection::PoolConfig::default();
+        config.max_connections = 8;
+        config.min_idle = Some(1);
+
+        let pool = connection::initialize_pool_with_config(
+            &db_name,
+            "test_encryption_key_32_bytes_long!",
+            &config,
+        )
+        .map_err(|e| e.to_string())?;
+
+        let db = Database {
+            pool,
+            metrics_enabled: std::env::var("RPMA_DB_METRICS").is_ok(),
+            query_monitor: std::sync::Arc::new(connection::QueryPerformanceMonitor::new(
+                Duration::from_millis(100),
+            )),
+            stmt_cache: std::sync::Arc::new(connection::PreparedStatementCache::new()),
+            dynamic_pool_manager: std::sync::Arc::new(connection::DynamicPoolManager::new()),
+        };
+
         db.init()?;
+        let latest_version = Database::get_latest_migration_version();
+        db.migrate(latest_version)?;
         Ok(db)
     }
 

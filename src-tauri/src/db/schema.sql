@@ -397,6 +397,26 @@ CREATE INDEX IF NOT EXISTS idx_tasks_technician_scheduled ON tasks(technician_id
 CREATE INDEX IF NOT EXISTS idx_tasks_status_scheduled ON tasks(status, scheduled_date);
 CREATE INDEX IF NOT EXISTS idx_tasks_sync_status ON tasks(synced, status) WHERE synced = 0;
 
+-- Table 4.5: task_history
+-- Tracks task status transitions for auditing
+CREATE TABLE IF NOT EXISTS task_history (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))),
+  task_id TEXT NOT NULL,
+  old_status TEXT,
+  new_status TEXT NOT NULL,
+  reason TEXT,
+  changed_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+  changed_by TEXT,
+  FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+  FOREIGN KEY (changed_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Indexes for task_history
+CREATE INDEX IF NOT EXISTS idx_task_history_task_id ON task_history(task_id);
+CREATE INDEX IF NOT EXISTS idx_task_history_changed_at ON task_history(changed_at);
+CREATE INDEX IF NOT EXISTS idx_task_history_new_status ON task_history(new_status);
+CREATE INDEX IF NOT EXISTS idx_task_history_changed_by ON task_history(changed_by) WHERE changed_by IS NOT NULL;
+
 -- Table 5: clients
 CREATE TABLE IF NOT EXISTS clients (
   -- Identifiants
@@ -799,9 +819,144 @@ CREATE TABLE IF NOT EXISTS user_settings (
 -- Indexes for user_settings
 CREATE INDEX IF NOT EXISTS idx_user_settings_user_id ON user_settings(user_id);
 
+-- Table 9.5: message_templates
+-- Reusable templates for email/SMS/in-app messages
+CREATE TABLE IF NOT EXISTS message_templates (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))),
+  name TEXT NOT NULL UNIQUE,
+  description TEXT,
+  message_type TEXT NOT NULL CHECK (message_type IN (
+    'email', 'sms', 'in_app',
+    'task_assignment', 'task_update', 'task_completion', 'status_change',
+    'overdue_warning', 'system_alert', 'new_assignment', 'deadline_reminder',
+    'quality_approval'
+  )),
+  channel TEXT NOT NULL CHECK (channel IN ('email', 'sms', 'push')),
+  subject TEXT,
+  body TEXT NOT NULL,
+  variables TEXT,
+  category TEXT DEFAULT 'general' CHECK (category IN ('general', 'task', 'client', 'system', 'reminder')),
+  is_active INTEGER DEFAULT 1,
+  created_by TEXT,
+  created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+  updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_message_templates_type ON message_templates(message_type);
+CREATE INDEX IF NOT EXISTS idx_message_templates_category ON message_templates(category);
+CREATE INDEX IF NOT EXISTS idx_message_templates_active ON message_templates(is_active);
+
+-- Table 9.6: messages
+-- Stores all outgoing/in-app messages
+CREATE TABLE IF NOT EXISTS messages (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))),
+  message_type TEXT NOT NULL CHECK (message_type IN ('email', 'sms', 'in_app')),
+  sender_id TEXT,
+  recipient_id TEXT,
+  recipient_email TEXT,
+  recipient_phone TEXT,
+  subject TEXT,
+  body TEXT NOT NULL,
+  template_id TEXT,
+  task_id TEXT,
+  client_id TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'sent', 'delivered', 'failed', 'read')),
+  priority TEXT DEFAULT 'normal' CHECK (priority IN ('low', 'normal', 'high', 'urgent')),
+  scheduled_at INTEGER,
+  sent_at INTEGER,
+  read_at INTEGER,
+  error_message TEXT,
+  metadata TEXT,
+  created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+  updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+  FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE SET NULL,
+  FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+  FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
+  FOREIGN KEY (template_id) REFERENCES message_templates(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON messages(sender_id);
+CREATE INDEX IF NOT EXISTS idx_messages_recipient_id ON messages(recipient_id);
+CREATE INDEX IF NOT EXISTS idx_messages_task_id ON messages(task_id);
+CREATE INDEX IF NOT EXISTS idx_messages_client_id ON messages(client_id);
+CREATE INDEX IF NOT EXISTS idx_messages_status ON messages(status);
+CREATE INDEX IF NOT EXISTS idx_messages_type ON messages(message_type);
+CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
+CREATE INDEX IF NOT EXISTS idx_messages_scheduled_at ON messages(scheduled_at) WHERE scheduled_at IS NOT NULL;
+
+-- Table 9.7: notification_preferences
+-- User notification settings
+CREATE TABLE IF NOT EXISTS notification_preferences (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))),
+  user_id TEXT NOT NULL UNIQUE,
+  email_enabled INTEGER DEFAULT 1,
+  sms_enabled INTEGER DEFAULT 0,
+  in_app_enabled INTEGER DEFAULT 1,
+  task_assigned INTEGER DEFAULT 1,
+  task_updated INTEGER DEFAULT 1,
+  task_completed INTEGER DEFAULT 1,
+  task_overdue INTEGER DEFAULT 1,
+  client_created INTEGER DEFAULT 1,
+  client_updated INTEGER DEFAULT 1,
+  system_alerts INTEGER DEFAULT 1,
+  maintenance_notifications INTEGER DEFAULT 1,
+  quiet_hours_enabled INTEGER DEFAULT 0,
+  quiet_hours_start TEXT,
+  quiet_hours_end TEXT,
+  email_frequency TEXT DEFAULT 'immediate' CHECK (email_frequency IN ('immediate', 'daily', 'weekly')),
+  email_digest_time TEXT DEFAULT '09:00',
+  created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+  updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_notification_preferences_user_id ON notification_preferences(user_id);
+
 -- Table 10: sync_queue (PRD-07: Sync Queue System)
 -- Note: Table already defined above at line 464 with comprehensive schema
 -- This duplicate definition removed to prevent schema corruption
+
+-- Table 10.5: suppliers
+-- Master data for material suppliers
+CREATE TABLE IF NOT EXISTS suppliers (
+  id TEXT PRIMARY KEY NOT NULL,
+  name TEXT NOT NULL,
+  code TEXT UNIQUE,
+  contact_person TEXT,
+  email TEXT,
+  phone TEXT,
+  website TEXT,
+  address_street TEXT,
+  address_city TEXT,
+  address_state TEXT,
+  address_zip TEXT,
+  address_country TEXT,
+  tax_id TEXT,
+  business_license TEXT,
+  payment_terms TEXT,
+  lead_time_days INTEGER DEFAULT 0,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  is_preferred INTEGER NOT NULL DEFAULT 0,
+  quality_rating REAL DEFAULT 0.0 CHECK(quality_rating IS NULL OR (quality_rating >= 0.0 AND quality_rating <= 5.0)),
+  delivery_rating REAL DEFAULT 0.0 CHECK(delivery_rating IS NULL OR (delivery_rating >= 0.0 AND delivery_rating <= 5.0)),
+  on_time_delivery_rate REAL DEFAULT 0.0 CHECK(on_time_delivery_rate IS NULL OR (on_time_delivery_rate >= 0.0 AND on_time_delivery_rate <= 100.0)),
+  notes TEXT,
+  special_instructions TEXT,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  created_by TEXT,
+  updated_by TEXT,
+  synced INTEGER NOT NULL DEFAULT 0,
+  last_synced_at INTEGER,
+  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_suppliers_code ON suppliers(code);
+CREATE INDEX IF NOT EXISTS idx_suppliers_active ON suppliers(is_active);
+CREATE INDEX IF NOT EXISTS idx_suppliers_preferred ON suppliers(is_preferred);
 
 -- Table 11: materials (PRD-08: Material Tracking)
 -- Inventory management for PPF materials and consumables
@@ -817,6 +972,7 @@ CREATE TABLE IF NOT EXISTS materials (
     CHECK(material_type IN ('ppf_film', 'adhesive', 'cleaning_solution', 'tool', 'consumable')),
   category TEXT,
   subcategory TEXT,
+  category_id TEXT,
 
   -- Specifications
   brand TEXT,

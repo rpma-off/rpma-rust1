@@ -384,9 +384,10 @@ mod tests {
         let service = PhotoProcessingService::new();
         let small_data = vec![1, 2, 3, 4, 5]; // Not a valid image, will fail
         
-        // This should fail because it's not valid image data
-        let result = service.compress_image_if_needed(small_data).await;
-        assert!(result.is_err());
+        // This should return the original data because it's under the size limit
+        let result = service.compress_image_if_needed(small_data.clone()).await;
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), small_data);
     }
 
     #[tokio::test]

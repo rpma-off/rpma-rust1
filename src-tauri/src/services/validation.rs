@@ -145,8 +145,8 @@ impl ValidationService {
             });
         }
 
-        // Username regex: alphanumeric, underscores allowed (no hyphens to match generation logic)
-        let username_regex = Regex::new(r"^[a-zA-Z0-9_]+$")
+        // Username regex: alphanumeric, underscores and hyphens allowed
+        let username_regex = Regex::new(r"^[a-zA-Z0-9_-]+$")
             .map_err(|_| ValidationError::InvalidUsername("Invalid regex pattern".to_string()))?;
 
         if !username_regex.is_match(username) {
@@ -155,10 +155,14 @@ impl ValidationService {
             ));
         }
 
-        // Cannot start or end with underscore
-        if username.starts_with('_') || username.ends_with('_') {
+        // Cannot start or end with underscore or hyphen
+        if username.starts_with('_')
+            || username.ends_with('_')
+            || username.starts_with('-')
+            || username.ends_with('-')
+        {
             return Err(ValidationError::InvalidUsername(
-                "Username cannot start or end with underscore".to_string(),
+                "Username cannot start or end with underscore or hyphen".to_string(),
             ));
         }
 

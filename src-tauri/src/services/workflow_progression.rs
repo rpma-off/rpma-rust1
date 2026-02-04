@@ -5,7 +5,7 @@
 
 use crate::db::Database;
 use crate::db::{InterventionError, InterventionResult};
-use crate::logging::{LogDomain, RPMARequestLogger};
+use crate::logging::RPMARequestLogger;
 use crate::models::common::TimestampString;
 use crate::models::intervention::Intervention;
 use crate::models::step::{InterventionStep, StepStatus};

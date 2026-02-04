@@ -109,7 +109,8 @@ impl TokenService {
 
     /// Validate and decode access token
     pub fn validate_access_token(&self, token: &str) -> Result<Claims, TokenError> {
-        let validation = Validation::new(jsonwebtoken::Algorithm::HS256);
+        let mut validation = Validation::new(jsonwebtoken::Algorithm::HS256);
+        validation.leeway = 0;
 
         let token_data: TokenData<Claims> = decode(token, &self.decoding_key, &validation)
             .map_err(|e| match e.kind() {
@@ -126,6 +127,7 @@ impl TokenService {
         validation.validate_exp = true;
         validation.aud = None;
         validation.iss = None;
+        validation.leeway = 0;
 
         let token_data: TokenData<Claims> = decode(token, &self.decoding_key, &validation)
             .map_err(|e| match e.kind() {

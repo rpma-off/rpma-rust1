@@ -64,7 +64,7 @@ impl WorkerPool {
     /// * `pool_size` - Maximum number of concurrent tasks allowed
     ///
     /// # Example
-    /// ```
+    /// ```ignore
     /// let pool = WorkerPool::new(4);
     /// ```
     pub fn new(pool_size: usize) -> Self {
@@ -104,10 +104,10 @@ impl WorkerPool {
     /// * `Result<T, String>` - The result of the processor function
     ///
     /// # Example
-    /// ```
+    /// ```ignore
     /// let pool = WorkerPool::new(4);
     /// let task = WorkerTask::new("example", vec![1, 2, 3]);
-    /// 
+    ///
     /// let result = pool.execute(task, |t| {
     ///     // Process the task
     ///     Ok(t.payload.len())

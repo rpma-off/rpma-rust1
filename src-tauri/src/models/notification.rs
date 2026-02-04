@@ -362,11 +362,15 @@ impl NotificationTemplate {
     }
 
     pub fn from_row(row: &Row) -> SqliteResult<Self> {
+        let notification_type_value: Option<String> = row
+            .get("notification_type")
+            .or_else(|_| row.get("message_type"))
+            .unwrap_or(None);
+
         Ok(Self {
             id: row.get("id")?,
             name: row.get("name")?,
-            notification_type: row
-                .get::<_, Option<String>>("notification_type")?
+            notification_type: notification_type_value
                 .and_then(|s| match s.as_str() {
                     "task_assignment" => Some(NotificationType::TaskAssignment),
                     "task_update" => Some(NotificationType::TaskUpdate),

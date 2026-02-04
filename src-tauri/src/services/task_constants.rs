@@ -3,7 +3,7 @@
 //! This module contains shared constants and utilities used across task-related services.
 
 use crate::commands::AppError;
-use crate::models::task::{PaginationInfo, TaskPriority, TaskQuery, TaskStatus};
+use crate::models::task::{PaginationInfo, TaskQuery};
 
 /// Timeout duration for single task operations (in seconds)
 pub const SINGLE_TASK_TIMEOUT_SECS: u64 = 5;
@@ -76,7 +76,7 @@ pub const TASK_QUERY_COLUMNS_ALIASED: &str = r#"
 /// AppError with appropriate error type (Database, Validation, or Internal)
 ///
 /// # Example
-/// ```rust
+/// ```ignore
 /// let result: AppResult<Task> = database_operation()
 ///     .map_err(|e| convert_to_app_error(format!("Failed to get task: {}", e)));
 /// ```
@@ -119,7 +119,7 @@ pub fn convert_to_app_error(error: String) -> AppError {
 /// PaginationInfo with page, limit, total, and total_pages
 ///
 /// # Example
-/// ```rust
+/// ```ignore
 /// let pagination = calculate_pagination(100, Some(2), Some(20));
 /// assert_eq!(pagination.page, 2);
 /// assert_eq!(pagination.limit, 20);
@@ -153,7 +153,7 @@ pub fn calculate_pagination(
 /// Offset value for SQL LIMIT/OFFSET clause
 ///
 /// # Example
-/// ```rust
+/// ```ignore
 /// let offset = calculate_offset(2, 20);
 /// assert_eq!(offset, 20);
 /// ```

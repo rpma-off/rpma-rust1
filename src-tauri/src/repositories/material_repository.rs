@@ -144,7 +144,7 @@ impl MaterialRepository {
             .query_single_as::<Material>(
                 r#"
                 SELECT
-                    id, sku, name, description, material_type, category, subcategory,
+                    id, sku, name, description, material_type, category, subcategory, category_id,
                     brand, model, specifications,
                     unit_of_measure, current_stock, minimum_stock, maximum_stock, reorder_point,
                     unit_cost, currency,
@@ -183,7 +183,7 @@ impl MaterialRepository {
             .query_as::<Material>(
                 r#"
                 SELECT
-                    id, sku, name, description, material_type, category, subcategory,
+                    id, sku, name, description, material_type, category, subcategory, category_id,
                     brand, model, specifications,
                     unit_of_measure, current_stock, minimum_stock, maximum_stock, reorder_point,
                     unit_cost, currency,
@@ -223,7 +223,7 @@ impl MaterialRepository {
             .query_as::<Material>(
                 r#"
                 SELECT
-                    id, sku, name, description, material_type, category, subcategory,
+                    id, sku, name, description, material_type, category, subcategory, category_id,
                     brand, model, specifications,
                     unit_of_measure, current_stock, minimum_stock, maximum_stock, reorder_point,
                     unit_cost, currency,
@@ -293,7 +293,7 @@ impl MaterialRepository {
         let sql = format!(
             r#"
             SELECT
-                id, sku, name, description, material_type, category, subcategory,
+                id, sku, name, description, material_type, category, subcategory, category_id,
                 brand, model, specifications,
                 unit_of_measure, current_stock, minimum_stock, maximum_stock, reorder_point,
                 unit_cost, currency,
@@ -364,7 +364,7 @@ impl Repository<Material, String> for MaterialRepository {
             .query_single_as::<Material>(
                 r#"
                 SELECT
-                    id, sku, name, description, material_type, category, subcategory,
+                    id, sku, name, description, material_type, category, subcategory, category_id,
                     brand, model, specifications,
                     unit_of_measure, current_stock, minimum_stock, maximum_stock, reorder_point,
                     unit_cost, currency,
@@ -401,7 +401,7 @@ impl Repository<Material, String> for MaterialRepository {
             .query_as::<Material>(
                 r#"
                 SELECT
-                    id, sku, name, description, material_type, category, subcategory,
+                    id, sku, name, description, material_type, category, subcategory, category_id,
                     brand, model, specifications,
                     unit_of_measure, current_stock, minimum_stock, maximum_stock, reorder_point,
                     unit_cost, currency,
@@ -447,7 +447,7 @@ impl Repository<Material, String> for MaterialRepository {
                 .execute(
                     r#"
                     UPDATE materials SET
-                        sku = ?, name = ?, description = ?, material_type = ?, category = ?, subcategory = ?,
+                        sku = ?, name = ?, description = ?, material_type = ?, category = ?, subcategory = ?, category_id = ?,
                         brand = ?, model = ?, specifications = ?,
                         unit_of_measure = ?, current_stock = ?, minimum_stock = ?, maximum_stock = ?, reorder_point = ?,
                         unit_cost = ?, currency = ?,
@@ -465,6 +465,7 @@ impl Repository<Material, String> for MaterialRepository {
                         entity.material_type.to_string(),
                         entity.category,
                         entity.subcategory,
+                        entity.category_id,
                         entity.brand,
                         entity.model,
                         specifications_json,
@@ -498,8 +499,8 @@ impl Repository<Material, String> for MaterialRepository {
                 .execute(
                     r#"
                     INSERT INTO materials (
-                        id, sku, name, description, material_type, category, subcategory,
-                        brand, model, specifications,
+                    id, sku, name, description, material_type, category, subcategory, category_id,
+                    brand, model, specifications,
                         unit_of_measure, current_stock, minimum_stock, maximum_stock, reorder_point,
                         unit_cost, currency,
                         supplier_id, supplier_name, supplier_sku,
@@ -508,7 +509,7 @@ impl Repository<Material, String> for MaterialRepository {
                         storage_location, warehouse_id,
                         created_at, updated_at, created_by, updated_by,
                         synced
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (unixepoch() * 1000), (unixepoch() * 1000), ?, ?, 0)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (unixepoch() * 1000), (unixepoch() * 1000), ?, ?, 0)
                     "#,
                     params![
                         entity.id,
@@ -518,6 +519,7 @@ impl Repository<Material, String> for MaterialRepository {
                         entity.material_type.to_string(),
                         entity.category,
                         entity.subcategory,
+                        entity.category_id,
                         entity.brand,
                         entity.model,
                         specifications_json,

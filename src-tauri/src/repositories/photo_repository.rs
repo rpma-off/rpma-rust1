@@ -481,7 +481,7 @@ impl Repository<Photo, String> for PhotoRepository {
                         synced, storage_url, upload_retry_count, upload_error,
                         last_synced_at, captured_at, uploaded_at,
                         created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     params![
                         entity.id,
                         entity.intervention_id,
@@ -560,9 +560,48 @@ impl Repository<Photo, String> for PhotoRepository {
 mod tests {
     use super::*;
     use crate::db::Database;
+    use rusqlite::params;
 
     async fn setup_test_db() -> Database {
         Database::new_in_memory().await.unwrap()
+    }
+
+    fn seed_task(db: &Database, task_id: &str) {
+        let now = chrono::Utc::now().timestamp_millis();
+        db.execute(
+            r#"
+            INSERT INTO tasks (
+                id, task_number, title, status, priority, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            "#,
+            params![
+                task_id,
+                format!("TASK-{}", &task_id[..8]),
+                "Test Task",
+                "draft",
+                "medium",
+                now,
+                now,
+            ],
+        )
+        .unwrap();
+    }
+
+    fn seed_intervention(db: &Database, intervention_id: &str, task_id: &str) {
+        db.execute(
+            r#"
+            INSERT INTO interventions (
+                id, task_id, status, vehicle_plate
+            ) VALUES (?, ?, ?, ?)
+            "#,
+            params![
+                intervention_id,
+                task_id,
+                "pending",
+                "TEST-PLATE",
+            ],
+        )
+        .unwrap();
     }
 
     #[tokio::test]
@@ -572,6 +611,9 @@ mod tests {
         let repo = PhotoRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let intervention_id = uuid::Uuid::new_v4().to_string();
+        let task_id = format!("task-{}", intervention_id);
+        seed_task(repo.db.as_ref(), &task_id);
+        seed_intervention(repo.db.as_ref(), &intervention_id, &task_id);
         let photo = Photo::new(intervention_id.clone(), "/test/path.jpg".to_string());
 
         repo.save(photo.clone()).await.unwrap();
@@ -598,6 +640,9 @@ mod tests {
         let repo = PhotoRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let intervention_id = uuid::Uuid::new_v4().to_string();
+        let task_id = format!("task-{}", intervention_id);
+        seed_task(repo.db.as_ref(), &task_id);
+        seed_intervention(repo.db.as_ref(), &intervention_id, &task_id);
         let photo1 = Photo::new(intervention_id.clone(), "/test/path1.jpg".to_string());
         let photo2 = Photo::new(intervention_id.clone(), "/test/path2.jpg".to_string());
 
@@ -615,6 +660,9 @@ mod tests {
         let repo = PhotoRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let intervention_id = uuid::Uuid::new_v4().to_string();
+        let task_id = format!("task-{}", intervention_id);
+        seed_task(repo.db.as_ref(), &task_id);
+        seed_intervention(repo.db.as_ref(), &intervention_id, &task_id);
         let photo = Photo::new(intervention_id, "/test/path.jpg".to_string());
 
         let saved = repo.save(photo.clone()).await.unwrap();
@@ -629,6 +677,9 @@ mod tests {
         let repo = PhotoRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let intervention_id = uuid::Uuid::new_v4().to_string();
+        let task_id = format!("task-{}", intervention_id);
+        seed_task(repo.db.as_ref(), &task_id);
+        seed_intervention(repo.db.as_ref(), &intervention_id, &task_id);
         let mut photo = Photo::new(intervention_id, "/test/path.jpg".to_string());
         repo.save(photo.clone()).await.unwrap();
 
@@ -644,6 +695,9 @@ mod tests {
         let repo = PhotoRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let intervention_id = uuid::Uuid::new_v4().to_string();
+        let task_id = format!("task-{}", intervention_id);
+        seed_task(repo.db.as_ref(), &task_id);
+        seed_intervention(repo.db.as_ref(), &intervention_id, &task_id);
         let photo = Photo::new(intervention_id, "/test/path.jpg".to_string());
         repo.save(photo.clone()).await.unwrap();
 
@@ -659,6 +713,9 @@ mod tests {
         let repo = PhotoRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let intervention_id = uuid::Uuid::new_v4().to_string();
+        let task_id = format!("task-{}", intervention_id);
+        seed_task(repo.db.as_ref(), &task_id);
+        seed_intervention(repo.db.as_ref(), &intervention_id, &task_id);
         let photo1 = Photo::new(intervention_id.clone(), "/test/path1.jpg".to_string());
         let photo2 = Photo::new(intervention_id.clone(), "/test/path2.jpg".to_string());
 
@@ -676,6 +733,9 @@ mod tests {
         let repo = PhotoRepository::new(Arc::new(db), Arc::clone(&cache));
 
         let intervention_id = uuid::Uuid::new_v4().to_string();
+        let task_id = format!("task-{}", intervention_id);
+        seed_task(repo.db.as_ref(), &task_id);
+        seed_intervention(repo.db.as_ref(), &intervention_id, &task_id);
         let mut photo1 = Photo::new(intervention_id.clone(), "/test/path1.jpg".to_string());
         photo1.photo_category = Some(PhotoCategory::VehicleCondition);
         let mut photo2 = Photo::new(intervention_id.clone(), "/test/path2.jpg".to_string());

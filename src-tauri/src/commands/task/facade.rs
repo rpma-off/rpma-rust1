@@ -210,9 +210,7 @@ pub async fn import_tasks_bulk(
     ).await.map_err(|e| AppError::Database(format!("Import failed: {}", e)))?;
 
     // Create tasks from parsed data
-    let mut successful = 0u32;
-    let mut failed = 0u32;
-    let mut errors = import_result.errors.clone();
+    let errors = import_result.errors.clone();
 
     // Note: The actual task creation logic would require storing parsed task data
     // For now, the import service validates and returns counts
@@ -564,5 +562,3 @@ pub async fn task_crud(
         }
     }
 }
-
-

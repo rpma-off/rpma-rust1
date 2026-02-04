@@ -121,7 +121,7 @@ impl UserRepository {
             .query_single_as::<User>(
                 r#"
                 SELECT
-                    id, email, password_hash, full_name, role, phone, is_active,
+                    id, email, username, password_hash, full_name, role, phone, is_active,
                     last_login_at, login_count, preferences, synced, last_synced_at,
                     created_at, updated_at, deleted_at
                 FROM users
@@ -307,7 +307,7 @@ impl Repository<User, String> for UserRepository {
             .query_single_as::<User>(
                 r#"
                 SELECT
-                    id, email, password_hash, full_name, role, phone, is_active,
+                    id, email, username, password_hash, full_name, role, phone, is_active,
                     last_login_at, login_count, preferences, synced, last_synced_at,
                     created_at, updated_at, deleted_at
                 FROM users

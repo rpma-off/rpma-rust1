@@ -1,6 +1,6 @@
 [build]
 # Use fewer parallel jobs to reduce memory usage
-jobs = 2
+jobs = 1
 incremental = true
 target-dir = "target"
 
@@ -9,7 +9,7 @@ target-dir = "target"
 rustflags = ["-C", "target-cpu=native"]
 
 [profile.dev]
-# Compile faster in dev
+# Compile faster in dev (and avoid OOM/ICE on low-memory systems)
 opt-level = 0
 debug = true
 split-debuginfo = "unpacked"
@@ -17,7 +17,7 @@ overflow-checks = true
 lto = false
 panic = "unwind"
 incremental = true
-codegen-units = 256
+codegen-units = 16
 
 [profile.dev.package."*"]
 # Optimize dependencies for faster builds

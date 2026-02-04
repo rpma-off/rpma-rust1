@@ -205,7 +205,6 @@ impl WorkerPool {
             // Update stats
             {
                 let mut stats = stats.lock();
-                stats.queue_size -= 1;
                 stats.tasks_active += 1;
             }
 
@@ -223,6 +222,7 @@ impl WorkerPool {
             {
                 let mut stats = stats.lock();
                 stats.tasks_active -= 1;
+                stats.queue_size -= 1;
                 stats.total_execution_time_ns += execution_time;
 
                 match &result {
@@ -528,14 +528,10 @@ mod tests {
         let task1 = TaskBuilder::new().payload(b"task1".to_vec()).build();
         pool.submit_task(task1).await.unwrap();
 
-        // Submit second task (should succeed as queue allows 1)
+        // Submit second task (should fail as queue is full with in-flight task)
         let task2 = TaskBuilder::new().payload(b"task2".to_vec()).build();
-        pool.submit_task(task2).await.unwrap();
-
-        // Submit third task (should fail as queue is full)
-        let task3 = TaskBuilder::new().payload(b"task3".to_vec()).build();
         assert!(matches!(
-            pool.submit_task(task3).await,
+            pool.submit_task(task2).await,
             Err(WorkerPoolError::QueueFull)
         ));
 
