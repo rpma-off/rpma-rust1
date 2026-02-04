@@ -9,7 +9,6 @@ import { DayView } from '@/components/calendar/DayView';
 import { AgendaView } from '@/components/calendar/AgendaView';
 import { useCalendarStore } from '@/lib/stores/calendarStore';
 import { useCalendar } from '@/hooks/useCalendar';
-import { designTokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { EventDetailPopover } from './EventDetailPopover';
@@ -93,8 +92,10 @@ export function CalendarDashboard() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      <CalendarHeader />
+    <div className="flex flex-col h-[calc(100vh-62px)]">
+      <div className="mb-4">
+        <CalendarHeader />
+      </div>
 
       <div className="flex-1 overflow-auto">
         {isLoading ? (
@@ -106,17 +107,16 @@ export function CalendarDashboard() {
         )}
       </div>
 
-      <Button
-        onClick={toggleQuickAdd}
-        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg"
-        style={{
-          backgroundColor: designTokens.colors.primary,
-          color: 'white',
-        }}
-        aria-label="Ajouter une nouvelle tâche"
-      >
-        <Plus className="h-6 w-6" />
-      </Button>
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2">
+        <Button
+          onClick={toggleQuickAdd}
+          className="h-11 px-6 rounded-full shadow-[var(--rpma-shadow-soft)] bg-[hsl(var(--rpma-teal))] text-white hover:bg-[hsl(var(--rpma-teal))]/90"
+          aria-label="Ajouter une nouvelle tâche"
+        >
+          <Plus className="h-5 w-5 mr-2" />
+          + Add
+        </Button>
+      </div>
 
       <FilterDrawer isOpen={isFilterDrawerOpen} onClose={toggleFilterDrawer} />
       <QuickAddDialog isOpen={isQuickAddOpen} onClose={toggleQuickAdd} />

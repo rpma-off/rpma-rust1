@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { TaskCard } from './TaskCard';
 import type { CalendarTask } from '../../lib/backend';
-import { designTokens } from '../../lib/design-tokens';
 
 interface MonthViewProps {
   tasks: CalendarTask[];
@@ -72,57 +71,42 @@ export const MonthView: React.FC<MonthViewProps> = ({
   const today = new Date();
 
   return (
-    <div className={`bg-white ${className}`}>
-      {/* Week day headers */}
-      <div className="grid grid-cols-7 border-b sticky top-0 bg-white z-10" style={{ borderColor: designTokens.colors.border }}>
-        {weekDays.map(day => (
+    <div className={`bg-white border border-[hsl(var(--rpma-border))] rounded-[10px] overflow-hidden ${className}`}>
+      <div className="grid grid-cols-7 border-b border-[hsl(var(--rpma-border))] bg-white">
+        {weekDays.map((day) => (
           <div
             key={day}
-            className="p-3 text-center text-sm font-semibold border-r last:border-r-0 uppercase tracking-wide"
-            style={{
-              color: designTokens.colors.textSecondary,
-              borderColor: designTokens.colors.border
-            }}
+            className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground border-r last:border-r-0 border-[hsl(var(--rpma-border))]"
           >
             {day}
           </div>
         ))}
       </div>
 
-      {/* Calendar grid */}
       <div className="grid grid-cols-7">
         {monthData.map((day, index) => {
           const isToday = day.date.toDateString() === today.toDateString();
-          const isWeekend = day.date.getDay() === 0 || day.date.getDay() === 6;
+          const isMuted = !day.isCurrentMonth;
 
           return (
             <div
               key={index}
-              className={`
-                min-h-[120px] p-2 border-r border-b last:border-r-0
-                hover:shadow-sm transition-shadow duration-150
-              `}
-              style={{
-                backgroundColor: day.isCurrentMonth && !isWeekend ? '#FFFFFF' :
-                              day.isCurrentMonth && isWeekend ? '#F8FAFC' :
-                              '#F3F4F6',
-                borderColor: designTokens.colors.border,
-              }}
+              className="min-h-[120px] border-r border-b last:border-r-0 border-[hsl(var(--rpma-border))] p-2 bg-white"
             >
-              <div
-                className={`
-                  text-sm font-medium mb-2 rounded-full w-7 h-7 flex items-center justify-center
-                `}
-                style={{
-                  color: isToday ? '#FFFFFF' : (day.isCurrentMonth ? designTokens.colors.textPrimary : designTokens.colors.textTertiary),
-                  backgroundColor: isToday ? designTokens.colors.primary : ''
-                }}
-              >
-                {day.date.getDate()}
+              <div className="flex items-center justify-start mb-2">
+                <div
+                  className={`
+                    text-xs font-semibold h-6 w-6 flex items-center justify-center rounded-full
+                    ${isToday ? 'bg-[hsl(var(--rpma-teal))] text-white' : 'text-foreground'}
+                    ${isMuted ? 'text-muted-foreground' : ''}
+                  `}
+                >
+                  {day.date.getDate()}
+                </div>
               </div>
 
-              <div className="space-y-1 max-h-[85px] overflow-y-auto">
-                {day.tasks.slice(0, 4).map(task => (
+              <div className="space-y-1">
+                {day.tasks.slice(0, 3).map((task) => (
                   <TaskCard
                     key={task.id}
                     task={task}
@@ -131,17 +115,6 @@ export const MonthView: React.FC<MonthViewProps> = ({
                     onClick={() => onTaskClick?.(task)}
                   />
                 ))}
-                {day.tasks.length > 4 && (
-                  <div
-                    className="text-xs text-center py-1 font-medium cursor-pointer hover:text-primary"
-                    style={{ color: designTokens.colors.textSecondary }}
-                    onClick={() => {
-                      day.tasks.slice(4).forEach(task => onTaskClick?.(task));
-                    }}
-                  >
-                    +{day.tasks.length - 4} more
-                  </div>
-                )}
               </div>
             </div>
           );

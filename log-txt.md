@@ -1,36 +1,33 @@
-﻿﻿app-index.tsx:25  03/02/2026, 23:07:21 [CORR:req-ml75fv7n-0002-3fznde] [FRONTEND] [API] [ERROR] IPC call error: client_crud | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | error: Error: {"Database":"Client listing failed: Failed to get all clients: Database error: Failed to find all clients: Conversion error from type Text at index: 0, invalid digit found in string"} {id: '1770156441071-zi04igpmt1g', timestamp: '2026-02-03T22:07:21.071Z', correlation_id: 'req-ml75fv7n-0002-3fznde', layer: 'FRONTEND', domain: 'API', …}
+﻿﻿main-app.js?v=1770237105385:1847 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+logger.ts:164 04/02/2026, 21:31:46 [CORR:req-ml8hgtfs-0000-l3fonh] [FRONTEND] [SYSTEM] [INFO] Application started | data: {"user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0","url":"http://localhost:3000/","timestamp":"2026-02-04T20:31:46.696Z"} {id: '1770237106696-7gm7lvmeli7', timestamp: '2026-02-04T20:31:46.696Z', correlation_id: 'req-ml8hgtfs-0000-l3fonh', layer: 'FRONTEND', domain: 'SYSTEM', …}
+logger.ts:164 04/02/2026, 21:31:46 [CORR:req-ml8hgtgm-0001-4t28sx] [FRONTEND] [SYSTEM] [INFO] Application started | data: {"user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0","url":"http://localhost:3000/","timestamp":"2026-02-04T20:31:46.726Z"} {id: '1770237106726-ateznhd1wbk', timestamp: '2026-02-04T20:31:46.726Z', correlation_id: 'req-ml8hgtgm-0001-4t28sx', layer: 'FRONTEND', domain: 'SYSTEM', …}
+cache.ts:132 [IPC Cache] auth_validate_session -> cache miss for key: auth:session:eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzAyMzY4NDUsImV4cCI6MTc3MDI0NDA0NSwianRpIjoiMTdlYTdmNjMtNGEyOC00NmIyLTk5MDEtZjA1OTNjMmMxODUyIiwic2Vzc2lvbl9pZCI6IjEwMDk0ZWM5LWZlMjUtNDA1Zi04ZDk1LTI4OGEzYzI4ZGRlMiJ9.I4dtE7gX0tIGc2OjO8tHVdqne7FSbj0JeLkS1m6MxbQ, invoking...
+logger.ts:161 04/02/2026, 21:31:46 [CORR:req-ml8hgtmf-0002-f4klxm] [FRONTEND] [API] [DEBUG] IPC call started: user_crud | data: {"command":"user_crud","args":{"request":{"action":{"action":"Get","id":"a2975c76-eeda-41f8-9efe-d0741c9785a5"},"session_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzAyMzY4NDUsImV4cCI6MTc3MDI0NDA0NSwianRpIjoiMTdlYTdmNjMtNGEyOC00NmIyLTk5MDEtZjA1OTNjMmMxODUyIiwic2Vzc2lvbl9pZCI6IjEwMDk0ZWM5LWZlMjUtNDA1Zi04ZDk1LTI4OGEzYzI4ZGRlMiJ9.I4dtE7gX0tIGc2OjO8tHVdqne7FSbj0JeLkS1m6MxbQ"}},"timeout_ms":120000} {id: '1770237106936-ey4yfpn78gd', timestamp: '2026-02-04T20:31:46.936Z', correlation_id: 'req-ml8hgtmf-0002-f4klxm', layer: 'FRONTEND', domain: 'API', …}
+cache.ts:132 [IPC Cache] sync_get_status -> cache miss for key: sync:status, invoking...
+logger.ts:161 04/02/2026, 21:31:47 [CORR:req-ml8hgtmf-0002-f4klxm] [FRONTEND] [API] [DEBUG] IPC call started: calendar_get_tasks | data: {"command":"calendar_get_tasks","args":{"request":{"session_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzAyMzY4NDUsImV4cCI6MTc3MDI0NDA0NSwianRpIjoiMTdlYTdmNjMtNGEyOC00NmIyLTk5MDEtZjA1OTNjMmMxODUyIiwic2Vzc2lvbl9pZCI6IjEwMDk0ZWM5LWZlMjUtNDA1Zi04ZDk1LTI4OGEzYzI4ZGRlMiJ9.I4dtE7gX0tIGc2OjO8tHVdqne7FSbj0JeLkS1m6MxbQ","date_range":{"start_date":"2026-01-31","end_date":"2026-02-27"},"technician_ids":null,"statuses":null}},"timeout_ms":120000} {id: '1770237107068-jx91bbjwmd', timestamp: '2026-02-04T20:31:47.068Z', correlation_id: 'req-ml8hgtmf-0002-f4klxm', layer: 'FRONTEND', domain: 'API', …}
+logger.ts:164 04/02/2026, 21:31:47 [CORR:req-ml8hgtmf-0002-f4klxm] [FRONTEND] [AUTH] [INFO] User authenticated | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"user_id":"a2975c76-eeda-41f8-9efe-d0741c9785a5","email":"rayepasmonauto@gmail.com"} {id: '1770237107081-z3vk347ng8l', timestamp: '2026-02-04T20:31:47.081Z', correlation_id: 'req-ml8hgtmf-0002-f4klxm', layer: 'FRONTEND', domain: 'AUTH', …}
+RootClientLayout.tsx:76 checkAdminRedirect running {pathname: '/', user: 'a2975c76-eeda-41f8-9efe-d0741c9785a5'}
+logger.ts:161 04/02/2026, 21:31:47 [CORR:req-ml8hgtmf-0002-f4klxm] [FRONTEND] [API] [DEBUG] IPC call started: calendar_get_tasks | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"calendar_get_tasks","args":{"request":{"session_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzAyMzY4NDUsImV4cCI6MTc3MDI0NDA0NSwianRpIjoiMTdlYTdmNjMtNGEyOC00NmIyLTk5MDEtZjA1OTNjMmMxODUyIiwic2Vzc2lvbl9pZCI6IjEwMDk0ZWM5LWZlMjUtNDA1Zi04ZDk1LTI4OGEzYzI4ZGRlMiJ9.I4dtE7gX0tIGc2OjO8tHVdqne7FSbj0JeLkS1m6MxbQ","date_range":{"start_date":"2026-01-31","end_date":"2026-02-27"},"technician_ids":null,"statuses":null}},"timeout_ms":120000} {id: '1770237107099-hj8obdghssc', timestamp: '2026-02-04T20:31:47.099Z', correlation_id: 'req-ml8hgtmf-0002-f4klxm', layer: 'FRONTEND', domain: 'API', …}
+scheduler.development.js:519 [Violation] 'message' handler took 192ms
+logger.ts:161 04/02/2026, 21:31:47 [CORR:req-ml8hgtmf-0002-f4klxm] [FRONTEND] [API] [DEBUG] IPC call started: has_admins | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"has_admins","timeout_ms":120000} {id: '1770237107144-xoatkr240s', timestamp: '2026-02-04T20:31:47.144Z', correlation_id: 'req-ml8hgtmf-0002-f4klxm', layer: 'FRONTEND', domain: 'API', …}
+cache.ts:127 [IPC Cache] auth_validate_session -> cache hit for key: auth:session:eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzAyMzY4NDUsImV4cCI6MTc3MDI0NDA0NSwianRpIjoiMTdlYTdmNjMtNGEyOC00NmIyLTk5MDEtZjA1OTNjMmMxODUyIiwic2Vzc2lvbl9pZCI6IjEwMDk0ZWM5LWZlMjUtNDA1Zi04ZDk1LTI4OGEzYzI4ZGRlMiJ9.I4dtE7gX0tIGc2OjO8tHVdqne7FSbj0JeLkS1m6MxbQ
+logger.ts:161 04/02/2026, 21:31:47 [CORR:req-ml8hgtmf-0002-f4klxm] [FRONTEND] [API] [DEBUG] IPC call started: user_crud | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"user_crud","args":{"request":{"action":{"action":"Get","id":"a2975c76-eeda-41f8-9efe-d0741c9785a5"},"session_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzAyMzY4NDUsImV4cCI6MTc3MDI0NDA0NSwianRpIjoiMTdlYTdmNjMtNGEyOC00NmIyLTk5MDEtZjA1OTNjMmMxODUyIiwic2Vzc2lvbl9pZCI6IjEwMDk0ZWM5LWZlMjUtNDA1Zi04ZDk1LTI4OGEzYzI4ZGRlMiJ9.I4dtE7gX0tIGc2OjO8tHVdqne7FSbj0JeLkS1m6MxbQ"}},"timeout_ms":120000} {id: '1770237107226-d1e050s53o8', timestamp: '2026-02-04T20:31:47.226Z', correlation_id: 'req-ml8hgtmf-0002-f4klxm', layer: 'FRONTEND', domain: 'API', …}
+logger.ts:164 04/02/2026, 21:31:47 [CORR:req-ml8hgtmf-0002-f4klxm] [FRONTEND] [API] [INFO] IPC call completed: user_crud | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"user_crud","duration_ms":335,"response_type":"object"} {id: '1770237107271-o08gmgwtj2n', timestamp: '2026-02-04T20:31:47.271Z', correlation_id: 'req-ml8hgtmf-0002-f4klxm', layer: 'FRONTEND', domain: 'API', …}
+logger.ts:235 [04/02/2026, 21:31:47] DEBUG [system] auth | Data: "Profile loaded successfully" {id: '1770237107283-rxvuuldiks', timestamp: '2026-02-04T20:31:47.283Z', level: 0, context: 'system', message: 'auth', …}
+app-index.tsx:25  04/02/2026, 21:31:47 [CORR:req-ml8hgtmf-0002-f4klxm] [FRONTEND] [API] [ERROR] IPC call error: calendar_get_tasks | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | error: Error: {"Internal":"Failed to retrieve calendar tasks: Database error: no such table: calendar_tasks"} {id: '1770237107332-r7hfh31dbza', timestamp: '2026-02-04T20:31:47.332Z', correlation_id: 'req-ml8hgtmf-0002-f4klxm', layer: 'FRONTEND', domain: 'API', …}
 window.console.error @ app-index.tsx:25
 console.error @ hydration-error-info.ts:72
 log @ logger.ts:171
 error @ logger.ts:273
 safeInvoke @ utils.ts:218
 await in safeInvoke
-listWithTasks @ client.ts:663
-getClientsWithTasks @ client.service.ts:118
-eval @ page.tsx:43
-eval @ page.tsx:74
+getCalendarTasks @ calendar.ts:16
+eval @ useCalendar.ts:125
+eval @ useCalendar.ts:212
 commitHookEffectListMount @ react-dom.development.js:21102
 commitHookPassiveMountEffects @ react-dom.development.js:23154
 reconnectPassiveEffects @ react-dom.development.js:23406
 recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23404
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23485
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23485
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23404
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23485
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23404
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23404
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23404
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23404
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
 reconnectPassiveEffects @ react-dom.development.js:23485
 recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
 reconnectPassiveEffects @ react-dom.development.js:23404
@@ -38,8 +35,6 @@ recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
 reconnectPassiveEffects @ react-dom.development.js:23404
 recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
 reconnectPassiveEffects @ react-dom.development.js:23485
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23404
 recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
 reconnectPassiveEffects @ react-dom.development.js:23485
 recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
@@ -173,66 +168,27 @@ commitPassiveMountOnFiber @ react-dom.development.js:23267
 commitPassiveMountEffects @ react-dom.development.js:23225
 flushPassiveEffectsImpl @ react-dom.development.js:26497
 flushPassiveEffects @ react-dom.development.js:26438
-eval @ react-dom.development.js:26172
+performSyncWorkOnRoot @ react-dom.development.js:24870
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+commitRootImpl @ react-dom.development.js:26369
+commitRoot @ react-dom.development.js:26077
+commitRootWhenReady @ react-dom.development.js:24749
+finishConcurrentRender @ react-dom.development.js:24714
+performConcurrentWorkOnRoot @ react-dom.development.js:24559
 workLoop @ scheduler.development.js:256
 flushWork @ scheduler.development.js:225
 performWorkUntilDeadline @ scheduler.development.js:534
-app-index.tsx:25  03/02/2026, 23:07:21 [CORR:req-ml75fv7n-0002-3fznde] [FRONTEND] [API] [ERROR] IPC call error: client_crud | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | error: Error: {"Database":"Client listing failed: Failed to get all clients: Database error: Failed to find all clients: Conversion error from type Text at index: 0, invalid digit found in string"} {id: '1770156441193-duln7f3knl7', timestamp: '2026-02-03T22:07:21.193Z', correlation_id: 'req-ml75fv7n-0002-3fznde', layer: 'FRONTEND', domain: 'API', …}
+app-index.tsx:25  Failed to fetch calendar tasks: {Internal: 'Failed to retrieve calendar tasks: Database error: no such table: calendar_tasks'}
 window.console.error @ app-index.tsx:25
 console.error @ hydration-error-info.ts:72
-log @ logger.ts:171
-error @ logger.ts:273
-safeInvoke @ utils.ts:218
-await in safeInvoke
-listWithTasks @ client.ts:663
-getClientsWithTasks @ client.service.ts:118
-eval @ page.tsx:43
-eval @ page.tsx:74
-commitHookEffectListMount @ react-dom.development.js:21102
-invokePassiveEffectMountInDEV @ react-dom.development.js:23980
-invokeEffectsInDev @ react-dom.development.js:26852
-legacyCommitDoubleInvokeEffectsInDEV @ react-dom.development.js:26835
-commitDoubleInvokeEffectsInDEV @ react-dom.development.js:26816
-flushPassiveEffectsImpl @ react-dom.development.js:26514
-flushPassiveEffects @ react-dom.development.js:26438
-eval @ react-dom.development.js:26172
-workLoop @ scheduler.development.js:256
-flushWork @ scheduler.development.js:225
-performWorkUntilDeadline @ scheduler.development.js:534
-app-index.tsx:25  03/02/2026, 23:07:21 [CORR:req-ml75fv7n-0002-3fznde] [FRONTEND] [API] [ERROR] IPC call error: client_crud | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | error: Error: {"Database":"Client listing failed: Failed to get all clients: Database error: Failed to find all clients: Conversion error from type Text at index: 0, invalid digit found in string"} {id: '1770156441658-829mqo28w36', timestamp: '2026-02-03T22:07:21.658Z', correlation_id: 'req-ml75fv7n-0002-3fznde', layer: 'FRONTEND', domain: 'API', …}
-window.console.error @ app-index.tsx:25
-console.error @ hydration-error-info.ts:72
-log @ logger.ts:171
-error @ logger.ts:273
-safeInvoke @ utils.ts:218
-await in safeInvoke
-list @ client.ts:642
-getClientsWithTasks @ client.service.ts:136
-await in getClientsWithTasks
-eval @ page.tsx:43
-eval @ page.tsx:74
+eval @ useCalendar.ts:128
+await in eval
+eval @ useCalendar.ts:212
 commitHookEffectListMount @ react-dom.development.js:21102
 commitHookPassiveMountEffects @ react-dom.development.js:23154
 reconnectPassiveEffects @ react-dom.development.js:23406
 recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23404
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23485
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23485
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23404
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23485
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23404
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23404
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23404
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23404
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
 reconnectPassiveEffects @ react-dom.development.js:23485
 recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
 reconnectPassiveEffects @ react-dom.development.js:23404
@@ -240,8 +196,6 @@ recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
 reconnectPassiveEffects @ react-dom.development.js:23404
 recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
 reconnectPassiveEffects @ react-dom.development.js:23485
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23404
 recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
 reconnectPassiveEffects @ react-dom.development.js:23485
 recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
@@ -375,22 +329,27 @@ commitPassiveMountOnFiber @ react-dom.development.js:23267
 commitPassiveMountEffects @ react-dom.development.js:23225
 flushPassiveEffectsImpl @ react-dom.development.js:26497
 flushPassiveEffects @ react-dom.development.js:26438
-eval @ react-dom.development.js:26172
+performSyncWorkOnRoot @ react-dom.development.js:24870
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+commitRootImpl @ react-dom.development.js:26369
+commitRoot @ react-dom.development.js:26077
+commitRootWhenReady @ react-dom.development.js:24749
+finishConcurrentRender @ react-dom.development.js:24714
+performConcurrentWorkOnRoot @ react-dom.development.js:24559
 workLoop @ scheduler.development.js:256
 flushWork @ scheduler.development.js:225
 performWorkUntilDeadline @ scheduler.development.js:534
-app-index.tsx:25  03/02/2026, 23:07:21 [CORR:req-ml75fv7n-0002-3fznde] [FRONTEND] [API] [ERROR] IPC call error: client_crud | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | error: Error: {"Database":"Client listing failed: Failed to get all clients: Database error: Failed to find all clients: Conversion error from type Text at index: 0, invalid digit found in string"} {id: '1770156441681-13kfhctkueml', timestamp: '2026-02-03T22:07:21.681Z', correlation_id: 'req-ml75fv7n-0002-3fznde', layer: 'FRONTEND', domain: 'API', …}
+app-index.tsx:25  04/02/2026, 21:31:47 [CORR:req-ml8hgtmf-0002-f4klxm] [FRONTEND] [API] [ERROR] IPC call error: calendar_get_tasks | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | error: Error: {"Internal":"Failed to retrieve calendar tasks: Database error: no such table: calendar_tasks"} {id: '1770237107349-4far0qq2a7m', timestamp: '2026-02-04T20:31:47.349Z', correlation_id: 'req-ml8hgtmf-0002-f4klxm', layer: 'FRONTEND', domain: 'API', …}
 window.console.error @ app-index.tsx:25
 console.error @ hydration-error-info.ts:72
 log @ logger.ts:171
 error @ logger.ts:273
 safeInvoke @ utils.ts:218
 await in safeInvoke
-list @ client.ts:642
-getClientsWithTasks @ client.service.ts:136
-await in getClientsWithTasks
-eval @ page.tsx:43
-eval @ page.tsx:74
+getCalendarTasks @ calendar.ts:16
+eval @ useCalendar.ts:125
+eval @ useCalendar.ts:212
 commitHookEffectListMount @ react-dom.development.js:21102
 invokePassiveEffectMountInDEV @ react-dom.development.js:23980
 invokeEffectsInDev @ react-dom.development.js:26852
@@ -398,7 +357,43 @@ legacyCommitDoubleInvokeEffectsInDEV @ react-dom.development.js:26835
 commitDoubleInvokeEffectsInDEV @ react-dom.development.js:26816
 flushPassiveEffectsImpl @ react-dom.development.js:26514
 flushPassiveEffects @ react-dom.development.js:26438
-eval @ react-dom.development.js:26172
+performSyncWorkOnRoot @ react-dom.development.js:24870
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+commitRootImpl @ react-dom.development.js:26369
+commitRoot @ react-dom.development.js:26077
+commitRootWhenReady @ react-dom.development.js:24749
+finishConcurrentRender @ react-dom.development.js:24714
+performConcurrentWorkOnRoot @ react-dom.development.js:24559
 workLoop @ scheduler.development.js:256
 flushWork @ scheduler.development.js:225
 performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  Failed to fetch calendar tasks: {Internal: 'Failed to retrieve calendar tasks: Database error: no such table: calendar_tasks'}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+eval @ useCalendar.ts:128
+await in eval
+eval @ useCalendar.ts:212
+commitHookEffectListMount @ react-dom.development.js:21102
+invokePassiveEffectMountInDEV @ react-dom.development.js:23980
+invokeEffectsInDev @ react-dom.development.js:26852
+legacyCommitDoubleInvokeEffectsInDEV @ react-dom.development.js:26835
+commitDoubleInvokeEffectsInDEV @ react-dom.development.js:26816
+flushPassiveEffectsImpl @ react-dom.development.js:26514
+flushPassiveEffects @ react-dom.development.js:26438
+performSyncWorkOnRoot @ react-dom.development.js:24870
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+commitRootImpl @ react-dom.development.js:26369
+commitRoot @ react-dom.development.js:26077
+commitRootWhenReady @ react-dom.development.js:24749
+finishConcurrentRender @ react-dom.development.js:24714
+performConcurrentWorkOnRoot @ react-dom.development.js:24559
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+logger.ts:164 04/02/2026, 21:31:47 [CORR:req-ml8hgtmf-0002-f4klxm] [FRONTEND] [API] [INFO] IPC call completed: has_admins | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"has_admins","duration_ms":220,"response_type":"boolean"} {id: '1770237107364-fls7d0kv5x', timestamp: '2026-02-04T20:31:47.364Z', correlation_id: 'req-ml8hgtmf-0002-f4klxm', layer: 'FRONTEND', domain: 'API', …}
+RootClientLayout.tsx:80 hasAdmins result true
+RootClientLayout.tsx:95 No redirect needed {hasAdmins: true, pathname: '/'}
+logger.ts:164 04/02/2026, 21:31:47 [CORR:req-ml8hgtmf-0002-f4klxm] [FRONTEND] [API] [INFO] IPC call completed: user_crud | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"user_crud","duration_ms":192,"response_type":"object"} {id: '1770237107418-d84j5j7hl2', timestamp: '2026-02-04T20:31:47.418Z', correlation_id: 'req-ml8hgtmf-0002-f4klxm', layer: 'FRONTEND', domain: 'API', …}
+logger.ts:235 [04/02/2026, 21:31:47] DEBUG [system] auth | Data: "Profile loaded successfully" {id: '1770237107428-x66krlmxlk', timestamp: '2026-02-04T20:31:47.428Z', level: 0, context: 'system', message: 'auth', …}

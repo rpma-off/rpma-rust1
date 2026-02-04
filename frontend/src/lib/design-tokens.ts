@@ -19,6 +19,7 @@ export const designTokens = {
     background: '#FFFFFF', // Light mode background
     backgroundDark: '#111827', // Dark mode background
     surface: '#F3F4F6', // Secondary/Gray 100
+    surfaceMuted: '#F8FAFC', // Light gray surface
     surfaceElevated: '#FFFFFF', // Card background
     surfaceOverlay: 'rgba(0, 0, 0, 0.5)', // Modal overlay
 
@@ -36,6 +37,7 @@ export const designTokens = {
 
     // Border colors
     border: '#E5E7EB', // Border (light mode)
+    borderSoft: '#EEF2F7',
     borderDark: '#4B5563', // Border (dark mode)
     borderLight: '#F3F4F6',
 

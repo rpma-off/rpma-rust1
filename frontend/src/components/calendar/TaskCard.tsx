@@ -76,30 +76,18 @@ const TaskCardComponent = memo<TaskCardProps>(({
     return (
       <div
         className={`
-          border-l-4 p-2 rounded-r-md shadow-sm cursor-pointer
-          hover:shadow-md hover:opacity-90 transition-all duration-200
-          ${isDragging ? 'opacity-50 rotate-2' : ''}
-          ${task.priority.toLowerCase() === 'urgent' ? 'animate-pulse' : ''}
+          px-2 py-1 rounded-full bg-[hsl(var(--rpma-teal))] text-white shadow-sm cursor-pointer
+          hover:opacity-90 transition-all duration-200
+          ${isDragging ? 'opacity-60' : ''}
           ${className}
         `}
         onClick={onClick}
         role="button"
         tabIndex={0}
         aria-label={`${task.task_number}: ${task.title}, Status: ${task.status}, Priority: ${task.priority}`}
-        style={{
-          backgroundColor: statusColors,
-          borderColor: priorityColor,
-        }}
       >
-        <div className="flex items-start gap-1">
-          <div className="flex-1 min-w-0">
-            <div className="text-xs font-medium text-white truncate leading-tight">
-              {task.task_number}: {task.title}
-            </div>
-            <div className="text-xs text-white/90 truncate mt-0.5">
-              {task.vehicle_plate || task.client_name || 'No vehicle'}
-            </div>
-          </div>
+        <div className="text-[11px] font-medium truncate">
+          {task.task_number}: {task.title}
         </div>
       </div>
     );

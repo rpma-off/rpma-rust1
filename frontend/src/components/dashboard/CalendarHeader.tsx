@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Filter, List, X, FileText } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, Filter, List, X, Calendar as CalendarIcon, Grid3X3, Clock, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCalendarStore } from '@/lib/stores/calendarStore';
-import { designTokens } from '@/lib/design-tokens';
 
 export function CalendarHeader() {
   const {
@@ -102,96 +101,159 @@ export function CalendarHeader() {
     return chips;
   }, [filters, setFilters]);
 
-  // Mock monthly revenue - in production this would be calculated from actual data
-  const monthlyRevenue = useMemo(() => {
-    const monthName = format(currentDate, 'MMMM', { locale: fr });
-    // This would be replaced with actual revenue calculation
-    const revenue = 0;
-    return `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${revenue.toFixed(2).replace('.', ',')} $`;
-  }, [currentDate]);
+  // Monthly revenue intentionally omitted from the new header layout
 
   return (
-    <div className="border-b border-border/20 bg-background">
-      <div className="px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <h1 className="text-2xl font-bold text-foreground">
-            {currentView === 'week' ? 'CALENDRIER' : format(currentDate, 'MMMM yyyy', { locale: fr })}
-          </h1>
+    <div className="bg-white border border-[hsl(var(--rpma-border))] rounded-[10px] shadow-[var(--rpma-shadow-soft)]">
+      <div className="px-5 py-4 flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-semibold text-foreground">
+              {format(currentDate, 'MMMM yyyy', { locale: fr })}
+            </h1>
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          </div>
 
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={toggleFilterDrawer}
+            className="gap-2 rounded-full border-border/60"
+            aria-label={`Filtres${activeFilterCount > 0 ? ` (${activeFilterCount} actifs)` : ''}`}
+          >
+            <Filter className="h-4 w-4" />
+            Filtre
+            {activeFilterCount > 0 && (
+              <span className="ml-1 h-5 px-1.5 text-xs rounded-full bg-[hsl(var(--rpma-teal))] text-white" aria-label={`${activeFilterCount} filtres actifs`}>
+                {activeFilterCount}
+              </span>
+            )}
+          </Button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
             <Button
               size="sm"
-              variant="outline"
+              variant="ghost"
               onClick={goToPrevious}
-              className="border-border/60"
+              className="h-8 w-8 p-0 rounded-full"
               aria-label="Mois précédent"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={goToToday}
-              aria-label="Aller à aujourd'hui"
-            >
-              AUJOURD&apos;HUI
-            </Button>
-
             <Button
               size="sm"
               variant="outline"
+              onClick={goToToday}
+              className="rounded-full border-border/60"
+            >
+              Aujourd&apos;hui
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
               onClick={goToNext}
-              className="border-border/60"
+              className="h-8 w-8 p-0 rounded-full"
               aria-label="Mois suivant"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-        </div>
 
-        <div className="flex items-center gap-3">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={toggleFilterDrawer}
-            className="gap-2"
-            aria-label={`Filtres${activeFilterCount > 0 ? ` (${activeFilterCount} actifs)` : ''}`}
-          >
-            <Filter className="h-4 w-4" />
-            FILTRE
-            {activeFilterCount > 0 && (
-              <span className="ml-1 h-5 px-1.5 text-xs rounded-full bg-accent text-white" aria-label={`${activeFilterCount} filtres actifs`}>
-                {activeFilterCount}
-              </span>
-            )}
-          </Button>
+          <div className="flex items-center gap-2 border border-border/60 rounded-full p-1 bg-muted/30">
+            <Button
+              size="sm"
+              variant={currentView === 'agenda' ? 'default' : 'ghost'}
+              onClick={() => setCurrentView('agenda')}
+              className={currentView === 'agenda' ? 'bg-[hsl(var(--rpma-teal))] text-white rounded-full' : 'rounded-full'}
+            >
+              <List className="h-4 w-4 mr-1" />
+              Agenda
+            </Button>
+            <Button
+              size="sm"
+              variant={currentView === 'month' ? 'default' : 'ghost'}
+              onClick={() => setCurrentView('month')}
+              className={currentView === 'month' ? 'bg-[hsl(var(--rpma-teal))] text-white rounded-full' : 'rounded-full'}
+            >
+              <Grid3X3 className="h-4 w-4 mr-1" />
+              Mois
+            </Button>
+            <Button
+              size="sm"
+              variant={currentView === 'week' ? 'default' : 'ghost'}
+              onClick={() => setCurrentView('week')}
+              className={currentView === 'week' ? 'bg-[hsl(var(--rpma-teal))] text-white rounded-full' : 'rounded-full'}
+            >
+              <CalendarIcon className="h-4 w-4 mr-1" />
+              Semaine
+            </Button>
+            <Button
+              size="sm"
+              variant={currentView === 'day' ? 'default' : 'ghost'}
+              onClick={() => setCurrentView('day')}
+              className={currentView === 'day' ? 'bg-[hsl(var(--rpma-teal))] text-white rounded-full' : 'rounded-full'}
+            >
+              <Clock className="h-4 w-4 mr-1" />
+              Jour
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="rounded-full opacity-40 cursor-not-allowed"
+              aria-disabled="true"
+            >
+              <MapPin className="h-4 w-4 mr-1" />
+              Carte
+            </Button>
+          </div>
 
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-2"
-            aria-label="Citations"
-            title="Citations (Devis)"
-          >
-            <FileText className="h-4 w-4" />
-            CITATIONS
-          </Button>
+          <div className="flex items-center gap-3">
+            <div className="text-sm text-muted-foreground">Assigné :</div>
+            <Select
+              value={filters.technicianId || 'all'}
+              onValueChange={(value) =>
+                setFilters({ technicianId: value === 'all' ? null : value })
+              }
+            >
+              <SelectTrigger className="h-8 w-36 rounded-full border-border/60">
+                <SelectValue placeholder="Tous" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous</SelectItem>
+                <SelectItem value="unassigned">Non assigné</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-          <div className="h-6 w-px bg-border mx-2" />
-
-          <div className="text-sm font-semibold text-foreground">
-            {monthlyRevenue}
+          <div className="flex items-center gap-1 border border-border/60 rounded-full p-1 bg-muted/30">
+            <Button
+              size="sm"
+              variant={!filters.showMyEventsOnly ? 'default' : 'ghost'}
+              onClick={() => setFilters({ showMyEventsOnly: false })}
+              className={!filters.showMyEventsOnly ? 'bg-[hsl(var(--rpma-teal))] text-white rounded-full' : 'rounded-full'}
+            >
+              Dans l&apos;ensemble
+            </Button>
+            <Button
+              size="sm"
+              variant={filters.showMyEventsOnly ? 'default' : 'ghost'}
+              onClick={() => setFilters({ showMyEventsOnly: true })}
+              className={filters.showMyEventsOnly ? 'bg-[hsl(var(--rpma-teal))] text-white rounded-full' : 'rounded-full'}
+            >
+              Éléments de ligne
+            </Button>
           </div>
         </div>
       </div>
 
       {filterChips.length > 0 && (
-        <div className="px-4 py-2 flex items-center gap-2 border-t border-border/10 flex-wrap">
+        <div className="px-5 pb-4 flex items-center gap-2 flex-wrap">
           {filterChips.map((chip) => (
             <div
               key={chip.key}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/30 text-foreground text-sm"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[hsl(var(--rpma-surface))] border border-[hsl(var(--rpma-border))] text-foreground text-sm"
             >
               {chip.label}
               <button
@@ -205,71 +267,6 @@ export function CalendarHeader() {
           ))}
         </div>
       )}
-
-      <div className="px-4 py-2 flex items-center gap-3 border-t border-border/10">
-        <div className="flex items-center gap-1 bg-muted rounded-lg p-1" role="group" aria-label="Mode d'affichage">
-          <Button
-            size="sm"
-            variant={currentView === 'month' ? 'default' : 'ghost'}
-            onClick={() => setCurrentView('month')}
-            className={currentView === 'month' ? 'bg-accent text-white' : ''}
-            aria-label="Vue mensuelle"
-          >
-            Mois
-          </Button>
-          <Button
-            size="sm"
-            variant={currentView === 'week' ? 'default' : 'ghost'}
-            onClick={() => setCurrentView('week')}
-            className={currentView === 'week' ? 'bg-accent text-white' : ''}
-            aria-label="Vue hebdomadaire"
-          >
-            Semaine
-          </Button>
-          <Button
-            size="sm"
-            variant={currentView === 'day' ? 'default' : 'ghost'}
-            onClick={() => setCurrentView('day')}
-            className={currentView === 'day' ? 'bg-accent text-white' : ''}
-            aria-label="Vue journalière"
-          >
-            Jour
-          </Button>
-          <Button
-            size="sm"
-            variant={currentView === 'agenda' ? 'default' : 'ghost'}
-            onClick={() => setCurrentView('agenda')}
-            className={currentView === 'agenda' ? 'bg-accent text-white' : ''}
-            aria-label="Vue agenda"
-          >
-            <List className="h-4 w-4" />
-          </Button>
-        </div>
-
-        <Select
-          value={filters.technicianId || 'all'}
-          onValueChange={(value) =>
-            setFilters({ technicianId: value === 'all' ? null : value })
-          }
-        >
-          <SelectTrigger className="h-9 w-48">
-            <SelectValue placeholder="Attribué" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous</SelectItem>
-            <SelectItem value="unassigned">Non assigné</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => setFilters({ showMyEventsOnly: !filters.showMyEventsOnly })}
-          className={filters.showMyEventsOnly ? 'bg-accent text-white' : ''}
-        >
-          {filters.showMyEventsOnly ? 'Éléments de ligne' : 'Dans l\'ensemble'}
-        </Button>
-      </div>
     </div>
   );
 }

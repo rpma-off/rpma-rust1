@@ -53,6 +53,15 @@
     --primary-foreground: 0 0% 100%;
     /* #FFFFFF White text on teal */
 
+    /* RPMA UI tokens */
+    --rpma-teal: 174 72% 46%;
+    /* #1ad1ba */
+    --rpma-surface: 210 40% 98%;
+    /* #F8FAFC */
+    --rpma-border: 214 32% 91%;
+    /* #E5E7EB */
+    --rpma-shadow-soft: 0 6px 18px rgba(15, 23, 42, 0.08);
+
     /* Secondary Colors - Dark Slate */
     --secondary: 215 25% 27%;
     /* #1E293B Dark Slate */
@@ -190,6 +199,12 @@
     /* #14b09c Teal Active */
     --primary-foreground: 0 0% 100%;
     /* #FFFFFF White text */
+
+    /* RPMA UI tokens */
+    --rpma-teal: 174 72% 46%;
+    --rpma-surface: 215 28% 12%;
+    --rpma-border: 215 20% 35%;
+    --rpma-shadow-soft: 0 10px 24px rgba(0, 0, 0, 0.35);
 
     /* Secondary Colors - Dark Slate (same in dark mode) */
     --secondary: 215 25% 27%;
