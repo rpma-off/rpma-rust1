@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useState, useCallback } from "react";
 import {
@@ -146,23 +146,23 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
     <div className="p-3 sm:p-6 max-w-2xl mx-auto">
       <div className="bg-muted rounded-lg border border-border overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-accent/20 to-accent/10 p-3 sm:p-4 border-b border-border">
+        <div className="bg-[hsl(var(--rpma-surface))] p-3 sm:p-4 border-b border-border">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
             <div className="flex items-center">
-              <Calendar className="w-5 h-5 text-accent mr-2" />
+              <Calendar className="w-5 h-5 text-[hsl(var(--rpma-teal))] mr-2" />
               <h3 className="text-base sm:text-lg font-semibold text-foreground">
                 Planification de l&apos;intervention
               </h3>
             </div>
-            <div className="text-xs sm:text-sm bg-accent/20 px-2 sm:px-3 py-1 rounded-full">
-              <span className="font-medium text-accent">
+            <div className="text-xs sm:text-sm bg-[hsl(var(--rpma-teal))]/10 px-2 sm:px-3 py-1 rounded-full">
+              <span className="font-medium text-[hsl(var(--rpma-teal))]">
                 <Timer className="w-4 h-4 inline mr-1" />~
                 {formatDuration(estimatedDuration)}
               </span>
             </div>
           </div>
-          <p className="text-xs sm:text-sm text-border-light mt-1">
-            Définissez la date et les horaires de l&apos;intervention PPF
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+            DÃ©finissez la date et les horaires de l&apos;intervention PPF
           </p>
         </div>
 
@@ -183,12 +183,12 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
                 min={getMinDate()}
                 max={getMaxDate()}
                 className={`
-                  w-full px-3 py-2 border rounded-lg transition-all duration-200 bg-black-light text-foreground
+                  w-full px-3 py-2 border rounded-lg transition-all duration-200 bg-white text-foreground
                   ${
                     errors.scheduled_date
                       ? "border-red-500 focus:border-red-500 focus:ring-red-500/50"
                       : formData.scheduled_date
-                        ? "border-accent focus:border-accent focus:ring-accent/50"
+                        ? "border-[hsl(var(--rpma-teal))] focus:border-[hsl(var(--rpma-teal))] focus:ring-[hsl(var(--rpma-teal))]/20"
                         : "border-border focus:border-border-light focus:ring-border-light/50"
                   }
                   focus:ring-2 focus:outline-none
@@ -207,14 +207,14 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
               isDayPassed(formData.scheduled_date) && (
                 <p className="text-sm text-red-400 flex items-center mt-1">
                   <AlertCircle className="w-4 h-4 mr-1 flex-shrink-0" />
-                  La date sélectionnée est dans le passé
+                  La date sÃ©lectionnÃ©e est dans le passÃ©
                 </p>
               )}
 
             {formData.scheduled_date && isWeekend(formData.scheduled_date) && (
               <p className="text-sm text-yellow-400 flex items-center mt-1">
                 <Info className="w-4 h-4 mr-1 flex-shrink-0" />
-                Week-end sélectionné - vérifiez les disponibilités
+                Week-end sÃ©lectionnÃ© - vÃ©rifiez les disponibilitÃ©s
               </p>
             )}
 
@@ -242,8 +242,8 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
                     px-3 py-2 text-sm font-medium rounded-lg border transition-all duration-200
                     ${
                       formData.scheduled_time === time
-                        ? "bg-accent text-black border-accent"
-                        : "bg-black-light text-foreground border-border hover:bg-muted hover:border-border-light"
+                        ? "bg-[hsl(var(--rpma-teal))] text-white border-[hsl(var(--rpma-teal))]"
+                        : "bg-white text-foreground border-border hover:bg-muted hover:border-border-light"
                     }
                     disabled:opacity-50 disabled:cursor-not-allowed
                   `}
@@ -256,15 +256,15 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
 
             {/* Custom time input */}
             <div className="mt-3">
-              <label className="text-xs text-border-light mb-1 block">
-                Ou saisissez une heure personnalisée :
+              <label className="text-xs text-muted-foreground mb-1 block">
+                Ou saisissez une heure personnalisÃ©e :
               </label>
               <input
                 type="time"
                 name="scheduled_time"
                 value={formData.scheduled_time || ""}
                 onChange={handleChange}
-                className="w-32 px-3 py-1 text-sm border border-border bg-black-light text-foreground rounded focus:border-accent focus:ring-2 focus:ring-accent/50 focus:outline-none"
+                className="w-32 px-3 py-1 text-sm border border-border bg-white text-foreground rounded focus:border-[hsl(var(--rpma-teal))] focus:ring-2 focus:ring-[hsl(var(--rpma-teal))]/20 focus:outline-none"
                 disabled={isLoading}
               />
             </div>
@@ -278,17 +278,17 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
           </div>
 
           {/* Duration and Working Hours */}
-          <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
+          <div className="bg-[hsl(var(--rpma-teal))]/10 border border-[hsl(var(--rpma-teal))]/30 rounded-lg p-4">
             <h4 className="text-sm font-medium text-foreground mb-2 flex items-center">
               <Timer className="w-4 h-4 mr-2" />
-              Estimation de durée
+              Estimation de durÃ©e
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Start Time */}
               <div className="space-y-2">
                 <label className="block text-xs font-medium text-foreground">
-                  Heure de début (optionnel)
+                  Heure de dÃ©but (optionnel)
                 </label>
                 <select
                   name="start_time"
@@ -296,10 +296,10 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
                   onChange={(e) =>
                     handleTimeChange("start_time", e.target.value)
                   }
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-black-light text-foreground focus:border-accent focus:ring-2 focus:ring-accent/50 focus:outline-none"
+                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-foreground focus:border-[hsl(var(--rpma-teal))] focus:ring-2 focus:ring-[hsl(var(--rpma-teal))]/20 focus:outline-none"
                   disabled={isLoading}
                 >
-                  <option value="">Sélectionner...</option>
+                  <option value="">SÃ©lectionner...</option>
                   {TIME_SLOTS.map((time) => (
                     <option key={time} value={time}>
                       {time}
@@ -317,10 +317,10 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
                   name="end_time"
                   value={formData.end_time || ""}
                   onChange={(e) => handleTimeChange("end_time", e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-black-light text-foreground focus:border-accent focus:ring-2 focus:ring-accent/50 focus:outline-none"
+                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-foreground focus:border-[hsl(var(--rpma-teal))] focus:ring-2 focus:ring-[hsl(var(--rpma-teal))]/20 focus:outline-none"
                   disabled={isLoading}
                 >
-                  <option value="">Sélectionner...</option>
+                  <option value="">SÃ©lectionner...</option>
                   {TIME_SLOTS.map((time) => (
                     <option key={time} value={time}>
                       {time}
@@ -334,7 +334,7 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
             {formData.start_time && formData.end_time && (
               <div className="mt-3 text-sm text-foreground">
                 <p>
-                  Durée prévue :{" "}
+                  DurÃ©e prÃ©vue :{" "}
                   {(() => {
                     const start = new Date(
                       `1970-01-01T${formData.start_time}:00`,
@@ -350,11 +350,11 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
               </div>
             )}
 
-            <p className="text-xs text-border-light mt-2">
-              Estimation basée sur{" "}
+            <p className="text-xs text-muted-foreground mt-2">
+              Estimation basÃ©e sur{" "}
               {(formData.ppf_zones?.length || 0) +
                 (formData.custom_ppf_zones?.length || 0)}{" "}
-              zones sélectionnées
+              zones sÃ©lectionnÃ©es
             </p>
           </div>
 
@@ -368,11 +368,11 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
               name="notes"
               value={formData.notes || ""}
               onChange={handleChange}
-              placeholder="Instructions spéciales, préparatifs nécessaires, particularités du véhicule..."
+              placeholder="Instructions spÃ©ciales, prÃ©paratifs nÃ©cessaires, particularitÃ©s du vÃ©hicule..."
               rows={4}
               maxLength={1000}
               className={`
-                w-full px-3 py-2 border rounded-lg transition-all duration-200 resize-none bg-black-light text-foreground placeholder-border-light
+                w-full px-3 py-2 border rounded-lg transition-all duration-200 resize-none bg-white text-foreground placeholder-border-light
                 ${
                   errors.notes
                     ? "border-red-500 focus:border-red-500 focus:ring-red-500/50"
@@ -392,22 +392,22 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
                   </p>
                 )}
               </div>
-              <p className="text-xs text-border-light">
-                {formData.notes?.length || 0}/1000 caractères
+              <p className="text-xs text-muted-foreground">
+                {formData.notes?.length || 0}/1000 caractÃ¨res
               </p>
             </div>
           </div>
 
           {/* Summary Card */}
           {formData.scheduled_date && formData.scheduled_time && (
-            <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
+            <div className="bg-[hsl(var(--rpma-teal))]/10 border border-[hsl(var(--rpma-teal))]/30 rounded-lg p-4">
               <h4 className="text-sm font-medium text-foreground mb-2 flex items-center">
-                <CheckCircle className="w-4 h-4 mr-2 text-accent" />
-                Récapitulatif du rendez-vous
+                <CheckCircle className="w-4 h-4 mr-2 text-[hsl(var(--rpma-teal))]" />
+                RÃ©capitulatif du rendez-vous
               </h4>
               <div className="space-y-2 text-sm text-foreground">
                 <div className="flex items-center">
-                  <Calendar className="w-4 h-4 mr-2 text-accent" />
+                  <Calendar className="w-4 h-4 mr-2 text-[hsl(var(--rpma-teal))]" />
                   <span>
                     {new Date(formData.scheduled_date).toLocaleDateString(
                       "fr-FR",
@@ -421,20 +421,20 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
                   </span>
                 </div>
                 <div className="flex items-center">
-                  <Clock className="w-4 h-4 mr-2 text-accent" />
+                  <Clock className="w-4 h-4 mr-2 text-[hsl(var(--rpma-teal))]" />
                   <span>
-                    À {formData.scheduled_time}
+                    Ã€ {formData.scheduled_time}
                     {formData.start_time && formData.end_time && (
-                      <span className="ml-2 text-border-light">
-                        (Travaux de {formData.start_time} à {formData.end_time})
+                      <span className="ml-2 text-muted-foreground">
+                        (Travaux de {formData.start_time} Ã  {formData.end_time})
                       </span>
                     )}
                   </span>
                 </div>
                 <div className="flex items-center">
-                  <Timer className="w-4 h-4 mr-2 text-accent" />
+                  <Timer className="w-4 h-4 mr-2 text-[hsl(var(--rpma-teal))]" />
                   <span>
-                    Durée estimée : {formatDuration(estimatedDuration)}
+                    DurÃ©e estimÃ©e : {formatDuration(estimatedDuration)}
                   </span>
                 </div>
               </div>
@@ -442,17 +442,17 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
           )}
 
           {/* Info Box */}
-          <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
+          <div className="bg-[hsl(var(--rpma-teal))]/10 border border-[hsl(var(--rpma-teal))]/30 rounded-lg p-4">
             <div className="flex items-start">
-              <Info className="w-5 h-5 text-accent mr-2 flex-shrink-0 mt-0.5" />
+              <Info className="w-5 h-5 text-[hsl(var(--rpma-teal))] mr-2 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-foreground">
                 <p className="font-medium mb-1">Informations importantes :</p>
-                <ul className="space-y-1 text-border-light">
-                  <li>• Prévoir un espace de travail propre et éclairé</li>
-                  <li>• Le véhicule doit être lavé et décontaminé</li>
-                  <li>• Durée estimée basée sur la complexité des zones</li>
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>â€¢ PrÃ©voir un espace de travail propre et Ã©clairÃ©</li>
+                  <li>â€¢ Le vÃ©hicule doit Ãªtre lavÃ© et dÃ©contaminÃ©</li>
+                  <li>â€¢ DurÃ©e estimÃ©e basÃ©e sur la complexitÃ© des zones</li>
                   <li>
-                    • Possibilité d&apos;ajustement selon les conditions réelles
+                    â€¢ PossibilitÃ© d&apos;ajustement selon les conditions rÃ©elles
                   </li>
                 </ul>
               </div>

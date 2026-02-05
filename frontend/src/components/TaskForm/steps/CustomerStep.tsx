@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -218,24 +218,24 @@ export const CustomerStep: React.FC<FormStepProps> = ({
 
   return (
     <div className="p-3 sm:p-6 max-w-2xl mx-auto">
-      <div className="bg-muted rounded-lg border border-border overflow-hidden">
+      <div className="bg-muted rounded-lg border border-[hsl(var(--rpma-border))] overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-accent/20 to-accent/10 p-3 sm:p-4 border-b border-border">
+        <div className="bg-[hsl(var(--rpma-surface))] p-3 sm:p-4 border-b border-[hsl(var(--rpma-border))]">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
             <div className="flex items-center">
-              <User className="w-5 h-5 text-accent mr-2" />
+              <User className="w-5 h-5 text-[hsl(var(--rpma-teal))] mr-2" />
               <h3 className="text-base sm:text-lg font-semibold text-foreground">
                 Informations client
               </h3>
             </div>
-            <div className="text-xs sm:text-sm bg-accent/20 px-2 sm:px-3 py-1 rounded-full">
-              <span className="font-medium text-accent">
-                {isFormEmpty ? "À remplir" : "Complété"}
+            <div className="text-xs sm:text-sm bg-[hsl(var(--rpma-teal))]/10 px-2 sm:px-3 py-1 rounded-full">
+              <span className="font-medium text-[hsl(var(--rpma-teal))]">
+                {isFormEmpty ? "Ã€ remplir" : "ComplÃ©tÃ©"}
               </span>
             </div>
           </div>
-          <p className="text-xs sm:text-sm text-border-light mt-1">
-            Saisissez les informations du client pour cette tâche
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+            Saisissez les informations du client pour cette tÃ¢che
           </p>
         </div>
 
@@ -255,8 +255,8 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                   flex-1 flex items-center justify-center px-4 py-3 rounded-lg border-2 transition-all duration-200
                   ${
                     useExistingClient && selectedClient
-                      ? "border-accent bg-accent/20 text-accent"
-                      : "border-border bg-black-light text-foreground hover:bg-muted"
+                      ? "border-[hsl(var(--rpma-teal))] bg-[hsl(var(--rpma-teal))]/10 text-[hsl(var(--rpma-teal))]"
+                      : "border-[hsl(var(--rpma-border))] bg-white text-foreground hover:bg-muted"
                   }
                 `}
                 disabled={isLoading}
@@ -264,8 +264,8 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                 <Search className="w-5 h-5 mr-2" />
                 <span className="font-medium">
                   {selectedClient
-                    ? `Client sélectionné: ${selectedClient.name}`
-                    : "Sélectionner un client existant"}
+                    ? `Client sÃ©lectionnÃ©: ${selectedClient.name}`
+                    : "SÃ©lectionner un client existant"}
                 </span>
               </button>
 
@@ -277,8 +277,8 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                   flex-1 flex items-center justify-center px-4 py-3 rounded-lg border-2 transition-all duration-200
                   ${
                     !useExistingClient
-                      ? "border-accent bg-accent/20 text-accent"
-                      : "border-border bg-black-light text-foreground hover:bg-muted"
+                      ? "border-[hsl(var(--rpma-teal))] bg-[hsl(var(--rpma-teal))]/10 text-[hsl(var(--rpma-teal))]"
+                      : "border-[hsl(var(--rpma-border))] bg-white text-foreground hover:bg-muted"
                   }
                 `}
                 disabled={isLoading}
@@ -290,17 +290,17 @@ export const CustomerStep: React.FC<FormStepProps> = ({
 
             {/* Selected Client Info */}
             {selectedClient && (
-              <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
+              <div className="bg-[hsl(var(--rpma-teal))]/10 border border-[hsl(var(--rpma-teal))]/30 rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-accent mr-2" />
+                    <CheckCircle className="w-5 h-5 text-[hsl(var(--rpma-teal))] mr-2" />
                     <div>
                       <p className="font-medium text-foreground">
                         {selectedClient.name}
                       </p>
-                      <p className="text-sm text-border-light">
-                        {selectedClient.email && `${selectedClient.email} • `}
-                        {selectedClient.phone && `${selectedClient.phone} • `}
+                      <p className="text-sm text-muted-foreground">
+                        {selectedClient.email && `${selectedClient.email} â€¢ `}
+                        {selectedClient.phone && `${selectedClient.phone} â€¢ `}
                         {selectedClient.customer_type === "business"
                           ? "Entreprise"
                           : "Particulier"}
@@ -310,7 +310,7 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                   <button
                     type="button"
                     onClick={handleManualEntry}
-                    className="text-sm text-accent hover:text-accent-hover underline"
+                    className="text-sm text-[hsl(var(--rpma-teal))] hover:text-[hsl(var(--rpma-teal))]-hover underline"
                   >
                     Changer
                   </button>
@@ -322,16 +322,16 @@ export const CustomerStep: React.FC<FormStepProps> = ({
           {/* Client Selector Modal */}
           {showClientSelector && (
             <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-              <div className="bg-muted rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden border border-border">
-                <div className="p-4 border-b border-border">
+              <div className="bg-muted rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden border border-[hsl(var(--rpma-border))]">
+                <div className="p-4 border-b border-[hsl(var(--rpma-border))]">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-foreground">
-                      Sélectionner un client
+                      SÃ©lectionner un client
                     </h3>
                     <button
                       type="button"
                       onClick={() => setShowClientSelector(false)}
-                      className="text-border-light hover:text-foreground"
+                      className="text-muted-foreground hover:text-foreground"
                     >
                       <X className="w-6 h-6" />
                     </button>
@@ -341,12 +341,12 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                   <div className="space-y-4">
                     {/* Search Input */}
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-border-light" />
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <input
                         type="text"
                         placeholder="Rechercher un client..."
                         value={searchQuery}
-                        className="w-full pl-10 pr-4 py-2 bg-black-light border border-border text-foreground placeholder-border-light rounded-lg focus:ring-2 focus:ring-accent focus:border-accent"
+                        className="w-full pl-10 pr-4 py-2 bg-white border border-[hsl(var(--rpma-border))] text-foreground placeholder-muted-foreground rounded-lg focus:ring-2 focus:ring-[hsl(var(--rpma-teal))]/20 focus:border-[hsl(var(--rpma-teal))]"
                         onChange={(e) => setSearchQuery(e.target.value)}
                       />
                     </div>
@@ -354,9 +354,9 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                     {/* Client List */}
                     <div className="max-h-60 overflow-y-auto space-y-2">
                       {filteredClients.length === 0 ? (
-                        <div className="text-center py-4 text-border-light">
+                        <div className="text-center py-4 text-muted-foreground">
                           {searchQuery
-                            ? "Aucun client trouvé pour cette recherche"
+                            ? "Aucun client trouvÃ© pour cette recherche"
                             : "Aucun client disponible"}
                         </div>
                       ) : (
@@ -365,20 +365,20 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                             key={client.id}
                             type="button"
                             onClick={() => handleClientSelect(client)}
-                            className="w-full text-left p-3 border border-border bg-black-light rounded-lg hover:bg-muted hover:border-border-light transition-colors"
+                            className="w-full text-left p-3 border border-[hsl(var(--rpma-border))] bg-white rounded-lg hover:bg-muted hover:border-[hsl(var(--rpma-border))]-light transition-colors"
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-3">
-                                <User className="h-5 w-5 text-border-light" />
+                                <User className="h-5 w-5 text-muted-foreground" />
                                 <div>
                                   <p className="font-medium text-foreground">
                                     {client.name}
                                   </p>
-                                  <div className="text-sm text-border-light space-y-1">
+                                  <div className="text-sm text-muted-foreground space-y-1">
                                     {client.email && <p>{client.email}</p>}
                                     {client.phone && <p>{client.phone}</p>}
                                     {client.company_name && (
-                                      <p className="text-accent">
+                                      <p className="text-[hsl(var(--rpma-teal))]">
                                         {client.company_name}
                                       </p>
                                     )}
@@ -386,7 +386,7 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                                 </div>
                               </div>
                               {selectedClient?.id === client.id && (
-                                <CheckCircle className="h-5 w-5 text-accent" />
+                                <CheckCircle className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />
                               )}
                             </div>
                           </button>
@@ -402,14 +402,14 @@ export const CustomerStep: React.FC<FormStepProps> = ({
           {/* Manual Entry Form - Only show if not using existing client */}
           {!useExistingClient && (
             <div className="space-y-4">
-              <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
+              <div className="bg-[hsl(var(--rpma-teal))]/10 border border-[hsl(var(--rpma-teal))]/30 rounded-lg p-4">
                 <div className="flex items-start">
-                  <Info className="w-5 h-5 text-accent mr-2 flex-shrink-0 mt-0.5" />
+                  <Info className="w-5 h-5 text-[hsl(var(--rpma-teal))] mr-2 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-foreground">
                     <p className="font-medium">Nouveau client</p>
-                    <p className="text-border-light mt-1">
+                    <p className="text-muted-foreground mt-1">
                       Saisissez les informations du client. Un nouveau profil
-                      client sera créé.
+                      client sera crÃ©Ã©.
                     </p>
                   </div>
                 </div>
@@ -429,13 +429,13 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                     onChange={handleChange}
                     placeholder="Ex: Jean Dupont"
                     className={`
-                  w-full px-3 py-2 border rounded-lg transition-all duration-200 bg-black-light text-foreground placeholder-border-light
+                  w-full px-3 py-2 border rounded-lg transition-all duration-200 bg-white text-foreground placeholder-muted-foreground
                   ${
                     errors.customer_name
                       ? "border-red-500 focus:border-red-500 focus:ring-red-500/50"
                       : formData.customer_name
-                        ? "border-accent focus:border-accent focus:ring-accent/50"
-                        : "border-border focus:border-border-light focus:ring-border-light/50"
+                        ? "border-[hsl(var(--rpma-teal))] focus:border-[hsl(var(--rpma-teal))] focus:ring-[hsl(var(--rpma-teal))]/20/50"
+                        : "border-[hsl(var(--rpma-border))] focus:border-[hsl(var(--rpma-border))]-light focus:ring-border-light/50"
                   }
                   focus:ring-2 focus:outline-none
                   disabled:opacity-50 disabled:cursor-not-allowed
@@ -470,7 +470,7 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                       onChange={handleChange}
                       placeholder="client@example.com"
                       className={`
-                    w-full px-3 py-2 border rounded-lg transition-all duration-200 bg-black-light text-foreground placeholder-border-light
+                    w-full px-3 py-2 border rounded-lg transition-all duration-200 bg-white text-foreground placeholder-muted-foreground
                     ${
                       errors.customer_email ||
                       (formData.customer_email &&
@@ -478,8 +478,8 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                         ? "border-red-500 focus:border-red-500 focus:ring-red-500/50"
                         : formData.customer_email &&
                             validateEmail(formData.customer_email)
-                          ? "border-accent focus:border-accent focus:ring-accent/50"
-                          : "border-border focus:border-border-light focus:ring-border-light/50"
+                          ? "border-[hsl(var(--rpma-teal))] focus:border-[hsl(var(--rpma-teal))] focus:ring-[hsl(var(--rpma-teal))]/20/50"
+                          : "border-[hsl(var(--rpma-border))] focus:border-[hsl(var(--rpma-border))]-light focus:ring-border-light/50"
                     }
                     focus:ring-2 focus:outline-none
                     disabled:opacity-50 disabled:cursor-not-allowed
@@ -509,7 +509,7 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-foreground">
                     <Phone className="w-4 h-4 inline mr-1" />
-                    Téléphone
+                    TÃ©lÃ©phone
                   </label>
                   <div className="relative">
                     <input
@@ -519,7 +519,7 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                       onChange={handlePhoneChange}
                       placeholder="06 12 34 56 78"
                       className={`
-                    w-full px-3 py-2 border rounded-lg font-mono transition-all duration-200 bg-black-light text-foreground placeholder-border-light
+                    w-full px-3 py-2 border rounded-lg font-mono transition-all duration-200 bg-white text-foreground placeholder-muted-foreground
                     ${
                       errors.customer_phone ||
                       (formData.customer_phone &&
@@ -527,8 +527,8 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                         ? "border-red-500 focus:border-red-500 focus:ring-red-500/50"
                         : formData.customer_phone &&
                             validatePhone(formData.customer_phone)
-                          ? "border-accent focus:border-accent focus:ring-accent/50"
-                          : "border-border focus:border-border-light focus:ring-border-light/50"
+                          ? "border-[hsl(var(--rpma-teal))] focus:border-[hsl(var(--rpma-teal))] focus:ring-[hsl(var(--rpma-teal))]/20/50"
+                          : "border-[hsl(var(--rpma-border))] focus:border-[hsl(var(--rpma-border))]-light focus:ring-border-light/50"
                     }
                     focus:ring-2 focus:outline-none
                     disabled:opacity-50 disabled:cursor-not-allowed
@@ -543,7 +543,7 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                     !validatePhone(formData.customer_phone) && (
                       <p className="text-sm text-red-400 flex items-center mt-1">
                         <AlertCircle className="w-4 h-4 mr-1 flex-shrink-0" />
-                        Format de téléphone invalide
+                        Format de tÃ©lÃ©phone invalide
                       </p>
                     )}
                   {errors.customer_phone && (
@@ -570,13 +570,13 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                     rows={3}
                     maxLength={200}
                     className={`
-                  w-full px-3 py-2 border rounded-lg transition-all duration-200 resize-none bg-black-light text-foreground placeholder-border-light
+                  w-full px-3 py-2 border rounded-lg transition-all duration-200 resize-none bg-white text-foreground placeholder-muted-foreground
                   ${
                     errors.customer_address
                       ? "border-red-500 focus:border-red-500 focus:ring-red-500/50"
                       : formData.customer_address
-                        ? "border-accent focus:border-accent focus:ring-accent/50"
-                        : "border-border focus:border-border-light focus:ring-border-light/50"
+                        ? "border-[hsl(var(--rpma-teal))] focus:border-[hsl(var(--rpma-teal))] focus:ring-[hsl(var(--rpma-teal))]/20/50"
+                        : "border-[hsl(var(--rpma-border))] focus:border-[hsl(var(--rpma-border))]-light focus:ring-border-light/50"
                   }
                   focus:ring-2 focus:outline-none
                   disabled:opacity-50 disabled:cursor-not-allowed
@@ -594,32 +594,32 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                   </p>
                 )}
                 {formData.customer_address && (
-                  <p className="text-xs text-border-light">
-                    {formData.customer_address.length}/200 caractères
+                  <p className="text-xs text-muted-foreground">
+                    {formData.customer_address.length}/200 caractÃ¨res
                   </p>
                 )}
               </div>
 
               {/* Benefits of providing customer info */}
-              <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
+              <div className="bg-[hsl(var(--rpma-teal))]/10 border border-[hsl(var(--rpma-teal))]/30 rounded-lg p-4">
                 <div className="flex items-start">
-                  <Info className="w-5 h-5 text-accent mr-2 flex-shrink-0 mt-0.5" />
+                  <Info className="w-5 h-5 text-[hsl(var(--rpma-teal))] mr-2 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-foreground">
                     <p className="font-medium mb-1">
                       Avantages de renseigner ces informations :
                     </p>
-                    <ul className="space-y-1 text-border-light">
+                    <ul className="space-y-1 text-muted-foreground">
                       <li>
-                        • Communication directe en cas de questions ou retards
+                        â€¢ Communication directe en cas de questions ou retards
                       </li>
                       <li>
-                        • Notifications automatiques de l&apos;avancement des
+                        â€¢ Notifications automatiques de l&apos;avancement des
                         travaux
                       </li>
                       <li>
-                        • Historique client pour les interventions futures
+                        â€¢ Historique client pour les interventions futures
                       </li>
-                      <li>• Facturation et suivi comptable facilités</li>
+                      <li>â€¢ Facturation et suivi comptable facilitÃ©s</li>
                     </ul>
                   </div>
                 </div>
@@ -627,34 +627,34 @@ export const CustomerStep: React.FC<FormStepProps> = ({
 
               {/* Summary of entered information */}
               {!isFormEmpty && (
-                <div className="bg-black-light border border-border rounded-lg p-4">
+                <div className="bg-white border border-[hsl(var(--rpma-border))] rounded-lg p-4">
                   <h4 className="text-sm font-medium text-foreground mb-2">
-                    Résumé des informations :
+                    RÃ©sumÃ© des informations :
                   </h4>
-                  <div className="text-sm text-border-light space-y-1">
+                  <div className="text-sm text-muted-foreground space-y-1">
                     {formData.customer_name && (
                       <div className="flex items-center">
-                        <User className="w-4 h-4 mr-2 text-border-light" />
+                        <User className="w-4 h-4 mr-2 text-muted-foreground" />
                         <span>{formData.customer_name}</span>
                       </div>
                     )}
                     {formData.customer_email &&
                       validateEmail(formData.customer_email) && (
                         <div className="flex items-center">
-                          <Mail className="w-4 h-4 mr-2 text-border-light" />
+                          <Mail className="w-4 h-4 mr-2 text-muted-foreground" />
                           <span>{formData.customer_email}</span>
                         </div>
                       )}
                     {formData.customer_phone &&
                       validatePhone(formData.customer_phone) && (
                         <div className="flex items-center">
-                          <Phone className="w-4 h-4 mr-2 text-border-light" />
+                          <Phone className="w-4 h-4 mr-2 text-muted-foreground" />
                           <span>{formData.customer_phone}</span>
                         </div>
                       )}
                     {formData.customer_address && (
                       <div className="flex items-start">
-                        <MapPin className="w-4 h-4 mr-2 text-border-light mt-0.5 flex-shrink-0" />
+                        <MapPin className="w-4 h-4 mr-2 text-muted-foreground mt-0.5 flex-shrink-0" />
                         <span className="break-words">
                           {formData.customer_address}
                         </span>
@@ -668,17 +668,17 @@ export const CustomerStep: React.FC<FormStepProps> = ({
 
           {/* Quick Skip Option - Only show if no client selected and no manual entry */}
           {!useExistingClient && !selectedClient && isFormEmpty && (
-            <div className="bg-border/20 border border-border rounded-lg p-4">
+            <div className="bg-[hsl(var(--rpma-surface))] border border-[hsl(var(--rpma-border))] rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-start">
-                  <Info className="w-5 h-5 text-border-light mr-2 flex-shrink-0 mt-0.5" />
+                  <Info className="w-5 h-5 text-muted-foreground mr-2 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-foreground">
                     <p className="font-medium">
                       Pas d&apos;informations client ?
                     </p>
-                    <p className="text-border-light mt-1">
-                      Vous pouvez passer cette étape et l&apos;remplir plus tard
-                      si nécessaire.
+                    <p className="text-muted-foreground mt-1">
+                      Vous pouvez passer cette Ã©tape et l&apos;remplir plus tard
+                      si nÃ©cessaire.
                     </p>
                   </div>
                 </div>

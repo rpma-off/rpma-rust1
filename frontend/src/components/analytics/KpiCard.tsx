@@ -14,21 +14,21 @@ interface KpiCardProps {
 
 export function KpiCard({ title, value, icon, trend, description, className }: KpiCardProps) {
   const trendIcon = {
-    up: <TrendingUp className="w-4 h-4 text-accent" />,
+    up: <TrendingUp className="w-4 h-4 text-[hsl(var(--rpma-teal))]" />,
     down: <TrendingDown className="w-4 h-4 text-red-500" />,
-    neutral: <Minus className="w-4 h-4 text-border-400" />,
+    neutral: <Minus className="w-4 h-4 text-muted-foreground" />,
   };
 
   const trendColor = {
-    up: 'text-accent',
+    up: 'text-[hsl(var(--rpma-teal))]',
     down: 'text-red-500',
-    neutral: 'text-border-400',
+    neutral: 'text-muted-foreground',
   };
 
   return (
-    <Card className={cn("bg-border-800 border-border-700", className)}>
+    <Card className={cn("rpma-shell", className)}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-border-300">
+        <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
         </CardTitle>
         <div className="text-blue-500">
@@ -40,7 +40,7 @@ export function KpiCard({ title, value, icon, trend, description, className }: K
           {value}
         </div>
         <div className="flex items-center justify-between">
-          <p className="text-xs text-border-400">
+          <p className="text-xs text-muted-foreground">
             {description}
           </p>
           {trendIcon[trend]}

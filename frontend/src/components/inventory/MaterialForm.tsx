@@ -40,7 +40,6 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
             id="sku"
             value={formData.sku}
             onChange={(e) => updateFormData('sku', e.target.value)}
-            className="bg-border-900 border-border-600 text-foreground"
             required
           />
         </div>
@@ -50,7 +49,6 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
             id="name"
             value={formData.name}
             onChange={(e) => updateFormData('name', e.target.value)}
-            className="bg-border-900 border-border-600 text-foreground"
             required
           />
         </div>
@@ -62,7 +60,6 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
           id="description"
           value={formData.description}
           onChange={(e) => updateFormData('description', e.target.value)}
-          className="bg-border-900 border-border-600 text-foreground"
           rows={3}
         />
       </div>
@@ -75,10 +72,10 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
             value={formData.material_type}
             onValueChange={(value) => updateFormData('material_type', value)}
           >
-            <SelectTrigger className="bg-border-900 border-border-600">
+            <SelectTrigger>
               <SelectValue placeholder="Select type" />
             </SelectTrigger>
-            <SelectContent className="bg-border-800 border-border-700">
+            <SelectContent className="bg-white border-[hsl(var(--rpma-border))]">
               <SelectItem value="ppf_film">PPF Film</SelectItem>
               <SelectItem value="adhesive">Adhesive</SelectItem>
               <SelectItem value="cleaning_solution">Cleaning Solution</SelectItem>
@@ -93,10 +90,10 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
             value={formData.unit_of_measure}
             onValueChange={(value) => updateFormData('unit_of_measure', value)}
           >
-            <SelectTrigger className="bg-border-900 border-border-600">
+            <SelectTrigger>
               <SelectValue placeholder="Select unit" />
             </SelectTrigger>
-            <SelectContent className="bg-border-800 border-border-700">
+            <SelectContent className="bg-white border-[hsl(var(--rpma-border))]">
               <SelectItem value="piece">Piece</SelectItem>
               <SelectItem value="meter">Meter</SelectItem>
               <SelectItem value="liter">Liter</SelectItem>
@@ -111,7 +108,6 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
             id="currency"
             value={formData.currency}
             onChange={(e) => updateFormData('currency', e.target.value)}
-            className="bg-border-900 border-border-600 text-foreground"
             placeholder="EUR"
           />
         </div>
@@ -127,7 +123,6 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
             step="0.01"
             value={formData.current_stock}
             onChange={(e) => updateFormData('current_stock', parseFloat(e.target.value) || 0)}
-            className="bg-border-900 border-border-600 text-foreground"
           />
         </div>
         <div>
@@ -138,7 +133,6 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
             step="0.01"
             value={formData.minimum_stock}
             onChange={(e) => updateFormData('minimum_stock', e.target.value ? parseFloat(e.target.value) : undefined)}
-            className="bg-border-900 border-border-600 text-foreground"
           />
         </div>
         <div>
@@ -149,7 +143,6 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
             step="0.01"
             value={formData.maximum_stock}
             onChange={(e) => updateFormData('maximum_stock', e.target.value ? parseFloat(e.target.value) : undefined)}
-            className="bg-border-900 border-border-600 text-foreground"
           />
         </div>
       </div>
@@ -164,7 +157,6 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
             step="0.01"
             value={formData.unit_cost}
             onChange={(e) => updateFormData('unit_cost', e.target.value ? parseFloat(e.target.value) : undefined)}
-            className="bg-border-900 border-border-600 text-foreground"
           />
         </div>
         <div>
@@ -175,7 +167,6 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
             step="0.01"
             value={formData.reorder_point}
             onChange={(e) => updateFormData('reorder_point', e.target.value ? parseFloat(e.target.value) : undefined)}
-            className="bg-border-900 border-border-600 text-foreground"
           />
         </div>
       </div>
@@ -202,14 +193,12 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
           type="button"
           variant="outline"
           onClick={onClose}
-          className="border-border-600 text-border-300 hover:bg-border-700"
         >
           Cancel
         </Button>
         <Button
           type="submit"
           disabled={loading}
-          className="bg-accent hover:bg-accent/80"
         >
           {loading ? 'Saving...' : (material ? 'Update Material' : 'Create Material')}
         </Button>

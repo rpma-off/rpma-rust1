@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
@@ -13,7 +13,7 @@ export function PPFWorkflowHeader() {
 
   return (
     <motion.header
-      className="bg-muted/95 backdrop-blur-sm border-b border-border/30 shadow-lg"
+      className="bg-white/95 backdrop-blur-sm border-b border-[hsl(var(--rpma-border))] shadow-sm"
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4 }}
@@ -30,25 +30,23 @@ export function PPFWorkflowHeader() {
               onClick={() => router.push(`/tasks/${taskId}`)}
               variant="ghost"
               size="sm"
-              className="text-border-light hover:text-foreground hover:bg-border/50 transition-all duration-200 rounded-lg px-3 py-2"
+              className="text-muted-foreground hover:text-foreground hover:bg-[hsl(var(--rpma-surface))] transition-all duration-200 rounded-lg px-3 py-2"
             >
               <ArrowLeft className="w-4 h-4 mr-2 transition-transform hover:-translate-x-1" />
-              Retour à la tâche
+              Retour Ã  la tÃ¢che
             </Button>
-            <div className="h-6 w-px bg-border/50" />
+            <div className="h-6 w-px bg-[hsl(var(--rpma-border))]" />
             <div className="flex items-center space-x-3">
               <motion.div
-                className="p-2 bg-accent/10 rounded-lg"
+                className="p-2 bg-[hsl(var(--rpma-teal))]/10 rounded-lg"
                 whileHover={{ scale: 1.05 }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
-                <Shield className="h-6 w-6 text-accent" />
+                <Shield className="h-6 w-6 text-[hsl(var(--rpma-teal))]" />
               </motion.div>
               <div>
-                <h1 className="text-xl font-bold text-foreground">
-                  Workflow PPF
-                </h1>
-                <p className="text-xs text-border-light">Installation professionnelle</p>
+                <h1 className="text-xl font-bold text-foreground">Workflow PPF</h1>
+                <p className="text-xs text-muted-foreground">Installation professionnelle</p>
               </div>
             </div>
           </motion.div>
@@ -60,13 +58,11 @@ export function PPFWorkflowHeader() {
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.2, duration: 0.4 }}
             >
-              <div className="flex items-center space-x-2 mb-1">
-                <Sparkles className="h-4 w-4 text-accent animate-pulse" />
-                <p className="text-sm font-medium text-border-light">Étape actuelle</p>
+              <div className="flex items-center space-x-2 mb-1 justify-end">
+                <Sparkles className="h-4 w-4 text-[hsl(var(--rpma-teal))] animate-pulse" />
+                <p className="text-sm font-medium text-muted-foreground">Ã‰tape actuelle</p>
               </div>
-              <p className="text-lg font-bold text-foreground bg-gradient-to-r from-foreground to-border-light bg-clip-text text-transparent">
-                {currentStep.title}
-              </p>
+              <p className="text-lg font-bold text-foreground">{currentStep.title}</p>
             </motion.div>
           )}
         </div>

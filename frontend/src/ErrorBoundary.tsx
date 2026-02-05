@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
@@ -55,17 +55,17 @@ class ErrorBoundary extends Component<Props, State> {
             </div>
             
             <h2 className="text-2xl font-bold text-foreground mb-2">
-              Oups ! Quelque chose s&apos;est mal passé
+              Oups ! Quelque chose s&apos;est mal passÃ©
             </h2>
             
             <p className="text-gray-600 mb-6">
-              Une erreur inattendue s&apos;est produite. Veuillez réessayer ou contacter le support si le problème persiste.
+              Une erreur inattendue s&apos;est produite. Veuillez rÃ©essayer ou contacter le support si le problÃ¨me persiste.
             </p>
 
             {this.state.error && (
               <details className="mb-6 text-left">
-                <summary className="cursor-pointer text-sm font-medium text-border-light mb-2">
-                  Détails de l&apos;erreur (développement)
+                <summary className="cursor-pointer text-sm font-medium text-muted-foreground mb-2">
+                  DÃ©tails de l&apos;erreur (dÃ©veloppement)
                 </summary>
                 <div className="bg-gray-100 p-3 rounded text-xs font-mono text-gray-800 overflow-auto">
                   <div className="mb-2">
@@ -90,7 +90,7 @@ class ErrorBoundary extends Component<Props, State> {
                 className="flex items-center gap-2"
               >
                 <RefreshCw className="h-4 w-4" />
-                Réessayer
+                RÃ©essayer
               </Button>
               
               <Button

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+﻿import { useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -81,7 +81,7 @@ export function DesktopForm({
         <button
           type="button"
           onClick={handleCancel}
-          className="flex items-center gap-2 px-4 py-2 text-border-light bg-muted/50 border border-border/30 rounded hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-muted-foreground bg-[hsl(var(--rpma-surface))] border border-[hsl(var(--rpma-border))] rounded hover:bg-gray-50 transition-colors"
           disabled={isLoading}
         >
           <X size={16} />
@@ -98,8 +98,8 @@ export function DesktopForm({
       </div>
 
       <div className="text-xs text-border text-center space-y-1">
-        <div>💡 Ctrl+Enter pour enregistrer rapidement</div>
-        <div>💡 Échap pour annuler</div>
+        <div>ðŸ’¡ Ctrl+Enter pour enregistrer rapidement</div>
+        <div>ðŸ’¡ Ã‰chap pour annuler</div>
       </div>
     </form>
   );

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -235,14 +235,14 @@ export default function InstallationStepPage() {
             <Layers className="h-8 w-8 text-orange-500" />
           </div>
           <div className="text-sm bg-orange-500/10 text-orange-400 px-3 py-1 rounded-full font-medium">
-            Étape 3 sur 4
+            Ã‰tape 3 sur 4
           </div>
         </div>
         <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
           Installation du PPF
         </h1>
-        <p className="text-lg text-border-light max-w-2xl mx-auto leading-relaxed">
-          Application professionnelle du film protecteur avec suivi précis des zones
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          Application professionnelle du film protecteur avec suivi prÃ©cis des zones
         </p>
       </motion.div>
 
@@ -255,7 +255,7 @@ export default function InstallationStepPage() {
       >
         <div className="flex items-center space-x-2">
           <CheckCircle2 className="h-5 w-5 text-green-500" />
-          <span className="text-sm text-green-400">Préparation</span>
+          <span className="text-sm text-green-400">PrÃ©paration</span>
         </div>
         <div className="w-8 h-px bg-orange-500"></div>
         <div className="flex items-center space-x-2">
@@ -287,10 +287,10 @@ export default function InstallationStepPage() {
               </div>
               <div>
                 <CardTitle className="text-xl text-foreground group-hover:text-indigo-400 transition-colors">
-                  Lot de Matériel Global
+                  Lot de MatÃ©riel Global
                 </CardTitle>
-                <CardDescription className="text-border-light">
-                  Numéro de lot du film PPF utilisé (optionnel)
+                <CardDescription className="text-muted-foreground">
+                  NumÃ©ro de lot du film PPF utilisÃ© (optionnel)
                 </CardDescription>
               </div>
             </div>
@@ -303,8 +303,8 @@ export default function InstallationStepPage() {
                 onChange={(e) => setGlobalMaterialLot(e.target.value)}
                 className="bg-[hsl(var(--rpma-surface))] border-[hsl(var(--rpma-border))] h-12 text-base transition-all duration-200 focus:border-indigo-500/50"
               />
-              <p className="text-xs text-border-light mt-2">
-                Ce numéro sera utilisé comme valeur par défaut pour toutes les zones
+              <p className="text-xs text-muted-foreground mt-2">
+                Ce numÃ©ro sera utilisÃ© comme valeur par dÃ©faut pour toutes les zones
               </p>
             </div>
           </CardContent>
@@ -324,8 +324,8 @@ export default function InstallationStepPage() {
                   <CardTitle className="text-xl text-foreground group-hover:text-orange-400 transition-colors">
                     Suivi des Zones
                   </CardTitle>
-                  <CardDescription className="text-border-light">
-                    Chronométrage précis de l&apos;application par zone
+                  <CardDescription className="text-muted-foreground">
+                    ChronomÃ©trage prÃ©cis de l&apos;application par zone
                   </CardDescription>
                 </div>
               </div>
@@ -348,7 +348,7 @@ export default function InstallationStepPage() {
                       ? 'bg-green-500/5 border-green-500/30 hover:bg-green-500/10'
                       : zone.status === 'in_progress'
                       ? 'bg-blue-500/5 border-blue-500/30 hover:bg-blue-500/10'
-                      : 'bg-border/10 border-border/30 hover:border-orange-500/30 hover:bg-orange-500/5'
+                      : 'bg-[hsl(var(--rpma-surface))] border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))]/30 hover:bg-[hsl(var(--rpma-surface))]'
                   }`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -363,12 +363,12 @@ export default function InstallationStepPage() {
                       <h3 className="text-lg font-semibold text-foreground">{zone.name}</h3>
                       <Badge className={`text-xs ${getZoneStatusColor(zone.status)}`}>
                         {zone.status === 'pending' ? 'En attente' :
-                         zone.status === 'in_progress' ? 'En cours' : 'Terminé'}
+                         zone.status === 'in_progress' ? 'En cours' : 'TerminÃ©'}
                       </Badge>
                     </div>
                     {zone.duration > 0 && (
                       <div className="text-right">
-                        <p className="text-sm text-border-light">Durée totale</p>
+                        <p className="text-sm text-muted-foreground">DurÃ©e totale</p>
                         <p className="text-lg font-mono font-bold text-foreground">
                           {formatDuration(zone.duration)}
                         </p>
@@ -382,7 +382,7 @@ export default function InstallationStepPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <Timer className="h-4 w-4 text-blue-400" />
-                          <span className="text-sm font-medium text-blue-400">Chronomètre actif</span>
+                          <span className="text-sm font-medium text-blue-400">ChronomÃ¨tre actif</span>
                         </div>
                         <div className="text-lg font-mono font-bold text-blue-300">
                           {formatDuration(Math.floor((currentTime - zone.startTime) / 1000 / 60) + zone.duration)}
@@ -394,7 +394,7 @@ export default function InstallationStepPage() {
                   {/* Material Lot Input */}
                   <div className="mb-4">
                     <Label htmlFor={`material-${index}`} className="text-sm font-medium text-foreground mb-2 block">
-                      Lot de Matériel
+                      Lot de MatÃ©riel
                     </Label>
                     <Input
                       id={`material-${index}`}
@@ -416,7 +416,7 @@ export default function InstallationStepPage() {
                           className="bg-green-600 hover:bg-green-700 text-white"
                         >
                           <Play className="h-4 w-4 mr-1" />
-                          Démarrer
+                          DÃ©marrer
                         </Button>
                       )}
 
@@ -445,14 +445,14 @@ export default function InstallationStepPage() {
                       {zone.status === 'completed' && (
                         <div className="flex items-center space-x-2 text-green-400">
                           <CheckCircle2 className="h-4 w-4" />
-                          <span className="text-sm font-medium">Zone terminée</span>
+                          <span className="text-sm font-medium">Zone terminÃ©e</span>
                         </div>
                       )}
                     </div>
 
                     {zone.status === 'completed' && zone.duration > 0 && (
                       <div className="text-right">
-                        <p className="text-xs text-border-light">Durée finale</p>
+                        <p className="text-xs text-muted-foreground">DurÃ©e finale</p>
                         <p className="text-sm font-mono font-bold text-green-400">
                           {formatDuration(zone.duration)}
                         </p>
@@ -479,7 +479,7 @@ export default function InstallationStepPage() {
                   <CardTitle className="text-xl text-foreground group-hover:text-green-400 transition-colors">
                     Photos d&apos;installation
                   </CardTitle>
-                  <CardDescription className="text-border-light">
+                  <CardDescription className="text-muted-foreground">
                     Documentation visuelle de l&apos;application (optionnel)
                   </CardDescription>
                 </div>
@@ -525,11 +525,11 @@ export default function InstallationStepPage() {
             <p className={`text-sm font-medium ${
               canProceed ? 'text-green-400' : 'text-yellow-400'
             }`}>
-              {canProceed ? 'Prêt pour la finalisation' : 'Complétez toutes les zones'}
+              {canProceed ? 'PrÃªt pour la finalisation' : 'ComplÃ©tez toutes les zones'}
             </p>
           </div>
-          <p className="text-border-light text-sm">
-            Zones: {zones.filter(z => z.status === 'completed').length}/{zones.length} •
+          <p className="text-muted-foreground text-sm">
+            Zones: {zones.filter(z => z.status === 'completed').length}/{zones.length} â€¢
             Lots: {zones.filter(z => z.materialLot.trim() !== '').length}/{zones.length}
           </p>
         </div>
@@ -543,7 +543,7 @@ export default function InstallationStepPage() {
           }`}
         >
           <span className="flex items-center justify-center space-x-2">
-            <span>{isCompleting ? 'Finalisation...' : 'Étape suivante'}</span>
+            <span>{isCompleting ? 'Finalisation...' : 'Ã‰tape suivante'}</span>
             <ArrowRight className={`h-5 w-5 transition-transform ${isCompleting ? '' : 'group-hover:translate-x-1'}`} />
           </span>
         </Button>

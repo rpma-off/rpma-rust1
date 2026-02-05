@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -35,26 +35,26 @@ type PreparationCollectedData = {
 const defaultChecklist: PreparationChecklistItem[] = [
   {
     id: 'wash',
-    label: 'Lavage du véhicule',
+    label: 'Lavage du vÃ©hicule',
     description: 'Nettoyage complet de la surface avec shampooing pH neutre',
     completed: false
   },
   {
     id: 'clay_bar',
     label: 'Clay Bar',
-    description: 'Traitement avec clay bar pour éliminer les contaminants',
+    description: 'Traitement avec clay bar pour Ã©liminer les contaminants',
     completed: false
   },
   {
     id: 'degrease',
-    label: 'Dégraissage',
-    description: 'Application de dégraissant pour préparation de surface',
+    label: 'DÃ©graissage',
+    description: 'Application de dÃ©graissant pour prÃ©paration de surface',
     completed: false
   },
   {
     id: 'masking',
     label: 'Masquage',
-    description: 'Protection des zones non traitées (joints, poignées, etc.)',
+    description: 'Protection des zones non traitÃ©es (joints, poignÃ©es, etc.)',
     completed: false
   }
 ];
@@ -191,14 +191,14 @@ export default function PreparationStepPage() {
             <Wrench className="h-8 w-8 text-purple-500" />
           </div>
           <div className="text-sm bg-purple-500/10 text-purple-400 px-3 py-1 rounded-full font-medium">
-            Étape 2 sur 4
+            Ã‰tape 2 sur 4
           </div>
         </div>
         <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-          Préparation de surface
+          PrÃ©paration de surface
         </h1>
-        <p className="text-lg text-border-light max-w-2xl mx-auto leading-relaxed">
-          Préparation méticuleuse de la surface et contrôle des conditions environnementales
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          PrÃ©paration mÃ©ticuleuse de la surface et contrÃ´le des conditions environnementales
         </p>
       </motion.div>
 
@@ -218,7 +218,7 @@ export default function PreparationStepPage() {
           <div className="w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center">
             <span className="text-xs font-bold text-white">2</span>
           </div>
-          <span className="text-sm font-medium text-purple-400">Préparation</span>
+          <span className="text-sm font-medium text-purple-400">PrÃ©paration</span>
         </div>
         <div className="w-8 h-px bg-gray-600"></div>
         <div className="flex items-center space-x-2">
@@ -244,10 +244,10 @@ export default function PreparationStepPage() {
                   </div>
                   <div>
                     <CardTitle className="text-xl text-foreground group-hover:text-purple-400 transition-colors">
-                      Checklist de préparation
+                      Checklist de prÃ©paration
                     </CardTitle>
-                    <CardDescription className="text-border-light">
-                      Procédures de préparation de surface
+                    <CardDescription className="text-muted-foreground">
+                      ProcÃ©dures de prÃ©paration de surface
                     </CardDescription>
                   </div>
                 </div>
@@ -268,7 +268,7 @@ export default function PreparationStepPage() {
                     className={`flex items-start space-x-4 p-4 rounded-lg border transition-all duration-200 ${
                       item.completed
                         ? 'bg-green-500/5 border-green-500/30 hover:bg-green-500/10'
-                        : 'bg-border/10 border-border/30 hover:border-purple-500/30 hover:bg-purple-500/5'
+                        : 'bg-[hsl(var(--rpma-surface))] border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))]/30 hover:bg-[hsl(var(--rpma-surface))]'
                     }`}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -290,7 +290,7 @@ export default function PreparationStepPage() {
                         {item.label}
                       </label>
                       <p className={`text-xs mt-1 leading-relaxed ${
-                        item.completed ? 'text-green-300/70' : 'text-border-light'
+                        item.completed ? 'text-[hsl(var(--rpma-teal))]' : 'text-muted-foreground'
                       }`}>
                         {item.description}
                       </p>
@@ -324,8 +324,8 @@ export default function PreparationStepPage() {
                     <CardTitle className="text-xl text-foreground group-hover:text-blue-400 transition-colors">
                       Conditions environnementales
                     </CardTitle>
-                    <CardDescription className="text-border-light">
-                      Contrôle des paramètres pour une application optimale
+                    <CardDescription className="text-muted-foreground">
+                      ContrÃ´le des paramÃ¨tres pour une application optimale
                     </CardDescription>
                   </div>
                 </div>
@@ -342,7 +342,7 @@ export default function PreparationStepPage() {
                 <div className="space-y-3">
                   <Label htmlFor="temperature" className="flex items-center text-foreground font-medium">
                     <Thermometer className="h-4 w-4 mr-2 text-red-400" />
-                    Température (°C)
+                    TempÃ©rature (Â°C)
                   </Label>
                   <Input
                     id="temperature"
@@ -364,8 +364,8 @@ export default function PreparationStepPage() {
                     }`}
                   />
                   <div className="flex items-center justify-between">
-                    <p className="text-xs text-border-light">
-                      Recommandé: 15-25°C
+                    <p className="text-xs text-muted-foreground">
+                      RecommandÃ©: 15-25Â°C
                     </p>
                     {environment.temperatureCelsius !== null && (
                       <span className={`text-xs px-2 py-0.5 rounded-full ${
@@ -382,7 +382,7 @@ export default function PreparationStepPage() {
                 <div className="space-y-3">
                   <Label htmlFor="humidity" className="flex items-center text-foreground font-medium">
                     <Droplets className="h-4 w-4 mr-2 text-blue-400" />
-                    Humidité (%)
+                    HumiditÃ© (%)
                   </Label>
                   <Input
                     id="humidity"
@@ -404,8 +404,8 @@ export default function PreparationStepPage() {
                     }`}
                   />
                   <div className="flex items-center justify-between">
-                    <p className="text-xs text-border-light">
-                      Recommandé: 30-60%
+                    <p className="text-xs text-muted-foreground">
+                      RecommandÃ©: 30-60%
                     </p>
                     {environment.humidityPercent !== null && (
                       <span className={`text-xs px-2 py-0.5 rounded-full ${
@@ -433,7 +433,7 @@ export default function PreparationStepPage() {
                           Conditions non optimales
                         </p>
                         <p className="text-sm text-yellow-300/80">
-                          Les conditions environnementales sont hors des plages recommandées. L&apos;application du PPF peut être compromise.
+                          Les conditions environnementales sont hors des plages recommandÃ©es. L&apos;application du PPF peut Ãªtre compromise.
                         </p>
                       </div>
                     </div>
@@ -455,9 +455,9 @@ export default function PreparationStepPage() {
                   </div>
                   <div>
                     <CardTitle className="text-xl text-foreground group-hover:text-green-400 transition-colors">
-                      Photos de préparation
+                      Photos de prÃ©paration
                     </CardTitle>
-                    <CardDescription className="text-border-light">
+                    <CardDescription className="text-muted-foreground">
                       Documentation visuelle (optionnel)
                     </CardDescription>
                   </div>
@@ -480,7 +480,7 @@ export default function PreparationStepPage() {
                 maxFiles={6}
                 minPhotos={0}
                 onUploadComplete={(urls) => setUploadedPhotos(urls)}
-                title="Photos de préparation"
+                title="Photos de prÃ©paration"
                 uploadButtonText="Ajouter des photos"
               />
             </CardContent>
@@ -503,12 +503,12 @@ export default function PreparationStepPage() {
             <p className={`text-sm font-medium ${
               canProceed ? 'text-green-400' : 'text-yellow-400'
             }`}>
-              {canProceed ? 'Prêt pour l\'installation' : 'Complétez toutes les étapes requises'}
+              {canProceed ? 'PrÃªt pour l\'installation' : 'ComplÃ©tez toutes les Ã©tapes requises'}
             </p>
           </div>
-          <p className="text-border-light text-sm">
-            Checklist: {checklist.filter(item => item.completed).length}/{checklist.length} •
-            Environnement: {environmentValid ? 'Optimal' : 'À ajuster'}
+          <p className="text-muted-foreground text-sm">
+            Checklist: {checklist.filter(item => item.completed).length}/{checklist.length} â€¢
+            Environnement: {environmentValid ? 'Optimal' : 'Ã€ ajuster'}
           </p>
         </div>
         <Button
@@ -521,7 +521,7 @@ export default function PreparationStepPage() {
           }`}
         >
           <span className="flex items-center justify-center space-x-2">
-            <span>{isCompleting ? 'Finalisation...' : 'Étape suivante'}</span>
+            <span>{isCompleting ? 'Finalisation...' : 'Ã‰tape suivante'}</span>
             <ArrowRight className={`h-5 w-5 transition-transform ${isCompleting ? '' : 'group-hover:translate-x-1'}`} />
           </span>
         </Button>

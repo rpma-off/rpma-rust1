@@ -60,9 +60,9 @@ export function MaterialCatalog() {
 
   if (error) {
     return (
-      <Card className="bg-border-800 border-border-700">
+      <Card className="rpma-shell">
         <CardContent className="p-6">
-          <div className="text-center text-border-300">
+          <div className="text-center text-muted-foreground">
             Error loading materials: {error}
           </div>
         </CardContent>
@@ -76,16 +76,16 @@ export function MaterialCatalog() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Material Catalog</h2>
-          <p className="text-border-300">Manage your PPF materials and supplies</p>
+          <p className="text-muted-foreground">Manage your PPF materials and supplies</p>
         </div>
         <Dialog open={showForm} onOpenChange={setShowForm}>
           <DialogTrigger asChild>
-            <Button className="bg-accent hover:bg-accent/80">
+            <Button>
               <Plus className="w-4 h-4 mr-2" />
               Add Material
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-border-800 border-border-700">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white border-[hsl(var(--rpma-border))]">
             <DialogHeader>
               <DialogTitle className="text-foreground">
                 {editingMaterial ? 'Edit Material' : 'Add New Material'}
@@ -100,25 +100,25 @@ export function MaterialCatalog() {
       </div>
 
       {/* Filters */}
-      <Card className="bg-border-800 border-border-700">
+      <Card className="rpma-shell">
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-border-400" />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search materials..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-border-900 border-border-600 text-foreground"
+                  className="pl-10"
                 />
               </div>
             </div>
             <Select value={materialTypeFilter} onValueChange={setMaterialTypeFilter}>
-              <SelectTrigger className="w-full md:w-48 bg-border-900 border-border-600">
+              <SelectTrigger className="w-full md:w-48">
                 <SelectValue placeholder="Material Type" />
               </SelectTrigger>
-              <SelectContent className="bg-border-800 border-border-700">
+              <SelectContent className="bg-white border-[hsl(var(--rpma-border))]">
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="ppf_film">PPF Film</SelectItem>
                 <SelectItem value="adhesive">Adhesive</SelectItem>
@@ -128,10 +128,10 @@ export function MaterialCatalog() {
               </SelectContent>
             </Select>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-full md:w-48 bg-border-900 border-border-600">
+              <SelectTrigger className="w-full md:w-48">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
-              <SelectContent className="bg-border-800 border-border-700">
+              <SelectContent className="bg-white border-[hsl(var(--rpma-border))]">
                 <SelectItem value="all">All Categories</SelectItem>
                 {stats?.materials_by_category && Object.keys(stats.materials_by_category).map(category => (
                   <SelectItem key={category} value={category}>
@@ -145,7 +145,7 @@ export function MaterialCatalog() {
       </Card>
 
       {/* Materials Table */}
-      <Card className="bg-border-800 border-border-700">
+      <Card className="rpma-shell">
         <CardHeader>
           <CardTitle className="text-foreground">
             Materials ({filteredMaterials.length})
@@ -154,19 +154,19 @@ export function MaterialCatalog() {
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow className="border-border-700">
-                <TableHead className="text-border-300">SKU</TableHead>
-                <TableHead className="text-border-300">Name</TableHead>
-                <TableHead className="text-border-300">Type</TableHead>
-                <TableHead className="text-border-300">Stock</TableHead>
-                <TableHead className="text-border-300">Unit Cost</TableHead>
-                <TableHead className="text-border-300">Status</TableHead>
-                <TableHead className="text-border-300">Actions</TableHead>
+              <TableRow className="rpma-table-header">
+                <TableHead>SKU</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Stock</TableHead>
+                <TableHead>Unit Cost</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredMaterials.map((material) => (
-                <TableRow key={material.id} className="border-border-700">
+                <TableRow key={material.id} className="border-border">
                   <TableCell className="text-foreground font-mono">
                     {material.sku}
                   </TableCell>
@@ -194,7 +194,7 @@ export function MaterialCatalog() {
                   <TableCell>
                     <Badge
                       variant={material.is_active ? "default" : "secondary"}
-                      className={material.is_active ? "bg-accent" : ""}
+                      className={material.is_active ? "bg-[hsl(var(--rpma-teal))] text-white" : ""}
                     >
                       {material.is_active ? 'Active' : 'Inactive'}
                     </Badge>
@@ -204,7 +204,7 @@ export function MaterialCatalog() {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEdit(material)}
-                      className="text-border-300 hover:text-foreground"
+                      className="text-muted-foreground hover:text-foreground"
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
@@ -215,9 +215,9 @@ export function MaterialCatalog() {
           </Table>
 
           {filteredMaterials.length === 0 && (
-            <div className="text-center py-8">
-              <Package className="w-12 h-12 text-border-400 mx-auto mb-4" />
-              <p className="text-border-400">No materials found</p>
+            <div className="rpma-empty">
+              <Package className="w-12 h-12 mx-auto mb-4" />
+              <p className="text-muted-foreground">No materials found</p>
             </div>
           )}
         </CardContent>

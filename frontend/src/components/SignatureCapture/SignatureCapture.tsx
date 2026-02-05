@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Signature Capture Component
  */
 
@@ -87,7 +87,7 @@ export const SignatureCapture: React.FC<SignatureCaptureProps> = ({
           <h3 className="text-lg font-medium text-foreground mb-2">
             Signature
           </h3>
-          <p className="text-sm text-border-light">
+          <p className="text-sm text-muted-foreground">
             Signez dans la zone ci-dessous
           </p>
         </div>
@@ -124,7 +124,7 @@ export const SignatureCapture: React.FC<SignatureCaptureProps> = ({
             size="sm"
             onClick={captureSignature}
             disabled={!hasSignature}
-            className="bg-accent hover:bg-accent/80"
+            className="bg-[hsl(var(--rpma-teal))] hover:bg-[hsl(var(--rpma-teal))]/80"
           >
             <Pen className="h-4 w-4 mr-2" />
             Capturer

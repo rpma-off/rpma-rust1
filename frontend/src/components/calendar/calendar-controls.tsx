@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import {
@@ -60,14 +60,14 @@ export function CalendarControls() {
               placeholder="Rechercher dans le calendrier..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-10 h-9 bg-border/10 border-border/30 text-foreground placeholder-border focus:border-accent focus:ring-accent/20"
+              className="pl-10 pr-10 h-9 bg-white border-[hsl(var(--rpma-border))] text-foreground placeholder-border focus:border-[hsl(var(--rpma-teal))] focus:ring-[hsl(var(--rpma-teal))]/20"
             />
             <Button
               variant="ghost"
               size="icon"
               className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 hover:bg-border/20"
             >
-              <Settings className="h-3.5 w-3.5 text-border-light" />
+              <Settings className="h-3.5 w-3.5 text-muted-foreground" />
             </Button>
           </div>
 
@@ -76,7 +76,7 @@ export function CalendarControls() {
             <Button
               variant="outline"
               size="sm"
-              className="h-9 px-3 border-border/60 text-border-light hover:bg-border/20"
+              className="h-9 px-3 border-border/60 text-muted-foreground hover:bg-border/20"
               onClick={goToToday}
             >
               Aujourd&apos;hui
@@ -89,7 +89,7 @@ export function CalendarControls() {
           <Button
             variant="outline"
             size="sm"
-            className="border-border/60 text-border-light hover:bg-border/20 hover:text-foreground"
+            className="border-border/60 text-muted-foreground hover:bg-border/20 hover:text-foreground"
             onClick={goToToday}
           >
             Aujourd&apos;hui
@@ -101,7 +101,7 @@ export function CalendarControls() {
                 variant="outline"
                 size="sm"
                 className={cn(
-                  "gap-2 justify-start text-left font-normal border-border/60 text-border-light hover:bg-border/20 hover:text-foreground"
+                  "gap-2 justify-start text-left font-normal border-border/60 text-muted-foreground hover:bg-border/20 hover:text-foreground"
                 )}
               >
                 <CalendarIcon className="h-4 w-4" />
@@ -135,14 +135,14 @@ export function CalendarControls() {
                 variant="outline"
                 size="sm"
                 className={cn(
-                  "h-9 px-3 gap-2 border-border/60 text-border-light hover:bg-border/20 hover:text-foreground",
-                  hasActiveFilters && "bg-accent/20 border-accent/40 text-accent"
+                  "h-9 px-3 gap-2 border-border/60 text-muted-foreground hover:bg-border/20 hover:text-foreground",
+                  hasActiveFilters && "bg-[hsl(var(--rpma-teal))]/10 border-[hsl(var(--rpma-teal))]/30 text-[hsl(var(--rpma-teal))]"
                 )}
               >
                 <SlidersHorizontal className="h-4 w-4" />
                 <span className="hidden sm:inline text-xs">Filtres</span>
                 {hasActiveFilters && (
-                  <span className="h-2 w-2 rounded-full bg-accent" />
+                  <span className="h-2 w-2 rounded-full bg-[hsl(var(--rpma-teal))]" />
                 )}
               </Button>
             </PopoverTrigger>
@@ -153,47 +153,47 @@ export function CalendarControls() {
               <div className="space-y-4 w-full">
                 <div>
                   <h4 className="text-sm font-semibold mb-3 flex items-center gap-2 text-foreground">
-                    <Video className="h-4 w-4 text-accent" />
-                    Type d&apos;événement
+                    <Video className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
+                    Type d&apos;Ã©vÃ©nement
                   </h4>
                   <div className="space-y-1">
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full justify-between h-9 px-3 text-border-light hover:text-foreground hover:bg-border/20"
+                      className="w-full justify-between h-9 px-3 text-muted-foreground hover:text-foreground hover:bg-border/20"
                       onClick={() => setEventTypeFilter("all")}
                     >
-                      <span className="text-sm">Tous les événements</span>
+                      <span className="text-sm">Tous les Ã©vÃ©nements</span>
                       {eventTypeFilter === "all" && (
-                        <Check className="h-4 w-4 text-accent" />
+                        <Check className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
                       )}
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full justify-between h-9 px-3 text-border-light hover:text-foreground hover:bg-border/20"
+                      className="w-full justify-between h-9 px-3 text-muted-foreground hover:text-foreground hover:bg-border/20"
                       onClick={() => setEventTypeFilter("with-meeting")}
                     >
                       <div className="flex items-center gap-2.5">
                         <Video className="h-4 w-4 text-cyan-400" />
-                        <span className="text-sm">Avec réunion</span>
+                        <span className="text-sm">Avec rÃ©union</span>
                       </div>
                       {eventTypeFilter === "with-meeting" && (
-                        <Check className="h-4 w-4 text-accent" />
+                        <Check className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
                       )}
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full justify-between h-9 px-3 text-border-light hover:text-foreground hover:bg-border/20"
+                      className="w-full justify-between h-9 px-3 text-muted-foreground hover:text-foreground hover:bg-border/20"
                       onClick={() => setEventTypeFilter("without-meeting")}
                     >
                       <div className="flex items-center gap-2.5">
                         <VideoOff className="h-4 w-4 text-border" />
-                        <span className="text-sm">Sans réunion</span>
+                        <span className="text-sm">Sans rÃ©union</span>
                       </div>
                       {eventTypeFilter === "without-meeting" && (
-                        <Check className="h-4 w-4 text-accent" />
+                        <Check className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
                       )}
                     </Button>
                   </div>
@@ -203,25 +203,25 @@ export function CalendarControls() {
 
                 <div>
                   <h4 className="text-sm font-semibold mb-3 flex items-center gap-2 text-foreground">
-                    <Users className="h-4 w-4 text-accent" />
+                    <Users className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
                     Participants
                   </h4>
                   <div className="space-y-1">
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full justify-between h-9 px-3 text-border-light hover:text-foreground hover:bg-border/20"
+                      className="w-full justify-between h-9 px-3 text-muted-foreground hover:text-foreground hover:bg-border/20"
                       onClick={() => setParticipantsFilter("all")}
                     >
                       <span className="text-sm">Tous</span>
                       {participantsFilter === "all" && (
-                        <Check className="h-4 w-4 text-accent" />
+                        <Check className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
                       )}
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full justify-between h-9 px-3 text-border-light hover:text-foreground hover:bg-border/20"
+                      className="w-full justify-between h-9 px-3 text-muted-foreground hover:text-foreground hover:bg-border/20"
                       onClick={() => setParticipantsFilter("with-participants")}
                     >
                       <div className="flex items-center gap-2.5">
@@ -229,13 +229,13 @@ export function CalendarControls() {
                         <span className="text-sm">Avec participants</span>
                       </div>
                       {participantsFilter === "with-participants" && (
-                        <Check className="h-4 w-4 text-accent" />
+                        <Check className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
                       )}
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full justify-between h-9 px-3 text-border-light hover:text-foreground hover:bg-border/20"
+                      className="w-full justify-between h-9 px-3 text-muted-foreground hover:text-foreground hover:bg-border/20"
                       onClick={() => setParticipantsFilter("without-participants")}
                     >
                       <div className="flex items-center gap-2.5">
@@ -243,7 +243,7 @@ export function CalendarControls() {
                         <span className="text-sm">Sans participants</span>
                       </div>
                       {participantsFilter === "without-participants" && (
-                        <Check className="h-4 w-4 text-accent" />
+                        <Check className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
                       )}
                     </Button>
                   </div>
@@ -255,7 +255,7 @@ export function CalendarControls() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full h-9 border-border/60 text-border-light hover:bg-border/20 hover:text-foreground"
+                      className="w-full h-9 border-border/60 text-muted-foreground hover:bg-border/20 hover:text-foreground"
                       onClick={() => {
                         setEventTypeFilter("all");
                         setParticipantsFilter("all");

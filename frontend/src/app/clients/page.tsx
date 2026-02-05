@@ -1,10 +1,10 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/compatibility';
 import { clientService } from '@/lib/services/entities/client.service';
-import { Plus, Search, Edit, Trash2, Eye, User, Building, ChevronDown, ArrowUpDown, RefreshCw, AlertCircle, Users, FileText, Calendar, Phone } from 'lucide-react';
+import { Plus, Search, SearchX, Edit, Trash2, Eye, User, Building, ChevronDown, ArrowUpDown, RefreshCw, AlertCircle, Users, FileText, Calendar, Phone } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import type { Client, ClientWithTasks } from '@/lib/backend';
@@ -53,7 +53,7 @@ export default function ClientsPage() {
       }, 5);
 
       if (response.error) {
-        setError(typeof response.error === 'string' ? response.error : response.error.message || 'Échec du chargement des clients');
+        setError(typeof response.error === 'string' ? response.error : response.error.message || 'Ã‰chec du chargement des clients');
         return;
       }
 
@@ -96,7 +96,7 @@ export default function ClientsPage() {
   };
 
   const handleClientDelete = async (client: Client | ClientWithTasks) => {
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${client.name} ? Cette action est irréversible.`)) {
+    if (!confirm(`ÃŠtes-vous sÃ»r de vouloir supprimer ${client.name} ? Cette action est irrÃ©versible.`)) {
       return;
     }
 
@@ -108,7 +108,7 @@ export default function ClientsPage() {
 
       const response = await clientService.deleteClient(client.id, user.token);
       if (response.error) {
-        setError(response.error || 'Échec de la suppression du client');
+        setError(response.error || 'Ã‰chec de la suppression du client');
         return;
       }
 
@@ -136,7 +136,7 @@ export default function ClientsPage() {
             <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full animate-ping border-t-accent mx-auto opacity-20"></div>
           </div>
           <h3 className="text-xl font-semibold text-foreground mb-2">Chargement des clients...</h3>
-          <p className="text-muted-foreground">Veuillez patienter pendant que nous récupérons vos données</p>
+          <p className="text-muted-foreground">Veuillez patienter pendant que nous rÃ©cupÃ©rons vos donnÃ©es</p>
         </div>
       </div>
     );
@@ -147,12 +147,12 @@ export default function ClientsPage() {
       {/* Header */}
       <PageHeader
         title="Clients"
-        subtitle="Gérer votre base de données clients et vos relations"
-        icon={<User className="h-6 w-6 sm:h-8 sm:w-8 text-accent" />}
+        subtitle="GÃ©rer votre base de donnÃ©es clients et vos relations"
+        icon={<User className="h-6 w-6 sm:h-8 sm:w-8 text-[hsl(var(--rpma-teal))]" />}
         actions={
           <Link
             href="/clients/new"
-            className="bg-accent hover:bg-accent/90 text-black px-4 sm:px-6 py-3 rounded-[6px] flex items-center justify-center space-x-2 transition-all duration-200 font-semibold w-full lg:w-auto hover:shadow-sm"
+            className="bg-[hsl(var(--rpma-teal))] hover:bg-[hsl(var(--rpma-teal))]/90 text-black px-4 sm:px-6 py-3 rounded-[6px] flex items-center justify-center space-x-2 transition-all duration-200 font-semibold w-full lg:w-auto hover:shadow-sm"
           >
             <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
             <span className="font-medium">Ajouter un client</span>
@@ -168,7 +168,7 @@ export default function ClientsPage() {
             />
             <StatCard
               value={clients.filter(c => (c.tasks || []).length > 0).length}
-              label="Avec Tâches"
+              label="Avec TÃ¢ches"
               icon={FileText}
               color="green"
             />
@@ -200,7 +200,7 @@ export default function ClientsPage() {
                 placeholder="Rechercher par nom, email, entreprise..."
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-muted/30 border border-border rounded-[6px] text-foreground placeholder-muted-foreground focus:outline-none focus:border-accent transition-all duration-200"
+                className="w-full pl-12 pr-4 py-3 bg-white border border-[hsl(var(--rpma-border))] rounded-[6px] text-foreground placeholder-muted-foreground focus:outline-none focus:border-[hsl(var(--rpma-teal))] transition-all duration-200"
               />
             </div>
           </div>
@@ -215,11 +215,11 @@ export default function ClientsPage() {
                   onChange={(e) => handleFilterChange({
                     customer_type: e.target.value as 'individual' | 'business' | undefined
                   })}
-                  className="pl-10 pr-8 py-2.5 rpma-shell text-foreground text-sm focus:outline-none focus:border-accent transition-all duration-200 appearance-none cursor-pointer hover:bg-muted/10"
+                  className="pl-10 pr-8 py-2.5 rpma-shell text-foreground text-sm focus:outline-none focus:border-[hsl(var(--rpma-teal))] transition-all duration-200 appearance-none cursor-pointer hover:bg-muted/10"
                 >
-                  <option value="">🏢 Tous les types</option>
-                  <option value="individual">👤 Particuliers</option>
-                  <option value="business">🏢 Entreprises</option>
+                  <option value="">ðŸ¢ Tous les types</option>
+                  <option value="individual">ðŸ‘¤ Particuliers</option>
+                  <option value="business">ðŸ¢ Entreprises</option>
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               </div>
@@ -234,13 +234,13 @@ export default function ClientsPage() {
                       sort_order: sortOrder as 'asc' | 'desc'
                     });
                   }}
-                  className="pl-10 pr-8 py-2.5 rpma-shell text-foreground text-sm focus:outline-none focus:border-accent transition-all duration-200 appearance-none cursor-pointer hover:bg-muted/10"
+                  className="pl-10 pr-8 py-2.5 rpma-shell text-foreground text-sm focus:outline-none focus:border-[hsl(var(--rpma-teal))] transition-all duration-200 appearance-none cursor-pointer hover:bg-muted/10"
                 >
-                  <option value="name_asc">📝 Nom A-Z</option>
-                  <option value="name_desc">📝 Nom Z-A</option>
-                  <option value="created_at_desc">🕒 Plus récent</option>
-                  <option value="created_at_asc">🕒 Plus ancien</option>
-                  <option value="total_tasks_desc">📊 Plus de tâches</option>
+                  <option value="name_asc">ðŸ“ Nom A-Z</option>
+                  <option value="name_desc">ðŸ“ Nom Z-A</option>
+                  <option value="created_at_desc">ðŸ•’ Plus rÃ©cent</option>
+                  <option value="created_at_asc">ðŸ•’ Plus ancien</option>
+                  <option value="total_tasks_desc">ðŸ“Š Plus de tÃ¢ches</option>
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               </div>
@@ -281,7 +281,10 @@ export default function ClientsPage() {
               ))}
             </div>
           ) : clients.length === 0 ? (
-            <div className="text-foreground text-center py-8">No clients found</div>
+            <div className="rpma-empty">
+              <SearchX />
+              <h3 className="text-lg font-semibold">No results found</h3>
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {clients.map((client, index) => (
@@ -307,10 +310,10 @@ export default function ClientsPage() {
           <div className="rpma-shell p-6 shadow-lg">
             <div className="flex items-center gap-4">
               <div className="relative">
-                <div className="w-8 h-8 border-3 border-border rounded-full animate-spin border-t-accent"></div>
+                <div className="w-8 h-8 border-3 border-[hsl(var(--rpma-border))] rounded-full animate-spin border-t-accent"></div>
               </div>
               <div>
-                <h4 className="text-foreground font-medium">Mise à jour...</h4>
+                <h4 className="text-foreground font-medium">Mise Ã  jour...</h4>
                 <p className="text-muted-foreground text-sm">Actualisation de la liste des clients</p>
               </div>
             </div>

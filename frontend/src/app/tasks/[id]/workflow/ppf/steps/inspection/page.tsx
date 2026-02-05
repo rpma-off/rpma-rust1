@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -126,14 +126,14 @@ export default function InspectionStepPage() {
             <Search className="h-8 w-8 text-blue-500" />
           </div>
           <div className="text-sm bg-blue-500/10 text-blue-400 px-3 py-1 rounded-full font-medium">
-            Étape 1 sur 4
+            Ã‰tape 1 sur 4
           </div>
         </div>
         <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-          Inspection du véhicule
+          Inspection du vÃ©hicule
         </h1>
-        <p className="text-lg text-border-light max-w-2xl mx-auto leading-relaxed">
-          Documentez les dommages pré-existants et l&apos;état du véhicule avant l&apos;installation
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          Documentez les dommages prÃ©-existants et l&apos;Ã©tat du vÃ©hicule avant l&apos;installation
         </p>
       </motion.div>
 
@@ -152,16 +152,16 @@ export default function InspectionStepPage() {
                 </div>
                 <div>
                   <CardTitle className="text-xl text-foreground group-hover:text-blue-400 transition-colors">
-                    Diagramme du véhicule
+                    Diagramme du vÃ©hicule
                   </CardTitle>
-                  <CardDescription className="text-border-light">
-                    Cliquez sur les zones pour signaler les défauts
+                  <CardDescription className="text-muted-foreground">
+                    Cliquez sur les zones pour signaler les dÃ©fauts
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="bg-border/20 rounded-lg p-4 border border-border/30">
+              <div className="bg-[hsl(var(--rpma-surface))] rounded-lg p-4 border border-[hsl(var(--rpma-border))]">
                 <VehicleDiagram
                   defects={defects}
                   onDefectAdd={(defect) => setDefects([...defects, defect])}
@@ -185,7 +185,7 @@ export default function InspectionStepPage() {
                     <CardTitle className="text-xl text-foreground group-hover:text-green-400 transition-colors">
                       Photos d&apos;inspection
                     </CardTitle>
-                    <CardDescription className="text-border-light">
+                    <CardDescription className="text-muted-foreground">
                       Documentation visuelle (optionnel)
                     </CardDescription>
                   </div>
@@ -231,10 +231,10 @@ export default function InspectionStepPage() {
                 </div>
                 <div>
                   <CardTitle className="text-xl text-foreground">
-                    Défauts identifiés ({defects.length})
+                    DÃ©fauts identifiÃ©s ({defects.length})
                   </CardTitle>
-                  <CardDescription className="text-border-light">
-                    Zones nécessitant une attention particulière
+                  <CardDescription className="text-muted-foreground">
+                    Zones nÃ©cessitant une attention particuliÃ¨re
                   </CardDescription>
                 </div>
               </div>
@@ -244,7 +244,7 @@ export default function InspectionStepPage() {
                 {defects.map((defect, index) => (
                   <motion.div
                     key={defect.id}
-                    className="flex items-center justify-between p-4 bg-border/20 rounded-lg border border-border/30 hover:border-orange-500/30 transition-all duration-200"
+                    className="flex items-center justify-between p-4 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))]/30 transition-all duration-200"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1, duration: 0.3 }}
@@ -257,7 +257,7 @@ export default function InspectionStepPage() {
                         </span>
                       </div>
                       {defect.notes && (
-                        <p className="text-border-light text-sm truncate">{defect.notes}</p>
+                        <p className="text-muted-foreground text-sm truncate">{defect.notes}</p>
                       )}
                     </div>
                     <Button
@@ -284,10 +284,10 @@ export default function InspectionStepPage() {
         transition={{ delay: 0.6, duration: 0.4 }}
       >
         <div className="text-center sm:text-left">
-          <p className="text-border-light text-sm">
+          <p className="text-muted-foreground text-sm">
             {defects.length === 0
-              ? "Aucun défaut détecté - prêt pour la préparation"
-              : `${defects.length} défaut${defects.length > 1 ? 's' : ''} documenté${defects.length > 1 ? 's' : ''} - attention requise`
+              ? "Aucun dÃ©faut dÃ©tectÃ© - prÃªt pour la prÃ©paration"
+              : `${defects.length} dÃ©faut${defects.length > 1 ? 's' : ''} documentÃ©${defects.length > 1 ? 's' : ''} - attention requise`
             }
           </p>
         </div>
@@ -297,7 +297,7 @@ export default function InspectionStepPage() {
           className="min-w-40 h-12 text-base font-medium bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/25 transition-all duration-300 hover:shadow-xl hover:shadow-blue-600/30"
         >
           <span className="flex items-center justify-center space-x-2">
-            <span>{isCompleting ? 'Finalisation...' : 'Étape suivante'}</span>
+            <span>{isCompleting ? 'Finalisation...' : 'Ã‰tape suivante'}</span>
             <ArrowRight className={`h-5 w-5 transition-transform ${isCompleting ? '' : 'group-hover:translate-x-1'}`} />
           </span>
         </Button>

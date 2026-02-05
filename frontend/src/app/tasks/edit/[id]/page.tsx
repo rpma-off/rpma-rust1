@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -42,8 +42,8 @@ export default function EditTaskPage() {
         setTaskData(task);
       } catch (err) {
         console.error('Failed to fetch task:', err);
-        setError('Impossible de charger la tâche. Elle peut avoir été supprimée ou vous n\'avez pas les permissions nécessaires.');
-        toast.error('Erreur lors du chargement de la tâche');
+        setError('Impossible de charger la tÃ¢che. Elle peut avoir Ã©tÃ© supprimÃ©e ou vous n\'avez pas les permissions nÃ©cessaires.');
+        toast.error('Erreur lors du chargement de la tÃ¢che');
       } finally {
         setLoading(false);
       }
@@ -54,7 +54,7 @@ export default function EditTaskPage() {
 
   const handleSuccess = (updatedTask?: { id: string }) => {
     if (updatedTask?.id) {
-      toast.success('Tâche mise à jour avec succès !');
+      toast.success('TÃ¢che mise Ã  jour avec succÃ¨s !');
       // Redirect to the updated task
       router.push(`/tasks/${updatedTask.id}`);
     }
@@ -72,7 +72,7 @@ export default function EditTaskPage() {
           <div className="flex items-center justify-center py-12">
             <div className="flex items-center space-x-3">
               <Loader2 className="w-8 h-8 animate-spin text-green-500" />
-              <span className="text-white text-lg font-medium">Chargement de la tâche...</span>
+              <span className="text-white text-lg font-medium">Chargement de la tÃ¢che...</span>
             </div>
           </div>
         </div>
@@ -92,9 +92,9 @@ export default function EditTaskPage() {
                 </svg>
               </div>
               <h3 className="text-xl font-bold text-white mb-2">Erreur de chargement</h3>
-              <p className="text-border-light mb-6">{error}</p>
+              <p className="text-muted-foreground mb-6">{error}</p>
               <Button onClick={handleCancel} variant="outline">
-                Retour à la liste des tâches
+                Retour Ã  la liste des tÃ¢ches
               </Button>
             </div>
           </div>
@@ -109,10 +109,10 @@ export default function EditTaskPage() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-[hsl(var(--rpma-surface))] rounded-xl p-4 md:p-6 border border-[hsl(var(--rpma-border))]">
             <div className="text-center py-12">
-              <h3 className="text-xl font-bold text-white mb-2">Tâche introuvable</h3>
-              <p className="text-border-light mb-6">La tâche demandée n&apos;existe pas ou a été supprimée.</p>
+              <h3 className="text-xl font-bold text-white mb-2">TÃ¢che introuvable</h3>
+              <p className="text-muted-foreground mb-6">La tÃ¢che demandÃ©e n&apos;existe pas ou a Ã©tÃ© supprimÃ©e.</p>
               <Button onClick={handleCancel} variant="outline">
-                Retour à la liste des tâches
+                Retour Ã  la liste des tÃ¢ches
               </Button>
             </div>
           </div>
@@ -133,18 +133,18 @@ export default function EditTaskPage() {
                 <Button
                   variant="outline"
                   onClick={handleCancel}
-                  className="flex items-center gap-2 border-border/60 text-border-light hover:bg-border/20 hover:text-foreground hover:border-primary/50 transition-all duration-200"
+                  className="flex items-center gap-2 border-[hsl(var(--rpma-border))] text-muted-foreground hover:bg-[hsl(var(--rpma-surface))] hover:text-foreground hover:border-[hsl(var(--rpma-teal))]/50 transition-all duration-200"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  <span className="hidden sm:inline">Retour à la liste des tâches</span>
+                  <span className="hidden sm:inline">Retour Ã  la liste des tÃ¢ches</span>
                   <span className="sm:hidden">Retour</span>
                 </Button>
 
                 {/* Breadcrumbs */}
-                <nav className="hidden sm:flex items-center text-sm text-border-light">
+                <nav className="hidden sm:flex items-center text-sm text-muted-foreground">
                   <a href="/dashboard" className="hover:text-foreground transition-colors">Dashboard</a>
                   <span className="mx-2">/</span>
-                  <a href="/tasks" className="hover:text-foreground transition-colors">Tâches</a>
+                  <a href="/tasks" className="hover:text-foreground transition-colors">TÃ¢ches</a>
                   <span className="mx-2">/</span>
                   <a href={`/tasks/${taskId}`} className="hover:text-foreground transition-colors">{taskData.task_number}</a>
                   <span className="mx-2">/</span>
@@ -159,10 +159,10 @@ export default function EditTaskPage() {
                 </div>
                 <div>
                   <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                    Modifier la tâche {taskData.task_number}
+                    Modifier la tÃ¢che {taskData.task_number}
                   </h1>
-                  <p className="text-border-light mt-1 text-sm md:text-base">
-                    Modifiez les informations de la tâche. Les changements seront sauvegardés automatiquement.
+                  <p className="text-muted-foreground mt-1 text-sm md:text-base">
+                    Modifiez les informations de la tÃ¢che. Les changements seront sauvegardÃ©s automatiquement.
                   </p>
                 </div>
               </div>
@@ -177,7 +177,7 @@ export default function EditTaskPage() {
                   </div>
                   <div>
                     <h4 className="text-sm font-medium text-blue-500 mb-1">Astuce rapide</h4>
-                    <p className="text-xs text-border-light">
+                    <p className="text-xs text-muted-foreground">
                       Utilisez la touche Tab pour naviguer rapidement entre les champs. Le formulaire se sauvegarde automatiquement.
                     </p>
                   </div>

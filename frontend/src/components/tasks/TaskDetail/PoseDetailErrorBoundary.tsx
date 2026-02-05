@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+﻿import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -103,7 +103,7 @@ class PoseDetailErrorBoundary extends Component<Props, State> {
 
     return (
       <details className="mt-4 p-4 bg-gray-50 rounded-lg border">
-        <summary className="cursor-pointer text-sm font-medium text-border-light mb-2">
+        <summary className="cursor-pointer text-sm font-medium text-muted-foreground mb-2">
           Error Details (Development Only)
         </summary>
         <div className="space-y-2 text-xs font-mono">
@@ -178,7 +178,7 @@ class PoseDetailErrorBoundary extends Component<Props, State> {
                 onClick={this.handleGoBack}
                 className={cn(
                   "w-full flex items-center justify-center gap-2 px-4 py-2",
-                  "bg-gray-200 text-border-light rounded-lg hover:bg-gray-300",
+                  "bg-[hsl(var(--rpma-surface))] text-muted-foreground rounded-lg hover:bg-[hsl(var(--rpma-surface))]",
                   "transition-colors duration-200 font-medium"
                 )}
               >
@@ -190,7 +190,7 @@ class PoseDetailErrorBoundary extends Component<Props, State> {
                 onClick={this.handleGoHome}
                 className={cn(
                   "w-full flex items-center justify-center gap-2 px-4 py-2",
-                  "bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200",
+                  "bg-gray-100 text-gray-600 rounded-lg hover:bg-[hsl(var(--rpma-surface))]",
                   "transition-colors duration-200 font-medium"
                 )}
               >

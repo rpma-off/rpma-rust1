@@ -21,6 +21,18 @@
       display: inline;
     }
   }
+
+  .text-border-light {
+    color: hsl(var(--muted-foreground));
+  }
+
+  .text-border {
+    color: hsl(var(--muted-foreground));
+  }
+
+  .bg-border {
+    background-color: hsl(var(--rpma-border));
+  }
 }
 
 
@@ -53,14 +65,18 @@
     --primary-foreground: 0 0% 100%;
     /* #FFFFFF White text on teal */
 
+    /* Accent aligned to RPMA teal */
+    --accent: 169 57% 49%;
+    --accent-foreground: 0 0% 100%;
+
     /* RPMA UI tokens */
-    --rpma-teal: 174 72% 46%;
-    /* #1ad1ba */
-    --rpma-surface: 210 40% 98%;
-    /* #F8FAFC */
-    --rpma-border: 214 32% 91%;
-    /* #E5E7EB */
-    --rpma-shadow-soft: 0 6px 18px rgba(15, 23, 42, 0.08);
+    --rpma-teal: 169 57% 49%;
+    /* #2ecaa0 */
+    --rpma-surface: 210 10% 96%;
+    /* #f5f6f7 */
+    --rpma-border: 210 12% 91%;
+    /* #e3e6ea */
+    --rpma-shadow-soft: 0 6px 14px rgba(16, 24, 40, 0.10);
 
     /* Secondary Colors - Dark Slate */
     --secondary: 215 25% 27%;
@@ -368,5 +384,63 @@
     border: 1px solid hsl(var(--rpma-border));
     border-radius: 10px;
     box-shadow: var(--rpma-shadow-soft);
+  }
+
+  .rpma-topbar {
+    height: 56px;
+    background-color: hsl(var(--rpma-teal));
+    color: white;
+    box-shadow: var(--rpma-shadow-soft);
+  }
+
+  .rpma-tabbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.8125rem;
+  }
+
+  .rpma-tabbar a,
+  .rpma-tabbar button,
+  .rpma-tabbar span {
+    position: relative;
+    padding: 0 18px;
+    height: 56px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 3px solid transparent;
+    color: rgba(255, 255, 255, 0.88);
+  }
+
+  .rpma-tabbar .is-active {
+    color: white;
+    font-weight: 600;
+    border-bottom-color: white;
+  }
+
+  .rpma-table-header {
+    background-color: #f3f4f6;
+    color: #6b7280;
+    border-bottom: 1px solid hsl(var(--rpma-border));
+  }
+
+  .rpma-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: #111827;
+  }
+
+  .rpma-empty svg {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 0.75rem;
+    color: #111827;
   }
 }

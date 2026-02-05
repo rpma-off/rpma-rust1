@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react';
+﻿import React, { memo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Play, CheckCircle, Image as ImageIcon, ListChecks,
@@ -200,11 +200,11 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      toast.success('Statut mis à jour avec succès');
+      toast.success('Statut mis Ã  jour avec succÃ¨s');
       setShowStatusDialog(false);
     },
     onError: (error) => {
-      toast.error('Erreur lors de la mise à jour du statut');
+      toast.error('Erreur lors de la mise Ã  jour du statut');
       console.error('Status update error:', error);
     }
   });
@@ -217,10 +217,10 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      toast.success('Priorité mise à jour avec succès');
+      toast.success('PrioritÃ© mise Ã  jour avec succÃ¨s');
     },
     onError: (error) => {
-      toast.error('Erreur lors de la mise à jour de la priorité');
+      toast.error('Erreur lors de la mise Ã  jour de la prioritÃ©');
       console.error('Priority update error:', error);
     }
   });
@@ -233,7 +233,7 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      toast.success('Tâche assignée avec succès');
+      toast.success('TÃ¢che assignÃ©e avec succÃ¨s');
       setShowAssignmentDialog(false);
     },
     onError: (error) => {
@@ -250,11 +250,11 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      toast.success('Notes mises à jour avec succès');
+      toast.success('Notes mises Ã  jour avec succÃ¨s');
       setShowNotesDialog(false);
     },
     onError: (error) => {
-      toast.error('Erreur lors de la mise à jour des notes');
+      toast.error('Erreur lors de la mise Ã  jour des notes');
       console.error('Notes update error:', error);
     }
   });
@@ -312,12 +312,12 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
         queryClient.invalidateQueries({ queryKey: interventionKeys.ppfIntervention(task.id) });
         queryClient.invalidateQueries({ queryKey: ['interventions', task.id, 'photos'] });
       }, 100);
-      toast.success('Intervention démarrée avec succès');
+      toast.success('Intervention dÃ©marrÃ©e avec succÃ¨s');
       router.push(`/tasks/${task.id}/workflow/ppf`);
     },
      onError: (error) => {
-       const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue lors du démarrage de l\'intervention';
-       toast.error(`Erreur lors du démarrage de l'intervention: ${errorMessage}`);
+       const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue lors du dÃ©marrage de l\'intervention';
+       toast.error(`Erreur lors du dÃ©marrage de l'intervention: ${errorMessage}`);
        console.error('Start intervention error:', error);
      }
   });
@@ -375,7 +375,7 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
     },
     {
       id: 'assign',
-      label: 'M\'assigner la tâche',
+      label: 'M\'assigner la tÃ¢che',
       icon: User,
       onClick: () => setShowAssignmentDialog(true),
       disabled: isAssignedToCurrentUser
@@ -388,7 +388,7 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
     },
     {
       id: 'edit',
-      label: 'Modifier la tâche',
+      label: 'Modifier la tÃ¢che',
       icon: Edit,
       onClick: () => setShowEditModal(true)
     },
@@ -401,14 +401,14 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
           // Get client phone number from task data
           const phoneNumber = task?.client?.phone;
           if (!phoneNumber) {
-            toast.error('Aucun numéro de téléphone disponible pour ce client');
+            toast.error('Aucun numÃ©ro de tÃ©lÃ©phone disponible pour ce client');
             return;
           }
 
           // Call backend to initiate phone call
           await ipcClient.ui.initiateCustomerCall(phoneNumber);
 
-          toast.success(`Appel initié vers ${phoneNumber}`);
+          toast.success(`Appel initiÃ© vers ${phoneNumber}`);
         } catch (error) {
           console.error('Failed to initiate call:', error);
           toast.error('Erreur lors de l\'initiation de l\'appel');
@@ -423,13 +423,13 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
     },
     {
       id: 'delay',
-      label: 'Reporter la tâche',
+      label: 'Reporter la tÃ¢che',
       icon: Clock,
       onClick: () => setShowDelayTaskModal(true)
     },
     {
       id: 'report',
-      label: 'Signaler un problème',
+      label: 'Signaler un problÃ¨me',
       icon: AlertCircle,
       onClick: () => setShowReportIssueModal(true)
     },
@@ -491,7 +491,7 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
         <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Changer le statut de la tâche</DialogTitle>
+              <DialogTitle>Changer le statut de la tÃ¢che</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -510,16 +510,16 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="pending">En attente</SelectItem>
-                    <SelectItem value="scheduled">Planifiée</SelectItem>
+                    <SelectItem value="scheduled">PlanifiÃ©e</SelectItem>
                     <SelectItem value="in_progress">En cours</SelectItem>
-                    <SelectItem value="completed">Terminée</SelectItem>
-                    <SelectItem value="cancelled">Annulée</SelectItem>
+                    <SelectItem value="completed">TerminÃ©e</SelectItem>
+                    <SelectItem value="cancelled">AnnulÃ©e</SelectItem>
                     <SelectItem value="on_hold">En pause</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               {updateStatusMutation.isPending && (
-                <p className="text-sm text-muted-foreground">Mise à jour en cours...</p>
+                <p className="text-sm text-muted-foreground">Mise Ã  jour en cours...</p>
               )}
             </div>
           </DialogContent>
@@ -529,10 +529,10 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
         <Dialog open={showAssignmentDialog} onOpenChange={setShowAssignmentDialog}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Assigner la tâche</DialogTitle>
+              <DialogTitle>Assigner la tÃ¢che</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <p>Êtes-vous sûr de vouloir vous assigner cette tâche ?</p>
+              <p>ÃŠtes-vous sÃ»r de vouloir vous assigner cette tÃ¢che ?</p>
               <div className="flex justify-end space-x-2">
                 <Button
                   variant="outline"
@@ -565,7 +565,7 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
                   id="notes-textarea"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Ajoutez des notes pour cette tâche..."
+                  placeholder="Ajoutez des notes pour cette tÃ¢che..."
                   rows={4}
                 />
               </div>
@@ -677,7 +677,7 @@ const PrimaryActionButton: React.FC<PrimaryActionButtonProps> = ({
       )}
     >
       <Play className="h-5 w-5 mr-2" />
-      {isPending ? 'Démarrage...' : 'Démarrer l\'intervention'}
+      {isPending ? 'DÃ©marrage...' : 'DÃ©marrer l\'intervention'}
     </Button>
   );
 };
@@ -710,23 +710,23 @@ const SecondaryActionsGrid: React.FC<SecondaryActionsGridProps> = ({
           "flex flex-col items-center justify-center p-4 rounded-lg border transition-all duration-200 hover:scale-105",
           action.disabled
             ? "border-border/50 bg-background/30 cursor-not-allowed opacity-50"
-            : "border-border bg-background/50 hover:border-accent hover:bg-border"
+            : "border-border bg-background/50 hover:border-[hsl(var(--rpma-teal))] hover:bg-[hsl(var(--rpma-surface))]"
         )}
       >
         <div className="relative">
           <action.icon className={cn(
             "h-6 w-6 mb-2",
-            action.disabled ? "text-border" : "text-accent"
+            action.disabled ? "text-muted-foreground" : "text-[hsl(var(--rpma-teal))]"
           )} />
           {action.count && action.count > 0 && (
-            <span className="absolute -top-2 -right-2 bg-accent text-background text-xs font-bold px-2 py-1 rounded-full min-w-[20px] h-5 flex items-center justify-center">
+            <span className="absolute -top-2 -right-2 bg-[hsl(var(--rpma-teal))] text-background text-xs font-bold px-2 py-1 rounded-full min-w-[20px] h-5 flex items-center justify-center">
               {action.count}
             </span>
           )}
         </div>
         <span className={cn(
           "text-xs font-medium text-center",
-          action.disabled ? "text-border" : "text-border-light"
+          action.disabled ? "text-muted-foreground" : "text-muted-foreground-light"
         )}>
           {action.label}
         </span>
@@ -751,11 +751,11 @@ const MoreActionsSection: React.FC<MoreActionsSectionProps> = ({
   <div className="pt-4 border-t border-border">
     <button
       onClick={toggleMoreActions}
-      className="w-full flex items-center justify-center p-3 rounded-lg border border-border bg-background/30 hover:bg-border transition-colors duration-200"
+      className="w-full flex items-center justify-center p-3 rounded-lg border border-border bg-background/30 hover:bg-[hsl(var(--rpma-surface))] transition-colors duration-200"
     >
-      <Settings className="h-4 w-4 mr-2 text-border-light" />
-      <span className="text-sm font-medium text-border-light">Plus d&apos;actions</span>
-      <MoreVertical className="h-4 w-4 ml-2 text-border-light" />
+      <Settings className="h-4 w-4 mr-2 text-muted-foreground-light" />
+      <span className="text-sm font-medium text-muted-foreground-light">Plus d&apos;actions</span>
+      <MoreVertical className="h-4 w-4 ml-2 text-muted-foreground-light" />
     </button>
 
     {showMoreActions && (
@@ -769,16 +769,16 @@ const MoreActionsSection: React.FC<MoreActionsSectionProps> = ({
               "w-full flex items-center p-3 rounded-lg border transition-colors duration-200",
               action.disabled
                 ? "border-border/50 bg-background/30 cursor-not-allowed opacity-50"
-                : "border-border bg-background/50 hover:border-accent hover:bg-border"
+                : "border-border bg-background/50 hover:border-[hsl(var(--rpma-teal))] hover:bg-[hsl(var(--rpma-surface))]"
             )}
           >
             <action.icon className={cn(
               "h-4 w-4 mr-3",
-              action.disabled ? "text-border" : "text-accent"
+              action.disabled ? "text-muted-foreground" : "text-[hsl(var(--rpma-teal))]"
             )} />
             <span className={cn(
               "text-sm font-medium",
-              action.disabled ? "text-border" : "text-foreground"
+              action.disabled ? "text-muted-foreground" : "text-foreground"
             )}>
               {action.label}
             </span>
@@ -810,7 +810,7 @@ const StatusWarnings: React.FC<StatusWarningsProps> = ({
         <div className="flex items-start">
           <AlertCircle className="h-4 w-4 text-yellow-400 mr-2 mt-0.5 flex-shrink-0" />
           <p className="text-xs text-yellow-200">
-            Cette tâche est déjà assignée à un autre technicien.
+            Cette tÃ¢che est dÃ©jÃ  assignÃ©e Ã  un autre technicien.
           </p>
         </div>
       </div>
@@ -821,7 +821,7 @@ const StatusWarnings: React.FC<StatusWarningsProps> = ({
         <div className="flex items-start">
           <AlertCircle className="h-4 w-4 text-orange-400 mr-2 mt-0.5 flex-shrink-0" />
           <p className="text-xs text-orange-200">
-            Statut de tâche incompatible avec le démarrage d&apos;intervention: {taskStatus}
+            Statut de tÃ¢che incompatible avec le dÃ©marrage d&apos;intervention: {taskStatus}
           </p>
         </div>
       </div>
@@ -842,7 +842,7 @@ const PrioritySelector: React.FC<PrioritySelectorProps> = ({
 }) => (
   <div className="mt-4 pt-4 border-t border-border">
     <div className="flex items-center justify-between">
-      <span className="text-sm font-medium text-foreground">Priorité</span>
+      <span className="text-sm font-medium text-foreground">PrioritÃ©</span>
       <Select
         value={value}
         onValueChange={(value: string) => {
@@ -851,14 +851,14 @@ const PrioritySelector: React.FC<PrioritySelectorProps> = ({
         }}
         disabled={isPending}
       >
-        <SelectTrigger className="w-32 border-border bg-muted text-foreground hover:bg-border">
+        <SelectTrigger className="w-32 border-border bg-muted text-foreground hover:bg-[hsl(var(--rpma-surface))]">
           <SelectValue />
         </SelectTrigger>
         <SelectContent className="bg-muted border-border">
-          <SelectItem value="low" className="text-foreground hover:bg-border focus:bg-border">Basse</SelectItem>
-          <SelectItem value="medium" className="text-foreground hover:bg-border focus:bg-border">Moyenne</SelectItem>
-          <SelectItem value="high" className="text-foreground hover:bg-border focus:bg-border">Haute</SelectItem>
-          <SelectItem value="urgent" className="text-foreground hover:bg-border focus:bg-border">Urgente</SelectItem>
+          <SelectItem value="low" className="text-foreground hover:bg-[hsl(var(--rpma-surface))] focus:bg-border">Basse</SelectItem>
+          <SelectItem value="medium" className="text-foreground hover:bg-[hsl(var(--rpma-surface))] focus:bg-border">Moyenne</SelectItem>
+          <SelectItem value="high" className="text-foreground hover:bg-[hsl(var(--rpma-surface))] focus:bg-border">Haute</SelectItem>
+          <SelectItem value="urgent" className="text-foreground hover:bg-[hsl(var(--rpma-surface))] focus:bg-border">Urgente</SelectItem>
         </SelectContent>
       </Select>
     </div>

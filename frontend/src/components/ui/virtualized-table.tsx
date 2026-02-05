@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { VirtualizedList, usePerformanceMonitor } from './virtualization';
 import { cn } from '@/lib/utils';
@@ -91,8 +91,8 @@ export function VirtualizedTable<T extends Record<string, any>>({
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.02 }}
       className={cn(
-        'flex items-center border-b border-border/20 hover:bg-border/10 transition-colors cursor-pointer group',
-        selectable && selectedRows.has(index) && 'bg-accent/10 border-accent/30',
+        'flex items-center border-b border-[hsl(var(--rpma-border))] hover:bg-[#f5f6f7] transition-colors cursor-pointer group',
+        selectable && selectedRows.has(index) && 'bg-[hsl(var(--rpma-teal))]/10 border-[hsl(var(--rpma-teal))]/30',
         className
       )}
       onClick={() => handleRowClick(item, index)}
@@ -104,7 +104,7 @@ export function VirtualizedTable<T extends Record<string, any>>({
             type="checkbox"
             checked={selectedRows.has(index)}
             onChange={() => handleRowSelect(index)}
-            className="rounded border-border/30 text-accent focus:ring-accent/20"
+            className="rounded border-border/30 text-[hsl(var(--rpma-teal))] focus:ring-[hsl(var(--rpma-teal))]/20"
             onClick={(e) => e.stopPropagation()}
           />
         </div>
@@ -135,9 +135,9 @@ export function VirtualizedTable<T extends Record<string, any>>({
   const totalWidth = columns.reduce((sum, col) => sum + (col.width || 150), selectable ? 60 : 0);
 
   return (
-    <div className={cn('border border-border/20 rounded-lg overflow-hidden', className)}>
+    <div className={cn('border border-[hsl(var(--rpma-border))] rounded-lg overflow-hidden', className)}>
       {/* Header */}
-      <div className="bg-border/10 border-b border-border/20">
+      <div className="rpma-table-header">
         <div className="flex items-center" style={{ height: rowHeight }}>
           {selectable && (
             <div className="px-4 flex items-center">
@@ -151,7 +151,7 @@ export function VirtualizedTable<T extends Record<string, any>>({
                     onSelectionChange?.(new Set(data.map((_, i) => i)));
                   }
                 }}
-                className="rounded border-border/30 text-accent focus:ring-accent/20"
+                className="rounded border-border/30 text-[hsl(var(--rpma-teal))] focus:ring-[hsl(var(--rpma-teal))]/20"
               />
             </div>
           )}
@@ -161,7 +161,7 @@ export function VirtualizedTable<T extends Record<string, any>>({
               key={String(column.key)}
               className={cn(
                 'px-4 flex items-center font-semibold text-foreground',
-                column.sortable && 'cursor-pointer hover:bg-border/20 transition-colors',
+                column.sortable && 'cursor-pointer hover:bg-[hsl(var(--rpma-surface))] transition-colors',
                 column.className
               )}
               style={{ width: column.width, minWidth: column.width }}
@@ -172,12 +172,12 @@ export function VirtualizedTable<T extends Record<string, any>>({
                 <div className="ml-2 flex flex-col">
                   {sortConfig?.key === column.key ? (
                     sortConfig.direction === 'asc' ? (
-                      <ChevronUp className="w-3 h-3 text-accent" />
+                      <ChevronUp className="w-3 h-3 text-[hsl(var(--rpma-teal))]" />
                     ) : (
-                      <ChevronDown className="w-3 h-3 text-accent" />
+                      <ChevronDown className="w-3 h-3 text-[hsl(var(--rpma-teal))]" />
                     )
                   ) : (
-                    <ChevronsUpDown className="w-3 h-3 text-border-light" />
+                    <ChevronsUpDown className="w-3 h-3 text-muted-foreground" />
                   )}
                 </div>
               )}
@@ -196,16 +196,16 @@ export function VirtualizedTable<T extends Record<string, any>>({
       />
 
       {/* Footer */}
-      <div className="bg-border/10 border-t border-border/20 px-4 py-2">
-        <div className="flex items-center justify-between text-sm text-border-light">
+      <div className="bg-[hsl(var(--rpma-surface))] border-t border-[hsl(var(--rpma-border))] px-4 py-2">
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>
-            {selectedRows.size > 0 && `${selectedRows.size} sélectionné(s) • `}
-            {data.length} élément(s) total
+            {selectedRows.size > 0 && `${selectedRows.size} sÃ©lectionnÃ©(s) â€¢ `}
+            {data.length} Ã©lÃ©ment(s) total
           </span>
           {sortConfig && (
-            <span className="text-accent">
-              Trié par {columns.find(col => String(col.key) === sortConfig.key)?.header}
-              {sortConfig.direction === 'asc' ? ' ↑' : ' ↓'}
+            <span className="text-[hsl(var(--rpma-teal))]">
+              TriÃ© par {columns.find(col => String(col.key) === sortConfig.key)?.header}
+              {sortConfig.direction === 'asc' ? ' â†‘' : ' â†“'}
             </span>
           )}
         </div>

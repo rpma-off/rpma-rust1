@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { LucideIcon } from 'lucide-react';
@@ -104,7 +104,7 @@ export function StatCard({ value, label, icon: Icon, color = 'accent', trend, cl
     yellow: 'bg-yellow-100 text-yellow-600 border-yellow-200',
     red: 'bg-red-100 text-red-600 border-red-200',
     purple: 'bg-purple-100 text-purple-600 border-purple-200',
-    accent: 'bg-accent/10 text-accent border-accent/30',
+    accent: 'bg-[hsl(var(--rpma-teal))]/10 text-[hsl(var(--rpma-teal))] border-[hsl(var(--rpma-teal))]/30',
   };
 
   return (
@@ -127,13 +127,13 @@ export function StatCard({ value, label, icon: Icon, color = 'accent', trend, cl
       {trend && (
         <div className="mt-2 flex items-center gap-1 text-xs">
           {trend.direction === 'up' && (
-            <span className="text-success">↑ {trend.value}</span>
+            <span className="text-success">â†‘ {trend.value}</span>
           )}
           {trend.direction === 'down' && (
-            <span className="text-error">↓ {trend.value}</span>
+            <span className="text-error">â†“ {trend.value}</span>
           )}
           {trend.direction === 'neutral' && (
-            <span className="text-muted-foreground">→ {trend.value}</span>
+            <span className="text-muted-foreground">â†’ {trend.value}</span>
           )}
         </div>
       )}

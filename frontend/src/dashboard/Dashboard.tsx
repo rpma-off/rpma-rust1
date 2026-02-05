@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -303,7 +303,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--rpma-teal))]"></div>
         <span className="sr-only">Loading dashboard...</span>
       </div>
     );
@@ -325,7 +325,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             size="sm"
             className="bg-red-500/20 text-red-300 hover:bg-red-500/30 border-red-500/50"
           >
-            Réessayer
+            RÃ©essayer
           </Button>
         </div>
       </div>
@@ -353,24 +353,24 @@ export const Dashboard: React.FC<DashboardProps> = ({
           initial={false}
           animate={{ x: sidebarOpen ? 0 : '-100%' }}
           className={cn(
-            'fixed left-0 top-0 z-50 h-full w-64 bg-muted shadow-lg transform transition-transform duration-300 ease-in-out border-r border-border',
+            'fixed left-0 top-0 z-50 h-full w-64 bg-muted shadow-lg transform transition-transform duration-300 ease-in-out border-r border-[hsl(var(--rpma-border))]',
             'lg:fixed lg:translate-x-0 lg:z-40',
             sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
           )}
         >
           <div className="flex h-full flex-col">
             {/* Sidebar Header */}
-            <div className="flex h-16 items-center justify-between px-4 border-b border-border">
+            <div className="flex h-16 items-center justify-between px-4 border-b border-[hsl(var(--rpma-border))]">
               <div>
                 <h2 className="text-lg font-semibold text-foreground">Dashboard</h2>
-                <p className="text-xs text-border-light capitalize">{currentViewMode}</p>
-                <p className="text-xs text-accent">✓ Barre latérale active</p>
+                <p className="text-xs text-muted-foreground capitalize">{currentViewMode}</p>
+                <p className="text-xs text-[hsl(var(--rpma-teal))]">âœ“ Barre latÃ©rale active</p>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleSidebarToggle}
-                className="lg:hidden text-border-light hover:text-foreground hover:bg-border"
+                className="lg:hidden text-muted-foreground hover:text-foreground hover:bg-[hsl(var(--rpma-surface))]"
               >
                 <X className="h-5 w-5" />
               </Button>
@@ -390,7 +390,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 isActive={currentViewMode === 'tasks'}
                 onClick={() => handleViewModeChange('tasks')}
               >
-                Tâches
+                TÃ¢ches
               </SidebarItem>
               {showAnalytics && (
                 <SidebarItem
@@ -408,7 +408,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               >
                 <div className="flex items-center gap-2">
                   <span>Workflows</span>
-                  <span className="px-1.5 py-0.5 text-xs bg-accent/20 text-accent rounded-full">NOUVEAU</span>
+                  <span className="px-1.5 py-0.5 text-xs bg-[hsl(var(--rpma-teal))]/20 text-[hsl(var(--rpma-teal))] rounded-full">NOUVEAU</span>
                 </div>
               </SidebarItem>
               <SidebarItem
@@ -417,8 +417,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 onClick={() => handleViewModeChange('quality')}
               >
                 <div className="flex items-center gap-2">
-                  <span>Qualité</span>
-                  <span className="px-1.5 py-0.5 text-xs bg-accent/20 text-accent rounded-full">NOUVEAU</span>
+                  <span>QualitÃ©</span>
+                  <span className="px-1.5 py-0.5 text-xs bg-[hsl(var(--rpma-teal))]/20 text-[hsl(var(--rpma-teal))] rounded-full">NOUVEAU</span>
                 </div>
               </SidebarItem>
               <SidebarItem
@@ -453,12 +453,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* Main Content */}
       <div className={cn('flex-1 min-h-screen', showSidebar && 'lg:ml-64')}>
         {/* Mobile Header */}
-        <div className="sticky top-0 z-30 flex h-16 items-center justify-between bg-muted/95 backdrop-blur-sm px-4 shadow-sm lg:hidden border-b border-border">
+        <div className="sticky top-0 z-30 flex h-16 items-center justify-between bg-muted/95 backdrop-blur-sm px-4 shadow-sm lg:hidden border-b border-[hsl(var(--rpma-border))]">
           <Button
             variant="ghost"
             size="sm"
             onClick={handleSidebarToggle}
-            className="text-foreground hover:bg-border"
+            className="text-foreground hover:bg-[hsl(var(--rpma-surface))]"
           >
             <Menu className="h-5 w-5" />
           </Button>
@@ -467,22 +467,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Mobile New Features Banner */}
-        <div className="lg:hidden bg-gradient-to-r from-accent/20 to-accent/10 border-b border-accent/30 px-4 py-3">
+        <div className="lg:hidden bg-gradient-to-r from-[hsl(var(--rpma-teal))]/10 to-[hsl(var(--rpma-teal))]/5 border-b border-[hsl(var(--rpma-teal))]/30 px-4 py-3">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
-            <span className="text-sm font-medium text-foreground">Nouvelles fonctionnalités disponibles</span>
+            <div className="w-2 h-2 bg-[hsl(var(--rpma-teal))] rounded-full animate-pulse"></div>
+            <span className="text-sm font-medium text-foreground">Nouvelles fonctionnalitÃ©s disponibles</span>
           </div>
-          <p className="text-xs text-border-light mt-1">
-            Appuyez sur le menu pour accéder aux tableaux de bord Workflows, Qualité et Photos
+          <p className="text-xs text-muted-foreground mt-1">
+            Appuyez sur le menu pour accÃ©der aux tableaux de bord Workflows, QualitÃ© et Photos
           </p>
         </div>
 
         {/* Desktop Header */}
-        <div className="hidden lg:block bg-muted/95 backdrop-blur-sm border-b border-border px-6 py-4">
+        <div className="hidden lg:block bg-muted/95 backdrop-blur-sm border-b border-[hsl(var(--rpma-border))] px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
               {/* Breadcrumb */}
-              <nav className="flex items-center space-x-2 text-sm text-border-light mb-2">
+              <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-2">
                 <span>Dashboard</span>
                 <span>/</span>
                 <span className="text-foreground font-medium">
@@ -497,21 +497,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </nav>
               <h1 className="text-2xl font-bold text-foreground">
                 {currentViewMode === 'overview' && 'Vue d\'ensemble du tableau de bord'}
-                {currentViewMode === 'tasks' && 'Gestion des tâches'}
+                {currentViewMode === 'tasks' && 'Gestion des tÃ¢ches'}
                 {currentViewMode === 'analytics' && 'Analyses et performances'}
-                {currentViewMode === 'workflows' && 'Exécution des workflows'}
-                {currentViewMode === 'quality' && 'Assurance qualité'}
+                {currentViewMode === 'workflows' && 'ExÃ©cution des workflows'}
+                {currentViewMode === 'quality' && 'Assurance qualitÃ©'}
                 {currentViewMode === 'photos' && 'Documentation photo'}
                 {currentViewMode === 'management' && 'Outils de gestion'}
               </h1>
-              <p className="text-sm text-border-light mt-1">
-                {currentViewMode === 'overview' && 'Vue d\'ensemble en temps réel des tâches et des performances'}
-                {currentViewMode === 'tasks' && 'Gérer et suivre les tâches d\'installation'}
-                {currentViewMode === 'analytics' && 'Métriques de performance et insights'}
-                {currentViewMode === 'workflows' && 'Surveiller l\'avancement des workflows en temps réel'}
-                {currentViewMode === 'quality' && 'Suivre les métriques qualité et la conformité'}
-                {currentViewMode === 'photos' && 'Gérer la documentation photo et les galeries'}
-                {currentViewMode === 'management' && 'Administration système et gestion'}
+              <p className="text-sm text-muted-foreground mt-1">
+                {currentViewMode === 'overview' && 'Vue d\'ensemble en temps rÃ©el des tÃ¢ches et des performances'}
+                {currentViewMode === 'tasks' && 'GÃ©rer et suivre les tÃ¢ches d\'installation'}
+                {currentViewMode === 'analytics' && 'MÃ©triques de performance et insights'}
+                {currentViewMode === 'workflows' && 'Surveiller l\'avancement des workflows en temps rÃ©el'}
+                {currentViewMode === 'quality' && 'Suivre les mÃ©triques qualitÃ© et la conformitÃ©'}
+                {currentViewMode === 'photos' && 'GÃ©rer la documentation photo et les galeries'}
+                {currentViewMode === 'management' && 'Administration systÃ¨me et gestion'}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -519,7 +519,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={handleRefresh}
-                className="flex items-center gap-2 border-border text-border-light hover:text-foreground hover:border-accent"
+                className="flex items-center gap-2 border-[hsl(var(--rpma-border))] text-muted-foreground hover:text-foreground hover:border-[hsl(var(--rpma-teal))]"
               >
                 <RefreshCw className="h-4 w-4" />
                 Actualiser
@@ -545,35 +545,35 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <StatsGrid stats={dashboardStats} />
 
                 {/* New Dashboard Features Quick Access */}
-                <DashboardSection title="Fonctionnalités du Dashboard">
-                  <div className="mb-4 p-3 bg-accent/10 border border-accent/30 rounded-lg">
+                <DashboardSection title="FonctionnalitÃ©s du Dashboard">
+                  <div className="mb-4 p-3 bg-[hsl(var(--rpma-teal))]/10 border border-[hsl(var(--rpma-teal))]/30 rounded-lg">
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
-                      <span className="text-sm text-accent font-medium">Nouvelles fonctionnalités disponibles</span>
+                      <div className="w-2 h-2 bg-[hsl(var(--rpma-teal))] rounded-full animate-pulse"></div>
+                      <span className="text-sm text-[hsl(var(--rpma-teal))] font-medium">Nouvelles fonctionnalitÃ©s disponibles</span>
                     </div>
-                    <p className="text-xs text-border-light mt-1">
-                       Accédez aux outils avancés de surveillance des workflows, d&apos;assurance qualité et de documentation photo
+                    <p className="text-xs text-muted-foreground mt-1">
+                       AccÃ©dez aux outils avancÃ©s de surveillance des workflows, d&apos;assurance qualitÃ© et de documentation photo
                     </p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <DashboardWidget
-                      title="Exécution de Workflow"
+                      title="ExÃ©cution de Workflow"
                       icon={Workflow}
-                      content="Surveiller l'avancement des workflows en temps réel et la completion des étapes"
+                      content="Surveiller l'avancement des workflows en temps rÃ©el et la completion des Ã©tapes"
                       onClick={() => handleViewModeChange('workflows')}
                       className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-accent"
                     />
                     <DashboardWidget
-                      title="Assurance Qualité"
+                      title="Assurance QualitÃ©"
                       icon={Shield}
-                      content="Suivre les métriques qualité, la conformité et la résolution des problèmes"
+                      content="Suivre les mÃ©triques qualitÃ©, la conformitÃ© et la rÃ©solution des problÃ¨mes"
                       onClick={() => handleViewModeChange('quality')}
                       className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-accent"
                     />
                     <DashboardWidget
                       title="Documentation Photo"
                       icon={Camera}
-                      content="Gérer les uploads de photos, galeries et évaluation de qualité"
+                      content="GÃ©rer les uploads de photos, galeries et Ã©valuation de qualitÃ©"
                       onClick={() => handleViewModeChange('photos')}
                       className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-purple-400"
                     />
@@ -849,11 +849,11 @@ const SidebarItem = ({
       className={cn(
         'group flex items-center w-full px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 text-left cursor-pointer border border-transparent',
         isActive
-          ? 'bg-accent/20 border-l-2 border-accent text-accent shadow-sm'
-          : 'text-border-light hover:bg-border hover:text-foreground hover:shadow-sm hover:border-border'
+          ? 'bg-[hsl(var(--rpma-teal))]/20 border-l-2 border-[hsl(var(--rpma-teal))] text-[hsl(var(--rpma-teal))] shadow-sm'
+          : 'text-muted-foreground hover:bg-[hsl(var(--rpma-surface))] hover:text-foreground hover:shadow-sm hover:border-[hsl(var(--rpma-border))]'
       )}
     >
-      <Icon className={cn('mr-3 h-5 w-5', isActive ? 'text-accent' : 'text-border-light group-hover:text-foreground')} />
+      <Icon className={cn('mr-3 h-5 w-5', isActive ? 'text-[hsl(var(--rpma-teal))]' : 'text-muted-foreground group-hover:text-foreground')} />
       {children}
     </button>
   );

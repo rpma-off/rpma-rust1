@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { cn } from '@/lib/utils';
 
 // Theme-aware container component that adapts to light/dark themes
@@ -73,11 +73,11 @@ export const ThemeAwareText: React.FC<ThemeAwareTextProps> = ({
     },
     secondary: {
       light: 'text-gray-700',
-      dark: 'text-border-light'
+      dark: 'text-muted-foreground'
     },
     muted: {
       light: 'text-gray-500',
-      dark: 'text-border'
+      dark: 'text-muted-foreground'
     },
     error: {
       light: 'text-red-600',
@@ -85,7 +85,7 @@ export const ThemeAwareText: React.FC<ThemeAwareTextProps> = ({
     },
     success: {
       light: 'text-green-600',
-      dark: 'text-accent'
+      dark: 'text-[hsl(var(--rpma-teal))]'
     }
   };
 
@@ -147,7 +147,7 @@ export const ThemeAwareButton: React.FC<ThemeAwareButtonProps> = ({
         size === 'touch-lg' && 'min-h-[48px] px-6 py-4 text-base',
         // Theme-specific focus styles
         currentTheme === 'dark'
-          ? 'focus-visible:ring-accent focus-visible:ring-offset-background'
+          ? 'focus-visible:ring-[hsl(var(--rpma-teal))]/30 focus-visible:ring-offset-background'
           : 'focus-visible:ring-blue-500 focus-visible:ring-offset-white',
         // Variant styles
         getVariantClass(),

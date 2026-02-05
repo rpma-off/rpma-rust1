@@ -1,4 +1,4 @@
-import React, { useId } from 'react';
+﻿import React, { useId } from 'react';
 import { AlertCircle, Check, AlertTriangle } from 'lucide-react';
 import { FormAccessibility } from '@/lib/accessibility';
 
@@ -88,7 +88,7 @@ export const FormField: React.FC<FormFieldProps> = ({
             value={value || ''}
             onChange={onChange}
             onBlur={onBlur}
-             className={`flex h-10 w-full rounded-md border border-border bg-black-light px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-border-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${hasError ? 'border-red-500 focus-visible:ring-red-500' : ''} ${inputClassName}`}
+             className={`flex h-10 w-full rounded-md border border-[hsl(var(--rpma-border))] bg-white px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--rpma-teal))]/20 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${hasError ? 'border-red-500 focus-visible:ring-red-500' : ''} ${inputClassName}`}
             placeholder={placeholder}
             inputMode={inputMode}
             maxLength={maxLength}

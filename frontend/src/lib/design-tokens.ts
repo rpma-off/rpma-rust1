@@ -5,9 +5,9 @@ export const designTokens = {
   // Color palette - v2 Design System (Teal-based)
   colors: {
     // Primary brand colors (Teal - v2 Design System)
-    primary: '#1ad1ba',
-    primaryHover: '#17bca9',
-    primaryActive: '#14b09c',
+    primary: '#2ecaa0',
+    primaryHover: '#28b892',
+    primaryActive: '#22a584',
 
     // Secondary colors (Dark Slate)
     secondary: '#1E293B',
@@ -18,8 +18,8 @@ export const designTokens = {
     // Background colors
     background: '#FFFFFF', // Light mode background
     backgroundDark: '#111827', // Dark mode background
-    surface: '#F3F4F6', // Secondary/Gray 100
-    surfaceMuted: '#F8FAFC', // Light gray surface
+    surface: '#f5f6f7', // Light surface
+    surfaceMuted: '#f5f6f7', // Light gray surface
     surfaceElevated: '#FFFFFF', // Card background
     surfaceOverlay: 'rgba(0, 0, 0, 0.5)', // Modal overlay
 
@@ -36,7 +36,7 @@ export const designTokens = {
     sidebarActiveBg: '#e6f9f7', // Teal-light background for active items
 
     // Border colors
-    border: '#E5E7EB', // Border (light mode)
+    border: '#e3e6ea', // Border (light mode)
     borderSoft: '#EEF2F7',
     borderDark: '#4B5563', // Border (dark mode)
     borderLight: '#F3F4F6',

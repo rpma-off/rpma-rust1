@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect } from 'react';
 import { DragDropContext } from '@hello-pangea/dnd';
@@ -92,7 +92,7 @@ export function CalendarDashboard() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-62px)]">
+    <div className="flex flex-col h-[calc(100vh-56px)]">
       <div className="mb-4">
         <CalendarHeader />
       </div>
@@ -100,7 +100,7 @@ export function CalendarDashboard() {
       <div className="flex-1 overflow-auto">
         {isLoading ? (
           <div className="flex items-center justify-center h-64" role="status" aria-live="polite">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent" />
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--rpma-teal))]" />
           </div>
         ) : (
           renderView()
@@ -111,7 +111,7 @@ export function CalendarDashboard() {
         <Button
           onClick={toggleQuickAdd}
           className="h-11 px-6 rounded-full shadow-[var(--rpma-shadow-soft)] bg-[hsl(var(--rpma-teal))] text-white hover:bg-[hsl(var(--rpma-teal))]/90"
-          aria-label="Ajouter une nouvelle tâche"
+          aria-label="Ajouter une nouvelle tÃ¢che"
         >
           <Plus className="h-5 w-5 mr-2" />
           + Add

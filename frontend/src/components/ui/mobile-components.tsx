@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -141,7 +141,7 @@ export const ActionSheet: React.FC<ActionSheetProps> = ({
     <BottomSheet isOpen={isOpen} onClose={onClose} height="auto">
       {title && (
         <div className="text-center mb-4">
-          <p className="text-border-light text-sm">{title}</p>
+          <p className="text-muted-foreground text-sm">{title}</p>
         </div>
       )}
 
@@ -161,7 +161,7 @@ export const ActionSheet: React.FC<ActionSheetProps> = ({
               'w-full flex items-center gap-3 px-4 py-4 rounded-xl text-left transition-all active:scale-95 touch-manipulation min-h-[48px]',
               action.destructive
                 ? 'text-red-400 hover:bg-red-500/10 active:bg-red-500/20'
-                : 'text-foreground hover:bg-border/20 active:bg-border/30',
+                : 'text-foreground hover:bg-[hsl(var(--rpma-surface))] active:bg-[hsl(var(--rpma-surface))]',
               action.disabled && 'opacity-50 cursor-not-allowed'
             )}
           >
@@ -177,7 +177,7 @@ export const ActionSheet: React.FC<ActionSheetProps> = ({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: actions.length * 0.05 }}
           onClick={onClose}
-          className="w-full px-4 py-4 text-foreground font-semibold bg-border/20 hover:bg-border/30 active:bg-border/40 rounded-xl transition-all active:scale-95 touch-manipulation min-h-[48px]"
+          className="w-full px-4 py-4 text-foreground font-semibold bg-[hsl(var(--rpma-surface))] hover:bg-[hsl(var(--rpma-surface))] active:bg-[hsl(var(--rpma-surface))] rounded-xl transition-all active:scale-95 touch-manipulation min-h-[48px]"
         >
           {cancelLabel}
         </motion.button>
@@ -336,10 +336,10 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
           transition={{ duration: 0.2 }}
           className="mr-2"
         >
-          ↓
+          â†“
         </motion.div>
-        <span className="text-sm text-border-light">
-          {isRefreshing ? 'Actualisation...' : canRefresh ? 'Relâcher pour actualiser' : 'Tirer pour actualiser'}
+        <span className="text-sm text-muted-foreground">
+          {isRefreshing ? 'Actualisation...' : canRefresh ? 'RelÃ¢cher pour actualiser' : 'Tirer pour actualiser'}
         </span>
       </motion.div>
 
@@ -418,7 +418,7 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
                   action.onClick();
                   setIsExpanded(false);
                 }}
-                className="flex items-center gap-3 bg-accent hover:bg-accent/90 text-black px-4 py-3 rounded-full shadow-lg hover:shadow-accent/25 transition-all duration-200"
+                className="flex items-center gap-3 bg-[hsl(var(--rpma-teal))] hover:bg-[hsl(var(--rpma-teal))]/90 text-white px-4 py-3 rounded-full shadow-lg hover:shadow-black/5 transition-all duration-200"
               >
                 {action.icon}
                 <span className="font-medium">{action.label}</span>
@@ -433,7 +433,7 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
         whileTap={{ scale: 0.95 }}
         onClick={handleMainClick}
         className={cn(
-          'w-14 h-14 bg-accent hover:bg-accent/90 text-black rounded-full shadow-lg hover:shadow-accent/25 transition-all duration-200 flex items-center justify-center',
+          'w-14 h-14 bg-[hsl(var(--rpma-teal))] hover:bg-[hsl(var(--rpma-teal))]/90 text-white rounded-full shadow-lg hover:shadow-black/5 transition-all duration-200 flex items-center justify-center',
           isExpanded && 'rotate-45'
         )}
       >

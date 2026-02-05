@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import dynamic from 'next/dynamic';
@@ -55,12 +55,12 @@ const tabConfig = [
   },
   {
     id: 'preferences',
-    label: 'Préférences',
+    label: 'PrÃ©fÃ©rences',
     icon: Bell
   },
   {
     id: 'security',
-    label: 'Sécurité',
+    label: 'SÃ©curitÃ©',
     icon: Shield
   },
   {
@@ -70,7 +70,7 @@ const tabConfig = [
   },
   {
     id: 'accessibility',
-    label: 'Accessibilité',
+    label: 'AccessibilitÃ©',
     icon: Eye
   },
   {
@@ -178,9 +178,9 @@ export default function SettingsPage() {
       <div className="container mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Header */}
         <PageHeader
-          title="Paramètres"
-          subtitle="Gérez vos paramètres de compte et préférences"
-          icon={<Settings className="h-5 w-5 text-accent" />}
+          title="ParamÃ¨tres"
+          subtitle="GÃ©rez vos paramÃ¨tres de compte et prÃ©fÃ©rences"
+          icon={<Settings className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />}
           actions={
             <>
               <div className="hidden lg:flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded">
@@ -200,13 +200,13 @@ export default function SettingsPage() {
         <Card className="rpma-shell">
           <CardHeader className="pb-4 border-b border-[hsl(var(--rpma-border))]">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-accent/20 rounded-lg">
-                <User className="h-5 w-5 text-accent" />
+              <div className="p-2 bg-[hsl(var(--rpma-teal))]/20 rounded-lg">
+                <User className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />
               </div>
               <div>
-                <CardTitle className="text-lg font-semibold text-foreground">Paramètres personnels</CardTitle>
-                <CardDescription className="text-border-light">
-                  Configurez vos informations personnelles, préférences et paramètres de sécurité
+                <CardTitle className="text-lg font-semibold text-foreground">ParamÃ¨tres personnels</CardTitle>
+                <CardDescription className="text-muted-foreground">
+                  Configurez vos informations personnelles, prÃ©fÃ©rences et paramÃ¨tres de sÃ©curitÃ©
                 </CardDescription>
               </div>
             </div>
@@ -226,7 +226,7 @@ export default function SettingsPage() {
                            <Menu className="h-4 w-4 mr-3" />
                            <span>{tabConfig.find(tab => tab.id === activeTab)?.label || 'Navigation'}</span>
                          </div>
-                         <span className="text-border-light text-sm">
+                         <span className="text-muted-foreground text-sm">
                            {activeTab === 'profile' && '1'}
                            {activeTab === 'preferences' && '2'}
                            {activeTab === 'security' && '3'}
@@ -240,10 +240,10 @@ export default function SettingsPage() {
                        <SheetHeader className="text-left">
                          <SheetTitle className="text-foreground flex items-center gap-2">
                            <Settings className="h-5 w-5" />
-                           Paramètres
+                           ParamÃ¨tres
                          </SheetTitle>
-                         <SheetDescription className="text-border-light">
-                           Choisissez une section à configurer
+                         <SheetDescription className="text-muted-foreground">
+                           Choisissez une section Ã  configurer
                          </SheetDescription>
                        </SheetHeader>
                        <div className="grid grid-cols-1 gap-2 mt-6">
@@ -255,8 +255,8 @@ export default function SettingsPage() {
                                variant={activeTab === tab.id ? "default" : "ghost"}
                                className={`justify-start h-12 ${
                                  activeTab === tab.id
-                                   ? 'bg-accent text-black hover:bg-accent/90'
-                                   : 'text-border-light hover:text-foreground hover:bg-border/20'
+                                   ? 'bg-[hsl(var(--rpma-teal))] text-black hover:bg-[hsl(var(--rpma-teal))]/90'
+                                   : 'text-muted-foreground hover:text-foreground hover:bg-border/20'
                                }`}
                                onClick={() => handleTabChange(tab.id)}
                              >
@@ -272,7 +272,7 @@ export default function SettingsPage() {
                          })}
                        </div>
                        <div className="mt-6 pt-4 border-t border-[hsl(var(--rpma-border))]">
-                         <p className="text-xs text-border-light text-center">
+                         <p className="text-xs text-muted-foreground text-center">
                            Utilisez Ctrl+1-6 pour naviguer rapidement (desktop)
                          </p>
                        </div>
@@ -282,24 +282,27 @@ export default function SettingsPage() {
                </div>
 
                {/* Enhanced Desktop Tabs List */}
-               <TabsList className="hidden lg:grid w-full grid-cols-6 bg-border/20 border-border/30">
+               <div className="hidden lg:block bg-[hsl(var(--rpma-teal))] rounded-[10px] px-2">
+               <TabsList data-variant="underline" className="w-full justify-start">
                  {tabConfig.map((tab, index) => {
                    const Icon = tab.icon;
                    return (
                      <TabsTrigger
                        key={tab.id}
                        value={tab.id}
-                       className="flex items-center gap-2 data-[state=active]:bg-accent data-[state=active]:text-black font-medium relative"
+                       data-variant="underline"
+                       className="flex items-center gap-2 font-medium relative"
                      >
                        <Icon className="h-4 w-4" />
                        <span>{tab.label}</span>
-                       <span className="absolute -top-1 -right-1 text-xs bg-border/40 text-border-light rounded-full w-4 h-4 flex items-center justify-center opacity-60">
+                       <span className="absolute -top-1 -right-1 text-xs bg-border/40 text-muted-foreground rounded-full w-4 h-4 flex items-center justify-center opacity-60">
                          {index + 1}
                        </span>
                      </TabsTrigger>
                    );
                  })}
                </TabsList>
+               </div>
 
                {/* Tab Content */}
                <div className="mt-4 md:mt-6">
@@ -307,8 +310,8 @@ export default function SettingsPage() {
                    <Suspense fallback={
                      <div className="flex items-center justify-center p-8 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
                        <div className="text-center">
-                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4"></div>
-                         <p className="text-border-light">Chargement du profil...</p>
+                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--rpma-teal))] mx-auto mb-4"></div>
+                         <p className="text-muted-foreground">Chargement du profil...</p>
                        </div>
                      </div>
                    }>
@@ -320,8 +323,8 @@ export default function SettingsPage() {
                    <Suspense fallback={
                      <div className="flex items-center justify-center p-8 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
                        <div className="text-center">
-                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4"></div>
-                         <p className="text-border-light">Chargement des préférences...</p>
+                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--rpma-teal))] mx-auto mb-4"></div>
+                         <p className="text-muted-foreground">Chargement des prÃ©fÃ©rences...</p>
                        </div>
                      </div>
                    }>
@@ -333,8 +336,8 @@ export default function SettingsPage() {
                    <Suspense fallback={
                      <div className="flex items-center justify-center p-8 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
                        <div className="text-center">
-                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4"></div>
-                         <p className="text-border-light">Chargement de la sécurité...</p>
+                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--rpma-teal))] mx-auto mb-4"></div>
+                         <p className="text-muted-foreground">Chargement de la sÃ©curitÃ©...</p>
                        </div>
                      </div>
                    }>
@@ -346,8 +349,8 @@ export default function SettingsPage() {
                    <Suspense fallback={
                      <div className="flex items-center justify-center p-8 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
                        <div className="text-center">
-                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4"></div>
-                         <p className="text-border-light">Chargement des performances...</p>
+                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--rpma-teal))] mx-auto mb-4"></div>
+                         <p className="text-muted-foreground">Chargement des performances...</p>
                        </div>
                      </div>
                    }>
@@ -359,8 +362,8 @@ export default function SettingsPage() {
                    <Suspense fallback={
                      <div className="flex items-center justify-center p-8 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
                        <div className="text-center">
-                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4"></div>
-                          <p className="text-border-light">Chargement de l&apos;accessibilité...</p>
+                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--rpma-teal))] mx-auto mb-4"></div>
+                          <p className="text-muted-foreground">Chargement de l&apos;accessibilitÃ©...</p>
                        </div>
                      </div>
                    }>
@@ -372,8 +375,8 @@ export default function SettingsPage() {
                    <Suspense fallback={
                      <div className="flex items-center justify-center p-8 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
                        <div className="text-center">
-                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4"></div>
-                         <p className="text-border-light">Chargement des notifications...</p>
+                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--rpma-teal))] mx-auto mb-4"></div>
+                         <p className="text-muted-foreground">Chargement des notifications...</p>
                        </div>
                      </div>
                    }>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -130,7 +130,7 @@ const TaskFormWizard: React.FC<TaskFormProps> = React.memo(({
       <div className={`bg-muted rounded-lg shadow-lg p-8 ${className}`}>
         <div className="flex items-center justify-center py-12">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-[hsl(var(--rpma-teal))] border-t-transparent rounded-full animate-spin" />
             <span className="text-white text-lg font-medium">Verifying authentication...</span>
           </div>
         </div>
@@ -148,12 +148,12 @@ const TaskFormWizard: React.FC<TaskFormProps> = React.memo(({
             </svg>
           </div>
           <h3 className="text-xl font-bold text-white mb-2">Authentication Required</h3>
-          <p className="text-border-light mb-6">
+          <p className="text-muted-foreground mb-6">
             You must be logged in to create a task. Please log in and try again.
           </p>
           <button
             onClick={() => window.location.href = '/login'}
-            className="bg-accent text-foreground px-6 py-3 rounded-lg font-medium hover:bg-accent-hover transition-colors duration-200"
+            className="bg-[hsl(var(--rpma-teal))] text-foreground px-6 py-3 rounded-lg font-medium hover:bg-[hsl(var(--rpma-teal))]-hover transition-colors duration-200"
           >
             Log In
           </button>

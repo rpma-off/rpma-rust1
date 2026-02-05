@@ -19,7 +19,7 @@ export const TaskFormAutoSaveStatus: React.FC<TaskFormAutoSaveStatusProps> = Rea
     : 'Aucune sauvegarde';
 
   return (
-    <div className="mt-4 text-center text-xs sm:text-sm text-border-light">
+    <div className="mt-4 text-center text-xs sm:text-sm text-muted-foreground">
       {isDirty ? (
         <div className="flex items-center justify-center space-x-2">
           <Clock className="w-4 h-4" />
@@ -27,12 +27,12 @@ export const TaskFormAutoSaveStatus: React.FC<TaskFormAutoSaveStatusProps> = Rea
         </div>
       ) : (
         <div className="flex items-center justify-center space-x-2">
-          <CheckCircle className="w-4 h-4 text-accent" />
+          <CheckCircle className="w-4 h-4 text-[hsl(var(--rpma-teal))]" />
           <span>Toutes les modifications sont sauvegardées</span>
         </div>
       )}
       {!isDirty && (
-        <div className="mt-1 text-xs text-border-light/80">
+        <div className="mt-1 text-xs text-muted-foreground/80">
           {lastSavedLabel}
         </div>
       )}

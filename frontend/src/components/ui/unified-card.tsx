@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { cn } from '@/lib/utils';
 import { StandardCard, CardHeader, CardContent, CardSection } from './standard-card';
 import { cardStandards, animationStandards, responsiveStandards } from '@/lib/component-standards';
@@ -24,13 +24,13 @@ export const STATUS_CONFIG = {
     color: 'bg-[var(--status-success)]/20 text-[var(--status-success-foreground)] border-[var(--status-success)]/40',
     dot: 'bg-[var(--status-success)]',
     icon: CheckCircle2,
-    label: 'Terminée'
+    label: 'TerminÃ©e'
   },
   cancelled: {
     color: 'bg-[var(--status-destructive)]/20 text-[var(--status-destructive-foreground)] border-[var(--status-destructive)]/40',
     dot: 'bg-[var(--status-destructive)]',
     icon: AlertCircle,
-    label: 'Annulée'
+    label: 'AnnulÃ©e'
   }
 } as const;
 
@@ -121,11 +121,11 @@ export const UnifiedCard = React.memo<UnifiedCardProps>((props) => {
     <div className="space-y-4">
       {/* Vehicle Info */}
       {(props.vehicle || props.vehicleModel) && (
-        <div className="flex items-center gap-3 p-3 bg-zinc-800/30 rounded-lg border border-zinc-700/30">
-          <Car className="h-5 w-5 text-accent flex-shrink-0" />
+        <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-[hsl(var(--rpma-border))]">
+          <Car className="h-5 w-5 text-[hsl(var(--rpma-teal))] flex-shrink-0" />
           <div className="min-w-0 flex-1">
-            <span className="text-sm text-zinc-400 block">Véhicule</span>
-            <span className="text-base font-semibold text-white truncate">
+            <span className="text-sm text-muted-foreground block">VÃ©hicule</span>
+            <span className="text-base font-semibold text-foreground truncate">
               {props.vehicle} {props.vehicleModel}
             </span>
           </div>
@@ -134,13 +134,13 @@ export const UnifiedCard = React.memo<UnifiedCardProps>((props) => {
 
       {/* Zones */}
       {props.zones && props.zones.length > 0 && (
-        <div className="flex items-start gap-3 p-3 bg-zinc-800/30 rounded-lg border border-zinc-700/30">
-          <div className="h-5 w-5 flex items-center justify-center text-accent flex-shrink-0 rounded bg-accent/20">
+        <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-[hsl(var(--rpma-border))]">
+          <div className="h-5 w-5 flex items-center justify-center text-[hsl(var(--rpma-teal))] flex-shrink-0 rounded bg-[hsl(var(--rpma-teal))]/20">
             <span className="text-xs font-bold">PPF</span>
           </div>
           <div className="min-w-0 flex-1">
-            <span className="text-sm text-zinc-400 block">Zones</span>
-            <span className="text-base font-semibold text-white truncate">
+            <span className="text-sm text-muted-foreground block">Zones</span>
+            <span className="text-base font-semibold text-foreground truncate">
               {props.zones.join(', ')}
             </span>
           </div>
@@ -150,11 +150,11 @@ export const UnifiedCard = React.memo<UnifiedCardProps>((props) => {
       {/* Customer & Technician */}
       <div className="grid grid-cols-1 gap-3">
         {props.customerName && (
-          <div className="flex items-center gap-3 p-3 bg-zinc-800/30 rounded-lg border border-zinc-700/30">
-            <UserCircle className="h-5 w-5 text-accent flex-shrink-0" />
+          <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-[hsl(var(--rpma-border))]">
+            <UserCircle className="h-5 w-5 text-[hsl(var(--rpma-teal))] flex-shrink-0" />
             <div className="min-w-0 flex-1">
-              <span className="text-sm text-zinc-400 block">Client</span>
-              <span className="text-base font-semibold text-white truncate">
+              <span className="text-sm text-muted-foreground block">Client</span>
+              <span className="text-base font-semibold text-foreground truncate">
                 {props.customerName}
               </span>
             </div>
@@ -162,11 +162,11 @@ export const UnifiedCard = React.memo<UnifiedCardProps>((props) => {
         )}
 
         {props.technicianName && (
-          <div className="flex items-center gap-3 p-3 bg-zinc-800/30 rounded-lg border border-zinc-700/30">
-            <UserCircle className="h-5 w-5 text-accent flex-shrink-0" />
+          <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-[hsl(var(--rpma-border))]">
+            <UserCircle className="h-5 w-5 text-[hsl(var(--rpma-teal))] flex-shrink-0" />
             <div className="min-w-0 flex-1">
-              <span className="text-sm text-zinc-400 block">Technicien</span>
-              <span className="text-base font-semibold text-white truncate">
+              <span className="text-sm text-muted-foreground block">Technicien</span>
+              <span className="text-base font-semibold text-foreground truncate">
                 {props.technicianName}
               </span>
             </div>
@@ -176,11 +176,11 @@ export const UnifiedCard = React.memo<UnifiedCardProps>((props) => {
 
       {/* Scheduled Date */}
       {props.scheduledDate && (
-        <div className="flex items-center gap-3 p-3 bg-zinc-800/30 rounded-lg border border-zinc-700/30">
-          <Calendar className="h-5 w-5 text-accent flex-shrink-0" />
+        <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-[hsl(var(--rpma-border))]">
+          <Calendar className="h-5 w-5 text-[hsl(var(--rpma-teal))] flex-shrink-0" />
           <div className="min-w-0 flex-1">
-            <span className="text-sm text-zinc-400 block">Date prévue</span>
-            <span className="text-base font-semibold text-white">
+            <span className="text-sm text-muted-foreground block">Date prÃ©vue</span>
+            <span className="text-base font-semibold text-foreground">
               {new Date(props.scheduledDate).toLocaleDateString('fr-FR')}
             </span>
           </div>
@@ -189,25 +189,25 @@ export const UnifiedCard = React.memo<UnifiedCardProps>((props) => {
 
       {/* Progress */}
       {props.progress && (
-        <div className="border-t border-zinc-700/50 pt-4 mt-4">
+        <div className="border-t border-[hsl(var(--rpma-border))] pt-4 mt-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-zinc-400" />
-              <span className="text-sm font-medium text-zinc-300">Progression</span>
+              <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
+              <span className="text-sm font-medium text-muted-foreground">Progression</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-white">
+              <span className="text-sm font-bold text-foreground">
                 {props.progress.completed}/{props.progress.total}
               </span>
-              <span className="text-xs text-zinc-400">
+              <span className="text-xs text-muted-foreground">
                 ({Math.round((props.progress.completed / props.progress.total) * 100)}%)
               </span>
             </div>
           </div>
           <div className="relative">
-            <div className="w-full bg-zinc-700/50 rounded-full h-3 overflow-hidden">
+            <div className="w-full bg-[hsl(var(--rpma-border))] rounded-full h-3 overflow-hidden">
               <div
-                className="h-3 rounded-full transition-all duration-500 ease-out bg-gradient-to-r from-accent to-accent/80"
+                className="h-3 rounded-full transition-all duration-500 ease-out bg-gradient-to-r from-[hsl(var(--rpma-teal))] to-[hsl(var(--rpma-teal))]"
                 style={{ width: `${(props.progress.completed / props.progress.total) * 100}%` }}
               />
             </div>
@@ -223,13 +223,13 @@ export const UnifiedCard = React.memo<UnifiedCardProps>((props) => {
       {/* Contact Info */}
       <div className="grid grid-cols-1 gap-3">
         {props.company && (
-          <div className="flex items-center gap-3 p-3 bg-zinc-800/30 rounded-lg border border-zinc-700/30">
-            <div className="h-5 w-5 flex items-center justify-center text-accent flex-shrink-0 rounded bg-accent/20">
-              <span className="text-xs font-bold">🏢</span>
+          <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-[hsl(var(--rpma-border))]">
+            <div className="h-5 w-5 flex items-center justify-center text-[hsl(var(--rpma-teal))] flex-shrink-0 rounded bg-[hsl(var(--rpma-teal))]/20">
+              <span className="text-xs font-bold">ðŸ¢</span>
             </div>
             <div className="min-w-0 flex-1">
-              <span className="text-sm text-zinc-400 block">Entreprise</span>
-              <span className="text-base font-semibold text-white truncate">
+              <span className="text-sm text-muted-foreground block">Entreprise</span>
+              <span className="text-base font-semibold text-foreground truncate">
                 {props.company}
               </span>
             </div>
@@ -237,13 +237,13 @@ export const UnifiedCard = React.memo<UnifiedCardProps>((props) => {
         )}
 
         {props.email && (
-          <div className="flex items-center gap-3 p-3 bg-zinc-800/30 rounded-lg border border-zinc-700/30">
-            <div className="h-5 w-5 flex items-center justify-center text-accent flex-shrink-0 rounded bg-accent/20">
+          <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-[hsl(var(--rpma-border))]">
+            <div className="h-5 w-5 flex items-center justify-center text-[hsl(var(--rpma-teal))] flex-shrink-0 rounded bg-[hsl(var(--rpma-teal))]/20">
               <span className="text-xs font-bold">@</span>
             </div>
             <div className="min-w-0 flex-1">
-              <span className="text-sm text-zinc-400 block">Email</span>
-              <span className="text-base font-semibold text-white truncate">
+              <span className="text-sm text-muted-foreground block">Email</span>
+              <span className="text-base font-semibold text-foreground truncate">
                 {props.email}
               </span>
             </div>
@@ -253,17 +253,17 @@ export const UnifiedCard = React.memo<UnifiedCardProps>((props) => {
 
       {/* Task Stats */}
       {(props.totalTasks !== undefined || props.activeTasks !== undefined) && (
-        <div className="grid grid-cols-2 gap-3 pt-4 border-t border-zinc-700/50">
+        <div className="grid grid-cols-2 gap-3 pt-4 border-t border-[hsl(var(--rpma-border))]">
           {props.totalTasks !== undefined && (
-            <div className="text-center p-3 bg-zinc-800/30 rounded-lg border border-zinc-700/30">
-              <p className="text-xl font-bold text-white mb-1">{props.totalTasks}</p>
-              <p className="text-xs text-zinc-400 font-medium">Total tâches</p>
+            <div className="text-center p-3 bg-white rounded-lg border border-[hsl(var(--rpma-border))]">
+              <p className="text-xl font-bold text-foreground mb-1">{props.totalTasks}</p>
+              <p className="text-xs text-muted-foreground font-medium">Total tÃ¢ches</p>
             </div>
           )}
           {props.activeTasks !== undefined && (
-            <div className="text-center p-3 bg-zinc-800/30 rounded-lg border border-zinc-700/30">
-              <p className="text-xl font-bold text-accent mb-1">{props.activeTasks}</p>
-              <p className="text-xs text-zinc-400 font-medium">En cours</p>
+            <div className="text-center p-3 bg-white rounded-lg border border-[hsl(var(--rpma-border))]">
+              <p className="text-xl font-bold text-[hsl(var(--rpma-teal))] mb-1">{props.activeTasks}</p>
+              <p className="text-xs text-muted-foreground font-medium">En cours</p>
             </div>
           )}
         </div>
@@ -276,11 +276,11 @@ export const UnifiedCard = React.memo<UnifiedCardProps>((props) => {
     <div className="text-center space-y-4">
       {/* Value */}
       <div className="space-y-2">
-        <div className="text-4xl md:text-5xl font-bold text-white">
+        <div className="text-4xl md:text-5xl font-bold text-foreground">
           {props.value}
         </div>
         {props.description && (
-          <p className="text-sm text-zinc-400">{props.description}</p>
+          <p className="text-sm text-muted-foreground">{props.description}</p>
         )}
       </div>
 
@@ -290,13 +290,13 @@ export const UnifiedCard = React.memo<UnifiedCardProps>((props) => {
           <span className={cn(
             'text-sm font-medium',
             props.trend.direction === 'up' ? 'text-emerald-400' :
-            props.trend.direction === 'down' ? 'text-red-400' : 'text-zinc-400'
+            props.trend.direction === 'down' ? 'text-red-400' : 'text-muted-foreground'
           )}>
-            {props.trend.direction === 'up' ? '↗' :
-             props.trend.direction === 'down' ? '↘' : '→'}
+            {props.trend.direction === 'up' ? 'â†—' :
+             props.trend.direction === 'down' ? 'â†˜' : 'â†’'}
             {Math.abs(props.trend.value)}%
           </span>
-          <span className="text-xs text-zinc-400">vs période précédente</span>
+          <span className="text-xs text-muted-foreground">vs pÃ©riode prÃ©cÃ©dente</span>
         </div>
       )}
     </div>
