@@ -325,7 +325,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             size="sm"
             className="bg-red-500/20 text-red-300 hover:bg-red-500/30 border-red-500/50"
           >
-            RÃ©essayer
+            Réessayer
           </Button>
         </div>
       </div>
@@ -364,7 +364,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <div>
                 <h2 className="text-lg font-semibold text-foreground">Dashboard</h2>
                 <p className="text-xs text-muted-foreground capitalize">{currentViewMode}</p>
-                <p className="text-xs text-[hsl(var(--rpma-teal))]">âœ“ Barre latÃ©rale active</p>
+                <p className="text-xs text-[hsl(var(--rpma-teal))]">âœ“ Barre latérale active</p>
               </div>
               <Button
                 variant="ghost"
@@ -390,7 +390,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 isActive={currentViewMode === 'tasks'}
                 onClick={() => handleViewModeChange('tasks')}
               >
-                TÃ¢ches
+                Tâches
               </SidebarItem>
               {showAnalytics && (
                 <SidebarItem
@@ -417,7 +417,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 onClick={() => handleViewModeChange('quality')}
               >
                 <div className="flex items-center gap-2">
-                  <span>QualitÃ©</span>
+                  <span>Qualité</span>
                   <span className="px-1.5 py-0.5 text-xs bg-[hsl(var(--rpma-teal))]/20 text-[hsl(var(--rpma-teal))] rounded-full">NOUVEAU</span>
                 </div>
               </SidebarItem>
@@ -470,10 +470,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="lg:hidden bg-gradient-to-r from-[hsl(var(--rpma-teal))]/10 to-[hsl(var(--rpma-teal))]/5 border-b border-[hsl(var(--rpma-teal))]/30 px-4 py-3">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-[hsl(var(--rpma-teal))] rounded-full animate-pulse"></div>
-            <span className="text-sm font-medium text-foreground">Nouvelles fonctionnalitÃ©s disponibles</span>
+            <span className="text-sm font-medium text-foreground">Nouvelles fonctionnalités disponibles</span>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Appuyez sur le menu pour accÃ©der aux tableaux de bord Workflows, QualitÃ© et Photos
+            Appuyez sur le menu pour accéder aux tableaux de bord Workflows, Qualité et Photos
           </p>
         </div>
 
@@ -497,21 +497,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </nav>
               <h1 className="text-2xl font-bold text-foreground">
                 {currentViewMode === 'overview' && 'Vue d\'ensemble du tableau de bord'}
-                {currentViewMode === 'tasks' && 'Gestion des tÃ¢ches'}
+                {currentViewMode === 'tasks' && 'Gestion des tâches'}
                 {currentViewMode === 'analytics' && 'Analyses et performances'}
-                {currentViewMode === 'workflows' && 'ExÃ©cution des workflows'}
-                {currentViewMode === 'quality' && 'Assurance qualitÃ©'}
+                {currentViewMode === 'workflows' && 'Exécution des workflows'}
+                {currentViewMode === 'quality' && 'Assurance qualité'}
                 {currentViewMode === 'photos' && 'Documentation photo'}
                 {currentViewMode === 'management' && 'Outils de gestion'}
               </h1>
               <p className="text-sm text-muted-foreground mt-1">
-                {currentViewMode === 'overview' && 'Vue d\'ensemble en temps rÃ©el des tÃ¢ches et des performances'}
-                {currentViewMode === 'tasks' && 'GÃ©rer et suivre les tÃ¢ches d\'installation'}
-                {currentViewMode === 'analytics' && 'MÃ©triques de performance et insights'}
-                {currentViewMode === 'workflows' && 'Surveiller l\'avancement des workflows en temps rÃ©el'}
-                {currentViewMode === 'quality' && 'Suivre les mÃ©triques qualitÃ© et la conformitÃ©'}
-                {currentViewMode === 'photos' && 'GÃ©rer la documentation photo et les galeries'}
-                {currentViewMode === 'management' && 'Administration systÃ¨me et gestion'}
+                {currentViewMode === 'overview' && 'Vue d\'ensemble en temps réel des tâches et des performances'}
+                {currentViewMode === 'tasks' && 'Gérer et suivre les tâches d\'installation'}
+                {currentViewMode === 'analytics' && 'Métriques de performance et insights'}
+                {currentViewMode === 'workflows' && 'Surveiller l\'avancement des workflows en temps réel'}
+                {currentViewMode === 'quality' && 'Suivre les métriques qualité et la conformité'}
+                {currentViewMode === 'photos' && 'Gérer la documentation photo et les galeries'}
+                {currentViewMode === 'management' && 'Administration système et gestion'}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -545,35 +545,35 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <StatsGrid stats={dashboardStats} />
 
                 {/* New Dashboard Features Quick Access */}
-                <DashboardSection title="FonctionnalitÃ©s du Dashboard">
+                <DashboardSection title="Fonctionnalités du Dashboard">
                   <div className="mb-4 p-3 bg-[hsl(var(--rpma-teal))]/10 border border-[hsl(var(--rpma-teal))]/30 rounded-lg">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-[hsl(var(--rpma-teal))] rounded-full animate-pulse"></div>
-                      <span className="text-sm text-[hsl(var(--rpma-teal))] font-medium">Nouvelles fonctionnalitÃ©s disponibles</span>
+                      <span className="text-sm text-[hsl(var(--rpma-teal))] font-medium">Nouvelles fonctionnalités disponibles</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                       AccÃ©dez aux outils avancÃ©s de surveillance des workflows, d&apos;assurance qualitÃ© et de documentation photo
+                       Accédez aux outils avancés de surveillance des workflows, d&apos;assurance qualité et de documentation photo
                     </p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <DashboardWidget
-                      title="ExÃ©cution de Workflow"
+                      title="Exécution de Workflow"
                       icon={Workflow}
-                      content="Surveiller l'avancement des workflows en temps rÃ©el et la completion des Ã©tapes"
+                      content="Surveiller l'avancement des workflows en temps réel et la completion des étapes"
                       onClick={() => handleViewModeChange('workflows')}
                       className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-accent"
                     />
                     <DashboardWidget
-                      title="Assurance QualitÃ©"
+                      title="Assurance Qualité"
                       icon={Shield}
-                      content="Suivre les mÃ©triques qualitÃ©, la conformitÃ© et la rÃ©solution des problÃ¨mes"
+                      content="Suivre les métriques qualité, la conformité et la résolution des problèmes"
                       onClick={() => handleViewModeChange('quality')}
                       className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-accent"
                     />
                     <DashboardWidget
                       title="Documentation Photo"
                       icon={Camera}
-                      content="GÃ©rer les uploads de photos, galeries et Ã©valuation de qualitÃ©"
+                      content="Gérer les uploads de photos, galeries et évaluation de qualité"
                       onClick={() => handleViewModeChange('photos')}
                       className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-purple-400"
                     />

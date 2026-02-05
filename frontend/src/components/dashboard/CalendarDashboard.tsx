@@ -111,7 +111,7 @@ export function CalendarDashboard() {
         <Button
           onClick={toggleQuickAdd}
           className="h-11 px-6 rounded-full shadow-[var(--rpma-shadow-soft)] bg-[hsl(var(--rpma-teal))] text-white hover:bg-[hsl(var(--rpma-teal))]/90"
-          aria-label="Ajouter une nouvelle tÃ¢che"
+          aria-label="Ajouter une nouvelle tâche"
         >
           <Plus className="h-5 w-5 mr-2" />
           + Add

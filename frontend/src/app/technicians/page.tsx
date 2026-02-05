@@ -96,7 +96,7 @@ export default function TechniciansPage() {
               <h3 className="text-xl font-bold text-foreground mb-2">Erreur de chargement</h3>
               <p className="text-muted-foreground mb-6">{error}</p>
               <Button onClick={() => window.location.reload()}>
-                RÃ©essayer
+                Réessayer
               </Button>
             </div>
           </div>
@@ -120,7 +120,7 @@ export default function TechniciansPage() {
                   Gestion des Techniciens
                 </h1>
                 <p className="text-muted-foreground mt-1 text-sm md:text-base">
-                  GÃ©rez votre Ã©quipe de techniciens PPF et suivez leurs performances
+                  Gérez votre équipe de techniciens PPF et suivez leurs performances
                 </p>
               </div>
             </div>
@@ -156,7 +156,7 @@ export default function TechniciansPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                TÃ¢ches Aujourd&apos;hui
+                Tâches Aujourd&apos;hui
               </CardTitle>
               <Clock className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
             </CardHeader>
@@ -183,16 +183,16 @@ export default function TechniciansPage() {
           <CardHeader>
             <CardTitle className="text-foreground">Liste des Techniciens</CardTitle>
             <CardDescription className="text-muted-foreground">
-              {technicians.length} technicien{technicians.length !== 1 ? 's' : ''} trouvÃ©{technicians.length !== 1 ? 's' : ''}
+              {technicians.length} technicien{technicians.length !== 1 ? 's' : ''} trouvé{technicians.length !== 1 ? 's' : ''}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {technicians.length === 0 ? (
               <div className="text-center py-12">
                 <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-foreground mb-2">Aucun technicien trouvÃ©</h3>
+                <h3 className="text-lg font-medium text-foreground mb-2">Aucun technicien trouvé</h3>
                 <p className="text-muted-foreground">
-                  Les utilisateurs avec le rÃ´le &ldquo;technicien&rdquo; apparaÃ®tront ici.
+                  Les utilisateurs avec le rôle &ldquo;technicien&rdquo; apparaîtront ici.
                 </p>
               </div>
             ) : (

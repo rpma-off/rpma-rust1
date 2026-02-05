@@ -55,7 +55,7 @@ export default function SignupPage() {
     }
 
     if (!isPasswordValid) {
-      setError('Veuillez choisir un mot de passe plus sÃ©curisÃ©.');
+      setError('Veuillez choisir un mot de passe plus sécurisé.');
       return false;
     }
 
@@ -85,16 +85,16 @@ export default function SignupPage() {
       });
 
       if (response.success) {
-        logger.info('Inscription rÃ©ussie', { email: formData.email });
+        logger.info('Inscription réussie', { email: formData.email });
         setSuccess(true);
 
-        // Rediriger vers la page de connexion aprÃ¨s un court dÃ©lai
+        // Rediriger vers la page de connexion après un court délai
         setTimeout(() => {
           router.push(ROUTES.LOGIN);
         }, 3000);
       } else {
         const errorMessage = response.error || 'Une erreur est survenue lors de l\'inscription';
-        logger.error('Ã‰chec de l\'inscription', { email: formData.email, error: errorMessage });
+        logger.error('Échec de l\'inscription', { email: formData.email, error: errorMessage });
         setError(errorMessage);
       }
 
@@ -123,9 +123,9 @@ export default function SignupPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Inscription rÃ©ussie !</h2>
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Inscription réussie !</h2>
                 <p className="text-muted-foreground text-sm md:text-base">
-                  Votre compte a Ã©tÃ© crÃ©Ã© avec succÃ¨s. Vous allez Ãªtre redirigÃ© vers la page de connexion.
+                  Votre compte a été créé avec succès. Vous allez être redirigé vers la page de connexion.
                 </p>
               </div>
 
@@ -139,7 +139,7 @@ export default function SignupPage() {
                     </div>
                     <div>
                       <h4 className="text-sm font-medium text-[hsl(var(--rpma-teal))] mb-1">Bienvenue sur RPMA V2 !</h4>
-                      <p className="text-sm text-muted-foreground">Votre compte a Ã©tÃ© crÃ©Ã© avec succÃ¨s.</p>
+                      <p className="text-sm text-muted-foreground">Votre compte a été créé avec succès.</p>
                     </div>
                   </div>
                 </div>
@@ -159,7 +159,7 @@ export default function SignupPage() {
                 <div className="w-6 h-6 bg-[hsl(var(--rpma-teal))]/20 rounded flex items-center justify-center">
                   <span className="text-[hsl(var(--rpma-teal))] font-bold text-xs">R</span>
                 </div>
-                <span>RPMA V2 - SystÃ¨me de gestion PPF</span>
+                <span>RPMA V2 - Système de gestion PPF</span>
               </div>
             </div>
           </div>
@@ -180,9 +180,9 @@ export default function SignupPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                 </svg>
               </div>
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">CrÃ©er un compte</h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Créer un compte</h2>
               <p className="text-muted-foreground text-sm md:text-base">
-                Rejoignez RPMA V2 et commencez Ã  gÃ©rer vos projets PPF
+                Rejoignez RPMA V2 et commencez Ã  gérer vos projets PPF
               </p>
             </div>
 
@@ -202,7 +202,7 @@ export default function SignupPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label htmlFor="firstName" className="block text-sm font-semibold text-foreground">
-                      PrÃ©nom
+                      Prénom
                     </label>
                     <div className="relative">
                       <input
@@ -343,11 +343,11 @@ export default function SignupPage() {
               {isLoading ? (
                 <>
                   <UILoader size="sm" className="mr-3" />
-                  CrÃ©ation en cours...
+                  Création en cours...
                 </>
               ) : (
                 <>
-                  CrÃ©er mon compte
+                  Créer mon compte
                   <svg className="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
@@ -358,7 +358,7 @@ export default function SignupPage() {
             {/* Alternative Actions */}
             <div className="text-center">
               <p className="text-muted-foreground text-sm">
-                Vous avez dÃ©jÃ  un compte ?{' '}
+                Vous avez déjÃ  un compte ?{' '}
                 <Link
                   href={ROUTES.LOGIN}
                   className="font-semibold text-[hsl(var(--rpma-teal))] hover:text-[hsl(var(--rpma-teal))]/80 transition-colors duration-150"
@@ -372,7 +372,7 @@ export default function SignupPage() {
           {/* Terms and Conditions */}
           <div className="pt-4 border-t border-[hsl(var(--rpma-border))]">
             <p className="text-center text-xs text-muted-foreground leading-relaxed">
-              En vous inscrivant, vous acceptez nos conditions d&apos;utilisation et notre politique de confidentialitÃ©.
+              En vous inscrivant, vous acceptez nos conditions d&apos;utilisation et notre politique de confidentialité.
             </p>
           </div>
         </form>
@@ -385,7 +385,7 @@ export default function SignupPage() {
           <div className="w-6 h-6 bg-[hsl(var(--rpma-teal))]/20 rounded flex items-center justify-center">
             <span className="text-[hsl(var(--rpma-teal))] font-bold text-xs">R</span>
           </div>
-          <span>RPMA V2 - SystÃ¨me de gestion PPF</span>
+          <span>RPMA V2 - Système de gestion PPF</span>
         </div>
       </div>
     </FadeIn>

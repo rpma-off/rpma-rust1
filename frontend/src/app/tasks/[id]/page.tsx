@@ -51,13 +51,13 @@ export default function TaskDetailPage() {
 
         if (result.error) {
           if (result.status === 404) {
-            setError('TÃ¢che non trouvÃ©e');
-            toast.error('TÃ¢che non trouvÃ©e');
+            setError('Tâche non trouvée');
+            toast.error('Tâche non trouvée');
           } else if (result.status === 403) {
-            setError('AccÃ¨s non autorisÃ© Ã  cette tÃ¢che');
-            toast.error('AccÃ¨s non autorisÃ© Ã  cette tÃ¢che');
+            setError('Accès non autorisé Ã  cette tâche');
+            toast.error('Accès non autorisé Ã  cette tâche');
           } else {
-            const errorMessage = result.error || 'Erreur lors du chargement de la tÃ¢che';
+            const errorMessage = result.error || 'Erreur lors du chargement de la tâche';
             setError(errorMessage);
             toast.error(errorMessage);
           }
@@ -151,7 +151,7 @@ export default function TaskDetailPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <p className="text-foreground">Chargement des dÃ©tails de la tÃ¢che...</p>
+          <p className="text-foreground">Chargement des détails de la tâche...</p>
         </div>
       </div>
     );
@@ -183,7 +183,7 @@ export default function TaskDetailPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
-          <p className="text-foreground">TÃ¢che non trouvÃ©e</p>
+          <p className="text-foreground">Tâche non trouvée</p>
           <Button
             onClick={() => router.back()}
             variant="outline"
@@ -222,7 +222,7 @@ export default function TaskDetailPage() {
                <TaskHeader
                  task={task}
                  statusInfo={{
-                   label: task.status === 'completed' ? 'TerminÃ©e' :
+                   label: task.status === 'completed' ? 'Terminée' :
                           task.status === 'in_progress' ? 'En cours' :
                           task.status === 'pending' ? 'En attente' : 'Brouillon',
                    color: task.status === 'completed' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50' :
@@ -264,7 +264,7 @@ export default function TaskDetailPage() {
              </a>
              <span className="text-border/50">/</span>
              <a href="/tasks" className="hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-[hsl(var(--rpma-surface))]">
-               TÃ¢ches
+               Tâches
              </a>
              <span className="text-border/50">/</span>
              <span className="text-foreground font-medium px-2 py-1 bg-[hsl(var(--rpma-surface))] rounded">
@@ -292,7 +292,7 @@ export default function TaskDetailPage() {
                        </svg>
                        {task.vehicle_make && task.vehicle_model
                          ? `${task.vehicle_make} ${task.vehicle_model}`
-                         : 'VÃ©hicule non spÃ©cifiÃ©'}
+                         : 'Véhicule non spécifié'}
                        {task.vehicle_plate && ` â€¢ ${task.vehicle_plate}`}
                      </p>
                    </div>
@@ -308,7 +308,7 @@ export default function TaskDetailPage() {
                          'bg-gray-500/20 text-gray-300 border-gray-500/50'
                        }`}
                      >
-                       {task.status === 'completed' ? 'âœ“ TerminÃ©e' :
+                       {task.status === 'completed' ? 'âœ“ Terminée' :
                         task.status === 'in_progress' ? 'âŸ³ En cours' :
                         task.status === 'pending' ? 'â³ En attente' : '? Autre'}
                      </Badge>
@@ -331,18 +331,18 @@ export default function TaskDetailPage() {
              <div className="flex flex-wrap gap-4 sm:gap-6 lg:gap-8">
                {task.scheduled_date && (
                  <div className="text-center min-w-0 p-3 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
-                   <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">PlanifiÃ©e</p>
+                   <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">Planifiée</p>
                    <p className="text-sm font-semibold text-foreground">{formatDate(task.scheduled_date)}</p>
                  </div>
                )}
                {task.estimated_duration_minutes && (
                  <div className="text-center min-w-0 p-3 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
-                   <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">DurÃ©e estimÃ©e</p>
+                   <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">Durée estimée</p>
                    <p className="text-sm font-semibold text-foreground">{Math.round(task.estimated_duration_minutes / 60)}h</p>
                  </div>
                )}
                <div className="text-center min-w-0 p-3 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
-                 <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">CrÃ©Ã©e</p>
+                 <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">Créée</p>
                  <p className="text-sm font-semibold text-foreground">{formatDate(task.created_at)}</p>
                </div>
 
@@ -350,7 +350,7 @@ export default function TaskDetailPage() {
                <div className="block sm:hidden text-center min-w-0 p-3 bg-primary/10 rounded-lg border border-primary/20">
                  <p className="text-xs text-primary uppercase tracking-wide font-medium mb-1">Statut</p>
                  <p className="text-sm font-semibold text-primary">
-                   {task.status === 'completed' ? 'TerminÃ©e' :
+                   {task.status === 'completed' ? 'Terminée' :
                     task.status === 'in_progress' ? 'En cours' :
                     task.status === 'pending' ? 'En attente' : 'Brouillon'}
                  </p>
@@ -392,7 +392,7 @@ export default function TaskDetailPage() {
 
               {/* Quick Stats - Mobile Enhancement */}
               <div className="block xl:hidden bg-[hsl(var(--rpma-surface))] rounded-xl border border-[hsl(var(--rpma-border))] p-4">
-                <h3 className="text-sm font-semibold text-foreground mb-3">AperÃ§u rapide</h3>
+                <h3 className="text-sm font-semibold text-foreground mb-3">Aperçu rapide</h3>
                 <div className="grid grid-cols-2 gap-3 text-center">
                   <div className="p-3 bg-background/50 rounded-lg">
                     <p className="text-lg font-bold text-foreground">

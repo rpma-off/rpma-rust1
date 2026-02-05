@@ -233,7 +233,7 @@ export class TaskService {
       const data = await response.json().catch(() => null);
 
       if (!response.ok) {
-        const errorMessage = (data as { error?: string } | null)?.error || 'Erreur lors du marquage de la tÃ¢che comme invalide';
+        const errorMessage = (data as { error?: string } | null)?.error || 'Erreur lors du marquage de la tâche comme invalide';
         return { success: false, error: errorMessage, status: response.status };
       }
 

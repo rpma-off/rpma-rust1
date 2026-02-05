@@ -138,7 +138,7 @@ export function CalendarHeader() {
               variant="ghost"
               onClick={goToPrevious}
               className="h-8 w-8 p-0 rounded-full"
-              aria-label="Mois prÃ©cÃ©dent"
+              aria-label="Mois précédent"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -210,7 +210,7 @@ export function CalendarHeader() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="text-sm text-muted-foreground">AssignÃ© :</div>
+            <div className="text-sm text-muted-foreground">Assigné :</div>
             <Select
               value={filters.technicianId || 'all'}
               onValueChange={(value) =>
@@ -222,7 +222,7 @@ export function CalendarHeader() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tous</SelectItem>
-                <SelectItem value="unassigned">Non assignÃ©</SelectItem>
+                <SelectItem value="unassigned">Non assigné</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -242,7 +242,7 @@ export function CalendarHeader() {
               onClick={() => setFilters({ showMyEventsOnly: true })}
               className={filters.showMyEventsOnly ? 'bg-[hsl(var(--rpma-teal))] text-white rounded-full' : 'rounded-full'}
             >
-              Ã‰lÃ©ments de ligne
+              Éléments de ligne
             </Button>
           </div>
         </div>

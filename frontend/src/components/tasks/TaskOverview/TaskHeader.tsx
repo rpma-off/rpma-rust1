@@ -43,7 +43,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
             <div className="flex items-center text-muted-foreground-light bg-white px-2 py-1 rounded-md">
               <Clock className="h-3.5 w-3.5 mr-1.5 text-muted-foreground flex-shrink-0" />
               <span className="text-xs sm:text-sm">
-                AssignÃ© le {formatDate(task.assigned_at as unknown as string, 'dd/MM/yyyy HH:mm')}
+                Assigné le {formatDate(task.assigned_at as unknown as string, 'dd/MM/yyyy HH:mm')}
               </span>
             </div>
           )}
@@ -60,7 +60,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                 isAssignedToCurrentUser ? 'text-[hsl(var(--rpma-teal))]' : 'text-muted-foreground'
               } flex-shrink-0`} />
               <span className="text-xs sm:text-sm whitespace-nowrap">
-                {isAssignedToCurrentUser ? 'Vous Ãªtes assignÃ©' : 'AssignÃ© Ã  un technicien'}
+                {isAssignedToCurrentUser ? 'Vous êtes assigné' : 'Assigné Ã  un technicien'}
               </span>
             </div>
           )}

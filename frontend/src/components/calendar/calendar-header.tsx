@@ -71,7 +71,7 @@ export function CalendarHeader() {
                   onClick={() => setCreateDialogOpen(true)}
                 >
                   <Plus className="h-4 w-4 mr-1" />
-                  <span className="text-xs">CrÃ©er</span>
+                  <span className="text-xs">Créer</span>
                 </Button>
               </div>
 
@@ -95,14 +95,14 @@ export function CalendarHeader() {
                       <div className="flex items-center gap-2 w-full">
                         <CheckCircle2 className="h-4 w-4 text-green-400" />
                         <span className="text-sm font-medium text-foreground flex-1">
-                          RÃ©union confirmÃ©e
+                          Réunion confirmée
                         </span>
                         <span className="text-xs text-muted-foreground">
                           il y a 2 min
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground pl-6">
-                        Le point quotidien est confirmÃ© pour demain Ã  9h00
+                        Le point quotidien est confirmé pour demain Ã  9h00
                       </p>
                     </DropdownMenuItem>
                     <DropdownMenuItem className="flex flex-col items-start gap-1 p-3 cursor-pointer hover:bg-border/10">
@@ -145,8 +145,8 @@ export function CalendarHeader() {
                   onClick={() => setCreateDialogOpen(true)}
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  <span className="hidden lg:inline">CrÃ©er un Ã©vÃ©nement</span>
-                  <span className="lg:hidden">CrÃ©er</span>
+                  <span className="hidden lg:inline">Créer un événement</span>
+                  <span className="lg:hidden">Créer</span>
                 </Button>
               </div>
 

@@ -37,7 +37,7 @@
           </div>
 
           <p className="text-xs text-muted-foreground">
-            PrÃ©paration de votre tableau de bord
+            Préparation de votre tableau de bord
           </p>
         </div>
 
@@ -53,7 +53,7 @@
               <div>
                 <p className="text-sm font-medium text-foreground mb-1">Astuce</p>
                 <p className="text-xs text-muted-foreground">
-                  Utilisez Ctrl+K pour accÃ©der rapidement Ã  la recherche globale
+                  Utilisez Ctrl+K pour accéder rapidement Ã  la recherche globale
                 </p>
               </div>
             </div>

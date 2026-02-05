@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -53,7 +53,7 @@ export default function ClientsPage() {
       }, 5);
 
       if (response.error) {
-        setError(typeof response.error === 'string' ? response.error : response.error.message || 'Ã‰chec du chargement des clients');
+        setError(typeof response.error === 'string' ? response.error : response.error.message || 'Échec du chargement des clients');
         return;
       }
 
@@ -96,7 +96,7 @@ export default function ClientsPage() {
   };
 
   const handleClientDelete = async (client: Client | ClientWithTasks) => {
-    if (!confirm(`ÃŠtes-vous sÃ»r de vouloir supprimer ${client.name} ? Cette action est irrÃ©versible.`)) {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${client.name} ? Cette action est irréversible.`)) {
       return;
     }
 
@@ -108,7 +108,7 @@ export default function ClientsPage() {
 
       const response = await clientService.deleteClient(client.id, user.token);
       if (response.error) {
-        setError(response.error || 'Ã‰chec de la suppression du client');
+        setError(response.error || 'Échec de la suppression du client');
         return;
       }
 
@@ -136,7 +136,7 @@ export default function ClientsPage() {
             <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full animate-ping border-t-accent mx-auto opacity-20"></div>
           </div>
           <h3 className="text-xl font-semibold text-foreground mb-2">Chargement des clients...</h3>
-          <p className="text-muted-foreground">Veuillez patienter pendant que nous rÃ©cupÃ©rons vos donnÃ©es</p>
+          <p className="text-muted-foreground">Veuillez patienter pendant que nous récupérons vos données</p>
         </div>
       </div>
     );
@@ -147,7 +147,7 @@ export default function ClientsPage() {
       {/* Header */}
       <PageHeader
         title="Clients"
-        subtitle="GÃ©rer votre base de donnÃ©es clients et vos relations"
+        subtitle="Gérer votre base de données clients et vos relations"
         icon={<User className="h-6 w-6 sm:h-8 sm:w-8 text-[hsl(var(--rpma-teal))]" />}
         actions={
           <Link
@@ -168,7 +168,7 @@ export default function ClientsPage() {
             />
             <StatCard
               value={clients.filter(c => (c.tasks || []).length > 0).length}
-              label="Avec TÃ¢ches"
+              label="Avec Tâches"
               icon={FileText}
               color="green"
             />
@@ -236,11 +236,11 @@ export default function ClientsPage() {
                   }}
                   className="pl-10 pr-8 py-2.5 rpma-shell text-foreground text-sm focus:outline-none focus:border-[hsl(var(--rpma-teal))] transition-all duration-200 appearance-none cursor-pointer hover:bg-muted/10"
                 >
-                  <option value="name_asc">ðŸ“ Nom A-Z</option>
-                  <option value="name_desc">ðŸ“ Nom Z-A</option>
-                  <option value="created_at_desc">ðŸ•’ Plus rÃ©cent</option>
-                  <option value="created_at_asc">ðŸ•’ Plus ancien</option>
-                  <option value="total_tasks_desc">ðŸ“Š Plus de tÃ¢ches</option>
+<option value="name_asc">📝 Nom A-Z</option>
+<option value="name_desc">📝 Nom Z-A</option>
+<option value="created_at_desc">🕑 Plus récent</option>
+<option value="created_at_asc">🕑 Plus ancien</option>
+<option value="total_tasks_desc">📊 Plus de tâches</option>
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               </div>
@@ -313,7 +313,7 @@ export default function ClientsPage() {
                 <div className="w-8 h-8 border-3 border-[hsl(var(--rpma-border))] rounded-full animate-spin border-t-accent"></div>
               </div>
               <div>
-                <h4 className="text-foreground font-medium">Mise Ã  jour...</h4>
+                <h4 className="text-foreground font-medium">Mise à jour...</h4>
                 <p className="text-muted-foreground text-sm">Actualisation de la liste des clients</p>
               </div>
             </div>

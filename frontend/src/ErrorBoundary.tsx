@@ -55,17 +55,17 @@ class ErrorBoundary extends Component<Props, State> {
             </div>
             
             <h2 className="text-2xl font-bold text-foreground mb-2">
-              Oups ! Quelque chose s&apos;est mal passÃ©
+              Oups ! Quelque chose s&apos;est mal passé
             </h2>
             
             <p className="text-gray-600 mb-6">
-              Une erreur inattendue s&apos;est produite. Veuillez rÃ©essayer ou contacter le support si le problÃ¨me persiste.
+              Une erreur inattendue s&apos;est produite. Veuillez réessayer ou contacter le support si le problème persiste.
             </p>
 
             {this.state.error && (
               <details className="mb-6 text-left">
                 <summary className="cursor-pointer text-sm font-medium text-muted-foreground mb-2">
-                  DÃ©tails de l&apos;erreur (dÃ©veloppement)
+                  Détails de l&apos;erreur (développement)
                 </summary>
                 <div className="bg-gray-100 p-3 rounded text-xs font-mono text-gray-800 overflow-auto">
                   <div className="mb-2">
@@ -90,7 +90,7 @@ class ErrorBoundary extends Component<Props, State> {
                 className="flex items-center gap-2"
               >
                 <RefreshCw className="h-4 w-4" />
-                RÃ©essayer
+                Réessayer
               </Button>
               
               <Button

@@ -199,12 +199,12 @@ export function VirtualizedTable<T extends Record<string, any>>({
       <div className="bg-[hsl(var(--rpma-surface))] border-t border-[hsl(var(--rpma-border))] px-4 py-2">
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>
-            {selectedRows.size > 0 && `${selectedRows.size} sÃ©lectionnÃ©(s) â€¢ `}
-            {data.length} Ã©lÃ©ment(s) total
+            {selectedRows.size > 0 && `${selectedRows.size} sélectionné(s) â€¢ `}
+            {data.length} élément(s) total
           </span>
           {sortConfig && (
             <span className="text-[hsl(var(--rpma-teal))]">
-              TriÃ© par {columns.find(col => String(col.key) === sortConfig.key)?.header}
+              Trié par {columns.find(col => String(col.key) === sortConfig.key)?.header}
               {sortConfig.direction === 'asc' ? ' â†‘' : ' â†“'}
             </span>
           )}

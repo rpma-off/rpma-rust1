@@ -35,26 +35,26 @@ type PreparationCollectedData = {
 const defaultChecklist: PreparationChecklistItem[] = [
   {
     id: 'wash',
-    label: 'Lavage du vÃ©hicule',
+    label: 'Lavage du véhicule',
     description: 'Nettoyage complet de la surface avec shampooing pH neutre',
     completed: false
   },
   {
     id: 'clay_bar',
     label: 'Clay Bar',
-    description: 'Traitement avec clay bar pour Ã©liminer les contaminants',
+    description: 'Traitement avec clay bar pour éliminer les contaminants',
     completed: false
   },
   {
     id: 'degrease',
-    label: 'DÃ©graissage',
-    description: 'Application de dÃ©graissant pour prÃ©paration de surface',
+    label: 'Dégraissage',
+    description: 'Application de dégraissant pour préparation de surface',
     completed: false
   },
   {
     id: 'masking',
     label: 'Masquage',
-    description: 'Protection des zones non traitÃ©es (joints, poignÃ©es, etc.)',
+    description: 'Protection des zones non traitées (joints, poignées, etc.)',
     completed: false
   }
 ];
@@ -191,14 +191,14 @@ export default function PreparationStepPage() {
             <Wrench className="h-8 w-8 text-purple-500" />
           </div>
           <div className="text-sm bg-purple-500/10 text-purple-400 px-3 py-1 rounded-full font-medium">
-            Ã‰tape 2 sur 4
+            Étape 2 sur 4
           </div>
         </div>
         <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-          PrÃ©paration de surface
+          Préparation de surface
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          PrÃ©paration mÃ©ticuleuse de la surface et contrÃ´le des conditions environnementales
+          Préparation méticuleuse de la surface et contrôle des conditions environnementales
         </p>
       </motion.div>
 
@@ -218,7 +218,7 @@ export default function PreparationStepPage() {
           <div className="w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center">
             <span className="text-xs font-bold text-white">2</span>
           </div>
-          <span className="text-sm font-medium text-purple-400">PrÃ©paration</span>
+          <span className="text-sm font-medium text-purple-400">Préparation</span>
         </div>
         <div className="w-8 h-px bg-gray-600"></div>
         <div className="flex items-center space-x-2">
@@ -244,10 +244,10 @@ export default function PreparationStepPage() {
                   </div>
                   <div>
                     <CardTitle className="text-xl text-foreground group-hover:text-purple-400 transition-colors">
-                      Checklist de prÃ©paration
+                      Checklist de préparation
                     </CardTitle>
                     <CardDescription className="text-muted-foreground">
-                      ProcÃ©dures de prÃ©paration de surface
+                      Procédures de préparation de surface
                     </CardDescription>
                   </div>
                 </div>
@@ -325,7 +325,7 @@ export default function PreparationStepPage() {
                       Conditions environnementales
                     </CardTitle>
                     <CardDescription className="text-muted-foreground">
-                      ContrÃ´le des paramÃ¨tres pour une application optimale
+                      Contrôle des paramètres pour une application optimale
                     </CardDescription>
                   </div>
                 </div>
@@ -342,7 +342,7 @@ export default function PreparationStepPage() {
                 <div className="space-y-3">
                   <Label htmlFor="temperature" className="flex items-center text-foreground font-medium">
                     <Thermometer className="h-4 w-4 mr-2 text-red-400" />
-                    TempÃ©rature (Â°C)
+                    Température (Â°C)
                   </Label>
                   <Input
                     id="temperature"
@@ -365,7 +365,7 @@ export default function PreparationStepPage() {
                   />
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-muted-foreground">
-                      RecommandÃ©: 15-25Â°C
+                      Recommandé: 15-25Â°C
                     </p>
                     {environment.temperatureCelsius !== null && (
                       <span className={`text-xs px-2 py-0.5 rounded-full ${
@@ -382,7 +382,7 @@ export default function PreparationStepPage() {
                 <div className="space-y-3">
                   <Label htmlFor="humidity" className="flex items-center text-foreground font-medium">
                     <Droplets className="h-4 w-4 mr-2 text-blue-400" />
-                    HumiditÃ© (%)
+                    Humidité (%)
                   </Label>
                   <Input
                     id="humidity"
@@ -405,7 +405,7 @@ export default function PreparationStepPage() {
                   />
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-muted-foreground">
-                      RecommandÃ©: 30-60%
+                      Recommandé: 30-60%
                     </p>
                     {environment.humidityPercent !== null && (
                       <span className={`text-xs px-2 py-0.5 rounded-full ${
@@ -433,7 +433,7 @@ export default function PreparationStepPage() {
                           Conditions non optimales
                         </p>
                         <p className="text-sm text-yellow-300/80">
-                          Les conditions environnementales sont hors des plages recommandÃ©es. L&apos;application du PPF peut Ãªtre compromise.
+                          Les conditions environnementales sont hors des plages recommandées. L&apos;application du PPF peut être compromise.
                         </p>
                       </div>
                     </div>
@@ -455,7 +455,7 @@ export default function PreparationStepPage() {
                   </div>
                   <div>
                     <CardTitle className="text-xl text-foreground group-hover:text-green-400 transition-colors">
-                      Photos de prÃ©paration
+                      Photos de préparation
                     </CardTitle>
                     <CardDescription className="text-muted-foreground">
                       Documentation visuelle (optionnel)
@@ -480,7 +480,7 @@ export default function PreparationStepPage() {
                 maxFiles={6}
                 minPhotos={0}
                 onUploadComplete={(urls) => setUploadedPhotos(urls)}
-                title="Photos de prÃ©paration"
+                title="Photos de préparation"
                 uploadButtonText="Ajouter des photos"
               />
             </CardContent>
@@ -503,12 +503,12 @@ export default function PreparationStepPage() {
             <p className={`text-sm font-medium ${
               canProceed ? 'text-green-400' : 'text-yellow-400'
             }`}>
-              {canProceed ? 'PrÃªt pour l\'installation' : 'ComplÃ©tez toutes les Ã©tapes requises'}
+              {canProceed ? 'Prêt pour l\'installation' : 'Complétez toutes les étapes requises'}
             </p>
           </div>
           <p className="text-muted-foreground text-sm">
             Checklist: {checklist.filter(item => item.completed).length}/{checklist.length} â€¢
-            Environnement: {environmentValid ? 'Optimal' : 'Ã€ ajuster'}
+            Environnement: {environmentValid ? 'Optimal' : 'À ajuster'}
           </p>
         </div>
         <Button
@@ -521,7 +521,7 @@ export default function PreparationStepPage() {
           }`}
         >
           <span className="flex items-center justify-center space-x-2">
-            <span>{isCompleting ? 'Finalisation...' : 'Ã‰tape suivante'}</span>
+            <span>{isCompleting ? 'Finalisation...' : 'Étape suivante'}</span>
             <ArrowRight className={`h-5 w-5 transition-transform ${isCompleting ? '' : 'group-hover:translate-x-1'}`} />
           </span>
         </Button>

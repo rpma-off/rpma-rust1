@@ -30,7 +30,7 @@ export function DesktopTable<T extends Record<string, unknown>>({
   onRowSelect,
   selectedRows = [],
   className = '',
-  emptyMessage = 'Aucune donnÃ©e disponible'
+  emptyMessage = 'Aucune donnée disponible'
 }: DesktopTableProps<T>) {
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -166,7 +166,7 @@ export function DesktopTable<T extends Record<string, unknown>>({
             <tr>
               {onRowSelect && (
                 <th                    className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  <span className="sr-only">SÃ©lection</span>
+                  <span className="sr-only">Sélection</span>
                 </th>
               )}
               {columns.map(column => (
@@ -268,13 +268,13 @@ export function DesktopTable<T extends Record<string, unknown>>({
       {/* Results count and keyboard hints */}
       <div className="flex justify-between items-center text-sm text-border">
         <div>
-          {filteredAndSortedData.length} rÃ©sultat{filteredAndSortedData.length !== 1 ? 's' : ''}
+          {filteredAndSortedData.length} résultat{filteredAndSortedData.length !== 1 ? 's' : ''}
           {searchTerm && ` pour "${searchTerm}"`}
         </div>
         {filteredAndSortedData.length > 0 && (
           <div className="text-xs space-x-4">
             <span>â†‘â†“ pour naviguer</span>
-            <span>Enter pour sÃ©lectionner</span>
+            <span>Enter pour sélectionner</span>
             {onRowSelect && <span>Espace pour cocher</span>}
           </div>
         )}

@@ -32,7 +32,7 @@ const SendMessageModal: React.FC<SendMessageModalProps> = ({ task, open, onOpenC
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      toast.success('Message envoyÃ© avec succÃ¨s');
+      toast.success('Message envoyé avec succès');
       setMessage('');
       setMessageType('general');
       onOpenChange(false);
@@ -75,7 +75,7 @@ const SendMessageModal: React.FC<SendMessageModalProps> = ({ task, open, onOpenC
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-muted border-border">
-                <SelectItem value="general" className="text-foreground hover:bg-border">GÃ©nÃ©ral</SelectItem>
+                <SelectItem value="general" className="text-foreground hover:bg-border">Général</SelectItem>
                 <SelectItem value="update" className="text-foreground hover:bg-border">Mise Ã  jour</SelectItem>
                 <SelectItem value="urgent" className="text-foreground hover:bg-border">Urgent</SelectItem>
                 <SelectItem value="question" className="text-foreground hover:bg-border">Question</SelectItem>
@@ -98,7 +98,7 @@ const SendMessageModal: React.FC<SendMessageModalProps> = ({ task, open, onOpenC
           </div>
 
           <div className="text-sm text-muted-foreground">
-            <p>Ce message sera associÃ© Ã  la tÃ¢che #{task.task_number}</p>
+            <p>Ce message sera associé Ã  la tâche #{task.task_number}</p>
             {task.customer_name && (
               <p>Destinataire: {task.customer_name}</p>
             )}

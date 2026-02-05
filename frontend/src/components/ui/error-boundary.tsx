@@ -102,8 +102,8 @@ function DefaultErrorFallback({ error, resetError, errorInfo }: ErrorBoundaryFal
     if (isNetworkError) {
       return {
         icon: WifiOff,
-        title: 'ProblÃ¨me de connexion',
-        description: 'VÃ©rifiez votre connexion internet et rÃ©essayez.',
+        title: 'Problème de connexion',
+        description: 'Vérifiez votre connexion internet et réessayez.',
         bgColor: 'from-blue-500/10 to-blue-600/10',
         borderColor: 'border-blue-500/20',
         iconBg: 'bg-blue-500/20',
@@ -113,8 +113,8 @@ function DefaultErrorFallback({ error, resetError, errorInfo }: ErrorBoundaryFal
     if (isAuthError) {
       return {
         icon: Shield,
-        title: 'AccÃ¨s non autorisÃ©',
-        description: 'Votre session a expirÃ© ou vous n\'avez pas les permissions nÃ©cessaires.',
+        title: 'Accès non autorisé',
+        description: 'Votre session a expiré ou vous n\'avez pas les permissions nécessaires.',
         bgColor: 'from-amber-500/10 to-amber-600/10',
         borderColor: 'border-amber-500/20',
         iconBg: 'bg-amber-500/20',
@@ -125,7 +125,7 @@ function DefaultErrorFallback({ error, resetError, errorInfo }: ErrorBoundaryFal
       return {
         icon: AlertCircle,
         title: 'Erreur de validation',
-        description: 'Les donnÃ©es saisies ne sont pas valides. VÃ©rifiez vos informations.',
+        description: 'Les données saisies ne sont pas valides. Vérifiez vos informations.',
         bgColor: 'from-orange-500/10 to-orange-600/10',
         borderColor: 'border-orange-500/20',
         iconBg: 'bg-orange-500/20',
@@ -135,7 +135,7 @@ function DefaultErrorFallback({ error, resetError, errorInfo }: ErrorBoundaryFal
     return {
       icon: Zap,
       title: 'Erreur inattendue',
-      description: 'L\'application a rencontrÃ© une erreur inattendue. Nos Ã©quipes ont Ã©tÃ© notifiÃ©es.',
+      description: 'L\'application a rencontré une erreur inattendue. Nos équipes ont été notifiées.',
       bgColor: 'from-red-500/10 to-red-600/10',
       borderColor: 'border-red-500/20',
       iconBg: 'bg-red-500/20',
@@ -191,7 +191,7 @@ function DefaultErrorFallback({ error, resetError, errorInfo }: ErrorBoundaryFal
               size="lg"
             >
               <RefreshCw className="w-5 h-5" />
-              RÃ©essayer
+              Réessayer
             </Button>
 
             <Button
@@ -209,7 +209,7 @@ function DefaultErrorFallback({ error, resetError, errorInfo }: ErrorBoundaryFal
             <details className="mt-8 p-4 bg-[hsl(var(--rpma-surface))] border border-[hsl(var(--rpma-border))] rounded-xl backdrop-blur-sm">
               <summary className="cursor-pointer text-sm font-semibold text-muted-foreground flex items-center gap-2 hover:text-foreground transition-colors">
                 <Bug className="w-4 h-4" />
-                DÃ©tails techniques (dÃ©veloppement)
+                Détails techniques (développement)
                 <div className="ml-auto">
                   <ChevronDown className="w-4 h-4" />
                 </div>
@@ -303,7 +303,7 @@ export function ErrorAlert({
                 className="bg-red-600 hover:bg-red-700 text-white border-red-600 hover:border-red-700 transition-all duration-200 hover:scale-105"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
-                RÃ©essayer
+                Réessayer
               </Button>
             </motion.div>
           )}

@@ -24,13 +24,13 @@ export const STATUS_CONFIG = {
     color: 'bg-[var(--status-success)]/20 text-[var(--status-success-foreground)] border-[var(--status-success)]/40',
     dot: 'bg-[var(--status-success)]',
     icon: CheckCircle2,
-    label: 'TerminÃ©e'
+    label: 'Terminée'
   },
   cancelled: {
     color: 'bg-[var(--status-destructive)]/20 text-[var(--status-destructive-foreground)] border-[var(--status-destructive)]/40',
     dot: 'bg-[var(--status-destructive)]',
     icon: AlertCircle,
-    label: 'AnnulÃ©e'
+    label: 'Annulée'
   }
 } as const;
 
@@ -124,7 +124,7 @@ export const UnifiedCard = React.memo<UnifiedCardProps>((props) => {
         <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-[hsl(var(--rpma-border))]">
           <Car className="h-5 w-5 text-[hsl(var(--rpma-teal))] flex-shrink-0" />
           <div className="min-w-0 flex-1">
-            <span className="text-sm text-muted-foreground block">VÃ©hicule</span>
+            <span className="text-sm text-muted-foreground block">Véhicule</span>
             <span className="text-base font-semibold text-foreground truncate">
               {props.vehicle} {props.vehicleModel}
             </span>
@@ -179,7 +179,7 @@ export const UnifiedCard = React.memo<UnifiedCardProps>((props) => {
         <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-[hsl(var(--rpma-border))]">
           <Calendar className="h-5 w-5 text-[hsl(var(--rpma-teal))] flex-shrink-0" />
           <div className="min-w-0 flex-1">
-            <span className="text-sm text-muted-foreground block">Date prÃ©vue</span>
+            <span className="text-sm text-muted-foreground block">Date prévue</span>
             <span className="text-base font-semibold text-foreground">
               {new Date(props.scheduledDate).toLocaleDateString('fr-FR')}
             </span>
@@ -257,7 +257,7 @@ export const UnifiedCard = React.memo<UnifiedCardProps>((props) => {
           {props.totalTasks !== undefined && (
             <div className="text-center p-3 bg-white rounded-lg border border-[hsl(var(--rpma-border))]">
               <p className="text-xl font-bold text-foreground mb-1">{props.totalTasks}</p>
-              <p className="text-xs text-muted-foreground font-medium">Total tÃ¢ches</p>
+              <p className="text-xs text-muted-foreground font-medium">Total tâches</p>
             </div>
           )}
           {props.activeTasks !== undefined && (
@@ -296,7 +296,7 @@ export const UnifiedCard = React.memo<UnifiedCardProps>((props) => {
              props.trend.direction === 'down' ? 'â†˜' : 'â†’'}
             {Math.abs(props.trend.value)}%
           </span>
-          <span className="text-xs text-muted-foreground">vs pÃ©riode prÃ©cÃ©dente</span>
+          <span className="text-xs text-muted-foreground">vs période précédente</span>
         </div>
       )}
     </div>

@@ -42,13 +42,13 @@ export default function LoginPage() {
       
       if (error) {
         const errorMessage = typeof error === 'string' ? error : (error as Error).message || 'Erreur lors de la connexion';
-        logger.error('Ã‰chec de la connexion', {
+        logger.error('Échec de la connexion', {
           email: formData.email,
           error: errorMessage
         });
         setError(errorMessage);
       } else {
-        logger.info('Connexion rÃ©ussie', { email: formData.email });
+        logger.info('Connexion réussie', { email: formData.email });
         // RootClientLayout will check admin status and redirect appropriately
         // No need to redirect here, let the layout handle it
       }
@@ -78,7 +78,7 @@ export default function LoginPage() {
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Connexion</h2>
               <p className="text-muted-foreground text-sm md:text-base">
-                AccÃ©dez Ã  votre tableau de bord RPMA V2
+                Accédez Ã  votre tableau de bord RPMA V2
               </p>
             </div>
 
@@ -169,7 +169,7 @@ export default function LoginPage() {
                       href={ROUTES.SIGNUP}
                       className="font-semibold text-[hsl(var(--rpma-teal))] hover:text-[hsl(var(--rpma-teal))]/80 transition-colors duration-150"
                     >
-                      CrÃ©er un compte
+                      Créer un compte
                     </Link>
                   </p>
                 </div>
@@ -183,7 +183,7 @@ export default function LoginPage() {
               <div className="w-6 h-6 bg-[hsl(var(--rpma-teal))]/10 rounded flex items-center justify-center">
                 <span className="text-[hsl(var(--rpma-teal))] font-bold text-xs">R</span>
               </div>
-              <span>RPMA V2 - SystÃ¨me de gestion PPF</span>
+              <span>RPMA V2 - Système de gestion PPF</span>
             </div>
           </div>
         </div>

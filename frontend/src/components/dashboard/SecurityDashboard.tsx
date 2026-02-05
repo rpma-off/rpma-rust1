@@ -72,8 +72,8 @@ export function SecurityDashboard({ onRefresh }: SecurityDashboardProps) {
       setSessions(sessionsData as UserSession[]);
     } catch (err) {
       console.error('Failed to load security data:', err);
-      setError('Erreur lors du chargement des donnÃ©es de sÃ©curitÃ©');
-      toast.error('Erreur lors du chargement des donnÃ©es de sÃ©curitÃ©');
+      setError('Erreur lors du chargement des données de sécurité');
+      toast.error('Erreur lors du chargement des données de sécurité');
     } finally {
       setLoading(false);
     }
@@ -88,7 +88,7 @@ export function SecurityDashboard({ onRefresh }: SecurityDashboardProps) {
 
     try {
       await ipcClient.security.acknowledgeAlert(alertId, user.token);
-      toast.success('Alerte acquittÃ©e');
+      toast.success('Alerte acquittée');
       loadSecurityData(); // Refresh data
     } catch (err) {
       console.error('Failed to acknowledge alert:', err);
@@ -101,11 +101,11 @@ export function SecurityDashboard({ onRefresh }: SecurityDashboardProps) {
 
     try {
       await ipcClient.security.revokeSession(sessionId, user.token);
-      toast.success('Session rÃ©voquÃ©e');
+      toast.success('Session révoquée');
       loadSecurityData(); // Refresh data
     } catch (err) {
       console.error('Failed to revoke session:', err);
-      toast.error('Erreur lors de la rÃ©vocation de la session');
+      toast.error('Erreur lors de la révocation de la session');
     }
   };
 
@@ -130,7 +130,7 @@ export function SecurityDashboard({ onRefresh }: SecurityDashboardProps) {
         <CardContent className="flex items-center justify-center py-8">
           <div className="text-center">
             <Shield className="h-8 w-8 animate-pulse mx-auto mb-2 text-[hsl(var(--rpma-teal))]" />
-            <p className="text-muted-foreground">Chargement des donnÃ©es de sÃ©curitÃ©...</p>
+            <p className="text-muted-foreground">Chargement des données de sécurité...</p>
           </div>
         </CardContent>
       </Card>
@@ -159,14 +159,14 @@ export function SecurityDashboard({ onRefresh }: SecurityDashboardProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />
-            Vue d&apos;ensemble de la sÃ©curitÃ©
+            Vue d&apos;ensemble de la sécurité
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div className="text-center p-4 bg-[hsl(var(--rpma-surface))] rounded-lg">
               <div className="text-2xl font-bold text-foreground">{metrics?.total_events_today || 0}</div>
-              <div className="text-xs text-muted-foreground">Ã‰vÃ©nements aujourd&apos;hui</div>
+              <div className="text-xs text-muted-foreground">Événements aujourd&apos;hui</div>
             </div>
             <div className="text-center p-4 bg-red-500/10 rounded-lg">
               <div className="text-2xl font-bold text-red-400">{metrics?.critical_alerts_today || 0}</div>
@@ -174,15 +174,15 @@ export function SecurityDashboard({ onRefresh }: SecurityDashboardProps) {
             </div>
             <div className="text-center p-4 bg-orange-500/10 rounded-lg">
               <div className="text-2xl font-bold text-orange-400">{metrics?.failed_auth_attempts_last_hour || 0}</div>
-              <div className="text-xs text-muted-foreground">Ã‰checs d&apos;authentification</div>
+              <div className="text-xs text-muted-foreground">Échecs d&apos;authentification</div>
             </div>
             <div className="text-center p-4 bg-yellow-500/10 rounded-lg">
               <div className="text-2xl font-bold text-yellow-400">{metrics?.suspicious_activities_detected || 0}</div>
-              <div className="text-xs text-muted-foreground">ActivitÃ©s suspectes</div>
+              <div className="text-xs text-muted-foreground">Activités suspectes</div>
             </div>
             <div className="text-center p-4 bg-purple-500/10 rounded-lg">
               <div className="text-2xl font-bold text-purple-400">{metrics?.blocked_ips || 0}</div>
-              <div className="text-xs text-muted-foreground">IPs bloquÃ©es</div>
+              <div className="text-xs text-muted-foreground">IPs bloquées</div>
             </div>
             <div className="text-center p-4 bg-blue-500/10 rounded-lg">
               <div className="text-2xl font-bold text-blue-400">{sessions.length}</div>
@@ -197,7 +197,7 @@ export function SecurityDashboard({ onRefresh }: SecurityDashboardProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-orange-500" />
-            Alertes de sÃ©curitÃ© actives
+            Alertes de sécurité actives
             <Badge variant="secondary" className="ml-auto">
               {alerts.filter(a => !a.resolved).length}
             </Badge>
@@ -227,7 +227,7 @@ export function SecurityDashboard({ onRefresh }: SecurityDashboardProps) {
                         </Badge>
                         {alert.acknowledged && (
                           <Badge variant="outline" className="text-xs">
-                            AcquittÃ©e
+                            Acquittée
                           </Badge>
                         )}
                       </div>
@@ -282,8 +282,8 @@ export function SecurityDashboard({ onRefresh }: SecurityDashboardProps) {
                     <div>
                       <p className="font-medium text-foreground">{session.username}</p>
                       <p className="text-xs text-muted-foreground">
-                        {session.device_info?.ip_address || 'IP inconnue'} â€¢
-                        DerniÃ¨re activitÃ©: {new Date(session.last_activity).toLocaleString('fr-FR')}
+                        {session.device_info?.ip_address || 'IP inconnue'} •
+                        Dernière activité: {new Date(session.last_activity).toLocaleString('fr-FR')}
                       </p>
                     </div>
                   </div>
@@ -294,7 +294,7 @@ export function SecurityDashboard({ onRefresh }: SecurityDashboardProps) {
                     className="text-red-400 border-red-400 hover:bg-red-400 hover:text-white"
                   >
                     <XCircle className="h-3 w-3 mr-1" />
-                    RÃ©voquer
+                    Révoquer
                   </Button>
                 </div>
               ))}

@@ -61,7 +61,7 @@ const ErrorPage = ({ error, reset }: ErrorPageProps) => {
               Oups&thinsp;! Une erreur est survenue
             </h1>
             <p className="text-base md:text-lg text-muted-foreground mb-6 leading-relaxed">
-              Une erreur inattendue s&apos;est produite. Notre Ã©quipe a Ã©tÃ© notifiÃ©e et travaille Ã  rÃ©soudre le problÃ¨me.
+              Une erreur inattendue s&apos;est produite. Notre équipe a été notifiée et travaille Ã  résoudre le problème.
             </p>
 
             {/* Error Details for Development */}
@@ -72,7 +72,7 @@ const ErrorPage = ({ error, reset }: ErrorPageProps) => {
                     <svg className="w-4 h-4 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
-                    DÃ©tails techniques (dÃ©veloppement)
+                    Détails techniques (développement)
                   </summary>
                   <div className="mt-3 space-y-3">
                     <pre className="text-xs text-red-500 whitespace-pre-wrap bg-white p-3 rounded-lg border border-red-500/20 overflow-auto max-h-40">
@@ -96,7 +96,7 @@ const ErrorPage = ({ error, reset }: ErrorPageProps) => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button onClick={handleReset} className="px-8 py-3">
               <RefreshCw className="w-5 h-5" />
-              RÃ©essayer
+              Réessayer
             </Button>
 
             <Button
@@ -113,7 +113,7 @@ const ErrorPage = ({ error, reset }: ErrorPageProps) => {
           <div className="mt-8 pt-6 border-t border-[hsl(var(--rpma-border))]">
             <div className="text-center">
               <p className="text-sm text-muted-foreground mb-4">
-                Si le problÃ¨me persiste, contactez notre support technique
+                Si le problème persiste, contactez notre support technique
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center text-xs">
                 <div className="flex items-center gap-2 text-muted-foreground">
@@ -139,7 +139,7 @@ const ErrorPage = ({ error, reset }: ErrorPageProps) => {
             <div className="w-6 h-6 bg-[hsl(var(--rpma-teal))]/10 rounded flex items-center justify-center">
               <span className="text-[hsl(var(--rpma-teal))] font-bold text-xs">R</span>
             </div>
-            <span>RPMA V2 - SystÃ¨me de gestion PPF</span>
+            <span>RPMA V2 - Système de gestion PPF</span>
           </div>
         </div>
       </div>

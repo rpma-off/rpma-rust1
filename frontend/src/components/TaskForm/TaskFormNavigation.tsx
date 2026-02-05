@@ -39,7 +39,7 @@ export const TaskFormNavigation: React.FC<TaskFormNavigationProps> = React.memo(
           }
         `}
       >
-        PrÃ©cÃ©dent
+        Précédent
       </button>
 
       <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-3">

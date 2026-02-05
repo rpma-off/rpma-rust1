@@ -230,12 +230,12 @@ export const CustomerStep: React.FC<FormStepProps> = ({
             </div>
             <div className="text-xs sm:text-sm bg-[hsl(var(--rpma-teal))]/10 px-2 sm:px-3 py-1 rounded-full">
               <span className="font-medium text-[hsl(var(--rpma-teal))]">
-                {isFormEmpty ? "Ã€ remplir" : "ComplÃ©tÃ©"}
+                {isFormEmpty ? "À remplir" : "Complété"}
               </span>
             </div>
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-            Saisissez les informations du client pour cette tÃ¢che
+            Saisissez les informations du client pour cette tâche
           </p>
         </div>
 
@@ -264,8 +264,8 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                 <Search className="w-5 h-5 mr-2" />
                 <span className="font-medium">
                   {selectedClient
-                    ? `Client sÃ©lectionnÃ©: ${selectedClient.name}`
-                    : "SÃ©lectionner un client existant"}
+                    ? `Client sélectionné: ${selectedClient.name}`
+                    : "Sélectionner un client existant"}
                 </span>
               </button>
 
@@ -299,8 +299,8 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                         {selectedClient.name}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {selectedClient.email && `${selectedClient.email} â€¢ `}
-                        {selectedClient.phone && `${selectedClient.phone} â€¢ `}
+                        {selectedClient.email && `${selectedClient.email} • `}
+                        {selectedClient.phone && `${selectedClient.phone} • `}
                         {selectedClient.customer_type === "business"
                           ? "Entreprise"
                           : "Particulier"}
@@ -326,7 +326,7 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                 <div className="p-4 border-b border-[hsl(var(--rpma-border))]">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-foreground">
-                      SÃ©lectionner un client
+                      Sélectionner un client
                     </h3>
                     <button
                       type="button"
@@ -356,7 +356,7 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                       {filteredClients.length === 0 ? (
                         <div className="text-center py-4 text-muted-foreground">
                           {searchQuery
-                            ? "Aucun client trouvÃ© pour cette recherche"
+                            ? "Aucun client trouvé pour cette recherche"
                             : "Aucun client disponible"}
                         </div>
                       ) : (
@@ -409,7 +409,7 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                     <p className="font-medium">Nouveau client</p>
                     <p className="text-muted-foreground mt-1">
                       Saisissez les informations du client. Un nouveau profil
-                      client sera crÃ©Ã©.
+                      client sera créé.
                     </p>
                   </div>
                 </div>
@@ -509,7 +509,7 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-foreground">
                     <Phone className="w-4 h-4 inline mr-1" />
-                    TÃ©lÃ©phone
+                    Téléphone
                   </label>
                   <div className="relative">
                     <input
@@ -543,7 +543,7 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                     !validatePhone(formData.customer_phone) && (
                       <p className="text-sm text-red-400 flex items-center mt-1">
                         <AlertCircle className="w-4 h-4 mr-1 flex-shrink-0" />
-                        Format de tÃ©lÃ©phone invalide
+                        Format de téléphone invalide
                       </p>
                     )}
                   {errors.customer_phone && (
@@ -595,7 +595,7 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                 )}
                 {formData.customer_address && (
                   <p className="text-xs text-muted-foreground">
-                    {formData.customer_address.length}/200 caractÃ¨res
+                    {formData.customer_address.length}/200 caractères
                   </p>
                 )}
               </div>
@@ -610,16 +610,16 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                     </p>
                     <ul className="space-y-1 text-muted-foreground">
                       <li>
-                        â€¢ Communication directe en cas de questions ou retards
+                        • Communication directe en cas de questions ou retards
                       </li>
                       <li>
-                        â€¢ Notifications automatiques de l&apos;avancement des
+                        • Notifications automatiques de l&apos;avancement des
                         travaux
                       </li>
                       <li>
-                        â€¢ Historique client pour les interventions futures
+                        • Historique client pour les interventions futures
                       </li>
-                      <li>â€¢ Facturation et suivi comptable facilitÃ©s</li>
+                      <li>• Facturation et suivi comptable facilités</li>
                     </ul>
                   </div>
                 </div>
@@ -629,7 +629,7 @@ export const CustomerStep: React.FC<FormStepProps> = ({
               {!isFormEmpty && (
                 <div className="bg-white border border-[hsl(var(--rpma-border))] rounded-lg p-4">
                   <h4 className="text-sm font-medium text-foreground mb-2">
-                    RÃ©sumÃ© des informations :
+                    Résumé des informations :
                   </h4>
                   <div className="text-sm text-muted-foreground space-y-1">
                     {formData.customer_name && (
@@ -677,8 +677,8 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                       Pas d&apos;informations client ?
                     </p>
                     <p className="text-muted-foreground mt-1">
-                      Vous pouvez passer cette Ã©tape et l&apos;remplir plus tard
-                      si nÃ©cessaire.
+                      Vous pouvez passer cette étape et l&apos;remplir plus tard
+                      si nécessaire.
                     </p>
                   </div>
                 </div>

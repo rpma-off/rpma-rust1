@@ -18,15 +18,15 @@ export const TaskFormHeader: React.FC<TaskFormHeaderProps> = React.memo(({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
         <div className="flex-1">
           <h2 className="text-xl sm:text-2xl font-bold">
-            {isEditing ? 'Modifier la tÃ¢che' : 'CrÃ©er une nouvelle tÃ¢che'}
+            {isEditing ? 'Modifier la tâche' : 'Créer une nouvelle tâche'}
           </h2>
           <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-            {isEditing ? 'Modifiez les informations de la tÃ¢che' : 'Remplissez le formulaire pour crÃ©er une nouvelle tÃ¢che'}
+            {isEditing ? 'Modifiez les informations de la tâche' : 'Remplissez le formulaire pour créer une nouvelle tâche'}
           </p>
         </div>
         <div className="text-center sm:text-right">
           <div className="text-2xl sm:text-3xl font-bold">{taskNumber}</div>
-          <div className="text-muted-foreground text-xs sm:text-sm">NumÃ©ro de tÃ¢che</div>
+          <div className="text-muted-foreground text-xs sm:text-sm">Numéro de tâche</div>
         </div>
       </div>
     </div>

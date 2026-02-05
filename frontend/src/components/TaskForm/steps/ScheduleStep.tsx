@@ -162,7 +162,7 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
             </div>
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-            DÃ©finissez la date et les horaires de l&apos;intervention PPF
+            Définissez la date et les horaires de l&apos;intervention PPF
           </p>
         </div>
 
@@ -207,14 +207,14 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
               isDayPassed(formData.scheduled_date) && (
                 <p className="text-sm text-red-400 flex items-center mt-1">
                   <AlertCircle className="w-4 h-4 mr-1 flex-shrink-0" />
-                  La date sÃ©lectionnÃ©e est dans le passÃ©
+                  La date sélectionnée est dans le passé
                 </p>
               )}
 
             {formData.scheduled_date && isWeekend(formData.scheduled_date) && (
               <p className="text-sm text-yellow-400 flex items-center mt-1">
                 <Info className="w-4 h-4 mr-1 flex-shrink-0" />
-                Week-end sÃ©lectionnÃ© - vÃ©rifiez les disponibilitÃ©s
+                Week-end sélectionné - vérifiez les disponibilités
               </p>
             )}
 
@@ -257,7 +257,7 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
             {/* Custom time input */}
             <div className="mt-3">
               <label className="text-xs text-muted-foreground mb-1 block">
-                Ou saisissez une heure personnalisÃ©e :
+                Ou saisissez une heure personnalisée :
               </label>
               <input
                 type="time"
@@ -281,14 +281,14 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
           <div className="bg-[hsl(var(--rpma-teal))]/10 border border-[hsl(var(--rpma-teal))]/30 rounded-lg p-4">
             <h4 className="text-sm font-medium text-foreground mb-2 flex items-center">
               <Timer className="w-4 h-4 mr-2" />
-              Estimation de durÃ©e
+              Estimation de durée
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Start Time */}
               <div className="space-y-2">
                 <label className="block text-xs font-medium text-foreground">
-                  Heure de dÃ©but (optionnel)
+                  Heure de début (optionnel)
                 </label>
                 <select
                   name="start_time"
@@ -299,7 +299,7 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
                   className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-foreground focus:border-[hsl(var(--rpma-teal))] focus:ring-2 focus:ring-[hsl(var(--rpma-teal))]/20 focus:outline-none"
                   disabled={isLoading}
                 >
-                  <option value="">SÃ©lectionner...</option>
+                  <option value="">Sélectionner...</option>
                   {TIME_SLOTS.map((time) => (
                     <option key={time} value={time}>
                       {time}
@@ -320,7 +320,7 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
                   className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white text-foreground focus:border-[hsl(var(--rpma-teal))] focus:ring-2 focus:ring-[hsl(var(--rpma-teal))]/20 focus:outline-none"
                   disabled={isLoading}
                 >
-                  <option value="">SÃ©lectionner...</option>
+                  <option value="">Sélectionner...</option>
                   {TIME_SLOTS.map((time) => (
                     <option key={time} value={time}>
                       {time}
@@ -334,7 +334,7 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
             {formData.start_time && formData.end_time && (
               <div className="mt-3 text-sm text-foreground">
                 <p>
-                  DurÃ©e prÃ©vue :{" "}
+                  Durée prévue :{" "}
                   {(() => {
                     const start = new Date(
                       `1970-01-01T${formData.start_time}:00`,
@@ -351,10 +351,10 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
             )}
 
             <p className="text-xs text-muted-foreground mt-2">
-              Estimation basÃ©e sur{" "}
+              Estimation basée sur{" "}
               {(formData.ppf_zones?.length || 0) +
                 (formData.custom_ppf_zones?.length || 0)}{" "}
-              zones sÃ©lectionnÃ©es
+              zones sélectionnées
             </p>
           </div>
 
@@ -368,7 +368,7 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
               name="notes"
               value={formData.notes || ""}
               onChange={handleChange}
-              placeholder="Instructions spÃ©ciales, prÃ©paratifs nÃ©cessaires, particularitÃ©s du vÃ©hicule..."
+              placeholder="Instructions spéciales, préparatifs nécessaires, particularités du véhicule..."
               rows={4}
               maxLength={1000}
               className={`
@@ -393,7 +393,7 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                {formData.notes?.length || 0}/1000 caractÃ¨res
+                {formData.notes?.length || 0}/1000 caractères
               </p>
             </div>
           </div>
@@ -403,7 +403,7 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
             <div className="bg-[hsl(var(--rpma-teal))]/10 border border-[hsl(var(--rpma-teal))]/30 rounded-lg p-4">
               <h4 className="text-sm font-medium text-foreground mb-2 flex items-center">
                 <CheckCircle className="w-4 h-4 mr-2 text-[hsl(var(--rpma-teal))]" />
-                RÃ©capitulatif du rendez-vous
+                Récapitulatif du rendez-vous
               </h4>
               <div className="space-y-2 text-sm text-foreground">
                 <div className="flex items-center">
@@ -423,10 +423,10 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
                 <div className="flex items-center">
                   <Clock className="w-4 h-4 mr-2 text-[hsl(var(--rpma-teal))]" />
                   <span>
-                    Ã€ {formData.scheduled_time}
+                    À {formData.scheduled_time}
                     {formData.start_time && formData.end_time && (
                       <span className="ml-2 text-muted-foreground">
-                        (Travaux de {formData.start_time} Ã  {formData.end_time})
+                        (Travaux de {formData.start_time} Ï  {formData.end_time})
                       </span>
                     )}
                   </span>
@@ -434,7 +434,7 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
                 <div className="flex items-center">
                   <Timer className="w-4 h-4 mr-2 text-[hsl(var(--rpma-teal))]" />
                   <span>
-                    DurÃ©e estimÃ©e : {formatDuration(estimatedDuration)}
+                    Durée estimée : {formatDuration(estimatedDuration)}
                   </span>
                 </div>
               </div>
@@ -448,11 +448,11 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
               <div className="text-sm text-foreground">
                 <p className="font-medium mb-1">Informations importantes :</p>
                 <ul className="space-y-1 text-muted-foreground">
-                  <li>â€¢ PrÃ©voir un espace de travail propre et Ã©clairÃ©</li>
-                  <li>â€¢ Le vÃ©hicule doit Ãªtre lavÃ© et dÃ©contaminÃ©</li>
-                  <li>â€¢ DurÃ©e estimÃ©e basÃ©e sur la complexitÃ© des zones</li>
+                  <li>• Prévoir un espace de travail propre et éclairé</li>
+                  <li>• Le véhicule doit être lavé et décontaminé</li>
+                  <li>• Durée estimée basée sur la complexité des zones</li>
                   <li>
-                    â€¢ PossibilitÃ© d&apos;ajustement selon les conditions rÃ©elles
+                    • Possibilité d&apos;ajustement selon les conditions réelles
                   </li>
                 </ul>
               </div>

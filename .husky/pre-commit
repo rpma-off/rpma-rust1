@@ -1,0 +1,43 @@
+#!/bin/sh
+
+# Check for corrupted UTF-8 encoding in source files
+echo "Checking for UTF-8 encoding corruption..."
+
+# Get all staged .ts, .tsx, .js, .jsx files
+staged_files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|js|jsx)$' || true)
+
+if [ -z "$staged_files" ]; then
+  echo "No TypeScript/JavaScript files staged."
+else
+  # Patterns to check for (corrupted UTF-8 sequences)
+  corrupted_patterns="Ã©|Ã´|Ã®|Ã¨|Ãª|Ã |Ã§|Ã¹|Ã«|Ã¯|Ã¼|Ã¶|Ã¤|Ã¢|Ã‰|Ãˆ|ÃŠ|Ã€|Ã‡"
+
+  has_corruption=false
+
+  for file in $staged_files; do
+    if [ ! -f "$file" ]; then
+      continue
+    fi
+
+    # Skip the fix-encoding script itself (it intentionally contains corrupted patterns)
+    if [ "$(basename "$file")" = "fix-encoding.js" ]; then
+      continue
+    fi
+
+    if grep -qE "$corrupted_patterns" "$file"; then
+      echo "❌ ERROR: Corrupted UTF-8 encoding found in $file"
+      has_corruption=true
+    fi
+  done
+
+  if [ "$has_corruption" = true ]; then
+    echo ""
+    echo "⚠️  Your files contain corrupted UTF-8 characters."
+    echo "   This usually happens when files are saved with wrong encoding (ISO-8859-1 instead of UTF-8)."
+    echo "   Please ensure your editor saves files as UTF-8."
+    echo "   You can fix existing files by running: node scripts/fix-encoding.js"
+    exit 1
+  fi
+
+  echo "✓ No encoding corruption found."
+fi

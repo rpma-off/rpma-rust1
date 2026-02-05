@@ -35,7 +35,7 @@ export function TaskAttachments({ taskId }: TaskAttachmentsProps) {
       <div className="p-6">
         <div className="flex items-center space-x-2 mb-4">
           <Camera className="w-5 h-5 text-[hsl(var(--rpma-teal))]" />
-          <h2 className="text-xl font-semibold text-foreground">Photos et piÃ¨ces jointes</h2>
+          <h2 className="text-xl font-semibold text-foreground">Photos et pièces jointes</h2>
         </div>
         {interventionId ? (
           <TaskPhotos taskId={taskId} interventionId={interventionId} />
@@ -43,7 +43,7 @@ export function TaskAttachments({ taskId }: TaskAttachmentsProps) {
           <div className="text-center py-8">
             <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">
-              Les photos ne sont disponibles qu&apos;aprÃ¨s le dÃ©marrage d&apos;une intervention.
+              Les photos ne sont disponibles qu&apos;après le démarrage d&apos;une intervention.
             </p>
           </div>
         )}

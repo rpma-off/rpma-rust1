@@ -154,7 +154,7 @@ export function CalendarControls() {
                 <div>
                   <h4 className="text-sm font-semibold mb-3 flex items-center gap-2 text-foreground">
                     <Video className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
-                    Type d&apos;Ã©vÃ©nement
+                    Type d&apos;événement
                   </h4>
                   <div className="space-y-1">
                     <Button
@@ -163,7 +163,7 @@ export function CalendarControls() {
                       className="w-full justify-between h-9 px-3 text-muted-foreground hover:text-foreground hover:bg-border/20"
                       onClick={() => setEventTypeFilter("all")}
                     >
-                      <span className="text-sm">Tous les Ã©vÃ©nements</span>
+                      <span className="text-sm">Tous les événements</span>
                       {eventTypeFilter === "all" && (
                         <Check className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
                       )}
@@ -176,7 +176,7 @@ export function CalendarControls() {
                     >
                       <div className="flex items-center gap-2.5">
                         <Video className="h-4 w-4 text-cyan-400" />
-                        <span className="text-sm">Avec rÃ©union</span>
+                        <span className="text-sm">Avec réunion</span>
                       </div>
                       {eventTypeFilter === "with-meeting" && (
                         <Check className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
@@ -190,7 +190,7 @@ export function CalendarControls() {
                     >
                       <div className="flex items-center gap-2.5">
                         <VideoOff className="h-4 w-4 text-border" />
-                        <span className="text-sm">Sans rÃ©union</span>
+                        <span className="text-sm">Sans réunion</span>
                       </div>
                       {eventTypeFilter === "without-meeting" && (
                         <Check className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />

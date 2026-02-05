@@ -33,13 +33,13 @@ const DelayTaskModal: React.FC<DelayTaskModalProps> = ({ task, open, onOpenChang
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast.success('TÃ¢che reportÃ©e avec succÃ¨s');
+      toast.success('Tâche reportée avec succès');
       setNewDate('');
       setReason('');
       onOpenChange(false);
     },
     onError: (error) => {
-      toast.error('Erreur lors du report de la tÃ¢che');
+      toast.error('Erreur lors du report de la tâche');
       console.error('Delay task error:', error);
     }
   });
@@ -48,7 +48,7 @@ const DelayTaskModal: React.FC<DelayTaskModalProps> = ({ task, open, onOpenChang
     e.preventDefault();
 
     if (!newDate) {
-      toast.error('Veuillez sÃ©lectionner une nouvelle date');
+      toast.error('Veuillez sélectionner une nouvelle date');
       return;
     }
 
@@ -63,7 +63,7 @@ const DelayTaskModal: React.FC<DelayTaskModalProps> = ({ task, open, onOpenChang
     today.setHours(0, 0, 0, 0);
 
     if (selectedDate <= today) {
-      toast.error('La nouvelle date doit Ãªtre dans le futur');
+      toast.error('La nouvelle date doit être dans le futur');
       return;
     }
 
@@ -87,12 +87,12 @@ const DelayTaskModal: React.FC<DelayTaskModalProps> = ({ task, open, onOpenChang
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Reporter la tÃ¢che</DialogTitle>
+          <DialogTitle>Reporter la tâche</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="text-sm text-muted-foreground">
-            <p>TÃ¢che actuelle: #{task.task_number} - {task.title}</p>
+            <p>Tâche actuelle: #{task.task_number} - {task.title}</p>
             {task.scheduled_date && (
               <p>Date actuelle: {new Date(task.scheduled_date).toLocaleDateString('fr-FR')}</p>
             )}
@@ -110,7 +110,7 @@ const DelayTaskModal: React.FC<DelayTaskModalProps> = ({ task, open, onOpenChang
               className="bg-muted border-border text-foreground"
             />
             <p className="text-xs text-border mt-1">
-              La date doit Ãªtre dans le futur
+              La date doit être dans le futur
             </p>
           </div>
 
@@ -120,7 +120,7 @@ const DelayTaskModal: React.FC<DelayTaskModalProps> = ({ task, open, onOpenChang
               id="reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="Expliquez pourquoi cette tÃ¢che doit Ãªtre reportÃ©e..."
+              placeholder="Expliquez pourquoi cette tâche doit être reportée..."
               rows={3}
               required
               className="bg-muted border-border text-foreground"

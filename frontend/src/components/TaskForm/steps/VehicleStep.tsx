@@ -204,18 +204,18 @@ export const VehicleStep: React.FC<FormStepProps> = ({
             <div className="flex items-center">
               <Car className="w-5 h-5 text-[hsl(var(--rpma-teal))] mr-2" />
               <h3 className="text-base sm:text-lg font-semibold text-foreground">
-                Informations du vÃ©hicule
+                Informations du véhicule
               </h3>
             </div>
             <div className="text-xs sm:text-sm bg-[hsl(var(--rpma-teal))]/10 px-2 sm:px-3 py-1 rounded-full">
-              <span className="font-medium text-[hsl(var(--rpma-teal))]">NÂ°:</span>
+              <span className="font-medium text-[hsl(var(--rpma-teal))]">N°:</span>
               <span className="text-muted-foreground ml-1">
-                {formData.title || "Auto-gÃ©nÃ©rÃ©"}
+                {formData.title || "Auto-généré"}
               </span>
             </div>
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-            Saisissez les informations du vÃ©hicule Ã  traiter
+            Saisissez les informations du véhicule Ï  traiter
           </p>
         </div>
 
@@ -344,7 +344,7 @@ export const VehicleStep: React.FC<FormStepProps> = ({
             {/* Vehicle Model */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-foreground">
-                ModÃ¨le *
+                Modèle *
               </label>
               <div className="relative">
                 <input
@@ -352,7 +352,7 @@ export const VehicleStep: React.FC<FormStepProps> = ({
                   name="vehicle_model"
                   value={formData.vehicle_model || ""}
                   onChange={handleChange}
-                  placeholder="Ex: SÃ©rie 3, Classe C, A4..."
+                  placeholder="Ex: Série 3, Classe C, A4..."
                   className={`
                     w-full px-3 py-2 border rounded-lg transition-all duration-200 bg-white text-foreground placeholder-muted-foreground
                     ${
@@ -392,7 +392,7 @@ export const VehicleStep: React.FC<FormStepProps> = ({
             {/* Vehicle Year */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-foreground">
-                AnnÃ©e *
+                Année *
               </label>
               <div className="relative">
                 <input
@@ -442,7 +442,7 @@ export const VehicleStep: React.FC<FormStepProps> = ({
                 <Hash className="w-4 h-4 inline mr-1" />
                 VIN (optionnel)
                 <span className="text-xs text-muted-foreground ml-1">
-                  17 caractÃ¨res
+                  17 caractères
                 </span>
               </label>
               <div className="relative">
@@ -478,7 +478,7 @@ export const VehicleStep: React.FC<FormStepProps> = ({
                   <div className="flex items-center space-x-2">
                     {vinValidationState === "checking" && (
                       <span className="text-[hsl(var(--rpma-teal))]">
-                        VÃ©rification en cours...
+                        Vérification en cours...
                       </span>
                     )}
                     {vinValidationState === "valid" && (
@@ -495,7 +495,7 @@ export const VehicleStep: React.FC<FormStepProps> = ({
                     )}
                   </div>
                 )}
-                <p>Format: 17 caractÃ¨res (A-Z, 0-9, sans I, O, Q)</p>
+                <p>Format: 17 caractères (A-Z, 0-9, sans I, O, Q)</p>
               </div>
 
               {errors.vehicle_vin && (
@@ -517,16 +517,16 @@ export const VehicleStep: React.FC<FormStepProps> = ({
               <div className="text-sm text-foreground">
                 <p className="font-medium mb-1">Conseils de saisie :</p>
                 <ul className="space-y-1 text-muted-foreground">
-                  <li>â€¢ La plaque sera automatiquement formatÃ©e (AB-123-CD)</li>
+                  <li>• La plaque sera automatiquement formatée (AB-123-CD)</li>
                   <li>
-                    â€¢ Le VIN est optionnel mais aide Ã  l&apos;identification
-                    prÃ©cise
+                    • Le VIN est optionnel mais aide Ï  l&apos;identification
+                    précise
                   </li>
                   <li>
-                    â€¢ Utilisez la suggestion de marques pour Ã©viter les erreurs
+                    • Utilisez la suggestion de marques pour éviter les erreurs
                   </li>
                   <li>
-                    â€¢ Le VIN est validÃ© en temps rÃ©el avec vÃ©rification de
+                    • Le VIN est validé en temps réel avec vérification de
                     checksum
                   </li>
                 </ul>

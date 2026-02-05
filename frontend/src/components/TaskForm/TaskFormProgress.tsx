@@ -24,7 +24,7 @@ export const TaskFormProgress: React.FC<TaskFormProgressProps> = React.memo(({
     <div className="mb-4 sm:mb-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 space-y-1 sm:space-y-0">
         <span className="text-xs sm:text-sm font-medium text-foreground">
-          Ã‰tape {STEPS_CONFIG.findIndex(s => s.id === currentStep) + 1} sur {STEPS_CONFIG.length}
+          Étape {STEPS_CONFIG.findIndex(s => s.id === currentStep) + 1} sur {STEPS_CONFIG.length}
         </span>
         <span className="text-xs sm:text-sm text-muted-foreground">{Math.round(progress)}%</span>
       </div>

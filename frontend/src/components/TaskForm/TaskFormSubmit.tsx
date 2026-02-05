@@ -31,12 +31,12 @@ export const TaskFormSubmit: React.FC<TaskFormSubmitProps> = React.memo(({
         {loading ? (
           <div className="flex items-center justify-center">
             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-            CrÃ©ation en cours...
+            Création en cours...
           </div>
         ) : (
           <>
             <CheckCircle className="w-5 h-5 inline mr-2" />
-            CrÃ©er la tÃ¢che
+            Créer la tâche
           </>
         )}
       </button>

@@ -33,14 +33,14 @@ const ReportIssueModal: React.FC<ReportIssueModalProps> = ({ task, open, onOpenC
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      toast.success('ProblÃ¨me signalÃ© avec succÃ¨s');
+      toast.success('Problème signalé avec succès');
       setIssueType('technical');
       setSeverity('medium');
       setDescription('');
       onOpenChange(false);
     },
     onError: (error) => {
-      toast.error('Erreur lors du signalement du problÃ¨me');
+      toast.error('Erreur lors du signalement du problème');
       console.error('Report issue error:', error);
     }
   });
@@ -49,7 +49,7 @@ const ReportIssueModal: React.FC<ReportIssueModalProps> = ({ task, open, onOpenC
     e.preventDefault();
 
     if (!description.trim()) {
-      toast.error('Veuillez dÃ©crire le problÃ¨me');
+      toast.error('Veuillez décrire le problème');
       return;
     }
 
@@ -67,33 +67,33 @@ const ReportIssueModal: React.FC<ReportIssueModalProps> = ({ task, open, onOpenC
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Signaler un problÃ¨me</DialogTitle>
+          <DialogTitle>Signaler un problème</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="text-sm text-muted-foreground">
-            <p>TÃ¢che concernÃ©e: #{task.task_number} - {task.title}</p>
+            <p>Tâche concernée: #{task.task_number} - {task.title}</p>
           </div>
 
           <div>
-            <Label htmlFor="issue-type">Type de problÃ¨me</Label>
+            <Label htmlFor="issue-type">Type de problème</Label>
             <Select value={issueType} onValueChange={setIssueType}>
               <SelectTrigger className="bg-muted border-border text-foreground">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-muted border-border">
                 <SelectItem value="technical" className="text-foreground hover:bg-border">Technique</SelectItem>
-                <SelectItem value="material" className="text-foreground hover:bg-border">MatÃ©riel</SelectItem>
+                <SelectItem value="material" className="text-foreground hover:bg-border">Matériel</SelectItem>
                 <SelectItem value="client" className="text-foreground hover:bg-border">Client</SelectItem>
                 <SelectItem value="planning" className="text-foreground hover:bg-border">Planning</SelectItem>
-                <SelectItem value="quality" className="text-foreground hover:bg-border">QualitÃ©</SelectItem>
+                <SelectItem value="quality" className="text-foreground hover:bg-border">Qualité</SelectItem>
                 <SelectItem value="other" className="text-foreground hover:bg-border">Autre</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div>
-            <Label htmlFor="severity">SÃ©vÃ©ritÃ©</Label>
+            <Label htmlFor="severity">Sévérité</Label>
             <Select value={severity} onValueChange={setSeverity}>
               <SelectTrigger className="bg-muted border-border text-foreground">
                 <SelectValue />
@@ -101,19 +101,19 @@ const ReportIssueModal: React.FC<ReportIssueModalProps> = ({ task, open, onOpenC
               <SelectContent className="bg-muted border-border">
                 <SelectItem value="low" className="text-foreground hover:bg-border">Faible</SelectItem>
                 <SelectItem value="medium" className="text-foreground hover:bg-border">Moyenne</SelectItem>
-                <SelectItem value="high" className="text-foreground hover:bg-border">Ã‰levÃ©e</SelectItem>
+                <SelectItem value="high" className="text-foreground hover:bg-border">Élevée</SelectItem>
                 <SelectItem value="critical" className="text-foreground hover:bg-border">Critique</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div>
-            <Label htmlFor="description">Description du problÃ¨me *</Label>
+            <Label htmlFor="description">Description du problème *</Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="DÃ©crivez le problÃ¨me en dÃ©tail..."
+              placeholder="Décrivez le problème en détail..."
               rows={4}
               required
               className="bg-muted border-border text-foreground"
@@ -121,7 +121,7 @@ const ReportIssueModal: React.FC<ReportIssueModalProps> = ({ task, open, onOpenC
           </div>
 
           <div className="text-sm text-muted-foreground">
-            <p>Ce signalement sera transmis Ã  l&apos;Ã©quipe de support pour rÃ©solution.</p>
+            <p>Ce signalement sera transmis Ã  l&apos;équipe de support pour résolution.</p>
           </div>
 
           <div className="flex justify-end space-x-3 pt-4 border-t border-border">

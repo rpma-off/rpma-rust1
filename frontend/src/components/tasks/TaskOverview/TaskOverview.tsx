@@ -34,7 +34,7 @@ interface TaskOverviewProps {
 
 export function TaskOverview({ task }: TaskOverviewProps) {
   const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return 'Non dÃ©fini';
+    if (!dateString) return 'Non défini';
     try {
       return new Date(dateString).toLocaleDateString('fr-FR', {
         weekday: 'long',
@@ -48,7 +48,7 @@ export function TaskOverview({ task }: TaskOverviewProps) {
   };
 
   const formatTime = (timeString: string | null | undefined) => {
-    if (!timeString) return 'Non dÃ©fini';
+    if (!timeString) return 'Non défini';
     try {
       return new Date(timeString).toLocaleTimeString('fr-FR', {
         hour: '2-digit',
@@ -79,7 +79,7 @@ export function TaskOverview({ task }: TaskOverviewProps) {
     switch (status) {
       case 'completed':
       case 'termine':
-        return 'TerminÃ©';
+        return 'Terminé';
       case 'in_progress':
       case 'en_cours':
         return 'En cours';
@@ -117,7 +117,7 @@ export function TaskOverview({ task }: TaskOverviewProps) {
       case 'low':
         return 'Basse';
       default:
-        return 'Non dÃ©finie';
+        return 'Non définie';
     }
   };
 
@@ -148,7 +148,7 @@ export function TaskOverview({ task }: TaskOverviewProps) {
       <div className="p-6">
         <div className="flex items-center space-x-2 mb-6">
           <FileText className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />
-          <h2 className="text-xl font-semibold text-foreground">DÃ©tails de l&apos;intervention</h2>
+          <h2 className="text-xl font-semibold text-foreground">Détails de l&apos;intervention</h2>
         </div>
 
         {/* Task Status & Priority */}
@@ -156,7 +156,7 @@ export function TaskOverview({ task }: TaskOverviewProps) {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <Target className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
-              <h3 className="text-sm font-medium text-foreground">Statut & PrioritÃ©</h3>
+              <h3 className="text-sm font-medium text-foreground">Statut & Priorité</h3>
             </div>
             <div className="bg-background/50 rounded-lg p-3 sm:p-4 space-y-3">
               <div className="flex justify-between items-center">
@@ -170,13 +170,13 @@ export function TaskOverview({ task }: TaskOverviewProps) {
                     'bg-gray-500/20 text-gray-300 border-gray-500/50'
                   }`}
                 >
-                  {task.status === 'completed' ? 'TerminÃ©e' :
+                  {task.status === 'completed' ? 'Terminée' :
                    task.status === 'in_progress' ? 'En cours' :
                    task.status === 'pending' ? 'En attente' : 'Autre'}
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">PrioritÃ©</span>
+                <span className="text-sm text-muted-foreground">Priorité</span>
                 <Badge
                   variant="outline"
                   className={`px-2 py-1 text-xs font-medium ${getPriorityColor(task.priority || 'medium')}`}
@@ -191,7 +191,7 @@ export function TaskOverview({ task }: TaskOverviewProps) {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <TrendingUp className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
-              <h3 className="text-sm font-medium text-foreground">Progression & MÃ©triques</h3>
+              <h3 className="text-sm font-medium text-foreground">Progression & Métriques</h3>
             </div>
             <div className="bg-background/50 rounded-lg p-3 sm:p-4 space-y-3">
               <div className="flex justify-between items-center">
@@ -213,7 +213,7 @@ export function TaskOverview({ task }: TaskOverviewProps) {
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Photos aprÃ¨s</span>
+                <span className="text-sm text-muted-foreground">Photos après</span>
                 <span className="text-sm font-medium text-foreground">
                   {task.photos_after?.length || 0}
                 </span>
@@ -235,11 +235,11 @@ export function TaskOverview({ task }: TaskOverviewProps) {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <Hash className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
-              <h3 className="text-sm font-medium text-foreground">Informations gÃ©nÃ©rales</h3>
+              <h3 className="text-sm font-medium text-foreground">Informations générales</h3>
             </div>
             <div className="bg-background/50 rounded-lg p-3 sm:p-4 space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">ID de la tÃ¢che</span>
+                <span className="text-sm text-muted-foreground">ID de la tâche</span>
                 <span className="text-sm font-medium text-foreground font-mono">
                   {task.id?.slice(-8) || 'N/A'}
                 </span>
@@ -262,7 +262,7 @@ export function TaskOverview({ task }: TaskOverviewProps) {
               )}
               {task.estimated_duration_minutes && (
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">DurÃ©e estimÃ©e</span>
+                  <span className="text-sm text-muted-foreground">Durée estimée</span>
                   <span className="text-sm font-medium text-foreground">
                     {Math.round(task.estimated_duration_minutes / 60)}h
                   </span>
@@ -279,20 +279,20 @@ export function TaskOverview({ task }: TaskOverviewProps) {
             </div>
             <div className="bg-background/50 rounded-lg p-3 sm:p-4 space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">CrÃ©Ã©e le</span>
+                <span className="text-sm text-muted-foreground">Créée le</span>
                  <span className="text-sm font-medium text-foreground">
                    {formatDate(task.created_at as unknown as string)}
                  </span>
                </div>
                <div className="flex justify-between items-center">
-                 <span className="text-sm text-muted-foreground">DerniÃ¨re mise Ã  jour</span>
+                 <span className="text-sm text-muted-foreground">Dernière mise Ã  jour</span>
                  <span className="text-sm font-medium text-foreground">
                    {formatDate(task.updated_at as unknown as string)}
                  </span>
               </div>
               {task.start_time && (
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">DÃ©but effectif</span>
+                  <span className="text-sm text-muted-foreground">Début effectif</span>
                   <span className="text-sm font-medium text-foreground">
                     {formatTime(task.start_time)}
                   </span>
@@ -315,24 +315,24 @@ export function TaskOverview({ task }: TaskOverviewProps) {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <Car className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
-              <h3 className="text-sm font-medium text-foreground">VÃ©hicule</h3>
+              <h3 className="text-sm font-medium text-foreground">Véhicule</h3>
             </div>
             <div className="bg-background/50 rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">ModÃ¨le</span>
+                <span className="text-sm text-muted-foreground">Modèle</span>
                 <span className="text-sm font-medium text-foreground">
-                  {task.vehicle_make ? `${task.vehicle_make} ${task.vehicle_model}` : task.vehicle_model || 'Non spÃ©cifiÃ©'}
+                  {task.vehicle_make ? `${task.vehicle_make} ${task.vehicle_model}` : task.vehicle_model || 'Non spécifié'}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Plaque</span>
                 <span className="text-sm font-medium text-foreground font-mono">
-                  {task.vehicle_plate || 'Non spÃ©cifiÃ©e'}
+                  {task.vehicle_plate || 'Non spécifiée'}
                 </span>
               </div>
               {task.vehicle_year && (
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">AnnÃ©e</span>
+                  <span className="text-sm text-muted-foreground">Année</span>
                   <span className="text-sm font-medium text-foreground">
                     {task.vehicle_year}
                   </span>
@@ -360,7 +360,7 @@ export function TaskOverview({ task }: TaskOverviewProps) {
               <div className="space-y-2 pb-3 border-b border-border/30">
                 <div className="flex items-center space-x-2 mb-2">
                   <Calendar className="h-3 w-3 text-[hsl(var(--rpma-teal))]" />
-                  <span className="text-xs font-medium text-foreground uppercase tracking-wide">PlanifiÃ©</span>
+                  <span className="text-xs font-medium text-foreground uppercase tracking-wide">Planifié</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Date RDV</span>
@@ -378,7 +378,7 @@ export function TaskOverview({ task }: TaskOverviewProps) {
                 )}
                 {task.estimated_duration_minutes && (
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">DurÃ©e estimÃ©e</span>
+                    <span className="text-sm text-muted-foreground">Durée estimée</span>
                     <span className="text-sm font-medium text-foreground">
                       {Math.round(task.estimated_duration_minutes / 60)}h {task.estimated_duration_minutes % 60 > 0 ? `${task.estimated_duration_minutes % 60}min` : ''}
                     </span>
@@ -391,11 +391,11 @@ export function TaskOverview({ task }: TaskOverviewProps) {
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2 mb-2">
                     <Clock className="h-3 w-3 text-[hsl(var(--rpma-teal))]" />
-                    <span className="text-xs font-medium text-foreground uppercase tracking-wide">RÃ©alisÃ©</span>
+                    <span className="text-xs font-medium text-foreground uppercase tracking-wide">Réalisé</span>
                   </div>
                   {task.start_time && (
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">DÃ©but effectif</span>
+                      <span className="text-sm text-muted-foreground">Début effectif</span>
                       <span className="text-sm font-medium text-foreground">
                         {formatTime(task.start_time)}
                       </span>
@@ -411,7 +411,7 @@ export function TaskOverview({ task }: TaskOverviewProps) {
                   )}
                   {task.start_time && task.end_time && (
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">DurÃ©e rÃ©elle</span>
+                      <span className="text-sm text-muted-foreground">Durée réelle</span>
                       <span className="text-sm font-medium text-foreground">
                         {(() => {
                           const start = new Date(task.start_time!);
@@ -440,7 +440,7 @@ export function TaskOverview({ task }: TaskOverviewProps) {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <Package className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
-              <h3 className="text-sm font-medium text-foreground">DÃ©tails techniques</h3>
+              <h3 className="text-sm font-medium text-foreground">Détails techniques</h3>
             </div>
             <div className="bg-background/50 rounded-lg p-3 sm:p-4 space-y-3">
               {/* PPF Information */}
@@ -452,12 +452,12 @@ export function TaskOverview({ task }: TaskOverviewProps) {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Zones</span>
                   <span className="text-sm font-medium text-foreground">
-                    {task.ppf_zones?.length ? `${task.ppf_zones.length} zone${task.ppf_zones.length > 1 ? 's' : ''}` : 'Non spÃ©cifiÃ©es'}
+                    {task.ppf_zones?.length ? `${task.ppf_zones.length} zone${task.ppf_zones.length > 1 ? 's' : ''}` : 'Non spécifiées'}
                   </span>
                 </div>
                 {task.ppf_zones && task.ppf_zones.length > 0 && (
                   <div className="flex justify-between items-start">
-                    <span className="text-sm text-muted-foreground">DÃ©tail</span>
+                    <span className="text-sm text-muted-foreground">Détail</span>
                     <span className="text-sm font-medium text-foreground text-right max-w-[60%]">
                       {task.ppf_zones.join(', ')}
                     </span>
@@ -469,7 +469,7 @@ export function TaskOverview({ task }: TaskOverviewProps) {
               <div className="space-y-2">
                 <div className="flex items-center space-x-2 mb-2">
                   <Tag className="h-3 w-3 text-[hsl(var(--rpma-teal))]" />
-                  <span className="text-xs font-medium text-foreground uppercase tracking-wide">MatÃ©riel</span>
+                  <span className="text-xs font-medium text-foreground uppercase tracking-wide">Matériel</span>
                 </div>
                 {task.lot_film && (
                   <div className="flex justify-between items-center">
@@ -492,7 +492,7 @@ export function TaskOverview({ task }: TaskOverviewProps) {
               {/* No technical details */}
               {!task.ppf_zones?.length && !task.lot_film && !task.customer_address && (
                 <div className="text-center py-4">
-                  <span className="text-sm text-muted-foreground">Aucun dÃ©tail technique disponible</span>
+                  <span className="text-sm text-muted-foreground">Aucun détail technique disponible</span>
                 </div>
               )}
             </div>
@@ -526,7 +526,7 @@ export function TaskOverview({ task }: TaskOverviewProps) {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Statut</span>
                   <span className="text-sm font-medium text-foreground">
-                    Non assignÃ©
+                    Non assigné
                   </span>
                 </div>
               )}
@@ -555,7 +555,7 @@ export function TaskOverview({ task }: TaskOverviewProps) {
                   </div>
                   {task.client.phone && (
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">TÃ©lÃ©phone</span>
+                      <span className="text-sm text-muted-foreground">Téléphone</span>
                       <span className="text-sm font-medium text-foreground">
                         {task.client.phone}
                       </span>
@@ -595,7 +595,7 @@ export function TaskOverview({ task }: TaskOverviewProps) {
 
                   {task.customer_phone && (
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">TÃ©lÃ©phone</span>
+                      <span className="text-sm text-muted-foreground">Téléphone</span>
                       <div className="flex items-center space-x-2">
                         <Phone className="h-3 w-3 text-muted-foreground" />
                         <span className="text-sm font-medium text-foreground">
@@ -694,7 +694,7 @@ export function TaskOverview({ task }: TaskOverviewProps) {
               <div className="bg-background/50 rounded-lg p-4">
                 <div className="flex items-center space-x-2 mb-2">
                   <AlertTriangle className="h-3 w-3 text-yellow-500" />
-                  <span className="text-xs font-medium text-foreground uppercase tracking-wide">Instructions spÃ©ciales</span>
+                  <span className="text-xs font-medium text-foreground uppercase tracking-wide">Instructions spéciales</span>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {(task as Task & { special_instructions?: string }).special_instructions}

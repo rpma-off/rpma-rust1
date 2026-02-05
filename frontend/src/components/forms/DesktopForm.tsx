@@ -99,7 +99,7 @@ export function DesktopForm({
 
       <div className="text-xs text-border text-center space-y-1">
         <div>ðŸ’¡ Ctrl+Enter pour enregistrer rapidement</div>
-        <div>ðŸ’¡ Ã‰chap pour annuler</div>
+        <div>ðŸ’¡ Échap pour annuler</div>
       </div>
     </form>
   );

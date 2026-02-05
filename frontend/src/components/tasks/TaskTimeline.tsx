@@ -13,7 +13,7 @@ export function TaskTimeline({ taskId }: TaskTimelineProps) {
       <div className="p-6">
         <div className="flex items-center space-x-2 mb-4">
           <History className="w-5 h-5 text-[hsl(var(--rpma-teal))]" />
-          <h2 className="text-xl font-semibold text-foreground">Historique des activitÃ©s</h2>
+          <h2 className="text-xl font-semibold text-foreground">Historique des activités</h2>
         </div>
         <TaskHistory taskId={taskId} />
       </div>

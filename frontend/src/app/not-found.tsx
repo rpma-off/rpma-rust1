@@ -44,8 +44,8 @@ export default function NotFound() {
               Page introuvable
             </h2>
             <p className="text-base md:text-lg text-muted-foreground mb-8 leading-relaxed">
-              DÃ©solÃ©, la page que vous recherchez n&apos;existe pas ou a Ã©tÃ© dÃ©placÃ©e.
-              VÃ©rifiez l&apos;URL ou retournez Ã  une page connue.
+              Désolé, la page que vous recherchez n&apos;existe pas ou a été déplacée.
+              Vérifiez l&apos;URL ou retournez Ã  une page connue.
             </p>
           </motion.div>
 
@@ -69,7 +69,7 @@ export default function NotFound() {
               className="px-8 py-3"
             >
               <Search className="w-5 h-5" />
-              Retour en arriÃ¨re
+              Retour en arrière
             </Button>
           </motion.div>
 
@@ -86,7 +86,7 @@ export default function NotFound() {
                 href="/tasks"
                 className="p-3 bg-white rounded-lg border border-[hsl(var(--rpma-border))] hover:bg-[hsl(var(--rpma-surface))] transition-all duration-base text-center"
               >
-                <div className="text-[hsl(var(--rpma-teal))] font-medium text-sm">TÃ¢ches</div>
+                <div className="text-[hsl(var(--rpma-teal))] font-medium text-sm">Tâches</div>
               </Link>
               <Link
                 href="/clients"
@@ -149,7 +149,7 @@ export default function NotFound() {
             <div className="w-6 h-6 bg-[hsl(var(--rpma-teal))]/10 rounded flex items-center justify-center">
               <span className="text-[hsl(var(--rpma-teal))] font-bold text-xs">R</span>
             </div>
-            <span>RPMA V2 - SystÃ¨me de gestion PPF</span>
+            <span>RPMA V2 - Système de gestion PPF</span>
           </div>
         </motion.div>
       </motion.div>

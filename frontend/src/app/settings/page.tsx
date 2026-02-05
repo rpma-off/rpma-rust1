@@ -55,12 +55,12 @@ const tabConfig = [
   },
   {
     id: 'preferences',
-    label: 'PrÃ©fÃ©rences',
+    label: 'Préférences',
     icon: Bell
   },
   {
     id: 'security',
-    label: 'SÃ©curitÃ©',
+    label: 'Sécurité',
     icon: Shield
   },
   {
@@ -70,7 +70,7 @@ const tabConfig = [
   },
   {
     id: 'accessibility',
-    label: 'AccessibilitÃ©',
+    label: 'Accessibilité',
     icon: Eye
   },
   {
@@ -178,8 +178,8 @@ export default function SettingsPage() {
       <div className="container mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Header */}
         <PageHeader
-          title="ParamÃ¨tres"
-          subtitle="GÃ©rez vos paramÃ¨tres de compte et prÃ©fÃ©rences"
+          title="Paramètres"
+          subtitle="Gérez vos paramètres de compte et préférences"
           icon={<Settings className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />}
           actions={
             <>
@@ -204,9 +204,9 @@ export default function SettingsPage() {
                 <User className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />
               </div>
               <div>
-                <CardTitle className="text-lg font-semibold text-foreground">ParamÃ¨tres personnels</CardTitle>
+                <CardTitle className="text-lg font-semibold text-foreground">Paramètres personnels</CardTitle>
                 <CardDescription className="text-muted-foreground">
-                  Configurez vos informations personnelles, prÃ©fÃ©rences et paramÃ¨tres de sÃ©curitÃ©
+                  Configurez vos informations personnelles, préférences et paramètres de sécurité
                 </CardDescription>
               </div>
             </div>
@@ -240,7 +240,7 @@ export default function SettingsPage() {
                        <SheetHeader className="text-left">
                          <SheetTitle className="text-foreground flex items-center gap-2">
                            <Settings className="h-5 w-5" />
-                           ParamÃ¨tres
+                           Paramètres
                          </SheetTitle>
                          <SheetDescription className="text-muted-foreground">
                            Choisissez une section Ã  configurer
@@ -324,7 +324,7 @@ export default function SettingsPage() {
                      <div className="flex items-center justify-center p-8 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
                        <div className="text-center">
                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--rpma-teal))] mx-auto mb-4"></div>
-                         <p className="text-muted-foreground">Chargement des prÃ©fÃ©rences...</p>
+                         <p className="text-muted-foreground">Chargement des préférences...</p>
                        </div>
                      </div>
                    }>
@@ -337,7 +337,7 @@ export default function SettingsPage() {
                      <div className="flex items-center justify-center p-8 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
                        <div className="text-center">
                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--rpma-teal))] mx-auto mb-4"></div>
-                         <p className="text-muted-foreground">Chargement de la sÃ©curitÃ©...</p>
+                         <p className="text-muted-foreground">Chargement de la sécurité...</p>
                        </div>
                      </div>
                    }>
@@ -363,7 +363,7 @@ export default function SettingsPage() {
                      <div className="flex items-center justify-center p-8 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
                        <div className="text-center">
                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--rpma-teal))] mx-auto mb-4"></div>
-                          <p className="text-muted-foreground">Chargement de l&apos;accessibilitÃ©...</p>
+                          <p className="text-muted-foreground">Chargement de l&apos;accessibilité...</p>
                        </div>
                      </div>
                    }>
