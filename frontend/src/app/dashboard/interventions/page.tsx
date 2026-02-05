@@ -8,7 +8,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth/compatibility';
 import { useRouter } from 'next/navigation';
-import { Loader2, Activity, CheckCircle, Clock, TrendingUp, User, MapPin, Target, Link, Calendar } from 'lucide-react';
+import { Loader2, Activity, CheckCircle, Clock, TrendingUp, User, MapPin, Target, Link, Calendar, SearchX } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -165,15 +165,19 @@ export default function InterventionsDashboard() {
 
   return (
     <div className="container mx-auto p-4 space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard Interventions PPF</h1>
-          <p className="text-gray-600">
-            Vue d&apos;ensemble des interventions actives et métriques de performance
-          </p>
+      <Tabs defaultValue="active" className="space-y-4">
+        <div className="bg-[hsl(var(--rpma-teal))] text-white rounded-[10px] shadow-[var(--rpma-shadow-soft)]">
+          <div className="px-5 pt-4 pb-0">
+            <h1 className="text-xl font-semibold">Activity</h1>
+          </div>
+          <div className="px-2">
+            <TabsList data-variant="underline" className="w-full justify-start">
+              <TabsTrigger value="active" data-variant="underline">All</TabsTrigger>
+              <TabsTrigger value="recent" data-variant="underline">Jobs</TabsTrigger>
+              <TabsTrigger value="analytics" data-variant="underline">Events</TabsTrigger>
+            </TabsList>
+          </div>
         </div>
-      </div>
 
       {/* Métriques principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -231,23 +235,13 @@ export default function InterventionsDashboard() {
       </div>
 
       {/* Tabs pour différentes vues */}
-      <Tabs defaultValue="active" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="active">Interventions Actives</TabsTrigger>
-          <TabsTrigger value="recent">Historique Récent</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-        </TabsList>
-
         {/* Interventions Actives */}
         <TabsContent value="active" className="space-y-4">
           {activeInterventions.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-8">
-                <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">Aucune intervention active</h3>
-                <p className="text-gray-600">
-                  Toutes les interventions sont terminées ou en attente.
-                </p>
+            <Card className="rpma-shell">
+              <CardContent className="rpma-empty">
+                <SearchX />
+                <h3 className="text-lg font-semibold">No results found</h3>
               </CardContent>
             </Card>
           ) : (
@@ -320,13 +314,10 @@ export default function InterventionsDashboard() {
         {/* Historique Récent */}
         <TabsContent value="recent" className="space-y-4">
           {recentInterventions.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-8">
-                <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">Aucune intervention récente</h3>
-                <p className="text-gray-600">
-                  Aucune intervention n&apos;a été effectuée ces 7 derniers jours.
-                </p>
+            <Card className="rpma-shell">
+              <CardContent className="rpma-empty">
+                <SearchX />
+                <h3 className="text-lg font-semibold">No results found</h3>
               </CardContent>
             </Card>
           ) : (

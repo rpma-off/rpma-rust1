@@ -79,43 +79,43 @@ export function UserList({ users, onEdit, onRefresh }: UserListProps) {
   };
 
   return (
-    <div className="bg-muted/50 rounded-xl border border-border/20 shadow-lg backdrop-blur-sm overflow-hidden">
+    <div className="rpma-shell overflow-hidden">
       <div className="px-4 py-5 sm:p-6">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-[hsl(var(--rpma-border))]">
+            <thead className="rpma-table-header">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-border uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Name
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-border uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Email
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-border uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Role
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-border uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-border uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Last Login
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-border uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Created
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-border uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-muted/50 divide-y divide-border/20">
+            <tbody className="bg-white divide-y divide-[hsl(var(--rpma-border))]">
               {users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
+                <tr key={user.id} className="hover:bg-[hsl(var(--rpma-surface))]">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-foreground">
                       {user.first_name} {user.last_name}
                     </div>
-                    <div className="text-sm text-border">
+                    <div className="text-sm text-muted-foreground">
                       @{user.username}
                     </div>
                   </td>
@@ -136,10 +136,10 @@ export function UserList({ users, onEdit, onRefresh }: UserListProps) {
                       {user.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-border">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {user.last_login ? formatDate(user.last_login) : 'Never'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-border">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {formatDate(user.created_at)}
                   </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -175,8 +175,8 @@ export function UserList({ users, onEdit, onRefresh }: UserListProps) {
         </div>
 
         {users.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-border">No users found</div>
+          <div className="rpma-empty">
+            <div className="text-muted-foreground">No users found</div>
           </div>
         )}
       </div>

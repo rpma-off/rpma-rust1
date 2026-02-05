@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import * as React from 'react';
 import { Slot } from '@radix-ui/react-slot';
@@ -10,13 +10,13 @@ const enhancedButtonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-accent text-foreground hover:bg-accent-hover active:scale-95 transition-all duration-150 shadow-lg hover:shadow-xl',
+        default: 'bg-[hsl(var(--rpma-teal))] text-foreground hover:bg-[hsl(var(--rpma-teal))]/90 active:scale-95 transition-all duration-150 shadow-lg hover:shadow-xl',
         destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90 active:scale-95',
-        outline: 'border border-border bg-transparent text-foreground hover:bg-muted hover:border-accent active:scale-95 transition-all duration-150',
-        secondary: 'bg-muted text-foreground border border-border hover:bg-border hover:border-accent hover:scale-105 active:scale-95 transition-all duration-200',
-        ghost: 'text-border-light hover:bg-muted hover:text-foreground hover:scale-105 active:scale-95 transition-all duration-150',
-        link: 'text-accent underline-offset-4 hover:underline hover:text-accent-hover transition-colors duration-150',
-        primary: 'bg-accent text-foreground hover:bg-accent-hover hover:scale-105 active:scale-95 transition-all duration-200 shadow-lg hover:shadow-2xl font-semibold',
+        outline: 'border border-border bg-transparent text-foreground hover:bg-[hsl(var(--rpma-surface))] hover:border-[hsl(var(--rpma-teal))] active:scale-95 transition-all duration-150',
+        secondary: 'bg-muted text-foreground border border-border hover:bg-[hsl(var(--rpma-surface))] hover:border-[hsl(var(--rpma-teal))] hover:scale-105 active:scale-95 transition-all duration-200',
+        ghost: 'text-muted-foreground hover:bg-[hsl(var(--rpma-surface))] hover:text-foreground hover:scale-105 active:scale-95 transition-all duration-150',
+        link: 'text-[hsl(var(--rpma-teal))] underline-offset-4 hover:underline hover:text-[hsl(var(--rpma-teal))]-hover transition-colors duration-150',
+        primary: 'bg-[hsl(var(--rpma-teal))] text-foreground hover:bg-[hsl(var(--rpma-teal))]/90 hover:scale-105 active:scale-95 transition-all duration-200 shadow-lg hover:shadow-2xl font-semibold',
         success: 'bg-green-600 text-white hover:bg-green-700 active:scale-95',
         warning: 'bg-yellow-600 text-white hover:bg-yellow-700 active:scale-95',
         gradient: 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 active:scale-95',

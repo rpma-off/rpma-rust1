@@ -3,7 +3,7 @@ import { BarChart3 } from 'lucide-react';
 
 export function InventoryReports() {
   return (
-    <Card className="bg-border-800 border-border-700">
+    <Card className="rpma-shell">
       <CardHeader>
         <CardTitle className="text-foreground flex items-center gap-2">
           <BarChart3 className="w-5 h-5" />
@@ -11,7 +11,7 @@ export function InventoryReports() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-border-300">Inventory reporting interface coming soon...</p>
+        <p className="text-muted-foreground">Inventory reporting interface coming soon...</p>
       </CardContent>
     </Card>
   );

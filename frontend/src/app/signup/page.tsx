@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -118,46 +118,46 @@ export default function SignupPage() {
             {/* Header Card */}
             <div className="rpma-shell p-8">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent/20 mb-6">
-                  <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[hsl(var(--rpma-teal))]/20 mb-6">
+                  <svg className="w-8 h-8 text-[hsl(var(--rpma-teal))]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Inscription réussie !</h2>
-                <p className="text-border-light text-sm md:text-base">
+                <p className="text-muted-foreground text-sm md:text-base">
                   Votre compte a été créé avec succès. Vous allez être redirigé vers la page de connexion.
                 </p>
               </div>
 
               <div className="space-y-4">
-                <div className="bg-accent/10 border border-accent/30 rounded-xl p-4">
+                <div className="bg-[hsl(var(--rpma-teal))]/10 border border-[hsl(var(--rpma-teal))]/30 rounded-xl p-4">
                   <div className="flex items-center gap-3">
                     <div className="flex-shrink-0">
-                      <svg className="h-5 w-5 text-accent" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <svg className="h-5 w-5 text-[hsl(var(--rpma-teal))]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                       </svg>
                     </div>
                     <div>
-                      <h4 className="text-sm font-medium text-accent mb-1">Bienvenue sur RPMA V2 !</h4>
-                      <p className="text-sm text-border-light">Votre compte a été créé avec succès.</p>
+                      <h4 className="text-sm font-medium text-[hsl(var(--rpma-teal))] mb-1">Bienvenue sur RPMA V2 !</h4>
+                      <p className="text-sm text-muted-foreground">Votre compte a été créé avec succès.</p>
                     </div>
                   </div>
                 </div>
 
                 <Button
                   onClick={() => router.push(ROUTES.LOGIN)}
-                  className="w-full bg-accent hover:bg-accent/90 text-black"
+                  className="w-full bg-[hsl(var(--rpma-teal))] hover:bg-[hsl(var(--rpma-teal))]/90 text-black"
                 >
-                  Aller à la connexion
+                  Aller Ã  la connexion
                 </Button>
               </div>
             </div>
 
             {/* Footer with Branding */}
             <div className="mt-8 text-center">
-              <div className="inline-flex items-center gap-2 text-border-light text-xs">
-                <div className="w-6 h-6 bg-accent/20 rounded flex items-center justify-center">
-                  <span className="text-accent font-bold text-xs">R</span>
+              <div className="inline-flex items-center gap-2 text-muted-foreground text-xs">
+                <div className="w-6 h-6 bg-[hsl(var(--rpma-teal))]/20 rounded flex items-center justify-center">
+                  <span className="text-[hsl(var(--rpma-teal))] font-bold text-xs">R</span>
                 </div>
                 <span>RPMA V2 - Système de gestion PPF</span>
               </div>
@@ -175,14 +175,14 @@ export default function SignupPage() {
           {/* Header Card */}
           <div className="rpma-shell p-8">
             <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent/20 mb-6">
-                <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[hsl(var(--rpma-teal))]/20 mb-6">
+                <svg className="w-8 h-8 text-[hsl(var(--rpma-teal))]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                 </svg>
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Créer un compte</h2>
-              <p className="text-border-light text-sm md:text-base">
-                Rejoignez RPMA V2 et commencez à gérer vos projets PPF
+              <p className="text-muted-foreground text-sm md:text-base">
+                Rejoignez RPMA V2 et commencez Ã  gérer vos projets PPF
               </p>
             </div>
 
@@ -212,7 +212,7 @@ export default function SignupPage() {
                         required
                         value={formData.firstName}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 bg-border/10 border border-border/30 rounded-xl text-foreground placeholder-border-light focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all duration-200"
+                        className="w-full px-4 py-3 bg-white border border-[hsl(var(--rpma-border))] rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(var(--rpma-teal))]/20 focus:border-[hsl(var(--rpma-teal))] transition-all duration-200"
                         placeholder="Jean"
                       />
                       <svg className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-border" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -233,7 +233,7 @@ export default function SignupPage() {
                       required
                       value={formData.lastName}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 bg-border/10 border border-border/30 rounded-xl text-foreground placeholder-border-light focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all duration-200"
+                      className="w-full px-4 py-3 bg-white border border-[hsl(var(--rpma-border))] rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(var(--rpma-teal))]/20 focus:border-[hsl(var(--rpma-teal))] transition-all duration-200"
                       placeholder="Dupont"
                     />
                     <svg className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-border" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -257,7 +257,7 @@ export default function SignupPage() {
                     required
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 bg-border/10 border border-border/30 rounded-xl text-foreground placeholder-border-light focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all duration-200"
+                    className="w-full px-4 py-3 bg-white border border-[hsl(var(--rpma-border))] rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(var(--rpma-teal))]/20 focus:border-[hsl(var(--rpma-teal))] transition-all duration-200"
                     placeholder="votre@email.com"
                   />
                   <svg className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-border" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -280,8 +280,8 @@ export default function SignupPage() {
                     required
                     value={formData.password}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 bg-border/10 border border-border/30 rounded-xl text-foreground placeholder-border-light focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all duration-200"
-                    placeholder="••••••••"
+                    className="w-full px-4 py-3 bg-white border border-[hsl(var(--rpma-border))] rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(var(--rpma-teal))]/20 focus:border-[hsl(var(--rpma-teal))] transition-all duration-200"
+                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                   />
                   <svg className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-border" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -308,12 +308,12 @@ export default function SignupPage() {
                     required
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 bg-border/10 border rounded-xl text-foreground placeholder-border-light focus:outline-none focus:ring-2 transition-all duration-200 ${
+                    className={`w-full px-4 py-3 bg-white border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 transition-all duration-200 ${
                       formData.confirmPassword && formData.password !== formData.confirmPassword
                         ? 'border-red-500/50 focus:ring-red-500/50 focus:border-red-500'
-                        : 'border-border/30 focus:ring-accent/50 focus:border-accent'
+                        : 'border-[hsl(var(--rpma-border))] focus:ring-[hsl(var(--rpma-teal))]/20 focus:border-[hsl(var(--rpma-teal))]'
                     }`}
-                    placeholder="••••••••"
+                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                   />
                   <svg className={`absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 ${
                     formData.confirmPassword && formData.password !== formData.confirmPassword
@@ -338,7 +338,7 @@ export default function SignupPage() {
             <Button
               type="submit"
               disabled={isLoading || !isPasswordValid || (formData.confirmPassword.length > 0 && formData.password !== formData.confirmPassword)}
-              className={`w-full flex justify-center items-center py-3 px-4 text-sm font-semibold rounded-xl bg-accent text-black hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-background transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 disabled:hover:scale-100`}
+              className={`w-full flex justify-center items-center py-3 px-4 text-sm font-semibold rounded-xl bg-[hsl(var(--rpma-teal))] text-black hover:bg-[hsl(var(--rpma-teal))]/90 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--rpma-teal))]/20 focus:ring-offset-2 focus:ring-offset-background transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 disabled:hover:scale-100`}
             >
               {isLoading ? (
                 <>
@@ -357,11 +357,11 @@ export default function SignupPage() {
 
             {/* Alternative Actions */}
             <div className="text-center">
-              <p className="text-border-light text-sm">
-                Vous avez déjà un compte ?{' '}
+              <p className="text-muted-foreground text-sm">
+                Vous avez déjÃ  un compte ?{' '}
                 <Link
                   href={ROUTES.LOGIN}
-                  className="font-semibold text-accent hover:text-accent/80 transition-colors duration-150"
+                  className="font-semibold text-[hsl(var(--rpma-teal))] hover:text-[hsl(var(--rpma-teal))]/80 transition-colors duration-150"
                 >
                   Se connecter
                 </Link>
@@ -371,7 +371,7 @@ export default function SignupPage() {
 
           {/* Terms and Conditions */}
           <div className="pt-4 border-t border-[hsl(var(--rpma-border))]">
-            <p className="text-center text-xs text-border-light leading-relaxed">
+            <p className="text-center text-xs text-muted-foreground leading-relaxed">
               En vous inscrivant, vous acceptez nos conditions d&apos;utilisation et notre politique de confidentialité.
             </p>
           </div>
@@ -381,9 +381,9 @@ export default function SignupPage() {
 
         {/* Footer with Branding */}
       <div className="mt-8 text-center">
-        <div className="inline-flex items-center gap-2 text-border-light text-xs">
-          <div className="w-6 h-6 bg-accent/20 rounded flex items-center justify-center">
-            <span className="text-accent font-bold text-xs">R</span>
+        <div className="inline-flex items-center gap-2 text-muted-foreground text-xs">
+          <div className="w-6 h-6 bg-[hsl(var(--rpma-teal))]/20 rounded flex items-center justify-center">
+            <span className="text-[hsl(var(--rpma-teal))] font-bold text-xs">R</span>
           </div>
           <span>RPMA V2 - Système de gestion PPF</span>
         </div>

@@ -54,15 +54,15 @@ function OverviewReport({ dateRange, filters, overviewData }: OverviewReportProp
         <div className="rpma-shell p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-border-light">Tâches Terminées</p>
+              <p className="text-sm font-medium text-muted-foreground">Tâches Terminées</p>
               <p className="text-2xl font-bold text-foreground">
                 {taskCompletion.summary.completed_tasks}
               </p>
-              <p className="text-xs text-border">
+              <p className="text-xs text-muted-foreground">
                 {taskCompletion.summary.completion_rate.toFixed(1)}% de taux de réussite
               </p>
             </div>
-            <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-[hsl(var(--rpma-surface))] rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -70,14 +70,14 @@ function OverviewReport({ dateRange, filters, overviewData }: OverviewReportProp
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
+        <div className="rpma-shell p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Techniciens Actifs</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">
+              <p className="text-sm font-medium text-muted-foreground">Techniciens Actifs</p>
+              <p className="text-2xl font-bold text-foreground">
                 {technicianPerformance.technicians.length}
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-muted-foreground">
                 Score moyen: {technicianPerformance.benchmarks.team_average.toFixed(1)}
               </p>
             </div>
@@ -89,14 +89,14 @@ function OverviewReport({ dateRange, filters, overviewData }: OverviewReportProp
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
+        <div className="rpma-shell p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Clients Actifs</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">
+              <p className="text-sm font-medium text-muted-foreground">Clients Actifs</p>
+              <p className="text-2xl font-bold text-foreground">
                 {clientAnalytics.summary.total_clients}
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-muted-foreground">
                 {clientAnalytics.summary.retention_rate.toFixed(1)}% de rétention
               </p>
             </div>
@@ -108,14 +108,14 @@ function OverviewReport({ dateRange, filters, overviewData }: OverviewReportProp
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
+        <div className="rpma-shell p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Qualité Moyenne</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">
+              <p className="text-sm font-medium text-muted-foreground">Qualité Moyenne</p>
+              <p className="text-2xl font-bold text-foreground">
                 {qualityCompliance.summary.overall_quality_score.toFixed(1)}
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-muted-foreground">
                 Conformité qualité
               </p>
             </div>
@@ -130,8 +130,8 @@ function OverviewReport({ dateRange, filters, overviewData }: OverviewReportProp
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+        <div className="rpma-shell p-6">
+          <h3 className="text-lg font-semibold text-foreground mb-4">
             Évolution des Tâches
           </h3>
           <TaskCompletionChart
@@ -151,8 +151,8 @@ function OverviewReport({ dateRange, filters, overviewData }: OverviewReportProp
           />
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+        <div className="rpma-shell p-6">
+          <h3 className="text-lg font-semibold text-foreground mb-4">
             Performance Globale
           </h3>
           <DashboardOverviewChart data={overviewData} />
@@ -161,32 +161,32 @@ function OverviewReport({ dateRange, filters, overviewData }: OverviewReportProp
 
       {/* Additional Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
-          <h4 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">Matériel Utilisé</h4>
-          <p className="text-xl font-bold text-slate-900 dark:text-white">
+        <div className="rpma-shell p-6">
+          <h4 className="text-sm font-medium text-muted-foreground mb-2">Matériel Utilisé</h4>
+          <p className="text-xl font-bold text-foreground">
             {materialUsage.summary.total_material_cost.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Coût total des matériaux
           </p>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
-          <h4 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">Zones Géographiques</h4>
-          <p className="text-xl font-bold text-slate-900 dark:text-white">
+        <div className="rpma-shell p-6">
+          <h4 className="text-sm font-medium text-muted-foreground mb-2">Zones Géographiques</h4>
+          <p className="text-xl font-bold text-foreground">
             {geographic.geographic_stats.unique_locations}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Emplacements couverts
           </p>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
-          <h4 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">Intelligence Opérationnelle</h4>
-          <p className="text-xl font-bold text-slate-900 dark:text-white">
+        <div className="rpma-shell p-6">
+          <h4 className="text-sm font-medium text-muted-foreground mb-2">Intelligence Opérationnelle</h4>
+          <p className="text-xl font-bold text-foreground">
             {operationalIntelligence.process_efficiency.overall_efficiency_score.toFixed(1)}%
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Score d&apos;efficacité globale
           </p>
         </div>

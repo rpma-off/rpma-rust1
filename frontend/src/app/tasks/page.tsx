@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, Calendar, Car, User, Shield, Eye, Edit, Trash2, RefreshCw, Download, Upload, Grid, List, AlertCircle, Filter, X, ChevronRight } from 'lucide-react';
+import { Plus, Search, Calendar, Car, User, Shield, Eye, Edit, Trash2, RefreshCw, Download, Upload, Grid, List, AlertCircle, Filter, X, ChevronRight, SearchX } from 'lucide-react';
 import { CalendarView } from '@/components/calendar/CalendarView';
 import { KanbanBoard } from '@/components/tasks/KanbanBoard';
 import { Card, CardContent } from '@/components/ui/card';
@@ -284,7 +284,7 @@ const TaskTable = React.memo(({
           <div className="text-sm font-medium text-foreground line-clamp-1">
             {getTaskDisplayTitle(task)}
           </div>
-          <div className="text-xs text-border-light md:hidden">
+          <div className="text-xs text-muted-foreground md:hidden">
             {task.vehicle_plate && `${task.vehicle_plate} • `}
             {formatDate(task.scheduled_date)}
           </div>
@@ -305,7 +305,7 @@ const TaskTable = React.memo(({
               : task.vehicle_plate || '-'
             }
           </div>
-          <div className="text-xs text-border-light">
+          <div className="text-xs text-muted-foreground">
             {task.vehicle_plate}
           </div>
         </div>
@@ -981,7 +981,7 @@ export default function TasksPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-foreground mb-4">Accès non autorisé</h1>
-          <p className="text-border-light">Veuillez vous connecter pour accéder à cette page.</p>
+          <p className="text-muted-foreground">Veuillez vous connecter pour accéder à cette page.</p>
         </div>
       </div>
     );
@@ -997,10 +997,10 @@ export default function TasksPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-foreground mb-4">Desktop App Required</h1>
-          <p className="text-border-light mb-4">
+          <p className="text-muted-foreground mb-4">
             This application must be run through the Tauri desktop app, not in a browser.
           </p>
-          <p className="text-border-light text-sm">
+          <p className="text-muted-foreground text-sm">
             Run <code className="bg-border/20 px-2 py-1 rounded">npm run dev</code> and use the desktop window that opens.
           </p>
         </div>
@@ -1014,23 +1014,26 @@ export default function TasksPage() {
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-semibold text-foreground">Jobs</h1>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="rounded-full border-border/60">
+            <Button variant="outline" size="sm" className="rounded-[6px] gap-2">
+              <Shield className="h-4 w-4" />
               Show progress
             </Button>
             <Button
               variant="outline"
               size="sm"
-              className="rounded-full border-border/60"
+              className="rounded-[6px] gap-2"
               onClick={() => setShowFilters(!showFilters)}
             >
+              <Filter className="h-4 w-4" />
               Filter
             </Button>
             <Button
               variant="outline"
               size="sm"
-              className="rounded-full border-border/60"
+              className="rounded-[6px] gap-2"
               onClick={handleExport}
             >
+              <Download className="h-4 w-4" />
               Export
             </Button>
           </div>
@@ -1044,7 +1047,7 @@ export default function TasksPage() {
                 key={tab.key}
                 onClick={() => setStatusFilter(tab.filter)}
                 className={cn(
-                  'flex items-center gap-2 pb-3 text-sm font-medium border-b-2',
+                  'flex items-center gap-2 pb-3 text-xs font-semibold border-b-2 uppercase tracking-wide',
                   isActive ? 'border-[hsl(var(--rpma-teal))] text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'
                 )}
               >
@@ -1096,27 +1099,15 @@ export default function TasksPage() {
               ))}
             </div>
           ) : filteredTasks.length === 0 ? (
-            <div className="text-center py-12 bg-white border border-[hsl(var(--rpma-border))] rounded-[10px] shadow-[var(--rpma-shadow-soft)]">
-              <Shield className="h-10 w-10 text-[hsl(var(--rpma-teal))] mx-auto mb-3" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                {searchTerm || statusFilter !== 'all' || dateFilter !== 'all' || technicianFilter !== 'all' || ppfZoneFilter !== 'all'
-                  ? 'Aucune tâche trouvée'
-                  : 'Aucune tâche pour le moment'}
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Ajustez vos filtres ou créez un nouveau job.
-              </p>
-              <Button
-                onClick={() => router.push('/tasks/new')}
-                className="rounded-full bg-[hsl(var(--rpma-teal))] text-white hover:bg-[hsl(var(--rpma-teal))]/90"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                + Add
-              </Button>
+            <div className="bg-white border border-[hsl(var(--rpma-border))] rounded-[10px] shadow-[var(--rpma-shadow-soft)]">
+              <div className="rpma-empty">
+                <SearchX />
+                <h3 className="text-lg font-semibold">No results found</h3>
+              </div>
             </div>
           ) : viewMode === 'table' ? (
             <div className="bg-white border border-[hsl(var(--rpma-border))] rounded-[10px] shadow-[var(--rpma-shadow-soft)] overflow-hidden">
-              <div className="grid grid-cols-[36px_140px_1fr_140px_24px] gap-2 px-4 py-2 text-xs text-muted-foreground bg-[hsl(var(--rpma-surface))] border-b border-[hsl(var(--rpma-border))]">
+              <div className="grid grid-cols-[36px_140px_1fr_140px_24px] gap-2 px-4 py-2 text-xs rpma-table-header">
                 <div className="flex items-center">
                   <input type="checkbox" className="h-4 w-4 rounded border-border" aria-label="Select all" />
                 </div>

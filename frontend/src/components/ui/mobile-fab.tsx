@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { createButtonClass } from '@/lib/component-standards';
@@ -121,10 +121,10 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
           positionClasses[position],
           sizeClasses[size],
           variant === 'primary'
-            ? "bg-accent hover:bg-accent/90"
+            ? "bg-[hsl(var(--rpma-teal))] hover:bg-[hsl(var(--rpma-teal))]/90"
             : "bg-muted hover:bg-border",
           variant === 'primary'
-            ? "bg-accent hover:bg-accent/90 shadow-accent/25"
+            ? "bg-[hsl(var(--rpma-teal))] hover:bg-[hsl(var(--rpma-teal))]/90 shadow-black/5"
             : "bg-muted hover:bg-border"
         )}
         onClick={handleMainClick}
@@ -186,8 +186,8 @@ export const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
             onClick={action.onClick}
             className={cn(
               "flex flex-col items-center gap-1 p-2 rounded-lg min-h-[60px] min-w-[60px] flex-1 touch-manipulation",
-              action.variant === 'primary' && "text-accent hover:bg-accent/10",
-              action.variant === 'secondary' && "text-border-light hover:bg-border/20",
+              action.variant === 'primary' && "text-[hsl(var(--rpma-teal))] hover:bg-[hsl(var(--rpma-teal))]/10",
+              action.variant === 'secondary' && "text-muted-foreground hover:bg-[hsl(var(--rpma-surface))]",
               action.variant === 'destructive' && "text-red-400 hover:bg-red-500/10"
             )}
             whileTap={{ scale: 0.95 }}

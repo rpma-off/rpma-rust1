@@ -50,7 +50,7 @@ export default function NewTaskPage() {
                 <Button
                   variant="outline"
                   onClick={handleCancel}
-                  className="flex items-center gap-2 border-border/60 text-border-light hover:bg-border/20 hover:text-foreground hover:border-primary/50 transition-all duration-200"
+                  className="flex items-center gap-2 border-border/60 text-muted-foreground hover:bg-border/20 hover:text-foreground hover:border-primary/50 transition-all duration-200"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   <span className="hidden sm:inline">Retour à la liste des tâches</span>
@@ -58,7 +58,7 @@ export default function NewTaskPage() {
                 </Button>
 
                 {/* Breadcrumbs */}
-                <nav className="hidden sm:flex items-center text-sm text-border-light">
+                <nav className="hidden sm:flex items-center text-sm text-muted-foreground">
                   <a href="/dashboard" className="hover:text-foreground transition-colors">Dashboard</a>
                   <span className="mx-2">/</span>
                   <a href="/tasks" className="hover:text-foreground transition-colors">Tâches</a>
@@ -78,7 +78,7 @@ export default function NewTaskPage() {
                   <h1 className="text-2xl md:text-3xl font-bold text-foreground">
                     Créer une nouvelle tâche
                   </h1>
-                  <p className="text-border-light mt-1 text-sm md:text-base">
+                  <p className="text-muted-foreground mt-1 text-sm md:text-base">
                     Remplissez le formulaire étape par étape pour créer une nouvelle tâche PPF
                   </p>
                 </div>
@@ -94,7 +94,7 @@ export default function NewTaskPage() {
                   </div>
                   <div>
                     <h4 className="text-sm font-medium text-blue-500 mb-1">Astuce rapide</h4>
-                    <p className="text-xs text-border-light">
+                    <p className="text-xs text-muted-foreground">
                       Utilisez la touche Tab pour naviguer rapidement entre les champs. Le formulaire se sauvegarde automatiquement.
                     </p>
                   </div>

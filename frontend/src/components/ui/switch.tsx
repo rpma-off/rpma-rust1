@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import * as React from 'react';
 import { cn } from '@/lib/utils';
@@ -56,7 +56,7 @@ const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
         className={cn(
           'relative inline-flex items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2',
           sizeClasses[size],
-          isChecked ? 'bg-accent' : 'bg-muted',
+          isChecked ? 'bg-[hsl(var(--rpma-teal))]' : 'bg-muted',
           disabled && 'opacity-50 cursor-not-allowed',
           className
         )}

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+﻿import React, { useEffect, useRef } from 'react';
 
 // Accessibility utilities and hooks
 export function useA11y() {
@@ -173,10 +173,10 @@ export const AccessibleInput: React.FC<AccessibleInputProps> = ({
 
       <input
         id={inputId}
-        className={`w-full px-3 py-2 bg-border/10 border rounded-lg text-foreground placeholder-border-light transition-all duration-200 ${
+        className={`w-full px-3 py-2 bg-[hsl(var(--rpma-surface))] border rounded-lg text-foreground placeholder-border-light transition-all duration-200 ${
           error
             ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/20'
-            : 'border-border/30 focus:border-accent focus:ring-accent/20'
+            : 'border-[hsl(var(--rpma-border))] focus:border-[hsl(var(--rpma-teal))] focus:ring-[hsl(var(--rpma-teal))]/20'
         } focus:outline-none focus:ring-2`}
         aria-invalid={error ? 'true' : 'false'}
         aria-describedby={error ? errorId : hint ? hintId : undefined}
@@ -185,7 +185,7 @@ export const AccessibleInput: React.FC<AccessibleInputProps> = ({
       />
 
       {hint && !error && (
-        <p id={hintId} className="text-sm text-border-light">
+        <p id={hintId} className="text-sm text-muted-foreground">
           {hint}
         </p>
       )}
@@ -243,10 +243,10 @@ export const AccessibleSelect: React.FC<AccessibleSelectProps> = ({
 
       <select
         id={selectId}
-        className={`w-full px-3 py-2 bg-border/10 border rounded-lg text-foreground transition-all duration-200 ${
+        className={`w-full px-3 py-2 bg-[hsl(var(--rpma-surface))] border rounded-lg text-foreground transition-all duration-200 ${
           error
             ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/20'
-            : 'border-border/30 focus:border-accent focus:ring-accent/20'
+            : 'border-[hsl(var(--rpma-border))] focus:border-[hsl(var(--rpma-teal))] focus:ring-[hsl(var(--rpma-teal))]/20'
         } focus:outline-none focus:ring-2`}
         aria-invalid={error ? 'true' : 'false'}
         aria-describedby={error ? errorId : hint ? hintId : undefined}
@@ -265,7 +265,7 @@ export const AccessibleSelect: React.FC<AccessibleSelectProps> = ({
       </select>
 
       {hint && !error && (
-        <p id={hintId} className="text-sm text-border-light">
+        <p id={hintId} className="text-sm text-muted-foreground">
           {hint}
         </p>
       )}
@@ -303,8 +303,8 @@ export const AccessibleButton: React.FC<AccessibleButtonProps> = ({
   const baseClasses = 'inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
 
   const variantClasses = {
-    primary: 'bg-accent text-black hover:bg-accent/90 focus:ring-accent border-accent',
-    secondary: 'bg-border/20 text-foreground hover:bg-border/30 focus:ring-border border-border/30',
+    primary: 'bg-[hsl(var(--rpma-teal))] text-white hover:bg-[hsl(var(--rpma-teal))]/90 focus:ring-[hsl(var(--rpma-teal))]/30 border-[hsl(var(--rpma-teal))]',
+    secondary: 'bg-[hsl(var(--rpma-surface))] text-foreground hover:bg-border/30 focus:ring-border border-[hsl(var(--rpma-border))]',
     danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 border-red-600'
   };
 
@@ -354,7 +354,7 @@ export const SkipLink: React.FC<{ href: string; children: React.ReactNode }> = (
 }) => (
   <a
     href={href}
-    className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-accent text-black px-4 py-2 rounded-md font-medium z-50 transition-all duration-200 hover:bg-accent/90"
+    className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-[hsl(var(--rpma-teal))] text-white px-4 py-2 rounded-md font-medium z-50 transition-all duration-200 hover:bg-[hsl(var(--rpma-teal))]/90"
   >
     {children}
   </a>
@@ -392,11 +392,11 @@ export const Disclosure: React.FC<DisclosureProps> = ({
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-controls={contentId}
-        className="flex items-center justify-between w-full px-4 py-3 bg-border/10 hover:bg-border/20 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
+        className="flex items-center justify-between w-full px-4 py-3 bg-[hsl(var(--rpma-surface))] hover:bg-[hsl(var(--rpma-surface))] rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--rpma-teal))]/30 focus:ring-offset-2 focus:ring-offset-background"
       >
         <span className="font-medium text-foreground">{title}</span>
         <svg
-          className={`w-5 h-5 text-border-light transition-transform duration-200 ${
+          className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${
             isOpen ? 'rotate-180' : ''
           }`}
           fill="none"

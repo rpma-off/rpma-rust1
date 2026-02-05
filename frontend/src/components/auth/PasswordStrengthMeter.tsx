@@ -100,7 +100,7 @@ const PasswordStrengthMeter: React.FC<PasswordStrengthMeterProps> = ({
           {validation.feedback.suggestions.length > 0 && !validation.isValid && (
             <div className="mt-2">
               <p className="text-sm font-medium">Suggestions:</p>
-              <ul className="text-sm text-border-light list-disc pl-5">
+              <ul className="text-sm text-muted-foreground list-disc pl-5">
                 {validation.feedback.suggestions.map((suggestion, index) => (
                   <li key={index}>{suggestion}</li>
                 ))}

@@ -31,7 +31,7 @@ export default function DataExplorerPage() {
                   transition={{ duration: 0.5, delay: 0.2 }}
                   className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-[hsl(var(--rpma-surface))] rounded-2xl border border-[hsl(var(--rpma-border))] shadow-[var(--rpma-shadow-soft)]"
                 >
-                  <Database className="h-8 w-8 md:h-10 md:w-10 text-accent" />
+                  <Database className="h-8 w-8 md:h-10 md:w-10 text-[hsl(var(--rpma-teal))]" />
                 </motion.div>
 
                 <div className="space-y-3">
@@ -47,7 +47,7 @@ export default function DataExplorerPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.4 }}
-                    className="text-base md:text-lg text-border-light max-w-2xl mx-auto leading-relaxed"
+                    className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed"
                   >
                     Explorez, recherchez et analysez votre base de données PPF en temps réel.
                     Accédez à toutes vos données clients, tâches et interventions.
@@ -60,19 +60,19 @@ export default function DataExplorerPage() {
                   transition={{ duration: 0.5, delay: 0.5 }}
                   className="flex flex-wrap justify-center gap-2 md:gap-3"
                 >
-                  <Badge variant="secondary" className="px-3 py-1.5 bg-accent/20 text-accent border-accent/30 hover:bg-accent/30">
+                  <Badge variant="secondary" className="px-3 py-1.5 bg-[hsl(var(--rpma-surface))] text-muted-foreground border-[hsl(var(--rpma-border))]">
                     <Search className="h-3 w-3 mr-1.5" />
                     Recherche Avancée
                   </Badge>
-                  <Badge variant="secondary" className="px-3 py-1.5 bg-blue-500/20 text-blue-400 border-blue-500/30 hover:bg-blue-500/30">
+                  <Badge variant="secondary" className="px-3 py-1.5 bg-[hsl(var(--rpma-surface))] text-muted-foreground border-[hsl(var(--rpma-border))]">
                     <Eye className="h-3 w-3 mr-1.5" />
                     Vue Complète
                   </Badge>
-                  <Badge variant="secondary" className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/30">
+                  <Badge variant="secondary" className="px-3 py-1.5 bg-[hsl(var(--rpma-surface))] text-muted-foreground border-[hsl(var(--rpma-border))]">
                     <RefreshCw className="h-3 w-3 mr-1.5" />
                     Temps Réel
                   </Badge>
-                  <Badge variant="secondary" className="px-3 py-1.5 bg-purple-500/20 text-purple-400 border-purple-500/30 hover:bg-purple-500/30">
+                  <Badge variant="secondary" className="px-3 py-1.5 bg-[hsl(var(--rpma-surface))] text-muted-foreground border-[hsl(var(--rpma-border))]">
                     <Shield className="h-3 w-3 mr-1.5" />
                     Sécurisé
                   </Badge>
@@ -93,12 +93,12 @@ export default function DataExplorerPage() {
             <div className="rpma-shell p-6">
               <div className="text-center mb-6">
                 <h2 className="text-lg font-semibold text-foreground mb-2">Actions rapides</h2>
-                <p className="text-border-light text-sm">Commencez à explorer vos données</p>
+                <p className="text-muted-foreground text-sm">Commencez à explorer vos données</p>
               </div>
               <div className="flex flex-col sm:flex-row justify-center gap-3">
                 <Button
                   size="lg"
-                  className="bg-accent hover:bg-accent/90 text-black font-semibold shadow-lg hover:shadow-accent/25 transition-all duration-200 hover:scale-105 flex-1 sm:flex-none"
+                  className="font-semibold flex-1 sm:flex-none"
                 >
                   <Search className="h-5 w-5 mr-2" />
                   Commencer l&apos;Exploration
@@ -106,7 +106,7 @@ export default function DataExplorerPage() {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="border-border/60 text-border-light hover:bg-border/20 hover:text-foreground hover:border-accent/50 transition-all duration-200 hover:scale-105 flex-1 sm:flex-none"
+                  className="border-border text-foreground hover:bg-[hsl(var(--rpma-surface))] flex-1 sm:flex-none"
                 >
                   <BarChart3 className="h-5 w-5 mr-2" />
                   Voir les Statistiques
@@ -114,7 +114,7 @@ export default function DataExplorerPage() {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="border-border/60 text-border-light hover:bg-border/20 hover:text-foreground hover:border-accent/50 transition-all duration-200 hover:scale-105 flex-1 sm:flex-none"
+                  className="border-border text-foreground hover:bg-[hsl(var(--rpma-surface))] flex-1 sm:flex-none"
                 >
                   <RefreshCw className="h-5 w-5 mr-2" />
                   Actualiser
@@ -133,20 +133,20 @@ export default function DataExplorerPage() {
               <CardHeader className="border-b border-[hsl(var(--rpma-border))] bg-white">
                 <CardTitle className="flex items-center justify-between text-xl">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-accent/20 rounded-lg border border-accent/30">
-                      <Database className="h-5 w-5 text-accent" />
+                    <div className="p-2 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
+                      <Database className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />
                     </div>
                     <div>
                       <h3 className="text-foreground font-semibold">Base de Données PPF</h3>
-                      <p className="text-border-light text-sm">Exploration et analyse de vos données</p>
+                      <p className="text-muted-foreground text-sm">Exploration et analyse de vos données</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                    <Badge variant="secondary" className="bg-[hsl(var(--rpma-surface))] text-muted-foreground border-[hsl(var(--rpma-border))]">
                       <RefreshCw className="h-3 w-3 mr-1" />
                       Temps Réel
                     </Badge>
-                    <Badge variant="secondary" className="bg-accent/20 text-accent border-accent/30">
+                    <Badge variant="secondary" className="bg-[hsl(var(--rpma-surface))] text-muted-foreground border-[hsl(var(--rpma-border))]">
                       <Shield className="h-3 w-3 mr-1" />
                       Sécurisé
                     </Badge>

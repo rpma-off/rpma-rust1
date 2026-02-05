@@ -32,6 +32,7 @@
     "install": "npm run frontend:install",
     "clean": "npm run frontend:clean && cd src-tauri && cargo clean",
     "frontend:clean": "cd frontend && rm -rf node_modules .next out",
+    "fix:encoding": "node scripts/fix-encoding.js",
     "prepare": "husky"
   },
   "devDependencies": {

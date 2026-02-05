@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
@@ -64,7 +64,7 @@ class ErrorBoundary extends Component<Props, State> {
 
             {this.state.error && (
               <details className="mb-6 text-left">
-                <summary className="cursor-pointer text-sm font-medium text-border-light mb-2">
+                <summary className="cursor-pointer text-sm font-medium text-muted-foreground mb-2">
                   Détails de l&apos;erreur (développement)
                 </summary>
                 <div className="bg-gray-100 p-3 rounded text-xs font-mono text-gray-800 overflow-auto">

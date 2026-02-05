@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,9 +25,9 @@ export function AnalyticsDashboard() {
 
   if (error) {
     return (
-      <Card className="bg-border-800 border-border-700">
+      <Card className="rpma-shell">
         <CardContent className="p-6">
-          <div className="text-center text-border-300">
+          <div className="text-center text-muted-foreground">
             Error loading analytics: {error}
           </div>
         </CardContent>
@@ -37,9 +37,9 @@ export function AnalyticsDashboard() {
 
   if (!summary) {
     return (
-      <Card className="bg-border-800 border-border-700">
+      <Card className="rpma-shell">
         <CardContent className="p-6">
-          <div className="text-center text-border-300">
+          <div className="text-center text-muted-foreground">
             No analytics data available
           </div>
         </CardContent>
@@ -53,14 +53,14 @@ export function AnalyticsDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Performance Overview</h2>
-          <p className="text-border-400 text-sm">
+          <p className="text-muted-foreground text-sm">
             Last updated: {lastRefresh.toLocaleString()}
           </p>
         </div>
         <Button
           onClick={handleRefresh}
           variant="outline"
-          className="border-border-600 text-border-300 hover:bg-border-700"
+          className="border-border text-foreground hover:bg-[hsl(var(--rpma-surface))]"
         >
           <RefreshCw className="w-4 h-4 mr-2" />
           Refresh
@@ -119,7 +119,7 @@ export function AnalyticsDashboard() {
 
         <KpiCard
           title="Monthly Revenue"
-          value={`€${summary.revenue_this_month.toLocaleString('fr-FR')}`}
+          value={`â‚¬${summary.revenue_this_month.toLocaleString('fr-FR')}`}
           icon={<TrendingUp className="w-5 h-5" />}
           trend="up"
           description="This month"
@@ -136,7 +136,7 @@ export function AnalyticsDashboard() {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-border-800 border-border-700">
+        <Card className="rpma-shell">
           <CardHeader>
             <CardTitle className="text-foreground">Task Completion Trend</CardTitle>
           </CardHeader>
@@ -157,7 +157,7 @@ export function AnalyticsDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="bg-border-800 border-border-700">
+        <Card className="rpma-shell">
           <CardHeader>
             <CardTitle className="text-foreground">Intervention Types</CardTitle>
           </CardHeader>
@@ -177,43 +177,43 @@ export function AnalyticsDashboard() {
       </div>
 
       {/* Recent Activity */}
-      <Card className="bg-border-800 border-border-700">
+      <Card className="rpma-shell">
         <CardHeader>
           <CardTitle className="text-foreground">Recent Activity</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-border-900 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-[hsl(var(--rpma-surface))] rounded-lg">
               <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-accent rounded-full"></div>
+                <div className="w-2 h-2 bg-[hsl(var(--rpma-teal))] rounded-full"></div>
                 <div>
                   <p className="text-foreground font-medium">Task #1234 completed</p>
-                  <p className="text-border-400 text-sm">PPF installation on BMW X3</p>
+                  <p className="text-muted-foreground text-sm">PPF installation on BMW X3</p>
                 </div>
               </div>
-              <span className="text-border-400 text-sm">2 hours ago</span>
+              <span className="text-muted-foreground text-sm">2 hours ago</span>
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-border-900 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-[hsl(var(--rpma-surface))] rounded-lg">
               <div className="flex items-center space-x-3">
                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                 <div>
                   <p className="text-foreground font-medium">New client registered</p>
-                  <p className="text-border-400 text-sm">Premium customer package</p>
+                  <p className="text-muted-foreground text-sm">Premium customer package</p>
                 </div>
               </div>
-              <span className="text-border-400 text-sm">4 hours ago</span>
+              <span className="text-muted-foreground text-sm">4 hours ago</span>
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-border-900 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-[hsl(var(--rpma-surface))] rounded-lg">
               <div className="flex items-center space-x-3">
                 <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
                 <div>
                   <p className="text-foreground font-medium">Low stock alert</p>
-                  <p className="text-border-400 text-sm">PPF Film inventory below threshold</p>
+                  <p className="text-muted-foreground text-sm">PPF Film inventory below threshold</p>
                 </div>
               </div>
-              <span className="text-border-400 text-sm">6 hours ago</span>
+              <span className="text-muted-foreground text-sm">6 hours ago</span>
             </div>
           </div>
         </CardContent>

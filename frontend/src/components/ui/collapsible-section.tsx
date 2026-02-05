@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -44,7 +44,7 @@ export const CollapsibleSection = React.memo<CollapsibleSectionProps>(({
       >
         <div className="flex items-center gap-3 flex-1 min-w-0">
           {icon && (
-            <div className="flex-shrink-0 w-8 h-8 bg-accent/20 rounded-lg flex items-center justify-center">
+            <div className="flex-shrink-0 w-8 h-8 bg-[hsl(var(--rpma-teal))]/10 rounded-lg flex items-center justify-center">
               {icon}
             </div>
           )}

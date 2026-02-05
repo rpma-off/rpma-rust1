@@ -19,7 +19,7 @@ export default function MessagesPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-foreground mb-4">Accès non autorisé</h1>
-          <p className="text-border-light">Veuillez vous connecter pour accéder à cette page.</p>
+          <p className="text-muted-foreground">Veuillez vous connecter pour accéder à cette page.</p>
         </div>
       </div>
     );
@@ -33,32 +33,44 @@ export default function MessagesPage() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="rpma-shell mb-6"
+          className="mb-6"
         >
-          <div className="px-4 py-4 sm:px-6 sm:py-6">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="bg-[hsl(var(--rpma-teal))] text-white rounded-[10px] shadow-[var(--rpma-shadow-soft)]">
+            <div className="px-5 pt-4 pb-0 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[hsl(var(--rpma-surface))] border border-[hsl(var(--rpma-border))] rounded-full flex items-center justify-center flex-shrink-0">
-                  <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
-                </div>
-                <div>
-                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">Messages</h1>
-                  <p className="text-muted-foreground text-sm sm:text-base mt-1">
-                    Communication et notifications
-                  </p>
-                </div>
+                <MessageSquare className="w-5 h-5" />
+                <h1 className="text-xl font-semibold">Messages</h1>
               </div>
-              <div className="flex items-center gap-2 sm:gap-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setActiveTab('compose')}
-                  className="flex items-center gap-2 border-border/60 text-foreground hover:bg-muted/10"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Nouveau message</span>
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setActiveTab('compose')}
+                className="flex items-center gap-2 text-white border-white/40 hover:bg-white/10"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Nouveau message</span>
+              </Button>
+            </div>
+            <div className="px-2">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList data-variant="underline" className="w-full justify-start">
+                  <TabsTrigger value="inbox" data-variant="underline" className="flex items-center gap-2">
+                    <Inbox className="h-4 w-4" />
+                    <span className="hidden sm:inline">Boîte de réception</span>
+                    <span className="sm:hidden">Inbox</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="compose" data-variant="underline" className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    <span className="hidden sm:inline">Composer</span>
+                    <span className="sm:hidden">Compose</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="preferences" data-variant="underline" className="flex items-center gap-2">
+                    <Settings className="h-4 w-4" />
+                    <span className="hidden sm:inline">Préférences</span>
+                    <span className="sm:hidden">Settings</span>
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
           </div>
         </motion.div>
@@ -71,24 +83,6 @@ export default function MessagesPage() {
           className="rpma-shell overflow-hidden"
         >
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-muted/50 border-b border-border/10">
-              <TabsTrigger value="inbox" className="flex items-center gap-2">
-                <Inbox className="h-4 w-4" />
-                <span className="hidden sm:inline">Boîte de réception</span>
-                <span className="sm:hidden">Inbox</span>
-              </TabsTrigger>
-              <TabsTrigger value="compose" className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Composer</span>
-                <span className="sm:hidden">Compose</span>
-              </TabsTrigger>
-              <TabsTrigger value="preferences" className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                <span className="hidden sm:inline">Préférences</span>
-                <span className="sm:hidden">Settings</span>
-              </TabsTrigger>
-            </TabsList>
-
             <TabsContent value="inbox" className="p-6">
               <MessageInbox userId={user.id} />
             </TabsContent>

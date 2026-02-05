@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { Car, Info, CheckCircle, AlertCircle, Hash } from "lucide-react";
@@ -188,34 +188,34 @@ export const VehicleStep: React.FC<FormStepProps> = ({
 
   const getVINStatusColor = useCallback(() => {
     if (vinValidationState === "valid") {
-      return "border-accent bg-black-light focus:border-accent focus:ring-accent/50";
+      return "border-[hsl(var(--rpma-teal))] bg-white focus:border-[hsl(var(--rpma-teal))] focus:ring-[hsl(var(--rpma-teal))]/20";
     } else if (vinValidationState === "invalid") {
-      return "border-red-500 bg-black-light focus:border-red-500 focus:ring-red-500/50";
+      return "border-red-500 bg-white focus:border-red-500 focus:ring-red-500/50";
     }
-    return "border-border bg-black-light focus:border-border-light focus:ring-border-light/50";
+    return "border-border bg-white focus:border-border-light focus:ring-border-light/50";
   }, [vinValidationState]);
 
   return (
     <div className="p-3 sm:p-6 max-w-2xl mx-auto">
       <div className="bg-muted rounded-lg border border-border overflow-hidden shadow-sm">
         {/* Header */}
-        <div className="bg-gradient-to-r from-accent/20 to-accent/10 p-3 sm:p-4 border-b border-border">
+        <div className="bg-[hsl(var(--rpma-surface))] p-3 sm:p-4 border-b border-border">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
             <div className="flex items-center">
-              <Car className="w-5 h-5 text-accent mr-2" />
+              <Car className="w-5 h-5 text-[hsl(var(--rpma-teal))] mr-2" />
               <h3 className="text-base sm:text-lg font-semibold text-foreground">
                 Informations du véhicule
               </h3>
             </div>
-            <div className="text-xs sm:text-sm bg-accent/20 px-2 sm:px-3 py-1 rounded-full">
-              <span className="font-medium text-accent">N°:</span>
-              <span className="text-border-light ml-1">
+            <div className="text-xs sm:text-sm bg-[hsl(var(--rpma-teal))]/10 px-2 sm:px-3 py-1 rounded-full">
+              <span className="font-medium text-[hsl(var(--rpma-teal))]">N°:</span>
+              <span className="text-muted-foreground ml-1">
                 {formData.title || "Auto-généré"}
               </span>
             </div>
           </div>
-          <p className="text-xs sm:text-sm text-border-light mt-1">
-            Saisissez les informations du véhicule à traiter
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+            Saisissez les informations du véhicule Ï  traiter
           </p>
         </div>
 
@@ -236,12 +236,12 @@ export const VehicleStep: React.FC<FormStepProps> = ({
                 maxLength={9}
                 className={`
                   w-full px-3 sm:px-4 py-2 sm:py-3 text-base sm:text-lg font-mono tracking-wider text-center
-                  border rounded-lg transition-all duration-200 bg-black-light text-foreground placeholder-border-light
+                  border rounded-lg transition-all duration-200 bg-white text-foreground placeholder-muted-foreground
                   ${
                     errors.vehicle_plate
                       ? "border-red-500 focus:border-red-500 focus:ring-red-500/50"
                       : formData.vehicle_plate
-                        ? "border-accent focus:border-accent focus:ring-accent/50"
+                        ? "border-[hsl(var(--rpma-teal))] focus:border-[hsl(var(--rpma-teal))] focus:ring-[hsl(var(--rpma-teal))]/20"
                         : "border-border focus:border-border-light focus:ring-border-light/50"
                   }
                   focus:ring-2 focus:outline-none
@@ -287,12 +287,12 @@ export const VehicleStep: React.FC<FormStepProps> = ({
                   }
                   placeholder="Ex: BMW, Mercedes, Audi..."
                   className={`
-                    w-full px-3 py-2 border rounded-lg transition-all duration-200 bg-black-light text-foreground placeholder-border-light
+                    w-full px-3 py-2 border rounded-lg transition-all duration-200 bg-white text-foreground placeholder-muted-foreground
                     ${
                       errors.vehicle_make
                         ? "border-red-500 focus:border-red-500 focus:ring-red-500/50"
                         : formData.vehicle_make
-                          ? "border-accent focus:border-accent focus:ring-accent/50"
+                          ? "border-[hsl(var(--rpma-teal))] focus:border-[hsl(var(--rpma-teal))] focus:ring-[hsl(var(--rpma-teal))]/20"
                           : "border-border focus:border-border-light focus:ring-border-light/50"
                     }
                     focus:ring-2 focus:outline-none
@@ -315,7 +315,7 @@ export const VehicleStep: React.FC<FormStepProps> = ({
                       <button
                         key={make}
                         type="button"
-                        className="w-full px-3 py-2 text-left text-foreground hover:bg-accent/20 hover:text-accent transition-colors focus:bg-accent/20 focus:text-accent focus:outline-none"
+                        className="w-full px-3 py-2 text-left text-foreground hover:bg-[hsl(var(--rpma-teal))]/10 hover:text-[hsl(var(--rpma-teal))] transition-colors focus:bg-[hsl(var(--rpma-teal))]/10 focus:text-[hsl(var(--rpma-teal))] focus:outline-none"
                         onClick={() => selectMake(make)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") {
@@ -354,12 +354,12 @@ export const VehicleStep: React.FC<FormStepProps> = ({
                   onChange={handleChange}
                   placeholder="Ex: Série 3, Classe C, A4..."
                   className={`
-                    w-full px-3 py-2 border rounded-lg transition-all duration-200 bg-black-light text-foreground placeholder-border-light
+                    w-full px-3 py-2 border rounded-lg transition-all duration-200 bg-white text-foreground placeholder-muted-foreground
                     ${
                       errors.vehicle_model
                         ? "border-red-500 focus:border-red-500 focus:ring-red-500/50"
                         : formData.vehicle_model
-                          ? "border-accent focus:border-accent focus:ring-accent/50"
+                          ? "border-[hsl(var(--rpma-teal))] focus:border-[hsl(var(--rpma-teal))] focus:ring-[hsl(var(--rpma-teal))]/20"
                           : "border-border focus:border-border-light focus:ring-border-light/50"
                     }
                     focus:ring-2 focus:outline-none
@@ -404,12 +404,12 @@ export const VehicleStep: React.FC<FormStepProps> = ({
                   min="1900"
                   max={new Date().getFullYear() + 1}
                   className={`
-                    w-full px-3 py-2 border rounded-lg transition-all duration-200 bg-black-light text-foreground placeholder-border-light
+                    w-full px-3 py-2 border rounded-lg transition-all duration-200 bg-white text-foreground placeholder-muted-foreground
                     ${
                       errors.vehicle_year
                         ? "border-red-500 focus:border-red-500 focus:ring-red-500/50"
                         : formData.vehicle_year
-                          ? "border-accent focus:border-accent focus:ring-accent/50"
+                          ? "border-[hsl(var(--rpma-teal))] focus:border-[hsl(var(--rpma-teal))] focus:ring-[hsl(var(--rpma-teal))]/20"
                           : "border-border focus:border-border-light focus:ring-border-light/50"
                     }
                     focus:ring-2 focus:outline-none
@@ -441,7 +441,7 @@ export const VehicleStep: React.FC<FormStepProps> = ({
               <label className="block text-sm font-medium text-foreground">
                 <Hash className="w-4 h-4 inline mr-1" />
                 VIN (optionnel)
-                <span className="text-xs text-border-light ml-1">
+                <span className="text-xs text-muted-foreground ml-1">
                   17 caractères
                 </span>
               </label>
@@ -454,7 +454,7 @@ export const VehicleStep: React.FC<FormStepProps> = ({
                   placeholder="1HGBH41JXMN109186"
                   maxLength={17}
                   className={`
-                    w-full px-3 py-2 border rounded-lg font-mono text-sm transition-all duration-200 text-foreground placeholder-border-light
+                    w-full px-3 py-2 border rounded-lg font-mono text-sm transition-all duration-200 text-foreground placeholder-muted-foreground
                     ${getVINStatusColor()}
                     focus:ring-2 focus:outline-none
                     disabled:opacity-50 disabled:cursor-not-allowed
@@ -472,17 +472,17 @@ export const VehicleStep: React.FC<FormStepProps> = ({
               {/* VIN Help Text */}
               <div
                 id="vin-help"
-                className="text-xs text-border-light space-y-1"
+                className="text-xs text-muted-foreground space-y-1"
               >
                 {formData.vehicle_vin && (
                   <div className="flex items-center space-x-2">
                     {vinValidationState === "checking" && (
-                      <span className="text-accent">
+                      <span className="text-[hsl(var(--rpma-teal))]">
                         Vérification en cours...
                       </span>
                     )}
                     {vinValidationState === "valid" && (
-                      <span className="text-accent flex items-center">
+                      <span className="text-[hsl(var(--rpma-teal))] flex items-center">
                         <CheckCircle className="w-3 h-3 mr-1" />
                         VIN valide
                       </span>
@@ -511,15 +511,15 @@ export const VehicleStep: React.FC<FormStepProps> = ({
           </div>
 
           {/* Enhanced Info Box */}
-          <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
+          <div className="bg-[hsl(var(--rpma-teal))]/10 border border-[hsl(var(--rpma-teal))]/30 rounded-lg p-4">
             <div className="flex items-start">
-              <Info className="w-5 h-5 text-accent mr-2 flex-shrink-0 mt-0.5" />
+              <Info className="w-5 h-5 text-[hsl(var(--rpma-teal))] mr-2 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-foreground">
                 <p className="font-medium mb-1">Conseils de saisie :</p>
-                <ul className="space-y-1 text-border-light">
+                <ul className="space-y-1 text-muted-foreground">
                   <li>• La plaque sera automatiquement formatée (AB-123-CD)</li>
                   <li>
-                    • Le VIN est optionnel mais aide à l&apos;identification
+                    • Le VIN est optionnel mais aide Ï  l&apos;identification
                     précise
                   </li>
                   <li>

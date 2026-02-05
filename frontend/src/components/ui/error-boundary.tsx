@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { Component, ErrorInfo } from 'react';
 import { AlertCircle, RefreshCw, Home, Bug, Wifi, WifiOff, Shield, Zap, ChevronDown } from 'lucide-react';
@@ -174,7 +174,7 @@ function DefaultErrorFallback({ error, resetError, errorInfo }: ErrorBoundaryFal
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.3 }}
-            className="text-border-light mb-8 leading-relaxed"
+            className="text-muted-foreground mb-8 leading-relaxed"
           >
             {config.description}
           </motion.p>
@@ -187,7 +187,7 @@ function DefaultErrorFallback({ error, resetError, errorInfo }: ErrorBoundaryFal
           >
             <Button
               onClick={resetError}
-              className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-black font-semibold shadow-lg hover:shadow-accent/25 transition-all duration-200 hover:scale-105"
+              className="w-full flex items-center justify-center gap-2 bg-[hsl(var(--rpma-teal))] hover:bg-[hsl(var(--rpma-teal))]/90 text-white font-semibold shadow-lg hover:shadow-accent/25 transition-all duration-200 hover:scale-105"
               size="lg"
             >
               <RefreshCw className="w-5 h-5" />
@@ -196,7 +196,7 @@ function DefaultErrorFallback({ error, resetError, errorInfo }: ErrorBoundaryFal
 
             <Button
               onClick={() => window.location.href = '/dashboard'}
-              className="w-full flex items-center justify-center gap-2 border-border/50 text-border-light hover:bg-border/20 hover:text-foreground transition-all duration-200 hover:scale-105"
+              className="w-full flex items-center justify-center gap-2 border-[hsl(var(--rpma-border))] text-muted-foreground hover:bg-border/20 hover:text-foreground transition-all duration-200 hover:scale-105"
               variant="outline"
               size="lg"
             >
@@ -206,8 +206,8 @@ function DefaultErrorFallback({ error, resetError, errorInfo }: ErrorBoundaryFal
           </motion.div>
 
           {process.env.NODE_ENV === 'development' && (
-            <details className="mt-8 p-4 bg-border/10 border border-border/30 rounded-xl backdrop-blur-sm">
-              <summary className="cursor-pointer text-sm font-semibold text-border-light flex items-center gap-2 hover:text-foreground transition-colors">
+            <details className="mt-8 p-4 bg-[hsl(var(--rpma-surface))] border border-[hsl(var(--rpma-border))] rounded-xl backdrop-blur-sm">
+              <summary className="cursor-pointer text-sm font-semibold text-muted-foreground flex items-center gap-2 hover:text-foreground transition-colors">
                 <Bug className="w-4 h-4" />
                 Détails techniques (développement)
                 <div className="ml-auto">
@@ -217,18 +217,18 @@ function DefaultErrorFallback({ error, resetError, errorInfo }: ErrorBoundaryFal
               <div className="mt-4 space-y-3">
                 <div>
                   <div className="font-semibold text-foreground mb-2">Erreur:</div>
-                  <pre className="whitespace-pre-wrap break-words text-xs bg-background/50 p-3 rounded-lg border border-border/30 text-border-light">{error.message}</pre>
+                  <pre className="whitespace-pre-wrap break-words text-xs bg-background/50 p-3 rounded-lg border border-[hsl(var(--rpma-border))] text-muted-foreground">{error.message}</pre>
                 </div>
                 {error.stack && (
                   <div>
                     <div className="font-semibold text-foreground mb-2">Stack Trace:</div>
-                    <pre className="whitespace-pre-wrap break-words text-xs bg-background/50 p-3 rounded-lg border border-border/30 text-border-light max-h-40 overflow-y-auto">{error.stack}</pre>
+                    <pre className="whitespace-pre-wrap break-words text-xs bg-background/50 p-3 rounded-lg border border-[hsl(var(--rpma-border))] text-muted-foreground max-h-40 overflow-y-auto">{error.stack}</pre>
                   </div>
                 )}
                 {errorInfo && (
                   <div>
                     <div className="font-semibold text-foreground mb-2">Component Stack:</div>
-                    <pre className="whitespace-pre-wrap break-words text-xs bg-background/50 p-3 rounded-lg border border-border/30 text-border-light max-h-40 overflow-y-auto">{errorInfo.componentStack}</pre>
+                    <pre className="whitespace-pre-wrap break-words text-xs bg-background/50 p-3 rounded-lg border border-[hsl(var(--rpma-border))] text-muted-foreground max-h-40 overflow-y-auto">{errorInfo.componentStack}</pre>
                   </div>
                 )}
               </div>

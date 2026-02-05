@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -54,8 +54,8 @@ export default function TaskDetailPage() {
             setError('Tâche non trouvée');
             toast.error('Tâche non trouvée');
           } else if (result.status === 403) {
-            setError('Accès non autorisé à cette tâche');
-            toast.error('Accès non autorisé à cette tâche');
+            setError('Accès non autorisé Ã  cette tâche');
+            toast.error('Accès non autorisé Ã  cette tâche');
           } else {
             const errorMessage = result.error || 'Erreur lors du chargement de la tâche';
             setError(errorMessage);
@@ -165,11 +165,11 @@ export default function TaskDetailPage() {
             <AlertCircle className="h-8 w-8 text-red-400" />
           </div>
           <h2 className="text-xl font-semibold text-foreground">Erreur</h2>
-          <p className="text-border-light">{error}</p>
+          <p className="text-muted-foreground">{error}</p>
           <Button
             onClick={() => router.back()}
             variant="outline"
-            className="border-border text-border-light hover:text-foreground hover:border-primary"
+            className="border-[hsl(var(--rpma-border))] text-muted-foreground hover:text-foreground hover:border-[hsl(var(--rpma-teal))]"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Retour
@@ -187,7 +187,7 @@ export default function TaskDetailPage() {
           <Button
             onClick={() => router.back()}
             variant="outline"
-            className="border-border text-border-light hover:text-foreground hover:border-primary"
+            className="border-[hsl(var(--rpma-border))] text-muted-foreground hover:text-foreground hover:border-[hsl(var(--rpma-teal))]"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Retour
@@ -210,7 +210,7 @@ export default function TaskDetailPage() {
                onClick={() => router.back()}
                variant="ghost"
                size="sm"
-               className="text-border-light hover:text-foreground hover:bg-border/20 border border-border/30 hover:border-primary/50 transition-all duration-200"
+               className="text-muted-foreground hover:text-foreground hover:bg-[hsl(var(--rpma-surface))] border border-[hsl(var(--rpma-border))]/30 hover:border-[hsl(var(--rpma-teal))]/50 transition-all duration-200"
              >
                <ArrowLeft className="w-4 h-4 mr-2" />
                <span className="hidden sm:inline">Retour</span>
@@ -245,9 +245,9 @@ export default function TaskDetailPage() {
                    'bg-gray-500/20 text-gray-300 border-gray-500/50'
                  }`}
                >
-                 {task.status === 'completed' ? '✓' :
-                  task.status === 'in_progress' ? '⟳' :
-                  task.status === 'pending' ? '⏳' : '?'}
+                 {task.status === 'completed' ? 'âœ“' :
+                  task.status === 'in_progress' ? 'âŸ³' :
+                  task.status === 'pending' ? 'â³' : '?'}
                </Badge>
              </div>
            </div>
@@ -257,17 +257,17 @@ export default function TaskDetailPage() {
        {/* Enhanced Breadcrumbs */}
        <div className="bg-[hsl(var(--rpma-surface))] border-b border-[hsl(var(--rpma-border))]">
          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-3">
-           <nav className="flex items-center gap-2 text-xs md:text-sm text-border-light">
-             <a href="/dashboard" className="flex items-center hover:text-foreground transition-colors p-1 rounded hover:bg-border/20">
+           <nav className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+             <a href="/dashboard" className="flex items-center hover:text-foreground transition-colors p-1 rounded hover:bg-[hsl(var(--rpma-surface))]">
                <Home className="w-3 h-3 md:w-4 md:h-4 mr-1" />
                <span className="hidden sm:inline">Dashboard</span>
              </a>
              <span className="text-border/50">/</span>
-             <a href="/tasks" className="hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-border/20">
+             <a href="/tasks" className="hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-[hsl(var(--rpma-surface))]">
                Tâches
              </a>
              <span className="text-border/50">/</span>
-             <span className="text-foreground font-medium px-2 py-1 bg-border/20 rounded">
+             <span className="text-foreground font-medium px-2 py-1 bg-[hsl(var(--rpma-surface))] rounded">
                {getTaskDisplayTitle(task)}
              </span>
            </nav>
@@ -286,14 +286,14 @@ export default function TaskDetailPage() {
                      <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground leading-tight">
                        {getTaskDisplayTitle(task)}
                      </h1>
-                     <p className="text-sm md:text-base text-border-light mt-1 flex items-center gap-2">
+                     <p className="text-sm md:text-base text-muted-foreground mt-1 flex items-center gap-2">
                        <svg className="w-4 h-4 text-border" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                        </svg>
                        {task.vehicle_make && task.vehicle_model
                          ? `${task.vehicle_make} ${task.vehicle_model}`
                          : 'Véhicule non spécifié'}
-                       {task.vehicle_plate && ` • ${task.vehicle_plate}`}
+                       {task.vehicle_plate && ` â€¢ ${task.vehicle_plate}`}
                      </p>
                    </div>
 
@@ -308,16 +308,16 @@ export default function TaskDetailPage() {
                          'bg-gray-500/20 text-gray-300 border-gray-500/50'
                        }`}
                      >
-                       {task.status === 'completed' ? '✓ Terminée' :
-                        task.status === 'in_progress' ? '⟳ En cours' :
-                        task.status === 'pending' ? '⏳ En attente' : '? Autre'}
+                       {task.status === 'completed' ? 'âœ“ Terminée' :
+                        task.status === 'in_progress' ? 'âŸ³ En cours' :
+                        task.status === 'pending' ? 'â³ En attente' : '? Autre'}
                      </Badge>
                    </div>
                  </div>
 
                  {/* Client Info */}
                  {task.customer_name && (
-                   <div className="flex items-center gap-2 text-sm text-border-light">
+                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                      <svg className="w-4 h-4 text-border" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                      </svg>
@@ -330,19 +330,19 @@ export default function TaskDetailPage() {
              {/* Enhanced Key Metrics */}
              <div className="flex flex-wrap gap-4 sm:gap-6 lg:gap-8">
                {task.scheduled_date && (
-                 <div className="text-center min-w-0 p-3 bg-border/10 rounded-lg border border-[hsl(var(--rpma-border))]">
-                   <p className="text-xs text-border-light uppercase tracking-wide font-medium mb-1">Planifiée</p>
+                 <div className="text-center min-w-0 p-3 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
+                   <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">Planifiée</p>
                    <p className="text-sm font-semibold text-foreground">{formatDate(task.scheduled_date)}</p>
                  </div>
                )}
                {task.estimated_duration_minutes && (
-                 <div className="text-center min-w-0 p-3 bg-border/10 rounded-lg border border-[hsl(var(--rpma-border))]">
-                   <p className="text-xs text-border-light uppercase tracking-wide font-medium mb-1">Durée estimée</p>
+                 <div className="text-center min-w-0 p-3 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
+                   <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">Durée estimée</p>
                    <p className="text-sm font-semibold text-foreground">{Math.round(task.estimated_duration_minutes / 60)}h</p>
                  </div>
                )}
-               <div className="text-center min-w-0 p-3 bg-border/10 rounded-lg border border-[hsl(var(--rpma-border))]">
-                 <p className="text-xs text-border-light uppercase tracking-wide font-medium mb-1">Créée</p>
+               <div className="text-center min-w-0 p-3 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
+                 <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">Créée</p>
                  <p className="text-sm font-semibold text-foreground">{formatDate(task.created_at)}</p>
                </div>
 
@@ -398,13 +398,13 @@ export default function TaskDetailPage() {
                     <p className="text-lg font-bold text-foreground">
                       {task.ppf_zones?.length || 0}
                     </p>
-                    <p className="text-xs text-border-light">Zones PPF</p>
+                    <p className="text-xs text-muted-foreground">Zones PPF</p>
                   </div>
                   <div className="p-3 bg-background/50 rounded-lg">
                     <p className="text-lg font-bold text-primary">
                       {task.status === 'completed' ? '100%' : '0%'}
                     </p>
-                    <p className="text-xs text-border-light">Progression</p>
+                    <p className="text-xs text-muted-foreground">Progression</p>
                   </div>
                 </div>
               </div>

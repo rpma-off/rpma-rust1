@@ -43,8 +43,8 @@ export function DrawerSidebar({ isOpen, onToggle }: { isOpen: boolean; onToggle:
 
   return (
     <aside className="hidden lg:flex flex-col w-[280px] bg-white border-r border-[hsl(var(--rpma-border))]">
-      <div className="h-[62px] flex items-center justify-between px-4 border-b border-[hsl(var(--rpma-border))]">
-        <div className="text-2xl font-semibold text-gray-400 tracking-tight">urable</div>
+      <div className="h-[56px] flex items-center justify-between px-4 border-b border-[hsl(var(--rpma-border))]">
+        <div className="text-2xl font-semibold text-gray-400 tracking-tight">CarePPF</div>
         <button
           onClick={onToggle}
           className="p-2 rounded-md hover:bg-muted/30 transition-colors"
@@ -84,10 +84,10 @@ export function DrawerSidebar({ isOpen, onToggle }: { isOpen: boolean; onToggle:
         </div>
       </div>
 
-      <nav className="flex-1 px-4 py-4 space-y-1">
+      <nav className="flex-1 px-3 py-4 space-y-1">
         {mainItems.map((item) => {
           const itemClasses = cn(
-            'w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
+            'w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors relative',
             isActive(item.href)
               ? 'bg-[hsl(var(--rpma-surface))] text-foreground font-semibold'
               : 'text-muted-foreground hover:bg-muted/20 hover:text-foreground',
@@ -95,13 +95,19 @@ export function DrawerSidebar({ isOpen, onToggle }: { isOpen: boolean; onToggle:
             item.label === 'Message Center' && 'border border-border/60 justify-center gap-2 font-medium text-foreground'
           );
 
+            const activeBar = isActive(item.href) ? (
+              <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-[hsl(var(--rpma-teal))]" />
+            ) : null;
+
             return item.disabled ? (
               <div key={item.label} className={itemClasses} aria-disabled="true">
+                {activeBar}
                 {item.icon}
                 <span>{item.label}</span>
               </div>
             ) : (
               <Link key={item.label} href={item.href || '#'} className={itemClasses}>
+                {activeBar}
                 {item.icon}
                 <span>{item.label}</span>
               </Link>
@@ -145,7 +151,7 @@ export function DrawerSidebarMobile({ isOpen, onClose }: { isOpen: boolean; onCl
     <div className="lg:hidden fixed inset-0 z-50">
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
       <div className="absolute left-0 top-0 h-full w-[280px] bg-white shadow-lg">
-        <div className="h-[62px] flex items-center justify-between px-4 border-b border-[hsl(var(--rpma-border))]">
+        <div className="h-[56px] flex items-center justify-between px-4 border-b border-[hsl(var(--rpma-border))]">
           <div className="text-2xl font-semibold text-gray-400 tracking-tight">urable</div>
           <button
             onClick={onClose}
@@ -186,10 +192,10 @@ export function DrawerSidebarMobile({ isOpen, onClose }: { isOpen: boolean; onCl
           </div>
         </div>
 
-        <nav className="flex-1 px-4 py-4 space-y-1">
+        <nav className="flex-1 px-3 py-4 space-y-1">
           {mainItems.map((item) => {
             const itemClasses = cn(
-              'w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
+              'w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors relative',
               isActive(item.href)
                 ? 'bg-[hsl(var(--rpma-surface))] text-foreground font-semibold'
                 : 'text-muted-foreground hover:bg-muted/20 hover:text-foreground',
@@ -197,13 +203,19 @@ export function DrawerSidebarMobile({ isOpen, onClose }: { isOpen: boolean; onCl
               item.label === 'Message Center' && 'border border-border/60 justify-center gap-2 font-medium text-foreground'
             );
 
+            const activeBar = isActive(item.href) ? (
+              <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-[hsl(var(--rpma-teal))]" />
+            ) : null;
+
             return item.disabled ? (
               <div key={item.label} className={itemClasses} aria-disabled="true">
+                {activeBar}
                 {item.icon}
                 <span>{item.label}</span>
               </div>
             ) : (
               <Link key={item.label} href={item.href || '#'} className={itemClasses} onClick={onClose}>
+                {activeBar}
                 {item.icon}
                 <span>{item.label}</span>
               </Link>

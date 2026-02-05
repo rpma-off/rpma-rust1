@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { cn } from '@/lib/utils';
 import { cardStandards, createCardClass } from '@/lib/component-standards';
 
@@ -60,7 +60,7 @@ export const CardHeader: React.FC<CardHeaderProps> = ({
     <div className={cn(cardStandards.header, className)}>
       <div className="flex items-center gap-3 flex-1 min-w-0">
         {icon && (
-          <div className="flex-shrink-0 w-8 h-8 bg-accent/20 rounded-lg flex items-center justify-center">
+          <div className="flex-shrink-0 w-8 h-8 bg-[hsl(var(--rpma-teal))]/10 rounded-lg flex items-center justify-center">
             {icon}
           </div>
         )}
@@ -69,7 +69,7 @@ export const CardHeader: React.FC<CardHeaderProps> = ({
             {title}
           </h3>
           {subtitle && (
-            <p className="text-sm text-border-light truncate">
+            <p className="text-sm text-muted-foreground truncate">
               {subtitle}
             </p>
           )}

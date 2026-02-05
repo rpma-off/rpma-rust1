@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react';
+﻿import React, { memo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Play, CheckCircle, Image as ImageIcon, ListChecks,
@@ -200,11 +200,11 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      toast.success('Statut mis à jour avec succès');
+      toast.success('Statut mis Ã  jour avec succès');
       setShowStatusDialog(false);
     },
     onError: (error) => {
-      toast.error('Erreur lors de la mise à jour du statut');
+      toast.error('Erreur lors de la mise Ã  jour du statut');
       console.error('Status update error:', error);
     }
   });
@@ -217,10 +217,10 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      toast.success('Priorité mise à jour avec succès');
+      toast.success('Priorité mise Ã  jour avec succès');
     },
     onError: (error) => {
-      toast.error('Erreur lors de la mise à jour de la priorité');
+      toast.error('Erreur lors de la mise Ã  jour de la priorité');
       console.error('Priority update error:', error);
     }
   });
@@ -250,11 +250,11 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      toast.success('Notes mises à jour avec succès');
+      toast.success('Notes mises Ã  jour avec succès');
       setShowNotesDialog(false);
     },
     onError: (error) => {
-      toast.error('Erreur lors de la mise à jour des notes');
+      toast.error('Erreur lors de la mise Ã  jour des notes');
       console.error('Notes update error:', error);
     }
   });
@@ -519,7 +519,7 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
                 </Select>
               </div>
               {updateStatusMutation.isPending && (
-                <p className="text-sm text-muted-foreground">Mise à jour en cours...</p>
+                <p className="text-sm text-muted-foreground">Mise Ã  jour en cours...</p>
               )}
             </div>
           </DialogContent>
@@ -532,7 +532,7 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
               <DialogTitle>Assigner la tâche</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <p>Êtes-vous sûr de vouloir vous assigner cette tâche ?</p>
+              <p>Êtes-vous sÃ»r de vouloir vous assigner cette tâche ?</p>
               <div className="flex justify-end space-x-2">
                 <Button
                   variant="outline"
@@ -710,23 +710,23 @@ const SecondaryActionsGrid: React.FC<SecondaryActionsGridProps> = ({
           "flex flex-col items-center justify-center p-4 rounded-lg border transition-all duration-200 hover:scale-105",
           action.disabled
             ? "border-border/50 bg-background/30 cursor-not-allowed opacity-50"
-            : "border-border bg-background/50 hover:border-accent hover:bg-border"
+            : "border-border bg-background/50 hover:border-[hsl(var(--rpma-teal))] hover:bg-[hsl(var(--rpma-surface))]"
         )}
       >
         <div className="relative">
           <action.icon className={cn(
             "h-6 w-6 mb-2",
-            action.disabled ? "text-border" : "text-accent"
+            action.disabled ? "text-muted-foreground" : "text-[hsl(var(--rpma-teal))]"
           )} />
           {action.count && action.count > 0 && (
-            <span className="absolute -top-2 -right-2 bg-accent text-background text-xs font-bold px-2 py-1 rounded-full min-w-[20px] h-5 flex items-center justify-center">
+            <span className="absolute -top-2 -right-2 bg-[hsl(var(--rpma-teal))] text-background text-xs font-bold px-2 py-1 rounded-full min-w-[20px] h-5 flex items-center justify-center">
               {action.count}
             </span>
           )}
         </div>
         <span className={cn(
           "text-xs font-medium text-center",
-          action.disabled ? "text-border" : "text-border-light"
+          action.disabled ? "text-muted-foreground" : "text-muted-foreground-light"
         )}>
           {action.label}
         </span>
@@ -751,11 +751,11 @@ const MoreActionsSection: React.FC<MoreActionsSectionProps> = ({
   <div className="pt-4 border-t border-border">
     <button
       onClick={toggleMoreActions}
-      className="w-full flex items-center justify-center p-3 rounded-lg border border-border bg-background/30 hover:bg-border transition-colors duration-200"
+      className="w-full flex items-center justify-center p-3 rounded-lg border border-border bg-background/30 hover:bg-[hsl(var(--rpma-surface))] transition-colors duration-200"
     >
-      <Settings className="h-4 w-4 mr-2 text-border-light" />
-      <span className="text-sm font-medium text-border-light">Plus d&apos;actions</span>
-      <MoreVertical className="h-4 w-4 ml-2 text-border-light" />
+      <Settings className="h-4 w-4 mr-2 text-muted-foreground-light" />
+      <span className="text-sm font-medium text-muted-foreground-light">Plus d&apos;actions</span>
+      <MoreVertical className="h-4 w-4 ml-2 text-muted-foreground-light" />
     </button>
 
     {showMoreActions && (
@@ -769,16 +769,16 @@ const MoreActionsSection: React.FC<MoreActionsSectionProps> = ({
               "w-full flex items-center p-3 rounded-lg border transition-colors duration-200",
               action.disabled
                 ? "border-border/50 bg-background/30 cursor-not-allowed opacity-50"
-                : "border-border bg-background/50 hover:border-accent hover:bg-border"
+                : "border-border bg-background/50 hover:border-[hsl(var(--rpma-teal))] hover:bg-[hsl(var(--rpma-surface))]"
             )}
           >
             <action.icon className={cn(
               "h-4 w-4 mr-3",
-              action.disabled ? "text-border" : "text-accent"
+              action.disabled ? "text-muted-foreground" : "text-[hsl(var(--rpma-teal))]"
             )} />
             <span className={cn(
               "text-sm font-medium",
-              action.disabled ? "text-border" : "text-foreground"
+              action.disabled ? "text-muted-foreground" : "text-foreground"
             )}>
               {action.label}
             </span>
@@ -810,7 +810,7 @@ const StatusWarnings: React.FC<StatusWarningsProps> = ({
         <div className="flex items-start">
           <AlertCircle className="h-4 w-4 text-yellow-400 mr-2 mt-0.5 flex-shrink-0" />
           <p className="text-xs text-yellow-200">
-            Cette tâche est déjà assignée à un autre technicien.
+            Cette tâche est déjÃ  assignée Ã  un autre technicien.
           </p>
         </div>
       </div>
@@ -851,14 +851,14 @@ const PrioritySelector: React.FC<PrioritySelectorProps> = ({
         }}
         disabled={isPending}
       >
-        <SelectTrigger className="w-32 border-border bg-muted text-foreground hover:bg-border">
+        <SelectTrigger className="w-32 border-border bg-muted text-foreground hover:bg-[hsl(var(--rpma-surface))]">
           <SelectValue />
         </SelectTrigger>
         <SelectContent className="bg-muted border-border">
-          <SelectItem value="low" className="text-foreground hover:bg-border focus:bg-border">Basse</SelectItem>
-          <SelectItem value="medium" className="text-foreground hover:bg-border focus:bg-border">Moyenne</SelectItem>
-          <SelectItem value="high" className="text-foreground hover:bg-border focus:bg-border">Haute</SelectItem>
-          <SelectItem value="urgent" className="text-foreground hover:bg-border focus:bg-border">Urgente</SelectItem>
+          <SelectItem value="low" className="text-foreground hover:bg-[hsl(var(--rpma-surface))] focus:bg-border">Basse</SelectItem>
+          <SelectItem value="medium" className="text-foreground hover:bg-[hsl(var(--rpma-surface))] focus:bg-border">Moyenne</SelectItem>
+          <SelectItem value="high" className="text-foreground hover:bg-[hsl(var(--rpma-surface))] focus:bg-border">Haute</SelectItem>
+          <SelectItem value="urgent" className="text-foreground hover:bg-[hsl(var(--rpma-surface))] focus:bg-border">Urgente</SelectItem>
         </SelectContent>
       </Select>
     </div>

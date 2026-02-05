@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -91,7 +91,7 @@ const DelayTaskModal: React.FC<DelayTaskModalProps> = ({ task, open, onOpenChang
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="text-sm text-border-light">
+          <div className="text-sm text-muted-foreground">
             <p>Tâche actuelle: #{task.task_number} - {task.title}</p>
             {task.scheduled_date && (
               <p>Date actuelle: {new Date(task.scheduled_date).toLocaleDateString('fr-FR')}</p>
