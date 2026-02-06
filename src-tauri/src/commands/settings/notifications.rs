@@ -3,7 +3,7 @@
 //! This module handles user notification preferences including
 //! email, push, and SMS notification settings.
 
-use crate::commands::settings::core::{handle_settings_error, update_app_settings, get_app_settings};
+use crate::commands::settings::core::{handle_settings_error, update_app_settings, load_app_settings};
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::models::settings::UserNotificationSettings;
 
@@ -39,7 +39,12 @@ pub struct UpdateUserNotificationsRequest {
     pub maintenance: Option<bool>,
     pub security_alerts: Option<bool>,
     pub quiet_hours_enabled: Option<bool>,
+    pub quiet_hours_start: Option<String>,
+    pub quiet_hours_end: Option<String>,
+    pub digest_frequency: Option<String>,
     pub batch_notifications: Option<bool>,
+    pub sound_enabled: Option<bool>,
+    pub sound_volume: Option<u32>,
 }
 
 /// Update notification settings (system-wide)
@@ -58,7 +63,7 @@ pub async fn update_notification_settings(
         return Err(AppError::Authorization("Only administrators can update notification settings".to_string()));
     }
 
-    let mut app_settings = get_app_settings()
+    let mut app_settings = load_app_settings()
         .map_err(|e| AppError::Database(e))?;
 
     if let Some(push_notifications) = request.push_notifications {
@@ -111,12 +116,12 @@ pub async fn update_user_notifications(
         maintenance: request.maintenance.unwrap_or(false),
         security_alerts: request.security_alerts.unwrap_or(true),
         quiet_hours_enabled: request.quiet_hours_enabled.unwrap_or(false),
-        quiet_hours_start: "22:00".to_string(), // Default quiet hours
-        quiet_hours_end: "08:00".to_string(),
-        digest_frequency: "daily".to_string(), // Default digest frequency
+        quiet_hours_start: request.quiet_hours_start.unwrap_or_else(|| "22:00".to_string()),
+        quiet_hours_end: request.quiet_hours_end.unwrap_or_else(|| "08:00".to_string()),
+        digest_frequency: request.digest_frequency.unwrap_or_else(|| "daily".to_string()),
         batch_notifications: request.batch_notifications.unwrap_or(false),
-        sound_enabled: true, // Default sound enabled
-        sound_volume: 50, // Default volume
+        sound_enabled: request.sound_enabled.unwrap_or(true),
+        sound_volume: request.sound_volume.unwrap_or(50),
     };
 
     state

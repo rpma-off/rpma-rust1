@@ -1,5 +1,5 @@
-import { invoke } from '@tauri-apps/api/core';
 import { safeInvoke } from './utils';
+import { IPC_COMMANDS } from './commands';
 import type {
   CalendarTask,
   CalendarFilter,
@@ -26,9 +26,9 @@ export async function getCalendarTasks(
 export async function checkCalendarConflicts(
   taskId: string,
   newDate: string,
+  sessionToken: string,
   newStart?: string,
-  newEnd?: string,
-  sessionToken: string
+  newEnd?: string
 ): Promise<ConflictDetection> {
   return await safeInvoke<ConflictDetection>('calendar_check_conflicts', {
     request: {
@@ -44,28 +44,19 @@ export async function checkCalendarConflicts(
 export async function rescheduleTask(
   taskId: string,
   newScheduledDate: string,
+  sessionToken: string,
   newStartTime?: string,
   newEndTime?: string,
-  reason?: string,
-  sessionToken: string
+  reason?: string
 ): Promise<void> {
-  return await invoke('task_reschedule', {
-    session_token: sessionToken,
-    taskId,
-    newScheduledDate,
-    newStartTime,
-    newEndTime,
-    reason,
-  });
-}
-
-export async function getTechnicianAvailability(
-  technicianId: string,
-  date: string
-): Promise<{ availableSlots: Array<{ start: string; end: string; isAvailable: boolean }> }> {
-  return await invoke('calendar_get_technician_availability', {
-    technicianId,
-    date,
+  // Backend supports delay_task with scheduled date and reason only.
+  await safeInvoke<void>(IPC_COMMANDS.DELAY_TASK, {
+    request: {
+      task_id: taskId,
+      new_scheduled_date: newScheduledDate,
+      reason: reason ?? '',
+      session_token: sessionToken
+    }
   });
 }
 

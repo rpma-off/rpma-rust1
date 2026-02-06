@@ -26,17 +26,50 @@ describe('ReportContent', () => {
     end: new Date('2024-01-31'),
   };
 
-  const mockFilters = { technician_ids: undefined, client_ids: undefined, statuses: undefined, priorities: undefined, ppf_zones: undefined, vehicle_models: undefined };
+  const mockFilters = { technicians: undefined, clients: undefined, statuses: undefined, priorities: undefined, ppfZones: undefined };
 
   const mockOverviewData = {
-    summary: {
-      total_tasks: 100n,
-      completed_tasks: 85n,
-      completion_rate: 85,
+    taskCompletion: {
+      summary: {
+        total_tasks: 100n,
+        completed_tasks: 85n,
+        completion_rate: 85,
+      },
+      daily_breakdown: [],
+      status_distribution: [],
     },
-    task_completion_trends: [],
-    technician_performance: [],
-    client_analytics: [],
+    technicianPerformance: {
+      technicians: [],
+      benchmarks: {
+        team_average: 90,
+      },
+    },
+    clientAnalytics: {
+      summary: {
+        total_clients: 12,
+        retention_rate: 92,
+      },
+    },
+    qualityCompliance: {
+      summary: {
+        overall_quality_score: 88,
+      },
+    },
+    materialUsage: {
+      summary: {
+        total_material_cost: 1200,
+      },
+    },
+    geographic: {
+      geographic_stats: {
+        unique_locations: 5,
+      },
+    },
+    operationalIntelligence: {
+      process_efficiency: {
+        overall_efficiency_score: 91,
+      },
+    },
   };
 
   beforeEach(() => {
@@ -97,7 +130,7 @@ describe('ReportContent', () => {
   it('shows unknown report type message for invalid reportType', () => {
     render(
       <ReportContent
-        reportType="overview"
+        reportType="seasonal"
         dateRange={mockDateRange}
         filters={mockFilters}
         overviewData={null}

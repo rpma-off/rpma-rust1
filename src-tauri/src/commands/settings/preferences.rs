@@ -3,7 +3,7 @@
 //! This module handles user interface and behavior preferences
 //! including appearance, general settings, and performance preferences.
 
-use crate::commands::settings::core::{authenticate_user, handle_settings_error, update_app_settings, get_app_settings};
+use crate::commands::settings::core::{authenticate_user, handle_settings_error, update_app_settings, load_app_settings};
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::models::settings::UserPreferences;
 
@@ -60,7 +60,7 @@ pub async fn update_general_settings(
         return Err(AppError::Authorization("Only administrators can update general settings".to_string()));
     }
 
-    let mut app_settings = get_app_settings()
+    let mut app_settings = load_app_settings()
         .map_err(|e| AppError::Database(e))?;
 
     if let Some(auto_save) = request.auto_save {

@@ -23,13 +23,13 @@ describe('ResultsTable', () => {
       id: '2',
       entity_type: 'client' as const,
       title: 'Sophie Bernard',
-      subtitle: 'sophie.bernard@email.com • 3 véhicules',
+      subtitle: 'sophie.bernard@email.com',
       status: 'active',
       date: '2024-12-08',
       metadata: {
         email: 'sophie.bernard@email.com',
         phone: '+33987654321',
-        totalTasks: '3',
+        totalTasks: 3,
       },
     },
   ];
@@ -50,7 +50,7 @@ describe('ResultsTable', () => {
     expect(screen.getByText('Protection PPF - Renault Clio')).toBeInTheDocument();
     expect(screen.getByText('Client: Jean Dupont • Technicien: Marie Martin')).toBeInTheDocument();
     expect(screen.getByText('Sophie Bernard')).toBeInTheDocument();
-    expect(screen.getByText('sophie.bernard@email.com • 3 véhicules')).toBeInTheDocument();
+    expect(screen.getByText('sophie.bernard@email.com')).toBeInTheDocument();
   });
 
   it('displays status badges correctly', () => {
@@ -79,7 +79,7 @@ describe('ResultsTable', () => {
     expect(screen.getByText('AB-123-CD')).toBeInTheDocument();
 
     // Client metadata
-    expect(screen.getByText('3 véhicules')).toBeInTheDocument();
+    expect(screen.getByText('3 tâches')).toBeInTheDocument();
   });
 
   it('calls onRecordSelect when a result is clicked', () => {
@@ -91,7 +91,7 @@ describe('ResultsTable', () => {
       />
     );
 
-    const firstResult = screen.getByText('Protection PPF - Renault Clio').closest('div');
+    const firstResult = screen.getByText('Protection PPF - Renault Clio').closest('div.rounded-lg');
     fireEvent.click(firstResult!);
 
     expect(mockOnRecordSelect).toHaveBeenCalledWith(mockResults[0]);
@@ -106,7 +106,7 @@ describe('ResultsTable', () => {
       />
     );
 
-    const firstResult = screen.getByText('Protection PPF - Renault Clio').closest('div');
+    const firstResult = screen.getByText('Protection PPF - Renault Clio').closest('div.rounded-lg');
     expect(firstResult).toHaveClass('bg-blue-500/10', 'border-blue-500/50');
   });
 
@@ -120,8 +120,8 @@ describe('ResultsTable', () => {
     );
 
     // Check that the results contain the expected structure
-    const taskResult = screen.getByText('Protection PPF - Renault Clio').closest('div');
-    const clientResult = screen.getByText('Sophie Bernard').closest('div');
+    const taskResult = screen.getByText('Protection PPF - Renault Clio').closest('div.rounded-lg');
+    const clientResult = screen.getByText('Sophie Bernard').closest('div.rounded-lg');
 
     expect(taskResult).toBeInTheDocument();
     expect(clientResult).toBeInTheDocument();
@@ -137,8 +137,8 @@ describe('ResultsTable', () => {
     );
 
     // The dates should be formatted (we're testing that they're displayed)
-    expect(screen.getByText('15/12/2024')).toBeInTheDocument();
-    expect(screen.getByText('08/12/2024')).toBeInTheDocument();
+    expect(screen.getByText('15 déc. 2024')).toBeInTheDocument();
+    expect(screen.getByText('8 déc. 2024')).toBeInTheDocument();
   });
 
   it('handles empty results gracefully', () => {

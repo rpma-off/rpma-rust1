@@ -286,9 +286,11 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
       addTaskNote: async (taskId: string, note: string, sessionToken: string): Promise<void> => {
         await withPermissionCheck(currentUser, 'task:write', () =>
           safeInvoke<void>('add_task_note', {
-            task_id: taskId,
-            note: sanitizeInput(note),
-            session_token: sessionToken
+            request: {
+              task_id: taskId,
+              note: sanitizeInput(note),
+              session_token: sessionToken
+            }
           })
         );
         invalidatePattern('task:');
@@ -297,10 +299,12 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
       sendTaskMessage: async (taskId: string, message: string, messageType: string, sessionToken: string): Promise<void> => {
         await withPermissionCheck(currentUser, 'task:write', () =>
           safeInvoke<void>('send_task_message', {
-            task_id: taskId,
-            message: sanitizeInput(message),
-            message_type: sanitizeInput(messageType),
-            session_token: sessionToken
+            request: {
+              task_id: taskId,
+              message: sanitizeInput(message),
+              message_type: sanitizeInput(messageType),
+              session_token: sessionToken
+            }
           })
         );
       },
@@ -559,23 +563,23 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
             display_name: request.display_name ? sanitizeInput(request.display_name as string) : undefined,
             bio: request.bio ? sanitizeInput(request.bio as string) : undefined,
           };
-          return safeInvoke<unknown>('update_user_profile', { request: sanitizedRequest, session_token: sessionToken });
+          return safeInvoke<unknown>('update_user_profile', { request: { ...sanitizedRequest, session_token: sessionToken } });
         }),
 
       updateUserPreferences: (request: Record<string, unknown>, sessionToken: string) =>
         withPermissionCheck(currentUser, 'settings:write', () =>
-          safeInvoke<unknown>('update_user_preferences', { request, session_token: sessionToken })
+          safeInvoke<unknown>('update_user_preferences', { request: { ...request, session_token: sessionToken } })
         ),
 
       // Security settings require special permissions
       updateUserSecurity: (request: Record<string, unknown>, sessionToken: string) =>
         withPermissionCheck(currentUser, 'settings:write', () =>
-          safeInvoke<unknown>('update_user_security', { request, session_token: sessionToken })
+          safeInvoke<unknown>('update_user_security', { request: { ...request, session_token: sessionToken } })
         ),
 
       changeUserPassword: (request: Record<string, unknown>, sessionToken: string) =>
         withPermissionCheck(currentUser, 'settings:write', () =>
-          safeInvoke<string>('change_user_password', { request, session_token: sessionToken })
+          safeInvoke<string>('change_user_password', { request: { ...request, session_token: sessionToken } })
         ),
     },
   };

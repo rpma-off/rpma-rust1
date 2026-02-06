@@ -954,7 +954,7 @@ export default function TasksPage() {
             update_existing: false
           }, user.token);
 
-          enhancedToast.success(`${result.imported_count} tâches importées avec succès`);
+          enhancedToast.success(`${result.successful} tâches importées avec succès`);
           refetch(); // Refresh the task list
         } catch (error) {
           console.error('Import failed:', error);

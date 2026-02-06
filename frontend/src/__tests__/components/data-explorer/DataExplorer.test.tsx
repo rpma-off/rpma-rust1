@@ -38,8 +38,8 @@ describe('DataExplorer', () => {
   it('renders the DataExplorer component', () => {
     render(<DataExplorer {...defaultProps} />);
 
-    expect(screen.getByText('Explorateur de Données')).toBeInTheDocument();
-    expect(screen.getByText('Recherche et exploration des données')).toBeInTheDocument();
+    expect(screen.getByText('Exploration des Données')).toBeInTheDocument();
+    expect(screen.getByText('Recherchez et explorez les tâches, clients et interventions')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Rechercher dans les tâches...')).toBeInTheDocument();
   });
 
@@ -91,7 +91,7 @@ describe('DataExplorer', () => {
     await waitFor(() => {
       expect(mockSearch).toHaveBeenCalledWith(
         '',
-        'clients',
+        'client',
         expect.any(Object),
         expect.any(Object)
       );
@@ -107,7 +107,7 @@ describe('DataExplorer', () => {
     await waitFor(() => {
       expect(mockSearch).toHaveBeenCalledWith(
         'test search',
-        'tasks',
+        'task',
         expect.any(Object),
         expect.any(Object)
       );

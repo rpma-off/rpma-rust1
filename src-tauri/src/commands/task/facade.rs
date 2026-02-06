@@ -15,6 +15,7 @@ use crate::services::validation::ValidationService;
 // Re-export specialized modules for internal use
 pub use super::validation::*;
 pub use super::queries::*;
+pub use super::validation::validate_task_assignment_change;
 
 
 
@@ -120,6 +121,42 @@ pub struct BulkImportResponse {
     pub failed: u32,
     pub errors: Vec<String>,
     pub duplicates_skipped: u32,
+}
+
+/// Add task note command (placeholder)
+#[tracing::instrument(skip(_state))]
+#[tauri::command]
+pub async fn add_task_note(
+    _request: AddTaskNoteRequest,
+    _state: AppState<'_>,
+) -> Result<ApiResponse<String>, AppError> {
+    Ok(ApiResponse::error(AppError::Validation(
+        "Add task note is not implemented yet".to_string(),
+    )))
+}
+
+/// Send task message command (placeholder)
+#[tracing::instrument(skip(_state))]
+#[tauri::command]
+pub async fn send_task_message(
+    _request: SendTaskMessageRequest,
+    _state: AppState<'_>,
+) -> Result<ApiResponse<String>, AppError> {
+    Ok(ApiResponse::error(AppError::Validation(
+        "Send task message is not implemented yet".to_string(),
+    )))
+}
+
+/// Report task issue command (placeholder)
+#[tracing::instrument(skip(_state))]
+#[tauri::command]
+pub async fn report_task_issue(
+    _request: ReportTaskIssueRequest,
+    _state: AppState<'_>,
+) -> Result<ApiResponse<String>, AppError> {
+    Ok(ApiResponse::error(AppError::Validation(
+        "Report task issue is not implemented yet".to_string(),
+    )))
 }
 
 // Delegate to validation module

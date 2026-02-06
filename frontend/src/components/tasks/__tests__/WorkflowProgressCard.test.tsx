@@ -6,24 +6,22 @@ import { ipcClient } from '@/lib/ipc/client';
 import { useRouter } from 'next/navigation';
 
 // Mock dependencies
-const mockStartIntervention = jest.fn();
+const mockPush = jest.fn();
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
-    push: jest.fn(),
+    push: mockPush,
   }),
 }));
 
 jest.mock('@/lib/ipc/client', () => ({
   ipcClient: {
     interventions: {
-      start: mockStartIntervention,
+      start: jest.fn(),
     },
   },
 }));
 
-// Access the mocked versions
-const mockIpcClient = ipcClient as jest.Mocked<typeof ipcClient>;
-const getMockRouter = () => ({ push: jest.fn() });
+const mockStartIntervention = ipcClient.interventions.start as jest.MockedFunction<typeof ipcClient.interventions.start>;
 
 
 
@@ -184,7 +182,7 @@ describe('WorkflowProgressCard', () => {
       fireEvent.click(button);
 
       await waitFor(() => {
-        expect(mockIpcClient.interventions.start).toHaveBeenCalledWith(
+        expect(mockStartIntervention).toHaveBeenCalledWith(
           {
             task_id: 'task-123',
             intervention_number: null,
@@ -306,7 +304,7 @@ describe('WorkflowProgressCard', () => {
       fireEvent.click(button);
 
       await waitFor(() => {
-        expect(getMockRouter().push).toHaveBeenCalledWith('/tasks/task-123/workflow/ppf');
+        expect(mockPush).toHaveBeenCalledWith('/tasks/task-123/workflow/ppf');
       });
     });
   });

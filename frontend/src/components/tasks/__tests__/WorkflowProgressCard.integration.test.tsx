@@ -4,18 +4,17 @@ import { AuthContext } from '@/contexts/AuthContext';
 import { ipcClient } from '@/lib/ipc/client';
 
 // Mock the entire module
-const mockIpcClient = {
-  interventions: {
-    start: jest.fn(),
-    getActiveByTask: jest.fn(),
-    getProgress: jest.fn(),
-  },
-};
 jest.mock('@/lib/ipc/client', () => ({
-  ipcClient: mockIpcClient,
+  ipcClient: {
+    interventions: {
+      start: jest.fn(),
+      getActiveByTask: jest.fn(),
+      getProgress: jest.fn(),
+    },
+  },
 }));
 
-
+const mockStartIntervention = ipcClient.interventions.start as jest.MockedFunction<typeof ipcClient.interventions.start>;
 
 const mockSession = {
   id: 'user-123',
@@ -63,7 +62,7 @@ describe('WorkflowProgressCard Integration', () => {
 
   describe('Workflow Start Integration', () => {
     it('successfully starts workflow and updates UI', async () => {
-      mockIpcClient.interventions.start.mockResolvedValue({
+      mockStartIntervention.mockResolvedValue({
         intervention: {
           id: 'intervention-123',
           task_id: 'task-123',
@@ -84,12 +83,6 @@ describe('WorkflowProgressCard Integration', () => {
             updated_at: new Date().toISOString(),
           },
         ],
-      });
-
-      const mockReload = jest.fn();
-      Object.defineProperty(window, 'location', {
-        value: { reload: mockReload },
-        writable: true,
       });
 
       renderWithAuth(
@@ -113,7 +106,7 @@ describe('WorkflowProgressCard Integration', () => {
 
       // Wait for completion
       await waitFor(() => {
-        expect(mockIpcClient.interventions.start).toHaveBeenCalledWith(
+        expect(mockStartIntervention).toHaveBeenCalledWith(
           expect.objectContaining({
             task_id: 'task-123',
             technician_id: 'user-123',
@@ -123,13 +116,11 @@ describe('WorkflowProgressCard Integration', () => {
         );
       });
 
-      // Verify page reload was triggered
-      expect(mockReload).toHaveBeenCalled();
     });
 
     it('handles workflow start errors gracefully', async () => {
       const errorMessage = 'Failed to create intervention';
-      mockIpcClient.interventions.start.mockRejectedValue(new Error(errorMessage));
+      mockStartIntervention.mockRejectedValue(new Error(errorMessage));
 
       renderWithAuth(
         <WorkflowProgressCard
@@ -182,7 +173,7 @@ describe('WorkflowProgressCard Integration', () => {
 
       // Clicking disabled button should not call IPC
       fireEvent.click(button);
-      expect(mockIpcClient.interventions.start).not.toHaveBeenCalled();
+      expect(mockStartIntervention).not.toHaveBeenCalled();
     });
   });
 

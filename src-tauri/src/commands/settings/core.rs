@@ -3,7 +3,7 @@
 //! This module provides the foundation for settings operations,
 //! including shared utilities, authentication helpers, and common patterns.
 
-use crate::commands::{AppError, AppState};
+use crate::commands::{ApiResponse, AppError, AppState};
 use crate::models::settings::{AppSettings, SystemConfiguration};
 
 use std::sync::Mutex;
@@ -19,7 +19,7 @@ pub fn initialize_app_settings() -> Result<(), String> {
 }
 
 /// Get app settings with lazy initialization
-pub fn get_app_settings() -> Result<AppSettings, String> {
+pub fn load_app_settings() -> Result<AppSettings, String> {
     let mut settings = APP_SETTINGS.lock().map_err(|_| "Failed to lock app settings")?;
 
     if settings.is_none() {
@@ -35,6 +35,23 @@ pub fn update_app_settings(new_settings: AppSettings) -> Result<(), String> {
     let mut settings = APP_SETTINGS.lock().map_err(|_| "Failed to lock app settings")?;
     *settings = Some(new_settings);
     Ok(())
+}
+
+/// Get app settings (command)
+#[tauri::command]
+pub async fn get_app_settings(
+    session_token: Option<String>,
+    state: AppState<'_>,
+) -> Result<ApiResponse<AppSettings>, AppError> {
+    if let Some(token) = session_token {
+        if !token.is_empty() {
+            // Require a valid session when token is provided.
+            authenticate_user(&token, &state)?;
+        }
+    }
+
+    let settings = load_app_settings().map_err(AppError::Database)?;
+    Ok(ApiResponse::success(settings))
 }
 
 /// Get system configuration with lazy initialization

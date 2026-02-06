@@ -107,6 +107,9 @@ export function ReportContent({ reportType, dateRange, filters, overviewData, re
   const renderReportComponent = () => {
     switch (reportType) {
       case 'overview':
+        if (!overviewData) {
+          return <LoadingSpinner message="Chargement des donnees d''apercu..." />;
+        }
         return (
           <LazyReportWrapper reportType="Rapport d&apos;Aperçu">
             <OverviewReport dateRange={toDateRange(dateRange)} filters={toReportFilters(filters)} overviewData={overviewData} />

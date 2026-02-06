@@ -349,9 +349,11 @@ export const ipcClient = {
      */
     editTask: async (taskId: string, updates: Record<string, unknown>, sessionToken: string): Promise<Task> => {
       const result = await safeInvoke<unknown>('edit_task', {
-        task_id: taskId,
-        updates,
-        session_token: sessionToken
+        request: {
+          task_id: taskId,
+          data: updates,
+          session_token: sessionToken
+        }
       });
       invalidatePattern('task:');
       return extractAndValidate(result, validateTask) as Task;
@@ -366,9 +368,11 @@ export const ipcClient = {
      */
     addTaskNote: async (taskId: string, note: string, sessionToken: string): Promise<void> => {
       await safeInvoke<void>('add_task_note', {
-        task_id: taskId,
-        note,
-        session_token: sessionToken
+        request: {
+          task_id: taskId,
+          note,
+          session_token: sessionToken
+        }
       });
       invalidatePattern('task:');
     },
@@ -383,10 +387,12 @@ export const ipcClient = {
      */
     sendTaskMessage: async (taskId: string, message: string, messageType: string, sessionToken: string): Promise<void> => {
       await safeInvoke<void>('send_task_message', {
-        task_id: taskId,
-        message,
-        message_type: messageType,
-        session_token: sessionToken
+        request: {
+          task_id: taskId,
+          message,
+          message_type: messageType,
+          session_token: sessionToken
+        }
       });
     },
 
@@ -400,10 +406,12 @@ export const ipcClient = {
      */
     delayTask: async (taskId: string, newDate: string, reason: string, sessionToken: string): Promise<void> => {
       await safeInvoke<void>('delay_task', {
-        task_id: taskId,
-        new_date: newDate,
-        reason,
-        session_token: sessionToken
+        request: {
+          task_id: taskId,
+          new_scheduled_date: newDate,
+          reason,
+          session_token: sessionToken
+        }
       });
       invalidatePattern('task:');
     },
@@ -419,11 +427,13 @@ export const ipcClient = {
      */
     reportTaskIssue: async (taskId: string, issueType: string, severity: string, description: string, sessionToken: string): Promise<void> => {
       await safeInvoke<void>('report_task_issue', {
-        task_id: taskId,
-        issue_type: issueType,
-        severity,
-        description,
-        session_token: sessionToken
+        request: {
+          task_id: taskId,
+          issue_type: issueType,
+          severity,
+          description,
+          session_token: sessionToken
+        }
       });
     },
 
@@ -435,9 +445,16 @@ export const ipcClient = {
      */
     exportTasksCsv: (options: { include_notes?: boolean; date_range?: { start_date?: string; end_date?: string } }, sessionToken: string): Promise<string> =>
       safeInvoke<string>('export_tasks_csv', {
-        include_notes: options.include_notes ?? false,
-        date_range: options.date_range,
-        session_token: sessionToken
+        request: {
+          include_client_data: options.include_notes ?? false,
+          filter: options.date_range
+            ? {
+                date_from: options.date_range.start_date,
+                date_to: options.date_range.end_date
+              }
+            : undefined,
+          session_token: sessionToken
+        }
       }),
 
     /**
@@ -446,12 +463,13 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving to import result
      */
-    importTasksBulk: (options: { csv_lines: string[]; skip_duplicates?: boolean; update_existing?: boolean }, sessionToken: string): Promise<{ imported_count: number; skipped_count: number; errors: string[] }> =>
-      safeInvoke<{ imported_count: number; skipped_count: number; errors: string[] }>('import_tasks_bulk', {
-        csv_lines: options.csv_lines,
-        skip_duplicates: options.skip_duplicates ?? true,
-        update_existing: options.update_existing ?? false,
-        session_token: sessionToken
+    importTasksBulk: (options: { csv_lines: string[]; skip_duplicates?: boolean; update_existing?: boolean }, sessionToken: string): Promise<{ total_processed: number; successful: number; failed: number; errors: string[]; duplicates_skipped: number }> =>
+      safeInvoke<{ total_processed: number; successful: number; failed: number; errors: string[]; duplicates_skipped: number }>('import_tasks_bulk', {
+        request: {
+          csv_data: options.csv_lines.join('\n'),
+          update_existing: options.update_existing ?? false,
+          session_token: sessionToken
+        }
       }),
   },
 
@@ -994,32 +1012,32 @@ export const ipcClient = {
       safeInvoke<unknown>('get_app_settings', { session_token: sessionToken || '' }),
 
     updateNotificationSettings: (request: Record<string, unknown>, sessionToken: string) =>
-      safeInvoke<unknown>('update_notification_settings', { request, session_token: sessionToken }),
+      safeInvoke<unknown>('update_notification_settings', { request: { ...request, session_token: sessionToken } }),
 
     // User settings operations
     getUserSettings: (sessionToken: string) =>
       cachedInvoke<UserSettings>(`user-settings`, 'get_user_settings', { session_token: sessionToken }, undefined, 30000),
 
     updateUserProfile: (request: Record<string, unknown>, sessionToken: string) =>
-      safeInvoke<unknown>('update_user_profile', { request, session_token: sessionToken }),
+      safeInvoke<unknown>('update_user_profile', { request: { ...request, session_token: sessionToken } }),
 
     updateUserPreferences: (request: Record<string, unknown>, sessionToken: string) =>
-      safeInvoke<unknown>('update_user_preferences', { request, session_token: sessionToken }),
+      safeInvoke<unknown>('update_user_preferences', { request: { ...request, session_token: sessionToken } }),
 
     updateUserSecurity: (request: Record<string, unknown>, sessionToken: string) =>
-      safeInvoke<unknown>('update_user_security', { request, session_token: sessionToken }),
+      safeInvoke<unknown>('update_user_security', { request: { ...request, session_token: sessionToken } }),
 
     updateUserPerformance: (request: Record<string, unknown>, sessionToken: string) =>
       safeInvoke<unknown>('update_user_performance', { request, session_token: sessionToken }),
 
     updateUserAccessibility: (request: Record<string, unknown>, sessionToken: string) =>
-      safeInvoke<unknown>('update_user_accessibility', { request, session_token: sessionToken }),
+      safeInvoke<unknown>('update_user_accessibility', { request: { ...request, session_token: sessionToken } }),
 
     updateUserNotifications: (request: Record<string, unknown>, sessionToken: string) =>
-      safeInvoke<unknown>('update_user_notifications', { request, session_token: sessionToken }),
+      safeInvoke<unknown>('update_user_notifications', { request: { ...request, session_token: sessionToken } }),
 
     changeUserPassword: (request: Record<string, unknown>, sessionToken: string) =>
-      safeInvoke<string>('change_user_password', { request, session_token: sessionToken }),
+      safeInvoke<string>('change_user_password', { request: { ...request, session_token: sessionToken } }),
 
     // Security operations
     getActiveSessions: (sessionToken: string) =>
@@ -1039,8 +1057,7 @@ export const ipcClient = {
 
     uploadUserAvatar: (fileData: string, fileName: string, mimeType: string, sessionToken: string) =>
       safeInvoke<string>('upload_user_avatar', {
-        request: { file_data: fileData, file_name: fileName, mime_type: mimeType },
-        session_token: sessionToken
+        request: { avatar_data: fileData, mime_type: mimeType, session_token: sessionToken }
       }),
   },
 

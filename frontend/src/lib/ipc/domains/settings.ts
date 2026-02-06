@@ -14,8 +14,7 @@ export const settingsOperations = {
 
   updateNotificationSettings: (request: Record<string, unknown>, sessionToken: string): Promise<unknown> =>
     safeInvoke<unknown>(IPC_COMMANDS.UPDATE_NOTIFICATION_SETTINGS, {
-      request,
-      session_token: sessionToken
+      request: { ...request, session_token: sessionToken }
     }),
 
   // User settings operations
@@ -26,20 +25,17 @@ export const settingsOperations = {
 
   updateUserProfile: (request: Record<string, unknown>, sessionToken: string): Promise<unknown> =>
     safeInvoke<unknown>(IPC_COMMANDS.UPDATE_USER_PROFILE, {
-      request,
-      session_token: sessionToken
+      request: { ...request, session_token: sessionToken }
     }),
 
   updateUserPreferences: (request: Record<string, unknown>, sessionToken: string): Promise<unknown> =>
     safeInvoke<unknown>(IPC_COMMANDS.UPDATE_USER_PREFERENCES, {
-      request,
-      session_token: sessionToken
+      request: { ...request, session_token: sessionToken }
     }),
 
   updateUserSecurity: (request: Record<string, unknown>, sessionToken: string): Promise<unknown> =>
     safeInvoke<unknown>(IPC_COMMANDS.UPDATE_USER_SECURITY, {
-      request,
-      session_token: sessionToken
+      request: { ...request, session_token: sessionToken }
     }),
 
   updateUserPerformance: (request: Record<string, unknown>, sessionToken: string): Promise<unknown> =>
@@ -50,20 +46,17 @@ export const settingsOperations = {
 
   updateUserAccessibility: (request: Record<string, unknown>, sessionToken: string): Promise<unknown> =>
     safeInvoke<unknown>(IPC_COMMANDS.UPDATE_USER_ACCESSIBILITY, {
-      request,
-      session_token: sessionToken
+      request: { ...request, session_token: sessionToken }
     }),
 
   updateUserNotifications: (request: Record<string, unknown>, sessionToken: string): Promise<unknown> =>
     safeInvoke<unknown>(IPC_COMMANDS.UPDATE_USER_NOTIFICATIONS, {
-      request,
-      session_token: sessionToken
+      request: { ...request, session_token: sessionToken }
     }),
 
   changeUserPassword: (request: Record<string, unknown>, sessionToken: string): Promise<string> =>
     safeInvoke<string>(IPC_COMMANDS.CHANGE_USER_PASSWORD, {
-      request,
-      session_token: sessionToken
+      request: { ...request, session_token: sessionToken }
     }),
 
   // Security operations
@@ -101,7 +94,6 @@ export const settingsOperations = {
     sessionToken: string
   ): Promise<string> =>
     safeInvoke<string>(IPC_COMMANDS.UPLOAD_USER_AVATAR, {
-      request: { file_data: fileData, file_name: fileName, mime_type: mimeType },
-      session_token: sessionToken
+      request: { avatar_data: fileData, mime_type: mimeType, session_token: sessionToken }
     }),
 };

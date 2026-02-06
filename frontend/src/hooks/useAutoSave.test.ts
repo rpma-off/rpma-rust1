@@ -179,7 +179,7 @@ describe('useAutoSave', () => {
       rerender({ data: { test: 'changed2' } })
 
       act(() => {
-        jest.advanceTimersByTime(15000) // Another half
+        jest.advanceTimersByTime(30000)
       })
 
       // Should only save the latest data
@@ -216,13 +216,14 @@ describe('useAutoSave', () => {
       })
 
       // Now the second change should trigger a save
+      rerender({ data: { test: 'changed3' } })
       act(() => {
         jest.advanceTimersByTime(30000)
       })
 
       await waitFor(() => {
         expect(mockSaveFunction).toHaveBeenCalledTimes(2)
-        expect(mockSaveFunction).toHaveBeenLastCalledWith({ test: 'changed2' })
+        expect(mockSaveFunction).toHaveBeenLastCalledWith({ test: 'changed3' })
       })
     })
   })
@@ -253,16 +254,22 @@ describe('useAutoSave', () => {
       })
       mockSaveFunction.mockReturnValue(savePromise)
 
-      const savePromise2 = act(async () => {
-        const promise = result.current.forceSave()
-        expect(result.current.saving).toBe(true)
-        resolveSave(undefined)
-        return promise
+      act(() => {
+        result.current.forceSave()
       })
 
-      await savePromise2
+      await waitFor(() => {
+        expect(result.current.saving).toBe(true)
+      })
 
-      expect(result.current.saving).toBe(false)
+      act(() => {
+        resolveSave(undefined)
+      })
+
+      await waitFor(() => {
+        expect(result.current.saving).toBe(false)
+      })
+
       expect(result.current.lastSaved).toBeInstanceOf(Date)
     })
   })
@@ -324,11 +331,14 @@ describe('useAutoSave', () => {
 
   describe('Cleanup', () => {
     it('clears timeout on unmount', () => {
-      const { unmount } = renderHook(() =>
-        useAutoSave({ test: 'data' }, mockSaveFunction)
+      const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
+
+      const { rerender, unmount } = renderHook(
+        ({ data }) => useAutoSave(data, mockSaveFunction),
+        { initialProps: { data: { test: 'initial' } } }
       )
 
-      const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
+      rerender({ data: { test: 'changed' } })
 
       unmount()
 

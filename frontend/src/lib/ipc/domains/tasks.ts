@@ -81,7 +81,7 @@ const specializedOperations = {
     sessionToken: string
   ): Promise<unknown> =>
     safeInvoke<unknown>(IPC_COMMANDS.VALIDATE_TASK_ASSIGNMENT_CHANGE, {
-      request: { task_id: taskId, old_user_id: oldUserId, new_user_id: newUserId, sessionToken: sessionToken }
+      request: { task_id: taskId, old_user_id: oldUserId, new_user_id: newUserId, session_token: sessionToken }
     }),
 
   /**
@@ -93,9 +93,11 @@ const specializedOperations = {
    */
   editTask: async (taskId: string, updates: Record<string, unknown>, sessionToken: string): Promise<Task> => {
     const result = await safeInvoke<unknown>(IPC_COMMANDS.EDIT_TASK, {
-      task_id: taskId,
-      updates,
-      session_token: sessionToken
+      request: {
+        task_id: taskId,
+        data: updates,
+        session_token: sessionToken
+      }
     });
     return extractAndValidate(result, validateTask) as Task;
   },
@@ -109,9 +111,11 @@ const specializedOperations = {
    */
   addTaskNote: async (taskId: string, note: string, sessionToken: string): Promise<void> => {
     await safeInvoke<void>(IPC_COMMANDS.ADD_TASK_NOTE, {
-      task_id: taskId,
-      note,
-      session_token: sessionToken
+      request: {
+        task_id: taskId,
+        note,
+        session_token: sessionToken
+      }
     });
   },
 
@@ -130,10 +134,12 @@ const specializedOperations = {
     sessionToken: string
   ): Promise<void> => {
     await safeInvoke<void>(IPC_COMMANDS.SEND_TASK_MESSAGE, {
-      task_id: taskId,
-      message,
-      message_type: messageType,
-      session_token: sessionToken
+      request: {
+        task_id: taskId,
+        message,
+        message_type: messageType,
+        session_token: sessionToken
+      }
     });
   },
 
@@ -152,10 +158,12 @@ const specializedOperations = {
     sessionToken: string
   ): Promise<void> => {
     await safeInvoke<void>(IPC_COMMANDS.DELAY_TASK, {
-      task_id: taskId,
-      new_scheduled_date: newDate,
-      reason,
-      session_token: sessionToken
+      request: {
+        task_id: taskId,
+        new_scheduled_date: newDate,
+        reason,
+        session_token: sessionToken
+      }
     });
   },
 
@@ -176,11 +184,13 @@ const specializedOperations = {
     sessionToken: string
   ): Promise<void> => {
     await safeInvoke<void>(IPC_COMMANDS.REPORT_TASK_ISSUE, {
-      task_id: taskId,
-      issue_type: issueType,
-      severity,
-      description,
-      session_token: sessionToken
+      request: {
+        task_id: taskId,
+        issue_type: issueType,
+        severity,
+        description,
+        session_token: sessionToken
+      }
     });
   },
 
@@ -195,9 +205,16 @@ const specializedOperations = {
     sessionToken: string
   ): Promise<string> =>
     safeInvoke<string>(IPC_COMMANDS.EXPORT_TASKS_CSV, {
-      include_notes: options.include_notes ?? false,
-      date_range: options.date_range,
-      session_token: sessionToken
+      request: {
+        include_client_data: options.include_notes ?? false,
+        filter: options.date_range
+          ? {
+              date_from: options.date_range.start_date,
+              date_to: options.date_range.end_date
+            }
+          : undefined,
+        session_token: sessionToken
+      }
     }),
 
   /**
@@ -209,14 +226,15 @@ const specializedOperations = {
   importTasksBulk: (
     options: { csv_lines: string[]; skip_duplicates?: boolean; update_existing?: boolean },
     sessionToken: string
-  ): Promise<{ imported_count: number; skipped_count: number; errors: string[] }> =>
-    safeInvoke<{ imported_count: number; skipped_count: number; errors: string[] }>(
+  ): Promise<{ total_processed: number; successful: number; failed: number; errors: string[]; duplicates_skipped: number }> =>
+    safeInvoke<{ total_processed: number; successful: number; failed: number; errors: string[]; duplicates_skipped: number }>(
       IPC_COMMANDS.IMPORT_TASKS_BULK,
       {
-        csv_lines: options.csv_lines,
-        skip_duplicates: options.skip_duplicates ?? true,
-        update_existing: options.update_existing ?? false,
-        session_token: sessionToken
+        request: {
+          csv_data: options.csv_lines.join('\n'),
+          update_existing: options.update_existing ?? false,
+          session_token: sessionToken
+        }
       }
     ),
 };

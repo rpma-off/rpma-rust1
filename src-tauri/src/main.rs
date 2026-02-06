@@ -77,10 +77,10 @@ fn main() {
             commands::system::get_device_info,
             commands::task::task_crud,
             commands::task::edit_task,
-            // commands::task::add_task_note, // TODO: implement
-            // commands::task::send_task_message, // TODO: implement
+            commands::task::add_task_note,
+            commands::task::send_task_message,
             commands::task::delay_task,
-            // commands::task::report_task_issue, // TODO: implement
+            commands::task::report_task_issue,
             commands::task::export_tasks_csv,
             commands::task::import_tasks_bulk,
             commands::client::client_crud,
@@ -167,7 +167,7 @@ fn main() {
             commands::auth::regenerate_backup_codes,
             commands::analytics::analytics_get_summary,
             commands::ui::dashboard_get_stats,
-            // commands::settings::get_app_settings, // TODO: check export
+            commands::settings::core::get_app_settings,
             commands::settings::update_general_settings,
             commands::settings::update_security_settings,
             commands::settings::update_notification_settings,
@@ -239,7 +239,7 @@ fn main() {
             commands::reports::get_operational_intelligence_report,
             commands::task::check_task_assignment,
             commands::task::check_task_availability,
-            // commands::task::validate_task_assignment_change, // TODO: fix registration
+            commands::task::validate_task_assignment_change,
             commands::calendar::get_events,
             commands::calendar::get_event_by_id,
             commands::calendar::create_event,

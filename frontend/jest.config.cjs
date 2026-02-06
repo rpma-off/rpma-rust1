@@ -13,7 +13,8 @@ const config = {
   // Setup files
   setupFilesAfterEnv: [
     '<rootDir>/src/__tests__/setup.ts',
-    '<rootDir>/jest.setup.cjs',
+    '<rootDir>/src/__tests__/mocks/tauri.mock.ts',
+    '<rootDir>/src/__tests__/mocks/ipcClient.mock.ts',
   ],
   
   // Test file patterns
@@ -27,10 +28,12 @@ const config = {
     '<rootDir>/node_modules/',
     '<rootDir>/dist/',
     '<rootDir>/.next/',
+    '<rootDir>/src/__tests__/setup.ts',
+    '<rootDir>/src/__tests__/mocks/',
   ],
   
   // Coverage configuration
-  collectCoverage: true,
+  collectCoverage: false,
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html', 'json'],
   collectCoverageFrom: [
@@ -71,6 +74,10 @@ const config = {
   
   // Test timeout
   testTimeout: 10000,
+
+  // Limit workers to reduce memory pressure in CI/local runs
+  maxWorkers: 1,
+  workerIdleMemoryLimit: 512 * 1024 * 1024,
   
   // Verbose output
   verbose: process.env.NODE_ENV === 'development',
@@ -79,11 +86,6 @@ const config = {
   clearMocks: true,
   restoreMocks: true,
   
-  // Additional setup
-  setupFilesAfterEnv: [
-    '<rootDir>/src/__tests__/mocks/tauri.mock.ts',
-    '<rootDir>/src/__tests__/mocks/ipcClient.mock.ts',
-  ],
 };
 
 module.exports = createJestConfig(config);

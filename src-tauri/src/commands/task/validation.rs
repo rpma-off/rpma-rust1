@@ -295,6 +295,7 @@ pub async fn check_task_availability(
 }
 
 /// Validate task assignment change
+#[tauri::command]
 #[tracing::instrument(skip(state))]
 pub async fn validate_task_assignment_change(
     request: ValidateTaskAssignmentChangeRequest,

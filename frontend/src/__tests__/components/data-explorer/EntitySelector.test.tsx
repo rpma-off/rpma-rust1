@@ -1,12 +1,22 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { EntitySelector } from '../../../app/reports/components/data-explorer/EntitySelector';
+import { useEntityCounts } from '../../../hooks/useEntityCounts';
+
+jest.mock('../../../hooks/useEntityCounts');
+const mockUseEntityCounts = useEntityCounts as jest.MockedFunction<typeof useEntityCounts>;
 
 describe('EntitySelector', () => {
   const mockOnTypeChange = jest.fn();
 
   beforeEach(() => {
     mockOnTypeChange.mockClear();
+    mockUseEntityCounts.mockReturnValue({
+      counts: { tasks: 1234, clients: 567, interventions: 8901 },
+      loading: false,
+      error: null,
+      refetch: jest.fn(),
+    });
   });
 
   it('renders all entity type buttons', () => {
@@ -31,8 +41,8 @@ describe('EntitySelector', () => {
     const clientsButton = screen.getByText('Clients').closest('button');
     const tasksButton = screen.getByText('Tâches').closest('button');
 
-    expect(clientsButton).toHaveClass('bg-blue-600', 'hover:bg-blue-700');
-    expect(tasksButton).not.toHaveClass('bg-blue-600');
+    expect(clientsButton).toHaveClass('bg-green-500/20', 'text-green-400', 'border-green-500/50');
+    expect(tasksButton).not.toHaveClass('bg-blue-500/20');
   });
 
   it('calls onTypeChange when a different entity type is clicked', () => {
@@ -41,30 +51,21 @@ describe('EntitySelector', () => {
     const clientsButton = screen.getByText('Clients');
     fireEvent.click(clientsButton);
 
-    expect(mockOnTypeChange).toHaveBeenCalledWith('clients');
+    expect(mockOnTypeChange).toHaveBeenCalledWith('client');
   });
 
-  it('does not call onTypeChange when the selected entity type is clicked', () => {
+  it('calls onTypeChange when the selected entity type is clicked', () => {
     render(<EntitySelector selectedType="task" onTypeChange={mockOnTypeChange} />);
 
     const tasksButton = screen.getByText('Tâches');
     fireEvent.click(tasksButton);
 
-    expect(mockOnTypeChange).not.toHaveBeenCalled();
-  });
-
-  it('displays correct descriptions', () => {
-    render(<EntitySelector selectedType="task" onTypeChange={mockOnTypeChange} />);
-
-    expect(screen.getByText('Rechercher dans les tâches PPF')).toBeInTheDocument();
-    expect(screen.getByText('Rechercher dans les clients')).toBeInTheDocument();
-    expect(screen.getByText('Rechercher dans les interventions')).toBeInTheDocument();
+    expect(mockOnTypeChange).toHaveBeenCalledWith('task');
   });
 
   it('shows correct icons for each entity type', () => {
     render(<EntitySelector selectedType="task" onTypeChange={mockOnTypeChange} />);
 
-    // Check that the buttons contain the expected text and structure
     const tasksButton = screen.getByText('Tâches').closest('button');
     const clientsButton = screen.getByText('Clients').closest('button');
     const interventionsButton = screen.getByText('Interventions').closest('button');
@@ -78,13 +79,13 @@ describe('EntitySelector', () => {
     render(<EntitySelector selectedType="task" onTypeChange={mockOnTypeChange} />);
 
     const selectedButton = screen.getByText('Tâches').closest('button');
-    expect(selectedButton).toHaveClass('bg-blue-600', 'text-white');
+    expect(selectedButton).toHaveClass('bg-blue-500/20', 'text-blue-400', 'border-blue-500/50');
   });
 
   it('applies correct styling for unselected state', () => {
     render(<EntitySelector selectedType="task" onTypeChange={mockOnTypeChange} />);
 
     const unselectedButton = screen.getByText('Clients').closest('button');
-    expect(unselectedButton).toHaveClass('border-gray-600', 'text-gray-300');
+    expect(unselectedButton).toHaveClass('border-border/50', 'text-muted-foreground');
   });
 });

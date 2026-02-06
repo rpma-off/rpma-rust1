@@ -3,7 +3,7 @@
 //! This module handles security-related settings including
 //! authentication configuration, password policies, and security preferences.
 
-use crate::commands::settings::core::{authenticate_user, handle_settings_error, update_app_settings, get_app_settings};
+use crate::commands::settings::core::{authenticate_user, handle_settings_error, update_app_settings, load_app_settings};
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::models::settings::UserSecuritySettings;
 
@@ -44,7 +44,7 @@ pub async fn update_security_settings(
         return Err(AppError::Authorization("Only administrators can update security settings".to_string()));
     }
 
-    let mut app_settings = get_app_settings()
+    let mut app_settings = load_app_settings()
         .map_err(|e| AppError::Database(e))?;
 
     if let Some(two_factor_enabled) = request.two_factor_enabled {

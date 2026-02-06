@@ -164,7 +164,7 @@ export function useCalendar(initialDate?: Date, initialViewMode?: CalendarViewMo
         message: 'Authentication required to check conflicts',
       };
     }
-    return await checkCalendarConflicts(taskId, newDate, newStart, newEnd, user.token);
+    return await checkCalendarConflicts(taskId, newDate, user.token, newStart, newEnd);
   }, [user?.token]);
 
   const rescheduleTaskWithConflictCheck = useCallback(async (
@@ -192,7 +192,7 @@ export function useCalendar(initialDate?: Date, initialViewMode?: CalendarViewMo
       }
 
       // No conflicts, proceed with rescheduling
-      await rescheduleTask(taskId, newDate, newStart, newEnd, reason, user.token);
+      await rescheduleTask(taskId, newDate, user.token, newStart, newEnd, reason);
 
       // Refresh tasks after successful rescheduling
       await refreshTasks();
