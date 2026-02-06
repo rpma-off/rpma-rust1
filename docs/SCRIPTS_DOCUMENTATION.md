@@ -151,6 +151,11 @@ These are the commands available in `package.json` and the scripts they execute:
 | `ci:validate` | `bash scripts/ci-type-check.sh` | Runs CI validation suite. |
 | `security:audit` | `node scripts/security-audit.js` | Runs security audit. |
 | `performance:test` | `node scripts/performance-regression-test.js` | Runs performance tests. |
+| `git:start-feature` | `node scripts/git-workflow.js start-feature <name>` | Sync main and create a new feature branch. |
+| `git:sync-feature` | `node scripts/git-workflow.js sync-feature` | Rebase current feature branch on `origin/main`. |
+| `git:finish-feature` | `node scripts/git-workflow.js finish-feature` | Push current feature branch with upstream tracking. |
+| `git:cleanup-feature` | `node scripts/git-workflow.js cleanup-feature [branch]` | Update `main` and delete local feature branch. |
+| `git:guard-main` | `node scripts/git-workflow.js guard-main` | Blocks unsafe direct pushes from local `main`. |
 
 ## Text Encoding Guard
 
@@ -161,3 +166,17 @@ These are the commands available in `package.json` and the scripts they execute:
     *   `cd frontend && npm run encoding:check`
     *   `npm run frontend:encoding-check`
 *   **Guideline**: Keep source files saved as UTF-8 and avoid legacy recoding.
+
+## Git Workflow Automation
+
+#### `git-workflow.js`
+*   **Description**: Automates a safe feature-branch workflow around `main`.
+*   **Commands**:
+    *   `npm run git:start-feature -- my-change`
+    *   `npm run git:sync-feature`
+    *   `npm run git:finish-feature`
+    *   `npm run git:cleanup-feature -- feat/my-change`
+*   **Safety**:
+    *   Refuses to run when a merge is in progress.
+    *   Refuses unsafe operations on `main`.
+    *   `pre-push` hook runs `npm run git:guard-main`.

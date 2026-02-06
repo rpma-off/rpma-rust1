@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# Prevent unsafe direct pushes from local main.
+npm run git:guard-main
