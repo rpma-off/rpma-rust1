@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -71,14 +71,14 @@ export default function LoginPage() {
           {/* Header Card */}
           <div className="rpma-shell p-8">
             <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent/20 mb-6">
-                <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[hsl(var(--rpma-teal))]/10 mb-6">
+                <svg className="w-8 h-8 text-[hsl(var(--rpma-teal))]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Connexion</h2>
-              <p className="text-border-light text-sm md:text-base">
-                Accédez à votre tableau de bord RPMA V2
+              <p className="text-muted-foreground text-sm md:text-base">
+                Accédez Ã  votre tableau de bord RPMA V2
               </p>
             </div>
 
@@ -107,10 +107,10 @@ export default function LoginPage() {
                       required
                       value={formData.email}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 bg-border/10 border border-border/30 rounded-xl text-foreground placeholder-border-light focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all duration-200"
+                      className="w-full px-4 py-3 bg-white border border-[hsl(var(--rpma-border))] rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(var(--rpma-teal))]/20 focus:border-[hsl(var(--rpma-teal))] transition-all duration-200"
                       placeholder="votre@email.com"
                     />
-                    <svg className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-border" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                     </svg>
                   </div>
@@ -129,10 +129,10 @@ export default function LoginPage() {
                       required
                       value={formData.password}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 bg-border/10 border border-border/30 rounded-xl text-foreground placeholder-border-light focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all duration-200"
-                      placeholder="••••••••"
+                      className="w-full px-4 py-3 bg-white border border-[hsl(var(--rpma-border))] rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(var(--rpma-teal))]/20 focus:border-[hsl(var(--rpma-teal))] transition-all duration-200"
+                      placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                     />
-                    <svg className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-border" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                   </div>
@@ -144,7 +144,7 @@ export default function LoginPage() {
                 <Button
                   type="submit"
                   disabled={isSubmitting || loading}
-                  className={`w-full flex justify-center items-center py-3 px-4 text-sm font-semibold rounded-xl bg-accent text-black hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-background transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 disabled:hover:scale-100`}
+                  className="w-full"
                 >
                   {(isSubmitting || loading) ? (
                     <>
@@ -163,11 +163,11 @@ export default function LoginPage() {
 
                 {/* Alternative Actions */}
                 <div className="text-center">
-                  <p className="text-border-light text-sm">
+                  <p className="text-muted-foreground text-sm">
                     Vous n&apos;avez pas de compte ?{' '}
                     <Link
                       href={ROUTES.SIGNUP}
-                      className="font-semibold text-accent hover:text-accent/80 transition-colors duration-150"
+                      className="font-semibold text-[hsl(var(--rpma-teal))] hover:text-[hsl(var(--rpma-teal))]/80 transition-colors duration-150"
                     >
                       Créer un compte
                     </Link>
@@ -179,22 +179,12 @@ export default function LoginPage() {
 
           {/* Footer with Branding */}
           <div className="mt-8 text-center">
-            <div className="inline-flex items-center gap-2 text-border-light text-xs">
-              <div className="w-6 h-6 bg-accent/20 rounded flex items-center justify-center">
-                <span className="text-accent font-bold text-xs">R</span>
+            <div className="inline-flex items-center gap-2 text-muted-foreground text-xs">
+              <div className="w-6 h-6 bg-[hsl(var(--rpma-teal))]/10 rounded flex items-center justify-center">
+                <span className="text-[hsl(var(--rpma-teal))] font-bold text-xs">R</span>
               </div>
               <span>RPMA V2 - Système de gestion PPF</span>
             </div>
-          </div>
-        </div>
-
-        {/* Footer with Branding */}
-        <div className="mt-8 text-center">
-          <div className="inline-flex items-center gap-2 text-border-light text-xs">
-            <div className="w-6 h-6 bg-accent/20 rounded flex items-center justify-center">
-              <span className="text-accent font-bold text-xs">R</span>
-            </div>
-            <span>RPMA V2 - Système de gestion PPF</span>
           </div>
         </div>
       </FadeIn>

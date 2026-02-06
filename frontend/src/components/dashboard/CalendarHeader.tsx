@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import { format } from 'date-fns';
@@ -104,11 +104,11 @@ export function CalendarHeader() {
   // Monthly revenue intentionally omitted from the new header layout
 
   return (
-    <div className="bg-white border border-[hsl(var(--rpma-border))] rounded-[10px] shadow-[var(--rpma-shadow-soft)]">
+    <div className="rpma-shell">
       <div className="px-5 py-4 flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h1 className="text-xl font-semibold text-foreground">
+            <h1 className="text-lg font-semibold text-foreground">
               {format(currentDate, 'MMMM yyyy', { locale: fr })}
             </h1>
             <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -118,7 +118,7 @@ export function CalendarHeader() {
             size="sm"
             variant="outline"
             onClick={toggleFilterDrawer}
-            className="gap-2 rounded-full border-border/60"
+            className="gap-2 rounded-[6px]"
             aria-label={`Filtres${activeFilterCount > 0 ? ` (${activeFilterCount} actifs)` : ''}`}
           >
             <Filter className="h-4 w-4" />
@@ -146,7 +146,7 @@ export function CalendarHeader() {
               size="sm"
               variant="outline"
               onClick={goToToday}
-              className="rounded-full border-border/60"
+              className="rounded-[6px]"
             >
               Aujourd&apos;hui
             </Button>
@@ -258,7 +258,7 @@ export function CalendarHeader() {
               {chip.label}
               <button
                 onClick={chip.onRemove}
-                className="ml-1 hover:text-accent transition-colors"
+                className="ml-1 hover:text-[hsl(var(--rpma-teal))] transition-colors"
                 aria-label={`Remove ${chip.label} filter`}
               >
                 <X className="h-3 w-3" />

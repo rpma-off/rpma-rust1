@@ -416,13 +416,13 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
             <span className="text-red-400 text-xl">!</span>
           </div>
           <h3 className="mt-3 text-lg font-medium text-foreground">Erreur de chargement</h3>
-          <p className="mt-2 text-sm text-border-light">
+          <p className="mt-2 text-sm text-muted-foreground">
             Impossible de charger les détails de la tâche. Veuillez réessayer.
           </p>
           <div className="mt-6 space-x-3">
             <button
               onClick={() => window.location.reload()}
-              className="inline-flex items-center rounded-md bg-accent px-3 py-2 text-sm font-semibold text-background shadow-sm hover:bg-accent/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              className="inline-flex items-center rounded-md bg-[hsl(var(--rpma-teal))] px-3 py-2 text-sm font-semibold text-background shadow-sm hover:bg-[hsl(var(--rpma-teal))]/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--rpma-teal))]"
             >
               Réessayer
             </button>
@@ -470,7 +470,7 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
       <div
         ref={containerRef}
         className={cn(
-          "bg-muted/50 rounded-xl border border-border/20 overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-accent/10 hover:border-accent/30 max-w-6xl mx-auto w-full shadow-lg backdrop-blur-sm",
+          "bg-muted/50 rounded-xl border border-border/20 overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-black/5 hover:border-[hsl(var(--rpma-teal))]/30 max-w-6xl mx-auto w-full shadow-lg backdrop-blur-sm",
           {
             'ring-2 ring-accent ring-offset-2 ring-offset-background': derivedState?.isAssignedToCurrentUser,
             'ring-1 ring-border/20': !derivedState?.isAssignedToCurrentUser,

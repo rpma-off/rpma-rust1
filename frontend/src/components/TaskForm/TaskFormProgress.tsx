@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+﻿import React, { useCallback, useMemo } from 'react';
 import { CheckCircle } from 'lucide-react';
 import { FormStep, ENHANCED_STEPS as STEPS_CONFIG } from './types';
 
@@ -26,11 +26,11 @@ export const TaskFormProgress: React.FC<TaskFormProgressProps> = React.memo(({
         <span className="text-xs sm:text-sm font-medium text-foreground">
           Étape {STEPS_CONFIG.findIndex(s => s.id === currentStep) + 1} sur {STEPS_CONFIG.length}
         </span>
-        <span className="text-xs sm:text-sm text-border-light">{Math.round(progress)}%</span>
+        <span className="text-xs sm:text-sm text-muted-foreground">{Math.round(progress)}%</span>
       </div>
       <div className="w-full bg-muted rounded-full h-2">
         <div
-          className="bg-accent h-2 rounded-full transition-all duration-300 ease-out"
+          className="bg-[hsl(var(--rpma-teal))] h-2 rounded-full transition-all duration-300 ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -53,21 +53,21 @@ export const TaskFormProgress: React.FC<TaskFormProgressProps> = React.memo(({
             className={`
               flex items-center space-x-2 px-2 sm:px-4 py-2 rounded-lg transition-all duration-200 text-xs sm:text-sm
               ${isActive
-                ? 'bg-accent/20 text-accent border-2 border-accent/50'
+                ? 'bg-[hsl(var(--rpma-teal))]/20 text-[hsl(var(--rpma-teal))] border-2 border-[hsl(var(--rpma-teal))]/30'
                 : isCompleted
-                  ? 'bg-accent/30 text-accent border-2 border-accent'
+                  ? 'bg-[hsl(var(--rpma-teal))]/30 text-[hsl(var(--rpma-teal))] border-2 border-[hsl(var(--rpma-teal))]'
                   : canNavigate
                     ? 'bg-muted text-foreground border-2 border-border hover:bg-border hover:scale-105'
-                    : 'bg-muted/30 text-border-light border-2 border-border/30 cursor-not-allowed'
+                    : 'bg-[hsl(var(--rpma-surface))] text-muted-foreground border-2 border-border/30 cursor-not-allowed'
               }
             `}
           >
             <div className={`
               w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0
               ${isActive
-                ? 'bg-accent text-foreground'
+                ? 'bg-[hsl(var(--rpma-teal))] text-foreground'
                 : isCompleted
-                  ? 'bg-accent text-foreground'
+                  ? 'bg-[hsl(var(--rpma-teal))] text-foreground'
                   : 'bg-border text-foreground'
               }
             `}>

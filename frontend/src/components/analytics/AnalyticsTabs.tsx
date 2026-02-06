@@ -13,38 +13,38 @@ export function AnalyticsTabs() {
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-4 bg-border-900">
-        <TabsTrigger value="dashboard" className="flex items-center gap-2">
+      <TabsList data-variant="underline" className="w-full justify-start">
+        <TabsTrigger value="dashboard" data-variant="underline" className="flex items-center gap-2">
           <BarChart3 className="w-4 h-4" />
           Dashboard
         </TabsTrigger>
-        <TabsTrigger value="reports" className="flex items-center gap-2">
+        <TabsTrigger value="reports" data-variant="underline" className="flex items-center gap-2">
           <PieChart className="w-4 h-4" />
           Reports
         </TabsTrigger>
-        <TabsTrigger value="trends" className="flex items-center gap-2">
+        <TabsTrigger value="trends" data-variant="underline" className="flex items-center gap-2">
           <TrendingUp className="w-4 h-4" />
           Trends
         </TabsTrigger>
-        <TabsTrigger value="settings" className="flex items-center gap-2">
+        <TabsTrigger value="settings" data-variant="underline" className="flex items-center gap-2">
           <Settings className="w-4 h-4" />
           Settings
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="dashboard" className="mt-6">
+      <TabsContent value="dashboard" className="mt-4">
         <KpiDashboard />
       </TabsContent>
 
-      <TabsContent value="reports" className="mt-6">
+      <TabsContent value="reports" className="mt-4">
         <AnalyticsReports />
       </TabsContent>
 
-      <TabsContent value="trends" className="mt-6">
+      <TabsContent value="trends" className="mt-4">
         <TrendAnalysis />
       </TabsContent>
 
-      <TabsContent value="settings" className="mt-6">
+      <TabsContent value="settings" className="mt-4">
         <AnalyticsSettings />
       </TabsContent>
     </Tabs>

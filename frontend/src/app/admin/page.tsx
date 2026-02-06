@@ -231,9 +231,9 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
-          <Shield className="h-16 w-16 text-border mx-auto" />
+          <Shield className="h-16 w-16 text-muted-foreground mx-auto" />
           <h2 className="text-xl font-semibold text-foreground">Accès Restreint</h2>
-          <p className="text-border-light">Vous n&apos;avez pas les permissions pour accéder à cette page.</p>
+          <p className="text-muted-foreground">Vous n&apos;avez pas les permissions pour accéder à cette page.</p>
         </div>
       </div>
     );
@@ -276,16 +276,16 @@ export default function AdminPage() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="rpma-shell p-6">
+          <div className="bg-[hsl(var(--rpma-teal))] text-white rounded-[10px] shadow-[var(--rpma-shadow-soft)] p-6">
             <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-red-500/20 rounded-lg">
-                <Shield className="h-6 w-6 text-red-400" />
+              <div className="p-3 bg-white/15 rounded-lg">
+                <Shield className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                <h1 className="text-2xl md:text-3xl font-bold text-white">
                   Administration Système
                 </h1>
-                <p className="text-border-light text-sm md:text-base">
+                <p className="text-white/80 text-sm md:text-base">
                   Gestion et surveillance du système RPMA V2
                 </p>
               </div>
@@ -293,19 +293,19 @@ export default function AdminPage() {
 
             {/* Quick Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-background/50 rounded-lg border border-border/30">
-                <div className="text-2xl font-bold text-foreground">{stats.totalUsers}</div>
-                <div className="text-xs text-border-light">Utilisateurs</div>
+              <div className="text-center p-4 bg-white/15 rounded-lg border border-white/20">
+                <div className="text-2xl font-bold text-white">{stats.totalUsers}</div>
+                <div className="text-xs text-white/80">Utilisateurs</div>
               </div>
-              <div className="text-center p-4 bg-background/50 rounded-lg border border-border/30">
-                <div className="text-2xl font-bold text-green-400">{stats.activeUsers}</div>
-                <div className="text-xs text-border-light">Actifs</div>
+              <div className="text-center p-4 bg-white/15 rounded-lg border border-white/20">
+                <div className="text-2xl font-bold text-white">{stats.activeUsers}</div>
+                <div className="text-xs text-white/80">Actifs</div>
               </div>
-              <div className="text-center p-4 bg-background/50 rounded-lg border border-border/30">
-                <div className="text-2xl font-bold text-blue-400">{stats.totalTasks}</div>
-                <div className="text-xs text-border-light">Tâches</div>
+              <div className="text-center p-4 bg-white/15 rounded-lg border border-white/20">
+                <div className="text-2xl font-bold text-white">{stats.totalTasks}</div>
+                <div className="text-xs text-white/80">Tâches</div>
               </div>
-              <div className="text-center p-4 bg-background/50 rounded-lg border border-border/30">
+              <div className="text-center p-4 bg-white/15 rounded-lg border border-white/20">
                 <Badge className={`px-3 py-1 ${getHealthColor(stats.systemHealth)}`}>
                   {stats.systemHealth === 'healthy' ? '✓ Sain' :
                    stats.systemHealth === 'warning' ? '⚠ Attention' : '✗ Critique'}
@@ -317,20 +317,20 @@ export default function AdminPage() {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-border/20 border-border/30">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-accent data-[state=active]:text-black">
+          <TabsList data-variant="underline" className="w-full justify-start bg-[hsl(var(--rpma-teal))] text-white rounded-[10px] px-2">
+            <TabsTrigger value="overview" data-variant="underline">
               <BarChart3 className="h-4 w-4 mr-2" />
               Vue d&apos;ensemble
             </TabsTrigger>
-            <TabsTrigger value="users" className="data-[state=active]:bg-accent data-[state=active]:text-black">
+            <TabsTrigger value="users" data-variant="underline">
               <Users className="h-4 w-4 mr-2" />
               Utilisateurs
             </TabsTrigger>
-            <TabsTrigger value="system" className="data-[state=active]:bg-accent data-[state=active]:text-black">
+            <TabsTrigger value="system" data-variant="underline">
               <Server className="h-4 w-4 mr-2" />
               Système
             </TabsTrigger>
-            <TabsTrigger value="security" className="data-[state=active]:bg-accent data-[state=active]:text-black">
+            <TabsTrigger value="security" data-variant="underline">
               <Lock className="h-4 w-4 mr-2" />
               Sécurité
             </TabsTrigger>
@@ -343,24 +343,24 @@ export default function AdminPage() {
               <Card className="border-[hsl(var(--rpma-border))] bg-white">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-foreground">
-                    <Activity className="h-5 w-5 text-accent" />
+                    <Activity className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />
                     Santé Système
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-border-light">Statut</span>
+                    <span className="text-muted-foreground">Statut</span>
                     <Badge className={getHealthColor(stats.systemHealth)}>
                       {stats.systemHealth === 'healthy' ? '✓ Sain' :
                        stats.systemHealth === 'warning' ? '⚠ Attention' : '✗ Critique'}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-border-light">Disponibilité</span>
+                    <span className="text-muted-foreground">Disponibilité</span>
                     <span className="text-foreground font-medium">{stats.uptime}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-border-light">Base de données</span>
+                    <span className="text-muted-foreground">Base de données</span>
                     <span className="text-foreground font-medium">{stats.databaseSize}</span>
                   </div>
                 </CardContent>
@@ -370,7 +370,7 @@ export default function AdminPage() {
               <Card className="border-[hsl(var(--rpma-border))] bg-white md:col-span-2">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-foreground">
-                    <Clock className="h-5 w-5 text-accent" />
+                    <Clock className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />
                     Activité Récente
                   </CardTitle>
                 </CardHeader>
@@ -385,9 +385,9 @@ export default function AdminPage() {
                           <p className="text-sm text-foreground font-medium">{activity.description}</p>
                           <div className="flex items-center gap-2 mt-1">
                             {activity.user && (
-                              <span className="text-xs text-border-light">{activity.user}</span>
+                              <span className="text-xs text-muted-foreground">{activity.user}</span>
                             )}
-                            <span className="text-xs text-border-light">
+                            <span className="text-xs text-muted-foreground">
                               {new Date(activity.timestamp).toLocaleString('fr-FR')}
                             </span>
                           </div>
@@ -416,12 +416,12 @@ export default function AdminPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-foreground">Gestion des Utilisateurs</CardTitle>
-                  <Button className="bg-accent hover:bg-accent/90 text-black">
+                  <Button>
                     <Plus className="h-4 w-4 mr-2" />
                     Ajouter Utilisateur
                   </Button>
                 </div>
-                <CardDescription className="text-border-light">
+                <CardDescription className="text-muted-foreground">
                   Gérez les comptes utilisateurs et leurs permissions
                 </CardDescription>
               </CardHeader>
@@ -429,18 +429,18 @@ export default function AdminPage() {
                  <div className="flex items-center justify-between mb-6">
                    <div className="flex items-center gap-4">
                      <div className="relative flex-1 max-w-md">
-                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-border" />
+                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                        <Input
                          placeholder="Rechercher utilisateurs..."
                          value={userSearchQuery}
                          onChange={(e) => setUserSearchQuery(e.target.value)}
-                         className="pl-10 bg-background/50 border-border/30 text-foreground"
+                         className="pl-10"
                        />
                      </div>
                      <select
                        value={userRoleFilter}
                        onChange={(e) => setUserRoleFilter(e.target.value)}
-                       className="px-3 py-2 bg-background/50 border border-border/30 rounded-md text-foreground text-sm"
+                       className="px-3 py-2 bg-white border border-[hsl(var(--rpma-border))] rounded-[6px] text-foreground text-sm"
                      >
                        <option value="all">Tous les rôles</option>
                        <option value="admin">Administrateur</option>
@@ -451,7 +451,7 @@ export default function AdminPage() {
                    </div>
                    <Button
                      onClick={() => setShowAddUserModal(true)}
-                     className="bg-accent hover:bg-accent/80 text-foreground font-medium"
+                     className="font-medium"
                    >
                      <Plus className="h-4 w-4 mr-2" />
                      Ajouter Utilisateur
@@ -461,12 +461,12 @@ export default function AdminPage() {
                  <div className="space-y-3">
                    {isLoadingUsers ? (
                      <div className="text-center py-8">
-                       <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-accent" />
-                       <p className="text-border-light">Chargement des utilisateurs...</p>
+                       <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-[hsl(var(--rpma-teal))]" />
+                       <p className="text-muted-foreground">Chargement des utilisateurs...</p>
                      </div>
                    ) : users.length === 0 ? (
-                     <div className="text-center py-8 text-border-light">
-                       <User className="h-12 w-12 mx-auto mb-4 text-border" />
+                     <div className="text-center py-8 text-muted-foreground">
+                       <User className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                        <p className="text-sm">Aucun utilisateur trouvé</p>
                      </div>
                    ) : (
@@ -481,12 +481,12 @@ export default function AdminPage() {
                          .map((user) => (
                            <div key={user.id} className="flex items-center justify-between p-4 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
                              <div className="flex items-center gap-3">
-                               <div className="w-10 h-10 bg-accent/20 rounded-full flex items-center justify-center">
-                                 <User className="h-5 w-5 text-accent" />
+                               <div className="w-10 h-10 bg-[hsl(var(--rpma-surface))] rounded-full flex items-center justify-center">
+                                 <User className="h-5 w-5 text-foreground" />
                                </div>
                                <div>
                                  <p className="text-foreground font-medium">{user.first_name} {user.last_name}</p>
-                                 <p className="text-border-light text-sm">{user.email}</p>
+                                 <p className="text-muted-foreground text-sm">{user.email}</p>
                                </div>
                              </div>
                              <div className="flex items-center gap-3">
@@ -503,7 +503,7 @@ export default function AdminPage() {
                                    variant="outline"
                                    size="sm"
                                    onClick={() => handleUpdateUserStatus(user.id, !user.is_active)}
-                                   className="border-border/60 text-border-light hover:bg-border/20"
+                                   className="border-border/60 text-muted-foreground hover:bg-border/20"
                                  >
                                    {user.is_active ? <XCircle className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
                                  </Button>
@@ -532,25 +532,25 @@ export default function AdminPage() {
               <Card className="border-[hsl(var(--rpma-border))] bg-white">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-foreground">
-                    <Database className="h-5 w-5 text-accent" />
+                    <Database className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />
                     Base de Données
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-border-light">Taille</span>
+                    <span className="text-muted-foreground">Taille</span>
                     <span className="text-foreground font-medium">{stats.databaseSize}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-border-light">Dernière sauvegarde</span>
+                    <span className="text-muted-foreground">Dernière sauvegarde</span>
                     <span className="text-foreground font-medium">{stats.lastBackup}</span>
                   </div>
                   <div className="flex justify-end gap-2">
-                    <Button size="sm" variant="outline" className="border-border/60 text-border-light hover:bg-border/20">
+                    <Button size="sm" variant="outline" className="border-border/60 text-muted-foreground hover:bg-border/20">
                       <Download className="h-4 w-4 mr-2" />
                       Exporter
                     </Button>
-                    <Button size="sm" className="bg-accent hover:bg-accent/90 text-black">
+                    <Button size="sm">
                       <RefreshCw className="h-4 w-4 mr-2" />
                       Sauvegarder
                     </Button>
@@ -561,21 +561,21 @@ export default function AdminPage() {
               <Card className="border-[hsl(var(--rpma-border))] bg-white">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-foreground">
-                    <Server className="h-5 w-5 text-accent" />
+                    <Server className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />
                     Performance
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-border-light">Disponibilité</span>
+                    <span className="text-muted-foreground">Disponibilité</span>
                     <span className="text-foreground font-medium">{stats.uptime}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-border-light">Charge CPU</span>
+                    <span className="text-muted-foreground">Charge CPU</span>
                     <span className="text-green-400 font-medium">23%</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-border-light">Mémoire</span>
+                    <span className="text-muted-foreground">Mémoire</span>
                     <span className="text-yellow-400 font-medium">67%</span>
                   </div>
                 </CardContent>
@@ -609,38 +609,38 @@ export default function AdminPage() {
             }}>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-border-light mb-1">Email</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">Email</label>
                   <Input
                     name="email"
                     type="email"
                     required
-                    className="bg-background/50 border-border/30 text-foreground"
+                    className=""
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-border-light mb-1">Prénom</label>
+                    <label className="block text-sm font-medium text-muted-foreground mb-1">Prénom</label>
                     <Input
                       name="firstName"
                       required
-                      className="bg-background/50 border-border/30 text-foreground"
+                      className=""
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-border-light mb-1">Nom</label>
+                    <label className="block text-sm font-medium text-muted-foreground mb-1">Nom</label>
                     <Input
                       name="lastName"
                       required
-                      className="bg-background/50 border-border/30 text-foreground"
+                      className=""
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-border-light mb-1">Rôle</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">Rôle</label>
                   <select
                     name="role"
                     required
-                    className="w-full px-3 py-2 bg-background/50 border border-border/30 rounded-md text-foreground"
+                    className="w-full px-3 py-2 bg-white border border-[hsl(var(--rpma-border))] rounded-[6px] text-foreground"
                   >
                     <option value="viewer">Observateur</option>
                     <option value="technician">Technicien</option>
@@ -649,12 +649,12 @@ export default function AdminPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-border-light mb-1">Mot de passe</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">Mot de passe</label>
                   <Input
                     name="password"
                     type="password"
                     required
-                    className="bg-background/50 border-border/30 text-foreground"
+                    className=""
                   />
                 </div>
               </div>
@@ -663,13 +663,13 @@ export default function AdminPage() {
                   type="button"
                   variant="outline"
                   onClick={() => setShowAddUserModal(false)}
-                  className="flex-1 border-border/60 text-border-light hover:bg-border/20"
+                  className="flex-1 border-border/60 text-muted-foreground hover:bg-border/20"
                 >
                   Annuler
                 </Button>
                 <Button
                   type="submit"
-                  className="flex-1 bg-accent hover:bg-accent/80 text-foreground font-medium"
+                  className="flex-1 font-medium"
                 >
                   Ajouter
                 </Button>

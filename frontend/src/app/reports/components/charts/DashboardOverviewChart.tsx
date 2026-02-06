@@ -128,7 +128,7 @@ export function DashboardOverviewChart({ data }: DashboardOverviewChartProps) {
                   className="w-3 h-3 rounded-full shadow-sm"
                   style={{ backgroundColor: entry.color }}
                 />
-                <span className="text-border-light">
+                <span className="text-muted-foreground">
                   {entry.name}: <span className="text-foreground font-medium">
                     {entry.value}{entry.name.includes('Score') || entry.name.includes('Satisfaction') ? '%' : ''}
                   </span>
@@ -165,7 +165,7 @@ export function DashboardOverviewChart({ data }: DashboardOverviewChartProps) {
             Répartition des tâches
           </motion.h3>
           <motion.p
-            className="text-border-light text-sm md:text-base"
+            className="text-muted-foreground text-sm md:text-base"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
@@ -228,7 +228,7 @@ export function DashboardOverviewChart({ data }: DashboardOverviewChartProps) {
               Performance des techniciens
             </motion.h3>
             <motion.p
-              className="text-border-light text-sm md:text-base"
+              className="text-muted-foreground text-sm md:text-base"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
@@ -287,7 +287,7 @@ export function DashboardOverviewChart({ data }: DashboardOverviewChartProps) {
               Métriques de qualité
             </motion.h3>
             <motion.p
-              className="text-border-light text-sm md:text-base"
+              className="text-muted-foreground text-sm md:text-base"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}

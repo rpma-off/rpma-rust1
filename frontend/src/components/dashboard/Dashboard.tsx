@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
@@ -42,7 +42,7 @@ import { DashboardTask, TaskStatus, Priority, DashboardProps, ViewMode, Dashboar
 // Dynamically import charts to avoid SSR issues
 const StatisticsCharts = dynamic(
   () => import('../Charts/StatisticsCharts').then((mod) => mod.StatisticsCharts),
-  { ssr: false, loading: () => <div className="animate-pulse bg-gray-200 h-64 rounded-lg" /> }
+  { ssr: false, loading: () => <div className="animate-pulse bg-[hsl(var(--rpma-surface))] h-64 rounded-lg" /> }
 );
 
 // Animation variants
@@ -447,7 +447,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--rpma-teal))]"></div>
         <span className="sr-only">Loading dashboard...</span>
       </div>
     );
@@ -497,24 +497,24 @@ export const Dashboard: React.FC<DashboardProps> = ({
           initial={false}
           animate={{ x: sidebarOpen ? 0 : '-100%' }}
           className={cn(
-            'fixed left-0 top-0 z-50 h-full w-64 bg-muted shadow-lg transform transition-transform duration-300 ease-in-out border-r border-border',
+            'fixed left-0 top-0 z-50 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out border-r border-[hsl(var(--rpma-border))]',
             'lg:fixed lg:translate-x-0 lg:z-40',
             sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
           )}
         >
           <div className="flex h-full flex-col">
             {/* Sidebar Header */}
-            <div className="flex h-16 items-center justify-between px-4 border-b border-border">
+            <div className="flex h-16 items-center justify-between px-4 border-b border-[hsl(var(--rpma-border))]">
               <div>
                 <h2 className="text-lg font-semibold text-foreground">Dashboard</h2>
-                <p className="text-xs text-border-light capitalize">{currentViewMode}</p>
-                <p className="text-xs text-accent">✓ Barre latérale active</p>
+                <p className="text-xs text-muted-foreground capitalize">{currentViewMode}</p>
+                <p className="text-xs text-[hsl(var(--rpma-teal))]">âœ“ Barre latérale active</p>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleSidebarToggle}
-                className="lg:hidden text-border-light hover:text-foreground hover:bg-border"
+                className="lg:hidden text-muted-foreground hover:text-foreground hover:bg-border"
               >
                 <X className="h-5 w-5" />
               </Button>
@@ -552,7 +552,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               >
                 <div className="flex items-center gap-2">
                   <span>Workflows</span>
-                  <span className="px-1.5 py-0.5 text-xs bg-accent/20 text-accent rounded-full">NOUVEAU</span>
+                  <span className="px-1.5 py-0.5 text-xs bg-[hsl(var(--rpma-teal))]/10 text-[hsl(var(--rpma-teal))] rounded-full">NOUVEAU</span>
                 </div>
               </SidebarItem>
               <SidebarItem
@@ -562,7 +562,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               >
                 <div className="flex items-center gap-2">
                   <span>Qualité</span>
-                  <span className="px-1.5 py-0.5 text-xs bg-accent/20 text-accent rounded-full">NOUVEAU</span>
+                  <span className="px-1.5 py-0.5 text-xs bg-[hsl(var(--rpma-teal))]/10 text-[hsl(var(--rpma-teal))] rounded-full">NOUVEAU</span>
                 </div>
               </SidebarItem>
               <SidebarItem
@@ -572,7 +572,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               >
                 <div className="flex items-center gap-2">
                   <span>Photos</span>
-                  <span className="px-1.5 py-0.5 text-xs bg-purple-400/20 text-purple-300 rounded-full">NOUVEAU</span>
+                  <span className="px-1.5 py-0.5 text-xs bg-[hsl(var(--rpma-teal))]/10 text-[hsl(var(--rpma-teal))] rounded-full">NOUVEAU</span>
                 </div>
               </SidebarItem>
               <SidebarItem
@@ -597,7 +597,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* Main Content */}
       <div className={cn('flex-1 min-h-screen', showSidebar && 'lg:ml-64')}>
         {/* Mobile Header */}
-        <div className="sticky top-0 z-30 flex h-16 items-center justify-between bg-muted/95 backdrop-blur-sm px-4 shadow-sm lg:hidden border-b border-border">
+        <div className="sticky top-0 z-30 flex h-16 items-center justify-between bg-white/95 backdrop-blur-sm px-4 shadow-sm lg:hidden border-b border-[hsl(var(--rpma-border))]">
           <Button
             variant="ghost"
             size="sm"
@@ -611,22 +611,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Mobile New Features Banner */}
-        <div className="lg:hidden bg-gradient-to-r from-accent/20 to-accent/10 border-b border-accent/30 px-4 py-3">
+        <div className="lg:hidden bg-[hsl(var(--rpma-surface))] border-b border-[hsl(var(--rpma-border))] px-4 py-3">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
+            <div className="w-2 h-2 bg-[hsl(var(--rpma-teal))] rounded-full animate-pulse"></div>
             <span className="text-sm font-medium text-foreground">Nouvelles fonctionnalités disponibles</span>
           </div>
-          <p className="text-xs text-border-light mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Appuyez sur le menu pour accéder aux tableaux de bord Workflows, Qualité et Photos
           </p>
         </div>
 
         {/* Desktop Header */}
-        <div className="hidden lg:block bg-muted/95 backdrop-blur-sm border-b border-border px-6 py-4">
+        <div className="hidden lg:block bg-white/95 backdrop-blur-sm border-b border-[hsl(var(--rpma-border))] px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
               {/* Breadcrumb */}
-              <nav className="flex items-center space-x-2 text-sm text-border-light mb-2">
+              <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-2">
                 <span>Dashboard</span>
                 <span>/</span>
                 <span className="text-foreground font-medium">
@@ -648,7 +648,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 {currentViewMode === 'photos' && 'Documentation photo'}
                 {currentViewMode === 'management' && 'Outils de gestion'}
               </h1>
-              <p className="text-sm text-border-light mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {currentViewMode === 'overview' && 'Vue d\'ensemble en temps réel des tâches et des performances'}
                 {currentViewMode === 'tasks' && 'Gérer et suivre les tâches d\'installation'}
                 {currentViewMode === 'analytics' && 'Métriques de performance et insights'}
@@ -663,7 +663,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={handleRefresh}
-                className="flex items-center gap-2 border-border text-border-light hover:text-foreground hover:border-accent"
+                className="flex items-center gap-2 border-[hsl(var(--rpma-border))] text-muted-foreground hover:text-foreground hover:border-[hsl(var(--rpma-teal))]"
               >
                 <RefreshCw className="h-4 w-4" />
                 Actualiser
@@ -690,12 +690,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                 {/* New Dashboard Features Quick Access */}
                 <DashboardSection title="Fonctionnalités du Dashboard">
-                  <div className="mb-4 p-3 bg-accent/10 border border-accent/30 rounded-lg">
+                  <div className="mb-4 p-3 bg-[hsl(var(--rpma-surface))] border border-[hsl(var(--rpma-border))] rounded-lg">
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
-                      <span className="text-sm text-accent font-medium">Nouvelles fonctionnalités disponibles</span>
+                      <div className="w-2 h-2 bg-[hsl(var(--rpma-teal))] rounded-full animate-pulse"></div>
+                      <span className="text-sm text-[hsl(var(--rpma-teal))] font-medium">Nouvelles fonctionnalités disponibles</span>
                     </div>
-                    <p className="text-xs text-border-light mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                        Accédez aux outils avancés de surveillance des workflows, d&apos;assurance qualité et de documentation photo
                     </p>
                   </div>
@@ -705,21 +705,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       icon={Workflow}
                       content="Surveiller l'avancement des workflows en temps réel et la completion des étapes"
                       onClick={() => handleViewModeChange('workflows')}
-                      className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-accent"
+                      className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-[hsl(var(--rpma-teal))]"
                     />
                     <DashboardWidget
                       title="Assurance Qualité"
                       icon={Shield}
                       content="Suivre les métriques qualité, la conformité et la résolution des problèmes"
                       onClick={() => handleViewModeChange('quality')}
-                      className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-accent"
+                      className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-[hsl(var(--rpma-teal))]"
                     />
                     <DashboardWidget
                       title="Documentation Photo"
                       icon={Camera}
                       content="Gérer les uploads de photos, galeries et évaluation de qualité"
                       onClick={() => handleViewModeChange('photos')}
-                      className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-purple-400"
+                      className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-[hsl(var(--rpma-teal))]"
                     />
                   </div>
                 </DashboardSection>
@@ -868,11 +868,11 @@ const SidebarItem = ({
       className={cn(
         'group flex items-center w-full px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 text-left cursor-pointer border border-transparent',
         isActive
-          ? 'bg-accent/20 border-l-2 border-accent text-accent shadow-sm'
-          : 'text-border-light hover:bg-border hover:text-foreground hover:shadow-sm hover:border-border'
+          ? 'bg-[hsl(var(--rpma-teal))]/10 border-l-2 border-l-[hsl(var(--rpma-teal))] text-[hsl(var(--rpma-teal))] shadow-sm'
+          : 'text-muted-foreground hover:bg-[hsl(var(--rpma-surface))] hover:text-foreground hover:shadow-sm hover:border-[hsl(var(--rpma-border))]'
       )}
     >
-      <Icon className={cn('mr-3 h-5 w-5', isActive ? 'text-accent' : 'text-border-light group-hover:text-foreground')} />
+      <Icon className={cn('mr-3 h-5 w-5', isActive ? 'text-[hsl(var(--rpma-teal))]' : 'text-muted-foreground group-hover:text-foreground')} />
       {children}
     </button>
   );

@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+﻿import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { ChevronUp, ChevronDown, Search } from 'lucide-react';
 import { TableColumn } from '@/types';
 
@@ -188,11 +188,11 @@ export function DesktopTable<T extends Record<string, unknown>>({
                        >
                          <ChevronUp
                            size={12}
-                            className={sortColumn === String(column.key) && sortDirection === 'asc' ? 'text-accent' : 'text-muted-foreground'}
+                            className={sortColumn === String(column.key) && sortDirection === 'asc' ? 'text-[hsl(var(--rpma-teal))]' : 'text-muted-foreground'}
                            />
                          <ChevronDown
                            size={12}
-                            className={sortColumn === String(column.key) && sortDirection === 'desc' ? 'text-accent' : 'text-muted-foreground'}
+                            className={sortColumn === String(column.key) && sortDirection === 'desc' ? 'text-[hsl(var(--rpma-teal))]' : 'text-muted-foreground'}
                            />
                        </button>
                     )}
@@ -232,9 +232,9 @@ export function DesktopTable<T extends Record<string, unknown>>({
                   className={`${
                      onRowClick ? 'cursor-pointer hover:bg-muted/10' : ''
                   } ${
-                     focusedRowIndex === index ? 'bg-accent/10 ring-2 ring-accent ring-inset' : ''
+                     focusedRowIndex === index ? 'bg-[hsl(var(--rpma-teal))]/10/10 ring-2 ring-[hsl(var(--rpma-teal))]/40 ring-inset' : ''
                   } ${
-                     isRowSelected(item) ? 'bg-accent' : ''
+                     isRowSelected(item) ? 'bg-[hsl(var(--rpma-teal))]/10' : ''
                   } transition-colors`}
                   role="row"
                   tabIndex={-1}
@@ -245,7 +245,7 @@ export function DesktopTable<T extends Record<string, unknown>>({
                         type="checkbox"
                         checked={isRowSelected(item)}
                         onChange={() => handleRowSelect(item)}
-                         className="h-4 w-4 text-accent focus:ring-accent border-input rounded"
+                         className="h-4 w-4 text-[hsl(var(--rpma-teal))] focus:ring-[hsl(var(--rpma-teal))]/20 border-input rounded"
                         onClick={(e) => e.stopPropagation()}
                       />
                     </td>
@@ -273,7 +273,7 @@ export function DesktopTable<T extends Record<string, unknown>>({
         </div>
         {filteredAndSortedData.length > 0 && (
           <div className="text-xs space-x-4">
-            <span>↑↓ pour naviguer</span>
+            <span>â†‘â†“ pour naviguer</span>
             <span>Enter pour sélectionner</span>
             {onRowSelect && <span>Espace pour cocher</span>}
           </div>

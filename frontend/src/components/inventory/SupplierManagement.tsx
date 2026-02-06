@@ -3,7 +3,7 @@ import { Truck } from 'lucide-react';
 
 export function SupplierManagement() {
   return (
-    <Card className="bg-border-800 border-border-700">
+    <Card className="rpma-shell">
       <CardHeader>
         <CardTitle className="text-foreground flex items-center gap-2">
           <Truck className="w-5 h-5" />
@@ -11,7 +11,7 @@ export function SupplierManagement() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-border-300">Supplier management interface coming soon...</p>
+        <p className="text-muted-foreground">Supplier management interface coming soon...</p>
       </CardContent>
     </Card>
   );

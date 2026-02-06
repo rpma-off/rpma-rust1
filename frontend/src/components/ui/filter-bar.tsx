@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -10,11 +10,11 @@ export interface FilterChipProps {
 
 export function FilterChip({ label, onRemove, className }: FilterChipProps) {
   return (
-    <div className={cn('inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/30 text-foreground text-sm', className)}>
+    <div className={cn('inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-[hsl(var(--rpma-teal))]/10 border border-[hsl(var(--rpma-teal))]/30 text-foreground text-sm', className)}>
       {label}
       <button
         onClick={onRemove}
-        className="ml-1 hover:text-accent transition-colors focus:outline-none focus:ring-2 focus:ring-accent/50 rounded"
+        className="ml-1 hover:text-[hsl(var(--rpma-teal))] transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--rpma-teal))]/20 rounded"
         aria-label={`Supprimer le filtre ${label}`}
       >
         <X className="h-3 w-3" />
@@ -56,7 +56,7 @@ export function FilterBar({ activeFilters, onClearAll, className, showLabel = tr
       {onClearAll && activeFilters.length > 1 && (
         <button
           onClick={onClearAll}
-          className="ml-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors underline focus:outline-none focus:ring-2 focus:ring-accent/50 rounded"
+          className="ml-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors underline focus:outline-none focus:ring-2 focus:ring-[hsl(var(--rpma-teal))]/20 rounded"
         >
           Effacer tout
         </button>

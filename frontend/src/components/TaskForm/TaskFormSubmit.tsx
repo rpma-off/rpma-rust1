@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { CheckCircle } from 'lucide-react';
 import { FormStep } from './types';
 
@@ -23,8 +23,8 @@ export const TaskFormSubmit: React.FC<TaskFormSubmitProps> = React.memo(({
         className={`
           w-full px-4 sm:px-6 py-3 text-base sm:text-lg font-medium rounded-lg transition-all duration-200
           ${loading || !canProceedToNextStep(currentStep)
-            ? 'bg-muted text-border-light cursor-not-allowed'
-            : 'bg-accent text-foreground hover:bg-accent-hover hover:scale-105 focus:ring-2 focus:ring-accent'
+            ? 'bg-muted text-muted-foreground cursor-not-allowed'
+            : 'bg-[hsl(var(--rpma-teal))] text-foreground hover:bg-[hsl(var(--rpma-teal))]-hover hover:scale-105 focus:ring-2 focus:ring-[hsl(var(--rpma-teal))]/20'
           }
         `}
       >

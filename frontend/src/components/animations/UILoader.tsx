@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -27,7 +27,7 @@ export function UILoader({ size = 'md', className }: UILoaderProps) {
         {[0, 1, 2].map((i) => (
           <motion.div
             key={i}
-            className={cn('bg-accent rounded-full', dotSize[size])}
+            className={cn('bg-[hsl(var(--rpma-teal))] rounded-full', dotSize[size])}
             animate={{
               scale: [1, 1.2, 1],
               opacity: [0.7, 1, 0.7],

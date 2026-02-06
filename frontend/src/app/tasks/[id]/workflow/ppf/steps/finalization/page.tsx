@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -200,7 +200,7 @@ export default function FinalizationStepPage() {
         <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
           Finalisation
         </h1>
-        <p className="text-lg text-border-light max-w-2xl mx-auto leading-relaxed">
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
           Contrôle qualité final et validation client pour une intervention réussie
         </p>
       </motion.div>
@@ -242,7 +242,7 @@ export default function FinalizationStepPage() {
                     <CardTitle className="text-xl text-foreground group-hover:text-emerald-400 transition-colors">
                       Contrôle Qualité
                     </CardTitle>
-                    <CardDescription className="text-border-light">
+                    <CardDescription className="text-muted-foreground">
                       Vérifications finales avant validation
                     </CardDescription>
                   </div>
@@ -264,7 +264,7 @@ export default function FinalizationStepPage() {
                     className={`flex items-start space-x-4 p-4 rounded-lg border transition-all duration-200 ${
                       item.completed
                         ? 'bg-green-500/5 border-green-500/30 hover:bg-green-500/10'
-                        : 'bg-border/10 border-border/30 hover:border-emerald-500/30 hover:bg-emerald-500/5'
+                        : 'bg-[hsl(var(--rpma-surface))] border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))]/30 hover:bg-[hsl(var(--rpma-surface))]'
                     }`}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -286,7 +286,7 @@ export default function FinalizationStepPage() {
                         {item.label}
                       </label>
                       <p className={`text-xs mt-1 leading-relaxed ${
-                        item.completed ? 'text-green-300/70' : 'text-border-light'
+                        item.completed ? 'text-[hsl(var(--rpma-teal))]' : 'text-muted-foreground'
                       }`}>
                         {item.description}
                       </p>
@@ -320,7 +320,7 @@ export default function FinalizationStepPage() {
                     <CardTitle className="text-xl text-foreground group-hover:text-purple-400 transition-colors">
                       Signature Client
                     </CardTitle>
-                    <CardDescription className="text-border-light">
+                    <CardDescription className="text-muted-foreground">
                       Validation et signature de satisfaction
                     </CardDescription>
                   </div>
@@ -374,7 +374,7 @@ export default function FinalizationStepPage() {
                     <PenTool className="h-4 w-4 mr-2 text-purple-400" />
                     Signature digitale
                   </Label>
-                  <div className="border border-[hsl(var(--rpma-border))] rounded-lg p-4 bg-[hsl(var(--rpma-surface))] hover:border-purple-500/30 transition-colors duration-200">
+                  <div className="border border-[hsl(var(--rpma-border))] rounded-lg p-4 bg-[hsl(var(--rpma-surface))] hover:border-[hsl(var(--rpma-teal))]/30 transition-colors duration-200">
                     <SignatureCapture
                       onSignatureCapture={handleSignatureCapture}
                       width={350}
@@ -412,7 +412,7 @@ export default function FinalizationStepPage() {
                     <CardTitle className="text-xl text-foreground group-hover:text-green-400 transition-colors">
                       Photos de finalisation
                     </CardTitle>
-                    <CardDescription className="text-border-light">
+                    <CardDescription className="text-muted-foreground">
                       Documentation du résultat final (optionnel)
                     </CardDescription>
                   </div>
@@ -468,7 +468,7 @@ export default function FinalizationStepPage() {
                   <h3 className="text-2xl font-bold text-foreground mb-2">
                     Intervention terminée avec succès !
                   </h3>
-                  <p className="text-border-light text-lg">
+                  <p className="text-muted-foreground text-lg">
                     Toutes les vérifications qualité sont validées et la signature client est capturée.
                   </p>
                 </div>
@@ -506,8 +506,8 @@ export default function FinalizationStepPage() {
               {canComplete ? 'Prêt pour finalisation' : 'Complétez les vérifications requises'}
             </p>
           </div>
-          <p className="text-border-light text-sm">
-            QC: {qcChecklist.filter(item => item.completed).length}/{qcChecklist.length} •
+          <p className="text-muted-foreground text-sm">
+            QC: {qcChecklist.filter(item => item.completed).length}/{qcChecklist.length} â€¢
             Signature: {signatureValid ? 'Validée' : 'Requise'}
           </p>
         </div>

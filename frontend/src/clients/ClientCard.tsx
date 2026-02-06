@@ -74,8 +74,8 @@ export function ClientCard({
   return (
     <Card
       className={cn(
-        'group relative overflow-hidden bg-white border-border/20 hover:border-accent/30 transition-all duration-300 cursor-pointer hover:shadow-sm',
-        selectable && selected && 'ring-2 ring-accent/50 border-accent',
+        'group relative overflow-hidden bg-white border-border/20 hover:border-[hsl(var(--rpma-teal))]/30 transition-all duration-300 cursor-pointer hover:shadow-sm',
+        selectable && selected && 'ring-2 ring-[hsl(var(--rpma-teal))]/50 border-[hsl(var(--rpma-teal))]',
         className
       )}
       onClick={handleCardClick}
@@ -91,10 +91,10 @@ export function ClientCard({
                  <User className="h-4 w-4 md:h-6 md:w-6 text-foreground" />
                </div>
                <div className="min-w-0 flex-1">
-                 <h3 className="font-bold text-lg md:text-xl text-white mb-1 truncate">{client.name}</h3>
+                 <h3 className="font-bold text-lg md:text-xl text-foreground mb-1 truncate">{client.name}</h3>
                  {client.company_name && (
-                   <p className="text-xs md:text-sm text-zinc-400 flex items-center gap-1 md:gap-2">
-                     <Building className="h-3 w-3 md:h-4 md:w-4 text-zinc-500 flex-shrink-0" />
+                   <p className="text-xs md:text-sm text-muted-foreground flex items-center gap-1 md:gap-2">
+                     <Building className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
                      <span className="truncate">{client.company_name}</span>
                    </p>
                  )}
@@ -103,7 +103,7 @@ export function ClientCard({
 
               <div className="flex items-center gap-2 flex-shrink-0">
                 {client.customer_type === 'business' && (
-                  <div className="inline-flex items-center rounded text-xs font-bold px-1.5 py-0.5 bg-accent/10 border border-accent/30 text-accent">
+                  <div className="inline-flex items-center rounded text-xs font-bold px-1.5 py-0.5 bg-[hsl(var(--rpma-surface))] border border-[hsl(var(--rpma-border))] text-[hsl(var(--rpma-teal))]">
                     PRO
                   </div>
                 )}
@@ -214,8 +214,8 @@ export function ClientCard({
 
               {client.total_tasks !== undefined && (
                 <div className="flex items-center gap-2">
-                  <div className="p-1.5 md:p-2 bg-accent/10 border border-accent/30 rounded-lg">
-                    <CheckCircle className="h-3 w-3 md:h-4 md:w-4 text-accent" />
+                    <div className="p-1.5 md:p-2 bg-[hsl(var(--rpma-surface))] border border-[hsl(var(--rpma-border))] rounded-lg">
+                    <CheckCircle className="h-3 w-3 md:h-4 md:w-4 text-[hsl(var(--rpma-teal))]" />
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Tâches</p>
@@ -243,12 +243,12 @@ export function ClientCard({
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       <div className="flex-shrink-0">
                         {task.status === 'completed' ? (
-                          <div className="p-1.5 bg-accent/10 border border-accent/30 rounded-lg">
-                            <CheckCircle className="h-4 w-4 text-accent" />
+                          <div className="p-1.5 bg-[hsl(var(--rpma-surface))] border border-[hsl(var(--rpma-border))] rounded-lg">
+                            <CheckCircle className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
                           </div>
                         ) : task.status === 'in_progress' ? (
-                          <div className="p-1.5 bg-accent/10 border border-accent/30 rounded-lg">
-                            <Clock className="h-4 w-4 text-accent" />
+                          <div className="p-1.5 bg-[hsl(var(--rpma-surface))] border border-[hsl(var(--rpma-border))] rounded-lg">
+                            <Clock className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
                           </div>
                         ) : (
                           <div className="p-1.5 bg-muted/10 border border-border/10 rounded-lg">

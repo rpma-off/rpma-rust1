@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { Providers } from '@/components/providers';
 import localFont from "next/font/local";
@@ -112,7 +112,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     return (
       <div className="fixed inset-0 bg-background text-foreground z-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[hsl(var(--rpma-teal))] mx-auto mb-4"></div>
           <p className="text-muted-foreground">{authLoading || isAuthenticating ? 'Loading...' : 'Redirecting to login...'}</p>
         </div>
       </div>

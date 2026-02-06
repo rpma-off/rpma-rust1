@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { UserList } from '@/components/users/UserList';
@@ -109,7 +109,7 @@ export default function UsersPage() {
       <PageHeader
         title="Gestion des Utilisateurs"
         subtitle="Gérer les comptes utilisateurs et les permissions"
-        icon={<Users className="w-6 h-6 text-accent" />}
+        icon={<Users className="w-6 h-6 text-[hsl(var(--rpma-teal))]" />}
         actions={
           <HeaderActionButton
             label="Ajouter un utilisateur"

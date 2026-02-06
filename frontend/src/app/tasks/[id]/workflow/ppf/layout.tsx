@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import { useParams } from 'next/navigation';
@@ -33,7 +33,7 @@ function PPFWorkflowContent({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-border-light">Loading PPF workflow...</p>
+          <p className="text-muted-foreground">Loading PPF workflow...</p>
         </div>
       </div>
     );
@@ -45,10 +45,10 @@ function PPFWorkflowContent({ children }: { children: React.ReactNode }) {
         <div className="text-center max-w-md">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-foreground mb-2">Error Loading Workflow</h2>
-          <p className="text-border-light mb-4">
+          <p className="text-muted-foreground mb-4">
             {error?.message || 'Failed to load intervention data'}
           </p>
-          <p className="text-border-light text-sm mb-4">
+          <p className="text-muted-foreground text-sm mb-4">
             This might happen if the intervention was not started properly or if there are database issues.
           </p>
           <div className="flex gap-2 justify-center">
@@ -73,7 +73,7 @@ function PPFWorkflowContent({ children }: { children: React.ReactNode }) {
         <div className="text-center max-w-md">
           <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-foreground mb-2">No Active PPF Intervention</h2>
-          <p className="text-border-light mb-4">
+          <p className="text-muted-foreground mb-4">
             An active PPF intervention must be started for this task before accessing the workflow.
           </p>
           <Button onClick={() => window.history.back()}>

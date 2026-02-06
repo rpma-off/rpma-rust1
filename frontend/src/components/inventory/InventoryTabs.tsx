@@ -13,38 +13,38 @@ export function InventoryTabs() {
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-4 bg-border-900">
-        <TabsTrigger value="materials" className="flex items-center gap-2">
+      <TabsList data-variant="underline" className="w-full justify-start">
+        <TabsTrigger value="materials" data-variant="underline" className="flex items-center gap-2">
           <Package className="w-4 h-4" />
           Materials
         </TabsTrigger>
-        <TabsTrigger value="suppliers" className="flex items-center gap-2">
+        <TabsTrigger value="suppliers" data-variant="underline" className="flex items-center gap-2">
           <Truck className="w-4 h-4" />
           Suppliers
         </TabsTrigger>
-        <TabsTrigger value="reports" className="flex items-center gap-2">
+        <TabsTrigger value="reports" data-variant="underline" className="flex items-center gap-2">
           <BarChart3 className="w-4 h-4" />
           Reports
         </TabsTrigger>
-        <TabsTrigger value="settings" className="flex items-center gap-2">
+        <TabsTrigger value="settings" data-variant="underline" className="flex items-center gap-2">
           <Settings className="w-4 h-4" />
           Settings
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="materials" className="mt-6">
+      <TabsContent value="materials" className="mt-4">
         <MaterialCatalog />
       </TabsContent>
 
-      <TabsContent value="suppliers" className="mt-6">
+      <TabsContent value="suppliers" className="mt-4">
         <SupplierManagement />
       </TabsContent>
 
-      <TabsContent value="reports" className="mt-6">
+      <TabsContent value="reports" className="mt-4">
         <InventoryReports />
       </TabsContent>
 
-      <TabsContent value="settings" className="mt-6">
+      <TabsContent value="settings" className="mt-4">
         <InventorySettings />
       </TabsContent>
     </Tabs>

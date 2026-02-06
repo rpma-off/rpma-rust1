@@ -18,7 +18,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
   isAssignedToCurrentUser,
 }) => {
   return (
-    <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-border bg-gradient-to-r from-muted to-background">
+    <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))]">
       <div className="flex flex-col space-y-2 sm:space-y-0">
         {/* Title and Status Row */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -40,8 +40,8 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
         {/* Metadata Row */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm">
           {task.assigned_at && (
-            <div className="flex items-center text-border-light bg-border px-2 py-1 rounded-md">
-              <Clock className="h-3.5 w-3.5 mr-1.5 text-border flex-shrink-0" />
+            <div className="flex items-center text-muted-foreground bg-white px-2 py-1 rounded-md border border-[hsl(var(--rpma-border))]">
+              <Clock className="h-3.5 w-3.5 mr-1.5 text-muted-foreground flex-shrink-0" />
               <span className="text-xs sm:text-sm">
                 Assigné le {formatDate(task.assigned_at, 'dd/MM/yyyy HH:mm')}
               </span>
@@ -52,12 +52,12 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
             <div
               className={`flex items-center px-2.5 py-1 rounded-full border ${
                 isAssignedToCurrentUser
-                  ? 'bg-accent/10 border-accent/30 text-accent'
-                  : 'bg-border border-border text-border-light'
+                  ? 'bg-[hsl(var(--rpma-teal))]/10 border-[hsl(var(--rpma-teal))]/30 text-[hsl(var(--rpma-teal))]'
+                  : 'bg-white border-[hsl(var(--rpma-border))] text-muted-foreground'
               }`}
             >
               <Wrench className={`h-3.5 w-3.5 mr-1.5 ${
-                isAssignedToCurrentUser ? 'text-accent' : 'text-border'
+                isAssignedToCurrentUser ? 'text-[hsl(var(--rpma-teal))]' : 'text-muted-foreground'
               } flex-shrink-0`} />
               <span className="text-xs sm:text-sm whitespace-nowrap">
                 {isAssignedToCurrentUser ? 'Vous êtes assigné' : 'Assigné à un technicien'}
@@ -67,7 +67,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
 
           {/* Add any additional metadata here */}
           {task.workflow_status && (
-            <div className="hidden sm:flex items-center text-border-light bg-border px-2 py-1 rounded-md">
+            <div className="hidden sm:flex items-center text-muted-foreground bg-white px-2 py-1 rounded-md border border-[hsl(var(--rpma-border))]">
               <span className="text-xs sm:text-sm capitalize">
                 {task.workflow_status.replace(/_/g, ' ')}
               </span>

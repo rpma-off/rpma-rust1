@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -241,7 +241,7 @@ export default function InstallationStepPage() {
         <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
           Installation du PPF
         </h1>
-        <p className="text-lg text-border-light max-w-2xl mx-auto leading-relaxed">
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
           Application professionnelle du film protecteur avec suivi précis des zones
         </p>
       </motion.div>
@@ -289,7 +289,7 @@ export default function InstallationStepPage() {
                 <CardTitle className="text-xl text-foreground group-hover:text-indigo-400 transition-colors">
                   Lot de Matériel Global
                 </CardTitle>
-                <CardDescription className="text-border-light">
+                <CardDescription className="text-muted-foreground">
                   Numéro de lot du film PPF utilisé (optionnel)
                 </CardDescription>
               </div>
@@ -303,7 +303,7 @@ export default function InstallationStepPage() {
                 onChange={(e) => setGlobalMaterialLot(e.target.value)}
                 className="bg-[hsl(var(--rpma-surface))] border-[hsl(var(--rpma-border))] h-12 text-base transition-all duration-200 focus:border-indigo-500/50"
               />
-              <p className="text-xs text-border-light mt-2">
+              <p className="text-xs text-muted-foreground mt-2">
                 Ce numéro sera utilisé comme valeur par défaut pour toutes les zones
               </p>
             </div>
@@ -324,7 +324,7 @@ export default function InstallationStepPage() {
                   <CardTitle className="text-xl text-foreground group-hover:text-orange-400 transition-colors">
                     Suivi des Zones
                   </CardTitle>
-                  <CardDescription className="text-border-light">
+                  <CardDescription className="text-muted-foreground">
                     Chronométrage précis de l&apos;application par zone
                   </CardDescription>
                 </div>
@@ -348,7 +348,7 @@ export default function InstallationStepPage() {
                       ? 'bg-green-500/5 border-green-500/30 hover:bg-green-500/10'
                       : zone.status === 'in_progress'
                       ? 'bg-blue-500/5 border-blue-500/30 hover:bg-blue-500/10'
-                      : 'bg-border/10 border-border/30 hover:border-orange-500/30 hover:bg-orange-500/5'
+                      : 'bg-[hsl(var(--rpma-surface))] border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))]/30 hover:bg-[hsl(var(--rpma-surface))]'
                   }`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -368,7 +368,7 @@ export default function InstallationStepPage() {
                     </div>
                     {zone.duration > 0 && (
                       <div className="text-right">
-                        <p className="text-sm text-border-light">Durée totale</p>
+                        <p className="text-sm text-muted-foreground">Durée totale</p>
                         <p className="text-lg font-mono font-bold text-foreground">
                           {formatDuration(zone.duration)}
                         </p>
@@ -452,7 +452,7 @@ export default function InstallationStepPage() {
 
                     {zone.status === 'completed' && zone.duration > 0 && (
                       <div className="text-right">
-                        <p className="text-xs text-border-light">Durée finale</p>
+                        <p className="text-xs text-muted-foreground">Durée finale</p>
                         <p className="text-sm font-mono font-bold text-green-400">
                           {formatDuration(zone.duration)}
                         </p>
@@ -479,7 +479,7 @@ export default function InstallationStepPage() {
                   <CardTitle className="text-xl text-foreground group-hover:text-green-400 transition-colors">
                     Photos d&apos;installation
                   </CardTitle>
-                  <CardDescription className="text-border-light">
+                  <CardDescription className="text-muted-foreground">
                     Documentation visuelle de l&apos;application (optionnel)
                   </CardDescription>
                 </div>
@@ -528,8 +528,8 @@ export default function InstallationStepPage() {
               {canProceed ? 'Prêt pour la finalisation' : 'Complétez toutes les zones'}
             </p>
           </div>
-          <p className="text-border-light text-sm">
-            Zones: {zones.filter(z => z.status === 'completed').length}/{zones.length} •
+          <p className="text-muted-foreground text-sm">
+            Zones: {zones.filter(z => z.status === 'completed').length}/{zones.length} â€¢
             Lots: {zones.filter(z => z.materialLot.trim() !== '').length}/{zones.length}
           </p>
         </div>

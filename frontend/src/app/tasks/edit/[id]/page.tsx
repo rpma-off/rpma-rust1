@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -54,7 +54,7 @@ export default function EditTaskPage() {
 
   const handleSuccess = (updatedTask?: { id: string }) => {
     if (updatedTask?.id) {
-      toast.success('Tâche mise à jour avec succès !');
+      toast.success('Tâche mise Ã  jour avec succès !');
       // Redirect to the updated task
       router.push(`/tasks/${updatedTask.id}`);
     }
@@ -92,9 +92,9 @@ export default function EditTaskPage() {
                 </svg>
               </div>
               <h3 className="text-xl font-bold text-white mb-2">Erreur de chargement</h3>
-              <p className="text-border-light mb-6">{error}</p>
+              <p className="text-muted-foreground mb-6">{error}</p>
               <Button onClick={handleCancel} variant="outline">
-                Retour à la liste des tâches
+                Retour Ã  la liste des tâches
               </Button>
             </div>
           </div>
@@ -110,9 +110,9 @@ export default function EditTaskPage() {
           <div className="bg-[hsl(var(--rpma-surface))] rounded-xl p-4 md:p-6 border border-[hsl(var(--rpma-border))]">
             <div className="text-center py-12">
               <h3 className="text-xl font-bold text-white mb-2">Tâche introuvable</h3>
-              <p className="text-border-light mb-6">La tâche demandée n&apos;existe pas ou a été supprimée.</p>
+              <p className="text-muted-foreground mb-6">La tâche demandée n&apos;existe pas ou a été supprimée.</p>
               <Button onClick={handleCancel} variant="outline">
-                Retour à la liste des tâches
+                Retour Ã  la liste des tâches
               </Button>
             </div>
           </div>
@@ -133,15 +133,15 @@ export default function EditTaskPage() {
                 <Button
                   variant="outline"
                   onClick={handleCancel}
-                  className="flex items-center gap-2 border-border/60 text-border-light hover:bg-border/20 hover:text-foreground hover:border-primary/50 transition-all duration-200"
+                  className="flex items-center gap-2 border-[hsl(var(--rpma-border))] text-muted-foreground hover:bg-[hsl(var(--rpma-surface))] hover:text-foreground hover:border-[hsl(var(--rpma-teal))]/50 transition-all duration-200"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  <span className="hidden sm:inline">Retour à la liste des tâches</span>
+                  <span className="hidden sm:inline">Retour Ã  la liste des tâches</span>
                   <span className="sm:hidden">Retour</span>
                 </Button>
 
                 {/* Breadcrumbs */}
-                <nav className="hidden sm:flex items-center text-sm text-border-light">
+                <nav className="hidden sm:flex items-center text-sm text-muted-foreground">
                   <a href="/dashboard" className="hover:text-foreground transition-colors">Dashboard</a>
                   <span className="mx-2">/</span>
                   <a href="/tasks" className="hover:text-foreground transition-colors">Tâches</a>
@@ -161,7 +161,7 @@ export default function EditTaskPage() {
                   <h1 className="text-2xl md:text-3xl font-bold text-foreground">
                     Modifier la tâche {taskData.task_number}
                   </h1>
-                  <p className="text-border-light mt-1 text-sm md:text-base">
+                  <p className="text-muted-foreground mt-1 text-sm md:text-base">
                     Modifiez les informations de la tâche. Les changements seront sauvegardés automatiquement.
                   </p>
                 </div>
@@ -177,7 +177,7 @@ export default function EditTaskPage() {
                   </div>
                   <div>
                     <h4 className="text-sm font-medium text-blue-500 mb-1">Astuce rapide</h4>
-                    <p className="text-xs text-border-light">
+                    <p className="text-xs text-muted-foreground">
                       Utilisez la touche Tab pour naviguer rapidement entre les champs. Le formulaire se sauvegarde automatiquement.
                     </p>
                   </div>

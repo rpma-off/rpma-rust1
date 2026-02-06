@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -136,7 +136,7 @@ export default function PPFWorkflowPage() {
         <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-3">
           PPF Installation Workflow
         </h1>
-        <p className="text-lg text-border-light max-w-2xl mx-auto leading-relaxed">
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
           Guided process for professional PPF application with precision and quality control
         </p>
       </motion.div>
@@ -189,7 +189,7 @@ export default function PPFWorkflowPage() {
                       {getStatusIcon(status)}
                     </div>
                   </div>
-                  <CardDescription className="text-border-light text-base leading-relaxed">
+                  <CardDescription className="text-muted-foreground text-base leading-relaxed">
                     {stepConfig.description}
                   </CardDescription>
                 </CardHeader>
@@ -227,7 +227,7 @@ export default function PPFWorkflowPage() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8, duration: 0.6 }}
       >
-        <p className="text-border-light text-sm">
+        <p className="text-muted-foreground text-sm">
           Complete each step in order for optimal PPF installation results
         </p>
       </motion.div>

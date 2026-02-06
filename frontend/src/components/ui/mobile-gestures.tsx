@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+﻿import React, { useState, useRef } from 'react';
 import { motion, PanInfo } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { createCardClass } from '@/lib/component-standards';
@@ -201,9 +201,9 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
           transition={{
             rotate: { duration: isRefreshing ? 1 : 0.2, repeat: isRefreshing ? Infinity : 0 }
           }}
-          className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full"
+          className="w-6 h-6 border-2 border-[hsl(var(--rpma-teal))] border-t-transparent rounded-full"
         />
-        <span className="ml-3 text-sm text-border-light">
+        <span className="ml-3 text-sm text-muted-foreground">
           {isRefreshing ? 'Actualisation...' : 'Tirer pour actualiser'}
         </span>
       </motion.div>
