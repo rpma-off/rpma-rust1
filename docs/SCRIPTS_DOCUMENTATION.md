@@ -151,3 +151,13 @@ These are the commands available in `package.json` and the scripts they execute:
 | `ci:validate` | `bash scripts/ci-type-check.sh` | Runs CI validation suite. |
 | `security:audit` | `node scripts/security-audit.js` | Runs security audit. |
 | `performance:test` | `node scripts/performance-regression-test.js` | Runs performance tests. |
+
+## Text Encoding Guard
+
+#### `check-mojibake.js`
+*   **Description**: Detects mojibake signatures in frontend source files.
+*   **Utility**: Scans for corrupted sequences such as `é`, `«`, `’`, and replacement characters.
+*   **Usage**:
+    *   `cd frontend && npm run encoding:check`
+    *   `npm run frontend:encoding-check`
+*   **Guideline**: Keep source files saved as UTF-8 and avoid legacy recoding.

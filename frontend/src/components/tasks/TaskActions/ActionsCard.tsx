@@ -1,13 +1,25 @@
 import React, { memo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Play, CheckCircle, Image as ImageIcon, ListChecks,
-  MoreVertical, Edit, FileText, Phone, MessageSquare, Clock, AlertCircle, ArrowRight,
-  User, Settings
+  Play,
+  CheckCircle,
+  Image as ImageIcon,
+  ListChecks,
+  MoreVertical,
+  Edit,
+  FileText,
+  Phone,
+  MessageSquare,
+  Clock,
+  AlertCircle,
+  ArrowRight,
+  User,
+  Settings,
+  Wrench
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
@@ -30,15 +42,29 @@ interface ActionsCardProps {
   isAssignedToCurrentUser: boolean;
   isAvailable: boolean;
   canStartTask: boolean;
+  compact?: boolean;
+  stickyOffsetClass?: string;
+  mobileDocked?: boolean;
 }
+
+type ActionItem = {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  count?: number;
+  onClick: () => void;
+  disabled?: boolean;
+};
 
 const ActionsCard: React.FC<ActionsCardProps> = ({
   task,
   isAssignedToCurrentUser,
   isAvailable,
   canStartTask,
+  compact = false,
+  stickyOffsetClass,
+  mobileDocked = false
 }) => {
-  // Helper functions to create proper UpdateTaskRequest objects
   const createStatusUpdate = (status: TaskStatus): UpdateTaskRequest => ({
     id: null,
     title: null,
@@ -174,9 +200,11 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
     tags: null,
     technician_id: null
   });
+
   const router = useRouter();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+
   const [showMoreActions, setShowMoreActions] = useState(false);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [showAssignmentDialog, setShowAssignmentDialog] = useState(false);
@@ -186,16 +214,17 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
   const [showDelayTaskModal, setShowDelayTaskModal] = useState(false);
   const [showReportIssueModal, setShowReportIssueModal] = useState(false);
   const [notes, setNotes] = useState(task.note || '');
+
   const isInProgress = task.status === 'in_progress';
   const isCompleted = task.status === 'completed';
   const hasBeforePhotos = task.photos_before && task.photos_before.length > 0;
   const hasAfterPhotos = task.photos_after && task.photos_after.length > 0;
   const hasChecklist = task.checklist_items && task.checklist_items.length > 0;
+  const shouldShowDisabledReason = !canStartTask && !isInProgress && !isCompleted;
 
-  // Update task status
   const updateStatusMutation = useMutation({
     mutationFn: async (newStatus: TaskStatus) => {
-      if (!user?.token) throw new Error('User not authenticated');
+      if (!user?.token) throw new Error('Utilisateur non authentifié');
       return await taskService.updateTask(task.id, createStatusUpdate(newStatus));
     },
     onSuccess: () => {
@@ -203,32 +232,30 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
       toast.success('Statut mis à jour avec succès');
       setShowStatusDialog(false);
     },
-    onError: (error) => {
+    onError: error => {
       toast.error('Erreur lors de la mise à jour du statut');
       console.error('Status update error:', error);
     }
   });
 
-  // Update task priority
   const updatePriorityMutation = useMutation({
     mutationFn: async (newPriority: TaskPriority) => {
-      if (!user?.token) throw new Error('User not authenticated');
+      if (!user?.token) throw new Error('Utilisateur non authentifié');
       return await taskService.updateTask(task.id, createPriorityUpdate(newPriority));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
       toast.success('Priorité mise à jour avec succès');
     },
-    onError: (error) => {
+    onError: error => {
       toast.error('Erreur lors de la mise à jour de la priorité');
       console.error('Priority update error:', error);
     }
   });
 
-  // Assign task to current user
   const assignToMeMutation = useMutation({
     mutationFn: async () => {
-      if (!user?.token) throw new Error('User not authenticated');
+      if (!user?.token) throw new Error('Utilisateur non authentifié');
       return await taskService.updateTask(task.id, createTechnicianUpdate(user.id));
     },
     onSuccess: () => {
@@ -236,16 +263,15 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
       toast.success('Tâche assignée avec succès');
       setShowAssignmentDialog(false);
     },
-    onError: (error) => {
+    onError: error => {
       toast.error('Erreur lors de l\'assignation');
       console.error('Assignment error:', error);
     }
   });
 
-  // Update task notes
   const updateNotesMutation = useMutation({
     mutationFn: async (newNotes: string) => {
-      if (!user?.token) throw new Error('User not authenticated');
+      if (!user?.token) throw new Error('Utilisateur non authentifié');
       return await taskService.updateTask(task.id, createNotesUpdate(newNotes));
     },
     onSuccess: () => {
@@ -253,25 +279,16 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
       toast.success('Notes mises à jour avec succès');
       setShowNotesDialog(false);
     },
-    onError: (error) => {
+    onError: error => {
       toast.error('Erreur lors de la mise à jour des notes');
       console.error('Notes update error:', error);
     }
   });
 
-  const toggleMoreActions = () => setShowMoreActions(!showMoreActions);
-
-  const handleActionClick = (action: () => void) => {
-    setShowMoreActions(false);
-    action();
-  };
-
-  // Start intervention mutation
   const startInterventionMutation = useMutation({
     mutationFn: async () => {
-      if (!user?.token) throw new Error('User not authenticated');
+      if (!user?.token) throw new Error('Utilisateur non authentifié');
 
-      // Prepare intervention data with defaults
       const interventionData = {
         task_id: task.id,
         intervention_number: null,
@@ -279,35 +296,33 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
         priority: task.priority || 'medium',
         ppf_zones: task.ppf_zones || [],
         custom_ppf_zones: task.custom_ppf_zones || null,
-        film_type: 'standard', // Default
+        film_type: 'standard',
         film_brand: null,
         film_model: null,
-        weather_condition: 'sunny', // Default
-        lighting_condition: 'natural', // Default
-        work_location: 'outdoor', // Default
+        weather_condition: 'sunny',
+        lighting_condition: 'natural',
+        work_location: 'outdoor',
         temperature: null,
         humidity: null,
         technician_id: task.technician_id || user.id,
         assistant_ids: null,
         scheduled_start: new Date().toISOString(),
-        estimated_duration: task.estimated_duration || 120, // Default 2 hours
+        estimated_duration: task.estimated_duration || 120,
         gps_coordinates: null,
         address: task.customer_address || null,
         notes: task.notes || null,
         customer_requirements: null,
-        special_instructions: null,
+        special_instructions: null
       };
 
       const response = await InterventionWorkflowService.startIntervention(task.id, interventionData, user.token);
       if (!response.success) {
-        throw new Error(response.error?.message || 'Failed to start intervention');
+        throw new Error(response.error?.message || 'Impossible de démarrer l\'intervention');
       }
       return response.data;
     },
     onSuccess: () => {
-      // Invalidate queries in sequence to prevent race conditions
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      // Delay other invalidations slightly to prevent race conditions
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: interventionKeys.ppfIntervention(task.id) });
         queryClient.invalidateQueries({ queryKey: ['interventions', task.id, 'photos'] });
@@ -315,17 +330,21 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
       toast.success('Intervention démarrée avec succès');
       router.push(`/tasks/${task.id}/workflow/ppf`);
     },
-     onError: (error) => {
-       const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue lors du démarrage de l\'intervention';
-       toast.error(`Erreur lors du démarrage de l'intervention: ${errorMessage}`);
-       console.error('Start intervention error:', error);
-     }
+    onError: error => {
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue lors du démarrage de l\'intervention';
+      toast.error(`Erreur au démarrage de l'intervention : ${errorMessage}`);
+      console.error('Start intervention error:', error);
+    }
   });
 
-   const handleStartWorkflow = () => {
-     console.log('Starting intervention for task:', task.id, 'status:', task.status);
-     startInterventionMutation.mutate();
-   };
+  const handleActionClick = (action: () => void) => {
+    setShowMoreActions(false);
+    action();
+  };
+
+  const handleStartWorkflow = () => {
+    startInterventionMutation.mutate();
+  };
 
   const handleViewWorkflow = () => {
     router.push(`/tasks/${task.id}/workflow/ppf`);
@@ -343,30 +362,62 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
     router.push(`/tasks/${task.id}/completed`);
   };
 
-
-  // Secondary actions (photos, checklist, etc.)
-  const secondaryActions = [
+  const executionActions: ActionItem[] = [
+    {
+      id: 'workflow',
+      label: 'Workflow',
+      icon: Wrench,
+      onClick: isCompleted ? handleViewCompleted : handleViewWorkflow,
+      disabled: !isInProgress && !isCompleted
+    },
     {
       id: 'photos',
-      label: 'Voir les photos',
+      label: 'Photos',
       icon: ImageIcon,
-      count: (hasBeforePhotos ? task.photos_before?.length || 0 : 0) +
-             (hasAfterPhotos ? task.photos_after?.length || 0 : 0),
+      count: (hasBeforePhotos ? task.photos_before?.length || 0 : 0) + (hasAfterPhotos ? task.photos_after?.length || 0 : 0),
       onClick: handleViewPhotosPage,
-      disabled: !hasBeforePhotos && !hasAfterPhotos,
+      disabled: !hasBeforePhotos && !hasAfterPhotos
     },
     {
       id: 'checklist',
-      label: 'Voir la check-list',
+      label: 'Checklist',
       icon: ListChecks,
       count: hasChecklist ? task.checklist_items?.length : 0,
       onClick: handleViewChecklistPage,
-      disabled: !hasChecklist,
-    },
+      disabled: !hasChecklist
+    }
   ];
 
-  // More actions dropdown items
-  const moreActions = [
+  const communicationActions: ActionItem[] = [
+    {
+      id: 'call',
+      label: 'Appeler le client',
+      icon: Phone,
+      onClick: async () => {
+        try {
+          const phoneNumber = task?.client?.phone;
+          if (!phoneNumber) {
+            toast.error('Aucun numéro de téléphone disponible pour ce client');
+            return;
+          }
+
+          await ipcClient.ui.initiateCustomerCall(phoneNumber);
+          toast.success(`Appel lancé vers ${phoneNumber}`);
+        } catch (error) {
+          console.error('Failed to initiate call:', error);
+          toast.error('Erreur lors de l\'appel client');
+        }
+      }
+    },
+    {
+      id: 'message',
+      label: 'Envoyer un message',
+      icon: MessageSquare,
+      onClick: () => setShowSendMessageModal(true)
+    }
+  ];
+
+  const administrationActions: ActionItem[] = [
     {
       id: 'status',
       label: 'Changer le statut',
@@ -393,35 +444,6 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
       onClick: () => setShowEditModal(true)
     },
     {
-      id: 'call',
-      label: 'Appeler le client',
-      icon: Phone,
-      onClick: async () => {
-        try {
-          // Get client phone number from task data
-          const phoneNumber = task?.client?.phone;
-          if (!phoneNumber) {
-            toast.error('Aucun numéro de téléphone disponible pour ce client');
-            return;
-          }
-
-          // Call backend to initiate phone call
-          await ipcClient.ui.initiateCustomerCall(phoneNumber);
-
-          toast.success(`Appel initié vers ${phoneNumber}`);
-        } catch (error) {
-          console.error('Failed to initiate call:', error);
-          toast.error('Erreur lors de l\'initiation de l\'appel');
-        }
-      }
-    },
-    {
-      id: 'message',
-      label: 'Envoyer un message',
-      icon: MessageSquare,
-      onClick: () => setShowSendMessageModal(true)
-    },
-    {
       id: 'delay',
       label: 'Reporter la tâche',
       icon: Clock,
@@ -432,19 +454,35 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
       label: 'Signaler un problème',
       icon: AlertCircle,
       onClick: () => setShowReportIssueModal(true)
-    },
+    }
   ];
 
-  return (
-    <div className="bg-muted border border-border rounded-lg overflow-hidden">
-      <div className="p-5">
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-semibold text-foreground">Actions</h3>
-        </div>
+  const primaryDisabledReason = !isAvailable && !isAssignedToCurrentUser
+    ? 'Intervention indisponible : cette tâche est déjà prise par un autre technicien.'
+    : shouldShowDisabledReason
+      ? `Cette tâche est au statut « ${task.status} » et ne peut pas être démarrée.`
+      : null;
 
-        <div className="space-y-4">
-          {/* Primary Action Button */}
+  const dockedQuickActions = [...executionActions.filter(action => action.id !== 'workflow').slice(0, 2), communicationActions[1]];
+
+  return (
+    <div className={cn(
+      'rounded-xl overflow-hidden',
+      compact ? 'bg-transparent border-0' : 'bg-background/40 border border-border/50',
+      stickyOffsetClass
+    )}>
+      <div className={compact ? 'p-0' : 'p-5'}>
+        {!mobileDocked && (
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-foreground">Actions de l&apos;intervention</h3>
+          </div>
+        )}
+
+        <div className={cn(mobileDocked ? 'space-y-2' : 'space-y-5')}>
           <div>
+            {!mobileDocked && (
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-border-light">Action principale</p>
+            )}
             <PrimaryActionButton
               isCompleted={isCompleted}
               isInProgress={isInProgress}
@@ -453,41 +491,72 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
               onViewCompleted={handleViewCompleted}
               onViewWorkflow={handleViewWorkflow}
               onStartWorkflow={handleStartWorkflow}
+              compact={mobileDocked}
             />
+            {primaryDisabledReason && !mobileDocked && <p className="mt-2 text-xs text-amber-600">{primaryDisabledReason}</p>}
           </div>
 
-          {/* Quick Actions Grid */}
-          <SecondaryActionsGrid
-            actions={secondaryActions}
-            onActionClick={handleActionClick}
-          />
+          {mobileDocked ? (
+            <div className="grid grid-cols-4 gap-2">
+              {dockedQuickActions.map(action => (
+                <IconActionButton key={action.id} action={action} onActionClick={handleActionClick} compact />
+              ))}
+              <button
+                type="button"
+                onClick={() => setShowMoreActions(current => !current)}
+                className="rounded-lg border border-border/60 bg-background/60 px-2 py-2 text-xs text-border-light hover:text-foreground"
+              >
+                <MoreVertical className="h-4 w-4 mx-auto mb-1" />
+                Plus
+              </button>
 
-          {/* Additional Actions */}
-          <MoreActionsSection
-            showMoreActions={showMoreActions}
-            toggleMoreActions={toggleMoreActions}
-            actions={moreActions}
-            onActionClick={handleActionClick}
-          />
+              {showMoreActions && (
+                <div className="col-span-4 grid grid-cols-2 gap-2 pt-1">
+                  {[...communicationActions, ...administrationActions].map(action => (
+                    <InlineActionButton key={action.id} action={action} onActionClick={handleActionClick} />
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-border-light">Exécution</p>
+                <SecondaryActionsGrid actions={executionActions} onActionClick={handleActionClick} columns={3} />
+              </div>
 
-           {/* Status Warnings */}
-           <StatusWarnings
-             isAvailable={isAvailable}
-             isAssignedToCurrentUser={isAssignedToCurrentUser}
-             canStartTask={canStartTask}
-             isInProgress={isInProgress}
-             taskStatus={task.status}
-           />
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-border-light">Communication</p>
+                <SecondaryActionsGrid actions={communicationActions} onActionClick={handleActionClick} columns={2} />
+              </div>
 
-          {/* Priority Selector */}
-          <PrioritySelector
-            value={task.priority || 'medium'}
-            onChange={(value) => updatePriorityMutation.mutate(value)}
-            isPending={updatePriorityMutation.isPending}
-          />
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-border-light">Administration</p>
+                <MoreActionsSection
+                  showMoreActions={showMoreActions}
+                  toggleMoreActions={() => setShowMoreActions(current => !current)}
+                  actions={administrationActions}
+                  onActionClick={handleActionClick}
+                />
+              </div>
+
+              <StatusWarnings
+                isAvailable={isAvailable}
+                isAssignedToCurrentUser={isAssignedToCurrentUser}
+                canStartTask={canStartTask}
+                isInProgress={isInProgress}
+                taskStatus={task.status}
+              />
+
+              <PrioritySelector
+                value={task.priority || 'medium'}
+                onChange={value => updatePriorityMutation.mutate(value)}
+                isPending={updatePriorityMutation.isPending}
+              />
+            </>
+          )}
         </div>
 
-        {/* Status Update Dialog */}
         <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
           <DialogContent>
             <DialogHeader>
@@ -499,8 +568,21 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
                 <Select
                   value={task.status}
                   onValueChange={(value: string) => {
-                    // Convert string value back to TaskStatus enum
-                    const statusValue = ['draft', 'scheduled', 'in_progress', 'completed', 'cancelled', 'on_hold', 'pending', 'invalid', 'archived', 'failed', 'overdue', 'assigned', 'paused'].find(s => s === value) as TaskStatus;
+                    const statusValue = [
+                      'draft',
+                      'scheduled',
+                      'in_progress',
+                      'completed',
+                      'cancelled',
+                      'on_hold',
+                      'pending',
+                      'invalid',
+                      'archived',
+                      'failed',
+                      'overdue',
+                      'assigned',
+                      'paused'
+                    ].find(s => s === value) as TaskStatus;
                     if (statusValue) updateStatusMutation.mutate(statusValue);
                   }}
                   disabled={updateStatusMutation.isPending}
@@ -518,41 +600,30 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
                   </SelectContent>
                 </Select>
               </div>
-              {updateStatusMutation.isPending && (
-                <p className="text-sm text-muted-foreground">Mise à jour en cours...</p>
-              )}
+              {updateStatusMutation.isPending && <p className="text-sm text-muted-foreground">Mise à jour en cours...</p>}
             </div>
           </DialogContent>
         </Dialog>
 
-        {/* Assignment Dialog */}
         <Dialog open={showAssignmentDialog} onOpenChange={setShowAssignmentDialog}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Assigner la tâche</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <p>Êtes-vous sûr de vouloir vous assigner cette tâche ?</p>
+              <p>Voulez-vous vous assigner cette tâche ?</p>
               <div className="flex justify-end space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowAssignmentDialog(false)}
-                  disabled={assignToMeMutation.isPending}
-                >
+                <Button variant="outline" onClick={() => setShowAssignmentDialog(false)} disabled={assignToMeMutation.isPending}>
                   Annuler
                 </Button>
-                <Button
-                  onClick={() => assignToMeMutation.mutate()}
-                  disabled={assignToMeMutation.isPending}
-                >
-                  {assignToMeMutation.isPending ? 'Assignation...' : 'M\'assigner'}
+                <Button onClick={() => assignToMeMutation.mutate()} disabled={assignToMeMutation.isPending}>
+                  {assignToMeMutation.isPending ? 'Assignation...' : "M'assigner"}
                 </Button>
               </div>
             </div>
           </DialogContent>
         </Dialog>
 
-        {/* Notes Dialog */}
         <Dialog open={showNotesDialog} onOpenChange={setShowNotesDialog}>
           <DialogContent className="max-w-md">
             <DialogHeader>
@@ -564,23 +635,16 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
                 <Textarea
                   id="notes-textarea"
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={e => setNotes(e.target.value)}
                   placeholder="Ajoutez des notes pour cette tâche..."
                   rows={4}
                 />
               </div>
               <div className="flex justify-end space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowNotesDialog(false)}
-                  disabled={updateNotesMutation.isPending}
-                >
+                <Button variant="outline" onClick={() => setShowNotesDialog(false)} disabled={updateNotesMutation.isPending}>
                   Annuler
                 </Button>
-                <Button
-                  onClick={() => updateNotesMutation.mutate(notes)}
-                  disabled={updateNotesMutation.isPending}
-                >
+                <Button onClick={() => updateNotesMutation.mutate(notes)} disabled={updateNotesMutation.isPending}>
                   {updateNotesMutation.isPending ? 'Sauvegarde...' : 'Sauvegarder'}
                 </Button>
               </div>
@@ -588,33 +652,10 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
           </DialogContent>
         </Dialog>
 
-        {/* Edit Task Modal */}
-        <EditTaskModal
-          task={task}
-          open={showEditModal}
-          onOpenChange={setShowEditModal}
-        />
-
-        {/* Send Message Modal */}
-        <SendMessageModal
-          task={task}
-          open={showSendMessageModal}
-          onOpenChange={setShowSendMessageModal}
-        />
-
-        {/* Delay Task Modal */}
-        <DelayTaskModal
-          task={task}
-          open={showDelayTaskModal}
-          onOpenChange={setShowDelayTaskModal}
-        />
-
-        {/* Report Issue Modal */}
-        <ReportIssueModal
-          task={task}
-          open={showReportIssueModal}
-          onOpenChange={setShowReportIssueModal}
-        />
+        <EditTaskModal task={task} open={showEditModal} onOpenChange={setShowEditModal} />
+        <SendMessageModal task={task} open={showSendMessageModal} onOpenChange={setShowSendMessageModal} />
+        <DelayTaskModal task={task} open={showDelayTaskModal} onOpenChange={setShowDelayTaskModal} />
+        <ReportIssueModal task={task} open={showReportIssueModal} onOpenChange={setShowReportIssueModal} />
       </div>
     </div>
   );
@@ -630,6 +671,7 @@ interface PrimaryActionButtonProps {
   onViewCompleted: () => void;
   onViewWorkflow: () => void;
   onStartWorkflow: () => void;
+  compact?: boolean;
 }
 
 const PrimaryActionButton: React.FC<PrimaryActionButtonProps> = ({
@@ -640,13 +682,11 @@ const PrimaryActionButton: React.FC<PrimaryActionButtonProps> = ({
   onViewCompleted,
   onViewWorkflow,
   onStartWorkflow,
+  compact = false
 }) => {
   if (isCompleted) {
     return (
-      <Button
-        onClick={onViewCompleted}
-        className="w-full bg-green-600 hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-      >
+      <Button onClick={onViewCompleted} className={cn('w-full bg-emerald-600 hover:bg-emerald-700', compact && 'h-10 text-sm')}>
         <CheckCircle className="h-5 w-5 mr-2" />
         Voir le rapport final
       </Button>
@@ -657,7 +697,7 @@ const PrimaryActionButton: React.FC<PrimaryActionButtonProps> = ({
     return (
       <Button
         onClick={onViewWorkflow}
-        className="w-full bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        className={cn('w-full bg-[hsl(var(--rpma-teal))] hover:bg-[hsl(var(--rpma-teal))]/90', compact && 'h-10 text-sm')}
       >
         <ArrowRight className="h-5 w-5 mr-2" />
         Continuer l&apos;intervention
@@ -670,69 +710,87 @@ const PrimaryActionButton: React.FC<PrimaryActionButtonProps> = ({
       onClick={onStartWorkflow}
       disabled={!canStartTask || isPending}
       className={cn(
-        "w-full transition-colors duration-200",
+        'w-full transition-colors duration-200',
+        compact && 'h-10 text-sm',
         canStartTask && !isPending
-          ? "bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          : "bg-gray-300 cursor-not-allowed"
+          ? 'bg-[hsl(var(--rpma-teal))] hover:bg-[hsl(var(--rpma-teal))]/90'
+          : 'bg-gray-300/70 text-gray-600 cursor-not-allowed'
       )}
     >
       <Play className="h-5 w-5 mr-2" />
-      {isPending ? 'Démarrage...' : 'Démarrer l\'intervention'}
+      {isPending ? 'Démarrage...' : "Démarrer l'intervention"}
     </Button>
   );
-};
-
-type ActionItem = {
-  id: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  count?: number;
-  onClick: () => void;
-  disabled?: boolean;
 };
 
 interface SecondaryActionsGridProps {
   actions: ActionItem[];
   onActionClick: (action: () => void) => void;
+  columns?: 2 | 3;
 }
 
-const SecondaryActionsGrid: React.FC<SecondaryActionsGridProps> = ({
-  actions,
-  onActionClick,
-}) => (
-  <div className="grid grid-cols-2 gap-3">
-    {actions.map((action) => (
-      <button
-        key={action.id}
-        onClick={() => onActionClick(action.onClick)}
-        disabled={action.disabled}
-        className={cn(
-          "flex flex-col items-center justify-center p-4 rounded-lg border transition-all duration-200 hover:scale-105",
-          action.disabled
-            ? "border-border/50 bg-background/30 cursor-not-allowed opacity-50"
-            : "border-border bg-background/50 hover:border-accent hover:bg-border"
-        )}
-      >
-        <div className="relative">
-          <action.icon className={cn(
-            "h-6 w-6 mb-2",
-            action.disabled ? "text-border" : "text-accent"
-          )} />
-          {action.count && action.count > 0 && (
-            <span className="absolute -top-2 -right-2 bg-accent text-background text-xs font-bold px-2 py-1 rounded-full min-w-[20px] h-5 flex items-center justify-center">
-              {action.count}
-            </span>
-          )}
-        </div>
-        <span className={cn(
-          "text-xs font-medium text-center",
-          action.disabled ? "text-border" : "text-border-light"
-        )}>
-          {action.label}
-        </span>
-      </button>
+const SecondaryActionsGrid: React.FC<SecondaryActionsGridProps> = ({ actions, onActionClick, columns = 2 }) => (
+  <div className={cn('grid gap-3', columns === 3 ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2')}>
+    {actions.map(action => (
+      <IconActionButton key={action.id} action={action} onActionClick={onActionClick} />
     ))}
   </div>
+);
+
+const IconActionButton = ({
+  action,
+  onActionClick,
+  compact = false
+}: {
+  action: ActionItem;
+  onActionClick: (action: () => void) => void;
+  compact?: boolean;
+}) => (
+  <button
+    type="button"
+    onClick={() => onActionClick(action.onClick)}
+    disabled={action.disabled}
+    className={cn(
+      'flex flex-col items-center justify-center rounded-lg border transition-all duration-200',
+      compact ? 'p-2 min-h-[56px]' : 'p-4',
+      action.disabled
+        ? 'border-border/50 bg-background/30 cursor-not-allowed opacity-50'
+        : 'border-border/50 bg-background/60 hover:border-accent/60 hover:bg-border/30'
+    )}
+  >
+    <div className="relative">
+      <action.icon className={cn('h-5 w-5 mb-1', action.disabled ? 'text-border' : 'text-accent')} />
+      {action.count && action.count > 0 && (
+        <span className="absolute -top-2 -right-2 bg-accent text-background text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-4 flex items-center justify-center">
+          {action.count}
+        </span>
+      )}
+    </div>
+    <span className={cn('text-xs font-medium text-center', action.disabled ? 'text-border' : 'text-border-light')}>{action.label}</span>
+  </button>
+);
+
+const InlineActionButton = ({
+  action,
+  onActionClick
+}: {
+  action: ActionItem;
+  onActionClick: (action: () => void) => void;
+}) => (
+  <button
+    type="button"
+    onClick={() => onActionClick(action.onClick)}
+    disabled={action.disabled}
+    className={cn(
+      'w-full flex items-center p-2.5 rounded-lg border text-xs transition-colors duration-200',
+      action.disabled
+        ? 'border-border/50 bg-background/30 cursor-not-allowed opacity-50'
+        : 'border-border/50 bg-background/70 hover:border-accent/60 hover:bg-border/30'
+    )}
+  >
+    <action.icon className={cn('h-3.5 w-3.5 mr-2', action.disabled ? 'text-border' : 'text-accent')} />
+    <span className={cn(action.disabled ? 'text-border' : 'text-foreground')}>{action.label}</span>
+  </button>
 );
 
 interface MoreActionsSectionProps {
@@ -742,16 +800,13 @@ interface MoreActionsSectionProps {
   onActionClick: (action: () => void) => void;
 }
 
-const MoreActionsSection: React.FC<MoreActionsSectionProps> = ({
-  showMoreActions,
-  toggleMoreActions,
-  actions,
-  onActionClick,
-}) => (
-  <div className="pt-4 border-t border-border">
+const MoreActionsSection: React.FC<MoreActionsSectionProps> = ({ showMoreActions, toggleMoreActions, actions, onActionClick }) => (
+  <div className="pt-1">
     <button
+      type="button"
       onClick={toggleMoreActions}
-      className="w-full flex items-center justify-center p-3 rounded-lg border border-border bg-background/30 hover:bg-border transition-colors duration-200"
+      className="w-full flex items-center justify-center p-3 rounded-lg border border-border/60 bg-background/40 hover:bg-border/30 transition-colors duration-200"
+      aria-expanded={showMoreActions}
     >
       <Settings className="h-4 w-4 mr-2 text-border-light" />
       <span className="text-sm font-medium text-border-light">Plus d&apos;actions</span>
@@ -759,30 +814,9 @@ const MoreActionsSection: React.FC<MoreActionsSectionProps> = ({
     </button>
 
     {showMoreActions && (
-      <div className="mt-3 space-y-2">
-        {actions.map((action) => (
-          <button
-            key={action.id}
-            onClick={() => onActionClick(action.onClick)}
-            disabled={action.disabled}
-            className={cn(
-              "w-full flex items-center p-3 rounded-lg border transition-colors duration-200",
-              action.disabled
-                ? "border-border/50 bg-background/30 cursor-not-allowed opacity-50"
-                : "border-border bg-background/50 hover:border-accent hover:bg-border"
-            )}
-          >
-            <action.icon className={cn(
-              "h-4 w-4 mr-3",
-              action.disabled ? "text-border" : "text-accent"
-            )} />
-            <span className={cn(
-              "text-sm font-medium",
-              action.disabled ? "text-border" : "text-foreground"
-            )}>
-              {action.label}
-            </span>
-          </button>
+      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {actions.map(action => (
+          <InlineActionButton key={action.id} action={action} onActionClick={onActionClick} />
         ))}
       </div>
     )}
@@ -802,26 +836,24 @@ const StatusWarnings: React.FC<StatusWarningsProps> = ({
   isAssignedToCurrentUser,
   canStartTask,
   isInProgress,
-  taskStatus,
+  taskStatus
 }) => (
   <>
     {!isAvailable && !isAssignedToCurrentUser && (
-      <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+      <div className="p-3 bg-amber-500/5 border border-amber-500/20 rounded-lg">
         <div className="flex items-start">
-          <AlertCircle className="h-4 w-4 text-yellow-400 mr-2 mt-0.5 flex-shrink-0" />
-          <p className="text-xs text-yellow-200">
-            Cette tâche est déjà assignée à un autre technicien.
-          </p>
+          <AlertCircle className="h-4 w-4 text-amber-500 mr-2 mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-foreground/85">Cette tâche est déjà assignée à un autre technicien.</p>
         </div>
       </div>
     )}
 
     {!canStartTask && !isInProgress && taskStatus !== 'completed' && (
-      <div className="mt-4 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+      <div className="p-3 bg-orange-500/5 border border-orange-500/20 rounded-lg">
         <div className="flex items-start">
-          <AlertCircle className="h-4 w-4 text-orange-400 mr-2 mt-0.5 flex-shrink-0" />
-          <p className="text-xs text-orange-200">
-            Statut de tâche incompatible avec le démarrage d&apos;intervention: {taskStatus}
+          <AlertCircle className="h-4 w-4 text-orange-500 mr-2 mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-foreground/85">
+            Statut incompatible avec le démarrage d&apos;intervention : {taskStatus}
           </p>
         </div>
       </div>
@@ -835,12 +867,8 @@ interface PrioritySelectorProps {
   isPending: boolean;
 }
 
-const PrioritySelector: React.FC<PrioritySelectorProps> = ({
-  value,
-  onChange,
-  isPending,
-}) => (
-  <div className="mt-4 pt-4 border-t border-border">
+const PrioritySelector: React.FC<PrioritySelectorProps> = ({ value, onChange, isPending }) => (
+  <div className="pt-4 border-t border-border">
     <div className="flex items-center justify-between">
       <span className="text-sm font-medium text-foreground">Priorité</span>
       <Select
@@ -864,3 +892,6 @@ const PrioritySelector: React.FC<PrioritySelectorProps> = ({
     </div>
   </div>
 );
+
+
+

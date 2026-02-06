@@ -13,6 +13,7 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
+    "encoding:check": "node ../scripts/check-mojibake.js src",
     "types:sync": "cd ../src-tauri && cargo run --bin export-types --features=\"ts-rs\" | node ../scripts/write-types.js",
     "test": "jest",
     "test:watch": "jest --watch",

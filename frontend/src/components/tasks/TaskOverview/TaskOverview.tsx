@@ -1,720 +1,323 @@
-'use client';
+﻿'use client';
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import {
-  Car,
-  Calendar,
-  User,
-  FileText,
-  Package,
-  Mail,
-  Phone,
-  MapPin,
-  Building,
   AlertTriangle,
-  CheckCircle,
-  Clock,
-  DollarSign,
-  Hash,
-  Tag,
-  Target,
-  TrendingUp
+  Building,
+  FileText,
+  MapPin,
+  Shield,
+  User,
+  Wrench
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { getUserFullName } from '@/lib/types';
 import { TaskWithDetails } from '@/types/task.types';
 import { Task } from '@/lib/backend';
 
 interface TaskOverviewProps {
   task: TaskWithDetails;
+  defaultExpandedSections?: string[];
 }
 
-export function TaskOverview({ task }: TaskOverviewProps) {
-  const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return 'Non défini';
-    try {
-      return new Date(dateString).toLocaleDateString('fr-FR', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    } catch {
-      return 'Date invalide';
-    }
-  };
+function formatTime(timeString: string | null | undefined): string {
+  if (!timeString) return 'Non défini';
+  try {
+    return new Date(timeString).toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch {
+    return 'Heure invalide';
+  }
+}
 
-  const formatTime = (timeString: string | null | undefined) => {
-    if (!timeString) return 'Non défini';
-    try {
-      return new Date(timeString).toLocaleTimeString('fr-FR', {
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch {
-      return 'Heure invalide';
-    }
-  };
+function getPriorityColor(priority: string): string {
+  switch (priority?.toLowerCase()) {
+    case 'urgent':
+      return 'bg-red-500/10 text-red-500 border-red-500/30';
+    case 'high':
+      return 'bg-orange-500/10 text-orange-500 border-orange-500/30';
+    case 'medium':
+      return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/30';
+    case 'low':
+      return 'bg-green-500/10 text-green-500 border-green-500/30';
+    default:
+      return 'bg-gray-500/10 text-gray-500 border-gray-500/30';
+  }
+}
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-      case 'termine':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'in_progress':
-      case 'en_cours':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'pending':
-      case 'en_attente':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
+function getPriorityLabel(priority: string): string {
+  switch (priority?.toLowerCase()) {
+    case 'urgent':
+      return 'Urgente';
+    case 'high':
+      return 'Haute';
+    case 'medium':
+      return 'Moyenne';
+    case 'low':
+      return 'Basse';
+    default:
+      return 'Non définie';
+  }
+}
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'completed':
-      case 'termine':
-        return 'Terminé';
-      case 'in_progress':
-      case 'en_cours':
-        return 'En cours';
-      case 'pending':
-      case 'en_attente':
-        return 'En attente';
-      default:
-        return 'Inconnu';
-    }
-  };
+const SectionHeader = ({ icon: Icon, title }: { icon: React.ElementType; title: string }) => (
+  <div className="flex items-center gap-2">
+    <Icon className="h-4 w-4 text-accent" />
+    <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+  </div>
+);
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority?.toLowerCase()) {
-      case 'urgent':
-        return 'bg-red-500/20 text-red-300 border-red-500/50';
-      case 'high':
-        return 'bg-orange-500/20 text-orange-300 border-orange-500/50';
-      case 'medium':
-        return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/50';
-      case 'low':
-        return 'bg-green-500/20 text-green-300 border-green-500/50';
-      default:
-        return 'bg-gray-500/20 text-gray-300 border-gray-500/50';
-    }
-  };
+const InfoRow = ({ label, value }: { label: string; value: React.ReactNode }) => (
+  <div className="flex items-start justify-between gap-4 text-sm">
+    <dt className="text-border-light">{label}</dt>
+    <dd className="text-foreground font-medium text-right">{value}</dd>
+  </div>
+);
 
-  const getPriorityLabel = (priority: string) => {
-    switch (priority?.toLowerCase()) {
-      case 'urgent':
-        return 'Urgente';
-      case 'high':
-        return 'Haute';
-      case 'medium':
-        return 'Moyenne';
-      case 'low':
-        return 'Basse';
-      default:
-        return 'Non définie';
-    }
-  };
+const EmptyState = ({ label }: { label: string }) => (
+  <div className="rounded-lg border border-dashed border-border/60 bg-background/30 p-4 text-center">
+    <span className="text-sm text-border-light">{label}</span>
+  </div>
+);
 
-  const getTaskProgress = () => {
-    // Calculate progress based on available data
-    let progress = 0;
-    let total = 0;
+function ExpandableText({
+  value,
+  sectionKey,
+  expanded,
+  onToggle
+}: {
+  value: string;
+  sectionKey: string;
+  expanded: boolean;
+  onToggle: (section: string) => void;
+}) {
+  const isLongText = value.length > 150;
 
-    if (task.photos_before && task.photos_before.length > 0) {
-      progress += 1;
-      total += 1;
-    }
-    if (task.photos_after && task.photos_after.length > 0) {
-      progress += 1;
-      total += 1;
-    }
-    if (task.checklist_items && task.checklist_items.length > 0) {
-      const completedItems = task.checklist_items.filter(item => item.is_completed).length;
-      progress += completedItems;
-      total += task.checklist_items.length;
-    }
+  return (
+    <div>
+      <p className={`text-sm text-border-light leading-relaxed ${!expanded ? 'line-clamp-3' : ''}`}>
+        {value}
+      </p>
+      {isLongText && (
+        <button
+          type="button"
+          onClick={() => onToggle(sectionKey)}
+          className="mt-2 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+        >
+          {expanded ? 'Voir moins' : 'Voir plus'}
+        </button>
+      )}
+    </div>
+  );
+}
 
-    return total > 0 ? Math.round((progress / total) * 100) : 0;
+export function TaskOverview({ task, defaultExpandedSections = [] }: TaskOverviewProps) {
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(defaultExpandedSections));
+
+  const toggleSection = (section: string) => {
+    setExpandedSections(current => {
+      const next = new Set(current);
+      if (next.has(section)) next.delete(section);
+      else next.add(section);
+      return next;
+    });
   };
 
   return (
-    <div className="bg-muted border border-border rounded-lg overflow-hidden">
-      <div className="p-6">
-        <div className="flex items-center space-x-2 mb-6">
-          <FileText className="h-5 w-5 text-accent" />
-          <h2 className="text-xl font-semibold text-foreground">Détails de l&apos;intervention</h2>
-        </div>
+    <div className="space-y-6">
+      <div className="flex items-center gap-2">
+        <FileText className="h-5 w-5 text-accent" />
+        <h2 className="text-lg md:text-xl font-semibold text-foreground">Vue d&apos;ensemble de l&apos;intervention</h2>
+      </div>
 
-        {/* Task Status & Priority */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-6">
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Target className="h-4 w-4 text-accent" />
-              <h3 className="text-sm font-medium text-foreground">Statut & Priorité</h3>
-            </div>
-            <div className="bg-background/50 rounded-lg p-3 sm:p-4 space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-border-light">Statut</span>
-                <Badge
-                  variant="outline"
-                  className={`px-2 py-1 text-xs font-medium ${
-                    task.status === 'completed' ? 'bg-green-500/20 text-green-300 border-green-500/50' :
-                    task.status === 'in_progress' ? 'bg-blue-500/20 text-blue-300 border-blue-500/50' :
-                    task.status === 'pending' ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/50' :
-                    'bg-gray-500/20 text-gray-300 border-gray-500/50'
-                  }`}
-                >
-                  {task.status === 'completed' ? 'Terminée' :
-                   task.status === 'in_progress' ? 'En cours' :
-                   task.status === 'pending' ? 'En attente' : 'Autre'}
-                </Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-border-light">Priorité</span>
-                <Badge
-                  variant="outline"
-                  className={`px-2 py-1 text-xs font-medium ${getPriorityColor(task.priority || 'medium')}`}
-                >
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="rounded-lg border border-border/50 bg-background/40 p-4 space-y-3">
+          <SectionHeader icon={Shield} title="Intervention" />
+          <dl className="space-y-3">
+            <InfoRow
+              label="Priorité"
+              value={
+                <Badge variant="outline" className={`px-2 py-0.5 text-xs font-medium ${getPriorityColor(task.priority || 'medium')}`}>
                   {getPriorityLabel(task.priority || 'medium')}
                 </Badge>
-              </div>
-            </div>
-          </div>
+              }
+            />
+            <InfoRow
+              label="Checklist"
+              value={
+                task.checklist_items
+                  ? `${task.checklist_items.filter(item => item.is_completed).length}/${task.checklist_items.length}`
+                  : '0/0'
+              }
+            />
+          </dl>
 
-          {/* Task Progress & Metrics */}
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <TrendingUp className="h-4 w-4 text-accent" />
-              <h3 className="text-sm font-medium text-foreground">Progression & Métriques</h3>
-            </div>
-            <div className="bg-background/50 rounded-lg p-3 sm:p-4 space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-border-light">Progression</span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-16 h-2 bg-border rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-accent transition-all duration-300"
-                      style={{ width: `${getTaskProgress()}%` }}
-                    />
-                  </div>
-                  <span className="text-xs font-medium text-foreground">{getTaskProgress()}%</span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-border-light">Photos avant</span>
-                <span className="text-sm font-medium text-foreground">
-                  {task.photos_before?.length || 0}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-border-light">Photos après</span>
-                <span className="text-sm font-medium text-foreground">
-                  {task.photos_after?.length || 0}
-                </span>
-              </div>
-              {task.checklist_items && (
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-border-light">Checklist</span>
-                  <span className="text-sm font-medium text-foreground">
-                    {task.checklist_items.filter(item => item.is_completed).length}/{task.checklist_items.length}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
 
-        {/* Task Details & Timeline */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-6">
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Hash className="h-4 w-4 text-accent" />
-              <h3 className="text-sm font-medium text-foreground">Informations générales</h3>
-            </div>
-            <div className="bg-background/50 rounded-lg p-3 sm:p-4 space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-border-light">ID de la tâche</span>
-                <span className="text-sm font-medium text-foreground font-mono">
-                  {task.id?.slice(-8) || 'N/A'}
-                </span>
-              </div>
-              {task.ppf_zones && task.ppf_zones.length > 0 && (
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-border-light">Zones PPF</span>
-                  <span className="text-sm font-medium text-foreground">
-                    {task.ppf_zones.length} zone{task.ppf_zones.length > 1 ? 's' : ''}
-                  </span>
-                </div>
-              )}
-              {task.lot_film && (
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-border-light">Lot de film</span>
-                  <span className="text-sm font-medium text-foreground">
-                    {task.lot_film}
-                  </span>
-                </div>
-              )}
-              {task.estimated_duration_minutes && (
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-border-light">Durée estimée</span>
-                  <span className="text-sm font-medium text-foreground">
-                    {Math.round(task.estimated_duration_minutes / 60)}h
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Task Timeline */}
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Clock className="h-4 w-4 text-accent" />
-              <h3 className="text-sm font-medium text-foreground">Chronologie</h3>
-            </div>
-            <div className="bg-background/50 rounded-lg p-3 sm:p-4 space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-border-light">Créée le</span>
-                 <span className="text-sm font-medium text-foreground">
-                   {formatDate(task.created_at as unknown as string)}
-                 </span>
-               </div>
-               <div className="flex justify-between items-center">
-                 <span className="text-sm text-border-light">Dernière mise à jour</span>
-                 <span className="text-sm font-medium text-foreground">
-                   {formatDate(task.updated_at as unknown as string)}
-                 </span>
-              </div>
-              {task.start_time && (
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-border-light">Début effectif</span>
-                  <span className="text-sm font-medium text-foreground">
-                    {formatTime(task.start_time)}
-                  </span>
-                </div>
-              )}
-              {task.end_time && (
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-border-light">Fin</span>
-                  <span className="text-sm font-medium text-foreground">
-                    {formatTime(task.end_time)}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
+        <div className="rounded-lg border border-border/50 bg-background/40 p-4 space-y-3">
+          <SectionHeader icon={Wrench} title="Exécution terrain" />
+          <dl className="space-y-3">
+            <InfoRow
+              label="Zones PPF"
+              value={task.ppf_zones?.length ? `${task.ppf_zones.length} zone${task.ppf_zones.length > 1 ? 's' : ''}` : 'Non précisées'}
+            />
+            {task.ppf_zones?.length ? <InfoRow label="Détail zones" value={task.ppf_zones.join(', ')} /> : null}
+            {task.lot_film && <InfoRow label="Lot film" value={<span className="font-mono">{task.lot_film}</span>} />}
+            {task.heure_rdv && <InfoRow label="Heure RDV" value={task.heure_rdv} />}
+            {task.estimated_duration_minutes && (
+              <InfoRow
+                label="Durée estimée"
+                value={`${Math.floor(task.estimated_duration_minutes / 60)}h ${task.estimated_duration_minutes % 60 > 0 ? `${task.estimated_duration_minutes % 60} min` : ''}`}
+              />
+            )}
+            {task.start_time && <InfoRow label="Début effectif" value={formatTime(task.start_time)} />}
+            {task.end_time && <InfoRow label="Fin effective" value={formatTime(task.end_time)} />}
+          </dl>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
-          {/* Vehicle Information */}
+      <div className="rounded-lg border border-border/50 bg-background/40 p-4 space-y-3">
+        <SectionHeader icon={User} title="Client et accès" />
+        {(task.client || task.customer_name || task.customer_email || task.customer_phone || task.customer_address) ? (
           <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Car className="h-4 w-4 text-accent" />
-              <h3 className="text-sm font-medium text-foreground">Véhicule</h3>
-            </div>
-            <div className="bg-background/50 rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-border-light">Modèle</span>
-                <span className="text-sm font-medium text-foreground">
-                  {task.vehicle_make ? `${task.vehicle_make} ${task.vehicle_model}` : task.vehicle_model || 'Non spécifié'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-border-light">Plaque</span>
-                <span className="text-sm font-medium text-foreground font-mono">
-                  {task.vehicle_plate || 'Non spécifiée'}
-                </span>
-              </div>
-              {task.vehicle_year && (
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-border-light">Année</span>
-                  <span className="text-sm font-medium text-foreground">
-                    {task.vehicle_year}
-                  </span>
-                </div>
-              )}
-              {task.vin && (
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-border-light">VIN</span>
-                  <span className="text-sm font-medium text-foreground font-mono">
-                    {task.vin}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Schedule Information */}
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Calendar className="h-4 w-4 text-accent" />
-              <h3 className="text-sm font-medium text-foreground">Planification de l&apos;intervention</h3>
-            </div>
-            <div className="bg-background/50 rounded-lg p-3 sm:p-4 space-y-3">
-              {/* Planned Schedule */}
-              <div className="space-y-2 pb-3 border-b border-border/30">
-                <div className="flex items-center space-x-2 mb-2">
-                  <Calendar className="h-3 w-3 text-accent" />
-                  <span className="text-xs font-medium text-foreground uppercase tracking-wide">Planifié</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-border-light">Date RDV</span>
-                  <span className="text-sm font-medium text-foreground">
-                    {formatDate(task.date_rdv || task.scheduled_date)}
-                  </span>
-                </div>
-                {task.heure_rdv && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-border-light">Heure RDV</span>
-                    <span className="text-sm font-medium text-foreground">
-                      {task.heure_rdv}
-                    </span>
-                  </div>
-                )}
-                {task.estimated_duration_minutes && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-border-light">Durée estimée</span>
-                    <span className="text-sm font-medium text-foreground">
-                      {Math.round(task.estimated_duration_minutes / 60)}h {task.estimated_duration_minutes % 60 > 0 ? `${task.estimated_duration_minutes % 60}min` : ''}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Actual Execution */}
-              {(task.start_time || task.end_time) && (
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Clock className="h-3 w-3 text-accent" />
-                    <span className="text-xs font-medium text-foreground uppercase tracking-wide">Réalisé</span>
-                  </div>
-                  {task.start_time && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-border-light">Début effectif</span>
-                      <span className="text-sm font-medium text-foreground">
-                        {formatTime(task.start_time)}
-                      </span>
-                    </div>
-                  )}
-                  {task.end_time && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-border-light">Fin</span>
-                      <span className="text-sm font-medium text-foreground">
-                        {formatTime(task.end_time)}
-                      </span>
-                    </div>
-                  )}
-                  {task.start_time && task.end_time && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-border-light">Durée réelle</span>
-                      <span className="text-sm font-medium text-foreground">
-                        {(() => {
-                          const start = new Date(task.start_time!);
-                          const end = new Date(task.end_time!);
-                          const diffMs = end.getTime() - start.getTime();
-                          const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-                          const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-                          return `${diffHours}h ${diffMinutes}min`;
-                        })()}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* No schedule information */}
-              {!task.date_rdv && !task.scheduled_date && !task.heure_rdv && !task.start_time && !task.end_time && (
-                <div className="text-center py-4">
-                  <span className="text-sm text-border-light">Aucune information de planification disponible</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Technical Details */}
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Package className="h-4 w-4 text-accent" />
-              <h3 className="text-sm font-medium text-foreground">Détails techniques</h3>
-            </div>
-            <div className="bg-background/50 rounded-lg p-3 sm:p-4 space-y-3">
-              {/* PPF Information */}
-              <div className="space-y-2 pb-3 border-b border-border/30">
-                <div className="flex items-center space-x-2 mb-2">
-                  <Package className="h-3 w-3 text-accent" />
-                  <span className="text-xs font-medium text-foreground uppercase tracking-wide">Protection PPF</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-border-light">Zones</span>
-                  <span className="text-sm font-medium text-foreground">
-                    {task.ppf_zones?.length ? `${task.ppf_zones.length} zone${task.ppf_zones.length > 1 ? 's' : ''}` : 'Non spécifiées'}
-                  </span>
-                </div>
-                {task.ppf_zones && task.ppf_zones.length > 0 && (
-                  <div className="flex justify-between items-start">
-                    <span className="text-sm text-border-light">Détail</span>
-                    <span className="text-sm font-medium text-foreground text-right max-w-[60%]">
-                      {task.ppf_zones.join(', ')}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Materials */}
+            {task.client && (
               <div className="space-y-2">
-                <div className="flex items-center space-x-2 mb-2">
-                  <Tag className="h-3 w-3 text-accent" />
-                  <span className="text-xs font-medium text-foreground uppercase tracking-wide">Matériel</span>
+                <div className="flex items-center gap-2">
+                  <Building className="h-3 w-3 text-accent" />
+                  <span className="text-xs font-semibold uppercase tracking-wide text-border-light">Client entreprise</span>
                 </div>
-                {task.lot_film && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-border-light">Lot de film</span>
-                    <span className="text-sm font-medium text-foreground font-mono">
-                      {task.lot_film}
-                    </span>
-                  </div>
-                )}
-                {task.customer_address && (
-                  <div className="flex justify-between items-start">
-                    <span className="text-sm text-border-light">Adresse d&apos;intervention</span>
-                    <span className="text-sm font-medium text-foreground text-right max-w-[60%] leading-tight">
-                      {task.customer_address}
-                    </span>
-                  </div>
-                )}
+                <dl className="space-y-3">
+                  <InfoRow label="Nom" value={task.client.name} />
+                  {task.client.phone && <InfoRow label="Téléphone" value={task.client.phone} />}
+                </dl>
               </div>
+            )}
 
-              {/* No technical details */}
-              {!task.ppf_zones?.length && !task.lot_film && !task.customer_address && (
-                <div className="text-center py-4">
-                  <span className="text-sm text-border-light">Aucun détail technique disponible</span>
+            {(task.customer_name || task.customer_email || task.customer_phone || task.customer_address) && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <User className="h-3 w-3 text-accent" />
+                  <span className="text-xs font-semibold uppercase tracking-wide text-border-light">Client final</span>
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* Technician Information */}
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <User className="h-4 w-4 text-accent" />
-              <h3 className="text-sm font-medium text-foreground">Technicien</h3>
-            </div>
-            <div className="bg-background/50 rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3">
-              {task.technician ? (
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-border-light">Nom</span>
-                    <span className="text-sm font-medium text-foreground">
-                      {getUserFullName(task.technician)}
-                    </span>
-                  </div>
-                  {task.technician.email && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-border-light">Email</span>
-                      <span className="text-sm font-medium text-foreground">
-                        {task.technician.email}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-border-light">Statut</span>
-                  <span className="text-sm font-medium text-foreground">
-                    Non assigné
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Client Information */}
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Building className="h-4 w-4 text-accent" />
-              <h3 className="text-sm font-medium text-foreground">Informations client</h3>
-            </div>
-            <div className="bg-background/50 rounded-lg p-3 sm:p-4 space-y-3">
-              {/* Business Client */}
-              {task.client && (
-                <div className="space-y-2 pb-3 border-b border-border/30">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Building className="h-3 w-3 text-accent" />
-                    <span className="text-xs font-medium text-foreground uppercase tracking-wide">Client entreprise</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-border-light">Nom</span>
-                    <span className="text-sm font-medium text-foreground">
-                      {task.client.name}
-                    </span>
-                  </div>
-                  {task.client.phone && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-border-light">Téléphone</span>
-                      <span className="text-sm font-medium text-foreground">
-                        {task.client.phone}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Direct Customer */}
-              {(task.customer_name || task.customer_email || task.customer_phone || task.customer_address) && (
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <User className="h-3 w-3 text-accent" />
-                    <span className="text-xs font-medium text-foreground uppercase tracking-wide">Client final</span>
-                  </div>
-
-                  {task.customer_name && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-border-light">Nom</span>
-                      <span className="text-sm font-medium text-foreground">
-                        {task.customer_name}
-                      </span>
-                    </div>
-                  )}
-
-                  {task.customer_email && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-border-light">Email</span>
-                      <div className="flex items-center space-x-2">
-                        <Mail className="h-3 w-3 text-border-light" />
-                        <span className="text-sm font-medium text-foreground">
-                          {task.customer_email}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {task.customer_phone && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-border-light">Téléphone</span>
-                      <div className="flex items-center space-x-2">
-                        <Phone className="h-3 w-3 text-border-light" />
-                        <span className="text-sm font-medium text-foreground">
-                          {task.customer_phone}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
+                <dl className="space-y-3">
+                  {task.customer_phone && <InfoRow label="Téléphone" value={task.customer_phone} />}
+                  {task.customer_email && <InfoRow label="Email" value={task.customer_email} />}
                   {task.customer_address && (
-                    <div className="flex justify-between items-start">
-                      <span className="text-sm text-border-light">Adresse</span>
-                      <div className="flex items-start space-x-2 max-w-[60%]">
-                        <MapPin className="h-3 w-3 text-border-light mt-0.5 flex-shrink-0" />
-                        <span className="text-sm font-medium text-foreground text-right leading-tight">
+                    <InfoRow
+                      label="Adresse"
+                      value={
+                        <span className="inline-flex items-center gap-1 text-right">
+                          <MapPin className="h-3.5 w-3.5 text-border-light" />
                           {task.customer_address}
                         </span>
-                      </div>
-                    </div>
+                      }
+                    />
                   )}
-                </div>
-              )}
+                </dl>
+              </div>
+            )}
 
-              {/* No client information */}
-              {!task.client && !task.customer_name && !task.customer_email && !task.customer_phone && !task.customer_address && (
-                <div className="text-center py-4">
-                  <span className="text-sm text-border-light">Aucune information client disponible</span>
-                </div>
-              )}
+            <div className="pt-1 border-t border-border/40">
+              <dl className="space-y-3 pt-3">
+                <InfoRow label="Technicien" value={task.technician ? getUserFullName(task.technician) : 'Non assigné'} />
+                {task.technician?.email && <InfoRow label="Email technicien" value={task.technician.email} />}
+                {task.vin && <InfoRow label="VIN" value={<span className="font-mono">{task.vin}</span>} />}
+              </dl>
             </div>
           </div>
+        ) : (
+          <EmptyState label="Aucune information client disponible" />
+        )}
+      </div>
+
+      <div id="task-notes" className="scroll-mt-28 rounded-lg border border-border/50 bg-background/40 p-4 space-y-3">
+        <SectionHeader icon={AlertTriangle} title="Notes opérationnelles" />
+        <div className="space-y-3">
+          {task.client?.notes && (
+            <div className="bg-background/60 rounded-lg border border-border/40 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Building className="h-3 w-3 text-accent" />
+                <span className="text-xs font-semibold uppercase tracking-wide text-border-light">Notes client entreprise</span>
+              </div>
+              <ExpandableText
+                value={task.client.notes}
+                sectionKey="notes-client"
+                expanded={expandedSections.has('notes-client')}
+                onToggle={toggleSection}
+              />
+            </div>
+          )}
+
+          {(task.note || task.notes) && (
+            <div className="bg-background/60 rounded-lg border border-border/40 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <FileText className="h-3 w-3 text-accent" />
+                <span className="text-xs font-semibold uppercase tracking-wide text-border-light">Notes d&apos;intervention</span>
+              </div>
+              <ExpandableText
+                value={task.note || task.notes || ''}
+                sectionKey="notes-intervention"
+                expanded={expandedSections.has('notes-intervention')}
+                onToggle={toggleSection}
+              />
+            </div>
+          )}
+
+          {task.description && (
+            <div className="bg-background/60 rounded-lg border border-border/40 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="h-3 w-3 text-accent" />
+                <span className="text-xs font-semibold uppercase tracking-wide text-border-light">Description</span>
+              </div>
+              <ExpandableText
+                value={task.description}
+                sectionKey="description"
+                expanded={expandedSections.has('description')}
+                onToggle={toggleSection}
+              />
+            </div>
+          )}
+
+          {(task as Task & { customer_comments?: string }).customer_comments && (
+            <div className="bg-background/60 rounded-lg border border-border/40 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <User className="h-3 w-3 text-accent" />
+                <span className="text-xs font-semibold uppercase tracking-wide text-border-light">Commentaires client</span>
+              </div>
+              <ExpandableText
+                value={(task as Task & { customer_comments?: string }).customer_comments || ''}
+                sectionKey="commentaires-client"
+                expanded={expandedSections.has('commentaires-client')}
+                onToggle={toggleSection}
+              />
+            </div>
+          )}
+
+          {(task as Task & { special_instructions?: string }).special_instructions && (
+            <div className="bg-background/60 rounded-lg border border-border/40 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="h-3 w-3 text-yellow-500" />
+                <span className="text-xs font-semibold uppercase tracking-wide text-border-light">Instructions spéciales</span>
+              </div>
+              <ExpandableText
+                value={(task as Task & { special_instructions?: string }).special_instructions || ''}
+                sectionKey="instructions-speciales"
+                expanded={expandedSections.has('instructions-speciales')}
+                onToggle={toggleSection}
+              />
+            </div>
+          )}
+
+          {!task.client?.notes && !task.note && !task.notes && !task.description &&
+            !(task as Task & { customer_comments?: string }).customer_comments &&
+            !(task as Task & { special_instructions?: string }).special_instructions && (
+              <EmptyState label="Aucune note opérationnelle disponible" />
+            )}
         </div>
-
-        {/* Notes Section */}
-        <div className="mt-6 pt-6 border-t border-border">
-          <div className="flex items-center space-x-2 mb-4">
-            <FileText className="h-4 w-4 text-accent" />
-            <h3 className="text-sm font-medium text-foreground">Notes et commentaires</h3>
-          </div>
-
-          <div className="space-y-4">
-            {/* Client Notes */}
-            {task.client?.notes && (
-              <div className="bg-background/50 rounded-lg p-4">
-                <div className="flex items-center space-x-2 mb-2">
-                  <Building className="h-3 w-3 text-accent" />
-                  <span className="text-xs font-medium text-foreground uppercase tracking-wide">Notes client entreprise</span>
-                </div>
-                <p className="text-sm text-border-light leading-relaxed">
-                  {task.client.notes}
-                </p>
-              </div>
-            )}
-
-            {/* Task Notes */}
-            {(task.note || task.notes) && (
-              <div className="bg-background/50 rounded-lg p-4">
-                <div className="flex items-center space-x-2 mb-2">
-                  <FileText className="h-3 w-3 text-accent" />
-                  <span className="text-xs font-medium text-foreground uppercase tracking-wide">Notes d&apos;intervention</span>
-                </div>
-                <p className="text-sm text-border-light leading-relaxed">
-                  {task.note || task.notes}
-                </p>
-              </div>
-            )}
-
-            {/* Additional Notes Fields */}
-            {task.description && (
-              <div className="bg-background/50 rounded-lg p-4">
-                <div className="flex items-center space-x-2 mb-2">
-                  <AlertTriangle className="h-3 w-3 text-accent" />
-                  <span className="text-xs font-medium text-foreground uppercase tracking-wide">Description</span>
-                </div>
-                <p className="text-sm text-border-light leading-relaxed">
-                  {task.description}
-                </p>
-              </div>
-            )}
-
-            {/* Customer Comments */}
-            {(task as Task & { customer_comments?: string }).customer_comments && (
-              <div className="bg-background/50 rounded-lg p-4">
-                <div className="flex items-center space-x-2 mb-2">
-                  <User className="h-3 w-3 text-accent" />
-                  <span className="text-xs font-medium text-foreground uppercase tracking-wide">Commentaires client</span>
-                </div>
-                <p className="text-sm text-border-light leading-relaxed">
-                  {(task as Task & { customer_comments?: string }).customer_comments}
-                </p>
-              </div>
-            )}
-
-            {/* Special Instructions */}
-            {(task as Task & { special_instructions?: string }).special_instructions && (
-              <div className="bg-background/50 rounded-lg p-4">
-                <div className="flex items-center space-x-2 mb-2">
-                  <AlertTriangle className="h-3 w-3 text-yellow-500" />
-                  <span className="text-xs font-medium text-foreground uppercase tracking-wide">Instructions spéciales</span>
-                </div>
-                <p className="text-sm text-border-light leading-relaxed">
-                  {(task as Task & { special_instructions?: string }).special_instructions}
-                </p>
-              </div>
-            )}
-
-            {/* No notes message */}
-            {!task.client?.notes && !task.note && !task.notes && !task.description && (
-              <div className="bg-background/30 rounded-lg p-4 text-center">
-                <p className="text-sm text-border-light">
-                  Aucune note ou commentaire disponible
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-
       </div>
     </div>
   );
 }
+

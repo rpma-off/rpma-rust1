@@ -13,6 +13,7 @@
     "frontend:install": "cd frontend && npm install",
     "frontend:lint": "cd frontend && npm run lint",
     "frontend:type-check": "cd frontend && npm run type-check",
+    "frontend:encoding-check": "cd frontend && npm run encoding:check",
     "backend:build": "cd src-tauri && cargo build",
     "backend:build:release": "cd src-tauri && cargo build --release",
     "backend:check": "cd src-tauri && cargo check",

@@ -166,6 +166,11 @@ jobs:
       run: |
         cd frontend
         npm ci
+
+    - name: Check frontend text encoding
+      run: |
+        cd frontend
+        npm run encoding:check
         
     - name: Build frontend
       run: |
