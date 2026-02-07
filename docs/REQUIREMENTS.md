@@ -2067,15 +2067,98 @@ enum SyncStatus {
 | **NFR1.9** | Sync operation time (100 ops) | < 30 seconds |
 | **NFR1.10** | Report generation (1000 tasks) | < 10 seconds |
 
-### NFR2: Scalability
+| **NFR2.5** | Response times | Average response time < 200ms for 95% of API calls |
+| **NFR2.6** | Data throughput | Support 1000+ operations/second |
+
+---
+
+### NFR3: Reliability
 
 | Requirement | Target | Metric |
 |-------------|---------|--------|
-| **NFR2.1** | Concurrent users | Support 100+ concurrent users |
-| **NFR2.2** | Task records | Support 100,000+ tasks |
-| **NFR2.3** | Photo storage | Support 1TB+ of photos |
-| **NFR2.4** | Database size | Support 10GB+ database |
-| **NFR2.5** | Sync queue | Support 10,000+ pending operations |
+| **NFR3.1** | Application uptime | > 99.9% (excluding user actions) |
+| **NFR3.2** | Error recovery | Graceful degradation on service failures |
+| **NFR3.3** | Data integrity | Zero data loss with SQLite durability |
+| **NFR3.4** | Backup frequency | Manual backup option available |
+
+---
+
+### NFR4: Availability
+
+| Requirement | Target | Metric |
+|-------------|---------|--------|
+| **NFR4.1** | Offline mode | 100% functionality available without internet |
+| **NFR4.2** | Sync availability | Automatic sync when online with 5-minute maximum disruption |
+| **NFR4.3** | External service tolerance | Graceful degradation if external services unavailable |
+| **NFR4.4** | Local data access | Full access to all data without internet |
+
+---
+
+### NFR5: Security
+
+| Requirement | Target | Metric |
+|-------------|---------|--------|
+| **NFR5.1** | Authentication security | Multi-factor with TOTP and backup codes |
+| **NFR5.2** | Session security | Configurable timeout with auto-revocation |
+| **NFR5.3** | Authorization security | Role-based access with granular permissions |
+| **NFR5.4** | Data encryption | Sensitive data encrypted at rest and in transit |
+| **NFR5.5** | SQL injection protection | Parameterized queries only |
+| **NFR5.6** | XSS protection | Input sanitization and CSP headers |
+| **NFR5.7** | CSRF protection | Token-based API requests |
+| **NFR5.8** | Security monitoring | Failed login tracking and alerts |
+
+---
+
+### NFR6: Usability
+
+| Requirement | Target | Metric |
+|-------------|---------|--------|
+| **NFR6.1** | Learnability | New users productive in <1 hour |
+| **NFR6.2** | Efficiency | Common tasks <5 clicks |
+| **NFR6.3** | Error messages | Clear, actionable, with recovery options |
+| **NFR6.4** | Accessibility | WCAG 2.1 AA compliance with screen reader support |
+| **NFR6.5** | Keyboard navigation | All features accessible via shortcuts |
+| **NFR6.6** | Visual consistency | Consistent design system across components |
+
+---
+
+### NFR7: Compatibility
+
+| Requirement | Target | Metric |
+|-------------|---------|--------|
+| **NFR7.1** | Cross-platform | Windows (x86_64), macOS (Intel/ARM64), Linux (Ubuntu 20.04+) |
+| **NFR7.2** | Browser compatibility | Chromium 120+ for web version |
+| **NFR7.3** | Legacy systems | Support for importing data from previous RPMA version |
+| **NFR7.4** | Screen resolution | Minimum 1280x800 for desktop build |
+
+---
+
+### NFR8: Maintainability
+
+| Requirement | Target | Metric |
+|-------------|---------|--------|
+| **NFR8.1** | Code quality | 95% test coverage, 0% critical issues |
+| **NFR8.2** | Documentation | All APIs documented with comprehensive examples |
+| **NFR8.3** | Version control | Semantic versioning for releases |
+| **NFR8.4** | Automated updates | Tauri updater with background downloads |
+| **NFR8.5** | Migration system | Automated database migrations with rollback support |
+
+---
+
+### NFR9: Testability
+
+| Requirement | Target | Metric |
+|-------------|---------|--------|
+| **NFR9.1** | Unit test coverage | 100% business logic covered |
+| **NFR9.2** | Integration testing | All third-party integrations tested |
+| **NFR9.3** | E2E testing | Critical user flows covered |
+| **NFR9.4** | Performance testing | Benchmarks for critical paths |
+| **NFR9.5** | Security testing | OWASP Top 10 compliance |
+
+---
+
+**Document Version**: 2.0
+**Last Updated**: Based on comprehensive codebase analysis
 
 ### NFR3: Reliability
 

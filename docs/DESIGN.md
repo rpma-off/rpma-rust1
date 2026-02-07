@@ -814,7 +814,221 @@ Feature Components (120+ files)
 }
 ```
 
+## Additional UI Components
+
+### Layout Components (10)
+
+| Component | File | Description |
+|------------|------|-------------|
+| **AppShell** | layout/AppShell.tsx | Main application shell with sidebar and header |
+| **Header** | layout/Header.tsx | Application header with navigation and user menu |
+| **Sidebar** | layout/Sidebar.tsx | Collapsible sidebar navigation |
+| **SidebarItem** | layout/SidebarItem.tsx | Individual sidebar navigation item |
+| **Breadcrumb** | layout/Breadcrumb.tsx | Navigation breadcrumb trail |
+| **PageHeader** | layout/PageHeader.tsx | Page title and actions header |
+| **MobileMenu** | layout/MobileMenu.tsx | Mobile navigation menu |
+| **TabNavigation** | layout/TabNavigation.tsx | Tab-based navigation |
+| **ContextualSidebar** | layout/ContextualSidebar.tsx | Contextual sidebar for details |
+| **StatusBar** | layout/StatusBar.tsx | Application status bar |
+
+### Photo Management Components (5)
+
+| Component | File | Description |
+|------------|------|-------------|
+| **PhotoGallery** | photos/PhotoGallery.tsx | Gallery view for intervention photos |
+| **PhotoViewer** | photos/PhotoViewer.tsx | Full-screen photo viewer with zoom |
+| **PhotoUploadZone** | photos/PhotoUploadZone.tsx | Drag-and-drop photo upload area |
+| **PhotoMetadata** | photos/PhotoMetadata.tsx | Photo metadata display panel |
+| **PhotoComparison** | photos/PhotoComparison.tsx | Before/after photo comparison |
+
+### Message Components (5)
+
+| Component | File | Description |
+|------------|------|-------------|
+| **MessageList** | messages/MessageList.tsx | List of messages with unread indicators |
+| **MessageItem** | messages/MessageItem.tsx | Individual message with actions |
+| **MessageComposer** | messages/MessageComposer.tsx | Rich text message composer |
+| **MessageThread** | messages/MessageThread.tsx | Message conversation thread |
+| **MessageTemplates** | messages/MessageTemplates.tsx | Template selection and management |
+
+### Reporting Components (8)
+
+| Component | File | Description |
+|------------|------|-------------|
+| **ReportBuilder** | reports/ReportBuilder.tsx | Dynamic report configuration |
+| **ReportViewer** | reports/ReportViewer.tsx | Report display with export options |
+| **DatePicker** | reports/DatePicker.tsx | Date range picker for reports |
+| **FilterPanel** | reports/FilterPanel.tsx | Multi-criteria filter panel |
+| **ReportPreview** | reports/ReportPreview.tsx | Live report preview |
+| **ExportDialog** | reports/ExportDialog.tsx | Export format and options |
+| **ChartContainer** | reports/ChartContainer.tsx | Responsive chart wrapper |
+| **DataTable** | reports/DataTable.tsx | Paginated data table with sorting |
+
+### Auth Components (4)
+
+| Component | File | Description |
+|------------|------|-------------|
+| **LoginForm** | auth/LoginForm.tsx | Login form with validation |
+| **TwoFactorSetup** | auth/TwoFactorSetup.tsx | 2FA setup wizard |
+| **TwoFactorVerify** | auth/TwoFactorVerify.tsx | 2FA verification input |
+| **PasswordReset** | auth/PasswordReset.tsx | Password reset flow |
+
+### Notification Components (5)
+
+| Component | File | Description |
+|------------|------|-------------|
+| **NotificationCenter** | notifications/NotificationCenter.tsx | Notification center dropdown |
+| **ToastContainer** | notifications/ToastContainer.tsx | Toast notification container |
+| **NotificationItem** | notifications/NotificationItem.tsx | Individual notification display |
+| **NotificationSettings** | notifications/NotificationSettings.tsx | Notification preferences |
+| **AlertBanner** | notifications/AlertBanner.tsx | System alert banner |
+
+### Utility Components (15)
+
+| Component | File | Description |
+|------------|------|-------------|
+| **DataTable** | ui/DataTable.tsx | Sortable, paginated data table |
+| **FileUpload** | ui/FileUpload.tsx | File upload with progress |
+| **ImageCropper** | ui/ImageCropper.tsx | Image cropping tool |
+| **ColorPicker** | ui/ColorPicker.tsx | Color selection palette |
+| **SearchInput** | ui/SearchInput.tsx | Search with suggestions |
+| **VirtualList** | ui/VirtualList.tsx | Virtualized list for large datasets |
+| **DatePicker** | ui/DatePicker.tsx | Date picker with range selection |
+| **TimePicker** | ui/TimePicker.tsx | Time input component |
+| **RichTextEditor** | ui/RichTextEditor.tsx | WYSIWYG text editor |
+| **SignaturePad** | ui/SignaturePad.tsx | Digital signature capture |
+| **ProgressBar** | ui/ProgressBar.tsx | Progress bar with stages |
+| **SkeletonLoader** | ui/SkeletonLoader.tsx | Skeleton loading states |
+| **EmptyState** | ui/EmptyState.tsx | Empty state illustration |
+| **ErrorBoundary** | ui/ErrorBoundary.tsx | React error boundary |
+| **ConfirmDialog** | ui/ConfirmDialog.tsx | Confirmation dialog |
+
+## Component Variations
+
+### Button Variants
+
+```tsx
+// Ghost button for secondary actions
+<Button variant="ghost" size="sm">
+  Secondary Action
+</Button>
+
+// Loading state
+<Button disabled={loading} className="relative">
+  {loading && <LoadingSpinner className="absolute right-2" />}
+  {loading ? 'Processing...' : 'Submit'}
+</Button>
+
+// Icon button
+<Button variant="outline" size="icon">
+  <Icon name="plus" />
+</Button>
+
+// Group of buttons
+<div className="flex gap-2">
+  <Button variant="outline">Cancel</Button>
+  <Button>Save</Button>
+</div>
+```
+
+### Input Variants
+
+```tsx
+// Text input with validation
+<FormField
+  control={form.control}
+  name="email"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Email</FormLabel>
+      <FormControl>
+        <Input 
+          type="email" 
+          placeholder="user@example.com"
+          className={cn(field.error && "border-red-500")}
+          {...field}
+        />
+      </FormControl>
+      {field.error && (
+        <FormMessage>{field.error.message}</FormMessage>
+      )}
+    </FormItem>
+  )}
+/>
+```
+
+## Theme System Implementation
+
+### Theme Provider
+
+```tsx
+// frontend/src/providers/ThemeProvider.tsx
+import { createContext, useContext, useEffect, useState } from 'react';
+
+type Theme = 'light' | 'dark' | 'system';
+
+interface ThemeContextType {
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
+}
+
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [theme, setTheme] = useState<Theme>('system');
+  
+  useEffect(() => {
+    // Apply theme to document
+    const root = document.documentElement;
+    
+    if (theme === 'system') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      root.classList.toggle('dark', prefersDark);
+    } else {
+      root.classList.toggle('dark', theme === 'dark');
+    }
+    
+    // Store preference
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+  
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+};
+
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (!context) throw new Error('useTheme must be used within ThemeProvider');
+  return context;
+};
+```
+
+### Custom Hooks
+
+```tsx
+// frontend/src/hooks/useTheme.ts
+import { useTheme } from '@/providers/ThemeProvider';
+
+export const useTheme = () => {
+  const { theme, setTheme } = useTheme();
+  
+  const toggleTheme = () => {
+    setTheme(theme === 'light' ? 'dark' : 'light');
+  };
+  
+  return {
+    theme,
+    setTheme,
+    toggleTheme,
+    isDark: theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  };
+};
+```
+
 ---
 
-**Document Version**: 1.0
-**Last Updated**: Based on codebase analysis
+**Document Version**: 2.0
+**Last Updated**: Based on comprehensive codebase analysis
