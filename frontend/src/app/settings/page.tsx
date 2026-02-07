@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import dynamic from 'next/dynamic';
@@ -91,7 +91,7 @@ export default function SettingsPage() {
     enablePerformanceLogging: true
   });
 
-  // Log page load
+  // Log page load (run once on mount only)
   useEffect(() => {
     const timer = logPerformance('Settings page load');
     logInfo('Settings page loaded', {
@@ -106,9 +106,9 @@ export default function SettingsPage() {
     });
 
     timer();
-  }, [logInfo, logPerformance, activeTab, user?.user_id, profile]);
+  }, []);
 
-  // Keyboard navigation
+  // Keyboard navigation (listener doesn't depend on activeTab)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.ctrlKey || event.metaKey) {
@@ -162,7 +162,7 @@ export default function SettingsPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeTab, logUserAction]);
+  }, [logUserAction]);
 
   const handleTabChange = (newTab: string) => {
     logUserAction('Tab changed', {
@@ -243,7 +243,7 @@ export default function SettingsPage() {
                            Paramètres
                          </SheetTitle>
                          <SheetDescription className="text-muted-foreground">
-                           Choisissez une section Ã  configurer
+                          Choisissez une section à configurer
                          </SheetDescription>
                        </SheetHeader>
                        <div className="grid grid-cols-1 gap-2 mt-6">
@@ -363,7 +363,7 @@ export default function SettingsPage() {
                      <div className="flex items-center justify-center p-8 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
                        <div className="text-center">
                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--rpma-teal))] mx-auto mb-4"></div>
-                          <p className="text-muted-foreground">Chargement de l&apos;accessibilité...</p>
+                          <p className="text-muted-foreground">Chargement de l'accessibilité...</p>
                        </div>
                      </div>
                    }>

@@ -559,7 +559,7 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
     // Settings operations with permission checks
     settings: {
       getUserSettings: (sessionToken: string) =>
-        cachedInvoke<UserSettings>(getUserSettingsCacheKey(sessionToken), 'get_user_settings', { session_token: sessionToken }, undefined, 30000),
+        cachedInvoke<UserSettings>(getUserSettingsCacheKey(sessionToken), 'get_user_settings', { sessionToken }, undefined, 30000),
 
       updateUserProfile: (request: Record<string, unknown>, sessionToken: string) =>
         withPermissionCheck(currentUser, 'settings:write', () => {

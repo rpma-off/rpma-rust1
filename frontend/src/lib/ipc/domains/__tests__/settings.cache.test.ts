@@ -26,7 +26,7 @@ describe('settingsOperations cache behavior', () => {
     expect(cachedInvoke).toHaveBeenCalledWith(
       'user-settings:token-a',
       IPC_COMMANDS.GET_USER_SETTINGS,
-      { session_token: 'token-a' },
+      { sessionToken: 'token-a' },
       undefined,
       30000
     );
@@ -42,5 +42,26 @@ describe('settingsOperations cache behavior', () => {
       { request: { language: 'en', session_token: 'token-b' } }
     );
     expect(invalidatePattern).toHaveBeenCalledWith('user-settings:token-b');
+  });
+
+  it('uses camelCase top-level args for non-struct settings commands', async () => {
+    safeInvoke.mockResolvedValue('ok');
+
+    await settingsOperations.updateUserPerformance({ cache_enabled: true }, 'token-c');
+    expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.UPDATE_USER_PERFORMANCE, {
+      request: { cache_enabled: true },
+      sessionToken: 'token-c',
+    });
+
+    await settingsOperations.getActiveSessions('token-c');
+    expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.GET_ACTIVE_SESSIONS, {
+      sessionToken: 'token-c',
+    });
+
+    await settingsOperations.revokeSession('session-1', 'token-c');
+    expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.REVOKE_SESSION, {
+      sessionId: 'session-1',
+      sessionToken: 'token-c',
+    });
   });
 });

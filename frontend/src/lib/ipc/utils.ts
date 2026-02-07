@@ -252,6 +252,7 @@ function sanitizeArgs(args?: Record<string, unknown>): Record<string, unknown> |
     'token',
     'refresh_token',
     'session_token',
+    'sessiontoken',
     'secret',
     'key',
     'auth',

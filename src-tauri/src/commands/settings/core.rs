@@ -40,14 +40,17 @@ pub fn update_app_settings(new_settings: AppSettings) -> Result<(), String> {
 /// Get app settings (command)
 #[tauri::command]
 pub async fn get_app_settings(
-    session_token: Option<String>,
+    session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<AppSettings>, AppError> {
-    if let Some(token) = session_token {
-        if !token.is_empty() {
-            // Require a valid session when token is provided.
-            authenticate_user(&token, &state)?;
-        }
+    // Always require authentication and validate admin role
+    let user = authenticate_user(&session_token, &state)?;
+
+    // Only admins can view app settings
+    if !matches!(user.role, crate::models::auth::UserRole::Admin) {
+        return Err(AppError::Authorization(
+            "Only administrators can access application settings".to_string(),
+        ));
     }
 
     let settings = load_app_settings().map_err(AppError::Database)?;

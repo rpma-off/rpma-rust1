@@ -4,7 +4,7 @@ import type { UserSettings } from '../types/index';
 
 const getUserSettingsCacheKey = (sessionToken: string): string => `user-settings:${sessionToken}`;
 const invalidateUserSettingsCache = (sessionToken: string): void => {
-  invalidatePattern(getUserSettingsCacheKey(sessionToken));
+  invalidatePattern(`user-settings:${sessionToken}`);
 };
 
 /**
@@ -14,7 +14,7 @@ export const settingsOperations = {
   // App settings operations
   getAppSettings: (sessionToken?: string): Promise<unknown> =>
     safeInvoke<unknown>(IPC_COMMANDS.GET_APP_SETTINGS, {
-      session_token: sessionToken || ''
+      sessionToken: sessionToken || ''
     }),
 
   updateNotificationSettings: (request: Record<string, unknown>, sessionToken: string): Promise<unknown> =>
@@ -25,7 +25,7 @@ export const settingsOperations = {
   // User settings operations
   getUserSettings: (sessionToken: string): Promise<UserSettings> =>
     cachedInvoke<UserSettings>(getUserSettingsCacheKey(sessionToken), IPC_COMMANDS.GET_USER_SETTINGS, {
-      session_token: sessionToken
+      sessionToken
     }, undefined, 30000),
 
   updateUserProfile: async (request: Record<string, unknown>, sessionToken: string): Promise<unknown> => {
@@ -55,7 +55,7 @@ export const settingsOperations = {
   updateUserPerformance: async (request: Record<string, unknown>, sessionToken: string): Promise<unknown> => {
     const result = await safeInvoke<unknown>(IPC_COMMANDS.UPDATE_USER_PERFORMANCE, {
       request,
-      session_token: sessionToken
+      sessionToken
     });
     invalidateUserSettingsCache(sessionToken);
     return result;
@@ -88,29 +88,29 @@ export const settingsOperations = {
   // Security operations
   getActiveSessions: (sessionToken: string): Promise<unknown> =>
     safeInvoke<unknown>(IPC_COMMANDS.GET_ACTIVE_SESSIONS, {
-      session_token: sessionToken
+      sessionToken
     }),
 
   revokeSession: (sessionId: string, sessionToken: string): Promise<void> =>
     safeInvoke<void>(IPC_COMMANDS.REVOKE_SESSION, {
-      session_id: sessionId,
-      session_token: sessionToken
+      sessionId,
+      sessionToken
     }),
 
   revokeAllSessionsExceptCurrent: (sessionToken: string): Promise<void> =>
     safeInvoke<void>(IPC_COMMANDS.REVOKE_ALL_SESSIONS_EXCEPT_CURRENT, {
-      session_token: sessionToken
+      sessionToken
     }),
 
   updateSessionTimeout: (timeoutMinutes: number, sessionToken: string): Promise<void> =>
     safeInvoke<void>(IPC_COMMANDS.UPDATE_SESSION_TIMEOUT, {
-      timeout_minutes: timeoutMinutes,
-      session_token: sessionToken
+      timeoutMinutes,
+      sessionToken
     }),
 
   getSessionTimeoutConfig: (sessionToken: string): Promise<unknown> =>
     safeInvoke<unknown>(IPC_COMMANDS.GET_SESSION_TIMEOUT_CONFIG, {
-      session_token: sessionToken
+      sessionToken
     }),
 
   uploadUserAvatar: (
@@ -128,7 +128,7 @@ export const settingsOperations = {
 
   exportUserData: (sessionToken: string): Promise<Record<string, unknown>> =>
     safeInvoke<Record<string, unknown>>(IPC_COMMANDS.EXPORT_USER_DATA, {
-      session_token: sessionToken
+      sessionToken
     }),
 
   deleteUserAccount: async (confirmation: string, sessionToken: string): Promise<string> => {
@@ -141,7 +141,7 @@ export const settingsOperations = {
 
   getDataConsent: (sessionToken: string): Promise<Record<string, unknown>> =>
     safeInvoke<Record<string, unknown>>(IPC_COMMANDS.GET_DATA_CONSENT, {
-      session_token: sessionToken
+      sessionToken
     }),
 
   updateDataConsent: (request: Record<string, unknown>, sessionToken: string): Promise<Record<string, unknown>> =>

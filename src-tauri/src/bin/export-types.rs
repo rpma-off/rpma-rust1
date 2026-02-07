@@ -26,7 +26,8 @@ use rpma_ppf_intervention::models::{
         SendMessageRequest, UpdateNotificationPreferencesRequest,
     },
     notification::{
-        EmailConfig, NotificationConfig, NotificationType, SmsConfig, TemplateVariables,
+        EmailConfig, EmailProvider, NotificationConfig, NotificationType, SmsConfig, SmsProvider,
+        TemplateVariables,
     },
     photo::{Photo, PhotoCategory, PhotoType},
     reports::{
@@ -52,7 +53,7 @@ use rpma_ppf_intervention::models::{
         UserPreferences, UserProfileSettings, UserSecuritySettings, UserSettings,
     },
     status::{StatusDistribution, StatusTransitionRequest},
-    step::{InterventionStep, StepStatus},
+    step::{InterventionStep, StepStatus, StepType},
     sync::{EntityType, OperationType, SyncOperation, SyncQueueMetrics, SyncStatus},
     task::{
         CreateTaskRequest, DeleteTaskRequest, PaginationInfo, SortOrder, Task, TaskListResponse,
@@ -123,6 +124,10 @@ fn main() {
     type_definitions.push_str("\n");
     type_definitions.push_str(
         &EventParticipant::export_to_string().expect("Failed to export EventParticipant type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &ParticipantStatus::export_to_string().expect("Failed to export ParticipantStatus type"),
     );
     type_definitions.push_str("\n");
     type_definitions
@@ -289,6 +294,9 @@ fn main() {
         &InterventionStep::export_to_string().expect("Failed to export InterventionStep type"),
     );
     type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&StepType::export_to_string().expect("Failed to export StepType type"));
+    type_definitions.push_str("\n");
     type_definitions.push_str(
         &StartInterventionRequest::export_to_string()
             .expect("Failed to export StartInterventionRequest type"),
@@ -328,6 +336,18 @@ fn main() {
     type_definitions.push_str(
         &TemplateVariables::export_to_string().expect("Failed to export TemplateVariables type"),
     );
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&EmailProvider::export_to_string().expect("Failed to export EmailProvider type"));
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&EmailConfig::export_to_string().expect("Failed to export EmailConfig type"));
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&SmsProvider::export_to_string().expect("Failed to export SmsProvider type"));
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&SmsConfig::export_to_string().expect("Failed to export SmsConfig type"));
     type_definitions.push_str("\n");
     type_definitions.push_str(
         &NotificationConfig::export_to_string().expect("Failed to export NotificationConfig type"),
@@ -753,6 +773,7 @@ fn main() {
         "CalendarDateRange",
         "CreateEventInput",
         "UpdateEventInput",
+        "ParticipantStatus",
         "Client",
         "ClientWithTasks",
         "ClientQuery",
@@ -781,6 +802,7 @@ fn main() {
         "InterventionStatus",
         "InterventionType",
         "InterventionStep",
+        "StepType",
         "InterventionProgress",
         "InterventionMetrics",
         "StepStatus",
@@ -790,6 +812,10 @@ fn main() {
         "FinalizeInterventionRequest",
         "NotificationType",
         "TemplateVariables",
+        "EmailProvider",
+        "EmailConfig",
+        "SmsProvider",
+        "SmsConfig",
         "NotificationConfig",
         "UpdateNotificationConfigRequest",
         "SendNotificationRequest",

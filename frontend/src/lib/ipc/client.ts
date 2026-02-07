@@ -1016,14 +1016,14 @@ export const ipcClient = {
   // Settings operations
   settings: {
     getAppSettings: (sessionToken?: string) =>
-      safeInvoke<unknown>('get_app_settings', { session_token: sessionToken || '' }),
+      safeInvoke<unknown>('get_app_settings', { sessionToken: sessionToken || '' }),
 
     updateNotificationSettings: (request: Record<string, unknown>, sessionToken: string) =>
       safeInvoke<unknown>('update_notification_settings', { request: { ...request, session_token: sessionToken } }),
 
     // User settings operations
     getUserSettings: (sessionToken: string) =>
-      cachedInvoke<UserSettings>(getUserSettingsCacheKey(sessionToken), 'get_user_settings', { session_token: sessionToken }, undefined, 30000),
+      cachedInvoke<UserSettings>(getUserSettingsCacheKey(sessionToken), 'get_user_settings', { sessionToken }, undefined, 30000),
 
     updateUserProfile: async (request: Record<string, unknown>, sessionToken: string) => {
       const result = await safeInvoke<unknown>('update_user_profile', { request: { ...request, session_token: sessionToken } });
@@ -1044,7 +1044,7 @@ export const ipcClient = {
     },
 
     updateUserPerformance: async (request: Record<string, unknown>, sessionToken: string) => {
-      const result = await safeInvoke<unknown>('update_user_performance', { request, session_token: sessionToken });
+      const result = await safeInvoke<unknown>('update_user_performance', { request, sessionToken });
       invalidateUserSettingsCache(sessionToken);
       return result;
     },
@@ -1069,19 +1069,19 @@ export const ipcClient = {
 
     // Security operations
     getActiveSessions: (sessionToken: string) =>
-      safeInvoke<unknown>('get_active_sessions', { session_token: sessionToken }),
+      safeInvoke<unknown>('get_active_sessions', { sessionToken }),
 
     revokeSession: (sessionId: string, sessionToken: string) =>
-      safeInvoke<void>('revoke_session', { session_id: sessionId, session_token: sessionToken }),
+      safeInvoke<void>('revoke_session', { sessionId, sessionToken }),
 
     revokeAllSessionsExceptCurrent: (sessionToken: string) =>
-      safeInvoke<void>('revoke_all_sessions_except_current', { session_token: sessionToken }),
+      safeInvoke<void>('revoke_all_sessions_except_current', { sessionToken }),
 
     updateSessionTimeout: (timeoutMinutes: number, sessionToken: string) =>
-      safeInvoke<void>('update_session_timeout', { timeout_minutes: timeoutMinutes, session_token: sessionToken }),
+      safeInvoke<void>('update_session_timeout', { timeoutMinutes, sessionToken }),
 
     getSessionTimeoutConfig: (sessionToken: string) =>
-      safeInvoke<unknown>('get_session_timeout_config', { session_token: sessionToken }),
+      safeInvoke<unknown>('get_session_timeout_config', { sessionToken }),
 
     uploadUserAvatar: (fileData: string, fileName: string, mimeType: string, sessionToken: string) =>
       safeInvoke<string>('upload_user_avatar', {
@@ -1092,7 +1092,7 @@ export const ipcClient = {
       }),
 
     exportUserData: (sessionToken: string) =>
-      safeInvoke<Record<string, unknown>>('export_user_data', { session_token: sessionToken }),
+      safeInvoke<Record<string, unknown>>('export_user_data', { sessionToken }),
 
     deleteUserAccount: async (confirmation: string, sessionToken: string) => {
       const result = await safeInvoke<string>('delete_user_account', {
@@ -1103,7 +1103,7 @@ export const ipcClient = {
     },
 
     getDataConsent: (sessionToken: string) =>
-      safeInvoke<Record<string, unknown>>('get_data_consent', { session_token: sessionToken }),
+      safeInvoke<Record<string, unknown>>('get_data_consent', { sessionToken }),
 
     updateDataConsent: (request: Record<string, unknown>, sessionToken: string) =>
       safeInvoke<Record<string, unknown>>('update_data_consent', {
@@ -1273,19 +1273,19 @@ export const ipcClient = {
 
     // Session management
     getActiveSessions: (sessionToken: string) =>
-      safeInvoke<unknown[]>('get_active_sessions', { session_token: sessionToken }),
+      safeInvoke<unknown[]>('get_active_sessions', { sessionToken }),
 
     revokeSession: (sessionId: string, sessionToken: string) =>
-      safeInvoke<unknown>('revoke_session', { session_id: sessionId, session_token: sessionToken }),
+      safeInvoke<unknown>('revoke_session', { sessionId, sessionToken }),
 
     revokeAllSessionsExceptCurrent: (sessionToken: string) =>
-      safeInvoke<unknown>('revoke_all_sessions_except_current', { session_token: sessionToken }),
+      safeInvoke<unknown>('revoke_all_sessions_except_current', { sessionToken }),
 
     updateSessionTimeout: (timeoutMinutes: number, sessionToken: string) =>
-      safeInvoke<unknown>('update_session_timeout', { timeout_minutes: timeoutMinutes, session_token: sessionToken }),
+      safeInvoke<unknown>('update_session_timeout', { timeoutMinutes, sessionToken }),
 
     getSessionTimeoutConfig: (sessionToken: string) =>
-      safeInvoke<unknown>('get_session_timeout_config', { session_token: sessionToken }),
+      safeInvoke<unknown>('get_session_timeout_config', { sessionToken }),
   },
 
   // System operations

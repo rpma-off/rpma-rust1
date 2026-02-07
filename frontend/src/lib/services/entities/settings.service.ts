@@ -113,6 +113,11 @@ function requireToken(sessionToken?: string): string {
   return sessionToken;
 }
 
+function resolveToken(sessionTokenOrUserId: string, maybeSessionToken?: string): string {
+  // Backward compatibility: callers may still pass (userId, ..., sessionToken)
+  return requireToken(maybeSessionToken ?? sessionTokenOrUserId);
+}
+
 function normalizePasswordRequest(data: ChangePasswordRequest): { current_password: string; new_password: string } {
   const currentPassword = data.current_password ?? data.currentPassword ?? '';
   const newPassword = data.new_password ?? data.newPassword ?? '';
@@ -121,21 +126,33 @@ function normalizePasswordRequest(data: ChangePasswordRequest): { current_passwo
   if (!currentPassword || !newPassword) {
     throw new Error('Current password and new password are required');
   }
+
   if (confirmPassword && confirmPassword !== newPassword) {
     throw new Error('New password and confirmation do not match');
   }
 
+  // Password strength validation
+  if (newPassword.length < 8) {
+    throw new Error('Password must be at least 8 characters long');
+  }
+
+  if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(newPassword)) {
+    throw new Error('Password must contain at least one lowercase letter, one uppercase letter, and one number');
+  }
+
   return {
     current_password: currentPassword,
-    new_password: newPassword,
+    new_password: newPassword
   };
 }
 
 export class SettingsService {
-  static async getUserSettings(userId: string, sessionToken?: string): Promise<SettingsServiceResponse<UserSettings>> {
-    void userId;
+  static async getUserSettings(
+    sessionTokenOrUserId: string,
+    maybeSessionToken?: string
+  ): Promise<SettingsServiceResponse<UserSettings>> {
     try {
-      const token = requireToken(sessionToken);
+      const token = resolveToken(sessionTokenOrUserId, maybeSessionToken);
       const settings = await ipcClient.settings.getUserSettings(token);
       return ok(settings);
     } catch (error) {
@@ -144,73 +161,68 @@ export class SettingsService {
   }
 
   static async updatePreferences(
-    userId: string,
+    sessionTokenOrUserId: string,
     data: UpdatePreferencesRequest,
-    sessionToken?: string
+    maybeSessionToken?: string
   ): Promise<SettingsServiceResponse<UserSettings>> {
-    void userId;
     try {
-      const token = requireToken(sessionToken);
+      const token = resolveToken(sessionTokenOrUserId, maybeSessionToken);
       await ipcClient.settings.updateUserPreferences(data, token);
-      return this.getUserSettings(userId, token);
+      return this.getUserSettings(token);
     } catch (error) {
       return fail(error, 'Failed to update preferences');
     }
   }
 
   static async updateNotifications(
-    userId: string,
+    sessionTokenOrUserId: string,
     data: UpdateNotificationsRequest,
-    sessionToken?: string
+    maybeSessionToken?: string
   ): Promise<SettingsServiceResponse<UserSettings>> {
-    void userId;
     try {
-      const token = requireToken(sessionToken);
+      const token = resolveToken(sessionTokenOrUserId, maybeSessionToken);
       await ipcClient.settings.updateUserNotifications(data, token);
-      return this.getUserSettings(userId, token);
+      return this.getUserSettings(token);
     } catch (error) {
       return fail(error, 'Failed to update notifications');
     }
   }
 
   static async updateAccessibility(
-    userId: string,
+    sessionTokenOrUserId: string,
     data: UpdateAccessibilityRequest,
-    sessionToken?: string
+    maybeSessionToken?: string
   ): Promise<SettingsServiceResponse<UserSettings>> {
-    void userId;
     try {
-      const token = requireToken(sessionToken);
+      const token = resolveToken(sessionTokenOrUserId, maybeSessionToken);
       await ipcClient.settings.updateUserAccessibility(data, token);
-      return this.getUserSettings(userId, token);
+      return this.getUserSettings(token);
     } catch (error) {
       return fail(error, 'Failed to update accessibility settings');
     }
   }
 
   static async updatePerformance(
-    userId: string,
+    sessionTokenOrUserId: string,
     data: UpdatePerformanceRequest,
-    sessionToken?: string
+    maybeSessionToken?: string
   ): Promise<SettingsServiceResponse<UserSettings>> {
-    void userId;
     try {
-      const token = requireToken(sessionToken);
+      const token = resolveToken(sessionTokenOrUserId, maybeSessionToken);
       await ipcClient.settings.updateUserPerformance(data, token);
-      return this.getUserSettings(userId, token);
+      return this.getUserSettings(token);
     } catch (error) {
       return fail(error, 'Failed to update performance settings');
     }
   }
 
   static async updateProfile(
-    userId: string,
+    sessionTokenOrUserId: string,
     data: UpdateProfileRequest,
-    sessionToken?: string
+    maybeSessionToken?: string
   ): Promise<SettingsServiceResponse<UserSettings>> {
-    void userId;
     try {
-      const token = requireToken(sessionToken);
+      const token = resolveToken(sessionTokenOrUserId, maybeSessionToken);
       const profilePayload: Record<string, unknown> = {
         ...data,
       };
@@ -220,20 +232,19 @@ export class SettingsService {
       }
 
       await ipcClient.settings.updateUserProfile(profilePayload, token);
-      return this.getUserSettings(userId, token);
+      return this.getUserSettings(token);
     } catch (error) {
       return fail(error, 'Failed to update profile');
     }
   }
 
   static async changePassword(
-    userId: string,
+    sessionTokenOrUserId: string,
     data: ChangePasswordRequest,
-    sessionToken?: string
+    maybeSessionToken?: string
   ): Promise<SettingsServiceResponse<void>> {
-    void userId;
     try {
-      const token = requireToken(sessionToken);
+      const token = resolveToken(sessionTokenOrUserId, maybeSessionToken);
       const payload = normalizePasswordRequest(data);
       await ipcClient.settings.changeUserPassword(payload, token);
       return ok(undefined);
@@ -242,29 +253,30 @@ export class SettingsService {
     }
   }
 
-  static async resetSettings(userId: string, sessionToken?: string): Promise<SettingsServiceResponse<UserSettings>> {
-    void userId;
+  static async resetSettings(
+    sessionTokenOrUserId: string,
+    maybeSessionToken?: string
+  ): Promise<SettingsServiceResponse<UserSettings>> {
     try {
-      const token = requireToken(sessionToken);
+      const token = resolveToken(sessionTokenOrUserId, maybeSessionToken);
       await Promise.all([
         ipcClient.settings.updateUserPreferences(DEFAULT_PREFERENCES, token),
         ipcClient.settings.updateUserNotifications(DEFAULT_NOTIFICATIONS, token),
         ipcClient.settings.updateUserAccessibility(DEFAULT_ACCESSIBILITY, token),
         ipcClient.settings.updateUserPerformance(DEFAULT_PERFORMANCE, token),
       ]);
-      return this.getUserSettings(userId, token);
+      return this.getUserSettings(token);
     } catch (error) {
       return fail(error, 'Failed to reset settings');
     }
   }
 
   static async exportUserData(
-    userId: string,
-    sessionToken?: string
+    sessionTokenOrUserId: string,
+    maybeSessionToken?: string
   ): Promise<SettingsServiceResponse<Record<string, unknown>>> {
-    void userId;
     try {
-      const token = requireToken(sessionToken);
+      const token = resolveToken(sessionTokenOrUserId, maybeSessionToken);
       const data = await ipcClient.settings.exportUserData(token);
       return ok(data);
     } catch (error) {
