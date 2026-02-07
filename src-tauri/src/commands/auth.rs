@@ -277,10 +277,22 @@ pub async fn disable_2fa(
     )
     .await?;
 
+    let conn = state
+        .db
+        .get_connection()
+        .map_err(|e| AppError::Database(format!("Failed to access database: {}", e)))?;
+    let stored_hash: String = conn
+        .query_row(
+            "SELECT password_hash FROM users WHERE id = ? AND is_active = 1",
+            [&current_user.user_id],
+            |row| row.get(0),
+        )
+        .map_err(|_| AppError::Authentication("Invalid password".to_string()))?;
+
     // Verify password before disabling 2FA
     let is_valid_password = state
         .auth_service
-        .verify_password(&current_user.user_id, &password)
+        .verify_password(&password, &stored_hash)
         .map_err(|e| AppError::Internal(format!("Password verification failed: {}", e)))?;
 
     if !is_valid_password {

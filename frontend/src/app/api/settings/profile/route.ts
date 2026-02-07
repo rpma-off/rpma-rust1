@@ -1,48 +1,36 @@
-  import { NextRequest, NextResponse } from 'next/server';
-  import { settingsService } from '@/lib/services/entities/settings.service';
-  import { withAuth, NextRequestWithUser } from '@/lib/middleware/auth.middleware';
+import { settingsService } from '@/lib/services/entities/settings.service';
+import { withAuth, NextRequestWithUser } from '@/lib/middleware/auth.middleware';
+import { settingsError, settingsSuccess } from '../_shared';
 
-  export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 
- // GET /api/settings/profile - Get user profile
- export const GET = withAuth(async (request: NextRequestWithUser, context: unknown) => {
-   const user = request.user;
-  try {
-    // Profile data might come from user auth or separate service
-    // For now, return basic user info
-    return NextResponse.json({
-      profile: {
-        id: user.id,
-        email: user.email,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        phone: user.phone
-      }
-    });
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to get profile' },
-      { status: 500 }
-    );
+export const GET = withAuth(async (request: NextRequestWithUser) => {
+  const { user, token } = request;
+  const result = await settingsService.getUserSettings(user.id, token);
+
+  if (!result.success || !result.data) {
+    return settingsError(result.error || 'Failed to get user profile');
   }
+
+  return settingsSuccess({ profile: result.data.profile });
 }, 'all');
 
- // PUT /api/settings/profile - Update user profile
- export const PUT = withAuth(async (request: NextRequestWithUser, context: unknown) => {
-   const user = request.user;
+export const PUT = withAuth(async (request: NextRequestWithUser) => {
+  const { user, token } = request;
+
   try {
     const body = await request.json();
+    const result = await settingsService.updateProfile(user.id, body, token);
 
-    await settingsService.updateProfile(user.id, body);
+    if (!result.success || !result.data) {
+      return settingsError(result.error || 'Failed to update profile');
+    }
 
-    return NextResponse.json({
-      message: 'Profile updated successfully'
+    return settingsSuccess({
+      message: 'Profile updated successfully',
+      profile: result.data.profile,
     });
   } catch (error) {
-    console.error('Error in PUT /api/settings/profile:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return settingsError(error instanceof Error ? error.message : 'Invalid request body', 400);
   }
 }, 'all');

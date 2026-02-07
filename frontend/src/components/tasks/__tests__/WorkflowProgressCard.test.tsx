@@ -3,7 +3,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { WorkflowProgressCard } from '../WorkflowProgressCard';
 import { AuthContext } from '@/contexts/AuthContext';
 import { ipcClient } from '@/lib/ipc/client';
-import { useRouter } from 'next/navigation';
 
 // Mock dependencies
 const mockPush = jest.fn();
@@ -22,6 +21,13 @@ jest.mock('@/lib/ipc/client', () => ({
 }));
 
 const mockStartIntervention = ipcClient.interventions.start as jest.MockedFunction<typeof ipcClient.interventions.start>;
+
+const createStartedResponse = (): Awaited<ReturnType<typeof ipcClient.interventions.start>> =>
+  ({
+    type: 'Started',
+    intervention: { id: 'intervention-123' },
+    steps: [],
+  } as unknown as Awaited<ReturnType<typeof ipcClient.interventions.start>>);
 
 
 
@@ -67,6 +73,8 @@ const defaultProps = {
   },
   templateName: 'PPF Workflow',
 };
+
+type WorkflowStatus = NonNullable<React.ComponentProps<typeof WorkflowProgressCard>['workflowStatus']>;
 
 const renderWithAuth = (component: React.ReactElement) => {
   return render(
@@ -147,34 +155,7 @@ describe('WorkflowProgressCard', () => {
 
   describe('Button Actions', () => {
     it('calls ipcClient.interventions.start when starting workflow', async () => {
-      mockStartIntervention.mockResolvedValue({
-        type: 'Started',
-        intervention: {
-          id: 'intervention-123',
-          task_number: null,
-          status: 'in_progress',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          created_by: 'user-123',
-          updated_by: null,
-          task_id: 'task-123',
-          intervention_number: null,
-          ppf_zones: [],
-          custom_zones: null,
-          film_type: 'standard',
-          film_brand: null,
-          film_model: null,
-          weather_condition: null,
-          lighting_condition: null,
-          work_location: null,
-          gps_coordinates: null,
-          address: null,
-          notes: null,
-          customer_requirements: null,
-          special_instructions: null,
-        },
-        steps: [],
-      });
+      mockStartIntervention.mockResolvedValue(createStartedResponse());
 
       renderWithAuth(<WorkflowProgressCard {...defaultProps} />);
 
@@ -213,34 +194,7 @@ describe('WorkflowProgressCard', () => {
 
     it('shows loading state during workflow start', async () => {
       mockStartIntervention.mockImplementation(
-        () => new Promise(resolve => setTimeout(() => resolve({
-          type: 'Started',
-          intervention: {
-            id: 'intervention-123',
-            task_number: null,
-            status: 'in_progress',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            created_by: 'user-123',
-            updated_by: null,
-            task_id: 'task-123',
-            intervention_number: null,
-            ppf_zones: [],
-            custom_zones: null,
-            film_type: 'standard',
-            film_brand: null,
-            film_model: null,
-            weather_condition: null,
-            lighting_condition: null,
-            work_location: null,
-            gps_coordinates: null,
-            address: null,
-            notes: null,
-            customer_requirements: null,
-            special_instructions: null,
-          },
-          steps: [],
-        }), 100))
+        () => new Promise(resolve => setTimeout(() => resolve(createStartedResponse()), 100))
       );
 
       renderWithAuth(<WorkflowProgressCard {...defaultProps} />);
@@ -269,34 +223,7 @@ describe('WorkflowProgressCard', () => {
     });
 
     it('navigates to workflow page on successful workflow start', async () => {
-      mockStartIntervention.mockResolvedValue({
-        type: 'Started',
-        intervention: {
-          id: 'intervention-123',
-          task_number: null,
-          status: 'in_progress',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          created_by: 'user-123',
-          updated_by: null,
-          task_id: 'task-123',
-          intervention_number: null,
-          ppf_zones: [],
-          custom_zones: null,
-          film_type: 'standard',
-          film_brand: null,
-          film_model: null,
-          weather_condition: null,
-          lighting_condition: null,
-          work_location: null,
-          gps_coordinates: null,
-          address: null,
-          notes: null,
-          customer_requirements: null,
-          special_instructions: null,
-        },
-        steps: [],
-      });
+      mockStartIntervention.mockResolvedValue(createStartedResponse());
 
       renderWithAuth(<WorkflowProgressCard {...defaultProps} />);
 
@@ -327,7 +254,7 @@ describe('WorkflowProgressCard', () => {
     });
 
     it('shows correct button text for different workflow states', () => {
-      const states = [
+      const states: Array<{ status: WorkflowStatus; expectedText: string }> = [
         { status: 'not_started', expectedText: 'Commencer le workflow' },
         { status: 'paused', expectedText: 'Reprendre le workflow' },
         { status: 'in_progress', expectedText: 'Continuer le workflow' },
@@ -335,7 +262,7 @@ describe('WorkflowProgressCard', () => {
       ];
 
       states.forEach(({ status, expectedText }) => {
-        const props = { ...defaultProps, workflowStatus: status as any };
+        const props = { ...defaultProps, workflowStatus: status };
         const { rerender } = renderWithAuth(<WorkflowProgressCard {...props} />);
 
         expect(screen.getByText(expectedText)).toBeInTheDocument();

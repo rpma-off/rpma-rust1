@@ -64,9 +64,10 @@ export const authOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving when setup is verified
    */
-  verify2FASetup: (verificationCode: string, sessionToken: string): Promise<void> =>
+  verify2FASetup: (verificationCode: string, backupCodes: string[], sessionToken: string): Promise<void> =>
     safeInvoke<void>(IPC_COMMANDS.VERIFY_2FA_SETUP, {
       verification_code: verificationCode,
+      backup_codes: backupCodes,
       session_token: sessionToken
     }),
 
@@ -75,8 +76,8 @@ export const authOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving when 2FA is disabled
    */
-  disable2FA: (sessionToken: string): Promise<void> =>
-    safeInvoke<void>(IPC_COMMANDS.DISABLE_2FA, { session_token: sessionToken }),
+  disable2FA: (password: string, sessionToken: string): Promise<void> =>
+    safeInvoke<void>(IPC_COMMANDS.DISABLE_2FA, { password, session_token: sessionToken }),
 
   /**
    * Regenerates backup codes for 2FA
@@ -92,9 +93,8 @@ export const authOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to 2FA status
    */
-  is2FAEnabled: (userId: string, sessionToken: string): Promise<boolean> =>
+  is2FAEnabled: (sessionToken: string): Promise<boolean> =>
     safeInvoke<boolean>(IPC_COMMANDS.IS_2FA_ENABLED, {
-      user_id: userId,
       session_token: sessionToken
     }),
 };

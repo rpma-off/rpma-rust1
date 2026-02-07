@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,7 +22,6 @@ import {
   CheckCircle,
   Eye,
   EyeOff,
-  RefreshCw,
   Trash2,
   Clock,
   MapPin
@@ -65,7 +63,19 @@ interface LoginSession {
   current_session: boolean;
 }
 
-export function SecurityTab({ user, profile }: SecuritySettingsTabProps) {
+interface SessionResponse {
+  id: string;
+  device_info?: {
+    device_name?: string;
+    device_type?: string;
+  };
+  user_agent?: string;
+  location?: string;
+  ip_address?: string;
+  last_activity: string;
+}
+
+export function SecurityTab({ user }: SecuritySettingsTabProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordChangeSuccess, setPasswordChangeSuccess] = useState(false);
@@ -98,13 +108,10 @@ export function SecurityTab({ user, profile }: SecuritySettingsTabProps) {
 
       setIsLoading(true);
       try {
-        // Load user settings which may include security preferences
-        const userSettings = await ipcClient.settings.getUserSettings(user.token);
-
         // Load active sessions from backend
         const sessionsResponse = await ipcClient.settings.getActiveSessions(user.token);
         if (sessionsResponse && Array.isArray(sessionsResponse)) {
-          const formattedSessions = sessionsResponse.map((session: any) => ({
+          const formattedSessions = (sessionsResponse as SessionResponse[]).map((session) => ({
             id: session.id,
             device: session.device_info?.device_name || session.device_info?.device_type || 'Unknown Device',
             browser: session.user_agent || 'Unknown Browser',
@@ -117,7 +124,7 @@ export function SecurityTab({ user, profile }: SecuritySettingsTabProps) {
         }
 
         // Check 2FA status
-        const twoFactorStatus = await ipcClient.auth.is2FAEnabled(user.user_id, user.token);
+        const twoFactorStatus = await ipcClient.auth.is2FAEnabled(user.token);
         setTwoFactorEnabled(twoFactorStatus as boolean);
 
         // Get session timeout config
@@ -210,16 +217,31 @@ export function SecurityTab({ user, profile }: SecuritySettingsTabProps) {
 
     try {
       if (enabled) {
-        // Enable 2FA - this returns setup data (QR code, etc.)
-        const setupData = await ipcClient.auth.enable2FA(user.token);
-        // In a real implementation, you'd show a modal with QR code here
-        // For now, we'll just enable it
-        setTwoFactorEnabled(true);
+        const setupData = await ipcClient.auth.enable2FA(user.token) as { backup_codes?: string[] };
+        const verificationCode = window.prompt('Entrez le code de votre application d\'authentification pour activer la 2FA');
+        if (!verificationCode || !verificationCode.trim()) {
+          throw new Error('Activation 2FA annulée: code de vérification manquant');
+        }
+
+        await ipcClient.auth.verify2FASetup(
+          verificationCode.trim(),
+          Array.isArray(setupData?.backup_codes) ? setupData.backup_codes : [],
+          user.token
+        );
+
+        const refreshedStatus = await ipcClient.auth.is2FAEnabled(user.token);
+        setTwoFactorEnabled(Boolean(refreshedStatus));
         logInfo('2FA enabled successfully', { enabled });
       } else {
-        // Disable 2FA
-        await ipcClient.auth.disable2FA(user.token);
-        setTwoFactorEnabled(false);
+        const password = window.prompt('Entrez votre mot de passe pour désactiver la 2FA');
+        if (!password || !password.trim()) {
+          throw new Error('Désactivation 2FA annulée: mot de passe requis');
+        }
+
+        await ipcClient.auth.disable2FA(password, user.token);
+
+        const refreshedStatus = await ipcClient.auth.is2FAEnabled(user.token);
+        setTwoFactorEnabled(Boolean(refreshedStatus));
         logInfo('2FA disabled successfully', { enabled });
       }
 

@@ -5,19 +5,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { ZodError } from 'zod';
 import { User, Camera, Save, X, AlertCircle, CheckCircle } from 'lucide-react';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useLogger } from '@/hooks/useLogger';
 import { LogDomain } from '@/lib/logging/types';
 import { ipcClient } from '@/lib/ipc';
-import { UserSession } from '@/lib/backend';
+import { UserSession, UserSettings } from '@/lib/backend';
 import { UserAccount } from '@/types';
 import {
   updateProfileRequestSchema,
@@ -38,7 +38,7 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [userSettings, setUserSettings] = useState<any>(null);
+  const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
 
   const { logInfo, logError, logUserAction } = useLogger({
     context: LogDomain.USER,
@@ -59,6 +59,7 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
     const loadUserSettings = async () => {
       if (!user?.token) return;
 
+      setIsLoading(true);
       try {
         const settings = await ipcClient.settings.getUserSettings(user.token);
         setUserSettings(settings);
@@ -68,6 +69,8 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
           error: error instanceof Error ? error.message : error,
           userId: user.user_id
         });
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -103,11 +106,19 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
     try {
       // Validate data with Zod schema
       const validatedData = updateProfileRequestSchema.parse(data);
-      // Prepare profile data including avatar_url from current settings
+      const fullName = validatedData.full_name?.trim() || '';
+      const fullNameParts = fullName.split(/\s+/).filter(Boolean);
+      const firstName = fullNameParts[0] || undefined;
+      const lastName = fullNameParts.length > 1 ? fullNameParts.slice(1).join(' ') : undefined;
+
+      // Prepare profile data with backend-compatible fields
       const profileData = {
-        full_name: validatedData.full_name,
-        phone: validatedData.phone,
-        avatar_url: userSettings?.profile?.avatar_url || null,
+        full_name: fullName,
+        first_name: firstName,
+        last_name: lastName,
+        email: profile?.email || user?.email,
+        phone: validatedData.phone ?? '',
+        avatar_url: userSettings?.profile?.avatar_url ?? null,
       };
 
       await ipcClient.settings.updateUserProfile(profileData, user.token);
@@ -123,8 +134,8 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
 
     } catch (error) {
       // Handle validation errors
-      if (error instanceof Error && 'issues' in error) {
-        const validationErrors = SettingsErrorHandler.handleValidationError(error as any);
+      if (error instanceof ZodError) {
+        const validationErrors = SettingsErrorHandler.handleValidationError(error);
         const errorMessage = validationErrors.map(err => err.message).join(' ');
         setSaveError(errorMessage);
         logError('Profile validation failed', {
@@ -192,6 +203,14 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
         file.type,
         user.token
       );
+
+      setUserSettings((prev) => prev ? ({
+        ...prev,
+        profile: {
+          ...prev.profile,
+          avatar_url: avatarUrl,
+        },
+      }) : prev);
 
       logInfo('Avatar uploaded successfully', { userId: user.user_id, avatarUrl });
 

@@ -53,16 +53,16 @@ export class MFAService {
 
   async verifyMFA(request: MFAVerificationRequest, sessionToken: string): Promise<boolean> {
     try {
-      await ipcClient.auth.verify2FASetup(request.code, sessionToken);
+      await ipcClient.auth.verify2FASetup(request.code, [], sessionToken);
       return true;
     } catch (error) {
       return false;
     }
   }
 
-  async disableMFA(sessionToken: string): Promise<void> {
+  async disableMFA(sessionToken: string, password: string): Promise<void> {
     try {
-      await ipcClient.auth.disable2FA(sessionToken);
+      await ipcClient.auth.disable2FA(password, sessionToken);
     } catch (error) {
       throw new Error(error instanceof Error ? error.message : 'Failed to disable MFA');
     }

@@ -1,11 +1,11 @@
 import { safeInvoke } from './utils';
 import { cachedInvoke, invalidatePattern } from './cache';
-import type { UserSettings } from '@/types/settings.types';
 import type { ApiError } from '@/lib/backend';
 import type { UserAccount } from '@/lib/backend';
 import { createPermissionChecker, withPermissionCheck } from '@/lib/rbac';
 import type {
   UserSession,
+  UserSettings,
   Task,
   Client,
   CreateTaskRequest,
@@ -102,6 +102,11 @@ function extractAndValidate<T>(
   return validator ? validator(result) : result as T;
 }
 
+const getUserSettingsCacheKey = (sessionToken: string): string => `user-settings:${sessionToken}`;
+const invalidateUserSettingsCache = (sessionToken: string): void => {
+  invalidatePattern(getUserSettingsCacheKey(sessionToken));
+};
+
 /**
  * Creates a permission-aware IPC client
  */
@@ -142,17 +147,18 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
           safeInvoke<unknown>('enable_2fa', { session_token: sessionToken })
         ),
 
-      verify2FASetup: (verificationCode: string, sessionToken: string) =>
+      verify2FASetup: (verificationCode: string, backupCodes: string[], sessionToken: string) =>
         withPermissionCheck(currentUser, 'settings:write', () =>
           safeInvoke<void>('verify_2fa_setup', { 
             verification_code: sanitizeInput(verificationCode), 
+            backup_codes: backupCodes,
             session_token: sessionToken 
           })
         ),
 
-      disable2FA: (sessionToken: string) =>
+      disable2FA: (password: string, sessionToken: string) =>
         withPermissionCheck(currentUser, 'settings:write', () =>
-          safeInvoke<void>('disable_2fa', { session_token: sessionToken })
+          safeInvoke<void>('disable_2fa', { password, session_token: sessionToken })
         ),
 
       regenerateBackupCodes: (sessionToken: string) =>
@@ -160,8 +166,8 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
           safeInvoke<unknown>('regenerate_backup_codes', { session_token: sessionToken })
         ),
 
-      is2FAEnabled: (userId: string, sessionToken: string) =>
-        safeInvoke<boolean>('is_2fa_enabled', { user_id: userId, session_token: sessionToken }),
+      is2FAEnabled: (sessionToken: string) =>
+        safeInvoke<boolean>('is_2fa_enabled', { session_token: sessionToken }),
     },
 
     // Task operations
@@ -553,33 +559,48 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
     // Settings operations with permission checks
     settings: {
       getUserSettings: (sessionToken: string) =>
-        cachedInvoke<UserSettings>(`user-settings`, 'get_user_settings', { session_token: sessionToken }, undefined, 30000),
+        cachedInvoke<UserSettings>(getUserSettingsCacheKey(sessionToken), 'get_user_settings', { session_token: sessionToken }, undefined, 30000),
 
       updateUserProfile: (request: Record<string, unknown>, sessionToken: string) =>
         withPermissionCheck(currentUser, 'settings:write', () => {
-          // Sanitize profile updates
           const sanitizedRequest = {
             ...request,
-            display_name: request.display_name ? sanitizeInput(request.display_name as string) : undefined,
-            bio: request.bio ? sanitizeInput(request.bio as string) : undefined,
+            full_name: request.full_name ? sanitizeInput(request.full_name as string) : undefined,
+            email: request.email ? sanitizeInput(request.email as string) : undefined,
           };
-          return safeInvoke<unknown>('update_user_profile', { request: { ...sanitizedRequest, session_token: sessionToken } });
+          return safeInvoke<unknown>('update_user_profile', { request: { ...sanitizedRequest, session_token: sessionToken } })
+            .then((result) => {
+              invalidateUserSettingsCache(sessionToken);
+              return result;
+            });
         }),
 
       updateUserPreferences: (request: Record<string, unknown>, sessionToken: string) =>
         withPermissionCheck(currentUser, 'settings:write', () =>
           safeInvoke<unknown>('update_user_preferences', { request: { ...request, session_token: sessionToken } })
+            .then((result) => {
+              invalidateUserSettingsCache(sessionToken);
+              return result;
+            })
         ),
 
       // Security settings require special permissions
       updateUserSecurity: (request: Record<string, unknown>, sessionToken: string) =>
         withPermissionCheck(currentUser, 'settings:write', () =>
           safeInvoke<unknown>('update_user_security', { request: { ...request, session_token: sessionToken } })
+            .then((result) => {
+              invalidateUserSettingsCache(sessionToken);
+              return result;
+            })
         ),
 
       changeUserPassword: (request: Record<string, unknown>, sessionToken: string) =>
         withPermissionCheck(currentUser, 'settings:write', () =>
           safeInvoke<string>('change_user_password', { request: { ...request, session_token: sessionToken } })
+            .then((result) => {
+              invalidateUserSettingsCache(sessionToken);
+              return result;
+            })
         ),
     },
   };

@@ -16,6 +16,13 @@ jest.mock('@/lib/ipc/client', () => ({
 
 const mockStartIntervention = ipcClient.interventions.start as jest.MockedFunction<typeof ipcClient.interventions.start>;
 
+const createStartedResponse = (): Awaited<ReturnType<typeof ipcClient.interventions.start>> =>
+  ({
+    type: 'Started',
+    intervention: { id: 'intervention-123' },
+    steps: [],
+  } as unknown as Awaited<ReturnType<typeof ipcClient.interventions.start>>);
+
 const mockSession = {
   id: 'user-123',
   user_id: 'user-123',
@@ -47,6 +54,8 @@ const mockAuthContext = {
   refreshProfile: jest.fn(),
 };
 
+type WorkflowStatus = NonNullable<React.ComponentProps<typeof WorkflowProgressCard>['workflowStatus']>;
+
 const renderWithAuth = (component: React.ReactElement) => {
   return render(
     <AuthContext.Provider value={mockAuthContext}>
@@ -62,28 +71,7 @@ describe('WorkflowProgressCard Integration', () => {
 
   describe('Workflow Start Integration', () => {
     it('successfully starts workflow and updates UI', async () => {
-      mockStartIntervention.mockResolvedValue({
-        intervention: {
-          id: 'intervention-123',
-          task_id: 'task-123',
-          status: 'in_progress',
-          current_step: 1,
-          completion_percentage: 0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        steps: [
-          {
-            id: 'step-1',
-            intervention_id: 'intervention-123',
-            step_number: 1,
-            step_status: 'pending',
-            collected_data: null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-        ],
-      });
+      mockStartIntervention.mockResolvedValue(createStartedResponse());
 
       renderWithAuth(
         <WorkflowProgressCard
@@ -234,7 +222,7 @@ describe('WorkflowProgressCard Integration', () => {
 
   describe('Button State Transitions', () => {
     it('transitions through different workflow states correctly', () => {
-      const states = [
+      const states: Array<{ status: WorkflowStatus; buttonText: string }> = [
         { status: 'not_started', buttonText: 'Commencer le workflow' },
         { status: 'in_progress', buttonText: 'Continuer le workflow' },
         { status: 'paused', buttonText: 'Reprendre le workflow' },
@@ -245,7 +233,7 @@ describe('WorkflowProgressCard Integration', () => {
         const { rerender } = renderWithAuth(
           <WorkflowProgressCard
             taskId="task-123"
-            workflowStatus={status as any}
+            workflowStatus={status}
             workflowProgress={{
               percentage: 0,
               currentStep: 0,

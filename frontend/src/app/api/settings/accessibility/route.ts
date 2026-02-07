@@ -1,54 +1,36 @@
-  import { NextResponse } from 'next/server';
-  import { settingsService } from '@/lib/services/entities/settings.service';
-  import { withAuth, NextRequestWithUser } from '@/lib/middleware/auth.middleware';
-  import { UpdateAccessibilityRequest } from '@/types/settings.types';
+import { settingsService } from '@/lib/services/entities/settings.service';
+import { withAuth, NextRequestWithUser } from '@/lib/middleware/auth.middleware';
+import { settingsError, settingsSuccess } from '../_shared';
 
-  export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 
-  // GET /api/settings/accessibility - Get accessibility settings
-  export const GET = withAuth(async (request: NextRequestWithUser) => {
-    const { user, token } = request;
-   try {
-     const result = await settingsService.getUserSettings(user.id, token);
-     if (!result.success) {
-       return NextResponse.json(
-         { error: result.error || 'Failed to get settings' },
-         { status: 500 }
-       );
-     }
-     return NextResponse.json({ accessibility: result.data?.accessibility });
-   } catch (error) {
-     console.error('Error in GET /api/settings/accessibility:', error);
-     return NextResponse.json(
-       { error: 'Internal server error' },
-       { status: 500 }
-     );
-   }
- }, 'all');
+export const GET = withAuth(async (request: NextRequestWithUser) => {
+  const { user, token } = request;
+  const result = await settingsService.getUserSettings(user.id, token);
 
-  // PUT /api/settings/accessibility - Update accessibility settings
-  export const PUT = withAuth(async (request: NextRequestWithUser) => {
-    const user = request.user;
-   try {
-     const body: UpdateAccessibilityRequest = await request.json();
+  if (!result.success || !result.data) {
+    return settingsError(result.error || 'Failed to get accessibility settings');
+  }
 
-     const result = await settingsService.updateAccessibility(user.id, body);
+  return settingsSuccess({ accessibility: result.data.accessibility });
+}, 'all');
 
-     if (!result.success) {
-       return NextResponse.json(
-         { error: result.error || 'Failed to update settings' },
-         { status: 500 }
-       );
-     }
+export const PUT = withAuth(async (request: NextRequestWithUser) => {
+  const { user, token } = request;
 
-     return NextResponse.json({
-       message: 'Accessibility settings updated successfully'
-     });
-   } catch (error) {
-     console.error('Error in PUT /api/settings/accessibility:', error);
-     return NextResponse.json(
-       { error: 'Internal server error' },
-       { status: 500 }
-     );
-   }
- }, 'all');
+  try {
+    const body = await request.json();
+    const result = await settingsService.updateAccessibility(user.id, body, token);
+
+    if (!result.success || !result.data) {
+      return settingsError(result.error || 'Failed to update accessibility settings');
+    }
+
+    return settingsSuccess({
+      message: 'Accessibility settings updated successfully',
+      accessibility: result.data.accessibility,
+    });
+  } catch (error) {
+    return settingsError(error instanceof Error ? error.message : 'Invalid request body', 400);
+  }
+}, 'all');

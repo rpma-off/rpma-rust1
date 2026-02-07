@@ -5,6 +5,7 @@ use crate::models::settings::{
     UserAccessibilitySettings, UserNotificationSettings, UserPerformanceSettings, UserPreferences,
     UserProfileSettings, UserSecuritySettings, UserSettings,
 };
+use crate::services::validation::ValidationService;
 use rusqlite::params;
 use std::sync::Arc;
 use tracing::{error, warn};
@@ -154,7 +155,7 @@ impl SettingsService {
 
         conn.execute(
             "INSERT INTO user_settings (
-                id, user_id, full_name, email, phone, notes,
+                id, user_id, full_name, email, phone, avatar_url, notes,
                 email_notifications, push_notifications, task_assignments, task_updates,
                 system_alerts, weekly_reports, theme, language, date_format, time_format,
                 high_contrast, large_text, reduce_motion, screen_reader, auto_refresh, refresh_interval,
@@ -172,10 +173,10 @@ impl SettingsService {
                 notifications_quiet_hours_start, notifications_quiet_hours_end,
                 notifications_digest_frequency, notifications_batch_notifications,
                 notifications_sound_enabled, notifications_sound_volume
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             params![
                 id, user_id,
-                settings.profile.full_name, settings.profile.email, settings.profile.phone, settings.profile.notes,
+                settings.profile.full_name, settings.profile.email, settings.profile.phone, settings.profile.avatar_url, settings.profile.notes,
                 settings.preferences.email_notifications as i32, settings.preferences.push_notifications as i32,
                 settings.preferences.task_assignments as i32, settings.preferences.task_updates as i32,
                 settings.preferences.system_alerts as i32, settings.preferences.weekly_reports as i32,
@@ -492,18 +493,138 @@ impl SettingsService {
         Ok(())
     }
 
-    /// Change user password (placeholder - actual implementation would hash and verify)
+    /// Change user password with current password verification and session revocation.
     pub fn change_user_password(
         &self,
-        _user_id: &str,
-        _new_password_hash: &str,
+        user_id: &str,
+        current_password: &str,
+        new_password: &str,
+        current_session_token: &str,
+        auth_service: &crate::services::auth::AuthService,
     ) -> Result<(), AppError> {
-        // This is a placeholder - actual password change would involve:
-        // 1. Verifying current password
-        // 2. Hashing new password
-        // 3. Updating user record
-        // 4. Invalidating sessions
-        // 5. Audit logging
+        let conn = self.db.get_connection().map_err(|e| {
+            error!("Failed to get database connection: {}", e);
+            AppError::Database("Database connection failed".to_string())
+        })?;
+
+        let stored_hash: String = conn
+            .query_row(
+                "SELECT password_hash FROM users WHERE id = ? AND is_active = 1",
+                params![user_id],
+                |row| row.get(0),
+            )
+            .map_err(|e| {
+                error!("Failed to load password hash for {}: {}", user_id, e);
+                AppError::Authentication("Invalid current password".to_string())
+            })?;
+
+        let is_current_password_valid = auth_service
+            .verify_password(current_password, &stored_hash)
+            .map_err(|e| {
+                error!("Password verification failed for {}: {}", user_id, e);
+                AppError::Authentication("Invalid current password".to_string())
+            })?;
+
+        if !is_current_password_valid {
+            return Err(AppError::Authentication(
+                "Current password is incorrect".to_string(),
+            ));
+        }
+
+        let validator = ValidationService::new();
+        let validated_new_password = validator
+            .validate_password_enhanced(new_password)
+            .map_err(|e| AppError::Validation(e.to_string()))?;
+
+        let is_same_password = auth_service
+            .verify_password(&validated_new_password, &stored_hash)
+            .unwrap_or(false);
+        if is_same_password {
+            return Err(AppError::Validation(
+                "New password must be different from the current password".to_string(),
+            ));
+        }
+
+        auth_service
+            .change_password(user_id, &validated_new_password)
+            .map_err(|e| {
+                error!("Failed to update password for {}: {}", user_id, e);
+                AppError::Database(format!("Failed to update password: {}", e))
+            })?;
+
+        conn.execute(
+            "DELETE FROM user_sessions WHERE user_id = ? AND token != ?",
+            params![user_id, current_session_token],
+        )
+        .map_err(|e| {
+            error!("Failed to revoke sessions for {}: {}", user_id, e);
+            AppError::Database("Failed to revoke other sessions".to_string())
+        })?;
+
+        Ok(())
+    }
+
+    /// Soft-delete user account and purge settings/consent/session data.
+    pub fn delete_user_account(&self, user_id: &str) -> Result<(), AppError> {
+        let mut conn = self.db.get_connection().map_err(|e| {
+            error!("Failed to get database connection: {}", e);
+            AppError::Database("Database connection failed".to_string())
+        })?;
+
+        let tx = conn.transaction().map_err(|e| {
+            error!("Failed to start account deletion transaction: {}", e);
+            AppError::Database("Failed to start account deletion".to_string())
+        })?;
+
+        let now = chrono::Utc::now().timestamp_millis();
+
+        let updated_rows = tx
+            .execute(
+                "UPDATE users SET is_active = 0, deleted_at = ?, updated_at = ? WHERE id = ?",
+                params![now, now, user_id],
+            )
+            .map_err(|e| {
+                error!("Failed to soft-delete user {}: {}", user_id, e);
+                AppError::Database("Failed to deactivate account".to_string())
+            })?;
+
+        if updated_rows == 0 {
+            return Err(AppError::NotFound("User account not found".to_string()));
+        }
+
+        tx.execute("DELETE FROM user_sessions WHERE user_id = ?", params![user_id])
+            .map_err(|e| {
+                error!("Failed to revoke sessions for {}: {}", user_id, e);
+                AppError::Database("Failed to revoke sessions".to_string())
+            })?;
+
+        tx.execute("DELETE FROM user_settings WHERE user_id = ?", params![user_id])
+            .map_err(|e| {
+                error!("Failed to purge settings for {}: {}", user_id, e);
+                AppError::Database("Failed to purge user settings".to_string())
+            })?;
+
+        tx.execute("DELETE FROM user_consent WHERE user_id = ?", params![user_id])
+            .map_err(|e| {
+                error!("Failed to purge consent for {}: {}", user_id, e);
+                AppError::Database("Failed to purge user consent".to_string())
+            })?;
+
+        let _ = tx.execute(
+            "INSERT INTO settings_audit_log (id, user_id, setting_type, details, timestamp) VALUES (?, ?, ?, ?, ?)",
+            params![
+                Uuid::new_v4().to_string(),
+                user_id,
+                "account",
+                "Account soft-deleted and user settings/consent purged",
+                now
+            ],
+        );
+
+        tx.commit().map_err(|e| {
+            error!("Failed to commit account deletion transaction: {}", e);
+            AppError::Database("Failed to finalize account deletion".to_string())
+        })?;
 
         Ok(())
     }
@@ -641,7 +762,7 @@ impl SettingsService {
 
         tx.execute(
             "INSERT INTO user_settings (
-                id, user_id, full_name, email, phone, notes,
+                id, user_id, full_name, email, phone, avatar_url, notes,
                 email_notifications, push_notifications, task_assignments, task_updates,
                 system_alerts, weekly_reports, theme, language, date_format, time_format,
                 high_contrast, large_text, reduce_motion, screen_reader, auto_refresh, refresh_interval,
@@ -659,10 +780,10 @@ impl SettingsService {
                 notifications_quiet_hours_start, notifications_quiet_hours_end,
                 notifications_digest_frequency, notifications_batch_notifications,
                 notifications_sound_enabled, notifications_sound_volume
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             params![
                 id, user_id,
-                settings.profile.full_name, settings.profile.email, settings.profile.phone, settings.profile.notes,
+                settings.profile.full_name, settings.profile.email, settings.profile.phone, settings.profile.avatar_url, settings.profile.notes,
                 settings.preferences.email_notifications as i32, settings.preferences.push_notifications as i32,
                 settings.preferences.task_assignments as i32, settings.preferences.task_updates as i32,
                 settings.preferences.system_alerts as i32, settings.preferences.weekly_reports as i32,
@@ -717,5 +838,281 @@ impl SettingsService {
             error!("Failed to log settings change for user {}: {}", user_id, e);
             warn!("Audit logging failed but continuing with settings update");
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::auth::UserRole;
+    use crate::services::auth::AuthService;
+    use chrono::Utc;
+    use rusqlite::params;
+    use std::sync::Arc;
+    use tempfile::TempDir;
+
+    struct LocalTestDb {
+        _temp_dir: TempDir,
+        db: Arc<crate::db::Database>,
+    }
+
+    impl LocalTestDb {
+        fn new() -> Self {
+            let temp_dir = tempfile::tempdir().expect("failed to create temp dir");
+            let db_path = temp_dir.path().join("settings-service-tests.db");
+            let db = Arc::new(
+                crate::db::Database::new(&db_path, "test_encryption_key_32_bytes_long!")
+                    .expect("failed to create database"),
+            );
+            db.init().expect("failed to init database");
+            let latest = crate::db::Database::get_latest_migration_version();
+            db.migrate(latest).expect("failed to run migrations");
+
+            Self {
+                _temp_dir: temp_dir,
+                db,
+            }
+        }
+    }
+
+    fn setup_services() -> (LocalTestDb, SettingsService, AuthService) {
+        std::env::set_var(
+            "JWT_SECRET",
+            "test_jwt_secret_with_minimum_required_length_32_chars",
+        );
+
+        let test_db = LocalTestDb::new();
+        let db = test_db.db.clone();
+        let settings_service = SettingsService::new(db.clone());
+        let auth_service = AuthService::new(db.as_ref().clone()).expect("failed to create auth service");
+
+        (test_db, settings_service, auth_service)
+    }
+
+    fn create_test_user(auth_service: &AuthService) -> crate::models::auth::UserAccount {
+        auth_service
+            .create_account(
+                "settings.test@example.com",
+                "settings_test_user",
+                "Settings",
+                "Tester",
+                UserRole::Technician,
+                "CurrentPass1!",
+            )
+            .expect("failed to create test user")
+    }
+
+    fn insert_session(test_db: &LocalTestDb, user: &crate::models::auth::UserAccount, token: &str) {
+        let conn = test_db.db.get_connection().expect("failed to get connection");
+        conn.execute(
+            "INSERT INTO user_sessions (id, user_id, username, email, role, token, refresh_token, expires_at, last_activity, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            params![
+                Uuid::new_v4().to_string(),
+                user.id,
+                user.username,
+                user.email,
+                user.role.to_string(),
+                token,
+                Option::<String>::None,
+                (Utc::now() + chrono::Duration::hours(1)).to_rfc3339(),
+                Utc::now().to_rfc3339(),
+                Utc::now().to_rfc3339(),
+            ],
+        )
+        .expect("failed to insert session");
+    }
+
+    #[test]
+    fn default_settings_bootstrap_on_first_fetch() {
+        let (test_db, settings_service, auth_service) = setup_services();
+        let user = create_test_user(&auth_service);
+
+        let first = settings_service
+            .get_user_settings(&user.id)
+            .expect("failed to get first settings");
+        assert_eq!(first.preferences.theme, "system");
+        assert_eq!(first.performance.cache_enabled, true);
+        assert_eq!(first.notifications.email_enabled, true);
+
+        let second = settings_service
+            .get_user_settings(&user.id)
+            .expect("failed to get second settings");
+        assert_eq!(second.preferences.theme, "system");
+
+        let conn = test_db.db.get_connection().expect("failed to get connection");
+        let count: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM user_settings WHERE user_id = ?",
+                params![user.id],
+                |row| row.get(0),
+            )
+            .expect("failed to count settings rows");
+        assert_eq!(count, 1);
+    }
+
+    #[test]
+    fn profile_update_and_avatar_roundtrip() {
+        let (_test_db, settings_service, auth_service) = setup_services();
+        let user = create_test_user(&auth_service);
+
+        let mut settings = settings_service
+            .get_user_settings(&user.id)
+            .expect("failed to load settings");
+        settings.profile.full_name = "Settings Tester".to_string();
+        settings.profile.email = "new.email@example.com".to_string();
+        settings.profile.phone = Some("+1234567890".to_string());
+        settings.profile.avatar_url = Some("data:image/png;base64,aGVsbG8=".to_string());
+        settings.profile.notes = Some("Updated through test".to_string());
+
+        settings_service
+            .update_user_profile(&user.id, &settings.profile)
+            .expect("failed to update profile");
+
+        let reloaded = settings_service
+            .get_user_settings(&user.id)
+            .expect("failed to reload settings");
+        assert_eq!(reloaded.profile.full_name, "Settings Tester");
+        assert_eq!(reloaded.profile.email, "new.email@example.com");
+        assert_eq!(reloaded.profile.phone.as_deref(), Some("+1234567890"));
+        assert_eq!(
+            reloaded.profile.avatar_url.as_deref(),
+            Some("data:image/png;base64,aGVsbG8=")
+        );
+        assert_eq!(reloaded.profile.notes.as_deref(), Some("Updated through test"));
+    }
+
+    #[test]
+    fn password_change_success_and_failure_paths() {
+        let (test_db, settings_service, auth_service) = setup_services();
+        let user = create_test_user(&auth_service);
+
+        insert_session(&test_db, &user, "current-token");
+        insert_session(&test_db, &user, "other-token");
+
+        let failed = settings_service.change_user_password(
+            &user.id,
+            "WrongPass1!",
+            "NextPass1!",
+            "current-token",
+            &auth_service,
+        );
+        assert!(failed.is_err());
+
+        settings_service
+            .change_user_password(
+                &user.id,
+                "CurrentPass1!",
+                "NextPass1!",
+                "current-token",
+                &auth_service,
+            )
+            .expect("password change should succeed");
+
+        let conn = test_db.db.get_connection().expect("failed to get connection");
+        let hash: String = conn
+            .query_row(
+                "SELECT password_hash FROM users WHERE id = ?",
+                params![user.id],
+                |row| row.get(0),
+            )
+            .expect("failed to get password hash");
+
+        let old_valid = auth_service
+            .verify_password("CurrentPass1!", &hash)
+            .expect("failed to verify old password");
+        let new_valid = auth_service
+            .verify_password("NextPass1!", &hash)
+            .expect("failed to verify new password");
+        assert!(!old_valid);
+        assert!(new_valid);
+
+        let session_count: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM user_sessions WHERE user_id = ?",
+                params![user.id],
+                |row| row.get(0),
+            )
+            .expect("failed to count sessions");
+        let current_exists: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM user_sessions WHERE user_id = ? AND token = ?",
+                params![user.id, "current-token"],
+                |row| row.get(0),
+            )
+            .expect("failed to check current session");
+        assert_eq!(session_count, 1);
+        assert_eq!(current_exists, 1);
+    }
+
+    #[test]
+    fn delete_account_soft_delete_and_purge() {
+        let (test_db, settings_service, auth_service) = setup_services();
+        let user = create_test_user(&auth_service);
+
+        settings_service
+            .get_user_settings(&user.id)
+            .expect("failed to bootstrap settings");
+        insert_session(&test_db, &user, "delete-token");
+
+        let conn = test_db.db.get_connection().expect("failed to get connection");
+        conn.execute(
+            "INSERT INTO user_consent (user_id, consent_data, created_at, updated_at)
+             VALUES (?, ?, ?, ?)",
+            params![
+                user.id,
+                "{\"analytics_consent\":true}",
+                Utc::now().timestamp_millis(),
+                Utc::now().timestamp_millis(),
+            ],
+        )
+        .expect("failed to insert consent");
+
+        settings_service
+            .delete_user_account(&user.id)
+            .expect("failed to delete user account");
+
+        let is_active: i64 = conn
+            .query_row(
+                "SELECT is_active FROM users WHERE id = ?",
+                params![user.id],
+                |row| row.get(0),
+            )
+            .expect("failed to query user status");
+        let deleted_at: i64 = conn
+            .query_row(
+                "SELECT deleted_at FROM users WHERE id = ?",
+                params![user.id],
+                |row| row.get(0),
+            )
+            .expect("failed to query deleted_at");
+        assert_eq!(is_active, 0);
+        assert!(deleted_at > 0);
+
+        let settings_count: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM user_settings WHERE user_id = ?",
+                params![user.id],
+                |row| row.get(0),
+            )
+            .expect("failed to count settings rows");
+        let consent_count: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM user_consent WHERE user_id = ?",
+                params![user.id],
+                |row| row.get(0),
+            )
+            .expect("failed to count consent rows");
+        let session_count: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM user_sessions WHERE user_id = ?",
+                params![user.id],
+                |row| row.get(0),
+            )
+            .expect("failed to count sessions");
+
+        assert_eq!(settings_count, 0);
+        assert_eq!(consent_count, 0);
+        assert_eq!(session_count, 0);
     }
 }

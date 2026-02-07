@@ -95,24 +95,60 @@ pub async fn update_user_preferences(
 
     let user = authenticate_user(&request.session_token, &state)?;
 
-    let preferences = UserPreferences {
-        email_notifications: request.email_notifications.unwrap_or(true),
-        push_notifications: request.push_notifications.unwrap_or(true),
-        task_assignments: request.task_assignments.unwrap_or(true),
-        task_updates: request.task_updates.unwrap_or(true),
-        system_alerts: request.system_alerts.unwrap_or(true),
-        weekly_reports: request.weekly_reports.unwrap_or(false),
-        theme: request.theme.unwrap_or_else(|| "system".to_string()),
-        language: request.language.unwrap_or_else(|| "en".to_string()),
-        date_format: request.date_format.unwrap_or_else(|| "DD/MM/YYYY".to_string()),
-        time_format: request.time_format.unwrap_or_else(|| "24h".to_string()),
-        high_contrast: request.high_contrast.unwrap_or(false),
-        large_text: request.large_text.unwrap_or(false),
-        reduce_motion: request.reduce_motion.unwrap_or(false),
-        screen_reader: request.screen_reader.unwrap_or(false),
-        auto_refresh: request.auto_refresh.unwrap_or(true),
-        refresh_interval: request.refresh_interval.unwrap_or(30)
-    };
+    let mut preferences: UserPreferences = state
+        .settings_service
+        .get_user_settings(&user.id)
+        .map_err(|e| handle_settings_error(e, "Load user preferences"))?
+        .preferences;
+
+    if let Some(value) = request.email_notifications {
+        preferences.email_notifications = value;
+    }
+    if let Some(value) = request.push_notifications {
+        preferences.push_notifications = value;
+    }
+    if let Some(value) = request.task_assignments {
+        preferences.task_assignments = value;
+    }
+    if let Some(value) = request.task_updates {
+        preferences.task_updates = value;
+    }
+    if let Some(value) = request.system_alerts {
+        preferences.system_alerts = value;
+    }
+    if let Some(value) = request.weekly_reports {
+        preferences.weekly_reports = value;
+    }
+    if let Some(value) = request.theme {
+        preferences.theme = value;
+    }
+    if let Some(value) = request.language {
+        preferences.language = value;
+    }
+    if let Some(value) = request.date_format {
+        preferences.date_format = value;
+    }
+    if let Some(value) = request.time_format {
+        preferences.time_format = value;
+    }
+    if let Some(value) = request.high_contrast {
+        preferences.high_contrast = value;
+    }
+    if let Some(value) = request.large_text {
+        preferences.large_text = value;
+    }
+    if let Some(value) = request.reduce_motion {
+        preferences.reduce_motion = value;
+    }
+    if let Some(value) = request.screen_reader {
+        preferences.screen_reader = value;
+    }
+    if let Some(value) = request.auto_refresh {
+        preferences.auto_refresh = value;
+    }
+    if let Some(value) = request.refresh_interval {
+        preferences.refresh_interval = value;
+    }
 
     state
         .settings_service

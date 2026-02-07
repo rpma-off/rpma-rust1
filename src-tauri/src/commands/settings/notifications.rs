@@ -104,25 +104,63 @@ pub async fn update_user_notifications(
 
     let user = authenticate!(&request.session_token, &state);
 
-    let notification_settings = UserNotificationSettings {
-        email_enabled: request.email_enabled.unwrap_or(true),
-        push_enabled: request.push_enabled.unwrap_or(true),
-        in_app_enabled: request.in_app_enabled.unwrap_or(true),
-        task_assigned: request.task_assigned.unwrap_or(true),
-        task_updated: request.task_updated.unwrap_or(true),
-        task_completed: request.task_completed.unwrap_or(false),
-        task_overdue: request.task_overdue.unwrap_or(true),
-        system_alerts: request.system_alerts.unwrap_or(true),
-        maintenance: request.maintenance.unwrap_or(false),
-        security_alerts: request.security_alerts.unwrap_or(true),
-        quiet_hours_enabled: request.quiet_hours_enabled.unwrap_or(false),
-        quiet_hours_start: request.quiet_hours_start.unwrap_or_else(|| "22:00".to_string()),
-        quiet_hours_end: request.quiet_hours_end.unwrap_or_else(|| "08:00".to_string()),
-        digest_frequency: request.digest_frequency.unwrap_or_else(|| "daily".to_string()),
-        batch_notifications: request.batch_notifications.unwrap_or(false),
-        sound_enabled: request.sound_enabled.unwrap_or(true),
-        sound_volume: request.sound_volume.unwrap_or(50),
-    };
+    let mut notification_settings: UserNotificationSettings = state
+        .settings_service
+        .get_user_settings(&user.id)
+        .map_err(|e| handle_settings_error(e, "Load user notification settings"))?
+        .notifications;
+
+    if let Some(value) = request.email_enabled {
+        notification_settings.email_enabled = value;
+    }
+    if let Some(value) = request.push_enabled {
+        notification_settings.push_enabled = value;
+    }
+    if let Some(value) = request.in_app_enabled {
+        notification_settings.in_app_enabled = value;
+    }
+    if let Some(value) = request.task_assigned {
+        notification_settings.task_assigned = value;
+    }
+    if let Some(value) = request.task_updated {
+        notification_settings.task_updated = value;
+    }
+    if let Some(value) = request.task_completed {
+        notification_settings.task_completed = value;
+    }
+    if let Some(value) = request.task_overdue {
+        notification_settings.task_overdue = value;
+    }
+    if let Some(value) = request.system_alerts {
+        notification_settings.system_alerts = value;
+    }
+    if let Some(value) = request.maintenance {
+        notification_settings.maintenance = value;
+    }
+    if let Some(value) = request.security_alerts {
+        notification_settings.security_alerts = value;
+    }
+    if let Some(value) = request.quiet_hours_enabled {
+        notification_settings.quiet_hours_enabled = value;
+    }
+    if let Some(value) = request.quiet_hours_start {
+        notification_settings.quiet_hours_start = value;
+    }
+    if let Some(value) = request.quiet_hours_end {
+        notification_settings.quiet_hours_end = value;
+    }
+    if let Some(value) = request.digest_frequency {
+        notification_settings.digest_frequency = value;
+    }
+    if let Some(value) = request.batch_notifications {
+        notification_settings.batch_notifications = value;
+    }
+    if let Some(value) = request.sound_enabled {
+        notification_settings.sound_enabled = value;
+    }
+    if let Some(value) = request.sound_volume {
+        notification_settings.sound_volume = value;
+    }
 
     state
         .settings_service

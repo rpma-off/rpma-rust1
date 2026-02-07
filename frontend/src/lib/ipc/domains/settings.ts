@@ -1,6 +1,11 @@
-import { safeInvoke, cachedInvoke } from '../core';
+import { safeInvoke, cachedInvoke, invalidatePattern } from '../core';
 import { IPC_COMMANDS } from '../commands';
 import type { UserSettings } from '../types/index';
+
+const getUserSettingsCacheKey = (sessionToken: string): string => `user-settings:${sessionToken}`;
+const invalidateUserSettingsCache = (sessionToken: string): void => {
+  invalidatePattern(getUserSettingsCacheKey(sessionToken));
+};
 
 /**
  * Settings and configuration operations
@@ -19,45 +24,66 @@ export const settingsOperations = {
 
   // User settings operations
   getUserSettings: (sessionToken: string): Promise<UserSettings> =>
-    cachedInvoke<UserSettings>(`user-settings`, IPC_COMMANDS.GET_USER_SETTINGS, {
+    cachedInvoke<UserSettings>(getUserSettingsCacheKey(sessionToken), IPC_COMMANDS.GET_USER_SETTINGS, {
       session_token: sessionToken
     }, undefined, 30000),
 
-  updateUserProfile: (request: Record<string, unknown>, sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.UPDATE_USER_PROFILE, {
+  updateUserProfile: async (request: Record<string, unknown>, sessionToken: string): Promise<unknown> => {
+    const result = await safeInvoke<unknown>(IPC_COMMANDS.UPDATE_USER_PROFILE, {
       request: { ...request, session_token: sessionToken }
-    }),
+    });
+    invalidateUserSettingsCache(sessionToken);
+    return result;
+  },
 
-  updateUserPreferences: (request: Record<string, unknown>, sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.UPDATE_USER_PREFERENCES, {
+  updateUserPreferences: async (request: Record<string, unknown>, sessionToken: string): Promise<unknown> => {
+    const result = await safeInvoke<unknown>(IPC_COMMANDS.UPDATE_USER_PREFERENCES, {
       request: { ...request, session_token: sessionToken }
-    }),
+    });
+    invalidateUserSettingsCache(sessionToken);
+    return result;
+  },
 
-  updateUserSecurity: (request: Record<string, unknown>, sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.UPDATE_USER_SECURITY, {
+  updateUserSecurity: async (request: Record<string, unknown>, sessionToken: string): Promise<unknown> => {
+    const result = await safeInvoke<unknown>(IPC_COMMANDS.UPDATE_USER_SECURITY, {
       request: { ...request, session_token: sessionToken }
-    }),
+    });
+    invalidateUserSettingsCache(sessionToken);
+    return result;
+  },
 
-  updateUserPerformance: (request: Record<string, unknown>, sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.UPDATE_USER_PERFORMANCE, {
+  updateUserPerformance: async (request: Record<string, unknown>, sessionToken: string): Promise<unknown> => {
+    const result = await safeInvoke<unknown>(IPC_COMMANDS.UPDATE_USER_PERFORMANCE, {
       request,
       session_token: sessionToken
-    }),
+    });
+    invalidateUserSettingsCache(sessionToken);
+    return result;
+  },
 
-  updateUserAccessibility: (request: Record<string, unknown>, sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.UPDATE_USER_ACCESSIBILITY, {
+  updateUserAccessibility: async (request: Record<string, unknown>, sessionToken: string): Promise<unknown> => {
+    const result = await safeInvoke<unknown>(IPC_COMMANDS.UPDATE_USER_ACCESSIBILITY, {
       request: { ...request, session_token: sessionToken }
-    }),
+    });
+    invalidateUserSettingsCache(sessionToken);
+    return result;
+  },
 
-  updateUserNotifications: (request: Record<string, unknown>, sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.UPDATE_USER_NOTIFICATIONS, {
+  updateUserNotifications: async (request: Record<string, unknown>, sessionToken: string): Promise<unknown> => {
+    const result = await safeInvoke<unknown>(IPC_COMMANDS.UPDATE_USER_NOTIFICATIONS, {
       request: { ...request, session_token: sessionToken }
-    }),
+    });
+    invalidateUserSettingsCache(sessionToken);
+    return result;
+  },
 
-  changeUserPassword: (request: Record<string, unknown>, sessionToken: string): Promise<string> =>
-    safeInvoke<string>(IPC_COMMANDS.CHANGE_USER_PASSWORD, {
+  changeUserPassword: async (request: Record<string, unknown>, sessionToken: string): Promise<string> => {
+    const result = await safeInvoke<string>(IPC_COMMANDS.CHANGE_USER_PASSWORD, {
       request: { ...request, session_token: sessionToken }
-    }),
+    });
+    invalidateUserSettingsCache(sessionToken);
+    return result;
+  },
 
   // Security operations
   getActiveSessions: (sessionToken: string): Promise<unknown> =>
@@ -95,5 +121,31 @@ export const settingsOperations = {
   ): Promise<string> =>
     safeInvoke<string>(IPC_COMMANDS.UPLOAD_USER_AVATAR, {
       request: { avatar_data: fileData, mime_type: mimeType, session_token: sessionToken }
+    }).then((result) => {
+      invalidateUserSettingsCache(sessionToken);
+      return result;
+    }),
+
+  exportUserData: (sessionToken: string): Promise<Record<string, unknown>> =>
+    safeInvoke<Record<string, unknown>>(IPC_COMMANDS.EXPORT_USER_DATA, {
+      session_token: sessionToken
+    }),
+
+  deleteUserAccount: async (confirmation: string, sessionToken: string): Promise<string> => {
+    const result = await safeInvoke<string>(IPC_COMMANDS.DELETE_USER_ACCOUNT, {
+      request: { confirmation, session_token: sessionToken }
+    });
+    invalidateUserSettingsCache(sessionToken);
+    return result;
+  },
+
+  getDataConsent: (sessionToken: string): Promise<Record<string, unknown>> =>
+    safeInvoke<Record<string, unknown>>(IPC_COMMANDS.GET_DATA_CONSENT, {
+      session_token: sessionToken
+    }),
+
+  updateDataConsent: (request: Record<string, unknown>, sessionToken: string): Promise<Record<string, unknown>> =>
+    safeInvoke<Record<string, unknown>>(IPC_COMMANDS.UPDATE_DATA_CONSENT, {
+      request: { ...request, session_token: sessionToken }
     }),
 };

@@ -29,7 +29,7 @@ describe('ResultsTable', () => {
       metadata: {
         email: 'sophie.bernard@email.com',
         phone: '+33987654321',
-        totalTasks: 3,
+        totalTasks: '3',
       },
     },
   ];

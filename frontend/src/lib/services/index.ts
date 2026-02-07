@@ -4,7 +4,6 @@ export * from './entities/client.service';
 export * from './entities/task.service';
 export * from './entities/user.service';
 export * from './entities/settings.service';
-export * from './entities/settings-client.service';
 export * from './entities/configuration.service';
 export * from './entities/analytics.service';
 export * from './entities/task-photo.service';

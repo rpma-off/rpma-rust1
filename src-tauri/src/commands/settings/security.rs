@@ -82,10 +82,18 @@ pub async fn update_user_security(
 
     let user = authenticate_user(&request.session_token, &state)?;
 
-    let security_settings = UserSecuritySettings {
-        two_factor_enabled: request.two_factor_enabled.unwrap_or(false),
-        session_timeout: request.session_timeout.unwrap_or(60),
-    };
+    let mut security_settings: UserSecuritySettings = state
+        .settings_service
+        .get_user_settings(&user.id)
+        .map_err(|e| handle_settings_error(e, "Load user security settings"))?
+        .security;
+
+    if let Some(value) = request.two_factor_enabled {
+        security_settings.two_factor_enabled = value;
+    }
+    if let Some(value) = request.session_timeout {
+        security_settings.session_timeout = value;
+    }
 
     state
         .settings_service

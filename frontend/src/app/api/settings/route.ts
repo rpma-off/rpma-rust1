@@ -1,169 +1,103 @@
- import { NextRequest, NextResponse } from 'next/server';
- import { settingsService } from '@/lib/services/entities/settings.service';
- import { withAuth, NextRequestWithUser } from '@/lib/middleware/auth.middleware';
- import { UserSettings, UserPreferences, NotificationSettings, AccessibilitySettings, PerformanceSettings } from '@/types/settings.types';
+import { settingsService } from '@/lib/services/entities/settings.service';
+import type {
+  UpdateAccessibilityRequest,
+  UpdateNotificationsRequest,
+  UpdatePerformanceRequest,
+  UpdatePreferencesRequest,
+} from '@/lib/services/entities/settings.service';
+import { withAuth, NextRequestWithUser } from '@/lib/middleware/auth.middleware';
+import { settingsError, settingsSuccess } from './_shared';
 
- export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 
-// GET /api/settings - Get all user settings
-export const GET = withAuth(async (request: NextRequestWithUser, context: unknown) => {
+export const GET = withAuth(async (request: NextRequestWithUser) => {
   const { user, token } = request;
-  try {
-    const result = await settingsService.getUserSettings(user.id, token);
-    if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || 'Failed to get settings' },
-        { status: 500 }
-      );
-    }
-    return NextResponse.json({ settings: result.data });
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to get settings' },
-      { status: 500 }
-    );
+
+  const result = await settingsService.getUserSettings(user.id, token);
+  if (!result.success || !result.data) {
+    return settingsError(result.error || 'Failed to get settings');
   }
+
+  return settingsSuccess({ settings: result.data });
 }, 'all');
 
-// PUT /api/settings - Update user settings (bulk update)
-export const PUT = withAuth(async (request: NextRequestWithUser, context: unknown) => {
+export const PUT = withAuth(async (request: NextRequestWithUser) => {
   const { user, token } = request;
+
   try {
     const body = await request.json();
-    const { preferences, notifications, accessibility, performance } = body;
+    const { preferences, notifications, accessibility, performance } = body as Record<string, unknown>;
 
-    const results: Array<{
-      type: string;
-      success: boolean;
-      error?: string;
-      data?: UserSettings | UserPreferences | NotificationSettings | AccessibilitySettings | PerformanceSettings;
-    }> = [];
+    const updates: Array<{ section: string; success: boolean; error?: string }> = [];
 
-    // Update preferences if provided
     if (preferences) {
-      try {
-        const result = await settingsService.updatePreferences(user.id, preferences);
-        if (result.success) {
-          results.push({
-            type: 'preferences',
-            success: true,
-            data: result.data
-          });
-        } else {
-          results.push({
-            type: 'preferences',
-            success: false,
-            error: result.error || 'Update failed'
-          });
-        }
-      } catch (error) {
-        results.push({
-          type: 'preferences',
-          success: false,
-          error: error instanceof Error ? error.message : 'Update failed'
-        });
-      }
-    }
-
-    // Update notifications if provided
-    if (notifications) {
-      try {
-        const result = await settingsService.updateNotifications(user.id, notifications, token);
-        if (result.success) {
-          results.push({
-            type: 'notifications',
-            success: true,
-            data: result.data
-          });
-        } else {
-          results.push({
-            type: 'notifications',
-            success: false,
-            error: result.error || 'Update failed'
-          });
-        }
-      } catch (error) {
-        results.push({
-          type: 'notifications',
-          success: false,
-          error: error instanceof Error ? error.message : 'Update failed'
-        });
-      }
-    }
-
-    // Update accessibility if provided
-    if (accessibility) {
-      try {
-        const result = await settingsService.updateAccessibility(user.id, accessibility);
-        if (result.success) {
-          results.push({
-            type: 'accessibility',
-            success: true,
-            data: result.data
-          });
-        } else {
-          results.push({
-            type: 'accessibility',
-            success: false,
-            error: result.error || 'Update failed'
-          });
-        }
-      } catch (error) {
-        results.push({
-          type: 'accessibility',
-          success: false,
-          error: error instanceof Error ? error.message : 'Update failed'
-        });
-      }
-    }
-
-    // Update performance if provided
-    if (performance) {
-      try {
-        const result = await settingsService.updatePerformance(user.id, performance);
-        if (result.success) {
-          results.push({
-            type: 'performance',
-            success: true,
-            data: result.data
-          });
-        } else {
-          results.push({
-            type: 'performance',
-            success: false,
-            error: result.error || 'Update failed'
-          });
-        }
-      } catch (error) {
-        results.push({
-          type: 'performance',
-          success: false,
-          error: error instanceof Error ? error.message : 'Update failed'
-        });
-      }
-    }
-
-    // Check if any updates failed
-    const failedUpdates = results.filter(result => !result.success);
-    if (failedUpdates.length > 0) {
-      return NextResponse.json(
-        {
-          error: 'Some updates failed',
-          details: failedUpdates
-        },
-        { status: 400 }
+      const result = await settingsService.updatePreferences(
+        user.id,
+        preferences as UpdatePreferencesRequest,
+        token
       );
+      updates.push({
+        section: 'preferences',
+        success: result.success,
+        error: result.success ? undefined : result.error,
+      });
     }
 
-    return NextResponse.json({
+    if (notifications) {
+      const result = await settingsService.updateNotifications(
+        user.id,
+        notifications as UpdateNotificationsRequest,
+        token
+      );
+      updates.push({
+        section: 'notifications',
+        success: result.success,
+        error: result.success ? undefined : result.error,
+      });
+    }
+
+    if (accessibility) {
+      const result = await settingsService.updateAccessibility(
+        user.id,
+        accessibility as UpdateAccessibilityRequest,
+        token
+      );
+      updates.push({
+        section: 'accessibility',
+        success: result.success,
+        error: result.success ? undefined : result.error,
+      });
+    }
+
+    if (performance) {
+      const result = await settingsService.updatePerformance(
+        user.id,
+        performance as UpdatePerformanceRequest,
+        token
+      );
+      updates.push({
+        section: 'performance',
+        success: result.success,
+        error: result.success ? undefined : result.error,
+      });
+    }
+
+    const failed = updates.filter((item) => !item.success);
+    if (failed.length > 0) {
+      return settingsError('Some settings updates failed', 400, { updates });
+    }
+
+    const refreshed = await settingsService.getUserSettings(user.id, token);
+    if (!refreshed.success || !refreshed.data) {
+      return settingsError(refreshed.error || 'Settings updated but failed to reload');
+    }
+
+    return settingsSuccess({
       message: 'Settings updated successfully',
-      results
+      updates,
+      settings: refreshed.data,
     });
   } catch (error) {
-    console.error('Error in PUT /api/settings:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return settingsError(error instanceof Error ? error.message : 'Invalid request body', 400);
   }
 }, 'all');

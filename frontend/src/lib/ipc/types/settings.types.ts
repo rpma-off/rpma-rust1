@@ -1,2 +1,2 @@
 // Settings-related types
-export type { UserSettings } from '@/types/settings.types';
+export type { UserSettings } from '@/lib/backend';

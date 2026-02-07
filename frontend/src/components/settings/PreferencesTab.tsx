@@ -5,12 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import {
   Bell,
   Monitor,
@@ -21,8 +16,6 @@ import {
   CheckCircle,
   Moon,
   Sun,
-  Eye,
-  Volume2,
   Languages
 } from 'lucide-react';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -30,26 +23,20 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useLogger } from '@/hooks/useLogger';
 import { LogDomain } from '@/lib/logging/types';
 import { ipcClient } from '@/lib/ipc';
-import { UserSession } from '@/lib/backend';
-import { UserAccount } from '@/types';
 import {
-  updatePreferencesRequestSchema,
-  updateNotificationsRequestSchema,
-  updateAccessibilityRequestSchema,
-  updatePerformanceRequestSchema,
-  UpdatePreferencesRequestValidation,
-  UpdateNotificationsRequestValidation,
-  UpdateAccessibilityRequestValidation,
-  UpdatePerformanceRequestValidation
-} from '@/lib/validation/settings-schemas';
+  UserSession,
+  UserPreferences,
+  UserNotificationSettings,
+  UserAccessibilitySettings,
+} from '@/lib/backend';
+import { UserAccount } from '@/types';
 import { SettingsErrorHandler } from '@/lib/utils/settings-error-handler';
 
 // Combined form data type for all preference sections
 type PreferencesFormData = {
-  preferences: UpdatePreferencesRequestValidation;
-  notifications: UpdateNotificationsRequestValidation;
-  accessibility: UpdateAccessibilityRequestValidation;
-  performance: UpdatePerformanceRequestValidation;
+  preferences: UserPreferences;
+  notifications: UserNotificationSettings;
+  accessibility: UserAccessibilitySettings;
 };
 
 interface PreferencesSettingsTabProps {
@@ -57,7 +44,7 @@ interface PreferencesSettingsTabProps {
   profile?: UserAccount;
 }
 
-export function PreferencesTab({ user, profile }: PreferencesSettingsTabProps) {
+export function PreferencesTab({ user }: PreferencesSettingsTabProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -71,42 +58,53 @@ export function PreferencesTab({ user, profile }: PreferencesSettingsTabProps) {
   const form = useForm<PreferencesFormData>({
     defaultValues: {
       preferences: {
+        email_notifications: true,
+        push_notifications: true,
+        task_assignments: true,
+        task_updates: true,
+        system_alerts: true,
+        weekly_reports: false,
         theme: 'system',
         language: 'fr',
-        dateFormat: 'dd/MM/yyyy',
-        timeFormat: '24h',
+        date_format: 'DD/MM/YYYY',
+        time_format: '24h',
+        high_contrast: false,
+        large_text: false,
+        reduce_motion: false,
+        screen_reader: false,
+        auto_refresh: true,
+        refresh_interval: 60,
       },
       notifications: {
-        email: true,
-        push: true,
-        frequency: 'immediate',
-        events: {
-          taskUpdates: true,
-          statusChanges: true,
-          overdueWarnings: true,
-          systemAlerts: true,
-          newAssignments: true,
-          deadlineReminders: true,
-        },
+        email_enabled: true,
+        push_enabled: true,
+        in_app_enabled: true,
+        task_assigned: true,
+        task_updated: true,
+        task_completed: false,
+        task_overdue: true,
+        system_alerts: true,
+        maintenance: false,
+        security_alerts: true,
+        quiet_hours_enabled: false,
+        quiet_hours_start: '22:00',
+        quiet_hours_end: '08:00',
+        digest_frequency: 'never',
+        batch_notifications: false,
+        sound_enabled: true,
+        sound_volume: 70,
       },
       accessibility: {
-        highContrast: false,
-        largeText: false,
-        reducedMotion: false,
-        screenReader: false,
-        keyboardNavigation: false,
-        colorBlindness: 'none',
-        focusIndicators: false,
-      },
-      performance: {
-        autoRefresh: true,
-        refreshInterval: 60,
-        lazyLoading: true,
-        virtualScrolling: true,
-        chartAnimations: true,
-        realTimeUpdates: true,
-        dataCaching: true,
-        lowBandwidthMode: false,
+        high_contrast: false,
+        large_text: false,
+        reduce_motion: false,
+        screen_reader: false,
+        focus_indicators: true,
+        keyboard_navigation: true,
+        text_to_speech: false,
+        speech_rate: 1,
+        font_size: 16,
+        color_blind_mode: 'none',
       },
     },
   });
@@ -118,11 +116,15 @@ export function PreferencesTab({ user, profile }: PreferencesSettingsTabProps) {
 
       setIsLoading(true);
       try {
-        const preferences = await ipcClient.settings.getUserSettings(user.token);
+        const settings = await ipcClient.settings.getUserSettings(user.token);
 
         // Apply loaded preferences to form
-        if (preferences) {
-          form.reset(preferences as Record<string, unknown>);
+        if (settings) {
+          form.reset({
+            preferences: settings.preferences,
+            notifications: settings.notifications,
+            accessibility: settings.accessibility,
+          });
         }
 
         logInfo('Preferences loaded successfully', { userId: user.user_id });
@@ -157,28 +159,27 @@ export function PreferencesTab({ user, profile }: PreferencesSettingsTabProps) {
     try {
       // Update each settings section individually
       const updatePromises = [];
+      const dirtyFields = form.formState.dirtyFields as {
+        preferences?: Record<string, unknown>;
+        notifications?: Record<string, unknown>;
+        accessibility?: Record<string, unknown>;
+      };
 
-      if (Object.keys(data.preferences).length > 0) {
+      if (dirtyFields.preferences && Object.keys(dirtyFields.preferences).length > 0) {
         updatePromises.push(
           ipcClient.settings.updateUserPreferences(data.preferences, user.token)
         );
       }
 
-      if (Object.keys(data.notifications).length > 0) {
+      if (dirtyFields.notifications && Object.keys(dirtyFields.notifications).length > 0) {
         updatePromises.push(
           ipcClient.settings.updateUserNotifications(data.notifications, user.token)
         );
       }
 
-      if (Object.keys(data.accessibility).length > 0) {
+      if (dirtyFields.accessibility && Object.keys(dirtyFields.accessibility).length > 0) {
         updatePromises.push(
           ipcClient.settings.updateUserAccessibility(data.accessibility, user.token)
-        );
-      }
-
-      if (Object.keys(data.performance).length > 0) {
-        updatePromises.push(
-          ipcClient.settings.updateUserPerformance(data.performance, user.token)
         );
       }
 
@@ -253,7 +254,7 @@ export function PreferencesTab({ user, profile }: PreferencesSettingsTabProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
-                  name="notifications.email"
+                  name="notifications.email_enabled"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
@@ -274,7 +275,7 @@ export function PreferencesTab({ user, profile }: PreferencesSettingsTabProps) {
 
                 <FormField
                   control={form.control}
-                  name="notifications.push"
+                  name="notifications.push_enabled"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
@@ -295,7 +296,7 @@ export function PreferencesTab({ user, profile }: PreferencesSettingsTabProps) {
 
                 <FormField
                   control={form.control}
-                  name="notifications.events.newAssignments"
+                  name="notifications.task_assigned"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
@@ -316,7 +317,7 @@ export function PreferencesTab({ user, profile }: PreferencesSettingsTabProps) {
 
                 <FormField
                   control={form.control}
-                  name="notifications.events.taskUpdates"
+                  name="notifications.task_updated"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
@@ -337,7 +338,7 @@ export function PreferencesTab({ user, profile }: PreferencesSettingsTabProps) {
 
                 <FormField
                   control={form.control}
-                  name="notifications.events.systemAlerts"
+                  name="notifications.system_alerts"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
@@ -358,7 +359,7 @@ export function PreferencesTab({ user, profile }: PreferencesSettingsTabProps) {
 
                 <FormField
                   control={form.control}
-                  name="notifications.email"
+                  name="preferences.weekly_reports"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
@@ -471,7 +472,7 @@ export function PreferencesTab({ user, profile }: PreferencesSettingsTabProps) {
 
                 <FormField
                   control={form.control}
-                  name="preferences.dateFormat"
+                  name="preferences.date_format"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Format de date</FormLabel>
@@ -497,7 +498,7 @@ export function PreferencesTab({ user, profile }: PreferencesSettingsTabProps) {
 
                 <FormField
                   control={form.control}
-                  name="preferences.timeFormat"
+                  name="preferences.time_format"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Format d&apos;heure</FormLabel>
@@ -538,7 +539,7 @@ export function PreferencesTab({ user, profile }: PreferencesSettingsTabProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
-                  name="accessibility.highContrast"
+                  name="accessibility.high_contrast"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
@@ -559,7 +560,7 @@ export function PreferencesTab({ user, profile }: PreferencesSettingsTabProps) {
 
                 <FormField
                   control={form.control}
-                  name="accessibility.largeText"
+                  name="accessibility.large_text"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
@@ -580,7 +581,7 @@ export function PreferencesTab({ user, profile }: PreferencesSettingsTabProps) {
 
                 <FormField
                   control={form.control}
-                  name="accessibility.reducedMotion"
+                  name="accessibility.reduce_motion"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
@@ -601,7 +602,7 @@ export function PreferencesTab({ user, profile }: PreferencesSettingsTabProps) {
 
                 <FormField
                   control={form.control}
-                  name="accessibility.screenReader"
+                  name="accessibility.screen_reader"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
@@ -638,7 +639,7 @@ export function PreferencesTab({ user, profile }: PreferencesSettingsTabProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
-                  name="performance.autoRefresh"
+                  name="preferences.auto_refresh"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
@@ -659,7 +660,7 @@ export function PreferencesTab({ user, profile }: PreferencesSettingsTabProps) {
 
                 <FormField
                   control={form.control}
-                  name="performance.refreshInterval"
+                  name="preferences.refresh_interval"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Intervalle d&apos;actualisation (secondes)</FormLabel>

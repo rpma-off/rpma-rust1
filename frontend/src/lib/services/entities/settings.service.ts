@@ -1,141 +1,276 @@
 import { ipcClient } from '@/lib/ipc';
 import type {
-  AppSettings,
-  GeneralSettings,
-  SecuritySettings,
-  NotificationSettings as BackendNotificationSettings,
-  AppearanceSettings,
-  DataManagementSettings,
-  DatabaseSettings,
-  IntegrationSettings,
-  PerformanceSettings as BackendPerformanceSettings,
-  BackupSettings,
-  DiagnosticSettings,
-  SystemConfiguration,
-} from '@/lib/backend';
-import type {
   UserSettings,
-  UpdatePreferencesRequest,
-  UpdateNotificationsRequest,
-  UpdateAccessibilityRequest,
-  UpdatePerformanceRequest,
-  UpdateProfileRequest,
-  ChangePasswordRequest,
-  ApiResponse
-} from '@/types/settings.types';
-import { notificationService, NotificationConfig } from '@/lib/services/notifications.service';
+  UserPreferences,
+  UserNotificationSettings,
+  UserAccessibilitySettings,
+  UserPerformanceSettings,
+  UserProfileSettings,
+} from '@/lib/backend';
 
-// Settings service class
+export interface SettingsServiceResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
+export type UpdatePreferencesRequest = Partial<UserPreferences>;
+export type UpdateNotificationsRequest = Partial<UserNotificationSettings>;
+export type UpdateAccessibilityRequest = Partial<UserAccessibilitySettings>;
+export type UpdatePerformanceRequest = Partial<UserPerformanceSettings>;
+export type UpdateProfileRequest = Partial<UserProfileSettings> & {
+  first_name?: string;
+  last_name?: string;
+  profile_picture?: string;
+};
+
+export interface ChangePasswordRequest {
+  current_password?: string;
+  new_password?: string;
+  confirm_password?: string;
+  currentPassword?: string;
+  newPassword?: string;
+  confirmPassword?: string;
+}
+
+const DEFAULT_PREFERENCES: UserPreferences = {
+  email_notifications: true,
+  push_notifications: true,
+  task_assignments: true,
+  task_updates: true,
+  system_alerts: true,
+  weekly_reports: false,
+  theme: 'system',
+  language: 'fr',
+  date_format: 'DD/MM/YYYY',
+  time_format: '24h',
+  high_contrast: false,
+  large_text: false,
+  reduce_motion: false,
+  screen_reader: false,
+  auto_refresh: true,
+  refresh_interval: 60,
+};
+
+const DEFAULT_ACCESSIBILITY: UserAccessibilitySettings = {
+  high_contrast: false,
+  large_text: false,
+  reduce_motion: false,
+  screen_reader: false,
+  focus_indicators: true,
+  keyboard_navigation: true,
+  text_to_speech: false,
+  speech_rate: 1,
+  font_size: 16,
+  color_blind_mode: 'none',
+};
+
+const DEFAULT_NOTIFICATIONS: UserNotificationSettings = {
+  email_enabled: true,
+  push_enabled: true,
+  in_app_enabled: true,
+  task_assigned: true,
+  task_updated: true,
+  task_completed: false,
+  task_overdue: true,
+  system_alerts: true,
+  maintenance: false,
+  security_alerts: true,
+  quiet_hours_enabled: false,
+  quiet_hours_start: '22:00',
+  quiet_hours_end: '08:00',
+  digest_frequency: 'never',
+  batch_notifications: false,
+  sound_enabled: true,
+  sound_volume: 70,
+};
+
+const DEFAULT_PERFORMANCE: UserPerformanceSettings = {
+  cache_enabled: true,
+  cache_size: 100,
+  offline_mode: false,
+  sync_on_startup: true,
+  background_sync: true,
+  image_compression: true,
+  preload_data: false,
+};
+
+function ok<T>(data: T): SettingsServiceResponse<T> {
+  return { success: true, data };
+}
+
+function fail<T>(error: unknown, fallback: string): SettingsServiceResponse<T> {
+  return {
+    success: false,
+    error: error instanceof Error ? error.message : fallback,
+  };
+}
+
+function requireToken(sessionToken?: string): string {
+  if (!sessionToken) {
+    throw new Error('Missing session token');
+  }
+  return sessionToken;
+}
+
+function normalizePasswordRequest(data: ChangePasswordRequest): { current_password: string; new_password: string } {
+  const currentPassword = data.current_password ?? data.currentPassword ?? '';
+  const newPassword = data.new_password ?? data.newPassword ?? '';
+  const confirmPassword = data.confirm_password ?? data.confirmPassword ?? undefined;
+
+  if (!currentPassword || !newPassword) {
+    throw new Error('Current password and new password are required');
+  }
+  if (confirmPassword && confirmPassword !== newPassword) {
+    throw new Error('New password and confirmation do not match');
+  }
+
+  return {
+    current_password: currentPassword,
+    new_password: newPassword,
+  };
+}
+
 export class SettingsService {
-  static async getUserSettings(userId: string, sessionToken?: string): Promise<ApiResponse<UserSettings>> {
+  static async getUserSettings(userId: string, sessionToken?: string): Promise<SettingsServiceResponse<UserSettings>> {
+    void userId;
     try {
-      const settings = await ipcClient.settings.getAppSettings(sessionToken) as AppSettings;
-      // Helper to convert null to undefined
-      const nullToUndefined = <T>(value: T | null): T | undefined => value ?? undefined;
-
-      // Map backend settings to frontend format
-      const userSettings: UserSettings = {
-        preferences: {
-          theme: 'light', // Default, would be stored per user
-          language: nullToUndefined(settings.general.language),
-          timezone: nullToUndefined(settings.general.timezone)
-        },
-        notifications: {
-          email: nullToUndefined(settings.notifications.email_notifications),
-          push: nullToUndefined(settings.notifications.push_notifications),
-          sms: nullToUndefined(settings.notifications.sms_notifications)
-        },
-        accessibility: {
-          fontSize: 'medium',
-          highContrast: false,
-          screenReader: false
-        },
-        performance: {
-          animationsEnabled: true,
-          autoRefresh: true
-        }
-      };
-      return { success: true, data: userSettings };
+      const token = requireToken(sessionToken);
+      const settings = await ipcClient.settings.getUserSettings(token);
+      return ok(settings);
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to get user settings'
-      };
+      return fail(error, 'Failed to get user settings');
     }
   }
 
-  static async updatePreferences(userId: string, data: UpdatePreferencesRequest): Promise<ApiResponse<UserSettings>> {
-    // Implementation
-    throw new Error('Not implemented');
-  }
-
-  static async updateNotifications(userId: string, data: UpdateNotificationsRequest, sessionToken: string): Promise<ApiResponse<UserSettings>> {
+  static async updatePreferences(
+    userId: string,
+    data: UpdatePreferencesRequest,
+    sessionToken?: string
+  ): Promise<SettingsServiceResponse<UserSettings>> {
+    void userId;
     try {
-      // Map frontend format to backend format
-      const backendRequest = {
-        push_notifications: data.push,
-        email_notifications: data.email,
-        sms_notifications: data.sms,
-        task_assignments: data.events?.newAssignments,
-        task_completions: data.events?.taskUpdates, // Map appropriately
-        system_alerts: data.events?.systemAlerts,
-        daily_digest: data.frequency === 'daily'
-      };
-
-      await ipcClient.settings.updateNotificationSettings(backendRequest, sessionToken) as BackendNotificationSettings;
-
-      // Return updated settings
-      return this.getUserSettings(userId);
+      const token = requireToken(sessionToken);
+      await ipcClient.settings.updateUserPreferences(data, token);
+      return this.getUserSettings(userId, token);
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to update notifications'
-      };
+      return fail(error, 'Failed to update preferences');
     }
   }
 
-  static async initializeNotificationService(config: NotificationConfig, sessionToken: string): Promise<ApiResponse<void>> {
+  static async updateNotifications(
+    userId: string,
+    data: UpdateNotificationsRequest,
+    sessionToken?: string
+  ): Promise<SettingsServiceResponse<UserSettings>> {
+    void userId;
     try {
-      await notificationService.initializeNotificationService(config, sessionToken);
-      return { success: true, data: undefined };
+      const token = requireToken(sessionToken);
+      await ipcClient.settings.updateUserNotifications(data, token);
+      return this.getUserSettings(userId, token);
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to initialize notification service'
-      };
+      return fail(error, 'Failed to update notifications');
     }
   }
 
-  static async updateAccessibility(userId: string, data: UpdateAccessibilityRequest): Promise<ApiResponse<UserSettings>> {
-    // Implementation
-    throw new Error('Not implemented');
+  static async updateAccessibility(
+    userId: string,
+    data: UpdateAccessibilityRequest,
+    sessionToken?: string
+  ): Promise<SettingsServiceResponse<UserSettings>> {
+    void userId;
+    try {
+      const token = requireToken(sessionToken);
+      await ipcClient.settings.updateUserAccessibility(data, token);
+      return this.getUserSettings(userId, token);
+    } catch (error) {
+      return fail(error, 'Failed to update accessibility settings');
+    }
   }
 
-  static async updatePerformance(userId: string, data: UpdatePerformanceRequest): Promise<ApiResponse<UserSettings>> {
-    // Implementation
-    throw new Error('Not implemented');
+  static async updatePerformance(
+    userId: string,
+    data: UpdatePerformanceRequest,
+    sessionToken?: string
+  ): Promise<SettingsServiceResponse<UserSettings>> {
+    void userId;
+    try {
+      const token = requireToken(sessionToken);
+      await ipcClient.settings.updateUserPerformance(data, token);
+      return this.getUserSettings(userId, token);
+    } catch (error) {
+      return fail(error, 'Failed to update performance settings');
+    }
   }
 
-  static async updateProfile(userId: string, data: UpdateProfileRequest): Promise<ApiResponse<UserSettings>> {
-    // Implementation
-    throw new Error('Not implemented');
+  static async updateProfile(
+    userId: string,
+    data: UpdateProfileRequest,
+    sessionToken?: string
+  ): Promise<SettingsServiceResponse<UserSettings>> {
+    void userId;
+    try {
+      const token = requireToken(sessionToken);
+      const profilePayload: Record<string, unknown> = {
+        ...data,
+      };
+
+      if (data.profile_picture && !data.avatar_url) {
+        profilePayload.avatar_url = data.profile_picture;
+      }
+
+      await ipcClient.settings.updateUserProfile(profilePayload, token);
+      return this.getUserSettings(userId, token);
+    } catch (error) {
+      return fail(error, 'Failed to update profile');
+    }
   }
 
-  static async changePassword(userId: string, data: ChangePasswordRequest): Promise<ApiResponse<void>> {
-    // Implementation
-    throw new Error('Not implemented');
+  static async changePassword(
+    userId: string,
+    data: ChangePasswordRequest,
+    sessionToken?: string
+  ): Promise<SettingsServiceResponse<void>> {
+    void userId;
+    try {
+      const token = requireToken(sessionToken);
+      const payload = normalizePasswordRequest(data);
+      await ipcClient.settings.changeUserPassword(payload, token);
+      return ok(undefined);
+    } catch (error) {
+      return fail(error, 'Failed to change password');
+    }
   }
 
-  static async resetSettings(userId: string): Promise<ApiResponse<UserSettings>> {
-    // Implementation
-    throw new Error('Not implemented');
+  static async resetSettings(userId: string, sessionToken?: string): Promise<SettingsServiceResponse<UserSettings>> {
+    void userId;
+    try {
+      const token = requireToken(sessionToken);
+      await Promise.all([
+        ipcClient.settings.updateUserPreferences(DEFAULT_PREFERENCES, token),
+        ipcClient.settings.updateUserNotifications(DEFAULT_NOTIFICATIONS, token),
+        ipcClient.settings.updateUserAccessibility(DEFAULT_ACCESSIBILITY, token),
+        ipcClient.settings.updateUserPerformance(DEFAULT_PERFORMANCE, token),
+      ]);
+      return this.getUserSettings(userId, token);
+    } catch (error) {
+      return fail(error, 'Failed to reset settings');
+    }
   }
 
-  static async exportUserData(userId: string): Promise<ApiResponse<Blob>> {
-    // Implementation
-    throw new Error('Not implemented');
+  static async exportUserData(
+    userId: string,
+    sessionToken?: string
+  ): Promise<SettingsServiceResponse<Record<string, unknown>>> {
+    void userId;
+    try {
+      const token = requireToken(sessionToken);
+      const data = await ipcClient.settings.exportUserData(token);
+      return ok(data);
+    } catch (error) {
+      return fail(error, 'Failed to export user data');
+    }
   }
 }
 
-// Export singleton instance
 export const settingsService = SettingsService;
