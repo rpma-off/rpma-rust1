@@ -608,16 +608,3 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
 
 // Export the secure client creator
 export const ipcClient = createSecureIpcClient(null);
-
-// Hook to use the secure IPC client with current user
-export async function useSecureIpcClient() {
-  // Import here to avoid circular dependencies
-  const { useAuth } = await import('@/contexts/AuthContext');
-  const { profile } = useAuth();
-  return createSecureIpcClient(profile as any);
-}
-
-// Type-safe hook for backward compatibility
-export function useIpcClient() {
-  return useSecureIpcClient();
-}

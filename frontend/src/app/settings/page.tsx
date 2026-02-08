@@ -363,7 +363,7 @@ export default function SettingsPage() {
                      <div className="flex items-center justify-center p-8 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
                        <div className="text-center">
                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--rpma-teal))] mx-auto mb-4"></div>
-                          <p className="text-muted-foreground">Chargement de l'accessibilité...</p>
+                          <p className="text-muted-foreground">Chargement de l&apos;accessibilité...</p>
                        </div>
                      </div>
                    }>

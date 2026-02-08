@@ -22,7 +22,12 @@ pub async fn get_task_completion_report(
     validation::validate_date_range(&date_range)?;
 
     // Generate report using service layer
-    crate::services::reports::task_report::generate_task_completion_report(&date_range, &filters, &state.db).await
+    crate::services::reports::task_report::generate_task_completion_report(
+        &date_range,
+        &filters,
+        &state.db,
+    )
+    .await
 }
 
 /// Generate technician performance report
@@ -38,7 +43,12 @@ pub async fn get_technician_performance_report(
     validation::validate_date_range(&date_range)?;
 
     // Generate report using service layer
-    crate::services::reports::technician_report::generate_technician_performance_report(&date_range, technician_id.as_deref(), &state.db).await
+    crate::services::reports::technician_report::generate_technician_performance_report(
+        &date_range,
+        technician_id.as_deref(),
+        &state.db,
+    )
+    .await
 }
 
 /// Generate client analytics report
@@ -54,7 +64,12 @@ pub async fn get_client_analytics_report(
     validation::validate_date_range(&date_range)?;
 
     // Generate report using service layer
-    crate::services::reports::client_report::generate_client_analytics_report(&date_range, &filters, &state.db).await
+    crate::services::reports::client_report::generate_client_analytics_report(
+        &date_range,
+        &filters,
+        &state.db,
+    )
+    .await
 }
 
 /// Generate quality compliance report
@@ -70,7 +85,12 @@ pub async fn get_quality_compliance_report(
     validation::validate_date_range(&date_range)?;
 
     // Generate report using service layer
-    crate::services::reports::quality_report::generate_quality_compliance_report(&date_range, &filters, &state.db).await
+    crate::services::reports::quality_report::generate_quality_compliance_report(
+        &date_range,
+        &filters,
+        &state.db,
+    )
+    .await
 }
 
 /// Generate material usage report
@@ -86,7 +106,12 @@ pub async fn get_material_usage_report(
     validation::validate_date_range(&date_range)?;
 
     // Generate report using service layer
-    crate::services::reports::material_report::generate_material_usage_report(&date_range, &filters, &state.db).await
+    crate::services::reports::material_report::generate_material_usage_report(
+        &date_range,
+        &filters,
+        &state.db,
+    )
+    .await
 }
 
 /// Generate geographic report
@@ -102,15 +127,17 @@ pub async fn get_geographic_report(
     validation::validate_date_range(&date_range)?;
 
     // Generate report using service layer
-    crate::services::reports::geographic_report::generate_geographic_report(&date_range, &filters, &state.db).await
+    crate::services::reports::geographic_report::generate_geographic_report(
+        &date_range,
+        &filters,
+        &state.db,
+    )
+    .await
 }
 
 /// Generate seasonal report
 #[instrument(skip(state))]
-pub async fn get_seasonal_report(
-    year: i32,
-    state: AppState<'_>,
-) -> AppResult<SeasonalReport> {
+pub async fn get_seasonal_report(year: i32, state: AppState<'_>) -> AppResult<SeasonalReport> {
     info!("Generating seasonal report for year: {}", year);
 
     // Validate year parameter
@@ -132,7 +159,12 @@ pub async fn get_operational_intelligence_report(
     validation::validate_date_range(&date_range)?;
 
     // Generate report using service layer
-    crate::services::reports::intelligence_report::generate_operational_intelligence_report(&date_range, &ReportFilters::default(), &state.db).await
+    crate::services::reports::intelligence_report::generate_operational_intelligence_report(
+        &date_range,
+        &ReportFilters::default(),
+        &state.db,
+    )
+    .await
 }
 
 /// Generate overview report (special case - combines multiple reports)
@@ -148,15 +180,58 @@ pub async fn get_overview_report(
     validation::validate_date_range(&date_range)?;
 
     // Generate all component reports using service layer
-    let task_completion = crate::services::reports::task_report::generate_task_completion_report(&date_range, &filters, &state.db).await?;
-    let technician_performance = crate::services::reports::technician_report::generate_technician_performance_report(&date_range, None, &state.db).await?;
-    let client_analytics = crate::services::reports::client_report::generate_client_analytics_report(&date_range, &filters, &state.db).await?;
-    let quality_compliance = crate::services::reports::quality_report::generate_quality_compliance_report(&date_range, &filters, &state.db).await?;
-    let material_usage = crate::services::reports::material_report::generate_material_usage_report(&date_range, &filters, &state.db).await?;
-    let geographic = crate::services::reports::geographic_report::generate_geographic_report(&date_range, &filters, &state.db).await?;
+    let task_completion = crate::services::reports::task_report::generate_task_completion_report(
+        &date_range,
+        &filters,
+        &state.db,
+    )
+    .await?;
+    let technician_performance =
+        crate::services::reports::technician_report::generate_technician_performance_report(
+            &date_range,
+            None,
+            &state.db,
+        )
+        .await?;
+    let client_analytics =
+        crate::services::reports::client_report::generate_client_analytics_report(
+            &date_range,
+            &filters,
+            &state.db,
+        )
+        .await?;
+    let quality_compliance =
+        crate::services::reports::quality_report::generate_quality_compliance_report(
+            &date_range,
+            &filters,
+            &state.db,
+        )
+        .await?;
+    let material_usage = crate::services::reports::material_report::generate_material_usage_report(
+        &date_range,
+        &filters,
+        &state.db,
+    )
+    .await?;
+    let geographic = crate::services::reports::geographic_report::generate_geographic_report(
+        &date_range,
+        &filters,
+        &state.db,
+    )
+    .await?;
     let seasonal_year = date_range.start.year();
-    let seasonal = crate::services::reports::seasonal_report::generate_seasonal_report(seasonal_year, &state.db).await?;
-    let operational_intelligence = crate::services::reports::intelligence_report::generate_operational_intelligence_report(&date_range, &ReportFilters::default(), &state.db).await?;
+    let seasonal = crate::services::reports::seasonal_report::generate_seasonal_report(
+        seasonal_year,
+        &state.db,
+    )
+    .await?;
+    let operational_intelligence =
+        crate::services::reports::intelligence_report::generate_operational_intelligence_report(
+            &date_range,
+            &ReportFilters::default(),
+            &state.db,
+        )
+        .await?;
 
     Ok(OverviewReport {
         task_completion,

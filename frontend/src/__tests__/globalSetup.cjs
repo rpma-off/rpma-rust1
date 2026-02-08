@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 // Jest global setup file
 
 module.exports = async () => {

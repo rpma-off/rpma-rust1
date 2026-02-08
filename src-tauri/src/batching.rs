@@ -84,13 +84,17 @@ impl BatchProcessor {
         Self {
             serializer: IpcSerializer::messagepack(), // Use MessagePack for better performance
             operation_registry: Arc::new(Mutex::new(HashMap::new())),
-            max_batch_size: 50, // Maximum operations per batch
+            max_batch_size: 50,          // Maximum operations per batch
             max_parallel_operations: 10, // Maximum parallel operations
         }
     }
 
     /// Create batch processor with custom settings
-    pub fn with_config(max_batch_size: usize, max_parallel_operations: usize, use_json: bool) -> Self {
+    pub fn with_config(
+        max_batch_size: usize,
+        max_parallel_operations: usize,
+        use_json: bool,
+    ) -> Self {
         Self {
             serializer: if use_json {
                 IpcSerializer::json()
@@ -125,9 +129,11 @@ impl BatchProcessor {
 
         // Execute operations
         let results = if request.parallel {
-            self.execute_parallel(operations, request.timeout_ms).await?
+            self.execute_parallel(operations, request.timeout_ms)
+                .await?
         } else {
-            self.execute_sequential(operations, request.timeout_ms).await?
+            self.execute_sequential(operations, request.timeout_ms)
+                .await?
         };
 
         let total_time = start_time.elapsed().as_nanos();
@@ -169,13 +175,14 @@ impl BatchProcessor {
     ) -> Result<Vec<BatchOperationResult>, BatchError> {
         use futures::stream::{self, StreamExt};
 
-        let results = stream::iter(operations)
-            .map(|operation| async move {
-                self.execute_single_operation(operation, timeout_ms).await
-            })
-            .buffer_unordered(self.max_parallel_operations)
-            .collect::<Vec<_>>()
-            .await;
+        let results =
+            stream::iter(operations)
+                .map(|operation| async move {
+                    self.execute_single_operation(operation, timeout_ms).await
+                })
+                .buffer_unordered(self.max_parallel_operations)
+                .collect::<Vec<_>>()
+                .await;
 
         // Collect results and handle errors
         let mut final_results = Vec::new();
@@ -196,15 +203,17 @@ impl BatchProcessor {
 
         // Get the operation handler
         let registry = self.operation_registry.lock().await;
-        let handler = registry.get(&operation.command)
+        let handler = registry
+            .get(&operation.command)
             .ok_or_else(|| BatchError::UnknownCommand(operation.command.clone()))?;
 
         // Execute with timeout if specified
         let result = if let Some(timeout) = timeout_ms {
             tokio::time::timeout(
                 std::time::Duration::from_millis(timeout),
-                handler.execute(&operation.args, &self.serializer)
-            ).await
+                handler.execute(&operation.args, &self.serializer),
+            )
+            .await
             .map_err(|_| BatchError::Timeout)?
         } else {
             handler.execute(&operation.args, &self.serializer).await
@@ -237,14 +246,19 @@ impl BatchProcessor {
         }
 
         if request.operations.len() > self.max_batch_size {
-            return Err(BatchError::BatchTooLarge(request.operations.len(), self.max_batch_size));
+            return Err(BatchError::BatchTooLarge(
+                request.operations.len(),
+                self.max_batch_size,
+            ));
         }
 
         // Check for duplicate operation IDs
         let mut seen_ids = std::collections::HashSet::new();
         for operation in &request.operations {
             if !seen_ids.insert(&operation.operation_id) {
-                return Err(BatchError::DuplicateOperationId(operation.operation_id.clone()));
+                return Err(BatchError::DuplicateOperationId(
+                    operation.operation_id.clone(),
+                ));
             }
         }
 
@@ -282,7 +296,11 @@ pub struct BatchProcessorStats {
 #[async_trait::async_trait]
 pub trait BatchOperationHandler: Send + Sync {
     /// Execute an operation with serialized arguments
-    async fn execute(&self, args: &str, serializer: &IpcSerializer) -> Result<String, Box<dyn std::error::Error + Send + Sync>>;
+    async fn execute(
+        &self,
+        args: &str,
+        serializer: &IpcSerializer,
+    ) -> Result<String, Box<dyn std::error::Error + Send + Sync>>;
 }
 
 /// Batch processing errors
@@ -343,12 +361,7 @@ pub mod utils {
     ) -> Result<Vec<BatchOperation>, BatchError> {
         let mut operations = Vec::new();
         for (i, (command, args, priority)) in command_args.into_iter().enumerate() {
-            let operation = create_operation(
-                format!("op_{}", i),
-                command,
-                args,
-                priority,
-            )?;
+            let operation = create_operation(format!("op_{}", i), command, args, priority)?;
             operations.push(operation);
         }
         Ok(operations)
@@ -366,7 +379,11 @@ mod tests {
 
     #[async_trait::async_trait]
     impl BatchOperationHandler for MockHandler {
-        async fn execute(&self, args: &str, serializer: &IpcSerializer) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
+        async fn execute(
+            &self,
+            args: &str,
+            serializer: &IpcSerializer,
+        ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
             self.call_count.fetch_add(1, Ordering::SeqCst);
 
             // Parse the args (expecting a simple string)
@@ -391,13 +408,19 @@ mod tests {
             BatchOperation {
                 operation_id: "op1".to_string(),
                 command: "test_command".to_string(),
-                args: processor.serializer.serialize_to_string(&"arg1".to_string()).unwrap(),
+                args: processor
+                    .serializer
+                    .serialize_to_string(&"arg1".to_string())
+                    .unwrap(),
                 priority: 1,
             },
             BatchOperation {
                 operation_id: "op2".to_string(),
                 command: "test_command".to_string(),
-                args: processor.serializer.serialize_to_string(&"arg2".to_string()).unwrap(),
+                args: processor
+                    .serializer
+                    .serialize_to_string(&"arg2".to_string())
+                    .unwrap(),
                 priority: 2,
             },
         ];

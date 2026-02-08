@@ -2,11 +2,11 @@
 //!
 //! This module handles task analytics and reporting operations.
 
-use crate::commands::{ApiResponse, AppError, AppState};
+use crate::authenticate;
 use crate::commands::task_types::TaskFilter;
+use crate::commands::{ApiResponse, AppError, AppState};
 use crate::services::task_statistics::TaskStatistics;
 use serde::Deserialize;
-use crate::authenticate;
 use tracing::{debug, info};
 
 /// Request for getting task statistics summary
@@ -54,13 +54,10 @@ pub async fn get_task_statistics(
     }
 
     // Get statistics from service
-    let stats = state
-        .task_service
-        .get_task_statistics()
-        .map_err(|e| {
-            debug!("Failed to get task statistics: {}", e);
-            AppError::Database(format!("Failed to retrieve statistics: {}", e))
-        })?;
+    let stats = state.task_service.get_task_statistics().map_err(|e| {
+        debug!("Failed to get task statistics: {}", e);
+        AppError::Database(format!("Failed to retrieve statistics: {}", e))
+    })?;
 
     info!("Retrieved comprehensive task statistics");
 
@@ -77,11 +74,16 @@ pub fn calculate_completion_rate(stats: &TaskStatistics) -> f64 {
 }
 
 /// Calculate task efficiency metrics
-pub fn calculate_efficiency_metrics(stats: &TaskStatistics) -> std::collections::HashMap<String, f64> {
+pub fn calculate_efficiency_metrics(
+    stats: &TaskStatistics,
+) -> std::collections::HashMap<String, f64> {
     let mut metrics = std::collections::HashMap::new();
 
     // Completion rate
-    metrics.insert("completion_rate".to_string(), calculate_completion_rate(stats));
+    metrics.insert(
+        "completion_rate".to_string(),
+        calculate_completion_rate(stats),
+    );
 
     // On-time completion rate (simplified - would need actual on-time tracking)
     // Note: on_time_completed field doesn't exist in TaskStatistics
@@ -138,7 +140,10 @@ pub fn generate_performance_insights(stats: &TaskStatistics) -> Vec<String> {
 }
 
 /// Calculate productivity trends
-pub fn calculate_productivity_trends(current_stats: &TaskStatistics, previous_stats: Option<&TaskStatistics>) -> std::collections::HashMap<String, f64> {
+pub fn calculate_productivity_trends(
+    current_stats: &TaskStatistics,
+    previous_stats: Option<&TaskStatistics>,
+) -> std::collections::HashMap<String, f64> {
     let mut trends = std::collections::HashMap::new();
 
     if let Some(prev) = previous_stats {

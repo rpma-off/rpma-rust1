@@ -279,7 +279,9 @@ pub async fn user_crud(
 
             // Use UserService to change role
             let user_service = crate::services::UserService::new(state.repositories.user.clone());
-            user_service.change_role(&id, new_role, &current_user.user_id).await?;
+            user_service
+                .change_role(&id, new_role, &current_user.user_id)
+                .await?;
 
             info!("Role changed successfully for user {}", id);
             Ok(ApiResponse::success(UserResponse::RoleChanged))

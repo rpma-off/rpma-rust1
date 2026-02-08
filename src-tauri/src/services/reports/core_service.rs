@@ -3,24 +3,19 @@
 //! This service provides a unified interface for all report generation operations.
 //! Individual report logic has been split into specialized modules for better maintainability.
 
-use crate::commands::{AppResult, AppError};
+use crate::commands::{AppError, AppResult};
 use crate::db::Database;
 use crate::models::reports::*;
 
 // Import specialized report generators
 use crate::services::reports::{
-    overview_orchestrator::{generate_overview_report, get_intervention_with_details as get_intervention_details, get_entity_counts as get_entity_counts_fn},
-    task_report,
-    technician_report,
-    client_report,
-    quality_report,
-    material_report,
-    geographic_report,
-    seasonal_report,
-    intelligence_report,
+    client_report, geographic_report, intelligence_report, material_report,
+    overview_orchestrator::{
+        generate_overview_report, get_entity_counts as get_entity_counts_fn,
+        get_intervention_with_details as get_intervention_details,
+    },
+    quality_report, seasonal_report, task_report, technician_report,
 };
-
-
 
 /// Custom error type for report operations
 #[derive(Debug, thiserror::Error)]
@@ -46,11 +41,8 @@ impl From<ReportError> for AppError {
     }
 }
 
-
-
 /// Core report service for data retrieval operations
-#[derive(Clone)]
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct CoreReportService;
 
 impl CoreReportService {
@@ -73,7 +65,8 @@ impl CoreReportService {
         technician_id: Option<&str>,
         db: &Database,
     ) -> AppResult<TechnicianPerformanceReport> {
-        technician_report::generate_technician_performance_report(date_range, technician_id, db).await
+        technician_report::generate_technician_performance_report(date_range, technician_id, db)
+            .await
     }
 
     /// Generate client analytics report (delegates to specialized module)

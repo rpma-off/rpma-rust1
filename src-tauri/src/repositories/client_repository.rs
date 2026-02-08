@@ -4,8 +4,8 @@
 
 use crate::db::Database;
 use crate::models::client::{Client, CustomerType};
-use crate::repositories::base::{Repository, RepoError, RepoResult};
-use crate::repositories::cache::{Cache, CacheKeyBuilder, ttl};
+use crate::repositories::base::{RepoError, RepoResult, Repository};
+use crate::repositories::cache::{ttl, Cache, CacheKeyBuilder};
 use async_trait::async_trait;
 use rusqlite::params;
 use std::sync::Arc;
@@ -73,19 +73,26 @@ impl ClientQuery {
 
     fn validate_sort_column(sort_by: &str) -> Result<String, RepoError> {
         let allowed_columns = [
-            "created_at", "updated_at", "name", "email", "phone",
-            "customer_type", "city", "total_tasks", "active_tasks", "completed_tasks"
+            "created_at",
+            "updated_at",
+            "name",
+            "email",
+            "phone",
+            "customer_type",
+            "city",
+            "total_tasks",
+            "active_tasks",
+            "completed_tasks",
         ];
-        allowed_columns.iter()
+        allowed_columns
+            .iter()
             .find(|&&col| col == sort_by)
             .map(|s| s.to_string())
             .ok_or_else(|| RepoError::Validation(format!("Invalid sort column: {}", sort_by)))
     }
 
     fn build_order_by_clause(&self) -> Result<String, RepoError> {
-        let sort_by = Self::validate_sort_column(
-            self.sort_by.as_deref().unwrap_or("created_at")
-        )?;
+        let sort_by = Self::validate_sort_column(self.sort_by.as_deref().unwrap_or("created_at"))?;
         let sort_order = match self.sort_order.as_deref() {
             Some("ASC") => "ASC",
             Some("DESC") => "DESC",
@@ -148,8 +155,7 @@ impl ClientRepository {
             .map_err(|e| RepoError::Database(format!("Failed to find client by email: {}", e)))?;
 
         if let Some(ref client) = client {
-            self.cache
-                .set(&cache_key, client.clone(), ttl::MEDIUM);
+            self.cache.set(&cache_key, client.clone(), ttl::MEDIUM);
         }
 
         Ok(client)
@@ -183,8 +189,7 @@ impl ClientRepository {
             .map_err(|e| RepoError::Database(format!("Failed to find client by phone: {}", e)))?;
 
         if let Some(ref client) = client {
-            self.cache
-                .set(&cache_key, client.clone(), ttl::MEDIUM);
+            self.cache.set(&cache_key, client.clone(), ttl::MEDIUM);
         }
 
         Ok(client)
@@ -222,17 +227,14 @@ impl ClientRepository {
             )
             .map_err(|e| RepoError::Database(format!("Failed to find clients by type: {}", e)))?;
 
-        self.cache
-            .set(&cache_key, clients.clone(), ttl::MEDIUM);
+        self.cache.set(&cache_key, clients.clone(), ttl::MEDIUM);
 
         Ok(clients)
     }
 
     /// Search clients
     pub async fn search(&self, query: ClientQuery) -> RepoResult<Vec<Client>> {
-        let cache_key = self.cache_key_builder.query(&[
-            &format!("{:?}", query),
-        ]);
+        let cache_key = self.cache_key_builder.query(&[&format!("{:?}", query)]);
 
         if let Some(clients) = self.cache.get::<Vec<Client>>(&cache_key) {
             return Ok(clients);
@@ -270,8 +272,7 @@ impl ClientRepository {
             .query_as::<Client>(&sql, rusqlite::params_from_iter(params_vec.iter()))
             .map_err(|e| RepoError::Database(format!("Failed to search clients: {}", e)))?;
 
-        self.cache
-            .set(&cache_key, clients.clone(), ttl::SHORT);
+        self.cache.set(&cache_key, clients.clone(), ttl::SHORT);
 
         Ok(clients)
     }
@@ -339,47 +340,62 @@ impl ClientRepository {
     /// Count all clients
     pub async fn count_all(&self) -> RepoResult<i64> {
         let cache_key = self.cache_key_builder.query(&["count_all"]);
-        
+
         if let Some(count) = self.cache.get::<i64>(&cache_key) {
             return Ok(count);
         }
-        
-        let count = self.db
+
+        let count = self
+            .db
             .query_single_value::<i64>("SELECT COUNT(*) FROM clients WHERE deleted_at IS NULL", [])
             .map_err(|e| RepoError::Database(format!("Failed to count clients: {}", e)))?;
-            
+
         self.cache.set(&cache_key, count, ttl::MEDIUM);
         Ok(count)
     }
 
     /// Count clients by customer type
     pub async fn count_by_customer_type(&self, customer_type: &CustomerType) -> RepoResult<i64> {
-        let cache_key = self.cache_key_builder.query(&["count_by_type", &customer_type.to_string()]);
-        
+        let cache_key = self
+            .cache_key_builder
+            .query(&["count_by_type", &customer_type.to_string()]);
+
         if let Some(count) = self.cache.get::<i64>(&cache_key) {
             return Ok(count);
         }
-        
-        let count = self.db
+
+        let count = self
+            .db
             .query_single_value::<i64>(
                 "SELECT COUNT(*) FROM clients WHERE customer_type = ? AND deleted_at IS NULL",
-                params![customer_type.to_string()]
+                params![customer_type.to_string()],
             )
             .map_err(|e| RepoError::Database(format!("Failed to count clients by type: {}", e)))?;
-            
+
         self.cache.set(&cache_key, count, ttl::MEDIUM);
         Ok(count)
     }
 
     /// Search clients with simple string query (for backward compatibility)
-    pub async fn search_simple(&self, query: &str, limit: usize, offset: usize) -> RepoResult<Vec<Client>> {
-        let cache_key = self.cache_key_builder.query(&["search", query, &limit.to_string(), &offset.to_string()]);
-        
+    pub async fn search_simple(
+        &self,
+        query: &str,
+        limit: usize,
+        offset: usize,
+    ) -> RepoResult<Vec<Client>> {
+        let cache_key = self.cache_key_builder.query(&[
+            "search",
+            query,
+            &limit.to_string(),
+            &offset.to_string(),
+        ]);
+
         if let Some(clients) = self.cache.get::<Vec<Client>>(&cache_key) {
             return Ok(clients);
         }
-        
-        let clients = self.db
+
+        let clients = self
+            .db
             .query_as::<Client>(
                 r#"
                 SELECT * FROM clients 
@@ -395,10 +411,10 @@ impl ClientRepository {
                     format!("%{}%", query),
                     limit as i64,
                     offset as i64
-                ]
+                ],
             )
             .map_err(|e| RepoError::Database(format!("Failed to search clients: {}", e)))?;
-            
+
         self.cache.set(&cache_key, clients.clone(), ttl::SHORT);
         Ok(clients)
     }
@@ -432,8 +448,7 @@ impl Repository<Client, String> for ClientRepository {
             .map_err(|e| RepoError::Database(format!("Failed to find client by id: {}", e)))?;
 
         if let Some(ref client) = client {
-            self.cache
-                .set(&cache_key, client.clone(), ttl::LONG);
+            self.cache.set(&cache_key, client.clone(), ttl::LONG);
         }
 
         Ok(client)
@@ -465,8 +480,7 @@ impl Repository<Client, String> for ClientRepository {
             )
             .map_err(|e| RepoError::Database(format!("Failed to find all clients: {}", e)))?;
 
-        self.cache
-            .set(&cache_key, clients.clone(), ttl::MEDIUM);
+        self.cache.set(&cache_key, clients.clone(), ttl::MEDIUM);
 
         Ok(clients)
     }

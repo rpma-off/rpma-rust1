@@ -1,4 +1,4 @@
-use crate::commands::{AppState, ApiError};
+use crate::commands::{ApiError, AppState};
 use crate::models::message::*;
 use rusqlite::params;
 
@@ -8,12 +8,11 @@ pub async fn message_send(
     request: SendMessageRequest,
     state: AppState<'_>,
 ) -> Result<Message, ApiError> {
-    let conn = state.db.get_connection()
-        .map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "DATABASE_ERROR".to_string(),
-            details: None,
-        })?;
+    let conn = state.db.get_connection().map_err(|e| ApiError {
+        message: e.to_string(),
+        code: "DATABASE_ERROR".to_string(),
+        details: None,
+    })?;
 
     // Generate ID
     let id = format!("{:x}", rand::random::<u128>());
@@ -43,51 +42,54 @@ pub async fn message_send(
             request.scheduled_at,
             now,
             now,
-        ]
-    ).map_err(|e| ApiError {
+        ],
+    )
+    .map_err(|e| ApiError {
         message: e.to_string(),
         code: "INSERT_ERROR".to_string(),
         details: None,
     })?;
 
     // Return the created message
-    let message = conn.query_row(
-        "SELECT
+    let message = conn
+        .query_row(
+            "SELECT
             id, message_type, sender_id, recipient_id, recipient_email,
             recipient_phone, subject, body, template_id, task_id, client_id,
             status, priority, scheduled_at, sent_at, read_at, error_message,
             metadata, created_at, updated_at
         FROM messages WHERE id = ?",
-        params![id],
-        |row| {
-            Ok(Message {
-                id: row.get(0)?,
-                message_type: row.get(1)?,
-                sender_id: row.get(2)?,
-                recipient_id: row.get(3)?,
-                recipient_email: row.get(4)?,
-                recipient_phone: row.get(5)?,
-                subject: row.get(6)?,
-                body: row.get(7)?,
-                template_id: row.get(8)?,
-                task_id: row.get(9)?,
-                client_id: row.get(10)?,
-                status: row.get(11)?,
-                priority: row.get(12)?,
-                scheduled_at: row.get(13)?,
-                sent_at: row.get(14)?,
-                read_at: row.get(15)?,
-                error_message: row.get(16)?,
-                metadata: row.get(17)?,
-                created_at: row.get(18)?,
-                updated_at: row.get(19)?,
-            })
-        }
-    ).map_err(|e| ApiError {
-        message: e.to_string(),
-        code: "FETCH_ERROR".to_string(),
-        details: None,
-    })?;
+            params![id],
+            |row| {
+                Ok(Message {
+                    id: row.get(0)?,
+                    message_type: row.get(1)?,
+                    sender_id: row.get(2)?,
+                    recipient_id: row.get(3)?,
+                    recipient_email: row.get(4)?,
+                    recipient_phone: row.get(5)?,
+                    subject: row.get(6)?,
+                    body: row.get(7)?,
+                    template_id: row.get(8)?,
+                    task_id: row.get(9)?,
+                    client_id: row.get(10)?,
+                    status: row.get(11)?,
+                    priority: row.get(12)?,
+                    scheduled_at: row.get(13)?,
+                    sent_at: row.get(14)?,
+                    read_at: row.get(15)?,
+                    error_message: row.get(16)?,
+                    metadata: row.get(17)?,
+                    created_at: row.get(18)?,
+                    updated_at: row.get(19)?,
+                })
+            },
+        )
+        .map_err(|e| ApiError {
+            message: e.to_string(),
+            code: "FETCH_ERROR".to_string(),
+            details: None,
+        })?;
 
     Ok(message)
 }
@@ -98,12 +100,11 @@ pub async fn message_get_list(
     query: MessageQuery,
     state: AppState<'_>,
 ) -> Result<MessageListResponse, ApiError> {
-    let conn = state.db.get_connection()
-        .map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "DATABASE_ERROR".to_string(),
-            details: None,
-        })?;
+    let conn = state.db.get_connection().map_err(|e| ApiError {
+        message: e.to_string(),
+        code: "DATABASE_ERROR".to_string(),
+        details: None,
+    })?;
 
     let mut sql = String::from(
         "SELECT
@@ -111,7 +112,7 @@ pub async fn message_get_list(
             recipient_phone, subject, body, template_id, task_id, client_id,
             status, priority, scheduled_at, sent_at, read_at, error_message,
             metadata, created_at, updated_at
-        FROM messages WHERE 1=1"
+        FROM messages WHERE 1=1",
     );
     let mut owned_params = Vec::new();
 
@@ -240,16 +241,14 @@ pub async fn message_get_list(
     owned_params.push(limit.to_string());
     owned_params.push(offset.to_string());
 
-    let mut stmt = conn.prepare(&sql)
-        .map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "QUERY_ERROR".to_string(),
-            details: None,
-        })?;
+    let mut stmt = conn.prepare(&sql).map_err(|e| ApiError {
+        message: e.to_string(),
+        code: "QUERY_ERROR".to_string(),
+        details: None,
+    })?;
 
-    let messages = stmt.query_map(
-        rusqlite::params_from_iter(owned_params),
-        |row| {
+    let messages = stmt
+        .query_map(rusqlite::params_from_iter(owned_params), |row| {
             Ok(Message {
                 id: row.get(0)?,
                 message_type: row.get(1)?,
@@ -272,17 +271,18 @@ pub async fn message_get_list(
                 created_at: row.get(18)?,
                 updated_at: row.get(19)?,
             })
-        }
-    ).map_err(|e| ApiError {
-        message: e.to_string(),
-        code: "MAPPING_ERROR".to_string(),
-        details: None,
-    })?.collect::<Result<Vec<_>, _>>()
-    .map_err(|e| ApiError {
-        message: e.to_string(),
-        code: "COLLECTION_ERROR".to_string(),
-        details: None,
-    })?;
+        })
+        .map_err(|e| ApiError {
+            message: e.to_string(),
+            code: "MAPPING_ERROR".to_string(),
+            details: None,
+        })?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| ApiError {
+            message: e.to_string(),
+            code: "COLLECTION_ERROR".to_string(),
+            details: None,
+        })?;
 
     // Get total count
     let mut count_sql = String::from("SELECT COUNT(*) FROM messages WHERE 1=1");
@@ -295,11 +295,13 @@ pub async fn message_get_list(
     }
     // ... add other filters similarly
 
-    let total: i32 = conn.query_row(
-        &count_sql,
-        rusqlite::params_from_iter(count_params),
-        |row| row.get(0)
-    ).unwrap_or(0);
+    let total: i32 = conn
+        .query_row(
+            &count_sql,
+            rusqlite::params_from_iter(count_params),
+            |row| row.get(0),
+        )
+        .unwrap_or(0);
 
     let has_more = (offset + messages.len() as i32) < total;
 
@@ -312,16 +314,12 @@ pub async fn message_get_list(
 
 /// Mark message as read
 #[tauri::command]
-pub async fn message_mark_read(
-    message_id: String,
-    state: AppState<'_>,
-) -> Result<(), ApiError> {
-    let conn = state.db.get_connection()
-        .map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "DATABASE_ERROR".to_string(),
-            details: None,
-        })?;
+pub async fn message_mark_read(message_id: String, state: AppState<'_>) -> Result<(), ApiError> {
+    let conn = state.db.get_connection().map_err(|e| ApiError {
+        message: e.to_string(),
+        code: "DATABASE_ERROR".to_string(),
+        details: None,
+    })?;
 
     conn.execute(
         "UPDATE messages SET status = 'read', read_at = ?, updated_at = ? WHERE id = ?",
@@ -329,8 +327,9 @@ pub async fn message_mark_read(
             chrono::Utc::now().timestamp(),
             chrono::Utc::now().timestamp(),
             message_id
-        ]
-    ).map_err(|e| ApiError {
+        ],
+    )
+    .map_err(|e| ApiError {
         message: e.to_string(),
         code: "UPDATE_ERROR".to_string(),
         details: None,
@@ -346,12 +345,11 @@ pub async fn message_get_templates(
     message_type: Option<String>,
     state: AppState<'_>,
 ) -> Result<Vec<MessageTemplate>, ApiError> {
-    let conn = state.db.get_connection()
-        .map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "DATABASE_ERROR".to_string(),
-            details: None,
-        })?;
+    let conn = state.db.get_connection().map_err(|e| ApiError {
+        message: e.to_string(),
+        code: "DATABASE_ERROR".to_string(),
+        details: None,
+    })?;
 
     let mut sql = String::from(
         "SELECT id, name, description, message_type, subject, body, variables, category, is_active, created_by, created_at, updated_at
@@ -371,16 +369,14 @@ pub async fn message_get_templates(
 
     sql.push_str(" ORDER BY name");
 
-    let mut stmt = conn.prepare(&sql)
-        .map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "QUERY_ERROR".to_string(),
-            details: None,
-        })?;
+    let mut stmt = conn.prepare(&sql).map_err(|e| ApiError {
+        message: e.to_string(),
+        code: "QUERY_ERROR".to_string(),
+        details: None,
+    })?;
 
-    let templates = stmt.query_map(
-        rusqlite::params_from_iter(owned_params),
-        |row| {
+    let templates = stmt
+        .query_map(rusqlite::params_from_iter(owned_params), |row| {
             Ok(MessageTemplate {
                 id: row.get(0)?,
                 name: row.get(1)?,
@@ -395,17 +391,18 @@ pub async fn message_get_templates(
                 created_at: row.get(10)?,
                 updated_at: row.get(11)?,
             })
-        }
-    ).map_err(|e| ApiError {
-        message: e.to_string(),
-        code: "MAPPING_ERROR".to_string(),
-        details: None,
-    })?.collect::<Result<Vec<_>, _>>()
-    .map_err(|e| ApiError {
-        message: e.to_string(),
-        code: "COLLECTION_ERROR".to_string(),
-        details: None,
-    })?;
+        })
+        .map_err(|e| ApiError {
+            message: e.to_string(),
+            code: "MAPPING_ERROR".to_string(),
+            details: None,
+        })?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| ApiError {
+            message: e.to_string(),
+            code: "COLLECTION_ERROR".to_string(),
+            details: None,
+        })?;
 
     Ok(templates)
 }
@@ -416,50 +413,51 @@ pub async fn message_get_preferences(
     user_id: String,
     state: AppState<'_>,
 ) -> Result<NotificationPreferences, ApiError> {
-    let conn = state.db.get_connection()
-        .map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "DATABASE_ERROR".to_string(),
-            details: None,
-        })?;
+    let conn = state.db.get_connection().map_err(|e| ApiError {
+        message: e.to_string(),
+        code: "DATABASE_ERROR".to_string(),
+        details: None,
+    })?;
 
-    let prefs = conn.query_row(
-        "SELECT id, user_id, email_enabled, sms_enabled, in_app_enabled,
+    let prefs = conn
+        .query_row(
+            "SELECT id, user_id, email_enabled, sms_enabled, in_app_enabled,
             task_assigned, task_updated, task_completed, task_overdue,
             client_created, client_updated, system_alerts, maintenance_notifications,
             quiet_hours_enabled, quiet_hours_start, quiet_hours_end,
             email_frequency, email_digest_time, created_at, updated_at
         FROM notification_preferences WHERE user_id = ?",
-        params![user_id],
-        |row| {
-            Ok(NotificationPreferences {
-                id: row.get(0)?,
-                user_id: row.get(1)?,
-                email_enabled: row.get(2)?,
-                sms_enabled: row.get(3)?,
-                in_app_enabled: row.get(4)?,
-                task_assigned: row.get(5)?,
-                task_updated: row.get(6)?,
-                task_completed: row.get(7)?,
-                task_overdue: row.get(8)?,
-                client_created: row.get(9)?,
-                client_updated: row.get(10)?,
-                system_alerts: row.get(11)?,
-                maintenance_notifications: row.get(12)?,
-                quiet_hours_enabled: row.get(13)?,
-                quiet_hours_start: row.get(14)?,
-                quiet_hours_end: row.get(15)?,
-                email_frequency: row.get(16)?,
-                email_digest_time: row.get(17)?,
-                created_at: row.get(18)?,
-                updated_at: row.get(19)?,
-            })
-        }
-    ).map_err(|e| ApiError {
-        message: e.to_string(),
-        code: "FETCH_ERROR".to_string(),
-        details: None,
-    })?;
+            params![user_id],
+            |row| {
+                Ok(NotificationPreferences {
+                    id: row.get(0)?,
+                    user_id: row.get(1)?,
+                    email_enabled: row.get(2)?,
+                    sms_enabled: row.get(3)?,
+                    in_app_enabled: row.get(4)?,
+                    task_assigned: row.get(5)?,
+                    task_updated: row.get(6)?,
+                    task_completed: row.get(7)?,
+                    task_overdue: row.get(8)?,
+                    client_created: row.get(9)?,
+                    client_updated: row.get(10)?,
+                    system_alerts: row.get(11)?,
+                    maintenance_notifications: row.get(12)?,
+                    quiet_hours_enabled: row.get(13)?,
+                    quiet_hours_start: row.get(14)?,
+                    quiet_hours_end: row.get(15)?,
+                    email_frequency: row.get(16)?,
+                    email_digest_time: row.get(17)?,
+                    created_at: row.get(18)?,
+                    updated_at: row.get(19)?,
+                })
+            },
+        )
+        .map_err(|e| ApiError {
+            message: e.to_string(),
+            code: "FETCH_ERROR".to_string(),
+            details: None,
+        })?;
 
     Ok(prefs)
 }
@@ -471,12 +469,11 @@ pub async fn message_update_preferences(
     updates: UpdateNotificationPreferencesRequest,
     state: AppState<'_>,
 ) -> Result<NotificationPreferences, ApiError> {
-    let conn = state.db.get_connection()
-        .map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "DATABASE_ERROR".to_string(),
-            details: None,
-        })?;
+    let conn = state.db.get_connection().map_err(|e| ApiError {
+        message: e.to_string(),
+        code: "DATABASE_ERROR".to_string(),
+        details: None,
+    })?;
 
     // Build dynamic update query
     let mut sql = String::from("UPDATE notification_preferences SET updated_at = ?");

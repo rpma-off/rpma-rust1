@@ -6,8 +6,8 @@
 //! - Upload failure handling and recovery
 
 use crate::db::Database;
-use crate::models::photo::Photo;
 use crate::models::common::now;
+use crate::models::photo::Photo;
 use rusqlite::params;
 
 /// Photo upload service with retry logic
@@ -28,9 +28,9 @@ impl PhotoUploadService {
         photo_id: &str,
         max_retries: u32,
     ) -> crate::services::photo::PhotoResult<()> {
-        let mut photo = self
-            .get_photo(photo_id)?
-            .ok_or_else(|| crate::services::photo::PhotoError::NotFound(format!("Photo {} not found", photo_id)))?;
+        let mut photo = self.get_photo(photo_id)?.ok_or_else(|| {
+            crate::services::photo::PhotoError::NotFound(format!("Photo {} not found", photo_id))
+        })?;
 
         if photo.synced {
             return Ok(()); // Already uploaded
@@ -74,7 +74,10 @@ impl PhotoUploadService {
     }
 
     /// Attempt to upload a single photo (placeholder implementation)
-    async fn attempt_photo_upload(&self, _photo: &Photo) -> crate::services::photo::PhotoResult<()> {
+    async fn attempt_photo_upload(
+        &self,
+        _photo: &Photo,
+    ) -> crate::services::photo::PhotoResult<()> {
         // This is a placeholder for actual upload logic
         // In a real implementation, this would upload to a cloud storage service
         // For now, we'll simulate occasional failures for testing retry logic
@@ -86,7 +89,9 @@ impl PhotoUploadService {
         if rng.gen::<f64>() < success_rate {
             Ok(())
         } else {
-            Err(crate::services::photo::PhotoError::Storage("Simulated upload failure".to_string()))
+            Err(crate::services::photo::PhotoError::Storage(
+                "Simulated upload failure".to_string(),
+            ))
         }
     }
 
@@ -139,7 +144,10 @@ impl PhotoUploadService {
                     photo.title,
                     photo.description,
                     photo.notes,
-                    photo.annotations.as_ref().map(|a| serde_json::to_string(a).unwrap_or_default()),
+                    photo
+                        .annotations
+                        .as_ref()
+                        .map(|a| serde_json::to_string(a).unwrap_or_default()),
                     photo.gps_location_lat,
                     photo.gps_location_lon,
                     photo.gps_location_accuracy,

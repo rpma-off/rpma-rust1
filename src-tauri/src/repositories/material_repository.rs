@@ -4,8 +4,8 @@
 
 use crate::db::Database;
 use crate::models::material::{Material, MaterialType};
-use crate::repositories::base::{Repository, RepoError, RepoResult};
-use crate::repositories::cache::{Cache, CacheKeyBuilder, ttl};
+use crate::repositories::base::{RepoError, RepoResult, Repository};
+use crate::repositories::cache::{ttl, Cache, CacheKeyBuilder};
 use async_trait::async_trait;
 use rusqlite::params;
 use std::sync::Arc;
@@ -79,19 +79,25 @@ impl MaterialQuery {
 
     fn validate_sort_column(sort_by: &str) -> Result<String, RepoError> {
         let allowed_columns = [
-            "created_at", "updated_at", "name", "sku", "material_type", "category",
-            "is_active", "quantity", "price"
+            "created_at",
+            "updated_at",
+            "name",
+            "sku",
+            "material_type",
+            "category",
+            "is_active",
+            "quantity",
+            "price",
         ];
-        allowed_columns.iter()
+        allowed_columns
+            .iter()
             .find(|&&col| col == sort_by)
             .map(|s| s.to_string())
             .ok_or_else(|| RepoError::Validation(format!("Invalid sort column: {}", sort_by)))
     }
 
     fn build_order_by_clause(&self) -> Result<String, RepoError> {
-        let sort_by = Self::validate_sort_column(
-            self.sort_by.as_deref().unwrap_or("name")
-        )?;
+        let sort_by = Self::validate_sort_column(self.sort_by.as_deref().unwrap_or("name"))?;
         let sort_order = match self.sort_order.as_deref() {
             Some("ASC") => "ASC",
             Some("DESC") => "DESC",
@@ -163,8 +169,7 @@ impl MaterialRepository {
             .map_err(|e| RepoError::Database(format!("Failed to find material by SKU: {}", e)))?;
 
         if let Some(ref material) = material {
-            self.cache
-                .set(&cache_key, material.clone(), ttl::MEDIUM);
+            self.cache.set(&cache_key, material.clone(), ttl::MEDIUM);
         }
 
         Ok(material)
@@ -202,8 +207,7 @@ impl MaterialRepository {
             )
             .map_err(|e| RepoError::Database(format!("Failed to find low stock materials: {}", e)))?;
 
-        self.cache
-            .set(&cache_key, materials.clone(), ttl::SHORT);
+        self.cache.set(&cache_key, materials.clone(), ttl::SHORT);
 
         Ok(materials)
     }
@@ -241,14 +245,17 @@ impl MaterialRepository {
             )
             .map_err(|e| RepoError::Database(format!("Failed to find materials by type: {}", e)))?;
 
-        self.cache
-            .set(&cache_key, materials.clone(), ttl::MEDIUM);
+        self.cache.set(&cache_key, materials.clone(), ttl::MEDIUM);
 
         Ok(materials)
     }
 
     /// Update material stock
-    pub async fn update_stock(&self, material_id: &str, quantity_adjustment: f64) -> RepoResult<f64> {
+    pub async fn update_stock(
+        &self,
+        material_id: &str,
+        quantity_adjustment: f64,
+    ) -> RepoResult<f64> {
         self.db
             .execute(
                 r#"
@@ -268,16 +275,16 @@ impl MaterialRepository {
         let material = self
             .find_by_id(material_id.to_string())
             .await?
-            .ok_or_else(|| RepoError::NotFound("Material not found after stock update".to_string()))?;
+            .ok_or_else(|| {
+                RepoError::NotFound("Material not found after stock update".to_string())
+            })?;
 
         Ok(material.current_stock)
     }
 
     /// Search materials
     pub async fn search(&self, query: MaterialQuery) -> RepoResult<Vec<Material>> {
-        let cache_key = self.cache_key_builder.query(&[
-            &format!("{:?}", query),
-        ]);
+        let cache_key = self.cache_key_builder.query(&[&format!("{:?}", query)]);
 
         if let Some(materials) = self.cache.get::<Vec<Material>>(&cache_key) {
             return Ok(materials);
@@ -319,8 +326,7 @@ impl MaterialRepository {
             .query_as::<Material>(&sql, rusqlite::params_from_iter(params_vec.iter()))
             .map_err(|e| RepoError::Database(format!("Failed to search materials: {}", e)))?;
 
-        self.cache
-            .set(&cache_key, materials.clone(), ttl::SHORT);
+        self.cache.set(&cache_key, materials.clone(), ttl::SHORT);
 
         Ok(materials)
     }
@@ -382,8 +388,7 @@ impl Repository<Material, String> for MaterialRepository {
             .map_err(|e| RepoError::Database(format!("Failed to find material by id: {}", e)))?;
 
         if let Some(ref material) = material {
-            self.cache
-                .set(&cache_key, material.clone(), ttl::LONG);
+            self.cache.set(&cache_key, material.clone(), ttl::LONG);
         }
 
         Ok(material)
@@ -419,8 +424,7 @@ impl Repository<Material, String> for MaterialRepository {
             )
             .map_err(|e| RepoError::Database(format!("Failed to find all materials: {}", e)))?;
 
-        self.cache
-            .set(&cache_key, materials.clone(), ttl::MEDIUM);
+        self.cache.set(&cache_key, materials.clone(), ttl::MEDIUM);
 
         Ok(materials)
     }
@@ -579,11 +583,10 @@ impl Repository<Material, String> for MaterialRepository {
     async fn exists_by_id(&self, id: String) -> RepoResult<bool> {
         let count: i64 = self
             .db
-            .query_single_value(
-                "SELECT COUNT(*) FROM materials WHERE id = ?",
-                params![id],
-            )
-            .map_err(|e| RepoError::Database(format!("Failed to check material existence: {}", e)))?;
+            .query_single_value("SELECT COUNT(*) FROM materials WHERE id = ?", params![id])
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to check material existence: {}", e))
+            })?;
 
         Ok(count > 0)
     }

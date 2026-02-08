@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime};
 use tokio::time;
-use tracing::{debug, warn, error};
+use tracing::{debug, error, warn};
 
 /// Configuration for memory management
 #[derive(Debug, Clone)]
@@ -35,9 +35,9 @@ impl Default for MemoryConfig {
             max_cache_entries: 1000,
             default_cache_ttl: Duration::from_secs(300), // 5 minutes
             monitoring_interval: Duration::from_secs(60), // 1 minute
-            memory_warning_threshold: 80.0, // 80%
-            memory_critical_threshold: 90.0, // 90%
-            max_memory_bytes: 0, // No limit
+            memory_warning_threshold: 80.0,              // 80%
+            memory_critical_threshold: 90.0,             // 90%
+            max_memory_bytes: 0,                         // No limit
         }
     }
 }
@@ -117,7 +117,7 @@ where
     pub fn new(config: MemoryConfig) -> Self {
         Self {
             cache: Mutex::new(LruCache::new(
-                std::num::NonZeroUsize::new(config.max_cache_entries).unwrap()
+                std::num::NonZeroUsize::new(config.max_cache_entries).unwrap(),
             )),
             config,
             stats: Arc::new(Mutex::new(CacheStats::default())),
@@ -378,7 +378,7 @@ impl Default for LeakThresholds {
     fn default() -> Self {
         Self {
             max_allocations: 10000,
-            max_memory_mb: 500, // 500MB
+            max_memory_mb: 500,                       // 500MB
             alert_interval: Duration::from_secs(300), // 5 minutes
         }
     }
@@ -419,8 +419,7 @@ impl LeakDetector {
         if total_memory_mb > self.thresholds.max_memory_mb {
             warn!(
                 "Potential memory leak: {} MB used exceeds threshold {} MB",
-                total_memory_mb,
-                self.thresholds.max_memory_mb
+                total_memory_mb, self.thresholds.max_memory_mb
             );
         }
     }
@@ -437,7 +436,8 @@ impl LeakDetector {
 
         let total_allocations = allocations.len();
         let total_memory: usize = allocations.values().map(|info| info.size).sum();
-        let oldest_allocation = allocations.values()
+        let oldest_allocation = allocations
+            .values()
             .map(|info| info.allocated_at)
             .min()
             .unwrap_or(SystemTime::now());
@@ -445,7 +445,9 @@ impl LeakDetector {
         LeakStats {
             total_allocations,
             total_memory_bytes: total_memory,
-            oldest_allocation_age: oldest_allocation.elapsed().unwrap_or(Duration::from_secs(0)),
+            oldest_allocation_age: oldest_allocation
+                .elapsed()
+                .unwrap_or(Duration::from_secs(0)),
         }
     }
 
@@ -529,7 +531,8 @@ impl MemoryManager {
                 }
 
                 // Cleanup old allocation tracking
-                let old_cleaned = leak_detector_clone.cleanup_old_allocations(Duration::from_secs(3600)); // 1 hour
+                let old_cleaned =
+                    leak_detector_clone.cleanup_old_allocations(Duration::from_secs(3600)); // 1 hour
                 if old_cleaned > 0 {
                     debug!("Cleaned {} old allocation records", old_cleaned);
                 }

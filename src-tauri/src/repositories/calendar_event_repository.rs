@@ -3,10 +3,10 @@
 //! Provides consistent database access patterns for CalendarEvent entities.
 
 use crate::db::Database;
-use crate::repositories::base::{Repository, RepoResult, RepoError};
 use crate::models::calendar_event::{
     CalendarEvent, CreateEventInput, EventStatus, EventType, UpdateEventInput,
 };
+use crate::repositories::base::{RepoError, RepoResult, Repository};
 use async_trait::async_trait;
 use rusqlite::params;
 use serde_json;
@@ -56,7 +56,9 @@ impl CalendarEventRepository {
 
         self.db
             .query_as(&sql, rusqlite::params_from_iter(params_vec.iter()))
-            .map_err(|e| RepoError::Database(format!("Failed to query events by date range: {}", e)))
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to query events by date range: {}", e))
+            })
     }
 
     /// Find events for a specific technician
@@ -77,7 +79,9 @@ impl CalendarEventRepository {
             "#,
                 params![technician_id],
             )
-            .map_err(|e| RepoError::Database(format!("Failed to query events by technician: {}", e)))
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to query events by technician: {}", e))
+            })
     }
 
     /// Find events linked to a specific task
@@ -145,7 +149,8 @@ impl CalendarEventRepository {
                 (start_datetime < ? AND end_datetime >= ?) OR
                 (start_datetime >= ? AND end_datetime <= ?)
             )
-        "#.to_string();
+        "#
+        .to_string();
 
         let mut params_vec: Vec<rusqlite::types::Value> = vec![
             start_datetime.to_string().into(),
@@ -240,7 +245,7 @@ impl CalendarEventRepository {
             "#,
             rusqlite::params_from_iter(params_vec)
         ).map_err(|e| RepoError::Database(format!("Failed to create calendar event: {}", e)))?;
-        
+
         // Return the created event
         self.find_by_id(id)
             .await?
@@ -320,8 +325,9 @@ impl CalendarEventRepository {
             params_vec.push(is_virtual.into());
         }
         if let Some(participants) = &input.participants {
-            let participants_json = serde_json::to_string(participants)
-                .map_err(|e| RepoError::Database(format!("Failed to serialize participants: {}", e)))?;
+            let participants_json = serde_json::to_string(participants).map_err(|e| {
+                RepoError::Database(format!("Failed to serialize participants: {}", e))
+            })?;
             sql.push_str(", participants = ?");
             params_vec.push(participants_json.into());
         }
@@ -335,8 +341,9 @@ impl CalendarEventRepository {
             params_vec.push(status_str.to_string().into());
         }
         if let Some(reminders) = &input.reminders {
-            let reminders_json = serde_json::to_string(reminders)
-                .map_err(|e| RepoError::Database(format!("Failed to serialize reminders: {}", e)))?;
+            let reminders_json = serde_json::to_string(reminders).map_err(|e| {
+                RepoError::Database(format!("Failed to serialize reminders: {}", e))
+            })?;
             sql.push_str(", reminders = ?");
             params_vec.push(reminders_json.into());
         }
@@ -362,7 +369,7 @@ impl CalendarEventRepository {
             .db
             .execute(&sql, rusqlite::params_from_iter(params_vec.iter()))
             .map_err(|e| RepoError::Database(format!("Failed to update calendar event: {}", e)))?;
-        
+
         if rows_affected > 0 {
             self.find_by_id(id.to_string()).await
         } else {
@@ -475,7 +482,7 @@ impl Repository<CalendarEvent, String> for CalendarEventRepository {
             "UPDATE calendar_events SET deleted_at = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL",
             params![now, now, id]
         ).map_err(|e| RepoError::Database(format!("Failed to delete calendar event: {}", e)))?;
-        
+
         Ok(rows_affected > 0)
     }
 
@@ -486,8 +493,10 @@ impl Repository<CalendarEvent, String> for CalendarEventRepository {
                 "SELECT COUNT(*) FROM calendar_events WHERE id = ? AND deleted_at IS NULL",
                 params![id],
             )
-            .map_err(|e| RepoError::Database(format!("Failed to check calendar event existence: {}", e)))?;
-        
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to check calendar event existence: {}", e))
+            })?;
+
         Ok(count > 0)
     }
 }

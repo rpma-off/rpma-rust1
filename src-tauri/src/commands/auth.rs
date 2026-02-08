@@ -52,7 +52,8 @@ pub async fn auth_login(
     let auth_service = state.auth_service.clone();
 
     debug!("Auth service acquired, attempting authentication");
-    let session_result = auth_service.authenticate(&validated_email, &validated_password, ip_address.as_deref());
+    let session_result =
+        auth_service.authenticate(&validated_email, &validated_password, ip_address.as_deref());
     let session = match session_result {
         Ok(session) => {
             debug!("Authentication successful for user: {}", session.user_id);
@@ -205,8 +206,6 @@ pub async fn auth_refresh_token(
     info!("Token refresh successful");
     Ok(ApiResponse::success(session))
 }
-
-
 
 /// Enable 2FA for the current user
 #[tauri::command]

@@ -19,7 +19,10 @@ pub async fn submit_report_job(
     session_token: String,
     state: AppState<'_>,
 ) -> AppResult<String> {
-    info!("Submitting background report job for type: {:?}", report_type);
+    info!(
+        "Submitting background report job for type: {:?}",
+        report_type
+    );
 
     let current_user = authenticate!(&session_token, &state);
 
@@ -52,11 +55,10 @@ pub async fn submit_report_job(
     }
 
     // Submit background job
-    state.report_job_service.submit_job(
-        report_type,
-        date_range,
-        filters,
-    ).await
+    state
+        .report_job_service
+        .submit_job(report_type, date_range, filters)
+        .await
 }
 
 /// Submit background job for task completion report
@@ -89,11 +91,10 @@ pub async fn submit_task_completion_report_job(
     }
 
     // Submit background job
-    state.report_job_service.submit_job(
-        ReportType::Tasks,
-        date_range,
-        filters,
-    ).await
+    state
+        .report_job_service
+        .submit_job(ReportType::Tasks, date_range, filters)
+        .await
 }
 
 /// Get status of a background report job
@@ -146,14 +147,18 @@ pub async fn get_report_job_result(
                     // Get the report data from cache using the same key format as ReportJobService
                     let cache_key = match job.report_type {
                         ReportType::Tasks => format!("report:task_completion:{}", job_id),
-                        ReportType::Technicians => format!("report:technician_performance:{}", job_id),
+                        ReportType::Technicians => {
+                            format!("report:technician_performance:{}", job_id)
+                        }
                         ReportType::Clients => format!("report:client_analytics:{}", job_id),
                         ReportType::Quality => format!("report:quality_compliance:{}", job_id),
                         ReportType::Materials => format!("report:material_usage:{}", job_id),
                         ReportType::Geographic => format!("report:geographic:{}", job_id),
                         ReportType::Seasonal => format!("report:seasonal:{}", job_id),
                         ReportType::Overview => format!("report:overview:{}", job_id),
-                        ReportType::OperationalIntelligence => format!("report:operational_intelligence:{}", job_id),
+                        ReportType::OperationalIntelligence => {
+                            format!("report:operational_intelligence:{}", job_id)
+                        }
                         ReportType::DataExplorer => {
                             return Err(crate::commands::AppError::Validation(
                                 "Data Explorer reports are processed interactively".to_string(),
@@ -161,24 +166,27 @@ pub async fn get_report_job_result(
                         }
                     };
 
-                    state.cache_service.get(
-                        crate::services::cache::CacheType::ComputedAnalytics,
-                        &cache_key,
-                    )?
-                    .ok_or_else(|| crate::commands::AppError::NotFound(
-                        "Report data not found in cache".to_string(),
-                    ))
+                    state
+                        .cache_service
+                        .get(
+                            crate::services::cache::CacheType::ComputedAnalytics,
+                            &cache_key,
+                        )?
+                        .ok_or_else(|| {
+                            crate::commands::AppError::NotFound(
+                                "Report data not found in cache".to_string(),
+                            )
+                        })
                 }
                 crate::services::report_jobs::ReportJobStatus::Failed => {
                     Err(crate::commands::AppError::Internal(
-                        job.error_message.unwrap_or_else(|| "Report generation failed".to_string()),
+                        job.error_message
+                            .unwrap_or_else(|| "Report generation failed".to_string()),
                     ))
                 }
-                crate::services::report_jobs::ReportJobStatus::Processing => {
-                    Err(crate::commands::AppError::Validation(
-                        "Report is still processing".to_string(),
-                    ))
-                }
+                crate::services::report_jobs::ReportJobStatus::Processing => Err(
+                    crate::commands::AppError::Validation("Report is still processing".to_string()),
+                ),
                 crate::services::report_jobs::ReportJobStatus::Pending => {
                     Err(crate::commands::AppError::Validation(
                         "Report is queued for processing".to_string(),

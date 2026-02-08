@@ -85,8 +85,6 @@ pub struct GetEventsForTaskRequest {
     pub correlation_id: Option<String>,
 }
 
-
-
 /// Get calendar tasks with filtering
 #[tauri::command]
 #[instrument(skip(state))]
@@ -483,7 +481,8 @@ pub async fn get_events(
         ));
     }
 
-    let calendar_service = crate::services::calendar_event_service::CalendarEventService::new(state.db.clone());
+    let calendar_service =
+        crate::services::calendar_event_service::CalendarEventService::new(state.db.clone());
 
     match calendar_service
         .get_events_in_range(start_date, end_date, technician_id)
@@ -495,11 +494,13 @@ pub async fn get_events(
         }
         Err(e) => {
             error!("Failed to get events: {}", e);
-            Err(AppError::Internal(format!("Failed to retrieve events: {}", e)))
+            Err(AppError::Internal(format!(
+                "Failed to retrieve events: {}",
+                e
+            )))
         }
     }
 }
-
 
 /// Check for scheduling conflicts
 #[tauri::command]

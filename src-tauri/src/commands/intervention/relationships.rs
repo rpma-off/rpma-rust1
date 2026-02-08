@@ -5,27 +5,51 @@
 //! - Management operations with complex filtering
 //! - Operations involving interventions, tasks, and users
 
-use crate::commands::{ApiResponse, AppError, AppState};
 use crate::authenticate;
+use crate::commands::{ApiResponse, AppError, AppState};
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
 #[derive(Deserialize, Debug)]
 #[serde(tag = "action")]
 pub enum InterventionManagementAction {
-    List { query: InterventionQueryRequest },
-    GetStats { technician_id: Option<String>, from_date: Option<String>, to_date: Option<String> },
-    GetByTask { task_id: String, include_completed: Option<bool> },
-    BulkUpdate { intervention_ids: Vec<String>, updates: serde_json::Value },
+    List {
+        query: InterventionQueryRequest,
+    },
+    GetStats {
+        technician_id: Option<String>,
+        from_date: Option<String>,
+        to_date: Option<String>,
+    },
+    GetByTask {
+        task_id: String,
+        include_completed: Option<bool>,
+    },
+    BulkUpdate {
+        intervention_ids: Vec<String>,
+        updates: serde_json::Value,
+    },
 }
 
 #[derive(Serialize)]
 #[serde(tag = "type")]
 pub enum InterventionManagementResponse {
-    List { interventions: Vec<crate::models::intervention::Intervention>, total: u64, page: u32, limit: u32 },
-    Stats { stats: InterventionStats },
-    ByTask { interventions: Vec<crate::models::intervention::Intervention> },
-    BulkUpdated { updated_count: usize, message: String },
+    List {
+        interventions: Vec<crate::models::intervention::Intervention>,
+        total: u64,
+        page: u32,
+        limit: u32,
+    },
+    Stats {
+        stats: InterventionStats,
+    },
+    ByTask {
+        interventions: Vec<crate::models::intervention::Intervention>,
+    },
+    BulkUpdated {
+        updated_count: usize,
+        message: String,
+    },
 }
 
 #[derive(Serialize)]
@@ -116,32 +140,50 @@ pub async fn intervention_management(
             }))
         }
 
-        InterventionManagementAction::GetStats { technician_id, from_date: _, to_date: _ } => {
+        InterventionManagementAction::GetStats {
+            technician_id,
+            from_date: _,
+            to_date: _,
+        } => {
             // Check permissions for viewing stats
             let target_technician_id = technician_id.unwrap_or(session.user_id.clone());
 
-            if target_technician_id != session.user_id && session.role != crate::models::auth::UserRole::Admin && session.role != crate::models::auth::UserRole::Supervisor {
-                return Err(AppError::Authorization("Not authorized to view these statistics".to_string()));
+            if target_technician_id != session.user_id
+                && session.role != crate::models::auth::UserRole::Admin
+                && session.role != crate::models::auth::UserRole::Supervisor
+            {
+                return Err(AppError::Authorization(
+                    "Not authorized to view these statistics".to_string(),
+                ));
             }
 
             // TODO: Implement proper stats calculation
             // For now, return basic stats
             let (interventions, _) = state
                 .intervention_service
-                .list_interventions(
-                    None,
-                    Some(&target_technician_id),
-                    None,
-                    None,
-                )
-                .map_err(|e| AppError::Database(format!("Failed to get interventions for stats: {}", e)))?;
+                .list_interventions(None, Some(&target_technician_id), None, None)
+                .map_err(|e| {
+                    AppError::Database(format!("Failed to get interventions for stats: {}", e))
+                })?;
 
             let total_interventions = interventions.len() as u64;
-            let completed_interventions = interventions.iter()
-                .filter(|i| matches!(i.status, crate::models::intervention::InterventionStatus::Completed))
+            let completed_interventions = interventions
+                .iter()
+                .filter(|i| {
+                    matches!(
+                        i.status,
+                        crate::models::intervention::InterventionStatus::Completed
+                    )
+                })
                 .count() as u64;
-            let in_progress_interventions = interventions.iter()
-                .filter(|i| matches!(i.status, crate::models::intervention::InterventionStatus::InProgress))
+            let in_progress_interventions = interventions
+                .iter()
+                .filter(|i| {
+                    matches!(
+                        i.status,
+                        crate::models::intervention::InterventionStatus::InProgress
+                    )
+                })
                 .count() as u64;
 
             let response_stats = InterventionStats {
@@ -149,13 +191,20 @@ pub async fn intervention_management(
                 completed_interventions,
                 in_progress_interventions,
                 average_completion_time: None, // TODO: Calculate from actual data
-                technician_stats: vec![], // TODO: Implement technician stats
+                technician_stats: vec![],      // TODO: Implement technician stats
             };
 
-            Ok(ApiResponse::success(InterventionManagementResponse::Stats { stats: response_stats }))
+            Ok(ApiResponse::success(
+                InterventionManagementResponse::Stats {
+                    stats: response_stats,
+                },
+            ))
         }
 
-        InterventionManagementAction::GetByTask { task_id, include_completed } => {
+        InterventionManagementAction::GetByTask {
+            task_id,
+            include_completed,
+        } => {
             // Check task access
             let task_access = state
                 .task_service
@@ -163,7 +212,9 @@ pub async fn intervention_management(
                 .unwrap_or(false);
 
             if !task_access && session.role != crate::models::auth::UserRole::Admin {
-                return Err(AppError::Authorization("Not authorized to view interventions for this task".to_string()));
+                return Err(AppError::Authorization(
+                    "Not authorized to view interventions for this task".to_string(),
+                ));
             }
 
             let include_completed = include_completed.unwrap_or(true);
@@ -173,7 +224,9 @@ pub async fn intervention_management(
                 match state
                     .intervention_service
                     .get_latest_intervention_by_task(&task_id)
-                    .map_err(|e| AppError::Database(format!("Failed to get interventions by task: {}", e)))? {
+                    .map_err(|e| {
+                        AppError::Database(format!("Failed to get interventions by task: {}", e))
+                    })? {
                     Some(intervention) => vec![intervention],
                     None => vec![],
                 }
@@ -181,19 +234,33 @@ pub async fn intervention_management(
                 match state
                     .intervention_service
                     .get_active_intervention_by_task(&task_id)
-                    .map_err(|e| AppError::Database(format!("Failed to get active interventions by task: {}", e)))? {
+                    .map_err(|e| {
+                        AppError::Database(format!(
+                            "Failed to get active interventions by task: {}",
+                            e
+                        ))
+                    })? {
                     Some(intervention) => vec![intervention],
                     None => vec![],
                 }
             };
 
-            Ok(ApiResponse::success(InterventionManagementResponse::ByTask { interventions }))
+            Ok(ApiResponse::success(
+                InterventionManagementResponse::ByTask { interventions },
+            ))
         }
 
-        InterventionManagementAction::BulkUpdate { intervention_ids, updates } => {
+        InterventionManagementAction::BulkUpdate {
+            intervention_ids,
+            updates,
+        } => {
             // Only admins and supervisors can do bulk updates
-            if session.role != crate::models::auth::UserRole::Admin && session.role != crate::models::auth::UserRole::Supervisor {
-                return Err(AppError::Authorization("Not authorized to perform bulk updates".to_string()));
+            if session.role != crate::models::auth::UserRole::Admin
+                && session.role != crate::models::auth::UserRole::Supervisor
+            {
+                return Err(AppError::Authorization(
+                    "Not authorized to perform bulk updates".to_string(),
+                ));
             }
 
             // Parse updates
@@ -222,10 +289,12 @@ pub async fn intervention_management(
                 }
             }
 
-            Ok(ApiResponse::success(InterventionManagementResponse::BulkUpdated {
-                updated_count,
-                message: format!("Successfully updated {} interventions", updated_count),
-            }))
+            Ok(ApiResponse::success(
+                InterventionManagementResponse::BulkUpdated {
+                    updated_count,
+                    message: format!("Successfully updated {} interventions", updated_count),
+                },
+            ))
         }
     }
 }

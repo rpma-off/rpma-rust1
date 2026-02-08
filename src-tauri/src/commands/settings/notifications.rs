@@ -3,7 +3,9 @@
 //! This module handles user notification preferences including
 //! email, push, and SMS notification settings.
 
-use crate::commands::settings::core::{handle_settings_error, update_app_settings, load_app_settings};
+use crate::commands::settings::core::{
+    handle_settings_error, load_app_settings, update_app_settings,
+};
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::models::settings::UserNotificationSettings;
 
@@ -60,11 +62,12 @@ pub async fn update_notification_settings(
 
     // Only admins can update system notification settings
     if !matches!(user.role, crate::models::auth::UserRole::Admin) {
-        return Err(AppError::Authorization("Only administrators can update notification settings".to_string()));
+        return Err(AppError::Authorization(
+            "Only administrators can update notification settings".to_string(),
+        ));
     }
 
-    let mut app_settings = load_app_settings()
-        .map_err(|e| AppError::Database(e))?;
+    let mut app_settings = load_app_settings().map_err(|e| AppError::Database(e))?;
 
     if let Some(push_notifications) = request.push_notifications {
         app_settings.notifications.push_notifications = push_notifications;

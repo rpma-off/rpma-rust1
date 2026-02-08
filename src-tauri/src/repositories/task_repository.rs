@@ -3,10 +3,10 @@
 //! Provides consistent database access patterns for Task entities.
 
 use crate::db::{Database, QueryBuilder};
-use crate::repositories::base::{Repository, RepoResult, RepoError};
 use crate::models::task::{
     PaginationInfo, SortOrder, Task, TaskListResponse, TaskQuery, TaskWithDetails,
 };
+use crate::repositories::base::{RepoError, RepoResult, Repository};
 use async_trait::async_trait;
 use rusqlite::params;
 use std::sync::Arc;

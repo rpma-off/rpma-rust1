@@ -16,22 +16,22 @@ pub mod task_repository;
 pub mod task_repository_streaming;
 
 // New repositories
+pub mod audit_repository;
 pub mod client_repository;
-pub mod user_repository;
 pub mod material_repository;
 pub mod message_repository;
-pub mod photo_repository;
-pub mod notification_repository;
 pub mod notification_preferences_repository;
+pub mod notification_repository;
+pub mod photo_repository;
 pub mod task_history_repository;
-pub mod audit_repository;
+pub mod user_repository;
 
 // Re-exports - only what's actually used
+pub use audit_repository::AuditRepository;
 pub use base::Repository;
 pub use cache::Cache;
-pub use factory::Repositories;
 pub use calendar_event_repository::CalendarEventRepository;
-pub use intervention_repository::InterventionRepository;
 pub use client_repository::ClientRepository;
+pub use factory::Repositories;
+pub use intervention_repository::InterventionRepository;
 pub use user_repository::UserRepository;
-pub use audit_repository::AuditRepository;

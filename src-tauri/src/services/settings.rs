@@ -6,11 +6,83 @@ use crate::models::settings::{
     UserProfileSettings, UserSecuritySettings, UserSettings,
 };
 use crate::services::validation::ValidationService;
-use rusqlite::params;
+use rusqlite::{params, types::Value};
 use std::collections::HashSet;
 use std::sync::Arc;
-use tracing::{error, warn};
+use tracing::{debug, error, info, warn};
 use uuid::Uuid;
+
+const INSERT_USER_SETTINGS_SQL: &str = r#"
+    INSERT INTO user_settings (
+        id, user_id, full_name, email, phone, avatar_url, notes,
+        email_notifications, push_notifications, task_assignments, task_updates,
+        system_alerts, weekly_reports, theme, language, date_format, time_format,
+        high_contrast, large_text, reduce_motion, screen_reader, auto_refresh, refresh_interval,
+        two_factor_enabled, session_timeout,
+        cache_enabled, cache_size, offline_mode, sync_on_startup, background_sync,
+        image_compression, preload_data,
+        accessibility_high_contrast, accessibility_large_text, accessibility_reduce_motion,
+        accessibility_screen_reader, accessibility_focus_indicators, accessibility_keyboard_navigation,
+        accessibility_text_to_speech, accessibility_speech_rate, accessibility_font_size,
+        accessibility_color_blind_mode,
+        notifications_email_enabled, notifications_push_enabled, notifications_in_app_enabled,
+        notifications_task_assigned, notifications_task_updated, notifications_task_completed,
+        notifications_task_overdue, notifications_system_alerts, notifications_maintenance,
+        notifications_security_alerts, notifications_quiet_hours_enabled,
+        notifications_quiet_hours_start, notifications_quiet_hours_end,
+        notifications_digest_frequency, notifications_batch_notifications,
+        notifications_sound_enabled, notifications_sound_volume
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+"#;
+
+const UPDATE_PROFILE_SQL: &str = r#"
+    UPDATE user_settings SET
+        full_name = ?, email = ?, phone = ?, avatar_url = ?, notes = ?, updated_at = ?
+     WHERE user_id = ?
+"#;
+
+const UPDATE_PREFERENCES_SQL: &str = r#"
+    UPDATE user_settings SET
+        email_notifications = ?, push_notifications = ?, task_assignments = ?, task_updates = ?,
+        system_alerts = ?, weekly_reports = ?, theme = ?, language = ?, date_format = ?,
+        time_format = ?, high_contrast = ?, large_text = ?, reduce_motion = ?, screen_reader = ?,
+        auto_refresh = ?, refresh_interval = ?, updated_at = ?
+     WHERE user_id = ?
+"#;
+
+const UPDATE_SECURITY_SQL: &str = r#"
+    UPDATE user_settings SET
+        two_factor_enabled = ?, session_timeout = ?, updated_at = ?
+     WHERE user_id = ?
+"#;
+
+const UPDATE_PERFORMANCE_SQL: &str = r#"
+    UPDATE user_settings SET
+        cache_enabled = ?, cache_size = ?, offline_mode = ?, sync_on_startup = ?,
+        background_sync = ?, image_compression = ?, preload_data = ?, updated_at = ?
+     WHERE user_id = ?
+"#;
+
+const UPDATE_ACCESSIBILITY_SQL: &str = r#"
+    UPDATE user_settings SET
+        accessibility_high_contrast = ?, accessibility_large_text = ?, accessibility_reduce_motion = ?,
+        accessibility_screen_reader = ?, accessibility_focus_indicators = ?, accessibility_keyboard_navigation = ?,
+        accessibility_text_to_speech = ?, accessibility_speech_rate = ?, accessibility_font_size = ?,
+        accessibility_color_blind_mode = ?, updated_at = ?
+     WHERE user_id = ?
+"#;
+
+const UPDATE_NOTIFICATIONS_SQL: &str = r#"
+    UPDATE user_settings SET
+        notifications_email_enabled = ?, notifications_push_enabled = ?, notifications_in_app_enabled = ?,
+        notifications_task_assigned = ?, notifications_task_updated = ?, notifications_task_completed = ?,
+        notifications_task_overdue = ?, notifications_system_alerts = ?, notifications_maintenance = ?,
+        notifications_security_alerts = ?, notifications_quiet_hours_enabled = ?,
+        notifications_quiet_hours_start = ?, notifications_quiet_hours_end = ?,
+        notifications_digest_frequency = ?, notifications_batch_notifications = ?,
+        notifications_sound_enabled = ?, notifications_sound_volume = ?, updated_at = ?
+     WHERE user_id = ?
+"#;
 
 #[derive(Clone, Debug)]
 pub struct SettingsService {
@@ -20,6 +92,119 @@ pub struct SettingsService {
 impl SettingsService {
     pub fn new(db: Arc<crate::db::Database>) -> Self {
         Self { db }
+    }
+
+    fn build_user_settings_params(id: &str, user_id: &str, settings: &UserSettings) -> Vec<Value> {
+        let mut params = Vec::with_capacity(60);
+        params.push(Value::from(id.to_string()));
+        params.push(Value::from(user_id.to_string()));
+        params.push(Value::from(settings.profile.full_name.clone()));
+        params.push(Value::from(settings.profile.email.clone()));
+        params.push(match settings.profile.phone.as_deref() {
+            Some(value) => Value::from(value.to_string()),
+            None => Value::Null,
+        });
+        params.push(match settings.profile.avatar_url.as_deref() {
+            Some(value) => Value::from(value.to_string()),
+            None => Value::Null,
+        });
+        params.push(match settings.profile.notes.as_deref() {
+            Some(value) => Value::from(value.to_string()),
+            None => Value::Null,
+        });
+        params.push(Value::from(settings.preferences.email_notifications as i32));
+        params.push(Value::from(settings.preferences.push_notifications as i32));
+        params.push(Value::from(settings.preferences.task_assignments as i32));
+        params.push(Value::from(settings.preferences.task_updates as i32));
+        params.push(Value::from(settings.preferences.system_alerts as i32));
+        params.push(Value::from(settings.preferences.weekly_reports as i32));
+        params.push(Value::from(settings.preferences.theme.clone()));
+        params.push(Value::from(settings.preferences.language.clone()));
+        params.push(Value::from(settings.preferences.date_format.clone()));
+        params.push(Value::from(settings.preferences.time_format.clone()));
+        params.push(Value::from(settings.preferences.high_contrast as i32));
+        params.push(Value::from(settings.preferences.large_text as i32));
+        params.push(Value::from(settings.preferences.reduce_motion as i32));
+        params.push(Value::from(settings.preferences.screen_reader as i32));
+        params.push(Value::from(settings.preferences.auto_refresh as i32));
+        params.push(Value::from(settings.preferences.refresh_interval as i64));
+        params.push(Value::from(settings.security.two_factor_enabled as i32));
+        params.push(Value::from(settings.security.session_timeout as i64));
+        params.push(Value::from(settings.performance.cache_enabled as i32));
+        params.push(Value::from(settings.performance.cache_size as i64));
+        params.push(Value::from(settings.performance.offline_mode as i32));
+        params.push(Value::from(settings.performance.sync_on_startup as i32));
+        params.push(Value::from(settings.performance.background_sync as i32));
+        params.push(Value::from(settings.performance.image_compression as i32));
+        params.push(Value::from(settings.performance.preload_data as i32));
+        params.push(Value::from(settings.accessibility.high_contrast as i32));
+        params.push(Value::from(settings.accessibility.large_text as i32));
+        params.push(Value::from(settings.accessibility.reduce_motion as i32));
+        params.push(Value::from(settings.accessibility.screen_reader as i32));
+        params.push(Value::from(settings.accessibility.focus_indicators as i32));
+        params.push(Value::from(
+            settings.accessibility.keyboard_navigation as i32,
+        ));
+        params.push(Value::from(settings.accessibility.text_to_speech as i32));
+        params.push(Value::from(settings.accessibility.speech_rate as f64));
+        params.push(Value::from(settings.accessibility.font_size as i64));
+        params.push(Value::from(settings.accessibility.color_blind_mode.clone()));
+        params.push(Value::from(settings.notifications.email_enabled as i32));
+        params.push(Value::from(settings.notifications.push_enabled as i32));
+        params.push(Value::from(settings.notifications.in_app_enabled as i32));
+        params.push(Value::from(settings.notifications.task_assigned as i32));
+        params.push(Value::from(settings.notifications.task_updated as i32));
+        params.push(Value::from(settings.notifications.task_completed as i32));
+        params.push(Value::from(settings.notifications.task_overdue as i32));
+        params.push(Value::from(settings.notifications.system_alerts as i32));
+        params.push(Value::from(settings.notifications.maintenance as i32));
+        params.push(Value::from(settings.notifications.security_alerts as i32));
+        params.push(Value::from(
+            settings.notifications.quiet_hours_enabled as i32,
+        ));
+        params.push(Value::from(
+            settings.notifications.quiet_hours_start.clone(),
+        ));
+        params.push(Value::from(settings.notifications.quiet_hours_end.clone()));
+        params.push(Value::from(settings.notifications.digest_frequency.clone()));
+        params.push(Value::from(
+            settings.notifications.batch_notifications as i32,
+        ));
+        params.push(Value::from(settings.notifications.sound_enabled as i32));
+        params.push(Value::from(settings.notifications.sound_volume as i64));
+        params
+    }
+
+    fn with_settings_tx<T>(
+        &self,
+        user_id: &str,
+        context: &str,
+        op: impl FnOnce(&rusqlite::Transaction) -> Result<T, AppError>,
+    ) -> Result<T, AppError> {
+        let mut conn = self.db.get_connection().map_err(|e| {
+            error!("Failed to get database connection: {}", e);
+            AppError::Database("Database connection failed".to_string())
+        })?;
+        self.ensure_user_settings_schema_compatibility(&conn)?;
+
+        let tx = conn.transaction().map_err(|e| {
+            error!("Failed to start transaction for {} update: {}", context, e);
+            AppError::Database("Failed to start transaction".to_string())
+        })?;
+
+        self.ensure_user_settings_exist_with_tx(&tx, user_id)?;
+
+        let result = op(&tx)?;
+
+        tx.commit().map_err(|e| {
+            error!(
+                "Failed to commit {} update transaction for {}: {}",
+                context, user_id, e
+            );
+            AppError::Database("Failed to commit transaction".to_string())
+        })?;
+
+        Ok(result)
     }
 
     /// Legacy databases may miss columns that newer settings code expects.
@@ -63,12 +248,21 @@ impl SettingsService {
             ("accessibility_large_text", "INTEGER NOT NULL DEFAULT 0"),
             ("accessibility_reduce_motion", "INTEGER NOT NULL DEFAULT 0"),
             ("accessibility_screen_reader", "INTEGER NOT NULL DEFAULT 0"),
-            ("accessibility_focus_indicators", "INTEGER NOT NULL DEFAULT 1"),
-            ("accessibility_keyboard_navigation", "INTEGER NOT NULL DEFAULT 1"),
+            (
+                "accessibility_focus_indicators",
+                "INTEGER NOT NULL DEFAULT 1",
+            ),
+            (
+                "accessibility_keyboard_navigation",
+                "INTEGER NOT NULL DEFAULT 1",
+            ),
             ("accessibility_text_to_speech", "INTEGER NOT NULL DEFAULT 0"),
             ("accessibility_speech_rate", "REAL NOT NULL DEFAULT 1.0"),
             ("accessibility_font_size", "INTEGER NOT NULL DEFAULT 16"),
-            ("accessibility_color_blind_mode", "TEXT NOT NULL DEFAULT 'none'"),
+            (
+                "accessibility_color_blind_mode",
+                "TEXT NOT NULL DEFAULT 'none'",
+            ),
             ("notifications_email_enabled", "INTEGER NOT NULL DEFAULT 1"),
             ("notifications_push_enabled", "INTEGER NOT NULL DEFAULT 1"),
             ("notifications_in_app_enabled", "INTEGER NOT NULL DEFAULT 1"),
@@ -78,12 +272,30 @@ impl SettingsService {
             ("notifications_task_overdue", "INTEGER NOT NULL DEFAULT 1"),
             ("notifications_system_alerts", "INTEGER NOT NULL DEFAULT 1"),
             ("notifications_maintenance", "INTEGER NOT NULL DEFAULT 0"),
-            ("notifications_security_alerts", "INTEGER NOT NULL DEFAULT 1"),
-            ("notifications_quiet_hours_enabled", "INTEGER NOT NULL DEFAULT 0"),
-            ("notifications_quiet_hours_start", "TEXT NOT NULL DEFAULT '22:00'"),
-            ("notifications_quiet_hours_end", "TEXT NOT NULL DEFAULT '08:00'"),
-            ("notifications_digest_frequency", "TEXT NOT NULL DEFAULT 'never'"),
-            ("notifications_batch_notifications", "INTEGER NOT NULL DEFAULT 0"),
+            (
+                "notifications_security_alerts",
+                "INTEGER NOT NULL DEFAULT 1",
+            ),
+            (
+                "notifications_quiet_hours_enabled",
+                "INTEGER NOT NULL DEFAULT 0",
+            ),
+            (
+                "notifications_quiet_hours_start",
+                "TEXT NOT NULL DEFAULT '22:00'",
+            ),
+            (
+                "notifications_quiet_hours_end",
+                "TEXT NOT NULL DEFAULT '08:00'",
+            ),
+            (
+                "notifications_digest_frequency",
+                "TEXT NOT NULL DEFAULT 'never'",
+            ),
+            (
+                "notifications_batch_notifications",
+                "INTEGER NOT NULL DEFAULT 0",
+            ),
             ("notifications_sound_enabled", "INTEGER NOT NULL DEFAULT 1"),
             ("notifications_sound_volume", "INTEGER NOT NULL DEFAULT 70"),
             ("updated_at", "INTEGER NOT NULL DEFAULT 0"),
@@ -91,13 +303,19 @@ impl SettingsService {
 
         let mut stmt = conn
             .prepare("PRAGMA table_info(user_settings)")
-            .map_err(|e| AppError::Database(format!("Failed to inspect user_settings schema: {}", e)))?;
+            .map_err(|e| {
+                AppError::Database(format!("Failed to inspect user_settings schema: {}", e))
+            })?;
 
         let existing_columns: HashSet<String> = stmt
             .query_map([], |row| row.get::<_, String>(1))
-            .map_err(|e| AppError::Database(format!("Failed to inspect user_settings columns: {}", e)))?
+            .map_err(|e| {
+                AppError::Database(format!("Failed to inspect user_settings columns: {}", e))
+            })?
             .collect::<Result<HashSet<_>, _>>()
-            .map_err(|e| AppError::Database(format!("Failed to read user_settings columns: {}", e)))?;
+            .map_err(|e| {
+                AppError::Database(format!("Failed to read user_settings columns: {}", e))
+            })?;
 
         if existing_columns.is_empty() {
             return Err(AppError::Database(
@@ -131,8 +349,12 @@ impl SettingsService {
 
     /// Get user settings by user ID
     pub fn get_user_settings(&self, user_id: &str) -> Result<UserSettings, AppError> {
+        // Get connection and ensure schema compatibility first
         let conn = self.db.get_connection().map_err(|e| {
-            error!("Failed to get database connection: {}", e);
+            error!(
+                "Failed to get database connection for user {}: {}",
+                user_id, e
+            );
             AppError::Database("Database connection failed".to_string())
         })?;
         self.ensure_user_settings_schema_compatibility(&conn)?;
@@ -241,15 +463,73 @@ impl SettingsService {
                 // Create default settings for new user
                 warn!("No settings found for user {}, creating defaults", user_id);
                 let default_settings = UserSettings::default();
-                self.create_user_settings(user_id, &default_settings)?;
-                Ok(default_settings)
+
+                // Try to create the settings with detailed error logging
+                match self.create_user_settings(user_id, &default_settings) {
+                    Ok(()) => {
+                        info!("Successfully created default settings for user {}", user_id);
+                        Ok(default_settings)
+                    }
+                    Err(e) => {
+                        error!(
+                            "Failed to create default settings for user {}: {}",
+                            user_id, e
+                        );
+
+                        // Log the error details for debugging
+                        match e {
+                            AppError::Database(ref msg) => {
+                                error!("Database error details: {}", msg);
+
+                                // Check if it's a constraint violation
+                                if msg.contains("UNIQUE constraint failed") {
+                                    error!("User settings already exists for user {}, attempting to retrieve", user_id);
+                                    // Try once more to get the settings
+                                    return self.get_user_settings(user_id);
+                                }
+                            }
+                            _ => {}
+                        }
+
+                        Err(AppError::Database(format!(
+                            "Failed to create user settings for user {}: {}",
+                            user_id, e
+                        )))
+                    }
+                }
             }
             Err(e) => {
                 error!("Failed to get user settings for {}: {}", user_id, e);
-                Err(AppError::Database(format!(
-                    "Failed to get user settings: {}",
-                    e
-                )))
+
+                // Handle specific database errors with more context
+                let error_msg = match e {
+                    rusqlite::Error::SqliteFailure(sqlite_err, _) => {
+                        match sqlite_err.code {
+                            rusqlite::ErrorCode::ConstraintViolation => {
+                                error!(
+                                    "Constraint violation when accessing user_settings for user {}",
+                                    user_id
+                                );
+                                format!("Database constraint violation when accessing user settings: {}", e)
+                            }
+                            rusqlite::ErrorCode::CannotOpen => {
+                                error!(
+                                    "Cannot open database when accessing user_settings for user {}",
+                                    user_id
+                                );
+                                "Database access error: cannot open database".to_string()
+                            }
+                            _ => {
+                                format!("Database error when accessing user settings: {}", e)
+                            }
+                        }
+                    }
+                    _ => {
+                        format!("Unexpected error when accessing user settings: {}", e)
+                    }
+                };
+
+                Err(AppError::Database(error_msg))
             }
         }
     }
@@ -257,71 +537,80 @@ impl SettingsService {
     /// Create user settings record
     fn create_user_settings(&self, user_id: &str, settings: &UserSettings) -> Result<(), AppError> {
         let conn = self.db.get_connection().map_err(|e| {
-            error!("Failed to get database connection: {}", e);
+            error!(
+                "Failed to get database connection for user {}: {}",
+                user_id, e
+            );
             AppError::Database("Database connection failed".to_string())
         })?;
         self.ensure_user_settings_schema_compatibility(&conn)?;
 
+        // Check if settings already exist before creating
+        let existing_count: Result<i32, _> = conn.query_row(
+            "SELECT COUNT(*) FROM user_settings WHERE user_id = ?",
+            params![user_id],
+            |row| row.get(0),
+        );
+
+        match existing_count {
+            Ok(count) if count > 0 => {
+                warn!(
+                    "User settings already exist for user {}, skipping creation",
+                    user_id
+                );
+                return Ok(());
+            }
+            Ok(_) => {} // Continue with creation
+            Err(e) => {
+                error!(
+                    "Failed to check existing user settings for {}: {}",
+                    user_id, e
+                );
+                return Err(AppError::Database(format!(
+                    "Failed to check existing settings: {}",
+                    e
+                )));
+            }
+        }
+
         let id = Uuid::new_v4().to_string();
 
-        conn.execute(
-            "INSERT INTO user_settings (
-                id, user_id, full_name, email, phone, avatar_url, notes,
-                email_notifications, push_notifications, task_assignments, task_updates,
-                system_alerts, weekly_reports, theme, language, date_format, time_format,
-                high_contrast, large_text, reduce_motion, screen_reader, auto_refresh, refresh_interval,
-                two_factor_enabled, session_timeout,
-                cache_enabled, cache_size, offline_mode, sync_on_startup, background_sync,
-                image_compression, preload_data,
-                accessibility_high_contrast, accessibility_large_text, accessibility_reduce_motion,
-                accessibility_screen_reader, accessibility_focus_indicators, accessibility_keyboard_navigation,
-                accessibility_text_to_speech, accessibility_speech_rate, accessibility_font_size,
-                accessibility_color_blind_mode,
-                notifications_email_enabled, notifications_push_enabled, notifications_in_app_enabled,
-                notifications_task_assigned, notifications_task_updated, notifications_task_completed,
-                notifications_task_overdue, notifications_system_alerts, notifications_maintenance,
-                notifications_security_alerts, notifications_quiet_hours_enabled,
-                notifications_quiet_hours_start, notifications_quiet_hours_end,
-                notifications_digest_frequency, notifications_batch_notifications,
-                notifications_sound_enabled, notifications_sound_volume
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            params![
-                id, user_id,
-                settings.profile.full_name, settings.profile.email, settings.profile.phone, settings.profile.avatar_url, settings.profile.notes,
-                settings.preferences.email_notifications as i32, settings.preferences.push_notifications as i32,
-                settings.preferences.task_assignments as i32, settings.preferences.task_updates as i32,
-                settings.preferences.system_alerts as i32, settings.preferences.weekly_reports as i32,
-                settings.preferences.theme, settings.preferences.language, settings.preferences.date_format,
-                settings.preferences.time_format, settings.preferences.high_contrast as i32,
-                settings.preferences.large_text as i32, settings.preferences.reduce_motion as i32,
-                settings.preferences.screen_reader as i32, settings.preferences.auto_refresh as i32,
-                settings.preferences.refresh_interval,
-                settings.security.two_factor_enabled as i32, settings.security.session_timeout,
-                settings.performance.cache_enabled as i32, settings.performance.cache_size,
-                settings.performance.offline_mode as i32, settings.performance.sync_on_startup as i32,
-                settings.performance.background_sync as i32, settings.performance.image_compression as i32,
-                settings.performance.preload_data as i32,
-                settings.accessibility.high_contrast as i32, settings.accessibility.large_text as i32,
-                settings.accessibility.reduce_motion as i32, settings.accessibility.screen_reader as i32,
-                settings.accessibility.focus_indicators as i32, settings.accessibility.keyboard_navigation as i32,
-                settings.accessibility.text_to_speech as i32, settings.accessibility.speech_rate,
-                settings.accessibility.font_size, settings.accessibility.color_blind_mode,
-                settings.notifications.email_enabled as i32, settings.notifications.push_enabled as i32,
-                settings.notifications.in_app_enabled as i32, settings.notifications.task_assigned as i32,
-                settings.notifications.task_updated as i32, settings.notifications.task_completed as i32,
-                settings.notifications.task_overdue as i32, settings.notifications.system_alerts as i32,
-                settings.notifications.maintenance as i32, settings.notifications.security_alerts as i32,
-                settings.notifications.quiet_hours_enabled as i32, settings.notifications.quiet_hours_start,
-                settings.notifications.quiet_hours_end, settings.notifications.digest_frequency,
-                settings.notifications.batch_notifications as i32, settings.notifications.sound_enabled as i32,
-                settings.notifications.sound_volume
-            ],
-        ).map_err(|e| {
-            error!("Failed to create user settings for {}: {}", user_id, e);
-            AppError::Database("Failed to create user settings".to_string())
-        })?;
+        debug!("Creating user settings for user {} with ID {}", user_id, id);
 
-        Ok(())
+        let params = Self::build_user_settings_params(&id, user_id, settings);
+        match conn.execute(INSERT_USER_SETTINGS_SQL, rusqlite::params_from_iter(params)) {
+            Ok(_) => {
+                info!(
+                    "Successfully created user settings for user {} with ID {}",
+                    user_id, id
+                );
+                Ok(())
+            }
+            Err(e) => {
+                error!("Failed to create user settings for user {}: {}", user_id, e);
+
+                // Provide more specific error messages
+                let error_msg = match e {
+                    rusqlite::Error::SqliteFailure(sqlite_err, _) => match sqlite_err.code {
+                        rusqlite::ErrorCode::ConstraintViolation => {
+                            if e.to_string().contains("UNIQUE") {
+                                format!("User settings already exist for user {}", user_id)
+                            } else {
+                                format!("Constraint violation when creating user settings: {}", e)
+                            }
+                        }
+                        _ => {
+                            format!("Database error when creating user settings: {}", e)
+                        }
+                    },
+                    _ => {
+                        format!("Unexpected error when creating user settings: {}", e)
+                    }
+                };
+
+                Err(AppError::Database(error_msg))
+            }
+        }
     }
 
     /// Update user profile settings with transaction
@@ -330,59 +619,33 @@ impl SettingsService {
         user_id: &str,
         profile: &UserProfileSettings,
     ) -> Result<(), AppError> {
-        let mut conn = self.db.get_connection().map_err(|e| {
-            error!("Failed to get database connection: {}", e);
-            AppError::Database("Database connection failed".to_string())
-        })?;
-        self.ensure_user_settings_schema_compatibility(&conn)?;
+        self.with_settings_tx(user_id, "profile", |tx| {
+            tx.execute(
+                UPDATE_PROFILE_SQL,
+                params![
+                    profile.full_name,
+                    profile.email,
+                    profile.phone,
+                    profile.avatar_url,
+                    profile.notes,
+                    chrono::Utc::now().timestamp_millis(),
+                    user_id
+                ],
+            )
+            .map_err(|e| {
+                error!("Failed to update user profile for {}: {}", user_id, e);
+                AppError::Database("Failed to update user profile".to_string())
+            })?;
 
-        // Start transaction
-        let tx = conn.transaction().map_err(|e| {
-            error!("Failed to start transaction for profile update: {}", e);
-            AppError::Database("Failed to start transaction".to_string())
-        })?;
-
-        // First ensure user settings exist
-        self.ensure_user_settings_exist_with_tx(&tx, user_id)?;
-
-        // Update profile settings
-        tx.execute(
-            "UPDATE user_settings SET
-                full_name = ?, email = ?, phone = ?, avatar_url = ?, notes = ?, updated_at = ?
-             WHERE user_id = ?",
-            params![
-                profile.full_name,
-                profile.email,
-                profile.phone,
-                profile.avatar_url,
-                profile.notes,
-                chrono::Utc::now().timestamp_millis(),
-                user_id
-            ],
-        )
-        .map_err(|e| {
-            error!("Failed to update user profile for {}: {}", user_id, e);
-            AppError::Database("Failed to update user profile".to_string())
-        })?;
-
-        // Log the change for audit purposes (don't fail if logging fails)
-        let _ = self.log_settings_change(
-            &tx,
-            user_id,
-            "profile",
-            &format!("Updated profile: {:?}", profile),
-        );
-
-        // Commit transaction
-        tx.commit().map_err(|e| {
-            error!(
-                "Failed to commit profile update transaction for {}: {}",
-                user_id, e
+            let _ = self.log_settings_change(
+                tx,
+                user_id,
+                "profile",
+                &format!("Updated profile: {:?}", profile),
             );
-            AppError::Database("Failed to commit transaction".to_string())
-        })?;
 
-        Ok(())
+            Ok(())
+        })
     }
 
     /// Update user preferences with transaction
@@ -391,62 +654,44 @@ impl SettingsService {
         user_id: &str,
         preferences: &UserPreferences,
     ) -> Result<(), AppError> {
-        let mut conn = self.db.get_connection().map_err(|e| {
-            error!("Failed to get database connection: {}", e);
-            AppError::Database("Database connection failed".to_string())
-        })?;
-        self.ensure_user_settings_schema_compatibility(&conn)?;
+        self.with_settings_tx(user_id, "preferences", |tx| {
+            tx.execute(
+                UPDATE_PREFERENCES_SQL,
+                params![
+                    preferences.email_notifications as i32,
+                    preferences.push_notifications as i32,
+                    preferences.task_assignments as i32,
+                    preferences.task_updates as i32,
+                    preferences.system_alerts as i32,
+                    preferences.weekly_reports as i32,
+                    preferences.theme,
+                    preferences.language,
+                    preferences.date_format,
+                    preferences.time_format,
+                    preferences.high_contrast as i32,
+                    preferences.large_text as i32,
+                    preferences.reduce_motion as i32,
+                    preferences.screen_reader as i32,
+                    preferences.auto_refresh as i32,
+                    preferences.refresh_interval,
+                    chrono::Utc::now().timestamp_millis(),
+                    user_id
+                ],
+            )
+            .map_err(|e| {
+                error!("Failed to update user preferences for {}: {}", user_id, e);
+                AppError::Database("Failed to update user preferences".to_string())
+            })?;
 
-        // Start transaction
-        let tx = conn.transaction().map_err(|e| {
-            error!("Failed to start transaction for preferences update: {}", e);
-            AppError::Database("Failed to start transaction".to_string())
-        })?;
-
-        // First ensure user settings exist
-        self.ensure_user_settings_exist_with_tx(&tx, user_id)?;
-
-        // Update preferences settings
-        tx.execute(
-            "UPDATE user_settings SET
-                email_notifications = ?, push_notifications = ?, task_assignments = ?, task_updates = ?,
-                system_alerts = ?, weekly_reports = ?, theme = ?, language = ?, date_format = ?,
-                time_format = ?, high_contrast = ?, large_text = ?, reduce_motion = ?, screen_reader = ?,
-                auto_refresh = ?, refresh_interval = ?, updated_at = ?
-             WHERE user_id = ?",
-            params![
-                preferences.email_notifications as i32, preferences.push_notifications as i32,
-                preferences.task_assignments as i32, preferences.task_updates as i32,
-                preferences.system_alerts as i32, preferences.weekly_reports as i32,
-                preferences.theme, preferences.language, preferences.date_format, preferences.time_format,
-                preferences.high_contrast as i32, preferences.large_text as i32,
-                preferences.reduce_motion as i32, preferences.screen_reader as i32,
-                preferences.auto_refresh as i32, preferences.refresh_interval,
-                chrono::Utc::now().timestamp_millis(), user_id
-            ],
-        ).map_err(|e| {
-            error!("Failed to update user preferences for {}: {}", user_id, e);
-            AppError::Database("Failed to update user preferences".to_string())
-        })?;
-
-        // Log the change for audit purposes (don't fail if logging fails)
-        let _ = self.log_settings_change(
-            &tx,
-            user_id,
-            "preferences",
-            &format!("Updated preferences: {:?}", preferences),
-        );
-
-        // Commit transaction
-        tx.commit().map_err(|e| {
-            error!(
-                "Failed to commit preferences update transaction for {}: {}",
-                user_id, e
+            let _ = self.log_settings_change(
+                tx,
+                user_id,
+                "preferences",
+                &format!("Updated preferences: {:?}", preferences),
             );
-            AppError::Database("Failed to commit transaction".to_string())
-        })?;
 
-        Ok(())
+            Ok(())
+        })
     }
 
     /// Update user security settings
@@ -455,62 +700,36 @@ impl SettingsService {
         user_id: &str,
         security: &UserSecuritySettings,
     ) -> Result<(), AppError> {
-        let mut conn = self.db.get_connection().map_err(|e| {
-            error!("Failed to get database connection: {}", e);
-            AppError::Database("Database connection failed".to_string())
-        })?;
-        self.ensure_user_settings_schema_compatibility(&conn)?;
+        self.with_settings_tx(user_id, "security", |tx| {
+            tx.execute(
+                UPDATE_SECURITY_SQL,
+                params![
+                    security.two_factor_enabled as i32,
+                    security.session_timeout,
+                    chrono::Utc::now().timestamp_millis(),
+                    user_id
+                ],
+            )
+            .map_err(|e| {
+                error!(
+                    "Failed to update user security settings for {}: {}",
+                    user_id, e
+                );
+                AppError::Database("Failed to update user security settings".to_string())
+            })?;
 
-        // Start transaction
-        let tx = conn.transaction().map_err(|e| {
-            error!("Failed to start transaction for security update: {}", e);
-            AppError::Database("Failed to start transaction".to_string())
-        })?;
-
-        // Ensure user settings exist
-        self.ensure_user_settings_exist_with_tx(&tx, user_id)?;
-
-        // Update security settings
-        tx.execute(
-            "UPDATE user_settings SET
-                two_factor_enabled = ?, session_timeout = ?, updated_at = ?
-             WHERE user_id = ?",
-            params![
-                security.two_factor_enabled as i32,
-                security.session_timeout,
-                chrono::Utc::now().timestamp_millis(),
-                user_id
-            ],
-        )
-        .map_err(|e| {
-            error!(
-                "Failed to update user security settings for {}: {}",
-                user_id, e
+            let _ = self.log_settings_change(
+                tx,
+                user_id,
+                "security",
+                &format!(
+                    "Updated security settings: two_factor_enabled={}, session_timeout={}",
+                    security.two_factor_enabled, security.session_timeout
+                ),
             );
-            AppError::Database("Failed to update user security settings".to_string())
-        })?;
 
-        // Log the change for audit purposes
-        let _ = self.log_settings_change(
-            &tx,
-            user_id,
-            "security",
-            &format!(
-                "Updated security settings: two_factor_enabled={}, session_timeout={}",
-                security.two_factor_enabled, security.session_timeout
-            ),
-        );
-
-        // Commit transaction
-        tx.commit().map_err(|e| {
-            error!(
-                "Failed to commit security update transaction for {}: {}",
-                user_id, e
-            );
-            AppError::Database("Failed to commit transaction".to_string())
-        })?;
-
-        Ok(())
+            Ok(())
+        })
     }
 
     /// Update user performance settings
@@ -519,68 +738,41 @@ impl SettingsService {
         user_id: &str,
         performance: &UserPerformanceSettings,
     ) -> Result<(), AppError> {
-        let mut conn = self.db.get_connection().map_err(|e| {
-            error!("Failed to get database connection: {}", e);
-            AppError::Database("Database connection failed".to_string())
-        })?;
-        self.ensure_user_settings_schema_compatibility(&conn)?;
+        self.with_settings_tx(user_id, "performance", |tx| {
+            tx.execute(
+                UPDATE_PERFORMANCE_SQL,
+                params![
+                    performance.cache_enabled as i32,
+                    performance.cache_size,
+                    performance.offline_mode as i32,
+                    performance.sync_on_startup as i32,
+                    performance.background_sync as i32,
+                    performance.image_compression as i32,
+                    performance.preload_data as i32,
+                    chrono::Utc::now().timestamp_millis(),
+                    user_id
+                ],
+            )
+            .map_err(|e| {
+                error!(
+                    "Failed to update user performance settings for {}: {}",
+                    user_id, e
+                );
+                AppError::Database("Failed to update user performance settings".to_string())
+            })?;
 
-        // Start transaction
-        let tx = conn.transaction().map_err(|e| {
-            error!("Failed to start transaction for performance update: {}", e);
-            AppError::Database("Failed to start transaction".to_string())
-        })?;
-
-        // Ensure user settings exist
-        self.ensure_user_settings_exist_with_tx(&tx, user_id)?;
-
-        // Update performance settings
-        tx.execute(
-            "UPDATE user_settings SET
-                cache_enabled = ?, cache_size = ?, offline_mode = ?, sync_on_startup = ?,
-                background_sync = ?, image_compression = ?, preload_data = ?, updated_at = ?
-             WHERE user_id = ?",
-            params![
-                performance.cache_enabled as i32,
-                performance.cache_size,
-                performance.offline_mode as i32,
-                performance.sync_on_startup as i32,
-                performance.background_sync as i32,
-                performance.image_compression as i32,
-                performance.preload_data as i32,
-                chrono::Utc::now().timestamp_millis(),
-                user_id
-            ],
-        )
-        .map_err(|e| {
-            error!(
-                "Failed to update user performance settings for {}: {}",
-                user_id, e
+            let _ = self.log_settings_change(
+                tx,
+                user_id,
+                "performance",
+                &format!(
+                    "Updated performance settings: cache_enabled={}, cache_size={}, offline_mode={}",
+                    performance.cache_enabled, performance.cache_size, performance.offline_mode
+                ),
             );
-            AppError::Database("Failed to update user performance settings".to_string())
-        })?;
 
-        // Log the change for audit purposes
-        let _ = self.log_settings_change(
-            &tx,
-            user_id,
-            "performance",
-            &format!(
-                "Updated performance settings: cache_enabled={}, cache_size={}, offline_mode={}",
-                performance.cache_enabled, performance.cache_size, performance.offline_mode
-            ),
-        );
-
-        // Commit transaction
-        tx.commit().map_err(|e| {
-            error!(
-                "Failed to commit performance update transaction for {}: {}",
-                user_id, e
-            );
-            AppError::Database("Failed to commit transaction".to_string())
-        })?;
-
-        Ok(())
+            Ok(())
+        })
     }
 
     /// Update user accessibility settings
@@ -589,67 +781,44 @@ impl SettingsService {
         user_id: &str,
         accessibility: &UserAccessibilitySettings,
     ) -> Result<(), AppError> {
-        let mut conn = self.db.get_connection().map_err(|e| {
-            error!("Failed to get database connection: {}", e);
-            AppError::Database("Database connection failed".to_string())
-        })?;
-        self.ensure_user_settings_schema_compatibility(&conn)?;
+        self.with_settings_tx(user_id, "accessibility", |tx| {
+            tx.execute(
+                UPDATE_ACCESSIBILITY_SQL,
+                params![
+                    accessibility.high_contrast as i32,
+                    accessibility.large_text as i32,
+                    accessibility.reduce_motion as i32,
+                    accessibility.screen_reader as i32,
+                    accessibility.focus_indicators as i32,
+                    accessibility.keyboard_navigation as i32,
+                    accessibility.text_to_speech as i32,
+                    accessibility.speech_rate,
+                    accessibility.font_size,
+                    accessibility.color_blind_mode,
+                    chrono::Utc::now().timestamp_millis(),
+                    user_id
+                ],
+            )
+            .map_err(|e| {
+                error!(
+                    "Failed to update user accessibility settings for {}: {}",
+                    user_id, e
+                );
+                AppError::Database("Failed to update user accessibility settings".to_string())
+            })?;
 
-        // Start transaction
-        let tx = conn.transaction().map_err(|e| {
-            error!(
-                "Failed to start transaction for accessibility update: {}",
-                e
+            let _ = self.log_settings_change(
+                tx,
+                user_id,
+                "accessibility",
+                &format!(
+                    "Updated accessibility settings: high_contrast={}, large_text={}",
+                    accessibility.high_contrast, accessibility.large_text
+                ),
             );
-            AppError::Database("Failed to start transaction".to_string())
-        })?;
 
-        // Ensure user settings exist
-        self.ensure_user_settings_exist_with_tx(&tx, user_id)?;
-
-        // Update accessibility settings
-        tx.execute(
-            "UPDATE user_settings SET
-                accessibility_high_contrast = ?, accessibility_large_text = ?, accessibility_reduce_motion = ?,
-                accessibility_screen_reader = ?, accessibility_focus_indicators = ?, accessibility_keyboard_navigation = ?,
-                accessibility_text_to_speech = ?, accessibility_speech_rate = ?, accessibility_font_size = ?,
-                accessibility_color_blind_mode = ?, updated_at = ?
-             WHERE user_id = ?",
-            params![
-                accessibility.high_contrast as i32, accessibility.large_text as i32, accessibility.reduce_motion as i32,
-                accessibility.screen_reader as i32, accessibility.focus_indicators as i32,
-                accessibility.keyboard_navigation as i32, accessibility.text_to_speech as i32,
-                accessibility.speech_rate, accessibility.font_size, accessibility.color_blind_mode,
-                chrono::Utc::now().timestamp_millis(),
-                user_id
-            ],
-        )
-        .map_err(|e| {
-            error!("Failed to update user accessibility settings for {}: {}", user_id, e);
-            AppError::Database("Failed to update user accessibility settings".to_string())
-        })?;
-
-        // Log the change for audit purposes
-        let _ = self.log_settings_change(
-            &tx,
-            user_id,
-            "accessibility",
-            &format!(
-                "Updated accessibility settings: high_contrast={}, large_text={}",
-                accessibility.high_contrast, accessibility.large_text
-            ),
-        );
-
-        // Commit transaction
-        tx.commit().map_err(|e| {
-            error!(
-                "Failed to commit accessibility update transaction for {}: {}",
-                user_id, e
-            );
-            AppError::Database("Failed to commit transaction".to_string())
-        })?;
-
-        Ok(())
+            Ok(())
+        })
     }
 
     /// Update user notification settings
@@ -658,74 +827,51 @@ impl SettingsService {
         user_id: &str,
         notifications: &UserNotificationSettings,
     ) -> Result<(), AppError> {
-        let mut conn = self.db.get_connection().map_err(|e| {
-            error!("Failed to get database connection: {}", e);
-            AppError::Database("Database connection failed".to_string())
-        })?;
-        self.ensure_user_settings_schema_compatibility(&conn)?;
+        self.with_settings_tx(user_id, "notifications", |tx| {
+            tx.execute(
+                UPDATE_NOTIFICATIONS_SQL,
+                params![
+                    notifications.email_enabled as i32,
+                    notifications.push_enabled as i32,
+                    notifications.in_app_enabled as i32,
+                    notifications.task_assigned as i32,
+                    notifications.task_updated as i32,
+                    notifications.task_completed as i32,
+                    notifications.task_overdue as i32,
+                    notifications.system_alerts as i32,
+                    notifications.maintenance as i32,
+                    notifications.security_alerts as i32,
+                    notifications.quiet_hours_enabled as i32,
+                    notifications.quiet_hours_start,
+                    notifications.quiet_hours_end,
+                    notifications.digest_frequency,
+                    notifications.batch_notifications as i32,
+                    notifications.sound_enabled as i32,
+                    notifications.sound_volume,
+                    chrono::Utc::now().timestamp_millis(),
+                    user_id
+                ],
+            )
+            .map_err(|e| {
+                error!(
+                    "Failed to update user notification settings for {}: {}",
+                    user_id, e
+                );
+                AppError::Database("Failed to update user notification settings".to_string())
+            })?;
 
-        // Start transaction
-        let tx = conn.transaction().map_err(|e| {
-            error!(
-                "Failed to start transaction for notifications update: {}",
-                e
+            let _ = self.log_settings_change(
+                tx,
+                user_id,
+                "notifications",
+                &format!(
+                    "Updated notification settings: email_enabled={}, push_enabled={}",
+                    notifications.email_enabled, notifications.push_enabled
+                ),
             );
-            AppError::Database("Failed to start transaction".to_string())
-        })?;
 
-        // Ensure user settings exist
-        self.ensure_user_settings_exist_with_tx(&tx, user_id)?;
-
-        // Update notification settings
-        tx.execute(
-            "UPDATE user_settings SET
-                notifications_email_enabled = ?, notifications_push_enabled = ?, notifications_in_app_enabled = ?,
-                notifications_task_assigned = ?, notifications_task_updated = ?, notifications_task_completed = ?,
-                notifications_task_overdue = ?, notifications_system_alerts = ?, notifications_maintenance = ?,
-                notifications_security_alerts = ?, notifications_quiet_hours_enabled = ?,
-                notifications_quiet_hours_start = ?, notifications_quiet_hours_end = ?,
-                notifications_digest_frequency = ?, notifications_batch_notifications = ?,
-                notifications_sound_enabled = ?, notifications_sound_volume = ?, updated_at = ?
-             WHERE user_id = ?",
-            params![
-                notifications.email_enabled as i32, notifications.push_enabled as i32,
-                notifications.in_app_enabled as i32, notifications.task_assigned as i32,
-                notifications.task_updated as i32, notifications.task_completed as i32,
-                notifications.task_overdue as i32, notifications.system_alerts as i32,
-                notifications.maintenance as i32, notifications.security_alerts as i32,
-                notifications.quiet_hours_enabled as i32, notifications.quiet_hours_start,
-                notifications.quiet_hours_end, notifications.digest_frequency,
-                notifications.batch_notifications as i32, notifications.sound_enabled as i32,
-                notifications.sound_volume, chrono::Utc::now().timestamp_millis(),
-                user_id
-            ],
-        )
-        .map_err(|e| {
-            error!("Failed to update user notification settings for {}: {}", user_id, e);
-            AppError::Database("Failed to update user notification settings".to_string())
-        })?;
-
-        // Log the change for audit purposes
-        let _ = self.log_settings_change(
-            &tx,
-            user_id,
-            "notifications",
-            &format!(
-                "Updated notification settings: email_enabled={}, push_enabled={}",
-                notifications.email_enabled, notifications.push_enabled
-            ),
-        );
-
-        // Commit transaction
-        tx.commit().map_err(|e| {
-            error!(
-                "Failed to commit notifications update transaction for {}: {}",
-                user_id, e
-            );
-            AppError::Database("Failed to commit transaction".to_string())
-        })?;
-
-        Ok(())
+            Ok(())
+        })
     }
 
     /// Change user password with current password verification and session revocation.
@@ -1006,62 +1152,12 @@ impl SettingsService {
     ) -> Result<(), AppError> {
         let id = Uuid::new_v4().to_string();
 
-        tx.execute(
-            "INSERT INTO user_settings (
-                id, user_id, full_name, email, phone, avatar_url, notes,
-                email_notifications, push_notifications, task_assignments, task_updates,
-                system_alerts, weekly_reports, theme, language, date_format, time_format,
-                high_contrast, large_text, reduce_motion, screen_reader, auto_refresh, refresh_interval,
-                two_factor_enabled, session_timeout,
-                cache_enabled, cache_size, offline_mode, sync_on_startup, background_sync,
-                image_compression, preload_data,
-                accessibility_high_contrast, accessibility_large_text, accessibility_reduce_motion,
-                accessibility_screen_reader, accessibility_focus_indicators, accessibility_keyboard_navigation,
-                accessibility_text_to_speech, accessibility_speech_rate, accessibility_font_size,
-                accessibility_color_blind_mode,
-                notifications_email_enabled, notifications_push_enabled, notifications_in_app_enabled,
-                notifications_task_assigned, notifications_task_updated, notifications_task_completed,
-                notifications_task_overdue, notifications_system_alerts, notifications_maintenance,
-                notifications_security_alerts, notifications_quiet_hours_enabled,
-                notifications_quiet_hours_start, notifications_quiet_hours_end,
-                notifications_digest_frequency, notifications_batch_notifications,
-                notifications_sound_enabled, notifications_sound_volume
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            params![
-                id, user_id,
-                settings.profile.full_name, settings.profile.email, settings.profile.phone, settings.profile.avatar_url, settings.profile.notes,
-                settings.preferences.email_notifications as i32, settings.preferences.push_notifications as i32,
-                settings.preferences.task_assignments as i32, settings.preferences.task_updates as i32,
-                settings.preferences.system_alerts as i32, settings.preferences.weekly_reports as i32,
-                settings.preferences.theme, settings.preferences.language, settings.preferences.date_format,
-                settings.preferences.time_format, settings.preferences.high_contrast as i32,
-                settings.preferences.large_text as i32, settings.preferences.reduce_motion as i32,
-                settings.preferences.screen_reader as i32, settings.preferences.auto_refresh as i32,
-                settings.preferences.refresh_interval,
-                settings.security.two_factor_enabled as i32, settings.security.session_timeout,
-                settings.performance.cache_enabled as i32, settings.performance.cache_size,
-                settings.performance.offline_mode as i32, settings.performance.sync_on_startup as i32,
-                settings.performance.background_sync as i32, settings.performance.image_compression as i32,
-                settings.performance.preload_data as i32,
-                settings.accessibility.high_contrast as i32, settings.accessibility.large_text as i32,
-                settings.accessibility.reduce_motion as i32, settings.accessibility.screen_reader as i32,
-                settings.accessibility.focus_indicators as i32, settings.accessibility.keyboard_navigation as i32,
-                settings.accessibility.text_to_speech as i32, settings.accessibility.speech_rate,
-                settings.accessibility.font_size, settings.accessibility.color_blind_mode,
-                settings.notifications.email_enabled as i32, settings.notifications.push_enabled as i32,
-                settings.notifications.in_app_enabled as i32, settings.notifications.task_assigned as i32,
-                settings.notifications.task_updated as i32, settings.notifications.task_completed as i32,
-                settings.notifications.task_overdue as i32, settings.notifications.system_alerts as i32,
-                settings.notifications.maintenance as i32, settings.notifications.security_alerts as i32,
-                settings.notifications.quiet_hours_enabled as i32, settings.notifications.quiet_hours_start,
-                settings.notifications.quiet_hours_end, settings.notifications.digest_frequency,
-                settings.notifications.batch_notifications as i32, settings.notifications.sound_enabled as i32,
-                settings.notifications.sound_volume
-            ],
-        ).map_err(|e| {
-            error!("Failed to create user settings for {}: {}", user_id, e);
-            AppError::Database("Failed to create user settings".to_string())
-        })?;
+        let params = Self::build_user_settings_params(&id, user_id, settings);
+        tx.execute(INSERT_USER_SETTINGS_SQL, rusqlite::params_from_iter(params))
+            .map_err(|e| {
+                error!("Failed to create user settings for {}: {}", user_id, e);
+                AppError::Database("Failed to create user settings".to_string())
+            })?;
 
         Ok(())
     }
@@ -1089,13 +1185,15 @@ impl SettingsService {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::models::auth::UserRole;
+    use super::SettingsService;
+    use crate::models::auth::{UserAccount, UserRole};
     use crate::services::auth::AuthService;
     use chrono::Utc;
     use rusqlite::params;
     use std::sync::Arc;
     use tempfile::TempDir;
+    use tracing::{debug, info};
+    use uuid::Uuid;
 
     struct LocalTestDb {
         _temp_dir: TempDir,
@@ -1137,15 +1235,19 @@ mod tests {
     }
 
     fn create_test_user(auth_service: &AuthService) -> crate::models::auth::UserAccount {
+        // Note: Using create_account_from_signup which handles first_name/last_name properly
+        use crate::commands::auth::SignupRequest;
+        let signup_request = SignupRequest {
+            email: "settings.test@example.com".to_string(),
+            first_name: "Settings".to_string(),
+            last_name: "Tester".to_string(),
+            password: "CurrentPass1!".to_string(),
+            role: None,
+            correlation_id: None,
+        };
+
         auth_service
-            .create_account(
-                "settings.test@example.com",
-                "settings_test_user",
-                "Settings",
-                "Tester",
-                UserRole::Technician,
-                "CurrentPass1!",
-            )
+            .create_account_from_signup(&signup_request)
             .expect("failed to create test user")
     }
 

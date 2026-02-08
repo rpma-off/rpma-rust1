@@ -23,13 +23,9 @@ pub async fn generate_task_completion_report(
     validate_filters(filters).map_err(crate::commands::AppError::from)?;
 
     let start_date = DateTime::<Utc>::from_timestamp(date_range.start.timestamp(), 0)
-        .ok_or_else(|| {
-            crate::commands::AppError::Database("Invalid start date".to_string())
-        })?;
+        .ok_or_else(|| crate::commands::AppError::Database("Invalid start date".to_string()))?;
     let end_date = DateTime::<Utc>::from_timestamp(date_range.end.timestamp(), 0)
-        .ok_or_else(|| {
-            crate::commands::AppError::Database("Invalid end date".to_string())
-        })?;
+        .ok_or_else(|| crate::commands::AppError::Database("Invalid end date".to_string()))?;
 
     // Build WHERE clause for filters
     let mut where_clauses = vec!["i.created_at >= ?1 AND i.created_at <= ?2".to_string()];
@@ -178,10 +174,7 @@ pub async fn generate_task_completion_report(
             },
         )
         .map_err(|e| {
-            crate::commands::AppError::Database(format!(
-                "Failed to get daily breakdown: {}",
-                e
-            ))
+            crate::commands::AppError::Database(format!("Failed to get daily breakdown: {}", e))
         })?;
 
     // Query for status distribution
@@ -206,10 +199,7 @@ pub async fn generate_task_completion_report(
             |row| Ok((row.get(0)?, row.get(1)?)),
         )
         .map_err(|e| {
-            crate::commands::AppError::Database(format!(
-                "Failed to get status distribution: {}",
-                e
-            ))
+            crate::commands::AppError::Database(format!("Failed to get status distribution: {}", e))
         })?;
 
     let status_distribution: Vec<StatusCount> = status_counts

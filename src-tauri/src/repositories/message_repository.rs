@@ -3,9 +3,9 @@
 //! Provides consistent database access patterns for Message entities.
 
 use crate::db::Database;
-use crate::models::message::{Message, MessageType, MessageStatus};
-use crate::repositories::base::{Repository, RepoError, RepoResult};
-use crate::repositories::cache::{Cache, CacheKeyBuilder, ttl};
+use crate::models::message::{Message, MessageStatus, MessageType};
+use crate::repositories::base::{RepoError, RepoResult, Repository};
+use crate::repositories::cache::{ttl, Cache, CacheKeyBuilder};
 use async_trait::async_trait;
 use rusqlite::params;
 use std::sync::Arc;
@@ -90,19 +90,25 @@ impl MessageQuery {
 
     fn validate_sort_column(sort_by: &str) -> Result<String, RepoError> {
         let allowed_columns = [
-            "created_at", "updated_at", "message_type", "status", "priority",
-            "scheduled_at", "sent_at", "read_at", "subject"
+            "created_at",
+            "updated_at",
+            "message_type",
+            "status",
+            "priority",
+            "scheduled_at",
+            "sent_at",
+            "read_at",
+            "subject",
         ];
-        allowed_columns.iter()
+        allowed_columns
+            .iter()
             .find(|&&col| col == sort_by)
             .map(|s| s.to_string())
             .ok_or_else(|| RepoError::Validation(format!("Invalid sort column: {}", sort_by)))
     }
 
     fn build_order_by_clause(&self) -> Result<String, RepoError> {
-        let sort_by = Self::validate_sort_column(
-            self.sort_by.as_deref().unwrap_or("created_at")
-        )?;
+        let sort_by = Self::validate_sort_column(self.sort_by.as_deref().unwrap_or("created_at"))?;
         let sort_order = match self.sort_order.as_deref() {
             Some("ASC") => "ASC",
             Some("DESC") => "DESC",
@@ -163,8 +169,7 @@ impl MessageRepository {
             )
             .map_err(|e| RepoError::Database(format!("Failed to find messages by type: {}", e)))?;
 
-        self.cache
-            .set(&cache_key, messages.clone(), ttl::SHORT);
+        self.cache.set(&cache_key, messages.clone(), ttl::SHORT);
 
         Ok(messages)
     }
@@ -194,19 +199,18 @@ impl MessageRepository {
                 "#,
                 params![status.to_string()],
             )
-            .map_err(|e| RepoError::Database(format!("Failed to find messages by status: {}", e)))?;
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to find messages by status: {}", e))
+            })?;
 
-        self.cache
-            .set(&cache_key, messages.clone(), ttl::SHORT);
+        self.cache.set(&cache_key, messages.clone(), ttl::SHORT);
 
         Ok(messages)
     }
 
     /// Find messages for a specific recipient
     pub async fn find_by_recipient(&self, recipient_id: &str) -> RepoResult<Vec<Message>> {
-        let cache_key = self
-            .cache_key_builder
-            .query(&["recipient", recipient_id]);
+        let cache_key = self.cache_key_builder.query(&["recipient", recipient_id]);
 
         if let Some(messages) = self.cache.get::<Vec<Message>>(&cache_key) {
             return Ok(messages);
@@ -228,10 +232,11 @@ impl MessageRepository {
                 "#,
                 params![recipient_id],
             )
-            .map_err(|e| RepoError::Database(format!("Failed to find messages for recipient: {}", e)))?;
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to find messages for recipient: {}", e))
+            })?;
 
-        self.cache
-            .set(&cache_key, messages.clone(), ttl::SHORT);
+        self.cache.set(&cache_key, messages.clone(), ttl::SHORT);
 
         Ok(messages)
     }
@@ -263,8 +268,7 @@ impl MessageRepository {
             )
             .map_err(|e| RepoError::Database(format!("Failed to find unsent messages: {}", e)))?;
 
-        self.cache
-            .set(&cache_key, messages.clone(), ttl::SHORT);
+        self.cache.set(&cache_key, messages.clone(), ttl::SHORT);
 
         Ok(messages)
     }
@@ -302,9 +306,7 @@ impl MessageRepository {
 
     /// Search messages
     pub async fn search(&self, query: MessageQuery) -> RepoResult<Vec<Message>> {
-        let cache_key = self.cache_key_builder.query(&[
-            &format!("{:?}", query),
-        ]);
+        let cache_key = self.cache_key_builder.query(&[&format!("{:?}", query)]);
 
         if let Some(messages) = self.cache.get::<Vec<Message>>(&cache_key) {
             return Ok(messages);
@@ -340,8 +342,7 @@ impl MessageRepository {
             .query_as::<Message>(&sql, rusqlite::params_from_iter(params_vec.iter()))
             .map_err(|e| RepoError::Database(format!("Failed to search messages: {}", e)))?;
 
-        self.cache
-            .set(&cache_key, messages.clone(), ttl::SHORT);
+        self.cache.set(&cache_key, messages.clone(), ttl::SHORT);
 
         Ok(messages)
     }
@@ -397,8 +398,7 @@ impl Repository<Message, String> for MessageRepository {
             .map_err(|e| RepoError::Database(format!("Failed to find message by id: {}", e)))?;
 
         if let Some(ref message) = message {
-            self.cache
-                .set(&cache_key, message.clone(), ttl::MEDIUM);
+            self.cache.set(&cache_key, message.clone(), ttl::MEDIUM);
         }
 
         Ok(message)
@@ -428,8 +428,7 @@ impl Repository<Message, String> for MessageRepository {
             )
             .map_err(|e| RepoError::Database(format!("Failed to find all messages: {}", e)))?;
 
-        self.cache
-            .set(&cache_key, messages.clone(), ttl::SHORT);
+        self.cache.set(&cache_key, messages.clone(), ttl::SHORT);
 
         Ok(messages)
     }
@@ -519,10 +518,7 @@ impl Repository<Message, String> for MessageRepository {
     async fn delete_by_id(&self, id: String) -> RepoResult<bool> {
         let rows_affected = self
             .db
-            .execute(
-                "DELETE FROM messages WHERE id = ?",
-                params![id],
-            )
+            .execute("DELETE FROM messages WHERE id = ?", params![id])
             .map_err(|e| RepoError::Database(format!("Failed to delete message: {}", e)))?;
 
         if rows_affected > 0 {
@@ -536,11 +532,10 @@ impl Repository<Message, String> for MessageRepository {
     async fn exists_by_id(&self, id: String) -> RepoResult<bool> {
         let count: i64 = self
             .db
-            .query_single_value(
-                "SELECT COUNT(*) FROM messages WHERE id = ?",
-                params![id],
-            )
-            .map_err(|e| RepoError::Database(format!("Failed to check message existence: {}", e)))?;
+            .query_single_value("SELECT COUNT(*) FROM messages WHERE id = ?", params![id])
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to check message existence: {}", e))
+            })?;
 
         Ok(count > 0)
     }
@@ -801,10 +796,16 @@ mod tests {
         repo.save(message).await.unwrap();
 
         // Update status to sent
-        repo.update_status("update-status-msg", MessageStatus::Sent).await.unwrap();
+        repo.update_status("update-status-msg", MessageStatus::Sent)
+            .await
+            .unwrap();
 
         // Verify status updated
-        let updated = repo.find_by_id("update-status-msg".to_string()).await.unwrap().unwrap();
+        let updated = repo
+            .find_by_id("update-status-msg".to_string())
+            .await
+            .unwrap()
+            .unwrap();
         assert_eq!(updated.status, "sent");
         assert!(updated.sent_at.is_some());
     }

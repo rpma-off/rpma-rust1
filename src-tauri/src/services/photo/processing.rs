@@ -26,7 +26,7 @@ impl PhotoProcessingService {
     pub fn new() -> Self {
         Self {
             processing_semaphore: Arc::new(Semaphore::new(4)),
-            jpeg_quality: 80, // 80% quality as per requirements
+            jpeg_quality: 80,               // 80% quality as per requirements
             max_file_size: 2 * 1024 * 1024, // 2MB
         }
     }
@@ -41,38 +41,48 @@ impl PhotoProcessingService {
     }
 
     /// Compress image if needed based on settings
-    /// 
+    ///
     /// Performs the following operations:
     /// 1. Checks if image exceeds max file size
     /// 2. Compresses to target JPEG quality (80%)
     /// 3. Supports WebP format output
     /// 4. Uses semaphore to limit concurrent processing
-    pub async fn compress_image_if_needed(&self, data: Vec<u8>) -> crate::services::photo::PhotoResult<Vec<u8>> {
+    pub async fn compress_image_if_needed(
+        &self,
+        data: Vec<u8>,
+    ) -> crate::services::photo::PhotoResult<Vec<u8>> {
         // Skip compression if already under size limit
         if data.len() <= self.max_file_size {
             return Ok(data);
         }
 
         // Acquire semaphore permit to limit concurrent processing
-        let _permit = self.processing_semaphore
+        let _permit = self
+            .processing_semaphore
             .clone()
             .acquire_owned()
             .await
-            .map_err(|e| crate::services::photo::PhotoError::Processing(
-                format!("Failed to acquire processing permit: {}", e)
-            ))?;
+            .map_err(|e| {
+                crate::services::photo::PhotoError::Processing(format!(
+                    "Failed to acquire processing permit: {}",
+                    e
+                ))
+            })?;
 
         // Offload CPU-intensive compression to blocking task
         let jpeg_quality = self.jpeg_quality;
         let max_file_size = self.max_file_size;
-        
+
         let result = tokio::task::spawn_blocking(move || {
             Self::compress_image_blocking(&data, jpeg_quality, max_file_size)
         })
         .await
-        .map_err(|e| crate::services::photo::PhotoError::Processing(
-            format!("Image compression task failed: {}", e)
-        ))?;
+        .map_err(|e| {
+            crate::services::photo::PhotoError::Processing(format!(
+                "Image compression task failed: {}",
+                e
+            ))
+        })?;
 
         result
     }
@@ -90,12 +100,9 @@ impl PhotoProcessingService {
 
         // Try compression at target quality first
         let mut output = Cursor::new(Vec::new());
-        
+
         // Encode as JPEG with specified quality
-        let encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(
-            &mut output,
-            jpeg_quality,
-        );
+        let encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut output, jpeg_quality);
 
         encoder
             .write_image(
@@ -105,7 +112,10 @@ impl PhotoProcessingService {
                 img.color().into(),
             )
             .map_err(|e| {
-                crate::services::photo::PhotoError::Processing(format!("JPEG encoding failed: {}", e))
+                crate::services::photo::PhotoError::Processing(format!(
+                    "JPEG encoding failed: {}",
+                    e
+                ))
             })?;
 
         let compressed_data = output.into_inner();
@@ -125,7 +135,7 @@ impl PhotoProcessingService {
         } else {
             0.0
         };
-        
+
         tracing::info!(
             "Image compressed: {} bytes -> {} bytes ({}% reduction, quality: {}%)",
             original_size,
@@ -138,30 +148,40 @@ impl PhotoProcessingService {
     }
 
     /// Compress image to WebP format
-    pub async fn compress_to_webp(&self, data: Vec<u8>) -> crate::services::photo::PhotoResult<Vec<u8>> {
+    pub async fn compress_to_webp(
+        &self,
+        data: Vec<u8>,
+    ) -> crate::services::photo::PhotoResult<Vec<u8>> {
         // Skip if already under size limit
         if data.len() <= self.max_file_size {
             return Ok(data);
         }
 
         // Acquire semaphore permit
-        let _permit = self.processing_semaphore
+        let _permit = self
+            .processing_semaphore
             .clone()
             .acquire_owned()
             .await
-            .map_err(|e| crate::services::photo::PhotoError::Processing(
-                format!("Failed to acquire processing permit: {}", e)
-            ))?;
+            .map_err(|e| {
+                crate::services::photo::PhotoError::Processing(format!(
+                    "Failed to acquire processing permit: {}",
+                    e
+                ))
+            })?;
 
         let jpeg_quality = self.jpeg_quality;
-        
+
         let result = tokio::task::spawn_blocking(move || {
             Self::compress_to_webp_blocking(&data, jpeg_quality)
         })
         .await
-        .map_err(|e| crate::services::photo::PhotoError::Processing(
-            format!("WebP compression task failed: {}", e)
-        ))?;
+        .map_err(|e| {
+            crate::services::photo::PhotoError::Processing(format!(
+                "WebP compression task failed: {}",
+                e
+            ))
+        })?;
 
         result
     }
@@ -178,13 +198,13 @@ impl PhotoProcessingService {
 
         // Encode as WebP
         let mut output = Cursor::new(Vec::new());
-        
+
         img.write_to(&mut output, ImageFormat::WebP).map_err(|e| {
             crate::services::photo::PhotoError::Processing(format!("WebP encoding failed: {}", e))
         })?;
 
         let compressed_data = output.into_inner();
-        
+
         tracing::info!(
             "Image compressed to WebP: {} bytes -> {} bytes",
             data.len(),
@@ -369,11 +389,11 @@ mod tests {
     // Helper to create a test JPEG image
     fn create_test_image(width: u32, height: u32) -> Vec<u8> {
         use image::{ImageBuffer, Rgb};
-        
+
         let img = ImageBuffer::from_fn(width, height, |x, y| {
             Rgb([(x % 256) as u8, (y % 256) as u8, 128])
         });
-        
+
         let mut buf = Cursor::new(Vec::new());
         img.write_to(&mut buf, ImageFormat::Jpeg).unwrap();
         buf.into_inner()
@@ -383,7 +403,7 @@ mod tests {
     async fn test_compress_small_image_no_change() {
         let service = PhotoProcessingService::new();
         let small_data = vec![1, 2, 3, 4, 5]; // Not a valid image, will fail
-        
+
         // This should return the original data because it's under the size limit
         let result = service.compress_image_if_needed(small_data.clone()).await;
         assert!(result.is_ok());
@@ -395,7 +415,7 @@ mod tests {
         let service = PhotoProcessingService::new();
         // Create a test image
         let test_data = create_test_image(100, 100);
-        
+
         // Since our test image is small, it should not be compressed
         let result = service.compress_image_if_needed(test_data.clone()).await;
         assert!(result.is_ok());

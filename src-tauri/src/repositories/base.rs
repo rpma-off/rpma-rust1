@@ -196,9 +196,11 @@ impl<T> PaginatedResult<T> {
 
 /// Repository with pagination support
 #[async_trait]
-pub trait PaginatedRepository<T: Send, ID: Send + Sync + Clone + 'static, Q: PaginatedQuery + Send + Sync + Clone + 'static>:
-    Queryable<T, Q>
-where
+pub trait PaginatedRepository<
+    T: Send,
+    ID: Send + Sync + Clone + 'static,
+    Q: PaginatedQuery + Send + Sync + Clone + 'static,
+>: Queryable<T, Q> where
     <Q as Query>::Id: 'static,
 {
     /// Find entities with pagination

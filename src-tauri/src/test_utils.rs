@@ -132,11 +132,7 @@ impl TestDataFactory {
 
         let task_id = uuid::Uuid::new_v4().to_string();
         let task_number = format!("TASK-{:04}", rand::random::<u16>());
-        let mut intervention = Intervention::new(
-            task_id,
-            task_number,
-            "XYZ789".to_string(),
-        );
+        let mut intervention = Intervention::new(task_id, task_number, "XYZ789".to_string());
 
         intervention.status = InterventionStatus::Pending;
         intervention.vehicle_model = Some("Intervention Model".to_string());
@@ -214,10 +210,8 @@ impl TestDataFactory {
         );
         step.description = Some(format!("Description for test step {}", step_number));
         step.step_status = StepStatus::Pending;
-        step.quality_checkpoints = Some(vec![
-            "surface_clean".to_string(),
-            "no_bubbles".to_string(),
-        ]);
+        step.quality_checkpoints =
+            Some(vec!["surface_clean".to_string(), "no_bubbles".to_string()]);
         step.is_mandatory = true;
         step.requires_photos = true;
         step.min_photos_required = 1;

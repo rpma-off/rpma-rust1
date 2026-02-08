@@ -23,13 +23,9 @@ pub async fn generate_geographic_report(
     validate_filters(filters).map_err(crate::commands::AppError::from)?;
 
     let start_date = DateTime::<Utc>::from_timestamp(date_range.start.timestamp(), 0)
-        .ok_or_else(|| {
-            crate::commands::AppError::Database("Invalid start date".to_string())
-        })?;
+        .ok_or_else(|| crate::commands::AppError::Database("Invalid start date".to_string()))?;
     let end_date = DateTime::<Utc>::from_timestamp(date_range.end.timestamp(), 0)
-        .ok_or_else(|| {
-            crate::commands::AppError::Database("Invalid end date".to_string())
-        })?;
+        .ok_or_else(|| crate::commands::AppError::Database("Invalid end date".to_string()))?;
 
     // Query geographic data from interventions with GPS coordinates
     let geo_sql = format!(

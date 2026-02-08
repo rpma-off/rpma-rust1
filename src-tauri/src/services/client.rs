@@ -36,7 +36,11 @@ impl ClientService {
     }
 
     /// Create a new client
-    pub async fn create_client(&self, req: CreateClientRequest, user_id: &str) -> Result<Client, String> {
+    pub async fn create_client(
+        &self,
+        req: CreateClientRequest,
+        user_id: &str,
+    ) -> Result<Client, String> {
         // Validate request
         CreateClientRequest::validate(&req)?;
 
@@ -72,33 +76,37 @@ impl ClientService {
         };
 
         // Save using repository
-        self.client_repo.save(client.clone())
+        self.client_repo
+            .save(client.clone())
             .await
             .map_err(|e| format!("Failed to create client: {}", e))?;
 
         Ok(client)
     }
 
-/// Get clients with filtering and pagination
+    /// Get clients with filtering and pagination
     pub async fn get_clients(&self, query: ClientQuery) -> Result<ClientListResponse, String> {
         // Handle different query scenarios using repository methods
         let clients = if let Some(search_term) = &query.search {
             // Use search_simple method
-            self.client_repo.search_simple(
-                search_term,
-                query.limit.unwrap_or(20) as usize,
-                ((query.page.unwrap_or(1) - 1) * query.limit.unwrap_or(20)) as usize,
-            )
-            .await
-            .map_err(|e| format!("Failed to search clients: {}", e))?
+            self.client_repo
+                .search_simple(
+                    search_term,
+                    query.limit.unwrap_or(20) as usize,
+                    ((query.page.unwrap_or(1) - 1) * query.limit.unwrap_or(20)) as usize,
+                )
+                .await
+                .map_err(|e| format!("Failed to search clients: {}", e))?
         } else if let Some(customer_type) = &query.customer_type {
             // Use find_by_customer_type method
-            self.client_repo.find_by_customer_type(customer_type.clone())
+            self.client_repo
+                .find_by_customer_type(customer_type.clone())
                 .await
                 .map_err(|e| format!("Failed to get clients by type: {}", e))?
         } else {
             // Use find_all method
-            self.client_repo.find_all()
+            self.client_repo
+                .find_all()
                 .await
                 .map_err(|e| format!("Failed to get all clients: {}", e))?
         };
@@ -122,12 +130,14 @@ impl ClientService {
             clients.len() as i64
         } else if let Some(customer_type) = &query.customer_type {
             // Use repository to count by customer type
-            self.client_repo.count_by_customer_type(customer_type)
+            self.client_repo
+                .count_by_customer_type(customer_type)
                 .await
                 .map_err(|e| format!("Failed to count clients by type: {}", e))? as i64
         } else {
             // Use repository to count all
-            self.client_repo.count_all()
+            self.client_repo
+                .count_all()
                 .await
                 .map_err(|e| format!("Failed to count all clients: {}", e))? as i64
         };
@@ -157,13 +167,18 @@ impl ClientService {
 
     /// Get a single client by ID
     pub async fn get_client(&self, id: &str) -> Result<Option<Client>, String> {
-        self.client_repo.find_by_id(id.to_string())
+        self.client_repo
+            .find_by_id(id.to_string())
             .await
             .map_err(|e| format!("Failed to get client: {}", e))
     }
 
     /// Update a client
-    pub async fn update_client(&self, req: UpdateClientRequest, user_id: &str) -> Result<Client, String> {
+    pub async fn update_client(
+        &self,
+        req: UpdateClientRequest,
+        user_id: &str,
+    ) -> Result<Client, String> {
         // Get existing client
         let mut client = self
             .get_client(&req.id)
@@ -241,7 +256,8 @@ impl ClientService {
         client.updated_at = Utc::now().timestamp_millis();
 
         // Update using repository
-        self.client_repo.save(client.clone())
+        self.client_repo
+            .save(client.clone())
             .await
             .map_err(|e| format!("Failed to update client: {}", e))?;
 
@@ -262,7 +278,8 @@ impl ClientService {
         }
 
         // Delete using repository
-        self.client_repo.delete_by_id(id.to_string())
+        self.client_repo
+            .delete_by_id(id.to_string())
             .await
             .map_err(|e| format!("Failed to delete client: {}", e))?;
 
@@ -277,7 +294,8 @@ impl ClientService {
         limit: i32,
     ) -> Result<Vec<Client>, String> {
         let offset = (page - 1) * limit;
-        self.client_repo.search_simple(query, limit as usize, offset as usize)
+        self.client_repo
+            .search_simple(query, limit as usize, offset as usize)
             .await
             .map_err(|e| format!("Failed to search clients: {}", e))
     }
@@ -285,7 +303,9 @@ impl ClientService {
     /// Get task summary for a specific client
     pub async fn get_client_task_summary(&self, client_id: &str) -> Result<ClientStat, String> {
         // Get client and their task counts
-        let client = self.client_repo.find_by_id(client_id.to_string())
+        let client = self
+            .client_repo
+            .find_by_id(client_id.to_string())
             .await
             .map_err(|e| format!("Failed to get client: {}", e))?
             .ok_or_else(|| format!("Client with id {} not found", client_id))?;
@@ -300,33 +320,35 @@ impl ClientService {
     /// Get client statistics
     pub async fn get_client_stats(&self) -> Result<ClientStats, String> {
         // Get all clients first
-        let all_clients = self.client_repo.find_all()
+        let all_clients = self
+            .client_repo
+            .find_all()
             .await
             .map_err(|e| format!("Failed to get all clients: {}", e))?;
 
         // Calculate statistics
         let total_clients = all_clients.len() as i32;
-        let individual_clients = all_clients.iter()
+        let individual_clients = all_clients
+            .iter()
             .filter(|c| matches!(c.customer_type, crate::models::CustomerType::Individual))
             .count() as i32;
-        let business_clients = all_clients.iter()
+        let business_clients = all_clients
+            .iter()
             .filter(|c| matches!(c.customer_type, crate::models::CustomerType::Business))
             .count() as i32;
-        let clients_with_tasks = all_clients.iter()
-            .filter(|c| c.total_tasks > 0)
-            .count() as i32;
+        let clients_with_tasks = all_clients.iter().filter(|c| c.total_tasks > 0).count() as i32;
 
         // Get new clients this month
         let now = Utc::now();
-        let start_of_month = now.with_day(0)
-            .unwrap_or(now)
-            .timestamp_millis();
-        let new_clients_this_month = all_clients.iter()
+        let start_of_month = now.with_day(0).unwrap_or(now).timestamp_millis();
+        let new_clients_this_month = all_clients
+            .iter()
             .filter(|c| c.created_at >= start_of_month)
             .count() as i32;
 
         // Get top clients by task count
-        let mut top_clients: Vec<ClientStat> = all_clients.iter()
+        let mut top_clients: Vec<ClientStat> = all_clients
+            .iter()
             .filter(|c| c.total_tasks > 0)
             .map(|c| ClientStat {
                 id: c.id.clone(),
@@ -334,7 +356,7 @@ impl ClientService {
                 total_tasks: c.total_tasks,
             })
             .collect();
-        
+
         top_clients.sort_by(|a, b| b.total_tasks.cmp(&a.total_tasks));
         top_clients.truncate(5);
 

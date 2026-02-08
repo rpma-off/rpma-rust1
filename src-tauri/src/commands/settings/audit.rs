@@ -6,7 +6,7 @@
 use crate::commands::settings::core::authenticate_user;
 use crate::commands::{ApiResponse, AppError, AppState};
 
-use rusqlite::{OptionalExtension, params};
+use rusqlite::{params, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
@@ -45,13 +45,9 @@ fn default_data_consent(user_id: &str) -> DataConsent {
     }
 }
 
-fn upsert_data_consent(
-    conn: &rusqlite::Connection,
-    consent: &DataConsent,
-) -> Result<(), AppError> {
-    let consent_data = serde_json::to_string(consent).map_err(|e| {
-        AppError::Database(format!("Failed to serialize consent data: {}", e))
-    })?;
+fn upsert_data_consent(conn: &rusqlite::Connection, consent: &DataConsent) -> Result<(), AppError> {
+    let consent_data = serde_json::to_string(consent)
+        .map_err(|e| AppError::Database(format!("Failed to serialize consent data: {}", e)))?;
     let now = chrono::Utc::now().timestamp_millis();
 
     conn.execute(
@@ -157,6 +153,7 @@ pub async fn update_data_consent(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::auth::UserRole;
     use std::sync::Arc;
     use tempfile::TempDir;
 
@@ -171,6 +168,23 @@ mod tests {
         let latest = crate::db::Database::get_latest_migration_version();
         db.migrate(latest).expect("failed to run migrations");
         (temp_dir, db)
+    }
+
+    fn insert_test_user(conn: &rusqlite::Connection, user_id: &str) {
+        conn.execute(
+            "INSERT INTO users (id, email, username, password_hash, full_name, role, is_active)
+             VALUES (?, ?, ?, ?, ?, ?, ?)",
+            params![
+                user_id,
+                "audit.test@example.com",
+                "audit_test_user",
+                "hashed_password",
+                "Audit Tester",
+                UserRole::Technician.to_string(),
+                1,
+            ],
+        )
+        .expect("failed to insert test user");
     }
 
     #[test]
@@ -188,6 +202,7 @@ mod tests {
     fn consent_upsert_roundtrip_persists_updates() {
         let (_temp_dir, db) = create_test_db();
         let conn = db.get_connection().expect("failed to get connection");
+        insert_test_user(&conn, "user-abc");
 
         let mut consent = default_data_consent("user-abc");
         consent.analytics_consent = true;
@@ -203,7 +218,8 @@ mod tests {
                 |row| row.get(0),
             )
             .expect("failed to fetch stored consent");
-        let stored: DataConsent = serde_json::from_str(&stored_payload).expect("invalid stored consent json");
+        let stored: DataConsent =
+            serde_json::from_str(&stored_payload).expect("invalid stored consent json");
 
         assert!(stored.analytics_consent);
         assert!(stored.marketing_consent);

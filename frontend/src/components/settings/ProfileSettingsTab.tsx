@@ -39,6 +39,8 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [usingDefaultSettings, setUsingDefaultSettings] = useState(false);
 
   const { logInfo, logError, logUserAction } = useLogger({
     context: LogDomain.USER,
@@ -60,6 +62,9 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
       if (!user?.token) return;
 
       setIsLoading(true);
+      setSettingsError(null);
+      setUsingDefaultSettings(false);
+      
       try {
         const settings = await ipcClient.settings.getUserSettings(user.token);
         setUserSettings(settings);
@@ -69,13 +74,98 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
           error: error instanceof Error ? error.message : error,
           userId: user.user_id
         });
+        
+        // Check if it's a "Failed to create user settings" error
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        if (errorMsg.includes('Failed to create user settings') || 
+            errorMsg.includes('No settings found')) {
+          setSettingsError('Unable to load your settings. Using default values.');
+          setUsingDefaultSettings(true);
+          
+          // Set default settings to allow the UI to continue working
+          const defaultSettings: UserSettings = {
+            profile: {
+              full_name: profile ? `${profile.first_name} ${profile.last_name}` : user?.username || '',
+              email: profile?.email || user?.email || '',
+              phone: profile?.phone || null,
+              avatar_url: null,
+              notes: null,
+            },
+            preferences: {
+              email_notifications: true,
+              push_notifications: true,
+              task_assignments: true,
+              task_updates: true,
+              system_alerts: true,
+              weekly_reports: false,
+              theme: 'system',
+              language: 'fr',
+              date_format: 'DD/MM/YYYY',
+              time_format: '24h',
+              high_contrast: false,
+              large_text: false,
+              reduce_motion: false,
+              screen_reader: false,
+              auto_refresh: true,
+              refresh_interval: 60,
+            },
+            security: {
+              two_factor_enabled: false,
+              session_timeout: 480,
+            },
+            performance: {
+              cache_enabled: true,
+              cache_size: 100,
+              offline_mode: false,
+              sync_on_startup: true,
+              background_sync: true,
+              image_compression: true,
+              preload_data: false,
+            },
+            accessibility: {
+              high_contrast: false,
+              large_text: false,
+              reduce_motion: false,
+              screen_reader: false,
+              focus_indicators: true,
+              keyboard_navigation: true,
+              text_to_speech: false,
+              speech_rate: 1.0,
+              font_size: 16,
+              color_blind_mode: 'none',
+            },
+            notifications: {
+              email_enabled: true,
+              push_enabled: true,
+              in_app_enabled: true,
+              task_assigned: true,
+              task_updated: true,
+              task_completed: false,
+              task_overdue: true,
+              system_alerts: true,
+              maintenance: false,
+              security_alerts: true,
+              quiet_hours_enabled: false,
+              quiet_hours_start: '22:00',
+              quiet_hours_end: '08:00',
+              digest_frequency: 'never',
+              batch_notifications: false,
+              sound_enabled: true,
+              sound_volume: 70,
+            },
+          };
+          
+          setUserSettings(defaultSettings);
+        } else {
+          setSettingsError('Failed to load settings. Some features may not work correctly.');
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
     loadUserSettings();
-  }, [user?.token, user?.user_id, logInfo, logError]);
+  }, [user?.token, user?.user_id, logInfo, logError, profile]);
 
   // Update form when profile data changes
   useEffect(() => {
@@ -254,6 +344,16 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{saveError}</AlertDescription>
+        </Alert>
+      )}
+
+      {settingsError && (
+        <Alert className="border-yellow-200 bg-yellow-50">
+          <AlertCircle className="h-4 w-4 text-yellow-600" />
+          <AlertDescription className="text-yellow-800">
+            {settingsError}
+            {usingDefaultSettings && " You can continue using the application with default settings."}
+          </AlertDescription>
         </Alert>
       )}
 

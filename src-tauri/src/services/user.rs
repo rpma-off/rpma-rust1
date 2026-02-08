@@ -1,9 +1,9 @@
 //! User service for user management operations
 
 use crate::commands::AppError;
-use crate::models::auth::{UserRole, UserAccount};
-use crate::models::user::User as RepoUser;  // Import as RepoUser to distinguish
-use crate::repositories::{UserRepository, Repository};
+use crate::models::auth::{UserAccount, UserRole};
+use crate::models::user::User as RepoUser; // Import as RepoUser to distinguish
+use crate::repositories::{Repository, UserRepository};
 use std::sync::Arc;
 use tracing::{error, info};
 
@@ -20,7 +20,7 @@ fn repo_user_to_auth_user(repo_user: &RepoUser) -> UserAccount {
         email: repo_user.email.clone(),
         username: repo_user.email.clone(), // Using email as username for compatibility
         first_name: repo_user.full_name.clone(), // Splitting full_name might be needed
-        last_name: String::new(), // Empty for now
+        last_name: String::new(),          // Empty for now
         role: match repo_user.role {
             crate::models::user::UserRole::Admin => UserRole::Admin,
             crate::models::user::UserRole::Technician => UserRole::Technician,
@@ -33,7 +33,11 @@ fn repo_user_to_auth_user(repo_user: &RepoUser) -> UserAccount {
         is_active: repo_user.is_active,
         last_login: repo_user.last_login_at,
         login_count: repo_user.login_count,
-        preferences: repo_user.preferences.as_ref().map(|p| serde_json::to_string(p).ok()).flatten(),
+        preferences: repo_user
+            .preferences
+            .as_ref()
+            .map(|p| serde_json::to_string(p).ok())
+            .flatten(),
         synced: repo_user.synced,
         last_synced_at: repo_user.last_synced_at,
         created_at: repo_user.created_at,
@@ -74,7 +78,9 @@ impl UserService {
         admin_id: &str,
     ) -> Result<(), AppError> {
         // Get current user for audit
-        let repo_user = self.user_repo.find_by_id(user_id.to_string())
+        let repo_user = self
+            .user_repo
+            .find_by_id(user_id.to_string())
             .await
             .map_err(|e| {
                 error!("Failed to get user for role change: {}", e);
@@ -92,7 +98,8 @@ impl UserService {
         updated_user.role = auth_role_to_repo_role(new_role.clone());
         updated_user.updated_at = chrono::Utc::now().timestamp_millis();
 
-        self.user_repo.save(updated_user.clone())
+        self.user_repo
+            .save(updated_user.clone())
             .await
             .map_err(|e| {
                 error!("Failed to update user role for {}: {}", user_id, e);
@@ -118,7 +125,9 @@ impl UserService {
     /// Ban a user with audit logging and session invalidation
     pub async fn ban_user(&self, user_id: &str, admin_id: &str) -> Result<(), AppError> {
         // Get current user
-        let repo_user = self.user_repo.find_by_id(user_id.to_string())
+        let repo_user = self
+            .user_repo
+            .find_by_id(user_id.to_string())
             .await
             .map_err(|e| {
                 error!("Failed to get user for ban: {}", e);
@@ -139,7 +148,8 @@ impl UserService {
         updated_user.is_active = false;
         updated_user.updated_at = chrono::Utc::now().timestamp_millis();
 
-        self.user_repo.save(updated_user.clone())
+        self.user_repo
+            .save(updated_user.clone())
             .await
             .map_err(|e| {
                 error!("Failed to ban user {}: {}", user_id, e);
@@ -147,11 +157,7 @@ impl UserService {
             })?;
 
         // TODO: Add audit log to database directly since we don't have an audit repository yet
-        info!(
-            "Successfully banned user {} by admin {}",
-            user_id,
-            admin_id
-        );
+        info!("Successfully banned user {} by admin {}", user_id, admin_id);
 
         // TODO: Invalidate sessions - this would require direct DB access or session repository
         info!("Sessions for user {} should be invalidated", user_id);
@@ -162,7 +168,9 @@ impl UserService {
     /// Unban a user with audit logging
     pub async fn unban_user(&self, user_id: &str, admin_id: &str) -> Result<(), AppError> {
         // Get current user
-        let repo_user = self.user_repo.find_by_id(user_id.to_string())
+        let repo_user = self
+            .user_repo
+            .find_by_id(user_id.to_string())
             .await
             .map_err(|e| {
                 error!("Failed to get user for unban: {}", e);
@@ -183,7 +191,8 @@ impl UserService {
         updated_user.is_active = true;
         updated_user.updated_at = chrono::Utc::now().timestamp_millis();
 
-        self.user_repo.save(updated_user.clone())
+        self.user_repo
+            .save(updated_user.clone())
             .await
             .map_err(|e| {
                 error!("Failed to unban user {}: {}", user_id, e);
@@ -193,8 +202,7 @@ impl UserService {
         // TODO: Add audit log to database directly since we don't have an audit repository yet
         info!(
             "Successfully unbanned user {} by admin {}",
-            user_id,
-            admin_id
+            user_id, admin_id
         );
 
         Ok(())

@@ -23,13 +23,9 @@ pub async fn generate_quality_compliance_report(
     validate_filters(filters).map_err(crate::commands::AppError::from)?;
 
     let start_date = DateTime::<Utc>::from_timestamp(date_range.start.timestamp(), 0)
-        .ok_or_else(|| {
-            crate::commands::AppError::Database("Invalid start date".to_string())
-        })?;
+        .ok_or_else(|| crate::commands::AppError::Database("Invalid start date".to_string()))?;
     let end_date = DateTime::<Utc>::from_timestamp(date_range.end.timestamp(), 0)
-        .ok_or_else(|| {
-            crate::commands::AppError::Database("Invalid end date".to_string())
-        })?;
+        .ok_or_else(|| crate::commands::AppError::Database("Invalid end date".to_string()))?;
 
     // Build WHERE clause
     let mut where_clauses = vec!["i.created_at >= ?1 AND i.created_at <= ?2".to_string()];
@@ -184,19 +180,22 @@ pub async fn generate_quality_compliance_report(
             issue_type: "Missing Quality Score".to_string(),
             count: total_interventions.saturating_sub(quality_scored_count),
             percentage: if total_interventions > 0 {
-                ((total_interventions - quality_scored_count) as f64 / total_interventions as f64) * 100.0
+                ((total_interventions - quality_scored_count) as f64 / total_interventions as f64)
+                    * 100.0
             } else {
                 0.0
             },
             severity: "Medium".to_string(),
-            recommended_action: "Ensure quality scoring is completed for all interventions".to_string(),
+            recommended_action: "Ensure quality scoring is completed for all interventions"
+                .to_string(),
         },
         QualityIssue {
             issue_type: "Low Photo Compliance".to_string(),
             count: total_interventions.saturating_sub(interventions_with_photos),
             percentage: 100.0 - photo_compliance_rate,
             severity: "High".to_string(),
-            recommended_action: "Require minimum photo documentation for all interventions".to_string(),
+            recommended_action: "Require minimum photo documentation for all interventions"
+                .to_string(),
         },
     ];
 

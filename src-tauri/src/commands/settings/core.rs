@@ -20,19 +20,25 @@ pub fn initialize_app_settings() -> Result<(), String> {
 
 /// Get app settings with lazy initialization
 pub fn load_app_settings() -> Result<AppSettings, String> {
-    let mut settings = APP_SETTINGS.lock().map_err(|_| "Failed to lock app settings")?;
+    let mut settings = APP_SETTINGS
+        .lock()
+        .map_err(|_| "Failed to lock app settings")?;
 
     if settings.is_none() {
         // Initialize with defaults - in production this would load from DB
         *settings = Some(AppSettings::default());
     }
 
-    settings.clone().ok_or_else(|| "Failed to get app settings".to_string())
+    settings
+        .clone()
+        .ok_or_else(|| "Failed to get app settings".to_string())
 }
 
 /// Update app settings
 pub fn update_app_settings(new_settings: AppSettings) -> Result<(), String> {
-    let mut settings = APP_SETTINGS.lock().map_err(|_| "Failed to lock app settings")?;
+    let mut settings = APP_SETTINGS
+        .lock()
+        .map_err(|_| "Failed to lock app settings")?;
     *settings = Some(new_settings);
     Ok(())
 }
@@ -59,33 +65,49 @@ pub async fn get_app_settings(
 
 /// Get system configuration with lazy initialization
 pub fn get_system_config() -> Result<SystemConfiguration, String> {
-    let mut config = SYSTEM_CONFIG.lock().map_err(|_| "Failed to lock system config")?;
+    let mut config = SYSTEM_CONFIG
+        .lock()
+        .map_err(|_| "Failed to lock system config")?;
 
     if config.is_none() {
         // Initialize with defaults - in production this would load from DB
         *config = Some(SystemConfiguration::default());
     }
 
-    config.clone().ok_or_else(|| "Failed to get system config".to_string())
+    config
+        .clone()
+        .ok_or_else(|| "Failed to get system config".to_string())
 }
 
 /// Update system configuration
 pub fn update_system_config(new_config: SystemConfiguration) -> Result<(), String> {
-    let mut config = SYSTEM_CONFIG.lock().map_err(|_| "Failed to lock system config")?;
+    let mut config = SYSTEM_CONFIG
+        .lock()
+        .map_err(|_| "Failed to lock system config")?;
     *config = Some(new_config);
     Ok(())
 }
 
 /// Common authentication helper for settings operations
-pub fn authenticate_user(session_token: &str, state: &AppState) -> Result<crate::models::auth::UserSession, AppError> {
-    state.auth_service.validate_session(session_token)
+pub fn authenticate_user(
+    session_token: &str,
+    state: &AppState,
+) -> Result<crate::models::auth::UserSession, AppError> {
+    state
+        .auth_service
+        .validate_session(session_token)
         .map_err(|e| AppError::Authentication(format!("Session validation failed: {}", e)))
 }
 
 /// Validate settings update permissions
-pub fn validate_settings_permissions(user: &crate::models::auth::UserSession, required_role: crate::models::auth::UserRole) -> Result<(), AppError> {
+pub fn validate_settings_permissions(
+    user: &crate::models::auth::UserSession,
+    required_role: crate::models::auth::UserRole,
+) -> Result<(), AppError> {
     if !matches!(user.role, crate::models::auth::UserRole::Admin) && user.role != required_role {
-        return Err(AppError::Authorization("Insufficient permissions to modify settings".to_string()));
+        return Err(AppError::Authorization(
+            "Insufficient permissions to modify settings".to_string(),
+        ));
     }
     Ok(())
 }

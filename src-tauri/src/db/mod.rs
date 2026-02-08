@@ -117,7 +117,7 @@ pub struct AsyncDatabase {
 pub type DbResult<T> = Result<T, String>;
 
 // Re-export RepoResult and RepoError for new code
-pub use crate::repositories::base::{RepoResult, RepoError};
+pub use crate::repositories::base::{RepoError, RepoResult};
 
 /// Compatibility: Allow RepoError to be converted to String for legacy DbResult usage
 impl From<RepoError> for String {
@@ -266,7 +266,10 @@ impl Database {
     #[cfg(test)]
     pub async fn new_in_memory() -> DbResult<Self> {
         // Use a shared in-memory database so multiple pooled connections see the same schema/data.
-        let db_name = format!("file:rpma_test_{}?mode=memory&cache=shared", uuid::Uuid::new_v4());
+        let db_name = format!(
+            "file:rpma_test_{}?mode=memory&cache=shared",
+            uuid::Uuid::new_v4()
+        );
 
         let mut config = connection::PoolConfig::default();
         config.max_connections = 8;
@@ -455,11 +458,13 @@ impl Database {
             connections_active: state.connections,
             connections_idle: state.idle_connections,
             connections_pending: 0, // r2d2 doesn't expose pending connections
-            avg_wait_time_ms: load_stats.average_wait_time
+            avg_wait_time_ms: load_stats
+                .average_wait_time
                 .map(|d| d.as_millis() as f64)
                 .unwrap_or(0.0),
             max_connections: config.max_connections,
-            utilization_percentage: (state.connections as f64 / config.max_connections as f64) * 100.0,
+            utilization_percentage: (state.connections as f64 / config.max_connections as f64)
+                * 100.0,
         }
     }
 
@@ -483,12 +488,7 @@ impl Database {
     where
         F: Fn(&rusqlite::Row) -> Result<T, rusqlite::Error>,
     {
-        connection::ChunkedQuery::new(
-            query.to_string(),
-            params,
-            row_mapper,
-            self.pool.clone(),
-        )
+        connection::ChunkedQuery::new(query.to_string(), params, row_mapper, self.pool.clone())
     }
 
     /// Execute a streaming query with total count
@@ -507,7 +507,8 @@ impl Database {
         // If count query provided, execute it to get total
         if let Some(count_sql) = count_query {
             let conn = self.get_connection()?;
-            let count: i64 = conn.query_row(count_sql, [], |row| row.get(0))
+            let count: i64 = conn
+                .query_row(count_sql, [], |row| row.get(0))
                 .map_err(|e| format!("Failed to execute count query: {}", e))?;
             streaming_query = streaming_query.with_total_count(count as usize);
         }
@@ -654,18 +655,16 @@ impl AsyncDatabase {
         let pool_clone = self.pool.clone();
 
         tokio::task::spawn_blocking(move || {
-            let mut streaming_query = connection::ChunkedQuery::new(
-                query_clone,
-                params,
-                row_mapper,
-                pool_clone.clone(),
-            );
+            let mut streaming_query =
+                connection::ChunkedQuery::new(query_clone, params, row_mapper, pool_clone.clone());
 
             // If count query provided, execute it to get total
             if let Some(count_sql) = count_query_clone {
-                let conn = pool_clone.get()
+                let conn = pool_clone
+                    .get()
                     .map_err(|e| format!("Failed to get connection for count: {}", e))?;
-                let count: i64 = conn.query_row(&count_sql, [], |row| row.get(0))
+                let count: i64 = conn
+                    .query_row(&count_sql, [], |row| row.get(0))
                     .map_err(|e| format!("Failed to execute count query: {}", e))?;
                 streaming_query = streaming_query.with_total_count(count as usize);
             }

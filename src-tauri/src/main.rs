@@ -341,7 +341,10 @@ fn main() {
                     // For existing databases, check current version and migrate if needed
                     let current_version = db_instance.get_version()?;
                     let latest_version = db::Database::get_latest_migration_version();
-                    info!("Current version: {}, Target version: {}", current_version, latest_version);
+                    info!(
+                        "Current version: {}, Target version: {}",
+                        current_version, latest_version
+                    );
                     if current_version < latest_version {
                         if let Err(e) = db_instance.migrate(latest_version) {
                             error!("Failed to apply migrations: {}", e);

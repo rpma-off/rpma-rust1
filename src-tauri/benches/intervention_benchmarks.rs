@@ -3,47 +3,45 @@
 //! This module contains Criterion benchmarks for intervention workflow
 //! performance measurement and optimization tracking.
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use crate::services::intervention_workflow::InterventionWorkflowService;
 use crate::services::task_crud::TaskCrudService;
-use crate::test_utils::{TestDatabase, TestDataFactory, test_task};
+use crate::test_utils::{test_task, TestDataFactory, TestDatabase};
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use tokio::runtime::Runtime;
 
 fn benchmark_intervention_creation(c: &mut Criterion) {
     let rt = Runtime::new().unwrap();
-    
+
     c.bench_function("start_intervention_single", |b| {
         b.to_async(&rt).iter(|| async {
             let test_db = TestDatabase::new().unwrap();
             let workflow_service = InterventionWorkflowService::new(test_db.db());
-            
+
             let task_request = test_task!(
                 title: "PPF Installation Task".to_string(),
                 vehicle_plate: Some("ABC123".to_string()),
                 status: "scheduled".to_string()
             );
             let task = TestDataFactory::create_test_task(Some(task_request));
-            
+
             let request = crate::models::intervention::CreateInterventionRequest {
                 task_id: "task-123".to_string(),
                 ppf_zones_config: Some("front,rear".to_string()),
                 film_type: Some("premium".to_string()),
                 notes: Some("Standard installation".to_string()),
             };
-            
-            let _result = workflow_service.start_intervention(
-                black_box(request),
-                black_box(&task),
-                black_box("test_user")
-            ).await;
+
+            let _result = workflow_service
+                .start_intervention(black_box(request), black_box(&task), black_box("test_user"))
+                .await;
         });
     });
-    
+
     c.bench_function("start_intervention_batch_10", |b| {
         b.to_async(&rt).iter(|| async {
             let test_db = TestDatabase::new().unwrap();
             let workflow_service = InterventionWorkflowService::new(test_db.db());
-            
+
             for i in 0..10 {
                 let task_request = test_task!(
                     title: format!("Batch PPF Task {}", i),
@@ -51,19 +49,21 @@ fn benchmark_intervention_creation(c: &mut Criterion) {
                     status: "scheduled".to_string()
                 );
                 let task = TestDataFactory::create_test_task(Some(task_request));
-                
+
                 let request = crate::models::intervention::CreateInterventionRequest {
                     task_id: format!("task-{}", i),
                     ppf_zones_config: Some("front".to_string()),
                     film_type: Some("standard".to_string()),
                     notes: None,
                 };
-                
-                let _result = workflow_service.start_intervention(
-                    black_box(request),
-                    black_box(&task),
-                    black_box("test_user")
-                ).await;
+
+                let _result = workflow_service
+                    .start_intervention(
+                        black_box(request),
+                        black_box(&task),
+                        black_box("test_user"),
+                    )
+                    .await;
             }
         });
     });
@@ -71,13 +71,13 @@ fn benchmark_intervention_creation(c: &mut Criterion) {
 
 fn benchmark_intervention_steps(c: &mut Criterion) {
     let rt = Runtime::new().unwrap();
-    
+
     // Setup test data
     let test_db = TestDatabase::new().unwrap();
     let workflow_service = InterventionWorkflowService::new(test_db.db());
-    
+
     let mut intervention_ids = Vec::new();
-    
+
     rt.block_on(async {
         // Create test interventions
         for i in 0..50 {
@@ -87,29 +87,28 @@ fn benchmark_intervention_steps(c: &mut Criterion) {
                 status: "scheduled".to_string()
             );
             let task = TestDataFactory::create_test_task(Some(task_request));
-            
+
             let request = crate::models::intervention::CreateInterventionRequest {
                 task_id: format!("step-task-{}", i),
                 ppf_zones_config: Some("front".to_string()),
                 film_type: Some("standard".to_string()),
                 notes: None,
             };
-            
-            let intervention = workflow_service.start_intervention(
-                request,
-                &task,
-                "test_user"
-            ).await.unwrap();
-            
+
+            let intervention = workflow_service
+                .start_intervention(request, &task, "test_user")
+                .await
+                .unwrap();
+
             intervention_ids.push((intervention.id, intervention.steps));
         }
     });
-    
+
     c.bench_function("advance_step_start", |b| {
         b.to_async(&rt).iter(|| async {
             let (intervention_id, steps) = black_box(intervention_ids[0].clone());
             let first_step = &steps[0];
-            
+
             let advance_request = crate::models::intervention::AdvanceStepRequest {
                 step_id: first_step.id.clone(),
                 action: "start".to_string(),
@@ -119,41 +118,42 @@ fn benchmark_intervention_steps(c: &mut Criterion) {
                 location_lon: Some(-74.0060),
                 actual_duration: None,
             };
-            
+
             let test_db = TestDatabase::new().unwrap();
             let workflow_service = InterventionWorkflowService::new(test_db.db());
-            
-            let _result = workflow_service.advance_step(black_box(advance_request), black_box("test_user")).await;
+
+            let _result = workflow_service
+                .advance_step(black_box(advance_request), black_box("test_user"))
+                .await;
         });
     });
-    
+
     c.bench_function("advance_step_complete", |b| {
         b.to_async(&rt).iter(|| async {
             let test_db = TestDatabase::new().unwrap();
             let workflow_service = InterventionWorkflowService::new(test_db.db());
-            
+
             // Create new intervention for this test
             let task_request = test_task!(
                 title: "Complete Step Test".to_string(),
                 status: "scheduled".to_string()
             );
             let task = TestDataFactory::create_test_task(Some(task_request));
-            
+
             let request = crate::models::intervention::CreateInterventionRequest {
                 task_id: "complete-test".to_string(),
                 ppf_zones_config: Some("front".to_string()),
                 film_type: Some("standard".to_string()),
                 notes: None,
             };
-            
-            let intervention = workflow_service.start_intervention(
-                request,
-                &task,
-                "test_user"
-            ).await.unwrap();
-            
+
+            let intervention = workflow_service
+                .start_intervention(request, &task, "test_user")
+                .await
+                .unwrap();
+
             let first_step = &intervention.steps[0];
-            
+
             // Start step first
             let start_request = crate::models::intervention::AdvanceStepRequest {
                 step_id: first_step.id.clone(),
@@ -164,9 +164,12 @@ fn benchmark_intervention_steps(c: &mut Criterion) {
                 location_lon: None,
                 actual_duration: None,
             };
-            
-            workflow_service.advance_step(start_request, "test_user").await.unwrap();
-            
+
+            workflow_service
+                .advance_step(start_request, "test_user")
+                .await
+                .unwrap();
+
             // Now complete it
             let complete_request = crate::models::intervention::AdvanceStepRequest {
                 step_id: first_step.id.clone(),
@@ -177,38 +180,39 @@ fn benchmark_intervention_steps(c: &mut Criterion) {
                 location_lon: Some(-74.0060),
                 actual_duration: Some(30),
             };
-            
-            let _result = workflow_service.advance_step(black_box(complete_request), black_box("test_user")).await;
+
+            let _result = workflow_service
+                .advance_step(black_box(complete_request), black_box("test_user"))
+                .await;
         });
     });
-    
+
     c.bench_function("advance_step_with_photos", |b| {
         b.to_async(&rt).iter(|| async {
             let test_db = TestDatabase::new().unwrap();
             let workflow_service = InterventionWorkflowService::new(test_db.db());
-            
+
             // Create intervention
             let task_request = test_task!(
                 title: "Photo Step Test".to_string(),
                 status: "scheduled".to_string()
             );
             let task = TestDataFactory::create_test_task(Some(task_request));
-            
+
             let request = crate::models::intervention::CreateInterventionRequest {
                 task_id: "photo-test".to_string(),
                 ppf_zones_config: Some("front".to_string()),
                 film_type: Some("standard".to_string()),
                 notes: None,
             };
-            
-            let intervention = workflow_service.start_intervention(
-                request,
-                &task,
-                "test_user"
-            ).await.unwrap();
-            
+
+            let intervention = workflow_service
+                .start_intervention(request, &task, "test_user")
+                .await
+                .unwrap();
+
             let first_step = &intervention.steps[0];
-            
+
             // Start step first
             let start_request = crate::models::intervention::AdvanceStepRequest {
                 step_id: first_step.id.clone(),
@@ -219,9 +223,12 @@ fn benchmark_intervention_steps(c: &mut Criterion) {
                 location_lon: None,
                 actual_duration: None,
             };
-            
-            workflow_service.advance_step(start_request, "test_user").await.unwrap();
-            
+
+            workflow_service
+                .advance_step(start_request, "test_user")
+                .await
+                .unwrap();
+
             // Complete with photos
             let complete_request = crate::models::intervention::AdvanceStepRequest {
                 step_id: first_step.id.clone(),
@@ -279,26 +286,28 @@ fn benchmark_intervention_steps(c: &mut Criterion) {
                 location_lon: Some(-74.0060),
                 actual_duration: Some(45),
             };
-            
-            let _result = workflow_service.advance_step(black_box(complete_request), black_box("test_user")).await;
+
+            let _result = workflow_service
+                .advance_step(black_box(complete_request), black_box("test_user"))
+                .await;
         });
     });
 }
 
 fn benchmark_intervention_completion(c: &mut Criterion) {
     let rt = Runtime::new().unwrap();
-    
+
     c.bench_function("complete_intervention_full_workflow", |b| {
         b.to_async(&rt).iter(|| async {
             let test_db = TestDatabase::new().unwrap();
             let workflow_service = InterventionWorkflowService::new(test_db.db());
-            
+
             let task_request = test_task!(
                 title: "Complete Workflow Test".to_string(),
                 status: "scheduled".to_string()
             );
             let task = TestDataFactory::create_test_task(Some(task_request));
-            
+
             // Start intervention
             let request = crate::models::intervention::CreateInterventionRequest {
                 task_id: "complete-workflow".to_string(),
@@ -306,13 +315,12 @@ fn benchmark_intervention_completion(c: &mut Criterion) {
                 film_type: Some("premium".to_string()),
                 notes: None,
             };
-            
-            let mut intervention = workflow_service.start_intervention(
-                request,
-                &task,
-                "test_user"
-            ).await.unwrap();
-            
+
+            let mut intervention = workflow_service
+                .start_intervention(request, &task, "test_user")
+                .await
+                .unwrap();
+
             // Complete all steps
             for step in &intervention.steps {
                 let start_request = crate::models::intervention::AdvanceStepRequest {
@@ -324,9 +332,12 @@ fn benchmark_intervention_completion(c: &mut Criterion) {
                     location_lon: None,
                     actual_duration: None,
                 };
-                
-                workflow_service.advance_step(start_request, "test_user").await.unwrap();
-                
+
+                workflow_service
+                    .advance_step(start_request, "test_user")
+                    .await
+                    .unwrap();
+
                 let complete_request = crate::models::intervention::AdvanceStepRequest {
                     step_id: step.id.clone(),
                     action: "complete".to_string(),
@@ -336,10 +347,13 @@ fn benchmark_intervention_completion(c: &mut Criterion) {
                     location_lon: Some(-74.0060),
                     actual_duration: Some(30),
                 };
-                
-                workflow_service.advance_step(complete_request, "test_user").await.unwrap();
+
+                workflow_service
+                    .advance_step(complete_request, "test_user")
+                    .await
+                    .unwrap();
             }
-            
+
             // Complete intervention
             let complete_request = crate::models::intervention::CompleteInterventionRequest {
                 intervention_id: intervention.id.clone(),
@@ -348,19 +362,21 @@ fn benchmark_intervention_completion(c: &mut Criterion) {
                 final_observations: Some("Excellent work".to_string()),
                 actual_duration: Some(180),
             };
-            
-            let _result = workflow_service.complete_intervention(black_box(complete_request), black_box("test_user")).await;
+
+            let _result = workflow_service
+                .complete_intervention(black_box(complete_request), black_box("test_user"))
+                .await;
         });
     });
 }
 
 fn benchmark_intervention_queries(c: &mut Criterion) {
     let rt = Runtime::new().unwrap();
-    
+
     // Setup test data
     let test_db = TestDatabase::new().unwrap();
     let workflow_service = InterventionWorkflowService::new(test_db.db());
-    
+
     rt.block_on(async {
         // Create test interventions with different statuses
         for i in 0..200 {
@@ -369,45 +385,56 @@ fn benchmark_intervention_queries(c: &mut Criterion) {
                 status: "scheduled".to_string()
             );
             let task = TestDataFactory::create_test_task(Some(task_request));
-            
+
             let request = crate::models::intervention::CreateInterventionRequest {
                 task_id: format!("query-task-{}", i),
                 ppf_zones_config: Some("front".to_string()),
-                film_type: if i % 3 == 0 { Some("premium".to_string()) }
-                            else if i % 3 == 1 { Some("standard".to_string()) }
-                            else { Some("matte".to_string()) },
+                film_type: if i % 3 == 0 {
+                    Some("premium".to_string())
+                } else if i % 3 == 1 {
+                    Some("standard".to_string())
+                } else {
+                    Some("matte".to_string())
+                },
                 notes: None,
             };
-            
-            workflow_service.start_intervention(
-                request,
-                &task,
-                "test_user"
-            ).await.unwrap();
+
+            workflow_service
+                .start_intervention(request, &task, "test_user")
+                .await
+                .unwrap();
         }
     });
-    
+
     c.bench_function("list_interventions_10", |b| {
         b.to_async(&rt).iter(|| async {
-            let _result = workflow_service.list_interventions(black_box(10), black_box(0)).await;
+            let _result = workflow_service
+                .list_interventions(black_box(10), black_box(0))
+                .await;
         });
     });
-    
+
     c.bench_function("list_interventions_100", |b| {
         b.to_async(&rt).iter(|| async {
-            let _result = workflow_service.list_interventions(black_box(100), black_box(0)).await;
+            let _result = workflow_service
+                .list_interventions(black_box(100), black_box(0))
+                .await;
         });
     });
-    
+
     c.bench_function("get_intervention_by_id", |b| {
         b.to_async(&rt).iter(|| async {
-            let _result = workflow_service.get_intervention_by_id(black_box("query-task-50")).await;
+            let _result = workflow_service
+                .get_intervention_by_id(black_box("query-task-50"))
+                .await;
         });
     });
-    
+
     c.bench_function("get_interventions_by_task", |b| {
         b.to_async(&rt).iter(|| async {
-            let _result = workflow_service.get_interventions_by_task(black_box("query-task-25")).await;
+            let _result = workflow_service
+                .get_interventions_by_task(black_box("query-task-25"))
+                .await;
         });
     });
 }

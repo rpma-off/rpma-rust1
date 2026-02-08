@@ -6,10 +6,10 @@
 use crate::commands::settings::core::{authenticate_user, handle_settings_error};
 use crate::commands::{ApiResponse, AppError, AppState};
 
-use base64::{Engine as _, engine::general_purpose};
+use base64::{engine::general_purpose, Engine as _};
+use rusqlite::OptionalExtension;
 use serde::Deserialize;
 use serde_json::json;
-use rusqlite::OptionalExtension;
 
 use tracing::info;
 
@@ -249,7 +249,11 @@ pub async fn export_user_data(
         }),
     };
 
-    Ok(ApiResponse::success(build_export_payload(user_identity, &settings, consent)))
+    Ok(ApiResponse::success(build_export_payload(
+        user_identity,
+        &settings,
+        consent,
+    )))
 }
 
 /// Delete user account
@@ -265,7 +269,9 @@ pub async fn delete_user_account(
 
     // Validate confirmation
     if request.confirmation != "DELETE" {
-        return Err(AppError::Validation("Invalid confirmation text".to_string()));
+        return Err(AppError::Validation(
+            "Invalid confirmation text".to_string(),
+        ));
     }
 
     state
@@ -287,16 +293,20 @@ pub async fn upload_user_avatar(
     let user = authenticate!(&request.session_token, &state);
 
     // Decode base64 avatar data
-    let avatar_data = general_purpose::STANDARD.decode(&request.avatar_data)
+    let avatar_data = general_purpose::STANDARD
+        .decode(&request.avatar_data)
         .map_err(|e| AppError::Validation(format!("Invalid base64 data: {}", e)))?;
 
     // Validate file size (max 5MB)
     if avatar_data.len() > 5 * 1024 * 1024 {
-        return Err(AppError::Validation("Avatar file too large (max 5MB)".to_string()));
+        return Err(AppError::Validation(
+            "Avatar file too large (max 5MB)".to_string(),
+        ));
     }
 
     // Validate MIME type
-    if !["image/jpeg", "image/png", "image/gif", "image/webp"].contains(&request.mime_type.as_str()) {
+    if !["image/jpeg", "image/png", "image/gif", "image/webp"].contains(&request.mime_type.as_str())
+    {
         return Err(AppError::Validation("Unsupported image format".to_string()));
     }
 

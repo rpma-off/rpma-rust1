@@ -174,10 +174,7 @@ impl PhotoStorageService {
 
         // Write image data to file asynchronously
         fs::write(&file_path, data).await.map_err(|e| {
-            crate::services::photo::PhotoError::Storage(format!(
-                "Failed to write file: {}",
-                e
-            ))
+            crate::services::photo::PhotoError::Storage(format!("Failed to write file: {}", e))
         })?;
 
         Ok(file_path)
@@ -208,10 +205,7 @@ impl PhotoStorageService {
 
         // Write image data to file asynchronously
         fs::write(&file_path, data).await.map_err(|e| {
-            crate::services::photo::PhotoError::Storage(format!(
-                "Failed to write file: {}",
-                e
-            ))
+            crate::services::photo::PhotoError::Storage(format!("Failed to write file: {}", e))
         })?;
 
         Ok(file_path)
@@ -224,14 +218,11 @@ impl PhotoStorageService {
         file_name: &str,
     ) -> crate::services::photo::PhotoResult<Vec<u8>> {
         let file_path = self.generate_file_path(intervention_id, file_name);
-        
+
         let data = fs::read(&file_path).await.map_err(|e| {
-            crate::services::photo::PhotoError::Storage(format!(
-                "Failed to read file: {}",
-                e
-            ))
+            crate::services::photo::PhotoError::Storage(format!("Failed to read file: {}", e))
         })?;
-        
+
         Ok(data)
     }
 
@@ -241,12 +232,9 @@ impl PhotoStorageService {
         file_path: &Path,
     ) -> crate::services::photo::PhotoResult<Vec<u8>> {
         let data = fs::read(file_path).await.map_err(|e| {
-            crate::services::photo::PhotoError::Storage(format!(
-                "Failed to read file: {}",
-                e
-            ))
+            crate::services::photo::PhotoError::Storage(format!("Failed to read file: {}", e))
         })?;
-        
+
         Ok(data)
     }
 
@@ -257,16 +245,13 @@ impl PhotoStorageService {
         file_name: &str,
     ) -> crate::services::photo::PhotoResult<()> {
         let file_path = self.generate_file_path(intervention_id, file_name);
-        
+
         if file_path.exists() {
             fs::remove_file(&file_path).await.map_err(|e| {
-                crate::services::photo::PhotoError::Storage(format!(
-                    "Failed to delete file: {}",
-                    e
-                ))
+                crate::services::photo::PhotoError::Storage(format!("Failed to delete file: {}", e))
             })?;
         }
-        
+
         Ok(())
     }
 

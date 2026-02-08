@@ -4,8 +4,8 @@
 
 use crate::db::Database;
 use crate::models::photo::{Photo, PhotoCategory, PhotoType};
-use crate::repositories::base::{Repository, RepoError, RepoResult};
-use crate::repositories::cache::{Cache, CacheKeyBuilder, ttl};
+use crate::repositories::base::{RepoError, RepoResult, Repository};
+use crate::repositories::cache::{ttl, Cache, CacheKeyBuilder};
 use async_trait::async_trait;
 use rusqlite::params;
 use std::sync::Arc;
@@ -80,19 +80,26 @@ impl PhotoQuery {
 
     fn validate_sort_column(sort_by: &str) -> Result<String, RepoError> {
         let allowed_columns = [
-            "created_at", "updated_at", "captured_at", "title", "description",
-            "file_name", "file_size", "photo_type", "photo_category", "is_approved"
+            "created_at",
+            "updated_at",
+            "captured_at",
+            "title",
+            "description",
+            "file_name",
+            "file_size",
+            "photo_type",
+            "photo_category",
+            "is_approved",
         ];
-        allowed_columns.iter()
+        allowed_columns
+            .iter()
             .find(|&&col| col == sort_by)
             .map(|s| s.to_string())
             .ok_or_else(|| RepoError::Validation(format!("Invalid sort column: {}", sort_by)))
     }
 
     fn build_order_by_clause(&self) -> Result<String, RepoError> {
-        let sort_by = Self::validate_sort_column(
-            self.sort_by.as_deref().unwrap_or("captured_at")
-        )?;
+        let sort_by = Self::validate_sort_column(self.sort_by.as_deref().unwrap_or("captured_at"))?;
         let sort_order = match self.sort_order.as_deref() {
             Some("ASC") => "ASC",
             Some("DESC") => "DESC",
@@ -127,7 +134,9 @@ impl PhotoRepository {
 
     /// Find photos by intervention ID
     pub async fn find_by_intervention(&self, intervention_id: String) -> RepoResult<Vec<Photo>> {
-        let cache_key = self.cache_key_builder.list(&["intervention", &intervention_id]);
+        let cache_key = self
+            .cache_key_builder
+            .list(&["intervention", &intervention_id]);
 
         if let Some(photos) = self.cache.get::<Vec<Photo>>(&cache_key) {
             return Ok(photos);
@@ -139,7 +148,9 @@ impl PhotoRepository {
                 "SELECT * FROM photos WHERE intervention_id = ? ORDER BY captured_at DESC",
                 params![intervention_id],
             )
-            .map_err(|e| RepoError::Database(format!("Failed to find photos by intervention: {}", e)))?;
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to find photos by intervention: {}", e))
+            })?;
 
         self.cache.set(&cache_key, photos.clone(), ttl::SHORT);
 
@@ -169,7 +180,9 @@ impl PhotoRepository {
 
     /// Find photos by category
     pub async fn find_by_category(&self, category: PhotoCategory) -> RepoResult<Vec<Photo>> {
-        let cache_key = self.cache_key_builder.list(&["category", &category.to_string()]);
+        let cache_key = self
+            .cache_key_builder
+            .list(&["category", &category.to_string()]);
 
         if let Some(photos) = self.cache.get::<Vec<Photo>>(&cache_key) {
             return Ok(photos);
@@ -181,7 +194,9 @@ impl PhotoRepository {
                 "SELECT * FROM photos WHERE photo_category = ? ORDER BY captured_at DESC",
                 params![category.to_string()],
             )
-            .map_err(|e| RepoError::Database(format!("Failed to find photos by category: {}", e)))?;
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to find photos by category: {}", e))
+            })?;
 
         self.cache.set(&cache_key, photos.clone(), ttl::MEDIUM);
 
@@ -190,7 +205,9 @@ impl PhotoRepository {
 
     /// Find photos by type
     pub async fn find_by_type(&self, photo_type: PhotoType) -> RepoResult<Vec<Photo>> {
-        let cache_key = self.cache_key_builder.list(&["type", &photo_type.to_string()]);
+        let cache_key = self
+            .cache_key_builder
+            .list(&["type", &photo_type.to_string()]);
 
         if let Some(photos) = self.cache.get::<Vec<Photo>>(&cache_key) {
             return Ok(photos);
@@ -276,7 +293,8 @@ impl PhotoRepository {
         self.invalidate_photo_cache(&photo_id);
         self.invalidate_all_cache();
 
-        self.find_by_id(photo_id).await?
+        self.find_by_id(photo_id)
+            .await?
             .ok_or_else(|| RepoError::NotFound("Photo not found after update".to_string()))
     }
 
@@ -442,7 +460,9 @@ impl Repository<Photo, String> for PhotoRepository {
                         entity.title,
                         entity.description,
                         entity.notes,
-                        entity.annotations.and_then(|v| serde_json::to_string(&v).ok()),
+                        entity
+                            .annotations
+                            .and_then(|v| serde_json::to_string(&v).ok()),
                         entity.gps_location_lat,
                         entity.gps_location_lon,
                         entity.gps_location_accuracy,
@@ -530,7 +550,8 @@ impl Repository<Photo, String> for PhotoRepository {
         self.invalidate_photo_cache(&entity.id);
         self.invalidate_all_cache();
 
-        self.find_by_id(entity.id).await?
+        self.find_by_id(entity.id)
+            .await?
             .ok_or_else(|| RepoError::NotFound("Photo not found after save".to_string()))
     }
 
@@ -594,12 +615,7 @@ mod tests {
                 id, task_id, status, vehicle_plate
             ) VALUES (?, ?, ?, ?)
             "#,
-            params![
-                intervention_id,
-                task_id,
-                "pending",
-                "TEST-PLATE",
-            ],
+            params![intervention_id, task_id, "pending", "TEST-PLATE",],
         )
         .unwrap();
     }
@@ -744,8 +760,10 @@ mod tests {
         repo.save(photo1).await.unwrap();
         repo.save(photo2).await.unwrap();
 
-        let vehicle_photos = repo.find_by_category(PhotoCategory::VehicleCondition).await.unwrap();
+        let vehicle_photos = repo
+            .find_by_category(PhotoCategory::VehicleCondition)
+            .await
+            .unwrap();
         assert_eq!(vehicle_photos.len(), 1);
     }
 }
-

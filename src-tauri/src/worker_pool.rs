@@ -3,11 +3,11 @@
 //! This module provides worker pools for executing CPU-intensive operations
 //! asynchronously without blocking the main IPC thread.
 
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
- use tokio::sync::mpsc;
+use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 use tracing::{debug, error, info, warn};
-use serde::{Deserialize, Serialize};
 
 /// Configuration for worker pools
 #[derive(Debug, Clone)]
@@ -100,7 +100,9 @@ impl WorkerPool {
     pub fn with_config(config: WorkerPoolConfig) -> Self {
         let (result_sender, result_receiver) = mpsc::unbounded_channel();
 
-        let stats = Arc::new(parking_lot::Mutex::new(PoolStats::new(config.pool_name.clone())));
+        let stats = Arc::new(parking_lot::Mutex::new(PoolStats::new(
+            config.pool_name.clone(),
+        )));
 
         let mut task_senders = Vec::new();
         let mut handles = Vec::new();
@@ -114,29 +116,32 @@ impl WorkerPool {
             let stats_clone = stats.clone();
             let config_clone = config.clone();
 
-             let handle = tokio::spawn(async move {
-                 Self::worker_loop(
-                     worker_id,
-                     task_receiver,
-                     result_sender_clone,
-                     stats_clone,
-                     config_clone,
-                 ).await;
-             });
+            let handle = tokio::spawn(async move {
+                Self::worker_loop(
+                    worker_id,
+                    task_receiver,
+                    result_sender_clone,
+                    stats_clone,
+                    config_clone,
+                )
+                .await;
+            });
 
-             handles.push(handle);
-         }
+            handles.push(handle);
+        }
 
-         // Create a broadcast sender that sends to all worker channels
-         let task_sender = BroadcastSender { senders: task_senders };
+        // Create a broadcast sender that sends to all worker channels
+        let task_sender = BroadcastSender {
+            senders: task_senders,
+        };
 
-         Self {
-             config,
-             task_sender,
-             result_receiver,
-             handles,
-             stats,
-         }
+        Self {
+            config,
+            task_sender,
+            result_receiver,
+            handles,
+            stats,
+        }
     }
 
     /// Submit a task to the worker pool
@@ -195,10 +200,13 @@ impl WorkerPool {
         stats: Arc<parking_lot::Mutex<PoolStats>>,
         config: WorkerPoolConfig,
     ) {
-        debug!("Worker {} starting in pool '{}'", worker_id, config.pool_name);
+        debug!(
+            "Worker {} starting in pool '{}'",
+            worker_id, config.pool_name
+        );
 
         while let Some(task) = task_receiver.recv().await {
-        // Continue with task
+            // Continue with task
 
             let start_time = std::time::Instant::now();
 
@@ -213,8 +221,9 @@ impl WorkerPool {
             // Execute task with timeout
             let result = tokio::time::timeout(
                 std::time::Duration::from_secs(config.task_timeout_secs),
-                Self::execute_task(task.clone())
-            ).await;
+                Self::execute_task(task.clone()),
+            )
+            .await;
 
             let execution_time = start_time.elapsed().as_nanos();
 
@@ -269,7 +278,9 @@ impl WorkerPool {
     }
 
     /// Execute a single task (placeholder - should be overridden by specific implementations)
-    async fn execute_task(task: WorkerTask) -> Result<Vec<u8>, Box<dyn std::error::Error + Send + Sync>> {
+    async fn execute_task(
+        task: WorkerTask,
+    ) -> Result<Vec<u8>, Box<dyn std::error::Error + Send + Sync>> {
         // This is a placeholder implementation
         // In practice, this would dispatch to specific task handlers based on task type
 
@@ -362,7 +373,8 @@ impl WorkerPoolManager {
     /// Get all pool statistics
     pub fn get_all_stats(&self) -> Vec<(String, PoolStats)> {
         let pools = self.pools.lock();
-        pools.iter()
+        pools
+            .iter()
             .map(|(name, pool)| (name.clone(), pool.get_stats()))
             .collect()
     }

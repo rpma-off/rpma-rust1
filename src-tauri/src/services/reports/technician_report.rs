@@ -22,13 +22,9 @@ pub async fn generate_technician_performance_report(
     validate_date_range(date_range).map_err(crate::commands::AppError::from)?;
 
     let start_date = DateTime::<Utc>::from_timestamp(date_range.start.timestamp(), 0)
-        .ok_or_else(|| {
-            crate::commands::AppError::Database("Invalid start date".to_string())
-        })?;
+        .ok_or_else(|| crate::commands::AppError::Database("Invalid start date".to_string()))?;
     let end_date = DateTime::<Utc>::from_timestamp(date_range.end.timestamp(), 0)
-        .ok_or_else(|| {
-            crate::commands::AppError::Database("Invalid end date".to_string())
-        })?;
+        .ok_or_else(|| crate::commands::AppError::Database("Invalid end date".to_string()))?;
 
     // Build WHERE clause
     let mut where_clauses = vec!["i.created_at >= ?1 AND i.created_at <= ?2".to_string()];
@@ -62,7 +58,15 @@ pub async fn generate_technician_performance_report(
         where_clause
     );
 
-    let technician_data: Vec<(String, String, i64, i64, Option<f64>, Option<f64>, Option<f64>)> = db
+    let technician_data: Vec<(
+        String,
+        String,
+        i64,
+        i64,
+        Option<f64>,
+        Option<f64>,
+        Option<f64>,
+    )> = db
         .query_multiple(&technician_sql, rusqlite::params_from_iter(params), |row| {
             Ok((
                 row.get(0)?, // technician_id
@@ -85,12 +89,25 @@ pub async fn generate_technician_performance_report(
     let mut technicians = Vec::new();
     let mut total_efficiency_scores = Vec::new();
 
-    for (tech_id, tech_name, total_tasks, completed_tasks, avg_duration, avg_quality, avg_satisfaction) in technician_data {
+    for (
+        tech_id,
+        tech_name,
+        total_tasks,
+        completed_tasks,
+        avg_duration,
+        avg_quality,
+        avg_satisfaction,
+    ) in technician_data
+    {
         let tasks_completed = completed_tasks as u64;
         let total_tasks_u64 = total_tasks as u64;
 
         // Calculate metrics
-        let completion_rate = if total_tasks_u64 > 0 { (tasks_completed as f64 / total_tasks_u64 as f64) * 100.0 } else { 0.0 };
+        let completion_rate = if total_tasks_u64 > 0 {
+            (tasks_completed as f64 / total_tasks_u64 as f64) * 100.0
+        } else {
+            0.0
+        };
         let average_time_per_task = avg_duration.map(|d| d / 3600.0).unwrap_or(0.0); // Convert to hours
         let quality_score = avg_quality.unwrap_or(0.0);
         let customer_satisfaction = avg_satisfaction.map(|s| s * 10.0).unwrap_or(0.0); // Assuming scale 0-10
@@ -99,7 +116,8 @@ pub async fn generate_technician_performance_report(
         let utilization_rate = completion_rate;
 
         // Calculate efficiency score (weighted average of quality, completion rate, and satisfaction)
-        let efficiency_score = (quality_score * 0.4) + (completion_rate * 0.4) + (customer_satisfaction * 0.2);
+        let efficiency_score =
+            (quality_score * 0.4) + (completion_rate * 0.4) + (customer_satisfaction * 0.2);
         total_efficiency_scores.push(efficiency_score);
 
         let metrics = TechnicianMetrics {
@@ -129,7 +147,10 @@ pub async fn generate_technician_performance_report(
         0.0
     };
 
-    let top_performer_score = total_efficiency_scores.iter().fold(0.0, |max, &val| if val > max { val } else { max });
+    let top_performer_score =
+        total_efficiency_scores
+            .iter()
+            .fold(0.0, |max, &val| if val > max { val } else { max });
 
     let benchmarks = PerformanceBenchmarks {
         top_performer_score,

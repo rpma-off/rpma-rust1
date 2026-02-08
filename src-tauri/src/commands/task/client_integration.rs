@@ -2,12 +2,12 @@
 //!
 //! This module handles operations that involve task and client interactions.
 
+use crate::commands::task_types::TaskFilter;
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::models::task::Task;
-use crate::commands::task_types::TaskFilter;
 
-use serde::Deserialize;
 use crate::authenticate;
+use serde::Deserialize;
 use tracing::{debug, info};
 
 /// Request for getting tasks with detailed client information
@@ -115,7 +115,13 @@ pub async fn get_tasks_with_client_details(
         let client_details = if request.include_client_details.unwrap_or(false) {
             state
                 .client_service
-                .get_client_async(&task_with_client.task.client_id.as_ref().unwrap_or(&"".to_string()))
+                .get_client_async(
+                    &task_with_client
+                        .task
+                        .client_id
+                        .as_ref()
+                        .unwrap_or(&"".to_string()),
+                )
                 .await
                 .ok()
                 .flatten()
@@ -123,13 +129,20 @@ pub async fn get_tasks_with_client_details(
             None
         };
 
-        let relationship_status = determine_client_relationship_status(task_with_client, &client_details);
+        let relationship_status =
+            determine_client_relationship_status(task_with_client, &client_details);
 
         let enhanced_task = TaskWithClientDetails {
             task: task_with_client.task.clone(),
-            client_name: task_with_client.client_info.as_ref().map(|c| c.name.clone()).unwrap_or_default(),
+            client_name: task_with_client
+                .client_info
+                .as_ref()
+                .map(|c| c.name.clone())
+                .unwrap_or_default(),
             client_contact: client_details.as_ref().and_then(|c| c.email.clone()),
-            client_region: client_details.as_ref().and_then(|c| c.address_state.clone()),
+            client_region: client_details
+                .as_ref()
+                .and_then(|c| c.address_state.clone()),
             client_priority: Some("standard".to_string()), // Default priority
             relationship_status,
         };
@@ -137,7 +150,10 @@ pub async fn get_tasks_with_client_details(
         enhanced_tasks.push(enhanced_task);
     }
 
-    info!("Retrieved {} tasks with client details", enhanced_tasks.len());
+    info!(
+        "Retrieved {} tasks with client details",
+        enhanced_tasks.len()
+    );
 
     Ok(ApiResponse::success(enhanced_tasks))
 }
@@ -160,8 +176,8 @@ fn determine_client_relationship_status(
             "in_progress".to_string()
         }
         crate::models::task::TaskStatus::Pending => {
-        // Simplified status - could be enhanced with actual client status
-        "pending".to_string()
+            // Simplified status - could be enhanced with actual client status
+            "pending".to_string()
         }
         crate::models::task::TaskStatus::OnHold => "on_hold".to_string(),
         crate::models::task::TaskStatus::Draft => "draft".to_string(),
@@ -181,7 +197,10 @@ pub async fn validate_task_client_relationship(
     client_id: &str,
     state: &AppState<'_>,
 ) -> Result<(), AppError> {
-    debug!("Validating task-client relationship for task {} and client {}", task_id, client_id);
+    debug!(
+        "Validating task-client relationship for task {} and client {}",
+        task_id, client_id
+    );
 
     // Get task
     let task = state
@@ -232,7 +251,10 @@ pub async fn get_client_task_summary(
 
     // Check permissions - only Admin and Supervisor can view client data
     // (Technician and Viewer have restricted access)
-    let can_view_client_data = matches!(session.role, crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor);
+    let can_view_client_data = matches!(
+        session.role,
+        crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+    );
 
     if !can_view_client_data {
         return Err(AppError::Authorization(
@@ -240,10 +262,11 @@ pub async fn get_client_task_summary(
         ));
     }
 
-// Get client task summary
+    // Get client task summary
     let summary = state
         .client_service
-        .get_client_task_summary(client_id).await
+        .get_client_task_summary(client_id)
+        .await
         .map_err(|e| {
             debug!("Failed to get client task summary: {}", e);
             AppError::Database(format!("Failed to get client summary: {}", e))
