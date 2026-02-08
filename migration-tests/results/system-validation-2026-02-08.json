@@ -2,19 +2,19 @@
   "components": {
     "migrationTests": {
       "status": "FAILED",
-      "message": "Command failed: npm run migration:test\nnpm error Missing script: \"migration:test\"\nnpm error\nnpm error To see a list of scripts, run:\nnpm error   npm run\nnpm error A complete log of this run can be found in: C:\\Users\\emaMA\\AppData\\Local\\npm-cache\\_logs\\2026-02-08T13_33_21_558Z-debug-0.log\n"
+      "message": "Command failed: npm run migration:test\nnpm error Missing script: \"migration:test\"\nnpm error\nnpm error To see a list of scripts, run:\nnpm error   npm run\nnpm error A complete log of this run can be found in: C:\\Users\\emaMA\\AppData\\Local\\npm-cache\\_logs\\2026-02-08T13_56_18_287Z-debug-0.log\n"
     },
     "healthChecks": {
       "status": "FAILED",
-      "message": "Command failed: npm run migration:health-check\nnpm error Missing script: \"migration:health-check\"\nnpm error\nnpm error To see a list of scripts, run:\nnpm error   npm run\nnpm error A complete log of this run can be found in: C:\\Users\\emaMA\\AppData\\Local\\npm-cache\\_logs\\2026-02-08T13_33_23_199Z-debug-0.log\n"
+      "message": "Command failed: npm run migration:health-check\nnpm error Missing script: \"migration:health-check\"\nnpm error\nnpm error To see a list of scripts, run:\nnpm error   npm run\nnpm error A complete log of this run can be found in: C:\\Users\\emaMA\\AppData\\Local\\npm-cache\\_logs\\2026-02-08T13_56_18_740Z-debug-0.log\n"
     },
     "performanceAnalysis": {
       "status": "FAILED",
-      "message": "Command failed: npm run migration:performance-analyze\nnpm error Missing script: \"migration:performance-analyze\"\nnpm error\nnpm error To see a list of scripts, run:\nnpm error   npm run\nnpm error A complete log of this run can be found in: C:\\Users\\emaMA\\AppData\\Local\\npm-cache\\_logs\\2026-02-08T13_33_24_730Z-debug-0.log\n"
+      "message": "Command failed: npm run migration:performance-analyze\nnpm error Missing script: \"migration:performance-analyze\"\nnpm error\nnpm error To see a list of scripts, run:\nnpm error   npm run\nnpm error A complete log of this run can be found in: C:\\Users\\emaMA\\AppData\\Local\\npm-cache\\_logs\\2026-02-08T13_56_19_225Z-debug-0.log\n"
     },
     "schemaDrift": {
       "status": "FAILED",
-      "message": "Command failed: npm run schema:drift-detect\nnpm error Missing script: \"schema:drift-detect\"\nnpm error\nnpm error To see a list of scripts, run:\nnpm error   npm run\nnpm error A complete log of this run can be found in: C:\\Users\\emaMA\\AppData\\Local\\npm-cache\\_logs\\2026-02-08T13_33_26_542Z-debug-0.log\n"
+      "message": "Command failed: npm run schema:drift-detect\nnpm error Missing script: \"schema:drift-detect\"\nnpm error\nnpm error To see a list of scripts, run:\nnpm error   npm run\nnpm error A complete log of this run can be found in: C:\\Users\\emaMA\\AppData\\Local\\npm-cache\\_logs\\2026-02-08T13_56_19_725Z-debug-0.log\n"
     }
   },
   "integration": {
@@ -48,18 +48,19 @@
   "performance": {
     "testExecution": {
       "status": "PASSED",
-      "message": "Test execution took 1910ms",
-      "duration": 1910
+      "message": "Test execution took 531ms",
+      "duration": 531
     },
     "reportGeneration": {
       "status": "PASSED",
-      "message": "5 report files generated",
+      "message": "6 report files generated",
       "reports": [
         "health-check-2026-01-25.json",
         "health-check-2026-02-07.json",
         "migration-test-2026-01-25.json",
         "system-validation-2026-01-25.json",
-        "system-validation-2026-02-07.json"
+        "system-validation-2026-02-07.json",
+        "system-validation-2026-02-08.json"
       ]
     }
   },
