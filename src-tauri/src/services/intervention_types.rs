@@ -4,12 +4,12 @@
 //! to avoid circular dependencies.
 
 use serde::{Deserialize, Serialize};
-#[cfg(any(feature = "specta", feature = "ts-rs"))]
+// Conditional import removed
 use ts_rs::TS;
 
 /// Request to start a new intervention
 #[derive(Debug, Clone, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct StartInterventionRequest {
     pub task_id: String,
     pub intervention_number: Option<String>,
@@ -36,7 +36,7 @@ pub struct StartInterventionRequest {
 
 /// Response for starting an intervention
 #[derive(Debug, Serialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct StartInterventionResponse {
     pub intervention: crate::models::intervention::Intervention,
     pub steps: Vec<crate::models::step::InterventionStep>,
@@ -45,11 +45,11 @@ pub struct StartInterventionResponse {
 
 /// Request to advance a step
 #[derive(Debug, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct AdvanceStepRequest {
     pub intervention_id: String,
     pub step_id: String,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "any"))]
+    #[ts(type = "any")]
     pub collected_data: serde_json::Value,
     pub photos: Option<Vec<String>>, // Photo IDs
     pub notes: Option<String>,
@@ -59,7 +59,7 @@ pub struct AdvanceStepRequest {
 
 /// Response for advancing a step
 #[derive(Debug, Serialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct AdvanceStepResponse {
     pub step: crate::models::step::InterventionStep,
     pub next_step: Option<crate::models::step::InterventionStep>,
@@ -69,10 +69,10 @@ pub struct AdvanceStepResponse {
 
 /// Request for saving step progress without advancing
 #[derive(Debug, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct SaveStepProgressRequest {
     pub step_id: String,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "any"))]
+    #[ts(type = "any")]
     pub collected_data: serde_json::Value,
     pub notes: Option<String>,
     pub photos: Option<Vec<String>>,
@@ -80,17 +80,17 @@ pub struct SaveStepProgressRequest {
 
 /// Response for saving step progress
 #[derive(Debug, Serialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct SaveStepProgressResponse {
     pub step: crate::models::step::InterventionStep,
 }
 
 /// Request to finalize an intervention
 #[derive(Deserialize, Debug)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct FinalizeInterventionRequest {
     pub intervention_id: String,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "any"))]
+    #[ts(type = "any")]
     pub collected_data: Option<serde_json::Value>,
     pub photos: Option<Vec<String>>,
     pub customer_satisfaction: Option<i32>,
@@ -102,7 +102,7 @@ pub struct FinalizeInterventionRequest {
 
 /// Response for finalizing an intervention
 #[derive(Debug, Serialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct FinalizeInterventionResponse {
     pub intervention: crate::models::intervention::Intervention,
     pub metrics: InterventionMetrics,
@@ -110,7 +110,7 @@ pub struct FinalizeInterventionResponse {
 
 /// Intervention metrics for finalization
 #[derive(Debug, Serialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct InterventionMetrics {
     pub total_duration_minutes: i32,
     pub completion_rate: f32,
@@ -123,7 +123,7 @@ pub struct InterventionMetrics {
 
 /// Step requirement for workflow validation
 #[derive(Debug, Serialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct StepRequirement {
     pub step_id: String,
     pub requirement_type: String,
@@ -134,7 +134,7 @@ pub struct StepRequirement {
 
 /// GPS coordinates for location tracking
 #[derive(Debug, Clone, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct GpsCoordinates {
     pub latitude: f64,
     pub longitude: f64,
@@ -143,7 +143,7 @@ pub struct GpsCoordinates {
 
 /// Intervention step with associated photos
 #[derive(Debug, Serialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct InterventionStepWithPhotos {
     pub step: crate::models::step::InterventionStep,
     pub photos: Vec<crate::models::photo::Photo>,
@@ -151,7 +151,7 @@ pub struct InterventionStepWithPhotos {
 
 /// Intervention with all related data
 #[derive(Debug, Serialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct InterventionWithDetails {
     pub intervention: crate::models::intervention::Intervention,
     pub steps: Vec<InterventionStepWithPhotos>,

@@ -4,12 +4,12 @@ use super::common::*;
 use rusqlite::{Result as SqliteResult, Row};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-#[cfg(any(feature = "specta", feature = "ts-rs"))]
+// Conditional import removed
 use ts_rs::TS;
 
 /// Intervention status enum
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 #[serde(rename_all = "snake_case")]
 pub enum InterventionStatus {
     Pending,
@@ -55,7 +55,7 @@ impl std::str::FromStr for InterventionStatus {
 
 /// Intervention type
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 #[serde(rename_all = "snake_case")]
 pub enum InterventionType {
     Ppf,
@@ -98,7 +98,7 @@ impl std::fmt::Display for InterventionType {
 
 /// Main intervention struct
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct Intervention {
     // Identifiers
     pub id: String,
@@ -134,7 +134,7 @@ pub struct Intervention {
 
     // PPF Configuration - Box large collections to reduce stack size
     pub ppf_zones_config: Option<Vec<String>>,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "any"))]
+    #[ts(type = "any")]
     pub ppf_zones_extended: Option<serde_json::Value>,
     pub film_type: Option<FilmType>,
     pub film_brand: Option<String>,
@@ -171,13 +171,13 @@ pub struct Intervention {
     pub customer_comments: Option<String>,
 
     // Metadata - Box large JSON values
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "any"))]
+    #[ts(type = "any")]
     pub metadata: Option<serde_json::Value>,
     pub notes: Option<String>,
     pub special_instructions: Option<String>,
 
     // Device - Box large JSON values
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "any"))]
+    #[ts(type = "any")]
     pub device_info: Option<serde_json::Value>,
     pub app_version: Option<String>,
 
@@ -521,7 +521,7 @@ mod tests {
 
 /// Progress tracking for interventions
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct InterventionProgress {
     pub intervention_id: String,
     pub current_step: i32,
@@ -534,7 +534,7 @@ pub struct InterventionProgress {
 
 /// Filter for intervention queries
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct InterventionFilter {
     pub task_id: Option<String>,
     pub status: Option<String>,
@@ -548,7 +548,7 @@ pub struct InterventionFilter {
 
 /// Request for bulk updating interventions
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct BulkUpdateInterventionRequest {
     pub intervention_ids: Vec<String>,
     pub status: Option<String>,

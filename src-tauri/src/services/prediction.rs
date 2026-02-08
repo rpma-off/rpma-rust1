@@ -7,12 +7,12 @@ use crate::commands::AppError;
 use crate::db::Database;
 use chrono::{Duration, Utc};
 use serde::{Deserialize, Serialize};
-#[cfg(any(feature = "specta", feature = "ts-rs"))]
+// Conditional import removed
 use ts_rs::TS;
 
 /// Completion time prediction result
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct CompletionTimePrediction {
     pub predicted_duration_minutes: f64,
     pub confidence_interval: (f64, f64), // (lower_bound, upper_bound)

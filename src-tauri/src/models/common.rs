@@ -2,14 +2,14 @@
 
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-#[cfg(any(feature = "specta", feature = "ts-rs"))]
+// Conditional import removed
 use ts_rs::TS;
 
 // rusqlite for database operations
 
 /// Weather conditions for intervention
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 #[serde(rename_all = "lowercase")]
 pub enum WeatherCondition {
     Sunny,
@@ -58,7 +58,7 @@ impl std::fmt::Display for WeatherCondition {
 
 /// Lighting conditions
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 #[serde(rename_all = "lowercase")]
 pub enum LightingCondition {
     Natural,
@@ -92,7 +92,7 @@ impl std::fmt::Display for LightingCondition {
 
 /// Work location type
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 #[serde(rename_all = "snake_case")]
 pub enum WorkLocation {
     Indoor,
@@ -126,7 +126,7 @@ impl std::fmt::Display for WorkLocation {
 
 /// Film type for PPF
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 #[serde(rename_all = "lowercase")]
 pub enum FilmType {
     Standard,
@@ -176,7 +176,7 @@ impl rusqlite::types::FromSql for FilmType {
 
 /// GPS coordinates
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct GpsLocation {
     pub latitude: f64,
     pub longitude: f64,
@@ -217,7 +217,7 @@ pub type Timestamp = i64;
 
 /// Wrapper type for timestamps that serializes to ISO string
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct TimestampString(pub Option<i64>);
 
 impl TimestampString {

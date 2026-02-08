@@ -1,4 +1,4 @@
-﻿﻿PROMPT CODEX — Migration vers `ts-rs` uniquement (RPMA)
+﻿﻿Migration vers `ts-rs` uniquement (RPMA)
 
 **Contexte projet**
 
@@ -91,10 +91,3 @@ pub struct ExampleDto {
 * Projet compilable sans warnings liés aux types
 
 ---
-
-Si tu veux, je peux aussi te fournir :
-
-* une **version “audit only”** du prompt
-* ou un **prompt CI** (vérif que tous les DTO ont `derive(TS)`)
-
-Dis-moi 👍

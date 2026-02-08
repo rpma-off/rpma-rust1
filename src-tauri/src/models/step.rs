@@ -5,12 +5,12 @@ use crate::db::FromSqlRow;
 use rusqlite::{Result as SqliteResult, Row};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-#[cfg(any(feature = "specta", feature = "ts-rs"))]
+// Conditional import removed
 use ts_rs::TS;
 
 /// Step status enum
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 #[serde(rename_all = "snake_case")]
 pub enum StepStatus {
     Pending,
@@ -62,7 +62,7 @@ impl std::fmt::Display for StepStatus {
 
 /// Step type enum
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 #[serde(rename_all = "lowercase")]
 pub enum StepType {
     Inspection,
@@ -105,7 +105,7 @@ impl std::fmt::Display for StepType {
 
 /// Intervention step struct
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct InterventionStep {
     // Identifiers
     pub id: String,
@@ -119,7 +119,7 @@ pub struct InterventionStep {
 
     // Metadata
     pub description: Option<String>,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "any"))]
+    #[ts(type = "any")]
     pub instructions: Option<serde_json::Value>,
     pub quality_checkpoints: Option<Vec<String>>,
 
@@ -135,11 +135,11 @@ pub struct InterventionStep {
     pub paused_at: TimestampString,
     pub duration_seconds: Option<i32>,
     pub estimated_duration_seconds: Option<i32>,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "any"))]
+    #[ts(type = "any")]
     pub step_data: Option<serde_json::Value>,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "any"))]
+    #[ts(type = "any")]
     pub collected_data: Option<serde_json::Value>,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "any"))]
+    #[ts(type = "any")]
     pub measurements: Option<serde_json::Value>,
     pub observations: Option<Vec<String>>,
 
@@ -147,7 +147,7 @@ pub struct InterventionStep {
     pub photo_count: i32,
     pub required_photos_completed: bool,
     pub photo_urls: Option<Vec<String>>,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "any"))]
+    #[ts(type = "any")]
     pub validation_data: Option<serde_json::Value>,
     pub validation_errors: Option<Vec<String>>,
     pub validation_score: Option<i32>,

@@ -10,7 +10,7 @@ use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::Mutex;
-#[cfg(any(feature = "specta", feature = "ts-rs"))]
+// Conditional import removed
 use ts_rs::TS;
 
 lazy_static! {
@@ -19,7 +19,7 @@ lazy_static! {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct SendNotificationRequest {
     pub user_id: String,
     pub notification_type: NotificationType,
@@ -28,7 +28,7 @@ pub struct SendNotificationRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct UpdateNotificationConfigRequest {
     pub email_provider: Option<String>,
     pub email_api_key: Option<String>,

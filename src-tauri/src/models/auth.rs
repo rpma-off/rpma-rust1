@@ -4,11 +4,11 @@ use crate::models::common::{now, serialize_optional_timestamp, serialize_timesta
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::fmt;
-#[cfg(any(feature = "specta", feature = "ts-rs"))]
+// Conditional import removed
 use ts_rs::TS;
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct UserSession {
     pub id: String,
     pub user_id: String,
@@ -30,7 +30,7 @@ pub struct UserSession {
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub enum UserRole {
     #[serde(rename = "admin")]
     Admin,
@@ -68,7 +68,7 @@ impl std::str::FromStr for UserRole {
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct DeviceInfo {
     pub device_type: String, // "desktop", "mobile", "tablet"
     pub os: String,          // "Windows", "macOS", "Linux", "iOS", "Android"
@@ -195,8 +195,8 @@ impl UserSession {
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
-#[cfg_attr(feature = "ts-rs", ts(export))]
+#[derive(TS)]
+#[ts(export)]
 pub struct UserAccount {
     pub id: String,
     pub email: String,
@@ -213,13 +213,13 @@ pub struct UserAccount {
     pub preferences: Option<String>,
     pub synced: bool,
     #[serde(serialize_with = "serialize_optional_timestamp")]
-    #[cfg_attr(feature = "ts-rs", ts(type = "string | null"))]
+    #[ts(type = "string | null")]
     pub last_synced_at: Option<i64>,
     #[serde(serialize_with = "serialize_timestamp")]
-    #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
+    #[ts(type = "string")]
     pub created_at: i64,
     #[serde(serialize_with = "serialize_timestamp")]
-    #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
+    #[ts(type = "string")]
     pub updated_at: i64,
 }
 

@@ -2,11 +2,10 @@ use crate::db::FromSqlRow;
 use rusqlite::Row;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-#[cfg(any(feature = "specta", feature = "ts-rs"))]
+// Conditional import removed
 use ts_rs::TS;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct CalendarEvent {
     pub id: String,
@@ -61,8 +60,7 @@ pub struct CalendarEvent {
     pub deleted_by: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum EventType {
     Meeting,
@@ -72,8 +70,7 @@ pub enum EventType {
     Other,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum EventStatus {
     Confirmed,
@@ -109,8 +106,7 @@ impl FromStr for EventStatus {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct EventParticipant {
     pub id: String,
@@ -119,8 +115,7 @@ pub struct EventParticipant {
     pub status: ParticipantStatus,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum ParticipantStatus {
     Accepted,
@@ -129,8 +124,7 @@ pub enum ParticipantStatus {
     NeedsAction,
 }
 
-#[derive(Debug, Clone, Deserialize)]
-#[cfg_attr(feature = "ts-rs", derive(TS))]
+#[derive(Debug, Clone, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateEventInput {
     pub title: String,
@@ -154,8 +148,7 @@ pub struct CreateEventInput {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
-#[cfg_attr(feature = "ts-rs", derive(TS))]
+#[derive(Debug, Clone, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateEventInput {
     pub title: Option<String>,

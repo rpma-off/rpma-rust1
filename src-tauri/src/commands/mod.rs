@@ -106,7 +106,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 use tauri::State;
 use tracing::{debug, error, info, instrument, warn};
-#[cfg(any(feature = "specta", feature = "ts-rs"))]
+// Conditional import removed
 use ts_rs::TS;
 
 // Import authentication macros
@@ -119,7 +119,7 @@ use crate::models::client::{
 use crate::services::client::ClientStats;
 
 // User request types
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 #[derive(Deserialize, Debug)]
 pub struct CreateUserRequest {
     pub email: String,
@@ -129,7 +129,7 @@ pub struct CreateUserRequest {
     pub password: String,
 }
 
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 #[derive(Deserialize, Debug)]
 pub struct UpdateUserRequest {
     pub email: Option<String>,
@@ -215,7 +215,7 @@ pub enum ClientResponse {
 }
 
 /// User action types for CRUD operations
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 #[derive(Deserialize, Debug)]
 #[serde(tag = "action")]
 pub enum UserAction {
@@ -254,7 +254,7 @@ pub enum UserAction {
 
 /// User list response
 #[derive(Serialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct UserListResponse {
     pub data: Vec<crate::models::auth::UserAccount>,
 }
@@ -342,18 +342,18 @@ macro_rules! tracked_command {
 }
 
 /// Standard API response format
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ApiError {
     pub message: String,
     pub code: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "any"))]
+    #[ts(type = "any")]
     pub details: Option<serde_json::Value>,
 }
 
 /// Compressed API response for large payloads
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CompressedApiResponse {
     pub success: bool,

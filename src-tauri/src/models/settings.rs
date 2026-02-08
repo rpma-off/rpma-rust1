@@ -1,11 +1,11 @@
 //! Settings and configuration models
 
 use serde::{Deserialize, Serialize};
-#[cfg(any(feature = "specta", feature = "ts-rs"))]
+// Conditional import removed
 use ts_rs::TS;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct GeneralSettings {
     pub auto_save: bool,
     pub language: String,
@@ -15,7 +15,7 @@ pub struct GeneralSettings {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct SecuritySettings {
     pub two_factor_enabled: bool,
     pub session_timeout: u32, // minutes
@@ -26,7 +26,7 @@ pub struct SecuritySettings {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct NotificationSettings {
     pub push_notifications: bool,
     pub email_notifications: bool,
@@ -38,7 +38,7 @@ pub struct NotificationSettings {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct AppearanceSettings {
     pub dark_mode: bool,
     pub primary_color: String,
@@ -47,7 +47,7 @@ pub struct AppearanceSettings {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct DataManagementSettings {
     pub auto_backup: bool,
     pub backup_frequency: String, // daily, weekly, monthly
@@ -57,7 +57,7 @@ pub struct DataManagementSettings {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct StorageSettings {
     pub photo_storage_type: String, // "local", "cloud", "hybrid"
     pub local_storage_path: Option<String>,
@@ -73,7 +73,7 @@ pub struct StorageSettings {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct DatabaseSettings {
     pub connection_status: String,
     pub last_backup: Option<String>,
@@ -83,7 +83,7 @@ pub struct DatabaseSettings {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct IntegrationSettings {
     pub api_enabled: bool,
     pub webhook_url: Option<String>,
@@ -92,7 +92,7 @@ pub struct IntegrationSettings {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct PerformanceSettings {
     pub cache_enabled: bool,
     pub cache_size: u32, // MB
@@ -102,7 +102,7 @@ pub struct PerformanceSettings {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct BackupSettings {
     pub auto_backup: bool,
     pub backup_location: String,
@@ -112,7 +112,7 @@ pub struct BackupSettings {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct DiagnosticSettings {
     pub logging_level: String, // error, warn, info, debug
     pub performance_monitoring: bool,
@@ -122,7 +122,7 @@ pub struct DiagnosticSettings {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct AppSettings {
     pub general: GeneralSettings,
     pub security: SecuritySettings,
@@ -133,7 +133,7 @@ pub struct AppSettings {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct SystemConfiguration {
     pub database: DatabaseSettings,
     pub integrations: IntegrationSettings,
@@ -284,7 +284,7 @@ impl Default for DiagnosticSettings {
 // User-specific settings models
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct UserProfileSettings {
     pub full_name: String,
     pub email: String,
@@ -294,7 +294,7 @@ pub struct UserProfileSettings {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct UserPreferences {
     // Notifications
     pub email_notifications: bool,
@@ -322,14 +322,14 @@ pub struct UserPreferences {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct UserSecuritySettings {
     pub two_factor_enabled: bool,
     pub session_timeout: u32, // minutes
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct UserPerformanceSettings {
     pub cache_enabled: bool,
     pub cache_size: u32, // MB
@@ -341,7 +341,7 @@ pub struct UserPerformanceSettings {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct UserAccessibilitySettings {
     pub high_contrast: bool,
     pub large_text: bool,
@@ -356,7 +356,7 @@ pub struct UserAccessibilitySettings {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct UserNotificationSettings {
     pub email_enabled: bool,
     pub push_enabled: bool,
@@ -378,7 +378,7 @@ pub struct UserNotificationSettings {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub struct UserSettings {
     pub profile: UserProfileSettings,
     pub preferences: UserPreferences,

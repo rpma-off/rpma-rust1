@@ -5,8 +5,6 @@
 
 use serde::{Deserialize, Serialize};
 use std::fmt;
-#[cfg(feature = "specta")]
-use ts_rs::TS;
 
 /// Application error types for consistent error handling
 #[derive(Debug, Serialize, Deserialize, Clone)]
