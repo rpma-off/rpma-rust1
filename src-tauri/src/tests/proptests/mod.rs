@@ -7,8 +7,10 @@ use proptest::test_runner::Config;
 
 // Import all proptest modules
 mod audit_service_proptests;
+mod auth_service_proptests;
 mod client_validation_proptests;
 mod task_validation_proptests;
+mod task_validation_service_proptests;
 
 #[cfg(test)]
 mod main {

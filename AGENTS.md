@@ -1,48 +1,29 @@
 # AGENTS.md 
 
-## Project Structure
+## 🗂️ Structure du Projet
 
 ```
 rpma-rust/
-├── frontend/              # Next.js frontend application
+├── frontend/                 # Application Next.js
 │   ├── src/
-│   │   ├── app/          # Next.js App Router pages
-│   │   ├── components/   # React components
-│   │   ├── hooks/        # Custom hooks
-│   │   ├── lib/          # Utilities, API clients
-│   │   ├── types/        # TypeScript types
-│   │   ├── ui/           # shadcn/ui components
-│   │   └── store/        # Zustand state stores
-│   ├── public/           # Static assets
-│   ├── package.json
-│   └── next.config.js
-│
-├── src-tauri/            # Rust backend application
+│   │   ├── app/             # Pages App Router
+│   │   ├── components/      # Composants React
+│   │   ├── hooks/           # Hooks personnalisés
+│   │   ├── lib/             # Utilitaires et IPC
+│   │   ├── types/           # Types TypeScript
+│   │   └── ui/              # Composants shadcn/ui
+│   └── package.json
+├── src-tauri/               # Application Rust
 │   ├── src/
-│   │   ├── commands/     # Tauri IPC command handlers
-│   │   ├── services/     # Business logic layer
-│   │   ├── repositories/ # Data access layer
-│   │   ├── models/       # Domain models & DTOs
-│   │   ├── db/           # Database management
-│   │   ├── logging/      # Logging infrastructure
-│   │   ├── sync/         # Sync engine
-│   │   ├── menu/         # Application menus
-│   │   ├── bin/          # Binary executables
-│   │   ├── main.rs       # Application entry point
-│   │   └── lib.rs        # Library root
-│   ├── migrations/       # Database migrations
-│   ├── benches/          # Performance benchmarks
-│   ├── tests/            # Integration tests
-│   ├── Cargo.toml        # Rust dependencies
-│   └── tauri.conf.json   # Tauri configuration
-│
-├── scripts/              # Build & validation scripts
-├── migrations/           # Additional migrations
-├── docs/                 # Documentation PRDs
-├── .github/              # GitHub workflows
-├── package.json          # Root package.json (monorepo)
-├── .env                  # Environment variables
-└── Cargo.toml            # Workspace configuration
+│   │   ├── commands/        # Commandes Tauri IPC
+│   │   ├── models/          # Modèles de données
+│   │   ├── repositories/    # Accès aux données
+│   │   ├── services/        # Logique métier
+│   │   └── db/              # Gestion base de données
+│   └── Cargo.toml
+├── migrations/              # Migrations de base de données
+├── scripts/                 # Scripts de build et validation
+└── docs/                    # Documentation
 ```
 ## Architecture
 
@@ -57,181 +38,83 @@ rpma-rust/
 │ SQLite Database │  ← Data Layer
 └─────────────────┘
 ```
+## 📜 Scripts Disponibles
 
+### Scripts Principaux
+- `npm run dev` - Démarrage en mode développement
+- `npm run build` - Build de production
+- `npm run tauri dev` - Développement Tauri uniquement
 
-## Development Commands
+### Scripts Frontend
+- `npm run frontend:dev` - Serveur de développement Next.js
+- `npm run frontend:build` - Build frontend
+- `npm run frontend:lint` - Linting du code frontend
+- `npm run frontend:type-check` - Vérification des types TypeScript
 
-### Essential Commands
-```bash
-# Start development (recommended)
-npm run dev
+### Scripts Backend
+- `npm run backend:build` - Build Rust en mode debug
+- `npm run backend:build:release` - Build Rust en mode release
+- `npm run backend:check` - Vérification du code Rust
+- `npm run backend:clippy` - Analyse avec Clippy
+- `npm run backend:fmt` - Formatage du code Rust
 
-# Frontend only
-npm run frontend:dev
+### Synchronisation des Types
+- `npm run types:sync` - Synchroniser les types Rust → TypeScript
+- `npm run types:validate` - Valider la synchronisation des types
+- `npm run types:drift-check` - Détecter les divergences de types
+- `npm run types:ci-drift-check` - Vérification CI des types
 
-# Build for production
-npm run build
+### Tests et Qualité
+- `npm run test` - Lancer les tests unitaires
+- `npm run test:coverage` - Tests avec couverture
+- `npm run test:e2e` - Tests end-to-end
+- `npm run security:audit` - Audit de sécurité
+- `npm run performance:test` - Tests de performance
 
-# Type checking
-npm run frontend:type-check
+### Utilitaires
+- `npm run clean` - Nettoyer les builds et node_modules
+- `npm run git:start-feature` - Démarrer une nouvelle branche de fonctionnalité
+- `npm run fix:encoding` - Corriger les problèmes d'encodage
 
-# Linting
-npm run frontend:lint
+## Quick Start for AI Agents
 
-# Type sync (Rust → TypeScript)
-npm run types:sync
-```
+### To understand the project quickly:
+1. Start with [00_PROJECT_OVERVIEW.md](00_PROJECT_OVERVIEW.md) for high-level context
+2. Read [01_DOMAIN_MODEL.md](01_DOMAIN_MODEL.md) to understand the data model
+3. Review [02_ARCHITECTURE_AND_DATAFLOWS.md](02_ARCHITECTURE_AND_DATAFLOWS.md) for technical architecture
+4. Check [08_DEV_WORKFLOWS_AND_TOOLING.md](08_DEV_WORKFLOWS_AND_TOOLING.md) for development practices
 
-### Backend Commands
-```bash
-# Rust compilation check
-npm run backend:check
-
-# Rust linting
-npm run backend:clippy
-
-# Format Rust code
-npm run backend:fmt
-```
-
-##  🐘 BACKEND RULES (RUST)
-
-###  IPC Commands
-*   Location: `src-tauri/src/commands/`
-*   Commands must use the `#[tauri::command]` macro.
-*   **Authentication**: Most commands require a `session_token: String` argument. Use the `authenticate!` macro or helper function to validate the user and extract `user_id` early.
-
-```rust
-use crate::auth::authenticate;
-
-#[tauri::command]
-async fn get_task_details(task_id: String, session_token: String, app_state: State<'_, AppState>) -> Result<Task, AppError> {
-    // 1. Authenticate
-    let user = authenticate(&session_token, &app_state.db)?;
-
-    // 2. Authorize (RBAC)
-    if user.role != UserRole::Admin {
-        return Err(AppError::Authorization("Not an admin".to_string()));
-    }
-
-    // 3. Business Logic
-    let task = TaskRepository::get_by_id(&app_state.db, &task_id)?;
-    Ok(task)
-}
-```
-
-###  Error Handling
-*   Use the standardized `AppError` enum defined in `src-tauri/src/error.rs`.
-*   Map raw errors (SQLite, IO, etc.) to `AppError` variants.
-*   Never panic in production code; use `Result<T, AppError>`.
-
-###  Database Interaction
-*   Use the `r2d2` connection pool from `app_state`.
-*   SQL queries should be parameterized to prevent injection.
-*   Prefer Repository pattern (`src-tauri/src/repositories/`) for data access logic.
-
----
-
-##  ⚛️ FRONTEND RULES (NEXT.JS / REACT)
-
-###  UI Components
-*   **Strictly use `shadcn/ui`** for all UI primitives (Buttons, Inputs, Dialogs).
-*   Use Tailwind utility classes for layout and styling.
-*   **Design Tokens**: Refer to `DESIGN.md`. Do not hardcode colors.
-    *   Backgrounds: `bg-background`, `bg-card`
-    *   Text: `text-foreground`, `text-muted-foreground`
-    *   Borders: `border-border`
-    *   Primary Action: `bg-primary text-primary-foreground hover:bg-primary/90`
-
-###  State Management
-*   Use React Hooks (`useState`, `useEffect`, `useReducer`) for local component state.
-*   For global state (e.g., User Session), use React Context or a library like Zustand (if applicable, though Context is preferred here for simplicity).
-*   Use SWR or TanStack Query (React Query) for caching IPC responses if performance requires it, otherwise standard React state is fine.
-
-###  IPC Client
-*   Import the wrapper: `import { ipcClient } from '@/lib/ipc/client';`
-*   Call functions using the generated client methods. All calls are async.
-    ```typescript
-    const response = await ipcClient.tasks.get(taskId, sessionToken);
-    ```
-
----
-
-##  💾 DATABASE MIGRATIONS RULES
-
-###  Schema Changes
-1.  Create a new SQL file in `src-tauri/migrations/`.
-2.  Naming convention: `NNN_description.sql` (e.g., `012_add_user_avatar.sql`).
-3.  The system automatically applies unapplied migrations on startup based on the `schema_version` table.
-
-###  Migration Guidelines
-*   **DO NOT** create tables using Rust code only. Use SQL.
-*   Use `IF NOT EXISTS` or `IF EXISTS` to prevent errors on re-runs.
-*   Maintain backwards compatibility where possible.
-*   **Validation**:
-    *   Run `node scripts/validate-migration-system.js` before committing.
-    *   Run `node scripts/migration-health-check.js` to ensure syntax is correct.
-
----
-
-##  🧪 TESTING & QUALITY GATES
-
-Before any code is considered "Done", the following must pass:
-
-1.  **Type Sync**: `npm run types:sync` completes without error.
-2.  **Type Validation**: `npm run types:validate` confirms all types are present.
-3.  **Drift Check**: `npm run types:drift-check` finds no discrepancies between Rust and TS.
-4.  **Migration Health**: `node scripts/validate-migration-system.js` returns passing score.
-5.  **Security Audit**: `npm run security:audit` finds no hardcoded secrets or weak deps.
+### For specific tasks:
+- **Adding a new feature**: Read [03_FRONTEND_GUIDE.md](03_FRONTEND_GUIDE.md) and [04_BACKEND_GUIDE.md](04_BACKEND_GUIDE.md)
+- **Working with the API**: Read [05_IPC_API_AND_CONTRACTS.md](05_IPC_API_AND_CONTRACTS.md)
+- **Database changes**: Read [07_DATABASE_AND_MIGRATIONS.md](07_DATABASE_AND_MIGRATIONS.md)
+- **Security/permissions**: Read [06_SECURITY_AND_RBAC.md](06_SECURITY_AND_RBAC.md)
+- **UI/UX changes**: Read [09_USER_FLOWS_AND_UX.md](09_USER_FLOWS_AND_UX.md)
 
 
 
-##  🚀 WORKFLOWS
+### Code Patterns
+- **Frontend**: Use shadcn/ui components with Tailwind classes
+- **Backend**: Follow command→service→repository pattern
+- **Authentication**: All protected commands need `session_token`
+- **Type Safety**: Never edit `frontend/src/lib/backend.ts` (generated)
 
-### Scenario A: Adding a new API Command
-1.  **Define the Request/Response types** in a Rust model file (`src-tauri/src/models/`). Add `#[derive(Serialize, Type)]`.
-2.  **Implement the Command** in `src-tauri/src/commands/`.
-3.  **Register the Command** in `src-tauri/src/main.rs`.
-4.  **Generate Types**: Run `npm run types:sync`.
-5.  **Create Frontend Hook/Function**: Create a file in `frontend/src/lib/ipc/` (or similar) to wrap the raw IPC call.
-    ```typescript
-    // frontend/src/lib/ipc/tasks.ts
-    export async function getMyTasks(token: string) {
-       return await ipcClient.tasks.list({ /* filters */ }, token);
-    }
-    ```
-6.  **Build UI**: Create React components using the data.
+### Important Paths
+- Frontend root: `frontend/src/app/`
+- IPC client: `frontend/src/lib/ipc/`
+- Backend commands: `src-tauri/src/commands/`
+- Models: `src-tauri/src/models/`
+- Migrations: `src-tauri/migrations/`
 
-### Scenario B: Creating a New Page
-1.  Create folder in `frontend/src/app/feature-name/`.
-2.  Create `page.tsx`.
-3.  Use `AppLayout` (Sidebar/Header) wrapper.
-4.  Fetch data using `useEffect` or a custom hook.
-5.  Render using `shadcn/ui` components.
-6.  Ensure responsive design (Mobile/Desktop).
+## Acceptance Criteria
 
-### Scenario C: Modifying the Database
-1.  Write SQL migration file `src-tauri/migrations/NNN_change.sql`.
-2.  Update Rust `Model` structs to match new schema.
-3.  Run migration health check.
-4.  Run `npm run types:sync`.
+An agent that has thoroughly reviewed these files should be able to:
 
----
-
-##  ⚠️ COMMON PITFALLS TO AVOID
-
-*   **Editing `frontend/src/lib/backend.ts` manually**: This file is overwritten. Put custom types in a separate file.
-*   **Forgetting `#[tauri::command]`**: The command won't be exposed to the frontend.
-*   **Assuming Connection**: The app works offline. Always handle `network errors` gracefully; use the Sync Queue.
-*   **Hardcoded Styling**: Use Tailwind design tokens from `tailwind.config.ts`, not arbitrary hex codes.
-*   **Skipping RBAC**: Always check if the `session_token` user has the right `UserRole` before modifying data.
-
----
-
-##  📚 REFERENCE MAP
-
-*   **Looking for User Flows?** -> Check `USER-FLOWS.md`.
-*   **Looking for DB Schema?** -> Check `DATABASE.md`.
-*   **Looking for API Endpoints?** -> Check `API.md`.
-*   **Looking for Colors/Fonts?** -> Check `DESIGN.md`.
-*   **Need to run a script?** -> Check `SCRIPTS_DOCUMENTATION.md`.
+✅ Answer "Where do I add a new feature?"  
+✅ Identify "Which command handles X?"  
+✅ Locate "What tables store Y?"  
+✅ Understand "What are the business rules?"  
+✅ Follow development patterns consistently  
+✅ Navigate the codebase efficiently  
+✅ Avoid common pitfalls  
+✅ Run appropriate validation commands

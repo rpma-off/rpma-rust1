@@ -14,4 +14,7 @@ pub mod worker_pool;
 #[cfg(test)]
 pub mod test_utils;
 
+#[cfg(test)]
+pub mod tests;
+
 // Type generation for frontend

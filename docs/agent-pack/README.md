@@ -1,4 +1,4 @@
-# RPMA v2 Agent Documentation Pack
+# RPMA v2 Agent Documentation
 
 This directory contains 10 high-signal Markdown files designed to help an AI agent quickly understand and work with the RPMA v2 codebase. Each file focuses on a specific aspect of the application and provides practical, actionable information.
 
@@ -88,7 +88,6 @@ npm run dev              # Start development
 npm run types:sync        # Sync Rust→TS types (CRITICAL)
 npm run types:validate    # Validate types
 npm run types:drift-check # Check for drift
-npm run quality:check     # Run all quality gates
 ```
 
 ### Code Patterns

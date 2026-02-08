@@ -1,1034 +1,1295 @@
-# RPMA v2 - Design Documentation
+# Design System - RPMA v2
 
-## Table of Contents
+Ce document décrit le système de design complet de l'application RPMA v2, incluant les composants UI, les thèmes, les patterns d'interaction, et les guidelines de développement.
 
-- [Introduction](#introduction)
-- [Design System](#design-system)
-- [Color Palette](#color-palette)
-- [Typography](#typography)
-- [Spacing](#spacing)
-- [Shadows](#shadows)
-- [Borders & Radii](#borders--radii)
-- [UI Components](#ui-components)
-- [Component Patterns](#component-patterns)
-- [Accessibility](#accessibility)
-- [Responsive Design](#responsive-design)
+## 📋 Vue d'Ensemble
 
-## Introduction
+Le design system de RPMA v2 est construit sur une foundation moderne avec :
+- **Tailwind CSS** : Utility-first framework pour le styling
+- **shadcn/ui + Radix** : Composants accessibles et robustes
+- **Design Tokens** : Variables CSS pour la consistance
+- **Responsive Design** : Mobile-first approach
+- **Accessibility** : WCAG 2.1 AA compliance
 
-RPMA v2 uses a **modern, component-based design system** built on **Tailwind CSS** and **shadcn/ui**. The design prioritizes usability, accessibility, and consistency while maintaining a professional appearance suitable for PPF installation business operations.
+## 🎨 Système de Thème
 
-### Design Principles
+### 1. Color Palette
 
-1. **Clarity**: Clear visual hierarchy and information architecture
-2. **Efficiency**: Common tasks accessible with minimal clicks
-3. **Consistency**: Uniform patterns across all features
-4. **Accessibility**: WCAG 2.1 AA compliance
-5. **Performance**: Fast loading and smooth interactions
+#### Primary RPMA Colors
+```css
+:root {
+  /* RPMA Brand Colors */
+  --rpma-primary: 221 83% 53%;      /* hsl(221, 83%, 53%) - RPMA Teal */
+  --rpma-hover: 221 83% 48%;         /* Darker for hover */
+  --rpma-active: 221 83% 43%;        /* Even darker for active */
+  --rpma-foreground: 0 0% 95%;      /* White text on RPMA colors */
+  
+  /* Semantic Colors */
+  --background: 0 0% 100%;           /* Pure white */
+  --foreground: 222.2 84% 4.9%;      /* Near black */
+  
+  /* Surface Colors */
+  --card: 0 0% 100%;                /* White cards */
+  --card-foreground: 222.2 84% 4.9%; /* Card text */
+  --popover: 0 0% 100%;              /* White popovers */
+  --popover-foreground: 222.2 84% 4.9%;
+  
+  /* Status Colors */
+  --success: 142 76% 36%;            /* Green */
+  --warning: 38 92% 50%;             /* Amber */
+  --error: 0 84% 60%;               /* Red */
+  --info: 217 91% 60%;              /* Blue */
+}
+```
 
-### Design Tools
+#### Status-Specific Colors
+```css
+:root {
+  /* Workflow Status Colors */
+  --workflow-draft: 220 9% 46%;        /* Gray */
+  --workflow-scheduled: 221 83% 53%;     /* RPMA Teal */
+  --workflow-inProgress: 38 92% 50%;     /* Amber */
+  --workflow-completed: 142 76% 36%;      /* Green */
+  --workflow-cancelled: 0 84% 60%;        /* Red */
+  
+  /* Priority Colors */
+  --priority-low: 221 83% 53%;          /* Blue */
+  --priority-medium: 38 92% 50%;        /* Amber */
+  --priority-high: 25 95% 53%;           /* Deep Orange */
+  --priority-urgent: 0 84% 60%;          /* Red */
+}
+```
 
-| Tool | Purpose |
-|------|---------|
-| **Tailwind CSS** | Utility-first CSS framework |
-| **shadcn/ui** | Component library (Radix UI) |
-| **Framer Motion** | Animations and transitions |
-| **Lucide React** | Icon library (140+ icons) |
-| **Recharts** | Data visualization |
-| **React Day Picker** | Calendar component |
-| **Leaflet** | Maps and geolocation |
+### 2. Typography System
 
-## Design System
+#### Font Scale
+```css
+:root {
+  /* Font Size Scale (4px base unit for scalability) */
+  --font-size-2xs: 0.625rem;   /* 10px - Tiny */
+  --font-size-xs: 0.75rem;      /* 12px - Caption */
+  --font-size-sm: 0.875rem;     /* 14px - Body Small */
+  --font-size-base: 1rem;       /* 16px - Body */
+  --font-size-lg: 1.125rem;     /* 18px - Body Large */
+  --font-size-xl: 1.25rem;      /* 20px - H4 */
+  --font-size-2xl: 1.5rem;      /* 24px - H3 */
+  --font-size-3xl: 1.875rem;    /* 30px - H2 */
+  --font-size-4xl: 2.25rem;     /* 36px - H1 */
+  --font-size-5xl: 3rem;         /* 48px - Display */
+  --font-size-6xl: 3.75rem;      /* 60px - Jumbo */
+}
+```
 
-### Design Tokens
+#### Line Heights
+```css
+:root {
+  --line-height-tight: 1.1;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+  --line-height-loose: 2;
+}
+```
 
-Design tokens are defined in `frontend/tailwind.config.ts`:
+#### Font Weights
+```css
+:root {
+  --font-weight-normal: 400;      /* Regular */
+  --font-weight-medium: 500;      /* Medium */
+  --font-weight-semibold: 600;    /* Semibold */
+  --font-weight-bold: 700;        /* Bold */
+}
+```
 
+### 3. Spacing System
+
+#### 4px Base Unit Scale
+```css
+:root {
+  /* 4px base unit spacing */
+  --space-1: 0.25rem;    /* 4px */
+  --space-2: 0.5rem;     /* 8px */
+  --space-3: 0.75rem;    /* 12px */
+  --space-4: 1rem;       /* 16px */
+  --space-5: 1.25rem;    /* 20px */
+  --space-6: 1.5rem;     /* 24px */
+  --space-8: 2rem;       /* 32px */
+  --space-10: 2.5rem;    /* 40px */
+  --space-12: 3rem;      /* 48px */
+  --space-16: 4rem;      /* 64px */
+}
+```
+
+#### Semantic Spacing
+```css
+:root {
+  /* Component-specific spacing */
+  --spacing-xs: var(--space-1);    /* 4px */
+  --spacing-sm: var(--space-2);    /* 8px */
+  --spacing-md: var(--space-3);    /* 12px */
+  --spacing-lg: var(--space-4);    /* 16px */
+  --spacing-xl: var(--space-5);    /* 20px */
+  --spacing-2xl: var(--space-6);  /* 24px */
+  --spacing-3xl: var(--space-8);  /* 32px */
+  --spacing-4xl: var(--space-10); /* 40px */
+  --spacing-5xl: var(--space-12); /* 48px */
+}
+```
+
+### 4. Border Radius System
+
+```css
+:root {
+  --radius-none: 0px;
+  --radius-xs: 4px;          /* Small elements (tags, badges) */
+  --radius-sm: 6px;          /* Buttons, inputs */
+  --radius-md: 8px;          /* Cards */
+  --radius-lg: 12px;         /* Large cards */
+  --radius-xl: 16px;         /* Modals */
+  --radius-2xl: 20px;        /* Special cases */
+  --radius-full: 9999px;      /* Pills, avatars */
+}
+```
+
+### 5. Shadow System
+
+```css
+:root {
+  /* Elevation levels */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);          /* Level 1 - Subtle */
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 
+              0 2px 4px -2px rgb(0 0 0 / 0.1);          /* Level 2 - Cards */
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 
+              0 4px 6px -4px rgb(0 0 0 / 0.1);          /* Level 3 - Raised */
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 
+              0 8px 10px -6px rgb(0 0 0 / 0.1);          /* Level 4 - Floating */
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25); /* Level 5 - Modals */
+}
+```
+
+## 🧩 Component Architecture
+
+### 1. Component Hierarchy
+
+```
+src/components/
+├── ui/                          # Base UI components (shadcn/ui)
+│   ├── button.tsx
+│   ├── input.tsx
+│   ├── card.tsx
+│   ├── dialog.tsx
+│   ├── dropdown.tsx
+│   └── ...
+├── layout/                       # Layout components
+│   ├── header.tsx
+│   ├── sidebar.tsx
+│   ├── footer.tsx
+│   └── navigation.tsx
+├── forms/                        # Form components
+│   ├── task-form.tsx
+│   ├── client-form.tsx
+│   ├── user-form.tsx
+│   └── ...
+├── charts/                       # Data visualization
+│   ├── task-chart.tsx
+│   ├── performance-chart.tsx
+│   └── ...
+├── dashboard/                    # Dashboard specific
+│   ├── stats-card.tsx
+│   ├── task-list.tsx
+│   └── calendar.tsx
+├── tasks/                        # Task management
+│   ├── task-card.tsx
+│   ├── task-detail.tsx
+│   ├── task-list.tsx
+│   └── workflow/
+├── clients/                      # Client management
+│   ├── client-card.tsx
+│   ├── client-list.tsx
+│   └── client-detail.tsx
+└── workflow/                     # PPF workflow
+    ├── step-progress.tsx
+    ├── zone-selector.tsx
+    └── quality-check.tsx
+```
+
+### 2. Base Component Examples
+
+#### Button Component
 ```typescript
-const config = {
-  theme: {
-    extend: {
-      colors: {
-        // Custom color palette
-        primary: {
-          DEFAULT: 'hsl(162 76% 45%)',
-          hover: 'hsl(162 76% 40%)',
-          active: 'hsl(162 76% 35%)',
-        },
-        // ... more colors
+// src/components/ui/button.tsx
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[6px] text-base font-semibold transition-all duration-200 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background",
+  {
+    variants: {
+      variant: {
+        default: "bg-[hsl(var(--rpma-teal))] text-white hover:bg-[hsl(var(--rpma-teal))]/90 active:bg-[hsl(var(--rpma-teal))]/80 shadow-sm hover:shadow-md",
+        destructive: "bg-destructive text-destructive-foreground hover:brightness-110",
+        outline: "border border-[hsl(var(--rpma-border))] bg-white hover:bg-[hsl(var(--rpma-surface))]",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-muted hover:text-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
       },
-      fontFamily: {
-        // Custom fonts
-        sans: ['Inter', 'sans-serif'],
-      },
-      borderRadius: {
-        // Custom radii
-        DEFAULT: '0.5rem',
-        xl: '0.75rem',
-        '2xl': '1rem',
-      },
-      boxShadow: {
-        // Custom shadows
-        sm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
-        md: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-        lg: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-        xl: '0 20px 25px -5px rgb(0 0 0 / 0.1)',
-        '2xl': '0 25px 50px -12px rgb(0 0 0 / 0.25)',
+      size: {
+        default: "px-4 py-2 rounded-[6px]",
+        sm: "px-3 py-1.5 rounded-sm text-sm",
+        lg: "px-6 py-3 rounded-lg text-lg",
+        xl: "px-8 py-4 rounded-xl text-xl",
+        icon: "size-10 rounded-[6px]",
+        "icon-sm": "size-8 rounded-[6px]",
+        "icon-lg": "size-12 rounded-[6px]",
+        touch: "min-h-[44px] px-6 py-2 rounded-[6px]", // WCAG minimum
+        "touch-lg": "min-h-[48px] px-8 py-3 rounded-[6px]",
       },
     },
-  },
-};
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
+Button.displayName = "Button"
 ```
 
-## Color Palette
-
-### Primary Colors
-
-| Color | Value | Usage |
-|-------|-------|-------|
-| `--primary` | `hsl(162 76% 45%)` | Primary actions, links, active states |
-| `--primary-hover` | `hsl(162 76% 40%)` | Primary hover state |
-| `--primary-active` | `hsl(162 76% 35%)` | Primary active/pressed state |
-| `--rpma-primary` | `hsl(158 72% 50%)` | RPMA brand green |
-| `--rpma-teal` | `hsl(162 72% 45%)` | RPMA brand teal |
-
-### Status Colors
-
-| Color | Value | Usage |
-|-------|-------|-------|
-| `--success` | `hsl(142 76% 36%)` | Success states, completed tasks |
-| `--warning` | `hsl(38 92% 50%)` | Warnings, pending states |
-| `--error` | `hsl(0 84% 60%)` | Error states, failed operations |
-| `--info` | `hsl(217 91% 60%)` | Informational messages |
-
-### Priority Colors
-
-| Priority | Color | Value |
-|----------|-------|-------|
-| Low | `--priority-low` | `hsl(217 91% 60%)` |
-| Medium | `--priority-medium` | `hsl(38 92% 50%)` |
-| High | `--priority-high` | `hsl(25 95% 53%)` |
-| Urgent | `--priority-urgent` | `hsl(0 84% 60%)` |
-
-### Workflow Status Colors
-
-| Status | Color | Value |
-|--------|-------|-------|
-| Draft | `--workflow-draft` | `hsl(220 13% 91%)` |
-| Scheduled | `--workflow-scheduled` | `hsl(217 91% 60%)` |
-| In Progress | `--workflow-in-progress` | `hsl(38 92% 50%)` |
-| Completed | `--workflow-completed` | `hsl(142 76% 36%)` |
-| Cancelled | `--workflow-cancelled` | `hsl(0 84% 60%)` |
-
-### Semantic Colors
-
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--background` | `hsl(0 0% 100%)` | Page background |
-| `--foreground` | `hsl(222.2 84% 4.9%)` | Primary text |
-| `--card` | `hsl(0 0% 100%)` | Card background |
-| `--card-foreground` | `hsl(222.2 84% 4.9%)` | Card text |
-| `--popover` | `hsl(0 0% 100%)` | Popover background |
-| `--popover-foreground` | `hsl(222.2 84% 4.9%)` | Popover text |
-| `--primary` | `hsl(222.2 47.4% 11.2%)` | Primary text on dark |
-| `--secondary` | `hsl(210 40% 96.1%)` | Secondary text |
-| `--muted` | `hsl(210 40% 96.1%)` | Muted text |
-| `--accent` | `hsl(210 40% 96.1%)` | Accent elements |
-| `--destructive` | `hsl(0 84.2% 60.2%)` | Destructive actions |
-| `--border` | `hsl(214.3 31.8% 91.4%)` | Borders |
-| `--input` | `hsl(214.3 31.8% 91.4%)` | Input backgrounds |
-| `--ring` | `hsl(222.2 84% 4.9%)` | Focus ring |
-
-### Dark Mode Colors
-
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--background` | `hsl(222.2 84% 4.9%)` | Dark background |
-| `--foreground` | `hsl(210 40% 98%)` | Primary text on dark |
-| `--card` | `hsl(217.2 32.6% 17.5%)` | Card background on dark |
-| `--card-foreground` | `hsl(210 40% 98%)` | Card text on dark |
-| `--popover` | `hsl(222.2 84% 4.9%)` | Popover on dark |
-| `--popover-foreground` | `hsl(210 40% 98%)` | Popover text on dark |
-| `--primary` | `hsl(210 40% 98%)` | Primary text on dark |
-| `--secondary` | `hsl(217.2 32.6% 17.5%)` | Secondary text on dark |
-| `--muted` | `hsl(217.2 32.6% 17.5%)` | Muted text on dark |
-| `--accent` | `hsl(217.2 32.6% 17.5%)` | Accent on dark |
-| `--destructive` | `hsl(0 62.8% 30.6%)` | Destructive on dark |
-| `--border` | `hsl(217.2 32.6% 17.5%)` | Borders on dark |
-| `--input` | `hsl(217.2 32.6% 17.5%)` | Inputs on dark |
-| `--ring` | `hsl(212.7 26.8% 83.9%)` | Focus ring on dark |
-
-## Typography
-
-### Type Scale
-
-| Token | Value | Size | Line Height | Usage |
-|-------|-------|------|-------------|-------|
-| `--text-2xs` | 0.625rem | 10px | 1.5 | Micro text |
-| `--text-xs` | 0.75rem | 12px | 1.5 | Captions, labels |
-| `--text-sm` | 0.875rem | 14px | 1.5 | Body small |
-| `--text-base` | 1rem | 16px | 1.6 | Body default |
-| `--text-lg` | 1.125rem | 18px | 1.6 | Body large |
-| `--text-xl` | 1.25rem | 20px | 1.5 | Headings 4 |
-| `--text-2xl` | 1.5rem | 24px | 1.4 | Headings 3 |
-| `--text-3xl` | 1.875rem | 30px | 1.3 | Headings 2 |
-| `--text-4xl` | 2.25rem | 36px | 1.2 | Headings 1 |
-| `--text-5xl` | 3rem | 48px | 1.1 | Hero titles |
-| `--text-6xl` | 4rem | 64px | 1.0 | Display |
-
-### Font Weights
-
-| Weight | Value | Usage |
-|--------|-------|-------|
-| Light | 300 | Subtle text |
-| Normal | 400 | Body text |
-| Medium | 500 | Emphasis |
-| Semibold | 600 | Headings |
-| Bold | 700 | Strong headings |
-
-### Font Families
-
-```css
---font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
---font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-```
-
-**Usage**:
-- `font-sans`: All body text and UI elements
-- `font-mono`: Code snippets, technical data
-
-### Typography Examples
-
-```tsx
-// Page title
-<h1 className="text-4xl font-bold tracking-tight">
-  PPF Intervention Management
-</h1>
-
-// Section heading
-<h2 className="text-2xl font-semibold">
-  Task List
-</h2>
-
-// Body text
-<p className="text-base leading-relaxed">
-  View and manage all PPF installation tasks.
-</p>
-
-// Caption
-<span className="text-xs text-muted-foreground">
-  Last updated 2 hours ago
-</span>
-```
-
-## Spacing
-
-### Spacing Scale
-
-Based on 4px base unit:
-
-| Token | Value | CSS | Usage |
-|-------|-------|-----|-------|
-| `--spacing-0` | 0 | 0px | No spacing |
-| `--spacing-px` | 1px | 1px | Hairline |
-| `--spacing-1` | 0.25rem | 4px | Micro |
-| `--spacing-2` | 0.5rem | 8px | Small |
-| `--spacing-3` | 0.75rem | 12px | Medium |
-| `--spacing-4` | 1rem | 16px | Default |
-| `--spacing-5` | 1.25rem | 20px | Large |
-| `--spacing-6` | 1.5rem | 24px | Extra large |
-| `--spacing-8` | 2rem | 32px | 2x large |
-| `--spacing-10` | 2.5rem | 40px | 2.5x large |
-| `--spacing-12` | 3rem | 48px | 3x large |
-| `--spacing-16` | 4rem | 64px | 4x large |
-
-### Spacing Patterns
-
-```tsx
-// Compact spacing
-<div className="p-2 gap-2">
-
-// Default spacing
-<div className="p-4 gap-4">
-
-// Comfortable spacing
-<div className="p-6 gap-6">
-
-// Generous spacing
-<div className="p-8 gap-8">
-```
-
-## Shadows
-
-### Shadow Scale
-
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--shadow-sm` | `0 1px 2px 0 rgb(0 0 0 / 0.05)` | Subtle elevation |
-| `--shadow-md` | `0 4px 6px -1px rgb(0 0 0 / 0.1)` | Default elevation |
-| `--shadow-lg` | `0 10px 15px -3px rgb(0 0 0 / 0.1)` | Raised elements |
-| `--shadow-xl` | `0 20px 25px -5px rgb(0 0 0 / 0.1)` | Popovers, modals |
-| `--shadow-2xl` | `0 25px 50px -12px rgb(0 0 0 / 0.25)` | Highest elevation |
-
-### Shadow Usage
-
-```tsx
-// No shadow
-<div className="shadow-none">
-
-// Subtle
-<div className="shadow-sm">
-
-// Default
-<div className="shadow-md">
-
-// Card
-<div className="shadow-lg">
-
-// Modal
-<div className="shadow-xl">
-
-// Dropdown
-<div className="shadow-2xl">
-```
-
-## Borders & Radii
-
-### Border Radius Scale
-
-| Token | Value | CSS | Usage |
-|-------|-------|-----|-------|
-| `--radius-none` | 0 | 0px | Sharp corners |
-| `--radius-xs` | 0.125rem | 2px | Small elements |
-| `--radius-sm` | 0.25rem | 4px | Tags, chips |
-| `--radius-base` | 0.5rem | 8px | Default |
-| `--radius-lg` | 0.75rem | 12px | Cards |
-| `--radius-xl` | 1rem | 16px | Large cards |
-| `--radius-2xl` | 1.5rem | 24px | Hero elements |
-| `--radius-full` | 9999px | Pill shapes |
-
-### Border Widths
-
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--border-0` | 0px | No border |
-| `--border` | 1px | Default |
-| `--border-2` | 2px | Emphasis |
-| `--border-4` | 4px | Strong emphasis |
-
-### Border Colors
-
-```css
---border: hsl(214.3 31.8% 91.4%);           /* Light mode */
---border: hsl(217.2 32.6% 17.5%);           /* Dark mode */
---border-input: hsl(214.3 31.8% 91.4%);       /* Input borders */
---border-primary: hsl(222.2 47.4% 11.2%);    /* Primary elements */
-```
-
-## UI Components
-
-### Component Hierarchy
-
-```
-shadcn/ui Components (65 files)
-├── Atomic Components
-│   ├── Button
-│   ├── Input
-│   ├── Select
-│   ├── Checkbox
-│   ├── Radio
-│   ├── Switch
-│   ├── Slider
-│   └── ...
-│
-├── Composite Components
-│   ├── Dialog
-│   ├── Dropdown Menu
-│   ├── Popover
-│   ├── Tooltip
-│   ├── Sheet
-│   ├── Tabs
-│   └── ...
-│
-├── Data Display
-│   ├── Table
-│   ├── Card
-│   ├── Badge
-│   ├── Avatar
-│   └── ...
-│
-└── Form Components
-    ├── Form
-    ├── Label
-    ├── Calendar
-    ├── Date Picker
-    └── ...
-
-Feature Components (120+ files)
-├── Layout Components
-│   ├── AppShell
-│   ├── Header
-│   ├── Sidebar
-│   ├── Topbar
-│   └── ...
-│
-├── Dashboard Components (30+)
-│   ├── StatsCard
-│   ├── StatCard
-│   ├── TaskList
-│   ├── QuickActions
-│   └── ...
-│
-├── Task Components (40+)
-│   ├── TaskCard
-│   ├── TaskManager
-│   ├── TaskDetails
-│   ├── TaskActions
-│   └── ...
-│
-├── Calendar Components (15+)
-│   ├── CalendarView
-│   ├── MonthView
-│   ├── WeekView
-│   └── ...
-│
-└── Workflow Components (20+)
-    ├── PPFWorkflowHeader
-    ├── PPFStepProgress
-    ├── VehicleDiagram
-    └── ...
-```
-
-### shadcn/ui Components (65 files)
-
-#### Core Components
-
-| Component | Description | Props |
-|------------|-------------|--------|
-| **Button** | Primary action buttons | variant, size, disabled |
-| **Input** | Text input fields | placeholder, disabled, type |
-| **Select** | Dropdown selection | options, defaultValue, disabled |
-| **Checkbox** | Toggle checkbox | checked, onCheckedChange, disabled |
-| **RadioGroup** | Radio button group | value, onValueChange, options |
-| **Switch** | Toggle switch | checked, onCheckedChange, disabled |
-| **Slider** | Range slider | value, onValueChange, min, max, step |
-| **Textarea** | Multi-line input | placeholder, disabled, rows |
-
-#### Navigation Components
-
-| Component | Description | Props |
-|------------|-------------|--------|
-| **DropdownMenu** | Dropdown menus | trigger, content, align |
-| **ContextMenu** | Right-click menus | trigger, content |
-| **Menubar** | Top menu bar | children |
-| **NavigationMenu** | Navigation menu | trigger, content |
-| **Tabs** | Tabbed navigation | value, onValueChange, tabs |
-| **Breadcrumbs** | Navigation breadcrumbs | items |
-
-#### Feedback Components
-
-| Component | Description | Props |
-|------------|-------------|--------|
-| **Alert** | Alert banners | variant, title, description |
-| **AlertDialog** | Confirmation dialogs | open, onOpenChange, title, description |
-| **Toast** | Notification toasts | title, description, variant |
-| **Progress** | Progress bars | value, max |
-| **Skeleton** | Loading placeholders | className |
-| **LoadingSpinner** | Animated spinner | size |
-
-#### Data Display Components
-
-| Component | Description | Props |
-|------------|-------------|--------|
-| **Card** | Card container | className, children |
-| **Badge** | Status badges | variant |
-| **Avatar** | User avatars | src, alt, fallback |
-| **Table** | Data tables | columns, data |
-| **Separator** | Visual dividers | orientation |
-| **Accordion** | Expandable sections | items |
-
-#### Form Components
-
-| Component | Description | Props |
-|------------|-------------|--------|
-| **Form** | Form container | defaultValues, onSubmit |
-| **Label** | Form labels | htmlFor, children |
-| **Calendar** | Calendar picker | mode, selected, onSelect |
-| **DatePicker** | Date selection | value, onChange |
-| **TimePicker** | Time selection | value, onChange |
-
-#### Overlay Components
-
-| Component | Description | Props |
-|------------|-------------|--------|
-| **Dialog** | Modal dialogs | open, onOpenChange, title, description |
-| **Sheet** | Side sheets | open, onOpenChange, side |
-| **Popover** | Popover overlays | open, onOpenChange, content |
-| **Tooltip** | Tooltips | content, side |
-| **HoverCard** | Hover cards | trigger, content |
-
-#### Utility Components
-
-| Component | Description | Props |
-|------------|-------------|--------|
-| **ScrollArea** | Scrollable areas | className |
-| **Resizable** | Resizable handles | defaultSize |
-| **Command** | Command palette | children |
-| **Collapsible** | Collapsible sections | open, onOpenChange |
-
-### Feature Components
-
-#### Layout Components (5)
-
-| Component | File | Description |
-|------------|------|-------------|
-| **AppShell** | AppShell.tsx | Main application wrapper |
-| **Header** | Header.tsx | Top navigation header |
-| **Sidebar** | Sidebar.tsx | Main sidebar navigation |
-| **Topbar** | Topbar.tsx | Desktop top bar |
-| **DrawerSidebar** | DrawerSidebar.tsx | Collapsible sidebar |
-
-#### Dashboard Components (10)
-
-| Component | File | Description |
-|------------|------|-------------|
-| **Dashboard** | Dashboard.tsx | Main dashboard widget |
-| **CalendarDashboard** | CalendarDashboard.tsx | Calendar view widget |
-| **StatsGrid** | StatsGrid.tsx | Statistics grid |
-| **StatCard** | StatCard.tsx | Single stat card |
-| **TaskList** | TaskList.tsx | Task list widget |
-| **TaskCard** | TaskCard.tsx | Task display card |
-| **QuickActions** | QuickActions.tsx | Quick action buttons |
-| **RecentActivityAlerts** | RecentActivityAlerts.tsx | Activity alerts |
-| **FilterDrawer** | FilterDrawer.tsx | Mobile filter drawer |
-| **PerformanceMetrics** | PerformanceMetrics.tsx | Performance widget |
-
-#### Task Components (12)
-
-| Component | File | Description |
-|------------|------|-------------|
-| **TaskManager** | TaskManager.tsx | Task management main component |
-| **TaskDetails** | TaskDetails.tsx | Task details view |
-| **TaskCard** | TaskCard.tsx | Task display card |
-| **KanbanBoard** | KanbanBoard.tsx | Kanban board view |
-| **TaskActions** | TaskActions/ | Task action modals |
-| **DelayTaskModal** | TaskActions/DelayTaskModal.tsx | Delay task dialog |
-| **EditTaskModal** | TaskActions/EditTaskModal.tsx | Edit task dialog |
-| **ReportIssueModal** | TaskActions/ReportIssueModal.tsx | Report issue dialog |
-| **TaskOverview** | TaskOverview/ | Task detail sections |
-| **WorkflowProgressCard** | TaskDetail/WorkflowProgressCard.tsx | Workflow progress |
-| **PoseDetail** | TaskDetail/PoseDetail.tsx | PPF pose details |
-
-#### Calendar Components (6)
-
-| Component | File | Description |
-|------------|------|-------------|
-| **CalendarView** | CalendarView.tsx | Calendar main component |
-| **MonthView** | MonthView.tsx | Month view |
-| **WeekView** | WeekView.tsx | Week view |
-| **DayView** | DayView.tsx | Day view |
-| **create-event-dialog** | create-event-dialog.tsx | Event creation |
-| **event-sheet** | event-sheet.tsx | Event details sheet |
-
-#### Workflow Components (5)
-
-| Component | File | Description |
-|------------|------|-------------|
-| **PPFWorkflowHeader** | workflow/ppf/PPFWorkflowHeader.tsx | Workflow header |
-| **PPFStepProgress** | workflow/ppf/PPFStepProgress.tsx | Step progress |
-| **VehicleDiagram** | workflow/ppf/VehicleDiagram.tsx | Vehicle zones diagram |
-| **StepCard** | workflow/ppf/StepCard.tsx | Step display card |
-| **PhotoUpload** | workflow/ppf/PhotoUpload.tsx | Photo upload zone |
-
-#### Analytics Components (8)
-
-| Component | Description |
-|------------|-------------|
-| **AnalyticsDashboard** | Analytics main dashboard |
-| **KpiDashboard** | KPI cards display |
-| **TrendAnalysis** | Trend chart component |
-| **TaskCompletionChart** | Task completion visualization |
-| **TechnicianPerformanceChart** | Performance comparison |
-| **GeographicMap** | Geographic distribution map |
-| **MaterialUsageChart** | Material consumption chart |
-| **QualityScoreChart** | Quality score visualization |
-
-#### Inventory Components (6)
-
-| Component | Description |
-|------------|-------------|
-| **InventoryDashboard** | Inventory main view |
-| **MaterialCatalog** | Material list/catalog |
-| **MaterialForm** | Material creation/edit form |
-| **StockLevelCard** | Stock status card |
-| **SupplierManagement** | Supplier management view |
-| **InventoryTabs** | Inventory tabs (materials, suppliers) |
-
-#### Settings Components (6)
-
-| Component | Description |
-|------------|-------------|
-| **ProfileSettingsTab** | User profile settings |
-| **PreferencesTab** | User preferences |
-| **SecurityTab** | Security settings (password, 2FA) |
-| **NotificationsTab** | Notification preferences |
-| **AccessibilityTab** | Accessibility options |
-| **PerformanceTab** | Performance settings |
-
-## Component Patterns
-
-### Button Patterns
-
-```tsx
-// Primary button
-<Button>
-  Submit
-</Button>
-
-// Secondary button
-<Button variant="secondary">
-  Cancel
-</Button>
-
-// Destructive button
-<Button variant="destructive">
-  Delete
-</Button>
-
-// Loading button
-<Button disabled={loading}>
-  {loading ? <LoadingSpinner /> : 'Submit'}
-</Button>
-
-// Icon button
-<Button variant="ghost" size="icon">
-  <Icon name="settings" />
-</Button>
-```
-
-### Form Patterns
-
-```tsx
-// Form with validation
-<Form {...form}>
-  <FormField
-    control={form.control}
-    name="email"
-    render={({ field }) => (
-      <FormItem>
-        <FormLabel>Email</FormLabel>
-        <FormControl>
-          <Input placeholder="user@example.com" {...field} />
-        </FormControl>
-        <FormMessage />
-      </FormItem>
+#### Card Component
+```typescript
+// src/components/ui/card.tsx
+import * as React from "react"
+import { cn } from "@/lib/utils"
+
+const Card = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      "rounded-lg border bg-card text-card-foreground shadow-sm",
+      className
     )}
+    {...props}
   />
-  <Button type="submit">Submit</Button>
-</Form>
+))
+Card.displayName = "Card"
+
+const CardHeader = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex flex-col space-y-1.5 p-6", className)}
+    {...props}
+  />
+))
+CardHeader.displayName = "CardHeader"
+
+const CardTitle = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLHeadingElement>
+>(({ className, ...props }, ref) => (
+  <h3
+    ref={ref}
+    className={cn(
+      "text-2xl font-semibold leading-none tracking-tight",
+      className
+    )}
+    {...props}
+  />
+))
+CardTitle.displayName = "CardTitle"
 ```
 
-### Card Patterns
+### 3. Complex Components
 
-```tsx
-// Basic card
-<Card>
-  <CardHeader>
-    <CardTitle>Card Title</CardTitle>
-    <CardDescription>Card description</CardDescription>
-  </CardHeader>
-  <CardContent>
-    {/* Card content */}
-  </CardContent>
-  <CardFooter>
-    <Button>Action</Button>
-  </CardFooter>
-</Card>
+#### Task Card Component
+```typescript
+// src/components/tasks/TaskCard.tsx
+import React from 'react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Task, TaskStatus, TaskPriority } from '@/types';
+import { formatRelative } from 'date-fns';
+import { fr } from 'date-fns/locale';
+
+interface TaskCardProps {
+  task: Task;
+  onEdit?: (task: Task) => void;
+  onView?: (task: Task) => void;
+  className?: string;
+}
+
+export function TaskCard({ task, onEdit, onView, className }: TaskCardProps) {
+  const statusColor = {
+    draft: 'bg-gray-100 text-gray-800',
+    scheduled: 'bg-blue-100 text-blue-800',
+    in_progress: 'bg-amber-100 text-amber-800',
+    completed: 'bg-green-100 text-green-800',
+    cancelled: 'bg-red-100 text-red-800',
+  }[task.status];
+
+  const priorityColor = {
+    low: 'bg-blue-500',
+    medium: 'bg-amber-500',
+    high: 'bg-orange-500',
+    urgent: 'bg-red-500',
+  }[task.priority];
+
+  return (
+    <Card className={cn("hover:shadow-md transition-shadow", className)}>
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="font-semibold text-lg">{task.title}</h3>
+              <div className={cn("w-2 h-2 rounded-full", priorityColor)} />
+            </div>
+            <p className="text-muted-foreground text-sm line-clamp-2">
+              {task.description}
+            </p>
+          </div>
+          <Badge variant="secondary" className={statusColor}>
+            {task.status.replace('_', ' ')}
+          </Badge>
+        </div>
+      </CardHeader>
+      
+      <CardContent className="pt-0">
+        <div className="space-y-3">
+          {/* Vehicle Info */}
+          <div className="flex items-center gap-2 text-sm">
+            <span className="font-medium">Véhicule:</span>
+            <span>{task.vehicle_plate} - {task.vehicle_model}</span>
+          </div>
+          
+          {/* Schedule Info */}
+          {task.scheduled_date && (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="font-medium">Planifié:</span>
+              <span>
+                {formatRelative(new Date(task.scheduled_date), new Date(), { 
+                  addSuffix: true, 
+                  locale: fr 
+                })}
+              </span>
+            </div>
+          )}
+          
+          {/* PPF Zones */}
+          {task.ppf_zones && task.ppf_zones.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {task.ppf_zones.map((zone, index) => (
+                <Badge key={index} variant="outline" className="text-xs">
+                  {zone}
+                </Badge>
+              ))}
+            </div>
+          )}
+          
+          {/* Actions */}
+          <div className="flex gap-2 pt-2">
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => onView?.(task)}
+            >
+              Détails
+            </Button>
+            <Button 
+              size="sm"
+              onClick={() => onEdit?.(task)}
+            >
+              Modifier
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 ```
 
-### Modal Patterns
+## 📱 Responsive Design Strategy
 
-```tsx
-// Dialog modal
-<Dialog open={open} onOpenChange={setOpen}>
-  <DialogContent>
-    <DialogHeader>
-      <DialogTitle>Modal Title</DialogTitle>
-      <DialogDescription>Modal description</DialogDescription>
-    </DialogHeader>
-    {/* Modal content */}
-    <DialogFooter>
-      <Button variant="outline" onClick={setOpen.bind(null, false)}>
-        Cancel
-      </Button>
-      <Button>Confirm</Button>
-    </DialogFooter>
-  </DialogContent>
-</Dialog>
+### 1. Breakpoint System
+
+```css
+/* Tailwind default breakpoints */
+sm: 640px   /* Small tablets */
+md: 768px   /* Tablets */
+lg: 1024px  /* Small desktops */
+xl: 1280px  /* Desktops */
+2xl: 1536px /* Large desktops */
 ```
 
-## Accessibility
+### 2. Mobile-First Approach
 
-### WCAG 2.1 AA Compliance
+```typescript
+// src/components/layouts/ResponsiveLayout.tsx
+import React from 'react';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { Sidebar } from './Sidebar';
+import { MobileNavigation } from './MobileNavigation';
+
+export function ResponsiveLayout({ children }: { children: React.ReactNode }) {
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isTablet = useMediaQuery('(min-width: 769px) and (max-width: 1023px)');
+
+  if (isMobile) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <MobileNavigation />
+        <main className="flex-1 overflow-y-auto">
+          {children}
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-screen">
+      <Sidebar collapsed={isTablet} />
+      <main className="flex-1 overflow-y-auto">
+        {children}
+      </main>
+    </div>
+  );
+}
+```
+
+## 🎭 Animations and Transitions
+
+### 1. Animation Tokens
+
+```css
+:root {
+  /* Duration */
+  --transition-fast: 150ms;
+  --transition-base: 200ms;
+  --transition-slow: 300ms;
+  
+  /* Easing Functions */
+  --ease-out: cubic-bezier(0.0, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+}
+```
+
+### 2. Keyframe Animations
+
+```css
+/* Core animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0); 
+  }
+}
+
+@keyframes slideInRight {
+  from { 
+    opacity: 0;
+    transform: translateX(100%); 
+  }
+  to { 
+    opacity: 1;
+    transform: translateX(0); 
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+```
+
+### 3. Animation Components
+
+```typescript
+// src/components/ui/animations.tsx
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+export const FadeIn = ({ children }: { children: React.ReactNode }) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    transition={{ duration: 0.3 }}
+  >
+    {children}
+  </motion.div>
+);
+
+export const SlideUp = ({ children }: { children: React.ReactNode }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: 20 }}
+    transition={{ duration: 0.3 }}
+  >
+    {children}
+  </motion.div>
+);
+
+export const AnimatedList = ({ children }: { children: React.ReactNode }) => (
+  <motion.div
+    initial="hidden"
+    animate="visible"
+    variants={{
+      hidden: { opacity: 0 },
+      visible: { 
+        opacity: 1,
+        transition: { staggerChildren: 0.1 }
+      }
+    }}
+  >
+    {children}
+  </motion.div>
+);
+```
+
+## ♿ Accessibility Guidelines
+
+### 1. WCAG 2.1 AA Compliance
 
 #### Color Contrast
+```css
+/* All text meets 4.5:1 contrast ratio */
+.text-on-primary {
+  color: hsl(var(--rpma-foreground));
+  background-color: hsl(var(--rpma-primary));
+}
 
-| Element | Contrast Ratio | Status |
-|---------|--------------|--------|
-| Normal text (4.5:1) | ≥ 4.5:1 | ✅ Pass |
-| Large text (3:1) | ≥ 3:1 | ✅ Pass |
-| UI components (3:1) | ≥ 3:1 | ✅ Pass |
-
-#### Keyboard Navigation
-
-**Supported Keyboard Shortcuts**:
-- `Tab` / `Shift+Tab`: Navigate focusable elements
-- `Enter` / `Space`: Activate buttons and links
-- `Escape`: Close modals and dropdowns
-- `Arrow keys`: Navigate lists and grids
-- `Ctrl/Cmd + K`: Command palette
-- `Ctrl/Cmd + /`: Keyboard shortcuts help
-
-#### Screen Reader Support
-
-**ARIA Labels**:
-```tsx
-// Icon buttons
-<button aria-label="Delete task">
-  <TrashIcon aria-hidden="true" />
-</button>
-
-// Status badges
-<Badge aria-label="Task status: In progress">
-  In progress
-</Badge>
-
-// Progress indicators
-<ProgressBar
-  value={progress}
-  aria-label="Task progress"
-  aria-valuemin="0"
-  aria-valuemax="100"
-  aria-valuenow={progress}
-/>
+.text-on-surface {
+  color: hsl(var(--card-foreground));
+  background-color: hsl(var(--card));
+}
 ```
 
 #### Focus Management
+```typescript
+// src/components/ui/focus-trap.tsx
+import React, { useEffect, useRef } from 'react';
 
-**Focus Indicators**:
-```css
-.focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
-}
-```
+export function FocusTrap({ children }: { children: React.ReactNode }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
-**Skip Links**:
-```tsx
-<a
-  href="#main-content"
-  className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4"
->
-  Skip to main content
-</a>
-```
-
-### Reduced Motion
-
-```css
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-```
-
-### High Contrast Mode
-
-```css
-@media (prefers-contrast: high) {
-  :root {
-    --background: #000000;
-    --foreground: #ffffff;
-    --border: #ffffff;
-  }
-}
-```
-
-## Responsive Design
-
-### Breakpoints
-
-| Breakpoint | Value | Usage |
-|------------|-------|-------|
-| `xs` | 0px | Mobile phones |
-| `sm` | 640px | Mobile phones (large) |
-| `md` | 768px | Tablets |
-| `lg` | 1024px | Desktops (small) |
-| `xl` | 1280px | Desktops (default) |
-| `2xl` | 1536px | Desktops (large) |
-
-### Responsive Patterns
-
-```tsx
-// Sidebar: Hidden on mobile, visible on desktop
-<Sidebar className="hidden md:block" />
-
-// Grid: Responsive columns
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-
-// Card: Full width on mobile, fixed on desktop
-<Card className="w-full md:w-auto">
-
-// Text: Smaller on mobile
-<h1 className="text-2xl md:text-4xl">
-  Responsive Heading
-</h1>
-```
-
-### Mobile-First Approach
-
-```css
-/* Base styles (mobile first */
-.component {
-  padding: 1rem;
-  font-size: 1rem;
-}
-
-/* Tablet */
-@media (min-width: 768px) {
-  .component {
-    padding: 1.5rem;
-    font-size: 1.125rem;
-  }
-}
-
-/* Desktop */
-@media (min-width: 1024px) {
-  .component {
-    padding: 2rem;
-    font-size: 1.25rem;
-  }
-}
-```
-
-## Additional UI Components
-
-### Layout Components (10)
-
-| Component | File | Description |
-|------------|------|-------------|
-| **AppShell** | layout/AppShell.tsx | Main application shell with sidebar and header |
-| **Header** | layout/Header.tsx | Application header with navigation and user menu |
-| **Sidebar** | layout/Sidebar.tsx | Collapsible sidebar navigation |
-| **SidebarItem** | layout/SidebarItem.tsx | Individual sidebar navigation item |
-| **Breadcrumb** | layout/Breadcrumb.tsx | Navigation breadcrumb trail |
-| **PageHeader** | layout/PageHeader.tsx | Page title and actions header |
-| **MobileMenu** | layout/MobileMenu.tsx | Mobile navigation menu |
-| **TabNavigation** | layout/TabNavigation.tsx | Tab-based navigation |
-| **ContextualSidebar** | layout/ContextualSidebar.tsx | Contextual sidebar for details |
-| **StatusBar** | layout/StatusBar.tsx | Application status bar |
-
-### Photo Management Components (5)
-
-| Component | File | Description |
-|------------|------|-------------|
-| **PhotoGallery** | photos/PhotoGallery.tsx | Gallery view for intervention photos |
-| **PhotoViewer** | photos/PhotoViewer.tsx | Full-screen photo viewer with zoom |
-| **PhotoUploadZone** | photos/PhotoUploadZone.tsx | Drag-and-drop photo upload area |
-| **PhotoMetadata** | photos/PhotoMetadata.tsx | Photo metadata display panel |
-| **PhotoComparison** | photos/PhotoComparison.tsx | Before/after photo comparison |
-
-### Message Components (5)
-
-| Component | File | Description |
-|------------|------|-------------|
-| **MessageList** | messages/MessageList.tsx | List of messages with unread indicators |
-| **MessageItem** | messages/MessageItem.tsx | Individual message with actions |
-| **MessageComposer** | messages/MessageComposer.tsx | Rich text message composer |
-| **MessageThread** | messages/MessageThread.tsx | Message conversation thread |
-| **MessageTemplates** | messages/MessageTemplates.tsx | Template selection and management |
-
-### Reporting Components (8)
-
-| Component | File | Description |
-|------------|------|-------------|
-| **ReportBuilder** | reports/ReportBuilder.tsx | Dynamic report configuration |
-| **ReportViewer** | reports/ReportViewer.tsx | Report display with export options |
-| **DatePicker** | reports/DatePicker.tsx | Date range picker for reports |
-| **FilterPanel** | reports/FilterPanel.tsx | Multi-criteria filter panel |
-| **ReportPreview** | reports/ReportPreview.tsx | Live report preview |
-| **ExportDialog** | reports/ExportDialog.tsx | Export format and options |
-| **ChartContainer** | reports/ChartContainer.tsx | Responsive chart wrapper |
-| **DataTable** | reports/DataTable.tsx | Paginated data table with sorting |
-
-### Auth Components (4)
-
-| Component | File | Description |
-|------------|------|-------------|
-| **LoginForm** | auth/LoginForm.tsx | Login form with validation |
-| **TwoFactorSetup** | auth/TwoFactorSetup.tsx | 2FA setup wizard |
-| **TwoFactorVerify** | auth/TwoFactorVerify.tsx | 2FA verification input |
-| **PasswordReset** | auth/PasswordReset.tsx | Password reset flow |
-
-### Notification Components (5)
-
-| Component | File | Description |
-|------------|------|-------------|
-| **NotificationCenter** | notifications/NotificationCenter.tsx | Notification center dropdown |
-| **ToastContainer** | notifications/ToastContainer.tsx | Toast notification container |
-| **NotificationItem** | notifications/NotificationItem.tsx | Individual notification display |
-| **NotificationSettings** | notifications/NotificationSettings.tsx | Notification preferences |
-| **AlertBanner** | notifications/AlertBanner.tsx | System alert banner |
-
-### Utility Components (15)
-
-| Component | File | Description |
-|------------|------|-------------|
-| **DataTable** | ui/DataTable.tsx | Sortable, paginated data table |
-| **FileUpload** | ui/FileUpload.tsx | File upload with progress |
-| **ImageCropper** | ui/ImageCropper.tsx | Image cropping tool |
-| **ColorPicker** | ui/ColorPicker.tsx | Color selection palette |
-| **SearchInput** | ui/SearchInput.tsx | Search with suggestions |
-| **VirtualList** | ui/VirtualList.tsx | Virtualized list for large datasets |
-| **DatePicker** | ui/DatePicker.tsx | Date picker with range selection |
-| **TimePicker** | ui/TimePicker.tsx | Time input component |
-| **RichTextEditor** | ui/RichTextEditor.tsx | WYSIWYG text editor |
-| **SignaturePad** | ui/SignaturePad.tsx | Digital signature capture |
-| **ProgressBar** | ui/ProgressBar.tsx | Progress bar with stages |
-| **SkeletonLoader** | ui/SkeletonLoader.tsx | Skeleton loading states |
-| **EmptyState** | ui/EmptyState.tsx | Empty state illustration |
-| **ErrorBoundary** | ui/ErrorBoundary.tsx | React error boundary |
-| **ConfirmDialog** | ui/ConfirmDialog.tsx | Confirmation dialog |
-
-## Component Variations
-
-### Button Variants
-
-```tsx
-// Ghost button for secondary actions
-<Button variant="ghost" size="sm">
-  Secondary Action
-</Button>
-
-// Loading state
-<Button disabled={loading} className="relative">
-  {loading && <LoadingSpinner className="absolute right-2" />}
-  {loading ? 'Processing...' : 'Submit'}
-</Button>
-
-// Icon button
-<Button variant="outline" size="icon">
-  <Icon name="plus" />
-</Button>
-
-// Group of buttons
-<div className="flex gap-2">
-  <Button variant="outline">Cancel</Button>
-  <Button>Save</Button>
-</div>
-```
-
-### Input Variants
-
-```tsx
-// Text input with validation
-<FormField
-  control={form.control}
-  name="email"
-  render={({ field }) => (
-    <FormItem>
-      <FormLabel>Email</FormLabel>
-      <FormControl>
-        <Input 
-          type="email" 
-          placeholder="user@example.com"
-          className={cn(field.error && "border-red-500")}
-          {...field}
-        />
-      </FormControl>
-      {field.error && (
-        <FormMessage>{field.error.message}</FormMessage>
-      )}
-    </FormItem>
-  )}
-/>
-```
-
-## Theme System Implementation
-
-### Theme Provider
-
-```tsx
-// frontend/src/providers/ThemeProvider.tsx
-import { createContext, useContext, useEffect, useState } from 'react';
-
-type Theme = 'light' | 'dark' | 'system';
-
-interface ThemeContextType {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
-}
-
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>('system');
-  
   useEffect(() => {
-    // Apply theme to document
-    const root = document.documentElement;
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Save current focus
+    previousFocusRef.current = document.activeElement as HTMLElement;
+
+    // Focus first focusable element
+    const focusableElements = container.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
     
-    if (theme === 'system') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      root.classList.toggle('dark', prefersDark);
-    } else {
-      root.classList.toggle('dark', theme === 'dark');
+    const firstElement = focusableElements[0] as HTMLElement;
+    firstElement?.focus();
+
+    // Trap focus within container
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Tab') {
+        const elements = Array.from(focusableElements) as HTMLElement[];
+        const currentIndex = elements.indexOf(document.activeElement as HTMLElement);
+        
+        let nextIndex;
+        if (e.shiftKey) {
+          nextIndex = currentIndex <= 0 ? elements.length - 1 : currentIndex - 1;
+        } else {
+          nextIndex = currentIndex >= elements.length - 1 ? 0 : currentIndex + 1;
+        }
+        
+        e.preventDefault();
+        elements[nextIndex]?.focus();
+      }
+    };
+
+    container.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      container.removeEventListener('keydown', handleKeyDown);
+      // Restore focus when unmounting
+      previousFocusRef.current?.focus();
+    };
+  }, []);
+
+  return (
+    <div ref={containerRef}>
+      {children}
+    </div>
+  );
+}
+```
+
+#### Screen Reader Support
+```typescript
+// src/components/ui/accessible-button.tsx
+import React from 'react';
+import { Button } from './button';
+
+interface AccessibleButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  'aria-label': string;
+  'aria-describedby'?: string;
+  'aria-expanded'?: boolean;
+  children?: React.ReactNode;
+}
+
+export function AccessibleButton({ 
+  'aria-label': ariaLabel, 
+  'aria-describedby': ariaDescribedBy,
+  'aria-expanded': ariaExpanded,
+  children,
+  ...props 
+}: AccessibleButtonProps) {
+  return (
+    <Button
+      aria-label={ariaLabel}
+      aria-describedby={ariaDescribedBy}
+      aria-expanded={ariaExpanded}
+      {...props}
+    >
+      {children}
+    </Button>
+  );
+}
+```
+
+### 2. Keyboard Navigation
+
+```typescript
+// src/hooks/useKeyboardNavigation.ts
+import { useEffect, useCallback } from 'react';
+
+export function useKeyboardNavigation(
+  items: Array<{ id: string; element: HTMLElement }>,
+  onSelect?: (id: string) => void
+) {
+  const [selectedIndex, setSelectedIndex] = React.useState(0);
+
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedIndex(prev => 
+          prev < items.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedIndex(prev => 
+          prev > 0 ? prev - 1 : items.length - 1
+        );
+        break;
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        onSelect?.(items[selectedIndex]?.id);
+        break;
+    }
+  }, [items, selectedIndex, onSelect]);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
+
+  useEffect(() => {
+    items[selectedIndex]?.element?.focus();
+  }, [selectedIndex, items]);
+}
+```
+
+## 📐 Layout Patterns
+
+### 1. Dashboard Layout
+```typescript
+// src/components/layouts/DashboardLayout.tsx
+import React from 'react';
+import { Sidebar } from './Sidebar';
+import { Header } from './Header';
+import { MainContent } from './MainContent';
+
+export function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex h-screen bg-background">
+      <Sidebar />
+      <div className="flex-1 flex flex-col">
+        <Header />
+        <MainContent>
+          {children}
+        </MainContent>
+      </div>
+    </div>
+  );
+}
+```
+
+### 2. Form Layout
+```typescript
+// src/components/forms/FormLayout.tsx
+import React from 'react';
+import { cn } from '@/lib/utils';
+
+interface FormLayoutProps {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+  actions?: React.ReactNode;
+  className?: string;
+}
+
+export function FormLayout({ 
+  title, 
+  description, 
+  children, 
+  actions,
+  className 
+}: FormLayoutProps) {
+  return (
+    <div className={cn("max-w-2xl mx-auto p-6", className)}>
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+        {description && (
+          <p className="text-muted-foreground mt-2">{description}</p>
+        )}
+      </div>
+      
+      {/* Form Content */}
+      <div className="space-y-6 mb-8">
+        {children}
+      </div>
+      
+      {/* Actions */}
+      {actions && (
+        <div className="flex justify-end gap-3 pt-6 border-t">
+          {actions}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+## 🎯 Component Patterns
+
+### 1. Compound Components
+```typescript
+// src/components/ui/dialog.tsx
+import * as React from "react"
+import * as DialogPrimitive from "@radix-ui/react-dialog"
+import { X } from "lucide-react"
+import { cn } from "@/lib/utils"
+
+const Dialog = DialogPrimitive.Root
+const DialogTrigger = DialogPrimitive.Trigger
+const DialogPortal = DialogPrimitive.Portal
+const DialogClose = DialogPrimitive.Close
+
+const DialogOverlay = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Overlay>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Overlay
+    ref={ref}
+    className={cn(
+      "fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      className
+    )}
+    {...props}
+  />
+))
+DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
+
+const DialogContent = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
+>(({ className, children, ...props }, ref) => (
+  <DialogPortal>
+    <DialogOverlay />
+    <DialogPrimitive.Content
+      ref={ref}
+      className={cn(
+        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+        className
+      )}
+      {...props}
+    >
+      {children}
+      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+        <X className="h-4 w-4" />
+        <span className="sr-only">Close</span>
+      </DialogPrimitive.Close>
+    </DialogPrimitive.Content>
+  </DialogPortal>
+))
+DialogContent.displayName = DialogPrimitive.Content.displayName
+
+export {
+  Dialog,
+  DialogPortal,
+  DialogOverlay,
+  DialogClose,
+  DialogTrigger,
+  DialogContent,
+}
+```
+
+### 2. State Management Patterns
+```typescript
+// src/components/ui/data-table.tsx
+import React, { useState } from 'react';
+import { ChevronDown, ChevronUp, MoreHorizontal } from 'lucide-react';
+import { Button } from './button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './dropdown-menu';
+
+interface DataTableProps<T> {
+  data: T[];
+  columns: {
+    key: keyof T;
+    label: string;
+    render?: (value: any, row: T) => React.ReactNode;
+    sortable?: boolean;
+  }[];
+  sortable?: boolean;
+  onSort?: (column: keyof T, direction: 'asc' | 'desc') => void;
+}
+
+export function DataTable<T extends Record<string, any>>({
+  data,
+  columns,
+  sortable = true,
+  onSort
+}: DataTableProps<T>) {
+  const [sortColumn, setSortColumn] = useState<keyof T | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  const handleSort = (column: keyof T) => {
+    if (!sortable) return;
+    
+    const newDirection = 
+      sortColumn === column && sortDirection === 'asc' ? 'desc' : 'asc';
+    
+    setSortColumn(column);
+    setSortDirection(newDirection);
+    onSort?.(column, newDirection);
+  };
+
+  const sortedData = React.useMemo(() => {
+    if (!sortColumn) return data;
+
+    return [...data].sort((a, b) => {
+      const aVal = a[sortColumn];
+      const bVal = b[sortColumn];
+      
+      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [data, sortColumn, sortDirection]);
+
+  return (
+    <div className="w-full overflow-auto">
+      <table className="w-full">
+        <thead>
+          <tr className="border-b bg-muted/50">
+            {columns.map((column) => (
+              <th
+                key={column.key as string}
+                className="px-4 py-3 text-left font-medium"
+              >
+                {sortable && column.sortable ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSort(column.key)}
+                    className="h-auto p-0 font-semibold"
+                  >
+                    {column.label}
+                    {sortColumn === column.key && (
+                      sortDirection === 'asc' ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />
+                    )}
+                  </Button>
+                ) : (
+                  column.label
+                )}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {sortedData.map((row, index) => (
+            <tr key={index} className="border-b hover:bg-muted/50">
+              {columns.map((column) => (
+                <td key={column.key as string} className="px-4 py-3">
+                  {column.render ? (
+                    column.render(row[column.key], row)
+                  ) : (
+                    row[column.key]
+                  )}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+```
+
+## 🔄 State Management Integration
+
+### 1. Zustand Store Pattern
+```typescript
+// src/lib/stores/uiStore.ts
+import { create } from 'zustand';
+import { devtools, persist } from 'zustand/middleware';
+
+interface UIState {
+  // Theme
+  theme: 'light' | 'dark' | 'system';
+  setTheme: (theme: 'light' | 'dark' | 'system') => void;
+  
+  // Sidebar
+  sidebarCollapsed: boolean;
+  toggleSidebar: () => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
+  
+  // Loading states
+  isLoading: boolean;
+  setLoading: (loading: boolean) => void;
+  
+  // Notifications
+  notifications: Notification[];
+  addNotification: (notification: Notification) => void;
+  removeNotification: (id: string) => void;
+}
+
+interface Notification {
+  id: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  title: string;
+  message?: string;
+  duration?: number;
+}
+
+export const useUIStore = create<UIState>()(
+  devtools(
+    persist(
+      (set, get) => ({
+        theme: 'system',
+        setTheme: (theme) => set({ theme }),
+        
+        sidebarCollapsed: false,
+        toggleSidebar: () => set(state => ({ 
+          sidebarCollapsed: !state.sidebarCollapsed 
+        })),
+        setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
+        
+        isLoading: false,
+        setLoading: (loading) => set({ isLoading: loading }),
+        
+        notifications: [],
+        addNotification: (notification) => set(state => ({
+          notifications: [...state.notifications, { ...notification, id: crypto.randomUUID() }]
+        })),
+        removeNotification: (id) => set(state => ({
+          notifications: state.notifications.filter(n => n.id !== id)
+        })),
+      }),
+      {
+        name: 'ui-storage',
+        partialize: (state) => ({
+          theme: state.theme,
+          sidebarCollapsed: state.sidebarCollapsed,
+        }),
+      }
+    )
+  )
+);
+```
+
+### 2. Component Store Integration
+```typescript
+// src/components/theme-toggle.tsx
+import React from 'react';
+import { useUIStore } from '@/lib/stores/uiStore';
+import { Moon, Sun, Monitor } from 'lucide-react';
+
+export function ThemeToggle() {
+  const { theme, setTheme } = useUIStore();
+
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() => setTheme('light')}
+        className={`p-2 rounded ${theme === 'light' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+        aria-label="Thème clair"
+      >
+        <Sun className="h-4 w-4" />
+      </button>
+      
+      <button
+        onClick={() => setTheme('dark')}
+        className={`p-2 rounded ${theme === 'dark' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+        aria-label="Thème sombre"
+      >
+        <Moon className="h-4 w-4" />
+      </button>
+      
+      <button
+        onClick={() => setTheme('system')}
+        className={`p-2 rounded ${theme === 'system' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+        aria-label="Thème système"
+      >
+        <Monitor className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+```
+
+## 📱 Mobile Optimization
+
+### 1. Touch-Friendly Components
+```typescript
+// src/components/ui/mobile-button.tsx
+import React from 'react';
+import { Button } from './button';
+
+interface MobileButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  size?: 'default' | 'large';
+}
+
+export function MobileButton({ 
+  size = 'default', 
+  className, 
+  children, 
+  ...props 
+}: MobileButtonProps) {
+  const sizeClasses = {
+    default: 'min-h-[44px] px-6 py-2',
+    large: 'min-h-[48px] px-8 py-3 text-lg',
+  };
+
+  return (
+    <Button
+      className={`${sizeClasses[size]} ${className || ''}`}
+      {...props}
+    >
+      {children}
+    </Button>
+  );
+}
+```
+
+### 2. Swipe Gestures
+```typescript
+// src/components/ui/swipe-actions.tsx
+import React, { useRef, useState } from 'react';
+
+interface SwipeActionsProps {
+  children: React.ReactNode;
+  leftActions?: React.ReactNode;
+  rightActions?: React.ReactNode;
+  onSwipeLeft?: () => void;
+  onSwipeRight?: () => void;
+}
+
+export function SwipeActions({ 
+  children, 
+  leftActions, 
+  rightActions,
+  onSwipeLeft,
+  onSwipeRight 
+}: SwipeActionsProps) {
+  const [translateX, setTranslateX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const startX = useRef(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true);
+    startX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    
+    const currentX = e.touches[0].clientX;
+    const diff = currentX - startX.current;
+    
+    // Limit swipe distance
+    const maxSwipe = 120;
+    const constrainedDiff = Math.max(-maxSwipe, Math.min(maxSwipe, diff));
+    
+    setTranslateX(constrainedDiff);
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    
+    // Trigger actions based on swipe distance
+    if (Math.abs(translateX) > 50) {
+      if (translateX > 0 && onSwipeRight) {
+        onSwipeRight();
+      } else if (translateX < 0 && onSwipeLeft) {
+        onSwipeLeft();
+      }
     }
     
-    // Store preference
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-  
-  return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
-};
+    // Reset position
+    setTranslateX(0);
+  };
 
-export const useTheme = () => {
-  const context = useContext(ThemeContext);
-  if (!context) throw new Error('useTheme must be used within ThemeProvider');
-  return context;
-};
+  return (
+    <div className="relative overflow-hidden" ref={containerRef}>
+      {/* Left Actions (revealed on right swipe) */}
+      {leftActions && (
+        <div 
+          className="absolute inset-y-0 left-0 flex items-center pl-4 bg-red-500 text-white"
+          style={{ 
+            width: `${Math.max(0, translateX)}px`,
+            opacity: Math.abs(translateX) / 120
+          }}
+        >
+          {leftActions}
+        </div>
+      )}
+      
+      {/* Right Actions (revealed on left swipe) */}
+      {rightActions && (
+        <div 
+          className="absolute inset-y-0 right-0 flex items-center pr-4 bg-blue-500 text-white"
+          style={{ 
+            width: `${Math.max(0, -translateX)}px`,
+            opacity: Math.abs(translateX) / 120
+          }}
+        >
+          {rightActions}
+        </div>
+      )}
+      
+      {/* Main Content */}
+      <div
+        className="relative bg-background transition-transform duration-200 ease-out"
+        style={{ transform: `translateX(${translateX}px)` }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
 ```
 
-### Custom Hooks
+## 🔧 Development Guidelines
 
-```tsx
-// frontend/src/hooks/useTheme.ts
-import { useTheme } from '@/providers/ThemeProvider';
+### 1. Component Creation Checklist
 
-export const useTheme = () => {
-  const { theme, setTheme } = useTheme();
-  
-  const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
-  };
-  
-  return {
-    theme,
-    setTheme,
-    toggleTheme,
-    isDark: theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-  };
-};
+- [ ] **Accessibility**: ARIA labels, keyboard navigation, screen reader support
+- [ ] **Responsive**: Mobile-first design, breakpoints tested
+- [ ] **Performance**: React.memo, useCallback, useMemo where appropriate
+- [ ] **TypeScript**: Strong typing, no any types
+- [ ] **Testability**: Test-friendly structure, test file created
+- [ ] **Documentation**: JSDoc comments, props interface documented
+- [ ] **Error Boundaries**: Graceful error handling
+- [ ] **Loading States**: Skeleton loaders or spinners
+- [ ] **Empty States**: Meaningful empty state displays
+
+### 2. Performance Guidelines
+
+```typescript
+// src/components/ui/optimized-list.tsx
+import React, { useMemo } from 'react';
+import { FixedSizeList as List } from 'react-window';
+
+interface OptimizedListProps<T> {
+  items: T[];
+  itemHeight: number;
+  renderItem: (item: T, index: number) => React.ReactNode;
+  estimateSize?: (index: number) => number;
+}
+
+export function OptimizedList<T>({ 
+  items, 
+  itemHeight, 
+  renderItem,
+  estimateSize 
+}: OptimizedListProps<T>) {
+  const memoizedItems = useMemo(() => items, [items]);
+  const memoizedRenderItem = useMemo(() => renderItem, [renderItem]);
+
+  return (
+    <List
+      height={600}
+      itemCount={memoizedItems.length}
+      itemSize={estimateSize || itemHeight}
+      itemData={memoizedItems}
+    >
+      {({ index, style, data }) => (
+        <div style={style}>
+          {memoizedRenderItem(data[index], index)}
+        </div>
+      )}
+    </List>
+  );
+}
 ```
 
 ---
 
-**Document Version**: 2.0
-**Last Updated**: Based on comprehensive codebase analysis
+*Cette documentation du design system est un guide vivant qui évolue avec l'application RPMA v2.*

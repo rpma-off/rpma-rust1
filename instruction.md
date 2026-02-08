@@ -1,93 +1,64 @@
-﻿﻿Migration vers `ts-rs` uniquement (RPMA)
+﻿﻿Analyze my existing codebase and generate the following complete documentation in Markdown format. Use the source code, file structure, dependencies, and patterns used to create accurate and detailed documentation.
+## Documents to create:
 
-**Contexte projet**
+### 1. README.md
+- Project overview based on code analysis
+- Identified technical stack (frameworks, libraries, database)
+- Detected architecture (monolith, microservices, etc.)
+- Setup instructions derived from config files
+- Available scripts (package.json, Makefile, etc.)
 
-Tu travailles sur **RPMA**, une application desktop **Tauri v2 (Rust + Next.js)**, offline-first, avec IPC interne (WebSocket / invoke).
-Le backend Rust est la **source de vérité** pour tous les types partagés frontend ↔ backend.
+### 2. REQUIREMENTS.md
+- Existing features identified in the code
+- User stories deduced from controllers/routes/components
+- Data models analyzed
+- Third-party integrations detected (APIs, services)
+- Technical constraints observed
+### 3. API.md
+- Endpoints extracted from the code (routes, controllers)
+- HTTP methods used
+- Authentication middleware detected
+- Validation schemas found
+- Response format based on models
 
-Le projet utilise actuellement **`ts-rs` et `specta`**, mais **la décision est prise de conserver uniquement `ts-rs`**.
+### 4. DATABASE.md
+- Database schema based on models/migrations
+- Relationships between identified entities
+- Indexes and constraints detected
+- Existing migrations analyzed
 
----
+### 5. ARCHITECTURE.md
+- Documented folder structure
+- Architectural patterns identified (MVC, Clean Architecture, etc.)
+- Application layers detected
+- Data flows observed in the code
+- Dependencies between modules
 
-### 🎯 Objectif principal
+### 6. DEPLOYMENT.md
+- Existing deployment configuration (Docker, CI/CD)
+- Environment variables used
+- Build/deployment scripts found
+- External services configured
 
-👉 **Migrer entièrement le codebase vers `ts-rs` only**
-👉 **Supprimer toute dépendance à `specta` / `tauri-specta`**
-👉 Garantir que **tous les types partagés** sont exportés vers TypeScript de manière fiable et reproductible.
+### 7. DESIGN.md (if applicable)
+- Identified UI components
+- Styles/CSS/themes used
+- Template/view structure
+- Assets and graphic resources
 
----
+### 8. USER-FLOWS.md
+- User journeys deduced from routes/pages
+- Identified interface states
+- Error handling implemented
+- Observed business workflows
+## Specific instructions:
+- Be precise and factual, basing your comments solely on what exists in the code
+- Use concrete examples taken from the source code
+- Identify any gaps or inconsistencies
+- Suggest improvements where relevant
+- Format correctly in Markdown with clear sections
+- Include ASCII art diagrams where necessary
 
-### ✅ Tâches demandées à Codex
+Start by analyzing the entire structure of the project, then generate each document in detail.
 
-#### 1️⃣ Audit du codebase
 
-* Identifier tous les fichiers contenant :
-
-  * `use specta::Type`
-  * `#[derive(Type)]`, `#[derive(specta::Type)]`
-  * toute référence à `specta`, `tauri-specta`
-* Lister les structs / enums concernés (chemins + noms)
-
-#### 2️⃣ Refactor automatique
-
-Pour chaque type partagé frontend/backend :
-
-* Supprimer `specta::Type`
-* Ajouter `#[derive(TS)]`
-* Conserver / ajouter :
-
-  * `Serialize`, `Deserialize` si le type traverse l’IPC
-* S’assurer que les imports sont corrects (`use ts_rs::TS;`)
-
-Exemple cible :
-
-```rust
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../frontend/src/lib/rpma-types/")]
-pub struct ExampleDto {
-  pub id: String,
-}
-```
-
-#### 3️⃣ Nettoyage des dépendances
-
-* Supprimer `specta` et `tauri-specta` de tous les `Cargo.toml`
-* Vérifier qu’aucun module n’en dépend encore
-* S’assurer que le projet compile après suppression
-
-#### 4️⃣ Standardisation ts-rs
-
-* Vérifier que **tous les DTO / payloads IPC / events** dérivent `TS`
-* Vérifier que les types non compatibles TS sont convertis :
-
-  * `Uuid`, `DateTime`, `Decimal`, etc. → `String`
-* Uniformiser le dossier de sortie TS :
-
-  * `frontend/src/lib/rpma-types/`
-
-#### 5️⃣ Génération & cohérence
-
-* Vérifier ou créer un point d’entrée de génération TS (binaire ou test)
-* S’assurer que la génération est déterministe
-* Signaler tout type partagé **sans `derive(TS)`**
-
----
-
-### 🚨 Contraintes importantes
-
-* ❌ Ne PAS introduire `specta` ou `tauri-specta`
-* ❌ Ne PAS modifier la logique métier
-* ❌ Ne PAS changer les API publiques côté frontend
-* ✅ Respecter l’architecture offline-first existante
-* ✅ Rust reste la source de vérité
-
----
-
-### 📦 Résultat attendu
-
-* Codebase **100% ts-rs**
-* Aucun import ou dépendance `specta`
-* Types frontend/backend synchronisés
-* Projet compilable sans warnings liés aux types
-
----
