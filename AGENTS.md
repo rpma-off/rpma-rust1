@@ -94,38 +94,6 @@ npm run backend:clippy
 npm run backend:fmt
 ```
 
-
-##  ⚙️ THE GOLDEN RULE: TYPE BRIDGE (CRITICAL)
-
-The RPMA project relies on a strict contract between Rust and TypeScript. **Breaking this rule causes runtime crashes.**
-
-1.  **Rust Definition**: All data structures passed between Rust and Frontend **MUST** derive `Serialize` and `specta::Type`.
-    ```rust
-    use serde::Serialize;
-    use specta::Type;
-
-    #[derive(Serialize, Type, Debug, Clone)]
-    pub struct UserProfile {
-        pub id: String,
-        pub username: String,
-    }
-    ```
-
-2.  **Type Generation**: Do **NOT** manually write TypeScript interfaces for backend types.
-    *   Run `npm run types:sync` to regenerate `frontend/src/lib/backend.ts`.
-    *   This script calls the Rust binary `export-types`, parses the output, and writes valid TS.
-
-3.  **Frontend Usage**: Import types from the generated file.
-    ```typescript
-    import type { UserProfile } from '@/lib/backend';
-    ```
-
-4.  **Validation**:
-    *   Always run `npm run types:validate` to check for missing types.
-    *   Always run `npm run types:drift-check` to detect unused types or mismatches.
-
----
-
 ##  🐘 BACKEND RULES (RUST)
 
 ###  IPC Commands
