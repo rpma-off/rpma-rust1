@@ -6,15 +6,12 @@ use crate::commands::AppResult;
 use crate::db::Database;
 use crate::models::reports::*;
 use crate::services::reports::validation::validate_year;
-use chrono::{DateTime, Utc, Datelike};
+use chrono::{DateTime, Datelike, Utc};
 use tracing::info;
 
 /// Generate seasonal report
 #[tracing::instrument(skip(db))]
-pub async fn generate_seasonal_report(
-    year: i32,
-    db: &Database,
-) -> AppResult<SeasonalReport> {
+pub async fn generate_seasonal_report(year: i32, db: &Database) -> AppResult<SeasonalReport> {
     info!("Generating seasonal report for year: {}", year);
 
     // Validate year parameter
@@ -81,7 +78,13 @@ pub async fn generate_seasonal_report(
         let days_in_month = match month_num {
             1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
             4 | 6 | 9 | 11 => 30,
-            2 => if year % 4 == 0 { 29 } else { 28 },
+            2 => {
+                if year % 4 == 0 {
+                    29
+                } else {
+                    28
+                }
+            }
             _ => 30,
         };
 
@@ -172,7 +175,15 @@ pub async fn generate_seasonal_report(
         )
         .unwrap_or(vec![]);
 
-    let day_names = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    let day_names = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+    ];
     for (day_num, task_count) in peak_days {
         let day_idx: usize = day_num.parse().unwrap_or(0);
         let day_name = day_names.get(day_idx).unwrap_or(&"Unknown");
@@ -200,8 +211,14 @@ pub async fn generate_seasonal_report(
     for pattern in &seasonal_patterns {
         completion_predictions.push(crate::services::prediction::CompletionTimePrediction {
             predicted_duration_minutes: pattern.average_duration_minutes,
-            confidence_interval: (pattern.average_duration_minutes * 0.8, pattern.average_duration_minutes * 1.2),
-            factors_influencing: vec!["historical_data".to_string(), "seasonal_pattern".to_string()],
+            confidence_interval: (
+                pattern.average_duration_minutes * 0.8,
+                pattern.average_duration_minutes * 1.2,
+            ),
+            factors_influencing: vec![
+                "historical_data".to_string(),
+                "seasonal_pattern".to_string(),
+            ],
             historical_average: pattern.average_duration_minutes,
             prediction_accuracy: 0.85,
         });

@@ -1192,7 +1192,688 @@ TypeScript Types (frontend/src/lib/backend.ts)
 Frontend Components
 ```
 
+## Performance Optimization
+
+### Multi-Layer Caching Strategy
+
+RPMA v2 implements a comprehensive caching system to ensure optimal performance:
+
+#### 1. Memory Cache (L1)
+```rust
+// src-tauri/src/services/cache.rs
+pub struct MemoryCache {
+    cache: Arc<RwLock<LruCache<String, CachedData>>>,
+    ttl: Duration,
+}
+
+impl MemoryCache {
+    pub async fn get<T>(&self, key: &str) -> Option<T>
+    where
+        T: DeserializeOwned,
+    {
+        let cache = self.cache.read().await;
+        if let Some(data) = cache.get(key) {
+            if !data.is_expired() {
+                return serde_json::from_str::<T>(&data.value).ok();
+            }
+        }
+        None
+    }
+}
+```
+
+#### 2. Disk Cache (L2)
+```rust
+// Persistent cache for large datasets
+pub struct DiskCache {
+    base_path: PathBuf,
+    max_size: u64,
+}
+
+impl DiskCache {
+    pub async fn get(&self, key: &str) -> Option<Vec<u8>> {
+        let path = self.base_path.join(format!("{}.cache", key));
+        match tokio::fs::read(&path).await {
+            Ok(data) => Some(data),
+            Err(_) => None,
+        }
+    }
+}
+```
+
+#### 3. Database Query Cache
+```sql
+-- Prepared statement caching
+CREATE TABLE cached_queries (
+    query_hash TEXT PRIMARY KEY,
+    result TEXT,
+    expires_at INTEGER,
+    created_at INTEGER
+);
+
+-- Index for efficient expiration cleanup
+CREATE INDEX idx_cached_queries_expires ON cached_queries(expires_at);
+```
+
+### Database Optimization
+
+#### Connection Pooling
+- **Max Connections**: 100 (configurable)
+- **Min Idle**: 1
+- **Connection Timeout**: 30 seconds
+- **Retry Logic**: 3 attempts with exponential backoff
+
+#### WAL Mode Configuration
+```sql
+PRAGMA journal_mode = WAL;          -- Concurrent reads/writes
+PRAGMA synchronous = NORMAL;         -- Balance safety/performance
+PRAGMA cache_size = -64000;          -- 64MB cache
+PRAGMA temp_store = MEMORY;          -- Store temp tables in memory
+PRAGMA mmap_size = 30000000000;      -- 30GB memory-mapped I/O
+PRAGMA wal_autocheckpoint = 1000;    -- Checkpoint every 1000 pages
+```
+
+#### Query Optimization
+```rust
+// src-tauri/src/repositories/base_repository.rs
+pub trait OptimizedRepository {
+    // Batch operations for reduced round trips
+    async fn batch_insert<T>(&self, items: Vec<T>) -> Result<Vec<T>>;
+    
+    // Streaming for large datasets
+    async fn stream_query<'a>(
+        &'a self,
+        query: &'a str,
+        params: &'a [&'a dyn ToSql],
+    ) -> Pin<Box<dyn Stream<Item = Result<Row>> + Send + 'a>>;
+    
+    // Prepared statement caching
+    async fn execute_prepared(
+        &self,
+        statement_id: &str,
+        params: &[&dyn ToSql],
+    ) -> Result<Statement>;
+}
+```
+
+### Frontend Performance
+
+#### Virtual Scrolling
+```typescript
+// frontend/src/components/ui/VirtualList.tsx
+import { FixedSizeList as List } from 'react-window';
+
+export const VirtualizedTaskList: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
+  const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => (
+    <div style={style}>
+      <TaskCard task={tasks[index]} />
+    </div>
+  );
+
+  return (
+    <List
+      height={600}
+      itemCount={tasks.length}
+      itemSize={80}
+      itemData={tasks}
+    >
+      {Row}
+    </List>
+  );
+};
+```
+
+#### Code Splitting
+```typescript
+// frontend/src/app/dashboard/page.tsx
+import dynamic from 'next/dynamic';
+
+// Lazy load heavy components
+const AnalyticsChart = dynamic(
+  () => import('@/components/analytics/AnalyticsChart'),
+  { 
+    loading: () => <ChartSkeleton />,
+    ssr: false // Client-side only for complex charts
+  }
+);
+```
+
+#### Bundle Optimization
+```javascript
+// next.config.js
+module.exports = {
+  experimental: {
+    optimizeCss: true,
+    optimizePackageImports: ['@shadcn/ui', 'lucide-react']
+  },
+  webpack: (config) => {
+    config.optimization.splitChunks = {
+      chunks: 'all',
+      cacheGroups: {
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendors',
+          chunks: 'all',
+        },
+        common: {
+          name: 'common',
+          minChunks: 2,
+          chunks: 'all',
+          enforce: true,
+        },
+      },
+    };
+    return config;
+  },
+};
+```
+
+## Security Architecture
+
+### Authentication & Authorization
+
+#### JWT Implementation
+```rust
+// src-tauri/src/services/auth.rs
+pub struct JwtService {
+    encoding_key: EncodingKey,
+    decoding_key: DecodingKey,
+}
+
+impl JwtService {
+    pub fn generate_tokens(&self, user: &User) -> Result<TokenPair> {
+        let now = chrono::Utc::now().timestamp_millis();
+        
+        // Access token (8 hours)
+        let access_claims = Claims {
+            sub: user.id.clone(),
+            role: user.role.clone(),
+            exp: now + (8 * 60 * 60 * 1000), // 8 hours
+            iat: now,
+        };
+        
+        // Refresh token (30 days)
+        let refresh_claims = Claims {
+            sub: user.id.clone(),
+            role: user.role.clone(),
+            exp: now + (30 * 24 * 60 * 60 * 1000), // 30 days
+            iat: now,
+        };
+        
+        Ok(TokenPair {
+            access_token: encode(&Header::default(), &access_claims, &self.encoding_key)?,
+            refresh_token: encode(&Header::default(), &refresh_claims, &self.encoding_key)?,
+        })
+    }
+}
+```
+
+#### Password Security
+```rust
+// Argon2id configuration
+const ARGON_CONFIG: argon2::Config = argon2::Config {
+    variant: argon2::Variant::Argon2id,
+    version: argon2::Version::Version13,
+    mem_cost: 32768,        // 32 MB
+    time_cost: 3,            // 3 iterations
+    lanes: 4,               // 4 threads
+    secret: &[],
+    ad: &[],
+    hash_length: 32,
+};
+
+pub fn hash_password(password: &str) -> Result<String> {
+    let salt = generate_salt();
+    let hash = argon2::hash_encoded(password.as_bytes(), &salt, &ARGON_CONFIG)?;
+    Ok(hash)
+}
+```
+
+#### 2FA Implementation
+```rust
+// src-tauri/src/services/two_factor.rs
+use totp_rs::{Algorithm, TOTP, Secret};
+
+pub struct TwoFactorService {
+    issuer: String,
+}
+
+impl TwoFactorService {
+    pub fn generate_secret(&self) -> Secret {
+        Secret::generate_secret()
+    }
+    
+    pub fn generate_qr_code(&self, secret: &Secret, user_id: &str) -> Result<String> {
+        let totp = TOTP::new(
+            Algorithm::SHA1,
+            6,
+            1,
+            30,
+            secret.to_string().as_str(),
+            Some(self.issuer.as_str()),
+            user_id,
+        )?;
+        
+        let url = totp.get_url();
+        let qr_code = qrcode::QrCode::new(&url)?
+            .render::<svg::Color>()
+            .build();
+        
+        Ok(qr_code)
+    }
+}
+```
+
+### Data Protection
+
+#### Input Sanitization
+```rust
+// src-tauri/src/services/validation.rs
+pub struct InputSanitizer;
+
+impl InputSanitizer {
+    pub fn sanitize_text(input: &str, max_length: usize) -> String {
+        input
+            .chars()
+            .filter(|c| !c.is_control() && *c != '\0')
+            .take(max_length)
+            .collect::<String>()
+            .trim()
+            .to_string()
+    }
+    
+    pub fn sanitize_html(input: &str) -> String {
+        ammonia::clean(input)
+    }
+    
+    pub fn validate_email(email: &str) -> Result<()> {
+        if !email_regex().is_match(email) {
+            return Err("Invalid email format".into());
+        }
+        
+        if email.len() > 254 {
+            return Err("Email too long".into());
+        }
+        
+        Ok(())
+    }
+}
+```
+
+#### SQL Injection Prevention
+```rust
+// src-tauri/src/repositories/base_repository.rs
+impl SafeRepository for Database {
+    async fn safe_query<T>(
+        &self,
+        query_template: &str,
+        params: &[&dyn ToSql],
+    ) -> Result<Vec<T>> {
+        // Always use prepared statements
+        let mut stmt = self.prepare(query_template)?;
+        
+        // Bind parameters safely
+        for (i, param) in params.iter().enumerate() {
+            stmt.raw_bind_parameter(i + 1, *param)?;
+        }
+        
+        // Execute and map results
+        let rows = stmt.query_map(params, |row| {
+            // Safe row mapping with type checking
+            serde_json::from_value(row.get::<_, Value>(0)?)
+        })?;
+        
+        Ok(rows.collect::<Result<Vec<_>>>()?)
+    }
+}
+```
+
+#### Encryption at Rest
+```rust
+// src-tauri/src/services/encryption.rs
+use aes_gcm::{Aes256Gcm, Key, Nonce};
+use argon2::password_hash::{PasswordHasher, SaltString};
+
+pub struct EncryptionService {
+    key: Key<Aes256Gcm>,
+}
+
+impl EncryptionService {
+    pub fn encrypt(&self, data: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
+        let cipher = Aes256Gcm::new(&self.key);
+        let nonce = Aes256Gcm::generate_nonce(&cipher);
+        let ciphertext = cipher.encrypt(&nonce, data)?;
+        
+        Ok((ciphertext.to_vec(), nonce.to_vec()))
+    }
+    
+    pub fn decrypt(&self, ciphertext: &[u8], nonce: &[u8]) -> Result<Vec<u8>> {
+        let cipher = Aes256Gcm::new(&self.key);
+        let nonce = Nonce::from_slice(nonce)?;
+        
+        Ok(cipher.decrypt(&nonce, ciphertext)?.to_vec())
+    }
+}
+```
+
+### Security Headers & Policies
+
+#### Content Security Policy
+```typescript
+// frontend/src/pages/_document.tsx
+export default function Root({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <head>
+        <meta
+          httpEquiv="Content-Security-Policy"
+          content={`
+            default-src 'self';
+            script-src 'self' 'unsafe-inline' 'unsafe-eval';
+            style-src 'self' 'unsafe-inline';
+            img-src 'self' data: blob:;
+            font-src 'self';
+            connect-src 'self' ws:;
+            frame-ancestors 'none';
+            base-uri 'self';
+            form-action 'self';
+          `.replace(/\s+/g, ' ').trim()}
+        />
+      </head>
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+## Event Bus System
+
+### Architecture Overview
+
+RPMA v2 implements a publish-subscribe event bus for real-time updates and loose coupling:
+
+```rust
+// src-tauri/src/sync/event_bus.rs
+use parking_lot::RwLock;
+use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::broadcast;
+
+pub enum EventBusEvent {
+    TaskCreated(Task),
+    TaskUpdated { id: String, changes: Partial<Task> },
+    TaskDeleted(String),
+    InterventionStarted(Intervention),
+    InterventionAdvanced { 
+        intervention_id: String, 
+        step_number: u32, 
+        step_data: Value 
+    },
+    InterventionCompleted(Intervention),
+    MaterialUpdated(Material),
+    CalendarEventUpdated(CalendarEvent),
+    UserSessionExpired(String),
+    SyncStatusChanged(SyncStatus),
+}
+
+pub type EventHandler = Box<dyn Fn(EventBusEvent) + Send + Sync>;
+
+pub struct EventBus {
+    subscribers: Arc<RwLock<HashMap<String, Vec<EventHandler>>>>,
+    broadcast_channel: broadcast::Sender<EventBusEvent>,
+}
+
+impl EventBus {
+    pub fn new() -> Self {
+        let (tx, _) = broadcast::channel(1000);
+        Self {
+            subscribers: Arc::new(RwLock::new(HashMap::new())),
+            broadcast_channel: tx,
+        }
+    }
+    
+    pub fn subscribe<F>(&self, event_type: &str, handler: F)
+    where
+        F: Fn(EventBusEvent) + Send + Sync + 'static,
+    {
+        let mut subscribers = self.subscribers.write();
+        subscribers
+            .entry(event_type.to_string())
+            .or_insert_with(Vec::new)
+            .push(Box::new(handler));
+    }
+    
+    pub fn publish(&self, event: EventBusEvent) {
+        // Store event for audit
+        self.audit_event(&event);
+        
+        // Notify subscribers
+        let event_type = self.get_event_type(&event);
+        if let Some(handlers) = self.subscribers.read().get(&event_type) {
+            for handler in handlers {
+                handler(event.clone());
+            }
+        }
+        
+        // Broadcast via WebSocket
+        let _ = self.broadcast_channel.send(event);
+    }
+    
+    fn get_event_type(&self, event: &EventBusEvent) -> String {
+        match event {
+            EventBusEvent::TaskCreated(_) => "task.created".to_string(),
+            EventBusEvent::TaskUpdated { .. } => "task.updated".to_string(),
+            EventBusEvent::InterventionStarted(_) => "intervention.started".to_string(),
+            EventBusEvent::MaterialUpdated(_) => "material.updated".to_string(),
+            // ... more events
+        }
+    }
+}
+```
+
+### WebSocket Integration
+
+```rust
+// src-tauri/src/sync/websocket.rs
+use tokio::sync::broadcast;
+use warp::ws::{Message, WebSocket};
+
+pub struct WebSocketManager {
+    subscribers: Arc<RwLock<HashMap<String, Vec<WebSocket>>>>,
+    event_rx: broadcast::Receiver<EventBusEvent>,
+}
+
+impl WebSocketManager {
+    pub async fn handle_connection(
+        &self,
+        ws: WebSocket,
+        user_id: String,
+    ) {
+        let (ws_tx, ws_rx) = ws.split();
+        let event_rx = self.event_rx.resubscribe();
+        
+        // Subscribe to WebSocket manager
+        {
+            let mut subscribers = self.subscribers.write();
+            subscribers
+                .entry(user_id.clone())
+                .or_insert_with(Vec::new)
+                .push(ws_tx.clone());
+        }
+        
+        // Forward events to WebSocket
+        tokio::spawn(async move {
+            while let Ok(event) = event_rx.recv().await {
+                if self.should_send_to_user(&event, &user_id) {
+                    let message = serde_json::to_string(&event).unwrap();
+                    let _ = ws_tx.send(Message::text(message)).await;
+                }
+            }
+        });
+        
+        // Handle WebSocket messages
+        while let Some(msg) = ws_rx.next().await {
+            match msg {
+                Ok(Message::Text(text)) => {
+                    if let Ok(cmd) = serde_json::from_str::<ClientCommand>(&text) {
+                        self.handle_client_command(cmd, &user_id).await;
+                    }
+                }
+                Ok(Message::Close(_)) => break,
+                Err(e) => {
+                    eprintln!("WebSocket error: {}", e);
+                    break;
+                }
+                _ => {}
+            }
+        }
+        
+        // Cleanup on disconnect
+        self.remove_subscriber(&user_id, &ws_tx);
+    }
+    
+    fn should_send_to_user(&self, event: &EventBusEvent, user_id: &str) -> bool {
+        match event {
+            EventBusEvent::TaskUpdated { id, .. } => {
+                // Check if user has access to this task
+                self.user_has_task_access(user_id, id)
+            }
+            EventBusEvent::InterventionAdvanced { intervention_id, .. } => {
+                // Check if user is assigned to this intervention
+                self.user_has_intervention_access(user_id, intervention_id)
+            }
+            _ => true, // Send all other events
+        }
+    }
+}
+```
+
+### Frontend Event Handling
+
+```typescript
+// frontend/src/hooks/useEventBus.ts
+import { useEffect, useRef } from 'react';
+import { invoke } from '@tauri-apps/api/tauri';
+
+type EventHandler = (event: EventBusEvent) => void;
+
+export const useEventBus = (eventType: string, handler: EventHandler) => {
+  const handlerRef = useRef(handler);
+  handlerRef.current = handler;
+  
+  useEffect(() => {
+    // Subscribe to WebSocket events
+    const unsubscribe = invoke('subscribe_to_events', {
+      eventType,
+    }).then((unsubFn) => unsubFn as () => void);
+    
+    return () => {
+      unsubscribe.then(unsub => unsub());
+    };
+  }, [eventType]);
+};
+
+// Usage in components
+const TaskList = () => {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  
+  useEventBus('task.updated', (event) => {
+    if (event.type === 'task.updated') {
+      setTasks(prev => 
+        prev.map(t => 
+          t.id === event.data.id 
+            ? { ...t, ...event.data.changes }
+            : t
+        )
+      );
+    }
+  });
+  
+  useEventBus('task.created', (event) => {
+    if (event.type === 'task.created') {
+      setTasks(prev => [...prev, event.data]);
+    }
+  });
+  
+  // ... rest of component
+};
+```
+
+## Real-Time Features
+
+### Live Updates
+- Task status changes
+- Intervention progress updates
+- Material stock level alerts
+- Calendar event changes
+- System notifications
+
+### Conflict Resolution
+```rust
+// src-tauri/src/services/conflict_resolution.rs
+pub struct ConflictResolver;
+
+impl ConflictResolver {
+    pub async fn resolve_task_update_conflict(
+        &self,
+        local_task: Task,
+        remote_task: Task,
+    ) -> Result<Task> {
+        // Use last-write-wins with field-level merging
+        Ok(Task {
+            id: local_task.id,
+            title: if remote_task.updated_at > local_task.updated_at {
+                remote_task.title
+            } else {
+                local_task.title
+            },
+            // Merge other fields intelligently
+            ..local_task
+        })
+    }
+}
+```
+
+### Performance Monitoring
+```rust
+// src-tauri/src/services/performance_monitor.rs
+pub struct PerformanceMonitor {
+    metrics: Arc<RwLock<PerformanceMetrics>>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct PerformanceMetrics {
+    pub cpu_usage: f64,
+    pub memory_usage: u64,
+    pub database_queries: u64,
+    pub avg_response_time: f64,
+    pub active_connections: u32,
+}
+
+impl PerformanceMonitor {
+    pub async fn collect_metrics(&self) -> PerformanceMetrics {
+        // System metrics
+        let cpu_usage = self.get_cpu_usage().await;
+        let memory_usage = self.get_memory_usage().await;
+        
+        // Database metrics
+        let db_metrics = self.collect_database_metrics().await;
+        
+        // WebSocket metrics
+        let ws_metrics = self.collect_websocket_metrics().await;
+        
+        PerformanceMetrics {
+            cpu_usage,
+            memory_usage,
+            database_queries: db_metrics.queries_per_second,
+            avg_response_time: db_metrics.avg_response_time,
+            active_connections: ws_metrics.active_connections,
+        }
+    }
+}
+```
+
 ---
 
-**Document Version**: 1.0
-**Last Updated**: Based on codebase analysis
+**Document Version**: 2.0
+**Last Updated**: Based on comprehensive codebase analysis

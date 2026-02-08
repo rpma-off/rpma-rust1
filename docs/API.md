@@ -2716,7 +2716,579 @@ const response = await fetch(`https://storage.googleapis.com/${bucket}/${key}`, 
 });
 ```
 
+## Missing API Commands
+
+### Analytics Commands
+
+#### analytics_get_summary
+
+**Description**: Get analytics summary dashboard data.
+
+**Request**:
+```typescript
+interface AnalyticsSummaryRequest {
+    session_token: string;
+    date_range?: {
+        start: string;
+        end: string;
+    };
+}
+```
+
+**Response**:
+```typescript
+interface AnalyticsSummaryResponse {
+    tasks_completed: number;
+    tasks_in_progress: number;
+    interventions_completed: number;
+    average_duration: number;
+    quality_score_average: number;
+    customer_satisfaction_average: number;
+    material_usage: MaterialUsageStats[];
+    technician_performance: TechnicianPerformanceStats[];
+}
+```
+
+**Permissions**: Admin, Supervisor
+
+**Example**:
+```typescript
+const summary = await invoke('analytics_get_summary', {
+    session_token: token,
+    date_range: { start: '2024-01-01', end: '2024-01-31' }
+});
+```
+
 ---
 
-**Document Version**: 1.0
-**Last Updated**: Based on codebase analysis
+### UI Commands
+
+#### ui_window_minimize
+
+**Description**: Minimize the application window.
+
+**Request**:
+```typescript
+interface WindowMinimizeRequest {
+    minimize: boolean;
+}
+```
+
+**Response**: `void`
+
+**Example**:
+```typescript
+await invoke('ui_window_minimize', { minimize: true });
+```
+
+#### ui_window_maximize
+
+**Description**: Maximize the application window.
+
+**Request**:
+```typescript
+interface WindowMaximizeRequest {
+    maximize: boolean;
+}
+```
+
+**Response**: `void`
+
+**Example**:
+```typescript
+await invoke('ui_window_maximize', { maximize: true });
+```
+
+#### ui_window_close
+
+**Description**: Close the application window.
+
+**Request**: `void`
+
+**Response**: `void`
+
+**Example**:
+```typescript
+await invoke('ui_window_close');
+```
+
+#### ui_shell_open_url
+
+**Description**: Open URL in system default browser.
+
+**Request**:
+```typescript
+interface OpenUrlRequest {
+    url: string;
+}
+```
+
+**Response**: `void`
+
+**Example**:
+```typescript
+await invoke('ui_shell_open_url', { url: 'https://example.com' });
+```
+
+#### ui_gps_get_current_position
+
+**Description**: Get current GPS position.
+
+**Request**: `void`
+
+**Response**:
+```typescript
+interface GpsPosition {
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+    timestamp: number;
+}
+```
+
+**Example**:
+```typescript
+const position = await invoke('ui_gps_get_current_position');
+```
+
+---
+
+### Performance Commands
+
+#### performance_get_performance_stats
+
+**Description**: Get application performance statistics.
+
+**Request**: `void`
+
+**Response**:
+```typescript
+interface PerformanceStats {
+    cpu_usage: number;
+    memory_usage: number;
+    database_queries_per_second: number;
+    average_response_time: number;
+    active_websocket_connections: number;
+    cache_hit_ratio: number;
+}
+```
+
+**Permissions**: Admin only
+
+**Example**:
+```typescript
+const stats = await invoke('performance_get_performance_stats');
+```
+
+#### performance_clear_application_cache
+
+**Description**: Clear application cache.
+
+**Request**: `void`
+
+**Response**: `void`
+
+**Permissions**: Admin only
+
+**Example**:
+```typescript
+await invoke('performance_clear_application_cache');
+```
+
+---
+
+### Navigation Commands
+
+#### navigation_update
+
+**Description**: Update navigation state.
+
+**Request**:
+```typescript
+interface NavigationUpdateRequest {
+    route: string;
+    params?: Record<string, any>;
+    title?: string;
+}
+```
+
+**Response**: `void`
+
+**Example**:
+```typescript
+await invoke('navigation_update', {
+    route: '/tasks/123',
+    params: { taskId: '123' },
+    title: 'Task Details'
+});
+```
+
+#### navigation_add_to_history
+
+**Description**: Add current page to navigation history.
+
+**Request**: `void`
+
+**Response**: `void`
+
+**Example**:
+```typescript
+await invoke('navigation_add_to_history');
+```
+
+#### navigation_get_current
+
+**Description**: Get current navigation state.
+
+**Request**: `void`
+
+**Response**:
+```typescript
+interface NavigationState {
+    route: string;
+    params?: Record<string, any>;
+    title?: string;
+    can_go_back: boolean;
+    can_go_forward: boolean;
+}
+```
+
+**Example**:
+```typescript
+const current = await invoke('navigation_get_current');
+```
+
+---
+
+### Settings Commands
+
+#### settings_get_app_settings
+
+**Description**: Get application settings.
+
+**Request**:
+```typescript
+interface GetAppSettingsRequest {
+    category?: 'general' | 'security' | 'notifications' | 'performance';
+}
+```
+
+**Response**:
+```typescript
+interface AppSettings {
+    general: GeneralSettings;
+    security: SecuritySettings;
+    notifications: NotificationSettings;
+    performance: PerformanceSettings;
+}
+```
+
+**Example**:
+```typescript
+const settings = await invoke('settings_get_app_settings', {
+    category: 'security'
+});
+```
+
+#### settings_update_general_settings
+
+**Description**: Update general application settings.
+
+**Request**:
+```typescript
+interface UpdateGeneralSettingsRequest {
+    company_name?: string;
+    default_language?: string;
+    timezone?: string;
+    date_format?: string;
+    theme?: 'light' | 'dark' | 'auto';
+}
+```
+
+**Response**: `void`
+
+**Permissions**: Admin only
+
+**Example**:
+```typescript
+await invoke('settings_update_general_settings', {
+    company_name: 'PPF Pro Services',
+    timezone: 'America/New_York',
+    theme: 'dark'
+});
+```
+
+#### settings_change_user_password
+
+**Description**: Change user password.
+
+**Request**:
+```typescript
+interface ChangePasswordRequest {
+    current_password: string;
+    new_password: string;
+    session_token: string;
+}
+```
+
+**Response**: `void`
+
+**Validation**:
+- `current_password`: Must match current password
+- `new_password`: Min 8 chars, 3 of 4 char types
+
+**Example**:
+```typescript
+await invoke('settings_change_user_password', {
+    current_password: 'oldPass123',
+    new_password: 'newPass456!',
+    session_token: token
+});
+```
+
+---
+
+### Streaming Commands
+
+#### start_stream_transfer
+
+**Description**: Start a new stream transfer for large data.
+
+**Request**:
+```typescript
+interface StartStreamRequest {
+    stream_id: string;
+    total_size: number;
+    content_type: string;
+    chunk_size?: number;
+    metadata?: Record<string, any>;
+}
+```
+
+**Response**:
+```typescript
+interface StreamMetadata {
+    stream_id: string;
+    total_size: number;
+    total_chunks: number;
+    chunk_size: number;
+    content_type: string;
+    checksum: string;
+}
+```
+
+**Example**:
+```typescript
+const metadata = await invoke('start_stream_transfer', {
+    stream_id: 'stream_123',
+    total_size: file.size,
+    content_type: file.type,
+    chunk_size: 1024 * 1024 // 1MB chunks
+});
+```
+
+#### send_stream_chunk
+
+**Description**: Send a chunk of data for stream transfer.
+
+**Request**:
+```typescript
+interface StreamChunkRequest {
+    stream_id: string;
+    chunk_index: number;
+    chunk_data: ArrayBuffer;
+    is_last: boolean;
+}
+```
+
+**Response**: `void`
+
+**Example**:
+```typescript
+for (let i = 0; i < chunks.length; i++) {
+    await invoke('send_stream_chunk', {
+        stream_id: 'stream_123',
+        chunk_index: i,
+        chunk_data: chunks[i],
+        is_last: i === chunks.length - 1
+    });
+}
+```
+
+---
+
+### WebSocket Commands
+
+#### init_websocket_server
+
+**Description**: Initialize WebSocket server for real-time updates.
+
+**Request**:
+```typescript
+interface InitWebSocketRequest {
+    port?: number;
+    enable_compression?: boolean;
+}
+```
+
+**Response**:
+```typescript
+interface WebSocketServerInfo {
+    port: number;
+    url: string;
+    status: 'starting' | 'running' | 'stopped';
+}
+```
+
+**Permissions**: Admin only
+
+**Example**:
+```typescript
+const server = await invoke('init_websocket_server', {
+    port: 8000,
+    enable_compression: true
+});
+```
+
+#### broadcast_websocket_message
+
+**Description**: Broadcast message to all connected WebSocket clients.
+
+**Request**:
+```typescript
+interface BroadcastMessageRequest {
+    message_type: string;
+    data: any;
+    target_roles?: string[];
+    exclude_clients?: string[];
+}
+```
+
+**Response**: `void`
+
+**Permissions**: Admin only
+
+**Example**:
+```typescript
+await invoke('broadcast_websocket_message', {
+    message_type: 'task_updated',
+    data: { taskId: '123', status: 'completed' },
+    target_roles: ['technician', 'supervisor']
+});
+```
+
+---
+
+## Rate Limiting Implementation
+
+### Configuration
+
+```rust
+// src-tauri/src/services/rate_limiter.rs
+pub struct RateLimiter {
+    limits: HashMap<String, RateLimit>,
+    requests: Arc<RwLock<HashMap<String, Vec<RequestEntry>>>>,
+}
+
+#[derive(Debug)]
+pub struct RateLimit {
+    pub max_requests: u32,
+    pub window_seconds: u32,
+}
+
+impl RateLimiter {
+    pub async fn check_rate_limit(&self, key: &str, ip: &str) -> Result<()> {
+        let limit = self.limits.get(key)
+            .ok_or_else(|| AppError::RateLimit("Unknown rate limit key".to_string()))?;
+        
+        let mut requests = self.requests.write().await;
+        let now = chrono::Utc::now().timestamp_millis();
+        
+        // Clean old entries
+        requests.entry(key.to_string())
+            .or_insert_with(Vec::new)
+            .retain(|entry| now - entry.timestamp < limit.window_seconds as i64 * 1000);
+        
+        // Check current count
+        let current_count = requests.get(key)
+            .map(|entries| entries.len() as u32)
+            .unwrap_or(0);
+        
+        if current_count >= limit.max_requests {
+            return Err(AppError::RateLimit(format!(
+                "Rate limit exceeded: {}/{} requests",
+                current_count, limit.max_requests
+            )));
+        }
+        
+        // Add new request
+        requests.get_mut(key)
+            .unwrap()
+            .push(RequestEntry {
+                timestamp: now,
+                ip: ip.to_string(),
+            });
+        
+        Ok(())
+    }
+}
+```
+
+### Endpoint Limits
+
+| Endpoint | Max Requests | Window | Description |
+|----------|--------------|--------|-------------|
+| All auth endpoints | 10/minute | Per IP |
+| Task CRUD | 100/minute | Per user |
+| File upload | 5/minute | Per user |
+| Calendar operations | 200/minute | Per user |
+| Report generation | 20/minute | Per user |
+
+---
+
+## MessagePack Serialization
+
+### Configuration
+
+```typescript
+// frontend/src/lib/ipc/serialization.ts
+import msgpack from 'msgpack-lite';
+
+export const serializeWithMessagePack = (data: any): Uint8Array => {
+    return msgpack.encode(data);
+};
+
+export const deserializeFromMessagePack = (data: Uint8Array): any => {
+    return msgpack.decode(data);
+};
+```
+
+### Usage in Commands
+
+```typescript
+// Request with MessagePack
+const command = 'task_crud';
+const data = { action: 'List', session_token: token };
+
+const serializedData = serializeWithMessagePack({
+    command,
+    data,
+    format: 'messagepack'
+});
+
+const response = await invoke(command, serializedData);
+
+// Handle response
+if (response.compressed) {
+    const decompressed = decompressDataFromIpc(response);
+    const deserialized = deserializeFromMessagePack(decompressed.data);
+    return deserialized;
+}
+
+return response;
+```
+
+---
+
+**Document Version**: 2.0
+**Last Updated**: Based on comprehensive codebase analysis

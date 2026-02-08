@@ -15,7 +15,7 @@ use crate::models::step::{InterventionStep, StepStatus};
 use crate::services::intervention_data::InterventionDataService;
 use crate::services::intervention_types::*;
 use crate::services::workflow_strategy::{
-     WorkflowStrategyFactory, WorkflowContext, EnvironmentConditions,
+    EnvironmentConditions, WorkflowContext, WorkflowStrategyFactory,
 };
 use crate::services::workflow_validation::WorkflowValidationService;
 
@@ -106,8 +106,12 @@ impl InterventionWorkflowService {
                 if let Err(cleanup_err) = self.cleanup_failed_start(&request.task_id, &logger) {
                     // Log cleanup error but return original operation error
                     let mut cleanup_error_context = std::collections::HashMap::new();
-                    cleanup_error_context.insert("task_id".to_string(), serde_json::json!(request.task_id));
-                    cleanup_error_context.insert("cleanup_error".to_string(), serde_json::json!(cleanup_err.to_string()));
+                    cleanup_error_context
+                        .insert("task_id".to_string(), serde_json::json!(request.task_id));
+                    cleanup_error_context.insert(
+                        "cleanup_error".to_string(),
+                        serde_json::json!(cleanup_err.to_string()),
+                    );
                     logger.warn("Cleanup also failed", Some(cleanup_error_context));
                 }
 
@@ -158,14 +162,16 @@ impl InterventionWorkflowService {
                 };
 
                 // Get appropriate workflow strategy
-                let strategy = WorkflowStrategyFactory::create_strategy(&intervention, &workflow_context);
+                let strategy =
+                    WorkflowStrategyFactory::create_strategy(&intervention, &workflow_context);
                 logger.debug(
                     &format!("Using workflow strategy: {}", strategy.strategy_name()),
                     None,
                 );
 
                 // Initialize workflow steps using the strategy (synchronous version)
-                let workflow_result = strategy.initialize_workflow_sync(&intervention, &workflow_context)
+                let workflow_result = strategy
+                    .initialize_workflow_sync(&intervention, &workflow_context)
                     .map_err(|e| e.to_string())?;
 
                 let steps = workflow_result.steps;
@@ -179,11 +185,20 @@ impl InterventionWorkflowService {
 
                 let mut steps_context = std::collections::HashMap::new();
                 steps_context.insert("step_count".to_string(), serde_json::json!(steps.len()));
-                steps_context.insert("total_estimated_duration".to_string(), serde_json::json!(workflow_result.total_estimated_duration));
+                steps_context.insert(
+                    "total_estimated_duration".to_string(),
+                    serde_json::json!(workflow_result.total_estimated_duration),
+                );
                 if let Some(instructions) = &workflow_result.special_instructions {
-                    steps_context.insert("special_instructions".to_string(), serde_json::json!(instructions));
+                    steps_context.insert(
+                        "special_instructions".to_string(),
+                        serde_json::json!(instructions),
+                    );
                 }
-                logger.debug("Initialized workflow steps with strategy", Some(steps_context));
+                logger.debug(
+                    "Initialized workflow steps with strategy",
+                    Some(steps_context),
+                );
 
                 // Link task to intervention with proper step ID validation
                 let first_step_id = steps
@@ -202,7 +217,8 @@ impl InterventionWorkflowService {
                     .map_err(|e| e.to_string())?;
 
                 // Convert special instructions to requirements if present
-                let initial_requirements = workflow_result.special_instructions
+                let initial_requirements = workflow_result
+                    .special_instructions
                     .unwrap_or_default()
                     .into_iter()
                     .enumerate()
@@ -227,7 +243,11 @@ impl InterventionWorkflowService {
             .map_err(InterventionError::Database)
     }
     /// Cleanup partial state on failed intervention start
-    fn cleanup_failed_start(&self, task_id: &str, logger: &RPMARequestLogger) -> InterventionResult<()> {
+    fn cleanup_failed_start(
+        &self,
+        task_id: &str,
+        logger: &RPMARequestLogger,
+    ) -> InterventionResult<()> {
         let mut cleanup_context = std::collections::HashMap::new();
         cleanup_context.insert("task_id".to_string(), serde_json::json!(task_id));
         logger.warn(
@@ -316,7 +336,8 @@ impl InterventionWorkflowService {
         let mut current_step = self.get_step_with_retry(&request.step_id, &logger).await?;
 
         // Comprehensive workflow state validation
-        self.validation.validate_step_advancement(&intervention, &current_step, &logger)?;
+        self.validation
+            .validate_step_advancement(&intervention, &current_step, &logger)?;
 
         // Update step with collected data
         self.data
@@ -652,7 +673,8 @@ impl InterventionWorkflowService {
             })?;
 
         // Comprehensive finalization validation
-        self.validation.validate_intervention_finalization(&intervention, &logger)?;
+        self.validation
+            .validate_intervention_finalization(&intervention, &logger)?;
 
         // Save collected data and photos to the finalization step if provided
         let steps = self.data.get_intervention_steps(&intervention.id)?;

@@ -3,10 +3,10 @@
 //! This module provides an EventHandler implementation that broadcasts
 //! domain events via WebSocket to connected frontend clients.
 
-use async_trait::async_trait;
-use std::sync::Arc;
 use crate::commands::websocket::{broadcast_ws_message, WSMessage};
 use crate::services::event_bus::{DomainEvent, EventHandler};
+use async_trait::async_trait;
+use std::sync::Arc;
 use tracing::debug;
 
 /// WebSocket event handler that broadcasts domain events to connected clients
@@ -25,7 +25,7 @@ impl WebSocketEventHandler {
             enabled: true,
         }
     }
-    
+
     /// Create with specific event type filter
     pub fn with_filter(event_types: Vec<String>) -> Self {
         Self {
@@ -33,7 +33,7 @@ impl WebSocketEventHandler {
             enabled: true,
         }
     }
-    
+
     /// Create with all task-related events
     pub fn task_events_only() -> Self {
         Self {
@@ -46,7 +46,7 @@ impl WebSocketEventHandler {
             enabled: true,
         }
     }
-    
+
     /// Create with all intervention-related events
     pub fn intervention_events_only() -> Self {
         Self {
@@ -57,7 +57,7 @@ impl WebSocketEventHandler {
             enabled: true,
         }
     }
-    
+
     /// Create with all authentication-related events
     pub fn auth_events_only() -> Self {
         Self {
@@ -68,83 +68,95 @@ impl WebSocketEventHandler {
             enabled: true,
         }
     }
-    
+
     /// Enable broadcasting
     pub fn enable(&mut self) {
         self.enabled = true;
     }
-    
+
     /// Disable broadcasting
     pub fn disable(&mut self) {
         self.enabled = false;
     }
-    
+
     /// Check if broadcasting is enabled
     pub fn is_enabled(&self) -> bool {
         self.enabled
     }
-    
+
     /// Check if an event type should be broadcasted
     fn should_broadcast(&self, event_type: &str) -> bool {
         if !self.enabled {
             return false;
         }
-        
+
         // If no filter is set, broadcast all events
         if self.filter.is_empty() {
             return true;
         }
-        
+
         self.filter.contains(&event_type.to_string())
     }
-    
+
     /// Convert domain event to WebSocket message
     fn convert_to_ws_message(&self, event: &DomainEvent) -> Option<WSMessage> {
         match event {
-            DomainEvent::TaskCreated { task_id, title, assigned_to, .. } => {
-                Some(WSMessage::TaskCreated {
-                    task: serde_json::json!({
-                        "id": task_id,
-                        "title": title,
-                        "assigned_to": assigned_to,
-                    }),
-                })
-            }
-            DomainEvent::TaskUpdated { task_id, changes, .. } => {
-                Some(WSMessage::TaskUpdated {
-                    task_id: task_id.clone(),
-                    updates: serde_json::json!({
-                        "changes": changes,
-                    }),
-                })
-            }
-            DomainEvent::TaskStatusChanged { task_id, old_status, new_status, .. } => {
-                Some(WSMessage::TaskStatusChanged {
-                    task_id: task_id.clone(),
-                    old_status: old_status.clone(),
-                    new_status: new_status.clone(),
-                })
-            }
-            DomainEvent::TaskAssigned { task_id, assigned_to, .. } => {
-                Some(WSMessage::TaskUpdated {
-                    task_id: task_id.clone(),
-                    updates: serde_json::json!({
-                        "assigned_to": assigned_to,
-                    }),
-                })
-            }
-            DomainEvent::InterventionStarted { intervention_id, task_id, .. } => {
-                Some(WSMessage::InterventionStarted {
-                    intervention_id: intervention_id.clone(),
-                    task_id: task_id.clone(),
-                })
-            }
-            DomainEvent::InterventionCompleted { intervention_id, .. } => {
-                Some(WSMessage::InterventionCompleted {
-                    intervention_id: intervention_id.clone(),
-                })
-            }
-            DomainEvent::AuthenticationFailed { user_id, reason, .. } => {
+            DomainEvent::TaskCreated {
+                task_id,
+                title,
+                assigned_to,
+                ..
+            } => Some(WSMessage::TaskCreated {
+                task: serde_json::json!({
+                    "id": task_id,
+                    "title": title,
+                    "assigned_to": assigned_to,
+                }),
+            }),
+            DomainEvent::TaskUpdated {
+                task_id, changes, ..
+            } => Some(WSMessage::TaskUpdated {
+                task_id: task_id.clone(),
+                updates: serde_json::json!({
+                    "changes": changes,
+                }),
+            }),
+            DomainEvent::TaskStatusChanged {
+                task_id,
+                old_status,
+                new_status,
+                ..
+            } => Some(WSMessage::TaskStatusChanged {
+                task_id: task_id.clone(),
+                old_status: old_status.clone(),
+                new_status: new_status.clone(),
+            }),
+            DomainEvent::TaskAssigned {
+                task_id,
+                assigned_to,
+                ..
+            } => Some(WSMessage::TaskUpdated {
+                task_id: task_id.clone(),
+                updates: serde_json::json!({
+                    "assigned_to": assigned_to,
+                }),
+            }),
+            DomainEvent::InterventionStarted {
+                intervention_id,
+                task_id,
+                ..
+            } => Some(WSMessage::InterventionStarted {
+                intervention_id: intervention_id.clone(),
+                task_id: task_id.clone(),
+            }),
+            DomainEvent::InterventionCompleted {
+                intervention_id, ..
+            } => Some(WSMessage::InterventionCompleted {
+                intervention_id: intervention_id.clone(),
+            }),
+            DomainEvent::AuthenticationFailed {
+                user_id, reason, ..
+            } => {
                 // Don't broadcast auth failures for security
                 debug!("Auth failure for user {:?}: {}", user_id, reason);
                 None
@@ -168,16 +180,16 @@ impl Default for WebSocketEventHandler {
 impl EventHandler for WebSocketEventHandler {
     async fn handle(&self, event: &DomainEvent) -> Result<(), String> {
         let event_type = event.event_type();
-        
+
         if !self.should_broadcast(event_type) {
             debug!("Skipping broadcast for event type: {}", event_type);
             return Ok(());
         }
-        
+
         match self.convert_to_ws_message(event) {
             Some(ws_message) => {
                 debug!("Broadcasting {} event via WebSocket", event_type);
-                
+
                 if let Err(e) = broadcast_ws_message(ws_message).await {
                     // Log error but don't fail - WebSocket might not be initialized
                     debug!("Failed to broadcast WebSocket message: {}", e);
@@ -186,13 +198,16 @@ impl EventHandler for WebSocketEventHandler {
                 }
             }
             None => {
-                debug!("Event type {} not convertible to WebSocket message", event_type);
+                debug!(
+                    "Event type {} not convertible to WebSocket message",
+                    event_type
+                );
             }
         }
-        
+
         Ok(())
     }
-    
+
     fn interested_events(&self) -> Vec<&'static str> {
         vec![
             "TaskCreated",
@@ -221,25 +236,25 @@ impl WebSocketEventHandlerBuilder {
             enabled: true,
         }
     }
-    
+
     /// Add an event type to filter
     pub fn add_event_type(mut self, event_type: String) -> Self {
         self.filter.push(event_type);
         self
     }
-    
+
     /// Set event types filter
     pub fn with_event_types(mut self, event_types: Vec<String>) -> Self {
         self.filter = event_types;
         self
     }
-    
+
     /// Enable/disable broadcasting
     pub fn enabled(mut self, enabled: bool) -> Self {
         self.enabled = enabled;
         self
     }
-    
+
     /// Build the handler
     pub fn build(self) -> WebSocketEventHandler {
         WebSocketEventHandler {
@@ -271,46 +286,46 @@ impl WebSocketBroadcast for Arc<WebSocketEventHandler> {
 mod tests {
     use super::*;
     use crate::services::event_bus::event_factory;
-    
+
     #[test]
     fn test_websocket_handler_creation() {
         let handler = WebSocketEventHandler::new();
         assert!(handler.is_enabled());
         assert!(handler.filter.is_empty());
     }
-    
+
     #[test]
     fn test_websocket_handler_filtered() {
         let handler = WebSocketEventHandler::with_filter(vec![
             "TaskCreated".to_string(),
             "TaskUpdated".to_string(),
         ]);
-        
+
         assert!(handler.should_broadcast("TaskCreated"));
         assert!(handler.should_broadcast("TaskUpdated"));
         assert!(!handler.should_broadcast("TaskStatusChanged"));
     }
-    
+
     #[test]
     fn test_websocket_handler_disabled() {
         let mut handler = WebSocketEventHandler::new();
         handler.disable();
-        
+
         assert!(!handler.is_enabled());
         assert!(!handler.should_broadcast("TaskCreated"));
     }
-    
+
     #[test]
     fn test_websocket_handler_interested_events() {
         let handler = WebSocketEventHandler::new();
         let events = handler.interested_events();
-        
+
         assert!(events.contains(&"TaskCreated"));
         assert!(events.contains(&"TaskUpdated"));
         assert!(events.contains(&"InterventionStarted"));
         assert!(events.contains(&"AuthenticationSuccess"));
     }
-    
+
     #[test]
     fn test_event_conversion_task_created() {
         let handler = WebSocketEventHandler::new();
@@ -319,10 +334,10 @@ mod tests {
             "Test Task".to_string(),
             Some("user-456".to_string()),
         );
-        
+
         let ws_msg = handler.convert_to_ws_message(&event);
         assert!(ws_msg.is_some());
-        
+
         match ws_msg.unwrap() {
             WSMessage::TaskCreated { task } => {
                 assert_eq!(task["id"], "task-123");
@@ -331,7 +346,7 @@ mod tests {
             _ => panic!("Expected TaskCreated message"),
         }
     }
-    
+
     #[test]
     fn test_event_conversion_task_status_changed() {
         let handler = WebSocketEventHandler::new();
@@ -340,12 +355,16 @@ mod tests {
             "pending".to_string(),
             "in_progress".to_string(),
         );
-        
+
         let ws_msg = handler.convert_to_ws_message(&event);
         assert!(ws_msg.is_some());
-        
+
         match ws_msg.unwrap() {
-            WSMessage::TaskStatusChanged { task_id, old_status, new_status } => {
+            WSMessage::TaskStatusChanged {
+                task_id,
+                old_status,
+                new_status,
+            } => {
                 assert_eq!(task_id, "task-123");
                 assert_eq!(old_status, "pending");
                 assert_eq!(new_status, "in_progress");
@@ -353,42 +372,43 @@ mod tests {
             _ => panic!("Expected TaskStatusChanged message"),
         }
     }
-    
+
     #[test]
     fn test_event_conversion_intervention_started() {
         let handler = WebSocketEventHandler::new();
-        let event = event_factory::intervention_started(
-            "int-123".to_string(),
-            "task-456".to_string(),
-        );
-        
+        let event =
+            event_factory::intervention_started("int-123".to_string(), "task-456".to_string());
+
         let ws_msg = handler.convert_to_ws_message(&event);
         assert!(ws_msg.is_some());
-        
+
         match ws_msg.unwrap() {
-            WSMessage::InterventionStarted { intervention_id, task_id } => {
+            WSMessage::InterventionStarted {
+                intervention_id,
+                task_id,
+            } => {
                 assert_eq!(intervention_id, "int-123");
                 assert_eq!(task_id, "task-456");
             }
             _ => panic!("Expected InterventionStarted message"),
         }
     }
-    
+
     #[test]
     fn test_auth_events_not_broadcasted() {
         let handler = WebSocketEventHandler::new();
-        
+
         let auth_success = event_factory::authentication_success("user-123".to_string());
         let auth_failed = event_factory::authentication_failed(
             Some("user-123".to_string()),
             "Invalid password".to_string(),
         );
-        
+
         // Auth events should return None for security
         assert!(handler.convert_to_ws_message(&auth_success).is_none());
         assert!(handler.convert_to_ws_message(&auth_failed).is_none());
     }
-    
+
     #[test]
     fn test_builder_pattern() {
         let handler = WebSocketEventHandlerBuilder::new()
@@ -396,25 +416,25 @@ mod tests {
             .add_event_type("TaskUpdated".to_string())
             .enabled(true)
             .build();
-        
+
         assert!(handler.is_enabled());
         assert!(handler.should_broadcast("TaskCreated"));
         assert!(handler.should_broadcast("TaskUpdated"));
         assert!(!handler.should_broadcast("InterventionStarted"));
     }
-    
+
     #[test]
     fn test_predefined_filters() {
         let task_handler = WebSocketEventHandler::task_events_only();
         assert!(task_handler.should_broadcast("TaskCreated"));
         assert!(task_handler.should_broadcast("TaskUpdated"));
         assert!(!task_handler.should_broadcast("InterventionStarted"));
-        
+
         let intervention_handler = WebSocketEventHandler::intervention_events_only();
         assert!(!intervention_handler.should_broadcast("TaskCreated"));
         assert!(intervention_handler.should_broadcast("InterventionStarted"));
         assert!(intervention_handler.should_broadcast("InterventionCompleted"));
-        
+
         let auth_handler = WebSocketEventHandler::auth_events_only();
         assert!(!auth_handler.should_broadcast("TaskCreated"));
         assert!(auth_handler.should_broadcast("AuthenticationSuccess"));

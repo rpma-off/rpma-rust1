@@ -47,9 +47,10 @@ pub fn validate_date_range(date_range: &DateRange) -> AppResult<()> {
 pub fn validate_year(year: i32) -> AppResult<()> {
     let current_year = Utc::now().year();
     if year < 2020 || year > current_year + 1 {
-        return Err(AppError::Validation(
-            format!("Year must be between 2020 and {}", current_year + 1),
-        ));
+        return Err(AppError::Validation(format!(
+            "Year must be between 2020 and {}",
+            current_year + 1
+        )));
     }
     Ok(())
 }

@@ -1,20 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { settingsService } from '@/lib/services/entities/settings.service';
 import { withAuth, NextRequestWithUser } from '@/lib/middleware/auth.middleware';
+import { settingsError, settingsSuccess } from '../_shared';
 
-// POST /api/settings/reset - Reset settings to defaults
 export const POST = withAuth(async (request: NextRequestWithUser) => {
-  const { user } = request;
-  try {
-    await settingsService.resetSettings(user.id);
+  const { user, token } = request;
+  const result = await settingsService.resetSettings(user.id, token);
 
-    return NextResponse.json({
-      message: 'Settings reset to defaults successfully'
-    });
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to reset settings' },
-      { status: 500 }
-    );
+  if (!result.success || !result.data) {
+    return settingsError(result.error || 'Failed to reset settings');
   }
+
+  return settingsSuccess({
+    message: 'Settings reset to defaults successfully',
+    settings: result.data,
+  });
 }, 'all');

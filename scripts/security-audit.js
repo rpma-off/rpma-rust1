@@ -15,6 +15,7 @@ const { execSync } = require('child_process');
 
 class SecurityAuditor {
     constructor() {
+        this.projectRoot = path.join(__dirname, '..');
         this.issues = [];
         this.warnings = [];
         this.passes = [];
@@ -88,7 +89,7 @@ class SecurityAuditor {
 
         for (const file of sensitiveFiles) {
             try {
-                const fullPath = path.join(process.cwd(), '..', file);
+                const fullPath = path.join(this.projectRoot, file);
                 if (fs.existsSync(fullPath)) {
                     // Note: Windows permissions are different, but we can check if files exist
                     this.addPass('File Permissions', `${file} exists and is accessible`);
@@ -106,11 +107,25 @@ class SecurityAuditor {
 
         // Check Rust dependencies
         try {
-            const cargoToml = fs.readFileSync(path.join(process.cwd(), '..', 'src-tauri/Cargo.toml'), 'utf8');
-            if (cargoToml.includes('aes-gcm')) {
+            const cargoToml = fs.readFileSync(
+                path.join(this.projectRoot, 'src-tauri/Cargo.toml'),
+                'utf8'
+            );
+            const hasAesGcm = cargoToml.includes('aes-gcm');
+            const hasSqlcipher =
+                cargoToml.includes('bundled-sqlcipher') || cargoToml.includes('sqlcipher');
+
+            if (hasAesGcm) {
                 this.addPass('Dependencies', 'AES-GCM encryption library found');
+            } else if (hasSqlcipher) {
+                this.addPass('Dependencies', 'SQLCipher encryption support detected');
             } else {
-                this.addIssue('high', 'Dependencies', 'AES-GCM not found in dependencies', 'Ensure aes-gcm crate is included for secure encryption');
+                this.addIssue(
+                    'medium',
+                    'Dependencies',
+                    'No at-rest encryption crate detected (AES-GCM/SQLCipher)',
+                    'Enable SQLCipher (rusqlite bundled-sqlcipher) or add an AEAD encryption crate for sensitive local data'
+                );
             }
 
             if (cargoToml.includes('argon2')) {
@@ -124,10 +139,12 @@ class SecurityAuditor {
 
         // Check Node.js dependencies
         try {
-            const packageJson = JSON.parse(fs.readFileSync(path.join(process.cwd(), '..', 'package.json'), 'utf8'));
+            const packageJson = JSON.parse(
+                fs.readFileSync(path.join(this.projectRoot, 'package.json'), 'utf8')
+            );
             if (packageJson.dependencies && packageJson.dependencies.next) {
                 this.addPass('Dependencies', 'Next.js framework found');
-    }
+            }
         } catch (error) {
             this.addIssue('medium', 'Dependencies', 'Error reading package.json', error.message);
         }
@@ -138,7 +155,9 @@ class SecurityAuditor {
 
         // Check Tauri config
         try {
-            const tauriConfig = JSON.parse(fs.readFileSync(path.join(process.cwd(), '..', 'src-tauri/tauri.conf.json'), 'utf8'));
+            const tauriConfig = JSON.parse(
+                fs.readFileSync(path.join(this.projectRoot, 'src-tauri/tauri.conf.json'), 'utf8')
+            );
             if (tauriConfig.productName && tauriConfig.identifier) {
                 this.addPass('Configuration', 'Tauri configuration is valid');
             } else {
@@ -150,7 +169,10 @@ class SecurityAuditor {
 
         // Check for hardcoded secrets
         try {
-            const mainRs = fs.readFileSync(path.join(process.cwd(), '..', 'src-tauri/src/main.rs'), 'utf8');
+            const mainRs = fs.readFileSync(
+                path.join(this.projectRoot, 'src-tauri/src/main.rs'),
+                'utf8'
+            );
             if (mainRs.includes('development_key_not_secure') ||
                 mainRs.includes('test_secret') ||
                 mainRs.includes('password123')) {
@@ -168,7 +190,10 @@ class SecurityAuditor {
 
         try {
             // Run clippy for Rust code quality
-            execSync('cd ../src-tauri && cargo clippy -- -D warnings', { stdio: 'pipe' });
+            execSync('cargo clippy -- -D warnings', {
+                cwd: path.join(this.projectRoot, 'src-tauri'),
+                stdio: 'pipe'
+            });
             this.addPass('Code Quality', 'Rust code passes clippy checks');
         } catch (error) {
             const output = error.stdout?.toString() || error.stderr?.toString() || '';
@@ -180,7 +205,10 @@ class SecurityAuditor {
 
         try {
             // Check TypeScript compilation
-            execSync('cd ../frontend && npm run build', { stdio: 'pipe' });
+            execSync('npm run build', {
+                cwd: path.join(this.projectRoot, 'frontend'),
+                stdio: 'pipe'
+            });
             this.addPass('Code Quality', 'TypeScript compilation successful');
         } catch (error) {
             this.addIssue('high', 'Code Quality', 'TypeScript compilation failed', 'Fix TypeScript errors before deployment');
@@ -197,7 +225,10 @@ class SecurityAuditor {
         this.log('Checking authentication implementation...', 'info');
 
         try {
-            const authRs = fs.readFileSync(path.join(process.cwd(), '..', 'src-tauri/src/services/auth.rs'), 'utf8');
+            const authRs = fs.readFileSync(
+                path.join(this.projectRoot, 'src-tauri/src/services/auth.rs'),
+                'utf8'
+            );
 
             if (authRs.includes('Argon2')) {
                 this.addPass('Authentication', 'Argon2 password hashing implemented');

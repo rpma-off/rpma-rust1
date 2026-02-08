@@ -585,7 +585,7 @@ const debouncedSearchTerm = useDebounce(searchTerm, 300);
             className="px-3 h-9 bg-white border border-border/60 rounded-full text-foreground text-sm"
           >
             <option value="all">Toutes les dates</option>
-            <option value="today">Aujourd'hui</option>
+            <option value="today">Aujourd&apos;hui</option>
             <option value="week">Cette semaine</option>
             <option value="month">Ce mois</option>
             <option value="overdue">En retard</option>
@@ -954,7 +954,7 @@ export default function TasksPage() {
             update_existing: false
           }, user.token);
 
-          enhancedToast.success(`${result.imported_count} tâches importées avec succès`);
+          enhancedToast.success(`${result.successful} tâches importées avec succès`);
           refetch(); // Refresh the task list
         } catch (error) {
           console.error('Import failed:', error);

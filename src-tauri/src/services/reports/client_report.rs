@@ -23,13 +23,9 @@ pub async fn generate_client_analytics_report(
     validate_filters(filters).map_err(crate::commands::AppError::from)?;
 
     let start_date = DateTime::<Utc>::from_timestamp(date_range.start.timestamp(), 0)
-        .ok_or_else(|| {
-            crate::commands::AppError::Database("Invalid start date".to_string())
-        })?;
+        .ok_or_else(|| crate::commands::AppError::Database("Invalid start date".to_string()))?;
     let end_date = DateTime::<Utc>::from_timestamp(date_range.end.timestamp(), 0)
-        .ok_or_else(|| {
-            crate::commands::AppError::Database("Invalid end date".to_string())
-        })?;
+        .ok_or_else(|| crate::commands::AppError::Database("Invalid end date".to_string()))?;
 
     // Build WHERE clause for interventions
     let mut where_clauses = vec!["i.created_at >= ?1 AND i.created_at <= ?2".to_string()];
@@ -65,21 +61,16 @@ pub async fn generate_client_analytics_report(
         LEFT JOIN material_consumption mc ON i.id = mc.intervention_id
         WHERE i.client_id IS NOT NULL
         "#,
-        start_date.timestamp(), end_date.timestamp(), start_date.timestamp()
+        start_date.timestamp(),
+        end_date.timestamp(),
+        start_date.timestamp()
     );
 
     let summary_result: (i64, i64, i64, Option<f64>) = db
         .query_row_tuple(
             &client_summary_sql,
             rusqlite::params_from_iter(params.clone()),
-            |row| {
-                Ok((
-                    row.get(0)?,
-                    row.get(1)?,
-                    row.get(2)?,
-                    row.get(3)?,
-                ))
-            },
+            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
         )
         .unwrap_or((0, 0, 0, None));
 
@@ -153,7 +144,8 @@ pub async fn generate_client_analytics_report(
     };
 
     let repeat_client_rate = if clients_this_period > 0 {
-        ((clients_this_period - new_clients_this_period) as f64 / clients_this_period as f64) * 100.0
+        ((clients_this_period - new_clients_this_period) as f64 / clients_this_period as f64)
+            * 100.0
     } else {
         0.0
     };
@@ -171,7 +163,8 @@ pub async fn generate_client_analytics_report(
     let revenue_by_client_type = std::collections::HashMap::new();
 
     // Revenue growth rate (simplified - comparing to previous period)
-    let _previous_period_start = start_date - chrono::Duration::days((end_date - start_date).num_days());
+    let _previous_period_start =
+        start_date - chrono::Duration::days((end_date - start_date).num_days());
     let revenue_growth_rate = 0.0; // Would need historical data
 
     // Query top clients by revenue
@@ -214,7 +207,9 @@ pub async fn generate_client_analytics_report(
     let mut top_clients = Vec::new();
     let mut total_client_revenue = 0.0;
 
-    for (client_id, client_name, tasks_completed, revenue, avg_satisfaction, _completed_tasks) in top_clients_data {
+    for (client_id, client_name, tasks_completed, revenue, avg_satisfaction, _completed_tasks) in
+        top_clients_data
+    {
         let revenue = revenue.unwrap_or(0.0);
         total_client_revenue += revenue;
 
@@ -224,7 +219,11 @@ pub async fn generate_client_analytics_report(
             customer_type: "Standard".to_string(), // Could be enhanced with actual client types
             total_revenue: revenue,
             tasks_completed: tasks_completed as u64,
-            average_revenue_per_task: if tasks_completed > 0 { revenue / tasks_completed as f64 } else { 0.0 },
+            average_revenue_per_task: if tasks_completed > 0 {
+                revenue / tasks_completed as f64
+            } else {
+                0.0
+            },
             satisfaction_score: avg_satisfaction,
             retention_status: true, // Placeholder - would need retention analysis
         });

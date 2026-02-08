@@ -28,12 +28,26 @@ pub async fn export_report_data(
     auth::check_export_permissions(&report_type, &current_user)?;
 
     // Generate export with database access
-    debug!("Starting export generation for report type: {:?}, format: {:?}", report_type, format);
-    let export_result = generate_export_with_db(&report_type, &format, &date_range, &filters, &state.db, &state.app_data_dir).await
-        .map_err(|e| {
-            error!("Report export failed for type {:?}, format {:?}: {}", report_type, format, e);
-            e
-        })?;
+    debug!(
+        "Starting export generation for report type: {:?}, format: {:?}",
+        report_type, format
+    );
+    let export_result = generate_export_with_db(
+        &report_type,
+        &format,
+        &date_range,
+        &filters,
+        &state.db,
+        &state.app_data_dir,
+    )
+    .await
+    .map_err(|e| {
+        error!(
+            "Report export failed for type {:?}, format {:?}: {}",
+            report_type, format, e
+        );
+        e
+    })?;
 
     Ok(export_result)
 }

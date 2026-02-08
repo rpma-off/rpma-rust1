@@ -3,11 +3,11 @@
 //! This module provides the main PhotoService API that delegates to specialized
 //! modules while maintaining the same public interface for backward compatibility.
 
-pub use super::storage::{PhotoStorageService, StorageProvider};
-pub use super::processing::PhotoProcessingService;
-pub use super::upload::PhotoUploadService;
 pub use super::metadata::{PhotoMetadataService, PhotoMetadataUpdate};
+pub use super::processing::PhotoProcessingService;
 pub use super::statistics::{PhotoStatisticsService, PhotoStats};
+pub use super::storage::{PhotoStorageService, StorageProvider};
+pub use super::upload::PhotoUploadService;
 
 use crate::db::Database;
 use crate::models::photo::Photo;
@@ -126,43 +126,66 @@ impl PhotoService {
         // Store based on storage provider
         let (file_path, storage_url) = match self.storage.storage_provider() {
             StorageProvider::Local => {
-                let file_path = self.storage.store_locally(
-                    &request.intervention_id,
-                    &request.file_name,
-                    &compressed_data,
-                ).await?;
+                let file_path = self
+                    .storage
+                    .store_locally(
+                        &request.intervention_id,
+                        &request.file_name,
+                        &compressed_data,
+                    )
+                    .await?;
                 let storage_url = format!("file://{}", file_path.display());
                 (file_path, Some(storage_url))
             }
-            StorageProvider::Cloud { provider, bucket, region } => {
-                let storage_url = self.storage.store_in_cloud(
-                    provider,
-                    bucket,
-                    region,
-                    &request.intervention_id,
-                    &request.file_name,
-                    &compressed_data,
-                ).await?;
-                let file_path = self.storage.generate_local_cache_path(&request.intervention_id, &request.file_name);
+            StorageProvider::Cloud {
+                provider,
+                bucket,
+                region,
+            } => {
+                let storage_url = self
+                    .storage
+                    .store_in_cloud(
+                        provider,
+                        bucket,
+                        region,
+                        &request.intervention_id,
+                        &request.file_name,
+                        &compressed_data,
+                    )
+                    .await?;
+                let file_path = self
+                    .storage
+                    .generate_local_cache_path(&request.intervention_id, &request.file_name);
                 (file_path, Some(storage_url))
             }
-            StorageProvider::Hybrid { local_path, cloud_provider, bucket, region } => {
+            StorageProvider::Hybrid {
+                local_path,
+                cloud_provider,
+                bucket,
+                region,
+            } => {
                 // Store locally first
-                let file_path = self.storage.store_locally_with_path(
-                    local_path,
-                    &request.intervention_id,
-                    &request.file_name,
-                    &compressed_data,
-                ).await?;
+                let file_path = self
+                    .storage
+                    .store_locally_with_path(
+                        local_path,
+                        &request.intervention_id,
+                        &request.file_name,
+                        &compressed_data,
+                    )
+                    .await?;
                 // Then upload to cloud asynchronously (would be handled by background job)
-                let storage_url = self.storage.store_in_cloud(
-                    cloud_provider,
-                    bucket,
-                    region,
-                    &request.intervention_id,
-                    &request.file_name,
-                    &compressed_data,
-                ).await?;
+                let storage_url = self
+                    .storage
+                    .store_in_cloud(
+                        cloud_provider,
+                        bucket,
+                        region,
+                        &request.intervention_id,
+                        &request.file_name,
+                        &compressed_data,
+                    )
+                    .await?;
                 (file_path, Some(storage_url))
             }
         };
@@ -173,8 +196,9 @@ impl PhotoService {
 
         // Extract image dimensions and quality scores
         let (width, height) = self.processing.extract_image_dimensions(&compressed_data)?;
-        let (quality_score, blur_score, exposure_score, composition_score) =
-            self.processing.calculate_photo_quality_scores(&compressed_data)?;
+        let (quality_score, blur_score, exposure_score, composition_score) = self
+            .processing
+            .calculate_photo_quality_scores(&compressed_data)?;
 
         // Create photo record
         let mut photo = Photo::new(
@@ -260,7 +284,9 @@ impl PhotoService {
         photo_id: &str,
         max_retries: u32,
     ) -> PhotoResult<()> {
-        self.upload.upload_photo_with_retry(photo_id, max_retries).await
+        self.upload
+            .upload_photo_with_retry(photo_id, max_retries)
+            .await
     }
 
     /// Validate store request

@@ -18,13 +18,13 @@ pub use crate::repositories::task_repository::TaskRepository;
 
 // Import new repositories
 pub use crate::repositories::client_repository::ClientRepository;
-pub use crate::repositories::user_repository::UserRepository;
 pub use crate::repositories::material_repository::MaterialRepository;
 pub use crate::repositories::message_repository::MessageRepository;
-pub use crate::repositories::photo_repository::PhotoRepository;
-pub use crate::repositories::notification_repository::NotificationTemplateRepository;
 pub use crate::repositories::notification_preferences_repository::NotificationPreferencesRepository;
+pub use crate::repositories::notification_repository::NotificationTemplateRepository;
+pub use crate::repositories::photo_repository::PhotoRepository;
 pub use crate::repositories::task_history_repository::TaskHistoryRepository;
+pub use crate::repositories::user_repository::UserRepository;
 
 /// Repository container holding all repository instances
 #[derive(Clone)]
@@ -70,9 +70,18 @@ impl Repositories {
             material: Arc::new(MaterialRepository::new(Arc::clone(&db), Arc::clone(&cache))),
             message: Arc::new(MessageRepository::new(Arc::clone(&db), Arc::clone(&cache))),
             photo: Arc::new(PhotoRepository::new(Arc::clone(&db), Arc::clone(&cache))),
-            notification_template: Arc::new(NotificationTemplateRepository::new(Arc::clone(&db), Arc::clone(&cache))),
-            notification_preferences: Arc::new(NotificationPreferencesRepository::new(Arc::clone(&db), Arc::clone(&cache))),
-            task_history: Arc::new(TaskHistoryRepository::new(Arc::clone(&db), Arc::clone(&cache))),
+            notification_template: Arc::new(NotificationTemplateRepository::new(
+                Arc::clone(&db),
+                Arc::clone(&cache),
+            )),
+            notification_preferences: Arc::new(NotificationPreferencesRepository::new(
+                Arc::clone(&db),
+                Arc::clone(&cache),
+            )),
+            task_history: Arc::new(TaskHistoryRepository::new(
+                Arc::clone(&db),
+                Arc::clone(&cache),
+            )),
         }
     }
 
@@ -124,9 +133,7 @@ impl RepositoryBuilder {
     }
 
     pub async fn build(self) -> Result<Repositories, String> {
-        let db = self
-            .db
-            .ok_or_else(|| "Database not provided".to_string())?;
+        let db = self.db.ok_or_else(|| "Database not provided".to_string())?;
 
         Ok(Repositories::new(db, self.cache_size).await)
     }

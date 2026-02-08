@@ -74,6 +74,6 @@ describe('SearchBar', () => {
     render(<SearchBar value="" onChange={mockOnChange} />);
 
     const input = screen.getByPlaceholderText('Rechercher...');
-    expect(input).toHaveClass('pl-10', 'pr-10', 'bg-gray-900/50', 'border-gray-600');
+    expect(input).toHaveClass('pl-10', 'pr-10', 'bg-background', 'border-border');
   });
 });

@@ -3,8 +3,8 @@
 //! This module contains all Tauri commands for IPC communication
 //! between the frontend and backend.
 
-pub mod auth;
 pub mod analytics;
+pub mod auth;
 pub mod auth_middleware;
 pub mod calendar;
 pub mod client;
@@ -19,12 +19,12 @@ pub mod navigation;
 pub mod notification;
 pub mod performance;
 // pub mod photo; // Temporarily disabled - no photo.rs or photo/ directory
+pub mod message;
 pub mod queue;
 pub mod reports;
 pub mod security;
 pub mod settings;
 pub mod status;
-pub mod message;
 pub mod streaming;
 pub mod sync;
 pub mod system;
@@ -74,15 +74,14 @@ pub use performance::{
 
 // Re-export calendar commands
 #[allow(unused_imports)]
-pub use calendar::{
-    calendar_check_conflicts, calendar_get_tasks,
-};
+pub use calendar::{calendar_check_conflicts, calendar_get_tasks};
 
 // Re-export material commands
 pub use material::{
-    material_create, material_get, material_get_by_sku, material_get_expired, material_get_intervention_consumption,
-    material_get_intervention_summary, material_get_low_stock, material_get_stats, material_list,
-    material_record_consumption, material_update, material_update_stock,
+    material_create, material_get, material_get_by_sku, material_get_expired,
+    material_get_intervention_consumption, material_get_intervention_summary,
+    material_get_low_stock, material_get_stats, material_list, material_record_consumption,
+    material_update, material_update_stock,
 };
 
 // Re-export system commands
@@ -93,9 +92,7 @@ pub use system::{
 };
 
 // Re-export analytics commands
-pub use analytics::{
-    analytics_get_summary,
-};
+pub use analytics::analytics_get_summary;
 
 use crate::db::Database;
 use crate::models::auth::UserRole;
@@ -104,13 +101,13 @@ use crate::models::task::*;
 
 use crate::models::Client;
 use crate::services::{ClientService, SettingsService, TaskService};
-use base64::{Engine as _, engine::general_purpose};
+use base64::{engine::general_purpose, Engine as _};
 use serde::{Deserialize, Serialize};
-#[cfg(any(feature = "specta", feature = "ts-rs"))]
-use ts_rs::TS;
 use std::sync::{Arc, Mutex};
 use tauri::State;
 use tracing::{debug, error, info, instrument, warn};
+#[cfg(any(feature = "specta", feature = "ts-rs"))]
+use ts_rs::TS;
 
 // Import authentication macros
 use crate::authenticate;
@@ -474,7 +471,8 @@ impl CompressedApiResponse {
         match (&self.data, self.compressed) {
             (Some(data), true) => {
                 // Decompress base64 encoded gzipped data
-                let compressed = general_purpose::STANDARD.decode(data)
+                let compressed = general_purpose::STANDARD
+                    .decode(data)
                     .map_err(|e| AppError::Internal(format!("Base64 decode error: {}", e)))?;
 
                 use flate2::read::GzDecoder;
@@ -650,7 +648,9 @@ pub async fn user_crud(
             }
             // Use UserService to change role
             let user_service = crate::services::UserService::new(state.repositories.user.clone());
-            user_service.change_role(&id, new_role, &current_user.user_id).await?;
+            user_service
+                .change_role(&id, new_role, &current_user.user_id)
+                .await?;
             Ok(UserResponse::RoleChanged)
         }
         UserAction::Ban { id } => {

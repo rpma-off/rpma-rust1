@@ -6,8 +6,8 @@
 //! - Getting latest interventions by task
 //! - Getting individual intervention steps
 
-use crate::commands::{ApiResponse, AppError, AppState};
 use crate::authenticate;
+use crate::commands::{ApiResponse, AppError, AppState};
 use tracing::info;
 
 /// Get a specific intervention by ID
@@ -33,8 +33,12 @@ pub async fn intervention_get(
         .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", id)))?;
 
     // Check permissions
-    if intervention.technician_id.as_ref() != Some(&session.user_id) && session.role != crate::models::auth::UserRole::Admin {
-        return Err(AppError::Authorization("Not authorized to view this intervention".to_string()));
+    if intervention.technician_id.as_ref() != Some(&session.user_id)
+        && session.role != crate::models::auth::UserRole::Admin
+    {
+        return Err(AppError::Authorization(
+            "Not authorized to view this intervention".to_string(),
+        ));
     }
 
     Ok(ApiResponse::success(intervention))
@@ -59,20 +63,30 @@ pub async fn intervention_get_active_by_task(
         .unwrap_or(false);
 
     if !task_access && session.role != crate::models::auth::UserRole::Admin {
-        return Err(AppError::Authorization("Not authorized to view interventions for this task".to_string()));
+        return Err(AppError::Authorization(
+            "Not authorized to view interventions for this task".to_string(),
+        ));
     }
 
     match state
         .intervention_service
-        .get_active_intervention_by_task(&task_id) {
+        .get_active_intervention_by_task(&task_id)
+    {
         Ok(Some(intervention)) => Ok(ApiResponse::success(vec![intervention])),
         Ok(None) => Ok(ApiResponse::success(vec![])),
-        Err(e) => Err(AppError::Database(format!("Failed to get active interventions: {}", e)))
+        Err(e) => Err(AppError::Database(format!(
+            "Failed to get active interventions: {}",
+            e
+        ))),
     }
-        .map_err(|e| {
-            tracing::error!("Failed to get active interventions for task {}: {}", task_id, e);
-            AppError::Database(format!("Failed to get active interventions: {}", e))
-        })
+    .map_err(|e| {
+        tracing::error!(
+            "Failed to get active interventions for task {}: {}",
+            task_id,
+            e
+        );
+        AppError::Database(format!("Failed to get active interventions: {}", e))
+    })
 }
 
 /// Get the latest intervention for a specific task
@@ -94,7 +108,9 @@ pub async fn intervention_get_latest_by_task(
         .unwrap_or(false);
 
     if !task_access && session.role != crate::models::auth::UserRole::Admin {
-        return Err(AppError::Authorization("Not authorized to view interventions for this task".to_string()));
+        return Err(AppError::Authorization(
+            "Not authorized to view interventions for this task".to_string(),
+        ));
     }
 
     state
@@ -102,7 +118,11 @@ pub async fn intervention_get_latest_by_task(
         .get_latest_intervention_by_task(&task_id)
         .map(ApiResponse::success)
         .map_err(|e| {
-            tracing::error!("Failed to get latest intervention for task {}: {}", task_id, e);
+            tracing::error!(
+                "Failed to get latest intervention for task {}: {}",
+                task_id,
+                e
+            );
             AppError::Database(format!("Failed to get latest intervention: {}", e))
         })
 }
@@ -116,7 +136,10 @@ pub async fn intervention_get_step(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<crate::models::step::InterventionStep>, AppError> {
-    info!("Getting intervention step {} for intervention {}", step_id, intervention_id);
+    info!(
+        "Getting intervention step {} for intervention {}",
+        step_id, intervention_id
+    );
 
     let session = authenticate!(&session_token, &state);
 
@@ -127,8 +150,12 @@ pub async fn intervention_get_step(
         .map_err(|e| AppError::Database(format!("Failed to get intervention: {}", e)))?
         .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", intervention_id)))?;
 
-    if intervention.technician_id.as_ref() != Some(&session.user_id) && session.role != crate::models::auth::UserRole::Admin {
-        return Err(AppError::Authorization("Not authorized to view this intervention step".to_string()));
+    if intervention.technician_id.as_ref() != Some(&session.user_id)
+        && session.role != crate::models::auth::UserRole::Admin
+    {
+        return Err(AppError::Authorization(
+            "Not authorized to view this intervention step".to_string(),
+        ));
     }
 
     let _step = state

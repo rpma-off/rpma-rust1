@@ -3,11 +3,11 @@
 //! Provides a publish/subscribe event bus for loose coupling between services.
 //! Thread-safe with Arc<Mutex<>> for handler registration.
 
-use std::sync::{Arc, Mutex};
-use std::collections::HashMap;
 use async_trait::async_trait;
-use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
 /// Domain event types for system-wide communication
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -20,14 +20,14 @@ pub enum DomainEvent {
         assigned_to: Option<String>,
         timestamp: DateTime<Utc>,
     },
-    
+
     /// Task updated event
     TaskUpdated {
         task_id: String,
         changes: Vec<String>,
         timestamp: DateTime<Utc>,
     },
-    
+
     /// Task status changed event
     TaskStatusChanged {
         task_id: String,
@@ -35,34 +35,34 @@ pub enum DomainEvent {
         new_status: String,
         timestamp: DateTime<Utc>,
     },
-    
+
     /// Task assigned event
     TaskAssigned {
         task_id: String,
         assigned_to: String,
         timestamp: DateTime<Utc>,
     },
-    
+
     /// Authentication failed event
     AuthenticationFailed {
         user_id: Option<String>,
         reason: String,
         timestamp: DateTime<Utc>,
     },
-    
+
     /// Authentication success event
     AuthenticationSuccess {
         user_id: String,
         timestamp: DateTime<Utc>,
     },
-    
+
     /// Intervention started event
     InterventionStarted {
         intervention_id: String,
         task_id: String,
         timestamp: DateTime<Utc>,
     },
-    
+
     /// Intervention completed event
     InterventionCompleted {
         intervention_id: String,
@@ -84,7 +84,7 @@ impl DomainEvent {
             DomainEvent::InterventionCompleted { .. } => "InterventionCompleted",
         }
     }
-    
+
     /// Get the timestamp of the event
     pub fn timestamp(&self) -> DateTime<Utc> {
         match self {
@@ -105,7 +105,7 @@ impl DomainEvent {
 pub trait EventHandler: Send + Sync {
     /// Handle a domain event
     async fn handle(&self, event: &DomainEvent) -> Result<(), String>;
-    
+
     /// Get the event types this handler is interested in
     fn interested_events(&self) -> Vec<&'static str>;
 }
@@ -122,15 +122,15 @@ impl InMemoryEventBus {
             handlers: Arc::new(Mutex::new(HashMap::new())),
         }
     }
-    
+
     /// Register an event handler for specific event types
-    pub fn register_handler<H>(&self, handler: H) 
-    where 
-        H: EventHandler + 'static
+    pub fn register_handler<H>(&self, handler: H)
+    where
+        H: EventHandler + 'static,
     {
         let handler = Arc::new(handler);
         let mut handlers = self.handlers.lock().unwrap();
-        
+
         for event_type in handler.interested_events() {
             handlers
                 .entry(event_type.to_string())
@@ -138,12 +138,12 @@ impl InMemoryEventBus {
                 .push(handler.clone());
         }
     }
-    
+
     /// Publish an event to all registered handlers
     pub async fn publish(&self, event: DomainEvent) -> Result<(), String> {
         let handlers = self.handlers.lock().unwrap();
         let event_type = event.event_type();
-        
+
         if let Some(event_handlers) = handlers.get(event_type) {
             for handler in event_handlers {
                 if let Err(e) = handler.handle(&event).await {
@@ -151,10 +151,10 @@ impl InMemoryEventBus {
                 }
             }
         }
-        
+
         Ok(())
     }
-    
+
     /// Publish multiple events
     pub async fn publish_batch(&self, events: Vec<DomainEvent>) -> Result<(), String> {
         for event in events {
@@ -162,13 +162,13 @@ impl InMemoryEventBus {
         }
         Ok(())
     }
-    
+
     /// Get the number of registered handlers for an event type
     pub fn handler_count(&self, event_type: &str) -> usize {
         let handlers = self.handlers.lock().unwrap();
         handlers.get(event_type).map(|h| h.len()).unwrap_or(0)
     }
-    
+
     /// Check if there are any handlers registered for an event type
     pub fn has_handlers(&self, event_type: &str) -> bool {
         self.handler_count(event_type) > 0
@@ -198,8 +198,12 @@ pub trait EventPublisher: Send + Sync {
 /// Helper function to create domain events with current timestamp
 pub mod event_factory {
     use super::*;
-    
-    pub fn task_created(task_id: String, title: String, assigned_to: Option<String>) -> DomainEvent {
+
+    pub fn task_created(
+        task_id: String,
+        title: String,
+        assigned_to: Option<String>,
+    ) -> DomainEvent {
         DomainEvent::TaskCreated {
             task_id,
             title,
@@ -207,7 +211,7 @@ pub mod event_factory {
             timestamp: Utc::now(),
         }
     }
-    
+
     pub fn task_updated(task_id: String, changes: Vec<String>) -> DomainEvent {
         DomainEvent::TaskUpdated {
             task_id,
@@ -215,8 +219,12 @@ pub mod event_factory {
             timestamp: Utc::now(),
         }
     }
-    
-    pub fn task_status_changed(task_id: String, old_status: String, new_status: String) -> DomainEvent {
+
+    pub fn task_status_changed(
+        task_id: String,
+        old_status: String,
+        new_status: String,
+    ) -> DomainEvent {
         DomainEvent::TaskStatusChanged {
             task_id,
             old_status,
@@ -224,7 +232,7 @@ pub mod event_factory {
             timestamp: Utc::now(),
         }
     }
-    
+
     pub fn task_assigned(task_id: String, assigned_to: String) -> DomainEvent {
         DomainEvent::TaskAssigned {
             task_id,
@@ -232,7 +240,7 @@ pub mod event_factory {
             timestamp: Utc::now(),
         }
     }
-    
+
     pub fn authentication_failed(user_id: Option<String>, reason: String) -> DomainEvent {
         DomainEvent::AuthenticationFailed {
             user_id,
@@ -240,14 +248,14 @@ pub mod event_factory {
             timestamp: Utc::now(),
         }
     }
-    
+
     pub fn authentication_success(user_id: String) -> DomainEvent {
         DomainEvent::AuthenticationSuccess {
             user_id,
             timestamp: Utc::now(),
         }
     }
-    
+
     pub fn intervention_started(intervention_id: String, task_id: String) -> DomainEvent {
         DomainEvent::InterventionStarted {
             intervention_id,
@@ -255,7 +263,7 @@ pub mod event_factory {
             timestamp: Utc::now(),
         }
     }
-    
+
     pub fn intervention_completed(intervention_id: String) -> DomainEvent {
         DomainEvent::InterventionCompleted {
             intervention_id,
@@ -268,171 +276,160 @@ pub mod event_factory {
 mod tests {
     use super::*;
     use std::sync::atomic::{AtomicUsize, Ordering};
-    
+
     /// Test handler that counts events
     struct TestHandler {
         counter: Arc<AtomicUsize>,
         event_types: Vec<&'static str>,
     }
-    
+
     #[async_trait]
     impl EventHandler for TestHandler {
         async fn handle(&self, _event: &DomainEvent) -> Result<(), String> {
             self.counter.fetch_add(1, Ordering::SeqCst);
             Ok(())
         }
-        
+
         fn interested_events(&self) -> Vec<&'static str> {
             self.event_types.clone()
         }
     }
-    
+
     #[tokio::test]
     async fn test_event_bus_publish() {
         let event_bus = InMemoryEventBus::new();
         let counter = Arc::new(AtomicUsize::new(0));
-        
+
         let handler = TestHandler {
             counter: counter.clone(),
             event_types: vec!["TaskCreated"],
         };
-        
+
         event_bus.register_handler(handler);
-        
-        let event = event_factory::task_created(
-            "task-123".to_string(),
-            "Test Task".to_string(),
-            None,
-        );
-        
+
+        let event =
+            event_factory::task_created("task-123".to_string(), "Test Task".to_string(), None);
+
         event_bus.publish(event).await.unwrap();
-        
+
         assert_eq!(counter.load(Ordering::SeqCst), 1);
     }
-    
+
     #[tokio::test]
     async fn test_event_bus_multiple_handlers() {
         let event_bus = InMemoryEventBus::new();
         let counter1 = Arc::new(AtomicUsize::new(0));
         let counter2 = Arc::new(AtomicUsize::new(0));
-        
+
         let handler1 = TestHandler {
             counter: counter1.clone(),
             event_types: vec!["TaskCreated"],
         };
-        
+
         let handler2 = TestHandler {
             counter: counter2.clone(),
             event_types: vec!["TaskCreated", "TaskUpdated"],
         };
-        
+
         event_bus.register_handler(handler1);
         event_bus.register_handler(handler2);
-        
-        let event = event_factory::task_created(
-            "task-123".to_string(),
-            "Test Task".to_string(),
-            None,
-        );
-        
+
+        let event =
+            event_factory::task_created("task-123".to_string(), "Test Task".to_string(), None);
+
         event_bus.publish(event).await.unwrap();
-        
+
         // Both handlers should receive the TaskCreated event
         assert_eq!(counter1.load(Ordering::SeqCst), 1);
         assert_eq!(counter2.load(Ordering::SeqCst), 1);
     }
-    
+
     #[tokio::test]
     async fn test_event_bus_filtered_events() {
         let event_bus = InMemoryEventBus::new();
         let counter = Arc::new(AtomicUsize::new(0));
-        
+
         let handler = TestHandler {
             counter: counter.clone(),
             event_types: vec!["TaskCreated"],
         };
-        
+
         event_bus.register_handler(handler);
-        
+
         // Publish an event the handler is NOT interested in
         let event = event_factory::authentication_success("user-123".to_string());
         event_bus.publish(event).await.unwrap();
-        
+
         // Handler should not have been called
         assert_eq!(counter.load(Ordering::SeqCst), 0);
     }
-    
+
     #[tokio::test]
     async fn test_event_bus_batch_publish() {
         let event_bus = InMemoryEventBus::new();
         let counter = Arc::new(AtomicUsize::new(0));
-        
+
         let handler = TestHandler {
             counter: counter.clone(),
             event_types: vec!["TaskCreated", "TaskUpdated"],
         };
-        
+
         event_bus.register_handler(handler);
-        
+
         let events = vec![
             event_factory::task_created("task-1".to_string(), "Task 1".to_string(), None),
             event_factory::task_updated("task-2".to_string(), vec!["title".to_string()]),
             event_factory::task_created("task-3".to_string(), "Task 3".to_string(), None),
         ];
-        
+
         event_bus.publish_batch(events).await.unwrap();
-        
+
         assert_eq!(counter.load(Ordering::SeqCst), 3);
     }
-    
+
     #[test]
     fn test_domain_event_types() {
-        let task_created = event_factory::task_created(
-            "task-123".to_string(),
-            "Test".to_string(),
-            None,
-        );
+        let task_created =
+            event_factory::task_created("task-123".to_string(), "Test".to_string(), None);
         assert_eq!(task_created.event_type(), "TaskCreated");
-        
+
         let auth_success = event_factory::authentication_success("user-123".to_string());
         assert_eq!(auth_success.event_type(), "AuthenticationSuccess");
-        
-        let intervention_started = event_factory::intervention_started(
-            "int-123".to_string(),
-            "task-123".to_string(),
-        );
+
+        let intervention_started =
+            event_factory::intervention_started("int-123".to_string(), "task-123".to_string());
         assert_eq!(intervention_started.event_type(), "InterventionStarted");
     }
-    
+
     #[test]
     fn test_handler_count() {
         let event_bus = InMemoryEventBus::new();
-        
+
         assert_eq!(event_bus.handler_count("TaskCreated"), 0);
-        
+
         let handler = TestHandler {
             counter: Arc::new(AtomicUsize::new(0)),
             event_types: vec!["TaskCreated"],
         };
-        
+
         event_bus.register_handler(handler);
-        
+
         assert_eq!(event_bus.handler_count("TaskCreated"), 1);
         assert_eq!(event_bus.handler_count("TaskUpdated"), 0);
     }
-    
+
     #[test]
     fn test_event_bus_clone() {
         let event_bus1 = InMemoryEventBus::new();
         let event_bus2 = event_bus1.clone();
-        
+
         let handler = TestHandler {
             counter: Arc::new(AtomicUsize::new(0)),
             event_types: vec!["TaskCreated"],
         };
-        
+
         event_bus1.register_handler(handler);
-        
+
         // Both event buses should share the same handlers
         assert_eq!(event_bus2.handler_count("TaskCreated"), 1);
     }

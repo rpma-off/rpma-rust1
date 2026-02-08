@@ -1,18 +1,31 @@
- import { createClient } from '@supabase/supabase-js';
- import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import { NextResponse } from 'next/server';
 
- export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 
- // Initialize Supabase admin client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+function getSupabaseAdmin() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    return null;
+  }
+
+  return createClient(supabaseUrl, serviceRoleKey);
+}
 
 export async function POST(request: Request) {
   console.log('Bulk action endpoint called');
   
   try {
+    const supabase = getSupabaseAdmin();
+    if (!supabase) {
+      return NextResponse.json(
+        { error: 'Supabase not configured' },
+        { status: 500 }
+      );
+    }
+
     // Get the authorization header
     const authHeader = request.headers.get('authorization');
     if (!authHeader) {

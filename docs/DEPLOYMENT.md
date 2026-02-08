@@ -1075,7 +1075,519 @@ npm run performance:test
 npm run performance:update-baseline
 ```
 
+## Container Deployment
+
+### Docker Configuration
+
+#### Multi-stage Dockerfile
+
+```dockerfile
+# Stage 1: Build frontend
+FROM node:18-alpine AS frontend-builder
+
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm ci --only=production
+
+COPY frontend/ ./
+RUN npm run build
+
+# Stage 2: Build backend
+FROM rust:1.77-slim AS backend-builder
+
+WORKDIR /app/src-tauri
+COPY src-tauri/ .
+COPY Cargo.toml Cargo.lock ./
+RUN cargo build --release
+
+# Stage 3: Final image
+FROM debian:bullseye-slim
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    libwebkit2gtk-4.1-0 \
+    libssl3 \
+    libgtk-3-0 \
+    libayatana-appindicator3-1 \
+    librsvg2-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy application
+COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
+COPY --from=backend-builder /app/src-tauri/target/release/rpma .
+
+# Create app user
+RUN useradd -m -u 1000 rpma
+
+USER rpma
+
+EXPOSE 8000
+
+CMD ["./rpma"]
+```
+
+#### Docker Compose
+
+```yaml
+version: '3.8'
+
+services:
+  rpma-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - rpma_data:/home/rpma/.local/share/rpma
+      - rpma_config:/home/rpma/.config/rpma
+    environment:
+      - NODE_ENV=production
+      - RUST_LOG=info
+    restart: unless-stopped
+
+  rpma-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: rpma
+      POSTGRES_USER: rpma
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  rpma_data:
+  rpma_config:
+  postgres_data:
+```
+
+### Kubernetes Deployment
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rpma-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: rpma-app
+  template:
+    metadata:
+      labels:
+        app: rpma-app
+    spec:
+      containers:
+      - name: rpma
+        image: rpma:latest
+        ports:
+        - containerPort: 8000
+        env:
+          - name: NODE_ENV
+            value: "production"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+```
+
+## Performance Monitoring
+
+### Application Performance Monitoring (APM)
+
+#### OpenTelemetry Configuration
+
+```rust
+// src-tauri/src/monitoring/telemetry.rs
+use opentelemetry::trace::{Tracer, TracerProvider};
+use opentelemetry::sdk::trace::TracerProvider;
+use opentelemetry::sdk::trace as sdktrace;
+
+pub fn init_telemetry() -> Tracer {
+    let tracer = opentelemetry_jaeger::new_pipeline_pipeline()
+        .with_service_name("rpma")
+        .with_trace_config(sdktrace::config().with_resource(Resource::new(vec![
+            KeyValue::new("service.name", "rpma"),
+            KeyValue::new("service.version", env!("CARGO_PKG_VERSION")),
+        ])))
+        .install_simple();
+
+    tracer
+}
+```
+
+#### Metrics Collection
+
+```typescript
+// frontend/src/lib/monitoring/metrics.ts
+export const performanceMetrics = {
+  // Track page load time
+  trackPageLoad: (pageName: string) => {
+    const navigation = performance.getEntriesByType('navigation')[0];
+    const loadTime = navigation.loadEventEnd - navigation.loadEventStart;
+    
+    // Send to monitoring service
+    sendMetric('page_load_time', loadTime, {
+      page: pageName,
+      browser: navigator.userAgent,
+      timestamp: Date.now()
+    });
+  },
+  
+  // Track API response time
+  trackApiResponse: (endpoint: string, duration: number, status: number) => {
+    sendMetric('api_response_time', duration, {
+      endpoint,
+      status,
+      method: 'POST'
+    });
+  },
+  
+  // Track user interactions
+  trackUserAction: (action: string, context: any) => {
+    sendMetric('user_action', 1, {
+      action,
+      context,
+      timestamp: Date.now()
+    });
+  }
+};
+```
+
+### Health Check Endpoints
+
+```typescript
+// Health check routes
+app.get('/health', async (req, res) => {
+  const health = {
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    version: process.env.npm_package_version,
+    checks: {
+      database: await checkDatabase(),
+      redis: await checkRedis(),
+      filesystem: await checkFilesystem(),
+      memory: checkMemoryUsage(),
+      cpu: checkCpuUsage()
+    }
+  };
+  
+  res.status(200).json(health);
+});
+
+app.get('/health/ready', async (req, res) => {
+  // Check if all dependencies are ready
+  const isReady = await Promise.all([
+    checkDatabase(),
+    checkExternalServices(),
+    checkConfiguration()
+  ]);
+  
+  res.status(isReady ? 200 : 503).json({
+    status: isReady ? 'ready' : 'not_ready',
+    checks: isReady
+  });
+});
+```
+
+## Security Hardening
+
+### Runtime Security
+
+#### Content Security Policy
+
+```rust
+// src-tauri/src/security/csp.rs
+pub fn get_csp_header() -> String {
+    format!(
+        "default-src 'self'; \
+        script-src 'self' 'unsafe-inline' 'unsafe-eval'; \
+        style-src 'self' 'unsafe-inline'; \
+        img-src 'self' data: blob:; \
+        connect-src 'self' ws: wss:; \
+        font-src 'self'; \
+        object-src 'none'; \
+        media-src 'self'; \
+        frame-src 'none';"
+    )
+}
+```
+
+#### Secure Headers
+
+```rust
+// src-tauri/src/security/headers.rs
+use hyper::{Header, Response};
+
+pub fn add_security_headers(mut response: Response) -> Response {
+    // Prevent clickjacking
+    response.headers_mut().insert(
+        Header::from_static("x-frame-options"),
+        "DENY".parse().unwrap()
+    );
+    
+    // Prevent MIME type sniffing
+    response.headers_mut().insert(
+        Header::from_static("x-content-type-options"),
+        "nosniff".parse().unwrap()
+    );
+    
+    // XSS Protection
+    response.headers_mut().insert(
+        Header::from_static("x-xss-protection"),
+        "1; mode=block".parse().unwrap()
+    );
+    
+    // Referrer Policy
+    response.headers_mut().insert(
+        Header::from_static("referrer-policy"),
+        "strict-origin-when-cross-origin".parse().unwrap()
+    );
+    
+    response
+}
+```
+
+### Dependency Scanning
+
+#### GitHub Actions Security Scan
+
+```yaml
+# .github/workflows/security.yml
+name: Security Scan
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Run Cargo Audit
+        run: cargo audit
+        
+      - name: Run Cargo Deny
+        run: cargo deny check
+        
+      - name: Run Security Audit
+        run: cargo install cargo-audit && cargo audit
+        
+      - name: Upload Security Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-report
+          path: security-report.json
+```
+
+### Security Testing
+
+```bash
+# Frontend security test
+npm audit --audit-level high
+
+# Backend security audit
+cargo audit
+
+# Dependency vulnerability check
+cargo deny check
+
+# OWASP ZAP Baseline Scan
+docker run -t owasp/zap2.10-stable \
+  zap-baseline.py \
+  -t http://localhost:8000 \
+  -J security-report.json
+```
+
+## Backup Strategies
+
+### Automated Backups
+
+#### Database Backup Script
+
+```bash
+#!/bin/bash
+# scripts/backup-database.sh
+
+BACKUP_DIR="/backups/rpma"
+DB_PATH="$HOME/.local/share/rpma/rpma.db"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+BACKUP_FILE="rpma_backup_${TIMESTAMP}.db"
+
+# Create backup directory
+mkdir -p "$BACKUP_DIR"
+
+# Perform database vacuum before backup
+sqlite3 "$DB_PATH" "VACUUM;"
+
+# Create compressed backup
+sqlite3 "$DB_PATH" ".backup $BACKUP_FILE"
+gzip "$BACKUP_DIR/$BACKUP_FILE"
+
+# Clean old backups (keep last 30 days)
+find "$BACKUP_DIR" -name "*.gz" -mtime +30 -delete
+
+echo "Backup completed: $BACKUP_FILE.gz"
+```
+
+#### Application Data Backup
+
+```rust
+// src-tauri/src/backup/service.rs
+use std::fs;
+use std::path::Path;
+
+pub struct BackupService;
+
+impl BackupService {
+    pub async fn create_backup(&self) -> Result<BackupInfo> {
+        let backup_dir = Path::new("/backups");
+        let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
+        let backup_name = format!("rpma_backup_{}", timestamp);
+        let backup_path = backup_dir.join(&backup_name);
+        
+        // Create backup directory
+        fs::create_dir_all(&backup_path)?;
+        
+        // Backup database
+        self.backup_database(&backup_path).await?;
+        
+        // Backup user settings
+        self.backup_settings(&backup_path).await?;
+        
+        // Backup photos
+        self.backup_photos(&backup_path).await?;
+        
+        // Create backup manifest
+        let manifest = BackupManifest {
+            version: env!("CARGO_PKG_VERSION"),
+            created_at: chrono::Utc::now(),
+            items: self.get_backup_items(&backup_path)?,
+            checksum: self.calculate_checksum(&backup_path)?
+        };
+        
+        let manifest_path = backup_path.join("manifest.json");
+        let manifest_json = serde_json::to_string_pretty(&manifest)?;
+        fs::write(&manifest_path, manifest_json)?;
+        
+        // Compress backup
+        self.compress_backup(&backup_path).await?;
+        
+        Ok(BackupInfo {
+            path: backup_path.with_extension("tar.gz"),
+            size: self.get_backup_size(&backup_path)?,
+            checksum: manifest.checksum
+        })
+    }
+}
+```
+
+#### Scheduled Backups
+
+```typescript
+// frontend/src/hooks/useScheduledBackup.ts
+import { useEffect } from 'react';
+
+export const useScheduledBackup = () => {
+  useEffect(() => {
+    // Schedule daily backup at 2 AM
+    const scheduleBackup = () => {
+      const now = new Date();
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(2, 0, 0, 0);
+      
+      const msUntilBackup = tomorrow.getTime() - now.getTime();
+      
+      setTimeout(() => {
+        // Trigger backup
+        invoke('create_system_backup');
+        
+        // Schedule next backup
+        scheduleBackup();
+      }, msUntilBackup);
+    };
+    
+    scheduleBackup();
+  }, []);
+};
+```
+
+## CI/CD Pipeline Enhancements
+
+### Multi-Environment Deployment
+
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy
+
+on:
+  workflow_run:
+    inputs:
+      environment:
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - uses: actions/checkout@v3
+        
+      - name: Configure Environment
+        run: |
+          if [ "${{ github.event.inputs.environment }}" = "production" ]; then
+            echo "NODE_ENV=production" >> .env
+            echo "API_URL=https://api.rpma.com" >> .env
+          else
+            echo "NODE_ENV=staging" >> .env
+            echo "API_URL=https://staging-api.rpma.com" >> .env
+          fi
+        
+      - name: Build Application
+        run: npm run build
+        
+      - name: Deploy to Production
+        if: github.event.inputs.environment == 'production'
+        run: |
+          # Production deployment steps
+          npm run deploy:prod
+          
+      - name: Deploy to Staging
+        if: github.event.inputs.environment == 'staging'
+        run: |
+          # Staging deployment steps
+          npm run deploy:staging
+          
+      - name: Run Smoke Tests
+        run: |
+          # Run automated smoke tests
+          npm run test:smoke
+          
+      - name: Notify Team
+        if: success()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          channel: '#deployments'
+          message: 'Successfully deployed to ${{ github.event.inputs.environment }}'
+```
+
 ---
 
-**Document Version**: 1.0
-**Last Updated**: Based on codebase analysis
+**Document Version**: 2.0
+**Last Updated**: Based on comprehensive codebase analysis

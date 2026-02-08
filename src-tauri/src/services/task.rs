@@ -39,8 +39,8 @@ use crate::db::Database;
 use crate::models::task::*;
 use crate::services::task_client_integration::TaskClientIntegrationService;
 use crate::services::task_constants::convert_to_app_error;
-use crate::services::task_crud::TaskCrudService;
 use crate::services::task_creation::TaskCreationService;
+use crate::services::task_crud::TaskCrudService;
 use crate::services::task_queries::TaskQueriesService;
 use crate::services::task_statistics::TaskStatisticsService;
 use crate::services::task_validation::{validate_status_transition, TaskValidationService};
@@ -175,12 +175,16 @@ impl TaskService {
     /// - Text search across multiple fields
     /// - Pagination with configurable page size
     pub async fn get_tasks_async(&self, query: TaskQuery) -> AppResult<TaskListResponse> {
-        self.queries.get_tasks_async(query).await
+        self.queries
+            .get_tasks_async(query)
+            .await
             .map_err(convert_to_app_error)
     }
 
     pub async fn get_task_async(&self, id: &str) -> AppResult<Option<Task>> {
-        self.queries.get_task_async(id).await
+        self.queries
+            .get_task_async(id)
+            .await
             .map_err(convert_to_app_error)
     }
 
@@ -242,22 +246,26 @@ impl TaskService {
     /// - Average durations
     /// - Overdue task counts
     pub fn get_task_statistics(&self) -> AppResult<TaskStatistics> {
-        self.statistics.get_task_statistics()
+        self.statistics
+            .get_task_statistics()
             .map_err(convert_to_app_error)
     }
 
     pub fn get_completion_rate(&self, days: i32) -> AppResult<f64> {
-        self.statistics.get_completion_rate(days)
+        self.statistics
+            .get_completion_rate(days)
             .map_err(convert_to_app_error)
     }
 
     pub fn get_average_duration_by_status(&self) -> AppResult<Vec<(String, f64)>> {
-        self.statistics.get_average_duration_by_status()
+        self.statistics
+            .get_average_duration_by_status()
             .map_err(convert_to_app_error)
     }
 
     pub fn get_priority_distribution(&self) -> AppResult<Vec<(String, i64)>> {
-        self.statistics.get_priority_distribution()
+        self.statistics
+            .get_priority_distribution()
             .map_err(convert_to_app_error)
     }
 
@@ -292,7 +300,8 @@ impl TaskService {
     /// * `Ok(false)` - Task is not available for assignment
     /// * `Err(AppError)` - Error occurred during validation
     pub fn check_task_availability(&self, task_id: &str) -> AppResult<bool> {
-        self.validation.check_task_availability(task_id)
+        self.validation
+            .check_task_availability(task_id)
             .map_err(convert_to_app_error)
     }
 
@@ -357,13 +366,15 @@ impl TaskService {
 
     /// Check if task dependencies are satisfied
     pub fn check_dependencies_satisfied(&self, task_id: &str) -> AppResult<bool> {
-        self.validation.check_dependencies_satisfied(task_id)
+        self.validation
+            .check_dependencies_satisfied(task_id)
             .map_err(convert_to_app_error)
     }
 
     /// Validate task assignment eligibility
     pub fn validate_assignment(&self, task_id: &str, user_id: &str) -> AppResult<bool> {
-        self.validation.check_assignment_eligibility(task_id, user_id)
+        self.validation
+            .check_assignment_eligibility(task_id, user_id)
             .map_err(convert_to_app_error)
     }
 
@@ -381,7 +392,8 @@ impl TaskService {
 
     /// Validate task availability
     pub fn validate_availability(&self, task_id: &str) -> AppResult<bool> {
-        self.validation.check_task_availability(task_id)
+        self.validation
+            .check_task_availability(task_id)
             .map_err(convert_to_app_error)
     }
 
@@ -421,7 +433,9 @@ impl TaskService {
     ) -> Result<crate::services::task_import::ImportResult, crate::commands::AppError> {
         use crate::services::task_import::TaskImportService;
         let import_service = TaskImportService::new(self.crud.db.clone());
-        import_service.import_from_csv(csv_data, user_id, update_existing).await
+        import_service
+            .import_from_csv(csv_data, user_id, update_existing)
+            .await
     }
 
     /// Export tasks to CSV
@@ -439,7 +453,8 @@ impl TaskService {
     pub fn get_tasks_for_export(
         &self,
         query: TaskQuery,
-    ) -> Result<Vec<crate::services::task_import::TaskWithClientInfo>, crate::commands::AppError> {
+    ) -> Result<Vec<crate::services::task_import::TaskWithClientInfo>, crate::commands::AppError>
+    {
         use crate::services::task_import::TaskImportService;
         let import_service = TaskImportService::new(self.crud.db.clone());
         import_service.get_tasks_for_export(query)

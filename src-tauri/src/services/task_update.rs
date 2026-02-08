@@ -4,8 +4,11 @@
 
 use crate::commands::AppError;
 use crate::db::Database;
-use crate::models::task::{UpdateTaskRequest, Task};
-use crate::services::task_constants::{MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH, MAX_VEHICLE_YEAR, MIN_VEHICLE_YEAR, SINGLE_TASK_TIMEOUT_SECS, TASK_QUERY_COLUMNS};
+use crate::models::task::{Task, UpdateTaskRequest};
+use crate::services::task_constants::{
+    MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH, MAX_VEHICLE_YEAR, MIN_VEHICLE_YEAR,
+    SINGLE_TASK_TIMEOUT_SECS, TASK_QUERY_COLUMNS,
+};
 use crate::services::task_validation::{validate_status_transition, TaskValidationService};
 use chrono::Utc;
 use rusqlite::params;
@@ -85,9 +88,10 @@ impl TaskUpdateService {
                 return Err(AppError::Validation("Title cannot be empty".to_string()));
             }
             if title.len() > MAX_TITLE_LENGTH {
-                return Err(AppError::Validation(
-                    format!("Title must be {} characters or less", MAX_TITLE_LENGTH),
-                ));
+                return Err(AppError::Validation(format!(
+                    "Title must be {} characters or less",
+                    MAX_TITLE_LENGTH
+                )));
             }
             task.title = title.clone();
         }
@@ -98,9 +102,10 @@ impl TaskUpdateService {
     fn apply_description_updates(task: &mut Task, req: &UpdateTaskRequest) -> Result<(), AppError> {
         if let Some(description) = &req.description {
             if description.len() > MAX_DESCRIPTION_LENGTH {
-                return Err(AppError::Validation(
-                    format!("Description must be {} characters or less", MAX_DESCRIPTION_LENGTH),
-                ));
+                return Err(AppError::Validation(format!(
+                    "Description must be {} characters or less",
+                    MAX_DESCRIPTION_LENGTH
+                )));
             }
             task.description = req.description.clone();
         }
@@ -115,20 +120,30 @@ impl TaskUpdateService {
     }
 
     /// Apply status updates with timestamp management
-    fn apply_status_updates(service: &TaskUpdateService, task: &mut Task, req: &UpdateTaskRequest) -> Result<(), AppError> {
+    fn apply_status_updates(
+        service: &TaskUpdateService,
+        task: &mut Task,
+        req: &UpdateTaskRequest,
+    ) -> Result<(), AppError> {
         if let Some(new_status) = &req.status {
             let old_status = task.status.clone();
 
             if let Err(e) = validate_status_transition(&old_status, new_status) {
                 return Err(AppError::Validation(format!(
-                    "Invalid status transition from {:?} to {:?}: {}", old_status, new_status, e
+                    "Invalid status transition from {:?} to {:?}: {}",
+                    old_status, new_status, e
                 )));
             }
 
             task.status = new_status.clone();
 
             match (&old_status, new_status) {
-                (crate::models::task::TaskStatus::Pending | crate::models::task::TaskStatus::Scheduled | crate::models::task::TaskStatus::Assigned, crate::models::task::TaskStatus::InProgress) => {
+                (
+                    crate::models::task::TaskStatus::Pending
+                    | crate::models::task::TaskStatus::Scheduled
+                    | crate::models::task::TaskStatus::Assigned,
+                    crate::models::task::TaskStatus::InProgress,
+                ) => {
                     if task.started_at.is_none() {
                         task.started_at = Some(Utc::now().timestamp_millis());
                     }
@@ -160,9 +175,10 @@ impl TaskUpdateService {
         if let Some(vehicle_year_str) = &req.vehicle_year {
             if let Ok(vehicle_year) = vehicle_year_str.parse::<i32>() {
                 if !(MIN_VEHICLE_YEAR..=MAX_VEHICLE_YEAR).contains(&vehicle_year) {
-                    return Err(AppError::Validation(
-                        format!("Vehicle year must be between {} and {}", MIN_VEHICLE_YEAR, MAX_VEHICLE_YEAR),
-                    ));
+                    return Err(AppError::Validation(format!(
+                        "Vehicle year must be between {} and {}",
+                        MIN_VEHICLE_YEAR, MAX_VEHICLE_YEAR
+                    )));
                 }
             } else {
                 return Err(AppError::Validation(
@@ -184,23 +200,35 @@ impl TaskUpdateService {
     }
 
     /// Apply client updates with existence validation
-    fn apply_client_updates(service: &TaskUpdateService, task: &mut Task, req: &UpdateTaskRequest) -> Result<(), AppError> {
+    fn apply_client_updates(
+        service: &TaskUpdateService,
+        task: &mut Task,
+        req: &UpdateTaskRequest,
+    ) -> Result<(), AppError> {
         if let Some(new_client_id) = &req.client_id {
-            let exists: i64 = service.db.query_single_value(
-                "SELECT COUNT(*) FROM clients WHERE id = ? AND deleted_at IS NULL",
-                params![new_client_id],
-            )
-            .map_err(|e| AppError::Database(format!("Failed to check client existence: {}", e)))?;
+            let exists: i64 = service
+                .db
+                .query_single_value(
+                    "SELECT COUNT(*) FROM clients WHERE id = ? AND deleted_at IS NULL",
+                    params![new_client_id],
+                )
+                .map_err(|e| {
+                    AppError::Database(format!("Failed to check client existence: {}", e))
+                })?;
 
             if exists == 0 {
                 return Err(AppError::Validation(format!(
-                    "Client with ID {} does not exist", new_client_id
+                    "Client with ID {} does not exist",
+                    new_client_id
                 )));
             }
 
             if let Some(old_client_id) = &task.client_id {
                 if old_client_id != new_client_id {
-                    warn!("Moving task {} from client {} to {}", task.id, old_client_id, new_client_id);
+                    warn!(
+                        "Moving task {} from client {} to {}",
+                        task.id, old_client_id, new_client_id
+                    );
                 }
             }
             task.client_id = Some(new_client_id.clone());
@@ -209,12 +237,18 @@ impl TaskUpdateService {
     }
 
     /// Apply technician assignment updates with validation
-    fn apply_technician_updates(service: &TaskUpdateService, task: &mut Task, req: &UpdateTaskRequest) -> Result<(), AppError> {
+    fn apply_technician_updates(
+        service: &TaskUpdateService,
+        task: &mut Task,
+        req: &UpdateTaskRequest,
+    ) -> Result<(), AppError> {
         if let Some(technician_id) = &req.technician_id {
             let validation_service = TaskValidationService::new(service.db.clone());
             validation_service
                 .validate_technician_assignment(technician_id, &task.ppf_zones)
-                .map_err(|e| AppError::Validation(format!("Technician validation failed: {}", e)))?;
+                .map_err(|e| {
+                    AppError::Validation(format!("Technician validation failed: {}", e))
+                })?;
 
             task.technician_id = Some(technician_id.clone());
         }
@@ -372,7 +406,10 @@ impl TaskUpdateService {
             ],
         )
         .map_err(|e| {
-            error!("TaskUpdateService: failed to update task {}: {}", task.id, e);
+            error!(
+                "TaskUpdateService: failed to update task {}: {}",
+                task.id, e
+            );
             format!("Failed to update task: {}", e)
         })?;
 
@@ -424,5 +461,4 @@ impl TaskUpdateService {
             .query_single_as::<Task>(&sql, params![id])
             .map_err(|e| AppError::Database(format!("Failed to get task: {}", e)))
     }
-
 }

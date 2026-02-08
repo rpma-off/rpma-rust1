@@ -1391,7 +1391,263 @@ export default function Loading() {
 }
 ```
 
+## User Flow 11: Material Management
+
+**User**: Administrator, Supervisor
+**Goal**: Manage inventory levels, track material usage, order supplies
+
+### Journey
+
+```
+1. Navigate to /inventory
+2. View material catalog with stock levels
+3. Search/filter materials by type, supplier, stock status
+4. View material details and usage history
+5. Update stock levels (add/remove)
+6. Record material consumption during interventions
+7. Generate reorder reports
+8. Manage supplier information
+```
+
+### Interface States
+
+#### State 1: Material Catalog
+**Location**: `/inventory`
+**UI Elements**:
+- Page header: "Inventory Management"
+- Search bar with filters (type, category, supplier)
+- Material grid/list with stock indicators
+- "Add Material" button
+- Filter options:
+  - Low Stock
+  - Out of Stock
+  - Expired Soon
+  - By Category
+  - By Supplier
+
+**Actions Available**:
+- View material catalog
+- Search materials
+- Filter by stock status
+- Add new material
+- Export inventory list
+
 ---
 
-**Document Version**: 1.0
-**Last Updated**: Based on codebase analysis
+#### State 2: Material Details
+**Location**: `/inventory/[id]`
+**UI Elements**:
+- Material information panel:
+  - Name, SKU, description
+  - Current stock, minimum stock, maximum stock
+  - Supplier information
+  - Location/warehouse
+  - Last updated date
+- Usage history chart
+- "Update Stock" button
+- "Record Consumption" button
+- Related materials section
+
+**Actions Available**:
+- View full material details
+- Update stock level
+- Record consumption
+- View usage history
+- Edit material information
+
+---
+
+#### State 3: Stock Update
+**Location**: Modal/overlay from catalog or details
+**UI Elements**:
+- Update stock form:
+  - Adjustment type: Add, Remove, Set
+  - Quantity input with validation
+  - Reason dropdown (Physical count, Damage, Return, etc.)
+  - Date and time picker
+- Password confirmation for significant changes
+- Preview of new stock level
+
+**Actions Available**:
+- Add stock
+- Remove stock
+- Set stock level
+- Cancel operation
+
+---
+
+### Validation & Error Handling
+
+**Validation Errors**:
+- **Invalid quantity**: `error: "Quantity must be positive"`
+- **Below minimum**: `error: "Stock level below minimum threshold"`
+- **Above maximum**: `error: "Stock level exceeds maximum capacity"`
+
+**Success Criteria**:
+- ✅ Stock updated successfully
+- ✅ Consumption recorded
+- ✅ Material created/updated
+- ✅ Reorder report generated
+
+---
+
+## User Flow 12: Real-Time Collaboration
+
+**User**: All roles (Technician, Supervisor, Admin)
+**Goal**: Stay updated with live changes to tasks and interventions
+
+### Journey
+
+```
+1. Application connects to WebSocket on load
+2. User is notified of connection status
+3. Live updates appear for:
+   - Task status changes
+   - Intervention progress
+   - New messages
+   - System alerts
+4. User can interact with notifications
+5. Automatic refresh of affected data
+6. Conflict resolution for concurrent edits
+```
+
+### Interface States
+
+#### State 1: Connection Status
+**Location**: Top bar indicator
+**UI Elements**:
+- Connection indicator:
+  - Green dot: Connected
+  - Yellow dot: Reconnecting
+  - Red dot: Disconnected
+- Connection status text
+- "Retry Connection" button (if disconnected)
+
+**Actions Available**:
+- View connection status
+- Manually reconnect
+- Test connection
+
+---
+
+#### State 2: Live Notifications
+**Location**: Toast notification area
+**UI Elements**:
+- Toast container for incoming updates:
+  - Task assigned to technician
+  - Intervention step completed
+  - New message received
+  - System alerts
+- Notification with actions:
+  - View task
+  - Acknowledge alert
+  - Dismiss
+
+**Actions Available**:
+- View notification details
+- Navigate to affected item
+- Acknowledge or dismiss
+- View notification history
+
+---
+
+#### State 3: Conflict Resolution
+**Location**: Modal dialog
+**UI Elements**:
+- Conflict warning dialog:
+  - "This item was modified by another user"
+  - Show both versions side by side
+  - "Use my version", "Use their version", "Merge" buttons
+- Detailed comparison view
+- Option to add comment
+
+**Actions Available**:
+- Keep current changes
+- Accept other user's changes
+- Merge changes
+- Cancel and refresh
+
+---
+
+### Success Criteria
+
+- ✅ Connected to WebSocket automatically
+- ✅ Receive updates without page refresh
+- ✅ Clear indication of online/offline status
+- ✅ Conflicts detected and resolved
+- ✅ Notifications received with appropriate actions
+
+---
+
+## User Flow 13: Performance Monitoring
+
+**User**: Administrator
+**Goal**: Monitor system performance and identify optimization opportunities
+
+### Journey
+
+```
+1. Navigate to /settings/performance
+2. View system metrics dashboard
+3. Analyze performance charts
+4. Identify bottlenecks and issues
+5. Apply optimizations
+6. Monitor improvements
+7. Generate performance reports
+```
+
+### Interface States
+
+#### State 1: Performance Dashboard
+**Location**: `/settings/performance`
+**UI Elements**:
+- Real-time metrics:
+  - CPU usage
+  - Memory usage
+  - Database query performance
+  - Response times
+  - Active users
+- Performance charts:
+  - Historical trends
+  - Database size
+  - Cache hit ratios
+- "Optimize Database" button
+- "Clear Cache" button
+
+**Actions Available**:
+- View real-time metrics
+- Analyze historical data
+- Run optimization tasks
+- Export performance reports
+
+---
+
+#### State 2: Optimization Actions
+**Location**: Modal/dialog
+**UI Elements**:
+- Progress indicators for:
+  - Database vacuum
+  - Cache clearing
+  - Index rebuilding
+  - Log cleanup
+- Estimated completion time
+- "Cancel" button
+
+**Actions Available**:
+- Start optimization
+- Monitor progress
+- Cancel operation
+
+---
+
+### Success Criteria
+
+- ✅ Performance metrics displayed in real-time
+- ✅ Historical data available for analysis
+- ✅ Optimizations can be triggered
+- ✅ Reports generated for management review
+
+---
+
+**Document Version**: 2.0
+**Last Updated**: Based on comprehensive codebase analysis

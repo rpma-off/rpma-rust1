@@ -5,7 +5,7 @@
 
 use crate::commands::AppError;
 use crate::db::Database;
-use crate::models::task::{CreateTaskRequest, Task, TaskStatus, TaskPriority, TaskQuery};
+use crate::models::task::{CreateTaskRequest, Task, TaskPriority, TaskQuery, TaskStatus};
 use crate::services::task_client_integration::TaskClientIntegrationService;
 use std::sync::Arc;
 use tracing::{debug, info};
@@ -38,7 +38,10 @@ impl TaskImportService {
     /// Create a new TaskImportService
     pub fn new(db: Arc<Database>) -> Self {
         let client_integration = TaskClientIntegrationService::new(db.clone());
-        Self { db, client_integration }
+        Self {
+            db,
+            client_integration,
+        }
     }
 
     /// Import tasks from CSV data
@@ -160,8 +163,16 @@ impl TaskImportService {
                 custom_ppf_zones: None,
                 technician_id: Some(user_id.to_string()),
                 client_id: None,
-                customer_name: if !client_name.is_empty() { Some(client_name.to_string()) } else { None },
-                customer_email: if !client_email.is_empty() { Some(client_email.to_string()) } else { None },
+                customer_name: if !client_name.is_empty() {
+                    Some(client_name.to_string())
+                } else {
+                    None
+                },
+                customer_email: if !client_email.is_empty() {
+                    Some(client_email.to_string())
+                } else {
+                    None
+                },
                 customer_phone: None,
                 customer_address: None,
                 start_time: None,
@@ -187,8 +198,10 @@ impl TaskImportService {
             // Store for return (actual creation happens at higher level)
         }
 
-        info!("CSV import completed: {} processed, {} successful, {} failed",
-            total_processed, successful, failed);
+        info!(
+            "CSV import completed: {} processed, {} successful, {} failed",
+            total_processed, successful, failed
+        );
 
         Ok(ImportResult {
             total_processed,
@@ -219,7 +232,9 @@ impl TaskImportService {
         let mut csv_content = String::new();
 
         // Add header
-        csv_content.push_str("ID,Title,Description,Status,Priority,Client Name,Client Email,Created At,Updated At");
+        csv_content.push_str(
+            "ID,Title,Description,Status,Priority,Client Name,Client Email,Created At,Updated At",
+        );
         if include_client_data {
             csv_content.push_str(",Client Phone,Client Address");
         }
@@ -228,12 +243,24 @@ impl TaskImportService {
         // Add data rows
         for task_info in tasks {
             let task = &task_info.task;
-            
+
             // Escape quotes in fields
             let title_escaped = task.title.replace('"', "\"\"");
-            let description_escaped = task.description.as_deref().unwrap_or("").replace('"', "\"\"");
-            let client_name_escaped = task_info.client_name.as_deref().unwrap_or("N/A").replace('"', "\"\"");
-            let client_email_escaped = task_info.client_email.as_deref().unwrap_or("N/A").replace('"', "\"\"");
+            let description_escaped = task
+                .description
+                .as_deref()
+                .unwrap_or("")
+                .replace('"', "\"\"");
+            let client_name_escaped = task_info
+                .client_name
+                .as_deref()
+                .unwrap_or("N/A")
+                .replace('"', "\"\"");
+            let client_email_escaped = task_info
+                .client_email
+                .as_deref()
+                .unwrap_or("N/A")
+                .replace('"', "\"\"");
 
             csv_content.push_str(&format!(
                 "\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",\"{}\"",
@@ -249,12 +276,19 @@ impl TaskImportService {
             ));
 
             if include_client_data {
-                let client_phone_escaped = task_info.client_phone.as_deref().unwrap_or("N/A").replace('"', "\"\"");
-                let client_address_escaped = task_info.client_address.as_deref().unwrap_or("N/A").replace('"', "\"\"");
+                let client_phone_escaped = task_info
+                    .client_phone
+                    .as_deref()
+                    .unwrap_or("N/A")
+                    .replace('"', "\"\"");
+                let client_address_escaped = task_info
+                    .client_address
+                    .as_deref()
+                    .unwrap_or("N/A")
+                    .replace('"', "\"\"");
                 csv_content.push_str(&format!(
                     ",\"{}\",\"{}\"",
-                    client_phone_escaped,
-                    client_address_escaped
+                    client_phone_escaped, client_address_escaped
                 ));
             }
 
@@ -266,20 +300,29 @@ impl TaskImportService {
     }
 
     /// Get tasks for export with client information
-    pub fn get_tasks_for_export(&self, query: TaskQuery) -> Result<Vec<TaskWithClientInfo>, AppError> {
-        let result = self.client_integration.get_tasks_with_clients(query)
+    pub fn get_tasks_for_export(
+        &self,
+        query: TaskQuery,
+    ) -> Result<Vec<TaskWithClientInfo>, AppError> {
+        let result = self
+            .client_integration
+            .get_tasks_with_clients(query)
             .map_err(|e| AppError::Database(format!("Failed to get tasks for export: {}", e)))?;
 
-        let tasks_with_info: Vec<TaskWithClientInfo> = result.data.into_iter().map(|twc| {
-            let client_info = twc.client_info;
-            TaskWithClientInfo {
-                task: twc.task,
-                client_name: client_info.as_ref().map(|c| c.name.clone()),
-                client_email: client_info.as_ref().and_then(|c| c.email.clone()),
-                client_phone: client_info.as_ref().and_then(|c| c.phone.clone()),
-                client_address: None, // ClientInfo doesn't have address_street field
-            }
-        }).collect();
+        let tasks_with_info: Vec<TaskWithClientInfo> = result
+            .data
+            .into_iter()
+            .map(|twc| {
+                let client_info = twc.client_info;
+                TaskWithClientInfo {
+                    task: twc.task,
+                    client_name: client_info.as_ref().map(|c| c.name.clone()),
+                    client_email: client_info.as_ref().and_then(|c| c.email.clone()),
+                    client_phone: client_info.as_ref().and_then(|c| c.phone.clone()),
+                    client_address: None, // ClientInfo doesn't have address_street field
+                }
+            })
+            .collect();
 
         Ok(tasks_with_info)
     }

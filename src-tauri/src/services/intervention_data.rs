@@ -132,27 +132,28 @@ impl InterventionDataService {
         intervention: &Intervention,
     ) -> InterventionResult<Vec<InterventionStep>> {
         // Use synchronous version of workflow strategy to avoid runtime creation
-        use crate::services::workflow_strategy::{WorkflowStrategyFactory, WorkflowContext};
-        
+        use crate::services::workflow_strategy::{WorkflowContext, WorkflowStrategyFactory};
+
         let workflow_context = WorkflowContext {
             intervention: intervention.clone(),
             user_id: "system".to_string(), // Not used in this context
-            environment_conditions: None, // Not available in this context
+            environment_conditions: None,  // Not available in this context
         };
-        
+
         let strategy = WorkflowStrategyFactory::create_strategy(intervention, &workflow_context);
-        
+
         // Use synchronous version instead of creating runtime
-        let workflow_result = strategy.initialize_workflow_sync(intervention, &workflow_context)
+        let workflow_result = strategy
+            .initialize_workflow_sync(intervention, &workflow_context)
             .map_err(|e| {
                 InterventionError::Database(format!("Failed to initialize workflow: {}", e))
             })?;
-        
+
         // Save steps to database
         for step in &workflow_result.steps {
             self.save_step_with_tx(tx, step)?;
         }
-        
+
         Ok(workflow_result.steps)
     }
 

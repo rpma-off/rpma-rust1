@@ -3,8 +3,8 @@
 //! Provides consistent database access patterns for AuditLog entities.
 
 use crate::db::Database;
-use crate::repositories::base::{Repository, RepoError, RepoResult};
-use crate::repositories::cache::{Cache, CacheKeyBuilder, ttl};
+use crate::repositories::base::{RepoError, RepoResult, Repository};
+use crate::repositories::cache::{ttl, Cache, CacheKeyBuilder};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use rusqlite::params;
@@ -246,16 +246,18 @@ impl crate::db::FromSqlRow for AuditLog {
         };
 
         let timestamp_ms: i64 = row.get("timestamp")?;
-        let timestamp = DateTime::from_timestamp_millis(timestamp_ms)
-            .unwrap_or_else(|| Utc::now());
+        let timestamp = DateTime::from_timestamp_millis(timestamp_ms).unwrap_or_else(|| Utc::now());
 
-        let previous_state = row.get::<_, Option<String>>("previous_state")?
+        let previous_state = row
+            .get::<_, Option<String>>("previous_state")?
             .and_then(|s| serde_json::from_str(&s).ok());
 
-        let new_state = row.get::<_, Option<String>>("new_state")?
+        let new_state = row
+            .get::<_, Option<String>>("new_state")?
             .and_then(|s| serde_json::from_str(&s).ok());
 
-        let metadata = row.get::<_, Option<String>>("metadata")?
+        let metadata = row
+            .get::<_, Option<String>>("metadata")?
             .and_then(|s| serde_json::from_str(&s).ok());
 
         Ok(AuditLog {
@@ -356,7 +358,9 @@ impl AuditRepository {
 
     /// Find audit logs by user ID
     pub async fn find_by_user(&self, user_id: &str, limit: i64) -> RepoResult<Vec<AuditLog>> {
-        let cache_key = self.cache_key_builder.query(&["user", user_id, &limit.to_string()]);
+        let cache_key = self
+            .cache_key_builder
+            .query(&["user", user_id, &limit.to_string()]);
 
         if let Some(logs) = self.cache.get::<Vec<AuditLog>>(&cache_key) {
             return Ok(logs);
@@ -377,10 +381,11 @@ impl AuditRepository {
                 "#,
                 params![user_id, limit],
             )
-            .map_err(|e| RepoError::Database(format!("Failed to find audit logs by user: {}", e)))?;
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to find audit logs by user: {}", e))
+            })?;
 
-        self.cache
-            .set(&cache_key, logs.clone(), ttl::SHORT);
+        self.cache.set(&cache_key, logs.clone(), ttl::SHORT);
 
         Ok(logs)
     }
@@ -392,9 +397,12 @@ impl AuditRepository {
         resource_id: &str,
         limit: i64,
     ) -> RepoResult<Vec<AuditLog>> {
-        let cache_key = self
-            .cache_key_builder
-            .query(&["resource", resource_type, resource_id, &limit.to_string()]);
+        let cache_key = self.cache_key_builder.query(&[
+            "resource",
+            resource_type,
+            resource_id,
+            &limit.to_string(),
+        ]);
 
         if let Some(logs) = self.cache.get::<Vec<AuditLog>>(&cache_key) {
             return Ok(logs);
@@ -415,10 +423,11 @@ impl AuditRepository {
                 "#,
                 params![resource_type, resource_id, limit],
             )
-            .map_err(|e| RepoError::Database(format!("Failed to find audit logs by resource: {}", e)))?;
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to find audit logs by resource: {}", e))
+            })?;
 
-        self.cache
-            .set(&cache_key, logs.clone(), ttl::SHORT);
+        self.cache.set(&cache_key, logs.clone(), ttl::SHORT);
 
         Ok(logs)
     }
@@ -430,9 +439,9 @@ impl AuditRepository {
         limit: i64,
     ) -> RepoResult<Vec<AuditLog>> {
         let event_type_str = event_type.to_str();
-        let cache_key = self
-            .cache_key_builder
-            .query(&["event_type", event_type_str, &limit.to_string()]);
+        let cache_key =
+            self.cache_key_builder
+                .query(&["event_type", event_type_str, &limit.to_string()]);
 
         if let Some(logs) = self.cache.get::<Vec<AuditLog>>(&cache_key) {
             return Ok(logs);
@@ -453,10 +462,11 @@ impl AuditRepository {
                 "#,
                 params![event_type_str.to_string(), limit],
             )
-            .map_err(|e| RepoError::Database(format!("Failed to find audit logs by event type: {}", e)))?;
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to find audit logs by event type: {}", e))
+            })?;
 
-        self.cache
-            .set(&cache_key, logs.clone(), ttl::SHORT);
+        self.cache.set(&cache_key, logs.clone(), ttl::SHORT);
 
         Ok(logs)
     }
@@ -513,7 +523,8 @@ impl AuditRepository {
                 "DELETE FROM audit_events WHERE timestamp < ?",
                 params![date.timestamp_millis()],
             )
-            .map_err(|e| RepoError::Database(format!("Failed to delete old audit logs: {}", e)))? as i64;
+            .map_err(|e| RepoError::Database(format!("Failed to delete old audit logs: {}", e)))?
+            as i64;
 
         self.cache.clear();
         Ok(rows_affected)
@@ -550,8 +561,7 @@ impl Repository<AuditLog, String> for AuditRepository {
             .map_err(|e| RepoError::Database(format!("Failed to find audit log by id: {}", e)))?;
 
         if let Some(ref log) = log {
-            self.cache
-                .set(&cache_key, log.clone(), ttl::MEDIUM);
+            self.cache.set(&cache_key, log.clone(), ttl::MEDIUM);
         }
 
         Ok(log)
@@ -580,8 +590,7 @@ impl Repository<AuditLog, String> for AuditRepository {
             )
             .map_err(|e| RepoError::Database(format!("Failed to find all audit logs: {}", e)))?;
 
-        self.cache
-            .set(&cache_key, logs.clone(), ttl::SHORT);
+        self.cache.set(&cache_key, logs.clone(), ttl::SHORT);
 
         Ok(logs)
     }
@@ -649,11 +658,9 @@ impl Repository<AuditLog, String> for AuditRepository {
     async fn delete_by_id(&self, id: String) -> RepoResult<bool> {
         let rows_affected = self
             .db
-            .execute(
-                "DELETE FROM audit_events WHERE id = ?",
-                params![id],
-            )
-            .map_err(|e| RepoError::Database(format!("Failed to delete audit log: {}", e)))? as i64;
+            .execute("DELETE FROM audit_events WHERE id = ?", params![id])
+            .map_err(|e| RepoError::Database(format!("Failed to delete audit log: {}", e)))?
+            as i64;
 
         if rows_affected > 0 {
             self.invalidate_cache();
@@ -669,7 +676,9 @@ impl Repository<AuditLog, String> for AuditRepository {
                 "SELECT COUNT(*) FROM audit_events WHERE id = ?",
                 params![id],
             )
-            .map_err(|e| RepoError::Database(format!("Failed to check audit log existence: {}", e)))?;
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to check audit log existence: {}", e))
+            })?;
 
         Ok(count > 0)
     }

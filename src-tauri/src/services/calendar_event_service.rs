@@ -5,7 +5,7 @@
 use crate::commands::{AppError, AppResult};
 use crate::db::Database;
 use crate::models::calendar_event::{CalendarEvent, CreateEventInput, UpdateEventInput};
-use crate::repositories::{CalendarEventRepository, base::Repository};
+use crate::repositories::{base::Repository, CalendarEventRepository};
 use std::sync::Arc;
 
 /// Calendar event service for business logic operations

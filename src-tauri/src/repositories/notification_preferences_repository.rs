@@ -4,8 +4,8 @@
 
 use crate::db::Database;
 use crate::models::notification::NotificationPreferences;
-use crate::repositories::base::{Repository, RepoError, RepoResult};
-use crate::repositories::cache::{Cache, CacheKeyBuilder, ttl};
+use crate::repositories::base::{RepoError, RepoResult, Repository};
+use crate::repositories::cache::{ttl, Cache, CacheKeyBuilder};
 use async_trait::async_trait;
 use rusqlite::params;
 use std::sync::Arc;
@@ -65,19 +65,23 @@ impl NotificationPreferencesQuery {
 
     fn validate_sort_column(sort_by: &str) -> Result<String, RepoError> {
         let allowed_columns = [
-            "created_at", "updated_at", "user_id", "email_enabled",
-            "sms_enabled", "in_app_enabled", "quiet_hours_enabled"
+            "created_at",
+            "updated_at",
+            "user_id",
+            "email_enabled",
+            "sms_enabled",
+            "in_app_enabled",
+            "quiet_hours_enabled",
         ];
-        allowed_columns.iter()
+        allowed_columns
+            .iter()
             .find(|&&col| col == sort_by)
             .map(|s| s.to_string())
             .ok_or_else(|| RepoError::Validation(format!("Invalid sort column: {}", sort_by)))
     }
 
     fn build_order_by_clause(&self) -> Result<String, RepoError> {
-        let sort_by = Self::validate_sort_column(
-            self.sort_by.as_deref().unwrap_or("created_at")
-        )?;
+        let sort_by = Self::validate_sort_column(self.sort_by.as_deref().unwrap_or("created_at"))?;
         let sort_order = match self.sort_order.as_deref() {
             Some("ASC") => "ASC",
             Some("DESC") => "DESC",
@@ -111,7 +115,10 @@ impl NotificationPreferencesRepository {
     }
 
     /// Find preferences by user ID
-    pub async fn find_by_user_id(&self, user_id: String) -> RepoResult<Option<NotificationPreferences>> {
+    pub async fn find_by_user_id(
+        &self,
+        user_id: String,
+    ) -> RepoResult<Option<NotificationPreferences>> {
         let cache_key = self.cache_key_builder.id(&user_id);
 
         if let Some(prefs) = self.cache.get::<NotificationPreferences>(&cache_key) {
@@ -124,7 +131,9 @@ impl NotificationPreferencesRepository {
                 "SELECT * FROM notification_preferences WHERE user_id = ?",
                 params![user_id],
             )
-            .map_err(|e| RepoError::Database(format!("Failed to find preferences by user: {}", e)))?;
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to find preferences by user: {}", e))
+            })?;
 
         if let Some(ref prefs) = prefs {
             self.cache.set(&cache_key, prefs.clone(), ttl::LONG);
@@ -173,7 +182,8 @@ impl NotificationPreferencesRepository {
 
         self.invalidate_cache(&user_id);
 
-        self.find_by_user_id(user_id).await?
+        self.find_by_user_id(user_id)
+            .await?
             .ok_or_else(|| RepoError::NotFound("Preferences not found after update".to_string()))
     }
 
@@ -202,7 +212,8 @@ impl NotificationPreferencesRepository {
 
         self.invalidate_cache(&user_id);
 
-        self.find_by_user_id(user_id).await?
+        self.find_by_user_id(user_id)
+            .await?
             .ok_or_else(|| RepoError::NotFound("Preferences not found after update".to_string()))
     }
 
@@ -231,7 +242,8 @@ impl NotificationPreferencesRepository {
 
         self.invalidate_cache(&user_id);
 
-        self.find_by_user_id(user_id).await?
+        self.find_by_user_id(user_id)
+            .await?
             .ok_or_else(|| RepoError::NotFound("Preferences not found after update".to_string()))
     }
 
@@ -262,12 +274,16 @@ impl NotificationPreferencesRepository {
 
         self.invalidate_cache(&user_id);
 
-        self.find_by_user_id(user_id).await?
+        self.find_by_user_id(user_id)
+            .await?
             .ok_or_else(|| RepoError::NotFound("Preferences not found after update".to_string()))
     }
 
     /// Search preferences with query
-    pub async fn search(&self, query: NotificationPreferencesQuery) -> RepoResult<Vec<NotificationPreferences>> {
+    pub async fn search(
+        &self,
+        query: NotificationPreferencesQuery,
+    ) -> RepoResult<Vec<NotificationPreferences>> {
         let (where_clause, where_params) = query.build_where_clause();
         let order_by = query.build_order_by_clause().unwrap_or_else(|e| {
             eprintln!("Invalid order clause, using default: {}", e);
@@ -303,7 +319,10 @@ impl NotificationPreferencesRepository {
     pub async fn count(&self, query: NotificationPreferencesQuery) -> RepoResult<i64> {
         let (where_clause, where_params) = query.build_where_clause();
 
-        let sql = format!("SELECT COUNT(*) as count FROM notification_preferences {}", where_clause);
+        let sql = format!(
+            "SELECT COUNT(*) as count FROM notification_preferences {}",
+            where_clause
+        );
         let params = rusqlite::params_from_iter(where_params);
 
         let count = self
@@ -407,7 +426,11 @@ impl Repository<NotificationPreferences, String> for NotificationPreferencesRepo
                         if entity.client_created { 1 } else { 0 },
                         if entity.client_updated { 1 } else { 0 },
                         if entity.system_alerts { 1 } else { 0 },
-                        if entity.maintenance_notifications { 1 } else { 0 },
+                        if entity.maintenance_notifications {
+                            1
+                        } else {
+                            0
+                        },
                         if entity.quiet_hours_enabled { 1 } else { 0 },
                         entity.quiet_hours_start,
                         entity.quiet_hours_end,
@@ -442,7 +465,11 @@ impl Repository<NotificationPreferences, String> for NotificationPreferencesRepo
                         if entity.client_created { 1 } else { 0 },
                         if entity.client_updated { 1 } else { 0 },
                         if entity.system_alerts { 1 } else { 0 },
-                        if entity.maintenance_notifications { 1 } else { 0 },
+                        if entity.maintenance_notifications {
+                            1
+                        } else {
+                            0
+                        },
                         if entity.quiet_hours_enabled { 1 } else { 0 },
                         entity.quiet_hours_start,
                         entity.quiet_hours_end,
@@ -458,14 +485,18 @@ impl Repository<NotificationPreferences, String> for NotificationPreferencesRepo
         self.invalidate_cache(&entity.user_id);
         self.invalidate_all_cache();
 
-        self.find_by_id(entity.id).await?
+        self.find_by_id(entity.id)
+            .await?
             .ok_or_else(|| RepoError::NotFound("Preferences not found after save".to_string()))
     }
 
     async fn delete_by_id(&self, id: String) -> RepoResult<bool> {
         let result = self
             .db
-            .execute("DELETE FROM notification_preferences WHERE id = ?", params![id])
+            .execute(
+                "DELETE FROM notification_preferences WHERE id = ?",
+                params![id],
+            )
             .map_err(|e| RepoError::Database(format!("Failed to delete preferences: {}", e)))?;
 
         self.cache.remove(&self.cache_key_builder.id(&id));
@@ -477,8 +508,13 @@ impl Repository<NotificationPreferences, String> for NotificationPreferencesRepo
     async fn exists_by_id(&self, id: String) -> RepoResult<bool> {
         let exists = self
             .db
-            .query_single_value::<i64>("SELECT COUNT(*) FROM notification_preferences WHERE id = ?", params![id])
-            .map_err(|e| RepoError::Database(format!("Failed to check preferences existence: {}", e)))?;
+            .query_single_value::<i64>(
+                "SELECT COUNT(*) FROM notification_preferences WHERE id = ?",
+                params![id],
+            )
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to check preferences existence: {}", e))
+            })?;
 
         Ok(exists > 0)
     }
@@ -666,4 +702,3 @@ mod tests {
         assert!(!updated.task_overdue);
     }
 }
-

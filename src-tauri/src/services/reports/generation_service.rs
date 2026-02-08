@@ -3,7 +3,7 @@
 //! This service handles the business logic for generating reports
 //! with specific formatting and processing.
 
-use crate::commands::{AppResult};
+use crate::commands::AppResult;
 use crate::db::Database;
 use crate::models::reports::*;
 

@@ -16,12 +16,20 @@ pub async fn generate_intervention_pdf_report(
     session_token: String,
     state: AppState<'_>,
 ) -> AppResult<crate::models::reports::InterventionReportResult> {
-    info!("Generating comprehensive intervention PDF report for: {}", intervention_id);
+    info!(
+        "Generating comprehensive intervention PDF report for: {}",
+        intervention_id
+    );
 
     let current_user = authenticate!(&session_token, &state);
 
     // Get complete intervention data
-    let intervention_data = match crate::commands::reports::export::get_intervention_with_details(&intervention_id, &state.db).await {
+    let intervention_data = match crate::commands::reports::export::get_intervention_with_details(
+        &intervention_id,
+        &state.db,
+    )
+    .await
+    {
         Ok(data) => data,
         Err(e) => {
             error!("Failed to get intervention data for PDF report: {}", e);
@@ -31,7 +39,8 @@ pub async fn generate_intervention_pdf_report(
 
     // Check permissions (technician can only access their own interventions)
     if !matches!(current_user.role, UserRole::Admin | UserRole::Supervisor)
-        && intervention_data.intervention.technician_id != Some(current_user.user_id.clone()) {
+        && intervention_data.intervention.technician_id != Some(current_user.user_id.clone())
+    {
         return Err(crate::commands::errors::AppError::Authorization(
             "You can only generate PDF reports for your own interventions".to_string(),
         ));
@@ -42,8 +51,7 @@ pub async fn generate_intervention_pdf_report(
         std::path::PathBuf::from(custom_path)
     } else {
         // Use downloads directory with filename
-        let downloads_dir = dirs::download_dir()
-            .unwrap_or_else(|| std::env::temp_dir());
+        let downloads_dir = dirs::download_dir().unwrap_or_else(|| std::env::temp_dir());
         downloads_dir.join(format!("intervention-report-{}.pdf", intervention_id))
     };
 
@@ -95,9 +103,10 @@ pub async fn generate_intervention_pdf_report(
         }
         Err(e) => {
             tracing::error!("Failed to generate PDF report: {}", e);
-            Err(crate::commands::AppError::Internal(
-                format!("Failed to generate PDF report: {}", e)
-            ))
+            Err(crate::commands::AppError::Internal(format!(
+                "Failed to generate PDF report: {}",
+                e
+            )))
         }
     }
 }
@@ -105,20 +114,22 @@ pub async fn generate_intervention_pdf_report(
 /// Test PDF generation with minimal content
 #[tauri::command]
 #[instrument(skip(_state))]
-pub async fn test_pdf_generation(
-    output_path: String,
-    _state: AppState<'_>,
-) -> AppResult<String> {
+pub async fn test_pdf_generation(output_path: String, _state: AppState<'_>) -> AppResult<String> {
     tracing::info!("Testing PDF generation with minimal content");
 
     let output_path = std::path::PathBuf::from(output_path);
 
-    let result = crate::services::pdf_report::InterventionPdfReport::test_generate_minimal(&output_path).await;
+    let result =
+        crate::services::pdf_report::InterventionPdfReport::test_generate_minimal(&output_path)
+            .await;
 
     match result {
         Ok(_) => {
             tracing::info!("Test PDF generation successful");
-            Ok(format!("Test PDF generated successfully at: {:?}", output_path))
+            Ok(format!(
+                "Test PDF generated successfully at: {:?}",
+                output_path
+            ))
         }
         Err(e) => {
             tracing::error!("Test PDF generation failed: {}", e);

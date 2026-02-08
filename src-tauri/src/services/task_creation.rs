@@ -4,7 +4,7 @@
 
 use crate::commands::AppError;
 use crate::db::Database;
-use crate::models::task::{CreateTaskRequest, Task, TaskStatus, TaskPriority};
+use crate::models::task::{CreateTaskRequest, Task, TaskPriority, TaskStatus};
 use crate::services::task_validation::TaskValidationService;
 use crate::services::validation::ValidationService;
 use chrono::Utc;
@@ -69,7 +69,9 @@ impl TaskCreationService {
             let validation_service = TaskValidationService::new(self.db.clone());
             validation_service
                 .validate_technician_assignment(technician_id, &Some(ppf_zones.clone()))
-                .map_err(|e| AppError::Validation(format!("Technician validation failed: {}", e)))?;
+                .map_err(|e| {
+                    AppError::Validation(format!("Technician validation failed: {}", e))
+                })?;
         }
 
         // Generate unique task number if not provided
@@ -286,16 +288,7 @@ impl TaskCreationService {
                 priority, user_id, created_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             "#,
-            params![
-                "create",
-                "task",
-                task.id,
-                task_json,
-                "pending",
-                5,
-                user_id,
-                now_millis,
-            ],
+            params!["create", "task", task.id, task_json, "pending", 5, user_id, now_millis,],
         ) {
             error!("Failed to add task {} to sync queue: {}", task.id, e);
             // Non-fatal error - task was created successfully, just log the error

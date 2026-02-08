@@ -1746,7 +1746,253 @@ Validate migration system:
 npm run validate-migration-system
 ```
 
+### Migration System Details
+
+#### Migration Runner Implementation
+
+```rust
+// src-tauri/src/db/migrations.rs
+pub struct MigrationRunner {
+    db: Arc<AsyncDatabase>,
+    migrations: Vec<Box<dyn Migration>>,
+}
+
+impl MigrationRunner {
+    pub async fn run_migrations(&self) -> Result<MigrationReport> {
+        // Ensure schema_version table exists
+        self.ensure_schema_table().await?;
+        
+        // Get current version
+        let current_version = self.get_current_version().await?;
+        
+        // Get pending migrations
+        let pending_migrations = self.get_pending_migrations(current_version).await?;
+        
+        // Run each migration in transaction
+        for migration in pending_migrations {
+            let tx = self.db.begin().await?;
+            
+            // Run migration
+            migration.up(&tx).await?;
+            
+            // Update version
+            self.update_version(&tx, &migration.version()).await?;
+            
+            tx.commit().await?;
+        }
+        
+        Ok(MigrationReport {
+            migrations_run: pending_migrations.len(),
+            final_version: self.get_current_version().await?,
+        })
+    }
+}
+```
+
+#### Migration Validation
+
+```rust
+// Validate migration integrity
+pub fn validate_migration(migration: &str) -> Result<ValidationReport> {
+    let checks = vec![
+        ("SELECT", "No SELECT statements in migrations"),
+        ("DROP TABLE", "Drops must be in down() method"),
+        ("PRAGMA", "PRAGMA changes go in main.rs, not migrations"),
+    ];
+    
+    for (pattern, message) in checks {
+        if migration.to_uppercase().contains(pattern) {
+            return Err(ValidationError::new(message));
+        }
+    }
+    
+    Ok(ValidationReport::success())
+}
+```
+
+### Performance Optimization
+
+#### Index Strategy
+
+The database uses a comprehensive indexing strategy:
+
+```sql
+-- Composite indexes for common queries
+CREATE INDEX idx_tasks_technician_status_scheduled 
+ON tasks(technician_id, status, scheduled_date);
+
+-- Partial indexes for filtered queries
+CREATE INDEX idx_tasks_active_only 
+ON tasks(id, technician_id, priority, scheduled_date) 
+WHERE status IN ('pending', 'in_progress', 'assigned');
+
+-- Covering indexes to avoid table lookups
+CREATE INDEX idx_interventions_cover 
+ON interventions(task_id, status) 
+INCLUDE (started_at, completed_at, technician_id);
+```
+
+#### Query Optimization
+
+```sql
+-- Material stock queries
+SELECT m.*, COALESCE(SUM(mc.quantity_used), 0) as used_quantity
+FROM materials m
+LEFT JOIN material_consumption mc ON m.id = mc.material_id
+GROUP BY m.id;
+
+-- Task statistics with CTE
+WITH task_stats AS (
+  SELECT 
+    client_id,
+    COUNT(*) as total_tasks,
+    SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_tasks,
+    AVG(actual_duration) FILTER (WHERE status = 'completed') as avg_duration
+  FROM tasks
+  WHERE deleted_at IS NULL
+  GROUP BY client_id
+)
+UPDATE clients c
+SET total_tasks = ts.total_tasks,
+    completed_tasks = ts.completed_tasks,
+    avg_task_duration = ts.avg_duration
+FROM task_stats ts
+WHERE c.id = ts.client_id;
+```
+
+### Sync Queue Implementation
+
+#### Offline-First Architecture
+
+```sql
+-- Sync queue supports dependencies
+CREATE TABLE sync_queue (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    operation_type TEXT NOT NULL, -- create, update, delete
+    entity_type TEXT NOT NULL,   -- task, client, intervention, etc.
+    entity_id TEXT NOT NULL,
+    data TEXT NOT NULL,           -- JSON payload
+    dependencies TEXT,             -- JSON array of dependent operations
+    priority INTEGER DEFAULT 0,   -- Higher number = higher priority
+    retry_count INTEGER DEFAULT 0,
+    max_retries INTEGER DEFAULT 3,
+    status TEXT DEFAULT 'pending',
+    error_message TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+);
+
+-- Index for processing order
+CREATE INDEX idx_sync_queue_status_priority 
+ON sync_queue(status, priority DESC, created_at);
+```
+
+#### Sync Processing Logic
+
+```rust
+// src-tauri/src/sync/queue.rs
+impl SyncQueue {
+    pub async fn process_queue(&self) -> Result<Vec<SyncResult>> {
+        // Get batch of pending operations
+        let operations = self.get_pending_batch(100).await?;
+        
+        let mut results = Vec::new();
+        
+        for operation in operations {
+            // Check dependencies
+            if !self.are_dependencies_satisfied(&operation).await? {
+                continue; // Skip for now
+            }
+            
+            // Process operation
+            match self.process_operation(&operation).await {
+                Ok(result) => {
+                    self.mark_completed(operation.id).await?;
+                    results.push(result);
+                }
+                Err(e) => {
+                    self.mark_failed(operation.id, &e.to_string()).await?;
+                }
+            }
+        }
+        
+        Ok(results)
+    }
+}
+```
+
+### Version Control
+
+#### Schema Version Table
+
+```sql
+CREATE TABLE schema_version (
+    version INTEGER PRIMARY KEY,
+    applied_at INTEGER NOT NULL,
+    migration_hash TEXT NOT NULL, -- SHA256 of migration content
+    description TEXT,
+    migration_time_ms INTEGER  -- Time taken to apply migration
+);
+```
+
+#### Current Schema Details
+
+- **Current Version**: 27
+- **Total Tables**: 21
+- **Total Migrations**: 27
+- **Schema Size**: ~1249 lines of SQL
+
+### Database Size Management
+
+#### Automatic Vacuum
+
+```rust
+// src-tauri/src/db/connection.rs
+impl AsyncDatabase {
+    pub async fn auto_vacuum(&self) -> Result<()> {
+        // Check if vacuum is needed (every 100MB of changes)
+        let page_count = self.query_one::<i64>(
+            "PRAGMA page_count",
+            &[]
+        ).await?;
+        
+        let changes_since_vacuum = self.query_one::<i64>(
+            "SELECT changes FROM pragma_user_version()",
+            &[]
+        ).await?;
+        
+        if changes_since_vacuum > 100_000_000 / 4096 { // ~100MB
+            self.execute("VACUUM", &[]).await?;
+            self.execute("PRAGMA user_version = 0", &[]).await?;
+        }
+        
+        Ok(())
+    }
+}
+```
+
+#### Size Monitoring
+
+```sql
+-- Database size query
+SELECT 
+    page_count * page_size as database_size_bytes,
+    (page_count * page_size) / 1024.0 / 1024.0 as database_size_mb,
+    (page_count * page_size) / 1024.0 / 1024.0 / 1024.0 as database_size_gb
+FROM pragma_page_count(), pragma_page_size();
+
+-- Table sizes
+SELECT 
+    name,
+    COUNT(*) as row_count,
+    SUM(LENGTH(CAST(name AS BLOB))) as name_size,
+    SUM(LENGTH(sql)) as sql_size
+FROM sqlite_master 
+WHERE type = 'table' 
+GROUP BY name;
+```
+
 ---
 
-**Document Version**: 1.0
-**Last Updated**: Based on codebase analysis
+**Document Version**: 2.0
+**Last Updated**: Based on comprehensive codebase analysis

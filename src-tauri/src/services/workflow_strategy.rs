@@ -3,9 +3,9 @@
 //! This module defines the strategy pattern for different workflow types in the PPF intervention system.
 //! It allows for flexible workflow definitions that can be selected at runtime based on the intervention type.
 
-use crate::models::step::{InterventionStep, StepType};
-use crate::models::intervention::Intervention;
 use crate::db::InterventionResult;
+use crate::models::intervention::Intervention;
+use crate::models::step::{InterventionStep, StepType};
 use async_trait::async_trait;
 
 /// Configuration for a single workflow step
@@ -64,8 +64,6 @@ pub trait WorkflowStrategy: Send + Sync {
 
     /// Get the workflow steps configuration
     fn get_workflow_steps(&self, context: &WorkflowContext) -> Vec<WorkflowStepConfig>;
-
-
 
     /// Synchronous version of initialize_workflow for use in non-async contexts
     fn initialize_workflow_sync(
@@ -227,7 +225,7 @@ impl WorkflowStrategy for StandardPPFStrategy {
             },
             WorkflowStepConfig {
                 name: "Finalisation".to_string(),
-    
+
                 step_type: StepType::Finalization,
                 requires_photos: true,
                 min_photos_required: 4,
@@ -250,10 +248,15 @@ impl WorkflowStrategy for StandardPPFStrategy {
         // Add specific instructions based on conditions
         if let Some(conditions) = &context.environment_conditions {
             if conditions.temperature_celsius.unwrap_or(20.0) < 15.0 {
-                instructions.push("Low temperature detected - allow extra time for film adhesion".to_string());
+                instructions.push(
+                    "Low temperature detected - allow extra time for film adhesion".to_string(),
+                );
             }
             if conditions.humidity_percentage.unwrap_or(50.0) > 70.0 {
-                instructions.push("High humidity - ensure proper ventilation and extended drying time".to_string());
+                instructions.push(
+                    "High humidity - ensure proper ventilation and extended drying time"
+                        .to_string(),
+                );
             }
         }
 
@@ -293,7 +296,9 @@ impl WorkflowStrategy for ExpressPPFStrategy {
 
     fn is_applicable(&self, intervention: &Intervention, _context: &WorkflowContext) -> bool {
         // Express workflow for small zones only
-        intervention.ppf_zones_config.as_ref()
+        intervention
+            .ppf_zones_config
+            .as_ref()
             .map(|zones| zones.len() <= 2)
             .unwrap_or(false)
     }
@@ -391,7 +396,7 @@ impl WorkflowStrategyFactory {
 mod tests {
     use super::*;
     use crate::models::common::*;
-    use crate::models::intervention::{InterventionType, InterventionStatus};
+    use crate::models::intervention::{InterventionStatus, InterventionType};
 
     fn create_test_intervention() -> Intervention {
         let mut intervention = Intervention::new(
@@ -423,7 +428,7 @@ mod tests {
         let context = create_test_context();
 
         assert_eq!(strategy.strategy_name(), "standard_ppf");
-        
+
         let steps_config = strategy.get_workflow_steps(&context);
         assert_eq!(steps_config.len(), 4);
 
@@ -440,7 +445,7 @@ mod tests {
         let context = create_test_context();
 
         assert_eq!(strategy.strategy_name(), "express_ppf");
-        
+
         let steps_config = strategy.get_workflow_steps(&context);
         assert_eq!(steps_config.len(), 3);
 

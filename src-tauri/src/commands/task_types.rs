@@ -2,11 +2,10 @@
 //!
 //! This module defines types used by task commands that aren't part of the main models.
 
-use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 #[cfg(feature = "ts-rs")]
 use ts_rs::TS;
-
 
 /// Filter for task queries
 #[derive(Debug, Clone, Deserialize, Serialize)]

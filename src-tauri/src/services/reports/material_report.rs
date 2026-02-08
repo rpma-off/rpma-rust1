@@ -24,13 +24,9 @@ pub async fn generate_material_usage_report(
     validate_filters(filters).map_err(crate::commands::AppError::from)?;
 
     let start_date = DateTime::<Utc>::from_timestamp(date_range.start.timestamp(), 0)
-        .ok_or_else(|| {
-            crate::commands::AppError::Database("Invalid start date".to_string())
-        })?;
+        .ok_or_else(|| crate::commands::AppError::Database("Invalid start date".to_string()))?;
     let end_date = DateTime::<Utc>::from_timestamp(date_range.end.timestamp(), 0)
-        .ok_or_else(|| {
-            crate::commands::AppError::Database("Invalid end date".to_string())
-        })?;
+        .ok_or_else(|| crate::commands::AppError::Database("Invalid end date".to_string()))?;
 
     // Query material usage summary
     let summary_sql = format!(
@@ -126,7 +122,16 @@ pub async fn generate_material_usage_report(
         .unwrap_or(vec![]);
 
     let mut consumption_breakdown = Vec::new();
-    for (material_id, material_name, material_type, quantity_used, unit_cost, total_cost, waste_quantity) in consumption_data {
+    for (
+        material_id,
+        material_name,
+        material_type,
+        quantity_used,
+        unit_cost,
+        total_cost,
+        waste_quantity,
+    ) in consumption_data
+    {
         consumption_breakdown.push(MaterialConsumption {
             material_id,
             material_name,
@@ -141,7 +146,9 @@ pub async fn generate_material_usage_report(
     // Cost by material type
     let mut cost_by_material_type = HashMap::new();
     for consumption in &consumption_breakdown {
-        *cost_by_material_type.entry(consumption.material_type.clone()).or_insert(0.0) += consumption.total_cost;
+        *cost_by_material_type
+            .entry(consumption.material_type.clone())
+            .or_insert(0.0) += consumption.total_cost;
     }
 
     // Cost trends (monthly)
@@ -172,7 +179,11 @@ pub async fn generate_material_usage_report(
         cost_trends.push(CostTrend {
             period: month,
             material_cost: monthly_cost,
-            cost_per_task: if interventions > 0 { monthly_cost / interventions as f64 } else { 0.0 },
+            cost_per_task: if interventions > 0 {
+                monthly_cost / interventions as f64
+            } else {
+                0.0
+            },
         });
     }
 
@@ -214,7 +225,11 @@ pub async fn generate_material_usage_report(
 
     // Efficiency metrics
     let utilization_rate = if total_quantity_used > 0.0 { 94.8 } else { 0.0 };
-    let waste_reduction_rate = if waste_percentage > 0.0 { 100.0 - waste_percentage } else { 100.0 };
+    let waste_reduction_rate = if waste_percentage > 0.0 {
+        100.0 - waste_percentage
+    } else {
+        100.0
+    };
     let cost_efficiency_score = if total_material_cost > 0.0 { 87.2 } else { 0.0 };
     let inventory_optimization = 12.5;
 

@@ -1,9 +1,9 @@
 import { safeInvoke } from './utils';
 import { cachedInvoke, invalidatePattern } from './cache';
-import type { UserSettings } from '@/types/settings.types';
 import type { ApiError } from '@/lib/backend';
 import type {
   UserSession,
+  UserSettings,
   Task,
   Client,
   CreateTaskRequest,
@@ -100,6 +100,11 @@ function extractAndValidate<T>(
   return validator ? validator(result) : result as T;
 }
 
+const getUserSettingsCacheKey = (sessionToken: string): string => `user-settings:${sessionToken}`;
+const invalidateUserSettingsCache = (sessionToken: string): void => {
+  invalidatePattern(getUserSettingsCacheKey(sessionToken));
+};
+
 export const ipcClient = {
   // Auth operations
   auth: {
@@ -158,16 +163,20 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving when setup is verified
      */
-    verify2FASetup: (verificationCode: string, sessionToken: string) =>
-      safeInvoke<void>('verify_2fa_setup', { verification_code: verificationCode, session_token: sessionToken }),
+    verify2FASetup: (verificationCode: string, backupCodes: string[], sessionToken: string) =>
+      safeInvoke<void>('verify_2fa_setup', {
+        verification_code: verificationCode,
+        backup_codes: backupCodes,
+        session_token: sessionToken
+      }),
 
     /**
      * Disables 2FA for the current user
      * @param sessionToken - User's session token
      * @returns Promise resolving when 2FA is disabled
      */
-    disable2FA: (sessionToken: string) =>
-      safeInvoke<void>('disable_2fa', { session_token: sessionToken }),
+    disable2FA: (password: string, sessionToken: string) =>
+      safeInvoke<void>('disable_2fa', { password, session_token: sessionToken }),
 
     /**
      * Regenerates backup codes for 2FA
@@ -183,8 +192,8 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving to 2FA status
      */
-    is2FAEnabled: (userId: string, sessionToken: string) =>
-      safeInvoke<boolean>('is_2fa_enabled', { user_id: userId, session_token: sessionToken }),
+    is2FAEnabled: (sessionToken: string) =>
+      safeInvoke<boolean>('is_2fa_enabled', { session_token: sessionToken }),
   },
 
   // Task operations
@@ -349,9 +358,11 @@ export const ipcClient = {
      */
     editTask: async (taskId: string, updates: Record<string, unknown>, sessionToken: string): Promise<Task> => {
       const result = await safeInvoke<unknown>('edit_task', {
-        task_id: taskId,
-        updates,
-        session_token: sessionToken
+        request: {
+          task_id: taskId,
+          data: updates,
+          session_token: sessionToken
+        }
       });
       invalidatePattern('task:');
       return extractAndValidate(result, validateTask) as Task;
@@ -366,9 +377,11 @@ export const ipcClient = {
      */
     addTaskNote: async (taskId: string, note: string, sessionToken: string): Promise<void> => {
       await safeInvoke<void>('add_task_note', {
-        task_id: taskId,
-        note,
-        session_token: sessionToken
+        request: {
+          task_id: taskId,
+          note,
+          session_token: sessionToken
+        }
       });
       invalidatePattern('task:');
     },
@@ -383,10 +396,12 @@ export const ipcClient = {
      */
     sendTaskMessage: async (taskId: string, message: string, messageType: string, sessionToken: string): Promise<void> => {
       await safeInvoke<void>('send_task_message', {
-        task_id: taskId,
-        message,
-        message_type: messageType,
-        session_token: sessionToken
+        request: {
+          task_id: taskId,
+          message,
+          message_type: messageType,
+          session_token: sessionToken
+        }
       });
     },
 
@@ -400,10 +415,12 @@ export const ipcClient = {
      */
     delayTask: async (taskId: string, newDate: string, reason: string, sessionToken: string): Promise<void> => {
       await safeInvoke<void>('delay_task', {
-        task_id: taskId,
-        new_date: newDate,
-        reason,
-        session_token: sessionToken
+        request: {
+          task_id: taskId,
+          new_scheduled_date: newDate,
+          reason,
+          session_token: sessionToken
+        }
       });
       invalidatePattern('task:');
     },
@@ -419,11 +436,13 @@ export const ipcClient = {
      */
     reportTaskIssue: async (taskId: string, issueType: string, severity: string, description: string, sessionToken: string): Promise<void> => {
       await safeInvoke<void>('report_task_issue', {
-        task_id: taskId,
-        issue_type: issueType,
-        severity,
-        description,
-        session_token: sessionToken
+        request: {
+          task_id: taskId,
+          issue_type: issueType,
+          severity,
+          description,
+          session_token: sessionToken
+        }
       });
     },
 
@@ -435,9 +454,16 @@ export const ipcClient = {
      */
     exportTasksCsv: (options: { include_notes?: boolean; date_range?: { start_date?: string; end_date?: string } }, sessionToken: string): Promise<string> =>
       safeInvoke<string>('export_tasks_csv', {
-        include_notes: options.include_notes ?? false,
-        date_range: options.date_range,
-        session_token: sessionToken
+        request: {
+          include_client_data: options.include_notes ?? false,
+          filter: options.date_range
+            ? {
+                date_from: options.date_range.start_date,
+                date_to: options.date_range.end_date
+              }
+            : undefined,
+          session_token: sessionToken
+        }
       }),
 
     /**
@@ -446,12 +472,13 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving to import result
      */
-    importTasksBulk: (options: { csv_lines: string[]; skip_duplicates?: boolean; update_existing?: boolean }, sessionToken: string): Promise<{ imported_count: number; skipped_count: number; errors: string[] }> =>
-      safeInvoke<{ imported_count: number; skipped_count: number; errors: string[] }>('import_tasks_bulk', {
-        csv_lines: options.csv_lines,
-        skip_duplicates: options.skip_duplicates ?? true,
-        update_existing: options.update_existing ?? false,
-        session_token: sessionToken
+    importTasksBulk: (options: { csv_lines: string[]; skip_duplicates?: boolean; update_existing?: boolean }, sessionToken: string): Promise<{ total_processed: number; successful: number; failed: number; errors: string[]; duplicates_skipped: number }> =>
+      safeInvoke<{ total_processed: number; successful: number; failed: number; errors: string[]; duplicates_skipped: number }>('import_tasks_bulk', {
+        request: {
+          csv_data: options.csv_lines.join('\n'),
+          update_existing: options.update_existing ?? false,
+          session_token: sessionToken
+        }
       }),
   },
 
@@ -898,19 +925,17 @@ export const ipcClient = {
     saveStepProgress: async (stepData: SaveStepProgressRequest, sessionToken: string) => {
       const result = await safeInvoke<unknown>('intervention_progress', {
         action: {
-          action: 'SaveProgress',
-          intervention_id: stepData.intervention_id,
-          step_id: stepData.step_id,
-          progress_data: stepData.collected_data ?? {}
+          action: 'SaveStepProgress',
+          ...stepData,
         },
         session_token: sessionToken,
         sessionToken: sessionToken
       });
-      // Extract message from ProgressSaved response
+      // Extract updated step from StepProgressSaved response
       if (result && typeof result === 'object' && 'type' in result) {
-        const progressResponse = result as { type: string; message?: string };
-        if (progressResponse.type === 'ProgressSaved') {
-          return progressResponse;
+        const progressResponse = result as { type: string; step?: unknown };
+        if (progressResponse.type === 'StepProgressSaved' && progressResponse.step) {
+          return validateInterventionStep(progressResponse.step);
         }
       }
       throw new Error('Invalid response format for save step progress');
@@ -991,56 +1016,98 @@ export const ipcClient = {
   // Settings operations
   settings: {
     getAppSettings: (sessionToken?: string) =>
-      safeInvoke<unknown>('get_app_settings', { session_token: sessionToken || '' }),
+      safeInvoke<unknown>('get_app_settings', { sessionToken: sessionToken || '' }),
 
     updateNotificationSettings: (request: Record<string, unknown>, sessionToken: string) =>
-      safeInvoke<unknown>('update_notification_settings', { request, session_token: sessionToken }),
+      safeInvoke<unknown>('update_notification_settings', { request: { ...request, session_token: sessionToken } }),
 
     // User settings operations
     getUserSettings: (sessionToken: string) =>
-      cachedInvoke<UserSettings>(`user-settings`, 'get_user_settings', { session_token: sessionToken }, undefined, 30000),
+      cachedInvoke<UserSettings>(getUserSettingsCacheKey(sessionToken), 'get_user_settings', { sessionToken }, undefined, 30000),
 
-    updateUserProfile: (request: Record<string, unknown>, sessionToken: string) =>
-      safeInvoke<unknown>('update_user_profile', { request, session_token: sessionToken }),
+    updateUserProfile: async (request: Record<string, unknown>, sessionToken: string) => {
+      const result = await safeInvoke<unknown>('update_user_profile', { request: { ...request, session_token: sessionToken } });
+      invalidateUserSettingsCache(sessionToken);
+      return result;
+    },
 
-    updateUserPreferences: (request: Record<string, unknown>, sessionToken: string) =>
-      safeInvoke<unknown>('update_user_preferences', { request, session_token: sessionToken }),
+    updateUserPreferences: async (request: Record<string, unknown>, sessionToken: string) => {
+      const result = await safeInvoke<unknown>('update_user_preferences', { request: { ...request, session_token: sessionToken } });
+      invalidateUserSettingsCache(sessionToken);
+      return result;
+    },
 
-    updateUserSecurity: (request: Record<string, unknown>, sessionToken: string) =>
-      safeInvoke<unknown>('update_user_security', { request, session_token: sessionToken }),
+    updateUserSecurity: async (request: Record<string, unknown>, sessionToken: string) => {
+      const result = await safeInvoke<unknown>('update_user_security', { request: { ...request, session_token: sessionToken } });
+      invalidateUserSettingsCache(sessionToken);
+      return result;
+    },
 
-    updateUserPerformance: (request: Record<string, unknown>, sessionToken: string) =>
-      safeInvoke<unknown>('update_user_performance', { request, session_token: sessionToken }),
+    updateUserPerformance: async (request: Record<string, unknown>, sessionToken: string) => {
+      const result = await safeInvoke<unknown>('update_user_performance', { request, sessionToken });
+      invalidateUserSettingsCache(sessionToken);
+      return result;
+    },
 
-    updateUserAccessibility: (request: Record<string, unknown>, sessionToken: string) =>
-      safeInvoke<unknown>('update_user_accessibility', { request, session_token: sessionToken }),
+    updateUserAccessibility: async (request: Record<string, unknown>, sessionToken: string) => {
+      const result = await safeInvoke<unknown>('update_user_accessibility', { request: { ...request, session_token: sessionToken } });
+      invalidateUserSettingsCache(sessionToken);
+      return result;
+    },
 
-    updateUserNotifications: (request: Record<string, unknown>, sessionToken: string) =>
-      safeInvoke<unknown>('update_user_notifications', { request, session_token: sessionToken }),
+    updateUserNotifications: async (request: Record<string, unknown>, sessionToken: string) => {
+      const result = await safeInvoke<unknown>('update_user_notifications', { request: { ...request, session_token: sessionToken } });
+      invalidateUserSettingsCache(sessionToken);
+      return result;
+    },
 
-    changeUserPassword: (request: Record<string, unknown>, sessionToken: string) =>
-      safeInvoke<string>('change_user_password', { request, session_token: sessionToken }),
+    changeUserPassword: async (request: Record<string, unknown>, sessionToken: string) => {
+      const result = await safeInvoke<string>('change_user_password', { request: { ...request, session_token: sessionToken } });
+      invalidateUserSettingsCache(sessionToken);
+      return result;
+    },
 
     // Security operations
     getActiveSessions: (sessionToken: string) =>
-      safeInvoke<unknown>('get_active_sessions', { session_token: sessionToken }),
+      safeInvoke<unknown>('get_active_sessions', { sessionToken }),
 
     revokeSession: (sessionId: string, sessionToken: string) =>
-      safeInvoke<void>('revoke_session', { session_id: sessionId, session_token: sessionToken }),
+      safeInvoke<void>('revoke_session', { sessionId, sessionToken }),
 
     revokeAllSessionsExceptCurrent: (sessionToken: string) =>
-      safeInvoke<void>('revoke_all_sessions_except_current', { session_token: sessionToken }),
+      safeInvoke<void>('revoke_all_sessions_except_current', { sessionToken }),
 
     updateSessionTimeout: (timeoutMinutes: number, sessionToken: string) =>
-      safeInvoke<void>('update_session_timeout', { timeout_minutes: timeoutMinutes, session_token: sessionToken }),
+      safeInvoke<void>('update_session_timeout', { timeoutMinutes, sessionToken }),
 
     getSessionTimeoutConfig: (sessionToken: string) =>
-      safeInvoke<unknown>('get_session_timeout_config', { session_token: sessionToken }),
+      safeInvoke<unknown>('get_session_timeout_config', { sessionToken }),
 
     uploadUserAvatar: (fileData: string, fileName: string, mimeType: string, sessionToken: string) =>
       safeInvoke<string>('upload_user_avatar', {
-        request: { file_data: fileData, file_name: fileName, mime_type: mimeType },
-        session_token: sessionToken
+        request: { avatar_data: fileData, mime_type: mimeType, session_token: sessionToken }
+      }).then((result) => {
+        invalidateUserSettingsCache(sessionToken);
+        return result;
+      }),
+
+    exportUserData: (sessionToken: string) =>
+      safeInvoke<Record<string, unknown>>('export_user_data', { sessionToken }),
+
+    deleteUserAccount: async (confirmation: string, sessionToken: string) => {
+      const result = await safeInvoke<string>('delete_user_account', {
+        request: { confirmation, session_token: sessionToken }
+      });
+      invalidateUserSettingsCache(sessionToken);
+      return result;
+    },
+
+    getDataConsent: (sessionToken: string) =>
+      safeInvoke<Record<string, unknown>>('get_data_consent', { sessionToken }),
+
+    updateDataConsent: (request: Record<string, unknown>, sessionToken: string) =>
+      safeInvoke<Record<string, unknown>>('update_data_consent', {
+        request: { ...request, session_token: sessionToken }
       }),
   },
 
@@ -1206,19 +1273,19 @@ export const ipcClient = {
 
     // Session management
     getActiveSessions: (sessionToken: string) =>
-      safeInvoke<unknown[]>('get_active_sessions', { session_token: sessionToken }),
+      safeInvoke<unknown[]>('get_active_sessions', { sessionToken }),
 
     revokeSession: (sessionId: string, sessionToken: string) =>
-      safeInvoke<unknown>('revoke_session', { session_id: sessionId, session_token: sessionToken }),
+      safeInvoke<unknown>('revoke_session', { sessionId, sessionToken }),
 
     revokeAllSessionsExceptCurrent: (sessionToken: string) =>
-      safeInvoke<unknown>('revoke_all_sessions_except_current', { session_token: sessionToken }),
+      safeInvoke<unknown>('revoke_all_sessions_except_current', { sessionToken }),
 
     updateSessionTimeout: (timeoutMinutes: number, sessionToken: string) =>
-      safeInvoke<unknown>('update_session_timeout', { timeout_minutes: timeoutMinutes, session_token: sessionToken }),
+      safeInvoke<unknown>('update_session_timeout', { timeoutMinutes, sessionToken }),
 
     getSessionTimeoutConfig: (sessionToken: string) =>
-      safeInvoke<unknown>('get_session_timeout_config', { session_token: sessionToken }),
+      safeInvoke<unknown>('get_session_timeout_config', { sessionToken }),
   },
 
   // System operations

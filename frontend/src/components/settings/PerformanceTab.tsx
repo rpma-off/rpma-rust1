@@ -5,11 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,32 +15,25 @@ import {
   Zap,
   RefreshCw,
   Database,
-  HardDrive,
   Wifi,
   WifiOff,
   Trash2,
   Download,
   Upload,
   Activity,
-  Clock,
   AlertTriangle,
   CheckCircle,
   Save,
-  Volume2,
-  VolumeX
 } from 'lucide-react';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useLogger } from '@/hooks/useLogger';
 import { LogDomain } from '@/lib/logging/types';
 import { ipcClient } from '@/lib/ipc';
-import { UserSession } from '@/lib/backend';
+import { UserSession, UserPerformanceSettings } from '@/lib/backend';
 import { UserAccount } from '@/types';
-import type { UserSettings } from '@/types/settings.types';
 
 // Performance settings form schema
 const performanceSchema = z.object({
-  auto_refresh: z.boolean(),
-  refresh_interval: z.number().min(30).max(300),
   cache_enabled: z.boolean(),
   cache_size: z.number().min(50).max(500),
   offline_mode: z.boolean(),
@@ -84,7 +74,16 @@ interface SyncStats {
   syncStatus: 'idle' | 'syncing' | 'error';
 }
 
-export function PerformanceTab({ user, profile }: PerformanceSettingsTabProps) {
+interface SyncOperation {
+  direction?: string;
+  status?: string;
+}
+
+interface SyncStatusResponse {
+  status?: string;
+}
+
+export function PerformanceTab({ user }: PerformanceSettingsTabProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -111,8 +110,6 @@ export function PerformanceTab({ user, profile }: PerformanceSettingsTabProps) {
   const form = useForm<PerformanceFormData>({
     resolver: zodResolver(performanceSchema),
     defaultValues: {
-      auto_refresh: true,
-      refresh_interval: 60,
       cache_enabled: true,
       cache_size: 100,
       offline_mode: false,
@@ -134,8 +131,8 @@ export function PerformanceTab({ user, profile }: PerformanceSettingsTabProps) {
         const userSettings = await ipcClient.settings.getUserSettings(user.token);
 
         // Apply performance settings if available
-        if (userSettings && userSettings.performance) {
-          form.reset(userSettings.performance as Record<string, unknown>);
+        if (userSettings?.performance) {
+          form.reset(userSettings.performance as UserPerformanceSettings);
         }
 
         // Load real cache statistics
@@ -248,15 +245,16 @@ export function PerformanceTab({ user, profile }: PerformanceSettingsTabProps) {
       await ipcClient.sync.syncNow();
 
       // Get updated sync status
-      const syncStatus = await ipcClient.sync.getStatus();
-      const operations = await ipcClient.sync.getOperationsForEntity('all', 'all');
+      const syncStatus = await ipcClient.sync.getStatus() as SyncStatusResponse;
+      const operations = await ipcClient.sync.getOperationsForEntity('all', 'all') as SyncOperation[] | unknown;
+      const operationList = Array.isArray(operations) ? operations : [];
 
       setSyncStats(prev => ({
         ...prev,
         lastSync: new Date().toISOString(),
-        pendingUploads: Array.isArray(operations) ? operations.filter((op: any) => op.direction === 'upload' && op.status === 'pending').length : 0,
-        pendingDownloads: Array.isArray(operations) ? operations.filter((op: any) => op.direction === 'download' && op.status === 'pending').length : 0,
-        syncStatus: (syncStatus as any)?.status === 'running' ? 'syncing' : 'idle',
+        pendingUploads: operationList.filter((op) => op.direction === 'upload' && op.status === 'pending').length,
+        pendingDownloads: operationList.filter((op) => op.direction === 'download' && op.status === 'pending').length,
+        syncStatus: syncStatus?.status === 'running' ? 'syncing' : 'idle',
       }));
 
       logInfo('Manual sync completed successfully');
@@ -264,14 +262,6 @@ export function PerformanceTab({ user, profile }: PerformanceSettingsTabProps) {
       setSyncStats(prev => ({ ...prev, syncStatus: 'error' }));
       logError('Manual sync failed', { error: error instanceof Error ? error.message : error });
     }
-  };
-
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   if (isLoading) {
@@ -327,27 +317,27 @@ export function PerformanceTab({ user, profile }: PerformanceSettingsTabProps) {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Data Refresh Section */}
+          {/* Connectivity Section */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <RefreshCw className="h-5 w-5" />
-                Actualisation des données
+                Connectivité et démarrage
               </CardTitle>
                <CardDescription>
-                 Contrôlez la fréquence d&apos;actualisation automatique des données
+                 Configurez le mode hors ligne et la synchronisation au démarrage
                </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <FormField
                 control={form.control}
-                name="auto_refresh"
+                name="offline_mode"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base">Actualisation automatique</FormLabel>
+                      <FormLabel className="text-base">Mode hors ligne</FormLabel>
                       <FormDescription>
-                        Actualiser automatiquement les données en arrière-plan
+                        Active un comportement optimisé pour les connexions instables
                       </FormDescription>
                     </div>
                     <FormControl>
@@ -360,29 +350,6 @@ export function PerformanceTab({ user, profile }: PerformanceSettingsTabProps) {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="refresh_interval"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Intervalle d&apos;actualisation (secondes)</FormLabel>
-                    <FormControl>
-                      <input
-                        type="number"
-                        min="30"
-                        max="300"
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Fréquence d&apos;actualisation des données (30-300 secondes)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </CardContent>
           </Card>
 

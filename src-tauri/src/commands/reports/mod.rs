@@ -26,7 +26,15 @@ pub async fn export_report_data(
     session_token: String,
     state: crate::commands::AppState<'_>,
 ) -> crate::commands::AppResult<crate::models::reports::ExportResult> {
-    export::data_export::export_report_data(report_type, format, date_range, filters, session_token, state).await
+    export::data_export::export_report_data(
+        report_type,
+        format,
+        date_range,
+        filters,
+        session_token,
+        state,
+    )
+    .await
 }
 
 #[tauri::command]
@@ -35,7 +43,8 @@ pub async fn export_intervention_report(
     session_token: String,
     state: crate::commands::AppState<'_>,
 ) -> crate::commands::AppResult<crate::models::reports::InterventionReportResult> {
-    export::intervention_export::export_intervention_report(intervention_id, session_token, state).await
+    export::intervention_export::export_intervention_report(intervention_id, session_token, state)
+        .await
 }
 
 #[tauri::command]
@@ -45,7 +54,13 @@ pub async fn save_intervention_report(
     session_token: String,
     state: crate::commands::AppState<'_>,
 ) -> crate::commands::AppResult<String> {
-    export::intervention_export::save_intervention_report(intervention_id, file_path, session_token, state).await
+    export::intervention_export::save_intervention_report(
+        intervention_id,
+        file_path,
+        session_token,
+        state,
+    )
+    .await
 }
 
 #[tauri::command]
@@ -65,5 +80,3 @@ pub async fn cancel_report(
 ) -> crate::commands::AppResult<bool> {
     generation::background_jobs::cancel_report_job(job_id, session_token, state).await
 }
-
-

@@ -10,8 +10,8 @@ use rpma_ppf_intervention::models::{
     auth::{DeviceInfo, UserAccount, UserRole, UserSession},
     calendar::{CalendarDateRange, CalendarFilter, CalendarTask, ConflictDetection},
     calendar_event::{
-        CreateEventInput, EventParticipant, EventStatus, EventType, ParticipantStatus,
-        UpdateEventInput,
+        CalendarEvent, CreateEventInput, EventParticipant, EventStatus, EventType,
+        ParticipantStatus, UpdateEventInput,
     },
     client::{
         Client, ClientListResponse, ClientQuery, ClientStatistics, ClientWithTasks,
@@ -20,29 +20,36 @@ use rpma_ppf_intervention::models::{
     common::{
         FilmType, GpsLocation, LightingCondition, TimestampString, WeatherCondition, WorkLocation,
     },
+    intervention::{BulkUpdateInterventionRequest, InterventionFilter},
     intervention::{Intervention, InterventionProgress, InterventionStatus, InterventionType},
     message::{
-        Message, MessageListResponse, MessageQuery, MessageTemplate, NotificationPreferences,
+        Message, MessageListResponse, MessagePriority, MessageQuery, MessageStatus,
+        MessageTemplate, MessageTemplateRequest, MessageType, NotificationPreferences,
         SendMessageRequest, UpdateNotificationPreferencesRequest,
     },
     notification::{
-        EmailConfig, NotificationConfig, NotificationType, SmsConfig, TemplateVariables,
+        EmailConfig, EmailProvider, NotificationChannel, NotificationConfig, NotificationMessage,
+        NotificationPriority, NotificationStatus, NotificationTemplate, NotificationType,
+        SmsConfig, SmsProvider, TemplateVariables,
     },
     photo::{Photo, PhotoCategory, PhotoType},
     reports::{
+        AnalyticsDashboard, AnalyticsDashboardData, AnalyticsKpi, AnalyticsMetric,
+        AnalyticsSummary, AnalyticsTimeSeries, CalculationPeriod, ChartConfig, ChartDataPoint,
         ClientAnalyticsReport, ClientPerformance, ClientSummary, ComplianceMetrics, CostTrend,
-        DailyTaskData, DateRange, ExportFormat, ExportResult, GeographicReport, GeographicStats,
-        HeatMapPoint, InterventionBottleneck, InterventionReportResult, MaterialConsumption,
-        MaterialCostAnalysis, MaterialEfficiency, MaterialSummary, MaterialUsageReport,
+        DailyTaskData, DashboardType, DashboardWidget, DateRange, EntityCounts, ExportFormat,
+        ExportResult, GeographicReport, GeographicStats, HeatMapPoint, InterventionBottleneck,
+        InterventionReportResult, KpiCategory, MaterialConsumption, MaterialCostAnalysis,
+        MaterialEfficiency, MaterialSummary, MaterialUsageReport, MetricValueType,
         OperationalIntelligenceReport, OverviewReport, PeakPeriod, PerformanceBenchmarks,
         PerformanceTrend, ProcessEfficiencyMetrics, QualityComplianceReport, QualityIssue,
         QualitySummary, QualityTrend, ReportFilters, ReportMetadata, ReportRequest, ReportResponse,
         ReportStatus, ReportType, ResourceUtilization, RetentionAnalysis, RevenueAnalysis,
-        SearchFilters, SearchResponse, SearchResult, SeasonalPattern, SeasonalReport, ServiceArea,
-        StatusCount, StepBottleneck, SupplierPerformance, TaskCompletionReport,
-        TaskCompletionSummary, TechnicianMetrics, TechnicianPerformance,
-        TechnicianPerformanceReport, TechnicianTaskData, WeatherCorrelation,
-        WorkflowRecommendation, WorkloadPeriod,
+        SearchFilters, SearchResponse, SearchResult, SearchResults, SeasonalPattern,
+        SeasonalReport, ServiceArea, StatusCount, StepBottleneck, SupplierPerformance,
+        TaskCompletionReport, TaskCompletionSummary, TechnicianMetrics, TechnicianPerformance,
+        TechnicianPerformanceReport, TechnicianTaskData, TrendDirection, WeatherCorrelation,
+        WidgetPosition, WidgetSize, WidgetType, WorkflowRecommendation, WorkloadPeriod,
     },
     settings::{
         AppSettings, AppearanceSettings, BackupSettings, DataManagementSettings, DatabaseSettings,
@@ -52,27 +59,35 @@ use rpma_ppf_intervention::models::{
         UserPreferences, UserProfileSettings, UserSecuritySettings, UserSettings,
     },
     status::{StatusDistribution, StatusTransitionRequest},
-    step::{InterventionStep, StepStatus},
+    step::{InterventionStep, StepStatus, StepType},
     sync::{EntityType, OperationType, SyncOperation, SyncQueueMetrics, SyncStatus},
     task::{
-        CreateTaskRequest, DeleteTaskRequest, PaginationInfo, SortOrder, Task, TaskListResponse,
-        TaskPhoto, TaskPriority, TaskQuery, TaskStatistics, TaskStatus, TaskWithDetails,
-        UpdateTaskRequest,
+        AssignmentCheckResponse, AssignmentStatus, AvailabilityCheckResponse, AvailabilityStatus,
+        CreateTaskRequest, DeleteTaskRequest, PaginationInfo, SortOrder, Task, TaskHistory,
+        TaskListResponse, TaskPhoto, TaskPriority, TaskQuery, TaskStatistics, TaskStatus,
+        TaskWithDetails, UpdateTaskRequest,
     },
 };
+
+use rpma_ppf_intervention::repositories::{base::PaginatedResult, cache::CacheStats};
 
 // Import service request types
 use rpma_ppf_intervention::services::intervention::{
     AdvanceStepRequest, FinalizeInterventionRequest, GpsCoordinates, SaveStepProgressRequest,
     StartInterventionRequest,
 };
-use rpma_ppf_intervention::services::intervention_types::InterventionMetrics;
+use rpma_ppf_intervention::services::intervention_types::{
+    AdvanceStepResponse, FinalizeInterventionResponse, InterventionMetrics,
+    InterventionStepWithPhotos, InterventionWithDetails, SaveStepProgressResponse,
+    StartInterventionResponse, StepRequirement,
+};
 use rpma_ppf_intervention::services::prediction::CompletionTimePrediction;
 
 // Import command request types
 use rpma_ppf_intervention::commands::{
     notification::{SendNotificationRequest, UpdateNotificationConfigRequest},
-    ApiError, CreateUserRequest, UpdateUserRequest, UserAction, UserListResponse,
+    ApiError, CompressedApiResponse, CreateUserRequest, UpdateUserRequest, UserAction,
+    UserListResponse,
 };
 
 fn main() {
@@ -102,6 +117,11 @@ fn main() {
     type_definitions.push_str("// Error types\n");
     type_definitions
         .push_str(&ApiError::export_to_string().expect("Failed to export ApiError type"));
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &CompressedApiResponse::export_to_string()
+            .expect("Failed to export CompressedApiResponse type"),
+    );
     type_definitions.push_str("\n\n");
 
     // Auth types (ts-rs exports)
@@ -125,6 +145,10 @@ fn main() {
         &EventParticipant::export_to_string().expect("Failed to export EventParticipant type"),
     );
     type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &ParticipantStatus::export_to_string().expect("Failed to export ParticipantStatus type"),
+    );
+    type_definitions.push_str("\n");
     type_definitions
         .push_str(&EventStatus::export_to_string().expect("Failed to export EventStatus type"));
     type_definitions.push_str("\n");
@@ -135,10 +159,14 @@ fn main() {
     type_definitions.push_str(
         &UpdateEventInput::export_to_string().expect("Failed to export UpdateEventInput type"),
     );
+    type_definitions.push_str("\n");
     type_definitions.push_str("\n\n");
 
     // Calendar additional types
     type_definitions.push_str("// Calendar additional types\n");
+    type_definitions
+        .push_str(&CalendarEvent::export_to_string().expect("Failed to export CalendarEvent type"));
+    type_definitions.push_str("\n");
     type_definitions
         .push_str(&CalendarTask::export_to_string().expect("Failed to export CalendarTask type"));
     type_definitions.push_str("\n");
@@ -198,6 +226,27 @@ fn main() {
     type_definitions
         .push_str(&TaskPriority::export_to_string().expect("Failed to export TaskPriority type"));
     type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&TaskHistory::export_to_string().expect("Failed to export TaskHistory type"));
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &AssignmentStatus::export_to_string().expect("Failed to export AssignmentStatus type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &AvailabilityStatus::export_to_string().expect("Failed to export AvailabilityStatus type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &AssignmentCheckResponse::export_to_string()
+            .expect("Failed to export AssignmentCheckResponse type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &AvailabilityCheckResponse::export_to_string()
+            .expect("Failed to export AvailabilityCheckResponse type"),
+    );
+    type_definitions.push_str("\n");
     type_definitions.push_str(
         &CreateTaskRequest::export_to_string().expect("Failed to export CreateTaskRequest type"),
     );
@@ -236,6 +285,17 @@ fn main() {
     );
     type_definitions.push_str("\n\n");
 
+    // Repository types
+    type_definitions.push_str("// Repository types\n");
+    type_definitions.push_str(
+        &PaginatedResult::<Task>::export_to_string()
+            .expect("Failed to export PaginatedResult type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&CacheStats::export_to_string().expect("Failed to export CacheStats type"));
+    type_definitions.push_str("\n\n");
+
     // Photo types
     type_definitions.push_str("// Photo types\n");
     type_definitions.push_str(&Photo::export_to_string().expect("Failed to export Photo type"));
@@ -258,6 +318,15 @@ fn main() {
     type_definitions.push_str("\n");
     type_definitions.push_str(
         &InterventionType::export_to_string().expect("Failed to export InterventionType type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &InterventionFilter::export_to_string().expect("Failed to export InterventionFilter type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &BulkUpdateInterventionRequest::export_to_string()
+            .expect("Failed to export BulkUpdateInterventionRequest type"),
     );
     type_definitions.push_str("\n");
     type_definitions
@@ -289,6 +358,9 @@ fn main() {
         &InterventionStep::export_to_string().expect("Failed to export InterventionStep type"),
     );
     type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&StepType::export_to_string().expect("Failed to export StepType type"));
+    type_definitions.push_str("\n");
     type_definitions.push_str(
         &StartInterventionRequest::export_to_string()
             .expect("Failed to export StartInterventionRequest type"),
@@ -309,6 +381,40 @@ fn main() {
     );
     type_definitions.push_str("\n");
     type_definitions.push_str(
+        &StartInterventionResponse::export_to_string()
+            .expect("Failed to export StartInterventionResponse type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &AdvanceStepResponse::export_to_string()
+            .expect("Failed to export AdvanceStepResponse type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &SaveStepProgressResponse::export_to_string()
+            .expect("Failed to export SaveStepProgressResponse type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &FinalizeInterventionResponse::export_to_string()
+            .expect("Failed to export FinalizeInterventionResponse type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &StepRequirement::export_to_string().expect("Failed to export StepRequirement type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &InterventionStepWithPhotos::export_to_string()
+            .expect("Failed to export InterventionStepWithPhotos type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &InterventionWithDetails::export_to_string()
+            .expect("Failed to export InterventionWithDetails type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
         &InterventionProgress::export_to_string()
             .expect("Failed to export InterventionProgress type"),
     );
@@ -322,12 +428,48 @@ fn main() {
         .push_str(&StepStatus::export_to_string().expect("Failed to export StepStatus type"));
     type_definitions.push_str("\n");
     type_definitions.push_str(
+        &NotificationChannel::export_to_string()
+            .expect("Failed to export NotificationChannel type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
         &NotificationType::export_to_string().expect("Failed to export NotificationType type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &NotificationTemplate::export_to_string()
+            .expect("Failed to export NotificationTemplate type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &NotificationMessage::export_to_string()
+            .expect("Failed to export NotificationMessage type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &NotificationPriority::export_to_string()
+            .expect("Failed to export NotificationPriority type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &NotificationStatus::export_to_string().expect("Failed to export NotificationStatus type"),
     );
     type_definitions.push_str("\n");
     type_definitions.push_str(
         &TemplateVariables::export_to_string().expect("Failed to export TemplateVariables type"),
     );
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&EmailProvider::export_to_string().expect("Failed to export EmailProvider type"));
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&EmailConfig::export_to_string().expect("Failed to export EmailConfig type"));
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&SmsProvider::export_to_string().expect("Failed to export SmsProvider type"));
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&SmsConfig::export_to_string().expect("Failed to export SmsConfig type"));
     type_definitions.push_str("\n");
     type_definitions.push_str(
         &NotificationConfig::export_to_string().expect("Failed to export NotificationConfig type"),
@@ -346,6 +488,16 @@ fn main() {
     type_definitions.push_str(&Message::export_to_string().expect("Failed to export Message type"));
     type_definitions.push_str("\n");
     type_definitions
+        .push_str(&MessageType::export_to_string().expect("Failed to export MessageType type"));
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&MessageStatus::export_to_string().expect("Failed to export MessageStatus type"));
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &MessagePriority::export_to_string().expect("Failed to export MessagePriority type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions
         .push_str(&MessageQuery::export_to_string().expect("Failed to export MessageQuery type"));
     type_definitions.push_str("\n");
     type_definitions.push_str(
@@ -355,6 +507,11 @@ fn main() {
     type_definitions.push_str("\n");
     type_definitions.push_str(
         &MessageTemplate::export_to_string().expect("Failed to export MessageTemplate type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &MessageTemplateRequest::export_to_string()
+            .expect("Failed to export MessageTemplateRequest type"),
     );
     type_definitions.push_str("\n");
     type_definitions.push_str(
@@ -440,10 +597,80 @@ fn main() {
         .push_str(&SearchResult::export_to_string().expect("Failed to export SearchResult type"));
     type_definitions.push_str("\n");
     type_definitions
+        .push_str(&SearchResults::export_to_string().expect("Failed to export SearchResults type"));
+    type_definitions.push_str("\n");
+    type_definitions
         .push_str(&SearchFilters::export_to_string().expect("Failed to export SearchFilters type"));
     type_definitions.push_str("\n");
     type_definitions.push_str(
         &SearchResponse::export_to_string().expect("Failed to export SearchResponse type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&EntityCounts::export_to_string().expect("Failed to export EntityCounts type"));
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&KpiCategory::export_to_string().expect("Failed to export KpiCategory type"));
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &TrendDirection::export_to_string().expect("Failed to export TrendDirection type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &CalculationPeriod::export_to_string().expect("Failed to export CalculationPeriod type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&AnalyticsKpi::export_to_string().expect("Failed to export AnalyticsKpi type"));
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &MetricValueType::export_to_string().expect("Failed to export MetricValueType type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &AnalyticsMetric::export_to_string().expect("Failed to export AnalyticsMetric type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&DashboardType::export_to_string().expect("Failed to export DashboardType type"));
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &AnalyticsDashboard::export_to_string().expect("Failed to export AnalyticsDashboard type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &ChartDataPoint::export_to_string().expect("Failed to export ChartDataPoint type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&ChartConfig::export_to_string().expect("Failed to export ChartConfig type"));
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&WidgetType::export_to_string().expect("Failed to export WidgetType type"));
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &DashboardWidget::export_to_string().expect("Failed to export DashboardWidget type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &WidgetPosition::export_to_string().expect("Failed to export WidgetPosition type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&WidgetSize::export_to_string().expect("Failed to export WidgetSize type"));
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &AnalyticsDashboardData::export_to_string()
+            .expect("Failed to export AnalyticsDashboardData type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &AnalyticsTimeSeries::export_to_string()
+            .expect("Failed to export AnalyticsTimeSeries type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &AnalyticsSummary::export_to_string().expect("Failed to export AnalyticsSummary type"),
     );
     type_definitions.push_str("\n");
     type_definitions.push_str(
@@ -743,16 +970,19 @@ fn main() {
     // List of all types we're exporting to filter out invalid imports
     let exported_types = vec![
         "ApiError",
+        "CompressedApiResponse",
         "DeviceInfo",
         "UserAccount",
         "UserRole",
         "UserSession",
+        "CalendarEvent",
         "CalendarTask",
         "CalendarFilter",
         "ConflictDetection",
         "CalendarDateRange",
         "CreateEventInput",
         "UpdateEventInput",
+        "ParticipantStatus",
         "Client",
         "ClientWithTasks",
         "ClientQuery",
@@ -764,6 +994,11 @@ fn main() {
         "Task",
         "TaskStatus",
         "TaskPriority",
+        "TaskHistory",
+        "AssignmentStatus",
+        "AvailabilityStatus",
+        "AssignmentCheckResponse",
+        "AvailabilityCheckResponse",
         "CreateTaskRequest",
         "UpdateTaskRequest",
         "TaskQuery",
@@ -773,6 +1008,8 @@ fn main() {
         "DeleteTaskRequest",
         "TaskListResponse",
         "PaginationInfo",
+        "PaginatedResult",
+        "CacheStats",
         "TaskStatistics",
         "Photo",
         "PhotoType",
@@ -780,7 +1017,10 @@ fn main() {
         "Intervention",
         "InterventionStatus",
         "InterventionType",
+        "InterventionFilter",
+        "BulkUpdateInterventionRequest",
         "InterventionStep",
+        "StepType",
         "InterventionProgress",
         "InterventionMetrics",
         "StepStatus",
@@ -788,15 +1028,35 @@ fn main() {
         "AdvanceStepRequest",
         "SaveStepProgressRequest",
         "FinalizeInterventionRequest",
+        "StartInterventionResponse",
+        "AdvanceStepResponse",
+        "SaveStepProgressResponse",
+        "FinalizeInterventionResponse",
+        "StepRequirement",
+        "InterventionStepWithPhotos",
+        "InterventionWithDetails",
+        "NotificationChannel",
         "NotificationType",
+        "NotificationTemplate",
+        "NotificationMessage",
+        "NotificationPriority",
+        "NotificationStatus",
         "TemplateVariables",
+        "EmailProvider",
+        "EmailConfig",
+        "SmsProvider",
+        "SmsConfig",
         "NotificationConfig",
         "UpdateNotificationConfigRequest",
         "SendNotificationRequest",
         "Message",
+        "MessageType",
+        "MessageStatus",
+        "MessagePriority",
         "MessageQuery",
         "MessageListResponse",
         "MessageTemplate",
+        "MessageTemplateRequest",
         "SendMessageRequest",
         "NotificationPreferences",
         "UpdateNotificationPreferencesRequest",
@@ -845,8 +1105,27 @@ fn main() {
         "ExportFormat",
         "ReportMetadata",
         "SearchResult",
+        "SearchResults",
         "SearchFilters",
         "SearchResponse",
+        "EntityCounts",
+        "KpiCategory",
+        "TrendDirection",
+        "CalculationPeriod",
+        "AnalyticsKpi",
+        "MetricValueType",
+        "AnalyticsMetric",
+        "DashboardType",
+        "AnalyticsDashboard",
+        "ChartDataPoint",
+        "ChartConfig",
+        "WidgetType",
+        "DashboardWidget",
+        "WidgetPosition",
+        "WidgetSize",
+        "AnalyticsDashboardData",
+        "AnalyticsTimeSeries",
+        "AnalyticsSummary",
         "OverviewReport",
         "GeographicReport",
         "SeasonalReport",

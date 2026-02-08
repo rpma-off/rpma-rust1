@@ -7,7 +7,6 @@ use crate::commands::{authenticate, AppResult, AppState};
 use crate::models::auth::UserRole;
 use crate::models::reports::ReportType;
 
-
 /// Check if user has permission to export a specific report type
 pub fn check_export_permissions(
     report_type: &ReportType,
@@ -50,7 +49,8 @@ pub fn check_intervention_export_permissions(
 ) -> AppResult<()> {
     // Check permissions (technician can only access their own interventions)
     if !matches!(current_user.role, UserRole::Admin | UserRole::Supervisor)
-        && intervention_technician_id != Some(current_user.user_id.clone()) {
+        && intervention_technician_id != Some(current_user.user_id.clone())
+    {
         return Err(crate::commands::errors::AppError::Authorization(
             "You can only export reports for your own interventions".to_string(),
         ));
@@ -59,7 +59,10 @@ pub fn check_intervention_export_permissions(
 }
 
 /// Authenticate user for export operations
-pub async fn authenticate_for_export(session_token: &str, state: &AppState<'_>) -> AppResult<crate::models::auth::UserSession> {
+pub async fn authenticate_for_export(
+    session_token: &str,
+    state: &AppState<'_>,
+) -> AppResult<crate::models::auth::UserSession> {
     let current_user = authenticate!(session_token, state);
     Ok(current_user)
 }

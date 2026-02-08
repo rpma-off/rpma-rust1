@@ -75,7 +75,8 @@ pub fn initialize_pool_with_config(
         open_flags |= OpenFlags::SQLITE_OPEN_URI;
     }
 
-    let manager = SqliteConnectionManager::file(db_path).with_flags(open_flags)
+    let manager = SqliteConnectionManager::file(db_path)
+        .with_flags(open_flags)
         .with_init(move |conn| {
             // Set encryption key if provided and using SQLCipher
             // Note: Standard SQLite doesn't support encryption, so we skip this

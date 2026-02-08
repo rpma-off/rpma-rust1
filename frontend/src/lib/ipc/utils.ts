@@ -247,26 +247,45 @@ export async function safeInvoke<T>(
 function sanitizeArgs(args?: Record<string, unknown>): Record<string, unknown> | undefined {
   if (!args) return undefined;
 
-  const sanitized = { ...args };
+  const sensitiveFields = new Set([
+    'password',
+    'token',
+    'refresh_token',
+    'session_token',
+    'sessiontoken',
+    'secret',
+    'key',
+    'auth',
+    'authorization',
+  ]);
 
-  // Remove sensitive fields
-  const sensitiveFields = ['password', 'token', 'secret', 'key', 'auth', 'authorization'];
-  for (const field of sensitiveFields) {
-    if (field in sanitized) {
-      sanitized[field] = '[REDACTED]';
+  const sanitizeValue = (value: unknown): unknown => {
+    if (typeof value === 'string') {
+      return value.length > 100 ? `${value.substring(0, 100)}...[truncated]` : value;
     }
-  }
-
-  // Truncate large values
-  for (const [key, value] of Object.entries(sanitized)) {
-    if (typeof value === 'string' && value.length > 100) {
-      sanitized[key] = value.substring(0, 100) + '...[truncated]';
-    } else if (Array.isArray(value) && value.length > 10) {
-      sanitized[key] = `[Array(${value.length})]`;
-    } else if (value && typeof value === 'object' && Object.keys(value).length > 10) {
-      sanitized[key] = `[Object(${Object.keys(value).length} keys)]`;
+    if (Array.isArray(value)) {
+      if (value.length > 10) {
+        return `[Array(${value.length})]`;
+      }
+      return value.map(sanitizeValue);
     }
-  }
+    if (value && typeof value === 'object') {
+      const entries = Object.entries(value as Record<string, unknown>);
+      if (entries.length > 10) {
+        return `[Object(${entries.length} keys)]`;
+      }
+      const sanitizedObject: Record<string, unknown> = {};
+      for (const [key, entryValue] of entries) {
+        if (sensitiveFields.has(key.toLowerCase())) {
+          sanitizedObject[key] = '[REDACTED]';
+        } else {
+          sanitizedObject[key] = sanitizeValue(entryValue);
+        }
+      }
+      return sanitizedObject;
+    }
+    return value;
+  };
 
-  return sanitized;
+  return sanitizeValue(args) as Record<string, unknown>;
 }

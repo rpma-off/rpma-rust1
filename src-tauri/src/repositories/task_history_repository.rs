@@ -4,8 +4,8 @@
 
 use crate::db::Database;
 use crate::models::task::TaskHistory;
-use crate::repositories::base::{Repository, RepoError, RepoResult};
-use crate::repositories::cache::{Cache, CacheKeyBuilder, ttl};
+use crate::repositories::base::{RepoError, RepoResult, Repository};
+use crate::repositories::cache::{ttl, Cache, CacheKeyBuilder};
 use async_trait::async_trait;
 use rusqlite::params;
 use std::sync::Arc;
@@ -53,16 +53,15 @@ impl TaskHistoryQuery {
 
     fn validate_sort_column(sort_by: &str) -> Result<String, RepoError> {
         let allowed_columns = ["created_at", "changed_at", "new_status", "changed_by"];
-        allowed_columns.iter()
+        allowed_columns
+            .iter()
             .find(|&&col| col == sort_by)
             .map(|s| s.to_string())
             .ok_or_else(|| RepoError::Validation(format!("Invalid sort column: {}", sort_by)))
     }
 
     fn build_order_by_clause(&self) -> Result<String, RepoError> {
-        let sort_by = Self::validate_sort_column(
-            self.sort_by.as_deref().unwrap_or("changed_at")
-        )?;
+        let sort_by = Self::validate_sort_column(self.sort_by.as_deref().unwrap_or("changed_at"))?;
         let sort_order = match self.sort_order.as_deref() {
             Some("ASC") => "ASC",
             Some("DESC") => "DESC",
@@ -229,7 +228,10 @@ impl TaskHistoryRepository {
     pub async fn count(&self, query: TaskHistoryQuery) -> RepoResult<i64> {
         let (where_clause, where_params) = query.build_where_clause();
 
-        let sql = format!("SELECT COUNT(*) as count FROM task_history {}", where_clause);
+        let sql = format!(
+            "SELECT COUNT(*) as count FROM task_history {}",
+            where_clause
+        );
         let params = rusqlite::params_from_iter(where_params);
 
         let count = self
@@ -314,13 +316,16 @@ impl Repository<TaskHistory, String> for TaskHistoryRepository {
                         entity.changed_by,
                     ],
                 )
-                .map_err(|e| RepoError::Database(format!("Failed to create history entry: {}", e)))?;
+                .map_err(|e| {
+                    RepoError::Database(format!("Failed to create history entry: {}", e))
+                })?;
         }
 
         self.invalidate_history_cache(&entity.id);
         self.invalidate_all_cache();
 
-        self.find_by_id(entity.id).await?
+        self.find_by_id(entity.id)
+            .await?
             .ok_or_else(|| RepoError::NotFound("History entry not found after save".to_string()))
     }
 
@@ -339,8 +344,13 @@ impl Repository<TaskHistory, String> for TaskHistoryRepository {
     async fn exists_by_id(&self, id: String) -> RepoResult<bool> {
         let exists = self
             .db
-            .query_single_value::<i64>("SELECT COUNT(*) FROM task_history WHERE id = ?", params![id])
-            .map_err(|e| RepoError::Database(format!("Failed to check history existence: {}", e)))?;
+            .query_single_value::<i64>(
+                "SELECT COUNT(*) FROM task_history WHERE id = ?",
+                params![id],
+            )
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to check history existence: {}", e))
+            })?;
 
         Ok(exists > 0)
     }
@@ -385,7 +395,13 @@ mod tests {
 
         let task_id = uuid::Uuid::new_v4().to_string();
         seed_task(repo.db.as_ref(), &task_id);
-        let history = TaskHistory::new(task_id, Some("draft".to_string()), "scheduled".to_string(), Some("Task scheduled".to_string()), None);
+        let history = TaskHistory::new(
+            task_id,
+            Some("draft".to_string()),
+            "scheduled".to_string(),
+            Some("Task scheduled".to_string()),
+            None,
+        );
 
         repo.save(history.clone()).await.unwrap();
 
@@ -412,8 +428,20 @@ mod tests {
 
         let task_id = uuid::Uuid::new_v4().to_string();
         seed_task(repo.db.as_ref(), &task_id);
-        let history1 = TaskHistory::new(task_id.clone(), Some("draft".to_string()), "scheduled".to_string(), Some("Reason 1".to_string()), None);
-        let history2 = TaskHistory::new(task_id.clone(), Some("scheduled".to_string()), "in_progress".to_string(), Some("Reason 2".to_string()), None);
+        let history1 = TaskHistory::new(
+            task_id.clone(),
+            Some("draft".to_string()),
+            "scheduled".to_string(),
+            Some("Reason 1".to_string()),
+            None,
+        );
+        let history2 = TaskHistory::new(
+            task_id.clone(),
+            Some("scheduled".to_string()),
+            "in_progress".to_string(),
+            Some("Reason 2".to_string()),
+            None,
+        );
 
         repo.save(history1).await.unwrap();
         repo.save(history2).await.unwrap();
@@ -430,7 +458,13 @@ mod tests {
 
         let task_id = uuid::Uuid::new_v4().to_string();
         seed_task(repo.db.as_ref(), &task_id);
-        let history = TaskHistory::new(task_id, Some("draft".to_string()), "scheduled".to_string(), Some("Task scheduled".to_string()), None);
+        let history = TaskHistory::new(
+            task_id,
+            Some("draft".to_string()),
+            "scheduled".to_string(),
+            Some("Task scheduled".to_string()),
+            None,
+        );
 
         let saved = repo.save(history.clone()).await.unwrap();
         assert_eq!(saved.task_id, history.task_id);
@@ -445,7 +479,13 @@ mod tests {
 
         let task_id = uuid::Uuid::new_v4().to_string();
         seed_task(repo.db.as_ref(), &task_id);
-        let mut history = TaskHistory::new(task_id, Some("draft".to_string()), "scheduled".to_string(), Some("Task scheduled".to_string()), None);
+        let mut history = TaskHistory::new(
+            task_id,
+            Some("draft".to_string()),
+            "scheduled".to_string(),
+            Some("Task scheduled".to_string()),
+            None,
+        );
         repo.save(history.clone()).await.unwrap();
 
         history.new_status = "completed".to_string();
@@ -462,7 +502,13 @@ mod tests {
 
         let task_id = uuid::Uuid::new_v4().to_string();
         seed_task(repo.db.as_ref(), &task_id);
-        let history = TaskHistory::new(task_id, Some("draft".to_string()), "scheduled".to_string(), Some("Task scheduled".to_string()), None);
+        let history = TaskHistory::new(
+            task_id,
+            Some("draft".to_string()),
+            "scheduled".to_string(),
+            Some("Task scheduled".to_string()),
+            None,
+        );
         repo.save(history.clone()).await.unwrap();
 
         let deleted = repo.delete_by_id(history.id.clone()).await.unwrap();
@@ -478,8 +524,20 @@ mod tests {
 
         let task_id = uuid::Uuid::new_v4().to_string();
         seed_task(repo.db.as_ref(), &task_id);
-        let history1 = TaskHistory::new(task_id.clone(), Some("draft".to_string()), "scheduled".to_string(), Some("Reason 1".to_string()), None);
-        let history2 = TaskHistory::new(task_id.clone(), Some("scheduled".to_string()), "in_progress".to_string(), Some("Reason 2".to_string()), None);
+        let history1 = TaskHistory::new(
+            task_id.clone(),
+            Some("draft".to_string()),
+            "scheduled".to_string(),
+            Some("Reason 1".to_string()),
+            None,
+        );
+        let history2 = TaskHistory::new(
+            task_id.clone(),
+            Some("scheduled".to_string()),
+            "in_progress".to_string(),
+            Some("Reason 2".to_string()),
+            None,
+        );
 
         repo.save(history1).await.unwrap();
         repo.save(history2).await.unwrap();
@@ -496,9 +554,33 @@ mod tests {
 
         let task_id = uuid::Uuid::new_v4().to_string();
         seed_task(repo.db.as_ref(), &task_id);
-        repo.save(TaskHistory::new(task_id.clone(), Some("draft".to_string()), "scheduled".to_string(), Some("Reason 1".to_string()), None)).await.unwrap();
-        repo.save(TaskHistory::new(task_id.clone(), Some("scheduled".to_string()), "in_progress".to_string(), Some("Reason 2".to_string()), None)).await.unwrap();
-        repo.save(TaskHistory::new(task_id.clone(), Some("in_progress".to_string()), "completed".to_string(), Some("Reason 3".to_string()), None)).await.unwrap();
+        repo.save(TaskHistory::new(
+            task_id.clone(),
+            Some("draft".to_string()),
+            "scheduled".to_string(),
+            Some("Reason 1".to_string()),
+            None,
+        ))
+        .await
+        .unwrap();
+        repo.save(TaskHistory::new(
+            task_id.clone(),
+            Some("scheduled".to_string()),
+            "in_progress".to_string(),
+            Some("Reason 2".to_string()),
+            None,
+        ))
+        .await
+        .unwrap();
+        repo.save(TaskHistory::new(
+            task_id.clone(),
+            Some("in_progress".to_string()),
+            "completed".to_string(),
+            Some("Reason 3".to_string()),
+            None,
+        ))
+        .await
+        .unwrap();
 
         let count = repo.count_for_task(task_id).await.unwrap();
         assert_eq!(count, 3);
@@ -513,7 +595,13 @@ mod tests {
         for i in 0..10 {
             let task_id = uuid::Uuid::new_v4().to_string();
             seed_task(repo.db.as_ref(), &task_id);
-            let history = TaskHistory::new(task_id, Some("draft".to_string()), "scheduled".to_string(), Some(format!("Entry {}", i)), None);
+            let history = TaskHistory::new(
+                task_id,
+                Some("draft".to_string()),
+                "scheduled".to_string(),
+                Some(format!("Entry {}", i)),
+                None,
+            );
             repo.save(history).await.unwrap();
         }
 
@@ -521,4 +609,3 @@ mod tests {
         assert_eq!(recent.len(), 5);
     }
 }
-

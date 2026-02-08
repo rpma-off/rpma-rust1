@@ -3,12 +3,12 @@
 use crate::commands::AppError;
 use crate::db::Database;
 use crate::models::auth::{TwoFactorConfig, TwoFactorSetup};
+use base64::{engine::general_purpose, Engine as _};
 use chrono::Utc;
 use rand::Rng;
 use std::sync::Arc;
 use totp_rs::{Algorithm, TOTP};
 use tracing::{info, instrument};
-use base64::{Engine as _, engine::general_purpose};
 
 #[derive(Clone, Debug)]
 pub struct TwoFactorService {
@@ -327,7 +327,8 @@ impl TwoFactorService {
 
     /// Decrypt a TOTP secret
     fn decrypt_secret(&self, encrypted_secret: &str) -> Result<Vec<u8>, AppError> {
-        let encrypted = general_purpose::STANDARD.decode(encrypted_secret)
+        let encrypted = general_purpose::STANDARD
+            .decode(encrypted_secret)
             .map_err(|e| AppError::Internal(format!("Failed to decode secret: {}", e)))?;
 
         // Simple XOR decryption for development - use proper decryption in production

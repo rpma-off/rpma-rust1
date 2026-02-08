@@ -5,8 +5,8 @@
 //! - Progress tracking and retrieval
 //! - Management operations
 
-use crate::commands::{ApiResponse, AppError, AppState};
 use crate::authenticate;
+use crate::commands::{ApiResponse, AppError, AppState};
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
@@ -25,17 +25,34 @@ pub struct InterventionProgressQueryRequest {
 #[derive(Deserialize, Debug)]
 #[serde(tag = "action")]
 pub enum InterventionProgressAction {
-    Get { intervention_id: String },
-    AdvanceStep { intervention_id: String, step_id: String, notes: Option<String> },
-    SaveProgress { intervention_id: String, step_id: String, progress_data: serde_json::Value },
+    Get {
+        intervention_id: String,
+    },
+    AdvanceStep {
+        intervention_id: String,
+        step_id: String,
+        notes: Option<String>,
+    },
+    SaveProgress {
+        intervention_id: String,
+        step_id: String,
+        progress_data: serde_json::Value,
+    },
 }
 
 #[derive(Serialize)]
 #[serde(tag = "type")]
 pub enum InterventionProgressResponse {
-    Retrieved { progress: crate::models::intervention::InterventionProgress, steps: Vec<crate::models::step::InterventionStep> },
-    StepAdvanced { step: Box<crate::models::step::InterventionStep> },
-    ProgressSaved { message: String },
+    Retrieved {
+        progress: crate::models::intervention::InterventionProgress,
+        steps: Vec<crate::models::step::InterventionStep>,
+    },
+    StepAdvanced {
+        step: Box<crate::models::step::InterventionStep>,
+    },
+    ProgressSaved {
+        message: String,
+    },
 }
 
 /// Get intervention progress information
@@ -57,8 +74,12 @@ pub async fn intervention_get_progress(
         .map_err(|e| AppError::Database(format!("Failed to get intervention: {}", e)))?
         .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", intervention_id)))?;
 
-    if intervention.technician_id.as_ref() != Some(&session.user_id) && session.role != crate::models::auth::UserRole::Admin {
-        return Err(AppError::Authorization("Not authorized to view this intervention progress".to_string()));
+    if intervention.technician_id.as_ref() != Some(&session.user_id)
+        && session.role != crate::models::auth::UserRole::Admin
+    {
+        return Err(AppError::Authorization(
+            "Not authorized to view this intervention progress".to_string(),
+        ));
     }
 
     // Get intervention with details to calculate progress
@@ -69,11 +90,22 @@ pub async fn intervention_get_progress(
 
     // Calculate progress
     let total_steps = intervention_details.steps.len() as i32;
-    let completed_steps = intervention_details.steps.iter()
-        .filter(|s| matches!(s.step.step_status, crate::models::step::StepStatus::Completed))
+    let completed_steps = intervention_details
+        .steps
+        .iter()
+        .filter(|s| {
+            matches!(
+                s.step.step_status,
+                crate::models::step::StepStatus::Completed
+            )
+        })
         .count() as i32;
     let _current_step = completed_steps + 1;
-    let _completion_percentage = if total_steps > 0 { (completed_steps as f64 / total_steps as f64) * 100.0 } else { 0.0 };
+    let _completion_percentage = if total_steps > 0 {
+        (completed_steps as f64 / total_steps as f64) * 100.0
+    } else {
+        0.0
+    };
 
     // TODO: Implement get_progress method in InterventionService
     // For now, return a placeholder progress structure
@@ -100,7 +132,10 @@ pub async fn intervention_advance_step(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<crate::models::step::InterventionStep>, AppError> {
-    info!("Advancing step {} for intervention {}", step_id, intervention_id);
+    info!(
+        "Advancing step {} for intervention {}",
+        step_id, intervention_id
+    );
 
     let session = authenticate!(&session_token, &state);
 
@@ -111,8 +146,12 @@ pub async fn intervention_advance_step(
         .map_err(|e| AppError::Database(format!("Failed to get intervention: {}", e)))?
         .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", intervention_id)))?;
 
-    if intervention.technician_id.as_ref() != Some(&session.user_id) && session.role != crate::models::auth::UserRole::Admin {
-        return Err(AppError::Authorization("Not authorized to advance this intervention".to_string()));
+    if intervention.technician_id.as_ref() != Some(&session.user_id)
+        && session.role != crate::models::auth::UserRole::Admin
+    {
+        return Err(AppError::Authorization(
+            "Not authorized to advance this intervention".to_string(),
+        ));
     }
 
     let advance_request = crate::services::intervention_types::AdvanceStepRequest {
@@ -146,7 +185,10 @@ pub async fn intervention_save_step_progress(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    info!("Saving step progress for intervention {} step {}", intervention_id, step_id);
+    info!(
+        "Saving step progress for intervention {} step {}",
+        intervention_id, step_id
+    );
 
     let session = authenticate!(&session_token, &state);
 
@@ -157,8 +199,12 @@ pub async fn intervention_save_step_progress(
         .map_err(|e| AppError::Database(format!("Failed to get intervention: {}", e)))?
         .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", intervention_id)))?;
 
-    if intervention.technician_id.as_ref() != Some(&session.user_id) && session.role != crate::models::auth::UserRole::Admin {
-        return Err(AppError::Authorization("Not authorized to save progress for this intervention".to_string()));
+    if intervention.technician_id.as_ref() != Some(&session.user_id)
+        && session.role != crate::models::auth::UserRole::Admin
+    {
+        return Err(AppError::Authorization(
+            "Not authorized to save progress for this intervention".to_string(),
+        ));
     }
 
     let progress_request = crate::services::intervention_types::SaveStepProgressRequest {
@@ -170,7 +216,11 @@ pub async fn intervention_save_step_progress(
 
     state
         .intervention_service
-        .save_step_progress(progress_request, "save-progress-cmd", Some(&session.user_id))
+        .save_step_progress(
+            progress_request,
+            "save-progress-cmd",
+            Some(&session.user_id),
+        )
         .await
         .map(|_| ApiResponse::success("Step progress saved successfully".to_string()))
         .map_err(|e| {
@@ -198,25 +248,44 @@ pub async fn intervention_progress(
                 .intervention_service
                 .get_intervention(&intervention_id)
                 .map_err(|e| AppError::Database(format!("Failed to get intervention: {}", e)))?
-                .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", intervention_id)))?;
+                .ok_or_else(|| {
+                    AppError::NotFound(format!("Intervention {} not found", intervention_id))
+                })?;
 
-            if intervention.technician_id.as_ref() != Some(&session.user_id) && session.role != crate::models::auth::UserRole::Admin {
-                return Err(AppError::Authorization("Not authorized to view this intervention progress".to_string()));
+            if intervention.technician_id.as_ref() != Some(&session.user_id)
+                && session.role != crate::models::auth::UserRole::Admin
+            {
+                return Err(AppError::Authorization(
+                    "Not authorized to view this intervention progress".to_string(),
+                ));
             }
 
             // Get intervention with details to calculate progress
             let intervention_details = state
                 .intervention_service
                 .get_intervention_with_details(&intervention_id)
-                .map_err(|e| AppError::Database(format!("Failed to get intervention details: {}", e)))?;
+                .map_err(|e| {
+                    AppError::Database(format!("Failed to get intervention details: {}", e))
+                })?;
 
             // Calculate progress
             let total_steps = intervention_details.steps.len() as i32;
-            let completed_steps = intervention_details.steps.iter()
-                .filter(|s| matches!(s.step.step_status, crate::models::step::StepStatus::Completed))
+            let completed_steps = intervention_details
+                .steps
+                .iter()
+                .filter(|s| {
+                    matches!(
+                        s.step.step_status,
+                        crate::models::step::StepStatus::Completed
+                    )
+                })
                 .count() as i32;
             let current_step = completed_steps + 1;
-            let completion_percentage = if total_steps > 0 { ((completed_steps as f64 / total_steps as f64) * 100.0) as f32 } else { 0.0 };
+            let completion_percentage = if total_steps > 0 {
+                ((completed_steps as f64 / total_steps as f64) * 100.0) as f32
+            } else {
+                0.0
+            };
 
             let progress = crate::models::intervention::InterventionProgress {
                 intervention_id: intervention_id.clone(),
@@ -224,26 +293,42 @@ pub async fn intervention_progress(
                 completion_percentage,
                 total_steps,
                 completed_steps,
-        estimated_time_remaining: intervention.estimated_duration,
+                estimated_time_remaining: intervention.estimated_duration,
                 status: intervention.status,
             };
 
-            Ok(ApiResponse::success(InterventionProgressResponse::Retrieved {
-                progress,
-                steps: intervention_details.steps.into_iter().map(|s| s.step).collect()
-            }))
+            Ok(ApiResponse::success(
+                InterventionProgressResponse::Retrieved {
+                    progress,
+                    steps: intervention_details
+                        .steps
+                        .into_iter()
+                        .map(|s| s.step)
+                        .collect(),
+                },
+            ))
         }
 
-        InterventionProgressAction::AdvanceStep { intervention_id, step_id, notes } => {
+        InterventionProgressAction::AdvanceStep {
+            intervention_id,
+            step_id,
+            notes,
+        } => {
             // Check intervention access
             let intervention = state
                 .intervention_service
                 .get_intervention(&intervention_id)
                 .map_err(|e| AppError::Database(format!("Failed to get intervention: {}", e)))?
-                .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", intervention_id)))?;
+                .ok_or_else(|| {
+                    AppError::NotFound(format!("Intervention {} not found", intervention_id))
+                })?;
 
-            if intervention.technician_id.as_ref() != Some(&session.user_id) && session.role != crate::models::auth::UserRole::Admin {
-                return Err(AppError::Authorization("Not authorized to advance this intervention".to_string()));
+            if intervention.technician_id.as_ref() != Some(&session.user_id)
+                && session.role != crate::models::auth::UserRole::Admin
+            {
+                return Err(AppError::Authorization(
+                    "Not authorized to advance this intervention".to_string(),
+                ));
             }
 
             let advance_request = crate::services::intervention_types::AdvanceStepRequest {
@@ -262,19 +347,33 @@ pub async fn intervention_progress(
                 .await
                 .map_err(|e| AppError::Database(format!("Failed to advance step: {}", e)))?;
 
-            Ok(ApiResponse::success(InterventionProgressResponse::StepAdvanced { step: Box::new(response.step) }))
+            Ok(ApiResponse::success(
+                InterventionProgressResponse::StepAdvanced {
+                    step: Box::new(response.step),
+                },
+            ))
         }
 
-        InterventionProgressAction::SaveProgress { intervention_id, step_id, progress_data } => {
+        InterventionProgressAction::SaveProgress {
+            intervention_id,
+            step_id,
+            progress_data,
+        } => {
             // Check intervention access
             let intervention = state
                 .intervention_service
                 .get_intervention(&intervention_id)
                 .map_err(|e| AppError::Database(format!("Failed to get intervention: {}", e)))?
-                .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", intervention_id)))?;
+                .ok_or_else(|| {
+                    AppError::NotFound(format!("Intervention {} not found", intervention_id))
+                })?;
 
-            if intervention.technician_id.as_ref() != Some(&session.user_id) && session.role != crate::models::auth::UserRole::Admin {
-                return Err(AppError::Authorization("Not authorized to save progress for this intervention".to_string()));
+            if intervention.technician_id.as_ref() != Some(&session.user_id)
+                && session.role != crate::models::auth::UserRole::Admin
+            {
+                return Err(AppError::Authorization(
+                    "Not authorized to save progress for this intervention".to_string(),
+                ));
             }
 
             let progress_request = crate::services::intervention_types::SaveStepProgressRequest {
@@ -286,11 +385,19 @@ pub async fn intervention_progress(
 
             state
                 .intervention_service
-                .save_step_progress(progress_request, "save-progress-cmd", Some(&session.user_id))
+                .save_step_progress(
+                    progress_request,
+                    "save-progress-cmd",
+                    Some(&session.user_id),
+                )
                 .await
                 .map_err(|e| AppError::Database(format!("Failed to save progress: {}", e)))?;
 
-            Ok(ApiResponse::success(InterventionProgressResponse::ProgressSaved { message: "Progress saved".to_string() }))
+            Ok(ApiResponse::success(
+                InterventionProgressResponse::ProgressSaved {
+                    message: "Progress saved".to_string(),
+                },
+            ))
         }
     }
 }

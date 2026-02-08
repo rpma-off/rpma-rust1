@@ -24,7 +24,12 @@ impl TaskDeletionService {
     }
 
     /// Delete a task (async version) - uses soft delete by default
-    pub async fn delete_task_async(&self, id: &str, user_id: &str, force: bool) -> Result<(), AppError> {
+    pub async fn delete_task_async(
+        &self,
+        id: &str,
+        user_id: &str,
+        force: bool,
+    ) -> Result<(), AppError> {
         let db = self.db.clone();
         let id = id.to_string();
 
@@ -73,7 +78,10 @@ impl TaskDeletionService {
         let task = match task {
             Some(t) => t,
             None => {
-                warn!("TaskDeletionService: task {} not found for hard deletion", id);
+                warn!(
+                    "TaskDeletionService: task {} not found for hard deletion",
+                    id
+                );
                 return Err(AppError::NotFound(format!("Task with id {} not found", id)));
             }
         };
@@ -89,7 +97,10 @@ impl TaskDeletionService {
         let conn = self.db.get_connection()?;
         conn.execute("DELETE FROM tasks WHERE id = ?", params![id])
             .map_err(|e| {
-                error!("TaskDeletionService: failed to hard delete task {}: {}", id, e);
+                error!(
+                    "TaskDeletionService: failed to hard delete task {}: {}",
+                    id, e
+                );
                 AppError::Database(format!("Failed to hard delete task: {}", e))
             })?;
 
@@ -101,7 +112,10 @@ impl TaskDeletionService {
         // Check if task exists
         let task = self.get_task_sync(id)?;
         if task.is_none() {
-            warn!("TaskDeletionService: task {} not found for soft deletion", id);
+            warn!(
+                "TaskDeletionService: task {} not found for soft deletion",
+                id
+            );
             return Err(AppError::NotFound(format!("Task with id {} not found", id)));
         }
 
@@ -154,16 +168,21 @@ impl TaskDeletionService {
     /// Permanently delete all soft-deleted tasks older than specified days
     pub fn cleanup_deleted_tasks(&self, days_old: i32) -> Result<u32, AppError> {
         let conn = self.db.get_connection()?;
-        let cutoff_timestamp = chrono::Utc::now().timestamp_millis() - (days_old as i64 * 24 * 60 * 60 * 1000);
+        let cutoff_timestamp =
+            chrono::Utc::now().timestamp_millis() - (days_old as i64 * 24 * 60 * 60 * 1000);
 
-        let deleted_count = conn.execute(
-            "DELETE FROM tasks WHERE deleted_at IS NOT NULL AND deleted_at < ?",
-            params![cutoff_timestamp],
-        )
-        .map_err(|e| {
-            error!("TaskDeletionService: failed to cleanup deleted tasks: {}", e);
-            AppError::Database(format!("Failed to cleanup deleted tasks: {}", e))
-        })?;
+        let deleted_count = conn
+            .execute(
+                "DELETE FROM tasks WHERE deleted_at IS NOT NULL AND deleted_at < ?",
+                params![cutoff_timestamp],
+            )
+            .map_err(|e| {
+                error!(
+                    "TaskDeletionService: failed to cleanup deleted tasks: {}",
+                    e
+                );
+                AppError::Database(format!("Failed to cleanup deleted tasks: {}", e))
+            })?;
 
         Ok(deleted_count as u32)
     }

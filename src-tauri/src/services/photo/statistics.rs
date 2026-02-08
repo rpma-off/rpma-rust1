@@ -43,7 +43,10 @@ pub struct PhotoStatisticsService {
 impl PhotoStatisticsService {
     /// Create new photo statistics service
     pub fn new(db: Database, local_storage_path: std::path::PathBuf) -> Self {
-        Self { db, local_storage_path }
+        Self {
+            db,
+            local_storage_path,
+        }
     }
 
     /// Get photo statistics

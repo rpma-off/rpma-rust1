@@ -3,22 +3,22 @@
 //! This module contains Criterion benchmarks for audit logging
 //! performance to ensure minimal impact on system performance.
 
+use crate::services::audit_service::{ActionResult, AuditEventType, AuditService};
+use crate::test_utils::TestDatabase;
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use crate::services::audit_service::{AuditService, AuditEventType, ActionResult};
-use crate::test_utils::{TestDatabase};
 use tokio::runtime::Runtime;
 
 fn benchmark_audit_logging(c: &mut Criterion) {
     let rt = Runtime::new().unwrap();
-    
+
     // Setup test database
     let test_db = TestDatabase::new().unwrap();
     let audit_service = AuditService::new(test_db.db());
-    
+
     rt.block_on(async {
         audit_service.init().unwrap();
     });
-    
+
     c.bench_function("log_task_event", |b| {
         b.to_async(&rt).iter(|| async {
             let _result = audit_service.log_task_event(
@@ -32,7 +32,7 @@ fn benchmark_audit_logging(c: &mut Criterion) {
             );
         });
     });
-    
+
     c.bench_function("log_intervention_event", |b| {
         b.to_async(&rt).iter(|| async {
             let _result = audit_service.log_intervention_event(
@@ -46,7 +46,7 @@ fn benchmark_audit_logging(c: &mut Criterion) {
             );
         });
     });
-    
+
     c.bench_function("log_security_event", |b| {
         b.to_async(&rt).iter(|| async {
             let _result = audit_service.log_security_event(
@@ -59,7 +59,7 @@ fn benchmark_audit_logging(c: &mut Criterion) {
             );
         });
     });
-    
+
     c.bench_function("log_custom_event", |b| {
         b.to_async(&rt).iter(|| async {
             let custom_event = crate::services::audit_service::AuditEvent {
@@ -87,7 +87,7 @@ fn benchmark_audit_logging(c: &mut Criterion) {
                 session_id: None,
                 request_id: Some("metric-12345".to_string()),
             };
-            
+
             let _result = audit_service.log_event(black_box(custom_event));
         });
     });
@@ -95,20 +95,24 @@ fn benchmark_audit_logging(c: &mut Criterion) {
 
 fn benchmark_audit_batch_operations(c: &mut Criterion) {
     let rt = Runtime::new().unwrap();
-    
+
     // Setup test database
     let test_db = TestDatabase::new().unwrap();
     let audit_service = AuditService::new(test_db.db());
-    
+
     rt.block_on(async {
         audit_service.init().unwrap();
     });
-    
+
     c.bench_function("log_events_batch_10", |b| {
         b.to_async(&rt).iter(|| async {
             for i in 0..10 {
                 let _result = audit_service.log_task_event(
-                    if i % 2 == 0 { AuditEventType::TaskCreated } else { AuditEventType::TaskUpdated },
+                    if i % 2 == 0 {
+                        AuditEventType::TaskCreated
+                    } else {
+                        AuditEventType::TaskUpdated
+                    },
                     black_box(&format!("user-{}", i)),
                     black_box(&format!("task-{}", i)),
                     black_box(&format!("Batch event {}", i)),
@@ -119,12 +123,16 @@ fn benchmark_audit_batch_operations(c: &mut Criterion) {
             }
         });
     });
-    
+
     c.bench_function("log_events_batch_100", |b| {
         b.to_async(&rt).iter(|| async {
             for i in 0..100 {
                 let _result = audit_service.log_task_event(
-                    if i % 2 == 0 { AuditEventType::TaskCreated } else { AuditEventType::TaskUpdated },
+                    if i % 2 == 0 {
+                        AuditEventType::TaskCreated
+                    } else {
+                        AuditEventType::TaskUpdated
+                    },
                     black_box(&format!("user-{}", i)),
                     black_box(&format!("task-{}", i)),
                     black_box(&format!("Large batch event {}", i)),
@@ -139,148 +147,168 @@ fn benchmark_audit_batch_operations(c: &mut Criterion) {
 
 fn benchmark_audit_queries(c: &mut Criterion) {
     let rt = Runtime::new().unwrap();
-    
+
     // Setup test database with audit events
     let test_db = TestDatabase::new().unwrap();
     let audit_service = AuditService::new(test_db.db());
-    
+
     rt.block_on(async {
         audit_service.init().unwrap();
-        
+
         // Create test audit events
         for i in 0..1000 {
-            audit_service.log_task_event(
-                if i % 3 == 0 { AuditEventType::TaskCreated }
-                else if i % 3 == 1 { AuditEventType::TaskUpdated }
-                else { AuditEventType::TaskCompleted },
-                &format!("user-{}", i % 50), // 50 different users
-                &format!("task-{}", i),
-                &format!("Audit event {}", i),
-                None,
-                None,
-                ActionResult::Success,
-            ).unwrap();
+            audit_service
+                .log_task_event(
+                    if i % 3 == 0 {
+                        AuditEventType::TaskCreated
+                    } else if i % 3 == 1 {
+                        AuditEventType::TaskUpdated
+                    } else {
+                        AuditEventType::TaskCompleted
+                    },
+                    &format!("user-{}", i % 50), // 50 different users
+                    &format!("task-{}", i),
+                    &format!("Audit event {}", i),
+                    None,
+                    None,
+                    ActionResult::Success,
+                )
+                .unwrap();
         }
     });
-    
+
     c.bench_function("get_resource_history_single", |b| {
         b.to_async(&rt).iter(|| async {
-            let _result = audit_service.get_resource_history(
-                black_box("task"),
-                black_box("task-123"),
-                black_box(Some(10))
-            ).await;
+            let _result = audit_service
+                .get_resource_history(
+                    black_box("task"),
+                    black_box("task-123"),
+                    black_box(Some(10)),
+                )
+                .await;
         });
     });
-    
+
     c.bench_function("get_resource_history_pagination_10", |b| {
         b.to_async(&rt).iter(|| async {
-            let _result = audit_service.get_resource_history(
-                black_box("task"),
-                black_box("task-456"),
-                black_box(Some(10))
-            ).await;
+            let _result = audit_service
+                .get_resource_history(
+                    black_box("task"),
+                    black_box("task-456"),
+                    black_box(Some(10)),
+                )
+                .await;
         });
     });
-    
+
     c.bench_function("get_user_activity_single", |b| {
         b.to_async(&rt).iter(|| async {
-            let _result = audit_service.get_user_activity(
-                black_box("user-25"),
-                black_box(None),
-                black_box(None),
-                black_box(Some(50))
-            ).await;
+            let _result = audit_service
+                .get_user_activity(
+                    black_box("user-25"),
+                    black_box(None),
+                    black_box(None),
+                    black_box(Some(50)),
+                )
+                .await;
         });
     });
-    
+
     c.bench_function("get_user_activity_date_range", |b| {
         b.to_async(&rt).iter(|| async {
             let start_time = chrono::Utc::now() - chrono::Duration::days(1);
             let end_time = chrono::Utc::now();
-            
-            let _result = audit_service.get_user_activity(
-                black_box("user-25"),
-                black_box(Some(start_time)),
-                black_box(Some(end_time)),
-                black_box(Some(100))
-            ).await;
+
+            let _result = audit_service
+                .get_user_activity(
+                    black_box("user-25"),
+                    black_box(Some(start_time)),
+                    black_box(Some(end_time)),
+                    black_box(Some(100)),
+                )
+                .await;
         });
     });
 }
 
 fn benchmark_audit_maintenance(c: &mut Criterion) {
     let rt = Runtime::new().unwrap();
-    
+
     // Setup test database with old audit events
     let test_db = TestDatabase::new().unwrap();
     let audit_service = AuditService::new(test_db.db());
-    
+
     rt.block_on(async {
         audit_service.init().unwrap();
-        
+
         // Create test audit events
         for i in 0..500 {
-            audit_service.log_task_event(
-                AuditEventType::TaskCreated,
-                &format!("user-{}", i % 20),
-                &format!("task-{}", i),
-                &format!("Old audit event {}", i),
-                None,
-                None,
-                ActionResult::Success,
-            ).unwrap();
+            audit_service
+                .log_task_event(
+                    AuditEventType::TaskCreated,
+                    &format!("user-{}", i % 20),
+                    &format!("task-{}", i),
+                    &format!("Old audit event {}", i),
+                    None,
+                    None,
+                    ActionResult::Success,
+                )
+                .unwrap();
         }
     });
-    
+
     c.bench_function("cleanup_old_events_7_days", |b| {
         b.to_async(&rt).iter(|| async {
             let test_db = TestDatabase::new().unwrap();
             let audit_service = AuditService::new(test_db.db());
-            
+
             rt.block_on(async {
                 audit_service.init().unwrap();
-                
+
                 // Create some events to clean up
                 for i in 0..100 {
-                    audit_service.log_task_event(
-                        AuditEventType::TaskCreated,
-                        &format!("cleanup-user-{}", i),
-                        &format!("cleanup-task-{}", i),
-                        &format!("Cleanup event {}", i),
-                        None,
-                        None,
-                        ActionResult::Success,
-                    ).unwrap();
+                    audit_service
+                        .log_task_event(
+                            AuditEventType::TaskCreated,
+                            &format!("cleanup-user-{}", i),
+                            &format!("cleanup-task-{}", i),
+                            &format!("Cleanup event {}", i),
+                            None,
+                            None,
+                            ActionResult::Success,
+                        )
+                        .unwrap();
                 }
             });
-            
+
             let _result = audit_service.cleanup_old_events(black_box(7)).await;
         });
     });
-    
+
     c.bench_function("cleanup_old_events_30_days", |b| {
         b.to_async(&rt).iter(|| async {
             let test_db = TestDatabase::new().unwrap();
             let audit_service = AuditService::new(test_db.db());
-            
+
             rt.block_on(async {
                 audit_service.init().unwrap();
-                
+
                 // Create some events to clean up
                 for i in 0..100 {
-                    audit_service.log_task_event(
-                        AuditEventType::TaskCreated,
-                        &format!("cleanup-user-{}", i),
-                        &format!("cleanup-task-{}", i),
-                        &format!("Cleanup event {}", i),
-                        None,
-                        None,
-                        ActionResult::Success,
-                    ).unwrap();
+                    audit_service
+                        .log_task_event(
+                            AuditEventType::TaskCreated,
+                            &format!("cleanup-user-{}", i),
+                            &format!("cleanup-task-{}", i),
+                            &format!("Cleanup event {}", i),
+                            None,
+                            None,
+                            ActionResult::Success,
+                        )
+                        .unwrap();
                 }
             });
-            
+
             let _result = audit_service.cleanup_old_events(black_box(30)).await;
         });
     });

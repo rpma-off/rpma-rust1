@@ -744,6 +744,7 @@ CREATE TABLE IF NOT EXISTS user_settings (
   full_name TEXT,
   email TEXT,
   phone TEXT,
+  avatar_url TEXT,
   notes TEXT,
 
   -- Preferences
@@ -818,6 +819,35 @@ CREATE TABLE IF NOT EXISTS user_settings (
 
 -- Indexes for user_settings
 CREATE INDEX IF NOT EXISTS idx_user_settings_user_id ON user_settings(user_id);
+
+-- Table 9.1: settings_audit_log
+-- Tracks user settings changes for auditing and diagnostics.
+CREATE TABLE IF NOT EXISTS settings_audit_log (
+  id TEXT PRIMARY KEY NOT NULL,
+  user_id TEXT NOT NULL,
+  setting_type TEXT NOT NULL,
+  details TEXT NOT NULL,
+  timestamp INTEGER NOT NULL,
+  ip_address TEXT,
+  user_agent TEXT,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_settings_audit_user_timestamp ON settings_audit_log(user_id, timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_settings_audit_type_timestamp ON settings_audit_log(setting_type, timestamp DESC);
+
+-- Table 9.2: user_consent
+-- Stores user consent preferences for GDPR/compliance features.
+CREATE TABLE IF NOT EXISTS user_consent (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id TEXT NOT NULL UNIQUE,
+  consent_data TEXT NOT NULL,
+  updated_at INTEGER NOT NULL,
+  created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_consent_user_id ON user_consent(user_id);
 
 -- Table 9.5: message_templates
 -- Reusable templates for email/SMS/in-app messages

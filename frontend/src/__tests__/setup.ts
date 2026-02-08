@@ -1,6 +1,4 @@
 import '@testing-library/jest-dom';
-import 'jest-webextension-mock';
-
 // Mock Tauri APIs
 jest.mock('@tauri-apps/api', () => ({
   invoke: jest.fn(),
@@ -84,3 +82,14 @@ Object.defineProperty(global, 'performance', {
     getEntriesByType: jest.fn(() => []),
   },
 });
+
+// Polyfill web API classes used by Next.js server modules
+if (typeof (global as any).Request === 'undefined') {
+  (global as any).Request = class Request {};
+}
+if (typeof (global as any).Response === 'undefined') {
+  (global as any).Response = class Response {};
+}
+if (typeof (global as any).Headers === 'undefined') {
+  (global as any).Headers = class Headers {};
+}

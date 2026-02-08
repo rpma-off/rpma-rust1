@@ -39,18 +39,42 @@ pub async fn update_user_accessibility(
 
     let user = authenticate!(&request.session_token, &state);
 
-    let accessibility_settings = UserAccessibilitySettings {
-        high_contrast: request.high_contrast.unwrap_or(false),
-        large_text: request.large_text.unwrap_or(false),
-        reduce_motion: request.reduce_motion.unwrap_or(false),
-        screen_reader: request.screen_reader.unwrap_or(false),
-        focus_indicators: request.focus_indicators.unwrap_or(false),
-        keyboard_navigation: request.keyboard_navigation.unwrap_or(false),
-        text_to_speech: request.text_to_speech.unwrap_or(false),
-        speech_rate: request.speech_rate.unwrap_or(1.0),
-        font_size: request.font_size.unwrap_or(16),
-        color_blind_mode: request.color_blind_mode.unwrap_or_else(|| "none".to_string()),
-    };
+    let mut accessibility_settings: UserAccessibilitySettings = state
+        .settings_service
+        .get_user_settings(&user.id)
+        .map_err(|e| handle_settings_error(e, "Load user accessibility settings"))?
+        .accessibility;
+
+    if let Some(value) = request.high_contrast {
+        accessibility_settings.high_contrast = value;
+    }
+    if let Some(value) = request.large_text {
+        accessibility_settings.large_text = value;
+    }
+    if let Some(value) = request.reduce_motion {
+        accessibility_settings.reduce_motion = value;
+    }
+    if let Some(value) = request.screen_reader {
+        accessibility_settings.screen_reader = value;
+    }
+    if let Some(value) = request.focus_indicators {
+        accessibility_settings.focus_indicators = value;
+    }
+    if let Some(value) = request.keyboard_navigation {
+        accessibility_settings.keyboard_navigation = value;
+    }
+    if let Some(value) = request.text_to_speech {
+        accessibility_settings.text_to_speech = value;
+    }
+    if let Some(value) = request.speech_rate {
+        accessibility_settings.speech_rate = value;
+    }
+    if let Some(value) = request.font_size {
+        accessibility_settings.font_size = value;
+    }
+    if let Some(value) = request.color_blind_mode {
+        accessibility_settings.color_blind_mode = value;
+    }
 
     state
         .settings_service

@@ -2,12 +2,12 @@
 //!
 //! This module handles task assignment validation and availability checking.
 
+use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::models::task::{
     AssignmentCheckResponse, AssignmentStatus, AvailabilityCheckResponse, AvailabilityStatus,
     ValidationResult,
 };
-use crate::authenticate;
 use tracing::{debug, info};
 
 /// Request for checking task assignment eligibility
@@ -42,7 +42,6 @@ pub struct ValidateTaskAssignmentChangeRequest {
 
 /// Check task assignment eligibility
 #[tauri::command]
-
 #[tracing::instrument(skip(state))]
 pub async fn check_task_assignment(
     request: CheckTaskAssignmentRequest,
@@ -63,12 +62,14 @@ pub async fn check_task_assignment(
             AppError::NotFound(format!("Task not found: {}", request.task_id))
         })?;
 
-    let task = task_option.ok_or_else(|| {
-        AppError::NotFound(format!("Task not found: {}", request.task_id))
-    })?;
+    let task = task_option
+        .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
 
     // Check if user is authorized to assign tasks
-    if !matches!(session.role, crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor) {
+    if !matches!(
+        session.role,
+        crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+    ) {
         return Err(AppError::Authorization(
             "User not authorized to assign tasks".to_string(),
         ));
@@ -89,7 +90,9 @@ pub async fn check_task_assignment(
         })?;
 
     // Get max tasks per user from settings (configurable)
-    let max_tasks_per_user = state.settings_service.get_max_tasks_per_user()
+    let max_tasks_per_user = state
+        .settings_service
+        .get_max_tasks_per_user()
         .map_err(|e| {
             debug!("Failed to get max_tasks_per_user setting: {}", e);
             AppError::Database(format!("Failed to get settings: {}", e))
@@ -117,10 +120,16 @@ pub async fn check_task_assignment(
     let required_skills: Vec<String> = vec![]; // Temporary: empty skills list
 
     // Check task schedule conflicts
-    let has_schedule_conflicts = if let (Some(duration), Some(scheduled_date)) = (task.estimated_duration, &task.scheduled_date) {
+    let has_schedule_conflicts = if let (Some(duration), Some(scheduled_date)) =
+        (task.estimated_duration, &task.scheduled_date)
+    {
         state
             .task_service
-            .check_schedule_conflicts(&request.user_id, Some(scheduled_date.clone()), &Some(duration))
+            .check_schedule_conflicts(
+                &request.user_id,
+                Some(scheduled_date.clone()),
+                &Some(duration),
+            )
             .map_err(|e| {
                 debug!("Failed to check schedule conflicts: {}", e);
                 AppError::Database(format!("Failed to check schedule conflicts: {}", e))
@@ -152,10 +161,9 @@ pub async fn check_task_assignment(
                 "User has {} tasks, maximum allowed is {}",
                 current_task_count, max_tasks_per_user
             )],
-            AssignmentStatus::Restricted => vec![format!(
-                "User lacks required skills: {:?}",
-                required_skills
-            )],
+            AssignmentStatus::Restricted => {
+                vec![format!("User lacks required skills: {:?}", required_skills)]
+            }
             AssignmentStatus::Assigned => vec![format!(
                 "Task is already assigned to user: {}",
                 current_assignee.as_ref().unwrap()
@@ -173,10 +181,9 @@ pub async fn check_task_assignment(
                 "User has {} tasks, maximum allowed is {}",
                 current_task_count, max_tasks_per_user
             ),
-            AssignmentStatus::Restricted => format!(
-                "User lacks required skills: {:?}",
-                required_skills
-            ),
+            AssignmentStatus::Restricted => {
+                format!("User lacks required skills: {:?}", required_skills)
+            }
             AssignmentStatus::Assigned => format!(
                 "Task is already assigned to user: {}",
                 current_assignee.as_ref().unwrap()
@@ -192,7 +199,10 @@ pub async fn check_task_assignment(
         reason,
     };
 
-    info!("Task assignment check completed for task {} and user {}", request.task_id, request.user_id);
+    info!(
+        "Task assignment check completed for task {} and user {}",
+        request.task_id, request.user_id
+    );
 
     Ok(ApiResponse::success(response))
 }
@@ -219,9 +229,8 @@ pub async fn check_task_availability(
             AppError::NotFound(format!("Task not found: {}", request.task_id))
         })?;
 
-    let task = task_option.ok_or_else(|| {
-        AppError::NotFound(format!("Task not found: {}", request.task_id))
-    })?;
+    let task = task_option
+        .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
 
     // Check if task is available for assignment
     let is_available = match task.status {
@@ -278,8 +287,12 @@ pub async fn check_task_availability(
     let reason = match status {
         AvailabilityStatus::Unavailable => Some(format!("Task is in status: {:?}", task.status)),
         AvailabilityStatus::Locked => Some("Task dependencies are not satisfied".to_string()),
-        AvailabilityStatus::ScheduledConflict => Some("Task conflicts with existing schedule".to_string()),
-        AvailabilityStatus::MaterialUnavailable => Some("Required materials are unavailable".to_string()),
+        AvailabilityStatus::ScheduledConflict => {
+            Some("Task conflicts with existing schedule".to_string())
+        }
+        AvailabilityStatus::MaterialUnavailable => {
+            Some("Required materials are unavailable".to_string())
+        }
         AvailabilityStatus::Available => None,
     };
 
@@ -289,12 +302,16 @@ pub async fn check_task_availability(
         reason,
     };
 
-    info!("Task availability check completed for task {}", request.task_id);
+    info!(
+        "Task availability check completed for task {}",
+        request.task_id
+    );
 
     Ok(ApiResponse::success(response))
 }
 
 /// Validate task assignment change
+#[tauri::command]
 #[tracing::instrument(skip(state))]
 pub async fn validate_task_assignment_change(
     request: ValidateTaskAssignmentChangeRequest,
@@ -306,7 +323,10 @@ pub async fn validate_task_assignment_change(
     let session = authenticate!(&request.session_token, &state);
 
     // Validate user has permission to change assignments
-    if !matches!(session.role, crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor) {
+    if !matches!(
+        session.role,
+        crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+    ) {
         return Err(AppError::Authorization(
             "User not authorized to change task assignments".to_string(),
         ));
@@ -322,9 +342,8 @@ pub async fn validate_task_assignment_change(
             AppError::NotFound(format!("Task not found: {}", request.task_id))
         })?;
 
-    let task = task_option.ok_or_else(|| {
-        AppError::NotFound(format!("Task not found: {}", request.task_id))
-    })?;
+    let task = task_option
+        .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
 
     // Note: User existence validation skipped - no user_service available
     // Assume user exists if we get this far (validation could be added later if needed)
@@ -342,7 +361,10 @@ pub async fn validate_task_assignment_change(
     ];
 
     if !changeable_states.contains(&task.status) {
-        errors.push(format!("Task cannot be reassigned in status: {:?}", task.status));
+        errors.push(format!(
+            "Task cannot be reassigned in status: {:?}",
+            task.status
+        ));
     }
 
     // Check new user's capacity
@@ -355,7 +377,9 @@ pub async fn validate_task_assignment_change(
         })?;
 
     // Get max tasks per user from settings (configurable)
-    let max_tasks_per_user = state.settings_service.get_max_tasks_per_user()
+    let max_tasks_per_user = state
+        .settings_service
+        .get_max_tasks_per_user()
         .map_err(|e| {
             debug!("Failed to get max_tasks_per_user setting: {}", e);
             AppError::Database(format!("Failed to get settings: {}", e))
@@ -373,18 +397,24 @@ pub async fn validate_task_assignment_change(
 
     // Check new user's skills (simplified - could be enhanced with actual skill validation)
     let has_required_skills = true; // Placeholder - skills validation could be implemented
-    // Note: task.required_skills field doesn't exist in Task model
-    // This validation would need to be implemented differently if skill requirements are needed
+                                    // Note: task.required_skills field doesn't exist in Task model
+                                    // This validation would need to be implemented differently if skill requirements are needed
 
     if !has_required_skills {
         errors.push("New user lacks required skills".to_string());
     }
 
     // Check schedule conflicts for new user
-    let has_schedule_conflicts = if let (Some(duration), Some(scheduled_date)) = (task.estimated_duration, &task.scheduled_date) {
+    let has_schedule_conflicts = if let (Some(duration), Some(scheduled_date)) =
+        (task.estimated_duration, &task.scheduled_date)
+    {
         state
             .task_service
-            .check_schedule_conflicts(&request.new_user_id, Some(scheduled_date.clone()), &Some(duration))
+            .check_schedule_conflicts(
+                &request.new_user_id,
+                Some(scheduled_date.clone()),
+                &Some(duration),
+            )
             .map_err(|e| {
                 debug!("Failed to check schedule conflicts: {}", e);
                 AppError::Database(format!("Failed to check schedule conflicts: {}", e))
@@ -425,7 +455,10 @@ pub async fn validate_task_assignment_change(
         warnings,
     };
 
-    info!("Task assignment change validation completed for task {}", request.task_id);
+    info!(
+        "Task assignment change validation completed for task {}",
+        request.task_id
+    );
 
     Ok(ApiResponse::success(validation_result))
 }

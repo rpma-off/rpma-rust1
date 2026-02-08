@@ -5,9 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,7 +20,6 @@ import {
   Save,
   TestTube,
   Volume2,
-  VolumeX
 } from 'lucide-react';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useLogger } from '@/hooks/useLogger';
@@ -71,7 +67,7 @@ interface NotificationsSettingsTabProps {
   profile?: UserAccount;
 }
 
-export function NotificationsTab({ user, profile }: NotificationsSettingsTabProps) {
+export function NotificationsTab({ user }: NotificationsSettingsTabProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -127,8 +123,8 @@ export function NotificationsTab({ user, profile }: NotificationsSettingsTabProp
         const userSettings = await ipcClient.settings.getUserSettings(user.token);
 
         // Apply notification settings if available
-        if (userSettings && (userSettings as any).notifications) {
-          form.reset((userSettings as any).notifications);
+        if (userSettings?.notifications) {
+          form.reset(userSettings.notifications as unknown as NotificationsFormData);
         }
 
         logInfo('Notification settings loaded successfully', { userId: user.user_id });

@@ -5,7 +5,10 @@
 use crate::commands::{AppError, AppResult};
 use crate::db::Database;
 use crate::models::task::*;
-use crate::services::task_constants::{apply_query_filters, calculate_offset, calculate_pagination, DEFAULT_PAGE_SIZE, SINGLE_TASK_TIMEOUT_SECS, TASK_LIST_TIMEOUT_SECS, TASK_QUERY_COLUMNS};
+use crate::services::task_constants::{
+    apply_query_filters, calculate_offset, calculate_pagination, DEFAULT_PAGE_SIZE,
+    SINGLE_TASK_TIMEOUT_SECS, TASK_LIST_TIMEOUT_SECS, TASK_QUERY_COLUMNS,
+};
 use rusqlite::params;
 use std::sync::Arc;
 
@@ -32,7 +35,8 @@ impl TaskQueriesService {
             WHERE deleted_at IS NULL
         "#,
             TASK_QUERY_COLUMNS
-        ).to_string();
+        )
+        .to_string();
 
         let mut params_vec: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
 
@@ -59,7 +63,8 @@ impl TaskQueriesService {
         let mut stmt = conn.prepare(&sql).map_err(|e| e.to_string())?;
 
         // Convert Box<dyn ToSql> to &dyn ToSql for parameter binding
-        let params_refs: Vec<&dyn rusqlite::ToSql> = params_vec.iter().map(|p| p.as_ref()).collect();
+        let params_refs: Vec<&dyn rusqlite::ToSql> =
+            params_vec.iter().map(|p| p.as_ref()).collect();
 
         let tasks: Result<Vec<Task>, _> = stmt
             .query_map(&params_refs[..], |row| {
@@ -140,9 +145,13 @@ impl TaskQueriesService {
             count_params.push(Box::new(param));
         }
 
-        let count_params_refs: Vec<&dyn rusqlite::ToSql> = count_params.iter().map(|p| p.as_ref()).collect();
+        let count_params_refs: Vec<&dyn rusqlite::ToSql> =
+            count_params.iter().map(|p| p.as_ref()).collect();
 
-        let total_count: i64 = match self.db.query_single_value(&count_sql, &count_params_refs[..]) {
+        let total_count: i64 = match self
+            .db
+            .query_single_value(&count_sql, &count_params_refs[..])
+        {
             Ok(count) => count,
             Err(e) => {
                 tracing::error!("Failed to get total count: {}", e);
@@ -226,19 +235,22 @@ impl TaskQueriesService {
         match result {
             Ok(Ok(response)) => {
                 let total_time = start_time.elapsed();
-                tracing::debug!("Task async query completed successfully in {:?}", total_time);
+                tracing::debug!(
+                    "Task async query completed successfully in {:?}",
+                    total_time
+                );
                 Ok(response?)
-            },
+            }
             Ok(Err(e)) => {
                 let total_time = start_time.elapsed();
                 tracing::error!("Task sync query failed after {:?}: {}", total_time, e);
                 Err(format!("Task list retrieval failed: {}", e))
-            },
+            }
             Err(_timeout) => {
                 let total_time = start_time.elapsed();
                 tracing::error!("Task query timed out after {:?}", total_time);
                 Err("Task list timeout".to_string())
-            },
+            }
         }
     }
 
@@ -269,7 +281,8 @@ impl TaskQueriesService {
             WHERE technician_id = ? AND deleted_at IS NULL
         "#,
             TASK_QUERY_COLUMNS
-        ).to_string();
+        )
+        .to_string();
 
         let mut params_vec = vec![user_id.to_string()];
 

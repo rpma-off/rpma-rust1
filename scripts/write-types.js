@@ -16,6 +16,10 @@ process.stdin.on('end', () => {
     // Clean up malformed escape sequences that ts-rs sometimes generates
     typeDefinitions = typeDefinitions.replace(/\\n/g, '\n');
 
+    // ts-rs may emit local `import type` statements when targeting per-type files.
+    // Our backend.ts is a single bundled file, so those imports are invalid/conflicting.
+    typeDefinitions = typeDefinitions.replace(/^import type .* from "\.\/.*";\r?\n/gm, '');
+
     // Validate critical exports (excluding types that are manually defined to avoid conflicts)
     const requiredExports = ['TaskStatus', 'TaskPriority', 'UserAccount'];
     const manuallyDefinedTypes = ['Task', 'Client']; // These are defined in unified.types.ts to avoid conflicts

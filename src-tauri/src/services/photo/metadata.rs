@@ -35,7 +35,10 @@ impl PhotoMetadataService {
     }
 
     /// Get photos with filtering and pagination
-    pub fn get_photos(&self, request: super::GetPhotosRequest) -> crate::services::photo::PhotoResult<super::GetPhotosResponse> {
+    pub fn get_photos(
+        &self,
+        request: super::GetPhotosRequest,
+    ) -> crate::services::photo::PhotoResult<super::GetPhotosResponse> {
         let mut conditions = Vec::new();
         let mut params_vec = Vec::new();
 
@@ -106,9 +109,9 @@ impl PhotoMetadataService {
     /// Delete photo
     pub fn delete_photo(&self, id: &str) -> crate::services::photo::PhotoResult<()> {
         // Get photo record first
-        let photo = self
-            .get_photo(id)?
-            .ok_or_else(|| crate::services::photo::PhotoError::NotFound(format!("Photo {} not found", id)))?;
+        let photo = self.get_photo(id)?.ok_or_else(|| {
+            crate::services::photo::PhotoError::NotFound(format!("Photo {} not found", id))
+        })?;
 
         // Delete file
         if Path::new(&photo.file_path).exists() {
@@ -129,9 +132,9 @@ impl PhotoMetadataService {
         updates: PhotoMetadataUpdate,
     ) -> crate::services::photo::PhotoResult<Photo> {
         // Get current photo
-        let mut photo = self
-            .get_photo(id)?
-            .ok_or_else(|| crate::services::photo::PhotoError::NotFound(format!("Photo {} not found", id)))?;
+        let mut photo = self.get_photo(id)?.ok_or_else(|| {
+            crate::services::photo::PhotoError::NotFound(format!("Photo {} not found", id))
+        })?;
 
         // Apply updates
         if let Some(title) = updates.title {
@@ -201,7 +204,10 @@ impl PhotoMetadataService {
                     photo.title,
                     photo.description,
                     photo.notes,
-                    photo.annotations.as_ref().map(|a| serde_json::to_string(a).unwrap_or_default()),
+                    photo
+                        .annotations
+                        .as_ref()
+                        .map(|a| serde_json::to_string(a).unwrap_or_default()),
                     photo.gps_location_lat,
                     photo.gps_location_lon,
                     photo.gps_location_accuracy,

@@ -1,23 +1,20 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { settingsService } from '@/lib/services/entities/settings.service';
 import { withAuth, NextRequestWithUser } from '@/lib/middleware/auth.middleware';
+import { settingsError, settingsSuccess } from '../_shared';
 
-// PUT /api/settings/password - Change user password
 export const PUT = withAuth(async (request: NextRequestWithUser) => {
-  const { user } = request;
+  const { user, token } = request;
+
   try {
     const body = await request.json();
+    const result = await settingsService.changePassword(user.id, body, token);
 
-    await settingsService.changePassword(user.id, body);
+    if (!result.success) {
+      return settingsError(result.error || 'Failed to change password', 400);
+    }
 
-    return NextResponse.json({
-      message: 'Password changed successfully'
-    });
+    return settingsSuccess({ message: 'Password changed successfully' });
   } catch (error) {
-    console.error('Error in PUT /api/settings/password:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return settingsError(error instanceof Error ? error.message : 'Invalid request body', 400);
   }
 }, 'all');

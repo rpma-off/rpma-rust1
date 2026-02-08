@@ -81,7 +81,7 @@ export const securityOperations = {
    */
   getActiveSessions: (sessionToken: string): Promise<unknown[]> =>
     safeInvoke<unknown[]>(IPC_COMMANDS.GET_ACTIVE_SESSIONS, {
-      session_token: sessionToken
+      sessionToken
     }),
 
   /**
@@ -92,8 +92,8 @@ export const securityOperations = {
    */
   revokeSession: (sessionId: string, sessionToken: string): Promise<unknown> =>
     safeInvoke<unknown>(IPC_COMMANDS.REVOKE_SESSION, {
-      session_id: sessionId,
-      session_token: sessionToken
+      sessionId,
+      sessionToken
     }),
 
   /**
@@ -103,7 +103,7 @@ export const securityOperations = {
    */
   revokeAllSessionsExceptCurrent: (sessionToken: string): Promise<unknown> =>
     safeInvoke<unknown>(IPC_COMMANDS.REVOKE_ALL_SESSIONS_EXCEPT_CURRENT, {
-      session_token: sessionToken
+      sessionToken
     }),
 
   /**
@@ -114,8 +114,8 @@ export const securityOperations = {
    */
   updateSessionTimeout: (timeoutMinutes: number, sessionToken: string): Promise<unknown> =>
     safeInvoke<unknown>(IPC_COMMANDS.UPDATE_SESSION_TIMEOUT, {
-      timeout_minutes: timeoutMinutes,
-      session_token: sessionToken
+      timeoutMinutes,
+      sessionToken
     }),
 
   /**
@@ -125,7 +125,7 @@ export const securityOperations = {
    */
   getSessionTimeoutConfig: (sessionToken: string): Promise<unknown> =>
     safeInvoke<unknown>(IPC_COMMANDS.GET_SESSION_TIMEOUT_CONFIG, {
-      session_token: sessionToken
+      sessionToken
     }),
 
   // IP blocking management operations

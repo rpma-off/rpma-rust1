@@ -4,8 +4,8 @@
 
 use crate::db::Database;
 use crate::models::notification::{NotificationChannel, NotificationTemplate, NotificationType};
-use crate::repositories::base::{Repository, RepoError, RepoResult};
-use crate::repositories::cache::{Cache, CacheKeyBuilder, ttl};
+use crate::repositories::base::{RepoError, RepoResult, Repository};
+use crate::repositories::cache::{ttl, Cache, CacheKeyBuilder};
 use async_trait::async_trait;
 use rusqlite::params;
 use std::sync::Arc;
@@ -73,19 +73,23 @@ impl NotificationTemplateQuery {
 
     fn validate_sort_column(sort_by: &str) -> Result<String, RepoError> {
         let allowed_columns = [
-            "created_at", "updated_at", "name", "message_type", "channel",
-            "category", "is_active"
+            "created_at",
+            "updated_at",
+            "name",
+            "message_type",
+            "channel",
+            "category",
+            "is_active",
         ];
-        allowed_columns.iter()
+        allowed_columns
+            .iter()
             .find(|&&col| col == sort_by)
             .map(|s| s.to_string())
             .ok_or_else(|| RepoError::Validation(format!("Invalid sort column: {}", sort_by)))
     }
 
     fn build_order_by_clause(&self) -> Result<String, RepoError> {
-        let sort_by = Self::validate_sort_column(
-            self.sort_by.as_deref().unwrap_or("created_at")
-        )?;
+        let sort_by = Self::validate_sort_column(self.sort_by.as_deref().unwrap_or("created_at"))?;
         let sort_order = match self.sort_order.as_deref() {
             Some("ASC") => "ASC",
             Some("DESC") => "DESC",
@@ -119,8 +123,13 @@ impl NotificationTemplateRepository {
     }
 
     /// Find templates by notification type
-    pub async fn find_by_type(&self, notification_type: NotificationType) -> RepoResult<Vec<NotificationTemplate>> {
-        let cache_key = self.cache_key_builder.list(&["type", &notification_type.to_string()]);
+    pub async fn find_by_type(
+        &self,
+        notification_type: NotificationType,
+    ) -> RepoResult<Vec<NotificationTemplate>> {
+        let cache_key = self
+            .cache_key_builder
+            .list(&["type", &notification_type.to_string()]);
 
         if let Some(templates) = self.cache.get::<Vec<NotificationTemplate>>(&cache_key) {
             return Ok(templates);
@@ -140,8 +149,13 @@ impl NotificationTemplateRepository {
     }
 
     /// Find templates by channel
-    pub async fn find_by_channel(&self, channel: NotificationChannel) -> RepoResult<Vec<NotificationTemplate>> {
-        let cache_key = self.cache_key_builder.list(&["channel", &channel.to_string()]);
+    pub async fn find_by_channel(
+        &self,
+        channel: NotificationChannel,
+    ) -> RepoResult<Vec<NotificationTemplate>> {
+        let cache_key = self
+            .cache_key_builder
+            .list(&["channel", &channel.to_string()]);
 
         if let Some(templates) = self.cache.get::<Vec<NotificationTemplate>>(&cache_key) {
             return Ok(templates);
@@ -153,7 +167,9 @@ impl NotificationTemplateRepository {
                 "SELECT * FROM message_templates WHERE channel = ? ORDER BY created_at DESC",
                 params![channel.to_string()],
             )
-            .map_err(|e| RepoError::Database(format!("Failed to find templates by channel: {}", e)))?;
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to find templates by channel: {}", e))
+            })?;
 
         self.cache.set(&cache_key, templates.clone(), ttl::MEDIUM);
 
@@ -182,7 +198,10 @@ impl NotificationTemplateRepository {
     }
 
     /// Find templates by category
-    pub async fn find_by_category(&self, category: String) -> RepoResult<Vec<NotificationTemplate>> {
+    pub async fn find_by_category(
+        &self,
+        category: String,
+    ) -> RepoResult<Vec<NotificationTemplate>> {
         let cache_key = self.cache_key_builder.list(&["category", &category]);
 
         if let Some(templates) = self.cache.get::<Vec<NotificationTemplate>>(&cache_key) {
@@ -195,7 +214,9 @@ impl NotificationTemplateRepository {
                 "SELECT * FROM message_templates WHERE category = ? ORDER BY name ASC",
                 params![category],
             )
-            .map_err(|e| RepoError::Database(format!("Failed to find templates by category: {}", e)))?;
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to find templates by category: {}", e))
+            })?;
 
         self.cache.set(&cache_key, templates.clone(), ttl::MEDIUM);
 
@@ -203,7 +224,10 @@ impl NotificationTemplateRepository {
     }
 
     /// Find templates created by user
-    pub async fn find_by_creator(&self, created_by: String) -> RepoResult<Vec<NotificationTemplate>> {
+    pub async fn find_by_creator(
+        &self,
+        created_by: String,
+    ) -> RepoResult<Vec<NotificationTemplate>> {
         let cache_key = self.cache_key_builder.list(&["creator", &created_by]);
 
         if let Some(templates) = self.cache.get::<Vec<NotificationTemplate>>(&cache_key) {
@@ -216,7 +240,9 @@ impl NotificationTemplateRepository {
                 "SELECT * FROM message_templates WHERE created_by = ? ORDER BY created_at DESC",
                 params![created_by],
             )
-            .map_err(|e| RepoError::Database(format!("Failed to find templates by creator: {}", e)))?;
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to find templates by creator: {}", e))
+            })?;
 
         self.cache.set(&cache_key, templates.clone(), ttl::MEDIUM);
 
@@ -237,7 +263,8 @@ impl NotificationTemplateRepository {
         self.invalidate_template_cache(&template_id);
         self.invalidate_all_cache();
 
-        self.find_by_id(template_id).await?
+        self.find_by_id(template_id)
+            .await?
             .ok_or_else(|| RepoError::NotFound("Template not found after activation".to_string()))
     }
 
@@ -255,12 +282,16 @@ impl NotificationTemplateRepository {
         self.invalidate_template_cache(&template_id);
         self.invalidate_all_cache();
 
-        self.find_by_id(template_id).await?
+        self.find_by_id(template_id)
+            .await?
             .ok_or_else(|| RepoError::NotFound("Template not found after deactivation".to_string()))
     }
 
     /// Search templates with query
-    pub async fn search(&self, query: NotificationTemplateQuery) -> RepoResult<Vec<NotificationTemplate>> {
+    pub async fn search(
+        &self,
+        query: NotificationTemplateQuery,
+    ) -> RepoResult<Vec<NotificationTemplate>> {
         let (where_clause, where_params) = query.build_where_clause();
         let order_by = query.build_order_by_clause().unwrap_or_else(|e| {
             eprintln!("Invalid order clause, using default: {}", e);
@@ -296,7 +327,10 @@ impl NotificationTemplateRepository {
     pub async fn count(&self, query: NotificationTemplateQuery) -> RepoResult<i64> {
         let (where_clause, where_params) = query.build_where_clause();
 
-        let sql = format!("SELECT COUNT(*) as count FROM message_templates {}", where_clause);
+        let sql = format!(
+            "SELECT COUNT(*) as count FROM message_templates {}",
+            where_clause
+        );
         let params = rusqlite::params_from_iter(where_params);
 
         let count = self
@@ -327,7 +361,10 @@ impl Repository<NotificationTemplate, String> for NotificationTemplateRepository
 
         let template = self
             .db
-            .query_single_as::<NotificationTemplate>("SELECT * FROM message_templates WHERE id = ?", params![id])
+            .query_single_as::<NotificationTemplate>(
+                "SELECT * FROM message_templates WHERE id = ?",
+                params![id],
+            )
             .map_err(|e| RepoError::Database(format!("Failed to find template by id: {}", e)))?;
 
         if let Some(ref template) = template {
@@ -424,7 +461,8 @@ impl Repository<NotificationTemplate, String> for NotificationTemplateRepository
         self.invalidate_template_cache(&entity.id);
         self.invalidate_all_cache();
 
-        self.find_by_id(entity.id).await?
+        self.find_by_id(entity.id)
+            .await?
             .ok_or_else(|| RepoError::NotFound("Template not found after save".to_string()))
     }
 
@@ -443,8 +481,13 @@ impl Repository<NotificationTemplate, String> for NotificationTemplateRepository
     async fn exists_by_id(&self, id: String) -> RepoResult<bool> {
         let exists = self
             .db
-            .query_single_value::<i64>("SELECT COUNT(*) FROM message_templates WHERE id = ?", params![id])
-            .map_err(|e| RepoError::Database(format!("Failed to check template existence: {}", e)))?;
+            .query_single_value::<i64>(
+                "SELECT COUNT(*) FROM message_templates WHERE id = ?",
+                params![id],
+            )
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to check template existence: {}", e))
+            })?;
 
         Ok(exists > 0)
     }
@@ -627,7 +670,10 @@ mod tests {
         repo.save(template2).await.unwrap();
         repo.save(template3).await.unwrap();
 
-        let assignment_templates = repo.find_by_type(NotificationType::TaskAssignment).await.unwrap();
+        let assignment_templates = repo
+            .find_by_type(NotificationType::TaskAssignment)
+            .await
+            .unwrap();
         assert_eq!(assignment_templates.len(), 2);
     }
 
@@ -656,4 +702,3 @@ mod tests {
         assert_eq!(active.len(), 0);
     }
 }
-

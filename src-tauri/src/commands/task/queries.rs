@@ -2,12 +2,12 @@
 //!
 //! This module handles complex task filtering, pagination, and listing operations.
 
+use crate::authenticate;
+use crate::commands::task_types::TaskFilter;
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::models::task::{Task, TaskListResponse};
-use crate::commands::task_types::TaskFilter;
 use crate::services::task_statistics::TaskStatistics;
 use serde::Deserialize;
-use crate::authenticate;
 use tracing::{debug, info};
 
 /// Request for getting tasks with clients
@@ -146,27 +146,31 @@ pub async fn get_tasks_with_clients(
 
     // Convert TaskWithClient to TaskWithDetails
     let data_len = result.data.len();
-    let tasks: Vec<crate::models::task::TaskWithDetails> = result.data.into_iter().map(|task_with_client| {
-        let mut task = task_with_client.task;
+    let tasks: Vec<crate::models::task::TaskWithDetails> = result
+        .data
+        .into_iter()
+        .map(|task_with_client| {
+            let mut task = task_with_client.task;
 
-        // Merge client information if task doesn't have it
-        if let Some(client_info) = task_with_client.client_info {
-            if task.customer_name.is_none() {
-                task.customer_name = Some(client_info.name);
+            // Merge client information if task doesn't have it
+            if let Some(client_info) = task_with_client.client_info {
+                if task.customer_name.is_none() {
+                    task.customer_name = Some(client_info.name);
+                }
+                if task.customer_email.is_none() {
+                    task.customer_email = client_info.email;
+                }
+                if task.customer_phone.is_none() {
+                    task.customer_phone = client_info.phone;
+                }
+                if task.client_id.is_none() {
+                    task.client_id = Some(client_info.id);
+                }
             }
-            if task.customer_email.is_none() {
-                task.customer_email = client_info.email;
-            }
-            if task.customer_phone.is_none() {
-                task.customer_phone = client_info.phone;
-            }
-            if task.client_id.is_none() {
-                task.client_id = Some(client_info.id);
-            }
-        }
 
-        crate::models::task::TaskWithDetails { task }
-    }).collect();
+            crate::models::task::TaskWithDetails { task }
+        })
+        .collect();
 
     let response = TaskListResponse {
         data: tasks,
@@ -194,7 +198,12 @@ pub async fn get_user_assigned_tasks(
     let target_user_id = request.user_id.unwrap_or_else(|| session.user_id.clone());
 
     // Check permissions - users can only see their own tasks unless they have appropriate role
-    if target_user_id != session.user_id && !matches!(session.role, crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor) {
+    if target_user_id != session.user_id
+        && !matches!(
+            session.role,
+            crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+        )
+    {
         return Err(AppError::Authorization(
             "Not authorized to view other users' tasks".to_string(),
         ));
@@ -227,7 +236,11 @@ pub async fn get_user_assigned_tasks(
             AppError::Database(format!("Failed to retrieve user tasks: {}", e))
         })?;
 
-    info!("Retrieved {} tasks for user {}", tasks.len(), target_user_id);
+    info!(
+        "Retrieved {} tasks for user {}",
+        tasks.len(),
+        target_user_id
+    );
 
     Ok(ApiResponse::success(tasks))
 }
@@ -268,13 +281,10 @@ pub async fn get_task_statistics(
     }
 
     // Get statistics from service
-    let stats = state
-        .task_service
-        .get_task_statistics()
-        .map_err(|e| {
-            debug!("Failed to get task statistics: {}", e);
-            AppError::Database(format!("Failed to retrieve statistics: {}", e))
-        })?;
+    let stats = state.task_service.get_task_statistics().map_err(|e| {
+        debug!("Failed to get task statistics: {}", e);
+        AppError::Database(format!("Failed to retrieve statistics: {}", e))
+    })?;
 
     info!("Retrieved task statistics for filter: {:?}", filter);
 
@@ -312,13 +322,10 @@ pub async fn get_completion_rate(
     }
 
     // Calculate completion rate
-    let stats = state
-        .task_service
-        .get_task_statistics()
-        .map_err(|e| {
-            debug!("Failed to get completion rate data: {}", e);
-            AppError::Database(format!("Failed to calculate completion rate: {}", e))
-        })?;
+    let stats = state.task_service.get_task_statistics().map_err(|e| {
+        debug!("Failed to get completion rate data: {}", e);
+        AppError::Database(format!("Failed to calculate completion rate: {}", e))
+    })?;
 
     let completion_rate = if stats.total_tasks > 0 {
         (stats.completed_tasks as f64 / stats.total_tasks as f64) * 100.0
@@ -371,9 +378,13 @@ pub async fn get_average_duration_by_status(
         })?;
 
     // Convert Vec to HashMap
-    let avg_durations: std::collections::HashMap<String, f64> = avg_durations_vec.into_iter().collect();
+    let avg_durations: std::collections::HashMap<String, f64> =
+        avg_durations_vec.into_iter().collect();
 
-    info!("Retrieved average durations for {} statuses", avg_durations.len());
+    info!(
+        "Retrieved average durations for {} statuses",
+        avg_durations.len()
+    );
 
     Ok(ApiResponse::success(avg_durations))
 }
@@ -418,11 +429,15 @@ pub async fn get_priority_distribution(
         })?;
 
     // Convert Vec to HashMap and i64 to u64
-    let priority_dist: std::collections::HashMap<String, u64> = priority_dist_vec.into_iter()
+    let priority_dist: std::collections::HashMap<String, u64> = priority_dist_vec
+        .into_iter()
         .map(|(k, v)| (k, v as u64))
         .collect();
 
-    info!("Retrieved priority distribution with {} categories", priority_dist.len());
+    info!(
+        "Retrieved priority distribution with {} categories",
+        priority_dist.len()
+    );
 
     Ok(ApiResponse::success(priority_dist))
 }

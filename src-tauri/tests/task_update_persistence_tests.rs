@@ -8,8 +8,8 @@ use std::sync::Arc;
 
 fn setup_test_db() -> Arc<Database> {
     let temp_file = tempfile::NamedTempFile::new().expect("create temp db file");
-    let db = Database::new(temp_file.path(), "test_encryption_key_32_bytes_long!")
-        .expect("create db");
+    let db =
+        Database::new(temp_file.path(), "test_encryption_key_32_bytes_long!").expect("create db");
     db.init().expect("init db");
     Arc::new(db)
 }
@@ -144,7 +144,10 @@ fn test_update_persists_assignment_and_workflow_fields() {
     assert_eq!(persisted.assigned_at, Some(assigned_at));
     assert_eq!(persisted.assigned_by.as_deref(), Some("assigner"));
     assert_eq!(persisted.workflow_status.as_deref(), Some("in_progress"));
-    assert_eq!(persisted.current_workflow_step_id.as_deref(), Some("step-1"));
+    assert_eq!(
+        persisted.current_workflow_step_id.as_deref(),
+        Some("step-1")
+    );
     assert_eq!(persisted.completed_steps.as_deref(), Some("[\"step-1\"]"));
     assert_eq!(persisted.started_at, Some(started_at));
     assert_eq!(persisted.completed_at, Some(completed_at));

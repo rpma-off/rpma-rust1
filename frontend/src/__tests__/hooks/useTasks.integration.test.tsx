@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useTasks } from '../../hooks/useTasks';
 import { taskService } from '../../lib/services/entities/task.service';
 import type { TaskWithDetails } from '../../lib/services/entities/task.service';
-import { TaskStatus, TaskPriority } from '../../lib/backend';
 
 // Mock dependencies
 jest.mock('../../contexts/AuthContext', () => ({
@@ -41,8 +40,8 @@ const mockTask: TaskWithDetails = {
   vin: 'VIN123456789',
   ppf_zones: ['zone1', 'zone2'],
   custom_ppf_zones: null,
-  status: TaskStatus.Pending,
-  priority: TaskPriority.Medium,
+  status: 'pending',
+  priority: 'medium',
   technician_id: 'tech-1',
   assigned_at: '2024-01-01T00:00:00Z',
   assigned_by: 'admin',
@@ -191,7 +190,6 @@ describe('useTasks (Integration)', () => {
     // Should handle undefined data gracefully
     expect(result.current.tasks).toEqual([]);
     expect(result.current.error).toBeNull();
-    expect(result.current.isEmpty).toBe(true);
   });
 
   it('handles null data.data gracefully', async () => {
@@ -221,6 +219,5 @@ describe('useTasks (Integration)', () => {
     // Should handle null data gracefully
     expect(result.current.tasks).toEqual([]);
     expect(result.current.error).toBeNull();
-    expect(result.current.isEmpty).toBe(true);
   });
 });

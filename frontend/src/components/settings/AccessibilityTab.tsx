@@ -5,9 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
-import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -54,12 +51,11 @@ interface AccessibilitySettingsTabProps {
   profile?: UserAccount;
 }
 
-export function AccessibilityTab({ user, profile }: AccessibilitySettingsTabProps) {
+export function AccessibilityTab({ user }: AccessibilitySettingsTabProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [previewMode, setPreviewMode] = useState(false);
 
   const { logInfo, logError, logUserAction } = useLogger({
     context: LogDomain.USER,
@@ -92,8 +88,8 @@ export function AccessibilityTab({ user, profile }: AccessibilitySettingsTabProp
         const userSettings = await ipcClient.settings.getUserSettings(user.token);
 
         // Apply accessibility settings if available
-        if (userSettings && (userSettings as any).accessibility) {
-          form.reset((userSettings as any).accessibility);
+        if (userSettings?.accessibility) {
+          form.reset(userSettings.accessibility as unknown as AccessibilityFormData);
         }
 
         logInfo('Accessibility settings loaded successfully', { userId: user.user_id });
@@ -198,16 +194,6 @@ export function AccessibilityTab({ user, profile }: AccessibilitySettingsTabProp
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>{saveError}</AlertDescription>
-        </Alert>
-      )}
-
-      {/* Preview Mode Notice */}
-      {previewMode && (
-        <Alert>
-          <Eye className="h-4 w-4" />
-          <AlertDescription>
-            Mode aperçu activé. Les changements sont temporaires et ne seront appliqués qu&apos;après sauvegarde.
-          </AlertDescription>
         </Alert>
       )}
 

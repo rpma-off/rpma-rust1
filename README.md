@@ -379,6 +379,126 @@ npm run tauri dev
 
 ## Available Scripts
 
+### Essential Commands
+```bash
+# Start development (recommended)
+npm run dev
+
+# Frontend only
+npm run frontend:dev
+
+# Build for production
+npm run build
+
+# Type checking
+npm run frontend:type-check
+
+# Linting
+npm run frontend:lint
+
+# Type sync (Rust → TypeScript)
+npm run types:sync
+```
+
+### Build Commands
+```bash
+# Development build
+npm run build
+
+# Production build
+npm run build
+
+# Frontend build only
+npm run frontend:build
+
+# Backend development build
+npm run backend:build
+
+# Backend release build
+npm run backend:build:release
+```
+
+### Type Management Commands
+```bash
+# Sync types from Rust to TypeScript
+npm run types:sync
+
+# Validate generated types
+npm run types:validate
+
+# Check type drift
+npm run types:drift-check
+
+# CI strict drift check
+npm run types:ci-drift-check
+
+# Generate type documentation
+npm run types:generate-docs
+
+# Full CI validation suite
+npm run ci:validate
+```
+
+### Quality Assurance Commands
+```bash
+# Frontend linting
+npm run frontend:lint
+
+# TypeScript type checking
+npm run frontend:type-check
+
+# Backend compilation check
+npm run backend:check
+
+# Rust linting
+npm run backend:clippy
+
+# Rust formatting
+npm run backend:fmt
+```
+
+### Performance & Security Commands
+```bash
+# Analyze bundle size
+npm run bundle:analyze
+
+# Check bundle size
+npm run bundle:check-size
+
+# Run performance tests
+npm run performance:test
+
+# Update performance baseline
+npm run performance:update-baseline
+
+# Run security audit
+npm run security:audit
+```
+
+### Database Commands
+```bash
+# Inspect database state
+npm run check_db
+
+# Inspect database schema
+npm run check_db_schema
+
+# Clean up test data
+npm run cleanup_db
+
+# Test database migrations
+npm run test-migrations
+```
+
+### Migration Commands
+```bash
+# Validate migration system
+npm run validate-migration-system
+
+# Check migration health
+npm run migration-health-check
+```
+
 ### Development Scripts
 
 ```bash

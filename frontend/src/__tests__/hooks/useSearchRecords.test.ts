@@ -1,18 +1,27 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useSearchRecords } from '../../hooks/useSearchRecords';
+import { AuthSecureStorage } from '../../lib/secureStorage';
 
 // Mock Tauri invoke
 jest.mock('@tauri-apps/api/core', () => ({
   invoke: jest.fn(),
 }));
 
+jest.mock('../../lib/secureStorage', () => ({
+  AuthSecureStorage: {
+    getSession: jest.fn(),
+  },
+}));
+
 import { invoke } from '@tauri-apps/api/core';
 
 const mockInvoke = invoke as jest.MockedFunction<typeof invoke>;
+const mockGetSession = AuthSecureStorage.getSession as jest.MockedFunction<typeof AuthSecureStorage.getSession>;
 
 describe('useSearchRecords', () => {
   beforeEach(() => {
     mockInvoke.mockClear();
+    mockGetSession.mockResolvedValue({ token: 'test-token' } as any);
   });
 
   it('returns initial state correctly', () => {
@@ -52,6 +61,7 @@ describe('useSearchRecords', () => {
       filters,
       limit: 50,
       offset: 0,
+      sessionToken: 'test-token',
     });
   });
 
@@ -110,7 +120,7 @@ describe('useSearchRecords', () => {
       resolvePromise = resolve;
     });
 
-    mockInvoke.mockReturnValue(promise);
+    mockInvoke.mockReturnValue(promise as any);
 
     const { result } = renderHook(() => useSearchRecords());
 
@@ -135,12 +145,6 @@ describe('useSearchRecords', () => {
 
   it('clears results correctly', () => {
     const { result } = renderHook(() => useSearchRecords());
-
-    // First set some results
-    act(() => {
-      // Simulate setting results (in real usage this would come from search)
-      // For testing purposes, we'll just call clearResults
-    });
 
     act(() => {
       result.current.clearResults();
@@ -167,11 +171,12 @@ describe('useSearchRecords', () => {
 
     expect(mockInvoke).toHaveBeenCalledWith('search_records', {
       query: 'test',
-      entityType: 'tasks',
+      entityType: 'task',
       dateRange: undefined,
       filters: undefined,
       limit: 20,
       offset: 10,
+      sessionToken: 'test-token',
     });
   });
 
@@ -190,11 +195,12 @@ describe('useSearchRecords', () => {
 
     expect(mockInvoke).toHaveBeenCalledWith('search_records', {
       query: 'test',
-      entityType: 'tasks',
+      entityType: 'task',
       dateRange: undefined,
       filters: undefined,
       limit: 50,
       offset: 0,
+      sessionToken: 'test-token',
     });
   });
 
@@ -213,11 +219,12 @@ describe('useSearchRecords', () => {
 
     expect(mockInvoke).toHaveBeenCalledWith('search_records', {
       query: 'test',
-      entityType: 'clients',
+      entityType: 'client',
       dateRange: undefined,
       filters: undefined,
       limit: 50,
       offset: 0,
+      sessionToken: 'test-token',
     });
   });
 });

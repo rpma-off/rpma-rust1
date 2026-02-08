@@ -1,399 +1,152 @@
-﻿﻿main-app.js?v=1770237105385:1847 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
-logger.ts:164 04/02/2026, 21:31:46 [CORR:req-ml8hgtfs-0000-l3fonh] [FRONTEND] [SYSTEM] [INFO] Application started | data: {"user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0","url":"http://localhost:3000/","timestamp":"2026-02-04T20:31:46.696Z"} {id: '1770237106696-7gm7lvmeli7', timestamp: '2026-02-04T20:31:46.696Z', correlation_id: 'req-ml8hgtfs-0000-l3fonh', layer: 'FRONTEND', domain: 'SYSTEM', …}
-logger.ts:164 04/02/2026, 21:31:46 [CORR:req-ml8hgtgm-0001-4t28sx] [FRONTEND] [SYSTEM] [INFO] Application started | data: {"user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0","url":"http://localhost:3000/","timestamp":"2026-02-04T20:31:46.726Z"} {id: '1770237106726-ateznhd1wbk', timestamp: '2026-02-04T20:31:46.726Z', correlation_id: 'req-ml8hgtgm-0001-4t28sx', layer: 'FRONTEND', domain: 'SYSTEM', …}
-cache.ts:132 [IPC Cache] auth_validate_session -> cache miss for key: auth:session:eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzAyMzY4NDUsImV4cCI6MTc3MDI0NDA0NSwianRpIjoiMTdlYTdmNjMtNGEyOC00NmIyLTk5MDEtZjA1OTNjMmMxODUyIiwic2Vzc2lvbl9pZCI6IjEwMDk0ZWM5LWZlMjUtNDA1Zi04ZDk1LTI4OGEzYzI4ZGRlMiJ9.I4dtE7gX0tIGc2OjO8tHVdqne7FSbj0JeLkS1m6MxbQ, invoking...
-logger.ts:161 04/02/2026, 21:31:46 [CORR:req-ml8hgtmf-0002-f4klxm] [FRONTEND] [API] [DEBUG] IPC call started: user_crud | data: {"command":"user_crud","args":{"request":{"action":{"action":"Get","id":"a2975c76-eeda-41f8-9efe-d0741c9785a5"},"session_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzAyMzY4NDUsImV4cCI6MTc3MDI0NDA0NSwianRpIjoiMTdlYTdmNjMtNGEyOC00NmIyLTk5MDEtZjA1OTNjMmMxODUyIiwic2Vzc2lvbl9pZCI6IjEwMDk0ZWM5LWZlMjUtNDA1Zi04ZDk1LTI4OGEzYzI4ZGRlMiJ9.I4dtE7gX0tIGc2OjO8tHVdqne7FSbj0JeLkS1m6MxbQ"}},"timeout_ms":120000} {id: '1770237106936-ey4yfpn78gd', timestamp: '2026-02-04T20:31:46.936Z', correlation_id: 'req-ml8hgtmf-0002-f4klxm', layer: 'FRONTEND', domain: 'API', …}
-cache.ts:132 [IPC Cache] sync_get_status -> cache miss for key: sync:status, invoking...
-logger.ts:161 04/02/2026, 21:31:47 [CORR:req-ml8hgtmf-0002-f4klxm] [FRONTEND] [API] [DEBUG] IPC call started: calendar_get_tasks | data: {"command":"calendar_get_tasks","args":{"request":{"session_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzAyMzY4NDUsImV4cCI6MTc3MDI0NDA0NSwianRpIjoiMTdlYTdmNjMtNGEyOC00NmIyLTk5MDEtZjA1OTNjMmMxODUyIiwic2Vzc2lvbl9pZCI6IjEwMDk0ZWM5LWZlMjUtNDA1Zi04ZDk1LTI4OGEzYzI4ZGRlMiJ9.I4dtE7gX0tIGc2OjO8tHVdqne7FSbj0JeLkS1m6MxbQ","date_range":{"start_date":"2026-01-31","end_date":"2026-02-27"},"technician_ids":null,"statuses":null}},"timeout_ms":120000} {id: '1770237107068-jx91bbjwmd', timestamp: '2026-02-04T20:31:47.068Z', correlation_id: 'req-ml8hgtmf-0002-f4klxm', layer: 'FRONTEND', domain: 'API', …}
-logger.ts:164 04/02/2026, 21:31:47 [CORR:req-ml8hgtmf-0002-f4klxm] [FRONTEND] [AUTH] [INFO] User authenticated | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"user_id":"a2975c76-eeda-41f8-9efe-d0741c9785a5","email":"rayepasmonauto@gmail.com"} {id: '1770237107081-z3vk347ng8l', timestamp: '2026-02-04T20:31:47.081Z', correlation_id: 'req-ml8hgtmf-0002-f4klxm', layer: 'FRONTEND', domain: 'AUTH', …}
-RootClientLayout.tsx:76 checkAdminRedirect running {pathname: '/', user: 'a2975c76-eeda-41f8-9efe-d0741c9785a5'}
-logger.ts:161 04/02/2026, 21:31:47 [CORR:req-ml8hgtmf-0002-f4klxm] [FRONTEND] [API] [DEBUG] IPC call started: calendar_get_tasks | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"calendar_get_tasks","args":{"request":{"session_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzAyMzY4NDUsImV4cCI6MTc3MDI0NDA0NSwianRpIjoiMTdlYTdmNjMtNGEyOC00NmIyLTk5MDEtZjA1OTNjMmMxODUyIiwic2Vzc2lvbl9pZCI6IjEwMDk0ZWM5LWZlMjUtNDA1Zi04ZDk1LTI4OGEzYzI4ZGRlMiJ9.I4dtE7gX0tIGc2OjO8tHVdqne7FSbj0JeLkS1m6MxbQ","date_range":{"start_date":"2026-01-31","end_date":"2026-02-27"},"technician_ids":null,"statuses":null}},"timeout_ms":120000} {id: '1770237107099-hj8obdghssc', timestamp: '2026-02-04T20:31:47.099Z', correlation_id: 'req-ml8hgtmf-0002-f4klxm', layer: 'FRONTEND', domain: 'API', …}
-scheduler.development.js:519 [Violation] 'message' handler took 192ms
-logger.ts:161 04/02/2026, 21:31:47 [CORR:req-ml8hgtmf-0002-f4klxm] [FRONTEND] [API] [DEBUG] IPC call started: has_admins | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"has_admins","timeout_ms":120000} {id: '1770237107144-xoatkr240s', timestamp: '2026-02-04T20:31:47.144Z', correlation_id: 'req-ml8hgtmf-0002-f4klxm', layer: 'FRONTEND', domain: 'API', …}
-cache.ts:127 [IPC Cache] auth_validate_session -> cache hit for key: auth:session:eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzAyMzY4NDUsImV4cCI6MTc3MDI0NDA0NSwianRpIjoiMTdlYTdmNjMtNGEyOC00NmIyLTk5MDEtZjA1OTNjMmMxODUyIiwic2Vzc2lvbl9pZCI6IjEwMDk0ZWM5LWZlMjUtNDA1Zi04ZDk1LTI4OGEzYzI4ZGRlMiJ9.I4dtE7gX0tIGc2OjO8tHVdqne7FSbj0JeLkS1m6MxbQ
-logger.ts:161 04/02/2026, 21:31:47 [CORR:req-ml8hgtmf-0002-f4klxm] [FRONTEND] [API] [DEBUG] IPC call started: user_crud | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"user_crud","args":{"request":{"action":{"action":"Get","id":"a2975c76-eeda-41f8-9efe-d0741c9785a5"},"session_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzAyMzY4NDUsImV4cCI6MTc3MDI0NDA0NSwianRpIjoiMTdlYTdmNjMtNGEyOC00NmIyLTk5MDEtZjA1OTNjMmMxODUyIiwic2Vzc2lvbl9pZCI6IjEwMDk0ZWM5LWZlMjUtNDA1Zi04ZDk1LTI4OGEzYzI4ZGRlMiJ9.I4dtE7gX0tIGc2OjO8tHVdqne7FSbj0JeLkS1m6MxbQ"}},"timeout_ms":120000} {id: '1770237107226-d1e050s53o8', timestamp: '2026-02-04T20:31:47.226Z', correlation_id: 'req-ml8hgtmf-0002-f4klxm', layer: 'FRONTEND', domain: 'API', …}
-logger.ts:164 04/02/2026, 21:31:47 [CORR:req-ml8hgtmf-0002-f4klxm] [FRONTEND] [API] [INFO] IPC call completed: user_crud | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"user_crud","duration_ms":335,"response_type":"object"} {id: '1770237107271-o08gmgwtj2n', timestamp: '2026-02-04T20:31:47.271Z', correlation_id: 'req-ml8hgtmf-0002-f4klxm', layer: 'FRONTEND', domain: 'API', …}
-logger.ts:235 [04/02/2026, 21:31:47] DEBUG [system] auth | Data: "Profile loaded successfully" {id: '1770237107283-rxvuuldiks', timestamp: '2026-02-04T20:31:47.283Z', level: 0, context: 'system', message: 'auth', …}
-app-index.tsx:25  04/02/2026, 21:31:47 [CORR:req-ml8hgtmf-0002-f4klxm] [FRONTEND] [API] [ERROR] IPC call error: calendar_get_tasks | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | error: Error: {"Internal":"Failed to retrieve calendar tasks: Database error: no such table: calendar_tasks"} {id: '1770237107332-r7hfh31dbza', timestamp: '2026-02-04T20:31:47.332Z', correlation_id: 'req-ml8hgtmf-0002-f4klxm', layer: 'FRONTEND', domain: 'API', …}
-window.console.error @ app-index.tsx:25
-console.error @ hydration-error-info.ts:72
-log @ logger.ts:171
-error @ logger.ts:273
-safeInvoke @ utils.ts:218
-await in safeInvoke
-getCalendarTasks @ calendar.ts:16
-eval @ useCalendar.ts:125
-eval @ useCalendar.ts:212
-commitHookEffectListMount @ react-dom.development.js:21102
-commitHookPassiveMountEffects @ react-dom.development.js:23154
-reconnectPassiveEffects @ react-dom.development.js:23406
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23485
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23404
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23404
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23485
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23485
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23404
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23485
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23404
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23485
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23404
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-commitPassiveMountOnFiber @ react-dom.development.js:23341
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-commitPassiveMountEffects @ react-dom.development.js:23225
-flushPassiveEffectsImpl @ react-dom.development.js:26497
-flushPassiveEffects @ react-dom.development.js:26438
-performSyncWorkOnRoot @ react-dom.development.js:24870
-flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
-flushSyncWorkOnAllRoots @ react-dom.development.js:7718
-commitRootImpl @ react-dom.development.js:26369
-commitRoot @ react-dom.development.js:26077
-commitRootWhenReady @ react-dom.development.js:24749
-finishConcurrentRender @ react-dom.development.js:24714
-performConcurrentWorkOnRoot @ react-dom.development.js:24559
-workLoop @ scheduler.development.js:256
-flushWork @ scheduler.development.js:225
-performWorkUntilDeadline @ scheduler.development.js:534
-app-index.tsx:25  Failed to fetch calendar tasks: {Internal: 'Failed to retrieve calendar tasks: Database error: no such table: calendar_tasks'}
-window.console.error @ app-index.tsx:25
-console.error @ hydration-error-info.ts:72
-eval @ useCalendar.ts:128
-await in eval
-eval @ useCalendar.ts:212
-commitHookEffectListMount @ react-dom.development.js:21102
-commitHookPassiveMountEffects @ react-dom.development.js:23154
-reconnectPassiveEffects @ react-dom.development.js:23406
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23485
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23404
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23404
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23485
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23485
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23404
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23485
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23404
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23485
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-reconnectPassiveEffects @ react-dom.development.js:23404
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
-commitPassiveMountOnFiber @ react-dom.development.js:23341
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-commitPassiveMountEffects @ react-dom.development.js:23225
-flushPassiveEffectsImpl @ react-dom.development.js:26497
-flushPassiveEffects @ react-dom.development.js:26438
-performSyncWorkOnRoot @ react-dom.development.js:24870
-flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
-flushSyncWorkOnAllRoots @ react-dom.development.js:7718
-commitRootImpl @ react-dom.development.js:26369
-commitRoot @ react-dom.development.js:26077
-commitRootWhenReady @ react-dom.development.js:24749
-finishConcurrentRender @ react-dom.development.js:24714
-performConcurrentWorkOnRoot @ react-dom.development.js:24559
-workLoop @ scheduler.development.js:256
-flushWork @ scheduler.development.js:225
-performWorkUntilDeadline @ scheduler.development.js:534
-app-index.tsx:25  04/02/2026, 21:31:47 [CORR:req-ml8hgtmf-0002-f4klxm] [FRONTEND] [API] [ERROR] IPC call error: calendar_get_tasks | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | error: Error: {"Internal":"Failed to retrieve calendar tasks: Database error: no such table: calendar_tasks"} {id: '1770237107349-4far0qq2a7m', timestamp: '2026-02-04T20:31:47.349Z', correlation_id: 'req-ml8hgtmf-0002-f4klxm', layer: 'FRONTEND', domain: 'API', …}
-window.console.error @ app-index.tsx:25
-console.error @ hydration-error-info.ts:72
-log @ logger.ts:171
-error @ logger.ts:273
-safeInvoke @ utils.ts:218
-await in safeInvoke
-getCalendarTasks @ calendar.ts:16
-eval @ useCalendar.ts:125
-eval @ useCalendar.ts:212
-commitHookEffectListMount @ react-dom.development.js:21102
-invokePassiveEffectMountInDEV @ react-dom.development.js:23980
-invokeEffectsInDev @ react-dom.development.js:26852
-legacyCommitDoubleInvokeEffectsInDEV @ react-dom.development.js:26835
-commitDoubleInvokeEffectsInDEV @ react-dom.development.js:26816
-flushPassiveEffectsImpl @ react-dom.development.js:26514
-flushPassiveEffects @ react-dom.development.js:26438
-performSyncWorkOnRoot @ react-dom.development.js:24870
-flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
-flushSyncWorkOnAllRoots @ react-dom.development.js:7718
-commitRootImpl @ react-dom.development.js:26369
-commitRoot @ react-dom.development.js:26077
-commitRootWhenReady @ react-dom.development.js:24749
-finishConcurrentRender @ react-dom.development.js:24714
-performConcurrentWorkOnRoot @ react-dom.development.js:24559
-workLoop @ scheduler.development.js:256
-flushWork @ scheduler.development.js:225
-performWorkUntilDeadline @ scheduler.development.js:534
-app-index.tsx:25  Failed to fetch calendar tasks: {Internal: 'Failed to retrieve calendar tasks: Database error: no such table: calendar_tasks'}
-window.console.error @ app-index.tsx:25
-console.error @ hydration-error-info.ts:72
-eval @ useCalendar.ts:128
-await in eval
-eval @ useCalendar.ts:212
-commitHookEffectListMount @ react-dom.development.js:21102
-invokePassiveEffectMountInDEV @ react-dom.development.js:23980
-invokeEffectsInDev @ react-dom.development.js:26852
-legacyCommitDoubleInvokeEffectsInDEV @ react-dom.development.js:26835
-commitDoubleInvokeEffectsInDEV @ react-dom.development.js:26816
-flushPassiveEffectsImpl @ react-dom.development.js:26514
-flushPassiveEffects @ react-dom.development.js:26438
-performSyncWorkOnRoot @ react-dom.development.js:24870
-flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
-flushSyncWorkOnAllRoots @ react-dom.development.js:7718
-commitRootImpl @ react-dom.development.js:26369
-commitRoot @ react-dom.development.js:26077
-commitRootWhenReady @ react-dom.development.js:24749
-finishConcurrentRender @ react-dom.development.js:24714
-performConcurrentWorkOnRoot @ react-dom.development.js:24559
-workLoop @ scheduler.development.js:256
-flushWork @ scheduler.development.js:225
-performWorkUntilDeadline @ scheduler.development.js:534
-logger.ts:164 04/02/2026, 21:31:47 [CORR:req-ml8hgtmf-0002-f4klxm] [FRONTEND] [API] [INFO] IPC call completed: has_admins | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"has_admins","duration_ms":220,"response_type":"boolean"} {id: '1770237107364-fls7d0kv5x', timestamp: '2026-02-04T20:31:47.364Z', correlation_id: 'req-ml8hgtmf-0002-f4klxm', layer: 'FRONTEND', domain: 'API', …}
-RootClientLayout.tsx:80 hasAdmins result true
-RootClientLayout.tsx:95 No redirect needed {hasAdmins: true, pathname: '/'}
-logger.ts:164 04/02/2026, 21:31:47 [CORR:req-ml8hgtmf-0002-f4klxm] [FRONTEND] [API] [INFO] IPC call completed: user_crud | user_id: a2975c76-eeda-41f8-9efe-d0741c9785a5 | data: {"command":"user_crud","duration_ms":192,"response_type":"object"} {id: '1770237107418-d84j5j7hl2', timestamp: '2026-02-04T20:31:47.418Z', correlation_id: 'req-ml8hgtmf-0002-f4klxm', layer: 'FRONTEND', domain: 'API', …}
-logger.ts:235 [04/02/2026, 21:31:47] DEBUG [system] auth | Data: "Profile loaded successfully" {id: '1770237107428-x66krlmxlk', timestamp: '2026-02-04T20:31:47.428Z', level: 0, context: 'system', message: 'auth', …}
+﻿﻿
+You are an expert code auditor specializing in Rust/Tauri desktop applications with Next.js frontends. Your task is to perform a comprehensive audit of the RPMA v2 codebase to identify and fix issues while improving code quality WITHOUT adding new features or over-complicating the existing architecture.
+Your Objectives
+Fix Bugs & Issues: Identify and fix actual bugs, logic errors, and broken functionality
+Improve Code Quality: Refactor for clarity, maintainability, and best practices
+Optimize Performance: Find and fix performance bottlenecks
+Enhance Type Safety: Strengthen type definitions and eliminate any types
+Remove Dead Code: Eliminate unused code, imports, and dependencies
+What You Should Do
+Code Quality Improvements
+Fix inconsistent naming conventions
+Improve error handling patterns
+Simplify overly complex logic
+Extract reusable functions from duplicated code
+Add missing null/undefined checks
+Fix TypeScript/Rust type issues
+Improve code comments where logic is unclear
+Bug Fixes
+Fix race conditions and async/await issues
+Correct data validation logic
+Fix state management bugs
+Resolve memory leaks
+Fix database query issues
+Correct IPC command implementations
+Performance Optimization
+Optimize database queries with proper indexes
+Fix inefficient algorithms
+Reduce unnecessary re-renders in React
+Optimize bundle size by removing unused dependencies
+Fix memory inefficiencies
+Optimize image loading and caching
+Architecture Cleanup
+Consolidate duplicate service methods
+Remove circular dependencies
+Fix layering violations (e.g., UI calling repositories directly)
+Improve separation of concerns
+Standardize error handling across layers
+What You Should NOT Do
+❌ DO NOT add new features - Work only with existing functionality ❌ DO NOT change the overall architecture - Keep the layered structure ❌ DO NOT introduce new libraries - Use existing dependencies only ❌ DO NOT over-engineer - Keep solutions simple and pragmatic ❌ DO NOT rewrite working code - If it works well, leave it alone ❌ DO NOT change the database schema - Work within current structure ❌ DO NOT modify the migration system - It's already comprehensive ❌ DO NOT add unnecessary abstractions - Keep it straightforward
+Focus Areas
+High Priority
+Database Operations: Query optimization, connection pooling, transactions
+Synchronization Logic: Offline sync, conflict resolution, data consistency
+Error Handling: Consistent error patterns, user-friendly messages
+Type Safety: Remove any, fix type mismatches, strengthen interfaces
+Medium Priority
+Component Optimization: React performance, unnecessary re-renders
+State Management: Context usage, state updates, data flow
+Form Validation: Input validation, business rule checks
+API Command Structure: IPC command consistency, response formats
+Low Priority
+Code Style: Formatting consistency, naming conventions
+Comments & Documentation: Inline code documentation
+Test Coverage: Identify untested critical paths
+Dependency Audit: Remove unused packages
+Audit Process
+Phase 1: Analysis (Don't make changes yet)
+Review the codebase structure and key modules
+Identify critical issues, bugs, and security vulnerabilities
+Find performance bottlenecks and optimization opportunities
+Locate code duplication and refactoring candidates
+Check type safety and error handling patterns
+Phase 2: Prioritization
+Categorize findings by severity (Critical, High, Medium, Low)
+Group related issues together
+Identify quick wins vs. complex fixes
+Create a prioritized fix list
+Phase 3: Implementation
+Critical Issues First: data loss risks
+High Priority: Bugs affecting core functionality
+Medium Priority: Performance optimizations, code quality
+Low Priority: Style issues, minor improvements
+Phase 4: Validation
+Ensure fixes don't break existing functionality
+Verify type safety improvements compile correctly
+Test error handling improvements
+Validate performance improvements
+Reporting Format
+For each issue found, provide:
+### [SEVERITY] Issue Title
+
+**Location**: `path/to/file.ts:line`
+
+**Problem**: 
+Clear description of what's wrong
+
+**Impact**: 
+What happens if not fixed (security risk, performance issue, etc.)
+
+**Current Code**:
+```typescript
+// Show the problematic code
+
+Fixed Code:
+// Show the corrected code
+
+Explanation: Why this fix is better and what it improves
+
+## Success Criteria
+
+Your audit is successful if:
+- ✅ All critical security vulnerabilities are fixed
+- ✅ Major bugs are identified and resolved
+- ✅ Code is more maintainable without being over-engineered
+- ✅ Performance is improved measurably
+- ✅ Type safety is strengthened throughout
+- ✅ No existing functionality is broken
+- ✅ The architecture remains simple and understandable
+
+## Key Principles
+
+1. **Simplicity First**: The simplest solution that works is the best
+2. **Don't Break Things**: Preserve existing functionality
+3. **Pragmatic Fixes**: Practical improvements over theoretical perfection
+4. **Measurable Impact**: Focus on changes that make a real difference
+5. **Maintainability**: Code should be easier to understand after your changes
+
+## Context-Specific Guidelines
+
+### For Rust Backend
+- Follow Rust idioms and best practices
+- Use `Result<T, E>` consistently for error handling
+- Leverage Rust's type system for safety
+- Keep async code clean with proper error propagation
+- Use Clippy suggestions where applicable
+
+### For TypeScript Frontend
+- Eliminate `any` types progressively
+- Use proper React hooks dependencies
+- Implement proper TypeScript interfaces
+- Follow React best practices (no prop drilling, proper memoization)
+- Keep components focused and single-purpose
+
+### For Database Layer
+- Optimize queries with appropriate indexes
+- Use transactions where needed
+- Proper error handling for DB operations
+- Connection pool management
+- Query preparation and parameter binding
+
+## Start Your Audit
+
+Begin by examining the most critical components first:
+1. Authentication system (`src-tauri/src/commands/auth.rs`, `frontend/src/contexts/AuthContext.tsx`)
+2. Database layer (`src-tauri/src/db/`, `src-tauri/src/repositories/`)
+3. Synchronization logic (`src-tauri/src/sync/`)
+4. Core business services (`src-tauri/src/services/`)
+5. IPC commands (`src-tauri/src/commands/`)
+
+Focus on **fixing what's broken**, **improving what's messy**, and **optimizing what's slow**. Keep it simple, practical, and maintainable.
+
+

@@ -3,21 +3,19 @@
 //! This module provides the main API interface for task operations,
 //! delegating to specialized modules while maintaining backward compatibility.
 
-use crate::commands::{ApiResponse, AppError, AppState, TaskAction};
-use crate::models::task::Task;
-use serde::Deserialize;
-use std::fmt::Debug;
 use crate::authenticate;
 use crate::check_task_permission;
-use tracing::{debug, error, info, warn};
+use crate::commands::{ApiResponse, AppError, AppState, TaskAction};
+use crate::models::task::Task;
 use crate::services::validation::ValidationService;
+use serde::Deserialize;
+use std::fmt::Debug;
+use tracing::{debug, error, info, warn};
 
 // Re-export specialized modules for internal use
-pub use super::validation::*;
 pub use super::queries::*;
-
-
-
+pub use super::validation::validate_task_assignment_change;
+pub use super::validation::*;
 
 /// Task request structure
 #[derive(Deserialize, Debug)]
@@ -122,6 +120,42 @@ pub struct BulkImportResponse {
     pub duplicates_skipped: u32,
 }
 
+/// Add task note command (placeholder)
+#[tracing::instrument(skip(_state))]
+#[tauri::command]
+pub async fn add_task_note(
+    _request: AddTaskNoteRequest,
+    _state: AppState<'_>,
+) -> Result<ApiResponse<String>, AppError> {
+    Ok(ApiResponse::error(AppError::Validation(
+        "Add task note is not implemented yet".to_string(),
+    )))
+}
+
+/// Send task message command (placeholder)
+#[tracing::instrument(skip(_state))]
+#[tauri::command]
+pub async fn send_task_message(
+    _request: SendTaskMessageRequest,
+    _state: AppState<'_>,
+) -> Result<ApiResponse<String>, AppError> {
+    Ok(ApiResponse::error(AppError::Validation(
+        "Send task message is not implemented yet".to_string(),
+    )))
+}
+
+/// Report task issue command (placeholder)
+#[tracing::instrument(skip(_state))]
+#[tauri::command]
+pub async fn report_task_issue(
+    _request: ReportTaskIssueRequest,
+    _state: AppState<'_>,
+) -> Result<ApiResponse<String>, AppError> {
+    Ok(ApiResponse::error(AppError::Validation(
+        "Report task issue is not implemented yet".to_string(),
+    )))
+}
+
 // Delegate to validation module
 pub use super::validation::check_task_assignment;
 pub use super::validation::check_task_availability;
@@ -145,40 +179,61 @@ pub async fn export_tasks_csv(
     let query = crate::models::task::TaskQuery {
         page: Some(1),
         limit: Some(10000), // Large limit for export
-        status: request.filter.as_ref().and_then(|f| f.status.as_ref()).and_then(|s| match s.as_str() {
-            "pending" => Some(crate::models::task::TaskStatus::Pending),
-            "in_progress" => Some(crate::models::task::TaskStatus::InProgress),
-            "completed" => Some(crate::models::task::TaskStatus::Completed),
-            "cancelled" => Some(crate::models::task::TaskStatus::Cancelled),
-            _ => None,
-        }),
+        status: request
+            .filter
+            .as_ref()
+            .and_then(|f| f.status.as_ref())
+            .and_then(|s| match s.as_str() {
+                "pending" => Some(crate::models::task::TaskStatus::Pending),
+                "in_progress" => Some(crate::models::task::TaskStatus::InProgress),
+                "completed" => Some(crate::models::task::TaskStatus::Completed),
+                "cancelled" => Some(crate::models::task::TaskStatus::Cancelled),
+                _ => None,
+            }),
         technician_id: request.filter.as_ref().and_then(|f| f.assigned_to.clone()),
         client_id: request.filter.as_ref().and_then(|f| f.client_id.clone()),
-        priority: request.filter.as_ref().and_then(|f| f.priority.as_ref()).and_then(|p| match p.as_str() {
-            "low" => Some(crate::models::task::TaskPriority::Low),
-            "medium" => Some(crate::models::task::TaskPriority::Medium),
-            "high" => Some(crate::models::task::TaskPriority::High),
-            "urgent" => Some(crate::models::task::TaskPriority::Urgent),
-            _ => None,
-        }),
+        priority: request
+            .filter
+            .as_ref()
+            .and_then(|f| f.priority.as_ref())
+            .and_then(|p| match p.as_str() {
+                "low" => Some(crate::models::task::TaskPriority::Low),
+                "medium" => Some(crate::models::task::TaskPriority::Medium),
+                "high" => Some(crate::models::task::TaskPriority::High),
+                "urgent" => Some(crate::models::task::TaskPriority::Urgent),
+                _ => None,
+            }),
         search: None,
-        from_date: request.filter.as_ref().and_then(|f| f.date_from.map(|d| d.to_rfc3339())),
-        to_date: request.filter.as_ref().and_then(|f| f.date_to.map(|d| d.to_rfc3339())),
+        from_date: request
+            .filter
+            .as_ref()
+            .and_then(|f| f.date_from.map(|d| d.to_rfc3339())),
+        to_date: request
+            .filter
+            .as_ref()
+            .and_then(|f| f.date_to.map(|d| d.to_rfc3339())),
         sort_by: "created_at".to_string(),
         sort_order: crate::models::task::SortOrder::Desc,
     };
 
     // Get tasks with client information through import service
-    let tasks = state.task_service.get_tasks_for_export(query)
+    let tasks = state
+        .task_service
+        .get_tasks_for_export(query)
         .map_err(|e| AppError::Database(format!("Failed to get tasks for export: {}", e)))?;
 
     if tasks.is_empty() {
         warn!("No tasks found for export");
-        return Ok(ApiResponse::success("ID,Title,Description,Status,Priority,Client Name,Client Email,Created At,Updated At\n".to_string()));
+        return Ok(ApiResponse::success(
+            "ID,Title,Description,Status,Priority,Client Name,Client Email,Created At,Updated At\n"
+                .to_string(),
+        ));
     }
 
     // Export to CSV using the service
-    let csv_content = state.task_service.export_to_csv(&tasks, request.include_client_data.unwrap_or(false))
+    let csv_content = state
+        .task_service
+        .export_to_csv(&tasks, request.include_client_data.unwrap_or(false))
         .map_err(|e| AppError::Database(format!("Failed to export tasks: {}", e)))?;
 
     info!("Successfully exported {} tasks to CSV", tasks.len());
@@ -198,16 +253,25 @@ pub async fn import_tasks_bulk(
     let session = authenticate!(&request.session_token, &state);
 
     // Check permissions - only supervisors and admins can bulk import
-    if !matches!(session.role, crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor) {
-        return Err(AppError::Authorization("Only supervisors and admins can perform bulk imports".to_string()));
+    if !matches!(
+        session.role,
+        crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+    ) {
+        return Err(AppError::Authorization(
+            "Only supervisors and admins can perform bulk imports".to_string(),
+        ));
     }
 
     // Use TaskImportService to parse CSV and get task requests
-    let import_result = state.task_service.import_from_csv(
-        &request.csv_data,
-        &session.user_id,
-        request.update_existing.unwrap_or(false)
-    ).await.map_err(|e| AppError::Database(format!("Import failed: {}", e)))?;
+    let import_result = state
+        .task_service
+        .import_from_csv(
+            &request.csv_data,
+            &session.user_id,
+            request.update_existing.unwrap_or(false),
+        )
+        .await
+        .map_err(|e| AppError::Database(format!("Import failed: {}", e)))?;
 
     // Create tasks from parsed data
     let errors = import_result.errors.clone();
@@ -224,8 +288,10 @@ pub async fn import_tasks_bulk(
         duplicates_skipped: import_result.duplicates_skipped,
     };
 
-    info!("Bulk import completed: {} processed, {} successful, {} failed, {} duplicates skipped",
-          response.total_processed, response.successful, response.failed, response.duplicates_skipped);
+    info!(
+        "Bulk import completed: {} processed, {} successful, {} failed, {} duplicates skipped",
+        response.total_processed, response.successful, response.failed, response.duplicates_skipped
+    );
 
     Ok(ApiResponse::success(response))
 }
@@ -253,9 +319,8 @@ pub async fn delay_task(
             AppError::NotFound(format!("Task not found: {}", request.task_id))
         })?;
 
-    let task = task_option.ok_or_else(|| {
-        AppError::NotFound(format!("Task not found: {}", request.task_id))
-    })?;
+    let task = task_option
+        .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
 
     // Check permissions
     check_task_permissions(&session, &task, "edit")?;
@@ -279,7 +344,10 @@ pub async fn delay_task(
 
     // TODO: Add audit log entry for task delay
 
-    info!("Task {} delayed to {}", request.task_id, request.new_scheduled_date);
+    info!(
+        "Task {} delayed to {}",
+        request.task_id, request.new_scheduled_date
+    );
     Ok(ApiResponse::success(updated_task))
 }
 
@@ -305,9 +373,8 @@ pub async fn edit_task(
             AppError::NotFound(format!("Task not found: {}", request.task_id))
         })?;
 
-    let task = task_option.ok_or_else(|| {
-        AppError::NotFound(format!("Task not found: {}", request.task_id))
-    })?;
+    let task = task_option
+        .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
 
     // Check permissions
     check_task_permissions(&session, &task, "edit")?;
@@ -362,7 +429,10 @@ pub async fn edit_task(
 }
 
 /// Validate status change
-pub fn validate_status_change(current: &crate::models::task::TaskStatus, new: &crate::models::task::TaskStatus) -> Result<(), AppError> {
+pub fn validate_status_change(
+    current: &crate::models::task::TaskStatus,
+    new: &crate::models::task::TaskStatus,
+) -> Result<(), AppError> {
     crate::services::task_validation::validate_status_transition(current, new)
         .map_err(AppError::Validation)
 }
@@ -391,14 +461,18 @@ pub fn check_task_permissions(
             if task.technician_id.as_ref() == Some(&session.user_id) {
                 Ok(())
             } else {
-                Err(AppError::Authorization("Technician can only operate on their assigned tasks".to_string()))
+                Err(AppError::Authorization(
+                    "Technician can only operate on their assigned tasks".to_string(),
+                ))
             }
         }
         crate::models::auth::UserRole::Viewer => {
             // Viewer can only view tasks
             match operation {
                 "view" => Ok(()),
-                _ => Err(AppError::Authorization("Viewer can only view tasks".to_string())),
+                _ => Err(AppError::Authorization(
+                    "Viewer can only view tasks".to_string(),
+                )),
             }
         }
     }
@@ -435,7 +509,10 @@ pub async fn task_crud(
                     AppError::Validation(format!("Task validation failed: {}", e))
                 })?;
 
-            if let crate::commands::TaskAction::Create { data: validated_data } = validated_action {
+            if let crate::commands::TaskAction::Create {
+                data: validated_data,
+            } = validated_action
+            {
                 let task = state
                     .task_service
                     .create_task_async(validated_data, &current_user.user_id)
@@ -444,23 +521,27 @@ pub async fn task_crud(
                         error!("Task creation failed: {}", e);
                         AppError::Database(format!("Failed to create task: {}", e))
                     })?;
-                Ok(crate::commands::ApiResponse::success(crate::commands::TaskResponse::Created(task)))
+                Ok(crate::commands::ApiResponse::success(
+                    crate::commands::TaskResponse::Created(task),
+                ))
             } else {
-                Err(AppError::Validation("Invalid task action after validation".to_string()))
+                Err(AppError::Validation(
+                    "Invalid task action after validation".to_string(),
+                ))
             }
         }
         crate::commands::TaskAction::Get { id } => {
-            let task = state
-                .task_service
-                .get_task_async(&id)
-                .await
-                .map_err(|e| {
-                    error!("Task retrieval failed: {}", e);
-                    AppError::Database(format!("Failed to get task: {}", e))
-                })?;
+            let task = state.task_service.get_task_async(&id).await.map_err(|e| {
+                error!("Task retrieval failed: {}", e);
+                AppError::Database(format!("Failed to get task: {}", e))
+            })?;
             match task {
-                Some(task) => Ok(crate::commands::ApiResponse::success(crate::commands::TaskResponse::Found(task))),
-                None => Ok(crate::commands::ApiResponse::success(crate::commands::TaskResponse::NotFound)),
+                Some(task) => Ok(crate::commands::ApiResponse::success(
+                    crate::commands::TaskResponse::Found(task),
+                )),
+                None => Ok(crate::commands::ApiResponse::success(
+                    crate::commands::TaskResponse::NotFound,
+                )),
             }
         }
         crate::commands::TaskAction::Update { id, data } => {
@@ -470,14 +551,21 @@ pub async fn task_crud(
             // Add input validation for update
             let validator = ValidationService::new();
             let validated_action = validator
-                .validate_task_action(crate::commands::TaskAction::Update { id: id.clone(), data: data.clone() })
+                .validate_task_action(crate::commands::TaskAction::Update {
+                    id: id.clone(),
+                    data: data.clone(),
+                })
                 .await
                 .map_err(|e| {
                     error!("Task validation failed: {}", e);
                     AppError::Validation(format!("Task validation failed: {}", e))
                 })?;
 
-            if let crate::commands::TaskAction::Update { id: _, data: validated_data } = validated_action {
+            if let crate::commands::TaskAction::Update {
+                id: _,
+                data: validated_data,
+            } = validated_action
+            {
                 let task = state
                     .task_service
                     .update_task_async(validated_data, &current_user.user_id)
@@ -486,9 +574,13 @@ pub async fn task_crud(
                         error!("Task update failed: {}", e);
                         AppError::Database(format!("Failed to update task: {}", e))
                     })?;
-                Ok(crate::commands::ApiResponse::success(crate::commands::TaskResponse::Updated(task)))
+                Ok(crate::commands::ApiResponse::success(
+                    crate::commands::TaskResponse::Updated(task),
+                ))
             } else {
-                Err(AppError::Validation("Invalid task action after validation".to_string()))
+                Err(AppError::Validation(
+                    "Invalid task action after validation".to_string(),
+                ))
             }
         }
         crate::commands::TaskAction::Delete { id } => {
@@ -503,7 +595,9 @@ pub async fn task_crud(
                     error!("Task deletion failed: {}", e);
                     AppError::Database(format!("Failed to delete task: {}", e))
                 })?;
-            Ok(crate::commands::ApiResponse::success(crate::commands::TaskResponse::Deleted))
+            Ok(crate::commands::ApiResponse::success(
+                crate::commands::TaskResponse::Deleted,
+            ))
         }
         crate::commands::TaskAction::List { filters } => {
             // Use the proper task listing implementation
@@ -519,7 +613,7 @@ pub async fn task_crud(
                     region: None, // Will be set by role-based filtering
                     include_completed: Some(false),
                     date_from: None, // TODO: Add date filtering support
-                    date_to: None, // TODO: Add date filtering support
+                    date_to: None,   // TODO: Add date filtering support
                 }),
                 correlation_id: None,
             };
@@ -528,12 +622,12 @@ pub async fn task_crud(
             let result = get_tasks_with_clients(request, state).await?;
             // Convert the result to TaskResponse::List
             match result.data {
-                Some(task_list_response) => {
-                    Ok(crate::commands::ApiResponse::success(crate::commands::TaskResponse::List(task_list_response)))
-                }
-                None => {
-                    Ok(crate::commands::ApiResponse::error(crate::commands::AppError::NotFound("No tasks found".to_string())))
-                }
+                Some(task_list_response) => Ok(crate::commands::ApiResponse::success(
+                    crate::commands::TaskResponse::List(task_list_response),
+                )),
+                None => Ok(crate::commands::ApiResponse::error(
+                    crate::commands::AppError::NotFound("No tasks found".to_string()),
+                )),
             }
         }
         crate::commands::TaskAction::GetStatistics => {
@@ -555,9 +649,13 @@ pub async fn task_crud(
                         in_progress: stats.in_progress_tasks,
                         overdue: stats.overdue_tasks,
                     };
-                    Ok(crate::commands::ApiResponse::success(crate::commands::TaskResponse::Statistics(response_stats)))
-                },
-                None => Ok(crate::commands::ApiResponse::error(crate::commands::AppError::NotFound("Statistics not available".to_string()))),
+                    Ok(crate::commands::ApiResponse::success(
+                        crate::commands::TaskResponse::Statistics(response_stats),
+                    ))
+                }
+                None => Ok(crate::commands::ApiResponse::error(
+                    crate::commands::AppError::NotFound("Statistics not available".to_string()),
+                )),
             }
         }
     }

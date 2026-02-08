@@ -4,8 +4,8 @@
 
 use crate::db::Database;
 use crate::models::user::{User, UserRole};
-use crate::repositories::base::{Repository, RepoError, RepoResult};
-use crate::repositories::cache::{Cache, CacheKeyBuilder, ttl};
+use crate::repositories::base::{RepoError, RepoResult, Repository};
+use crate::repositories::cache::{ttl, Cache, CacheKeyBuilder};
 use async_trait::async_trait;
 use rusqlite::params;
 use std::sync::Arc;
@@ -61,19 +61,25 @@ impl UserQuery {
 
     fn validate_sort_column(sort_by: &str) -> Result<String, RepoError> {
         let allowed_columns = [
-            "created_at", "updated_at", "email", "full_name", "role", "phone",
-            "is_active", "last_login_at", "login_count"
+            "created_at",
+            "updated_at",
+            "email",
+            "full_name",
+            "role",
+            "phone",
+            "is_active",
+            "last_login_at",
+            "login_count",
         ];
-        allowed_columns.iter()
+        allowed_columns
+            .iter()
             .find(|&&col| col == sort_by)
             .map(|s| s.to_string())
             .ok_or_else(|| RepoError::Validation(format!("Invalid sort column: {}", sort_by)))
     }
 
     fn build_order_by_clause(&self) -> Result<String, RepoError> {
-        let sort_by = Self::validate_sort_column(
-            self.sort_by.as_deref().unwrap_or("created_at")
-        )?;
+        let sort_by = Self::validate_sort_column(self.sort_by.as_deref().unwrap_or("created_at"))?;
         let sort_order = match self.sort_order.as_deref() {
             Some("ASC") => "ASC",
             Some("DESC") => "DESC",
@@ -133,8 +139,7 @@ impl UserRepository {
             .map_err(|e| RepoError::Database(format!("Failed to find user by email: {}", e)))?;
 
         if let Some(ref user) = user {
-            self.cache
-                .set(&cache_key, user.clone(), ttl::MEDIUM);
+            self.cache.set(&cache_key, user.clone(), ttl::MEDIUM);
         }
 
         Ok(user)
@@ -142,9 +147,7 @@ impl UserRepository {
 
     /// Find users by role
     pub async fn find_by_role(&self, role: UserRole) -> RepoResult<Vec<User>> {
-        let cache_key = self
-            .cache_key_builder
-            .query(&["role", &role.to_string()]);
+        let cache_key = self.cache_key_builder.query(&["role", &role.to_string()]);
 
         if let Some(users) = self.cache.get::<Vec<User>>(&cache_key) {
             return Ok(users);
@@ -166,8 +169,7 @@ impl UserRepository {
             )
             .map_err(|e| RepoError::Database(format!("Failed to find users by role: {}", e)))?;
 
-        self.cache
-            .set(&cache_key, users.clone(), ttl::MEDIUM);
+        self.cache.set(&cache_key, users.clone(), ttl::MEDIUM);
 
         Ok(users)
     }
@@ -196,8 +198,7 @@ impl UserRepository {
             )
             .map_err(|e| RepoError::Database(format!("Failed to find active users: {}", e)))?;
 
-        self.cache
-            .set(&cache_key, users.clone(), ttl::SHORT);
+        self.cache.set(&cache_key, users.clone(), ttl::SHORT);
 
         Ok(users)
     }
@@ -225,9 +226,7 @@ impl UserRepository {
 
     /// Search users
     pub async fn search(&self, query: UserQuery) -> RepoResult<Vec<User>> {
-        let cache_key = self.cache_key_builder.query(&[
-            &format!("{:?}", query),
-        ]);
+        let cache_key = self.cache_key_builder.query(&[&format!("{:?}", query)]);
 
         if let Some(users) = self.cache.get::<Vec<User>>(&cache_key) {
             return Ok(users);
@@ -262,8 +261,7 @@ impl UserRepository {
             .query_as::<User>(&sql, rusqlite::params_from_iter(params_vec.iter()))
             .map_err(|e| RepoError::Database(format!("Failed to search users: {}", e)))?;
 
-        self.cache
-            .set(&cache_key, users.clone(), ttl::SHORT);
+        self.cache.set(&cache_key, users.clone(), ttl::SHORT);
 
         Ok(users)
     }
@@ -318,8 +316,7 @@ impl Repository<User, String> for UserRepository {
             .map_err(|e| RepoError::Database(format!("Failed to find user by id: {}", e)))?;
 
         if let Some(ref user) = user {
-            self.cache
-                .set(&cache_key, user.clone(), ttl::LONG);
+            self.cache.set(&cache_key, user.clone(), ttl::LONG);
         }
 
         Ok(user)
@@ -348,8 +345,7 @@ impl Repository<User, String> for UserRepository {
             )
             .map_err(|e| RepoError::Database(format!("Failed to find all users: {}", e)))?;
 
-        self.cache
-            .set(&cache_key, users.clone(), ttl::MEDIUM);
+        self.cache.set(&cache_key, users.clone(), ttl::MEDIUM);
 
         Ok(users)
     }
@@ -638,7 +634,11 @@ mod tests {
         repo.update_last_login("login-test").await.unwrap();
 
         // Verify login count increased
-        let updated_user = repo.find_by_id("login-test".to_string()).await.unwrap().unwrap();
+        let updated_user = repo
+            .find_by_id("login-test".to_string())
+            .await
+            .unwrap()
+            .unwrap();
         assert_eq!(updated_user.login_count, 1);
         assert!(updated_user.last_login_at.is_some());
     }
@@ -755,16 +755,20 @@ impl UserRepository {
                 params![user_id],
             )
             .map_err(|e| RepoError::Database(format!("Failed to update user role: {}", e)))?;
-        
+
         if rows_affected > 0 {
             self.invalidate_user_cache(user_id);
         }
-        
+
         Ok(rows_affected > 0)
     }
 
     /// Create an audit log entry for admin bootstrap
-    pub async fn create_admin_bootstrap_audit_log(&self, user_id: &str, user_email: &str) -> RepoResult<()> {
+    pub async fn create_admin_bootstrap_audit_log(
+        &self,
+        user_id: &str,
+        user_email: &str,
+    ) -> RepoResult<()> {
         self.db
             .execute(
                 "INSERT INTO audit_logs (user_id, user_email, action, entity_type, entity_id, old_values, new_values, created_at)

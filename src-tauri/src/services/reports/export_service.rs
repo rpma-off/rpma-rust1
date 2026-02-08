@@ -55,7 +55,11 @@ impl ExportReportService {
     ) -> AppResult<InterventionReportResult> {
         // Create unique filename
         let file_name = DocumentStorageService::generate_filename(
-            &format!("intervention_report_{}_{}", intervention_data.intervention.id, Utc::now().timestamp()),
+            &format!(
+                "intervention_report_{}_{}",
+                intervention_data.intervention.id,
+                Utc::now().timestamp()
+            ),
             "pdf",
         );
 
@@ -63,7 +67,12 @@ impl ExportReportService {
         debug!("Generating intervention PDF report at: {:?}", output_path);
 
         // Generate PDF using existing service
-        PdfGenerationService::generate_intervention_report_pdf(intervention_data, &output_path, base_dir).await?;
+        PdfGenerationService::generate_intervention_report_pdf(
+            intervention_data,
+            &output_path,
+            base_dir,
+        )
+        .await?;
 
         // Get file size
         let file_size = std::fs::metadata(&output_path)

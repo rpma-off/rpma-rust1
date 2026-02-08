@@ -82,6 +82,10 @@ export const IPC_COMMANDS = {
   UPDATE_SESSION_TIMEOUT: 'update_session_timeout',
   GET_SESSION_TIMEOUT_CONFIG: 'get_session_timeout_config',
   UPLOAD_USER_AVATAR: 'upload_user_avatar',
+  EXPORT_USER_DATA: 'export_user_data',
+  DELETE_USER_ACCOUNT: 'delete_user_account',
+  GET_DATA_CONSENT: 'get_data_consent',
+  UPDATE_DATA_CONSENT: 'update_data_consent',
 
   // Dashboard commands
   DASHBOARD_GET_STATS: 'dashboard_get_stats',
