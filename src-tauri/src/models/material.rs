@@ -7,9 +7,11 @@ use crate::db::FromSqlRow;
 use chrono::{DateTime, Utc};
 use rusqlite::Row;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 /// Material types for PPF workflows
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, ts_rs::TS)]
+#[ts(export)]
 pub enum MaterialType {
     #[serde(rename = "ppf_film")]
     PpfFilm,
@@ -36,7 +38,8 @@ impl std::fmt::Display for MaterialType {
 }
 
 /// Unit of measure for materials
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, ts_rs::TS)]
+#[ts(export)]
 pub enum UnitOfMeasure {
     #[serde(rename = "piece")]
     Piece,

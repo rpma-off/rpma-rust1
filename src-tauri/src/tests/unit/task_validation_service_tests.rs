@@ -8,7 +8,9 @@
 
 use crate::models::task::{Task, TaskPriority, TaskStatus};
 use crate::services::task_validation::TaskValidationService;
-use crate::test_utils::{test_db, test_task, TestDataFactory};
+use crate::test_utils::TestDataFactory;
+use crate::{test_client, test_db, test_intervention, test_task};
+use chrono::Utc;
 
 #[cfg(test)]
 mod tests {
@@ -19,35 +21,32 @@ mod tests {
         TaskValidationService::new(test_db.db())
     }
 
-    #[test]
-    fn test_validate_status_transition_draft_to_scheduled() {
+    #[tokio::test]
+    async fn test_validate_status_transition_draft_to_scheduled() {
         let validation_service = create_validation_service();
-        let task = test_task!(status: Some(TaskStatus::Draft));
-
-        let result = validation_service.validate_status_transition(&task, TaskStatus::Scheduled);
+        let result = validation_service
+            .validate_status_transition(&TaskStatus::Draft, &TaskStatus::Scheduled);
         assert!(result.is_ok(), "Draft to Scheduled should be valid");
     }
 
-    #[test]
-    fn test_validate_status_transition_scheduled_to_in_progress() {
+    #[tokio::test]
+    async fn test_validate_status_transition_scheduled_to_in_progress() {
         let validation_service = create_validation_service();
-        let task = test_task!(status: Some(TaskStatus::Scheduled));
-
-        let result = validation_service.validate_status_transition(&task, TaskStatus::InProgress);
+        let result = validation_service
+            .validate_status_transition(&TaskStatus::Scheduled, &TaskStatus::InProgress);
         assert!(result.is_ok(), "Scheduled to InProgress should be valid");
     }
 
-    #[test]
-    fn test_validate_status_transition_in_progress_to_completed() {
+    #[tokio::test]
+    async fn test_validate_status_transition_in_progress_to_completed() {
         let validation_service = create_validation_service();
-        let task = test_task!(status: Some(TaskStatus::InProgress));
-
-        let result = validation_service.validate_status_transition(&task, TaskStatus::Completed);
+        let result = validation_service
+            .validate_status_transition(&TaskStatus::InProgress, &TaskStatus::Completed);
         assert!(result.is_ok(), "InProgress to Completed should be valid");
     }
 
-    #[test]
-    fn test_validate_status_transition_invalid_draft_to_completed() {
+    #[tokio::test]
+    async fn test_validate_status_transition_invalid_draft_to_completed() {
         let validation_service = create_validation_service();
         let task = test_task!(status: Some(TaskStatus::Draft));
 
@@ -57,8 +56,8 @@ mod tests {
         assert!(error.contains("Cannot transition from Draft to Completed"));
     }
 
-    #[test]
-    fn test_validate_status_transition_invalid_completed_to_draft() {
+    #[tokio::test]
+    async fn test_validate_status_transition_invalid_completed_to_draft() {
         let validation_service = create_validation_service();
         let task = test_task!(status: Some(TaskStatus::Completed));
 
@@ -68,8 +67,8 @@ mod tests {
         assert!(error.contains("Cannot transition from Completed to Draft"));
     }
 
-    #[test]
-    fn test_validate_status_transition_all_valid_paths() {
+    #[tokio::test]
+    async fn test_validate_status_transition_all_valid_paths() {
         let validation_service = create_validation_service();
 
         // Test all valid transitions
@@ -98,8 +97,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_validate_technician_assignment_valid() {
+    #[tokio::test]
+    async fn test_validate_technician_assignment_valid() {
         let validation_service = create_validation_service();
         let task = test_task!(status: Some(TaskStatus::Scheduled));
 
@@ -126,18 +125,21 @@ mod tests {
             ],
         ).expect("Failed to create test technician");
 
-        let result = validation_service.validate_technician_assignment(&task, Some(&technician_id));
+        let ppf_zones = task.ppf_zones.clone();
+        let result =
+            validation_service.validate_technician_assignment(&technician_id, &Some(ppf_zones));
         assert!(result.is_ok(), "Valid technician assignment should succeed");
     }
 
-    #[test]
-    fn test_validate_technician_assignment_nonexistent_user() {
+    #[tokio::test]
+    async fn test_validate_technician_assignment_nonexistent_user() {
         let validation_service = create_validation_service();
         let task = test_task!(status: Some(TaskStatus::Scheduled));
 
         let nonexistent_id = uuid::Uuid::new_v4().to_string();
+        let ppf_zones = task.ppf_zones.clone();
         let result =
-            validation_service.validate_technician_assignment(&task, Some(&nonexistent_id));
+            validation_service.validate_technician_assignment(&nonexistent_id, &Some(ppf_zones));
 
         assert!(
             result.is_err(),
@@ -147,8 +149,8 @@ mod tests {
         assert!(error.contains("Technician not found"));
     }
 
-    #[test]
-    fn test_validate_technician_assignment_wrong_role() {
+    #[tokio::test]
+    async fn test_validate_technician_assignment_wrong_role() {
         let validation_service = create_validation_service();
         let task = test_task!(status: Some(TaskStatus::Scheduled));
 
@@ -184,8 +186,8 @@ mod tests {
         assert!(error.contains("User is not a technician"));
     }
 
-    #[test]
-    fn test_validate_technician_assignment_banned_user() {
+    #[tokio::test]
+    async fn test_validate_technician_assignment_banned_user() {
         let validation_service = create_validation_service();
         let task = test_task!(status: Some(TaskStatus::Scheduled));
 
@@ -222,10 +224,14 @@ mod tests {
         assert!(error.contains("Technician is banned"));
     }
 
-    #[test]
-    fn test_check_workload_capacity_available() {
+    #[tokio::test]
+    async fn test_check_workload_capacity_available() {
         let validation_service = create_validation_service();
         let technician_id = uuid::Uuid::new_v4().to_string();
+        let task = test_task!(
+            title: "Test Task".to_string(),
+            scheduled_date: Some(chrono::Utc::now().to_rfc3339())
+        );
 
         // Create a test technician with no existing tasks
         let conn = validation_service
@@ -249,15 +255,16 @@ mod tests {
             ],
         ).expect("Failed to create test technician");
 
-        let result = validation_service.check_workload_capacity(&technician_id);
+        let result =
+            validation_service.check_workload_capacity(&technician_id, &task.scheduled_date);
         assert!(
             result.is_ok(),
             "Technician with no tasks should have available capacity"
         );
     }
 
-    #[test]
-    fn test_check_workload_capacity_overloaded() {
+    #[tokio::test]
+    async fn test_check_workload_capacity_overloaded() {
         let validation_service = create_validation_service();
         let technician_id = uuid::Uuid::new_v4().to_string();
 
@@ -304,7 +311,8 @@ mod tests {
             ).expect("Failed to create test task");
         }
 
-        let result = validation_service.check_workload_capacity(&technician_id);
+        let result = validation_service
+            .check_workload_capacity(&technician_id, &Some("2024-01-15".to_string()));
         assert!(
             result.is_err(),
             "Overloaded technician should fail capacity check"
@@ -313,8 +321,8 @@ mod tests {
         assert!(error.contains("Technician workload capacity exceeded"));
     }
 
-    #[test]
-    fn test_validate_ppf_zones_basic() {
+    #[tokio::test]
+    async fn test_validate_ppf_zones_basic() {
         let validation_service = create_validation_service();
         let task = test_task!(ppf_zones: vec!["front".to_string(), "rear".to_string()]);
 
@@ -322,8 +330,8 @@ mod tests {
         assert!(result.is_ok(), "Valid PPF zones should pass");
     }
 
-    #[test]
-    fn test_validate_ppf_zones_invalid_zone() {
+    #[tokio::test]
+    async fn test_validate_ppf_zones_invalid_zone() {
         let validation_service = create_validation_service();
         let task = test_task!(ppf_zones: vec!["invalid_zone".to_string()]);
 
@@ -333,8 +341,8 @@ mod tests {
         assert!(error.contains("Invalid PPF zone"));
     }
 
-    #[test]
-    fn test_validate_ppf_zones_empty() {
+    #[tokio::test]
+    async fn test_validate_ppf_zones_empty() {
         let validation_service = create_validation_service();
         let task = test_task!(ppf_zones: vec![]);
 
@@ -344,8 +352,8 @@ mod tests {
         assert!(error.contains("At least one PPF zone is required"));
     }
 
-    #[test]
-    fn test_validate_ppf_zones_complex_configuration() {
+    #[tokio::test]
+    async fn test_validate_ppf_zones_complex_configuration() {
         let validation_service = create_validation_service();
 
         // Test complex valid configurations
@@ -367,8 +375,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_validate_task_comprehensive() {
+    #[tokio::test]
+    async fn test_validate_task_comprehensive() {
         let validation_service = create_validation_service();
 
         // Create a valid task
@@ -413,8 +421,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_validate_task_multiple_invalidations() {
+    #[tokio::test]
+    async fn test_validate_task_multiple_invalidations() {
         let validation_service = create_validation_service();
 
         // Create task with multiple invalidations
@@ -440,8 +448,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_validate_task_edge_cases() {
+    #[tokio::test]
+    async fn test_validate_task_edge_cases() {
         let validation_service = create_validation_service();
 
         // Test with very long values
@@ -464,6 +472,615 @@ mod tests {
         assert!(
             result.is_err(),
             "Special characters in vehicle plate should fail"
+        );
+    }
+
+    // === Tests for previously uncovered methods ===
+
+    #[tokio::test]
+    async fn test_check_assignment_eligibility_eligible_technician() {
+        let validation_service = create_validation_service();
+
+        // Create a test technician
+        let technician_id = uuid::Uuid::new_v4().to_string();
+        let conn = validation_service.db.get_connection().unwrap();
+
+        conn.execute(
+            "INSERT INTO users (id, username, email, first_name, last_name, password_hash, role, is_active, created_at, updated_at) 
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+            [
+                technician_id.clone(),
+                "eligible_tech".to_string(),
+                "eligible@example.com".to_string(),
+                "Eligible".to_string(),
+                "Technician".to_string(),
+                "hashed_password".to_string(),
+                "technician".to_string(),
+                "1".to_string(),
+                Utc::now().to_rfc3339(),
+                Utc::now().to_rfc3339(),
+            ],
+        ).unwrap();
+
+        // Create a task in assignable status
+        let task = test_task!(
+            status: Some(TaskStatus::Pending),
+            technician_id: None,
+            ppf_zones: Some(vec!["front".to_string(), "rear".to_string()]),
+            scheduled_date: Some(Utc::now().to_rfc3339())
+        );
+        let task_id = &task.id;
+
+        // Insert the task
+        conn.execute(
+            "INSERT INTO tasks (id, vehicle_plate, vehicle_model, ppf_zones, scheduled_date, status, created_at, updated_at) 
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            [
+                task_id.clone(),
+                task.vehicle_plate.clone(),
+                task.vehicle_model.unwrap_or_default(),
+                task.ppf_zones.as_ref().map(|z| z.join(",")).unwrap_or_default(),
+                task.scheduled_date.clone().unwrap_or_default(),
+                serde_json::to_string(&task.status).unwrap(),
+                task.created_at.to_rfc3339(),
+                task.updated_at.to_rfc3339(),
+            ],
+        ).unwrap();
+
+        let result = validation_service.check_assignment_eligibility(task_id, &technician_id);
+        assert!(result.is_ok(), "Should return Ok result");
+        assert!(result.unwrap(), "Eligible technician should be assignable");
+    }
+
+    #[tokio::test]
+    async fn test_check_assignment_eligibility_non_assignable_status() {
+        let validation_service = create_validation_service();
+
+        // Create a test technician
+        let technician_id = uuid::Uuid::new_v4().to_string();
+        let conn = validation_service.db.get_connection().unwrap();
+
+        conn.execute(
+            "INSERT INTO users (id, username, email, first_name, last_name, password_hash, role, is_active, created_at, updated_at) 
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+            [
+                technician_id.clone(),
+                "ineligible_tech".to_string(),
+                "ineligible@example.com".to_string(),
+                "Ineligible".to_string(),
+                "Technician".to_string(),
+                "hashed_password".to_string(),
+                "technician".to_string(),
+                "1".to_string(),
+                Utc::now().to_rfc3339(),
+                Utc::now().to_rfc3339(),
+            ],
+        ).unwrap();
+
+        // Create a task in non-assignable status
+        let task = test_task!(
+            status: Some(TaskStatus::Completed),
+            technician_id: None,
+            ppf_zones: Some(vec!["front".to_string()]),
+            scheduled_date: Some(Utc::now().to_rfc3339())
+        );
+        let task_id = &task.id;
+
+        // Insert the task
+        conn.execute(
+            "INSERT INTO tasks (id, vehicle_plate, vehicle_model, ppf_zones, scheduled_date, status, created_at, updated_at) 
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            [
+                task_id.clone(),
+                task.vehicle_plate.clone(),
+                task.vehicle_model.unwrap_or_default(),
+                task.ppf_zones.as_ref().map(|z| z.join(",")).unwrap_or_default(),
+                task.scheduled_date.clone().unwrap_or_default(),
+                serde_json::to_string(&task.status).unwrap(),
+                task.created_at.to_rfc3339(),
+                task.updated_at.to_rfc3339(),
+            ],
+        ).unwrap();
+
+        let result = validation_service.check_assignment_eligibility(task_id, &technician_id);
+        assert!(result.is_ok(), "Should return Ok result");
+        assert!(
+            !result.unwrap(),
+            "Non-assignable status should return false"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_check_assignment_eligibility_nonexistent_task() {
+        let validation_service = create_validation_service();
+        let technician_id = uuid::Uuid::new_v4().to_string();
+        let nonexistent_task_id = uuid::Uuid::new_v4().to_string();
+
+        let result =
+            validation_service.check_assignment_eligibility(&nonexistent_task_id, &technician_id);
+        assert!(result.is_err(), "Nonexistent task should return error");
+        assert!(result.unwrap_err().contains("not found"));
+    }
+
+    #[tokio::test]
+    async fn test_check_assignment_eligibility_workload_exceeded() {
+        let validation_service = create_validation_service();
+        let technician_id = uuid::Uuid::new_v4().to_string();
+        let scheduled_date = Utc::now().to_rfc3339();
+
+        // Create a test technician
+        let conn = validation_service.db.get_connection().unwrap();
+        conn.execute(
+            "INSERT INTO users (id, username, email, first_name, last_name, password_hash, role, is_active, created_at, updated_at) 
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+            [
+                technician_id.clone(),
+                "busy_tech".to_string(),
+                "busy@example.com".to_string(),
+                "Busy".to_string(),
+                "Technician".to_string(),
+                "hashed_password".to_string(),
+                "technician".to_string(),
+                "1".to_string(),
+                Utc::now().to_rfc3339(),
+                Utc::now().to_rfc3339(),
+            ],
+        ).unwrap();
+
+        // Create 3 tasks already assigned to this technician (at capacity)
+        for i in 0..3 {
+            let task_id = uuid::Uuid::new_v4().to_string();
+            conn.execute(
+                "INSERT INTO tasks (id, vehicle_plate, vehicle_model, ppf_zones, scheduled_date, technician_id, status, created_at, updated_at) 
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+                [
+                    task_id,
+                    format!("PLATE{}", i),
+                    "Test Model".to_string(),
+                    "front".to_string(),
+                    scheduled_date.clone(),
+                    technician_id.clone(),
+                    "scheduled".to_string(),
+                    Utc::now().to_rfc3339(),
+                    Utc::now().to_rfc3339(),
+                ],
+            ).unwrap();
+        }
+
+        // Create a new task for the same date
+        let new_task = test_task!(
+            status: Some(TaskStatus::Pending),
+            technician_id: None,
+            ppf_zones: Some(vec!["front".to_string()]),
+            scheduled_date: Some(scheduled_date)
+        );
+        let new_task_id = &new_task.id;
+
+        conn.execute(
+            "INSERT INTO tasks (id, vehicle_plate, vehicle_model, ppf_zones, scheduled_date, status, created_at, updated_at) 
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            [
+                new_task_id.clone(),
+                new_task.vehicle_plate.clone(),
+                new_task.vehicle_model.unwrap_or_default(),
+                new_task.ppf_zones.as_ref().map(|z| z.join(",")).unwrap_or_default(),
+                new_task.scheduled_date.clone().unwrap_or_default(),
+                serde_json::to_string(&new_task.status).unwrap(),
+                new_task.created_at.to_rfc3339(),
+                new_task.updated_at.to_rfc3339(),
+            ],
+        ).unwrap();
+
+        let result = validation_service.check_assignment_eligibility(new_task_id, &technician_id);
+        assert!(result.is_ok(), "Should return Ok result");
+        assert!(
+            !result.unwrap(),
+            "Technician at capacity should not be eligible"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_check_task_availability_available() {
+        let validation_service = create_validation_service();
+
+        // Create a task with no conflicts
+        let task = test_task!(
+            status: Some(TaskStatus::Pending),
+            technician_id: None,
+            ppf_zones: Some(vec!["front".to_string()]),
+            scheduled_date: Some(Utc::now().to_rfc3339()),
+            start_time: Some("09:00".to_string()),
+            end_time: Some("10:00".to_string())
+        );
+        let task_id = &task.id;
+
+        // Insert the task
+        let conn = validation_service.db.get_connection().unwrap();
+        conn.execute(
+            "INSERT INTO tasks (id, vehicle_plate, vehicle_model, ppf_zones, scheduled_date, start_time, end_time, status, created_at, updated_at) 
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+            [
+                task_id.clone(),
+                task.vehicle_plate.clone(),
+                task.vehicle_model.unwrap_or_default(),
+                task.ppf_zones.as_ref().map(|z| z.join(",")).unwrap_or_default(),
+                task.scheduled_date.clone().unwrap_or_default(),
+                task.start_time.clone().unwrap_or_default(),
+                task.end_time.clone().unwrap_or_default(),
+                serde_json::to_string(&task.status).unwrap(),
+                task.created_at.to_rfc3339(),
+                task.updated_at.to_rfc3339(),
+            ],
+        ).unwrap();
+
+        let result = validation_service.check_task_availability(task_id);
+        assert!(result.is_ok(), "Should return Ok result");
+        assert!(result.unwrap(), "Available task should return true");
+    }
+
+    #[tokio::test]
+    async fn test_check_task_availability_nonexistent_task() {
+        let validation_service = create_validation_service();
+        let nonexistent_task_id = uuid::Uuid::new_v4().to_string();
+
+        let result = validation_service.check_task_availability(&nonexistent_task_id);
+        assert!(result.is_err(), "Nonexistent task should return error");
+        assert!(result.unwrap_err().contains("not found"));
+    }
+
+    #[tokio::test]
+    async fn test_check_task_availability_non_assignable_status() {
+        let validation_service = create_validation_service();
+
+        // Create a task in completed status
+        let task = test_task!(
+            status: Some(TaskStatus::Completed),
+            technician_id: None,
+            ppf_zones: Some(vec!["front".to_string()])
+        );
+        let task_id = &task.id;
+
+        // Insert the task
+        let conn = validation_service.db.get_connection().unwrap();
+        conn.execute(
+            "INSERT INTO tasks (id, vehicle_plate, vehicle_model, ppf_zones, status, created_at, updated_at) 
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            [
+                task_id.clone(),
+                task.vehicle_plate.clone(),
+                task.vehicle_model.unwrap_or_default(),
+                task.ppf_zones.as_ref().map(|z| z.join(",")).unwrap_or_default(),
+                serde_json::to_string(&task.status).unwrap(),
+                task.created_at.to_rfc3339(),
+                task.updated_at.to_rfc3339(),
+            ],
+        ).unwrap();
+
+        let result = validation_service.check_task_availability(task_id);
+        assert!(result.is_ok(), "Should return Ok result");
+        assert!(!result.unwrap(), "Completed task should not be available");
+    }
+
+    #[tokio::test]
+    async fn test_validate_assignment_change_valid() {
+        let validation_service = create_validation_service();
+        let old_user_id = uuid::Uuid::new_v4().to_string();
+        let new_user_id = uuid::Uuid::new_v4().to_string();
+
+        // Create both technicians
+        let conn = validation_service.db.get_connection().unwrap();
+
+        for (id, username) in [(&old_user_id, "old_tech"), (&new_user_id, "new_tech")] {
+            conn.execute(
+                "INSERT INTO users (id, username, email, first_name, last_name, password_hash, role, is_active, created_at, updated_at) 
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+                [
+                    id.clone(),
+                    username.to_string(),
+                    format!("{}@example.com", username),
+                    "Test".to_string(),
+                    "Technician".to_string(),
+                    "hashed_password".to_string(),
+                    "technician".to_string(),
+                    "1".to_string(),
+                    Utc::now().to_rfc3339(),
+                    Utc::now().to_rfc3339(),
+                ],
+            ).unwrap();
+        }
+
+        // Create a task
+        let task = test_task!(
+            status: Some(TaskStatus::Pending),
+            technician_id: Some(old_user_id.clone()),
+            ppf_zones: Some(vec!["front".to_string()]),
+            scheduled_date: Some(Utc::now().to_rfc3339()),
+            priority: Some(TaskPriority::Normal)
+        );
+        let task_id = &task.id;
+
+        // Insert the task
+        conn.execute(
+            "INSERT INTO tasks (id, vehicle_plate, vehicle_model, ppf_zones, scheduled_date, technician_id, status, priority, created_at, updated_at) 
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+            [
+                task_id.clone(),
+                task.vehicle_plate.clone(),
+                task.vehicle_model.unwrap_or_default(),
+                task.ppf_zones.as_ref().map(|z| z.join(",")).unwrap_or_default(),
+                task.scheduled_date.clone().unwrap_or_default(),
+                task.technician_id.clone().unwrap_or_default(),
+                serde_json::to_string(&task.status).unwrap(),
+                serde_json::to_string(&task.priority.unwrap_or(TaskPriority::Normal)).unwrap(),
+                task.created_at.to_rfc3339(),
+                task.updated_at.to_rfc3339(),
+            ],
+        ).unwrap();
+
+        let result = validation_service.validate_assignment_change(
+            task_id,
+            Some(&old_user_id),
+            &new_user_id,
+        );
+
+        assert!(result.is_ok(), "Valid assignment change should succeed");
+        assert!(
+            result.unwrap().is_empty(),
+            "Valid change should have no warnings"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_validate_assignment_change_ineligible_user() {
+        let validation_service = create_validation_service();
+        let old_user_id = uuid::Uuid::new_v4().to_string();
+        let new_user_id = uuid::Uuid::new_v4().to_string();
+
+        // Create old technician
+        let conn = validation_service.db.get_connection().unwrap();
+        conn.execute(
+            "INSERT INTO users (id, username, email, first_name, last_name, password_hash, role, is_active, created_at, updated_at) 
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+            [
+                old_user_id.clone(),
+                "old_tech".to_string(),
+                "old@example.com".to_string(),
+                "Old".to_string(),
+                "Technician".to_string(),
+                "hashed_password".to_string(),
+                "technician".to_string(),
+                "1".to_string(),
+                Utc::now().to_rfc3339(),
+                Utc::now().to_rfc3339(),
+            ],
+        ).unwrap();
+
+        // Don't create the new user (non-existent)
+
+        // Create a task
+        let task = test_task!(
+            status: Some(TaskStatus::Pending),
+            technician_id: Some(old_user_id.clone()),
+            ppf_zones: Some(vec!["front".to_string()])
+        );
+        let task_id = &task.id;
+
+        // Insert the task
+        conn.execute(
+            "INSERT INTO tasks (id, vehicle_plate, vehicle_model, ppf_zones, technician_id, status, created_at, updated_at) 
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            [
+                task_id.clone(),
+                task.vehicle_plate.clone(),
+                task.vehicle_model.unwrap_or_default(),
+                task.ppf_zones.as_ref().map(|z| z.join(",")).unwrap_or_default(),
+                task.technician_id.clone().unwrap_or_default(),
+                serde_json::to_string(&task.status).unwrap(),
+                task.created_at.to_rfc3339(),
+                task.updated_at.to_rfc3339(),
+            ],
+        ).unwrap();
+
+        let result = validation_service.validate_assignment_change(
+            task_id,
+            Some(&old_user_id),
+            &new_user_id,
+        );
+
+        assert!(result.is_ok(), "Should return Ok result");
+        let warnings = result.unwrap();
+        assert!(
+            !warnings.is_empty(),
+            "Should have warnings for ineligible user"
+        );
+        assert!(warnings[0].contains("not eligible"));
+    }
+
+    #[tokio::test]
+    async fn test_validate_assignment_change_urgent_priority() {
+        let validation_service = create_validation_service();
+        let old_user_id = uuid::Uuid::new_v4().to_string();
+        let new_user_id = uuid::Uuid::new_v4().to_string();
+
+        // Create both technicians
+        let conn = validation_service.db.get_connection().unwrap();
+
+        for (id, username) in [(&old_user_id, "old_tech"), (&new_user_id, "new_tech")] {
+            conn.execute(
+                "INSERT INTO users (id, username, email, first_name, last_name, password_hash, role, is_active, created_at, updated_at) 
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+                [
+                    id.clone(),
+                    username.to_string(),
+                    format!("{}@example.com", username),
+                    "Test".to_string(),
+                    "Technician".to_string(),
+                    "hashed_password".to_string(),
+                    "technician".to_string(),
+                    "1".to_string(),
+                    Utc::now().to_rfc3339(),
+                    Utc::now().to_rfc3339(),
+                ],
+            ).unwrap();
+        }
+
+        // Create an urgent task
+        let task = test_task!(
+            status: Some(TaskStatus::Pending),
+            technician_id: Some(old_user_id.clone()),
+            ppf_zones: Some(vec!["front".to_string()]),
+            priority: Some(TaskPriority::Urgent)
+        );
+        let task_id = &task.id;
+
+        // Insert the task
+        conn.execute(
+            "INSERT INTO tasks (id, vehicle_plate, vehicle_model, ppf_zones, technician_id, status, priority, created_at, updated_at) 
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+            [
+                task_id.clone(),
+                task.vehicle_plate.clone(),
+                task.vehicle_model.unwrap_or_default(),
+                task.ppf_zones.as_ref().map(|z| z.join(",")).unwrap_or_default(),
+                task.technician_id.clone().unwrap_or_default(),
+                serde_json::to_string(&task.status).unwrap(),
+                serde_json::to_string(&task.priority.unwrap_or(TaskPriority::Normal)).unwrap(),
+                task.created_at.to_rfc3339(),
+                task.updated_at.to_rfc3339(),
+            ],
+        ).unwrap();
+
+        let result = validation_service.validate_assignment_change(
+            task_id,
+            Some(&old_user_id),
+            &new_user_id,
+        );
+
+        assert!(result.is_ok(), "Should return Ok result");
+        let warnings = result.unwrap();
+        assert!(
+            !warnings.is_empty(),
+            "Should have warnings for urgent task reassignment"
+        );
+        assert!(warnings[0].contains("urgent priority task"));
+    }
+
+    #[tokio::test]
+    async fn test_check_schedule_conflicts_no_conflicts() {
+        let validation_service = create_validation_service();
+        let user_id = uuid::Uuid::new_v4().to_string();
+        let scheduled_date = Utc::now().to_rfc3339();
+
+        // Create a technician
+        let conn = validation_service.db.get_connection().unwrap();
+        conn.execute(
+            "INSERT INTO users (id, username, email, first_name, last_name, password_hash, role, is_active, created_at, updated_at) 
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+            [
+                user_id.clone(),
+                "available_tech".to_string(),
+                "available@example.com".to_string(),
+                "Available".to_string(),
+                "Technician".to_string(),
+                "hashed_password".to_string(),
+                "technician".to_string(),
+                "1".to_string(),
+                Utc::now().to_rfc3339(),
+                Utc::now().to_rfc3339(),
+            ],
+        ).unwrap();
+
+        let result = validation_service.check_schedule_conflicts(
+            &user_id,
+            Some(scheduled_date),
+            &Some(60), // 1 hour duration
+        );
+
+        assert!(result.is_ok(), "Should return Ok result");
+        assert!(
+            !result.unwrap(),
+            "No conflicts should exist for available technician"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_check_schedule_conflicts_at_capacity() {
+        let validation_service = create_validation_service();
+        let user_id = uuid::Uuid::new_v4().to_string();
+        let scheduled_date = Utc::now().to_rfc3339();
+
+        // Create a technician
+        let conn = validation_service.db.get_connection().unwrap();
+        conn.execute(
+            "INSERT INTO users (id, username, email, first_name, last_name, password_hash, role, is_active, created_at, updated_at) 
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+            [
+                user_id.clone(),
+                "busy_tech".to_string(),
+                "busy@example.com".to_string(),
+                "Busy".to_string(),
+                "Technician".to_string(),
+                "hashed_password".to_string(),
+                "technician".to_string(),
+                "1".to_string(),
+                Utc::now().to_rfc3339(),
+                Utc::now().to_rfc3339(),
+            ],
+        ).unwrap();
+
+        // Create 3 tasks for this technician on the same day
+        for i in 0..3 {
+            let task_id = uuid::Uuid::new_v4().to_string();
+            conn.execute(
+                "INSERT INTO tasks (id, vehicle_plate, vehicle_model, ppf_zones, scheduled_date, technician_id, status, created_at, updated_at) 
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+                [
+                    task_id,
+                    format!("PLATE{}", i),
+                    "Test Model".to_string(),
+                    "front".to_string(),
+                    scheduled_date.clone(),
+                    user_id.clone(),
+                    "scheduled".to_string(),
+                    Utc::now().to_rfc3339(),
+                    Utc::now().to_rfc3339(),
+                ],
+            ).unwrap();
+        }
+
+        let result =
+            validation_service.check_schedule_conflicts(&user_id, Some(scheduled_date), &Some(60));
+
+        assert!(result.is_ok(), "Should return Ok result");
+        assert!(result.unwrap(), "Should have conflicts (at capacity)");
+    }
+
+    #[tokio::test]
+    async fn test_check_dependencies_satisfied() {
+        let validation_service = create_validation_service();
+        let task_id = uuid::Uuid::new_v4().to_string();
+
+        // Currently just returns true as dependencies are not implemented
+        let result = validation_service.check_dependencies_satisfied(&task_id);
+        assert!(result.is_ok(), "Should return Ok result");
+        assert!(result.unwrap(), "Should return true (stub implementation)");
+    }
+
+    #[tokio::test]
+    async fn test_check_schedule_conflicts_no_date() {
+        let validation_service = create_validation_service();
+        let user_id = uuid::Uuid::new_v4().to_string();
+
+        let result = validation_service.check_schedule_conflicts(
+            &user_id,
+            None, // No date
+            &Some(60),
+        );
+
+        assert!(result.is_ok(), "Should return Ok result");
+        assert!(
+            !result.unwrap(),
+            "Should return false when no date provided"
         );
     }
 }

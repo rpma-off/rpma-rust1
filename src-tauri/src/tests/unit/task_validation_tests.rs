@@ -5,14 +5,16 @@
 
 use crate::commands::AppResult;
 use crate::services::task_validation::TaskValidationService;
-use crate::test_utils::{test_db, test_task, TestDataFactory, TestDatabase};
+use crate::test_utils::{TestDataFactory, TestDatabase};
+use crate::{test_client, test_db, test_intervention, test_task};
+use rusqlite::params;
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_validate_task_request_success() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_validate_task_request_success() -> AppResult<()> {
         let test_db = test_db!();
         let service = TaskValidationService::new(test_db.db());
 
@@ -29,8 +31,8 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_validate_empty_title() {
+    #[tokio::test]
+    async fn test_validate_empty_title() {
         let test_db = test_db!();
         let service = TaskValidationService::new(test_db.db());
 
@@ -44,8 +46,8 @@ mod tests {
             .any(|e| e.contains("Title is required")));
     }
 
-    #[test]
-    fn test_validate_title_too_long() {
+    #[tokio::test]
+    async fn test_validate_title_too_long() {
         let test_db = test_db!();
         let service = TaskValidationService::new(test_db.db());
 
@@ -57,8 +59,8 @@ mod tests {
         assert!(result.errors.iter().any(|e| e.contains("Title too long")));
     }
 
-    #[test]
-    fn test_validate_invalid_vehicle_plate() {
+    #[tokio::test]
+    async fn test_validate_invalid_vehicle_plate() {
         let test_db = test_db!();
         let service = TaskValidationService::new(test_db.db());
 
@@ -80,8 +82,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_validate_invalid_vin() {
+    #[tokio::test]
+    async fn test_validate_invalid_vin() {
         let test_db = test_db!();
         let service = TaskValidationService::new(test_db.db());
 
@@ -101,8 +103,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_validate_invalid_email() {
+    #[tokio::test]
+    async fn test_validate_invalid_email() {
         let test_db = test_db!();
         let service = TaskValidationService::new(test_db.db());
 
@@ -123,8 +125,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_validate_valid_email() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_validate_valid_email() -> AppResult<()> {
         let test_db = test_db!();
         let service = TaskValidationService::new(test_db.db());
 
@@ -144,8 +146,8 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_validate_invalid_phone() {
+    #[tokio::test]
+    async fn test_validate_invalid_phone() {
         let test_db = test_db!();
         let service = TaskValidationService::new(test_db.db());
 
@@ -168,8 +170,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_validate_valid_phone() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_validate_valid_phone() -> AppResult<()> {
         let test_db = test_db!();
         let service = TaskValidationService::new(test_db.db());
 
@@ -190,8 +192,8 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_validate_negative_duration() {
+    #[tokio::test]
+    async fn test_validate_negative_duration() {
         let test_db = test_db!();
         let service = TaskValidationService::new(test_db.db());
 
@@ -205,8 +207,8 @@ mod tests {
             .any(|e| e.contains("Estimated duration must be positive")));
     }
 
-    #[test]
-    fn test_validate_excessive_duration() {
+    #[tokio::test]
+    async fn test_validate_excessive_duration() {
         let test_db = test_db!();
         let service = TaskValidationService::new(test_db.db());
 
@@ -221,8 +223,8 @@ mod tests {
             .any(|e| e.contains("Estimated duration too long")));
     }
 
-    #[test]
-    fn test_validate_invalid_status() {
+    #[tokio::test]
+    async fn test_validate_invalid_status() {
         let test_db = test_db!();
         let service = TaskValidationService::new(test_db.db());
 
@@ -233,8 +235,8 @@ mod tests {
         assert!(result.errors.iter().any(|e| e.contains("Invalid status")));
     }
 
-    #[test]
-    fn test_validate_invalid_priority() {
+    #[tokio::test]
+    async fn test_validate_invalid_priority() {
         let test_db = test_db!();
         let service = TaskValidationService::new(test_db.db());
 
@@ -245,8 +247,8 @@ mod tests {
         assert!(result.errors.iter().any(|e| e.contains("Invalid priority")));
     }
 
-    #[test]
-    fn test_validate_multiple_errors() {
+    #[tokio::test]
+    async fn test_validate_multiple_errors() {
         let test_db = test_db!();
         let service = TaskValidationService::new(test_db.db());
 
@@ -278,8 +280,8 @@ mod tests {
             .any(|e| e.contains("Estimated duration must be positive")));
     }
 
-    #[test]
-    fn test_validate_update_request() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_validate_update_request() -> AppResult<()> {
         let test_db = test_db!();
         let service = TaskValidationService::new(test_db.db());
 
@@ -301,8 +303,8 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_validate_status_transition() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_validate_status_transition() -> AppResult<()> {
         let test_db = test_db!();
         let service = TaskValidationService::new(test_db.db());
 
@@ -355,8 +357,8 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_validate_duplicate_vehicle_date() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_validate_duplicate_vehicle_date() -> AppResult<()> {
         let test_db = test_db!();
         let service = TaskValidationService::new(test_db.db());
 
@@ -385,8 +387,8 @@ mod tests {
 
     // Phase 2: New technician qualification tests
 
-    #[test]
-    fn test_validate_technician_assignment_valid() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_validate_technician_assignment_valid() -> AppResult<()> {
         let test_db = test_db!();
 
         // Create a valid technician user
@@ -406,8 +408,8 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_validate_technician_assignment_inactive() {
+    #[tokio::test]
+    async fn test_validate_technician_assignment_inactive() {
         let test_db = test_db!();
 
         // Create an inactive technician
@@ -432,8 +434,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_validate_technician_assignment_invalid_role() {
+    #[tokio::test]
+    async fn test_validate_technician_assignment_invalid_role() {
         let test_db = test_db!();
 
         // Create a viewer user
@@ -455,8 +457,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_validate_technician_assignment_non_existent() {
+    #[tokio::test]
+    async fn test_validate_technician_assignment_non_existent() {
         let test_db = test_db!();
 
         let service = TaskValidationService::new(test_db.db());
@@ -471,8 +473,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_ppf_zone_complexity_empty_zone() {
+    #[tokio::test]
+    async fn test_ppf_zone_complexity_empty_zone() {
         let test_db = test_db!();
 
         // Create technician
@@ -490,8 +492,8 @@ mod tests {
         assert!(result.is_err(), "Empty zone name should fail validation");
     }
 
-    #[test]
-    fn test_ppf_zone_complexity_long_zone_name() {
+    #[tokio::test]
+    async fn test_ppf_zone_complexity_long_zone_name() {
         let test_db = test_db!();
 
         // Create technician
@@ -510,8 +512,8 @@ mod tests {
         assert!(result.is_err(), "Zone name too long should fail validation");
     }
 
-    #[test]
-    fn test_validate_technician_assignment_no_zones() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_validate_technician_assignment_no_zones() -> AppResult<()> {
         let test_db = test_db!();
 
         // Create technician
@@ -535,8 +537,8 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_validate_technician_assignment_admin() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_validate_technician_assignment_admin() -> AppResult<()> {
         let test_db = test_db!();
 
         // Create admin
@@ -556,8 +558,8 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_assignment_eligibility_task_not_found() {
+    #[tokio::test]
+    async fn test_assignment_eligibility_task_not_found() {
         let test_db = test_db!();
 
         // Create technician
@@ -577,8 +579,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_task_availability_unassignable_status() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_task_availability_unassignable_status() -> AppResult<()> {
         let test_db = test_db!();
 
         // Create technician
@@ -606,8 +608,8 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_task_availability_assignable_status() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_task_availability_assignable_status() -> AppResult<()> {
         let test_db = test_db!();
 
         // Create technician

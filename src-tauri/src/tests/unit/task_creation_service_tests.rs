@@ -8,7 +8,8 @@
 
 use crate::models::task::{Task, TaskStatus};
 use crate::services::task_creation::TaskCreationService;
-use crate::test_utils::{test_db, test_task, TestDataFactory};
+use crate::test_utils::TestDataFactory;
+use crate::{test_client, test_db, test_intervention, test_task};
 
 #[cfg(test)]
 mod tests {
@@ -19,8 +20,8 @@ mod tests {
         TaskCreationService::new(test_db.db())
     }
 
-    #[test]
-    fn test_create_task_success() {
+    #[tokio::test]
+    async fn test_create_task_success() {
         let task_service = create_task_creation_service();
         let task_request = test_task!(
             title: Some("Test Task Creation".to_string()),
@@ -45,8 +46,8 @@ mod tests {
         assert!(task.created_at > 0);
     }
 
-    #[test]
-    fn test_create_task_minimal_valid_data() {
+    #[tokio::test]
+    async fn test_create_task_minimal_valid_data() {
         let task_service = create_task_creation_service();
         let task_request = test_task!(
             title: Some("Minimal Task".to_string()),
@@ -68,8 +69,8 @@ mod tests {
         assert_eq!(task.customer_name, None);
     }
 
-    #[test]
-    fn test_create_task_missing_required_fields() {
+    #[tokio::test]
+    async fn test_create_task_missing_required_fields() {
         let task_service = create_task_creation_service();
         let mut task_request = test_task!();
         task_request.title = None; // Remove required field
@@ -87,8 +88,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_create_task_invalid_ppf_zones() {
+    #[tokio::test]
+    async fn test_create_task_invalid_ppf_zones() {
         let task_service = create_task_creation_service();
         let task_request = test_task!(
             title: Some("Invalid PPF Task".to_string()),
@@ -108,8 +109,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_create_task_empty_ppf_zones() {
+    #[tokio::test]
+    async fn test_create_task_empty_ppf_zones() {
         let task_service = create_task_creation_service();
         let task_request = test_task!(
             title: Some("Empty PPF Task".to_string()),
@@ -129,8 +130,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_create_task_invalid_vehicle_plate_format() {
+    #[tokio::test]
+    async fn test_create_task_invalid_vehicle_plate_format() {
         let task_service = create_task_creation_service();
         let task_request = test_task!(
             title: Some("Invalid Plate Task".to_string()),
@@ -150,8 +151,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_create_task_invalid_email() {
+    #[tokio::test]
+    async fn test_create_task_invalid_email() {
         let task_service = create_task_creation_service();
         let task_request = test_task!(
             title: Some("Invalid Email Task".to_string()),
@@ -171,8 +172,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_generate_task_number_unique() {
+    #[tokio::test]
+    async fn test_generate_task_number_unique() {
         let task_service = create_task_creation_service();
 
         // Generate multiple task numbers
@@ -211,8 +212,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_create_task_with_existing_client() {
+    #[tokio::test]
+    async fn test_create_task_with_existing_client() {
         let task_service = create_task_creation_service();
 
         // First, create a client
@@ -254,8 +255,8 @@ mod tests {
         assert_eq!(task.client_id, Some(client_id));
     }
 
-    #[test]
-    fn test_create_task_with_nonexistent_client() {
+    #[tokio::test]
+    async fn test_create_task_with_nonexistent_client() {
         let task_service = create_task_creation_service();
         let nonexistent_client_id = uuid::Uuid::new_v4().to_string();
 
@@ -277,8 +278,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_create_task_with_valid_technician() {
+    #[tokio::test]
+    async fn test_create_task_with_valid_technician() {
         let task_service = create_task_creation_service();
 
         // Create a technician user
@@ -320,8 +321,8 @@ mod tests {
         assert_eq!(task.technician_id, Some(technician_id));
     }
 
-    #[test]
-    fn test_create_task_with_nonexistent_technician() {
+    #[tokio::test]
+    async fn test_create_task_with_nonexistent_technician() {
         let task_service = create_task_creation_service();
         let nonexistent_technician_id = uuid::Uuid::new_v4().to_string();
 
@@ -343,8 +344,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_create_task_with_banned_technician() {
+    #[tokio::test]
+    async fn test_create_task_with_banned_technician() {
         let task_service = create_task_creation_service();
 
         // Create a banned technician user
@@ -390,8 +391,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_create_task_with_valid_date() {
+    #[tokio::test]
+    async fn test_create_task_with_valid_date() {
         let task_service = create_task_creation_service();
         let future_date = (chrono::Utc::now() + chrono::Duration::days(7))
             .format("%Y-%m-%d")
@@ -412,8 +413,8 @@ mod tests {
         assert_eq!(task.scheduled_date, future_date);
     }
 
-    #[test]
-    fn test_create_task_with_past_date() {
+    #[tokio::test]
+    async fn test_create_task_with_past_date() {
         let task_service = create_task_creation_service();
         let past_date = (chrono::Utc::now() - chrono::Duration::days(7))
             .format("%Y-%m-%d")
@@ -434,8 +435,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_create_task_with_invalid_date_format() {
+    #[tokio::test]
+    async fn test_create_task_with_invalid_date_format() {
         let task_service = create_task_creation_service();
         let invalid_date = "not-a-date".to_string();
 
@@ -457,8 +458,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_create_task_priority_validation() {
+    #[tokio::test]
+    async fn test_create_task_priority_validation() {
         let task_service = create_task_creation_service();
 
         // Test valid priorities
@@ -478,8 +479,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_create_task_with_long_values() {
+    #[tokio::test]
+    async fn test_create_task_with_long_values() {
         let task_service = create_task_creation_service();
         let long_string = "a".repeat(1000);
 
@@ -503,8 +504,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_create_task_automatically_sets_defaults() {
+    #[tokio::test]
+    async fn test_create_task_automatically_sets_defaults() {
         let task_service = create_task_creation_service();
         let task_request = test_task!(
             title: Some("Default Values Task".to_string()),
@@ -536,8 +537,8 @@ mod tests {
         assert!(task.task_number.is_some(), "Should generate task number");
     }
 
-    #[test]
-    fn test_create_task_handles_concurrent_creation() {
+    #[tokio::test]
+    async fn test_create_task_handles_concurrent_creation() {
         let task_service = create_task_creation_service();
 
         // Create multiple tasks concurrently
@@ -574,8 +575,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_create_task_edge_case_characters() {
+    #[tokio::test]
+    async fn test_create_task_edge_case_characters() {
         let task_service = create_task_creation_service();
         let task_request = test_task!(
             title: Some("Task with émojis 🔧 and accents é".to_string()),

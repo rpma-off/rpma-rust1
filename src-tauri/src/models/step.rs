@@ -9,8 +9,7 @@ use std::str::FromStr;
 use ts_rs::TS;
 
 /// Step status enum
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[serde(rename_all = "snake_case")]
 pub enum StepStatus {
     Pending,
@@ -61,8 +60,7 @@ impl std::fmt::Display for StepStatus {
 }
 
 /// Step type enum
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum StepType {
     Inspection,
@@ -104,8 +102,7 @@ impl std::fmt::Display for StepType {
 }
 
 /// Intervention step struct
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct InterventionStep {
     // Identifiers
     pub id: String,

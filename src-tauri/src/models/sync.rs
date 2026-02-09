@@ -6,8 +6,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 /// Operation types for sync queue
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum OperationType {
     Create,
@@ -27,8 +26,7 @@ impl std::fmt::Display for OperationType {
 }
 
 /// Entity types that can be synchronized
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum EntityType {
     Task,
@@ -54,8 +52,7 @@ impl std::fmt::Display for EntityType {
 }
 
 /// Sync operation status
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum SyncStatus {
     Pending,
@@ -79,8 +76,7 @@ impl std::fmt::Display for SyncStatus {
 }
 
 /// Main sync operation structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct SyncOperation {
     pub id: Option<i64>,
     pub operation_type: OperationType,
@@ -102,8 +98,7 @@ pub struct SyncOperation {
 }
 
 /// Metrics for sync queue monitoring
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct SyncQueueMetrics {
     pub pending_operations: i64,
     pub processing_operations: i64,

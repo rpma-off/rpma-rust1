@@ -7,9 +7,11 @@
 //! - Complex data relationships
 
 use crate::models::intervention::{Intervention, InterventionStatus, InterventionType};
-use crate::models::intervention_step::{InterventionStep, StepStatus, StepType};
+use crate::models::step::{InterventionStep, StepStatus, StepType};
 use crate::repositories::intervention_repository::InterventionRepository;
-use crate::test_utils::{test_db, test_intervention, TestDataFactory};
+use crate::test_utils::TestDataFactory;
+use crate::{test_client, test_db, test_intervention, test_task};
+use chrono::Utc;
 
 #[cfg(test)]
 mod tests {
@@ -498,5 +500,346 @@ mod tests {
             .expect("Should execute steps query");
 
         assert_eq!(orphaned_steps, 0, "Should have no orphaned steps");
+    }
+
+    // === Tests for list_interventions method ===
+
+    #[test]
+    fn test_list_interventions_all() {
+        let repo = create_intervention_repository();
+
+        // Create multiple interventions with different statuses
+        let interventions: Vec<_> = (0..5)
+            .map(|i| {
+                let status = match i % 3 {
+                    0 => InterventionStatus::Pending,
+                    1 => InterventionStatus::InProgress,
+                    _ => InterventionStatus::Completed,
+                };
+                test_intervention!(
+                    status: status,
+                    task_id: format!("task-{}", i),
+                    vehicle_plate: format!("PLATE{}", i)
+                )
+            })
+            .collect();
+
+        // Insert all interventions
+        let created_ids: Vec<_> = interventions
+            .iter()
+            .map(|intervention| {
+                repo.create(intervention)
+                    .expect("Should create intervention")
+                    .id
+            })
+            .collect();
+
+        // List all interventions
+        let (listed, total) = repo
+            .list_interventions(None, None, None, None)
+            .expect("Should list interventions");
+
+        assert_eq!(total, 5, "Should count all interventions");
+        assert_eq!(listed.len(), 5, "Should return all interventions");
+
+        // Verify order (should be DESC by created_at)
+        for i in 0..listed.len() - 1 {
+            assert!(
+                listed[i].created_at >= listed[i + 1].created_at,
+                "Should be ordered by created_at DESC"
+            );
+        }
+
+        // Verify all created interventions are returned
+        let listed_ids: Vec<_> = listed.iter().map(|i| i.id.clone()).collect();
+        for id in created_ids {
+            assert!(
+                listed_ids.contains(&id),
+                "Should contain created intervention"
+            );
+        }
+    }
+
+    #[test]
+    fn test_list_interventions_with_status_filter() {
+        let repo = create_intervention_repository();
+
+        // Create interventions with different statuses
+        let status_counts = [
+            (InterventionStatus::Pending, 3),
+            (InterventionStatus::InProgress, 2),
+            (InterventionStatus::Completed, 4),
+            (InterventionStatus::Cancelled, 1),
+        ];
+
+        let mut expected_by_status = std::collections::HashMap::new();
+        for (status, count) in status_counts {
+            expected_by_status.insert(status.to_string(), count);
+            for i in 0..count {
+                let intervention = test_intervention!(
+                    status: status,
+                    task_id: format!("task-{}-{}", status.to_string(), i),
+                    vehicle_plate: format!("PLATE{}-{}", status.to_string(), i)
+                );
+                repo.create(&intervention)
+                    .expect("Should create intervention");
+            }
+        }
+
+        // Test each status filter
+        for (status, expected_count) in status_counts {
+            let (listed, total) = repo
+                .list_interventions(Some(&status.to_string()), None, None, None)
+                .expect("Should list with status filter");
+
+            assert_eq!(total, expected_count as i64, "Should count correct number");
+            assert_eq!(listed.len(), expected_count, "Should return correct number");
+
+            // All returned interventions should have the correct status
+            for intervention in &listed {
+                assert_eq!(intervention.status, status, "Should have correct status");
+            }
+        }
+    }
+
+    #[test]
+    fn test_list_interventions_with_technician_filter() {
+        let repo = create_intervention_repository();
+
+        // Create interventions for different technicians
+        let technicians = ["tech1", "tech2", "tech3"];
+        let interventions_per_tech = [3, 2, 4];
+
+        for (tech_idx, technician_id) in technicians.iter().enumerate() {
+            for i in 0..interventions_per_tech[tech_idx] {
+                let intervention = test_intervention!(
+                    status: InterventionStatus::Pending,
+                    technician_id: Some(technician_id.to_string()),
+                    task_id: format!("task-{}-{}", technician_id, i)
+                );
+                repo.create(&intervention)
+                    .expect("Should create intervention");
+            }
+        }
+
+        // Test filtering by each technician
+        for (tech_idx, technician_id) in technicians.iter().enumerate() {
+            let (listed, total) = repo
+                .list_interventions(None, Some(technician_id), None, None)
+                .expect("Should list with technician filter");
+
+            let expected_count = interventions_per_tech[tech_idx] as i64;
+            assert_eq!(
+                total, expected_count,
+                "Should count correct number for technician"
+            );
+            assert_eq!(
+                listed.len(),
+                expected_count,
+                "Should return correct number for technician"
+            );
+
+            // All returned interventions should belong to the technician
+            for intervention in &listed {
+                assert_eq!(
+                    intervention.technician_id.as_ref(),
+                    Some(technician_id),
+                    "Should belong to correct technician"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_list_interventions_with_combined_filters() {
+        let repo = create_intervention_repository();
+
+        // Create interventions with different combinations
+        let technicians = ["tech1", "tech2"];
+        let statuses = [InterventionStatus::Pending, InterventionStatus::InProgress];
+
+        for technician_id in technicians {
+            for status in statuses {
+                let intervention = test_intervention!(
+                    status: status,
+                    technician_id: Some(technician_id.to_string()),
+                    task_id: format!("task-{}-{}", technician_id, status.to_string())
+                );
+                repo.create(&intervention)
+                    .expect("Should create intervention");
+            }
+        }
+
+        // Test combined filter for specific technician and status
+        let (listed, total) = repo
+            .list_interventions(
+                Some(&InterventionStatus::Pending.to_string()),
+                Some("tech1"),
+                None,
+                None,
+            )
+            .expect("Should list with combined filters");
+
+        assert_eq!(total, 1, "Should count only one matching");
+        assert_eq!(listed.len(), 1, "Should return only one");
+
+        let intervention = &listed[0];
+        assert_eq!(
+            intervention.status,
+            InterventionStatus::Pending,
+            "Should have correct status"
+        );
+        assert_eq!(
+            intervention.technician_id.as_ref(),
+            Some(&"tech1".to_string()),
+            "Should have correct technician"
+        );
+    }
+
+    #[test]
+    fn test_list_interventions_with_pagination() {
+        let repo = create_intervention_repository();
+
+        // Create 10 interventions
+        let intervention_ids: Vec<_> = (0..10)
+            .map(|i| {
+                let intervention = test_intervention!(
+                    status: InterventionStatus::Pending,
+                    task_id: format!("task-{}", i),
+                    vehicle_plate: format!("PLATE{}", i)
+                );
+                repo.create(&intervention)
+                    .expect("Should create intervention")
+                    .id
+            })
+            .collect();
+
+        // Test first page (limit 3, offset 0)
+        let (page1, total) = repo
+            .list_interventions(None, None, Some(3), Some(0))
+            .expect("Should get first page");
+
+        assert_eq!(total, 10, "Should count all interventions");
+        assert_eq!(page1.len(), 3, "Should return page size");
+
+        // Test second page (limit 3, offset 3)
+        let (page2, _) = repo
+            .list_interventions(None, None, Some(3), Some(3))
+            .expect("Should get second page");
+
+        assert_eq!(page2.len(), 3, "Should return page size");
+
+        // Verify no overlap between pages
+        let page1_ids: Vec<_> = page1.iter().map(|i| i.id.clone()).collect();
+        let page2_ids: Vec<_> = page2.iter().map(|i| i.id.clone()).collect();
+
+        for id in &page1_ids {
+            assert!(!page2_ids.contains(id), "Pages should not overlap");
+        }
+
+        // Test last page (limit 3, offset 9)
+        let (last_page, _) = repo
+            .list_interventions(None, None, Some(3), Some(9))
+            .expect("Should get last page");
+
+        assert_eq!(last_page.len(), 1, "Last page should have remaining item");
+
+        // Verify all items are accounted for
+        let all_ids = [
+            page1_ids,
+            page2_ids,
+            last_page.into_iter().map(|i| i.id).collect(),
+        ]
+        .concat();
+        assert_eq!(all_ids.len(), 10, "Should have all items");
+
+        for id in intervention_ids {
+            assert!(
+                all_ids.contains(&id),
+                "Should contain all created interventions"
+            );
+        }
+    }
+
+    #[test]
+    fn test_list_interventions_empty_result() {
+        let repo = create_intervention_repository();
+
+        // Should return empty when no interventions exist
+        let (listed, total) = repo
+            .list_interventions(None, None, None, None)
+            .expect("Should handle empty list");
+
+        assert_eq!(total, 0, "Should count zero");
+        assert!(listed.is_empty(), "Should return empty list");
+    }
+
+    #[test]
+    fn test_list_interventions_filter_no_matches() {
+        let repo = create_intervention_repository();
+
+        // Create interventions with different statuses
+        let intervention = test_intervention!(
+            status: InterventionStatus::Completed,
+            task_id: "task-1".to_string()
+        );
+        repo.create(&intervention)
+            .expect("Should create intervention");
+
+        // Filter for non-existent status
+        let (listed, total) = repo
+            .list_interventions(Some("nonexistent_status"), None, None, None)
+            .expect("Should handle no matches");
+
+        assert_eq!(total, 0, "Should count zero matches");
+        assert!(listed.is_empty(), "Should return empty list");
+
+        // Filter for non-existent technician
+        let (listed, total) = repo
+            .list_interventions(None, Some("nonexistent_tech"), None, None)
+            .expect("Should handle no matches");
+
+        assert_eq!(total, 0, "Should count zero matches");
+        assert!(listed.is_empty(), "Should return empty list");
+    }
+
+    #[test]
+    fn test_list_interventions_performance_with_large_dataset() {
+        let repo = create_intervention_repository();
+
+        // Create many interventions
+        for i in 0..100 {
+            let status = match i % 4 {
+                0 => InterventionStatus::Pending,
+                1 => InterventionStatus::InProgress,
+                2 => InterventionStatus::Completed,
+                _ => InterventionStatus::Cancelled,
+            };
+
+            let intervention = test_intervention!(
+                status: status,
+                task_id: format!("task-{}", i),
+                vehicle_plate: format!("PLATE{}", i)
+            );
+            repo.create(&intervention)
+                .expect("Should create intervention");
+        }
+
+        // Test performance with pagination
+        let start = std::time::Instant::now();
+        let (first_page, total) = repo
+            .list_interventions(None, None, Some(20), Some(0))
+            .expect("Should handle large dataset");
+        let elapsed = start.elapsed();
+
+        assert_eq!(total, 100, "Should count all interventions");
+        assert_eq!(first_page.len(), 20, "Should return page size");
+
+        // Verify reasonable performance (should be less than 1 second)
+        assert!(
+            elapsed.as_millis() < 1000,
+            "Query should be fast: {}ms",
+            elapsed.as_millis()
+        );
     }
 }

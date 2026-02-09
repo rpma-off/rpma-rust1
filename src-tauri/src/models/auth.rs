@@ -7,8 +7,7 @@ use std::fmt;
 // Conditional import removed
 use ts_rs::TS;
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
-#[derive(TS)]
+#[derive(Clone, Serialize, Deserialize, Debug, TS)]
 pub struct UserSession {
     pub id: String,
     pub user_id: String,
@@ -29,8 +28,7 @@ pub struct UserSession {
     pub session_timeout_minutes: Option<u32>,
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
-#[derive(TS)]
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, TS)]
 pub enum UserRole {
     #[serde(rename = "admin")]
     Admin,
@@ -67,8 +65,7 @@ impl std::str::FromStr for UserRole {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
-#[derive(TS)]
+#[derive(Clone, Serialize, Deserialize, Debug, TS)]
 pub struct DeviceInfo {
     pub device_type: String, // "desktop", "mobile", "tablet"
     pub os: String,          // "Windows", "macOS", "Linux", "iOS", "Android"
@@ -194,8 +191,7 @@ impl UserSession {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
-#[derive(TS)]
+#[derive(Clone, Serialize, Deserialize, Debug, TS)]
 #[ts(export)]
 pub struct UserAccount {
     pub id: String,

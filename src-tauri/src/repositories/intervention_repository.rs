@@ -571,6 +571,25 @@ params![
     ) -> InterventionResult<(Vec<Intervention>, i64)> {
         let conn = self.db.get_connection()?;
 
+        // First, get total count
+        let mut count_sql = "SELECT COUNT(*) FROM interventions WHERE 1=1".to_string();
+        let mut count_params: Vec<rusqlite::types::Value> = Vec::new();
+
+        if let Some(status) = status {
+            count_sql.push_str(" AND status = ?");
+            count_params.push(rusqlite::types::Value::Text(status.to_string()));
+        }
+
+        if let Some(technician_id) = technician_id {
+            count_sql.push_str(" AND technician_id = ?");
+            count_params.push(rusqlite::types::Value::Text(technician_id.to_string()));
+        }
+
+        let mut count_stmt = conn.prepare(&count_sql)?;
+        let total: i64 =
+            count_stmt.query_row(rusqlite::params_from_iter(count_params), |row| row.get(0))?;
+
+        // Then, get the paginated results
         let mut sql = "SELECT * FROM interventions WHERE 1=1".to_string();
         let mut params: Vec<rusqlite::types::Value> = Vec::new();
 
@@ -596,28 +615,12 @@ params![
             params.push(offset_val.into());
         }
 
-        let _stmt = conn.prepare(&sql)?;
-        // For now, return empty list - this method needs proper implementation
-        // TODO: Implement proper list_interventions with correct type handling
-        let interventions = Vec::new();
-
-        // Get total count
-        let mut count_sql = "SELECT COUNT(*) FROM interventions WHERE 1=1".to_string();
-        let mut count_params: Vec<rusqlite::types::Value> = Vec::new();
-
-        if let Some(status) = status {
-            count_sql.push_str(" AND status = ?");
-            count_params.push(rusqlite::types::Value::Text(status.to_string()));
-        }
-
-        if let Some(technician_id) = technician_id {
-            count_sql.push_str(" AND technician_id = ?");
-            count_params.push(rusqlite::types::Value::Text(technician_id.to_string()));
-        }
-
-        // For now, return 0 - this method needs proper implementation
-        // TODO: Implement proper count query with correct type handling
-        let total: i64 = 0;
+        let mut stmt = conn.prepare(&sql)?;
+        let interventions: Vec<Intervention> = stmt
+            .query_map(rusqlite::params_from_iter(params), |row| {
+                Intervention::from_row(row)
+            })?
+            .collect::<Result<_, _>>()?;
 
         Ok((interventions, total))
     }

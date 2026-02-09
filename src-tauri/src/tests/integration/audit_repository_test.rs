@@ -6,9 +6,10 @@
 //! - Event filtering and pagination
 //! - Data retention policies
 
-use crate::models::audit::{AuditEvent, AuditEventType, AuditSeverity};
 use crate::repositories::audit_repository::AuditRepository;
-use crate::test_utils::test_db;
+use crate::services::audit_service::{AuditEvent, AuditEventType};
+use crate::test_db;
+use chrono::Utc;
 
 #[cfg(test)]
 mod tests {

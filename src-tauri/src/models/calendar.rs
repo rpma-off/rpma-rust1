@@ -8,8 +8,7 @@ use rusqlite::Row;
 
 /// CalendarTask represents a task with calendar-specific information
 /// Maps to the calendar_tasks SQL View
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct CalendarTask {
     // Identifiers
     pub id: String,
@@ -45,16 +44,14 @@ pub struct CalendarTask {
 }
 
 /// Date range filter for calendar queries
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct CalendarDateRange {
     pub start_date: String,
     pub end_date: String,
 }
 
 /// Calendar filter for tasks
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct CalendarFilter {
     pub date_range: CalendarDateRange,
     pub technician_ids: Option<Vec<String>>,
@@ -62,8 +59,7 @@ pub struct CalendarFilter {
 }
 
 /// Conflict detection result
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ConflictDetection {
     pub has_conflict: bool,
     pub conflict_type: Option<String>,

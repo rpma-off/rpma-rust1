@@ -8,7 +8,8 @@
 
 use crate::models::auth::{UserRole, UserSession};
 use crate::repositories::session_repository::SessionRepository;
-use crate::test_utils::test_db;
+use crate::{test_client, test_db, test_intervention, test_task};
+use chrono::Utc;
 
 #[cfg(test)]
 mod tests {

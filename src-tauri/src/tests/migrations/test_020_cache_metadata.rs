@@ -7,8 +7,14 @@
 //! - Virtual computed column might have compatibility issues
 
 use super::*;
+use crate::commands::errors::AppResult;
+use rusqlite::params;
 
-test_migration!(20, test_020_cache_metadata_schema, {
+#[test]
+fn test_020_cache_metadata_schema() -> AppResult<()> {
+    let mut ctx = MigrationTestContext::new();
+    ctx.database.migrate(20)?;
+
     // Create the old cache_metadata table with test data
     ctx.conn.execute_batch(
         r#"
@@ -155,7 +161,7 @@ test_migration!(20, test_020_cache_metadata_schema, {
         .prepare("SELECT COUNT(*) FROM cache_metadata WHERE cache_key = 'test_expired'")?;
     let count: i32 = stmt.query_row([], |row| row.get(0))?;
     assert_eq!(count, 0, "Expired entries should be cleaned up");
-});
+}
 
 #[test]
 fn test_020_cache_metadata_performance() -> Result<(), Box<dyn std::error::Error>> {

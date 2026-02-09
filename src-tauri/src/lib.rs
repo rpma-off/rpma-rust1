@@ -18,3 +18,4 @@ pub mod test_utils;
 pub mod tests;
 
 // Type generation for frontend
+pub use models::material_ts::*;

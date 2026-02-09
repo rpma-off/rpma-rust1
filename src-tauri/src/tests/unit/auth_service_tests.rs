@@ -14,7 +14,8 @@ use crate::services::rate_limiter::RateLimiterService;
 use crate::services::security_monitor::SecurityMonitorService;
 use crate::services::token::TokenService;
 use crate::services::validation::ValidationService;
-use crate::test_utils::{test_db, TestDataFactory};
+use crate::test_utils::TestDataFactory;
+use crate::{test_client, test_db, test_intervention, test_task};
 
 use chrono::Utc;
 use std::sync::Arc;
@@ -160,7 +161,7 @@ mod tests {
         user_request.email = "alice@example.com".to_string();
 
         let created_user = auth_service
-            .create_account(user_request, "127.0.0.1")
+            .create_account_from_signup(&user_request)
             .expect("Failed to create test user");
 
         // Authenticate with valid credentials
@@ -350,8 +351,7 @@ mod tests {
             .expect("Failed to create test user");
 
         // Change password
-        let result =
-            auth_service.change_password(&user.id, "SecurePassword123!", "NewSecurePassword456!");
+        let result = auth_service.change_password(&user.id, "NewSecurePassword456!");
         assert!(result.is_ok(), "Password change should succeed");
 
         // Old password should fail
@@ -433,5 +433,312 @@ mod tests {
             cleanup_count > 0,
             "Should have cleaned up some expired sessions"
         );
+    }
+
+    // ========== USER MANAGEMENT TESTS ==========
+
+    #[test]
+    fn test_list_users_empty() {
+        let (auth_service, _temp_dir) = create_test_auth_service();
+
+        // List users when none exist
+        let result = auth_service.list_users(None, None);
+        assert!(result.is_ok(), "Listing users should succeed");
+
+        let users = result.unwrap();
+        assert!(users.is_empty(), "Should return empty list when no users");
+    }
+
+    #[test]
+    fn test_list_users_with_data() {
+        let (auth_service, _temp_dir) = create_test_auth_service();
+
+        // Create test users
+        for i in 0..3 {
+            let mut user_request = create_test_user();
+            user_request.email = format!("user{}@example.com", i);
+            user_request.first_name = format!("User{}", i);
+
+            auth_service
+                .create_account(user_request, "127.0.0.1")
+                .expect("Failed to create test user");
+        }
+
+        // List all users
+        let result = auth_service.list_users(None, None);
+        assert!(result.is_ok(), "Listing users should succeed");
+
+        let users = result.unwrap();
+        assert_eq!(users.len(), 3, "Should return all created users");
+
+        // Verify ordering (should be by created_at DESC)
+        for (i, user) in users.iter().enumerate() {
+            assert!(user.email.contains(&format!("user{}@example.com", 2 - i)));
+        }
+    }
+
+    #[test]
+    fn test_list_users_with_pagination() {
+        let (auth_service, _temp_dir) = create_test_auth_service();
+
+        // Create test users
+        for i in 0..5 {
+            let mut user_request = create_test_user();
+            user_request.email = format!("paginate{}@example.com", i);
+
+            auth_service
+                .create_account(user_request, "127.0.0.1")
+                .expect("Failed to create test user");
+        }
+
+        // Test pagination - first page with limit 2
+        let result = auth_service.list_users(Some(2), Some(0));
+        assert!(result.is_ok(), "Paginated listing should succeed");
+
+        let first_page = result.unwrap();
+        assert_eq!(first_page.len(), 2, "First page should have 2 users");
+
+        // Test pagination - second page
+        let result = auth_service.list_users(Some(2), Some(2));
+        assert!(result.is_ok(), "Second page should succeed");
+
+        let second_page = result.unwrap();
+        assert_eq!(second_page.len(), 2, "Second page should have 2 users");
+
+        // Verify different users on different pages
+        let first_page_ids: Vec<_> = first_page.iter().map(|u| &u.id).collect();
+        let second_page_ids: Vec<_> = second_page.iter().map(|u| &u.id).collect();
+
+        for id1 in &first_page_ids {
+            assert!(
+                !second_page_ids.contains(&id1),
+                "Pages should have different users"
+            );
+        }
+    }
+
+    #[test]
+    fn test_get_user_existing() {
+        let (auth_service, _temp_dir) = create_test_auth_service();
+
+        // Create test user
+        let mut user_request = create_test_user();
+        user_request.email = "getme@example.com".to_string();
+        user_request.first_name = "Get".to_string();
+        user_request.last_name = "Me".to_string();
+
+        let created_user = auth_service
+            .create_account(user_request, "127.0.0.1")
+            .expect("Failed to create test user");
+
+        // Get user by ID
+        let result = auth_service.get_user(&created_user.id);
+        assert!(result.is_ok(), "Getting user should succeed");
+
+        let retrieved_user = result.unwrap();
+        assert!(retrieved_user.is_some(), "User should exist");
+
+        let user = retrieved_user.unwrap();
+        assert_eq!(user.id, created_user.id);
+        assert_eq!(user.email, "getme@example.com");
+        assert_eq!(user.first_name, "Get");
+        assert_eq!(user.last_name, "Me");
+        assert_eq!(user.role, UserRole::Technician);
+        assert!(user.is_active);
+    }
+
+    #[test]
+    fn test_get_user_nonexistent() {
+        let (auth_service, _temp_dir) = create_test_auth_service();
+
+        // Try to get non-existent user
+        let fake_id = uuid::Uuid::new_v4().to_string();
+        let result = auth_service.get_user(&fake_id);
+        assert!(result.is_ok(), "Query should succeed");
+
+        let user = result.unwrap();
+        assert!(user.is_none(), "Non-existent user should return None");
+    }
+
+    #[test]
+    fn test_update_user_all_fields() {
+        let (auth_service, _temp_dir) = create_test_auth_service();
+
+        // Create test user
+        let mut user_request = create_test_user();
+        user_request.email = "update@example.com".to_string();
+        user_request.role = UserRole::Technician;
+
+        let created_user = auth_service
+            .create_account(user_request, "127.0.0.1")
+            .expect("Failed to create test user");
+
+        // Update all fields
+        let result = auth_service.update_user(
+            &created_user.id,
+            Some("updated@example.com"),
+            Some("Updated"),
+            Some("Name"),
+            Some(UserRole::Admin),
+            Some(false),
+        );
+        assert!(result.is_ok(), "Update should succeed");
+
+        let updated_user = result.unwrap();
+        assert_eq!(updated_user.id, created_user.id);
+        assert_eq!(updated_user.email, "updated@example.com");
+        assert_eq!(updated_user.first_name, "Updated");
+        assert_eq!(updated_user.last_name, "Name");
+        assert_eq!(updated_user.role, UserRole::Admin);
+        assert!(!updated_user.is_active);
+        assert!(updated_user.updated_at > created_user.updated_at);
+    }
+
+    #[test]
+    fn test_update_user_partial_fields() {
+        let (auth_service, _temp_dir) = create_test_auth_service();
+
+        // Create test user
+        let mut user_request = create_test_user();
+        user_request.email = "partial@example.com".to_string();
+        user_request.first_name = "Partial";
+        user_request.last_name = "Update";
+        user_request.role = UserRole::Technician;
+
+        let created_user = auth_service
+            .create_account(user_request, "127.0.0.1")
+            .expect("Failed to create test user");
+
+        // Update only email
+        let result = auth_service.update_user(
+            &created_user.id,
+            Some("partial-updated@example.com"),
+            None,
+            None,
+            None,
+            None,
+        );
+        assert!(result.is_ok(), "Partial update should succeed");
+
+        let updated_user = result.unwrap();
+        assert_eq!(updated_user.email, "partial-updated@example.com");
+        assert_eq!(updated_user.first_name, "Partial"); // Should remain unchanged
+        assert_eq!(updated_user.last_name, "Update"); // Should remain unchanged
+        assert_eq!(updated_user.role, UserRole::Technician); // Should remain unchanged
+    }
+
+    #[test]
+    fn test_update_user_nonexistent() {
+        let (auth_service, _temp_dir) = create_test_auth_service();
+
+        // Try to update non-existent user
+        let fake_id = uuid::Uuid::new_v4().to_string();
+        let result =
+            auth_service.update_user(&fake_id, Some("fake@example.com"), None, None, None, None);
+        assert!(result.is_err(), "Update should fail for non-existent user");
+        assert!(result.unwrap_err().contains("User not found"));
+    }
+
+    #[test]
+    fn test_delete_user_soft_delete() {
+        let (auth_service, _temp_dir) = create_test_auth_service();
+
+        // Create test user
+        let mut user_request = create_test_user();
+        user_request.email = "delete@example.com".to_string();
+
+        let created_user = auth_service
+            .create_account(user_request, "127.0.0.1")
+            .expect("Failed to create test user");
+
+        // Verify user is active before deletion
+        let user_before = auth_service.get_user(&created_user.id).unwrap().unwrap();
+        assert!(
+            user_before.is_active,
+            "User should be active before deletion"
+        );
+
+        // Delete user (soft delete)
+        let result = auth_service.delete_user(&created_user.id);
+        assert!(result.is_ok(), "Delete should succeed");
+
+        // Verify user is now inactive but still exists
+        let user_after = auth_service.get_user(&created_user.id).unwrap().unwrap();
+        assert!(
+            !user_after.is_active,
+            "User should be inactive after deletion"
+        );
+        assert_eq!(user_after.id, created_user.id); // Same user record
+    }
+
+    #[test]
+    fn test_delete_user_nonexistent() {
+        let (auth_service, _temp_dir) = create_test_auth_service();
+
+        // Try to delete non-existent user
+        let fake_id = uuid::Uuid::new_v4().to_string();
+        let result = auth_service.delete_user(&fake_id);
+        assert!(
+            result.is_ok(),
+            "Delete should succeed even for non-existent user (idempotent)"
+        );
+    }
+
+    #[test]
+    fn test_user_role_consistency() {
+        let (auth_service, _temp_dir) = create_test_auth_service();
+
+        // Test all user roles
+        let roles = vec![
+            (UserRole::Admin, "admin@example.com"),
+            (UserRole::Technician, "tech@example.com"),
+            (UserRole::Supervisor, "sup@example.com"),
+            (UserRole::Viewer, "viewer@example.com"),
+        ];
+
+        for (role, email) in roles {
+            let mut user_request = create_test_user();
+            user_request.email = email.to_string();
+            user_request.role = role.clone();
+
+            let created_user = auth_service
+                .create_account(user_request, "127.0.0.1")
+                .expect("Failed to create user");
+
+            // Verify role is persisted correctly
+            let retrieved_user = auth_service.get_user(&created_user.id).unwrap().unwrap();
+
+            assert_eq!(retrieved_user.role, role, "Role should match for {}", email);
+        }
+    }
+
+    #[test]
+    fn test_user_data_integrity() {
+        let (auth_service, _temp_dir) = create_test_auth_service();
+
+        // Create user with all optional fields
+        let mut user_request = create_test_user();
+        user_request.email = "integrity@example.com".to_string();
+        user_request.phone = Some("555-TEST".to_string());
+        user_request.address_street = Some("123 Test St".to_string());
+        user_request.address_city = Some("Test City".to_string());
+
+        let created_user = auth_service
+            .create_account(user_request, "127.0.0.1")
+            .expect("Failed to create test user");
+
+        // Retrieve user multiple times to ensure consistency
+        for _ in 0..3 {
+            let retrieved_user = auth_service.get_user(&created_user.id).unwrap().unwrap();
+
+            assert_eq!(retrieved_user.id, created_user.id);
+            assert_eq!(retrieved_user.email, created_user.email);
+            assert_eq!(retrieved_user.username, created_user.username);
+            assert_eq!(retrieved_user.first_name, created_user.first_name);
+            assert_eq!(retrieved_user.last_name, created_user.last_name);
+            assert_eq!(retrieved_user.role, created_user.role);
+            assert_eq!(retrieved_user.phone, created_user.phone);
+            assert_eq!(retrieved_user.is_active, created_user.is_active);
+        }
     }
 }

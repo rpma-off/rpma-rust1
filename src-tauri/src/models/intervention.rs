@@ -8,8 +8,7 @@ use std::str::FromStr;
 use ts_rs::TS;
 
 /// Intervention status enum
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[serde(rename_all = "snake_case")]
 pub enum InterventionStatus {
     Pending,
@@ -54,8 +53,7 @@ impl std::str::FromStr for InterventionStatus {
 }
 
 /// Intervention type
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[serde(rename_all = "snake_case")]
 pub enum InterventionType {
     Ppf,
@@ -97,8 +95,7 @@ impl std::fmt::Display for InterventionType {
 }
 
 /// Main intervention struct
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct Intervention {
     // Identifiers
     pub id: String,
@@ -520,8 +517,7 @@ mod tests {
 }
 
 /// Progress tracking for interventions
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct InterventionProgress {
     pub intervention_id: String,
     pub current_step: i32,
@@ -533,8 +529,7 @@ pub struct InterventionProgress {
 }
 
 /// Filter for intervention queries
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct InterventionFilter {
     pub task_id: Option<String>,
     pub status: Option<String>,
@@ -547,8 +542,7 @@ pub struct InterventionFilter {
 }
 
 /// Request for bulk updating interventions
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct BulkUpdateInterventionRequest {
     pub intervention_ids: Vec<String>,
     pub status: Option<String>,

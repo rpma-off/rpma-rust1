@@ -6,3 +6,6 @@ pub mod unit;
 
 #[cfg(test)]
 pub mod migrations;
+
+#[cfg(test)]
+pub mod performance;

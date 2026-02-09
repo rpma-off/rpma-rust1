@@ -9,8 +9,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 /// Customer type enumeration
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, TS)]
 pub enum CustomerType {
     #[serde(rename = "individual")]
     #[default]
@@ -30,8 +29,7 @@ impl std::fmt::Display for CustomerType {
 }
 
 /// Main Client entity
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct Client {
     // Identifiers
     pub id: String,
@@ -85,8 +83,7 @@ pub struct Client {
 }
 
 /// Client with associated tasks
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ClientWithTasks {
     // Identifiers
     pub id: String,
@@ -144,8 +141,7 @@ pub struct ClientWithTasks {
 
 /// Conversion implementations for database operations
 /// Client query parameters for listing and filtering
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ClientQuery {
     pub page: Option<i32>,
     pub limit: Option<i32>,
@@ -169,8 +165,7 @@ impl Default for ClientQuery {
 }
 
 /// Client list response with pagination
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ClientListResponse {
     pub data: Vec<Client>,
     pub pagination: super::task::PaginationInfo,
@@ -178,8 +173,7 @@ pub struct ClientListResponse {
 }
 
 /// Client statistics
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ClientStatistics {
     pub total_clients: i64,
     pub individual_clients: i64,
@@ -189,8 +183,7 @@ pub struct ClientStatistics {
 }
 
 /// Create client request
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct CreateClientRequest {
     pub name: String,
     pub email: Option<String>,
@@ -235,8 +228,7 @@ impl CreateClientRequest {
 }
 
 /// Update client request
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct UpdateClientRequest {
     pub id: String,
     pub name: Option<String>,

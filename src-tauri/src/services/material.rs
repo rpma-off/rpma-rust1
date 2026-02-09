@@ -218,6 +218,76 @@ impl MaterialService {
             .query_single_as::<Material>("SELECT * FROM materials WHERE id = ?", params![id])?)
     }
 
+    /// Get material by ID (convenience method that returns the material directly)
+    pub fn get_material_by_id(&self, id: &str) -> MaterialResult<Material> {
+        self.get_material(id)?
+            .ok_or_else(|| MaterialError::NotFound(format!("Material {} not found", id)))
+    }
+
+    /// Get transaction history for a material
+    pub fn get_transaction_history(
+        &self,
+        material_id: &str,
+        transaction_type: Option<InventoryTransactionType>,
+        limit: Option<i32>,
+    ) -> MaterialResult<Vec<InventoryTransaction>> {
+        let mut sql = "SELECT * FROM inventory_transactions WHERE material_id = ?".to_string();
+        let mut params = vec![material_id.to_string()];
+
+        if let Some(tt) = transaction_type {
+            sql.push_str(" AND transaction_type = ?");
+            params.push(tt.to_string());
+        }
+
+        sql.push_str(" ORDER BY performed_at DESC");
+
+        if let Some(limit) = limit {
+            sql.push_str(" LIMIT ?");
+            params.push(limit.to_string());
+        }
+
+        Ok(self
+            .db
+            .query_as::<InventoryTransaction>(&sql, rusqlite::params_from_iter(params))?)
+    }
+
+    /// Delete material (soft delete)
+    pub fn delete_material(&self, id: &str, deleted_by: Option<String>) -> MaterialResult<()> {
+        let exists: i32 = self
+            .db
+            .query_single_value("SELECT COUNT(*) FROM materials WHERE id = ?", params![id])?;
+
+        if exists == 0 {
+            return Err(MaterialError::NotFound(format!(
+                "Material {} not found",
+                id
+            )));
+        }
+
+        // Soft delete by marking as inactive and discontinued
+        self.db.execute(
+            r#"
+            UPDATE materials SET
+                is_active = 0,
+                is_discontinued = 1,
+                updated_at = ?,
+                updated_by = ?,
+                deleted_at = ?,
+                deleted_by = ?
+            WHERE id = ?
+            "#,
+            params![
+                Utc::now().timestamp_millis(),
+                deleted_by,
+                Utc::now().timestamp_millis(),
+                deleted_by,
+                id
+            ],
+        )?;
+
+        Ok(())
+    }
+
     /// Get material by SKU
     pub fn get_material_by_sku(&self, sku: &str) -> MaterialResult<Option<Material>> {
         Ok(self

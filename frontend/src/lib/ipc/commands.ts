@@ -31,6 +31,27 @@ export const IPC_COMMANDS = {
   // Client commands
   CLIENT_CRUD: 'client_crud',
 
+  // Inventory/Material commands
+  MATERIAL_LIST: 'material_list',
+  MATERIAL_CREATE: 'material_create',
+  MATERIAL_UPDATE: 'material_update',
+  MATERIAL_GET: 'material_get',
+  MATERIAL_DELETE: 'material_delete',
+  MATERIAL_UPDATE_STOCK: 'material_update_stock',
+  MATERIAL_ADJUST_STOCK: 'material_adjust_stock',
+  MATERIAL_RECORD_CONSUMPTION: 'material_record_consumption',
+  MATERIAL_GET_CONSUMPTION_HISTORY: 'material_get_consumption_history',
+  MATERIAL_CREATE_INVENTORY_TRANSACTION: 'material_create_inventory_transaction',
+  MATERIAL_GET_TRANSACTION_HISTORY: 'material_get_transaction_history',
+  MATERIAL_CREATE_CATEGORY: 'material_create_category',
+  MATERIAL_LIST_CATEGORIES: 'material_list_categories',
+  MATERIAL_CREATE_SUPPLIER: 'material_create_supplier',
+  MATERIAL_LIST_SUPPLIERS: 'material_list_suppliers',
+  MATERIAL_GET_STATS: 'material_get_stats',
+  MATERIAL_GET_LOW_STOCK_MATERIALS: 'material_get_low_stock_materials',
+  MATERIAL_GET_EXPIRED_MATERIALS: 'material_get_expired_materials',
+  MATERIAL_GET_INVENTORY_MOVEMENT_SUMMARY: 'material_get_inventory_movement_summary',
+
   // Report commands
   GET_TASK_COMPLETION_REPORT: 'get_task_completion_report',
   GET_TECHNICIAN_PERFORMANCE_REPORT: 'get_technician_performance_report',

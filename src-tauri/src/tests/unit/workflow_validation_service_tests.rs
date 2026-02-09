@@ -6,11 +6,11 @@
 //! - Mandatory step checks
 //! - Quality checkpoint validation
 
-use crate::models::intervention::{
-    Intervention, InterventionStatus, InterventionStep, StepStatus, StepType,
-};
+use crate::models::intervention::{Intervention, InterventionStatus};
+use crate::models::step::{InterventionStep, StepStatus, StepType};
 use crate::services::workflow_validation::WorkflowValidationService;
-use crate::test_utils::{test_db, test_intervention, TestDataFactory};
+use crate::test_utils::TestDataFactory;
+use crate::{test_client, test_db, test_intervention, test_task};
 
 #[cfg(test)]
 mod tests {
@@ -21,8 +21,8 @@ mod tests {
         WorkflowValidationService::new(test_db.db())
     }
 
-    #[test]
-    fn test_validate_step_advancement_pending_to_in_progress() {
+    #[tokio::test]
+    async fn test_validate_step_advancement_pending_to_in_progress() {
         let validation_service = create_validation_service();
         let mut intervention = test_intervention!(status: InterventionStatus::Pending);
         let step = TestDataFactory::create_test_step(&intervention.id, 1, None);
@@ -38,8 +38,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_validate_step_advancement_invalid_completed_to_pending() {
+    #[tokio::test]
+    async fn test_validate_step_advancement_invalid_completed_to_pending() {
         let validation_service = create_validation_service();
         let mut intervention = test_intervention!(status: InterventionStatus::InProgress);
         let mut step = TestDataFactory::create_test_step(&intervention.id, 1, None);
@@ -52,8 +52,8 @@ mod tests {
         assert!(error.contains("Cannot transition from Completed to Pending"));
     }
 
-    #[test]
-    fn test_validate_step_advancement_sequence_validation() {
+    #[tokio::test]
+    async fn test_validate_step_advancement_sequence_validation() {
         let validation_service = create_validation_service();
         let mut intervention = test_intervention!(status: InterventionStatus::InProgress);
         intervention.current_step = 2;
@@ -71,8 +71,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_validate_step_advancement_valid_sequence() {
+    #[tokio::test]
+    async fn test_validate_step_advancement_valid_sequence() {
         let validation_service = create_validation_service();
         let mut intervention = test_intervention!(status: InterventionStatus::InProgress);
         intervention.current_step = 1;
@@ -94,8 +94,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_validate_step_advancement_mandatory_step_incomplete() {
+    #[tokio::test]
+    async fn test_validate_step_advancement_mandatory_step_incomplete() {
         let validation_service = create_validation_service();
         let mut intervention = test_intervention!(status: InterventionStatus::InProgress);
         intervention.current_step = 1;
@@ -121,8 +121,8 @@ mod tests {
         assert!(error.contains("Required photos not uploaded"));
     }
 
-    #[test]
-    fn test_validate_step_advancement_quality_checkpoint_missing() {
+    #[tokio::test]
+    async fn test_validate_step_advancement_quality_checkpoint_missing() {
         let validation_service = create_validation_service();
         let mut intervention = test_intervention!(status: InterventionStatus::InProgress);
         intervention.current_step = 1;
@@ -147,8 +147,8 @@ mod tests {
         assert!(error.contains("Quality checkpoints not validated"));
     }
 
-    #[test]
-    fn test_validate_intervention_finalization_all_steps_completed() {
+    #[tokio::test]
+    async fn test_validate_intervention_finalization_all_steps_completed() {
         let validation_service = create_validation_service();
         let mut intervention = test_intervention!(status: InterventionStatus::InProgress);
 
@@ -194,8 +194,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_validate_intervention_finalization_mandatory_step_incomplete() {
+    #[tokio::test]
+    async fn test_validate_intervention_finalization_mandatory_step_incomplete() {
         let validation_service = create_validation_service();
         let mut intervention = test_intervention!(status: InterventionStatus::InProgress);
 
@@ -252,8 +252,8 @@ mod tests {
         assert!(error.contains("Mandatory steps not completed"));
     }
 
-    #[test]
-    fn test_validate_intervention_finalization_invalid_status() {
+    #[tokio::test]
+    async fn test_validate_intervention_finalization_invalid_status() {
         let validation_service = create_validation_service();
         let intervention = test_intervention!(status: InterventionStatus::Pending);
 
@@ -263,8 +263,8 @@ mod tests {
         assert!(error.contains("Only in-progress interventions can be finalized"));
     }
 
-    #[test]
-    fn test_validate_intervention_finalization_missing_quality_metrics() {
+    #[tokio::test]
+    async fn test_validate_intervention_finalization_missing_quality_metrics() {
         let validation_service = create_validation_service();
         let mut intervention = test_intervention!(status: InterventionStatus::InProgress);
 
@@ -305,8 +305,8 @@ mod tests {
         assert!(error.contains("Quality score is required"));
     }
 
-    #[test]
-    fn test_validate_step_photo_requirements() {
+    #[tokio::test]
+    async fn test_validate_step_photo_requirements() {
         let validation_service = create_validation_service();
         let mut intervention = test_intervention!(status: InterventionStatus::InProgress);
         intervention.current_step = 1;
@@ -345,8 +345,8 @@ mod tests {
         assert!(result.is_ok(), "Should succeed with correct photo count");
     }
 
-    #[test]
-    fn test_validate_step_duration_requirements() {
+    #[tokio::test]
+    async fn test_validate_step_duration_requirements() {
         let validation_service = create_validation_service();
         let mut intervention = test_intervention!(status: InterventionStatus::InProgress);
         intervention.current_step = 1;
@@ -379,8 +379,8 @@ mod tests {
         assert!(result.is_ok(), "Should succeed with sufficient duration");
     }
 
-    #[test]
-    fn test_validate_intervention_comprehensive() {
+    #[tokio::test]
+    async fn test_validate_intervention_comprehensive() {
         let validation_service = create_validation_service();
 
         // Create a comprehensive valid intervention
@@ -435,8 +435,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_validate_workflow_edge_cases() {
+    #[tokio::test]
+    async fn test_validate_workflow_edge_cases() {
         let validation_service = create_validation_service();
 
         // Test intervention with no steps

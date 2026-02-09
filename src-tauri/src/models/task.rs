@@ -11,8 +11,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 /// Task status enumeration
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, TS)]
 #[ts(export)]
 pub enum TaskStatus {
     #[serde(rename = "draft")]
@@ -89,8 +88,7 @@ impl std::str::FromStr for TaskStatus {
 }
 
 /// Task priority enumeration
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, TS)]
 #[ts(export)]
 pub enum TaskPriority {
     #[serde(rename = "low")]
@@ -131,8 +129,7 @@ impl std::str::FromStr for TaskPriority {
 }
 
 /// Sort order for queries
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 pub enum SortOrder {
     #[serde(rename = "asc")]
     Asc,
@@ -151,8 +148,7 @@ impl std::fmt::Display for SortOrder {
 }
 
 /// Main Task entity
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct Task {
     // Identifiers
     pub id: String,
@@ -241,8 +237,7 @@ pub struct Task {
 }
 
 /// Task photo information
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct TaskPhoto {
     pub id: String,
     pub task_id: String,
@@ -257,16 +252,14 @@ pub struct TaskPhoto {
 }
 
 /// Task with full details including related data
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct TaskWithDetails {
     #[serde(flatten)]
     pub task: Task,
 }
 
 /// Assignment status for task assignment validation
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub enum AssignmentStatus {
     #[serde(rename = "assigned")]
     Assigned,
@@ -291,8 +284,7 @@ impl std::fmt::Display for AssignmentStatus {
 }
 
 /// Availability status for task availability checks
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub enum AvailabilityStatus {
     #[serde(rename = "available")]
     Available,
@@ -320,8 +312,7 @@ impl std::fmt::Display for AvailabilityStatus {
 }
 
 /// Validation result for assignment changes
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ValidationResult {
     pub is_valid: bool,
     pub warnings: Vec<String>,
@@ -329,8 +320,7 @@ pub struct ValidationResult {
 }
 
 /// Response for task assignment check
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct AssignmentCheckResponse {
     pub task_id: String,
     pub user_id: String,
@@ -339,8 +329,7 @@ pub struct AssignmentCheckResponse {
 }
 
 /// Response for task availability check
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct AvailabilityCheckResponse {
     pub task_id: String,
     pub status: AvailabilityStatus,
@@ -348,8 +337,7 @@ pub struct AvailabilityCheckResponse {
 }
 
 /// Request for creating a new task
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct CreateTaskRequest {
     // Required fields (matching migrate CreateTaskSchema)
     pub vehicle_plate: String,
@@ -395,8 +383,7 @@ pub struct CreateTaskRequest {
 }
 
 /// Request for updating a task
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, TS)]
 pub struct UpdateTaskRequest {
     pub id: Option<String>,
     pub title: Option<String>,
@@ -432,15 +419,13 @@ pub struct UpdateTaskRequest {
 }
 
 /// Request for deleting a task
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct DeleteTaskRequest {
     pub id: String,
 }
 
 /// Query parameters for task listing
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct TaskQuery {
     pub page: Option<i32>,
     pub limit: Option<i32>,
@@ -474,8 +459,7 @@ impl Default for TaskQuery {
 }
 
 /// Response for task listing with pagination
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct TaskListResponse {
     pub data: Vec<TaskWithDetails>,
     pub pagination: PaginationInfo,
@@ -483,8 +467,7 @@ pub struct TaskListResponse {
 }
 
 /// Pagination information
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct PaginationInfo {
     pub page: i32,
     pub limit: i32,
@@ -493,8 +476,7 @@ pub struct PaginationInfo {
 }
 
 /// Task statistics
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct TaskStatistics {
     #[ts(type = "number")]
     pub total_tasks: i64,
@@ -659,8 +641,7 @@ impl FromSqlRow for Task {
 }
 
 /// Task history entry - tracks status changes
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct TaskHistory {
     pub id: String,
     pub task_id: String,

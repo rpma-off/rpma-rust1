@@ -1,13 +1,17 @@
 //! Unit tests for security monitor service
 //!
 //! Tests the security monitoring functionality including:
-//! - Event logging and threshold checking
-//! - IP blocking and rate limiting
-//! - Alert generation and cleanup
+//! - Security event logging
+//! - IP blocking after threshold
+//! - Alert generation and management
 //! - Security metrics aggregation
+//! - Old data cleanup
 
 use crate::services::security_monitor::SecurityMonitorService;
-use crate::test_utils::test_db;
+use crate::services::security_monitor::{AlertSeverity, SecurityEventType};
+use crate::{test_client, test_db, test_intervention, test_task};
+use chrono::Utc;
+use std::collections::HashMap;
 
 #[cfg(test)]
 mod tests {
@@ -24,13 +28,22 @@ mod tests {
         let (security_service, _temp_dir) = create_security_service();
 
         // Log a successful login event
-        let result = security_service.log_event(
-            "login_success",
-            "user123",
-            Some("192.168.1.100"),
-            Some("Mozilla/5.0..."),
-            None,
-        );
+
+        let event = crate::services::security_monitor::SecurityEvent {
+            id: uuid::Uuid::new_v4().to_string(),
+            event_type: SecurityEventType::LoginSuccess,
+            severity: AlertSeverity::Info,
+            timestamp: Utc::now(),
+            user_id: Some("user123".to_string()),
+            ip_address: Some("192.168.1.100".to_string()),
+            user_agent: Some("Mozilla/5.0...".to_string()),
+            correlation_id: None,
+            details: HashMap::new(),
+            source: "login".to_string(),
+            mitigated: false,
+        };
+
+        let result = security_service.log_event(event);
 
         assert!(
             result.is_ok(),
@@ -43,13 +56,28 @@ mod tests {
         let (security_service, _temp_dir) = create_security_service();
 
         // Log a failed login event
-        let result = security_service.log_event(
-            "login_failed",
-            "user123",
-            Some("192.168.1.100"),
-            Some("Mozilla/5.0..."),
-            Some("Invalid password"),
+
+        let mut details = HashMap::new();
+        details.insert(
+            "reason".to_string(),
+            serde_json::Value::String("Invalid password".to_string()),
         );
+
+        let event = crate::services::security_monitor::SecurityEvent {
+            id: uuid::Uuid::new_v4().to_string(),
+            event_type: SecurityEventType::LoginFailed,
+            severity: AlertSeverity::Warning,
+            timestamp: Utc::now(),
+            user_id: Some("user123".to_string()),
+            ip_address: Some("192.168.1.100".to_string()),
+            user_agent: Some("Mozilla/5.0...".to_string()),
+            correlation_id: None,
+            details,
+            source: "login".to_string(),
+            mitigated: false,
+        };
+
+        let result = security_service.log_event(event);
 
         assert!(
             result.is_ok(),
@@ -62,13 +90,28 @@ mod tests {
         let (security_service, _temp_dir) = create_security_service();
 
         // Log suspicious activity
-        let result = security_service.log_event(
-            "suspicious_activity",
-            "user123",
-            Some("192.168.1.100"),
-            Some("Mozilla/5.0..."),
-            Some("Multiple failed attempts from different IPs"),
+
+        let mut details = HashMap::new();
+        details.insert(
+            "description".to_string(),
+            serde_json::Value::String("Multiple failed attempts from different IPs".to_string()),
         );
+
+        let event = crate::services::security_monitor::SecurityEvent {
+            id: uuid::Uuid::new_v4().to_string(),
+            event_type: SecurityEventType::SuspiciousActivity,
+            severity: AlertSeverity::High,
+            timestamp: Utc::now(),
+            user_id: Some("user123".to_string()),
+            ip_address: Some("192.168.1.100".to_string()),
+            user_agent: Some("Mozilla/5.0...".to_string()),
+            correlation_id: None,
+            details,
+            source: "system".to_string(),
+            mitigated: false,
+        };
+
+        let result = security_service.log_event(event);
 
         assert!(
             result.is_ok(),
@@ -571,28 +614,74 @@ mod tests {
         let (security_service, _temp_dir) = create_security_service();
 
         // Test with null values
-        let result = security_service.log_event("test_event", "", None, None, None);
+
+        let event = crate::services::security_monitor::SecurityEvent {
+            id: uuid::Uuid::new_v4().to_string(),
+            event_type: SecurityEventType::LoginSuccess,
+            severity: AlertSeverity::Info,
+            timestamp: Utc::now(),
+            user_id: None,
+            ip_address: None,
+            user_agent: None,
+            correlation_id: None,
+            details: HashMap::new(),
+            source: "test".to_string(),
+            mitigated: false,
+        };
+
+        let result = security_service.log_event(event);
         assert!(result.is_ok(), "Should handle null values gracefully");
 
         // Test with very long strings
+
         let long_string = "a".repeat(10000);
-        let result = security_service.log_event(
-            &long_string,
-            &long_string,
-            Some(&long_string),
-            Some(&long_string),
-            Some(&long_string),
+
+        let mut details = HashMap::new();
+        details.insert(
+            "long_string".to_string(),
+            serde_json::Value::String(long_string.clone()),
         );
+
+        let event = crate::services::security_monitor::SecurityEvent {
+            id: uuid::Uuid::new_v4().to_string(),
+            event_type: SecurityEventType::LoginSuccess,
+            severity: AlertSeverity::Info,
+            timestamp: Utc::now(),
+            user_id: Some(long_string.clone()),
+            ip_address: Some(long_string.clone()),
+            user_agent: Some(long_string.clone()),
+            correlation_id: Some(long_string.clone()),
+            details,
+            source: "test".to_string(),
+            mitigated: false,
+        };
+
+        let result = security_service.log_event(event);
         assert!(result.is_ok(), "Should handle long strings gracefully");
 
         // Test with special characters
-        let result = security_service.log_event(
-            "test_event_特殊字符_🔒",
-            "user_特殊字符",
-            Some("192.168.1.测试"),
-            Some("Mozilla/5.0...🦊"),
-            Some("Details with émojis 🔐 and accents"),
+
+        let mut details = HashMap::new();
+        details.insert(
+            "description".to_string(),
+            serde_json::Value::String("Details with émojis 🔐 and accents".to_string()),
         );
+
+        let event = crate::services::security_monitor::SecurityEvent {
+            id: uuid::Uuid::new_v4().to_string(),
+            event_type: SecurityEventType::LoginSuccess,
+            severity: AlertSeverity::Info,
+            timestamp: Utc::now(),
+            user_id: Some("user_特殊字符".to_string()),
+            ip_address: Some("192.168.1.测试".to_string()),
+            user_agent: Some("Mozilla/5.0...🦊".to_string()),
+            correlation_id: Some("test_event_特殊字符_🔒".to_string()),
+            details,
+            source: "test".to_string(),
+            mitigated: false,
+        };
+
+        let result = security_service.log_event(event);
         assert!(
             result.is_ok(),
             "Should handle special characters and emojis gracefully"

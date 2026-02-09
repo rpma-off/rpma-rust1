@@ -5,8 +5,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 /// Message types supported by the system
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[ts(export)]
 pub enum MessageType {
     Email,
@@ -40,8 +39,7 @@ impl std::fmt::Display for MessageType {
 }
 
 /// Message status enumeration
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[ts(export)]
 pub enum MessageStatus {
     Pending,
@@ -81,8 +79,7 @@ impl std::fmt::Display for MessageStatus {
 }
 
 /// Message priority levels
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[ts(export)]
 pub enum MessagePriority {
     Low,
@@ -113,8 +110,7 @@ impl MessagePriority {
 }
 
 /// Message entity representing a single message
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct Message {
     pub id: String,
@@ -140,8 +136,7 @@ pub struct Message {
 }
 
 /// Request to send a new message
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct SendMessageRequest {
     pub message_type: String,
@@ -158,8 +153,7 @@ pub struct SendMessageRequest {
 }
 
 /// Message template for reusable messages
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct MessageTemplate {
     pub id: String,
@@ -177,8 +171,7 @@ pub struct MessageTemplate {
 }
 
 /// Request to create/update a message template
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct MessageTemplateRequest {
     pub name: String,
@@ -191,8 +184,7 @@ pub struct MessageTemplateRequest {
 }
 
 /// User notification preferences
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct NotificationPreferences {
     pub id: String,
@@ -231,8 +223,7 @@ pub struct NotificationPreferences {
 }
 
 /// Request to update notification preferences
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct UpdateNotificationPreferencesRequest {
     pub email_enabled: Option<bool>,
@@ -254,8 +245,7 @@ pub struct UpdateNotificationPreferencesRequest {
 }
 
 /// Message query filters
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, TS)]
 #[ts(export)]
 pub struct MessageQuery {
     pub message_type: Option<String>,
@@ -272,8 +262,7 @@ pub struct MessageQuery {
 }
 
 /// Message list response
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct MessageListResponse {
     pub messages: Vec<Message>,

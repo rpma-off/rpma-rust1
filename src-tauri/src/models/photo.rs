@@ -7,8 +7,7 @@ use serde::{Deserialize, Serialize};
 // Conditional import removed
 use ts_rs::TS;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum PhotoType {
     Before,
@@ -33,8 +32,7 @@ impl ToSql for PhotoType {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[serde(rename_all = "snake_case")]
 pub enum PhotoCategory {
     VehicleCondition,
@@ -65,8 +63,7 @@ impl ToSql for PhotoCategory {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct Photo {
     pub id: String,
     pub intervention_id: String,

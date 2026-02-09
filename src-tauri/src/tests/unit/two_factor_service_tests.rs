@@ -7,7 +7,7 @@
 //! - Secret encryption/decryption
 
 use crate::services::two_factor::TwoFactorService;
-use crate::test_utils::test_db;
+use crate::{test_client, test_db, test_intervention, test_task};
 
 #[cfg(test)]
 mod tests {

@@ -1,64 +1,93 @@
-﻿﻿Analyze my existing codebase and generate the following complete documentation in Markdown format. Use the source code, file structure, dependencies, and patterns used to create accurate and detailed documentation.
-## Documents to create:
+﻿﻿# MISSION: Vérifier que les fichiers de tests correspondent bien au code testé et sont à jour
 
-### 1. README.md
-- Project overview based on code analysis
-- Identified technical stack (frameworks, libraries, database)
-- Detected architecture (monolith, microservices, etc.)
-- Setup instructions derived from config files
-- Available scripts (package.json, Makefile, etc.)
+Tu es un agent "Test Maintenance Auditor" sur le projet RPMA (Rust backend + Tauri IPC + SQLite + Next.js + Playwright).
+Objectif: détecter les tests obsolètes, non pertinents, trop couplés à l’implémentation, ou manquants par rapport au code actuel.
 
-### 2. REQUIREMENTS.md
-- Existing features identified in the code
-- User stories deduced from controllers/routes/components
-- Data models analyzed
-- Third-party integrations detected (APIs, services)
-- Technical constraints observed
-### 3. API.md
-- Endpoints extracted from the code (routes, controllers)
-- HTTP methods used
-- Authentication middleware detected
-- Validation schemas found
-- Response format based on models
+## 0) Règles
+- Ne modifie pas le comportement métier sans le signaler explicitement.
+- Ne supprime pas des tests sans justification + proposition de remplacement.
+- Priorité: tests de règles métier > tests de contrat IPC > tests DB/migrations > tests frontend > tests E2E.
+- Le but est d’aligner les tests sur le **comportement** et les **contrats**, pas sur l’implémentation interne.
 
-### 4. DATABASE.md
-- Database schema based on models/migrations
-- Relationships between identified entities
-- Indexes and constraints detected
-- Existing migrations analyzed
+## 1) Inventaire & cartographie
+1) Liste tous les fichiers de tests (Rust `#[test]`, `tests/`, `mod tests`, JS/TS `*.test.*`, Playwright).
+2) Pour chaque fichier de test, identifie:
+   - le(s) module(s)/fichier(s) de prod visés
+   - le type de test (unit, integration, contract/IPC, DB, migration, frontend unit, e2e)
+3) Construis une table `TEST_MAP.md`:
+   - Test file -> Code file(s) ciblés -> fonctionnalités couvertes -> type -> statut (OK / suspect / obsolète / manquant)
 
-### 5. ARCHITECTURE.md
-- Documented folder structure
-- Architectural patterns identified (MVC, Clean Architecture, etc.)
-- Application layers detected
-- Data flows observed in the code
-- Dependencies between modules
+## 2) Détection automatique des tests “désalignés”
+Pour chaque test, cherche ces signaux:
+- Référence à un champ/enum/erreur qui n’existe plus ou a changé de sens
+- Assertions trop liées à l’implémentation (ex: ordre interne, détails non contractuels)
+- Snapshots ou textes figés non utiles
+- Mocks qui ne représentent plus le comportement réel
+- Tests qui passent mais ne testent rien (assertions triviales, pas d’assert sur résultat)
+- Tests flaky (timing, random non seedé, dépendance à l’heure / réseau / FS non isolé)
 
-### 6. DEPLOYMENT.md
-- Existing deployment configuration (Docker, CI/CD)
-- Environment variables used
-- Build/deployment scripts found
-- External services configured
+Produit un fichier `TEST_HEALTH_REPORT.md` listant:
+- tests obsolètes (avec preuve: symboles disparus / comportements incohérents)
+- tests inutiles (pas d’assertions, ou asserts non pertinents)
+- zones du code critique sans tests
 
-### 7. DESIGN.md (if applicable)
-- Identified UI components
-- Styles/CSS/themes used
-- Template/view structure
-- Assets and graphic resources
+## 3) Vérification “code changé => tests changés ?”
+1) Analyse l’historique git récent (si dispo) ou à défaut:
+   - repère les modules les plus modifiés (auth, tasks, interventions, workflow, stock, sync queue, event bus, IPC commands)
+2) Pour chaque module critique, vérifie qu’il existe des tests qui:
+   - couvrent les règles métier importantes
+   - couvrent les erreurs attendues (Validation, NotFound, Authorization)
+   - couvrent le contrat IPC (payload + codes erreurs)
+3) Marque comme “à risque” tout module modifié récemment sans tests associés.
 
-### 8. USER-FLOWS.md
-- User journeys deduced from routes/pages
-- Identified interface states
-- Error handling implemented
-- Observed business workflows
-## Specific instructions:
-- Be precise and factual, basing your comments solely on what exists in the code
-- Use concrete examples taken from the source code
-- Identify any gaps or inconsistencies
-- Suggest improvements where relevant
-- Format correctly in Markdown with clear sections
-- Include ASCII art diagrams where necessary
+## 4) Contrats & schéma (points obligatoires)
+### A) IPC / API
+- Vérifie que chaque commande IPC critique a un test:
+  - happy path
+  - erreurs: Validation / NotFound / Authorization
+  - format de réponse stable
+- Liste les commandes non testées et propose les tests.
 
-Start by analyzing the entire structure of the project, then generate each document in detail.
+### B) DB / Migrations
+- Vérifie l’existence de tests de migrations:
+  - apply all migrations on empty DB
+  - PRAGMA foreign_key_check + integrity_check
+  - vérification tables/colonnes clés
+- Si absent ou incomplet: implémente.
 
+## 5) Mise à jour / corrections (actions)
+Pour chaque problème trouvé:
+- Propose une correction exacte:
+  - update assertions
+  - remplacer test trop couplé par test comportemental
+  - ajouter tests manquants
+  - refactor helpers de test (TestDb, factories, builders)
+- Applique les changements en commits atomiques.
 
+## 6) Définition “à jour”
+Un test est considéré “à jour” si:
+- il compile / s’exécute
+- il vérifie un comportement contractuel (output/erreurs/invariants)
+- il ne dépend pas d’un détail interne instable
+- il est déterministe
+
+## 7) Livrables
+1) `TEST_MAP.md` (cartographie tests -> code)
+2) `TEST_HEALTH_REPORT.md` (diagnostic + priorités)
+3) Patches / commits:
+   - corrections tests obsolètes
+   - ajout tests manquants (backend d’abord)
+4) `TESTING_GUIDELINES.md`:
+   - quand mettre à jour les tests
+   - anti-patterns (tests trop couplés)
+   - conventions naming + structure
+
+## 8) Commandes
+- Donne les commandes exactes pour lancer:
+  - backend tests
+  - frontend tests
+  - e2e
+  - coverage si présent
+- Ajoute un “smoke command” unique (ex: `make test` ou script) si nécessaire.
+
+Commence par générer `TEST_MAP.md`, puis `TEST_HEALTH_REPORT.md`, puis applique les corrections prioritaires.

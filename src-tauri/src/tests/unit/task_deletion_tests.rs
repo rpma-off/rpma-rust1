@@ -12,6 +12,8 @@ use crate::db::Database;
 use crate::models::task::{CreateTaskRequest, TaskPriority, TaskStatus};
 use crate::services::task_creation::TaskCreationService;
 use crate::services::task_deletion::TaskDeletionService;
+use crate::{test_client, test_db, test_intervention, test_task};
+use chrono::Utc;
 use rusqlite::params;
 use std::sync::Arc;
 
@@ -19,7 +21,7 @@ use std::sync::Arc;
 fn setup_test_db() -> Database {
     let db = Database::in_memory().expect("Failed to create in-memory database");
     let conn = db.get_connection().expect("Failed to get connection");
-    conn.execute_batch(include_str!("../../../db/schema.sql"))
+    conn.execute_batch(include_str!("../../db/schema.sql"))
         .expect("Failed to initialize schema");
     db
 }

@@ -5,11 +5,13 @@
 
 pub mod alerting;
 pub mod analytics;
+pub mod audit_service;
 pub mod auth;
 pub mod cache;
 pub mod calendar;
 pub mod calendar_event_service;
 pub mod client;
+pub mod client_validation;
 pub mod dashboard;
 pub mod document_storage;
 pub mod domain_event;

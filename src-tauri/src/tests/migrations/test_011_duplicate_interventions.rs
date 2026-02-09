@@ -7,8 +7,14 @@
 //! - Complex CTE for identifying duplicates
 
 use super::*;
+use crate::commands::errors::AppResult;
+use rusqlite::params;
 
-test_migration!(11, test_011_duplicate_interventions, {
+#[test]
+fn test_011_duplicate_interventions() -> AppResult<()> {
+    let mut ctx = MigrationTestContext::new();
+    ctx.database.migrate(11)?;
+
     // Create test data with duplicate interventions
     ctx.conn.execute_batch(
         r#"
@@ -105,7 +111,7 @@ test_migration!(11, test_011_duplicate_interventions, {
         .prepare("SELECT COUNT(*) FROM pragma_index_list('interventions') WHERE origin = 'u'")?;
     let unique_index_count: i32 = stmt.query_row([], |row| row.get(0))?;
     assert!(unique_index_count > 0, "Unique index should be created");
-});
+}
 
 #[test]
 fn test_011_duplicate_interventions_edge_cases() -> Result<(), Box<dyn std::error::Error>> {

@@ -7,8 +7,14 @@
 //! - Foreign keys that might reference non-existent records
 
 use super::*;
+use crate::commands::errors::AppResult;
+use rusqlite::params;
 
-test_migration!(27, test_027_task_constraints, {
+#[test]
+fn test_027_task_constraints() -> AppResult<()> {
+    let mut ctx = MigrationTestContext::new();
+    ctx.database.migrate(27)?;
+
     // Create test data with various edge cases
     ctx.conn.execute_batch(
         r#"
@@ -170,7 +176,7 @@ test_migration!(27, test_027_task_constraints, {
         result.is_err(),
         "Non-existent technician should be rejected"
     );
-});
+}
 
 #[test]
 fn test_027_task_constraints_business_logic() -> Result<(), Box<dyn std::error::Error>> {

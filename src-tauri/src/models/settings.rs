@@ -4,8 +4,7 @@ use serde::{Deserialize, Serialize};
 // Conditional import removed
 use ts_rs::TS;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct GeneralSettings {
     pub auto_save: bool,
     pub language: String,
@@ -14,8 +13,7 @@ pub struct GeneralSettings {
     pub currency: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct SecuritySettings {
     pub two_factor_enabled: bool,
     pub session_timeout: u32, // minutes
@@ -25,8 +23,7 @@ pub struct SecuritySettings {
     pub login_attempts_max: u8,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct NotificationSettings {
     pub push_notifications: bool,
     pub email_notifications: bool,
@@ -37,8 +34,7 @@ pub struct NotificationSettings {
     pub daily_digest: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct AppearanceSettings {
     pub dark_mode: bool,
     pub primary_color: String,
@@ -46,8 +42,7 @@ pub struct AppearanceSettings {
     pub compact_view: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct DataManagementSettings {
     pub auto_backup: bool,
     pub backup_frequency: String, // daily, weekly, monthly
@@ -56,8 +51,7 @@ pub struct DataManagementSettings {
     pub compression_enabled: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct StorageSettings {
     pub photo_storage_type: String, // "local", "cloud", "hybrid"
     pub local_storage_path: Option<String>,
@@ -72,8 +66,7 @@ pub struct StorageSettings {
     pub compression_quality: u8, // 1-100
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct DatabaseSettings {
     pub connection_status: String,
     pub last_backup: Option<String>,
@@ -82,8 +75,7 @@ pub struct DatabaseSettings {
     pub query_timeout: u32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct IntegrationSettings {
     pub api_enabled: bool,
     pub webhook_url: Option<String>,
@@ -91,8 +83,7 @@ pub struct IntegrationSettings {
     pub sync_interval: u32, // minutes
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct PerformanceSettings {
     pub cache_enabled: bool,
     pub cache_size: u32, // MB
@@ -101,8 +92,7 @@ pub struct PerformanceSettings {
     pub cpu_limit: f32,    // percentage
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct BackupSettings {
     pub auto_backup: bool,
     pub backup_location: String,
@@ -111,8 +101,7 @@ pub struct BackupSettings {
     pub include_attachments: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct DiagnosticSettings {
     pub logging_level: String, // error, warn, info, debug
     pub performance_monitoring: bool,
@@ -121,8 +110,7 @@ pub struct DiagnosticSettings {
     pub metrics_collection: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, TS)]
 pub struct AppSettings {
     pub general: GeneralSettings,
     pub security: SecuritySettings,
@@ -132,8 +120,7 @@ pub struct AppSettings {
     pub storage: StorageSettings,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, TS)]
 pub struct SystemConfiguration {
     pub database: DatabaseSettings,
     pub integrations: IntegrationSettings,
@@ -283,8 +270,7 @@ impl Default for DiagnosticSettings {
 
 // User-specific settings models
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct UserProfileSettings {
     pub full_name: String,
     pub email: String,
@@ -293,8 +279,7 @@ pub struct UserProfileSettings {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct UserPreferences {
     // Notifications
     pub email_notifications: bool,
@@ -321,15 +306,13 @@ pub struct UserPreferences {
     pub refresh_interval: u32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct UserSecuritySettings {
     pub two_factor_enabled: bool,
     pub session_timeout: u32, // minutes
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct UserPerformanceSettings {
     pub cache_enabled: bool,
     pub cache_size: u32, // MB
@@ -340,8 +323,7 @@ pub struct UserPerformanceSettings {
     pub preload_data: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct UserAccessibilitySettings {
     pub high_contrast: bool,
     pub large_text: bool,
@@ -355,8 +337,7 @@ pub struct UserAccessibilitySettings {
     pub color_blind_mode: String, // 'none', 'protanopia', 'deuteranopia', 'tritanopia'
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct UserNotificationSettings {
     pub email_enabled: bool,
     pub push_enabled: bool,
@@ -377,8 +358,7 @@ pub struct UserNotificationSettings {
     pub sound_volume: u32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, TS)]
 pub struct UserSettings {
     pub profile: UserProfileSettings,
     pub preferences: UserPreferences,

@@ -5,7 +5,8 @@
 
 use crate::models::client::CreateClientRequest;
 use crate::services::client_validation::ClientValidationService;
-use crate::test_utils::{test_db, TestDatabase};
+use crate::test_utils::TestDatabase;
+use crate::{test_client, test_db, test_intervention, test_task};
 use proptest::prelude::*;
 
 proptest! {
@@ -250,7 +251,9 @@ proptest! {
         prop_assert!(result1.is_valid);
 
         // Create the client
-        client_service.create_client_async(client1_request, "test_user").await.unwrap();
+        tokio::runtime::Runtime::new().unwrap().block_on(
+            client_service.create_client_async(client1_request, "test_user")
+        ).unwrap();
 
         // Try to create duplicate clients
         for i in 1..=duplicate_count {

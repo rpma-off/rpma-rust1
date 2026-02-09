@@ -1428,9 +1428,269 @@ export const ipcClient = {
          intervention_id: interventionId,
          session_token: sessionToken
        }),
-   },
- } as const;
+  },
 
+  // Inventory/Material operations
+  material: {
+    /**
+     * Lists materials with pagination and filtering
+     * @param sessionToken - User's session token
+     * @param query - Query parameters for filtering and pagination
+     * @returns Promise resolving to paginated material list
+     */
+    list: (sessionToken: string, query: any) =>
+      safeInvoke('material_list', {
+        sessionToken,
+        ...query
+      }),
+
+    /**
+     * Creates a new material
+     * @param data - Material creation data
+     * @param sessionToken - User's session token
+     * @returns Promise resolving to created material
+     */
+    create: (data: any, sessionToken: string) =>
+      safeInvoke('material_create', {
+        request: {
+          ...data,
+          session_token: sessionToken
+        }
+      }),
+
+    /**
+     * Updates an existing material
+     * @param id - Material ID
+     * @param data - Material update data
+     * @param sessionToken - User's session token
+     * @returns Promise resolving to updated material
+     */
+    update: (id: string, data: any, sessionToken: string) => {
+      invalidatePattern('materials:*');
+      invalidatePattern('material:*');
+      return safeInvoke('material_update', {
+        id,
+        request: {
+          ...data,
+          session_token: sessionToken
+        }
+      });
+    },
+
+    /**
+     * Gets a material by ID
+     * @param id - Material ID
+     * @param sessionToken - User's session token
+     * @returns Promise resolving to material details
+     */
+    get: (id: string, sessionToken: string) =>
+      safeInvoke('material_get', {
+        sessionToken,
+        id
+      }),
+
+    /**
+     * Deletes a material
+     * @param id - Material ID
+     * @param sessionToken - User's session token
+     * @returns Promise resolving to deletion result
+     */
+    delete: (id: string, sessionToken: string) => {
+      invalidatePattern('materials:*');
+      invalidatePattern('material:*');
+      return safeInvoke('material_delete', {
+        sessionToken,
+        id
+      });
+    },
+
+    /**
+     * Updates material stock levels
+     * @param data - Stock update data
+     * @param sessionToken - User's session token
+     * @returns Promise resolving to updated material with current stock
+     */
+    updateStock: (data: any, sessionToken: string) => {
+      invalidatePattern('materials:*');
+      invalidatePattern('material:*');
+      return safeInvoke('material_update_stock', {
+        request: {
+          ...data,
+          session_token: sessionToken
+        }
+      });
+    },
+
+    /**
+     * Adjusts material stock with correction reason
+     * @param data - Stock adjustment data
+     * @param sessionToken - User's session token
+     * @returns Promise resolving to updated material with current stock
+     */
+    adjustStock: (data: any, sessionToken: string) =>
+      safeInvoke('material_adjust_stock', {
+        request: {
+          ...data,
+          session_token: sessionToken
+        }
+      }),
+
+    /**
+     * Records material consumption for an intervention
+     * @param data - Consumption recording data
+     * @param sessionToken - User's session token
+     * @returns Promise resolving to consumption record
+     */
+    recordConsumption: (data: any, sessionToken: string) => {
+      invalidatePattern('materials:*');
+      invalidatePattern('material:*');
+      return safeInvoke('material_record_consumption', {
+        request: {
+          ...data,
+          session_token: sessionToken
+        }
+      });
+    },
+
+    /**
+     * Gets consumption history for a material
+     * @param materialId - Material ID
+     * @param sessionToken - User's session token
+     * @param query - Query parameters for pagination and filtering
+     * @returns Promise resolving to consumption history
+     */
+    getConsumptionHistory: (materialId: string, sessionToken: string, query?: any) =>
+      safeInvoke('material_get_consumption_history', {
+        sessionToken,
+        material_id: materialId,
+        page: query?.page || 1,
+        limit: query?.limit || 50,
+      }),
+
+    /**
+     * Creates an inventory transaction
+     * @param data - Transaction creation data
+     * @param sessionToken - User's session token
+     * @returns Promise resolving to created transaction
+     */
+    createInventoryTransaction: (data: any, sessionToken: string) => {
+      invalidatePattern('materials:*');
+      invalidatePattern('material:*');
+      return safeInvoke('material_create_inventory_transaction', {
+        request: {
+          ...data,
+          session_token: sessionToken
+        }
+      });
+    },
+
+    /**
+     * Gets transaction history for a material
+     * @param materialId - Material ID
+     * @param sessionToken - User's session token
+     * @param query - Query parameters for pagination and filtering
+     * @returns Promise resolving to transaction history
+     */
+    getTransactionHistory: (materialId: string, sessionToken: string, query?: any) =>
+      safeInvoke('material_get_transaction_history', {
+        sessionToken,
+        material_id: materialId,
+        page: query?.page || 1,
+        limit: query?.limit || 50,
+      }),
+
+    /**
+     * Creates a new material category
+     * @param data - Category creation data
+     * @param sessionToken - User's session token
+     * @returns Promise resolving to created category
+     */
+    createCategory: (data: any, sessionToken: string) =>
+      safeInvoke('material_create_category', {
+        request: {
+          ...data,
+          session_token: sessionToken
+        }
+      }),
+
+    /**
+     * Lists all material categories
+     * @param sessionToken - User's session token
+     * @returns Promise resolving to category list
+     */
+    listCategories: (sessionToken: string) =>
+      safeInvoke('material_list_categories', {
+        sessionToken
+      }),
+
+    /**
+     * Creates a new supplier
+     * @param data - Supplier creation data
+     * @param sessionToken - User's session token
+     * @returns Promise resolving to created supplier
+     */
+    createSupplier: (data: any, sessionToken: string) =>
+      safeInvoke('material_create_supplier', {
+        request: {
+          ...data,
+          session_token: sessionToken
+        }
+      }),
+
+    /**
+     * Lists all suppliers
+     * @param sessionToken - User's session token
+     * @returns Promise resolving to supplier list
+     */
+    listSuppliers: (sessionToken: string) =>
+      safeInvoke('material_list_suppliers', {
+        sessionToken
+      }),
+
+    /**
+     * Gets material statistics
+     * @param sessionToken - User's session token
+     * @returns Promise resolving to material statistics
+     */
+    getStats: (sessionToken: string) =>
+      safeInvoke('material_get_stats', {
+        sessionToken
+      }),
+
+    /**
+     * Gets materials with low stock levels
+     * @param sessionToken - User's session token
+     * @returns Promise resolving to low stock materials
+     */
+    getLowStockMaterials: (sessionToken: string) =>
+      safeInvoke('material_get_low_stock_materials', {
+        sessionToken
+      }),
+
+    /**
+     * Gets expired or near-expiry materials
+     * @param sessionToken - User's session token
+     * @returns Promise resolving to expired materials
+     */
+    getExpiredMaterials: (sessionToken: string) =>
+      safeInvoke('material_get_expired_materials', {
+        sessionToken
+      }),
+
+    /**
+     * Gets inventory movement summary for a material
+     * @param materialId - Material ID
+     * @param sessionToken - User's session token
+     * @returns Promise resolving to inventory movement summary
+     */
+    getInventoryMovementSummary: (materialId: string, sessionToken: string) =>
+      safeInvoke('material_get_inventory_movement_summary', {
+        sessionToken,
+        material_id: materialId,
+      }),
+  },
+
+} as const;
 // Type-safe hook
 export function useIpcClient() {
   return ipcClient;
