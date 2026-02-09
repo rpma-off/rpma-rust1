@@ -1,3 +1,23 @@
+/**
+ * Client Lifecycle E2E Tests
+ * 
+ * This test suite covers the complete lifecycle of client management in the RPMA application:
+ * - Client creation (individual and business)
+ * - Client information updates
+ * - Client search and filtering
+ * - Client deletion
+ * - Vehicle management for clients
+ * - Data persistence
+ * 
+ * To run these tests locally:
+ * 1. Make sure the Tauri backend is running: npm run tauri dev
+ * 2. Make sure the frontend dev server is running: npm run dev
+ * 3. Run the tests: npx playwright test client-lifecycle.spec.ts
+ * 
+ * These tests require authentication with a test user (test@example.com / testpassword).
+ * Make sure this user exists in the test database.
+ */
+
 import { test, expect } from '@playwright/test';
 
 test.describe('Client Lifecycle Management', () => {
@@ -37,7 +57,26 @@ test.describe('Client Lifecycle Management', () => {
     vin: '5YJ3E1EA1JF000001'
   };
 
+  test.beforeAll(async ({ playwright }) => {
+    // Check if frontend server is running (Tauri serves frontend on different port)
+    try {
+      const request = await playwright.request.newContext();
+      const response = await request.get('http://localhost:1420', { timeout: 5000 });
+      if (!response.ok()) {
+        throw new Error('Frontend server is not responding correctly');
+      }
+    } catch (error) {
+      throw new Error(
+        'Frontend server is not running at http://localhost:1420. Please start with "npm run tauri dev" before running these tests.'
+      );
+    }
+  });
+
   test.beforeEach(async ({ page }) => {
+    // Note: These tests require:
+    // 1. Start Tauri with: npm run tauri dev
+    // 2. Then run: npx playwright test client-lifecycle.spec.ts
+    
     // Login before each test
     await page.goto('/login');
     
@@ -48,7 +87,7 @@ test.describe('Client Lifecycle Management', () => {
     
     // Wait for navigation to complete - try multiple possible URLs
     await Promise.race([
-      page.waitForURL(/\/dashboard|\/tasks|\/$/, { timeout: 10000 }),
+      page.waitForURL(/\/(dashboard|tasks|\/?$)/, { timeout: 10000 }),
       page.waitForSelector('text=Jobs', { timeout: 10000 }),
       page.waitForSelector('text=Clients', { timeout: 10000 })
     ]);
@@ -68,7 +107,7 @@ test.describe('Client Lifecycle Management', () => {
     await page.fill('input[name="email"]', testClient.email);
     await page.fill('input[name="phone"]', testClient.phone);
     await page.fill('textarea[name="address_street"]', testClient.address_street);
-    await page.selectOption('input[name="customer_type"][value="individual"]');
+    await page.click('input[name="customer_type"][value="individual"]');
     await page.fill('textarea[name="notes"]', testClient.notes);
     
     // Submit form
@@ -96,7 +135,7 @@ test.describe('Client Lifecycle Management', () => {
     await page.fill('input[name="email"]', testBusinessClient.email);
     await page.fill('input[name="phone"]', testBusinessClient.phone);
     await page.fill('textarea[name="address_street"]', testBusinessClient.address_street);
-    await page.selectOption('input[name="customer_type"][value="business"]');
+    await page.click('input[name="customer_type"][value="business"]');
     await page.fill('input[name="company_name"]', testBusinessClient.company_name);
     await page.fill('textarea[name="notes"]', testBusinessClient.notes);
     
@@ -131,7 +170,7 @@ test.describe('Client Lifecycle Management', () => {
     // First create a client
     await page.goto('/clients/new');
     await page.fill('input[name="name"]', testClient.name);
-    await page.selectOption('input[name="customer_type"][value="individual"]');
+    await page.click('input[name="customer_type"][value="individual"]');
     await page.click('button[type="submit"]');
     
     // Wait for client detail page
@@ -146,7 +185,9 @@ test.describe('Client Lifecycle Management', () => {
     
     // Fill in task form with vehicle information
     await page.fill('input[name="title"]', 'Test Task with Vehicle');
-    await page.selectOption('select[name="client_id"]', { label: testClient.name });
+    // Find the option with the client name and select it
+    const clientOption = page.locator(`select[name="client_id"] option:has-text("${testClient.name}")`);
+    await page.selectOption('select[name="client_id"]', await clientOption.getAttribute('value'));
     await page.fill('input[name="vehicle_make"]', testVehicle.make);
     await page.fill('input[name="vehicle_model"]', testVehicle.model);
     await page.fill('input[name="vehicle_plate"]', testVehicle.plate);
@@ -166,7 +207,7 @@ test.describe('Client Lifecycle Management', () => {
     await page.goto('/clients/new');
     await page.fill('input[name="name"]', testClient.name);
     await page.fill('input[name="email"]', testClient.email);
-    await page.selectOption('input[name="customer_type"][value="individual"]');
+    await page.click('input[name="customer_type"][value="individual"]');
     await page.click('button[type="submit"]');
     
     // Wait for client detail page
@@ -207,7 +248,7 @@ test.describe('Client Lifecycle Management', () => {
     for (const client of clients) {
       await page.goto('/clients/new');
       await page.fill('input[name="name"]', client.name);
-      await page.selectOption(`input[name="customer_type"][value="${client.customer_type}"]`);
+      await page.click(`input[name="customer_type"][value="${client.customer_type}"]`);
       await page.click('button[type="submit"]');
       await page.waitForURL(/\/clients\/[a-zA-Z0-9-]+/);
       await page.goto('/clients'); // Go back to list for next creation
@@ -228,7 +269,7 @@ test.describe('Client Lifecycle Management', () => {
     await page.waitForTimeout(1000);
     
     // Test filter by customer type
-    await page.selectOption('select', { label: '🏢 Entreprises' });
+    await page.selectOption('select', 'business');
     await page.waitForTimeout(1000);
     
     // Should only show business clients
@@ -242,7 +283,7 @@ test.describe('Client Lifecycle Management', () => {
     await page.goto('/clients/new');
     await page.fill('input[name="name"]', testClient.name);
     await page.fill('input[name="email"]', testClient.email);
-    await page.selectOption('input[name="customer_type"][value="individual"]');
+    await page.click('input[name="customer_type"][value="individual"]');
     await page.click('button[type="submit"]');
     
     // Wait for client detail page
@@ -267,7 +308,7 @@ test.describe('Client Lifecycle Management', () => {
     await page.goto('/clients/new');
     await page.fill('input[name="name"]', testClient.name);
     await page.fill('input[name="email"]', testClient.email);
-    await page.selectOption('input[name="customer_type"][value="individual"]');
+    await page.click('input[name="customer_type"][value="individual"]');
     await page.click('button[type="submit"]');
     
     // Wait for client detail page
@@ -292,7 +333,7 @@ test.describe('Client Lifecycle Management', () => {
     // Create a client first
     await page.goto('/clients/new');
     await page.fill('input[name="name"]', 'Client to Delete');
-    await page.selectOption('input[name="customer_type"][value="individual"]');
+    await page.click('input[name="customer_type"][value="individual"]');
     await page.click('button[type="submit"]');
     
     // Wait for client detail page
@@ -320,7 +361,7 @@ test.describe('Client Lifecycle Management', () => {
     for (const name of clientNames) {
       await page.goto('/clients/new');
       await page.fill('input[name="name"]', name);
-      await page.selectOption('input[name="customer_type"][value="individual"]');
+      await page.click('input[name="customer_type"][value="individual"]');
       await page.click('button[type="submit"]');
       await page.waitForURL(/\/clients\/[a-zA-Z0-9-]+/);
       await page.goto('/clients');
@@ -352,14 +393,14 @@ test.describe('Client Lifecycle Management', () => {
     for (const name of clientNames) {
       await page.goto('/clients/new');
       await page.fill('input[name="name"]', name);
-      await page.selectOption('input[name="customer_type"][value="individual"]');
+      await page.click('input[name="customer_type"][value="individual"]');
       await page.click('button[type="submit"]');
       await page.waitForURL(/\/clients\/[a-zA-Z0-9-]+/);
       await page.goto('/clients');
     }
     
     // Test sorting by name A-Z
-    await page.selectOption('select', { label: '📝 Nom A-Z' });
+    await page.selectOption('select', 'name_asc');
     await page.waitForTimeout(1000);
     
     // Get all client names in order
@@ -378,7 +419,7 @@ test.describe('Client Lifecycle Management', () => {
     expect(names).toEqual(sortedNames);
     
     // Test sorting by name Z-A
-    await page.selectOption('select', { label: '📝 Nom Z-A' });
+    await page.selectOption('select', 'name_desc');
     await page.waitForTimeout(1000);
   });
 });

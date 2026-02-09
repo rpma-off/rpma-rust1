@@ -1,232 +1,221 @@
-# TEST_MAP.md - Cartographie des Tests RPMA v2
+# Test Map for RPMA Project
 
-Ce document établit la cartographie complète entre les fichiers de tests et les modules de production correspondants.
+## Overview
+This document maps all test files to their corresponding production code, functionality covered, test type, and current status.
 
-## Légende
-- **Type**: Unit (U), Integration (I), Contract (C), E2E (E), Property-based (P), Performance (Perf), Migration (M)
-- **Statut**: ✅ OK / ⚠️ suspect / ❌ obsolète / 🆕 manquant
-- **Couverture**: Haute / Moyenne / Faible / Nulle
+## Backend Test Files
 
-## 1. Tests Backend Rust
+### Unit Tests (`src-tauri/src/tests/unit/`)
 
-### Authentication & Sécurité
-| Fichier de Test | Code Ciblé | Fonctionnalités Couvertes | Type | Couverture | Statut |
-|-----------------|------------|--------------------------|------|------------|--------|
-| `auth_service_tests.rs` | `src/services/auth.rs` | Authentification, sessions, hash mots de passe | U | Haute | ✅ |
-| `two_factor_service_tests.rs` | `src/services/two_factor.rs` | TOTP, codes backup, chiffrement | U | Haute | ✅ |
-| `security_monitor_service_tests.rs` | `src/services/security_monitor.rs` | Monitoring sécurité, détection anomalies | U | Moyenne | ✅ |
-| `auth_service_proptests.rs` | `src/services/auth.rs` | Propriétés authentification (edge cases) | P | Moyenne | ⚠️ |
-| `user-management.e2e.spec.ts` | `src/commands/auth.rs` | Flow authentification complet | E | Haute | ✅ |
+| Test File | Target Code | Functionality | Type | Status |
+|------------|-------------|---------------|------|---------|
+| `auth_service_tests.rs` | `src-tauri/src/services/auth.rs` | Authentication logic, session management | Unit | OK |
+| `client_service_tests.rs` | `src-tauri/src/services/client.rs` | Client CRUD operations, validation | Unit | OK |
+| `intervention_workflow_tests.rs` | `src-tauri/src/services/intervention.rs` | Intervention workflow state transitions | Unit | OK |
+| `inventory_transaction_tests.rs` | `src-tauri/src/services/inventory.rs` | Stock movement, transaction logic | Unit | OK |
+| `material_repository_tests.rs` | `src-tauri/src/repositories/material.rs` | Material data access operations | Unit | OK |
+| `material_service_tests.rs` | `src-tauri/src/services/material.rs` | Material business logic, stock levels | Unit | OK |
+| `security_monitor_service_tests.rs` | `src-tauri/src/services/security.rs` | Security event monitoring, alerts | Unit | OK |
+| `task_creation_service_tests.rs` | `src-tauri/src/services/task_creation.rs` | Task creation validation, workflow | Unit | OK |
+| `task_creation_tests.rs` | `src-tauri/src/models/task.rs` | Task model creation, validation | Unit | OK |
+| `task_crud_tests.rs` | `src-tauri/src/repositories/task.rs` | Task CRUD database operations | Unit | OK |
+| `task_deletion_tests.rs` | `src-tauri/src/services/task_deletion.rs` | Task deletion logic, constraints | Unit | OK |
+| `task_update_tests.rs` | `src-tauri/src/services/task_update.rs` | Task update validation, business rules | Unit | OK |
+| `task_validation_service_tests.rs` | `src-tauri/src/services/task_validation.rs` | Task validation rules, business logic | Unit | OK |
+| `task_validation_tests.rs` | `src-tauri/src/models/task.rs` | Task model validation, constraints | Unit | OK |
+| `two_factor_service_tests.rs` | `src-tauri/src/services/two_factor.rs` | 2FA generation, validation | Unit | OK |
+| `workflow_validation_service_tests.rs` | `src-tauri/src/services/workflow_validation.rs` | Workflow state validation | Unit | OK |
 
-### Gestion des Tâches
-| Fichier de Test | Code Ciblé | Fonctionnalités Couvertes | Type | Couverture | Statut |
-|-----------------|------------|--------------------------|------|------------|--------|
-| `task_crud_tests.rs` | `src/repositories/task_repository.rs` | CRUD tâches | U | Haute | ✅ |
-| `task_validation_service_tests.rs` | `src/services/task_validation.rs` | Règles validation tâches | U | Haute | ✅ |
-| `task_creation_tests.rs` | `src/services/task.rs` | Logique création tâches | U | Haute | ✅ |
-| `task_update_tests.rs` | `src/services/task.rs` | Logique mise à jour tâches | U | Haute | ✅ |
-| `task_deletion_tests.rs` | `src/services/task.rs` | Suppression (soft/hard) tâches | U | Moyenne | ✅ |
-| `task_lifecycle_tests.rs` | `src/commands/task/` + `src/services/task.rs` | Cycle de vie complet | I | Haute | ✅ |
-| `task_validation_proptests.rs` | `src/services/task_validation.rs` | Propriétés validation | P | Moyenne | ⚠️ |
-| `tasks-creation.spec.ts` | `src/commands/task/create_task.rs` | Flow création tâche | E | Haute | ✅ |
+### Integration Tests (`src-tauri/src/tests/integration/`)
 
-### Workflows d'Intervention
-| Fichier de Test | Code Ciblé | Fonctionnalités Couvertes | Type | Couverture | Statut |
-|-----------------|------------|--------------------------|------|------------|--------|
-| `intervention_workflow_tests.rs` | `src/services/intervention_workflow.rs` | Orchestration workflow | U | Haute | ✅ |
-| `intervention_repository_test.rs` | `src/repositories/intervention_repository.rs` | Accès données interventions | U | Moyenne | ✅ |
-| `workflow_tests.rs` | `src/services/workflow.rs` | Interaction tâches-interventions | I | Moyenne | ✅ |
-| `intervention-management.spec.ts` | `src/commands/intervention/` | Flow gestion interventions | E | Haute | ✅ |
+| Test File | Target Code | Functionality | Type | Status |
+|------------|-------------|---------------|------|---------|
+| `audit_repository_test.rs` | `src-tauri/src/repositories/audit.rs` | Audit logging, retrieval | Integration | OK |
+| `client_task_intervention_material_flow.rs` | Multiple services | Cross-domain data flow, dependencies | Integration | OK |
+| `cross_domain_integration_tests.rs` | Multiple services | Service interaction, data consistency | Integration | OK |
+| `intervention_material_tracking.rs` | `src-tauri/src/services/intervention.rs` | Material consumption in interventions | Integration | OK |
+| `intervention_repository_test.rs` | `src-tauri/src/repositories/intervention.rs` | Intervention CRUD operations | Integration | OK |
+| `material_integration_tests.rs` | `src-tauri/src/services/material.rs` | Material management, stock updates | Integration | OK |
+| `network_resilience_tests.rs` | Various services | Behavior under network failures | Integration | OK |
+| `performance_integration_tests.rs` | Critical paths | Performance benchmarks, bottlenecks | Integration | OK |
+| `session_repository_test.rs` | `src-tauri/src/repositories/session.rs` | Session persistence, cleanup | Integration | OK |
+| `task_lifecycle_tests.rs` | `src-tauri/src/services/task.rs` | Task state transitions, workflow | Integration | OK |
+| `task_material_consumption_integration.rs` | Task/Material services | Material consumption tracking | Integration | OK |
+| `task_repository_test.rs` | `src-tauri/src/repositories/task.rs` | Task persistence, queries | Integration | OK |
+| `workflow_tests.rs` | `src-tauri/src/services/workflow.rs` | Workflow execution, state management | Integration | OK |
 
-### Gestion Clients
-| Fichier de Test | Code Ciblé | Fonctionnalités Couvertes | Type | Couverture | Statut |
-|-----------------|------------|--------------------------|------|------------|--------|
-| `client_service_tests.rs` | `src/services/client.rs` | CRUD clients, validation | U | Moyenne | ⚠️ |
-| `client_validation_proptests.rs` | `src/services/client_validation.rs` | Propriétés validation client | P | Faible | ⚠️ |
+### Migration Tests (`src-tauri/src/tests/migrations/`)
 
-### **INVENTAIRE & MATÉRIAUX - CRITIQUE MANQUANT**
-| Fichier de Test | Code Ciblé | Fonctionnalités Couvertes | Type | Couverture | Statut |
-|-----------------|------------|--------------------------|------|------------|--------|
-| `material_service_tests.rs` | `src/services/material.rs` | Gestion stocks, consommation | U | Nulle | 🆕 |
-| `material_transaction_tests.rs` | `src/services/inventory.rs` | Transactions inventaire | U | Nulle | 🆕 |
-| `material_repository_tests.rs` | `src/repositories/material_repository.rs` | Accès données matériaux | U | Nulle | 🆕 |
-| `inventory_integration_tests.rs` | `src/commands/material.rs` | Flow gestion inventaire | I | Nulle | 🆕 |
+| Test File | Target Migration | Functionality | Type | Status |
+|------------|------------------|---------------|------|---------|
+| `test_008_workflow_constraints.rs` | 008_workflow_constraints.sql | Workflow constraint creation | Migration | OK |
+| `test_011_duplicate_interventions.rs` | 011_duplicate_interventions.sql | Duplicate prevention logic | Migration | OK |
+| `test_012_material_tables.rs` | 012_material_tables.sql | Material table structure | Migration | OK |
+| `test_019_enhanced_performance_indexes.rs` | 019_enhanced_performance_indexes.sql | Performance index creation | Migration | OK |
+| `test_020_cache_metadata.rs` | 020_cache_metadata.sql | Cache table structure | Migration | OK |
+| `test_027_task_constraints.rs` | 027_task_constraints.sql | Task constraint validation | Migration | OK |
+| `test_framework.rs` | All migrations | Migration testing utilities | Migration | OK |
 
-### Audit & Logging
-| Fichier de Test | Code Ciblé | Fonctionnalités Couvertes | Type | Couverture | Statut |
-|-----------------|------------|--------------------------|------|------------|--------|
-| `audit_service_tests.rs` | `src/services/audit.rs` | Journalisation audits | U | Haute | ✅ |
-| `audit_service_proptests.rs` | `src/services/audit.rs` | Propriétés audit | P | Moyenne | ✅ |
+### Property-Based Tests (`src-tauri/src/tests/proptests/`)
 
-### Performance
-| Fichier de Test | Code Ciblé | Fonctionnalités Couvertes | Type | Couverture | Statut |
-|-----------------|------------|--------------------------|------|------------|--------|
-| `repository_performance_tests.rs` | `src/repositories/` | Performance repositories | Perf | Moyenne | ⚠️ |
+| Test File | Target Code | Functionality | Type | Status |
+|------------|-------------|---------------|------|---------|
+| `auth_service_proptests.rs` | `src-tauri/src/services/auth.rs` | Auth with random inputs, edge cases | Property-based | OK |
+| `audit_service_proptests.rs` | `src-tauri/src/services/audit.rs` | Audit with random events | Property-based | OK |
+| `client_validation_proptests.rs` | `src-tauri/src/services/client.rs` | Client validation with random data | Property-based | OK |
+| `task_validation_proptests.rs` | `src-tauri/src/models/task.rs` | Task validation edge cases | Property-based | OK |
+| `task_validation_service_proptests.rs` | `src-tauri/src/services/task_validation.rs` | Validation service robustness | Property-based | OK |
 
-### Tests de Migrations
-| Fichier de Test | Code Ciblé | Fonctionnalités Couvertes | Type | Couverture | Statut |
-|-----------------|------------|--------------------------|------|------------|--------|
-| `test_011_duplicate_interventions.rs` | `migrations/011_*.sql` | Contrainte unicité interventions | M | Haute | ✅ |
-| `test_008_workflow_constraints.rs` | `migrations/008_*.sql` | Contraintes workflows | M | Haute | ✅ |
-| `test_012_material_tables.rs` | `migrations/012_*.sql` | Tables matériaux | M | Moyenne | ✅ |
-| `test_019_enhanced_performance_indexes.rs` | `migrations/019_*.sql` | Index performance | M | Haute | ✅ |
-| `test_020_cache_metadata.rs` | `migrations/020_*.sql` | Métadonnées cache | M | Moyenne | ✅ |
-| `test_027_task_constraints.rs` | `migrations/027_*.sql` | Contraintes tâches | M | Haute | ✅ |
+### Command Tests (`src-tauri/tests/commands/`)
 
-## 2. Tests Frontend React/TypeScript
+| Test File | Target Commands | Functionality | Type | Status |
+|------------|-----------------|---------------|------|---------|
+| `auth_commands_test.rs` | `src-tauri/src/commands/auth.rs` | Auth IPC endpoints, error handling | Contract | SUSPECT |
+| `client_commands_test.rs` | `src-tauri/src/commands/client.rs` | Client IPC operations | Contract | SUSPECT |
+| `intervention_commands_test.rs` | `src-tauri/src/commands/intervention.rs` | Intervention IPC endpoints | Contract | SUSPECT |
+| `task_commands_test.rs` | `src-tauri/src/commands/task.rs` | Task IPC commands | Contract | SUSPECT |
+| `user_commands_test.rs` | `src-tauri/src/commands/user.rs` | User management IPC | Contract | SUSPECT |
 
-### Composants Tâches & Workflows
-| Fichier de Test | Code Ciblé | Fonctionnalités Couvertes | Type | Couverture | Statut |
-|-----------------|------------|--------------------------|------|------------|--------|
-| `TaskManager.test.tsx` | `components/TaskManager.tsx` | Interface gestion tâches | U | Haute | ✅ |
-| `TaskDetails.test.tsx` | `components/TaskDetails.tsx` | Affichage détails tâche | U | Haute | ✅ |
-| `WorkflowProgressCard.test.tsx` | `components/WorkflowProgressCard.tsx` | Affichage progression workflow | U | Haute | ✅ |
-| `WorkflowProgressCard.integration.test.tsx` | `components/WorkflowProgressCard.tsx` | Intégration workflow | I | Moyenne | ✅ |
-| `useTasks.integration.test.tsx` | `hooks/useTasks.ts` | Hook gestion tâches | I | Haute | ✅ |
-| `useTaskState.test.ts` | `hooks/useTaskState.ts` | État tâches | U | Moyenne | ✅ |
+### Performance Tests (`src-tauri/src/tests/performance/`)
 
-### Composants Utilisateurs
-| Fichier de Test | Code Ciblé | Fonctionnalités Couvertes | Type | Couverture | Statut |
-|-----------------|------------|--------------------------|------|------------|--------|
-| `UserForm.test.tsx` | `components/UserForm.tsx` | Formulaire utilisateur | U | Moyenne | ✅ |
+| Test File | Target Code | Functionality | Type | Status |
+|------------|-------------|---------------|------|---------|
+| `repository_performance_tests.rs` | All repositories | Database query performance | Performance | OK |
 
-### Composants Spécialisés
-| Fichier de Test | Code Ciblé | Fonctionnalités Couvertes | Type | Couverture | Statut |
-|-----------------|------------|--------------------------|------|------------|--------|
-| `SignatureCapture.test.tsx` | `components/SignatureCapture.tsx` | Capture signature | U | Moyenne | ✅ |
-| `QualityDashboard.test.tsx` | `components/QualityDashboard.tsx` | Tableau de bord qualité | U | Moyenne | ✅ |
-| `PhotoGallery.test.tsx` | `components/PhotoGallery.tsx` | Galerie photos | U | Moyenne | ✅ |
-| `GPSMonitor.test.tsx` | `components/GPSMonitor.tsx` | Monitoring GPS | U | Moyenne | ⚠️ |
+## Frontend Test Files
 
-### Data Explorer
-| Fichier de Test | Code Ciblé | Fonctionnalités Couvertes | Type | Couverture | Statut |
-|-----------------|------------|--------------------------|------|------------|--------|
-| `DataExplorer.test.tsx` | `components/DataExplorer.tsx` | Interface exploration données | U | Haute | ✅ |
-| `SearchBar.test.tsx` | `components/SearchBar.tsx` | Barre recherche | U | Haute | ✅ |
-| `ResultsTable.test.tsx` | `components/ResultsTable.tsx` | Tableau résultats | U | Haute | ✅ |
-| `RecordDetailPanel.test.tsx` | `components/RecordDetailPanel.tsx` | Panneau détails | U | Haute | ✅ |
-| `EntitySelector.test.tsx` | `components/EntitySelector.tsx` | Sélecteur entités | U | Haute | ✅ |
+### IPC Contract Tests (`frontend/src/lib/ipc/__tests__/`)
 
-### Rapports
-| Fichier de Test | Code Ciblé | Fonctionnalités Couvertes | Type | Couverture | Statut |
-|-----------------|------------|--------------------------|------|------------|--------|
-| `ReportContent.test.tsx` | `components/reports/ReportContent.tsx` | Contenu rapports | U | Moyenne | ✅ |
-| `ReportTabs.test.tsx` | `components/reports/ReportTabs.tsx` | Onglets rapports | U | Moyenne | ✅ |
-| `ExportControls.test.tsx` | `components/reports/ExportControls.tsx` | Contrôles export | U | Moyenne | ✅ |
-| `DateRangePicker.test.tsx` | `components/reports/DateRangePicker.tsx` | Sélecteur dates | U | Moyenne | ✅ |
-| `ReportsPage.integration.test.tsx` | `pages/ReportsPage.tsx` | Page rapports | I | Moyenne | ✅ |
+| Test File | Target IPC | Functionality | Type | Status |
+|------------|------------|---------------|------|---------|
+| `clients-ipc-contract.test.ts` | client commands | Client data structure validation | Contract | OK |
+| `interventions-ipc-contract.test.ts` | intervention commands | Intervention data contracts | Contract | OK |
+| `inventory-ipc-contract.test.ts` | inventory commands | Inventory data validation | Contract | OK |
+| `inventory-ipc-contract-new.test.ts` | new inventory commands | Updated inventory contracts | Contract | OK |
+| `tasks-ipc-contract.test.ts` | task commands | Task data structure validation | Contract | OK |
+| `settings-arg-shape.test.ts` | settings commands | Settings argument validation | Contract | OK |
+| `security-arg-shape.test.ts` | security commands | Security argument shapes | Contract | OK |
 
-### Utilitaires & Hooks
-| Fichier de Test | Code Ciblé | Fonctionnalités Couvertes | Type | Couverture | Statut |
-|-----------------|------------|--------------------------|------|------------|--------|
-| `useAutoSave.test.ts` | `hooks/useAutoSave.ts` | Sauvegarde automatique | U | Haute | ✅ |
-| `useSearchRecords.test.ts` | `hooks/useSearchRecords.ts` | Recherche enregistrements | U | Haute | ✅ |
+### Component Tests (`frontend/src/components/`)
 
-### **INVENTAIRE FRONTEND - MANQUANT**
-| Fichier de Test | Code Ciblé | Fonctionnalités Couvertes | Type | Couverture | Statut |
-|-----------------|------------|--------------------------|------|------------|--------|
-| `InventoryManager.test.tsx` | `components/InventoryManager.tsx` | Gestion inventaire | U | Nulle | 🆕 |
-| `MaterialForm.test.tsx` | `components/MaterialForm.tsx` | Formulaire matériaux | U | Nulle | 🆕 |
-| `StockLevelIndicator.test.tsx` | `components/StockLevelIndicator.tsx` | Indicateur stock | U | Nulle | 🆕 |
-| `useInventory.test.tsx` | `hooks/useInventory.ts` | Hook inventaire | U | Nulle | 🆕 |
+| Test File | Target Component | Functionality | Type | Status |
+|------------|------------------|---------------|------|---------|
+| `InventoryManager.test.tsx` | InventoryManager | Inventory management UI | Unit | OK |
+| `MaterialForm.test.tsx` | MaterialForm | Material creation/editing | Unit | OK |
+| `StockLevelIndicator.test.tsx` | StockLevelIndicator | Stock level visualization | Unit | OK |
+| `UserForm.test.tsx` | UserForm | User creation/editing | Unit | OK |
+| `error-boundary.test.tsx` | ErrorBoundary | Error handling UI | Unit | OK |
+| `inventory/InventoryManager.test.tsx` | Inventory components | Inventory-specific UI | Unit | OK |
+| `inventory/StockLevelIndicator.test.tsx` | StockLevelIndicator | Stock visualization | Unit | OK |
+| `tasks/TaskManager.test.tsx` | TaskManager | Task management interface | Unit | OK |
+| `tasks/TaskDetails.test.tsx` | TaskDetails | Task detail view | Unit | OK |
+| `tasks/WorkflowProgressCard.test.tsx` | WorkflowProgressCard | Workflow visualization | Unit | OK |
+| `settings/SecurityTab.contract.test.tsx` | SecurityTab | Security settings UI | Contract | OK |
+| `settings/PreferencesTab.payload.test.tsx` | PreferencesTab | Preference settings | Contract | OK |
+| `settings/PerformanceTab.payload.test.tsx` | PerformanceTab | Performance settings | Contract | OK |
 
-## 3. Tests IPC/Contracts
+### Hook Tests (`frontend/src/hooks/`)
 
-### Tests Contrats
-| Fichier de Test | Code Ciblé | Fonctionnalités Couvertes | Type | Couverture | Statut |
-|-----------------|------------|--------------------------|------|------------|--------|
-| `settings-arg-shape.test.ts` | `lib/ipc/domains/settings.ts` | Validation arguments settings | C | Haute | ✅ |
-| `security-arg-shape.test.ts` | `lib/ipc/domains/auth.ts` | Validation arguments sécurité | C | Haute | ✅ |
-| `SecurityTab.contract.test.tsx` | `components/SecurityTab.tsx` | Contract sécurité | C | Haute | ✅ |
-| `PreferencesTab.payload.test.tsx` | `components/PreferencesTab.tsx` | Payload préférences | C | Moyenne | ✅ |
-| `PerformanceTab.payload.test.tsx` | `components/PerformanceTab.tsx` | Payload performance | C | Moyenne | ✅ |
-| `settings.cache.test.ts` | `lib/ipc/domains/settings.ts` | Cache settings | C | Moyenne | ✅ |
+| Test File | Target Hook | Functionality | Type | Status |
+|------------|-------------|---------------|------|---------|
+| `useInventory.test.ts` | useInventory | Inventory state management | Unit | OK |
+| `useAutoSave.test.ts` | useAutoSave | Auto-save functionality | Unit | OK |
+| `hooks/useTasks.integration.test.ts` | useTasks | Task state management | Integration | OK |
+| `hooks/useSearchRecords.test.ts` | useSearchRecords | Search functionality | Unit | OK |
+| `hooks/useTaskState.test.ts` | useTaskState | Task state transitions | Unit | OK |
 
-### **CONTRATS IPC MANQUANTS**
-| Fichier de Test | Code Ciblé | Fonctionnalités Couvertes | Type | Couverture | Statut |
-|-----------------|------------|--------------------------|------|------------|--------|
-| `tasks-ipc-contract.test.ts` | `lib/ipc/domains/tasks.ts` | Contract tâches complet | C | Faible | 🆕 |
-| `interventions-ipc-contract.test.ts` | `lib/ipc/domains/interventions.ts` | Contract interventions | C | Faible | 🆕 |
-| `inventory-ipc-contract.test.ts` | `lib/ipc/domains/inventory.ts` | Contract inventaire | C | Nulle | 🆕 |
-| `clients-ipc-contract.test.ts` | `lib/ipc/domains/clients.ts` | Contract clients | C | Faible | 🆕 |
+### Integration Tests (`frontend/src/__tests__/`)
+- **components/data-explorer/** - Data explorer components
+- **components/reports/** - Report components
+- **hooks/** - Hook integration tests
 
-## 4. Tests E2E Playwright
+### E2E Tests (`frontend/tests/e2e/`)
 
-| Fichier de Test | Code Ciblé | Fonctionnalités Couvertes | Type | Couverture | Statut |
-|-----------------|------------|--------------------------|------|------------|--------|
-| `user-authentication.spec.ts` | Flow authentification | Login/logout/2FA | E | Haute | ✅ |
-| `intervention-management.spec.ts` | Flow interventions | Gestion interventions | E | Haute | ✅ |
-| `tasks-creation.spec.ts` | Flow création tâches | Création et gestion tâches | E | Haute | ✅ |
+| Test File | Target Flow | Functionality | Type | Status |
+|------------|-------------|---------------|------|---------|
+| `client-lifecycle.spec.ts` | Client management | Full client CRUD flow | E2E | OK |
+| `inventory-management.spec.ts` | Inventory management | Stock management workflow | E2E | OK |
+| `intervention-management.spec.ts` | Intervention management | Intervention lifecycle | E2E | OK |
+| `report-generation.spec.ts` | Report generation | Report creation and export | E2E | OK |
+| `tasks-creation.spec.ts` | Task creation | Task creation workflow | E2E | OK |
+| `user-authentication.spec.ts` | Authentication | Login/logout/2FA flows | E2E | OK |
 
-### **E2E MANQUANTS**
-| Fichier de Test | Code Ciblé | Fonctionnalités Couvertes | Type | Couverture | Statut |
-|-----------------|------------|--------------------------|------|------------|--------|
-| `inventory-management.spec.ts` | Flow inventaire | Gestion complète inventaire | E | Nulle | 🆕 |
-| `client-lifecycle.spec.ts` | Flow clients | Cycle de vie clients | E | Nulle | 🆕 |
-| `report-generation.spec.ts` | Flow rapports | Génération et export rapports | E | Nulle | 🆕 |
+## Test Utilities
 
-## Résumé des Lacunes Critiques
+### Backend Test Utilities
+- **src-tauri/src/test_utils.rs** - Common test utilities and fixtures
 
-### 🔴 Urgence 1: Inventaire & Matériaux
-- **Backend**: Aucun test pour MaterialService, InventoryService
-- **Frontend**: Aucun composant inventaire testé
-- **IPC**: Aucun test contract inventaire
-- **E2E**: Aucun test flow inventaire
+## Missing Tests (High Priority)
 
-### 🟡 Urgence 2: Contrats IPC Incomplets
-- Tasks: tests basiques mais pas tous les cas d'erreur
-- Interventions: tests basiques seulement
-- Clients: très limité
+| Module | Missing Tests | Impact |
+|--------|---------------|---------|
+| Analytics service (023) | All analytics functionality | HIGH |
+| User settings (024) | Settings persistence, validation | HIGH |
+| Inventory management (025) | New inventory features | HIGH |
+| Messaging system (026) | Message queue, notifications | HIGH |
+| Sync queue service | Offline sync, conflict resolution | MEDIUM |
+| Event bus system | Event handling, subscriptions | MEDIUM |
+| Cache management | Cache invalidation, performance | MEDIUM |
 
-### 🟡 Urgence 3: Tests d'Intégration Limités
-- Cross-domain (ex: tâche → intervention → consommation matériel)
-- Performance en conditions réelles
-- Gestion erreurs réseau/synchronisation
+## Status Legend
+- **OK**: Test is up-to-date and properly validates behavior
+- **SUSPECT**: Test may have issues (needs review)
+- **OBSOLETE**: Test is outdated or non-functional
+- **MISSING**: Critical code without corresponding tests
 
-### 🟢 Faible Priorité
-- Tests UI accessibility (a11y)
-- Tests performance frontend
-- Tests mutation (mutation testing)
+## Test Coverage Areas
 
-## Commandes d'Exécution des Tests
+### Well Covered Areas
+1. **Authentication** - Comprehensive unit, integration, and property tests
+2. **Task Management** - Extensive CRUD and validation testing
+3. **Material Management** - Good coverage of material operations
+4. **Workflow Management** - Workflow orchestration tested
 
-### Backend Tests
-```bash
-# Run all backend tests
-cd src-tauri && cargo test
+### Partially Covered Areas
+1. **Client Management** - Basic tests present but missing edge cases
+2. **Inventory Management** - Core operations tested but missing some scenarios
+3. **Audit System** - Basic functionality tested but missing comprehensive scenarios
 
-# Run specific test modules
-cd src-tauri && cargo test auth_service
-cd src-tauri && cargo test task_validation
-cd src-tauri && cargo test intervention_workflow
-```
+### Poorly Covered Areas
+1. **Analytics Dashboard** (migration 025) - No tests found
+2. **Messaging System** (migration 023) - No tests found
+3. **Two-Factor Authentication** (migration 015) - Limited tests
+4. **User Settings** (migrations 026, 027) - No specific tests
+5. **Performance Monitoring** - Limited performance tests
 
-### Frontend Tests
-```bash
-# Run all frontend tests
-cd frontend && npm test
+## Missing Test Areas
 
-# Run specific test patterns
-cd frontend && npm test -- --testNamePattern="auth"
-cd frontend && npm test -- --testNamePattern="tasks"
-cd frontend && npm test -- --testNamePattern="intervention"
-```
+### Recent Features Without Tests
+1. **User Settings and Preferences** (migrations 025-027)
+2. **Cache Metadata System** (migration 020)
+3. **Task History Tracking** (migration 022)
+4. **Client Statistics Views** (migration 021)
+5. **Enhanced Performance Indexes** (migration 019)
 
-### E2E Tests
-```bash
-# Run all e2e tests
-cd frontend && npm run test:e2e
+### Frontend Missing Tests
+1. **Settings Components** - Limited tests for settings UI
+2. **Security Components** - No tests for security features
+3. **Performance Monitoring UI** - No tests for performance components
+4. **Cache Management** - No tests for cache components
+5. **Messaging UI** - No tests for messaging interface
 
-# Run specific e2e tests
-cd frontend && npm run test:e2e -- --grep="Authentication"
-cd frontend && npm run test:e2e -- --grep="Task Management"
-```
+## Test Health Notes
 
-### Coverage Reports
-```bash
-# Backend coverage (if configured)
-cd src-tauri && cargo llvm-cov
+### Test Patterns
+1. **Backend** - Uses a mix of unit, integration, and property-based tests
+2. **Frontend** - Focused on IPC contract validation and component testing
+3. **Test Utilities** - Good shared utilities for backend tests
 
-# Frontend coverage
-cd frontend && npm run test:coverage
-```
+### Test Quality
+1. **Good** - Authentication and task management tests
+2. **Needs Improvement** - Client, inventory, and workflow tests
+3. **Missing** - Recent features and frontend components
+
+## Recommendations
+
+1. Add tests for recent migrations (025-027)
+2. Expand frontend test coverage for new components
+3. Add property-based tests for critical operations
+4. Improve integration test coverage for cross-domain scenarios
+5. Add performance tests for database operations
+6. Implement end-to-end tests for critical workflows

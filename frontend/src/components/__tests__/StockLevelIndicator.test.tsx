@@ -15,13 +15,12 @@ jest.mock('lucide-react', () => ({
 
 describe('StockLevelIndicator', () => {
   const createMockMaterial = (overrides: Partial<Material> = {}): Material => ({
-    ...overrides,
-    // Add default values for required properties
     id: overrides.id || '1',
     sku: overrides.sku || 'TEST-001',
     name: overrides.name || 'Test Material',
-    material_type: overrides.material_type || 'ppf_film',
-    unit_of_measure: overrides.unit_of_measure || 'piece',
+    description: overrides.description || 'Test description',
+    material_type: overrides.material_type || 'ppf_film' as MaterialType,
+    unit_of_measure: overrides.unit_of_measure || 'meter' as UnitOfMeasure,
     current_stock: overrides.current_stock || 100,
     currency: overrides.currency || 'EUR',
     is_active: overrides.is_active !== false,
@@ -31,20 +30,6 @@ describe('StockLevelIndicator', () => {
     created_at: overrides.created_at || '2023-01-01T00:00:00Z',
     updated_at: overrides.updated_at || '2023-01-01T00:00:00Z',
     synced: overrides.synced !== false,
-  });
-    id: '1',
-    sku: 'TEST-001',
-    name: 'Test Material',
-    description: 'Test description',
-    material_type: 'ppf_film' as MaterialType,
-    unit_of_measure: 'meter' as UnitOfMeasure,
-    current_stock: 100,
-    currency: 'EUR',
-    is_active: true,
-    is_discontinued: false,
-    created_at: '2023-01-01T00:00:00Z',
-    updated_at: '2023-01-01T00:00:00Z',
-    synced: true,
     ...overrides,
   });
 

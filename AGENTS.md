@@ -118,3 +118,46 @@ An agent that has thoroughly reviewed these files should be able to:
 ✅ Navigate the codebase efficiently  
 ✅ Avoid common pitfalls  
 ✅ Run appropriate validation commands
+
+## Commandes d'Exécution des Tests
+
+### Backend Tests
+```bash
+# Run all backend tests
+cd src-tauri && cargo test
+
+# Run specific test modules
+cd src-tauri && cargo test auth_service
+cd src-tauri && cargo test task_validation
+cd src-tauri && cargo test intervention_workflow
+```
+
+### Frontend Tests
+```bash
+# Run all frontend tests
+cd frontend && npm test
+
+# Run specific test patterns
+cd frontend && npm test -- --testNamePattern="auth"
+cd frontend && npm test -- --testNamePattern="tasks"
+cd frontend && npm test -- --testNamePattern="intervention"
+```
+
+### E2E Tests
+```bash
+# Run all e2e tests
+cd frontend && npm run test:e2e
+
+# Run specific e2e tests
+cd frontend && npm run test:e2e -- --grep="Authentication"
+cd frontend && npm run test:e2e -- --grep="Task Management"
+```
+
+### Coverage Reports
+```bash
+# Backend coverage (if configured)
+cd src-tauri && cargo llvm-cov
+
+# Frontend coverage
+cd frontend && npm run test:coverage
+```

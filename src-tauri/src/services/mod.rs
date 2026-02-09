@@ -11,6 +11,7 @@ pub mod cache;
 pub mod calendar;
 pub mod calendar_event_service;
 pub mod client;
+pub mod client_statistics;
 pub mod client_validation;
 pub mod dashboard;
 pub mod document_storage;
@@ -63,6 +64,7 @@ pub mod workflow_validation;
 pub use analytics::AnalyticsService;
 
 pub use client::ClientService;
+pub use client_statistics::ClientStatisticsService;
 pub use dashboard::DashboardService;
 
 pub use intervention::InterventionService;

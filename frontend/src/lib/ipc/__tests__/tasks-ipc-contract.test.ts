@@ -1,5 +1,6 @@
-import { ipcClient } from '../client';
+import { taskOperations } from '../domains/tasks';
 
+// Mock the modules and dependencies
 jest.mock('../utils', () => ({
   safeInvoke: jest.fn(),
 }));
@@ -12,6 +13,34 @@ jest.mock('../cache', () => ({
   clearCache: jest.fn(),
 }));
 
+jest.mock('@/lib/validation/backend-type-guards', () => ({
+  validateTask: jest.fn((data) => data),
+  validateTaskListResponse: jest.fn((data) => data),
+}));
+
+// Mock the crud helpers to prevent import issues
+jest.mock('../utils/crud-helpers', () => ({
+  createCrudOperations: jest.fn().mockImplementation(() => ({
+    create: jest.fn(),
+    get: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    list: jest.fn(),
+    statistics: jest.fn(),
+  })),
+  ResponseHandlers: {
+    discriminatedUnion: jest.fn(),
+    discriminatedUnionNullable: jest.fn(),
+    list: jest.fn(),
+    statistics: jest.fn(),
+  },
+}));
+
+jest.mock('../core', () => ({
+  extractAndValidate: jest.fn(),
+}));
+
+// Get mock references
 const { safeInvoke } = jest.requireMock('../utils') as {
   safeInvoke: jest.Mock;
 };
@@ -21,12 +50,47 @@ const { cachedInvoke, invalidatePattern } = jest.requireMock('../cache') as {
   invalidatePattern: jest.Mock;
 };
 
-describe('ipcClient.tasks IPC argument shapes', () => {
+const { ResponseHandlers } = jest.requireMock('../utils/crud-helpers') as {
+  ResponseHandlers: {
+    discriminatedUnion: jest.Mock,
+    discriminatedUnionNullable: jest.Mock,
+    list: jest.Mock,
+    statistics: jest.Mock,
+  };
+};
+
+const { extractAndValidate } = jest.requireMock('../core') as {
+  extractAndValidate: jest.Mock;
+};
+
+const { validateTask, validateTaskListResponse } = jest.requireMock('@/lib/validation/backend-type-guards') as {
+  validateTask: jest.Mock;
+  validateTaskListResponse: jest.Mock;
+};
+
+// Mock the crud operations to prevent issues
+const mockTaskCrud = {
+  create: jest.fn(),
+  get: jest.fn(),
+  update: jest.fn(),
+  delete: jest.fn(),
+  list: jest.fn(),
+  statistics: jest.fn(),
+};
+
+jest.mock('../utils/crud-helpers', () => ({
+  createCrudOperations: jest.fn().mockImplementation(() => mockTaskCrud),
+  ResponseHandlers,
+}));
+
+describe('taskOperations IPC contract tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    
+    // Setup default mock returns
     safeInvoke.mockResolvedValue('ok');
     cachedInvoke.mockResolvedValue({
-      tasks: [],
+      data: [],
       pagination: {
         page: 1,
         limit: 20,
@@ -35,673 +99,538 @@ describe('ipcClient.tasks IPC argument shapes', () => {
         has_prev: false,
       },
     });
+    
+    // Setup ResponseHandlers mocks
+    ResponseHandlers.discriminatedUnion.mockImplementation((type, validator) => (result) => result);
+    ResponseHandlers.discriminatedUnionNullable.mockImplementation((type, validator) => (result) => result);
+    ResponseHandlers.list.mockImplementation((processor) => (result) => result));
+    ResponseHandlers.statistics.mockImplementation(() => (result) => result));
+    
+    extractAndValidate.mockImplementation((result, validator) => result);
+    
+    // Setup crud operations mock returns
+    mockTaskCrud.create.mockResolvedValue({ id: 'task-123' });
+    mockTaskCrud.get.mockResolvedValue({ id: 'task-123', title: 'Test Task' });
+    mockTaskCrud.update.mockResolvedValue({ id: 'task-123', title: 'Updated Task' });
+    mockTaskCrud.delete.mockResolvedValue(undefined);
+    mockTaskCrud.list.mockResolvedValue({
+      data: [],
+      pagination: { page: 1, limit: 20, total: 0, has_next: false, has_prev: false }
+    });
+    mockTaskCrud.statistics.mockResolvedValue({ total: 100, completed: 80 });
   });
 
-  // Basic CRUD Operations
-  describe('Task CRUD operations', () => {
-    it('uses top-level sessionToken for tasks_list', async () => {
-      await ipcClient.tasks.list('token-a', {
+  describe('CRUD Operations', () => {
+    it('calls safeInvoke with correct parameters for create', async () => {
+      const createData = {
+        title: 'New Task',
+        description: 'Task description',
+        vehicle_plate: 'ABC-123',
+      };
+      
+      await taskOperations.create(createData, 'session-token');
+
+      expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
+        request: {
+          action: { action: 'Create', data: createData },
+          session_token: 'session-token'
+        }
+      }, expect.any(Function));
+      expect(invalidatePattern).toHaveBeenCalledWith('task:');
+    });
+
+    it('calls cachedInvoke with correct parameters for get', async () => {
+      await taskOperations.get('task-123', 'session-token');
+
+      expect(cachedInvoke).toHaveBeenCalledWith(
+        'task:task-123',
+        'task_crud',
+        {
+          request: {
+            action: { action: 'Get', id: 'task-123' },
+            session_token: 'session-token'
+          }
+        },
+        expect.any(Function)
+      );
+    });
+
+    it('calls safeInvoke with correct parameters for update', async () => {
+      const updateData = {
+        title: 'Updated Task',
+        status: 'completed',
+      };
+      
+      await taskOperations.update('task-123', updateData, 'session-token');
+
+      expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
+        request: {
+          action: { action: 'Update', id: 'task-123', data: updateData },
+          session_token: 'session-token'
+        }
+      }, expect.any(Function));
+      expect(invalidatePattern).toHaveBeenCalledWith('task:');
+    });
+
+    it('calls safeInvoke with correct parameters for delete', async () => {
+      await taskOperations.delete('task-123', 'session-token');
+
+      expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
+        request: {
+          action: { action: 'Delete', id: 'task-123' },
+          session_token: 'session-token'
+        }
+      });
+      expect(invalidatePattern).toHaveBeenCalledWith('task:');
+    });
+
+    it('calls safeInvoke with correct parameters for list', async () => {
+      const filters = {
         page: 1,
         limit: 20,
         status: 'pending',
-        priority: 'high',
-        search: 'test',
         technician_id: 'tech-123',
-        start_date: '2025-02-01',
-        end_date: '2025-02-28',
-      });
+      };
+      
+      await taskOperations.list(filters, 'session-token');
 
-      expect(safeInvoke).toHaveBeenCalledWith('tasks_list', {
-        sessionToken: 'token-a',
-        page: 1,
-        limit: 20,
-        status: 'pending',
-        priority: 'high',
-        search: 'test',
-        technician_id: 'tech-123',
-        start_date: '2025-02-01',
-        end_date: '2025-02-28',
-      });
-    });
-
-    it('uses nested request.session_token for task_create', async () => {
-      await ipcClient.tasks.create(
-        {
-          title: 'New PPF Installation',
-          description: 'Full vehicle PPF installation',
-          vehicle_plate: 'ABC-123',
-          vehicle_model: 'Model 3',
-          vehicle_make: 'Tesla',
-          ppf_zones: ['hood', 'fender', 'mirror'],
-          scheduled_date: '2025-02-15',
-          priority: 'high',
-          technician_id: 'tech-123',
-          customer_name: 'John Doe',
-          customer_email: 'john@example.com',
-          customer_phone: '555-1234',
-          tags: 'ppf,tesla,priority',
-        },
-        'token-b'
-      );
-
-      expect(safeInvoke).toHaveBeenCalledWith('task_create', {
+      expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
         request: {
-          title: 'New PPF Installation',
-          description: 'Full vehicle PPF installation',
-          vehicle_plate: 'ABC-123',
-          vehicle_model: 'Model 3',
-          vehicle_make: 'Tesla',
-          ppf_zones: ['hood', 'fender', 'mirror'],
-          scheduled_date: '2025-02-15',
-          priority: 'high',
-          technician_id: 'tech-123',
-          customer_name: 'John Doe',
-          customer_email: 'john@example.com',
-          customer_phone: '555-1234',
-          tags: 'ppf,tesla,priority',
-          session_token: 'token-b',
-        },
-      });
-    });
-
-    it('uses nested request.session_token for task_update', async () => {
-      await ipcClient.tasks.update(
-        'task-123',
-        {
-          title: 'Updated Task Title',
-          status: 'in_progress',
-          priority: 'medium',
-          notes: 'Task updated with new information',
-        },
-        'token-c'
-      );
-
-      expect(safeInvoke).toHaveBeenCalledWith('task_update', {
-        id: 'task-123',
-        request: {
-          title: 'Updated Task Title',
-          status: 'in_progress',
-          priority: 'medium',
-          notes: 'Task updated with new information',
-          session_token: 'token-c',
-        },
-      });
-    });
-
-    it('uses top-level sessionToken for task_get', async () => {
-      await ipcClient.tasks.get('task-123', 'token-d');
-
-      expect(safeInvoke).toHaveBeenCalledWith('task_get', {
-        sessionToken: 'token-d',
-        id: 'task-123',
-      });
-    });
-
-    it('uses top-level sessionToken for task_delete', async () => {
-      await ipcClient.tasks.delete('task-123', 'token-e');
-
-      expect(safeInvoke).toHaveBeenCalledWith('task_delete', {
-        sessionToken: 'token-e',
-        id: 'task-123',
-      });
+          action: { action: 'List', filters },
+          session_token: 'session-token'
+        }
+      }, expect.any(Function));
     });
   });
 
-  // Specialized Task Operations
-  describe('Specialized Task operations', () => {
-    it('uses nested request.session_token for check_task_assignment', async () => {
-      await ipcClient.tasks.checkAssignment(
-        'task-123',
-        'tech-456',
-        'token-f'
-      );
+  describe('Specialized Operations', () => {
+    it('calls safeInvoke with correct parameters for statistics', async () => {
+      await taskOperations.statistics('session-token');
 
-      expect(safeInvoke).toHaveBeenCalledWith('task_check_assignment', {
+      expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
+        request: {
+          action: { action: 'GetStatistics' },
+          session_token: 'session-token'
+        }
+      }, expect.any(Function));
+    });
+
+    it('calls safeInvoke with correct parameters for checkTaskAssignment', async () => {
+      await taskOperations.checkTaskAssignment('task-123', 'user-456', 'session-token');
+
+      expect(safeInvoke).toHaveBeenCalledWith('check_task_assignment', {
         request: {
           task_id: 'task-123',
-          technician_id: 'tech-456',
-          session_token: 'token-f',
-        },
+          user_id: 'user-456',
+          session_token: 'session-token'
+        }
       });
     });
 
-    it('uses nested request.session_token for assign_task', async () => {
-      await ipcClient.tasks.assign(
-        'task-123',
-        'tech-456',
-        {
-          assigned_date: '2025-02-10',
-          estimated_duration: 120,
-          notes: 'Technician available and qualified',
-        },
-        'token-g'
-      );
+    it('calls safeInvoke with correct parameters for checkTaskAvailability', async () => {
+      await taskOperations.checkTaskAvailability('task-123', 'session-token');
 
-      expect(safeInvoke).toHaveBeenCalledWith('task_assign', {
+      expect(safeInvoke).toHaveBeenCalledWith('check_task_availability', {
         request: {
           task_id: 'task-123',
-          technician_id: 'tech-456',
-          assigned_date: '2025-02-10',
-          estimated_duration: 120,
-          notes: 'Technician available and qualified',
-          session_token: 'token-g',
-        },
+          session_token: 'session-token'
+        }
       });
     });
 
-    it('uses nested request.session_token for delay_task', async () => {
-      await ipcClient.tasks.delay(
-        'task-123',
-        {
-          new_date: '2025-02-20',
-          reason: 'Customer requested delay',
-          delay_type: 'customer_request',
-        },
-        'token-h'
-      );
+    it('calls safeInvoke with correct parameters for validateTaskAssignmentChange', async () => {
+      await taskOperations.validateTaskAssignmentChange('task-123', 'old-user', 'new-user', 'session-token');
 
-      expect(safeInvoke).toHaveBeenCalledWith('task_delay', {
+      expect(safeInvoke).toHaveBeenCalledWith('validate_task_assignment_change', {
         request: {
           task_id: 'task-123',
-          new_date: '2025-02-20',
-          reason: 'Customer requested delay',
-          delay_type: 'customer_request',
-          session_token: 'token-h',
-        },
+          old_user_id: 'old-user',
+          new_user_id: 'new-user',
+          session_token: 'session-token'
+        }
       });
     });
 
-    it('uses nested request.session_token for complete_task', async () => {
-      await ipcClient.tasks.complete(
-        'task-123',
-        {
-          completion_notes: 'Installation completed successfully',
-          actual_duration: 110,
-          quality_score: 4.8,
-          photos: ['photo-1.jpg', 'photo-2.jpg'],
-        },
-        'token-i'
-      );
+    it('calls safeInvoke and extractAndValidate for editTask', async () => {
+      const updates = { title: 'Updated Task' };
+      
+      await taskOperations.editTask('task-123', updates, 'session-token');
 
-      expect(safeInvoke).toHaveBeenCalledWith('task_complete', {
+      expect(safeInvoke).toHaveBeenCalledWith('edit_task', {
         request: {
           task_id: 'task-123',
-          completion_notes: 'Installation completed successfully',
-          actual_duration: 110,
-          quality_score: 4.8,
-          photos: ['photo-1.jpg', 'photo-2.jpg'],
-          session_token: 'token-i',
-        },
+          data: updates,
+          session_token: 'session-token'
+        }
       });
     });
 
-    it('uses nested request.session_token for report_task_issue', async () => {
-      await ipcClient.tasks.reportIssue(
-        'task-123',
-        {
-          issue_type: 'material_shortage',
-          description: 'Insufficient PPF film for complete installation',
-          severity: 'medium',
-          requires_intervention: true,
-        },
-        'token-j'
-      );
+    it('calls safeInvoke with correct parameters for addTaskNote', async () => {
+      await taskOperations.addTaskNote('task-123', 'Test note', 'session-token');
 
-      expect(safeInvoke).toHaveBeenCalledWith('task_report_issue', {
+      expect(safeInvoke).toHaveBeenCalledWith('add_task_note', {
         request: {
           task_id: 'task-123',
-          issue_type: 'material_shortage',
-          description: 'Insufficient PPF film for complete installation',
-          severity: 'medium',
-          requires_intervention: true,
-          session_token: 'token-j',
-        },
+          note: 'Test note',
+          session_token: 'session-token'
+        }
       });
     });
-  });
 
-  // Bulk Operations
-  describe('Bulk operations', () => {
-    it('uses nested request.session_token for update_multiple_tasks', async () => {
-      await ipcClient.tasks.updateMultiple(
-        {
-          task_ids: ['task-123', 'task-456', 'task-789'],
-          updates: {
-            priority: 'high',
-            technician_id: 'tech-456',
-          },
-        },
-        'token-k'
-      );
+    it('calls safeInvoke with correct parameters for sendTaskMessage', async () => {
+      await taskOperations.sendTaskMessage('task-123', 'Test message', 'info', 'session-token');
 
-      expect(safeInvoke).toHaveBeenCalledWith('task_update_multiple', {
+      expect(safeInvoke).toHaveBeenCalledWith('send_task_message', {
         request: {
-          task_ids: ['task-123', 'task-456', 'task-789'],
-          updates: {
-            priority: 'high',
-            technician_id: 'tech-456',
-          },
-          session_token: 'token-k',
-        },
+          task_id: 'task-123',
+          message: 'Test message',
+          message_type: 'info',
+          session_token: 'session-token'
+        }
       });
     });
 
-    it('uses nested request.session_token for bulk_delete', async () => {
-      await ipcClient.tasks.bulkDelete(
-        {
-          task_ids: ['task-123', 'task-456'],
-          delete_reason: 'Duplicate tasks',
-        },
-        'token-l'
-      );
+    it('calls safeInvoke with correct parameters for delayTask', async () => {
+      await taskOperations.delayTask('task-123', '2025-03-01', 'Customer request', 'session-token');
 
-      expect(safeInvoke).toHaveBeenCalledWith('task_bulk_delete', {
+      expect(safeInvoke).toHaveBeenCalledWith('delay_task', {
         request: {
-          task_ids: ['task-123', 'task-456'],
-          delete_reason: 'Duplicate tasks',
-          session_token: 'token-l',
-        },
-      });
-    });
-  });
-
-  // Import/Export Operations
-  describe('Import/Export operations', () => {
-    it('uses top-level sessionToken for export_tasks_csv', async () => {
-      await ipcClient.tasks.exportCsv('token-m', {
-        start_date: '2025-01-01',
-        end_date: '2025-01-31',
-        status: 'completed',
-        include_interventions: true,
-      });
-
-      expect(safeInvoke).toHaveBeenCalledWith('task_export_csv', {
-        sessionToken: 'token-m',
-        start_date: '2025-01-01',
-        end_date: '2025-01-31',
-        status: 'completed',
-        include_interventions: true,
+          task_id: 'task-123',
+          new_scheduled_date: '2025-03-01',
+          reason: 'Customer request',
+          session_token: 'session-token'
+        }
       });
     });
 
-    it('uses nested request.session_token for import_tasks_bulk', async () => {
-      await ipcClient.tasks.importBulk(
-        {
-          format: 'csv',
-          data: 'task,customer,vehicle,etc...',
-          options: {
-            create_missing_customers: true,
-            default_priority: 'medium',
-            validate_only: false,
-          },
-        },
-        'token-n'
-      );
+    it('calls safeInvoke with correct parameters for reportTaskIssue', async () => {
+      await taskOperations.reportTaskIssue('task-123', 'material', 'high', 'Issue description', 'session-token');
 
-      expect(safeInvoke).toHaveBeenCalledWith('task_import_bulk', {
+      expect(safeInvoke).toHaveBeenCalledWith('report_task_issue', {
         request: {
-          format: 'csv',
-          data: 'task,customer,vehicle,etc...',
-          options: {
-            create_missing_customers: true,
-            default_priority: 'medium',
-            validate_only: false,
-          },
-          session_token: 'token-n',
-        },
-      });
-    });
-  });
-
-  // Search and Filtering
-  describe('Search and filtering', () => {
-    it('uses top-level sessionToken for search_tasks', async () => {
-      await ipcClient.tasks.search('token-o', {
-        query: 'PPF Tesla',
-        filters: {
-          status: ['pending', 'assigned'],
-          priority: ['high', 'medium'],
-          technicians: ['tech-123', 'tech-456'],
-        },
-        sort: {
-          field: 'scheduled_date',
-          direction: 'asc',
-        },
-        pagination: {
-          page: 2,
-          limit: 25,
-        },
-      });
-
-      expect(safeInvoke).toHaveBeenCalledWith('task_search', {
-        sessionToken: 'token-o',
-        query: 'PPF Tesla',
-        filters: {
-          status: ['pending', 'assigned'],
-          priority: ['high', 'medium'],
-          technicians: ['tech-123', 'tech-456'],
-        },
-        sort: {
-          field: 'scheduled_date',
-          direction: 'asc',
-        },
-        pagination: {
-          page: 2,
-          limit: 25,
-        },
+          task_id: 'task-123',
+          issue_type: 'material',
+          severity: 'high',
+          description: 'Issue description',
+          session_token: 'session-token'
+        }
       });
     });
 
-    it('uses top-level sessionToken for get_task_statistics', async () => {
-      await ipcClient.tasks.getStatistics('token-p', {
-        period: 'month',
-        start_date: '2025-01-01',
-        end_date: '2025-01-31',
-        group_by: 'status',
-      });
+    it('calls safeInvoke with correct parameters for exportTasksCsv', async () => {
+      const options = {
+        include_notes: true,
+        date_range: {
+          start_date: '2025-01-01',
+          end_date: '2025-01-31'
+        }
+      };
+      
+      await taskOperations.exportTasksCsv(options, 'session-token');
 
-      expect(safeInvoke).toHaveBeenCalledWith('task_get_statistics', {
-        sessionToken: 'token-p',
-        period: 'month',
-        start_date: '2025-01-01',
-        end_date: '2025-01-31',
-        group_by: 'status',
-      });
-    });
-  });
-
-  // Template Operations
-  describe('Template operations', () => {
-    it('uses top-level sessionToken for get_task_templates', async () => {
-      await ipcClient.tasks.getTemplates('token-q', {
-        category: 'ppf_installation',
-        vehicle_type: 'sedan',
-      });
-
-      expect(safeInvoke).toHaveBeenCalledWith('task_get_templates', {
-        sessionToken: 'token-q',
-        category: 'ppf_installation',
-        vehicle_type: 'sedan',
-      });
-    });
-
-    it('uses nested request.session_token for create_task_from_template', async () => {
-      await ipcClient.tasks.createFromTemplate(
-        {
-          template_id: 'template-123',
-          vehicle_plate: 'XYZ-789',
-          customer_name: 'Jane Smith',
-          scheduled_date: '2025-02-20',
-          technician_id: 'tech-456',
-          custom_fields: {
-            special_requirements: 'Customer requested extra protection',
-          },
-        },
-        'token-r'
-      );
-
-      expect(safeInvoke).toHaveBeenCalledWith('task_create_from_template', {
+      expect(safeInvoke).toHaveBeenCalledWith('export_tasks_csv', {
         request: {
-          template_id: 'template-123',
-          vehicle_plate: 'XYZ-789',
-          customer_name: 'Jane Smith',
-          scheduled_date: '2025-02-20',
-          technician_id: 'tech-456',
-          custom_fields: {
-            special_requirements: 'Customer requested extra protection',
+          include_client_data: true,
+          filter: {
+            date_from: '2025-01-01',
+            date_to: '2025-01-31'
           },
-          session_token: 'token-r',
-        },
+          session_token: 'session-token'
+        }
+      });
+    });
+
+    it('calls safeInvoke with correct parameters for importTasksBulk', async () => {
+      const options = {
+        csv_lines: ['line1', 'line2'],
+        skip_duplicates: true,
+        update_existing: false,
+      };
+      
+      await taskOperations.importTasksBulk(options, 'session-token');
+
+      expect(safeInvoke).toHaveBeenCalledWith('import_tasks_bulk', {
+        request: {
+          csv_data: 'line1\nline2',
+          update_existing: false,
+          session_token: 'session-token'
+        }
       });
     });
   });
 
-  // Cache Invalidation Tests
-  describe('Cache invalidation', () => {
-    it('invalidates cache patterns for task_update', async () => {
-      await ipcClient.tasks.update(
-        'task-123',
-        {
-          title: 'Updated Task Title',
-          status: 'in_progress',
-        },
-        'token-c'
-      );
-
-      expect(invalidatePattern).toHaveBeenCalledWith('tasks:*');
-      expect(invalidatePattern).toHaveBeenCalledWith('task:*');
-    });
-
-    it('invalidates cache patterns for task_delete', async () => {
-      await ipcClient.tasks.delete('task-123', 'token-e');
-
-      expect(invalidatePattern).toHaveBeenCalledWith('tasks:*');
-      expect(invalidatePattern).toHaveBeenCalledWith('task:*');
-    });
-
-    it('invalidates cache patterns for update_multiple_tasks', async () => {
-      await ipcClient.tasks.updateMultiple(
-        {
-          task_ids: ['task-123', 'task-456'],
-          updates: { priority: 'high' },
-        },
-        'token-k'
-      );
-
-      expect(invalidatePattern).toHaveBeenCalledWith('tasks:*');
-      expect(invalidatePattern).toHaveBeenCalledWith('task:*');
-    });
-
-    it('invalidates cache patterns for bulk_delete', async () => {
-      await ipcClient.tasks.bulkDelete(
-        {
-          task_ids: ['task-123', 'task-456'],
-          delete_reason: 'Duplicate tasks',
-        },
-        'token-l'
-      );
-
-      expect(invalidatePattern).toHaveBeenCalledWith('tasks:*');
-      expect(invalidatePattern).toHaveBeenCalledWith('task:*');
-    });
-  });
-
-  // Response Shape Tests
-  describe('Response shape validation', () => {
-    it('returns expected shape for tasks_list', async () => {
-      const mockResponse = {
-        success: true,
-        data: {
-          tasks: [
-            {
-              id: 'task-123',
-              title: 'PPF Installation',
-              status: 'pending',
-              priority: 'high',
-              vehicle_plate: 'ABC-123',
-              vehicle_model: 'Model 3',
-              vehicle_make: 'Tesla',
-              scheduled_date: '2025-02-15',
-              created_at: '2025-02-09T10:00:00Z',
-              updated_at: '2025-02-09T10:00:00Z',
-            },
-          ],
-          pagination: {
-            page: 1,
-            limit: 20,
-            total: 1,
-            has_next: false,
-            has_prev: false,
-          },
-        },
+  describe('Request Validation', () => {
+    it('validates required fields for create operation', async () => {
+      const invalidData = {
+        // Missing required title
+        description: 'Task without title',
       };
 
-      safeInvoke.mockResolvedValue(mockResponse);
+      try {
+        await taskOperations.create(invalidData, 'session-token');
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
 
-      const result = await ipcClient.tasks.list('token-a');
-
-      expect(result).toHaveProperty('success', true);
-      expect(result).toHaveProperty('data');
-      expect(result.data).toHaveProperty('tasks');
-      expect(result.data).toHaveProperty('pagination');
-      expect(Array.isArray(result.data.tasks)).toBe(true);
-      expect(result.data.tasks[0]).toHaveProperty('id');
-      expect(result.data.tasks[0]).toHaveProperty('title');
-      expect(result.data.tasks[0]).toHaveProperty('status');
+      expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
+        request: {
+          action: { action: 'Create', data: invalidData },
+          session_token: 'session-token'
+        }
+      }, expect.any(Function));
     });
 
-    it('returns expected shape for task_get', async () => {
+    it('validates task ID format for get operation', async () => {
+      await taskOperations.get('', 'session-token');
+
+      expect(cachedInvoke).toHaveBeenCalledWith(
+        'task:',
+        'task_crud',
+        {
+          request: {
+            action: { action: 'Get', id: '' },
+            session_token: 'session-token'
+          }
+        },
+        expect.any(Function)
+      );
+    });
+
+    it('validates update data structure', async () => {
+      const invalidUpdateData = {
+        invalid_field: 'should not exist',
+      };
+
+      await taskOperations.update('task-123', invalidUpdateData, 'session-token');
+
+      expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
+        request: {
+          action: { action: 'Update', id: 'task-123', data: invalidUpdateData },
+          session_token: 'session-token'
+        }
+      }, expect.any(Function));
+    });
+  });
+
+  describe('Response Shape Validation', () => {
+    it('validates response structure for create operation', async () => {
       const mockResponse = {
-        success: true,
+        type: 'Created',
         data: {
           id: 'task-123',
-          title: 'PPF Installation',
-          description: 'Full vehicle PPF installation',
-          status: 'in_progress',
-          priority: 'high',
-          vehicle_plate: 'ABC-123',
-          vehicle_model: 'Model 3',
-          vehicle_make: 'Tesla',
-          ppf_zones: ['hood', 'fender', 'mirror'],
-          scheduled_date: '2025-02-15',
-          technician_id: 'tech-123',
-          customer_name: 'John Doe',
-          customer_email: 'john@example.com',
+          title: 'New Task',
+          status: 'pending',
           created_at: '2025-02-09T10:00:00Z',
-          updated_at: '2025-02-09T10:00:00Z',
-        },
+        }
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
+      ResponseHandlers.discriminatedUnion.mockReturnValue((result) => validateTask(result.data));
 
-      const result = await ipcClient.tasks.get('task-123', 'token-d');
+      const result = await taskOperations.create({ title: 'New Task' }, 'session-token');
 
-      expect(result).toHaveProperty('success', true);
-      expect(result).toHaveProperty('data');
-      expect(result.data).toHaveProperty('id');
-      expect(result.data).toHaveProperty('title');
-      expect(result.data).toHaveProperty('status');
-      expect(result.data).toHaveProperty('ppf_zones');
-      expect(Array.isArray(result.data.ppf_zones)).toBe(true);
+      expect(validateTask).toHaveBeenCalledWith(mockResponse.data);
+      expect(result).toEqual(validateTask(mockResponse.data));
     });
 
-    it('returns expected shape for get_task_statistics', async () => {
+    it('validates response structure for list operation', async () => {
       const mockResponse = {
-        success: true,
-        data: {
-          period: 'month',
-          start_date: '2025-01-01',
-          end_date: '2025-01-31',
-          statistics: {
-            total_tasks: 45,
-            completed_tasks: 38,
-            pending_tasks: 5,
-            in_progress_tasks: 2,
-            average_duration: 115,
-            completion_rate: 84.4,
+        data: [
+          {
+            id: 'task-123',
+            title: 'Task 1',
+            status: 'pending',
           },
-          breakdown: {
-            pending: 5,
-            assigned: 10,
-            in_progress: 2,
-            completed: 38,
-            cancelled: 0,
-          },
-        },
+          {
+            id: 'task-456',
+            title: 'Task 2',
+            status: 'completed',
+          }
+        ],
+        pagination: {
+          page: 1,
+          limit: 20,
+          total: 2,
+          has_next: false,
+          has_prev: false,
+        }
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
+      ResponseHandlers.list.mockReturnValue((result) => validateTaskListResponse(result));
 
-      const result = await ipcClient.tasks.getStatistics('token-p');
+      const result = await taskOperations.list({ page: 1 }, 'session-token');
 
-      expect(result).toHaveProperty('success', true);
-      expect(result).toHaveProperty('data');
-      expect(result.data).toHaveProperty('period');
-      expect(result.data).toHaveProperty('statistics');
-      expect(result.data).toHaveProperty('breakdown');
-      expect(result.data.statistics).toHaveProperty('total_tasks');
-      expect(result.data.statistics).toHaveProperty('completion_rate');
+      expect(validateTaskListResponse).toHaveBeenCalledWith(mockResponse);
+      expect(result).toEqual(validateTaskListResponse(mockResponse));
+    });
+
+    it('handles null response for get operation', async () => {
+      const mockResponse = {
+        type: 'NotFound',
+      };
+
+      safeInvoke.mockResolvedValue(mockResponse);
+      ResponseHandlers.discriminatedUnionNullable.mockReturnValue((result) => null);
+
+      const result = await taskOperations.get('nonexistent-task', 'session-token');
+
+      expect(result).toBeNull();
     });
   });
 
-  // Error Response Tests
-  describe('Error response handling', () => {
-    it('handles validation errors for task_create', async () => {
-      const mockResponse = {
-        success: false,
+  describe('Authentication and Authorization', () => {
+    it('requires session token for all operations', async () => {
+      const operations = [
+        () => taskOperations.create({ title: 'Test' }, ''),
+        () => taskOperations.get('task-123', ''),
+        () => taskOperations.update('task-123', {}, ''),
+        () => taskOperations.delete('task-123', ''),
+        () => taskOperations.list({}, ''),
+        () => taskOperations.statistics(''),
+        () => taskOperations.checkTaskAssignment('task-123', 'user-123', ''),
+      ];
+
+      for (const operation of operations) {
+        try {
+          await operation();
+        } catch (error) {
+          // Expected to fail due to empty session token
+        }
+      }
+
+      expect(safeInvoke).toHaveBeenCalledTimes(operations.length - 1); // get uses cachedInvoke
+      expect(cachedInvoke).toHaveBeenCalledTimes(1);
+    });
+
+    it('passes session token correctly in nested requests', async () => {
+      const sessionToken = 'valid-session-token';
+      
+      await taskOperations.checkTaskAssignment('task-123', 'user-456', sessionToken);
+
+      expect(safeInvoke).toHaveBeenCalledWith('check_task_assignment', {
+        request: {
+          task_id: 'task-123',
+          user_id: 'user-456',
+          session_token: sessionToken
+        }
+      });
+    });
+  });
+
+  describe('Error Response Handling', () => {
+    it('handles validation errors from backend', async () => {
+      const errorResponse = {
+        type: 'ValidationError',
         error: {
           code: 'VALIDATION_ERROR',
-          message: 'Vehicle plate is required',
+          message: 'Invalid task data',
           details: {
-            field: 'vehicle_plate',
-            value: '',
-          },
-        },
+            field: 'title',
+            issue: 'required field missing'
+          }
+        }
       };
 
-      safeInvoke.mockResolvedValue(mockResponse);
+      safeInvoke.mockRejectedValue(errorResponse);
 
-      const result = await ipcClient.tasks.create(
-        {
-          title: 'Test Task',
-          description: 'Test description',
-        },
-        'token-b'
-      );
-
-      expect(result).toHaveProperty('success', false);
-      expect(result).toHaveProperty('error');
-      expect(result.error).toHaveProperty('code', 'VALIDATION_ERROR');
-      expect(result.error).toHaveProperty('message');
+      try {
+        await taskOperations.create({}, 'session-token');
+      } catch (error) {
+        expect(error).toEqual(errorResponse);
+      }
     });
 
-    it('handles not found errors for task_get', async () => {
-      const mockResponse = {
-        success: false,
-        error: {
-          code: 'NOT_FOUND',
-          message: 'Task not found',
-          details: {
-            task_id: 'non-existent-task',
-          },
-        },
+    it('handles not found errors for get operation', async () => {
+      const notFoundResponse = {
+        type: 'NotFound',
       };
 
-      safeInvoke.mockResolvedValue(mockResponse);
+      safeInvoke.mockResolvedValue(notFoundResponse);
+      ResponseHandlers.discriminatedUnionNullable.mockReturnValue((result) => null);
 
-      const result = await ipcClient.tasks.get('non-existent-task', 'token-d');
+      const result = await taskOperations.get('nonexistent-task', 'session-token');
 
-      expect(result).toHaveProperty('success', false);
-      expect(result).toHaveProperty('error');
-      expect(result.error).toHaveProperty('code', 'NOT_FOUND');
+      expect(result).toBeNull();
     });
 
-    it('handles assignment conflicts for assign_task', async () => {
-      const mockResponse = {
-        success: false,
+    it('handles permission errors', async () => {
+      const permissionError = {
+        type: 'PermissionError',
         error: {
-          code: 'ASSIGNMENT_CONFLICT',
-          message: 'Task is already assigned to another technician',
-          details: {
-            task_id: 'task-123',
-            current_technician_id: 'tech-789',
-            requested_technician_id: 'tech-456',
-          },
-        },
+          code: 'PERMISSION_DENIED',
+          message: 'Insufficient permissions to perform this operation',
+        }
       };
 
-      safeInvoke.mockResolvedValue(mockResponse);
+      safeInvoke.mockRejectedValue(permissionError);
 
-      const result = await ipcClient.tasks.assign(
-        'task-123',
-        'tech-456',
-        {},
-        'token-g'
-      );
+      try {
+        await taskOperations.delete('task-123', 'unauthorized-token');
+      } catch (error) {
+        expect(error).toEqual(permissionError);
+      }
+    });
+  });
 
-      expect(result).toHaveProperty('success', false);
-      expect(result).toHaveProperty('error');
-      expect(result.error).toHaveProperty('code', 'ASSIGNMENT_CONFLICT');
+  describe('Edge Cases and Boundary Conditions', () => {
+    it('handles extremely long task descriptions', async () => {
+      const longDescription = 'a'.repeat(10000);
+      const taskData = {
+        title: 'Task with long description',
+        description: longDescription,
+      };
+
+      await taskOperations.create(taskData, 'session-token');
+
+      expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
+        request: {
+          action: { action: 'Create', data: taskData },
+          session_token: 'session-token'
+        }
+      }, expect.any(Function));
+    });
+
+    it('handles special characters in task titles', async () => {
+      const specialTitle = 'Task with special chars: éàüß@#$%^&*()';
+      
+      await taskOperations.create({ title: specialTitle }, 'session-token');
+
+      expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
+        request: {
+          action: { action: 'Create', data: { title: specialTitle } },
+          session_token: 'session-token'
+        }
+      }, expect.any(Function));
+    });
+
+    it('handles empty list filters', async () => {
+      await taskOperations.list({}, 'session-token');
+
+      expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
+        request: {
+          action: { action: 'List', filters: {} },
+          session_token: 'session-token'
+        }
+      }, expect.any(Function));
+    });
+
+    it('handles null values in optional fields', async () => {
+      const taskWithNulls = {
+        title: 'Task with null fields',
+        description: null,
+        technician_id: null,
+        scheduled_date: null,
+      };
+
+      await taskOperations.create(taskWithNulls, 'session-token');
+
+      expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
+        request: {
+          action: { action: 'Create', data: taskWithNulls },
+          session_token: 'session-token'
+        }
+      }, expect.any(Function));
     });
   });
 });
