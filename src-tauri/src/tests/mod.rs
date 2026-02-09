@@ -3,3 +3,6 @@
 pub mod integration;
 pub mod proptests;
 pub mod unit;
+
+#[cfg(test)]
+pub mod migrations;

@@ -155,5 +155,6 @@ serial_test = "3.0"      # Test isolation
 criterion = "0.5"         # Performance testing
 proptest = "1.4"         # Property-based testing
 pretty_assertions = "1.4" # Better error messages in tests
+cargo-tarpaulin = "0.27"  # Coverage reporting
 
 
