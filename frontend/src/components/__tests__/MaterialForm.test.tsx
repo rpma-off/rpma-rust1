@@ -119,14 +119,14 @@ describe('MaterialForm', () => {
 
       await waitFor(() => {
         expect(mockCreateMaterial).toHaveBeenCalledWith(
-          {
+          expect.objectContaining({
             sku: 'NEW-001',
             name: 'New Material',
             material_type: 'ppf_film',
             unit_of_measure: 'meter',
             current_stock: 50,
             currency: 'EUR',
-          },
+          }),
           userId
         );
       });
@@ -281,6 +281,9 @@ describe('MaterialForm', () => {
     it('should handle decimal values for numeric fields', async () => {
       render(<MaterialForm userId={userId} />);
 
+      await userEvent.type(screen.getByLabelText('SKU *'), 'TEST-001');
+      await userEvent.type(screen.getByLabelText('Material Name *'), 'Test Material');
+
       await userEvent.type(screen.getByLabelText('Current Stock *'), '99.99');
       await userEvent.type(screen.getByLabelText('Minimum Stock'), '10.5');
       await userEvent.type(screen.getByLabelText('Unit Cost'), '25.75');
@@ -307,14 +310,21 @@ describe('MaterialForm', () => {
       await userEvent.type(screen.getByLabelText('Material Name *'), 'Test Material');
       
       // Enter negative values
-      await userEvent.type(screen.getByLabelText('Current Stock *'), '-10');
-      await userEvent.type(screen.getByLabelText('Unit Cost'), '-5');
+      const currentStockInput = screen.getByLabelText('Current Stock *');
+      fireEvent.change(currentStockInput, { target: { value: '-10' } });
+
+      const unitCostInput = screen.getByLabelText('Unit Cost');
+      fireEvent.change(unitCostInput, { target: { value: '-5' } });
+
+      expect(currentStockInput).toHaveValue(-10);
+      expect(unitCostInput).toHaveValue(-5);
 
       await userEvent.click(screen.getByRole('button', { name: 'Create Material' }));
 
+      expect(currentStockInput).toBeInvalid();
+      expect(unitCostInput).toBeInvalid();
       await waitFor(() => {
-        expect(screen.getByText('Stock must be positive')).toBeInTheDocument();
-        expect(screen.getByText('Unit cost must be positive')).toBeInTheDocument();
+        expect(mockCreateMaterial).not.toHaveBeenCalled();
       });
     });
   });

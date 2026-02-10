@@ -33,32 +33,16 @@ The `client-lifecycle.spec.ts` test file covers:
 
 ### Prerequisites
 
-1. Make sure you have Tauri running:
+1. Run the Playwright E2E tests (the dev server is started automatically with mock IPC):
    ```bash
-   npm run tauri dev
+   npm run test:e2e
    ```
-
-Note: In Tauri applications, the frontend is served embedded within the Tauri app, not as a separate dev server.
-
-2. Make sure the frontend dev server is running on port 3000:
-   ```bash
-   npm run dev
-   ```
-
-3. Ensure you have a test user with the following credentials:
-   - Email: `test@example.com`
-   - Password: `testpassword`
 
 ### Running the Tests
 
 To run all client lifecycle tests:
 ```bash
-npm run test:e2e:client-lifecycle
-```
-
-To run with a specific browser:
-```bash
-npx playwright test client-lifecycle.spec.ts --project chromium
+npm run test:e2e -- --project chromium --grep "Client Lifecycle"
 ```
 
 To run with a headed browser (useful for debugging):
@@ -126,16 +110,16 @@ const testVehicle = {
 If you encounter "Server is not running" errors:
 
 1. Make sure the dev server is running on port 3000
-2. Check if the Tauri backend is properly started
+2. Ensure Playwright started the Next.js dev server via `npm run test:e2e`
 3. Verify there are no port conflicts
 
 ### Authentication Issues
 
 If tests fail during login:
 
-1. Verify the test user exists in the database
+1. Verify the test user exists in the mock fixtures (`frontend/src/lib/ipc/mock/fixtures.ts`)
 2. Check if the email and password are correct
-3. Ensure the authentication system is working properly
+3. Ensure `NEXT_PUBLIC_IPC_MOCK=true` is set for the E2E run
 
 ### Element Not Found Errors
 

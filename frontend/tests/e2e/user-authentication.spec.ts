@@ -1,10 +1,13 @@
 import { test, expect } from '@playwright/test';
+import { resetMockDb, setMockFailure, setMockDelay } from './utils/mock';
 
 test.describe('User Authentication Flow', () => {
   test.beforeEach(async ({ page, context }) => {
     // Clear any existing auth state
     await context.clearCookies();
     await context.clearPermissions();
+    await page.goto('/login');
+    await resetMockDb(page);
   });
 
   test('should display login page with all required elements', async ({ page }) => {
@@ -145,17 +148,7 @@ test.describe('User Authentication Flow', () => {
   });
 
   test('should handle network errors gracefully', async ({ page }) => {
-    // Simulate network conditions
-    await page.route('**/*', route => {
-      // Block authentication requests
-      if (route.request().url().includes('/auth/login')) {
-        route.abort('failed');
-      } else {
-        route.continue();
-      }
-    });
-    
-    await page.goto('/login');
+    await setMockFailure(page, 'auth_login', 'Erreur lors de la connexion');
     
     // Fill form
     await page.fill('input[name="email"]', 'test@example.com');
@@ -229,13 +222,7 @@ test.describe('User Authentication Flow', () => {
   });
 
   test('should display loading state during authentication', async ({ page }) => {
-    // Slow down network response to test loading state
-    await page.route('**/auth/login', async route => {
-      await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
-      await route.continue();
-    });
-    
-    await page.goto('/login');
+    await setMockDelay(page, 'auth_login', 2000);
     
     // Fill form
     await page.fill('input[name="email"]', 'test@example.com');

@@ -10,15 +10,15 @@
  * - Data persistence
  * 
  * To run these tests locally:
- * 1. Make sure the Tauri backend is running: npm run tauri dev
- * 2. Make sure the frontend dev server is running: npm run dev
- * 3. Run the tests: npx playwright test client-lifecycle.spec.ts
+ * 1. Run: npm run test:e2e
+ * 2. Playwright will start the Next.js dev server with mock IPC enabled
  * 
  * These tests require authentication with a test user (test@example.com / testpassword).
  * Make sure this user exists in the test database.
  */
 
 import { test, expect } from '@playwright/test';
+import { resetMockDb } from './utils/mock';
 
 test.describe('Client Lifecycle Management', () => {
   // Test data
@@ -57,28 +57,10 @@ test.describe('Client Lifecycle Management', () => {
     vin: '5YJ3E1EA1JF000001'
   };
 
-  test.beforeAll(async ({ playwright }) => {
-    // Check if frontend server is running (Tauri serves frontend on different port)
-    try {
-      const request = await playwright.request.newContext();
-      const response = await request.get('http://localhost:1420', { timeout: 5000 });
-      if (!response.ok()) {
-        throw new Error('Frontend server is not responding correctly');
-      }
-    } catch (error) {
-      throw new Error(
-        'Frontend server is not running at http://localhost:1420. Please start with "npm run tauri dev" before running these tests.'
-      );
-    }
-  });
-
   test.beforeEach(async ({ page }) => {
-    // Note: These tests require:
-    // 1. Start Tauri with: npm run tauri dev
-    // 2. Then run: npx playwright test client-lifecycle.spec.ts
-    
     // Login before each test
     await page.goto('/login');
+    await resetMockDb(page);
     
     // Fill in login form (assuming test user exists)
     await page.fill('input[name="email"]', 'test@example.com');

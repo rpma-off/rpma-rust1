@@ -111,7 +111,9 @@ export function MaterialForm({ material, onSuccess, onCancel, userId }: Material
 
       onSuccess?.(result);
     } catch (err) {
-      setError(err as string);
+      const message =
+        err instanceof Error ? err.message : typeof err === 'string' ? err : 'Unknown error';
+      setError(message);
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,14 @@
-export { ipcClient } from './client';
-export { useIpcClient } from './client';
+import { ipcClient as realIpcClient, useIpcClient as realUseIpcClient } from './client';
+import { ipcClient as mockIpcClient, useIpcClient as mockUseIpcClient, initMockIpc } from './mock/mock-client';
+
+const useMock = process.env.NEXT_PUBLIC_IPC_MOCK === 'true' || process.env.NEXT_PUBLIC_IPC_MOCK === '1';
+
+if (useMock && typeof window !== 'undefined') {
+  initMockIpc();
+}
+
+export const ipcClient = useMock ? mockIpcClient : realIpcClient;
+export const useIpcClient = useMock ? mockUseIpcClient : realUseIpcClient;
 export { safeInvoke } from './utils';
 export { cachedInvoke, getCacheStats, invalidateKey, clearCache, invalidatePattern } from './cache';
 export { withRetry } from './retry';

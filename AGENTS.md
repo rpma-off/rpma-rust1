@@ -1,5 +1,8 @@
 # AGENTS.md 
 
+RPMA v2 is an offline-first desktop app (Tauri) for managing PPF interventions: tasks, interventions, steps, photos, inventory, reporting, and user management.
+
+
 ## 🗂️ Structure du Projet
 
 ```
@@ -25,139 +28,76 @@ rpma-rust/
 ├── scripts/                 # Scripts de build et validation
 └── docs/                    # Documentation
 ```
-## Architecture
 
-```
-┌─────────────────┐
-│ Next.js (React) │  ← Presentation Layer
-├─────────────────┤
-│   Tauri IPC     │  ← Communication Layer
-├─────────────────┤
-│ Rust Services   │  ← Business Logic
-├─────────────────┤
-│ SQLite Database │  ← Data Layer
-└─────────────────┘
-```
-## 📜 Scripts Disponibles
+## Tech Stack Summary
 
-### Scripts Principaux
-- `npm run dev` - Démarrage en mode développement
-- `npm run build` - Build de production
-- `npm run tauri dev` - Développement Tauri uniquement
+- **Desktop Framework**: Tauri (Rust + system webview)
+- **Frontend**: Next.js 14 with React, TypeScript, and Tailwind CSS
+- **UI Components**: shadcn/ui built on Radix UI primitives
+- **Backend**: Rust with SQLite (WAL mode) for data persistence
+- **State Management**: React hooks with contexts and Zustand for global state
+- **Authentication**: JWT with 2FA support and role-based access control
+- **Type Safety**: Automatic TypeScript generation from Rust models using `ts-rs`
 
-### Scripts Frontend
-- `npm run frontend:dev` - Serveur de développement Next.js
-- `npm run frontend:build` - Build frontend
-- `npm run frontend:lint` - Linting du code frontend
-- `npm run frontend:type-check` - Vérification des types TypeScript
+## Critical consistency rules
+- Rust models => TS types via ts-rs. Never drift.
+- IPC commands must be authenticated for protected endpoints (session_token) and follow the response envelope pattern.
+- RBAC must be enforced in command handlers and data access.
 
-### Scripts Backend
-- `npm run backend:build` - Build Rust en mode debug
-- `npm run backend:build:release` - Build Rust en mode release
-- `npm run backend:check` - Vérification du code Rust
-- `npm run backend:clippy` - Analyse avec Clippy
-- `npm run backend:fmt` - Formatage du code Rust
+## Where to look
+- Frontend patterns: `frontend/src/app`, `frontend/src/components`, `frontend/src/lib/ipc`
+- Backend patterns: `src-tauri/src/commands`, `src-tauri/src/services`, `src-tauri/src/repositories`
+- DB + migrations: `src-tauri/migrations`, migration manager code
+- Security/RBAC: auth commands, validators, scripts
 
-### Synchronisation des Types
-- `npm run types:sync` - Synchroniser les types Rust → TypeScript
-- `npm run types:validate` - Valider la synchronisation des types
-- `npm run types:drift-check` - Détecter les divergences de types
-- `npm run types:ci-drift-check` - Vérification CI des types
+## ARCHITECTURE MUST MATCH PROJECT DOCS
+- 4-layer architecture: Frontend -> IPC -> Rust Services -> Repositories -> SQLite. Keep responsibilities separated.
+- Offline-first: local DB is source-of-truth; avoid designs that require constant network connectivity.
+- Types: Rust models generate TS types (ts-rs). Never hand-edit generated types.
 
-### Tests et Qualité
-- `npm run test` - Lancer les tests unitaires
-- `npm run test:coverage` - Tests avec couverture
-- `npm run test:e2e` - Tests end-to-end
-- `npm run security:audit` - Audit de sécurité
-- `npm run performance:test` - Tests de performance
+## QUALITY GATES (RUN THE RIGHT ONES)
+When relevant:
+- Frontend: `npm run frontend:lint` and `npm run frontend:type-check`
+- Backend: `npm run backend:check`, `npm run backend:clippy`, `npm run backend:fmt`
+- Types: `npm run types:sync`, `npm run types:validate`, `npm run types:drift-check`
+- DB/migrations: `node scripts/validate-migration-system.js`
+- Security: `npm run security:audit`, `node scripts/validate-rbac.js`, `node scripts/validate-session-security.js`
+- Full: `npm run quality:check` (preferred)
 
-### Utilitaires
-- `npm run clean` - Nettoyer les builds et node_modules
-- `npm run git:start-feature` - Démarrer une nouvelle branche de fonctionnalité
-- `npm run fix:encoding` - Corriger les problèmes d'encodage
-
-## Quick Start for AI Agents
-
-### To understand the project quickly:
-1. Start with [00_PROJECT_OVERVIEW.md](00_PROJECT_OVERVIEW.md) for high-level context
-2. Read [01_DOMAIN_MODEL.md](01_DOMAIN_MODEL.md) to understand the data model
-3. Review [02_ARCHITECTURE_AND_DATAFLOWS.md](02_ARCHITECTURE_AND_DATAFLOWS.md) for technical architecture
-4. Check [08_DEV_WORKFLOWS_AND_TOOLING.md](08_DEV_WORKFLOWS_AND_TOOLING.md) for development practices
-
-### For specific tasks:
-- **Adding a new feature**: Read [03_FRONTEND_GUIDE.md](03_FRONTEND_GUIDE.md) and [04_BACKEND_GUIDE.md](04_BACKEND_GUIDE.md)
-- **Working with the API**: Read [05_IPC_API_AND_CONTRACTS.md](05_IPC_API_AND_CONTRACTS.md)
-- **Database changes**: Read [07_DATABASE_AND_MIGRATIONS.md](07_DATABASE_AND_MIGRATIONS.md)
-- **Security/permissions**: Read [06_SECURITY_AND_RBAC.md](06_SECURITY_AND_RBAC.md)
-- **UI/UX changes**: Read [09_USER_FLOWS_AND_UX.md](09_USER_FLOWS_AND_UX.md)
+## CHANGE RULES (STRICT)
+- Any new feature must include: tests, validation, error handling, and docs update (if user-facing).
+- Never leave TODOs, “quick hacks”, or commented-out code.
+- Prefer deterministic behavior; avoid time-based flakiness in tests.
+- Keep diffs small and reviewable.
 
 
+## DEFAULT WORKFLOW (ALWAYS)
+A) Locate the relevant files + existing patterns. Prefer copying existing patterns over inventing new ones.
+B) Make the smallest possible change that solves the task.
+C) Run the appropriate checks (see "Quality Gates").
+D) Summarize what changed + why + how to verify.
 
-### Code Patterns
-- **Frontend**: Use shadcn/ui components with Tailwind classes
-- **Backend**: Follow command→service→repository pattern
-- **Authentication**: All protected commands need `session_token`
-- **Type Safety**: Never edit `frontend/src/lib/backend.ts` (generated)
+# Testing Rules (Strict)
 
-### Important Paths
-- Frontend root: `frontend/src/app/`
-- IPC client: `frontend/src/lib/ipc/`
-- Backend commands: `src-tauri/src/commands/`
-- Models: `src-tauri/src/models/`
-- Migrations: `src-tauri/migrations/`
+## When you change code
+You must add or update tests that prove the change.
 
-## Acceptance Criteria
+## Backend
+- Unit tests for services and repositories when logic changes.
+- Integration tests for IPC commands where behavior is critical.
 
-An agent that has thoroughly reviewed these files should be able to:
+## Frontend
+- Component tests for UI flows when UX behavior changes.
+- Hook tests if business logic is in hooks.
 
-✅ Answer "Where do I add a new feature?"  
-✅ Identify "Which command handles X?"  
-✅ Locate "What tables store Y?"  
-✅ Understand "What are the business rules?"  
-✅ Follow development patterns consistently  
-✅ Navigate the codebase efficiently  
-✅ Avoid common pitfalls  
-✅ Run appropriate validation commands
+## Test quality
+- No flaky tests.
+- Prefer deterministic time and stable fixtures.
+- Keep tests fast, focused, and readable.
 
-## Commandes d'Exécution des Tests
-
-### Backend Tests
-```bash
-# Run all backend tests
-cd src-tauri && cargo test
-
-# Run specific test modules
-cd src-tauri && cargo test auth_service
-cd src-tauri && cargo test task_validation
-cd src-tauri && cargo test intervention_workflow
-```
-
-### Frontend Tests
-```bash
-# Run all frontend tests
-cd frontend && npm test
-
-# Run specific test patterns
-cd frontend && npm test -- --testNamePattern="auth"
-cd frontend && npm test -- --testNamePattern="tasks"
-cd frontend && npm test -- --testNamePattern="intervention"
-```
-
-### E2E Tests
-```bash
-# Run all e2e tests
-cd frontend && npm run test:e2e
-
-# Run specific e2e tests
-cd frontend && npm run test:e2e -- --grep="Authentication"
-cd frontend && npm run test:e2e -- --grep="Task Management"
-```
-
-### Coverage Reports
-```bash
-# Backend coverage (if configured)
-cd src-tauri && cargo llvm-cov
-
-# Frontend coverage
-cd frontend && npm run test:coverage
-```
+## Minimum bar
+- Every bug fix requires a regression test.
+- Every new feature requires tests for:
+  - success path
+  - validation failure
+  - permission failure (if protected)

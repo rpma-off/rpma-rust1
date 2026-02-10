@@ -1,3 +1,4 @@
+import './mock/init';
 import { safeInvoke } from './utils';
 import { cachedInvoke, invalidatePattern } from './cache';
 import type { ApiError } from '@/lib/backend';

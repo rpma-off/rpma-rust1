@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { resetMockDb } from './utils/mock';
 
 // Test data fixtures
 const TEST_MATERIALS = {
@@ -47,29 +48,11 @@ test.describe('Inventory Management', () => {
   let createdSuppliers: string[] = [];
   let createdCategories: string[] = [];
 
-  test.beforeAll(async ({ playwright }) => {
-    // Check if frontend server is running (Tauri serves frontend on different port)
-    try {
-      const request = await playwright.request.newContext();
-      const response = await request.get('http://localhost:1420', { timeout: 5000 });
-      if (!response.ok()) {
-        throw new Error('Frontend server is not responding correctly');
-      }
-    } catch (error) {
-      throw new Error(
-        'Frontend server is not running at http://localhost:1420. Please start with "npm run tauri dev" before running these tests.'
-      );
-    }
-  });
-
   // Authentication before each test
   test.beforeEach(async ({ page }) => {
-    // Note: These tests require:
-    // 1. Start Tauri with: npm run tauri dev
-    // 2. Then run: npx playwright test inventory-management.spec.ts
-    
     // Navigate to login page
     await page.goto('/login');
+    await resetMockDb(page);
     
     // Fill in login form with admin user for inventory permissions
     await page.fill('input[name="email"]', 'admin@test.com');

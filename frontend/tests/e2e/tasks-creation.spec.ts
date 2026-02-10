@@ -1,9 +1,11 @@
 import { test, expect } from '@playwright/test';
+import { resetMockDb } from './utils/mock';
 
 test.describe('Task Creation Workflow', () => {
   test.beforeEach(async ({ page }) => {
     // Login before each test
     await page.goto('/login');
+    await resetMockDb(page);
     
     // Fill in login form (assuming test user exists)
     await page.fill('input[name="email"]', 'test@example.com');
@@ -170,7 +172,7 @@ test.describe('Task Creation Workflow', () => {
     const fileInput = page.locator('input[type="file"]');
     if (await fileInput.isVisible()) {
       // Upload a test file
-      await fileInput.setInputFiles('test-assets/sample-photo.jpg');
+      await fileInput.setInputFiles('test-assets/sample-photo.png');
       
       // Wait for upload to complete and preview to show
       await expect(page.locator('img[alt*="preview"]')).toBeVisible({ timeout: 5000 });

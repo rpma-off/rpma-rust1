@@ -1,9 +1,11 @@
 import { test, expect } from '@playwright/test';
+import { resetMockDb } from './utils/mock';
 
 test.describe('Intervention Management', () => {
   test.beforeEach(async ({ page }) => {
     // Login before each test
     await page.goto('/login');
+    await resetMockDb(page);
     
     // Fill in login form (assuming test user exists)
     await page.fill('input[name="email"]', 'test@example.com');
@@ -93,7 +95,7 @@ test.describe('Intervention Management', () => {
       // If photos are required, upload test photos
       const photoUpload = page.locator('input[type="file"]');
       if (await photoUpload.isVisible()) {
-        await photoUpload.setInputFiles('test-assets/step-photo.jpg');
+        await photoUpload.setInputFiles('test-assets/sample-photo.png');
         await page.waitForTimeout(2000); // Wait for upload
       }
       
@@ -220,7 +222,7 @@ test.describe('Intervention Management', () => {
       // Upload final photos if required
       const finalPhotoUpload = page.locator('input[type="file"][accept*="image"]');
       if (await finalPhotoUpload.isVisible()) {
-        await finalPhotoUpload.setInputFiles('test-assets/final-photo.jpg');
+        await finalPhotoUpload.setInputFiles('test-assets/sample-photo.png');
         await page.waitForTimeout(2000); // Wait for upload
       }
       
@@ -262,7 +264,7 @@ test.describe('Intervention Management', () => {
       // Now add the required data
       const photoUpload = page.locator('input[type="file"]');
       if (await photoUpload.isVisible()) {
-        await photoUpload.setInputFiles('test-assets/required-photo.jpg');
+        await photoUpload.setInputFiles('test-assets/sample-photo.png');
         await page.waitForTimeout(2000);
       }
       

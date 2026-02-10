@@ -9,7 +9,9 @@ import { safeInvoke } from '@/lib/ipc/core';
 import { Material, MaterialType, UnitOfMeasure } from '@/lib/inventory';
 
 // Mock the core IPC module
-jest.mock('@/lib/ipc/core');
+jest.mock('@/lib/ipc/core', () => ({
+  safeInvoke: jest.fn(),
+}));
 const mockSafeInvoke = safeInvoke as jest.MockedFunction<typeof safeInvoke>;
 
 describe('Inventory IPC Contract Tests', () => {

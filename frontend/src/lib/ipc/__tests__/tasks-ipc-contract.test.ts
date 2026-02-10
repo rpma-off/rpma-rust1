@@ -103,8 +103,8 @@ describe('taskOperations IPC contract tests', () => {
     // Setup ResponseHandlers mocks
     ResponseHandlers.discriminatedUnion.mockImplementation((type, validator) => (result) => result);
     ResponseHandlers.discriminatedUnionNullable.mockImplementation((type, validator) => (result) => result);
-    ResponseHandlers.list.mockImplementation((processor) => (result) => result));
-    ResponseHandlers.statistics.mockImplementation(() => (result) => result));
+    ResponseHandlers.list.mockImplementation((processor) => (result) => result);
+    ResponseHandlers.statistics.mockImplementation(() => (result) => result);
     
     extractAndValidate.mockImplementation((result, validator) => result);
     

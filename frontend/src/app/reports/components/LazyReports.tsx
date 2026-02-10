@@ -95,7 +95,7 @@ const DataExplorerReport = lazy(() => import('./reports/DataExplorerReport').cat
 
 // Loading component for lazy-loaded reports
 const ReportLoadingFallback = ({ reportName }: { reportName: string }) => (
-  <div className="flex items-center justify-center py-20">
+  <div className="flex items-center justify-center py-20" data-testid="loading-indicator">
     <div className="text-center max-w-sm">
       <div className="relative mb-6">
         <div className="w-16 h-16 border-4 border-slate-200 dark:border-slate-700 border-t-blue-500 rounded-full animate-spin mx-auto"></div>

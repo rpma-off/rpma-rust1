@@ -1,4 +1,18 @@
 import '@testing-library/jest-dom';
+
+// Web crypto polyfill for tests
+if (typeof global.crypto === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  global.crypto = require('crypto').webcrypto;
+}
+
+// TextEncoder/TextDecoder polyfill for tests
+if (typeof global.TextEncoder === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { TextEncoder, TextDecoder } = require('util');
+  global.TextEncoder = TextEncoder;
+  global.TextDecoder = TextDecoder;
+}
 // Mock Tauri APIs
 jest.mock('@tauri-apps/api', () => ({
   invoke: jest.fn(),
@@ -46,6 +60,78 @@ class IntersectionObserverMock implements IntersectionObserver {
 }
 
 global.IntersectionObserver = IntersectionObserverMock as unknown as typeof IntersectionObserver;
+
+// Pointer event polyfills for Radix UI components
+if (!HTMLElement.prototype.hasPointerCapture) {
+  HTMLElement.prototype.hasPointerCapture = () => false;
+}
+if (!HTMLElement.prototype.setPointerCapture) {
+  HTMLElement.prototype.setPointerCapture = () => {};
+}
+if (!HTMLElement.prototype.releasePointerCapture) {
+  HTMLElement.prototype.releasePointerCapture = () => {};
+}
+if (!HTMLElement.prototype.scrollIntoView) {
+  HTMLElement.prototype.scrollIntoView = () => {};
+}
+
+// Simplified Select mock for tests (avoids Radix Select DOM requirements)
+jest.mock('@/components/ui/select', () => {
+  const React = require('react');
+  const SelectContext = React.createContext({ onValueChange: (_value: string) => {} });
+
+  const Select = ({ children, onValueChange }: { children: React.ReactNode; onValueChange?: (value: string) => void }) =>
+    React.createElement(
+      SelectContext.Provider,
+      { value: { onValueChange: onValueChange || (() => {}) } },
+      React.createElement('div', null, children)
+    );
+
+  const SelectTrigger = ({
+    children,
+    ...props
+  }: {
+    children: React.ReactNode;
+    [key: string]: unknown;
+  }) => React.createElement('button', { type: 'button', ...props }, children);
+
+  const SelectValue = ({
+    placeholder,
+    children,
+  }: {
+    placeholder?: string;
+    children?: React.ReactNode;
+  }) => React.createElement('span', null, children ?? placeholder);
+
+  const SelectContent = ({ children }: { children: React.ReactNode }) =>
+    React.createElement('div', null, children);
+
+  const SelectItem = ({ value, children }: { value?: string; children: React.ReactNode }) => {
+    const { onValueChange } = React.useContext(SelectContext);
+    return React.createElement(
+      'div',
+      { role: 'option', onClick: () => onValueChange(value ?? '') },
+      children
+    );
+  };
+
+  const SelectGroup = ({ children }: { children: React.ReactNode }) =>
+    React.createElement('div', null, children);
+  const SelectLabel = ({ children }: { children: React.ReactNode }) =>
+    React.createElement('div', null, children);
+  const SelectSeparator = () => React.createElement('div', { role: 'separator' });
+
+  return {
+    Select,
+    SelectTrigger,
+    SelectValue,
+    SelectContent,
+    SelectItem,
+    SelectGroup,
+    SelectLabel,
+    SelectSeparator,
+  };
+});
 
 // Suppress console warnings in tests
 if (process.env.NODE_ENV === 'test') {

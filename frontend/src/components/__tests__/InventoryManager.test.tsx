@@ -1,5 +1,5 @@
-import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+﻿import React from 'react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { InventoryManager } from '../InventoryManager';
 import { useInventory } from '@/hooks/useInventory';
@@ -25,6 +25,133 @@ jest.mock('lucide-react', () => ({
   Download: () => <div data-testid="download-icon" />,
   Upload: () => <div data-testid="upload-icon" />,
 }));
+
+jest.mock('../StockLevelIndicator', () => ({
+  StockLevelIndicator: () => <div data-testid="stock-level-indicator" />,
+}));
+
+// Mock Radix-based UI components to avoid portal/slot issues in jsdom
+jest.mock('@/components/ui/dialog', () => {
+  const React = require('react');
+  const DialogContext = React.createContext({ open: false, setOpen: (_open: boolean) => {} });
+
+  const Dialog = ({
+    children,
+    open,
+    onOpenChange,
+  }: {
+    children: React.ReactNode;
+    open?: boolean;
+    onOpenChange?: (value: boolean) => void;
+  }) => {
+    const [internalOpen, setInternalOpen] = React.useState(!!open);
+
+    React.useEffect(() => {
+      if (typeof open === 'boolean') {
+        setInternalOpen(open);
+      }
+    }, [open]);
+
+    const setOpen = (value: boolean) => {
+      setInternalOpen(value);
+      onOpenChange?.(value);
+    };
+
+    return (
+      <DialogContext.Provider value={{ open: internalOpen, setOpen }}>
+        <div>{children}</div>
+      </DialogContext.Provider>
+    );
+  };
+
+  const DialogTrigger = ({ children }: { children: React.ReactNode }) => {
+    const { setOpen } = React.useContext(DialogContext);
+    return <div onClick={() => setOpen(true)}>{children}</div>;
+  };
+
+  const DialogContent = ({ children }: { children: React.ReactNode }) => {
+    const { open } = React.useContext(DialogContext);
+    return open ? <div>{children}</div> : null;
+  };
+
+  const DialogHeader = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
+  const DialogTitle = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
+
+  return { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle };
+});
+
+jest.mock('@/components/ui/confirm-dialog', () => ({
+  ConfirmDialog: () => null,
+}));
+
+jest.mock('@/components/ui/virtualized-table', () => ({
+  VirtualizedTable: ({
+    data,
+    columns,
+  }: {
+    data: Array<Record<string, any>>;
+    columns: Array<{
+      key: string;
+      render?: (value: any, item: Record<string, any>, index: number) => React.ReactNode;
+    }>;
+  }) => (
+    <div>
+      {data.map((item, index) => (
+        <div key={item.id || index} data-testid="virtualized-row">
+          {columns.map((column) => {
+            const value = item[column.key];
+            const content = column.render ? column.render(item, item, index) : String(value ?? '');
+            return (
+              <div key={String(column.key)} data-testid={`col-${String(column.key)}`}>
+                {content}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  ),
+}));
+
+jest.mock('@/components/ui/select', () => {
+  const React = require('react');
+  const SelectContext = React.createContext({ onValueChange: (_value: string) => {} });
+
+  const Select = ({ children, onValueChange }: { children: React.ReactNode; onValueChange?: (value: string) => void }) => (
+    <SelectContext.Provider value={{ onValueChange: onValueChange || (() => {}) }}>
+      <div>{children}</div>
+    </SelectContext.Provider>
+  );
+
+  const SelectTrigger = ({ children }: { children: React.ReactNode }) => (
+    <button type="button">{children}</button>
+  );
+
+  const SelectValue = ({ placeholder }: { placeholder?: string }) => (
+    <span>{placeholder}</span>
+  );
+
+  const SelectContent = ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  );
+
+  const SelectItem = ({ value, children }: { value: string; children: React.ReactNode }) => {
+    const { onValueChange } = React.useContext(SelectContext);
+    return (
+      <div role="option" onClick={() => onValueChange(value)}>
+        {children}
+      </div>
+    );
+  };
+
+  return {
+    Select,
+    SelectTrigger,
+    SelectValue,
+    SelectContent,
+    SelectItem,
+  };
+});
 
 const mockUseInventory = useInventory as jest.MockedFunction<typeof useInventory>;
 const mockUseInventoryStats = useInventoryStats as jest.MockedFunction<typeof useInventoryStats>;
@@ -71,6 +198,7 @@ describe('InventoryManager', () => {
       category: 'Adhesives',
       current_stock: 5,
       minimum_stock: 10,
+      is_low_stock: true,
     }),
     createMockMaterial({
       id: '3',
@@ -101,26 +229,39 @@ describe('InventoryManager', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     
-    mockUseInventory.mockReturnValue({
-      materials: mockMaterials,
-      loading: false,
-      error: null,
-      stats: mockStats,
-      lowStockMaterials: [mockMaterials[1]],
-      expiredMaterials: [mockMaterials[2]],
-      refetch: mockRefetch,
-      createMaterial: jest.fn(),
-      updateMaterial: jest.fn(),
-      updateStock: jest.fn(),
-      recordConsumption: jest.fn(),
-      getMaterial: jest.fn(),
-      getMaterialBySku: jest.fn(),
-      getInterventionConsumption: jest.fn(),
-      getInterventionSummary: jest.fn(),
-      getMaterialStats: jest.fn(),
-      refetchStats: jest.fn(),
-      refetchLowStock: jest.fn(),
-      refetchExpired: jest.fn(),
+    mockUseInventory.mockImplementation((options) => {
+      const materialType = options?.material_type ?? null;
+      const category = options?.category ?? null;
+      const activeOnly = options?.active_only ?? true;
+
+      const filteredMaterials = mockMaterials.filter((material) => {
+        if (activeOnly && material.is_active === false) return false;
+        if (materialType && material.material_type !== materialType) return false;
+        if (category && material.category !== category) return false;
+        return true;
+      });
+
+      return {
+        materials: filteredMaterials,
+        loading: false,
+        error: null,
+        stats: mockStats,
+        lowStockMaterials: [mockMaterials[1]],
+        expiredMaterials: [mockMaterials[2]],
+        refetch: mockRefetch,
+        createMaterial: jest.fn(),
+        updateMaterial: jest.fn(),
+        updateStock: jest.fn(),
+        recordConsumption: jest.fn(),
+        getMaterial: jest.fn(),
+        getMaterialBySku: jest.fn(),
+        getInterventionConsumption: jest.fn(),
+        getInterventionSummary: jest.fn(),
+        getMaterialStats: jest.fn(),
+        refetchStats: jest.fn(),
+        refetchLowStock: jest.fn(),
+        refetchExpired: jest.fn(),
+      };
     });
 
     mockUseInventoryStats.mockReturnValue({
@@ -139,14 +280,21 @@ describe('InventoryManager', () => {
       expect(screen.getByText('Manage your material inventory and track stock levels')).toBeInTheDocument();
       
       // Stats cards
-      expect(screen.getByText('Total Materials')).toBeInTheDocument();
-      expect(screen.getByText('3')).toBeInTheDocument();
-      expect(screen.getByText('Low Stock Items')).toBeInTheDocument();
-      expect(screen.getByText('1')).toBeInTheDocument();
-      expect(screen.getByText('Expired Items')).toBeInTheDocument();
-      expect(screen.getByText('1')).toBeInTheDocument();
-      expect(screen.getByText('Total Value')).toBeInTheDocument();
-      expect(screen.getByText('€5,000.75')).toBeInTheDocument();
+      const totalMaterialsCard = screen.getByText('Total Materials').closest('div')?.parentElement;
+      expect(totalMaterialsCard).not.toBeNull();
+      expect(within(totalMaterialsCard as HTMLElement).getByText('3')).toBeInTheDocument();
+
+      const lowStockCard = screen.getByText('Low Stock Items').closest('div')?.parentElement;
+      expect(lowStockCard).not.toBeNull();
+      expect(within(lowStockCard as HTMLElement).getByText('1')).toBeInTheDocument();
+
+      const expiredCard = screen.getByText('Expired Items').closest('div')?.parentElement;
+      expect(expiredCard).not.toBeNull();
+      expect(within(expiredCard as HTMLElement).getByText('1')).toBeInTheDocument();
+
+      const totalValueCard = screen.getByText('Total Value').closest('div')?.parentElement;
+      expect(totalValueCard).not.toBeNull();
+      expect(within(totalValueCard as HTMLElement).getByText('€5,000.75')).toBeInTheDocument();
 
       // Materials table
       expect(screen.getByText('Materials (3)')).toBeInTheDocument();
@@ -178,9 +326,11 @@ describe('InventoryManager', () => {
       const searchInput = screen.getByPlaceholderText('Search materials...');
       await userEvent.type(searchInput, 'PPF');
 
-      expect(screen.getByText('PPF Film Standard')).toBeInTheDocument();
-      expect(screen.queryByText('Adhesive Premium')).not.toBeInTheDocument();
-      expect(screen.queryByText('Application Tool')).not.toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('PPF Film Standard')).toBeInTheDocument();
+        expect(screen.queryByText('Adhesive Premium')).not.toBeInTheDocument();
+        expect(screen.queryByText('Application Tool')).not.toBeInTheDocument();
+      });
     });
 
     it('should filter materials by SKU', async () => {
@@ -200,9 +350,11 @@ describe('InventoryManager', () => {
       const searchInput = screen.getByPlaceholderText('Search materials...');
       await userEvent.type(searchInput, '3M');
 
-      expect(screen.getByText('PPF Film Standard')).toBeInTheDocument();
-      expect(screen.queryByText('Adhesive Premium')).not.toBeInTheDocument();
-      expect(screen.queryByText('Application Tool')).not.toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('PPF Film Standard')).toBeInTheDocument();
+        expect(screen.queryByText('Adhesive Premium')).not.toBeInTheDocument();
+        expect(screen.queryByText('Application Tool')).not.toBeInTheDocument();
+      });
     });
   });
 
@@ -212,7 +364,8 @@ describe('InventoryManager', () => {
 
       const typeSelect = screen.getByText('Select type');
       await userEvent.click(typeSelect);
-      await userEvent.click(screen.getByText('PPF Film'));
+      const [ppfOption] = screen.getAllByText('PPF Film');
+      await userEvent.click(ppfOption);
 
       expect(screen.getByText('PPF Film Standard')).toBeInTheDocument();
       expect(screen.queryByText('Adhesive Premium')).not.toBeInTheDocument();
@@ -220,22 +373,50 @@ describe('InventoryManager', () => {
     });
 
     it('should filter by category', async () => {
-      render(<InventoryManager />);
-
       // Add categories to materials
       const materialsWithCategories = [
         { ...mockMaterials[0], category: 'Films' },
         { ...mockMaterials[1], category: 'Adhesives' },
         { ...mockMaterials[2], category: 'Tools' },
       ];
-      mockUseInventory.mockReturnValue({
-        ...mockUseInventory(),
-        materials: materialsWithCategories,
+      mockUseInventory.mockImplementation((options) => {
+        const materialType = options?.material_type ?? null;
+        const category = options?.category ?? null;
+        const activeOnly = options?.active_only ?? true;
+
+        const filteredMaterials = materialsWithCategories.filter((material) => {
+          if (activeOnly && material.is_active === false) return false;
+          if (materialType && material.material_type !== materialType) return false;
+          if (category && material.category !== category) return false;
+          return true;
+        });
+
+        return {
+          materials: filteredMaterials,
+          loading: false,
+          error: null,
+          stats: mockStats,
+          lowStockMaterials: [materialsWithCategories[1]],
+          expiredMaterials: [materialsWithCategories[2]],
+          refetch: mockRefetch,
+          createMaterial: jest.fn(),
+          updateMaterial: jest.fn(),
+          updateStock: jest.fn(),
+          recordConsumption: jest.fn(),
+          getMaterial: jest.fn(),
+          getMaterialBySku: jest.fn(),
+          getInterventionConsumption: jest.fn(),
+          getInterventionSummary: jest.fn(),
+          getMaterialStats: jest.fn(),
+          refetchStats: jest.fn(),
+          refetchLowStock: jest.fn(),
+          refetchExpired: jest.fn(),
+        };
       });
 
       render(<InventoryManager />);
 
-      const categorySelect = screen.getByText('Select category');
+      const categorySelect = screen.getAllByText('Select category')[0];
       await userEvent.click(categorySelect);
       await userEvent.click(screen.getByText('Films'));
 
@@ -251,9 +432,40 @@ describe('InventoryManager', () => {
         is_active: false 
       });
       
-      mockUseInventory.mockReturnValue({
-        ...mockUseInventory(),
-        materials: [...mockMaterials, inactiveMaterial],
+      const materialsWithInactive = [...mockMaterials, inactiveMaterial];
+      mockUseInventory.mockImplementation((options) => {
+        const materialType = options?.material_type ?? null;
+        const category = options?.category ?? null;
+        const activeOnly = options?.active_only ?? true;
+
+        const filteredMaterials = materialsWithInactive.filter((material) => {
+          if (activeOnly && material.is_active === false) return false;
+          if (materialType && material.material_type !== materialType) return false;
+          if (category && material.category !== category) return false;
+          return true;
+        });
+
+        return {
+          materials: filteredMaterials,
+          loading: false,
+          error: null,
+          stats: mockStats,
+          lowStockMaterials: [mockMaterials[1]],
+          expiredMaterials: [mockMaterials[2]],
+          refetch: mockRefetch,
+          createMaterial: jest.fn(),
+          updateMaterial: jest.fn(),
+          updateStock: jest.fn(),
+          recordConsumption: jest.fn(),
+          getMaterial: jest.fn(),
+          getMaterialBySku: jest.fn(),
+          getInterventionConsumption: jest.fn(),
+          getInterventionSummary: jest.fn(),
+          getMaterialStats: jest.fn(),
+          refetchStats: jest.fn(),
+          refetchLowStock: jest.fn(),
+          refetchExpired: jest.fn(),
+        };
       });
 
       render(<InventoryManager />);
@@ -264,7 +476,9 @@ describe('InventoryManager', () => {
       // Toggle to show inactive
       await userEvent.click(screen.getByText('Show Inactive'));
       
-      expect(screen.getByText('Inactive Material')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('Inactive Material')).toBeInTheDocument();
+      });
     });
   });
 
@@ -277,7 +491,8 @@ describe('InventoryManager', () => {
 
       render(<InventoryManager />);
 
-      expect(screen.getByTestId('refresh-icon')).toHaveClass('animate-spin');
+      const refreshIcons = screen.getAllByTestId('refresh-icon');
+      expect(refreshIcons.some((node) => node.classList.contains('animate-spin'))).toBe(true);
     });
 
     it('should show error state', () => {
@@ -336,26 +551,26 @@ describe('InventoryManager', () => {
   });
 
   describe('export and import functionality', () => {
-    it('should handle export button click', () => {
+    it('should handle export button click', async () => {
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
       
       render(<InventoryManager />);
       
       const exportButton = screen.getByText('Export');
-      userEvent.click(exportButton);
+      await userEvent.click(exportButton);
       
       expect(consoleSpy).toHaveBeenCalledWith('Exporting inventory...');
       
       consoleSpy.mockRestore();
     });
 
-    it('should handle import button click', () => {
+    it('should handle import button click', async () => {
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
       
       render(<InventoryManager />);
       
       const importButton = screen.getByText('Import');
-      userEvent.click(importButton);
+      await userEvent.click(importButton);
       
       expect(consoleSpy).toHaveBeenCalledWith('Importing inventory...');
       
@@ -370,7 +585,9 @@ describe('InventoryManager', () => {
       const addButton = screen.getByText('Add Material');
       await userEvent.click(addButton);
 
-      expect(screen.getByText('Add New Material')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getAllByText('Add New Material').length).toBeGreaterThan(0);
+      });
     });
 
     it('should show edit and view actions for each material', () => {
@@ -390,16 +607,19 @@ describe('InventoryManager', () => {
       render(<InventoryManager />);
 
       // PPF Film Standard - optimal stock
-      const ppfRow = screen.getByText('PPF Film Standard').closest('tr');
-      expect(ppfRow).toHaveTextContent('OK');
+      const ppfRow = screen.getByText('PPF Film Standard').closest('[data-testid="virtualized-row"]');
+      expect(ppfRow).not.toBeNull();
+      expect(within(ppfRow as HTMLElement).getByText('OK')).toBeInTheDocument();
 
       // Adhesive Premium - low stock
-      const adhesiveRow = screen.getByText('Adhesive Premium').closest('tr');
-      expect(adhesiveRow).toHaveTextContent('Low');
+      const adhesiveRow = screen.getByText('Adhesive Premium').closest('[data-testid="virtualized-row"]');
+      expect(adhesiveRow).not.toBeNull();
+      expect(within(adhesiveRow as HTMLElement).getByText('Low')).toBeInTheDocument();
 
       // Application Tool - out of stock and expired
-      const toolRow = screen.getByText('Application Tool').closest('tr');
-      expect(toolRow).toHaveTextContent('Expired');
+      const toolRow = screen.getByText('Application Tool').closest('[data-testid="virtualized-row"]');
+      expect(toolRow).not.toBeNull();
+      expect(within(toolRow as HTMLElement).getByText('Expired')).toBeInTheDocument();
     });
   });
 
@@ -426,7 +646,10 @@ describe('InventoryManager', () => {
 
       render(<InventoryManager />);
 
-      expect(screen.getByText('€25.50')).toBeInTheDocument();
+      const row = screen.getByText('PPF Film Standard').closest('[data-testid="virtualized-row"]');
+      expect(row).not.toBeNull();
+      const unitCostCell = within(row as HTMLElement).getByTestId('col-unit_cost');
+      expect(within(unitCostCell).getByText('€25.50')).toBeInTheDocument();
     });
 
     it('should show N/A when unit cost is not available', () => {
@@ -441,7 +664,10 @@ describe('InventoryManager', () => {
 
       render(<InventoryManager />);
 
-      expect(screen.getByText('N/A')).toBeInTheDocument();
+      const row = screen.getByText('PPF Film Standard').closest('[data-testid="virtualized-row"]');
+      expect(row).not.toBeNull();
+      const unitCostCell = within(row as HTMLElement).getByTestId('col-unit_cost');
+      expect(within(unitCostCell).getByText('N/A')).toBeInTheDocument();
     });
   });
 
@@ -458,7 +684,10 @@ describe('InventoryManager', () => {
 
       render(<InventoryManager />);
 
-      expect(screen.getByText('Warehouse A-1')).toBeInTheDocument();
+      const row = screen.getByText('PPF Film Standard').closest('[data-testid="virtualized-row"]');
+      expect(row).not.toBeNull();
+      const locationCell = within(row as HTMLElement).getByTestId('col-location');
+      expect(within(locationCell).getByText('Warehouse A-1')).toBeInTheDocument();
     });
 
     it('should show N/A when storage location is not available', () => {
@@ -473,7 +702,12 @@ describe('InventoryManager', () => {
 
       render(<InventoryManager />);
 
-      expect(screen.getByText('N/A')).toBeInTheDocument();
+      const row = screen.getByText('PPF Film Standard').closest('[data-testid="virtualized-row"]');
+      expect(row).not.toBeNull();
+      const locationCell = within(row as HTMLElement).getByTestId('col-location');
+      expect(within(locationCell).getByText('N/A')).toBeInTheDocument();
     });
   });
 });
+
+

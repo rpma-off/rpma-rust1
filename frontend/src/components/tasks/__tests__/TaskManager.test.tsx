@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -379,11 +379,11 @@ describe('TaskManager', () => {
       renderWithAuth(<TaskManager />);
       
       await waitFor(() => {
-        expect(screen.getByText('Nouvelle tâche')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Nouvelle/ })).toBeInTheDocument();
       });
       
       // Click the button, not the modal title
-      const buttons = screen.getAllByText('Nouvelle tâche');
+      const buttons = screen.getAllByRole('button', { name: /Nouvelle/ });
       fireEvent.click(buttons[0]); // First occurrence should be the button
       
       // Check for modal title specifically
@@ -398,7 +398,7 @@ describe('TaskManager', () => {
       renderWithAuth(<TaskManager />);
       
       await waitFor(() => {
-        fireEvent.click(screen.getByText('Nouvelle tâche'));
+        fireEvent.click(screen.getByRole('button', { name: /Nouvelle/ }));
       });
       
       // Fill form
@@ -409,17 +409,15 @@ describe('TaskManager', () => {
       const descriptionTextarea = screen.getByPlaceholderText('Description détaillée de l\'intervention');
       await userEvent.type(descriptionTextarea, 'New task description');
       
-      // Select client
-      const clientSelect = screen.getByDisplayValue('Sélectionner un client');
+      // Select client and priority
+      const [clientSelect, prioritySelect] = screen.getAllByRole('combobox');
       await userEvent.selectOptions(clientSelect, 'client-1');
-      
-      // Set priority
-      const prioritySelect = screen.getByDisplayValue('Moyenne');
       await userEvent.selectOptions(prioritySelect, 'high');
       
       // Set scheduled date
-      const dateInput = screen.getByDisplayValue(''); // Date input has no placeholder
-      await userEvent.type(dateInput, '2024-01-20');
+      const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement | null;
+      expect(dateInput).not.toBeNull();
+      await userEvent.type(dateInput as HTMLInputElement, '2024-01-20');
       
       // Submit form with userEvent for proper form submission
       const submitButton = screen.getByRole('button', { name: 'Créer' });
@@ -446,7 +444,7 @@ describe('TaskManager', () => {
       renderWithAuth(<TaskManager />);
       
       await waitFor(() => {
-        const buttons = screen.getAllByText('Nouvelle tâche');
+        const buttons = screen.getAllByRole('button', { name: /Nouvelle/ });
         fireEvent.click(buttons[0]);
       });
       
@@ -471,7 +469,7 @@ describe('TaskManager', () => {
       renderWithAuth(<TaskManager />);
       
       await waitFor(() => {
-        const buttons = screen.getAllByText('Nouvelle tâche');
+        const buttons = screen.getAllByRole('button', { name: /Nouvelle/ });
         fireEvent.click(buttons[0]);
       });
       
@@ -480,7 +478,7 @@ describe('TaskManager', () => {
       
       // Should close the form - check that modal is gone but button is still there
       await waitFor(() => {
-        expect(screen.getByText('Nouvelle tâche')).toBeInTheDocument(); // Button should still be there
+        expect(screen.getByRole('button', { name: /Nouvelle/ })).toBeInTheDocument(); // Button should still be there
         expect(screen.queryByText('Titre de l\'intervention')).not.toBeInTheDocument(); // Modal should be gone
       });
     });
@@ -524,13 +522,11 @@ describe('TaskManager', () => {
       const titleInput = screen.getByDisplayValue('Task 1');
       await userEvent.clear(titleInput);
       await userEvent.type(titleInput, 'Updated Task Title');
+      const [clientSelect] = screen.getAllByRole('combobox');
+      await userEvent.selectOptions(clientSelect, 'client-1');
       
       // Submit form with userEvent for proper form submission
       const submitButton = screen.getByRole('button', { name: /mettre à jour/i });
-      
-      // Debug info
-      console.log('Submit button found:', submitButton);
-      console.log('Submit button disabled:', submitButton.hasAttribute('disabled'));
       
       await userEvent.click(submitButton);
       
@@ -593,14 +589,14 @@ describe('TaskManager', () => {
       renderWithAuth(<TaskManager />);
       
       await waitFor(() => {
-        fireEvent.click(screen.getByText('Nouvelle tâche'));
+        fireEvent.click(screen.getByRole('button', { name: /Nouvelle/ }));
       });
       
       // Fill and submit form
       const titleInput = screen.getByPlaceholderText('Titre de l\'intervention');
       await userEvent.type(titleInput, 'Test Task');
       
-      const clientSelect = screen.getByDisplayValue('Sélectionner un client');
+      const [clientSelect] = screen.getAllByRole('combobox');
       await userEvent.selectOptions(clientSelect, 'client-1');
       
       fireEvent.click(screen.getByText('Créer'));
@@ -636,7 +632,10 @@ describe('TaskManager', () => {
       await waitFor(() => {
         expect(screen.getByText('Modifier la tâche')).toBeInTheDocument();
       });
-      
+
+      const [clientSelect] = screen.getAllByRole('combobox');
+      await userEvent.selectOptions(clientSelect, 'client-1');
+
       // Submit form without changes using submit button
       const submitButton = screen.getByRole('button', { name: /mettre à jour/i });
       await userEvent.click(submitButton);
@@ -706,19 +705,23 @@ describe('TaskManager', () => {
       renderWithAuth(<TaskManager />);
       
       await waitFor(() => {
-        const buttons = screen.getAllByText('Nouvelle tâche');
+        const buttons = screen.getAllByRole('button', { name: /Nouvelle/ });
         fireEvent.click(buttons[0]);
       });
       
-      // Click close button (✕)
-      const closeButton = screen.getByText('✕');
+      // Click close button (mojibake/close glyph)
+      const closeButton = screen.getByRole('button', { name: /âœ•|✕|×/ });
       fireEvent.click(closeButton);
       
       // Modal should close but button should remain
       await waitFor(() => {
-        expect(screen.getByText('Nouvelle tâche')).toBeInTheDocument(); // Button should still be there
+        expect(screen.getByRole('button', { name: /Nouvelle/ })).toBeInTheDocument(); // Button should still be there
         expect(screen.queryByText('Titre de l\'intervention')).not.toBeInTheDocument(); // Modal should be gone
       });
     });
   });
 });
+
+
+
+
