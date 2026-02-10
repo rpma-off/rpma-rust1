@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowRight, CheckCircle, Thermometer, Droplets, Wrench, AlertTriangle, Camera } from 'lucide-react';
 import { usePPFWorkflow } from '@/contexts/PPFWorkflowContext';
+import { getNextPPFStepId, getPPFStepPath } from '@/lib/ppf-workflow';
 import { PhotoUpload } from '@/components/PhotoUpload/PhotoUpload';
 
 interface PreparationChecklistItem {
@@ -61,7 +62,7 @@ const defaultChecklist: PreparationChecklistItem[] = [
 
 export default function PreparationStepPage() {
   const router = useRouter();
-  const { taskId, advanceToStep, stepsData } = usePPFWorkflow();
+  const { taskId, advanceToStep, stepsData, steps, currentStep } = usePPFWorkflow();
   const [isCompleting, setIsCompleting] = useState(false);
 
   const [checklist, setChecklist] = useState<PreparationChecklistItem[]>(defaultChecklist);
@@ -70,6 +71,18 @@ export default function PreparationStepPage() {
     humidityPercent: null
   });
   const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!steps.length) return;
+    const hasPreparation = steps.some(step => step.id === 'preparation');
+    if (!hasPreparation) {
+      const targetId = currentStep?.id ?? steps[0]?.id;
+      const targetPath = targetId ? getPPFStepPath(targetId) : null;
+      router.replace(
+        targetPath ? `/tasks/${taskId}/workflow/ppf/${targetPath}` : `/tasks/${taskId}/workflow/ppf`
+      );
+    }
+  }, [steps, currentStep, router, taskId]);
 
   // Load existing data when component mounts
   useEffect(() => {
@@ -143,15 +156,22 @@ export default function PreparationStepPage() {
 
       // Complete preparation step with collected data and photos
       await advanceToStep('preparation', collectedData, uploadedPhotos.length > 0 ? uploadedPhotos : undefined);
-      
-      // Navigate after all operations complete
-      router.push(`/tasks/${taskId}/workflow/ppf/steps/installation`);
+
+      const nextStepId = getNextPPFStepId(steps, 'preparation');
+      if (nextStepId) {
+        router.push(`/tasks/${taskId}/workflow/ppf/${getPPFStepPath(nextStepId)}`);
+      } else {
+        router.push(`/tasks/${taskId}/workflow/ppf`);
+      }
     } catch (error) {
       console.error('Error completing preparation:', error);
     } finally {
       setIsCompleting(false);
     }
   };
+
+  const stepIndex = steps.findIndex(step => step.id === 'preparation');
+  const stepLabel = stepIndex >= 0 ? `Étape ${stepIndex + 1} sur ${steps.length}` : 'Étape';
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -191,7 +211,7 @@ export default function PreparationStepPage() {
             <Wrench className="h-8 w-8 text-purple-500" />
           </div>
           <div className="text-sm bg-purple-500/10 text-purple-400 px-3 py-1 rounded-full font-medium">
-            Étape 2 sur 4
+            {stepLabel}
           </div>
         </div>
         <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">

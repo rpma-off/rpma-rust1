@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { TaskCard } from './TaskCard';
+import { getCalendarTaskLabel } from './TaskCard';
 import type { CalendarTask } from '../../lib/backend';
 
 interface AgendaViewProps {
@@ -97,66 +97,67 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
               <h2 className="text-lg font-semibold text-gray-900">
                 {formatDate(dateString)}
               </h2>
-              <p className="text-sm text-gray-600 mt-1">
-                {dayTasks.length} task{dayTasks.length !== 1 ? 's' : ''}
-              </p>
             </div>
 
             {/* Tasks for this date */}
             <div className="divide-y divide-gray-100">
-              {dayTasks.map(task => (
-                <div
-                  key={task.id}
-                  className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
-                  onClick={() => onTaskClick?.(task)}
-                >
-                  <div className="flex items-start space-x-4">
-                    {/* Time */}
-                    <div className="flex-shrink-0 w-24 text-sm text-gray-500 pt-1">
-                      {formatTime(task.start_time, task.end_time)}
-                    </div>
+              {dayTasks.map(task => {
+                const taskLabel = getCalendarTaskLabel(task);
 
-                    {/* Task content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-medium text-gray-900 truncate">
-                          {task.task_number}: {task.title}
-                        </h3>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          task.status.toLowerCase() === 'completed' ? 'bg-green-100 text-green-800' :
-                          task.status.toLowerCase() === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
-                          task.status.toLowerCase() === 'scheduled' ? 'bg-blue-100 text-blue-800' :
-                          task.status.toLowerCase() === 'cancelled' ? 'bg-red-100 text-red-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {task.status.replace('_', ' ')}
-                        </span>
+                return (
+                  <div
+                    key={task.id}
+                    className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                    onClick={() => onTaskClick?.(task)}
+                  >
+                    <div className="flex items-start space-x-4">
+                      {/* Time */}
+                      <div className="flex-shrink-0 w-24 text-sm text-gray-500 pt-1">
+                        {formatTime(task.start_time, task.end_time)}
                       </div>
 
-                      <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
-                        <div>
-                          <span className="font-medium">Client:</span> {task.client_name || 'N/A'}
+                      {/* Task content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-sm font-medium text-gray-900 truncate">
+                            {taskLabel}
+                          </h3>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            task.status.toLowerCase() === 'completed' ? 'bg-green-100 text-green-800' :
+                            task.status.toLowerCase() === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
+                            task.status.toLowerCase() === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                            task.status.toLowerCase() === 'cancelled' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {task.status.replace('_', ' ')}
+                          </span>
                         </div>
-                        <div>
-                          <span className="font-medium">Vehicle:</span> {task.vehicle_plate || 'N/A'}
-                        </div>
-                        <div>
-                          <span className="font-medium">Technician:</span> {task.technician_name || 'Unassigned'}
-                        </div>
-                        <div>
-                          <span className="font-medium">Priority:</span> {task.priority}
-                        </div>
-                      </div>
 
-                      {task.estimated_duration && (
-                        <div className="mt-2 text-sm text-gray-600">
-                          <span className="font-medium">Estimated duration:</span> {task.estimated_duration} minutes
+                        <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
+                          <div>
+                            <span className="font-medium">Client:</span> {task.client_name || 'N/A'}
+                          </div>
+                          <div>
+                            <span className="font-medium">Vehicle:</span> {task.vehicle_plate || 'N/A'}
+                          </div>
+                          <div>
+                            <span className="font-medium">Technician:</span> {task.technician_name || 'Unassigned'}
+                          </div>
+                          <div>
+                            <span className="font-medium">Priority:</span> {task.priority}
+                          </div>
                         </div>
-                      )}
+
+                        {task.estimated_duration && (
+                          <div className="mt-2 text-sm text-gray-600">
+                            <span className="font-medium">Estimated duration:</span> {task.estimated_duration} minutes
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ))}

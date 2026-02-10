@@ -257,6 +257,7 @@ impl Database {
             25 => self.apply_migration_25(),
             26 => self.apply_migration_26(),
             27 => self.apply_migration_27(),
+            28 => self.apply_migration_28(),
             _ => {
                 // Try to apply generic SQL migration for all other versions
                 // This covers 3-5, 7, 10, 13-15, 19-23, and 27+
@@ -1783,6 +1784,45 @@ impl Database {
         .map_err(|e| e.to_string())?;
 
         tracing::info!("Migration 027: Completed successfully - CHECK constraints added");
+        Ok(())
+    }
+
+    fn apply_migration_28(&self) -> DbResult<()> {
+        let conn = self.get_connection()?;
+        tracing::info!("Applying migration 28: Add 2FA backup codes/verified_at columns");
+
+        let backup_codes_exists: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM pragma_table_info('users') WHERE name='backup_codes'",
+                [],
+                |row| row.get(0),
+            )
+            .map_err(|e| format!("Failed to check backup_codes column: {}", e))?;
+
+        if backup_codes_exists == 0 {
+            conn.execute("ALTER TABLE users ADD COLUMN backup_codes TEXT", [])
+                .map_err(|e| format!("Failed to add backup_codes column: {}", e))?;
+        }
+
+        let verified_at_exists: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM pragma_table_info('users') WHERE name='verified_at'",
+                [],
+                |row| row.get(0),
+            )
+            .map_err(|e| format!("Failed to check verified_at column: {}", e))?;
+
+        if verified_at_exists == 0 {
+            conn.execute("ALTER TABLE users ADD COLUMN verified_at TEXT", [])
+                .map_err(|e| format!("Failed to add verified_at column: {}", e))?;
+        }
+
+        conn.execute(
+            "INSERT INTO schema_version (version) VALUES (?1)",
+            params![28],
+        )
+        .map_err(|e| e.to_string())?;
+
         Ok(())
     }
 }

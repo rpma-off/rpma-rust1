@@ -1,1593 +1,919 @@
-# RPMA v2 - Deployment Documentation
+# Déploiement - RPMA v2
 
-## Table of Contents
+Ce document décrit le processus de déploiement complet de l'application RPMA v2, incluant la configuration, le build, la distribution, et la maintenance.
 
-- [Introduction](#introduction)
-- [Prerequisites](#prerequisites)
-- [Environment Configuration](#environment-configuration)
-- [Build Configuration](#build-configuration)
-- [CI/CD Pipeline](#cicd-pipeline)
-- [Build Targets](#build-targets)
-- [Deployment Process](#deployment-process)
-- [External Services Configuration](#external-services-configuration)
-- [Maintenance](#maintenance)
+## 📋 Vue d'Ensemble
 
-## Introduction
+RPMA v2 est une application desktop multi-plateforme basée sur Tauri qui combine un backend Rust avec un frontend Next.js. L'application est conçue pour être déployée via des packages natifs sur Windows, macOS et Linux.
 
-This document provides comprehensive deployment instructions for **RPMA v2**, a Tauri-based desktop application. RPMA v2 uses GitHub Actions for continuous integration and supports multiple build targets for different platforms.
+## 🏗️ Configuration de Build
 
-### Deployment Overview
+### 1. Configuration Tauri
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     CI/CD Pipeline                            │
-│                  (GitHub Actions)                             │
-├─────────────────────────────────────────────────────────────────┤
-│  1. Test Job         → 2. Security Job  → 3. Build Job  │
-│     - Rust tests        - cargo-audit     - Multi-platform  │
-│     - E2E tests        - cargo-deny      - Windows/Linux/  │
-│     - Benchmarks       - Dependency check - macOS builds     │
-│  4. Release Job                                              │
-│     - GitHub Releases                                          │
-└─────────────────────────────────────────────────────────────────┘
-                                ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                  Distribution                                │
-│  - GitHub Releases (binaries)                               │
-│  - Auto-updates (Tauri Updater)                             │
-│  - Package installers (app, dmg, msi, appimage)             │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-## Prerequisites
-
-### Development Environment
-
-| Tool | Version | Purpose |
-|------|---------|---------|
-| **Node.js** | >=18.0.0 | Frontend build and development |
-| **npm** | >=9.0.0 | Package manager |
-| **Rust** | 1.77+ | Backend compilation |
-| **Cargo** | Latest | Rust package manager |
-| **Git** | Latest | Version control |
-| **Python** | 3.x | Some build scripts (optional) |
-
-### Build Dependencies
-
-#### Windows
-
-```powershell
-# Install Rust
-winget install Rustlang.Rust.MSVC
-
-# Install Node.js
-winget install OpenJS.NodeJS.LTS
-
-# Install WebView2 (for Tauri)
-winget install Microsoft.EdgeWebView2Runtime
-```
-
-#### macOS
-
-```bash
-# Install Rust via Homebrew
-brew install rust
-
-# Install Node.js
-brew install node
-
-# Install system dependencies
-brew install openssl sqlite3
-```
-
-#### Linux (Ubuntu/Debian)
-
-```bash
-# Install Rust
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-# Install Node.js
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt-get install -y nodejs
-
-# Install build dependencies
-sudo apt-get install -y libwebkit2gtk-4.1-dev \
-    build-essential \
-    curl \
-    wget \
-    file \
-    libssl-dev \
-    libayatana-appindicator3-dev \
-    librsvg2-dev
+#### Fichier de Configuration Principal
+```json
+// src-tauri/tauri.conf.json
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "RPMA PPF Intervention",
+  "version": "0.1.0",
+  "identifier": "com.rpma.ppf-intervention",
+  "build": {
+    "beforeDevCommand": "cd frontend && npm run dev:next",
+    "beforeBuildCommand": "cd frontend && npm run build",
+    "frontendDist": "../frontend/.next",
+    "devUrl": "http://localhost:3000"
+  },
+  "app": {
+    "windows": [{
+      "title": "RPMA - Gestion Interventions PPF",
+      "width": 1280,
+      "height": 800,
+      "minWidth": 800,
+      "minHeight": 600,
+      "resizable": true,
+      "fullscreen": false,
+      "decorations": true,
+      "center": true,
+      "visible": true,
+      "transparent": false
+    }],
+    "security": {
+      "csp": "default-src 'self'; connect-src 'self' http://localhost:3000 ws://localhost:3000 wss://localhost:3000; img-src 'self' asset: https://asset.localhost http://localhost:3000 data: blob:; style-src 'self'; script-src 'self'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app", "dmg", "msi", "appimage"],
+    "resources": [],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "publisher": "RPMA",
+    "category": "Business",
+    "shortDescription": "Gestion d'interventions PPF offline-first",
+    "longDescription": "Application desktop pour gestion complète des interventions Paint Protection Film avec support 100% offline",
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "http://timestamp.digicert.com",
+      "webviewInstallMode": {
+        "type": "embedBootstrapper"
+      }
+    },
+    "macOS": {
+      "frameworks": [],
+      "minimumSystemVersion": "10.15",
+      "providerShortName": "RPMATech",
+      "entitlements": null,
+      "signingIdentity": null
+    },
+    "linux": {
+      "deb": {
+        "depends": []
+      },
+      "appimage": {
+        "bundleMediaFramework": false
+      }
+    }
+  }
+}
 ```
 
-## Environment Configuration
+### 2. Configuration Rust
 
-### Environment Variables
+#### Optimisation Build Cargo
+```toml
+# src-tauri/Cargo.toml
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "z"
+strip = true
+overflow-checks = false
 
-Environment variables are defined in `.env` file in the root directory.
-
-#### Required Variables
-
-```bash
-# Application
-NODE_ENV=production
-VITE_TAURI_PRIVATE_KEY=your_private_key
-
-# Database
-DATABASE_PATH=./rpma.db
-
-# Email (optional)
-EMAIL_PROVIDER=sendgrid
-SENDGRID_API_KEY=your_sendgrid_api_key
-SENDGRID_FROM_EMAIL=noreply@rpma.com
-SENDGRID_FROM_NAME=RPMA
-
-# SMS (optional)
-SMS_PROVIDER=twilio
-TWILIO_ACCOUNT_SID=your_twilio_account_sid
-TWILIO_AUTH_TOKEN=your_twilio_auth_token
-TWILIO_FROM_NUMBER=+1234567890
-
-# Cloud Storage (optional)
-GCS_BUCKET_NAME=your_bucket_name
-GCS_SERVICE_ACCOUNT_KEY=your_service_account_key
-
-# Logging
-LOG_LEVEL=info
-LOG_DIR=./logs
+[profile.dev]
+panic = "abort"
+codegen-units = 16
+opt-level = 0
+debug = true
+incremental = true
+overflow-checks = false
 ```
 
-#### Optional Variables
+### 3. Configuration Frontend
 
-```bash
-# Performance
-CACHE_TTL_SECONDS=300
-MAX_CACHE_SIZE_MB=512
-
-# Sync
-SYNC_INTERVAL_SECONDS=300
-SYNC_RETRY_ATTEMPTS=3
-SYNC_RETRY_DELAY_SECONDS=5
-
-# Session
-SESSION_TIMEOUT_MINUTES=480
-
-# Rate Limiting
-RATE_LIMIT_CLIENT_OPS=100
-RATE_LIMIT_CALENDAR_OPS=200
+#### Build Next.js Optimisé
+```json
+// frontend/package.json
+{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "build:analyze": "ANALYZE=true next build",
+    "export": "next export",
+    "start": "next start"
+  }
+}
 ```
 
-### Environment-Specific Configuration
-
-#### Development
-
-```bash
-# .env.development
-NODE_ENV=development
-VITE_TAURI_PRIVATE_KEY=dev_private_key
-LOG_LEVEL=debug
-CACHE_TTL_SECONDS=60
-```
-
-#### Production
-
-```bash
-# .env.production
-NODE_ENV=production
-VITE_TAURI_PRIVATE_KEY=prod_private_key
-LOG_LEVEL=info
-CACHE_TTL_SECONDS=300
-```
-
-#### Testing
-
-```bash
-# .env.test
-NODE_ENV=test
-DATABASE_PATH=:memory:  # Use in-memory database for tests
-LOG_LEVEL=error
-```
-
-## Build Configuration
-
-### Next.js Configuration
-
-**File**: `frontend/next.config.js`
-
+#### Configuration Next.js pour Tauri
 ```javascript
+// frontend/next.config.js
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  output: 'export',
+  trailingSlash: true,
   images: {
-    domains: ['storage.googleapis.com'],
+    unoptimized: true
   },
   webpack: (config, { isServer }) => {
-    // Bundle splitting optimization
-    config.optimization.splitChunks = {
-      chunks: 'all',
-      cacheGroups: {
-        default: false,
-        vendors: false,
-        vendor: {
-          name: 'vendor',
-          chunks: 'all',
-          test: /[\\/]node_modules[\\/]/,
-          priority: 10,
-        },
-      },
-    };
-
+    if (!isServer) {
+      config.target = 'electron-renderer';
+      config.externals.push('electron', 'electron/renderer');
+    }
     return config;
-  },
+  }
 };
 
 module.exports = nextConfig;
 ```
 
-### Tauri Configuration
+## 🔧 Environnement de Build
 
-**File**: `src-tauri/tauri.conf.json`
+### 1. Prérequis Système
 
+#### Développement
+```bash
+# Node.js
+node --version  # >= 18.0.0
+npm --version     # >= 9.0.0
+
+# Rust
+rustc --version   # >= 1.77
+cargo --version
+
+# Platformes supportées
+# Windows 10+ (x64)
+# macOS 10.15+ (x64, arm64)
+# Linux (Ubuntu 20.04+, CentOS 8+)
+```
+
+#### Build Production
+```bash
+# Windows
+# Visual Studio Build Tools 2019+
+# Windows 10 SDK
+
+# macOS
+# Xcode 12+
+# macOS Command Line Tools
+
+# Linux
+# build-essential
+# libwebkit2gtk-4.0-dev
+# libssl-dev
+# libgtk-3-dev
+# libayatana-appindicator3-dev
+# librsvg2-dev
+```
+
+### 2. Configuration des Variables d'Environnement
+
+#### Variables de Build
+```bash
+# .env.production
+NODE_ENV=production
+NEXT_PUBLIC_APP_VERSION=0.1.0
+NEXT_PUBLIC_BUILD_DATE=$(date +%Y-%m-%d)
+RUST_LOG=info
+RPMA_DB_KEY=votre_cle_chiffrement_optionnelle
+JWT_SECRET=dfc3d7f5c295d19b42e9b3d7eaa9602e45f91a9e5e95cbaa3230fc17e631c74b
+```
+
+#### Variables Système
+```bash
+# Configuration path
+export RPMA_CONFIG_PATH="$HOME/.rpma"
+export RPMA_DATA_PATH="$HOME/.rpma/data"
+export RPMA_LOGS_PATH="$HOME/.rpma/logs"
+export RPMA_BACKUP_PATH="$HOME/.rpma/backups"
+
+# Performance
+export RUST_BACKTRACE=1
+export RUST_LOG_STYLE=always
+```
+
+## 🏭 Processus de Build
+
+### 1. Build Développement
+
+```bash
+# Clone du projet
+git clone <repository-url> rpma-rust
+cd rpma-rust
+
+# Installation dépendances
+npm run install
+
+# Démarrage développement
+npm run dev
+# Lance automatiquement:
+# - Frontend Next.js (localhost:3000)
+# - Backend Tauri (application desktop)
+# - Synchronisation des types Rust ↔ TypeScript
+```
+
+### 2. Build Production
+
+```bash
+# Build frontend
+npm run frontend:build
+
+# Build application complète
+npm run build
+
+# Build release optimisé (Rust)
+cd src-tauri
+cargo build --release
+
+# Création des packages
+npm run tauri build
+```
+
+### 3. Structure des Artéfacts de Build
+
+```
+dist/
+├── src-tauri/
+│   ├── target/
+│   │   ├── release/
+│   │   │   ├── rpma-ppf-intervention.exe    # Windows
+│   │   │   ├── rpma-ppf-intervention.app    # macOS
+│   │   │   └── rpma-ppf-intervention.AppImage # Linux
+│   │   └── bundle/
+│   │       ├── msi/                     # Windows Installer
+│   │       ├── dmg/                     # macOS Disk Image
+│   │       ├── deb/                     # Linux Debian Package
+│   │       └── appimage/                # Linux AppImage
+│   └── icons/
+├── frontend/.next/                    # Frontend build output
+└── bundle/                           # Final application bundles
+```
+
+## 📦 Distribution Multi-Plateforme
+
+### 1. Windows Distribution
+
+#### Package MSI
+```xml
+<!-- installer.wxs -->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*" 
+           Name="RPMA PPF Intervention" 
+           Language="1033" 
+           Version="0.1.0.0" 
+           Manufacturer="RPMA" 
+           UpgradeCode="GUID-UPGRADE-CODE">
+    
+    <Package InstallerVersion="200" 
+             Compressed="yes" 
+             InstallScope="perMachine" />
+    
+    <MediaTemplate EmbedCab="yes" />
+    
+    <Feature Id="ProductFeature" 
+             Title="RPMA PPF Intervention" 
+             Level="1">
+      <ComponentRef Id="MainExecutable" />
+      <ComponentRef Id="ApplicationShortcut" />
+    </Feature>
+    
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Component Id="MainExecutable" Guid="*">
+        <File Id="RPMAExe" 
+              Source="$(var.SourceDir)rpma-ppf-intervention.exe" 
+              KeyPath="yes" />
+      </Component>
+    </Directory>
+  </Product>
+</Wix>
+```
+
+#### Configuration Windows
 ```json
 {
-  "build": {
-    "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build",
-    "devPath": "http://localhost:3000",
-    "distDir": "../dist",
-    "withGlobalTauri": false
-  },
-  "package": {
-    "productName": "RPMA PPF Intervention",
-    "version": "0.1.0"
-  },
-  "tauri": {
-    "allowlist": {
-      "all": false,
-      "shell": {
-        "all": false,
-        "open": true
-      },
-      "dialog": {
-        "all": false,
-        "open": true,
-        "save": true
-      }
-    },
-    "bundle": {
-      "active": true,
-      "targets": ["app", "dmg", "msi", "appimage"],
-      "identifier": "com.rpma.ppf-intervention",
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/128x128@2x.png",
-        "icons/icon.icns",
-        "icons/icon.ico"
-      ],
-      "category": "Productivity",
-      "shortDescription": "PPF Intervention Management",
-      "longDescription": "Comprehensive PPF installation intervention management application with task tracking, workflow management, and reporting capabilities.",
-      "macOS": {
-        "frameworks": [],
-        "minimumSystemVersion": "10.15",
-        "entitlements": null,
-        "exceptionDomain": "",
-        "signingIdentity": null,
-        "providerShortName": null,
-        "info": {
-          "CFBundleName": "RPMA PPF Intervention",
-          "CFBundleDisplayName": "RPMA",
-          "CFBundleIdentifier": "com.rpma.ppf-intervention",
-          "CFBundleVersion": "0.1.0",
-          "CFBundleShortVersionString": "0.1.0"
-        }
-      },
-      "windows": {
-        "certificateThumbprint": null,
-        "digestAlgorithm": "sha256",
-        "timestampUrl": ""
-      }
-    },
-    "security": {
-      "csp": "default-src 'self'; connect-src ipc: http://ipc.localhost https://*.rpma.com; img-src 'self' https://storage.googleapis.com data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-eval';"
-    },
-    "updater": {
-      "active": true,
-      "endpoints": [
-        "https://releases.rpma.com/{{target}}/{{current_version}}"
-      ],
-      "dialog": true,
-      "pubkey": "YOUR_PUBLIC_KEY_HERE"
-    },
-    "windows": [
-      {
-        "title": "RPMA PPF Intervention",
-        "width": 1280,
-        "height": 800,
-        "resizable": true,
-        "fullscreen": false,
-        "decorations": true,
-        "transparent": false,
-        "alwaysOnTop": false,
-        "center": true,
-        "minWidth": 800,
-        "minHeight": 600,
-        "visible": true
-      }
-    ]
+  "publisher": "RPMA",
+  "certificateThumbprint": null,
+  "digestAlgorithm": "sha256",
+  "timestampUrl": "http://timestamp.digicert.com",
+  "webviewInstallMode": {
+    "type": "embedBootstrapper"
   }
 }
 ```
 
-### Cargo Configuration
+#### Script d'Installation PowerShell
+```powershell
+# install.ps1
+param($InstallPath = "$env:PROGRAMFILES\RPMA")
 
-**File**: `src-tauri/Cargo.toml`
-
-```toml
-[package]
-name = "rpma-ppf-intervention"
-version = "0.1.0"
-description = "RPMA PPF Intervention Management Application"
-authors = ["RPMA Team"]
-license = "MIT"
-repository = "https://github.com/your-org/rpma-rust"
-edition = "2021"
-rust-version = "1.77"
-
-[dependencies]
-tauri = { version = "2.1", features = ["shell-open"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-tokio = { version = "1.42", features = ["full"] }
-rusqlite = { version = "0.32", features = ["bundled"] }
-r2d2 = "0.8"
-r2d2_sqlite = "0.25"
-argon2 = "0.5"
-jsonwebtoken = "9.3"
-totp-rs = "5.5"
-reqwest = { version = "0.12", features = ["json", "gzip"] }
-specta = "2.0"
-ts-rs = "8.0"
-genpdf = "0.2"
-printpdf = "0.7"
-geo = "0.28"
-parking_lot = "0.12"
-lru = "0.12"
-futures = "0.3"
-chrono = { version = "0.4", features = ["serde"] }
-thiserror = "1.0"
-tracing = "0.1"
-tracing-subscriber = "0.3"
-
-[build-dependencies]
-tauri-build = { version = "2.0", features = [] }
-
-[profile.release]
-opt-level = "z"  # Optimize for size
-lto = true
-codegen-units = 1
-strip = true
-panic = "abort"
-
-[profile.dev]
-opt-level = 0
-debug = true
-```
-
-### Package.json Configuration
-
-**File**: `package.json` (root)
-
-```json
-{
-  "name": "rpma-rust",
-  "version": "0.1.0",
-  "description": "RPMA v2 - Paint Protection Film Intervention Management",
-  "type": "module",
-  "scripts": {
-    "dev": "npm run types:sync && tauri dev",
-    "frontend:dev": "next dev",
-    "build": "npm run frontend:build && npm run backend:build:release",
-    "frontend:build": "next build",
-    "backend:build": "cargo build --manifest-path=src-tauri/Cargo.toml",
-    "backend:build:release": "cargo build --release --manifest-path=src-tauri/Cargo.toml",
-    "types:sync": "node scripts/write-types.js",
-    "types:validate": "node scripts/validate-types.js",
-    "ci:validate": "npm run types:validate && npm run types:drift-check"
-  },
-  "devDependencies": {
-    "@tauri-apps/cli": "^2.1.0",
-    "next": "^14.2.0",
-    "react": "^18.3.1",
-    "typescript": "^5.0.0",
-    "@types/node": "^20.0.0"
-  }
+# Vérification des prérequis
+if (-not (Test-Path $env:PROGRAMFILES\RPMA\rpma-ppf-intervention.exe)) {
+    Write-Host "Installation de RPMA PPF Intervention..."
+    
+    # Création du répertoire
+    New-Item -ItemType Directory -Force -Path $InstallPath
+    
+    # Copie des fichiers
+    Copy-Item -Path ".\*" -Destination $InstallPath -Recurse -Force
+    
+    # Création du raccourci bureau
+    $WshShell = New-Object -comObject WScript.Shell
+    $WshShell.CreateShortcut("$env:PUBLIC\Desktop\RPMA.lnk", 
+                              "$InstallPath\rpma-ppf-intervention.exe")
+    
+    # Configuration du registre
+    New-Item -Path "HKLM:\SOFTWARE\RPMA" -Force
+    New-ItemProperty -Path "HKLM:\SOFTWARE\RPMA" -Name "InstallPath" -Value $InstallPath -PropertyType String -Force
+    
+    Write-Host "Installation terminée avec succès!"
+} else {
+    Write-Host "RPMA PPF Intervention est déjà installé."
 }
 ```
 
-## CI/CD Pipeline
+### 2. macOS Distribution
 
-### GitHub Actions Workflow
+#### Configuration macOS
+```json
+{
+  "frameworks": [],
+  "minimumSystemVersion": "10.15",
+  "providerShortName": "RPMATech",
+  "entitlements": null,
+  "signingIdentity": null
+}
+```
 
-**File**: `.github/workflows/ci.yml`
+#### Script d'Installation macOS
+```bash
+#!/bin/bash
+# install.sh
+
+RPMA_APP="/Applications/RPMA PPF Intervention.app"
+
+if [ ! -d "$RPMA_APP" ]; then
+    echo "Installation de RPMA PPF Intervention..."
+    
+    # Extraction du DMG
+    hdiutil attach "./RPMA-PPF-Intervention.dmg"
+    APP_PATH=$(ls /Volumes/RPMA*/ | grep .app)
+    
+    # Copie vers Applications
+    cp -R "/Volumes/RPMA*/$APP_PATH" "/Applications/"
+    
+    # Détachement
+    hdiutil detach "/Volumes/RPMA*"
+    
+    # Permissions
+    chmod -R 755 "/Applications/$APP_PATH"
+    
+    echo "Installation terminée! L'application est disponible dans le dossier Applications."
+else
+    echo "RPMA PPF Intervention est déjà installé."
+fi
+```
+
+#### Configuration Notarisation
+```bash
+# notarize.sh
+APP_NAME="RPMA PPF Intervention"
+APP_PATH="./dist/macos/RPMA PPF Intervention.app"
+
+# Upload pour notarisation
+xcrun altool --notarize-app \
+    --primary-bundle-id "com.rpma.ppf-intervention" \
+    --username "developer@rpma.com" \
+    --password "@keychain:AC_PASSWORD" \
+    --file "$APP_PATH" \
+    --output-format json
+
+# Staple du ticket
+xcrun stapler staple \
+    "RPMA-PPF-Intervention.dmg" \
+    "$APP_PATH"
+```
+
+### 3. Linux Distribution
+
+#### Package Debian (.deb)
+```bash
+# debian/control
+Package: rpma-ppf-intervention
+Version: 0.1.0
+Section: graphics
+Priority: optional
+Architecture: amd64
+Depends: libwebkit2gtk-4.0-37 (>= 2.34.0), libssl1.1 (>= 1.1.1), libgtk-3-0 (>= 3.24.0)
+Maintainer: RPMA <support@rpma.com>
+Description: Application desktop pour la gestion d'interventions PPF
+Homepage: https://rpma.com
+```
+
+#### Script Post-Installation
+```bash
+#!/bin/bash
+# postinst
+set -e
+
+# Création raccourci bureau
+update-desktop-database
+
+# Configuration permissions
+chmod +x /opt/rpma-ppf-intervention/rpma-ppf-intervention
+
+# Message d'installation
+echo "RPMA PPF Intervention a été installé avec succès!"
+```
+
+#### AppImage Configuration
+```bash
+# AppRun script
+#!/bin/bash
+HERE="$(dirname "$(readlink -f "${0}")"
+
+export APPIMAGE="${APPIMAGE:-$HERE}"
+export ARGV="$@"
+export TMPDIR=$([ -z "${XDG_CACHE_HOME}" ] && echo "/tmp/${USER:-root}" || echo "${XDG_CACHE_HOME}/tmp")
+
+exec "${APPIMAGE}/usr/bin/rpma-ppf-intervention" "$@"
+```
+
+## 🔄 CI/CD Pipeline
+
+### 1. GitHub Actions Workflow
 
 ```yaml
-name: CI/CD Pipeline
+# .github/workflows/build.yml
+name: Build and Release
 
 on:
   push:
-    branches: [main, develop]
+    tags: ['v*']
   pull_request:
-    branches: [main, develop]
-  release:
-    types: [published]
-
-env:
-  CARGO_TERM_COLOR: always
-  RUST_BACKTRACE: 1
+    branches: [main]
 
 jobs:
   test:
-    name: Test
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        rust: [stable, beta]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: ${{ matrix.rust }}
-          override: true
-
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Cache dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-            node_modules
-          key: ${{ runner.os }}-cargo-${{ matrix.rust }}-node-${{ hashFiles('**/Cargo.lock', '**/package-lock.json') }}
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Format check
-        run: cargo fmt -- --check
-
-      - name: Clippy
-        run: cargo clippy -- -D warnings
-
-      - name: Run tests
-        run: cargo test --verbose
-
-      - name: Run integration tests
-        run: cargo test --test integration --verbose
-
-      - name: Run property-based tests
-        run: cargo test --test proptest --verbose
-
-      - name: Check test coverage
-        run: |
-          cargo install cargo-tarpaulin
-          cargo tarpaulin --out Xml
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v3
-
-  security:
-    name: Security
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install Rust
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Setup Rust
         uses: actions-rs/toolchain@v1
         with:
-          profile: minimal
           toolchain: stable
-          override: true
-
-      - name: Run cargo audit
-        run: |
-          cargo install cargo-audit
-          cargo audit
-
-      - name: Run cargo deny
-        run: |
-          cargo install cargo-deny
-          cargo deny check
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run tests
+        run: npm test
+        
+      - name: Type check
+        run: npm run types:validate
+        
+      - name: Rust lint
+        run: cd src-tauri && cargo clippy -- -D warnings
+        
+      - name: Rust format check
+        run: cd src-tauri && cargo fmt -- --check
 
   build:
-    name: Build
-    needs: [test, security]
-    runs-on: ${{ matrix.os }}
+    needs: test
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        target:
-          - x86_64
-          - aarch64
-        include:
-          - os: ubuntu-latest
-            target: x86_64
-          - os: macos-latest
-            target: x86_64
-          - os: macos-latest
-            target: aarch64
-          - os: windows-latest
-            target: x86_64
-
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+    
+    runs-on: ${{ matrix.platform }}
+    
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-
-      - name: Install Node.js
+      
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-
+          
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          
       - name: Install dependencies
-        run: npm install
-
-      - name: Sync types
-        run: npm run types:sync
-
+        run: npm ci
+        
       - name: Build frontend
         run: npm run frontend:build
-
-      - name: Build backend (Release)
-        run: npm run backend:build:release
-
+        
+      - name: Build Tauri app
+        run: npm run tauri build
+        env:
+          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+          
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.os }}-${{ matrix.target }}-release
+          name: ${{ matrix.platform }}-build
           path: |
-            src-tauri/target/release/rpma-ppf-intervention
-            src-tauri/target/release/rpma-ppf-intervention.exe
             src-tauri/target/release/bundle/
-
-  release:
-    name: Release
-    needs: [build]
-    if: github.event_name == 'release' && github.event.action == 'published'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            **/rpma-ppf-intervention.app
-            **/rpma-ppf-intervention.dmg
-            **/rpma-ppf-intervention.msi
-            **/rpma-ppf-integration_*.AppImage
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            src-tauri/target/release/rpma-ppf-intervention*
 ```
 
-### Pipeline Stages
-
-#### 1. Test Job
-
-**Purpose**: Run all tests across multiple Rust versions and OS.
-
-**Tests**:
-- Unit tests (`cargo test`)
-- Integration tests (`cargo test --test integration`)
-- Property-based tests (`proptest`)
-- E2E tests (via Playwright)
-- Performance tests (via Criterion)
-
-**Quality Checks**:
-- Code formatting (`cargo fmt --check`)
-- Linting (`cargo clippy`)
-- Test coverage (`cargo tarpaulin`)
-
-#### 2. Security Job
-
-**Purpose**: Scan for security vulnerabilities.
-
-**Scans**:
-- `cargo-audit` - Known CVEs in dependencies
-- `cargo-deny` - License and advisory checks
-
-#### 3. Build Job
-
-**Purpose**: Build release binaries for multiple platforms.
-
-**Targets**:
-- Linux (x86_64)
-- macOS (x86_64, ARM64)
-- Windows (x86_64)
-
-#### 4. Release Job
-
-**Purpose**: Publish releases to GitHub Releases.
-
-**Artifacts**:
-- macOS: `.app`, `.dmg`
-- Windows: `.exe`, `.msi`
-- Linux: AppImage, Debian package
-
-## Build Targets
-
-### Supported Platforms
-
-| Platform | Architecture | Bundle Type | Status |
-|----------|-------------|-------------|--------|
-| **Windows** | x86_64 | app, msi | ✅ Supported |
-| **macOS** | x86_64 | app, dmg | ✅ Supported |
-| **macOS** | ARM64 | app, dmg | ✅ Supported |
-| **Linux** | x86_64 | appimage, deb | ✅ Supported |
-
-### Build Commands
-
-#### Development Build
-
-```bash
-# Full development build
-npm run dev
-
-# Frontend only
-npm run frontend:dev
-
-# Backend only (dev)
-npm run backend:build
-```
-
-#### Production Build
-
-```bash
-# Full production build
-npm run build
-
-# Frontend only
-npm run frontend:build
-
-# Backend only (release)
-npm run backend:build:release
-```
-
-#### Platform-Specific Build
-
-```bash
-# Windows
-npm run build -- --target x86_64-pc-windows-msvc
-
-# macOS Intel
-npm run build -- --target x86_64-apple-darwin
-
-# macOS Apple Silicon
-npm run build -- --target aarch64-apple-darwin
-
-# Linux
-npm run build -- --target x86_64-unknown-linux-gnu
-```
-
-### Tauri Bundlers
-
-#### App Bundler
-
-Produces a standalone executable for the target platform.
-
-```bash
-tauri build --target app
-```
-
-**Output**:
-- Windows: `rpma-ppf-intervention.exe`
-- macOS: `rpma-ppf-intervention.app`
-- Linux: `rpma-ppf-integration`
-
-#### DMG Bundler (macOS)
-
-Produces a disk image for macOS distribution.
-
-```bash
-tauri build --target dmg
-```
-
-**Output**: `rpma-ppf-intervention_0.1.0_x64.dmg`
-
-#### MSI Bundler (Windows)
-
-Produces an MSI installer for Windows.
-
-```bash
-tauri build --target msi
-```
-
-**Output**: `rpma-ppf-integration_0.1.0_x64_en-US.msi`
-
-#### AppImage Bundler (Linux)
-
-Produces an AppImage package for Linux.
-
-```bash
-tauri build --target appimage
-```
-
-**Output**: `rpma-ppf-integration_0.1.0_amd64.AppImage`
-
-## Deployment Process
-
-### 1. Development Deployment
-
-**Purpose**: Deploy development environment locally.
-
-**Steps**:
-```bash
-# Clone repository
-git clone https://github.com/your-org/rpma-rust.git
-cd rpma-rust
-
-# Install dependencies
-npm install
-
-# Copy environment template
-cp .env.example .env
-
-# Edit environment variables
-# Edit .env with your configuration
-
-# Start development server
-npm run dev
-```
-
-**Result**: Application opens in development mode with hot-reload enabled.
-
-### 2. Staging Deployment
-
-**Purpose**: Deploy to staging environment for testing.
-
-**Steps**:
-```bash
-# Create staging branch
-git checkout -b staging
-
-# Build for staging
-npm run build
-
-# Test staging build
-# Run all tests manually
-
-# Merge to develop
-git checkout develop
-git merge staging
-git push origin develop
-```
-
-**CI/CD**: Tests run automatically on push to `develop`.
-
-### 3. Production Deployment
-
-**Purpose**: Deploy production build for distribution.
-
-**Steps**:
-
-#### 3.1 Prepare Release
-
-```bash
-# Ensure main branch is up to date
-git checkout main
-git pull origin main
-
-# Run full test suite
-npm run test:e2e
-
-# Run type validation
-npm run ci:validate
-
-# Build production version
-npm run build
-```
-
-#### 3.2 Tag Release
-
-```bash
-# Create version tag (e.g., v0.1.0)
-git tag -a v0.1.0 -m "Release v0.1.0"
-
-# Push tag to trigger CI/CD
-git push origin v0.1.0
-```
-
-#### 3.3 CI/CD Builds
-
-GitHub Actions automatically:
-1. Runs tests
-2. Runs security scans
-3. Builds for all platforms
-4. Creates GitHub Release
-5. Uploads build artifacts
-
-#### 3.4 Verify Release
-
-```bash
-# Download artifacts from GitHub Release
-# Test on each platform:
-# - Windows: Test .exe and .msi
-# - macOS: Test .app and .dmg
-# - Linux: Test AppImage
-```
-
-### 4. Auto-Update Deployment
-
-RPMA v2 includes built-in auto-update via Tauri Updater.
-
-**Update Flow**:
-```
-Application starts
-    ↓
-Check for updates (configured endpoint)
-    ↓
-If update available:
-    ↓
-Download update in background
-    ↓
-Prompt user to install
-    ↓
-Install and restart
-```
-
-**Configuration** (`tauri.conf.json`):
-
-```json
-{
-  "tauri": {
-    "updater": {
-      "active": true,
-      "endpoints": [
-        "https://releases.rpma.com/{{target}}/{{current_version}}"
-      ],
-      "dialog": true,
-      "pubkey": "YOUR_PUBLIC_KEY_HERE"
-    }
-  }
-}
-```
-
-**Update Server Setup**:
-
-Configure your release server to serve updates:
-
-```json
-{
-  "version": "0.2.0",
-  "notes": "Bug fixes and performance improvements",
-  "pub_date": "2024-01-15T00:00:00Z",
-  "platforms": {
-    "windows-x86_64": {
-      "signature": "...",
-      "url": "https://releases.rpma.com/v0.2.0/rpma-ppf-integration_0.2.0_x64.msi.sig"
-    },
-    "darwin-x86_64": {
-      "signature": "...",
-      "url": "https://releases.rpma.com/v0.2.0/rpma-ppf-intervention_0.2.0_x64.dmg.tar.gz.sig"
-    },
-    "linux-x86_64": {
-      "signature": "...",
-      "url": "https://releases.rpma.com/v0.2.0/rpma-ppf-integration_0.2.0_amd64.AppImage.tar.gz.sig"
-    }
-  }
-}
-```
-
-## External Services Configuration
-
-### Email Configuration
-
-#### SendGrid
-
-**Environment Variables**:
-```bash
-EMAIL_PROVIDER=sendgrid
-SENDGRID_API_KEY=SG.your_api_key_here
-SENDGRID_FROM_EMAIL=noreply@rpma.com
-SENDGRID_FROM_NAME=RPMA
-```
-
-**Usage** (Backend):
-```rust
-let client = SendGridClient::new(&api_key);
-let message = SendGridMessage::new()
-    .from(&from_email)
-    .to(&to_email)
-    .subject(&subject)
-    .content(&body);
-
-client.send(&message).await?;
-```
-
-#### Mailgun
-
-**Environment Variables**:
-```bash
-EMAIL_PROVIDER=mailgun
-MAILGUN_API_KEY=your_api_key_here
-MAILGUN_DOMAIN=mg.rpma.com
-MAILGUN_FROM_EMAIL=noreply@rpma.com
-```
-
-### SMS Configuration
-
-#### Twilio
-
-**Environment Variables**:
-```bash
-SMS_PROVIDER=twilio
-TWILIO_ACCOUNT_SID=ACyour_account_sid
-TWILIO_AUTH_TOKEN=your_auth_token
-TWILIO_FROM_NUMBER=+1234567890
-```
-
-#### AWS SNS
-
-**Environment Variables**:
-```bash
-SMS_PROVIDER=aws_sns
-AWS_ACCESS_KEY=your_access_key
-AWS_SECRET_KEY=your_secret_key
-AWS_REGION=us-east-1
-AWS_SNS_TOPIC_ARN=arn:aws:sns:us-east-1:123456789012:topic/MyTopic
-```
-
-### Cloud Storage Configuration
-
-#### Google Cloud Storage
-
-**Environment Variables**:
-```bash
-GCS_BUCKET_NAME=rpma-backups
-GCS_SERVICE_ACCOUNT_KEY=your_service_account_key_json
-```
-
-**Usage** (Backend):
-```rust
-use google_cloud_storage::client::Client;
-
-let credentials = ServiceAccountCredentials::from_key(&service_account_key)?;
-let client = Client::new(credentials).await?;
-
-let bucket = client.bucket(&bucket_name);
-let object = bucket.object(&object_name);
-object.upload(&data).await?;
-```
-
-## Maintenance
-
-### Database Maintenance
-
-#### Vacuum Database
-
-Optimize database file size:
-
-```bash
-npm run vacuum_database
-```
-
-Or via Tauri command:
-
-```typescript
-await ipcClient.system.vacuumDatabase();
-```
-
-#### Check Database Integrity
-
-```bash
-npm run check_db
-npm run check_db_schema
-```
-
-### Log Management
-
-#### Rotate Logs
-
-Set up log rotation to prevent disk space issues:
-
-```bash
-# Configure log rotation in .env
-LOG_ROTATION_DAYS=30
-LOG_MAX_SIZE_MB=100
-```
-
-#### Clean Old Logs
-
-```bash
-# Delete logs older than 30 days
-find ./logs -name "*.log" -mtime +30 -delete
-```
-
-### Cache Management
-
-#### Clear Application Cache
-
-```typescript
-await ipcClient.system.clearApplicationCache(['query_result', 'image_thumbnail']);
-```
-
-#### Check Cache Statistics
-
-```typescript
-const stats = await ipcClient.system.getCacheStatistics();
-console.log('Cache hit rate:', stats.hit_rate);
-console.log('Cache size:', stats.memory_used_bytes);
-```
-
-### Security Maintenance
-
-#### Update Dependencies
-
-```bash
-# Update npm dependencies
-npm update
-
-# Update Rust dependencies
-cargo update
-```
-
-#### Security Audit
-
-```bash
-# Frontend
-npm audit
-
-# Backend
-cargo install cargo-audit
-cargo audit
-```
-
-### Performance Monitoring
-
-#### Run Performance Tests
-
-```bash
-npm run performance:test
-```
-
-#### Update Performance Baseline
-
-```bash
-npm run performance:update-baseline
-```
-
-## Container Deployment
-
-### Docker Configuration
-
-#### Multi-stage Dockerfile
-
-```dockerfile
-# Stage 1: Build frontend
-FROM node:18-alpine AS frontend-builder
-
-WORKDIR /app/frontend
-COPY frontend/package*.json ./
-RUN npm ci --only=production
-
-COPY frontend/ ./
-RUN npm run build
-
-# Stage 2: Build backend
-FROM rust:1.77-slim AS backend-builder
-
-WORKDIR /app/src-tauri
-COPY src-tauri/ .
-COPY Cargo.toml Cargo.lock ./
-RUN cargo build --release
-
-# Stage 3: Final image
-FROM debian:bullseye-slim
-
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y \
-    libwebkit2gtk-4.1-0 \
-    libssl3 \
-    libgtk-3-0 \
-    libayatana-appindicator3-1 \
-    librsvg2-0 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy application
-COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
-COPY --from=backend-builder /app/src-tauri/target/release/rpma .
-
-# Create app user
-RUN useradd -m -u 1000 rpma
-
-USER rpma
-
-EXPOSE 8000
-
-CMD ["./rpma"]
-```
-
-#### Docker Compose
+### 2. Release Automation
 
 ```yaml
-version: '3.8'
-
-services:
-  rpma-app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
-    volumes:
-      - rpma_data:/home/rpma/.local/share/rpma
-      - rpma_config:/home/rpma/.config/rpma
-    environment:
-      - NODE_ENV=production
-      - RUST_LOG=info
-    restart: unless-stopped
-
-  rpma-db:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_DB: rpma
-      POSTGRES_USER: rpma
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-volumes:
-  rpma_data:
-  rpma_config:
-  postgres_data:
-```
-
-### Kubernetes Deployment
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: rpma-app
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: rpma-app
-  template:
-    metadata:
-      labels:
-        app: rpma-app
-    spec:
-      containers:
-      - name: rpma
-        image: rpma:latest
-        ports:
-        - containerPort: 8000
-        env:
-          - name: NODE_ENV
-            value: "production"
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-```
-
-## Performance Monitoring
-
-### Application Performance Monitoring (APM)
-
-#### OpenTelemetry Configuration
-
-```rust
-// src-tauri/src/monitoring/telemetry.rs
-use opentelemetry::trace::{Tracer, TracerProvider};
-use opentelemetry::sdk::trace::TracerProvider;
-use opentelemetry::sdk::trace as sdktrace;
-
-pub fn init_telemetry() -> Tracer {
-    let tracer = opentelemetry_jaeger::new_pipeline_pipeline()
-        .with_service_name("rpma")
-        .with_trace_config(sdktrace::config().with_resource(Resource::new(vec![
-            KeyValue::new("service.name", "rpma"),
-            KeyValue::new("service.version", env!("CARGO_PKG_VERSION")),
-        ])))
-        .install_simple();
-
-    tracer
-}
-```
-
-#### Metrics Collection
-
-```typescript
-// frontend/src/lib/monitoring/metrics.ts
-export const performanceMetrics = {
-  // Track page load time
-  trackPageLoad: (pageName: string) => {
-    const navigation = performance.getEntriesByType('navigation')[0];
-    const loadTime = navigation.loadEventEnd - navigation.loadEventStart;
-    
-    // Send to monitoring service
-    sendMetric('page_load_time', loadTime, {
-      page: pageName,
-      browser: navigator.userAgent,
-      timestamp: Date.now()
-    });
-  },
-  
-  // Track API response time
-  trackApiResponse: (endpoint: string, duration: number, status: number) => {
-    sendMetric('api_response_time', duration, {
-      endpoint,
-      status,
-      method: 'POST'
-    });
-  },
-  
-  // Track user interactions
-  trackUserAction: (action: string, context: any) => {
-    sendMetric('user_action', 1, {
-      action,
-      context,
-      timestamp: Date.now()
-    });
-  }
-};
-```
-
-### Health Check Endpoints
-
-```typescript
-// Health check routes
-app.get('/health', async (req, res) => {
-  const health = {
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    version: process.env.npm_package_version,
-    checks: {
-      database: await checkDatabase(),
-      redis: await checkRedis(),
-      filesystem: await checkFilesystem(),
-      memory: checkMemoryUsage(),
-      cpu: checkCpuUsage()
-    }
-  };
-  
-  res.status(200).json(health);
-});
-
-app.get('/health/ready', async (req, res) => {
-  // Check if all dependencies are ready
-  const isReady = await Promise.all([
-    checkDatabase(),
-    checkExternalServices(),
-    checkConfiguration()
-  ]);
-  
-  res.status(isReady ? 200 : 503).json({
-    status: isReady ? 'ready' : 'not_ready',
-    checks: isReady
-  });
-});
-```
-
-## Security Hardening
-
-### Runtime Security
-
-#### Content Security Policy
-
-```rust
-// src-tauri/src/security/csp.rs
-pub fn get_csp_header() -> String {
-    format!(
-        "default-src 'self'; \
-        script-src 'self' 'unsafe-inline' 'unsafe-eval'; \
-        style-src 'self' 'unsafe-inline'; \
-        img-src 'self' data: blob:; \
-        connect-src 'self' ws: wss:; \
-        font-src 'self'; \
-        object-src 'none'; \
-        media-src 'self'; \
-        frame-src 'none';"
-    )
-}
-```
-
-#### Secure Headers
-
-```rust
-// src-tauri/src/security/headers.rs
-use hyper::{Header, Response};
-
-pub fn add_security_headers(mut response: Response) -> Response {
-    // Prevent clickjacking
-    response.headers_mut().insert(
-        Header::from_static("x-frame-options"),
-        "DENY".parse().unwrap()
-    );
-    
-    // Prevent MIME type sniffing
-    response.headers_mut().insert(
-        Header::from_static("x-content-type-options"),
-        "nosniff".parse().unwrap()
-    );
-    
-    // XSS Protection
-    response.headers_mut().insert(
-        Header::from_static("x-xss-protection"),
-        "1; mode=block".parse().unwrap()
-    );
-    
-    // Referrer Policy
-    response.headers_mut().insert(
-        Header::from_static("referrer-policy"),
-        "strict-origin-when-cross-origin".parse().unwrap()
-    );
-    
-    response
-}
-```
-
-### Dependency Scanning
-
-#### GitHub Actions Security Scan
-
-```yaml
-# .github/workflows/security.yml
-name: Security Scan
+# .github/workflows/release.yml
+name: Create Release
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-  schedule:
-    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+    tags: ['v*']
 
 jobs:
-  security:
+  create-release:
     runs-on: ubuntu-latest
+    needs: build
+    
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
-      - name: Run Cargo Audit
-        run: cargo audit
-        
-      - name: Run Cargo Deny
-        run: cargo deny check
-        
-      - name: Run Security Audit
-        run: cargo install cargo-audit && cargo audit
-        
-      - name: Upload Security Report
-        uses: actions/upload-artifact@v3
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
         with:
-          name: security-report
-          path: security-report.json
+          path: release-assets
+          
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: RPMA v${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          files: |
+            release-assets/msi/rpma-ppf-intervention.msi
+            release-assets/dmg/rpma-ppf-intervention.dmg
+            release-assets/appimage/rpma-ppf-intervention.AppImage
 ```
 
-### Security Testing
+## 🔧 Monitoring et Maintenance
 
-```bash
-# Frontend security test
-npm audit --audit-level high
+### 1. Configuration Monitoring
 
-# Backend security audit
-cargo audit
-
-# Dependency vulnerability check
-cargo deny check
-
-# OWASP ZAP Baseline Scan
-docker run -t owasp/zap2.10-stable \
-  zap-baseline.py \
-  -t http://localhost:8000 \
-  -J security-report.json
-```
-
-## Backup Strategies
-
-### Automated Backups
-
-#### Database Backup Script
-
-```bash
-#!/bin/bash
-# scripts/backup-database.sh
-
-BACKUP_DIR="/backups/rpma"
-DB_PATH="$HOME/.local/share/rpma/rpma.db"
-TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-BACKUP_FILE="rpma_backup_${TIMESTAMP}.db"
-
-# Create backup directory
-mkdir -p "$BACKUP_DIR"
-
-# Perform database vacuum before backup
-sqlite3 "$DB_PATH" "VACUUM;"
-
-# Create compressed backup
-sqlite3 "$DB_PATH" ".backup $BACKUP_FILE"
-gzip "$BACKUP_DIR/$BACKUP_FILE"
-
-# Clean old backups (keep last 30 days)
-find "$BACKUP_DIR" -name "*.gz" -mtime +30 -delete
-
-echo "Backup completed: $BACKUP_FILE.gz"
-```
-
-#### Application Data Backup
-
+#### Application Monitoring
 ```rust
-// src-tauri/src/backup/service.rs
-use std::fs;
-use std::path::Path;
+// src-tauri/src/monitoring.rs
+use serde_json::json;
+use tauri::Manager;
 
-pub struct BackupService;
+pub struct AppMonitor {
+    app: tauri::AppHandle,
+}
 
-impl BackupService {
-    pub async fn create_backup(&self) -> Result<BackupInfo> {
-        let backup_dir = Path::new("/backups");
-        let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
-        let backup_name = format!("rpma_backup_{}", timestamp);
-        let backup_path = backup_dir.join(&backup_name);
+impl AppMonitor {
+    pub fn new(app: tauri::AppHandle) -> Self {
+        Self { app }
+    }
+    
+    pub fn track_crash(&self, error: &str) {
+        let crash_data = json!({
+            "timestamp": chrono::Utc::now().to_rfc3339(),
+            "version": env!("CARGO_PKG_VERSION"),
+            "platform": std::env::consts::OS,
+            "error": error,
+            "user_id": self.get_user_id()
+        });
         
-        // Create backup directory
-        fs::create_dir_all(&backup_path)?;
+        // Envoyer au service de monitoring
+        self.send_to_monitoring_service("crash", crash_data);
+    }
+    
+    pub fn track_performance(&self, metric: &str, value: f64) {
+        let perf_data = json!({
+            "timestamp": chrono::Utc::now().to_rfc3339(),
+            "metric": metric,
+            "value": value,
+            "session_id": self.get_session_id()
+        });
         
-        // Backup database
-        self.backup_database(&backup_path).await?;
-        
-        // Backup user settings
-        self.backup_settings(&backup_path).await?;
-        
-        // Backup photos
-        self.backup_photos(&backup_path).await?;
-        
-        // Create backup manifest
-        let manifest = BackupManifest {
-            version: env!("CARGO_PKG_VERSION"),
-            created_at: chrono::Utc::now(),
-            items: self.get_backup_items(&backup_path)?,
-            checksum: self.calculate_checksum(&backup_path)?
-        };
-        
-        let manifest_path = backup_path.join("manifest.json");
-        let manifest_json = serde_json::to_string_pretty(&manifest)?;
-        fs::write(&manifest_path, manifest_json)?;
-        
-        // Compress backup
-        self.compress_backup(&backup_path).await?;
-        
-        Ok(BackupInfo {
-            path: backup_path.with_extension("tar.gz"),
-            size: self.get_backup_size(&backup_path)?,
-            checksum: manifest.checksum
-        })
+        self.send_to_monitoring_service("performance", perf_data);
     }
 }
 ```
 
-#### Scheduled Backups
-
-```typescript
-// frontend/src/hooks/useScheduledBackup.ts
-import { useEffect } from 'react';
-
-export const useScheduledBackup = () => {
-  useEffect(() => {
-    // Schedule daily backup at 2 AM
-    const scheduleBackup = () => {
-      const now = new Date();
-      const tomorrow = new Date(now);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(2, 0, 0, 0);
-      
-      const msUntilBackup = tomorrow.getTime() - now.getTime();
-      
-      setTimeout(() => {
-        // Trigger backup
-        invoke('create_system_backup');
+#### Health Checks Automatisés
+```rust
+// src-tauri/src/health.rs
+pub struct HealthChecker {
+    pub async fn run_comprehensive_check(&self) -> HealthReport {
+        let mut report = HealthReport::new();
         
-        // Schedule next backup
-        scheduleBackup();
-      }, msUntilBackup);
-    };
-    
-    scheduleBackup();
-  }, []);
-};
+        // Check base de données
+        report.database = self.check_database_health().await;
+        
+        // Check performance
+        report.performance = self.check_performance_metrics().await;
+        
+        // Check synchronisation
+        report.sync = self.check_sync_status().await;
+        
+        // Check sécurité
+        report.security = self.check_security_status().await;
+        
+        report
+    }
+}
 ```
 
-## CI/CD Pipeline Enhancements
+### 2. Mise à Jour Automatique
 
-### Multi-Environment Deployment
+#### Update Service Configuration
+```json
+{
+  "updater": {
+    "active": true,
+    "endpoints": [
+      "https://updates.rpma.com/api/updates/{{target}}/{{current_version}}"
+    ],
+    "dialog": {},
+    "pubkey": "YOUR_PUBLIC_KEY_HERE"
+  }
+}
+```
 
-```yaml
-# .github/workflows/deploy.yml
-name: Deploy
-
-on:
-  workflow_run:
-    inputs:
-      environment:
-        required: true
-        type: choice
-        options:
-          - staging
-          - production
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment }}
-    steps:
-      - uses: actions/checkout@v3
+#### Update Manager
+```rust
+// src-tauri/src/updater.rs
+pub struct UpdateManager {
+    pub async fn check_for_updates(&self) -> Result<UpdateInfo, AppError> {
+        let current_version = env!("CARGO_PKG_VERSION");
+        let update_info = self.fetch_update_info(&current_version).await?;
         
-      - name: Configure Environment
-        run: |
-          if [ "${{ github.event.inputs.environment }}" = "production" ]; then
-            echo "NODE_ENV=production" >> .env
-            echo "API_URL=https://api.rpma.com" >> .env
-          else
-            echo "NODE_ENV=staging" >> .env
-            echo "API_URL=https://staging-api.rpma.com" >> .env
-          fi
+        if update_info.is_update_available {
+            self.notify_user_of_update(&update_info).await?;
+        }
         
-      - name: Build Application
-        run: npm run build
+        Ok(update_info)
+    }
+    
+    pub async fn install_update(&self) -> Result<(), AppError> {
+        let update_url = self.get_update_url().await?;
         
-      - name: Deploy to Production
-        if: github.event.inputs.environment == 'production'
-        run: |
-          # Production deployment steps
-          npm run deploy:prod
-          
-      - name: Deploy to Staging
-        if: github.event.inputs.environment == 'staging'
-        run: |
-          # Staging deployment steps
-          npm run deploy:staging
-          
-      - name: Run Smoke Tests
-        run: |
-          # Run automated smoke tests
-          npm run test:smoke
-          
-      - name: Notify Team
-        if: success()
-        uses: 8398a7/action-slack@v3
-        with:
-          status: success
-          channel: '#deployments'
-          message: 'Successfully deployed to ${{ github.event.inputs.environment }}'
+        // Téléchargement et installation silencieuse
+        self.download_and_install(&update_url).await
+    }
+}
+```
+
+## 🚀 Déploiement en Production
+
+### 1. Processus de Release
+
+#### Versioning Strategy
+```
+Major.Minor.Patch
+Ex: 0.1.0
+
+- Major: Changements majeurs (nouvelles fonctionnalités importantes)
+- Minor: Nouvelles fonctionnalités (retrocompatibles)
+- Patch: Corrections de bugs (rétrocompatibles)
+```
+
+#### Release Checklist
+```
+[ ] Tests manuels complets sur toutes plateformes
+[ ] Validation de performance et sécurité
+[ ] Vérification de l'installation propre
+[ ] Test de mise à jour depuis version précédente
+[ ] Validation du fonctionnement offline
+[ ] Test de synchronisation des données
+[ ] Vérification de la documentation
+[ ] Backup des serveurs de mise à jour
+[ ] Communication aux utilisateurs
+```
+
+### 2. Distribution Channels
+
+#### Canal Stable
+```bash
+# Distribution principale pour tous utilisateurs
+npm run tauri build
+# Upload vers serveur principal
+# Notification aux utilisateurs
+```
+
+#### Canal Beta
+```bash
+# Distribution pour tests avancés
+npm run tauri build -- --features beta
+# Upload vers serveur beta
+# Limited beta tester group
+```
+
+#### Canal Nightly
+```bash
+# Builds quotidiens pour développement
+npm run tauri build -- --features nightly
+# Upload vers serveur de dev
+# Équipe de développement uniquement
+```
+
+### 3. Rollback Strategy
+
+#### Rollback Automatisé
+```bash
+# Conservation des versions précédentes
+cp rpma-ppf-intervention.exe rpma-ppf-intervention-v0.0.9.exe
+cp rpma-ppf-intervention.app rpma-ppf-intervention-v0.0.9.app
+
+# Script de rollback
+if [ "$UPDATE_FAILED" = "true" ]; then
+    echo "Rollback to previous version..."
+    ./rpma-ppf-intervention-v0.0.9.exe
+fi
+```
+
+## 📊 Analytics de Déploiement
+
+### 1. Métriques de Téléchargement
+
+#### Tracking Integration
+```javascript
+// download-tracking.js
+function trackDownload(platform, version) {
+    gtag('event', 'download', {
+        'event_category': 'Application',
+        'event_label': `${platform}-${version}`,
+        'custom_map': {
+            'platform': platform,
+            'version': version,
+            'download_source': document.referrer
+        }
+    });
+}
+```
+
+#### Dashboard Analytics
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Analytics de Déploiement                   │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│  │   Downloads  │    │   Install    │    │   Active     │  │
+│  │   by Platform │    │   Success    │    │   Users      │  │
+│  └─────────────┘    └─────────────┘    └─────────────┘  │
+│                                                             │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│  │   Version    │    │   Geography   │    │   Devices     │  │
+│  │   Adoption   │    │   Distribution│    │   Types       │  │
+│  └─────────────┘    └─────────────┘    └─────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 2. Monitoring des Incidents
+
+#### Alerting System
+```rust
+// src-tauri/src/alerting.rs
+pub struct AlertManager {
+    pub async fn check_system_health(&self) {
+        if self.detect_critical_issue().await {
+            self.send_alert(&Alert {
+                level: AlertLevel::Critical,
+                message: "System health degraded",
+                component: "database",
+                action: "Immediate restart required"
+            }).await;
+        }
+    }
+}
+```
+
+## 🔒 Sécurité de Déploiement
+
+### 1. Signature des Applications
+
+#### Windows Code Signing
+```powershell
+# sign-windows.ps1
+$cert = "cert:\CurrentUser\My\RPMA_Certificate"
+$timestamp_server = "http://timestamp.digicert.com"
+
+signtool sign /f /t $timestamp_server /d "RPMA PPF Intervention" $cert rpma-ppf-intervention.exe
+```
+
+#### macOS Code Signing
+```bash
+# sign-macos.sh
+IDENTITY="Developer ID Application: RPMA Team (TEAM_ID)"
+ENTITLEMENTS="entitlements.plist"
+
+codesign --force --options runtime --sign "$IDENTITY" --entitlements "$ENTITLEMENTS" "RPMA PPF Intervention.app"
+```
+
+### 2. Sécurité du Build
+
+#### Security Headers
+```json
+{
+  "security": {
+    "csp": "default-src 'self'; connect-src 'self' https://api.rpma.com; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:;"
+  }
+}
+```
+
+#### Hardening Runtime
+```rust
+// src-tauri/src/security.rs
+pub fn setup_security_policies() {
+    // Désactivation des fonctionnalités non sécurisées
+    #[cfg(windows)]
+    {
+        // Windows hardening
+        std::env::set_var("NODE_OPTIONS", "--no-sandbox");
+    }
+    
+    // Validation des inputs
+    validate_environment();
+    
+    // Restrictions réseau
+    configure_network_policies();
+}
+```
+
+## 📋 Support et Maintenance
+
+### 1. Documentation Déployée
+
+#### Site de Support
+```
+https://support.rpma.com/
+├── Installation guides
+├── User manuals  
+├── Troubleshooting
+├── FAQ
+├── Video tutorials
+└── Contact support
+```
+
+#### Knowledge Base Structure
+```
+knowledge/
+├── Getting Started/
+├── User Guides/
+├── Technical Documentation/
+├── Known Issues/
+├── Best Practices/
+└── Video Library/
+```
+
+### 2. Support Technique
+
+#### Ticket System Integration
+```rust
+// src-tauri/src/support.rs
+pub struct SupportManager {
+    pub async fn create_support_ticket(&self, issue: SupportIssue) -> Result<String, AppError> {
+        let ticket = json!({
+            "title": issue.title,
+            "description": issue.description,
+            "version": env!("CARGO_PKG_VERSION"),
+            "platform": std::env::consts::OS,
+            "user_id": self.get_user_id(),
+            "logs": self.collect_relevant_logs(&issue).await
+        });
+        
+        self.send_to_support_system(ticket).await
+    }
+}
 ```
 
 ---
 
-**Document Version**: 2.0
-**Last Updated**: Based on comprehensive codebase analysis
+*Cette documentation de déploiement est maintenue à jour avec chaque nouvelle version et plateforme supportée.*

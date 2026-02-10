@@ -239,6 +239,49 @@ Le fichier `src-tauri/tauri.conf.json` contient :
 - Export/import manuel des données
 - Backup automatique des données locales
 
+## 🧪 Tests
+
+### Suite de Tests Complète
+
+RPMA utilise une stratégie de test multi-niveaux pour garantir la qualité :
+
+```bash
+# Tous les tests backend (Rust)
+cd src-tauri && cargo test --lib
+
+# Tests de migration de base de données
+cd src-tauri && cargo test migration
+
+# Tests de performance
+cd src-tauri && cargo test performance
+
+# Tests frontend (TypeScript/React)
+cd frontend && npm test
+
+# Tests E2E avec Playwright
+cd frontend && npm run test:e2e
+
+# Couverture de code
+npm run test:coverage
+```
+
+### Types de Tests
+
+- **Unitaires** : Fonctions individuelles (Rust + TS)
+- **Intégration** : Interactions entre services
+- **Migration** : Validation des changements de schéma
+- **Property-Based** : Tests avec entrées aléatoires (proptest)
+- **Contrats IPC** : Validation API frontend/backend
+- **Composants** : Tests React avec RTL
+- **E2E** : Workflows utilisateur complets
+
+### Couverture Actuelle
+
+- **Backend** : ~68%
+- **Frontend** : ~72%
+- **Migrations** : 90%
+- **Cible** : >85% partout
+
 ## 🤝 Contribution
 
 ### Workflow de Développement

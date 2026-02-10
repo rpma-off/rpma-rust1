@@ -4,11 +4,10 @@ use super::common::*;
 use crate::db::FromSqlRow;
 use rusqlite::{Result as SqliteResult, Row, ToSql};
 use serde::{Deserialize, Serialize};
-#[cfg(any(feature = "specta", feature = "ts-rs"))]
+// Conditional import removed
 use ts_rs::TS;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum PhotoType {
     Before,
@@ -33,8 +32,7 @@ impl ToSql for PhotoType {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[serde(rename_all = "snake_case")]
 pub enum PhotoCategory {
     VehicleCondition,
@@ -65,8 +63,7 @@ impl ToSql for PhotoCategory {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct Photo {
     pub id: String,
     pub intervention_id: String,
@@ -88,7 +85,7 @@ pub struct Photo {
     pub title: Option<String>,
     pub description: Option<String>,
     pub notes: Option<String>,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "any"))]
+    #[ts(type = "any")]
     pub annotations: Option<serde_json::Value>,
 
     // GPS location - separate fields to match database schema
@@ -116,13 +113,13 @@ pub struct Photo {
     #[serde(serialize_with = "serialize_optional_timestamp")]
     pub captured_at: Option<i64>,
     #[serde(serialize_with = "serialize_optional_timestamp")]
-    #[cfg_attr(feature = "ts-rs", ts(type = "string | null"))]
+    #[ts(type = "string | null")]
     pub uploaded_at: Option<i64>,
     #[serde(serialize_with = "serialize_timestamp")]
-    #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
+    #[ts(type = "string")]
     pub created_at: i64,
     #[serde(serialize_with = "serialize_timestamp")]
-    #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
+    #[ts(type = "string")]
     pub updated_at: i64,
 }
 

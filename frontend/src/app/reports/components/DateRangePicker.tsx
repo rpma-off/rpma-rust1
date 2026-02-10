@@ -93,7 +93,7 @@ export function DateRangePicker({ dateRange, onDateRangeChange }: DateRangePicke
   };
 
   return (
-    <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
+    <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4" data-testid="date-range-picker">
       <div className="flex items-center space-x-2">
         <CalendarIcon className="h-4 w-4 text-gray-400" />
         <span className="text-sm text-gray-400">Période:</span>

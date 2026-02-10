@@ -3,6 +3,7 @@
 //! Provides consistent repository patterns for all entities.
 
 use async_trait::async_trait;
+use ts_rs::TS;
 
 /// Result type for repository operations
 pub type RepoResult<T> = Result<T, RepoError>;
@@ -152,7 +153,7 @@ pub trait PaginatedQuery: Query {
 
 /// Pagination metadata
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[derive(TS)]
 pub struct PaginationInfo {
     pub page: i32,
     pub limit: i32,
@@ -182,7 +183,7 @@ impl PaginationInfo {
 
 /// Paginated result
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[derive(TS)]
 pub struct PaginatedResult<T> {
     pub data: Vec<T>,
     pub pagination: PaginationInfo,

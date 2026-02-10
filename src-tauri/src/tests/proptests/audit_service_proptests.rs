@@ -4,7 +4,8 @@
 //! across a wide range of inputs to ensure robust audit functionality.
 
 use crate::services::audit_service::{ActionResult, AuditEvent, AuditEventType, AuditService};
-use crate::test_utils::{test_db, TestDatabase};
+use crate::test_utils::TestDatabase;
+use crate::{test_client, test_db, test_intervention, test_task};
 use chrono::{DateTime, Duration, Utc};
 use proptest::prelude::*;
 
@@ -72,7 +73,7 @@ proptest! {
         audit_service.init().unwrap();
 
         let metadata = serde_json::json!({
-            metadata_keys: metadata_values
+            metadata_keys.clone(): metadata_values
         });
 
         let event = AuditEvent {

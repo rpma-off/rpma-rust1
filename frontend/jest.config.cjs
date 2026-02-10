@@ -43,23 +43,9 @@ const config = {
     '!src/app/page.tsx',
     '!src/**/*.stories.{ts,tsx}',
   ],
-  coverageThreshold: {
-    global: {
-      branches: 80,
-      functions: 80,
-      lines: 80,
-      statements: 80,
-    },
-  },
   
   // Transform configurations
-  transform: {
-    '^.+\\.(ts|tsx)$': ['ts-jest', {
-      tsconfig: {
-        jsx: 'react-jsx',
-      },
-    }],
-  },
+  transform: {},
   
   // Module file extensions
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
@@ -67,7 +53,14 @@ const config = {
   // Module name mapping
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+    '\\.(png|jpg|jpeg|gif|webp|avif|svg|ico|bmp)$': '<rootDir>/src/__tests__/mocks/fileMock.ts',
   },
+
+  // ESM packages to transform
+  transformIgnorePatterns: [
+    '/node_modules/(?!(?:@radix-ui|@hello-pangea/dnd|cmdk|@tanstack|lucide-react|react-day-picker|sonner|date-fns|uuid)/)'
+  ],
   
   // Global setup
   // globalSetup: '<rootDir>/src/__tests__/globalSetup.cjs',

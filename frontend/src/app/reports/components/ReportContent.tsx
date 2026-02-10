@@ -57,7 +57,7 @@ interface ReportContentProps {
 
 function LoadingSpinner({ message = "Chargement du rapport..." }: { message?: string }) {
   return (
-    <div className="flex items-center justify-center py-20">
+    <div className="flex items-center justify-center py-20" data-testid="loading-indicator">
       <div className="text-center max-w-sm">
         <div className="relative mb-6">
           <div className="w-16 h-16 border-4 border-slate-200 dark:border-slate-700 border-t-blue-500 rounded-full animate-spin mx-auto"></div>
@@ -81,7 +81,7 @@ export function ReportContent({ reportType, dateRange, filters, overviewData, re
   // If reports haven't been generated yet, show a message
   if (!reportsGenerated) {
     return (
-      <div className="text-center py-20">
+      <div className="text-center py-20" data-testid="report-content">
         <div className="max-w-lg mx-auto">
           <div className="relative mb-8">
             <div className="w-20 h-20 bg-[hsl(var(--rpma-surface))] rounded-2xl border border-[hsl(var(--rpma-border))] flex items-center justify-center mx-auto mb-6">
@@ -169,8 +169,10 @@ export function ReportContent({ reportType, dateRange, filters, overviewData, re
   };
 
   return (
-    <Suspense fallback={<LoadingSpinner />}>
-      {renderReportComponent()}
-    </Suspense>
+    <div data-testid="report-content">
+      <Suspense fallback={<LoadingSpinner />}>
+        {renderReportComponent()}
+      </Suspense>
+    </div>
   );
 }

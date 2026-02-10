@@ -4,14 +4,15 @@
 
 use crate::commands::AppResult;
 use crate::services::client::ClientService;
-use crate::test_utils::{test_client, test_db, TestDataFactory, TestDatabase};
+use crate::test_utils::{TestDataFactory, TestDatabase};
+use crate::{test_client, test_db, test_intervention, test_task};
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_create_client_success() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_create_client_success() -> AppResult<()> {
         let test_db = test_db!();
         let service = ClientService::new(test_db.db());
 
@@ -37,8 +38,8 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_create_client_minimal_fields() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_create_client_minimal_fields() -> AppResult<()> {
         let test_db = test_db!();
         let service = ClientService::new(test_db.db());
 
@@ -62,8 +63,8 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_create_client_empty_name() {
+    #[tokio::test]
+    async fn test_create_client_empty_name() {
         let test_db = test_db!();
         let service = ClientService::new(test_db.db());
 
@@ -76,8 +77,8 @@ mod tests {
         assert!(result.unwrap_err().contains("Name is required"));
     }
 
-    #[test]
-    fn test_create_client_invalid_email() {
+    #[tokio::test]
+    async fn test_create_client_invalid_email() {
         let test_db = test_db!();
         let service = ClientService::new(test_db.db());
 
@@ -93,8 +94,8 @@ mod tests {
         assert!(result.unwrap_err().contains("Invalid email"));
     }
 
-    #[test]
-    fn test_create_client_duplicate_email() {
+    #[tokio::test]
+    async fn test_create_client_duplicate_email() {
         let test_db = test_db!();
         let service = ClientService::new(test_db.db());
 
@@ -122,8 +123,8 @@ mod tests {
         assert!(result.unwrap_err().contains("Email already exists"));
     }
 
-    #[test]
-    fn test_update_client_success() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_update_client_success() -> AppResult<()> {
         let test_db = test_db!();
         let service = ClientService::new(test_db.db());
 
@@ -167,8 +168,8 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_update_nonexistent_client() {
+    #[tokio::test]
+    async fn test_update_nonexistent_client() {
         let test_db = test_db!();
         let service = ClientService::new(test_db.db());
 
@@ -185,8 +186,8 @@ mod tests {
         assert!(result.unwrap_err().contains("not found"));
     }
 
-    #[test]
-    fn test_deactivate_client() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_deactivate_client() -> AppResult<()> {
         let test_db = test_db!();
         let service = ClientService::new(test_db.db());
 
@@ -215,8 +216,8 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_get_client_by_id() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_get_client_by_id() -> AppResult<()> {
         let test_db = test_db!();
         let service = ClientService::new(test_db.db());
 
@@ -241,8 +242,8 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_get_client_by_nonexistent_id() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_get_client_by_nonexistent_id() -> AppResult<()> {
         let test_db = test_db!();
         let service = ClientService::new(test_db.db());
 
@@ -252,8 +253,8 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_get_client_by_email() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_get_client_by_email() -> AppResult<()> {
         let test_db = test_db!();
         let service = ClientService::new(test_db.db());
 
@@ -285,8 +286,8 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_list_clients_empty() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_list_clients_empty() -> AppResult<()> {
         let test_db = test_db!();
         let service = ClientService::new(test_db.db());
 
@@ -296,8 +297,8 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_list_clients_with_data() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_list_clients_with_data() -> AppResult<()> {
         let test_db = test_db!();
         let service = ClientService::new(test_db.db());
 
@@ -334,8 +335,8 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_list_active_clients_only() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_list_active_clients_only() -> AppResult<()> {
         let test_db = test_db!();
         let service = ClientService::new(test_db.db());
 
@@ -371,8 +372,8 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_search_clients_by_name() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_search_clients_by_name() -> AppResult<()> {
         let test_db = test_db!();
         let service = ClientService::new(test_db.db());
 
@@ -403,8 +404,8 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_search_clients_by_email() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_search_clients_by_email() -> AppResult<()> {
         let test_db = test_db!();
         let service = ClientService::new(test_db.db());
 
@@ -439,8 +440,8 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_delete_client_success() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_delete_client_success() -> AppResult<()> {
         let test_db = test_db!();
         let service = ClientService::new(test_db.db());
 
@@ -463,8 +464,8 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_delete_nonexistent_client() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_delete_nonexistent_client() -> AppResult<()> {
         let test_db = test_db!();
         let service = ClientService::new(test_db.db());
 
@@ -476,8 +477,8 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_delete_client_with_tasks() {
+    #[tokio::test]
+    async fn test_delete_client_with_tasks() {
         let test_db = test_db!();
         let service = ClientService::new(test_db.db());
 
@@ -490,7 +491,7 @@ mod tests {
 
         // Create a task associated with this client
         let task_service = crate::services::task_crud::TaskCrudService::new(test_db.db());
-        let task_request = crate::test_utils::test_task!(
+        let task_request = test_task!(
             title: "Task for Client".to_string(),
             client_id: Some(created_client.id.clone())
         );
@@ -512,8 +513,8 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_client_statistics() -> AppResult<()> {
+    #[tokio::test]
+    async fn test_client_statistics() -> AppResult<()> {
         let test_db = test_db!();
         let service = ClientService::new(test_db.db());
         let task_service = crate::services::task_crud::TaskCrudService::new(test_db.db());
@@ -531,7 +532,7 @@ mod tests {
 
         // Create tasks for first client
         for i in 1..=3 {
-            let task_request = crate::test_utils::test_task!(
+            let task_request = test_task!(
                 title: format!("Task {}", i),
                 client_id: Some(client1.id.clone())
             );
@@ -541,7 +542,7 @@ mod tests {
         }
 
         // Create task for second client
-        let task_request = crate::test_utils::test_task!(
+        let task_request = test_task!(
             title: "Task for inactive client".to_string(),
             client_id: Some(client2.id.clone())
         );

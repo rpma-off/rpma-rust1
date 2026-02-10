@@ -57,12 +57,6 @@ export const DayView: React.FC<DayViewProps> = ({
         >
           {formatDate(currentDate)}
         </h2>
-        <p
-          className="text-sm mt-1"
-          style={{ color: designTokens.colors.textSecondary }}
-        >
-          {dayTasks.length} tâche{dayTasks.length !== 1 ? 's' : ''} planifiée{dayTasks.length !== 1 ? 's' : ''}
-        </p>
       </div>
 
       <div className="flex">

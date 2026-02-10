@@ -6,36 +6,33 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-#[cfg(any(feature = "specta", feature = "ts-rs"))]
+// Conditional import removed
 use ts_rs::TS;
 
 use crate::services::prediction::CompletionTimePrediction;
 
 /// Report metadata information
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ReportMetadata {
     pub title: String,
     pub date_range: DateRange,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub generated_at: DateTime<Utc>,
     pub filters: ReportFilters,
     pub total_records: u64,
 }
 
 /// Date range for reports
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct DateRange {
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub start: DateTime<Utc>,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub end: DateTime<Utc>,
 }
 
 /// Report filters
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ReportFilters {
     pub technician_ids: Option<Vec<String>>,
     pub client_ids: Option<Vec<String>>,
@@ -48,7 +45,7 @@ pub struct ReportFilters {
 /// Report types enumeration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub enum ReportType {
     Overview,
     DataExplorer,
@@ -65,7 +62,7 @@ pub enum ReportType {
 /// Export formats
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub enum ExportFormat {
     Pdf,
     Csv,
@@ -75,7 +72,7 @@ pub enum ExportFormat {
 /// Entity types for data explorer
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub enum EntityType {
     Tasks,
     Clients,
@@ -83,8 +80,7 @@ pub enum EntityType {
 }
 
 /// Search result for data explorer
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct SearchResult {
     pub id: String,
     pub entity_type: crate::models::sync::EntityType,
@@ -96,8 +92,7 @@ pub struct SearchResult {
 }
 
 /// Search filters for data explorer
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, TS)]
 pub struct SearchFilters {
     pub technician_ids: Option<Vec<String>>,
     pub client_ids: Option<Vec<String>>,
@@ -108,8 +103,7 @@ pub struct SearchFilters {
 }
 
 /// Search response
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct SearchResponse {
     pub results: Vec<SearchResult>,
     pub total_count: u64,
@@ -117,8 +111,7 @@ pub struct SearchResponse {
 }
 
 /// Task completion report
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct TaskCompletionReport {
     pub metadata: ReportMetadata,
     pub summary: TaskCompletionSummary,
@@ -128,8 +121,7 @@ pub struct TaskCompletionReport {
 }
 
 /// Task completion summary
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct TaskCompletionSummary {
     pub total_tasks: u64,
     pub completed_tasks: u64,
@@ -139,10 +131,9 @@ pub struct TaskCompletionSummary {
 }
 
 /// Daily task data
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct DailyTaskData {
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub date: DateTime<Utc>,
     pub total: u64,
     pub completed: u64,
@@ -152,8 +143,7 @@ pub struct DailyTaskData {
 }
 
 /// Status count
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct StatusCount {
     pub status: String,
     pub count: u64,
@@ -161,8 +151,7 @@ pub struct StatusCount {
 }
 
 /// Technician task data
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct TechnicianTaskData {
     pub technician_id: String,
     pub technician_name: String,
@@ -172,8 +161,7 @@ pub struct TechnicianTaskData {
 }
 
 /// Technician performance report
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct TechnicianPerformanceReport {
     pub metadata: ReportMetadata,
     pub technicians: Vec<TechnicianPerformance>,
@@ -182,8 +170,7 @@ pub struct TechnicianPerformanceReport {
 }
 
 /// Individual technician performance
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct TechnicianPerformance {
     pub id: String,
     pub name: String,
@@ -192,8 +179,7 @@ pub struct TechnicianPerformance {
 }
 
 /// Technician metrics
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct TechnicianMetrics {
     pub tasks_completed: u64,
     pub average_time_per_task: f64,
@@ -204,8 +190,7 @@ pub struct TechnicianMetrics {
 }
 
 /// Performance benchmarks
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct PerformanceBenchmarks {
     pub top_performer_score: f64,
     pub team_average: f64,
@@ -213,8 +198,7 @@ pub struct PerformanceBenchmarks {
 }
 
 /// Performance trend data
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct PerformanceTrend {
     pub period: String,
     pub performance_score: f64,
@@ -222,8 +206,7 @@ pub struct PerformanceTrend {
 }
 
 /// Client analytics report
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ClientAnalyticsReport {
     pub metadata: ReportMetadata,
     pub summary: ClientSummary,
@@ -233,8 +216,7 @@ pub struct ClientAnalyticsReport {
 }
 
 /// Client summary
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ClientSummary {
     pub total_clients: u64,
     pub new_clients_this_period: u64,
@@ -244,8 +226,7 @@ pub struct ClientSummary {
 }
 
 /// Retention analysis
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct RetentionAnalysis {
     pub new_client_rate: f64,
     pub repeat_client_rate: f64,
@@ -254,8 +235,7 @@ pub struct RetentionAnalysis {
 }
 
 /// Revenue analysis
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct RevenueAnalysis {
     pub total_revenue: f64,
     pub revenue_by_client_type: HashMap<String, f64>,
@@ -264,8 +244,7 @@ pub struct RevenueAnalysis {
 }
 
 /// Client performance data
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ClientPerformance {
     pub id: String,
     pub name: String,
@@ -278,8 +257,7 @@ pub struct ClientPerformance {
 }
 
 /// Quality compliance report
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct QualityComplianceReport {
     pub metadata: ReportMetadata,
     pub summary: QualitySummary,
@@ -289,8 +267,7 @@ pub struct QualityComplianceReport {
 }
 
 /// Quality summary
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct QualitySummary {
     pub overall_quality_score: f64,
     pub photo_compliance_rate: f64,
@@ -299,10 +276,9 @@ pub struct QualitySummary {
 }
 
 /// Quality trend data
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct QualityTrend {
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub date: DateTime<Utc>,
     pub quality_score: f64,
     pub photo_compliance: f64,
@@ -310,8 +286,7 @@ pub struct QualityTrend {
 }
 
 /// Quality issue
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct QualityIssue {
     pub issue_type: String,
     pub count: u64,
@@ -321,8 +296,7 @@ pub struct QualityIssue {
 }
 
 /// Compliance metrics
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ComplianceMetrics {
     pub documentation_completeness: f64,
     pub photo_quality_score: f64,
@@ -331,8 +305,7 @@ pub struct ComplianceMetrics {
 }
 
 /// Material usage report
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct MaterialUsageReport {
     pub metadata: ReportMetadata,
     pub summary: MaterialSummary,
@@ -342,8 +315,7 @@ pub struct MaterialUsageReport {
 }
 
 /// Material summary
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct MaterialSummary {
     pub total_material_cost: f64,
     pub cost_per_task: f64,
@@ -352,8 +324,7 @@ pub struct MaterialSummary {
 }
 
 /// Material consumption data
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct MaterialConsumption {
     pub material_id: String,
     pub material_name: String,
@@ -365,8 +336,7 @@ pub struct MaterialConsumption {
 }
 
 /// Material cost analysis
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct MaterialCostAnalysis {
     pub cost_by_material_type: HashMap<String, f64>,
     pub cost_trends: Vec<CostTrend>,
@@ -374,8 +344,7 @@ pub struct MaterialCostAnalysis {
 }
 
 /// Cost trend data
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct CostTrend {
     pub period: String,
     pub material_cost: f64,
@@ -383,8 +352,7 @@ pub struct CostTrend {
 }
 
 /// Supplier performance
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct SupplierPerformance {
     pub supplier_name: String,
     pub material_type: String,
@@ -394,8 +362,7 @@ pub struct SupplierPerformance {
 }
 
 /// Material efficiency metrics
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct MaterialEfficiency {
     pub utilization_rate: f64,
     pub waste_reduction_rate: f64,
@@ -404,8 +371,7 @@ pub struct MaterialEfficiency {
 }
 
 /// Geographic analytics report
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct GeographicReport {
     pub metadata: ReportMetadata,
     pub heat_map_data: Vec<HeatMapPoint>,
@@ -414,8 +380,7 @@ pub struct GeographicReport {
 }
 
 /// Heat map point for geographic visualization
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct HeatMapPoint {
     pub latitude: f64,
     pub longitude: f64,
@@ -424,8 +389,7 @@ pub struct HeatMapPoint {
 }
 
 /// Service area analysis
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ServiceArea {
     pub center_lat: f64,
     pub center_lon: f64,
@@ -435,8 +399,7 @@ pub struct ServiceArea {
 }
 
 /// Geographic statistics
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct GeographicStats {
     pub total_points: u32,
     pub unique_locations: u32,
@@ -445,8 +408,7 @@ pub struct GeographicStats {
 }
 
 /// Seasonal trend analysis report
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct SeasonalReport {
     pub metadata: ReportMetadata,
     pub seasonal_patterns: Vec<SeasonalPattern>,
@@ -457,8 +419,7 @@ pub struct SeasonalReport {
 }
 
 /// Seasonal pattern analysis
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct SeasonalPattern {
     pub season: String,
     pub month: u8,
@@ -469,8 +430,7 @@ pub struct SeasonalPattern {
 }
 
 /// Weather correlation analysis
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct WeatherCorrelation {
     pub temperature_impact: f64,
     pub precipitation_impact: f64,
@@ -479,8 +439,7 @@ pub struct WeatherCorrelation {
 }
 
 /// Peak period identification
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct PeakPeriod {
     pub period_type: String, // "hour", "day_of_week", "month"
     pub period_value: String,
@@ -490,21 +449,19 @@ pub struct PeakPeriod {
 }
 
 /// Export result
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ExportResult {
     pub download_url: Option<String>,
     pub content: Option<String>, // Base64 encoded content for small files
     pub file_name: String,
     pub file_size: u64,
     pub format: ExportFormat,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub expires_at: DateTime<Utc>,
 }
 
 /// Individual intervention report result
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct InterventionReportResult {
     pub success: bool,
     pub download_url: Option<String>,
@@ -512,7 +469,7 @@ pub struct InterventionReportResult {
     pub file_name: Option<String>,
     pub format: String,
     pub file_size: Option<u64>,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub generated_at: DateTime<Utc>,
 }
 
@@ -526,8 +483,7 @@ pub struct CompleteInterventionData {
 }
 
 /// Step bottleneck analysis
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct StepBottleneck {
     pub step_number: i32,
     pub step_name: String,
@@ -543,8 +499,7 @@ pub struct StepBottleneck {
 }
 
 /// Intervention bottleneck analysis
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct InterventionBottleneck {
     pub intervention_id: String,
     pub task_number: String,
@@ -558,8 +513,7 @@ pub struct InterventionBottleneck {
 }
 
 /// Resource utilization metrics
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ResourceUtilization {
     pub technician_id: String,
     pub technician_name: String,
@@ -571,8 +525,7 @@ pub struct ResourceUtilization {
 }
 
 /// Workload period breakdown
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct WorkloadPeriod {
     pub period: String, // "morning", "afternoon", "evening"
     pub interventions_count: u64,
@@ -580,8 +533,7 @@ pub struct WorkloadPeriod {
 }
 
 /// Process efficiency metrics
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ProcessEfficiencyMetrics {
     pub overall_efficiency_score: f64,
     pub average_step_completion_time: f64,
@@ -592,8 +544,7 @@ pub struct ProcessEfficiencyMetrics {
 }
 
 /// Workflow optimization recommendations
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct WorkflowRecommendation {
     pub recommendation_type: String, // "bottleneck_resolution", "resource_reallocation", "process_improvement"
     pub priority: String,            // "high", "medium", "low"
@@ -605,8 +556,7 @@ pub struct WorkflowRecommendation {
 }
 
 /// Operational intelligence report
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct OperationalIntelligenceReport {
     pub metadata: ReportMetadata,
     pub step_bottlenecks: Vec<StepBottleneck>,
@@ -617,8 +567,7 @@ pub struct OperationalIntelligenceReport {
 }
 
 /// Overview report combining all individual reports
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct OverviewReport {
     pub task_completion: TaskCompletionReport,
     pub technician_performance: TechnicianPerformanceReport,
@@ -631,8 +580,7 @@ pub struct OverviewReport {
 }
 
 /// Report generation request
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ReportRequest {
     pub report_type: ReportType,
     pub date_range: DateRange,
@@ -641,13 +589,12 @@ pub struct ReportRequest {
 }
 
 /// Report generation response
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ReportResponse {
     pub report_id: String,
     pub status: ReportStatus,
     pub progress: f64,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub estimated_completion: Option<DateTime<Utc>>,
     pub result: Option<ExportResult>,
 }
@@ -655,7 +602,7 @@ pub struct ReportResponse {
 /// Analytics KPI categories
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub enum KpiCategory {
     Operational,
     Financial,
@@ -667,7 +614,7 @@ pub enum KpiCategory {
 /// KPI trend direction
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub enum TrendDirection {
     Up,
     Down,
@@ -678,7 +625,7 @@ pub enum TrendDirection {
 /// Calculation period
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub enum CalculationPeriod {
     Hourly,
     Daily,
@@ -687,8 +634,7 @@ pub enum CalculationPeriod {
 }
 
 /// Analytics KPI definition and current value
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct AnalyticsKpi {
     pub id: String,
     pub kpi_name: String,
@@ -705,7 +651,7 @@ pub struct AnalyticsKpi {
     pub trend_direction: Option<TrendDirection>,
 
     // Metadata
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub last_calculated: Option<DateTime<Utc>>,
     pub calculation_period: CalculationPeriod,
     pub is_active: bool,
@@ -743,7 +689,7 @@ impl crate::db::FromSqlRow for AnalyticsKpi {
 /// Metric value types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub enum MetricValueType {
     Count,
     Percentage,
@@ -753,8 +699,7 @@ pub enum MetricValueType {
 }
 
 /// Analytics metric data point
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct AnalyticsMetric {
     pub id: String,
     pub metric_name: String,
@@ -762,11 +707,11 @@ pub struct AnalyticsMetric {
     pub value: f64,
     pub value_type: MetricValueType,
     pub dimensions: Option<String>,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub timestamp: DateTime<Utc>,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub period_start: Option<DateTime<Utc>>,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub period_end: Option<DateTime<Utc>>,
     pub source: String,
     pub source_id: Option<String>,
@@ -775,7 +720,7 @@ pub struct AnalyticsMetric {
 /// Dashboard types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub enum DashboardType {
     Main,
     Operational,
@@ -785,8 +730,7 @@ pub enum DashboardType {
 }
 
 /// Dashboard configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct AnalyticsDashboard {
     pub id: String,
     pub name: String,
@@ -798,9 +742,9 @@ pub struct AnalyticsDashboard {
     pub is_public: bool,
     pub is_default: bool,
     pub is_active: bool,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub created_at: DateTime<Utc>,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub updated_at: DateTime<Utc>,
     pub created_by: Option<String>,
     pub updated_by: Option<String>,
@@ -835,19 +779,17 @@ impl crate::db::FromSqlRow for AnalyticsDashboard {
 }
 
 /// Chart data point for frontend visualization
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ChartDataPoint {
     pub label: String,
     pub value: f64,
     pub category: Option<String>,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub timestamp: Option<DateTime<Utc>>,
 }
 
 /// Chart configuration for dashboard widgets
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ChartConfig {
     pub chart_type: String, // 'line', 'bar', 'pie', 'area', 'scatter'
     pub title: String,
@@ -862,7 +804,7 @@ pub struct ChartConfig {
 /// Dashboard widget types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub enum WidgetType {
     KpiCard,
     Chart,
@@ -872,8 +814,7 @@ pub enum WidgetType {
 }
 
 /// Dashboard widget configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct DashboardWidget {
     pub id: String,
     pub widget_type: WidgetType,
@@ -887,36 +828,32 @@ pub struct DashboardWidget {
 }
 
 /// Widget position on dashboard grid
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct WidgetPosition {
     pub x: i32,
     pub y: i32,
 }
 
 /// Widget size on dashboard grid
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct WidgetSize {
     pub width: i32,
     pub height: i32,
 }
 
 /// Analytics dashboard data response
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct AnalyticsDashboardData {
     pub dashboard: AnalyticsDashboard,
     pub kpis: Vec<AnalyticsKpi>,
     pub widgets: Vec<DashboardWidget>,
     pub date_range: DateRange,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub last_updated: DateTime<Utc>,
 }
 
 /// Analytics time series data for trend charts
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct AnalyticsTimeSeries {
     pub metric_name: String,
     pub data_points: Vec<ChartDataPoint>,
@@ -925,8 +862,7 @@ pub struct AnalyticsTimeSeries {
 }
 
 /// Analytics summary for quick overview
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct AnalyticsSummary {
     pub total_interventions: i64,
     pub completed_today: i64,
@@ -938,14 +874,14 @@ pub struct AnalyticsSummary {
     pub inventory_turnover: f64,
     pub top_performing_technician: Option<String>,
     pub most_common_issue: Option<String>,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub last_updated: DateTime<Utc>,
 }
 
 /// Report generation status
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(TS)]
 pub enum ReportStatus {
     Pending,
     Processing,
@@ -1214,8 +1150,7 @@ impl Default for OperationalIntelligenceReport {
 }
 
 /// Entity counts for Data Explorer
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct EntityCounts {
     pub tasks: i64,
     pub clients: i64,
@@ -1224,8 +1159,7 @@ pub struct EntityCounts {
 }
 
 /// Search results across multiple entities
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct SearchResults {
     pub tasks: Vec<crate::models::task::Task>,
     pub clients: Vec<crate::models::client::Client>,

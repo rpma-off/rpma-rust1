@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Play, Pause, Square, Package, Timer, CheckCircle2, Camera, Layers } from 'lucide-react';
 import { usePPFWorkflow } from '@/contexts/PPFWorkflowContext';
+import { getNextPPFStepId, getPPFStepPath } from '@/lib/ppf-workflow';
 import { PhotoUpload } from '@/components/PhotoUpload/PhotoUpload';
 
 interface ZoneTimer {
@@ -32,13 +33,25 @@ type InstallationCollectedData = {
 
 export default function InstallationStepPage() {
   const router = useRouter();
-  const { taskId, advanceToStep, task, stepsData } = usePPFWorkflow();
+  const { taskId, advanceToStep, task, stepsData, steps, currentStep } = usePPFWorkflow();
   const [isCompleting, setIsCompleting] = useState(false);
 
   const [zones, setZones] = useState<ZoneTimer[]>([]);
   const [globalMaterialLot, setGlobalMaterialLot] = useState('');
   const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
   const [currentTime, setCurrentTime] = useState(Date.now());
+
+  useEffect(() => {
+    if (!steps.length) return;
+    const hasInstallation = steps.some(step => step.id === 'installation');
+    if (!hasInstallation) {
+      const targetId = currentStep?.id ?? steps[0]?.id;
+      const targetPath = targetId ? getPPFStepPath(targetId) : null;
+      router.replace(
+        targetPath ? `/tasks/${taskId}/workflow/ppf/${targetPath}` : `/tasks/${taskId}/workflow/ppf`
+      );
+    }
+  }, [steps, currentStep, router, taskId]);
 
   // Initialize zones from task data and load existing data
   useEffect(() => {
@@ -185,7 +198,13 @@ export default function InstallationStepPage() {
       };
 
       await advanceToStep('installation', collectedData, uploadedPhotos.length > 0 ? uploadedPhotos : undefined);
-      router.push(`/tasks/${taskId}/workflow/ppf/steps/finalization`);
+
+      const nextStepId = getNextPPFStepId(steps, 'installation');
+      if (nextStepId) {
+        router.push(`/tasks/${taskId}/workflow/ppf/${getPPFStepPath(nextStepId)}`);
+      } else {
+        router.push(`/tasks/${taskId}/workflow/ppf`);
+      }
     } catch (error) {
       console.error('Error completing installation:', error);
     } finally {
@@ -196,6 +215,9 @@ export default function InstallationStepPage() {
   if (!task) {
     return <div>Loading task data...</div>;
   }
+
+  const stepIndex = steps.findIndex(step => step.id === 'installation');
+  const stepLabel = stepIndex >= 0 ? `Étape ${stepIndex + 1} sur ${steps.length}` : 'Étape';
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -235,7 +257,7 @@ export default function InstallationStepPage() {
             <Layers className="h-8 w-8 text-orange-500" />
           </div>
           <div className="text-sm bg-orange-500/10 text-orange-400 px-3 py-1 rounded-full font-medium">
-            Étape 3 sur 4
+            {stepLabel}
           </div>
         </div>
         <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
@@ -244,33 +266,6 @@ export default function InstallationStepPage() {
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
           Application professionnelle du film protecteur avec suivi précis des zones
         </p>
-      </motion.div>
-
-      {/* Progress Indicator */}
-      <motion.div
-        className="flex items-center justify-center space-x-4 mb-8"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3, duration: 0.4 }}
-      >
-        <div className="flex items-center space-x-2">
-          <CheckCircle2 className="h-5 w-5 text-green-500" />
-          <span className="text-sm text-green-400">Préparation</span>
-        </div>
-        <div className="w-8 h-px bg-orange-500"></div>
-        <div className="flex items-center space-x-2">
-          <div className="w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
-            <span className="text-xs font-bold text-white">3</span>
-          </div>
-          <span className="text-sm font-medium text-orange-400">Installation</span>
-        </div>
-        <div className="w-8 h-px bg-gray-600"></div>
-        <div className="flex items-center space-x-2">
-          <div className="w-5 h-5 bg-gray-600 rounded-full flex items-center justify-center">
-            <span className="text-xs text-gray-400">4</span>
-          </div>
-          <span className="text-sm text-gray-400">Finalisation</span>
-        </div>
       </motion.div>
 
       <motion.div

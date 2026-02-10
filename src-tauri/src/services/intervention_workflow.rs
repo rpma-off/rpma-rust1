@@ -18,6 +18,7 @@ use crate::services::workflow_strategy::{
     EnvironmentConditions, WorkflowContext, WorkflowStrategyFactory,
 };
 use crate::services::workflow_validation::WorkflowValidationService;
+use serde_json::json;
 
 use std::sync::Arc;
 
@@ -752,5 +753,86 @@ impl InterventionWorkflowService {
             intervention,
             metrics,
         })
+    }
+
+    /// Cancel an intervention
+    pub fn cancel_intervention(
+        &self,
+        intervention_id: &str,
+        user_id: &str,
+    ) -> InterventionResult<Intervention> {
+        // Get intervention
+        let mut intervention = self
+            .data
+            .get_intervention(intervention_id)?
+            .ok_or_else(|| {
+                InterventionError::NotFound(format!(
+                    "Intervention {} not found",
+                    intervention_id
+                ))
+            })?;
+
+        // Check if intervention can be cancelled
+        match intervention.status {
+            InterventionStatus::Pending | InterventionStatus::InProgress => {
+                // Can cancel
+            }
+            InterventionStatus::Completed | InterventionStatus::Cancelled => {
+                return Err(InterventionError::BusinessRule(format!(
+                    "Cannot cancel intervention in {} state",
+                    intervention.status
+                )));
+            }
+            InterventionStatus::Paused => {
+                // Can cancel paused interventions
+            }
+        }
+
+        // Update intervention status to cancelled
+        intervention.status = InterventionStatus::Cancelled;
+        intervention.updated_at = chrono::Utc::now().timestamp_millis();
+        intervention.updated_by = Some(user_id.to_string());
+
+        // Save to database
+        let updates = json!({
+            "status": serde_json::to_string(&intervention.status).unwrap_or_default(),
+            "updated_at": intervention.updated_at,
+            "updated_by": intervention.updated_by
+        });
+        self.data.update_intervention(&intervention.id, updates)?;
+
+        Ok(intervention)
+    }
+
+    /// Get an intervention by ID
+    pub fn get_intervention_by_id(
+        &self,
+        intervention_id: &str,
+    ) -> InterventionResult<Option<Intervention>> {
+        self.data.get_intervention(intervention_id)
+    }
+
+    /// Get interventions for a task
+    pub fn get_interventions_by_task(
+        &self,
+        task_id: &str,
+    ) -> InterventionResult<Vec<Intervention>> {
+        // Since the data service doesn't have this method, we'll implement it directly
+        // Get all interventions and filter by task_id
+        let (interventions, _) = self.data.list_interventions(None, None, Some(1000), Some(0))?;
+        Ok(interventions
+            .into_iter()
+            .filter(|i| i.task_id == task_id)
+            .collect())
+    }
+
+    /// List interventions with pagination
+    pub fn list_interventions(
+        &self,
+        limit: i32,
+        offset: i32,
+    ) -> InterventionResult<Vec<Intervention>> {
+        let (interventions, _) = self.data.list_interventions(None, None, Some(limit), Some(offset))?;
+        Ok(interventions)
     }
 }
