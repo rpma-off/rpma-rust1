@@ -274,6 +274,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
       if (!interventionData?.intervention) throw new Error('No active intervention');
 
 
+      // Get the updated steps data
       const currentStepsData = stepsData;
 
       // Find the CURRENT step (the one that should be completed)
@@ -318,6 +319,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
       if (!interventionData?.intervention) throw new Error('No active intervention');
 
 
+      // Get the updated steps data
       const currentStepsData = stepsData;
 
       // Find the step in the intervention

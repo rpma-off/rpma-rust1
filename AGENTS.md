@@ -39,6 +39,26 @@ rpma-rust/
 - **Authentication**: JWT with 2FA support and role-based access control
 - **Type Safety**: Automatic TypeScript generation from Rust models using `ts-rs`
 
+## Essential Commands
+
+# Start development (recommended)
+npm run dev
+
+# Frontend only
+npm run frontend:dev
+
+# Build for production
+npm run build
+
+# Type checking
+npm run frontend:type-check
+
+# Linting
+npm run frontend:lint
+
+# Type sync (Rust → TypeScript)
+npm run types:sync
+
 ## Critical consistency rules
 - Rust models => TS types via ts-rs. Never drift.
 - IPC commands must be authenticated for protected endpoints (session_token) and follow the response envelope pattern.
