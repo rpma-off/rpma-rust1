@@ -329,6 +329,7 @@ const interventions = await ipcClient.invoke('list_interventions', {
    - Month/Week/Day view toggles
    - Color-coded task status
    - Technician filtering (Supervisor)
+   - Task cards show `license plate – client name` as the primary label
 
 2. **Task Scheduling**:
    - Drag-and-drop task assignment
