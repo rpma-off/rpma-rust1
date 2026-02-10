@@ -77,7 +77,7 @@ mod tests {
 
     #[test]
     fn test_create_material_success() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let request = create_basic_material_request();
@@ -99,7 +99,7 @@ mod tests {
 
     #[test]
     fn test_create_material_validation_empty_sku() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let mut request = create_basic_material_request();
@@ -119,7 +119,7 @@ mod tests {
 
     #[test]
     fn test_create_material_validation_empty_name() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let mut request = create_basic_material_request();
@@ -139,7 +139,7 @@ mod tests {
 
     #[test]
     fn test_create_material_duplicate_sku() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let request = create_basic_material_request();
@@ -162,7 +162,7 @@ mod tests {
 
     #[test]
     fn test_get_material_by_id_success() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let request = create_basic_material_request();
@@ -180,7 +180,7 @@ mod tests {
 
     #[test]
     fn test_get_material_by_id_not_found() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let result = service.get_material("non-existent-id");
@@ -192,7 +192,7 @@ mod tests {
 
     #[test]
     fn test_get_material_by_id_success_direct() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let request = create_basic_material_request();
@@ -210,7 +210,7 @@ mod tests {
 
     #[test]
     fn test_get_material_by_id_not_found_direct() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let result = service.get_material_by_id("non-existent-id");
@@ -226,7 +226,7 @@ mod tests {
 
     #[test]
     fn test_get_material_by_sku_success() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let request = create_basic_material_request();
@@ -244,7 +244,7 @@ mod tests {
 
     #[test]
     fn test_get_material_by_sku_not_found() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let result = service.get_material_by_sku("NON-EXISTENT-SKU");
@@ -256,7 +256,7 @@ mod tests {
 
     #[test]
     fn test_list_materials_success() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         // Create test materials
@@ -274,7 +274,7 @@ mod tests {
 
     #[test]
     fn test_list_materials_with_type_filter() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         // Create test materials
@@ -295,7 +295,7 @@ mod tests {
 
     #[test]
     fn test_list_materials_with_category_filter() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         // Create test materials
@@ -325,7 +325,7 @@ mod tests {
 
     #[test]
     fn test_update_material_success() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let request = create_basic_material_request();
@@ -351,7 +351,7 @@ mod tests {
 
     #[test]
     fn test_update_material_not_found() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let request = create_basic_material_request();
@@ -369,7 +369,7 @@ mod tests {
 
     #[test]
     fn test_update_stock_success() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material = create_test_material_with_stock(&service, "STOCK-001", 50.0);
@@ -390,7 +390,7 @@ mod tests {
 
     #[test]
     fn test_update_stock_insufficient_stock() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material = create_test_material_with_stock(&service, "STOCK-002", 10.0);
@@ -415,7 +415,7 @@ mod tests {
 
     #[test]
     fn test_update_stock_exceeds_maximum() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material = create_test_material_with_stock(&service, "STOCK-003", 40.0);
@@ -440,7 +440,7 @@ mod tests {
 
     #[test]
     fn test_record_consumption_success() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material = create_test_material_with_stock(&service, "CONSUME-001", 100.0);
@@ -471,7 +471,7 @@ mod tests {
 
     #[test]
     fn test_record_consumption_material_not_found() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let request = RecordConsumptionRequest {
@@ -500,13 +500,13 @@ mod tests {
 
     #[test]
     fn test_record_consumption_expired_material() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         // Create an expired material
         let mut request = create_basic_material_request();
         request.sku = "EXPIRED-001".to_string();
-        request.expiry_date = Some(Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0).unwrap());
+        request.expiry_date = Some(Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0).unwrap().timestamp());
         let material = service
             .create_material(request, Some("test_user".to_string()))
             .unwrap();
@@ -537,7 +537,7 @@ mod tests {
 
     #[test]
     fn test_get_intervention_consumption() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material1 = create_test_material_with_stock(&service, "MAT-001", 100.0);
@@ -582,7 +582,7 @@ mod tests {
 
     #[test]
     fn test_get_intervention_material_summary() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material1 = create_test_material_with_stock(&service, "MAT-001", 100.0);
@@ -630,7 +630,7 @@ mod tests {
 
     #[test]
     fn test_get_material_stats() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         // Create test materials
@@ -654,7 +654,7 @@ mod tests {
         // Create expired material
         let mut expired_request = create_basic_material_request();
         expired_request.sku = "EXP-001".to_string();
-        expired_request.expiry_date = Some(Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0).unwrap());
+        expired_request.expiry_date = Some(Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0).unwrap().timestamp());
         let _expired_material = service
             .create_material(expired_request, Some("test_user".to_string()))
             .unwrap();
@@ -673,7 +673,7 @@ mod tests {
 
     #[test]
     fn test_get_low_stock_materials() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         // Create normal stock material
@@ -707,7 +707,7 @@ mod tests {
 
     #[test]
     fn test_get_expired_materials() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         // Create normal material
@@ -716,7 +716,7 @@ mod tests {
         // Create expired material
         let mut expired_request = create_basic_material_request();
         expired_request.sku = "EXP-001".to_string();
-        expired_request.expiry_date = Some(Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0).unwrap());
+        expired_request.expiry_date = Some(Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0).unwrap().timestamp());
         let _expired_material = service
             .create_material(expired_request, Some("test_user".to_string()))
             .unwrap();
@@ -732,7 +732,7 @@ mod tests {
 
     #[test]
     fn test_create_material_category_success() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let request = CreateMaterialCategoryRequest {
@@ -757,7 +757,7 @@ mod tests {
 
     #[test]
     fn test_create_material_category_validation_empty_name() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let mut request = CreateMaterialCategoryRequest {
@@ -782,7 +782,7 @@ mod tests {
 
     #[test]
     fn test_create_supplier_success() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let request = CreateSupplierRequest {
@@ -827,7 +827,7 @@ mod tests {
 
     #[test]
     fn test_create_supplier_validation_empty_name() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let mut request = CreateSupplierRequest {
@@ -867,7 +867,7 @@ mod tests {
 
     #[test]
     fn test_create_inventory_transaction_stock_in() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material = create_test_material_with_stock(&service, "TRANS-001", 50.0);
@@ -884,7 +884,7 @@ mod tests {
             location_from: None,
             location_to: Some("Rack A-1".to_string()),
             batch_number: Some("BATCH-001".to_string()),
-            expiry_date: Some(Utc.with_ymd_and_hms(2025, 12, 31, 0, 0, 0).unwrap()),
+            expiry_date: Some(Utc.with_ymd_and_hms(2025, 12, 31, 0, 0, 0).unwrap().timestamp()),
             quality_status: Some("Good".to_string()),
             intervention_id: None,
             step_id: None,
@@ -910,7 +910,7 @@ mod tests {
 
     #[test]
     fn test_create_inventory_transaction_stock_out() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material = create_test_material_with_stock(&service, "TRANS-002", 100.0);
@@ -953,7 +953,7 @@ mod tests {
 
     #[test]
     fn test_create_inventory_transaction_adjustment() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material = create_test_material_with_stock(&service, "TRANS-003", 50.0);
@@ -996,7 +996,7 @@ mod tests {
 
     #[test]
     fn test_create_inventory_transaction_insufficient_stock() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material = create_test_material_with_stock(&service, "TRANS-004", 20.0);
@@ -1032,7 +1032,7 @@ mod tests {
 
     #[test]
     fn test_create_inventory_transaction_material_not_found() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let request = CreateInventoryTransactionRequest {
@@ -1066,7 +1066,7 @@ mod tests {
 
     #[test]
     fn test_get_transaction_history() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material = create_test_material_with_stock(&service, "HIST-001", 50.0);
@@ -1112,7 +1112,7 @@ mod tests {
 
     #[test]
     fn test_get_transaction_history_with_type_filter() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material = create_test_material_with_stock(&service, "HIST-002", 50.0);
@@ -1165,7 +1165,7 @@ mod tests {
 
     #[test]
     fn test_get_transaction_history_with_limit() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material = create_test_material_with_stock(&service, "HIST-003", 50.0);
@@ -1205,7 +1205,7 @@ mod tests {
 
     #[test]
     fn test_delete_material_success() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let request = create_basic_material_request();
@@ -1225,7 +1225,7 @@ mod tests {
 
     #[test]
     fn test_delete_material_not_found() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let result = service.delete_material("non-existent-id", Some("test_user".to_string()));
@@ -1241,7 +1241,7 @@ mod tests {
 
     #[test]
     fn test_list_materials_with_pagination() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         // Create test materials
@@ -1271,3 +1271,5 @@ mod tests {
         assert!(first_ids.intersection(&second_ids).count() == 0);
     }
 }
+
+

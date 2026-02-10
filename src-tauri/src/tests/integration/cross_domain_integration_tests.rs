@@ -45,7 +45,7 @@ pub struct CrossDomainTestFixture {
 impl CrossDomainTestFixture {
     /// Create a new test fixture with all required services
     pub fn new() -> AppResult<Self> {
-        let db = TestDatabase::new();
+        let db = TestDatabase::new().expect("Failed to create test database");
         let client_service = ClientService::new_with_db(db.db());
         let client_stats_service = ClientStatisticsService::new(db.db());
         let task_service = TaskCrudService::new(db.db());

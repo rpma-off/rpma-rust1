@@ -80,7 +80,7 @@ impl FailureSimulator {
 impl NetworkResilienceTestFixture {
     /// Create a new network resilience test fixture
     pub fn new() -> AppResult<Self> {
-        let db = TestDatabase::new();
+        let db = TestDatabase::new().expect("Failed to create test database");
         let client_service = ClientService::new_with_db(db.db());
         let task_service = TaskCrudService::new(db.db());
         let intervention_service = InterventionWorkflowService::new(db.db());
@@ -214,7 +214,7 @@ impl NetworkResilienceTestFixture {
             vehicle_make: Some(client.name.clone()),
             vehicle_year: Some("2023".to_string()),
             ppf_zones: ppf_zones,
-            status: "pending".to_string(),
+            status: Some(TaskStatus::Pending),
             priority: Some(TaskPriority::Medium),
             client_id: Some(client.id.clone()),
             customer_name: Some(client.name.clone()),
@@ -342,7 +342,7 @@ impl NetworkResilienceTestFixture {
     }
 
     /// Test transaction rollback scenarios
-    pub async fn test_transaction_rollback_scenarios() -> AppResult<(i32, i32)> {
+    pub async fn test_transaction_rollback_scenarios(&self) -> AppResult<(i32, i32)> {
         let mut successful_rollback_tests = 0;
         let mut total_rollback_tests = 0;
         

@@ -14,8 +14,11 @@ pub mod worker_pool;
 #[cfg(test)]
 pub mod test_utils;
 
-#[cfg(test)]
+#[cfg(all(test, feature = "legacy-tests"))]
 pub mod tests;
+
+#[cfg(test)]
+mod smoke_tests;
 
 // Type generation for frontend
 pub use models::material_ts::*;

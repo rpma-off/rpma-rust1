@@ -86,7 +86,7 @@ mod tests {
 
     #[test]
     fn test_create_stock_in_transaction() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material = create_test_material(&service, "STOCK-IN-001", 0.0);
@@ -127,7 +127,7 @@ mod tests {
 
     #[test]
     fn test_create_stock_out_transaction() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material = create_test_material(&service, "STOCK-OUT-001", 200.0);
@@ -169,7 +169,7 @@ mod tests {
 
     #[test]
     fn test_create_adjustment_transaction() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material = create_test_material(&service, "ADJUST-001", 75.0);
@@ -207,7 +207,7 @@ mod tests {
 
     #[test]
     fn test_create_transfer_transaction() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material = create_test_material(&service, "TRANSFER-001", 150.0);
@@ -249,7 +249,7 @@ mod tests {
 
     #[test]
     fn test_create_waste_transaction() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material = create_test_material(&service, "WASTE-001", 100.0);
@@ -288,7 +288,7 @@ mod tests {
 
     #[test]
     fn test_create_return_transaction() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material = create_test_material(&service, "RETURN-001", 50.0);
@@ -329,7 +329,7 @@ mod tests {
 
     #[test]
     fn test_create_transaction_insufficient_stock() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material = create_test_material(&service, "INSUFF-001", 10.0);
@@ -360,7 +360,7 @@ mod tests {
 
     #[test]
     fn test_create_transaction_material_not_found() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let request = create_transaction_request("non-existent-material".to_string());
@@ -378,7 +378,7 @@ mod tests {
 
     #[test]
     fn test_list_inventory_transactions_by_material() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material = create_test_material(&service, "LIST-001", 100.0);
@@ -419,7 +419,7 @@ mod tests {
 
     #[test]
     fn test_list_inventory_transactions_by_type() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material = create_test_material(&service, "LIST-TYPE-001", 100.0);
@@ -460,7 +460,7 @@ mod tests {
 
     #[test]
     fn test_list_inventory_transactions_with_pagination() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material = create_test_material(&service, "LIST-PAGE-001", 100.0);
@@ -510,7 +510,7 @@ mod tests {
 
     #[test]
     fn test_list_recent_inventory_transactions() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         // Create materials and transactions
@@ -545,7 +545,7 @@ mod tests {
 
     #[test]
     fn test_get_inventory_stats() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         // Create materials with different stock levels
@@ -609,7 +609,7 @@ mod tests {
 
     #[test]
     fn test_get_inventory_movement_summary() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         // Create materials
@@ -674,7 +674,7 @@ mod tests {
 
     #[test]
     fn test_get_inventory_movement_summary_for_specific_material() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         // Create materials
@@ -712,7 +712,7 @@ mod tests {
 
     #[test]
     fn test_transaction_with_intervention_and_step() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material = create_test_material(&service, "INTERVENTION-001", 100.0);
@@ -735,7 +735,7 @@ mod tests {
 
     #[test]
     fn test_transaction_total_cost_calculation() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material = create_test_material(&service, "COST-001", 100.0);
@@ -756,7 +756,7 @@ mod tests {
 
     #[test]
     fn test_transaction_without_unit_cost() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
 
         let material = create_test_material(&service, ("NO-COST-001"), 100.0);

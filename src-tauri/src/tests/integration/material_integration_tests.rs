@@ -140,7 +140,7 @@ mod tests {
 
     #[test]
     fn test_material_crud_workflow() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let material_service = MaterialService::new(test_db.db());
 
         // 1. Create a material
@@ -210,7 +210,7 @@ mod tests {
 
     #[test]
     fn test_material_consumption_workflow() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let material_service = MaterialService::new(test_db.db());
 
         // 1. Create materials with stock
@@ -301,7 +301,7 @@ mod tests {
 
     #[test]
     fn test_task_intervention_material_consumption_workflow() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let material_service = MaterialService::new(test_db.db());
         let task_service = TaskCreationService::new(test_db.db());
         let intervention_service = InterventionWorkflowService::new(test_db.db());
@@ -429,7 +429,7 @@ mod tests {
 
     #[test]
     fn test_low_stock_notification_workflow() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let material_service = MaterialService::new(test_db.db());
 
         // 1. Create materials at different stock levels
@@ -523,7 +523,7 @@ mod tests {
 
     #[test]
     fn test_inventory_transaction_workflow() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let material_service = MaterialService::new(test_db.db());
 
         // 1. Create a material
@@ -664,7 +664,7 @@ mod tests {
 
     #[test]
     fn test_material_expiry_tracking() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let material_service = MaterialService::new(test_db.db());
 
         // 1. Create materials with different expiry dates

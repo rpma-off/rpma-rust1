@@ -19,7 +19,7 @@ mod tests {
 
     /// Helper function to create a test app state with a material
     fn create_test_state_with_material() -> (AppState<'static>, String) {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let db = test_db.db();
         let state = AppState {
             db: Box::leak(Box::new(db)),
@@ -69,7 +69,7 @@ mod tests {
 
     /// Helper function to create a test app state without materials
     fn create_test_state() -> AppState<'static> {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let db = test_db.db();
         AppState {
             db: Box::leak(Box::new(db)),

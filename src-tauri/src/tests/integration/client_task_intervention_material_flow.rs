@@ -38,7 +38,7 @@ pub struct ClientTaskInterventionMaterialFlowTestFixture {
 impl ClientTaskInterventionMaterialFlowTestFixture {
     /// Create a new test fixture with all required services
     pub fn new() -> AppResult<Self> {
-        let db = TestDatabase::new();
+        let db = TestDatabase::new().expect("Failed to create test database");
         let client_service = ClientService::new_with_db(db.db());
         let client_stats_service = ClientStatisticsService::new(db.db());
         let task_service = TaskCrudService::new(db.db());
@@ -61,7 +61,7 @@ impl ClientTaskInterventionMaterialFlowTestFixture {
     }
     
     /// Create a test client with full details
-    pub fn create_test_client(&self, name: &str, email: Option<&str>) -> AppResult<Client> {
+    pub async fn create_test_client(&self, name: &str, email: Option<&str>) -> AppResult<Client> {
         let client_request = test_client!(
             name: name.to_string(),
             email: email.map(|e| e.to_string()),
@@ -76,7 +76,9 @@ impl ClientTaskInterventionMaterialFlowTestFixture {
             tags: Some("integration,test".to_string())
         );
         
-        self.client_service.create_client_async(client_request, "test_user").await
+        self.client_service
+            .create_client_async(client_request, "test_user")
+            .await
     }
     
     /// Create test materials for the workflow
@@ -165,7 +167,7 @@ impl ClientTaskInterventionMaterialFlowTestFixture {
     }
     
     /// Create a task for a client
-    pub fn create_task_for_client(
+    pub async fn create_task_for_client(
         &self,
         client: &Client,
         title: &str,
@@ -179,7 +181,7 @@ impl ClientTaskInterventionMaterialFlowTestFixture {
             vehicle_make: Some(client.name.clone()),
             vehicle_year: Some("2023".to_string()),
             ppf_zones: ppf_zones,
-            status: "pending".to_string(),
+            status: Some(TaskStatus::Pending),
             priority: Some(crate::models::task::TaskPriority::Medium),
             client_id: Some(client.id.clone()),
             customer_name: Some(client.name.clone()),
@@ -330,7 +332,12 @@ impl ClientTaskInterventionMaterialFlowTestFixture {
     }
     
     /// Get audit trail for the entire workflow
-    pub fn get_workflow_audit_trail(&self, client_id: &str, task_id: &str, intervention_id: &str) -> AppResult<Vec<crate::models::audit::AuditEvent>> {
+    pub fn get_workflow_audit_trail(
+        &self,
+        client_id: &str,
+        task_id: &str,
+        intervention_id: &str,
+    ) -> AppResult<Vec<AuditEvent>> {
         let mut all_events = Vec::new();
         
         // Get client events
@@ -420,20 +427,24 @@ mod tests {
     
     #[tokio::test]
     async fn test_creating_a_task_for_a_client() -> AppResult<()> {
-        let fixture = ClientTaskInterventionMaterialFlowTestFixture::new();
+        let fixture = ClientTaskInterventionMaterialFlowTestFixture::new()?;
         
         // Create a client
-        let client = fixture.create_test_client(
+        let client = fixture
+            .create_test_client(
             "John Doe",
             Some("john.doe@example.com")
-        )?;
+        )
+        .await?;
         
         // Create a task for the client
-        let task = fixture.create_task_for_client(
+        let task = fixture
+            .create_task_for_client(
             &client,
             "Full Vehicle PPF Installation",
             vec!["full".to_string()],
-        )?;
+        )
+        .await?;
         
         // Verify the task is associated with the client
         assert_eq!(task.client_id, Some(client.id.clone()));
@@ -449,8 +460,8 @@ mod tests {
         
         // Verify the task was created with the correct details
         assert_eq!(task.title, Some("Full Vehicle PPF Installation".to_string()));
-        assert_eq!(task.ppf_zones, vec!["full".to_string()]);
-        assert_eq!(task.status, "pending");
+        assert_eq!(task.ppf_zones, Some(vec!["full".to_string()]));
+        assert_eq!(task.status, TaskStatus::Pending);
         
         // Verify the client statistics have been updated
         // Note: Using get_client_activity_metrics instead of full client statistics
@@ -466,19 +477,23 @@ mod tests {
     
     #[tokio::test]
     async fn test_converting_task_to_intervention() -> AppResult<()> {
-        let fixture = ClientTaskInterventionMaterialFlowTestFixture::new();
+        let fixture = ClientTaskInterventionMaterialFlowTestFixture::new()?;
         
         // Create a client and task
-        let client = fixture.create_test_client(
+        let client = fixture
+            .create_test_client(
             "Jane Smith",
             Some("jane.smith@example.com")
-        )?;
+        )
+        .await?;
         
-        let task = fixture.create_task_for_client(
+        let task = fixture
+            .create_task_for_client(
             &client,
             "Partial PPF Installation",
             vec!["hood".to_string(), "fender".to_string()],
-        )?;
+        )
+        .await?;
         
         // Convert task to intervention
         let intervention = fixture.convert_task_to_intervention(
@@ -497,7 +512,7 @@ mod tests {
             .get_task_by_id_async(&task.id)
             .await?
             .unwrap();
-        assert_eq!(updated_task.status, "in_progress");
+        assert_eq!(updated_task.status, TaskStatus::InProgress);
         assert_eq!(updated_task.workflow_id, Some(intervention.id.clone()));
         
         // Verify the intervention has the correct steps
@@ -516,19 +531,23 @@ mod tests {
     
     #[tokio::test]
     async fn test_consuming_materials_during_intervention() -> AppResult<()> {
-        let fixture = ClientTaskInterventionMaterialFlowTestFixture::new();
+        let fixture = ClientTaskInterventionMaterialFlowTestFixture::new()?;
         
         // Create client, task, and intervention
-        let client = fixture.create_test_client(
+        let client = fixture
+            .create_test_client(
             "Bob Johnson",
             Some("bob.johnson@example.com")
-        )?;
+        )
+        .await?;
         
-        let task = fixture.create_task_for_client(
+        let task = fixture
+            .create_task_for_client(
             &client,
             "Material Consumption Test",
             vec!["mirrors".to_string(), "bumpers".to_string()],
-        )?;
+        )
+        .await?;
         
         let intervention = fixture.convert_task_to_intervention(
             &task,
@@ -554,7 +573,9 @@ mod tests {
         assert_eq!(updated_adhesive.current_stock, initial_adhesive_stock - 5.0 - 0.5);
         
         // Get detailed consumption records using the material service
-        let consumptions = self.material_service.get_intervention_consumption(&intervention.id)?;
+        let consumptions = fixture
+            .material_service
+            .get_intervention_consumption(&intervention.id)?;
         assert!(!consumptions.is_empty());
         
         // Verify consumption details
@@ -577,13 +598,15 @@ mod tests {
     
     #[tokio::test]
     async fn test_updating_client_statistics_based_on_completed_work() -> AppResult<()> {
-        let fixture = ClientTaskInterventionMaterialFlowTestFixture::new();
+        let fixture = ClientTaskInterventionMaterialFlowTestFixture::new()?;
         
         // Create a client
-        let client = fixture.create_test_client(
+        let client = fixture
+            .create_test_client(
             "Alice Williams",
             Some("alice.williams@example.com")
-        )?;
+        )
+        .await?;
         
         // Get initial client statistics
         let initial_stats = fixture.get_client_statistics(&client.id)?;
@@ -591,11 +614,13 @@ mod tests {
         assert_eq!(initial_stats.completed_tasks, 0);
         
         // Create and complete a task for the client
-        let task = fixture.create_task_for_client(
+        let task = fixture
+            .create_task_for_client(
             &client,
             "Statistics Test Task",
             vec!["door".to_string()],
-        )?;
+        )
+        .await?;
         
         let intervention = fixture.convert_task_to_intervention(
             &task,
@@ -615,7 +640,7 @@ mod tests {
             .get_task_by_id_async(&task.id)
             .await?
             .unwrap();
-        assert_eq!(updated_task.status, "completed");
+        assert_eq!(updated_task.status, TaskStatus::Completed);
         
         // Verify intervention is completed
         let updated_intervention = fixture.intervention_service.get_intervention_by_id(&intervention.id)?;
@@ -627,11 +652,13 @@ mod tests {
         // The specific fields might vary based on the actual ClientActivityMetrics struct
         
         // Create and complete a second task
-        let task2 = fixture.create_task_for_client(
+        let task2 = fixture
+            .create_task_for_client(
             &client,
             "Second Statistics Test Task",
             vec!["roof".to_string()],
-        )?;
+        )
+        .await?;
         
         let intervention2 = fixture.convert_task_to_intervention(
             &task2,
@@ -652,20 +679,24 @@ mod tests {
     
     #[tokio::test]
     async fn test_audit_trail_creation_for_the_entire_flow() -> AppResult<()> {
-        let fixture = ClientTaskInterventionMaterialFlowTestFixture::new();
+        let fixture = ClientTaskInterventionMaterialFlowTestFixture::new()?;
         
         // Create a client
-        let client = fixture.create_test_client(
+        let client = fixture
+            .create_test_client(
             "Charlie Brown",
             Some("charlie.brown@example.com")
-        )?;
+        )
+        .await?;
         
         // Create and complete a task for the client
-        let task = fixture.create_task_for_client(
+        let task = fixture
+            .create_task_for_client(
             &client,
             "Audit Trail Test Task",
             vec!["hood".to_string()],
-        )?;
+        )
+        .await?;
         
         let intervention = fixture.convert_task_to_intervention(
             &task,
@@ -729,20 +760,24 @@ mod tests {
     
     #[tokio::test]
     async fn test_complete_workflow_end_to_end() -> AppResult<()> {
-        let fixture = ClientTaskInterventionMaterialFlowTestFixture::new();
+        let fixture = ClientTaskInterventionMaterialFlowTestFixture::new()?;
         
         // Step 1: Create a client
-        let client = fixture.create_test_client(
+        let client = fixture
+            .create_test_client(
             "David Miller",
             Some("david.miller@example.com")
-        )?;
+        )
+        .await?;
         
         // Step 2: Create a task for the client
-        let task = fixture.create_task_for_client(
+        let task = fixture
+            .create_task_for_client(
             &client,
             "Complete End-to-End Test",
             vec!["full".to_string()],
-        )?;
+        )
+        .await?;
         
         // Step 3: Convert task to intervention
         let intervention = fixture.convert_task_to_intervention(
@@ -766,7 +801,7 @@ mod tests {
             .get_task_by_id_async(&task.id)
             .await?
             .unwrap();
-        assert_eq!(updated_task.status, "completed");
+        assert_eq!(updated_task.status, TaskStatus::Completed);
         assert_eq!(updated_task.workflow_id, Some(intervention.id.clone()));
         
         // 7b. Verify intervention status

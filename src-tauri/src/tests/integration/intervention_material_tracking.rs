@@ -30,7 +30,7 @@ pub struct InterventionMaterialTrackingTestFixture {
 impl InterventionMaterialTrackingTestFixture {
     /// Create a new test fixture with all required services
     pub fn new() -> AppResult<Self> {
-        let db = TestDatabase::new();
+        let db = TestDatabase::new().expect("Failed to create test database");
         let task_service = TaskCrudService::new(db.db());
         let material_service = MaterialService::new(db.db());
         let intervention_service = InterventionWorkflowService::new(db.db());

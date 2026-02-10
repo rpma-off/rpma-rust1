@@ -1,156 +1,105 @@
-﻿﻿You are working inside the **RPMA v2** repository.
+﻿﻿# MISSION: Augmenter fortement la couverture de tests (RPMA)
 
-Goal: **silently refresh** the existing 10 Markdown onboarding files under `docs/Doc-AI-AGENT/` so they accurately match the current codebase and existing docs.
+Tu es un agent "Testing Lead". Objectif: diagnostiquer le manque de tests et livrer une série de PRs / patches qui ajoutent une base solide de tests sur:
+- Backend Rust (services + repositories + migrations + IPC commands)
+- Frontend Next.js (unit tests composants + tests du client IPC)
+- E2E Playwright (3 à 5 parcours critiques)
+- CI: rendre les tests réellement bloquants + coverage utile
 
-⚠️ CRITICAL MODE: SILENT UPDATE (NO TRACE / NO NOISE)
-You MUST:
-- Update ONLY the 10 files listed below (no other files touched).
-- NOT create new files outside `docs/Doc-AI-AGENT/`.
-- NOT rename, move, or delete any files.
-- NOT modify formatting/styles across the repo (only within these 10 files).
-- NOT output diffs, change summaries, “updated” notes, or any commentary.
-- NOT mention that changes were made (no “I updated…”, no “here are changes”, no “commit…”).
-- NOT add changelogs, timestamps, “last updated”, or revision history inside the docs.
-- NOT add TODOs unless the repo genuinely doesn’t contain the info; then use: **TODO (verify in code)**.
-- Preserve existing structure when possible; improve only where it increases accuracy and navigation.
+## 0) Contraintes
+- Ne change pas le comportement métier.
+- Préfère des tests rapides, déterministes, isolés.
+- SQLite: utilise `:memory:` ou un fichier temp par test.
+- Offline-first / queue / retry: tester l’idempotence et les statuts (pas besoin de réseau réel).
+- Fournir des commits petits et reviewables.
 
-Your output must contain ONLY the final full contents of each of the 10 files, labeled by their exact paths.
+## 1) Audit initial (doit être factuel)
+1) Liste les frameworks existants (Rust: cargo test / proptest / etc; Front: jest/vitest; E2E: playwright).
+2) Mesure l’état actuel:
+   - nombre de tests (par crate / package)
+   - temps d’exécution
+   - couverture si tarpaulin est présent (ou sinon propose)
+3) Identifie les zones critiques sans tests:
+   - règles métier (workflow/statuts)
+   - RBAC/permissions
+   - repositories DB / contraintes / indexes
+   - migrations
+   - IPC commands (contrat)
+   - sync queue / outbox / event bus
+4) Donne une matrice risque x effort pour prioriser.
 
----
+## 2) Plan de tests cible (priorité: backend Rust)
+### A. Unit tests “purs” (sans DB)
+- Ajoute des tests sur les règles métier: transitions de statut, validations, RBAC.
+- Ajoute au moins 20 tests unitaires répartis sur les modules critiques.
+- Ajoute 3–5 tests property-based (proptest) sur:
+  - transitions valides/invalides
+  - invariants (ex: pas 2 interventions actives pour une même task, etc.)
 
-## Scope (ONLY these 10 files)
+### B. Integration tests DB (SQLite)
+- Ajoute tests d’intégration pour repositories:
+  - CRUD + soft delete si existant
+  - contraintes FK, uniqueness
+  - requêtes de stats si présentes
+- Structure:
+  - helper `TestDb` (setup schema + seed + teardown)
+  - un test = DB isolée
 
-1) docs/Doc-AI-AGENT/00_PROJECT_OVERVIEW.md
-2) docs/Doc-AI-AGENT/01_DOMAIN_MODEL.md
-3) docs/Doc-AI-AGENT/02_ARCHITECTURE_AND_DATAFLOWS.md
-4) docs/Doc-AI-AGENT/03_FRONTEND_GUIDE.md
-5) docs/Doc-AI-AGENT/04_BACKEND_GUIDE.md
-6) docs/Doc-AI-AGENT/05_IPC_API_AND_CONTRACTS.md
-7) docs/Doc-AI-AGENT/06_SECURITY_AND_RBAC.md
-8) docs/Doc-AI-AGENT/07_DATABASE_AND_MIGRATIONS.md
-9) docs/Doc-AI-AGENT/08_DEV_WORKFLOWS_AND_TOOLING.md
-10) docs/Doc-AI-AGENT/09_USER_FLOWS_AND_UX.md
+### C. Migration tests (OBLIGATOIRE)
+- Ajoute un test qui:
+  - crée une DB vide
+  - exécute toutes les migrations
+  - vérifie `PRAGMA foreign_key_check` et `PRAGMA integrity_check`
+  - vérifie existence tables/colonnes clés
+- Ajoute un test “upgrade” depuis un snapshot (fixture) si possible.
 
----
+### D. IPC command tests (contrat)
+- Pour les 10 commandes les plus utilisées:
+  - happy path
+  - NotFound / Validation / Authorization
+  - idempotence si pertinent
+- Les tests doivent vérifier les codes d’erreur et le format de réponse.
 
-## Step 0 — Silent verification scan (mandatory, internal only)
+## 3) Frontend tests (minimum viable)
+- Ajoute tests unitaires (Testing Library) sur 8–12 composants critiques:
+  - formulaires principaux
+  - affichage erreurs
+  - composants de listes / filtres si présents
+- Ajoute tests sur le client IPC (mock invoke):
+  - mapping erreurs
+  - sérialisation/désérialisation
 
-Without reporting anything, inspect:
-- `frontend/`, `src-tauri/`, `scripts/`, `docs/`
-- Frontend entrypoints (root layout/app entry, routes, key providers)
-- IPC client code (frontend callers) + Rust command registration/handlers
-- Services/repos/models structure in Rust
-- DB init + migrations mechanism
-- Offline-first/sync queue/event bus (if present)
-- Auth + RBAC enforcement points
-- Type sync approach (Rust → TS types generation) and scripts
+## 4) E2E Playwright (3–5 parcours)
+Crée ou complète Playwright avec:
+1) Login -> Dashboard
+2) Créer Task -> assign -> changer statut
+3) Démarrer intervention -> compléter -> finaliser
+4) (Optionnel) mode offline simulé -> queue -> resync
 
-Do not describe this scan. Use it only to update the docs.
+## 5) CI / Qualité
+- Vérifie que le job tests exécute réellement:
+  - cargo test (unit + integration)
+  - tarpaulin (si installé) ou propose configuration
+  - tests frontend
+  - playwright
+- Rends le pipeline bloquant si des suites sont vides (ex: aucun test découvert).
+- Propose un gating coverage progressif (ex: +5% par semaine ou seuil initial raisonnable).
 
----
+## 6) Livrables attendus
+1) Un rapport `TESTING_AUDIT.md` (état actuel, risques, plan).
+2) Ajouts de tests + helpers (backend + frontend).
+3) Mise à jour CI (si nécessaire).
+4) Instructions `TESTING.md`:
+   - comment exécuter localement
+   - comment ajouter un nouveau test
+   - conventions
 
-## Update rules
+## 7) Format de sortie
+- Fournis une liste de commits (ou PRs) proposés avec:
+  - résumé
+  - fichiers modifiés
+  - commande pour exécuter les tests
+- Donne ensuite le diff/patch ou les changements exacts.
 
-### Grounding
-- Every claim must be grounded in repo code or existing docs.
-- If uncertain or not found, write: **TODO (verify in code)** and point to the most likely path(s).
-
-### Paths & entrypoints
-- Add/refresh direct pointers to:
-  - command handlers (Rust file paths)
-  - frontend consumers (TS/React file paths)
-  - DB schema/migrations paths
-  - scripts (exact filenames)
-
-### Acceptance
-A new agent must be able to answer quickly:
-- “Where do I add a new feature end-to-end?”
-- “Which IPC command handles X and where is it called?”
-- “What tables store Y and how do migrations work?”
-- “What RBAC roles exist and where are they enforced?”
-
-### Consistency & mismatch handling
-- Ensure naming consistency (entities, statuses, roles, command names).
-- If docs contradict code, include a short callout:
-  **DOC vs CODE mismatch** + suggested resolution (without adding a changelog).
-
-### Brevity
-- Prefer bullets, tables, and short diagrams.
-- Remove fluff and outdated info.
-
----
-
-## File-specific requirements (refresh as needed)
-
-### 00_PROJECT_OVERVIEW.md
-- What RPMA v2 is, who uses it, offline-first goals, boundaries of source of truth
-- Tech stack summary (Tauri, Rust, SQLite WAL, Next.js/React, state mgmt if present)
-- Top-level modules
-- “Golden paths” + internal links to other 9 files
-
-### 01_DOMAIN_MODEL.md
-- Core entities, relationships, statuses, key rules
-- Map to storage (tables or locations to find them)
-- Domain invariants
-
-### 02_ARCHITECTURE_AND_DATAFLOWS.md
-- Layered architecture (Frontend → IPC → Rust → SQLite)
-- Dataflow diagrams for:
-  - task creation
-  - intervention workflow step advance/complete
-  - calendar updates
-- Offline-first/sync queue/event bus pointers
-
-### 03_FRONTEND_GUIDE.md
-- Routes/pages structure
-- UI component patterns
-- State mgmt and validation approach
-- How IPC is called (where, patterns)
-- Pitfalls (types drift, IPC naming, payload size)
-
-### 04_BACKEND_GUIDE.md
-- Backend module structure (commands/services/repos/models/db/sync)
-- How to implement a command end-to-end (with exact paths/examples)
-- Error model and logging
-
-### 05_IPC_API_AND_CONTRACTS.md
-- IPC contract rules (auth, envelopes, correlation_id, etc.)
-- “Top 30 important commands” table:
-  - name, purpose, params, permissions, Rust impl path, frontend consumer path
-- Type sync mechanism + where generated + how to run
-
-### 06_SECURITY_AND_RBAC.md
-- Auth flow (login/refresh/2FA if present)
-- RBAC matrix and enforcement points in code
-- Local DB protection, secrets/env vars
-
-### 07_DATABASE_AND_MIGRATIONS.md
-- SQLite setup + WAL + path configuration
-- Migration discovery/apply mechanism
-- How to add a migration safely + test approach
-- Troubleshooting
-
-### 08_DEV_WORKFLOWS_AND_TOOLING.md
-- Run dev/build/test/CI/release basics
-- Scripts: type sync, drift checks, db checks, security audit (exact commands if present)
-- “If you change X, run Y” checklist
-
-### 09_USER_FLOWS_AND_UX.md
-- Main user flows (tasks, execution, workflow, calendar, clients, auth, admin, reporting)
-- For each flow:
-  - entry routes
-  - key UI states
-  - backend commands involved
-  - validations/errors
-- Design system guardrails (Tailwind/shadcn tokens/patterns)
-
----
-
-## FINAL OUTPUT RULE (MANDATORY)
-
-Output ONLY the complete final contents of the 10 files, each preceded by its exact path on a single line, like:
-
-docs/Doc-AI-AGENT/00_PROJECT_OVERVIEW.md
-<full markdown content>
-
-No other text. No explanations. No “done”. No notes.
+Commence par l’audit (section 1), puis implémente en suivant l’ordre:
+Backend Unit -> Backend DB -> Migrations -> IPC -> Front -> E2E -> CI.

@@ -4,7 +4,7 @@
 //! including large datasets, concurrent operations, and complex queries.
 
 use crate::db::Database;
-use crate::models::task::{Task, TaskQuery, TaskStatus, TaskPriority};
+use crate::models::task::{Task, TaskQuery, TaskStatus, TaskPriority, SortOrder};
 use crate::models::user::{User, UserRole};
 use crate::models::client::Client;
 use crate::models::intervention::{Intervention, InterventionType, InterventionStatus};
@@ -361,8 +361,8 @@ mod tests {
         // Test query performance under memory pressure
         let query_start = Instant::now();
         let result = task_service.get_tasks_async(TaskQuery {
-            page: 1,
-            limit: 50,
+            page: Some(1),
+            limit: Some(50),
             status: Some(TaskStatus::Pending),
             technician_id: None,
             client_id: None,
@@ -370,8 +370,8 @@ mod tests {
             search: Some("very long title".to_string()),
             from_date: None,
             to_date: None,
-            sort_by: Some("created_at".to_string()),
-            sort_order: Some("desc".to_string()),
+            sort_by: "created_at".to_string(),
+            sort_order: SortOrder::Desc,
         }).await?;
         let query_duration = query_start.elapsed();
 
@@ -412,7 +412,7 @@ mod tests {
         }
 
         let transaction_duration = transaction_start.elapsed();
-        let total_tasks = batch_size * num_batches;
+        let total_tasks = (batch_size * num_batches) as i32;
 
         println!("Created {} batches ({} tasks) in {:?}", 
                 num_batches, total_tasks, transaction_duration);
@@ -423,8 +423,8 @@ mod tests {
 
         // Verify all tasks were created
         let result = task_service.get_tasks_async(TaskQuery {
-            page: 1,
-            limit: total_tasks,
+            page: Some(1),
+            limit: Some(total_tasks),
             status: None,
             technician_id: None,
             client_id: None,
@@ -432,11 +432,11 @@ mod tests {
             search: Some("Tx-".to_string()),
             from_date: None,
             to_date: None,
-            sort_by: Some("created_at".to_string()),
-            sort_order: Some("desc".to_string()),
+            sort_by: "created_at".to_string(),
+            sort_order: SortOrder::Desc,
         }).await?;
 
-        assert_eq!(result.data.len(), total_tasks, 
+        assert_eq!(result.data.len(), total_tasks as usize, 
                   "Not all transaction-batched tasks were created");
 
         Ok(())
@@ -470,9 +470,9 @@ mod tests {
                 let _permit = permit;
                 
                 // Simulate database operation by querying tasks
-                let _result = task_service_clone.get_tasks_async(TaskQuery {
-                    page: (i % 5) + 1,
-                    limit: 10,
+                let result = task_service_clone.get_tasks_async(TaskQuery {
+                    page: Some((i % 5) + 1),
+                    limit: Some(10),
                     status: None,
                     technician_id: None,
                     client_id: None,
@@ -480,11 +480,14 @@ mod tests {
                     search: None,
                     from_date: None,
                     to_date: None,
-                    sort_by: Some("created_at".to_string()),
-                    sort_order: Some("desc".to_string()),
-                }).await?;
+                    sort_by: "created_at".to_string(),
+                    sort_order: SortOrder::Desc,
+                }).await;
                 
-                Ok::<(), Box<dyn std::error::Error>>(())
+                match result {
+                    Ok(_) => Ok::<(), String>(()),
+                    Err(e) => Err(e.to_string()),
+                }
             });
 
             handles.push(handle);

@@ -73,7 +73,7 @@ proptest! {
         audit_service.init().unwrap();
 
         let metadata = serde_json::json!({
-            metadata_keys: metadata_values
+            metadata_keys.clone(): metadata_values
         });
 
         let event = AuditEvent {

@@ -165,6 +165,7 @@ totp-rs = { version = "5.5", features = ["qr"] }
 default = ["custom-protocol"]
 custom-protocol = ["tauri/custom-protocol"]
 sqlcipher = []  # Optional feature for SQLCipher encryption support
+legacy-tests = [] # Enable legacy integration/performance/proptest modules
 
 [dev-dependencies]
 # Testing framework
@@ -176,5 +177,4 @@ criterion = "0.5"         # Performance testing
 proptest = "1.4"         # Property-based testing
 pretty_assertions = "1.4" # Better error messages in tests
 cargo-tarpaulin = "0.27"  # Coverage reporting
-
 

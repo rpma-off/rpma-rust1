@@ -109,7 +109,7 @@ mod tests {
 
     #[test]
     fn test_find_by_id_cache_hit() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let repository = MaterialRepository::new(test_db.db());
 
         // Create a material
@@ -134,7 +134,7 @@ mod tests {
 
     #[test]
     fn test_find_by_id_not_found() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let repository = MaterialRepository::new(test_db.db());
 
         let result = repository.find_by_id("non-existent-id");
@@ -150,7 +150,7 @@ mod tests {
 
     #[test]
     fn test_find_by_sku() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let repository = MaterialRepository::new(test_db.db());
 
         // Create a material
@@ -171,7 +171,7 @@ mod tests {
 
     #[test]
     fn test_find_by_sku_not_found() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let repository = MaterialRepository::new(test_db.db());
 
         let result = repository.find_by_sku("NON-EXISTENT-SKU");
@@ -187,7 +187,7 @@ mod tests {
 
     #[test]
     fn test_find_many_with_empty_query() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let repository = MaterialRepository::new(test_db.db());
 
         // Create test materials
@@ -218,7 +218,7 @@ mod tests {
 
     #[test]
     fn test_find_many_with_material_type_filter() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let repository = MaterialRepository::new(test_db.db());
 
         // Create test materials
@@ -255,7 +255,7 @@ mod tests {
 
     #[test]
     fn test_find_many_with_active_filter() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let repository = MaterialRepository::new(test_db.db());
 
         // Create test materials
@@ -320,7 +320,7 @@ mod tests {
 
     #[test]
     fn test_find_many_with_discontinued_filter() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let repository = MaterialRepository::new(test_db.db());
 
         // Create test materials
@@ -385,7 +385,7 @@ mod tests {
 
     #[test]
     fn test_find_many_with_sku_filter() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let repository = MaterialRepository::new(test_db.db());
 
         // Create test materials
@@ -416,7 +416,7 @@ mod tests {
 
     #[test]
     fn test_find_many_with_category_filter() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let repository = MaterialRepository::new(test_db.db());
 
         // Create test materials with categories
@@ -468,7 +468,7 @@ mod tests {
 
     #[test]
     fn test_find_many_with_supplier_filter() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let repository = MaterialRepository::new(test_db.db());
 
         // Create test materials with supplier IDs
@@ -520,7 +520,7 @@ mod tests {
 
     #[test]
     fn test_find_many_with_search_filter() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let repository = MaterialRepository::new(test_db.db());
 
         // Create test materials
@@ -573,7 +573,7 @@ mod tests {
 
     #[test]
     fn test_find_many_with_limit_and_offset() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let repository = MaterialRepository::new(test_db.db());
 
         // Create test materials
@@ -614,7 +614,7 @@ mod tests {
 
     #[test]
     fn test_find_many_with_sorting() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let repository = MaterialRepository::new(test_db.db());
 
         // Create test materials
@@ -672,7 +672,7 @@ mod tests {
 
     #[test]
     fn test_find_many_with_invalid_sort_column() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let repository = MaterialRepository::new(test_db.db());
 
         // Create a test material
@@ -702,7 +702,7 @@ mod tests {
 
     #[test]
     fn test_find_many_with_multiple_filters() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let repository = MaterialRepository::new(test_db.db());
 
         // Create test materials with different properties
@@ -766,7 +766,7 @@ mod tests {
 
     #[test]
     fn test_count_with_empty_query() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let repository = MaterialRepository::new(test_db.db());
 
         // Create test materials
@@ -797,7 +797,7 @@ mod tests {
 
     #[test]
     fn test_count_with_filters() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let repository = MaterialRepository::new(test_db.db());
 
         // Create test materials
@@ -839,7 +839,7 @@ mod tests {
 
     #[test]
     fn test_save_create() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let repository = MaterialRepository::new(test_db.db());
 
         let mut material = Material::new(
@@ -867,7 +867,7 @@ mod tests {
 
     #[test]
     fn test_save_update() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let repository = MaterialRepository::new(test_db.db());
 
         // Create a material
@@ -898,7 +898,7 @@ mod tests {
 
     #[test]
     fn test_delete() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let repository = MaterialRepository::new(test_db.db());
 
         // Create a material
@@ -930,7 +930,7 @@ mod tests {
 
     #[test]
     fn test_delete_not_found() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let repository = MaterialRepository::new(test_db.db());
 
         // Try to delete non-existent material
@@ -947,7 +947,7 @@ mod tests {
 
     #[test]
     fn test_find_many_with_complex_where_clause() {
-        let test_db = TestDatabase::new();
+        let test_db = TestDatabase::new().expect("Failed to create test database");
         let repository = MaterialRepository::new(test_db.db());
 
         // Create test materials with different properties

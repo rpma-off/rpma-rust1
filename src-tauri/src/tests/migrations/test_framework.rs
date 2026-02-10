@@ -3,14 +3,13 @@
 //! Provides utilities for testing database migrations
 
 use crate::commands::errors::{AppError, AppResult};
-use crate::db::Database;
-use rusqlite::Connection;
+use crate::db::{Database, PooledConn};
 use tempfile::{tempdir, TempDir};
 
 /// Context for migration testing
 pub struct MigrationTestContext {
     pub temp_dir: TempDir,
-    pub conn: Connection,
+    pub conn: PooledConn,
     pub database: Database,
 }
 
@@ -19,10 +18,9 @@ impl MigrationTestContext {
     pub fn new() -> AppResult<Self> {
         let temp_dir = tempdir()?;
         let db_path = temp_dir.path().join("test.db");
-        let conn = Connection::open(db_path)?;
-
-        // Initialize database
-        let database = Database::new(conn.clone());
+        let database = Database::new(&db_path, "test_encryption_key_32_bytes_long!")?;
+        database.init()?;
+        let conn = database.get_connection()?;
 
         Ok(Self {
             temp_dir,
@@ -53,7 +51,7 @@ impl MigrationTestContext {
 
     /// Helper method to migrate to a specific version
     pub fn migrate_to_version(&mut self, version: i32) -> AppResult<()> {
-        self.database.migrate(version)
+        Ok(self.database.migrate(version)?)
     }
 
     /// Helper method to check database integrity
@@ -75,7 +73,7 @@ impl MigrationTestContext {
 }
 
 /// Verify database integrity after migration
-pub fn verify_integrity(conn: &Connection) -> AppResult<()> {
+pub fn verify_integrity(conn: &PooledConn) -> AppResult<()> {
     // Check foreign key constraints
     let fk_check: i32 = conn.query_row("PRAGMA foreign_key_check", [], |row| row.get(0))?;
     if fk_check != 0 {

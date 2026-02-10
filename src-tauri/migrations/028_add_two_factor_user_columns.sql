@@ -1,0 +1,2 @@
+-- Migration 028: Add 2FA backup codes + verified_at columns to users
+-- Applied via custom migration in src/db/migrations.rs
