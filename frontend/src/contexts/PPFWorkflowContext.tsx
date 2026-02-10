@@ -275,9 +275,23 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
         return null;
       }
       
-      const currentStepNum = interventionData.intervention.current_step || 0;
-      const stepTypes: StepType[] = ['inspection', 'preparation', 'installation', 'finalization'];
-      return stepTypes[currentStepNum] || 'inspection';
+      // Determine current step from stepsData, not from current_step count
+      if (stepsData?.steps && stepsData.steps.length > 0) {
+        // First, look for a step that is in_progress
+        const inProgressStep = stepsData.steps.find(step => step.step_status === 'in_progress');
+        if (inProgressStep) {
+          return inProgressStep.step_type;
+        }
+        
+        // If no in_progress step, find the first pending step
+        const pendingStep = stepsData.steps.find(step => step.step_status === 'pending');
+        if (pendingStep) {
+          return pendingStep.step_type;
+        }
+      }
+      
+      // Fallback: if no steps data yet, default to inspection
+      return 'inspection';
     })(),
     stepStatuses: (() => {
       const statuses: Record<PPFStepId, PPFStep['status']> = {
