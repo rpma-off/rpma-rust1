@@ -14,6 +14,9 @@ Cargo.lock
 .env
 .env.local
 
+# TypeScript build info
+*.tsbuildinfo
+
 # Backup files
 *.backup
 *.patch

@@ -275,9 +275,31 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
         return null;
       }
       
-      const currentStepNum = interventionData.intervention.current_step || 0;
-      const stepTypes: StepType[] = ['inspection', 'preparation', 'installation', 'finalization'];
-      return stepTypes[currentStepNum] || 'inspection';
+      // Determine current step from stepsData, not from current_step count
+      // Backend orders steps by step_number, so array order is guaranteed
+      if (stepsData?.steps && stepsData.steps.length > 0) {
+        // First, look for a step that is in_progress
+        const inProgressStep = stepsData.steps.find(step => step.step_status === 'in_progress');
+        if (inProgressStep) {
+          return inProgressStep.step_type;
+        }
+        
+        // If no in_progress step, find the first pending step (steps are ordered by step_number)
+        const pendingStep = stepsData.steps.find(step => step.step_status === 'pending');
+        if (pendingStep) {
+          return pendingStep.step_type;
+        }
+        
+        // If all steps are completed (no in_progress or pending), return null
+        // This should already be caught by the status check above, but be defensive
+        const allCompleted = stepsData.steps.every(step => step.step_status === 'completed');
+        if (allCompleted) {
+          return null;
+        }
+      }
+      
+      // Fallback: if no steps data yet, default to inspection (first step)
+      return 'inspection';
     })(),
     stepStatuses: (() => {
       const statuses: Record<PPFStepId, PPFStep['status']> = {
