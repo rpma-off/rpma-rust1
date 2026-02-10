@@ -90,9 +90,9 @@ describe('SecurityTab error handling', () => {
 
     render(<SecurityTab user={user} />);
 
-    const currentPasswordInput = await screen.findByLabelText(/mot de passe actuel/i);
-    const newPasswordInput = screen.getByLabelText(/nouveau mot de passe/i);
-    const confirmPasswordInput = screen.getByLabelText(/confirmer le nouveau mot de passe/i);
+    const currentPasswordInput = await screen.findByPlaceholderText(/mot de passe actuel/i);
+    const newPasswordInput = screen.getByPlaceholderText('Votre nouveau mot de passe');
+    const confirmPasswordInput = screen.getByPlaceholderText(/confirmer votre nouveau mot de passe/i);
 
     fireEvent.change(currentPasswordInput, { target: { value: 'CurrentPass1!' } });
     fireEvent.change(newPasswordInput, { target: { value: 'NewPass123!@#' } });
@@ -108,8 +108,8 @@ describe('SecurityTab error handling', () => {
   test('shows validation error for weak password', async () => {
     render(<SecurityTab user={user} />);
 
-    const newPasswordInput = await screen.findByLabelText(/nouveau mot de passe/i);
-    const confirmPasswordInput = screen.getByLabelText(/confirmer le nouveau mot de passe/i);
+    const newPasswordInput = await screen.findByPlaceholderText('Votre nouveau mot de passe');
+    const confirmPasswordInput = screen.getByPlaceholderText(/confirmer votre nouveau mot de passe/i);
 
     fireEvent.change(newPasswordInput, { target: { value: '123' } });
     fireEvent.change(confirmPasswordInput, { target: { value: '123' } });
@@ -118,7 +118,7 @@ describe('SecurityTab error handling', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/au moins 12 caractères/i)
+        screen.getByText(/Le mot de passe doit contenir au moins 12/i)
       ).toBeInTheDocument();
     });
   });
