@@ -71,7 +71,7 @@ const defaultQCChecklist: QCItem[] = [
 
 export default function FinalizationStepPage() {
   const router = useRouter();
-  const { taskId, finalizeIntervention, stepsData } = usePPFWorkflow();
+  const { taskId, finalizeIntervention, stepsData, steps } = usePPFWorkflow();
   const [isCompleting, setIsCompleting] = useState(false);
 
 
@@ -156,6 +156,9 @@ export default function FinalizationStepPage() {
     }
   };
 
+  const stepIndex = steps.findIndex(step => step.id === 'finalization');
+  const stepLabel = stepIndex >= 0 ? `Étape ${stepIndex + 1} sur ${steps.length}` : 'Étape';
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -194,7 +197,7 @@ export default function FinalizationStepPage() {
             <Trophy className="h-8 w-8 text-emerald-500" />
           </div>
           <div className="text-sm bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full font-medium">
-            Étape 4 sur 4
+            {stepLabel}
           </div>
         </div>
         <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">

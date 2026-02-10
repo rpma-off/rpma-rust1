@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight, Camera, MapPin, Search, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { usePPFWorkflow } from '@/contexts/PPFWorkflowContext';
+import { getNextPPFStepId, getPPFStepPath } from '@/lib/ppf-workflow';
 import { VehicleDiagram, Defect } from '@/components/workflow/ppf/VehicleDiagram';
 import { PhotoUpload } from '@/components/PhotoUpload/PhotoUpload';
 
@@ -27,7 +28,7 @@ type InspectionCollectedData = {
 
 export default function InspectionStepPage() {
   const router = useRouter();
-  const { taskId, advanceToStep, stepsData } = usePPFWorkflow();
+  const { taskId, advanceToStep, stepsData, steps, currentStep } = usePPFWorkflow();
   const [defects, setDefects] = useState<Array<Defect>>([]);
   const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
   const [isCompleting, setIsCompleting] = useState(false);
@@ -57,6 +58,18 @@ export default function InspectionStepPage() {
     }
   }, [stepsData]);
 
+  useEffect(() => {
+    if (!steps.length) return;
+    const hasInspection = steps.some(step => step.id === 'inspection');
+    if (!hasInspection) {
+      const targetId = currentStep?.id ?? steps[0]?.id;
+      const targetPath = targetId ? getPPFStepPath(targetId) : null;
+      router.replace(
+        targetPath ? `/tasks/${taskId}/workflow/ppf/${targetPath}` : `/tasks/${taskId}/workflow/ppf`
+      );
+    }
+  }, [steps, currentStep, router, taskId]);
+
   const handleCompleteInspection = async () => {
     if (isCompleting) return; // Prevent multiple calls
     
@@ -78,15 +91,22 @@ export default function InspectionStepPage() {
       // Use advanceToStep which both saves data AND completes the step
       // This replaces the separate completeStep + advanceToStep calls
       await advanceToStep('inspection', collectedData, uploadedPhotos.length > 0 ? uploadedPhotos : undefined);
-      
-      // Navigate after all operations complete
-      router.push(`/tasks/${taskId}/workflow/ppf/steps/preparation`);
+
+      const nextStepId = getNextPPFStepId(steps, 'inspection');
+      if (nextStepId) {
+        router.push(`/tasks/${taskId}/workflow/ppf/${getPPFStepPath(nextStepId)}`);
+      } else {
+        router.push(`/tasks/${taskId}/workflow/ppf`);
+      }
     } catch (error) {
       console.error('Error completing inspection:', error);
     } finally {
       setIsCompleting(false);
     }
   };
+
+  const stepIndex = steps.findIndex(step => step.id === 'inspection');
+  const stepLabel = stepIndex >= 0 ? `Étape ${stepIndex + 1} sur ${steps.length}` : 'Étape';
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -126,7 +146,7 @@ export default function InspectionStepPage() {
             <Search className="h-8 w-8 text-blue-500" />
           </div>
           <div className="text-sm bg-blue-500/10 text-blue-400 px-3 py-1 rounded-full font-medium">
-            Étape 1 sur 4
+            {stepLabel}
           </div>
         </div>
         <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">

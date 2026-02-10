@@ -7,41 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight, CheckCircle, Clock, AlertCircle, Shield, Sparkles } from 'lucide-react';
 import { usePPFWorkflow } from '@/contexts/PPFWorkflowContext';
-import type { StepType } from '@/lib/StepType';
-
-type StepConfig = {
-  id: StepType;
-  title: string;
-  description: string;
-  path: string;
-};
-
-const stepConfigs: StepConfig[] = [
-  {
-    id: 'inspection',
-    title: 'Inspection',
-    description: 'Document pre-existing damage and vehicle condition',
-    path: 'steps/inspection'
-  },
-  {
-    id: 'preparation',
-    title: 'Preparation',
-    description: 'Surface preparation and environment setup',
-    path: 'steps/preparation'
-  },
-  {
-    id: 'installation',
-    title: 'Installation',
-    description: 'PPF application and zone tracking',
-    path: 'steps/installation'
-  },
-  {
-    id: 'finalization',
-    title: 'Finalization',
-    description: 'Quality control and customer sign-off',
-    path: 'steps/finalization'
-  }
-];
+import { getPPFStepPath } from '@/lib/ppf-workflow';
 
 export default function PPFWorkflowPage() {
   const router = useRouter();
@@ -50,23 +16,9 @@ export default function PPFWorkflowPage() {
   // Automatically navigate to the current step if it exists
   useEffect(() => {
     if (currentStep && currentStep.id) {
-      const stepConfig = stepConfigs.find(config => config.id === currentStep.id);
-      if (stepConfig) {
-        router.replace(`/tasks/${taskId}/workflow/ppf/${stepConfig.path}`);
-      }
+      router.replace(`/tasks/${taskId}/workflow/ppf/${getPPFStepPath(currentStep.id)}`);
     }
   }, [currentStep, router, taskId]);
-
-  const getStepStatus = (stepId: StepType) => {
-    const step = steps.find(s => s.id === stepId);
-    if (!step) return 'locked';
-
-    if (step.status === 'completed') return 'completed';
-    if (step.id === currentStep?.id) return 'current';
-    if (canAdvanceToStep(stepId)) return 'available';
-
-    return 'locked';
-  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -146,13 +98,20 @@ export default function PPFWorkflowPage() {
         className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-6xl mx-auto"
         variants={containerVariants}
       >
-        {stepConfigs.map((stepConfig, index) => {
-          const status = getStepStatus(stepConfig.id);
+        {steps.map((step, index) => {
+          const status =
+            step.status === 'completed'
+              ? 'completed'
+              : step.id === currentStep?.id
+                ? 'current'
+                : canAdvanceToStep(step.id)
+                  ? 'available'
+                  : 'locked';
           const isAccessible = status !== 'locked';
 
           return (
             <motion.div
-              key={stepConfig.id}
+              key={step.id}
               variants={cardVariants}
               whileHover={isAccessible ? { scale: 1.02 } : {}}
               whileTap={isAccessible ? { scale: 0.98 } : {}}
@@ -165,7 +124,10 @@ export default function PPFWorkflowPage() {
                     ? 'hover:shadow-[var(--rpma-shadow-soft)] cursor-pointer border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))]'
                     : 'opacity-60 cursor-not-allowed'
                 } backdrop-blur-sm`}
-                onClick={() => isAccessible && router.push(`/tasks/${taskId}/workflow/ppf/${stepConfig.path}`)}
+                onClick={() =>
+                  isAccessible &&
+                  router.push(`/tasks/${taskId}/workflow/ppf/${getPPFStepPath(step.id)}`)
+                }
               >
                 {/* Step Number Badge */}
                 <div className="absolute top-4 right-4 w-8 h-8 bg-background/80 rounded-full flex items-center justify-center text-sm font-bold text-foreground border border-border">
@@ -178,7 +140,7 @@ export default function PPFWorkflowPage() {
                 <CardHeader className="relative z-10 pb-4">
                   <div className="flex items-start justify-between mb-3">
                     <CardTitle className="text-xl md:text-2xl text-foreground group-hover:text-primary transition-colors duration-300">
-                      {stepConfig.title}
+                      {step.title}
                     </CardTitle>
                     <div className={`p-2 rounded-full transition-all duration-300 ${
                       status === 'completed' ? 'bg-green-500/20' :
@@ -190,7 +152,7 @@ export default function PPFWorkflowPage() {
                     </div>
                   </div>
                   <CardDescription className="text-muted-foreground text-base leading-relaxed">
-                    {stepConfig.description}
+                    {step.description}
                   </CardDescription>
                 </CardHeader>
 
