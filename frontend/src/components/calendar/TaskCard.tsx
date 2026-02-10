@@ -10,9 +10,13 @@ interface TaskCardProps {
   isDragging?: boolean;
 }
 
-export const getCalendarTaskLabel = (task: CalendarTask & { customer_name?: string | null }): string => {
-  const plate = task.vehicle_plate?.trim() || 'N/A';
-  const clientName = task.client_name?.trim() || task.customer_name?.trim() || 'N/A';
+export type CalendarTaskWithCustomerName = CalendarTask & { customer_name?: string | null };
+
+export const getCalendarTaskLabel = (task: CalendarTaskWithCustomerName): string => {
+  const plateValue = task.vehicle_plate?.trim();
+  const clientValue = task.client_name?.trim() || task.customer_name?.trim();
+  const plate = plateValue ? plateValue : 'N/A';
+  const clientName = clientValue ? clientValue : 'N/A';
   return `${plate} – ${clientName}`;
 };
 
@@ -74,6 +78,8 @@ const TaskCardComponent = memo<TaskCardProps>(({
   const statusColors = getStatusColor(task.status);
   const priorityColor = getPriorityColor(task.priority);
   const taskLabel = getCalendarTaskLabel(task);
+  const titleSegment = task.title?.trim() ? `, Title: ${task.title.trim()}` : '';
+  const ariaLabel = `${taskLabel}${titleSegment}, Status: ${task.status}, Priority: ${task.priority}`;
 
   const timeDisplay = task.start_time && task.end_time
     ? `${task.start_time} - ${task.end_time}`
@@ -91,7 +97,7 @@ const TaskCardComponent = memo<TaskCardProps>(({
         onClick={onClick}
         role="button"
         tabIndex={0}
-        aria-label={`${taskLabel}, Status: ${task.status}, Priority: ${task.priority}`}
+        aria-label={ariaLabel}
       >
         <div className="text-[11px] font-medium truncate">
           {taskLabel}
@@ -112,7 +118,7 @@ const TaskCardComponent = memo<TaskCardProps>(({
       onClick={onClick}
       role="button"
       tabIndex={0}
-      aria-label={`${taskLabel}, Status: ${task.status}, Priority: ${task.priority}`}
+      aria-label={ariaLabel}
       style={{
         backgroundColor: statusColors,
         borderColor: priorityColor,

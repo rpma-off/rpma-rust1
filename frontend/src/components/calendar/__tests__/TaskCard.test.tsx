@@ -1,11 +1,10 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import type { CalendarTask } from '@/lib/backend';
-import { TaskCard } from '../TaskCard';
+import { TaskCard, type CalendarTaskWithCustomerName } from '../TaskCard';
 
 const createTask = (
-  overrides: Partial<CalendarTask & { customer_name?: string | null }> = {}
-): CalendarTask & { customer_name?: string | null } => ({
+  overrides: Partial<CalendarTaskWithCustomerName> = {}
+): CalendarTaskWithCustomerName => ({
   id: 'task-1',
   task_number: 'TASK-001',
   title: 'Test Task',
@@ -52,6 +51,22 @@ describe('TaskCard', () => {
     expect(screen.getByRole('button')).toHaveAttribute(
       'aria-label',
       expect.stringContaining('N/A – Jane Smith')
+    );
+  });
+
+  it('falls back to N/A when plate and client name are missing', () => {
+    const task = createTask({
+      vehicle_plate: null,
+      client_name: null,
+      customer_name: null,
+    });
+
+    render(<TaskCard task={task} mode="compact" />);
+
+    expect(screen.getByText('N/A – N/A')).toBeInTheDocument();
+    expect(screen.getByRole('button')).toHaveAttribute(
+      'aria-label',
+      expect.stringContaining('N/A – N/A')
     );
   });
 });
