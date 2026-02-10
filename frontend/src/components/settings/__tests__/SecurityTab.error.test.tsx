@@ -118,7 +118,7 @@ describe('SecurityTab error handling', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/au moins 12 caractÃ¨res/i)
+        screen.getByText(/au moins 12 caractères/i)
       ).toBeInTheDocument();
     });
   });

@@ -440,7 +440,7 @@ function buildQualityComplianceReport() {
         count: 2,
         percentage: 4,
         severity: 'low',
-        recommended_action: 'Rappeler la prise de photos Ã  chaque Ã©tape'
+        recommended_action: 'Rappeler la prise de photos Ã  chaque étape'
       }
     ],
     compliance_metrics: {
@@ -568,7 +568,7 @@ function buildSeasonalReport() {
       {
         predicted_duration_minutes: 155,
         confidence_interval: [140, 170],
-        factors_influencing: ['ComplexitÃ©', 'MÃ©tÃ©o'],
+        factors_influencing: ['Complexité', 'Météo'],
         historical_average: 160,
         prediction_accuracy: 0.82
       }
@@ -582,7 +582,7 @@ function buildOperationalIntelligenceReport() {
     step_bottlenecks: [
       {
         step_number: 2,
-        step_name: 'PrÃ©paration surface',
+        step_name: 'Préparation surface',
         step_type: 'preparation',
         average_duration_minutes: 48,
         median_duration_minutes: 45,
@@ -631,9 +631,9 @@ function buildOperationalIntelligenceReport() {
     },
     recommendations: [
       {
-        recommendation_type: 'Optimisation du prÃ©-traitement',
+        recommendation_type: 'Optimisation du pré-traitement',
         priority: 'medium',
-        description: 'Standardiser la prÃ©paration pour rÃ©duire la variabilitÃ©.',
+        description: 'Standardiser la préparation pour réduire la variabilité.',
         impact_score: 0.27,
         implementation_effort: 'medium',
         affected_steps: [2, 3],
