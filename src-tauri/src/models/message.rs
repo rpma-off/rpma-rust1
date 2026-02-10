@@ -1,13 +1,12 @@
 use crate::db::FromSqlRow;
 use rusqlite::Row;
 use serde::{Deserialize, Serialize};
-#[cfg(any(feature = "specta", feature = "ts-rs"))]
+// Conditional import removed
 use ts_rs::TS;
 
 /// Message types supported by the system
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
-#[cfg_attr(feature = "ts-rs", ts(export))]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export)]
 pub enum MessageType {
     Email,
     Sms,
@@ -40,9 +39,8 @@ impl std::fmt::Display for MessageType {
 }
 
 /// Message status enumeration
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
-#[cfg_attr(feature = "ts-rs", ts(export))]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export)]
 pub enum MessageStatus {
     Pending,
     Sent,
@@ -81,9 +79,8 @@ impl std::fmt::Display for MessageStatus {
 }
 
 /// Message priority levels
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
-#[cfg_attr(feature = "ts-rs", ts(export))]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export)]
 pub enum MessagePriority {
     Low,
     Normal,
@@ -113,9 +110,8 @@ impl MessagePriority {
 }
 
 /// Message entity representing a single message
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
-#[cfg_attr(feature = "ts-rs", ts(export))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct Message {
     pub id: String,
     pub message_type: String, // Using String for database compatibility
@@ -140,9 +136,8 @@ pub struct Message {
 }
 
 /// Request to send a new message
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
-#[cfg_attr(feature = "ts-rs", ts(export))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct SendMessageRequest {
     pub message_type: String,
     pub recipient_id: Option<String>,
@@ -158,9 +153,8 @@ pub struct SendMessageRequest {
 }
 
 /// Message template for reusable messages
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
-#[cfg_attr(feature = "ts-rs", ts(export))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct MessageTemplate {
     pub id: String,
     pub name: String,
@@ -177,9 +171,8 @@ pub struct MessageTemplate {
 }
 
 /// Request to create/update a message template
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
-#[cfg_attr(feature = "ts-rs", ts(export))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct MessageTemplateRequest {
     pub name: String,
     pub description: Option<String>,
@@ -191,9 +184,8 @@ pub struct MessageTemplateRequest {
 }
 
 /// User notification preferences
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
-#[cfg_attr(feature = "ts-rs", ts(export))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct NotificationPreferences {
     pub id: String,
     pub user_id: String,
@@ -231,9 +223,8 @@ pub struct NotificationPreferences {
 }
 
 /// Request to update notification preferences
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
-#[cfg_attr(feature = "ts-rs", ts(export))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct UpdateNotificationPreferencesRequest {
     pub email_enabled: Option<bool>,
     pub sms_enabled: Option<bool>,
@@ -254,9 +245,8 @@ pub struct UpdateNotificationPreferencesRequest {
 }
 
 /// Message query filters
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
-#[cfg_attr(feature = "ts-rs", ts(export))]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, TS)]
+#[ts(export)]
 pub struct MessageQuery {
     pub message_type: Option<String>,
     pub sender_id: Option<String>,
@@ -272,9 +262,8 @@ pub struct MessageQuery {
 }
 
 /// Message list response
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
-#[cfg_attr(feature = "ts-rs", ts(export))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct MessageListResponse {
     pub messages: Vec<Message>,
     pub total: i32,

@@ -46,6 +46,7 @@ function extractRustTypes() {
           // Check if this line has TS derive (multiple patterns)
           if (line.includes('derive(ts)') ||
               line.includes('derive(TS)') ||
+              line.includes('#[derive') && line.includes('TS') ||
               line.includes('#[cfg_attr') && line.includes('TS)') ||
               line.includes('#[cfg_attr') && line.includes('ts_rs::TS')) {
             // Look ahead for the struct/enum declaration

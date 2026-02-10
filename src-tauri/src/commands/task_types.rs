@@ -4,7 +4,6 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "ts-rs")]
 use ts_rs::TS;
 
 /// Filter for task queries
@@ -73,8 +72,7 @@ impl Default for TaskQuery {
 }
 
 /// Statistics response for task operations
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "ts-rs", derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct TaskStatistics {
     pub total: i64,
     pub completed: i64,

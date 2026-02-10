@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useMemo, ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ipcClient } from '@/lib/ipc';
@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { interventionKeys } from '@/lib/query-keys';
 import type { Intervention, InterventionStep, Task } from '@/lib/backend';
 import type { StepType } from '@/lib/StepType';
+import { buildPPFStepsFromData, getCurrentPPFStepId } from '@/lib/ppf-workflow';
 
 
 interface PPFStep {
@@ -124,38 +125,6 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
   const queryClient = useQueryClient();
   const { session } = useAuth();
 
-  // Initialize steps
-  const [steps] = useState<PPFStep[]>([
-    {
-      id: 'inspection',
-      title: 'Inspection',
-      description: 'Vehicle inspection and defect documentation',
-      status: 'pending',
-      order: 1
-    },
-    {
-      id: 'preparation',
-      title: 'Preparation',
-      description: 'Surface preparation and setup',
-      status: 'pending',
-      order: 2
-    },
-    {
-      id: 'installation',
-      title: 'Installation',
-      description: 'PPF application',
-      status: 'pending',
-      order: 3
-    },
-    {
-      id: 'finalization',
-      title: 'Finalization',
-      description: 'Quality control and completion',
-      status: 'pending',
-      order: 4
-    }
-  ]);
-
   // Get intervention for this task
   const { data: interventionData, isLoading: interventionLoading, error: interventionError } = useQuery({
     queryKey: interventionKeys.ppfIntervention(taskId),
@@ -267,64 +236,31 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     enabled: !!session?.token && !!taskId
   });
 
-// Get workflow state from intervention data
-  const workflowData = interventionData?.intervention ? {
-    currentStepId: (() => {
-      // If intervention is completed, there's no current step
-      if (interventionData.intervention.status === 'completed') {
-        return null;
-      }
-      
-      const currentStepNum = interventionData.intervention.current_step || 0;
-      const stepTypes: StepType[] = ['inspection', 'preparation', 'installation', 'finalization'];
-      return stepTypes[currentStepNum] || 'inspection';
-    })(),
-    stepStatuses: (() => {
-      const statuses: Record<PPFStepId, PPFStep['status']> = {
-        inspection: 'pending',
-        preparation: 'pending',
-        installation: 'pending',
-        finalization: 'pending'
-      };
-
-      if (stepsData?.steps) {
-        stepsData.steps.forEach((step) => {
-          const stepType = step.step_type;
-          if (step.step_status === 'completed') {
-            statuses[stepType] = 'completed';
-          } else if (step.step_status === 'in_progress') {
-            statuses[stepType] = 'in_progress';
-          }
-        });
-      }
-
-      return statuses;
-    })()
-  } : null;
-
   const isLoading = interventionLoading || stepsLoading || taskLoading;
   const error = interventionError || stepsError || taskError;
 
-  // Update steps based on API data
-  const updatedSteps = steps.map(step => {
-    const newStatus = (workflowData?.stepStatuses?.[step.id] as PPFStep['status']) || step.status;
-    return {
-      ...step,
-      status: newStatus
-    };
-  });
+  const steps = useMemo<PPFStep[]>(() => {
+    return buildPPFStepsFromData(stepsData?.steps);
+  }, [stepsData?.steps]);
 
-   const currentStep = updatedSteps.find(step => step.id === workflowData?.currentStepId) || null;
+  const currentStepId = useMemo(
+    () => getCurrentPPFStepId(stepsData?.steps, interventionData?.intervention?.status),
+    [stepsData?.steps, interventionData?.intervention?.status]
+  );
+
+  const currentStep = currentStepId
+    ? steps.find(step => step.id === currentStepId) || steps[0] || null
+    : null;
 
   const canAdvanceToStep = (stepId: PPFStepId): boolean => {
-    const step = updatedSteps.find(s => s.id === stepId);
+    const step = steps.find(s => s.id === stepId);
     if (!step) return false;
 
     // Can access first step
     if (step.order === 1) return true;
 
     // Can access step if previous step is completed
-    const previousStep = updatedSteps.find(s => s.order === step.order - 1);
+    const previousStep = steps.find(s => s.order === step.order - 1);
     return previousStep?.status === 'completed';
   };
 
@@ -337,15 +273,12 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
       if (!session?.token) throw new Error('No session token');
       if (!interventionData?.intervention) throw new Error('No active intervention');
 
-      // Ensure steps data is fresh
-      await queryClient.refetchQueries({ queryKey: interventionKeys.ppfInterventionSteps(interventionData.intervention.id) });
 
-      // Get the updated steps data
-      const updatedStepsData = queryClient.getQueryData<PPFStepsData>(interventionKeys.ppfInterventionSteps(interventionData.intervention.id));
+      const currentStepsData = stepsData;
 
       // Find the CURRENT step (the one that should be completed)
       // stepId here is the CURRENT step to advance, not the target step
-      const currentStep = updatedStepsData?.steps?.find((s) => s.step_type === stepId);
+      const currentStep = currentStepsData?.steps?.find((s) => s.step_type === stepId);
        if (!currentStep) throw new Error(`Current step ${stepId} not found in intervention`);
 
        // Advance current step (this will complete it and move to next)
@@ -384,14 +317,11 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
       if (!session?.token) throw new Error('No session token');
       if (!interventionData?.intervention) throw new Error('No active intervention');
 
-      // Ensure steps data is fresh
-      await queryClient.refetchQueries({ queryKey: interventionKeys.ppfInterventionSteps(interventionData.intervention.id) });
 
-      // Get the updated steps data
-      const updatedStepsData = queryClient.getQueryData<PPFStepsData>(interventionKeys.ppfInterventionSteps(interventionData.intervention.id));
+      const currentStepsData = stepsData;
 
       // Find the step in the intervention
-      const step = updatedStepsData?.steps?.find((s) => s.step_type === stepId);
+      const step = currentStepsData?.steps?.find((s) => s.step_type === stepId);
        if (!step) throw new Error(`Step ${stepId} not found in intervention`);
 
        // Save step progress using direct IPC call
@@ -467,7 +397,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     }
 
     // Check if step is already completed
-    const step = updatedSteps.find(s => s.id === stepId);
+    const step = steps.find(s => s.id === stepId);
     if (step?.status === 'completed') {
       toast.error('Cette étape est déjà terminée');
       return;
@@ -486,7 +416,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
 
   const value: PPFWorkflowContextType = {
     taskId,
-    steps: updatedSteps,
+    steps: steps,
     currentStep,
     isLoading,
     error,

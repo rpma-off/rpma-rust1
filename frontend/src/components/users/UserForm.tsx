@@ -133,10 +133,11 @@ export function UserForm({ user, onClose, onSuccess }: UserFormProps) {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-foreground">
+              <label htmlFor="user-email" className="block text-sm font-medium text-foreground">
                 Email
               </label>
               <input
+                id="user-email"
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
@@ -153,10 +154,11 @@ export function UserForm({ user, onClose, onSuccess }: UserFormProps) {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-foreground">
+                <label htmlFor="user-first-name" className="block text-sm font-medium text-foreground">
                   First Name
                 </label>
                 <input
+                  id="user-first-name"
                   type="text"
                   value={formData.first_name}
                   onChange={(e) => handleInputChange('first_name', e.target.value)}
@@ -170,10 +172,11 @@ export function UserForm({ user, onClose, onSuccess }: UserFormProps) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-foreground">
+                <label htmlFor="user-last-name" className="block text-sm font-medium text-foreground">
                   Last Name
                 </label>
                 <input
+                  id="user-last-name"
                   type="text"
                   value={formData.last_name}
                   onChange={(e) => handleInputChange('last_name', e.target.value)}
@@ -188,10 +191,11 @@ export function UserForm({ user, onClose, onSuccess }: UserFormProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label htmlFor="user-role" className="block text-sm font-medium text-gray-700">
                 Role
               </label>
               <select
+                id="user-role"
                 value={formData.role}
                 onChange={(e) => handleInputChange('role', e.target.value)}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
@@ -205,10 +209,11 @@ export function UserForm({ user, onClose, onSuccess }: UserFormProps) {
 
             {!isEditing && (
               <div>
-                <label className="block text-sm font-medium text-foreground">
+                <label htmlFor="user-password" className="block text-sm font-medium text-foreground">
                   Password
                 </label>
                 <input
+                  id="user-password"
                   type="password"
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}

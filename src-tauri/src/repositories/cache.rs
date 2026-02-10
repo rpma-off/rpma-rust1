@@ -5,6 +5,7 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
+use ts_rs::TS;
 
 /// Simple in-memory cache entry
 #[derive(Clone)]
@@ -115,8 +116,7 @@ impl Clone for Cache {
 }
 
 /// Cache statistics
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "ts-rs", derive(ts_rs::TS))]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, TS)]
 pub struct CacheStats {
     pub size: usize,
 }

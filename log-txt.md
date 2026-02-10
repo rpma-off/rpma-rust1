@@ -1,152 +1,1190 @@
-﻿﻿
-You are an expert code auditor specializing in Rust/Tauri desktop applications with Next.js frontends. Your task is to perform a comprehensive audit of the RPMA v2 codebase to identify and fix issues while improving code quality WITHOUT adding new features or over-complicating the existing architecture.
-Your Objectives
-Fix Bugs & Issues: Identify and fix actual bugs, logic errors, and broken functionality
-Improve Code Quality: Refactor for clarity, maintainability, and best practices
-Optimize Performance: Find and fix performance bottlenecks
-Enhance Type Safety: Strengthen type definitions and eliminate any types
-Remove Dead Code: Eliminate unused code, imports, and dependencies
-What You Should Do
-Code Quality Improvements
-Fix inconsistent naming conventions
-Improve error handling patterns
-Simplify overly complex logic
-Extract reusable functions from duplicated code
-Add missing null/undefined checks
-Fix TypeScript/Rust type issues
-Improve code comments where logic is unclear
-Bug Fixes
-Fix race conditions and async/await issues
-Correct data validation logic
-Fix state management bugs
-Resolve memory leaks
-Fix database query issues
-Correct IPC command implementations
-Performance Optimization
-Optimize database queries with proper indexes
-Fix inefficient algorithms
-Reduce unnecessary re-renders in React
-Optimize bundle size by removing unused dependencies
-Fix memory inefficiencies
-Optimize image loading and caching
-Architecture Cleanup
-Consolidate duplicate service methods
-Remove circular dependencies
-Fix layering violations (e.g., UI calling repositories directly)
-Improve separation of concerns
-Standardize error handling across layers
-What You Should NOT Do
-❌ DO NOT add new features - Work only with existing functionality ❌ DO NOT change the overall architecture - Keep the layered structure ❌ DO NOT introduce new libraries - Use existing dependencies only ❌ DO NOT over-engineer - Keep solutions simple and pragmatic ❌ DO NOT rewrite working code - If it works well, leave it alone ❌ DO NOT change the database schema - Work within current structure ❌ DO NOT modify the migration system - It's already comprehensive ❌ DO NOT add unnecessary abstractions - Keep it straightforward
-Focus Areas
-High Priority
-Database Operations: Query optimization, connection pooling, transactions
-Synchronization Logic: Offline sync, conflict resolution, data consistency
-Error Handling: Consistent error patterns, user-friendly messages
-Type Safety: Remove any, fix type mismatches, strengthen interfaces
-Medium Priority
-Component Optimization: React performance, unnecessary re-renders
-State Management: Context usage, state updates, data flow
-Form Validation: Input validation, business rule checks
-API Command Structure: IPC command consistency, response formats
-Low Priority
-Code Style: Formatting consistency, naming conventions
-Comments & Documentation: Inline code documentation
-Test Coverage: Identify untested critical paths
-Dependency Audit: Remove unused packages
-Audit Process
-Phase 1: Analysis (Don't make changes yet)
-Review the codebase structure and key modules
-Identify critical issues, bugs, and security vulnerabilities
-Find performance bottlenecks and optimization opportunities
-Locate code duplication and refactoring candidates
-Check type safety and error handling patterns
-Phase 2: Prioritization
-Categorize findings by severity (Critical, High, Medium, Low)
-Group related issues together
-Identify quick wins vs. complex fixes
-Create a prioritized fix list
-Phase 3: Implementation
-Critical Issues First: data loss risks
-High Priority: Bugs affecting core functionality
-Medium Priority: Performance optimizations, code quality
-Low Priority: Style issues, minor improvements
-Phase 4: Validation
-Ensure fixes don't break existing functionality
-Verify type safety improvements compile correctly
-Test error handling improvements
-Validate performance improvements
-Reporting Format
-For each issue found, provide:
-### [SEVERITY] Issue Title
+﻿﻿app-index.tsx:25  11/02/2026, 00:32:19 [CORR:req-mlh8i8ps-0002-491hms] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzA3NjYyNTIsImV4cCI6MTc3MDc3MzQ1MiwianRpIjoiOTM2ZTAzZWYtYTZhMy00NmVlLTg0YzctYmNhZTFjY2Q0NGZmIiwic2Vzc2lvbl9pZCI6IjVhNzNjNTY5LTdlZGQtNGZhNi04NGRhLTY1M2NiY2JjNTJiZSJ9.xHLOQo3kCj3Ed56SHAufjp6dT6pP4qM_faSNoGqpyNE | data: {"message":"Uncaught ReferenceError: updatedSteps is not defined","filename":"webpack-internal:///(app-pages-browser)/./src/contexts/PPFWorkflowContext.tsx","lineno":350,"colno":16,"error":{}} {id: '1770766339790-rfp403igk5s', timestamp: '2026-02-10T23:32:19.790Z', correlation_id: 'req-mlh8i8ps-0002-491hms', layer: 'FRONTEND', domain: 'SYSTEM', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:171
+error @ logger.ts:273
+eval @ logger.ts:53
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopConcurrent @ react-dom.development.js:25734
+renderRootConcurrent @ react-dom.development.js:25690
+performConcurrentWorkOnRoot @ react-dom.development.js:24504
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  [11/02/2026, 00:32:19] ERROR [system] system | Data: "Uncaught error" {id: '1770766339871-d3tp8um4u2', timestamp: '2026-02-10T23:32:19.871Z', level: 3, context: 'system', message: 'system', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:245
+error @ logger.ts:342
+eval @ logger.ts:105
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopConcurrent @ react-dom.development.js:25734
+renderRootConcurrent @ react-dom.development.js:25690
+performConcurrentWorkOnRoot @ react-dom.development.js:24504
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  Warning: Cannot update a component (`HotReload`) while rendering a different component (`PPFWorkflowProvider`). To locate the bad setState() call inside `PPFWorkflowProvider`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render
+    at PPFWorkflowProvider (webpack-internal:///(app-pages-browser)/./src/contexts/PPFWorkflowContext.tsx:28:11)
+    at PPFWorkflowLayout (webpack-internal:///(app-pages-browser)/./src/app/tasks/[id]/workflow/ppf/layout.tsx:24:11)
+    at InnerLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:243:11)
+    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
+    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
+    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at LoadingBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:349:11)
+    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at OuterLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:370:11)
+    at InnerLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:243:11)
+    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
+    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
+    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at LoadingBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:349:11)
+    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at OuterLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:370:11)
+    at InnerLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:243:11)
+    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
+    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
+    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at LoadingBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:349:11)
+    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at OuterLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:370:11)
+    at InnerLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:243:11)
+    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
+    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
+    at NotFoundErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:76:9)
+    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at Suspense
+    at LoadingBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:349:11)
+    at ErrorBoundaryHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:113:9)
+    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at OuterLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:370:11)
+    at div
+    at main
+    at div
+    at div
+    at AppShell (webpack-internal:///(app-pages-browser)/./src/components/layout/AppShell.tsx:16:11)
+    at RPMALayout (webpack-internal:///(app-pages-browser)/./src/components/RPMALayout.tsx:10:11)
+    at AppNavigation (webpack-internal:///(app-pages-browser)/./src/components/AppNavigation.tsx:15:11)
+    at AppLayout (webpack-internal:///(app-pages-browser)/./src/app/RootClientLayout.tsx:47:11)
+    at V (webpack-internal:///(app-pages-browser)/./node_modules/next-themes/dist/index.mjs:54:24)
+    at J (webpack-internal:///(app-pages-browser)/./node_modules/next-themes/dist/index.mjs:47:47)
+    at ThemeProvider (webpack-internal:///(app-pages-browser)/./src/components/theme-provider.tsx:13:11)
+    at AuthProvider (webpack-internal:///(app-pages-browser)/./src/contexts/AuthContext.tsx:27:11)
+    at QueryClientProvider (webpack-internal:///(app-pages-browser)/./node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js:27:11)
+    at Providers (webpack-internal:///(app-pages-browser)/./src/components/providers.tsx:23:11)
+    at GlobalErrorWrapper (webpack-internal:///(app-pages-browser)/./src/error-boundaries/GlobalErrorBoundary.tsx:625:9)
+    at BaseErrorBoundary (webpack-internal:///(app-pages-browser)/./src/error-boundaries/BaseErrorBoundary.tsx:402:9)
+    at GlobalErrorBoundary (webpack-internal:///(app-pages-browser)/./src/error-boundaries/GlobalErrorBoundary.tsx:499:11)
+    at div
+    at RootClientLayout (webpack-internal:///(app-pages-browser)/./src/app/RootClientLayout.tsx:200:11)
+    at body
+    at html
+    at RootLayout (Server)
+    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
+    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
+    at NotFoundErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:76:9)
+    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at DevRootNotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/dev-root-not-found-boundary.js:33:11)
+    at ReactDevOverlay (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/react-dev-overlay/app/ReactDevOverlay.js:87:9)
+    at HotReload (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/react-dev-overlay/app/hot-reloader-client.js:321:11)
+    at Router (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/app-router.js:207:11)
+    at ErrorBoundaryHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:113:9)
+    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
+    at AppRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/app-router.js:585:13)
+    at ServerRoot (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:112:27)
+    at Root (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:117:11)
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+printWarning @ react-dom.development.js:94
+error @ react-dom.development.js:68
+warnAboutRenderPhaseUpdatesInDEV @ react-dom.development.js:26990
+scheduleUpdateOnFiber @ react-dom.development.js:24395
+dispatchReducerAction @ react-dom.development.js:13001
+eval @ hot-reloader-client.tsx:488
+eval @ use-error-handler.ts:72
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopConcurrent @ react-dom.development.js:25734
+renderRootConcurrent @ react-dom.development.js:25690
+performConcurrentWorkOnRoot @ react-dom.development.js:24504
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+PPFWorkflowContext.tsx:425  Uncaught ReferenceError: updatedSteps is not defined
+    at PPFWorkflowProvider (PPFWorkflowContext.tsx:425:12)
+    at renderWithHooks (react-dom.development.js:11121:1)
+    at mountIndeterminateComponent (react-dom.development.js:16869:1)
+    at beginWork$1 (react-dom.development.js:18458:1)
+    at HTMLUnknownElement.callCallback (react-dom.development.js:20565:1)
+    at Object.invokeGuardedCallbackImpl (react-dom.development.js:20614:1)
+    at invokeGuardedCallback (react-dom.development.js:20689:1)
+    at beginWork (react-dom.development.js:26949:1)
+    at performUnitOfWork (react-dom.development.js:25748:1)
+    at workLoopConcurrent (react-dom.development.js:25734:1)
+    at renderRootConcurrent (react-dom.development.js:25690:1)
+    at performConcurrentWorkOnRoot (react-dom.development.js:24504:1)
+    at workLoop (scheduler.development.js:256:1)
+    at flushWork (scheduler.development.js:225:1)
+    at MessagePort.performWorkUntilDeadline (scheduler.development.js:534:1)
+PPFWorkflowProvider @ PPFWorkflowContext.tsx:425
+renderWithHooks @ react-dom.development.js:11121
+mountIndeterminateComponent @ react-dom.development.js:16869
+beginWork$1 @ react-dom.development.js:18458
+callCallback @ react-dom.development.js:20565
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopConcurrent @ react-dom.development.js:25734
+renderRootConcurrent @ react-dom.development.js:25690
+performConcurrentWorkOnRoot @ react-dom.development.js:24504
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  11/02/2026, 00:32:19 [CORR:req-mlh8i8ps-0002-491hms] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzA3NjYyNTIsImV4cCI6MTc3MDc3MzQ1MiwianRpIjoiOTM2ZTAzZWYtYTZhMy00NmVlLTg0YzctYmNhZTFjY2Q0NGZmIiwic2Vzc2lvbl9pZCI6IjVhNzNjNTY5LTdlZGQtNGZhNi04NGRhLTY1M2NiY2JjNTJiZSJ9.xHLOQo3kCj3Ed56SHAufjp6dT6pP4qM_faSNoGqpyNE | data: {"message":"Uncaught ReferenceError: updatedSteps is not defined","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js","lineno":57,"colno":9,"error":{}} {id: '1770766339896-9qdthctp1y', timestamp: '2026-02-10T23:32:19.896Z', correlation_id: 'req-mlh8i8ps-0002-491hms', layer: 'FRONTEND', domain: 'SYSTEM', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:171
+error @ logger.ts:273
+eval @ logger.ts:53
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopConcurrent @ react-dom.development.js:25734
+renderRootConcurrent @ react-dom.development.js:25690
+performConcurrentWorkOnRoot @ react-dom.development.js:24504
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  [11/02/2026, 00:32:20] ERROR [system] system | Data: "Uncaught error" {id: '1770766340217-22nc51prwn9', timestamp: '2026-02-10T23:32:20.217Z', level: 3, context: 'system', message: 'system', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:245
+error @ logger.ts:342
+eval @ logger.ts:105
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopConcurrent @ react-dom.development.js:25734
+renderRootConcurrent @ react-dom.development.js:25690
+performConcurrentWorkOnRoot @ react-dom.development.js:24504
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+redirect-boundary.tsx:59  Uncaught ReferenceError: updatedSteps is not defined
+    at PPFWorkflowProvider (PPFWorkflowContext.tsx:425:12)
+    at renderWithHooks (react-dom.development.js:11121:1)
+    at mountIndeterminateComponent (react-dom.development.js:16869:1)
+    at beginWork$1 (react-dom.development.js:18458:1)
+    at beginWork (react-dom.development.js:26927:1)
+    at performUnitOfWork (react-dom.development.js:25748:1)
+    at workLoopConcurrent (react-dom.development.js:25734:1)
+    at renderRootConcurrent (react-dom.development.js:25690:1)
+    at performConcurrentWorkOnRoot (react-dom.development.js:24504:1)
+    at workLoop (scheduler.development.js:256:1)
+    at flushWork (scheduler.development.js:225:1)
+    at MessagePort.performWorkUntilDeadline (scheduler.development.js:534:1)
+PPFWorkflowProvider @ PPFWorkflowContext.tsx:425
+renderWithHooks @ react-dom.development.js:11121
+mountIndeterminateComponent @ react-dom.development.js:16869
+beginWork$1 @ react-dom.development.js:18458
+beginWork @ react-dom.development.js:26927
+performUnitOfWork @ react-dom.development.js:25748
+workLoopConcurrent @ react-dom.development.js:25734
+renderRootConcurrent @ react-dom.development.js:25690
+performConcurrentWorkOnRoot @ react-dom.development.js:24504
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  11/02/2026, 00:32:20 [CORR:req-mlh8i8ps-0002-491hms] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzA3NjYyNTIsImV4cCI6MTc3MDc3MzQ1MiwianRpIjoiOTM2ZTAzZWYtYTZhMy00NmVlLTg0YzctYmNhZTFjY2Q0NGZmIiwic2Vzc2lvbl9pZCI6IjVhNzNjNTY5LTdlZGQtNGZhNi04NGRhLTY1M2NiY2JjNTJiZSJ9.xHLOQo3kCj3Ed56SHAufjp6dT6pP4qM_faSNoGqpyNE | data: {"message":"Uncaught ReferenceError: updatedSteps is not defined","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js","lineno":57,"colno":9,"error":{}} {id: '1770766340278-j9f8ou3oa5', timestamp: '2026-02-10T23:32:20.278Z', correlation_id: 'req-mlh8i8ps-0002-491hms', layer: 'FRONTEND', domain: 'SYSTEM', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:171
+error @ logger.ts:273
+eval @ logger.ts:53
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopConcurrent @ react-dom.development.js:25734
+renderRootConcurrent @ react-dom.development.js:25690
+performConcurrentWorkOnRoot @ react-dom.development.js:24504
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  [11/02/2026, 00:32:20] ERROR [system] system | Data: "Uncaught error" {id: '1770766340343-lnuwwy5ofb', timestamp: '2026-02-10T23:32:20.343Z', level: 3, context: 'system', message: 'system', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:245
+error @ logger.ts:342
+eval @ logger.ts:105
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopConcurrent @ react-dom.development.js:25734
+renderRootConcurrent @ react-dom.development.js:25690
+performConcurrentWorkOnRoot @ react-dom.development.js:24504
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+redirect-boundary.tsx:59  Uncaught ReferenceError: updatedSteps is not defined
+    at PPFWorkflowProvider (PPFWorkflowContext.tsx:425:12)
+    at renderWithHooks (react-dom.development.js:11121:1)
+    at mountIndeterminateComponent (react-dom.development.js:16869:1)
+    at beginWork$1 (react-dom.development.js:18458:1)
+    at beginWork (react-dom.development.js:26927:1)
+    at performUnitOfWork (react-dom.development.js:25748:1)
+    at workLoopConcurrent (react-dom.development.js:25734:1)
+    at renderRootConcurrent (react-dom.development.js:25690:1)
+    at performConcurrentWorkOnRoot (react-dom.development.js:24504:1)
+    at workLoop (scheduler.development.js:256:1)
+    at flushWork (scheduler.development.js:225:1)
+    at MessagePort.performWorkUntilDeadline (scheduler.development.js:534:1)
+PPFWorkflowProvider @ PPFWorkflowContext.tsx:425
+renderWithHooks @ react-dom.development.js:11121
+mountIndeterminateComponent @ react-dom.development.js:16869
+beginWork$1 @ react-dom.development.js:18458
+beginWork @ react-dom.development.js:26927
+performUnitOfWork @ react-dom.development.js:25748
+workLoopConcurrent @ react-dom.development.js:25734
+renderRootConcurrent @ react-dom.development.js:25690
+performConcurrentWorkOnRoot @ react-dom.development.js:24504
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  11/02/2026, 00:32:20 [CORR:req-mlh8i8ps-0002-491hms] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzA3NjYyNTIsImV4cCI6MTc3MDc3MzQ1MiwianRpIjoiOTM2ZTAzZWYtYTZhMy00NmVlLTg0YzctYmNhZTFjY2Q0NGZmIiwic2Vzc2lvbl9pZCI6IjVhNzNjNTY5LTdlZGQtNGZhNi04NGRhLTY1M2NiY2JjNTJiZSJ9.xHLOQo3kCj3Ed56SHAufjp6dT6pP4qM_faSNoGqpyNE | data: {"message":"Uncaught ReferenceError: updatedSteps is not defined","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js","lineno":57,"colno":9,"error":{}} {id: '1770766340399-gd1h3h72hp', timestamp: '2026-02-10T23:32:20.399Z', correlation_id: 'req-mlh8i8ps-0002-491hms', layer: 'FRONTEND', domain: 'SYSTEM', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:171
+error @ logger.ts:273
+eval @ logger.ts:53
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopConcurrent @ react-dom.development.js:25734
+renderRootConcurrent @ react-dom.development.js:25690
+performConcurrentWorkOnRoot @ react-dom.development.js:24504
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  [11/02/2026, 00:32:20] ERROR [system] system | Data: "Uncaught error" {id: '1770766340476-anplmx2ajhr', timestamp: '2026-02-10T23:32:20.476Z', level: 3, context: 'system', message: 'system', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:245
+error @ logger.ts:342
+eval @ logger.ts:105
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopConcurrent @ react-dom.development.js:25734
+renderRootConcurrent @ react-dom.development.js:25690
+performConcurrentWorkOnRoot @ react-dom.development.js:24504
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+redirect-boundary.tsx:59  Uncaught ReferenceError: updatedSteps is not defined
+    at PPFWorkflowProvider (PPFWorkflowContext.tsx:425:12)
+    at renderWithHooks (react-dom.development.js:11121:1)
+    at mountIndeterminateComponent (react-dom.development.js:16869:1)
+    at beginWork$1 (react-dom.development.js:18458:1)
+    at beginWork (react-dom.development.js:26927:1)
+    at performUnitOfWork (react-dom.development.js:25748:1)
+    at workLoopConcurrent (react-dom.development.js:25734:1)
+    at renderRootConcurrent (react-dom.development.js:25690:1)
+    at performConcurrentWorkOnRoot (react-dom.development.js:24504:1)
+    at workLoop (scheduler.development.js:256:1)
+    at flushWork (scheduler.development.js:225:1)
+    at MessagePort.performWorkUntilDeadline (scheduler.development.js:534:1)
+PPFWorkflowProvider @ PPFWorkflowContext.tsx:425
+renderWithHooks @ react-dom.development.js:11121
+mountIndeterminateComponent @ react-dom.development.js:16869
+beginWork$1 @ react-dom.development.js:18458
+beginWork @ react-dom.development.js:26927
+performUnitOfWork @ react-dom.development.js:25748
+workLoopConcurrent @ react-dom.development.js:25734
+renderRootConcurrent @ react-dom.development.js:25690
+performConcurrentWorkOnRoot @ react-dom.development.js:24504
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  11/02/2026, 00:32:20 [CORR:req-mlh8i8ps-0002-491hms] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzA3NjYyNTIsImV4cCI6MTc3MDc3MzQ1MiwianRpIjoiOTM2ZTAzZWYtYTZhMy00NmVlLTg0YzctYmNhZTFjY2Q0NGZmIiwic2Vzc2lvbl9pZCI6IjVhNzNjNTY5LTdlZGQtNGZhNi04NGRhLTY1M2NiY2JjNTJiZSJ9.xHLOQo3kCj3Ed56SHAufjp6dT6pP4qM_faSNoGqpyNE | data: {"message":"Uncaught ReferenceError: updatedSteps is not defined","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js","lineno":57,"colno":9,"error":{}} {id: '1770766340542-bx1ove8q8k', timestamp: '2026-02-10T23:32:20.542Z', correlation_id: 'req-mlh8i8ps-0002-491hms', layer: 'FRONTEND', domain: 'SYSTEM', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:171
+error @ logger.ts:273
+eval @ logger.ts:53
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopConcurrent @ react-dom.development.js:25734
+renderRootConcurrent @ react-dom.development.js:25690
+performConcurrentWorkOnRoot @ react-dom.development.js:24504
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  [11/02/2026, 00:32:20] ERROR [system] system | Data: "Uncaught error" {id: '1770766340626-z72rt109s7m', timestamp: '2026-02-10T23:32:20.626Z', level: 3, context: 'system', message: 'system', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:245
+error @ logger.ts:342
+eval @ logger.ts:105
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopConcurrent @ react-dom.development.js:25734
+renderRootConcurrent @ react-dom.development.js:25690
+performConcurrentWorkOnRoot @ react-dom.development.js:24504
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+redirect-boundary.tsx:59  Uncaught ReferenceError: updatedSteps is not defined
+    at PPFWorkflowProvider (PPFWorkflowContext.tsx:425:12)
+    at renderWithHooks (react-dom.development.js:11121:1)
+    at mountIndeterminateComponent (react-dom.development.js:16869:1)
+    at beginWork$1 (react-dom.development.js:18458:1)
+    at beginWork (react-dom.development.js:26927:1)
+    at performUnitOfWork (react-dom.development.js:25748:1)
+    at workLoopConcurrent (react-dom.development.js:25734:1)
+    at renderRootConcurrent (react-dom.development.js:25690:1)
+    at performConcurrentWorkOnRoot (react-dom.development.js:24504:1)
+    at workLoop (scheduler.development.js:256:1)
+    at flushWork (scheduler.development.js:225:1)
+    at MessagePort.performWorkUntilDeadline (scheduler.development.js:534:1)
+PPFWorkflowProvider @ PPFWorkflowContext.tsx:425
+renderWithHooks @ react-dom.development.js:11121
+mountIndeterminateComponent @ react-dom.development.js:16869
+beginWork$1 @ react-dom.development.js:18458
+beginWork @ react-dom.development.js:26927
+performUnitOfWork @ react-dom.development.js:25748
+workLoopConcurrent @ react-dom.development.js:25734
+renderRootConcurrent @ react-dom.development.js:25690
+performConcurrentWorkOnRoot @ react-dom.development.js:24504
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  11/02/2026, 00:32:20 [CORR:req-mlh8i8ps-0002-491hms] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzA3NjYyNTIsImV4cCI6MTc3MDc3MzQ1MiwianRpIjoiOTM2ZTAzZWYtYTZhMy00NmVlLTg0YzctYmNhZTFjY2Q0NGZmIiwic2Vzc2lvbl9pZCI6IjVhNzNjNTY5LTdlZGQtNGZhNi04NGRhLTY1M2NiY2JjNTJiZSJ9.xHLOQo3kCj3Ed56SHAufjp6dT6pP4qM_faSNoGqpyNE | data: {"message":"Uncaught ReferenceError: updatedSteps is not defined","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js","lineno":37,"colno":9,"error":{}} {id: '1770766340657-0o1haeg8quip', timestamp: '2026-02-10T23:32:20.657Z', correlation_id: 'req-mlh8i8ps-0002-491hms', layer: 'FRONTEND', domain: 'SYSTEM', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:171
+error @ logger.ts:273
+eval @ logger.ts:53
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopConcurrent @ react-dom.development.js:25734
+renderRootConcurrent @ react-dom.development.js:25690
+performConcurrentWorkOnRoot @ react-dom.development.js:24504
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  [11/02/2026, 00:32:20] ERROR [system] system | Data: "Uncaught error" {id: '1770766340737-ftdhbuam0r9', timestamp: '2026-02-10T23:32:20.737Z', level: 3, context: 'system', message: 'system', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:245
+error @ logger.ts:342
+eval @ logger.ts:105
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopConcurrent @ react-dom.development.js:25734
+renderRootConcurrent @ react-dom.development.js:25690
+performConcurrentWorkOnRoot @ react-dom.development.js:24504
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+not-found-boundary.tsx:69  Uncaught ReferenceError: updatedSteps is not defined
+    at PPFWorkflowProvider (PPFWorkflowContext.tsx:425:12)
+    at renderWithHooks (react-dom.development.js:11121:1)
+    at mountIndeterminateComponent (react-dom.development.js:16869:1)
+    at beginWork$1 (react-dom.development.js:18458:1)
+    at beginWork (react-dom.development.js:26927:1)
+    at performUnitOfWork (react-dom.development.js:25748:1)
+    at workLoopConcurrent (react-dom.development.js:25734:1)
+    at renderRootConcurrent (react-dom.development.js:25690:1)
+    at performConcurrentWorkOnRoot (react-dom.development.js:24504:1)
+    at workLoop (scheduler.development.js:256:1)
+    at flushWork (scheduler.development.js:225:1)
+    at MessagePort.performWorkUntilDeadline (scheduler.development.js:534:1)
+PPFWorkflowProvider @ PPFWorkflowContext.tsx:425
+renderWithHooks @ react-dom.development.js:11121
+mountIndeterminateComponent @ react-dom.development.js:16869
+beginWork$1 @ react-dom.development.js:18458
+beginWork @ react-dom.development.js:26927
+performUnitOfWork @ react-dom.development.js:25748
+workLoopConcurrent @ react-dom.development.js:25734
+renderRootConcurrent @ react-dom.development.js:25690
+performConcurrentWorkOnRoot @ react-dom.development.js:24504
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  11/02/2026, 00:32:20 [CORR:req-mlh8i8ps-0002-491hms] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzA3NjYyNTIsImV4cCI6MTc3MDc3MzQ1MiwianRpIjoiOTM2ZTAzZWYtYTZhMy00NmVlLTg0YzctYmNhZTFjY2Q0NGZmIiwic2Vzc2lvbl9pZCI6IjVhNzNjNTY5LTdlZGQtNGZhNi04NGRhLTY1M2NiY2JjNTJiZSJ9.xHLOQo3kCj3Ed56SHAufjp6dT6pP4qM_faSNoGqpyNE | data: {"message":"Uncaught ReferenceError: updatedSteps is not defined","filename":"webpack-internal:///(app-pages-browser)/./src/contexts/PPFWorkflowContext.tsx","lineno":350,"colno":16,"error":{}} {id: '1770766340854-lulsabx5jje', timestamp: '2026-02-10T23:32:20.854Z', correlation_id: 'req-mlh8i8ps-0002-491hms', layer: 'FRONTEND', domain: 'SYSTEM', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:171
+error @ logger.ts:273
+eval @ logger.ts:53
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performConcurrentWorkOnRoot @ react-dom.development.js:24542
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  [11/02/2026, 00:32:20] ERROR [system] system | Data: "Uncaught error" {id: '1770766340934-lmxvrpof2n', timestamp: '2026-02-10T23:32:20.934Z', level: 3, context: 'system', message: 'system', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:245
+error @ logger.ts:342
+eval @ logger.ts:105
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performConcurrentWorkOnRoot @ react-dom.development.js:24542
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+PPFWorkflowContext.tsx:425  Uncaught ReferenceError: updatedSteps is not defined
+    at PPFWorkflowProvider (PPFWorkflowContext.tsx:425:12)
+    at renderWithHooks (react-dom.development.js:11121:1)
+    at mountIndeterminateComponent (react-dom.development.js:16869:1)
+    at beginWork$1 (react-dom.development.js:18458:1)
+    at HTMLUnknownElement.callCallback (react-dom.development.js:20565:1)
+    at Object.invokeGuardedCallbackImpl (react-dom.development.js:20614:1)
+    at invokeGuardedCallback (react-dom.development.js:20689:1)
+    at beginWork (react-dom.development.js:26949:1)
+    at performUnitOfWork (react-dom.development.js:25748:1)
+    at workLoopSync (react-dom.development.js:25464:1)
+    at renderRootSync (react-dom.development.js:25419:1)
+    at recoverFromConcurrentError (react-dom.development.js:24597:1)
+    at performConcurrentWorkOnRoot (react-dom.development.js:24542:1)
+    at workLoop (scheduler.development.js:256:1)
+    at flushWork (scheduler.development.js:225:1)
+    at MessagePort.performWorkUntilDeadline (scheduler.development.js:534:1)
+PPFWorkflowProvider @ PPFWorkflowContext.tsx:425
+renderWithHooks @ react-dom.development.js:11121
+mountIndeterminateComponent @ react-dom.development.js:16869
+beginWork$1 @ react-dom.development.js:18458
+callCallback @ react-dom.development.js:20565
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performConcurrentWorkOnRoot @ react-dom.development.js:24542
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  11/02/2026, 00:32:20 [CORR:req-mlh8i8ps-0002-491hms] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzA3NjYyNTIsImV4cCI6MTc3MDc3MzQ1MiwianRpIjoiOTM2ZTAzZWYtYTZhMy00NmVlLTg0YzctYmNhZTFjY2Q0NGZmIiwic2Vzc2lvbl9pZCI6IjVhNzNjNTY5LTdlZGQtNGZhNi04NGRhLTY1M2NiY2JjNTJiZSJ9.xHLOQo3kCj3Ed56SHAufjp6dT6pP4qM_faSNoGqpyNE | data: {"message":"Uncaught ReferenceError: updatedSteps is not defined","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js","lineno":57,"colno":9,"error":{}} {id: '1770766340949-xci7402zvy9', timestamp: '2026-02-10T23:32:20.949Z', correlation_id: 'req-mlh8i8ps-0002-491hms', layer: 'FRONTEND', domain: 'SYSTEM', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:171
+error @ logger.ts:273
+eval @ logger.ts:53
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performConcurrentWorkOnRoot @ react-dom.development.js:24542
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  [11/02/2026, 00:32:21] ERROR [system] system | Data: "Uncaught error" {id: '1770766341011-pexnfy6rkp', timestamp: '2026-02-10T23:32:21.011Z', level: 3, context: 'system', message: 'system', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:245
+error @ logger.ts:342
+eval @ logger.ts:105
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performConcurrentWorkOnRoot @ react-dom.development.js:24542
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+redirect-boundary.tsx:59  Uncaught ReferenceError: updatedSteps is not defined
+    at PPFWorkflowProvider (PPFWorkflowContext.tsx:425:12)
+    at renderWithHooks (react-dom.development.js:11121:1)
+    at mountIndeterminateComponent (react-dom.development.js:16869:1)
+    at beginWork$1 (react-dom.development.js:18458:1)
+    at beginWork (react-dom.development.js:26927:1)
+    at performUnitOfWork (react-dom.development.js:25748:1)
+    at workLoopSync (react-dom.development.js:25464:1)
+    at renderRootSync (react-dom.development.js:25419:1)
+    at recoverFromConcurrentError (react-dom.development.js:24597:1)
+    at performConcurrentWorkOnRoot (react-dom.development.js:24542:1)
+    at workLoop (scheduler.development.js:256:1)
+    at flushWork (scheduler.development.js:225:1)
+    at MessagePort.performWorkUntilDeadline (scheduler.development.js:534:1)
+PPFWorkflowProvider @ PPFWorkflowContext.tsx:425
+renderWithHooks @ react-dom.development.js:11121
+mountIndeterminateComponent @ react-dom.development.js:16869
+beginWork$1 @ react-dom.development.js:18458
+beginWork @ react-dom.development.js:26927
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performConcurrentWorkOnRoot @ react-dom.development.js:24542
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  11/02/2026, 00:32:21 [CORR:req-mlh8i8ps-0002-491hms] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzA3NjYyNTIsImV4cCI6MTc3MDc3MzQ1MiwianRpIjoiOTM2ZTAzZWYtYTZhMy00NmVlLTg0YzctYmNhZTFjY2Q0NGZmIiwic2Vzc2lvbl9pZCI6IjVhNzNjNTY5LTdlZGQtNGZhNi04NGRhLTY1M2NiY2JjNTJiZSJ9.xHLOQo3kCj3Ed56SHAufjp6dT6pP4qM_faSNoGqpyNE | data: {"message":"Uncaught ReferenceError: updatedSteps is not defined","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js","lineno":57,"colno":9,"error":{}} {id: '1770766341020-m8w1ctj8ur', timestamp: '2026-02-10T23:32:21.020Z', correlation_id: 'req-mlh8i8ps-0002-491hms', layer: 'FRONTEND', domain: 'SYSTEM', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:171
+error @ logger.ts:273
+eval @ logger.ts:53
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performConcurrentWorkOnRoot @ react-dom.development.js:24542
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  [11/02/2026, 00:32:21] ERROR [system] system | Data: "Uncaught error" {id: '1770766341080-9g5alw5qaen', timestamp: '2026-02-10T23:32:21.080Z', level: 3, context: 'system', message: 'system', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:245
+error @ logger.ts:342
+eval @ logger.ts:105
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performConcurrentWorkOnRoot @ react-dom.development.js:24542
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+redirect-boundary.tsx:59  Uncaught ReferenceError: updatedSteps is not defined
+    at PPFWorkflowProvider (PPFWorkflowContext.tsx:425:12)
+    at renderWithHooks (react-dom.development.js:11121:1)
+    at mountIndeterminateComponent (react-dom.development.js:16869:1)
+    at beginWork$1 (react-dom.development.js:18458:1)
+    at beginWork (react-dom.development.js:26927:1)
+    at performUnitOfWork (react-dom.development.js:25748:1)
+    at workLoopSync (react-dom.development.js:25464:1)
+    at renderRootSync (react-dom.development.js:25419:1)
+    at recoverFromConcurrentError (react-dom.development.js:24597:1)
+    at performConcurrentWorkOnRoot (react-dom.development.js:24542:1)
+    at workLoop (scheduler.development.js:256:1)
+    at flushWork (scheduler.development.js:225:1)
+    at MessagePort.performWorkUntilDeadline (scheduler.development.js:534:1)
+PPFWorkflowProvider @ PPFWorkflowContext.tsx:425
+renderWithHooks @ react-dom.development.js:11121
+mountIndeterminateComponent @ react-dom.development.js:16869
+beginWork$1 @ react-dom.development.js:18458
+beginWork @ react-dom.development.js:26927
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performConcurrentWorkOnRoot @ react-dom.development.js:24542
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  11/02/2026, 00:32:21 [CORR:req-mlh8i8ps-0002-491hms] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzA3NjYyNTIsImV4cCI6MTc3MDc3MzQ1MiwianRpIjoiOTM2ZTAzZWYtYTZhMy00NmVlLTg0YzctYmNhZTFjY2Q0NGZmIiwic2Vzc2lvbl9pZCI6IjVhNzNjNTY5LTdlZGQtNGZhNi04NGRhLTY1M2NiY2JjNTJiZSJ9.xHLOQo3kCj3Ed56SHAufjp6dT6pP4qM_faSNoGqpyNE | data: {"message":"Uncaught ReferenceError: updatedSteps is not defined","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js","lineno":57,"colno":9,"error":{}} {id: '1770766341091-tuj5su355r', timestamp: '2026-02-10T23:32:21.091Z', correlation_id: 'req-mlh8i8ps-0002-491hms', layer: 'FRONTEND', domain: 'SYSTEM', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:171
+error @ logger.ts:273
+eval @ logger.ts:53
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performConcurrentWorkOnRoot @ react-dom.development.js:24542
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  [11/02/2026, 00:32:21] ERROR [system] system | Data: "Uncaught error" {id: '1770766341152-92g6tn9a81o', timestamp: '2026-02-10T23:32:21.152Z', level: 3, context: 'system', message: 'system', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:245
+error @ logger.ts:342
+eval @ logger.ts:105
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performConcurrentWorkOnRoot @ react-dom.development.js:24542
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+redirect-boundary.tsx:59  Uncaught ReferenceError: updatedSteps is not defined
+    at PPFWorkflowProvider (PPFWorkflowContext.tsx:425:12)
+    at renderWithHooks (react-dom.development.js:11121:1)
+    at mountIndeterminateComponent (react-dom.development.js:16869:1)
+    at beginWork$1 (react-dom.development.js:18458:1)
+    at beginWork (react-dom.development.js:26927:1)
+    at performUnitOfWork (react-dom.development.js:25748:1)
+    at workLoopSync (react-dom.development.js:25464:1)
+    at renderRootSync (react-dom.development.js:25419:1)
+    at recoverFromConcurrentError (react-dom.development.js:24597:1)
+    at performConcurrentWorkOnRoot (react-dom.development.js:24542:1)
+    at workLoop (scheduler.development.js:256:1)
+    at flushWork (scheduler.development.js:225:1)
+    at MessagePort.performWorkUntilDeadline (scheduler.development.js:534:1)
+PPFWorkflowProvider @ PPFWorkflowContext.tsx:425
+renderWithHooks @ react-dom.development.js:11121
+mountIndeterminateComponent @ react-dom.development.js:16869
+beginWork$1 @ react-dom.development.js:18458
+beginWork @ react-dom.development.js:26927
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performConcurrentWorkOnRoot @ react-dom.development.js:24542
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  11/02/2026, 00:32:21 [CORR:req-mlh8i8ps-0002-491hms] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzA3NjYyNTIsImV4cCI6MTc3MDc3MzQ1MiwianRpIjoiOTM2ZTAzZWYtYTZhMy00NmVlLTg0YzctYmNhZTFjY2Q0NGZmIiwic2Vzc2lvbl9pZCI6IjVhNzNjNTY5LTdlZGQtNGZhNi04NGRhLTY1M2NiY2JjNTJiZSJ9.xHLOQo3kCj3Ed56SHAufjp6dT6pP4qM_faSNoGqpyNE | data: {"message":"Uncaught ReferenceError: updatedSteps is not defined","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js","lineno":57,"colno":9,"error":{}} {id: '1770766341161-yri2tzlqsv', timestamp: '2026-02-10T23:32:21.161Z', correlation_id: 'req-mlh8i8ps-0002-491hms', layer: 'FRONTEND', domain: 'SYSTEM', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:171
+error @ logger.ts:273
+eval @ logger.ts:53
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performConcurrentWorkOnRoot @ react-dom.development.js:24542
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  [11/02/2026, 00:32:21] ERROR [system] system | Data: "Uncaught error" {id: '1770766341225-vk100kcdlhr', timestamp: '2026-02-10T23:32:21.225Z', level: 3, context: 'system', message: 'system', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:245
+error @ logger.ts:342
+eval @ logger.ts:105
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performConcurrentWorkOnRoot @ react-dom.development.js:24542
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+redirect-boundary.tsx:59  Uncaught ReferenceError: updatedSteps is not defined
+    at PPFWorkflowProvider (PPFWorkflowContext.tsx:425:12)
+    at renderWithHooks (react-dom.development.js:11121:1)
+    at mountIndeterminateComponent (react-dom.development.js:16869:1)
+    at beginWork$1 (react-dom.development.js:18458:1)
+    at beginWork (react-dom.development.js:26927:1)
+    at performUnitOfWork (react-dom.development.js:25748:1)
+    at workLoopSync (react-dom.development.js:25464:1)
+    at renderRootSync (react-dom.development.js:25419:1)
+    at recoverFromConcurrentError (react-dom.development.js:24597:1)
+    at performConcurrentWorkOnRoot (react-dom.development.js:24542:1)
+    at workLoop (scheduler.development.js:256:1)
+    at flushWork (scheduler.development.js:225:1)
+    at MessagePort.performWorkUntilDeadline (scheduler.development.js:534:1)
+PPFWorkflowProvider @ PPFWorkflowContext.tsx:425
+renderWithHooks @ react-dom.development.js:11121
+mountIndeterminateComponent @ react-dom.development.js:16869
+beginWork$1 @ react-dom.development.js:18458
+beginWork @ react-dom.development.js:26927
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performConcurrentWorkOnRoot @ react-dom.development.js:24542
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  11/02/2026, 00:32:21 [CORR:req-mlh8i8ps-0002-491hms] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhMjk3NWM3Ni1lZWRhLTQxZjgtOWVmZS1kMDc0MWM5Nzg1YTUiLCJlbWFpbCI6InJheWVwYXNtb25hdXRvQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWhtZWRfYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzA3NjYyNTIsImV4cCI6MTc3MDc3MzQ1MiwianRpIjoiOTM2ZTAzZWYtYTZhMy00NmVlLTg0YzctYmNhZTFjY2Q0NGZmIiwic2Vzc2lvbl9pZCI6IjVhNzNjNTY5LTdlZGQtNGZhNi04NGRhLTY1M2NiY2JjNTJiZSJ9.xHLOQo3kCj3Ed56SHAufjp6dT6pP4qM_faSNoGqpyNE | data: {"message":"Uncaught ReferenceError: updatedSteps is not defined","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js","lineno":37,"colno":9,"error":{}} {id: '1770766341236-wq6qnprwvsa', timestamp: '2026-02-10T23:32:21.236Z', correlation_id: 'req-mlh8i8ps-0002-491hms', layer: 'FRONTEND', domain: 'SYSTEM', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:171
+error @ logger.ts:273
+eval @ logger.ts:53
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performConcurrentWorkOnRoot @ react-dom.development.js:24542
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  [11/02/2026, 00:32:21] ERROR [system] system | Data: "Uncaught error" {id: '1770766341290-tfjrofe0n3', timestamp: '2026-02-10T23:32:21.290Z', level: 3, context: 'system', message: 'system', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:245
+error @ logger.ts:342
+eval @ logger.ts:105
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performConcurrentWorkOnRoot @ react-dom.development.js:24542
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+not-found-boundary.tsx:69  Uncaught ReferenceError: updatedSteps is not defined
+    at PPFWorkflowProvider (PPFWorkflowContext.tsx:425:12)
+    at renderWithHooks (react-dom.development.js:11121:1)
+    at mountIndeterminateComponent (react-dom.development.js:16869:1)
+    at beginWork$1 (react-dom.development.js:18458:1)
+    at beginWork (react-dom.development.js:26927:1)
+    at performUnitOfWork (react-dom.development.js:25748:1)
+    at workLoopSync (react-dom.development.js:25464:1)
+    at renderRootSync (react-dom.development.js:25419:1)
+    at recoverFromConcurrentError (react-dom.development.js:24597:1)
+    at performConcurrentWorkOnRoot (react-dom.development.js:24542:1)
+    at workLoop (scheduler.development.js:256:1)
+    at flushWork (scheduler.development.js:225:1)
+    at MessagePort.performWorkUntilDeadline (scheduler.development.js:534:1)
+PPFWorkflowProvider @ PPFWorkflowContext.tsx:425
+renderWithHooks @ react-dom.development.js:11121
+mountIndeterminateComponent @ react-dom.development.js:16869
+beginWork$1 @ react-dom.development.js:18458
+beginWork @ react-dom.development.js:26927
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performConcurrentWorkOnRoot @ react-dom.development.js:24542
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  The above error occurred in the <NotFoundErrorBoundary> component:
 
-**Location**: `path/to/file.ts:line`
+    at PPFWorkflowProvider (webpack-internal:///(app-pages-browser)/./src/contexts/PPFWorkflowContext.tsx:28:11)
+    at PPFWorkflowLayout (webpack-internal:///(app-pages-browser)/./src/app/tasks/[id]/workflow/ppf/layout.tsx:24:11)
+    at InnerLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:243:11)
+    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
+    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
+    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at LoadingBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:349:11)
+    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at OuterLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:370:11)
+    at InnerLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:243:11)
+    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
+    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
+    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at LoadingBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:349:11)
+    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at OuterLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:370:11)
+    at InnerLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:243:11)
+    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
+    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
+    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at LoadingBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:349:11)
+    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at OuterLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:370:11)
+    at InnerLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:243:11)
+    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
+    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
+    at NotFoundErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:76:9)
+    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at Suspense
+    at LoadingBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:349:11)
+    at ErrorBoundaryHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:113:9)
+    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at OuterLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:370:11)
+    at div
+    at main
+    at div
+    at div
+    at AppShell (webpack-internal:///(app-pages-browser)/./src/components/layout/AppShell.tsx:16:11)
+    at RPMALayout (webpack-internal:///(app-pages-browser)/./src/components/RPMALayout.tsx:10:11)
+    at AppNavigation (webpack-internal:///(app-pages-browser)/./src/components/AppNavigation.tsx:15:11)
+    at AppLayout (webpack-internal:///(app-pages-browser)/./src/app/RootClientLayout.tsx:47:11)
+    at V (webpack-internal:///(app-pages-browser)/./node_modules/next-themes/dist/index.mjs:54:24)
+    at J (webpack-internal:///(app-pages-browser)/./node_modules/next-themes/dist/index.mjs:47:47)
+    at ThemeProvider (webpack-internal:///(app-pages-browser)/./src/components/theme-provider.tsx:13:11)
+    at AuthProvider (webpack-internal:///(app-pages-browser)/./src/contexts/AuthContext.tsx:27:11)
+    at QueryClientProvider (webpack-internal:///(app-pages-browser)/./node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js:27:11)
+    at Providers (webpack-internal:///(app-pages-browser)/./src/components/providers.tsx:23:11)
+    at GlobalErrorWrapper (webpack-internal:///(app-pages-browser)/./src/error-boundaries/GlobalErrorBoundary.tsx:625:9)
+    at BaseErrorBoundary (webpack-internal:///(app-pages-browser)/./src/error-boundaries/BaseErrorBoundary.tsx:402:9)
+    at GlobalErrorBoundary (webpack-internal:///(app-pages-browser)/./src/error-boundaries/GlobalErrorBoundary.tsx:499:11)
+    at div
+    at RootClientLayout (webpack-internal:///(app-pages-browser)/./src/app/RootClientLayout.tsx:200:11)
+    at body
+    at html
+    at RootLayout (Server)
+    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
+    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
+    at NotFoundErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:76:9)
+    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at DevRootNotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/dev-root-not-found-boundary.js:33:11)
+    at ReactDevOverlay (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/react-dev-overlay/app/ReactDevOverlay.js:87:9)
+    at HotReload (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/react-dev-overlay/app/hot-reloader-client.js:321:11)
+    at Router (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/app-router.js:207:11)
+    at ErrorBoundaryHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:113:9)
+    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
+    at AppRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/app-router.js:585:13)
+    at ServerRoot (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:112:27)
+    at Root (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:117:11)
 
-**Problem**: 
-Clear description of what's wrong
-
-**Impact**: 
-What happens if not fixed (security risk, performance issue, etc.)
-
-**Current Code**:
-```typescript
-// Show the problematic code
-
-Fixed Code:
-// Show the corrected code
-
-Explanation: Why this fix is better and what it improves
-
-## Success Criteria
-
-Your audit is successful if:
-- ✅ All critical security vulnerabilities are fixed
-- ✅ Major bugs are identified and resolved
-- ✅ Code is more maintainable without being over-engineered
-- ✅ Performance is improved measurably
-- ✅ Type safety is strengthened throughout
-- ✅ No existing functionality is broken
-- ✅ The architecture remains simple and understandable
-
-## Key Principles
-
-1. **Simplicity First**: The simplest solution that works is the best
-2. **Don't Break Things**: Preserve existing functionality
-3. **Pragmatic Fixes**: Practical improvements over theoretical perfection
-4. **Measurable Impact**: Focus on changes that make a real difference
-5. **Maintainability**: Code should be easier to understand after your changes
-
-## Context-Specific Guidelines
-
-### For Rust Backend
-- Follow Rust idioms and best practices
-- Use `Result<T, E>` consistently for error handling
-- Leverage Rust's type system for safety
-- Keep async code clean with proper error propagation
-- Use Clippy suggestions where applicable
-
-### For TypeScript Frontend
-- Eliminate `any` types progressively
-- Use proper React hooks dependencies
-- Implement proper TypeScript interfaces
-- Follow React best practices (no prop drilling, proper memoization)
-- Keep components focused and single-purpose
-
-### For Database Layer
-- Optimize queries with appropriate indexes
-- Use transactions where needed
-- Proper error handling for DB operations
-- Connection pool management
-- Query preparation and parameter binding
-
-## Start Your Audit
-
-Begin by examining the most critical components first:
-1. Authentication system (`src-tauri/src/commands/auth.rs`, `frontend/src/contexts/AuthContext.tsx`)
-2. Database layer (`src-tauri/src/db/`, `src-tauri/src/repositories/`)
-3. Synchronization logic (`src-tauri/src/sync/`)
-4. Core business services (`src-tauri/src/services/`)
-5. IPC commands (`src-tauri/src/commands/`)
-
-Focus on **fixing what's broken**, **improving what's messy**, and **optimizing what's slow**. Keep it simple, practical, and maintainable.
-
-
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundaryHandler.
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+logCapturedError @ react-dom.development.js:15295
+update.callback @ react-dom.development.js:15344
+callCallback @ react-dom.development.js:8696
+commitCallbacks @ react-dom.development.js:8743
+commitClassCallbacks @ react-dom.development.js:21323
+commitLayoutEffectOnFiber @ react-dom.development.js:21425
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21418
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21488
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21488
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21488
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21488
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21418
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21418
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21488
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21488
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21488
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21418
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21418
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21418
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21418
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21437
+commitLayoutEffects @ react-dom.development.js:22912
+commitRootImpl @ react-dom.development.js:26226
+commitRoot @ react-dom.development.js:26077
+commitRootWhenReady @ react-dom.development.js:24749
+finishConcurrentRender @ react-dom.development.js:24714
+performConcurrentWorkOnRoot @ react-dom.development.js:24559
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  Error boundary caught: {message: 'updatedSteps is not defined', stack: 'ReferenceError: updatedSteps is not defined\n    at…ed/scheduler/cjs/scheduler.development.js:534:21)', digest: undefined, timestamp: '2026-02-10T23:32:21.402Z'}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+eval @ error.tsx:26
+commitHookEffectListMount @ react-dom.development.js:21102
+commitHookPassiveMountEffects @ react-dom.development.js:23154
+commitPassiveMountOnFiber @ react-dom.development.js:23259
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23267
+commitPassiveMountEffects @ react-dom.development.js:23225
+flushPassiveEffectsImpl @ react-dom.development.js:26497
+flushPassiveEffects @ react-dom.development.js:26438
+performSyncWorkOnRoot @ react-dom.development.js:24870
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+commitRootImpl @ react-dom.development.js:26369
+commitRoot @ react-dom.development.js:26077
+commitRootWhenReady @ react-dom.development.js:24749
+finishConcurrentRender @ react-dom.development.js:24714
+performConcurrentWorkOnRoot @ react-dom.development.js:24559
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  Error boundary caught: {message: 'updatedSteps is not defined', stack: 'ReferenceError: updatedSteps is not defined\n    at…ed/scheduler/cjs/scheduler.development.js:534:21)', digest: undefined, timestamp: '2026-02-10T23:32:21.405Z'}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+eval @ error.tsx:26
+commitHookEffectListMount @ react-dom.development.js:21102
+invokePassiveEffectMountInDEV @ react-dom.development.js:23980
+invokeEffectsInDev @ react-dom.development.js:26852
+legacyCommitDoubleInvokeEffectsInDEV @ react-dom.development.js:26835
+commitDoubleInvokeEffectsInDEV @ react-dom.development.js:26816
+flushPassiveEffectsImpl @ react-dom.development.js:26514
+flushPassiveEffects @ react-dom.development.js:26438
+performSyncWorkOnRoot @ react-dom.development.js:24870
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+commitRootImpl @ react-dom.development.js:26369
+commitRoot @ react-dom.development.js:26077
+commitRootWhenReady @ react-dom.development.js:24749
+finishConcurrentRender @ react-dom.development.js:24714
+performConcurrentWorkOnRoot @ react-dom.development.js:24559
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534

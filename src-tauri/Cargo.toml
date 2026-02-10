@@ -20,7 +20,7 @@ path = "src/main.rs"
 [[bin]]
 name = "export-types"
 path = "src/bin/export-types.rs"
-required-features = ["ts-rs"]
+
 
 [[bench]]
 name = "task_benchmarks"
@@ -34,11 +34,31 @@ harness = false
 name = "audit_benchmarks"
 harness = false
 
+[[test]]
+name = "auth_commands_test"
+path = "tests/commands/auth_commands_test.rs"
+
+[[test]]
+name = "client_commands_test"
+path = "tests/commands/client_commands_test.rs"
+
+[[test]]
+name = "user_commands_test"
+path = "tests/commands/user_commands_test.rs"
+
+[[test]]
+name = "intervention_commands_test"
+path = "tests/commands/intervention_commands_test.rs"
+
+[[test]]
+name = "task_commands_test"
+path = "tests/commands/task_commands_test.rs"
+
 [build-dependencies]
 tauri-build = { version = "2.0", features = [] }
 
 [dependencies]
-tauri = { version = "2.1", features = ["specta"] }
+tauri = { version = "2.1", features = [] }
 tauri-plugin-shell = "2.0"
 tauri-plugin-dialog = "2.0"
 serde = { version = "1.0", features = ["derive"] }
@@ -91,8 +111,7 @@ dirs = "5.0"
 # File system operations
 fs2 = "0.4"
 
-# TypeScript generation for IPC
-specta = { version = "2.0.0-rc.22", optional = true }
+
 
 # Async runtime
 tokio = { version = "1.42", features = ["rt-multi-thread", "macros", "sync", "time", "net"] }
@@ -125,9 +144,7 @@ rand = "0.8"
 dotenvy = "0.15"
 
 # Type generation
-tauri-specta = "2.0.0-rc"
-specta-typescript = "0.0"
-ts-rs = { version = "10.1", optional = true, features = ["no-serde-warnings"] }
+ts-rs = { version = "10.1", features = ["no-serde-warnings"] }
 
 # Utilities
 md5 = "0.7"
@@ -147,9 +164,8 @@ totp-rs = { version = "5.5", features = ["qr"] }
 [features]
 default = ["custom-protocol"]
 custom-protocol = ["tauri/custom-protocol"]
-ts-rs = ["dep:ts-rs"]
-specta = ["dep:specta"]
 sqlcipher = []  # Optional feature for SQLCipher encryption support
+legacy-tests = [] # Enable legacy integration/performance/proptest modules
 
 [dev-dependencies]
 # Testing framework
@@ -160,5 +176,5 @@ serial_test = "3.0"      # Test isolation
 criterion = "0.5"         # Performance testing
 proptest = "1.4"         # Property-based testing
 pretty_assertions = "1.4" # Better error messages in tests
-
+cargo-tarpaulin = "0.27"  # Coverage reporting
 

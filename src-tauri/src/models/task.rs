@@ -7,13 +7,12 @@ use crate::models::common::{serialize_optional_timestamp, serialize_timestamp};
 
 use rusqlite::Row;
 use serde::{Deserialize, Serialize};
-#[cfg(any(feature = "specta", feature = "ts-rs"))]
+// Conditional import removed
 use ts_rs::TS;
 
 /// Task status enumeration
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
-#[cfg_attr(feature = "ts-rs", ts(export))]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, TS)]
+#[ts(export)]
 pub enum TaskStatus {
     #[serde(rename = "draft")]
     #[default]
@@ -89,9 +88,8 @@ impl std::str::FromStr for TaskStatus {
 }
 
 /// Task priority enumeration
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
-#[cfg_attr(feature = "ts-rs", ts(export))]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, TS)]
+#[ts(export)]
 pub enum TaskPriority {
     #[serde(rename = "low")]
     Low,
@@ -131,8 +129,7 @@ impl std::str::FromStr for TaskPriority {
 }
 
 /// Sort order for queries
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 pub enum SortOrder {
     #[serde(rename = "asc")]
     Asc,
@@ -151,8 +148,7 @@ impl std::fmt::Display for SortOrder {
 }
 
 /// Main Task entity
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct Task {
     // Identifiers
     pub id: String,
@@ -180,7 +176,7 @@ pub struct Task {
     // Assignment
     pub technician_id: Option<String>,
     #[serde(serialize_with = "serialize_optional_timestamp")]
-    #[cfg_attr(feature = "ts-rs", ts(type = "string | null"))]
+    #[ts(type = "string | null")]
     pub assigned_at: Option<i64>,
     pub assigned_by: Option<String>,
 
@@ -197,10 +193,10 @@ pub struct Task {
     pub workflow_status: Option<String>,
     pub current_workflow_step_id: Option<String>,
     #[serde(serialize_with = "serialize_optional_timestamp")]
-    #[cfg_attr(feature = "ts-rs", ts(type = "string | null"))]
+    #[ts(type = "string | null")]
     pub started_at: Option<i64>,
     #[serde(serialize_with = "serialize_optional_timestamp")]
-    #[cfg_attr(feature = "ts-rs", ts(type = "string | null"))]
+    #[ts(type = "string | null")]
     pub completed_at: Option<i64>,
     pub completed_steps: Option<String>,
 
@@ -222,27 +218,26 @@ pub struct Task {
 
     // Audit fields
     #[serde(serialize_with = "serialize_timestamp")]
-    #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
+    #[ts(type = "string")]
     pub created_at: i64,
     #[serde(serialize_with = "serialize_timestamp")]
-    #[cfg_attr(feature = "ts-rs", ts(type = "string"))]
+    #[ts(type = "string")]
     pub updated_at: i64,
     pub creator_id: Option<String>,
     pub created_by: Option<String>,
     pub updated_by: Option<String>,
     #[serde(serialize_with = "serialize_optional_timestamp")]
-    #[cfg_attr(feature = "ts-rs", ts(type = "string | null"))]
+    #[ts(type = "string | null")]
     pub deleted_at: Option<i64>,
     pub deleted_by: Option<String>,
     pub synced: bool,
     #[serde(serialize_with = "serialize_optional_timestamp")]
-    #[cfg_attr(feature = "ts-rs", ts(type = "string | null"))]
+    #[ts(type = "string | null")]
     pub last_synced_at: Option<i64>,
 }
 
 /// Task photo information
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct TaskPhoto {
     pub id: String,
     pub task_id: String,
@@ -257,16 +252,14 @@ pub struct TaskPhoto {
 }
 
 /// Task with full details including related data
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct TaskWithDetails {
     #[serde(flatten)]
     pub task: Task,
 }
 
 /// Assignment status for task assignment validation
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub enum AssignmentStatus {
     #[serde(rename = "assigned")]
     Assigned,
@@ -291,8 +284,7 @@ impl std::fmt::Display for AssignmentStatus {
 }
 
 /// Availability status for task availability checks
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub enum AvailabilityStatus {
     #[serde(rename = "available")]
     Available,
@@ -320,8 +312,7 @@ impl std::fmt::Display for AvailabilityStatus {
 }
 
 /// Validation result for assignment changes
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ValidationResult {
     pub is_valid: bool,
     pub warnings: Vec<String>,
@@ -329,8 +320,7 @@ pub struct ValidationResult {
 }
 
 /// Response for task assignment check
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct AssignmentCheckResponse {
     pub task_id: String,
     pub user_id: String,
@@ -339,8 +329,7 @@ pub struct AssignmentCheckResponse {
 }
 
 /// Response for task availability check
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct AvailabilityCheckResponse {
     pub task_id: String,
     pub status: AvailabilityStatus,
@@ -348,8 +337,7 @@ pub struct AvailabilityCheckResponse {
 }
 
 /// Request for creating a new task
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct CreateTaskRequest {
     // Required fields (matching migrate CreateTaskSchema)
     pub vehicle_plate: String,
@@ -395,8 +383,7 @@ pub struct CreateTaskRequest {
 }
 
 /// Request for updating a task
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, TS)]
 pub struct UpdateTaskRequest {
     pub id: Option<String>,
     pub title: Option<String>,
@@ -432,15 +419,13 @@ pub struct UpdateTaskRequest {
 }
 
 /// Request for deleting a task
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct DeleteTaskRequest {
     pub id: String,
 }
 
 /// Query parameters for task listing
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct TaskQuery {
     pub page: Option<i32>,
     pub limit: Option<i32>,
@@ -474,8 +459,7 @@ impl Default for TaskQuery {
 }
 
 /// Response for task listing with pagination
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct TaskListResponse {
     pub data: Vec<TaskWithDetails>,
     pub pagination: PaginationInfo,
@@ -483,8 +467,7 @@ pub struct TaskListResponse {
 }
 
 /// Pagination information
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct PaginationInfo {
     pub page: i32,
     pub limit: i32,
@@ -493,36 +476,35 @@ pub struct PaginationInfo {
 }
 
 /// Task statistics
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct TaskStatistics {
-    #[cfg_attr(feature = "ts-rs", ts(type = "number"))]
+    #[ts(type = "number")]
     pub total_tasks: i64,
-    #[cfg_attr(feature = "ts-rs", ts(type = "number"))]
+    #[ts(type = "number")]
     pub draft_tasks: i64,
-    #[cfg_attr(feature = "ts-rs", ts(type = "number"))]
+    #[ts(type = "number")]
     pub scheduled_tasks: i64,
-    #[cfg_attr(feature = "ts-rs", ts(type = "number"))]
+    #[ts(type = "number")]
     pub in_progress_tasks: i64,
-    #[cfg_attr(feature = "ts-rs", ts(type = "number"))]
+    #[ts(type = "number")]
     pub completed_tasks: i64,
-    #[cfg_attr(feature = "ts-rs", ts(type = "number"))]
+    #[ts(type = "number")]
     pub cancelled_tasks: i64,
-    #[cfg_attr(feature = "ts-rs", ts(type = "number"))]
+    #[ts(type = "number")]
     pub on_hold_tasks: i64,
-    #[cfg_attr(feature = "ts-rs", ts(type = "number"))]
+    #[ts(type = "number")]
     pub pending_tasks: i64,
-    #[cfg_attr(feature = "ts-rs", ts(type = "number"))]
+    #[ts(type = "number")]
     pub invalid_tasks: i64,
-    #[cfg_attr(feature = "ts-rs", ts(type = "number"))]
+    #[ts(type = "number")]
     pub archived_tasks: i64,
-    #[cfg_attr(feature = "ts-rs", ts(type = "number"))]
+    #[ts(type = "number")]
     pub failed_tasks: i64,
-    #[cfg_attr(feature = "ts-rs", ts(type = "number"))]
+    #[ts(type = "number")]
     pub overdue_tasks: i64,
-    #[cfg_attr(feature = "ts-rs", ts(type = "number"))]
+    #[ts(type = "number")]
     pub assigned_tasks: i64,
-    #[cfg_attr(feature = "ts-rs", ts(type = "number"))]
+    #[ts(type = "number")]
     pub paused_tasks: i64,
 }
 
@@ -659,8 +641,7 @@ impl FromSqlRow for Task {
 }
 
 /// Task history entry - tracks status changes
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct TaskHistory {
     pub id: String,
     pub task_id: String,

@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { VirtualizedList, usePerformanceMonitor } from './virtualization';
 import { cn } from '@/lib/utils';
@@ -17,6 +17,7 @@ interface VirtualizedTableProps<T> {
   data: T[];
   columns: Column<T>[];
   height?: number;
+  maxHeight?: number;
   rowHeight?: number;
   className?: string;
   onRowClick?: (item: T, index: number) => void;
@@ -29,6 +30,7 @@ export function VirtualizedTable<T extends Record<string, any>>({
   data,
   columns,
   height = 400,
+  maxHeight,
   rowHeight = 48,
   className = '',
   onRowClick,

@@ -3,17 +3,17 @@
 //! This service provides comprehensive audit trail functionality for security
 //! and compliance requirements, tracking all critical system events.
 
-use crate::db::Database;
-use crate::models::task::*;
-use crate::models::intervention::*;
-use crate::models::client::*;
 use crate::commands::AppResult;
+use crate::db::Database;
+use crate::models::client::*;
+use crate::models::intervention::*;
+use crate::models::task::*;
 use rusqlite::params;
 
 use chrono::{DateTime, Utc};
-use uuid;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use uuid;
 
 /// Action result enumeration for audit events
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -38,7 +38,7 @@ pub enum AuditEventType {
     PasswordChanged,
     PasswordResetRequested,
     PasswordResetCompleted,
-    
+
     // Data Access Events
     DataRead,
     DataCreated,
@@ -46,7 +46,7 @@ pub enum AuditEventType {
     DataDeleted,
     DataExported,
     DataImported,
-    
+
     // Task Management Events
     TaskCreated,
     TaskUpdated,
@@ -55,13 +55,13 @@ pub enum AuditEventType {
     TaskCompleted,
     TaskCancelled,
     TaskStatusChanged,
-    
+
     // Client Management Events
     ClientCreated,
     ClientUpdated,
     ClientDeleted,
     ClientContactChanged,
-    
+
     // Intervention Workflow Events
     InterventionCreated,
     InterventionUpdated,
@@ -69,7 +69,7 @@ pub enum AuditEventType {
     InterventionCompleted,
     InterventionStepCompleted,
     InterventionWorkflowChanged,
-    
+
     // System Events
     SystemStartup,
     SystemShutdown,
@@ -78,7 +78,7 @@ pub enum AuditEventType {
     BackupFailed,
     MaintenanceStarted,
     MaintenanceCompleted,
-    
+
     // Security Events
     SecurityViolation,
     SuspiciousActivity,
@@ -87,13 +87,13 @@ pub enum AuditEventType {
     SqlInjectionAttempt,
     XssAttempt,
     PathTraversalAttempt,
-    
+
     // Error Events
     SystemError,
     DatabaseError,
     NetworkError,
     ValidationError,
-    
+
     // Configuration Events
     ConfigurationChanged,
     SettingUpdated,
@@ -106,49 +106,49 @@ pub enum AuditEventType {
 pub struct AuditEvent {
     /// Unique identifier for the audit event
     pub id: String,
-    
+
     /// Type of audit event
     pub event_type: AuditEventType,
-    
+
     /// User who performed the action
     pub user_id: String,
-    
+
     /// Action performed (e.g., "CREATE_TASK", "UPDATE_CLIENT")
     pub action: String,
-    
+
     /// Resource that was acted upon (e.g., task ID, client ID)
     pub resource_id: Option<String>,
-    
+
     /// Resource type (e.g., "task", "client", "intervention")
     pub resource_type: Option<String>,
-    
+
     /// Detailed description of the event
     pub description: String,
-    
+
     /// IP address of the client
     pub ip_address: Option<String>,
-    
+
     /// User agent string
     pub user_agent: Option<String>,
-    
+
     /// Result of the action
     pub result: ActionResult,
-    
+
     /// Previous state (for updates)
     pub previous_state: Option<serde_json::Value>,
-    
+
     /// New state (for updates)
     pub new_state: Option<serde_json::Value>,
-    
+
     /// Event timestamp
     pub timestamp: DateTime<Utc>,
-    
+
     /// Additional metadata
     pub metadata: Option<serde_json::Value>,
-    
+
     /// Session identifier
     pub session_id: Option<String>,
-    
+
     /// Request identifier for tracing
     pub request_id: Option<String>,
 }
@@ -192,18 +192,21 @@ impl AuditService {
             )
             "#,
             [],
-        ).map_err(|e| e.to_string())?;
+        )
+        .map_err(|e| e.to_string())?;
 
         // Create indexes for performance
         conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_audit_events_user_id ON audit_events(user_id)",
             [],
-        ).map_err(|e| e.to_string())?;
+        )
+        .map_err(|e| e.to_string())?;
 
         conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_audit_events_timestamp ON audit_events(timestamp)",
             [],
-        ).map_err(|e| e.to_string())?;
+        )
+        .map_err(|e| e.to_string())?;
 
         conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_audit_events_resource ON audit_events(resource_type, resource_id)",
@@ -213,7 +216,8 @@ impl AuditService {
         conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_audit_events_event_type ON audit_events(event_type)",
             [],
-        ).map_err(|e| e.to_string())?;
+        )
+        .map_err(|e| e.to_string())?;
 
         Ok(())
     }
@@ -224,10 +228,16 @@ impl AuditService {
 
         let event_type_str = format!("{:?}", event.event_type);
         let result_str = format!("{:?}", event.result);
-        
-        let previous_state_json = event.previous_state.map(|v| serde_json::to_string(&v).unwrap_or_default());
-        let new_state_json = event.new_state.map(|v| serde_json::to_string(&v).unwrap_or_default());
-        let metadata_json = event.metadata.map(|v| serde_json::to_string(&v).unwrap_or_default());
+
+        let previous_state_json = event
+            .previous_state
+            .map(|v| serde_json::to_string(&v).unwrap_or_default());
+        let new_state_json = event
+            .new_state
+            .map(|v| serde_json::to_string(&v).unwrap_or_default());
+        let metadata_json = event
+            .metadata
+            .map(|v| serde_json::to_string(&v).unwrap_or_default());
 
         conn.execute(
             r#"
@@ -255,7 +265,8 @@ impl AuditService {
                 event.session_id,
                 event.request_id
             ],
-        ).map_err(|e| e.to_string())?;
+        )
+        .map_err(|e| e.to_string())?;
 
         Ok(())
     }
@@ -273,7 +284,7 @@ impl AuditService {
     ) -> AppResult<()> {
         let event = AuditEvent {
             id: uuid::Uuid::new_v4().to_string(),
-            event_type,
+            event_type: event_type.clone(),
             user_id: user_id.to_string(),
             action: match event_type {
                 AuditEventType::TaskCreated => "CREATE_TASK".to_string(),
@@ -315,7 +326,7 @@ impl AuditService {
     ) -> AppResult<()> {
         let event = AuditEvent {
             id: uuid::Uuid::new_v4().to_string(),
-            event_type,
+            event_type: event_type.clone(),
             user_id: user_id.to_string(),
             action: match event_type {
                 AuditEventType::ClientCreated => "CREATE_CLIENT".to_string(),
@@ -354,15 +365,19 @@ impl AuditService {
     ) -> AppResult<()> {
         let event = AuditEvent {
             id: uuid::Uuid::new_v4().to_string(),
-            event_type,
+            event_type: event_type.clone(),
             user_id: user_id.to_string(),
             action: match event_type {
                 AuditEventType::InterventionCreated => "CREATE_INTERVENTION".to_string(),
                 AuditEventType::InterventionUpdated => "UPDATE_INTERVENTION".to_string(),
                 AuditEventType::InterventionStarted => "START_INTERVENTION".to_string(),
                 AuditEventType::InterventionCompleted => "COMPLETE_INTERVENTION".to_string(),
-                AuditEventType::InterventionStepCompleted => "COMPLETE_INTERVENTION_STEP".to_string(),
-                AuditEventType::InterventionWorkflowChanged => "CHANGE_INTERVENTION_WORKFLOW".to_string(),
+                AuditEventType::InterventionStepCompleted => {
+                    "COMPLETE_INTERVENTION_STEP".to_string()
+                }
+                AuditEventType::InterventionWorkflowChanged => {
+                    "CHANGE_INTERVENTION_WORKFLOW".to_string()
+                }
                 _ => "INTERVENTION_ACTION".to_string(),
             },
             resource_id: Some(intervention_id.to_string()),
@@ -371,7 +386,8 @@ impl AuditService {
             ip_address: None,
             user_agent: None,
             result,
-            previous_state: previous_intervention.map(|i| serde_json::to_value(i).unwrap_or_default()),
+            previous_state: previous_intervention
+                .map(|i| serde_json::to_value(i).unwrap_or_default()),
             new_state: new_intervention.map(|i| serde_json::to_value(i).unwrap_or_default()),
             timestamp: Utc::now(),
             metadata: None,
@@ -394,7 +410,7 @@ impl AuditService {
     ) -> AppResult<()> {
         let event = AuditEvent {
             id: uuid::Uuid::new_v4().to_string(),
-            event_type,
+            event_type: event_type.clone(),
             user_id: user_id.to_string(),
             action: match event_type {
                 AuditEventType::AuthenticationSuccess => "AUTH_SUCCESS".to_string(),
@@ -435,7 +451,7 @@ impl AuditService {
         limit: Option<i32>,
     ) -> AppResult<Vec<AuditEvent>> {
         let conn = self.db.get_connection()?;
-        
+
         let limit_clause = limit.map(|l| format!(" LIMIT {}", l)).unwrap_or_default();
         let query = format!(
             "SELECT * FROM audit_events WHERE resource_type = ? AND resource_id = ? ORDER BY timestamp DESC{}",
@@ -443,10 +459,9 @@ impl AuditService {
         );
 
         let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
-        
-        let event_iter = stmt.query_map(
-            params![resource_type, resource_id],
-            |row| {
+
+        let event_iter = stmt
+            .query_map(params![resource_type, resource_id], |row| {
                 let id: String = row.get(0)?;
                 let event_type_str: String = row.get(1)?;
                 let user_id: String = row.get(2)?;
@@ -489,15 +504,13 @@ impl AuditService {
                     _ => ActionResult::Failure,
                 };
 
-                let previous_state = previous_state_json
-                    .and_then(|s| serde_json::from_str(&s).ok());
-                let new_state = new_state_json
-                    .and_then(|s| serde_json::from_str(&s).ok());
-                let metadata = metadata_json
-                    .and_then(|s| serde_json::from_str(&s).ok());
-                
-                let timestamp = DateTime::from_timestamp_millis(timestamp_ms)
-                    .unwrap_or_else(|| Utc::now());
+                let previous_state =
+                    previous_state_json.and_then(|s| serde_json::from_str(&s).ok());
+                let new_state = new_state_json.and_then(|s| serde_json::from_str(&s).ok());
+                let metadata = metadata_json.and_then(|s| serde_json::from_str(&s).ok());
+
+                let timestamp =
+                    DateTime::from_timestamp_millis(timestamp_ms).unwrap_or_else(|| Utc::now());
 
                 Ok(AuditEvent {
                     id,
@@ -517,8 +530,8 @@ impl AuditService {
                     session_id,
                     request_id,
                 })
-            },
-        ).map_err(|e| e.to_string())?;
+            })
+            .map_err(|e| e.to_string())?;
 
         let mut events = Vec::new();
         for event in event_iter {
@@ -537,28 +550,28 @@ impl AuditService {
         limit: Option<i32>,
     ) -> AppResult<Vec<AuditEvent>> {
         let conn = self.db.get_connection()?;
-        
+
         let mut query = "SELECT * FROM audit_events WHERE user_id = ?".to_string();
         let mut params = vec![user_id.to_string()];
-        
+
         if let Some(start) = start_time {
             query.push_str(" AND timestamp >= ?");
             params.push(start.timestamp_millis().to_string());
         }
-        
+
         if let Some(end) = end_time {
             query.push_str(" AND timestamp <= ?");
             params.push(end.timestamp_millis().to_string());
         }
-        
+
         query.push_str(" ORDER BY timestamp DESC");
-        
+
         if let Some(limit) = limit {
             query.push_str(&format!(" LIMIT {}", limit));
         }
 
         let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
-        
+
         // Similar mapping logic as get_resource_history
         // For brevity, returning empty vec - implement full mapping in production
         Ok(vec![])
@@ -567,15 +580,16 @@ impl AuditService {
     /// Cleanup old audit events (retention policy)
     pub fn cleanup_old_events(&self, days_to_keep: i32) -> AppResult<i32> {
         let conn = self.db.get_connection()?;
-        
-        let cutoff_timestamp = Utc::now()
-            .chrono::Duration::days(-(days_to_keep as i64))
-            .timestamp_millis();
 
-        let rows_affected = conn.execute(
-            "DELETE FROM audit_events WHERE timestamp < ?",
-            params![cutoff_timestamp],
-        ).map_err(|e| e.to_string())?;
+        let cutoff_timestamp =
+            (Utc::now() - chrono::Duration::days(days_to_keep as i64)).timestamp_millis();
+
+        let rows_affected = conn
+            .execute(
+                "DELETE FROM audit_events WHERE timestamp < ?",
+                params![cutoff_timestamp],
+            )
+            .map_err(|e| e.to_string())?;
 
         Ok(rows_affected as i32)
     }
@@ -585,7 +599,7 @@ impl AuditService {
 pub trait Auditable {
     /// Get the audit service instance
     fn get_audit_service(&self) -> &AuditService;
-    
+
     /// Log a custom audit event
     fn log_custom_event(&self, event: AuditEvent) -> AppResult<()> {
         self.get_audit_service().log_event(event)

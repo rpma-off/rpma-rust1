@@ -68,7 +68,7 @@ These scripts ensure that the TypeScript frontend types remain perfectly in sync
 
 #### `check-type-drift.js`
 *   **Description**: Analyzes consistency between Rust source code and generated TypeScript types.
-*   **Utility**: Scans Rust files for `derive(TS)` or `derive(specta::Type)` and compares them against `backend.ts`. It generates a detailed report (`type-drift-report.json`) of missing or duplicate types.
+*   **Utility**: Scans Rust files for `derive(TS)` and compares them against `backend.ts`. It generates a detailed report (`type-drift-report.json`) of missing or duplicate types.
 *   **Usage**: `node scripts/check-type-drift.js`
 
 #### `ci-type-drift-check.js`

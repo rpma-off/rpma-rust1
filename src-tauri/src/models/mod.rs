@@ -10,6 +10,7 @@ pub mod client;
 pub mod common;
 pub mod intervention;
 pub mod material;
+pub mod material_ts;
 pub mod message;
 pub mod notification;
 pub mod photo;

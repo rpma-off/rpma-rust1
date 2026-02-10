@@ -15,6 +15,7 @@ use crate::services::task_creation::TaskCreationService;
 use crate::services::task_deletion::TaskDeletionService;
 use crate::services::task_update::TaskUpdateService;
 use crate::services::task_validation::TaskValidationService;
+use chrono::Utc;
 use rusqlite::params;
 use std::sync::Arc;
 
@@ -24,7 +25,7 @@ fn setup_test_db() -> Database {
 
     // Initialize schema
     let conn = db.get_connection().expect("Failed to get connection");
-    conn.execute_batch(include_str!("../../../db/schema.sql"))
+    conn.execute_batch(include_str!("../../db/schema.sql"))
         .expect("Failed to initialize schema");
 
     db

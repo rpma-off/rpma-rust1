@@ -2,12 +2,11 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-#[cfg(any(feature = "specta", feature = "ts-rs"))]
+// Conditional import removed
 use ts_rs::TS;
 
 /// Operation types for sync queue
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum OperationType {
     Create,
@@ -27,8 +26,7 @@ impl std::fmt::Display for OperationType {
 }
 
 /// Entity types that can be synchronized
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum EntityType {
     Task,
@@ -54,8 +52,7 @@ impl std::fmt::Display for EntityType {
 }
 
 /// Sync operation status
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum SyncStatus {
     Pending,
@@ -79,31 +76,29 @@ impl std::fmt::Display for SyncStatus {
 }
 
 /// Main sync operation structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct SyncOperation {
     pub id: Option<i64>,
     pub operation_type: OperationType,
     pub entity_type: EntityType,
     pub entity_id: String,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "any"))]
+    #[ts(type = "any")]
     pub data: serde_json::Value,
     pub dependencies: Vec<String>,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub timestamp_utc: DateTime<Utc>,
     pub retry_count: i32,
     pub max_retries: i32,
     pub last_error: Option<String>,
     pub status: SyncStatus,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub created_at: DateTime<Utc>,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub updated_at: DateTime<Utc>,
 }
 
 /// Metrics for sync queue monitoring
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct SyncQueueMetrics {
     pub pending_operations: i64,
     pub processing_operations: i64,

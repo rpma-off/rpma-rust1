@@ -1,7 +1,6 @@
 // We only compile this file for the export-types binary, not the main app
 
 // Note: serde_json::Value is handled via #[ts(type = "any")] attributes in the model definitions
-#[cfg(feature = "ts-rs")]
 use ts_rs::TS;
 
 // Import your project's models
@@ -22,6 +21,12 @@ use rpma_ppf_intervention::models::{
     },
     intervention::{BulkUpdateInterventionRequest, InterventionFilter},
     intervention::{Intervention, InterventionProgress, InterventionStatus, InterventionType},
+    material::{
+        InterventionMaterialSummary, InventoryMovementSummary, InventoryStats,
+        InventoryTransaction, InventoryTransactionType, Material, MaterialCategory,
+        MaterialConsumption, MaterialConsumptionSummary, MaterialStats, MaterialType, Supplier,
+        UnitOfMeasure,
+    },
     message::{
         Message, MessageListResponse, MessagePriority, MessageQuery, MessageStatus,
         MessageTemplate, MessageTemplateRequest, MessageType, NotificationPreferences,
@@ -39,15 +44,15 @@ use rpma_ppf_intervention::models::{
         ClientAnalyticsReport, ClientPerformance, ClientSummary, ComplianceMetrics, CostTrend,
         DailyTaskData, DashboardType, DashboardWidget, DateRange, EntityCounts, ExportFormat,
         ExportResult, GeographicReport, GeographicStats, HeatMapPoint, InterventionBottleneck,
-        InterventionReportResult, KpiCategory, MaterialConsumption, MaterialCostAnalysis,
-        MaterialEfficiency, MaterialSummary, MaterialUsageReport, MetricValueType,
-        OperationalIntelligenceReport, OverviewReport, PeakPeriod, PerformanceBenchmarks,
-        PerformanceTrend, ProcessEfficiencyMetrics, QualityComplianceReport, QualityIssue,
-        QualitySummary, QualityTrend, ReportFilters, ReportMetadata, ReportRequest, ReportResponse,
-        ReportStatus, ReportType, ResourceUtilization, RetentionAnalysis, RevenueAnalysis,
-        SearchFilters, SearchResponse, SearchResult, SearchResults, SeasonalPattern,
-        SeasonalReport, ServiceArea, StatusCount, StepBottleneck, SupplierPerformance,
-        TaskCompletionReport, TaskCompletionSummary, TechnicianMetrics, TechnicianPerformance,
+        InterventionReportResult, KpiCategory, MaterialCostAnalysis, MaterialEfficiency,
+        MaterialSummary, MaterialUsageReport, MetricValueType, OperationalIntelligenceReport,
+        OverviewReport, PeakPeriod, PerformanceBenchmarks, PerformanceTrend,
+        ProcessEfficiencyMetrics, QualityComplianceReport, QualityIssue, QualitySummary,
+        QualityTrend, ReportFilters, ReportMetadata, ReportRequest, ReportResponse, ReportStatus,
+        ReportType, ResourceUtilization, RetentionAnalysis, RevenueAnalysis, SearchFilters,
+        SearchResponse, SearchResult, SearchResults, SeasonalPattern, SeasonalReport, ServiceArea,
+        StatusCount, StepBottleneck, SupplierPerformance, TaskCompletionReport,
+        TaskCompletionSummary, TechnicianMetrics, TechnicianPerformance,
         TechnicianPerformanceReport, TechnicianTaskData, TrendDirection, WeatherCorrelation,
         WidgetPosition, WidgetSize, WidgetType, WorkflowRecommendation, WorkloadPeriod,
     },
@@ -101,7 +106,7 @@ fn main() {
         fs::create_dir_all(parent).expect("Failed to create directories");
     }
 
-    // Generate TypeScript definitions using specta
+    // Generate TypeScript definitions  
     let mut type_definitions = String::new();
 
     // Add header comment
@@ -213,6 +218,62 @@ fn main() {
     type_definitions.push_str("\n");
     type_definitions.push_str(
         &ClientStatistics::export_to_string().expect("Failed to export ClientStatistics type"),
+    );
+    type_definitions.push_str("\n\n");
+
+    // Material types
+    type_definitions.push_str("// Material types\n");
+    type_definitions
+        .push_str(&MaterialType::export_to_string().expect("Failed to export MaterialType type"));
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&UnitOfMeasure::export_to_string().expect("Failed to export UnitOfMeasure type"));
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&Material::export_to_string().expect("Failed to export Material type"));
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &MaterialConsumption::export_to_string()
+            .expect("Failed to export MaterialConsumption type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&MaterialStats::export_to_string().expect("Failed to export MaterialStats type"));
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &InventoryStats::export_to_string().expect("Failed to export InventoryStats type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &InventoryTransaction::export_to_string()
+            .expect("Failed to export InventoryTransaction type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &InventoryTransactionType::export_to_string()
+            .expect("Failed to export InventoryTransactionType type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&Supplier::export_to_string().expect("Failed to export Supplier type"));
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &MaterialCategory::export_to_string().expect("Failed to export MaterialCategory type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &InterventionMaterialSummary::export_to_string()
+            .expect("Failed to export InterventionMaterialSummary type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &MaterialConsumptionSummary::export_to_string()
+            .expect("Failed to export MaterialConsumptionSummary type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &InventoryMovementSummary::export_to_string()
+            .expect("Failed to export InventoryMovementSummary type"),
     );
     type_definitions.push_str("\n\n");
 

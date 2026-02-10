@@ -5,7 +5,9 @@
 
 use crate::commands::AppResult;
 use crate::services::audit_service::{ActionResult, AuditEvent, AuditEventType, AuditService};
-use crate::test_utils::{test_db, TestDatabase};
+use crate::test_utils::TestDatabase;
+use crate::{test_client, test_db, test_intervention, test_task};
+use chrono::Utc;
 
 #[cfg(test)]
 mod tests {
@@ -24,7 +26,7 @@ mod tests {
         let table_exists: i64 = conn
             .query_row(
                 "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='audit_events'",
-                [],
+                rusqlite::params![],
                 |row| row.get(0),
             )
             .map_err(|e| e.to_string())?;

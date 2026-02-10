@@ -4,11 +4,10 @@ use crate::db::FromSqlRow;
 use chrono::{DateTime, Utc};
 use rusqlite::{Result as SqliteResult, Row};
 use serde::{Deserialize, Serialize};
-#[cfg(any(feature = "specta", feature = "ts-rs"))]
+// Conditional import removed
 use ts_rs::TS;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 pub enum NotificationChannel {
     Email,
     Sms,
@@ -32,8 +31,7 @@ impl rusqlite::ToSql for NotificationChannel {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 pub enum NotificationType {
     TaskAssignment,
     TaskUpdate,
@@ -69,8 +67,7 @@ impl rusqlite::ToSql for NotificationType {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct NotificationTemplate {
     pub id: String,
     pub name: String,
@@ -80,14 +77,13 @@ pub struct NotificationTemplate {
     pub body_template: String,
     pub variables: Vec<String>, // List of variable names that can be substituted
     pub is_active: bool,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub created_at: DateTime<Utc>,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct NotificationMessage {
     pub id: String,
     pub user_id: String,
@@ -98,19 +94,18 @@ pub struct NotificationMessage {
     pub body: String,
     pub priority: NotificationPriority,
     pub status: NotificationStatus,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub scheduled_at: Option<DateTime<Utc>>,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub sent_at: Option<DateTime<Utc>>,
     pub error_message: Option<String>,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub created_at: DateTime<Utc>,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub enum NotificationPriority {
     Low,
     Normal,
@@ -130,8 +125,7 @@ impl std::fmt::Display for NotificationPriority {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub enum NotificationStatus {
     Pending,
     Sent,
@@ -151,8 +145,7 @@ impl std::fmt::Display for NotificationStatus {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct EmailConfig {
     pub provider: EmailProvider,
     pub api_key: String,
@@ -160,8 +153,7 @@ pub struct EmailConfig {
     pub from_name: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub enum EmailProvider {
     SendGrid,
     Mailgun,
@@ -179,16 +171,14 @@ impl std::fmt::Display for EmailProvider {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct SmsConfig {
     pub provider: SmsProvider,
     pub api_key: String,
     pub from_number: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub enum SmsProvider {
     Twilio,
     AwsSns,
@@ -204,8 +194,7 @@ impl std::fmt::Display for SmsProvider {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct NotificationConfig {
     pub email: Option<EmailConfig>,
     pub sms: Option<SmsConfig>,
@@ -216,8 +205,7 @@ pub struct NotificationConfig {
 }
 
 // Template variables for substitution
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct TemplateVariables {
     pub user_name: Option<String>,
     pub task_title: Option<String>,
@@ -243,8 +231,7 @@ impl Default for NotificationConfig {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(any(feature = "specta", feature = "ts-rs"), derive(TS))]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct NotificationPreferences {
     pub id: String,
     pub user_id: String,
@@ -271,9 +258,9 @@ pub struct NotificationPreferences {
     pub email_frequency: String,
     pub email_digest_time: String,
 
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub created_at: i64,
-    #[cfg_attr(any(feature = "specta", feature = "ts-rs"), ts(type = "string"))]
+    #[ts(type = "string")]
     pub updated_at: i64,
 }
 

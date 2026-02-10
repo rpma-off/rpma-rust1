@@ -4,8 +4,6 @@ use super::common::*;
 use crate::db::FromSqlRow;
 use rusqlite::Row;
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "specta")]
-use ts_rs::TS;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]

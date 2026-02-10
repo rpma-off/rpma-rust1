@@ -7,7 +7,8 @@ use crate::commands::AppError;
 use crate::models::task::{CreateTaskRequest, TaskPriority, TaskStatus, UpdateTaskRequest};
 use crate::services::task_creation::TaskCreationService;
 use crate::services::task_update::TaskUpdateService;
-use crate::test_utils::{test_db, test_task, TestDataFactory, TestDatabase};
+use crate::test_utils::{TestDataFactory, TestDatabase};
+use crate::{test_client, test_db, test_intervention, test_task};
 use chrono::Utc;
 
 #[cfg(test)]
@@ -55,8 +56,8 @@ mod tests {
         Ok(task.id)
     }
 
-    #[test]
-    fn test_update_task_title_success() {
+    #[tokio::test]
+    async fn test_update_task_title_success() {
         let test_db = test_db!();
         let service = TaskUpdateService::new(test_db.db());
         let task_id = create_test_task(&test_db).unwrap();
@@ -74,8 +75,8 @@ mod tests {
         assert_eq!(updated_task.title, "Updated Title");
     }
 
-    #[test]
-    fn test_update_task_empty_title_fails() {
+    #[tokio::test]
+    async fn test_update_task_empty_title_fails() {
         let test_db = test_db!();
         let service = TaskUpdateService::new(test_db.db());
         let task_id = create_test_task(&test_db).unwrap();
@@ -96,8 +97,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_update_task_title_too_long_fails() {
+    #[tokio::test]
+    async fn test_update_task_title_too_long_fails() {
         let test_db = test_db!();
         let service = TaskUpdateService::new(test_db.db());
         let task_id = create_test_task(&test_db).unwrap();
@@ -118,8 +119,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_update_task_status_pending_to_in_progress() {
+    #[tokio::test]
+    async fn test_update_task_status_pending_to_in_progress() {
         let test_db = test_db!();
         let service = TaskUpdateService::new(test_db.db());
         let task_id = create_test_task(&test_db).unwrap();
@@ -143,8 +144,8 @@ mod tests {
         assert!(updated_task.started_at.is_some());
     }
 
-    #[test]
-    fn test_update_task_status_in_progress_to_completed() {
+    #[tokio::test]
+    async fn test_update_task_status_in_progress_to_completed() {
         let test_db = test_db!();
         let service = TaskUpdateService::new(test_db.db());
         let task_id = create_test_task(&test_db).unwrap();
@@ -173,8 +174,8 @@ mod tests {
         assert!(updated_task.completed_at.is_some());
     }
 
-    #[test]
-    fn test_update_task_status_completed_to_pending_fails() {
+    #[tokio::test]
+    async fn test_update_task_status_completed_to_pending_fails() {
         let test_db = test_db!();
         let service = TaskUpdateService::new(test_db.db());
         let task_id = create_test_task(&test_db).unwrap();
@@ -206,8 +207,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_update_task_status_cancelled_to_in_progress_fails() {
+    #[tokio::test]
+    async fn test_update_task_status_cancelled_to_in_progress_fails() {
         let test_db = test_db!();
         let service = TaskUpdateService::new(test_db.db());
         let task_id = create_test_task(&test_db).unwrap();
@@ -239,8 +240,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_update_task_client_id_with_valid_client() {
+    #[tokio::test]
+    async fn test_update_task_client_id_with_valid_client() {
         let test_db = test_db!();
         let service = TaskUpdateService::new(test_db.db());
         let task_id = create_test_task(&test_db).unwrap();
@@ -265,8 +266,8 @@ mod tests {
         assert_eq!(updated_task.client_id, Some(client_id.to_string()));
     }
 
-    #[test]
-    fn test_update_task_client_id_with_invalid_client_fails() {
+    #[tokio::test]
+    async fn test_update_task_client_id_with_invalid_client_fails() {
         let test_db = test_db!();
         let service = TaskUpdateService::new(test_db.db());
         let task_id = create_test_task(&test_db).unwrap();
@@ -287,8 +288,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_update_task_vehicle_year_valid() {
+    #[tokio::test]
+    async fn test_update_task_vehicle_year_valid() {
         let test_db = test_db!();
         let service = TaskUpdateService::new(test_db.db());
         let task_id = create_test_task(&test_db).unwrap();
@@ -306,8 +307,8 @@ mod tests {
         assert_eq!(updated_task.vehicle_year, Some("2024".to_string()));
     }
 
-    #[test]
-    fn test_update_task_vehicle_year_too_old_fails() {
+    #[tokio::test]
+    async fn test_update_task_vehicle_year_too_old_fails() {
         let test_db = test_db!();
         let service = TaskUpdateService::new(test_db.db());
         let task_id = create_test_task(&test_db).unwrap();
@@ -328,8 +329,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_update_task_vehicle_year_too_new_fails() {
+    #[tokio::test]
+    async fn test_update_task_vehicle_year_too_new_fails() {
         let test_db = test_db!();
         let service = TaskUpdateService::new(test_db.db());
         let task_id = create_test_task(&test_db).unwrap();
@@ -350,8 +351,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_update_task_vehicle_year_invalid_format_fails() {
+    #[tokio::test]
+    async fn test_update_task_vehicle_year_invalid_format_fails() {
         let test_db = test_db!();
         let service = TaskUpdateService::new(test_db.db());
         let task_id = create_test_task(&test_db).unwrap();
@@ -372,8 +373,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_update_task_description_too_long_fails() {
+    #[tokio::test]
+    async fn test_update_task_description_too_long_fails() {
         let test_db = test_db!();
         let service = TaskUpdateService::new(test_db.db());
         let task_id = create_test_task(&test_db).unwrap();
@@ -394,8 +395,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_update_nonexistent_task_fails() {
+    #[tokio::test]
+    async fn test_update_nonexistent_task_fails() {
         let test_db = test_db!();
         let service = TaskUpdateService::new(test_db.db());
 
@@ -409,8 +410,8 @@ mod tests {
         assert!(result.is_err());
     }
 
-    #[test]
-    fn test_update_task_without_id_fails() {
+    #[tokio::test]
+    async fn test_update_task_without_id_fails() {
         let test_db = test_db!();
         let service = TaskUpdateService::new(test_db.db());
 
@@ -429,8 +430,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_status_transition_workflow() {
+    #[tokio::test]
+    async fn test_status_transition_workflow() {
         let test_db = test_db!();
         let service = TaskUpdateService::new(test_db.db());
         let task_id = create_test_task(&test_db).unwrap();

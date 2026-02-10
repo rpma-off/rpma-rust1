@@ -1,1653 +1,471 @@
-# RPMA v2 - User Flows Documentation
+# User Flows - RPMA v2
 
-## Table of Contents
+Ce document décrit les parcours utilisateur complets de l'application RPMA v2, incluant les workflows, les interactions, et les journeys pour chaque type d'utilisateur.
 
-- [Introduction](#introduction)
-- [User Flow Overview](#user-flow-overview)
-- [User Flow 1: Task Creation](#user-flow-1-task-creation)
-- [User Flow 2: Task Execution](#user-flow-2-task-execution)
-- [User Flow 3: Intervention Workflow](#user-flow-3-intervention-workflow)
-- [User Flow 4: Calendar & Scheduling](#user-flow-4-calendar--scheduling)
-- [User Flow 5: Client Management](#user-flow-5-client-management)
-- [User Flow 6: Authentication](#user-flow-6-authentication)
-- [User Flow 7: Settings](#user-flow-7-settings)
-- [User Flow 8: Admin](#user-flow-8-admin)
-- [User Flow 9: Reporting](#user-flow-9-reporting)
-- [User Flow 10: Messaging](#user-flow-10-messaging)
-- [Error Handling](#error-handling)
+## 📋 Vue d'Ensemble
 
-## Introduction
+RPMA v2 supporte quatre profils d'utilisateurs principaux avec des workflows adaptés à leurs besoins spécifiques :
+- **Technicien** : Exécution des interventions PPF au quotidien
+- **Superviseur** : Gestion d'équipe et planification 
+- **Administrateur** : Administration système et configuration
+- **Client** (via portail) : Suivi des services et communication
 
-This document describes the **user flows** in RPMA v2. A user flow is a sequence of steps a user takes to accomplish a specific goal within the application. Each flow includes:
+## 🎭 Parcours Utilisateurs Détaillés
 
-- **User journey**: The path from start to completion
-- **Interface states**: The UI states at each step
-- **Error handling**: How errors are handled throughout the flow
-- **Business rules**: The logic and constraints that guide the flow
+### 1. Technicien - Workflow d'Intervention
 
-### User Personas
-
-| Persona | Role | Goals |
-|---------|------|-------|
-| **Admin** | System Administrator | Manage users, configure system, view all reports |
-| **Supervisor** | Team Supervisor | Manage tasks, review quality, manage team |
-| **Technician** | Field Technician | Execute interventions, upload photos, update progress |
-| **Viewer** | Stakeholder | View reports, monitor progress (read-only) |
-
-## User Flow Overview
-
+#### 1.1 Connexion et Démarrage
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                     User Flow Map                           │
-├─────────────────────────────────────────────────────────────────┤
-│                                                               │
-│  Authentication ──┐                                          │
-│                   │                                          │
-│                   ▼                                          │
-│               Dashboard                                     │
-│                   │                                          │
-│        ┌──────────┼──────────┐                               │
-│        │          │          │                               │
-│        ▼          ▼          ▼                               │
-│   Tasks     Clients   Calendar                              │
-│        │          │          │                               │
-│        │          │          ▼                               │
-│        │          │    Interventions                          │
-│        │          │          │                               │
-│        │          ▼          ▼                               │
-│        │      Reports     Settings                            │
-│        │          │          │                               │
-│        └──────────┴──────────┘                               │
-│                     │                                      │
-│                     ▼                                      │
-│                Logout                                       │
-│                                                               │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    Connexion Quotidienne                     │
+└─────────────────────────────────────────────────────────────┘
+                               ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 1. Accueil à l'application                            │
+│    ├── Vérification automatique de session               │
+│    ├── Dashboard avec état actuel                       │
+│    ├── Notifications urgentes                           │
+│    └── Accès rapide aux tâches du jour                │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## User Flow 1: Task Creation
-
-**User**: Administrator or Supervisor
-**Goal**: Create a new PPF installation task
-
-### Journey
-
+#### 1.2 Consultation des Tâches du Jour
 ```
-1. Navigate to /tasks
-2. Click "Create Task" button
-3. Fill out task information
-   - Step 1: Customer information
-   - Step 2: Vehicle details
-   - Step 3: PPF configuration
-   - Step 4: Schedule
-4. Review and submit
-5. Task created, redirected to task details
-```
-
-### Interface States
-
-#### State 1: Task List
-**Location**: `/tasks`
-
-**UI Elements**:
-- Page header: "Tasks"
-- "Create Task" button (top right)
-- Task list table with filters
-- Search bar
-- Filter dropdowns (status, priority, technician, client)
-
-**Actions Available**:
-- View existing tasks
-- Filter tasks
-- Create new task
-- Export tasks
-
----
-
-#### State 2: Create Task (Wizard)
-**Location**: `/tasks/new`
-
-**UI Elements**:
-- Page header: "New Task"
-- Step progress indicator (1/4, 2/4, 3/4, 4/4)
-- Back/Next buttons
-- Cancel button
-- Auto-save indicator
-
-**Step 1: Customer Information**
-- Existing customer dropdown
-- "Add new client" link
-- Customer details form (if new):
-  - Name (required)
-  - Email
-  - Phone
-  - Type (Individual/Business)
-
-**Step 2: Vehicle Details**
-- Vehicle form:
-  - Plate (required)
-  - Make (required)
-  - Model (required)
-  - Year (required)
-  - VIN
-  - Color
-
-**Step 3: PPF Configuration**
-- PPF zones diagram (interactive)
-- Film type dropdown
-- Film brand dropdown
-- Film model dropdown
-- Custom zones input
-
-**Step 4: Schedule**
-- Date picker (required)
-- Time picker (required)
-- Technician dropdown
-- Estimated duration (hours)
-
-**Actions Available**:
-- Back to previous step
-- Next step
-- Cancel (return to task list)
-- Submit (final step only)
-
----
-
-#### State 3: Task Created Success
-**Location**: `/tasks/{id}`
-
-**UI Elements**:
-- Success toast: "Task created successfully"
-- Task details page
-- "Start Intervention" button
-
-**Actions Available**:
-- View task details
-- Edit task
-- Start intervention
-
-### Validation & Error Handling
-
-**Validation Errors**:
-- **Required fields missing**: Red border on field, error message below
-- **Invalid email**: "Please enter a valid email address"
-- **Invalid VIN**: "Invalid VIN format"
-- **Past date**: "Scheduled date must be in the future"
-
-**Business Rule Errors**:
-- **Client not found**: "Selected client does not exist"
-- **Technician unavailable**: "Selected technician is not available at scheduled time"
-- **Scheduling conflict**: "Conflicting task exists at this time"
-
-**Recovery**:
-- User corrects validation errors and resubmits
-- Business rule errors: User selects alternative date/technician
-
-### Success Criteria
-
-- ✅ Task saved to database
-- ✅ Task assigned unique number
-- ✅ Client statistics updated
-- ✅ Notification sent to assigned technician
-
----
-
-## User Flow 2: Task Execution
-
-**User**: Technician
-**Goal**: Execute assigned PPF installation task
-
-### Journey
-
-```
-1. Login to application
-2. Navigate to dashboard or /tasks
-3. Find assigned task
-4. Click task to view details
-5. Click "Start Intervention"
-6. Execute intervention workflow
-7. Finalize with customer sign-off
-8. Task marked as completed
+┌─────────────────────────────────────────────────────────────┐
+│                    Vue Calendrier                         │
+├─────────────────────────────────────────────────────────────┤
+│ • Liste chronologique des interventions                  │
+│ • Filtres par statut (en cours, à venir)              │
+│ • Accès rapide à la première tâche                       │
+│ • Vue par semaine/mois disponible                        │
+└─────────────────────────────────────────────────────────────┘
+                               ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 2. Sélection d'une Tâche                               │
+│    ├── Détails du véhicule                              │
+│    ├── Informations client                                 │
+│    ├── Configuration PPF préconfigurée                   │
+│    └── Bouton "Commencer l'intervention"                │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Interface States
-
-#### State 1: Task Details
-**Location**: `/tasks/{id}`
-
-**UI Elements**:
-- Task header (title, status, priority)
-- Vehicle information card
-- Client information card
-- "Start Intervention" button (if task not started)
-- "Continue Intervention" button (if intervention in progress)
-- Task actions:
-  - Edit task
-  - Delay task
-  - Report issue
-  - Send message
-
-**Actions Available**:
-- View task details
-- Start/resume intervention
-- Modify task (if authorized)
-- Report issues
-
----
-
-#### State 2: Intervention Active
-**Location**: `/tasks/{id}/workflow/ppf`
-
-**UI Elements**:
-- PPF workflow header:
-  - Task title
-  - Vehicle diagram with PPF zones
-  - Progress bar
-  - Current step indicator
-- Step content:
-  - Step instructions
-  - Required photos indicator
-  - Photo upload zone
-  - Next step button (when requirements met)
-  - GPS location indicator (optional)
-
-**Actions Available**:
-- Complete step requirements
-- Upload photos
-- Advance to next step
-- Pause intervention
-
----
-
-#### State 3: Step Completion
-**UI Elements**:
-- Step completion animation
-- Success message
-- "Next Step" button
-
-**Actions Available**:
-- Proceed to next step
-- Review step details
-
----
-
-#### State 4: Intervention Finalization
-**Location**: `/tasks/{id}/completed`
-
-**UI Elements**:
-- Finalization form:
-  - Customer satisfaction rating (1-10 stars)
-  - Quality score (auto-calculated)
-  - Final observations
-  - Customer signature capture
-  - Customer comments
-- "Complete Intervention" button
-
-**Actions Available**:
-- Rate satisfaction
-- Add observations
-- Capture signature
-- Complete intervention
-
----
-
-#### State 5: Task Completed
-**UI Elements**:
-- Success toast: "Intervention completed successfully"
-- Completion summary card
-- "View Report" button
-- "Return to Dashboard" button
-
-**Actions Available**:
-- View intervention report
-- Download report
-- Return to dashboard
-
-### Validation & Error Handling
-
-**Validation Errors**:
-- **Missing photos**: "Please upload required photos before proceeding"
-- **Invalid signature**: "Please provide customer signature"
-- **Incomplete steps**: "All mandatory steps must be completed"
-
-**Business Rule Errors**:
-- **Intervention already active**: "Task already has an active intervention"
-- **Step out of order**: "Cannot skip mandatory step"
-- **Missing supervisor approval**: "This step requires supervisor approval"
-
-**Recovery**:
-- User completes missing requirements
-- User contacts supervisor for approval
-
-### Success Criteria
-
-- ✅ All workflow steps completed
-- ✅ Required photos uploaded
-- ✅ Customer signature captured
-- ✅ Task status updated to "completed"
-- ✅ Intervention closed
-- ✅ Notification sent to client
-
----
-
-## User Flow 3: Intervention Workflow
-
-**User**: Technician
-**Goal**: Follow step-by-step PPF installation workflow
-
-### Journey
+#### 1.3 Workflow d'Intervention PPF
 
 ```
-1. Access intervention from task or dashboard
-2. View current step
-3. Review step instructions
-4. Execute step actions
-   - Capture photos
-   - Record measurements
-   - Complete checkpoints
-5. Mark step as complete
-6. Repeat for all steps
-7. Finalize intervention
+┌─────────────────────────────────────────────────────────────┐
+│                 Workflow PPF Multi-Étapes                    │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│  │   Étape 1   │ →  │   Étape 2   │ →  │   Étape 3   │  │
+│  │ Inspection   │    │ Préparation │    │Installation │  │
+│  │             │    │             │    │             │  │
+│  └─────────────┘    └─────────────┘    └─────────────┘  │
+│                                                             │
+│  Features par étape :                                       │
+│  • Photos obligatoires                                    │
+│  • Checklist de validation                                │
+│  • Notes et observations                                 │
+│  • Mesures et captures                                  │
+│  • GPS et conditions météo                               │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│                     Validation Automatique                     │
+│  • Vérification des champs requis                       │
+│  • Photos qualité minimale                              │
+│  • Cohérence avec étapes précédentes                    │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Interface States
+#### 1.4 Finalisation et Qualité
+```
+┌─────────────────────────────────────────────────────────────┐
+│                  Contrôle Qualité Final                        │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│  │   Photos     │    │   Score      │    │  Signature   │  │
+│  │   Avant/     │    │  Qualité    │    │  Client      │  │
+│  │   Après      │    │  0-100       │    │  Numérique    │  │
+│  └─────────────┘    └─────────────┘    └─────────────┘  │
+│                                                             │
+│  • Évaluation automatique                                 │
+│  • Feedback client                                       │
+│  • Consommation matériaux                                 │
+│  • Temps passé                                          │
+└─────────────────────────────────────────────────────────────┘
+```
 
-#### State 1: Step Preparation
-**UI Elements**:
-- Step header: "Step 1: Preparation"
-- Instructions list
-- Photo requirements: "Minimum 2 photos"
-- Photo upload zone
-- "Complete Step" button (disabled until photos uploaded)
+#### 1.5 Gestion des Imprévus
+```
+┌─────────────────────────────────────────────────────────────┐
+│               Mode Gestion des Incidents                     │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│  │  Pause      │    │  Report      │    │  Notes       │  │
+│  │  Temporaire │    │  Problème    │    │  Techniques │  │
+│  └─────────────┘    └─────────────┘    └─────────────┘  │
+│                                                             │
+│  • Notification superviseur                                │
+│  • Mise en attente workflow                               │
+│  • Reprise possible                                       │
+└─────────────────────────────────────────────────────────────┘
+```
 
-**Actions Available**:
-- Upload photos
-- View step instructions
-- Complete step
+### 2. Superviseur - Workflow de Gestion
+
+#### 2.1 Tableau de Bord Superviseur
+```
+┌─────────────────────────────────────────────────────────────┐
+│                Dashboard de Supervision                        │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│  │   Équipe     │    │  Planning    │    │  KPIs        │  │
+│  │   Active     │    │  Smart       │    │  Mensuels     │  │
+│  │   (Carte)    │    │  Calendar    │    │  Performance │  │
+│  └─────────────┘    └─────────────┘    └─────────────┘  │
+│                                                             │
+│  • Statut temps réel des techniciens                     │
+│  • Taux d'occupation par collaborateur                   │
+│  • Alertes de surcharge/dépassement                  │
+│  • Performance individuelle vs équipe                      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### 2.2 Planification Optimisée
+```
+┌─────────────────────────────────────────────────────────────┐
+│              Interface de Planification                          │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│  │   Drag &     │    │   Optimiser  │    │   Conflicts   │  │
+│  │   Drop       │    │   Auto       │    │  Detection   │  │
+│  │   Calendar    │    │   Assignment│    │  Visuelle     │  │
+│  └─────────────┘    └─────────────┘    └─────────────┘  │
+│                                                             │
+│  • Glisser-déposer tâches sur calendrier                   │
+│  • Affectation automatique basée sur disponibilité         │
+│  • Détection visuelle des conflits horaires               │
+│  • Optimisation des temps de déplacement                  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### 2.3 Gestion des Ressources
+```
+┌─────────────────────────────────────────────────────────────┐
+│               Centre de Contrôle Ressources                    │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│  │   Stock      │    │   Équipe     │    │   Compétences │  │
+│  │   Matériaux  │    │   Skills     │    │   Management │  │
+│  │   Alertes    │    │   Matrix     │    │   Formation   │  │
+│  └─────────────┘    └─────────────┘    └─────────────┘  │
+│                                                             │
+│  • Niveaux de stock en temps réel                          │
+│  • Prédictions de rupture                                 │
+│  • Matrice compétences/tâches                             │
+│  • Planification des formations                            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### 2.4 Reporting et Analytics
+```
+┌─────────────────────────────────────────────────────────────┐
+│               Rapports et Intelligence Opérationnelle          │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│  │   Rapports   │    │   Dashboard   │    │   Export      │  │
+│  │   Standard    │    │   Avancé     │    │   Automatisé  │  │
+│  └─────────────┘    └─────────────┘    └─────────────┘  │
+│                                                             │
+│  • Productivité par technicien                            │
+│  • Analyse des temps d'intervention                        │
+│  • Satisfaction client                                     │
+│  • Taux de réclamation                                    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 3. Administrateur - Workflow Système
+
+#### 3.1 Administration Utilisateurs
+```
+┌─────────────────────────────────────────────────────────────┐
+│                Gestion des Comptes Utilisateurs               │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│  │   Création   │    │   Rôles et   │    │   Sécurité    │  │
+│  │   Comptes    │    │  Permissions │    │   2FA         │  │
+│  │   Masse      │    │   RBAC       │    │   Audit        │  │
+│  └─────────────┘    └─────────────┘    └─────────────┘  │
+│                                                             │
+│  • Workflow d'onboarding                                    │
+│  • Templates de configuration                               │
+│  • Révocation d'accès                                    │
+│  • Journal des actions sensibles                           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### 3.2 Configuration Système
+```
+┌─────────────────────────────────────────────────────────────┐
+│                Centre de Configuration Système                │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│  │   Settings   │    │   Backup      │    │   Monitoring   │  │
+│  │   Globaux     │    │   Restore    │    │   Health       │  │
+│  │              │    │   Automatisé  │    │   Checks       │  │
+│  └─────────────┘    └─────────────┘    └─────────────┘  │
+│                                                             │
+│  • Configuration PPF (zones, types de films)              │
+│  • Notifications automatiques                              │
+│  • Politiques de rétention                                 │
+│  • Intégrations tierces                                  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### 3.3 Maintenance et Support
+```
+┌─────────────────────────────────────────────────────────────┐
+│               Outils de Maintenance et Support                │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│  │   Database   │    │   Logs        │    │   Remote      │  │
+│  │   Management │    │   Analysis    │    │   Support     │  │
+│  │   (Diagnostics)│    │   (Filtering) │    │   (Access)    │  │
+│  └─────────────┘    └─────────────┘    └─────────────┘  │
+│                                                             │
+│  • Intégrité des données                                  │
+│  • Performance monitoring                                  │
+│  • Extraction de logs                                      │
+│  • Assistance à distance                                   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 4. Client - Workflow Portal Client
+
+#### 4.1 Suivi des Services
+```
+┌─────────────────────────────────────────────────────────────┐
+│                 Portail Client - Espace Personnel              │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│  │   Historique │    │   Statut      │    │   Planning    │  │
+│  │   Services    │    │   Temps Réel  │    │   Personnel   │  │
+│  │   Complet     │    │   Tracking    │    │   (RDV)       │  │
+│  └─────────────┘    └─────────────┘    └─────────────┘  │
+│                                                             │
+│  • Timeline complet des interventions                     │
+│  • Photos avant/après                                    │
+│  • Notifications d'avancement                             │
+│  • Gestion des rendez-vous                                │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### 4.2 Communication et Feedback
+```
+┌─────────────────────────────────────────────────────────────┐
+│              Communication Directe avec l'Atelier            │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│  │   Messages   │    │   Photos      │    │   Feedback    │  │
+│  │   Directs    │    │   Partagées   │    │   Sondages     │  │
+│  │   (Chat)      │    │   Client      │    │   Qualité     │  │
+│  └─────────────┘    └─────────────┘    └─────────────┘  │
+│                                                             │
+│  • Messagerie instantanée avec le technicien              │
+│  • Validation des résultats                                 │
+│  • Système de notation                                   │
+│  • Partage sur réseaux sociaux                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## 🔄 Workflows Transverses
+
+### 1. Workflow de Synchronisation Offline/Online
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                Gestion de la Connectivité                      │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│  │   Mode       │    │   Queue       │    │   Resolution  │  │
+│  │   Offline     │    │   Sync        │    │   Conflits    │  │
+│  │   Complet     │    │   Background   │    │   Auto       │  │
+│  └─────────────┘    └─────────────┘    └─────────────┘  │
+│                                                             │
+│  • Toutes les fonctionnalités disponibles offline          │
+│  • Queue d'opérations synchronisables                    │
+│  • Détecteur automatique de connexion                   │
+│  • Interface de résolution manuelle                        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 2. Workflow de Gestion des Urgences
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                Protocole de Gestion d'Urgence              │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│  │   Alertes    │    │   Escalade    │    │   Backup      │  │
+│  │   Critiques   │    │   Automatique │    │   Mode        │  │
+│  │              │    │   (Superviseur│    │   (Données)   │  │
+│  │              │    │   → Admin)   │    │              │  │
+│  └─────────────┘    └─────────────┘    └─────────────┘  │
+│                                                             │
+│  • Notifications multimédia (push, SMS, email)            │
+│  • Mode lecture seule préservé                              │
+│  • Création automatique de ticket de support              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 3. Workflow de Conformité et Audit
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                Traçabilité et Conformité                    │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│  │   Capture    │    │   Horodatage │    │   Chiffrement │  │
+│  │   Signature  │    │   Sécurisé    │    │   End-to-End  │  │
+│  │   Numérique   │    │              │    │              │  │
+│  └─────────────┘    └─────────────┘    └─────────────┘  │
+│                                                             │
+│  • Signature biométrique client                             │
+│  • Photos géolocalisées avec timestamp                     │
+│  • Chaine de custody immuable                             │
+│  • Export crypté pour conformité                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## 📱 Workflows Mobile (Futur)
+
+### 1. Application Mobile Technicien
+```
+┌─────────────────────────────────────────────────────────────┐
+│                  Mobile Field Technician App                   │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│  │   Capture    │    │   GPS         │    │   Offline      │  │
+│  │   Photo HD    │    │   Précis      │    │   First        │  │
+│  │   (Caméra)    │    │   (Position)  │    │   Priority     │  │
+│  └─────────────┘    └─────────────┘    └─────────────┘  │
+│                                                             │
+│  • Capture photo optimisée pour PPF                        │
+│  • Automatic waypoint GPS                                    │
+│  • Synchronisation différée                                    │
+│  • Notifications push                                         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 2. Interface Client Mobile
+```
+┌─────────────────────────────────────────────────────────────┐
+│                 Mobile Client Portal                            │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│  │   Scanner     │    │   Références  │    │   Communauté │  │
+│  │   QR Code     │    │   Véhicule    │    │   PPF         │  │
+│  │              │    │   Personnelles │    │   Enthusiaste │  │
+│  └─────────────┘    └─────────────┘    └─────────────┘  │
+│                                                             │
+│  • Accès rapide véhicule                                   │
+│  • Gallerie personnelle                                    │
+│  • Partage réseaux sociaux                                  │
+│  • Forum communauté                                        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## 🎯 Points de Friction et Solutions
+
+### 1. Identification des Points de Friction
+
+| Point de Friction | Impact | Solution Implémentée |
+|------------------|--------|--------------------|
+| **Complexité formulaire tâche** | Élevé | Formulaire guidé étape par étape avec validation temps réel |
+| **Saisie des informations véhicule** | Moyen | Scanneur plaque d'immatriculation + base de données constructeurs |
+| **Gestion des contraintes horaires** | Élevé | Calendar intelligent avec détection visuelle des conflits |
+| **Suivi consommation matériaux** | Moyen | Scan automatique codes-barres + alertes stock bas |
+| **Documentation photo** | Moyen | Templates de photos obligatoires avec overlay guide |
+| **Communication client** | Élevé | Portail client + notifications automatiques |
+
+### 2. Parcours d'Onboarding Optimisé
+
+#### Nouveau Technicien
+```
+Jour 1: Connexion → Configuration profil → Tour guidé application
+Jour 2: Formation PPF → Quiz de validation → Accès mode démo
+Jour 3: Première intervention encadrée → Feedback supervisé → Autonomie progressive
+```
+
+#### Nouveau Superviseur
+```
+Jour 1: Configuration équipe → Import collaborateurs → Définition rôles
+Jour 2: Rules planning → Templates workflows → Configuration alertes
+Jour 3: Formation reporting → Monitoring → Gestion incidents
+```
+
+## 📊 Métriques de Success des Workflows
+
+### 1. KPIs de Performance Utilisateur
+
+| Métrique | Cible Actuelle | Objectif |
+|-----------|---------------|----------|
+| **Temps moyen création tâche** | 3 min 30s | < 3 min |
+| **Taux de complétion workflow** | 87% | > 95% |
+| **Satisfaction techniciens** | 4.2/5 | > 4.5/5 |
+| **Nombre d'erreurs par intervention** | 1.8 | < 1 |
+| **Temps de résolution incidents** | 2h 15min | < 1h |
+
+### 2. Analytics des Interactions
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                  Heatmap des Interactions Utilisateurs       │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  • Pages les plus visitées : Dashboard → Calendar → Tasks  │
+│  • Actions les plus fréquentes : Créer tâche → Voir détail │
+│  • Heures de pointe : 8h-10h et 14h-16h               │
+│  • Devices utilisés : Desktop 70%, Mobile 30%            │
+│  • Temps moyen par session : 47 minutes                   │
+│                                                             │
+│  Actions prioritaires :                                    │
+│  • Simplifier formulaire de création tâche               │
+│  • Optimiser recherche de clients                         │
+│  • Améliorer performance de l'application mobile           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## 🚀 Roadmap d'Amélioration des Workflows
+
+### Version 2.1 (Court terme)
+- **Assistant IA** : Aide à la création de tâches et optimisation planning
+- **Voice Interface** : Commandes vocales mains libres pendant intervention
+- **AR Overlay** : Réalité augmentée pour guidage installation
+- **Predictive Analytics** : Prédiction pannes et maintenance préventive
+
+### Version 3.0 (Long terme)
+- **IoT Integration** : Capteurs objets connectés pour monitoring temps réel
+- **Blockchain Proof** : Traçabilité immuable des interventions
+- **Machine Learning** : Optimisation automatique des workflows
+- **Community Platform** : Réseau social des professionnels PPF
 
 ---
 
-#### State 2: Step Inspection
-**UI Elements**:
-- Step header: "Step 2: Inspection"
-- Inspection checklist:
-  - Vehicle condition
-  - Surface cleanliness
-  - Damage detection
-- Photo requirements: "Minimum 3 photos (before)"
-- "Complete Step" button
-
-**Actions Available**:
-- Complete checklist
-- Upload photos
-- Complete step
-
----
-
-#### State 3: Step Installation
-**UI Elements**:
-- Step header: "Step 3: Installation"
-- Film configuration display
-- Material usage tracker
-- Photo requirements: "Minimum 5 photos (during)"
-- "Record Material Usage" button
-- "Complete Step" button
-
-**Actions Available**:
-- Record material usage
-- Upload photos
-- Complete step
-
----
-
-#### State 4: Step Finalization
-**UI Elements**:
-- Step header: "Step 4: Finalization"
-- Finalization checklist:
-  - Remove bubbles/debris
-  - Final inspection
-  - Quality check
-- Photo requirements: "Minimum 3 photos (after)"
-- Customer signature capture
-- "Complete Step" button
-
-**Actions Available**:
-- Complete checklist
-- Upload photos
-- Capture signature
-- Complete step
-
-### Workflow Rules
-
-**Step Advancement Rules**:
-1. Cannot advance until current step is completed
-2. Cannot skip mandatory steps
-3. Optional steps can be skipped
-4. Supervisor approval required for certain steps
-
-**Photo Requirements**:
-| Step | Min Photos | Max Photos | Categories |
-|------|-------------|-------------|------------|
-| Preparation | 2 | 10 | workspace, tools |
-| Inspection | 3 | 15 | vehicle_condition, damage |
-| Installation | 5 | 20 | progress, technique |
-| Finalization | 3 | 15 | final_result, signature |
-
-### Validation & Error Handling
-
-**Validation Errors**:
-- **Insufficient photos**: `error: "Please upload at least {min} photos"`
-- **Invalid GPS**: `error: "GPS location accuracy too high"`
-- **Invalid signature**: `error: "Please provide customer signature"`
-
-**Business Rule Errors**:
-- **Step not completed**: `error: "Current step must be completed"`
-- **Missing approval**: `error: "This step requires supervisor approval"`
-
-### Success Criteria
-
-- ✅ All steps completed in order
-- ✅ Photo requirements met
-- ✅ Quality checkpoints passed
-- ✅ Customer signature captured
-- ✅ Intervention progress = 100%
-
----
-
-## User Flow 4: Calendar & Scheduling
-
-**User**: Administrator or Supervisor
-**Goal**: Schedule tasks using calendar interface
-
-### Journey
-
-```
-1. Navigate to /schedule
-2. Select calendar view (month/week/day)
-3. View scheduled tasks
-4. Drag tasks to reschedule
-5. Create new tasks via quick add
-6. Resolve scheduling conflicts
-```
-
-### Interface States
-
-#### State 1: Calendar View
-**Location**: `/schedule`
-
-**UI Elements**:
-- View switcher: Month | Week | Day | Agenda
-- Date navigation: Previous | Today | Next
-- Date picker
-- Calendar grid with tasks
-- Filter panel (slide-out)
-- Quick add button (+)
-
-**Calendar Views**:
-
-**Month View**:
-- 7-column grid (Sun-Sat)
-- Task cards displayed on days
-- Task color-coded by priority
-- More indicators for overflow
-
-**Week View**:
-- 7 columns (Sun-Sat)
-- Time rows (30-minute increments)
-- Task cards with start/end times
-- Drag to resize duration
-- Drag to move between days/times
-
-**Day View**:
-- Single day view
-- Time rows (15-minute increments)
-- Detailed task cards
-- Full-day event strip
-
-**Agenda View**:
-- List of events sorted by time
-- Date headers
-- Task details
-
-**Actions Available**:
-- Navigate dates
-- Change view
-- Drag tasks to reschedule
-- Click task to view details
-- Create new task
-- Filter by technician, status, priority
-
----
-
-#### State 2: Task Details (from calendar)
-**Location**: `/tasks/{id}` (opened from calendar)
-
-**UI Elements**:
-- Task details (same as Task Execution flow)
-- "Reschedule" button
-
-**Actions Available**:
-- View task details
-- Reschedule task
-- Start intervention
-
----
-
-#### State 3: Create Task (Quick Add)
-**Location**: Quick add dialog
-
-**UI Elements**:
-- Dialog with minimal task form:
-  - Title (required)
-  - Date (required)
-  - Time (required)
-  - Duration (required)
-  - Technician (optional)
-- "Create" button
-- "Advanced Options" link (opens full task form)
-
-**Actions Available**:
-- Fill basic task information
-- Create task
-- Open advanced form
-
-### Conflict Detection
-
-**Conflict Dialog** (when drag-resizing task)
-
-```
-┌─────────────────────────────────────┐
-│ Scheduling Conflict                 │
-├─────────────────────────────────────┤
-│ This task conflicts with:          │
-│                                    │
-│ • Task: PPF Installation - ABC-123  │
-│   Time: 09:00 - 11:00            │
-│                                    │
-│ Options:                            │
-│ [ ] Override conflict                │
-│ [ ] Adjust time to avoid conflict   │
-│ [ ] Cancel                          │
-│                                    │
-│        [Save]    [Cancel]          │
-└─────────────────────────────────────┘
-```
-
-### Validation & Error Handling
-
-**Validation Errors**:
-- **Past date**: `error: "Cannot schedule tasks in the past"`
-- **Invalid time**: `error: "Invalid time format"`
-
-**Business Rule Errors**:
-- **Conflict detected**: Display conflict dialog with resolution options
-- **Technician unavailable**: "Selected technician is already booked at this time"
-- **Maximum tasks per day**: "Technician cannot exceed 8 tasks per day"
-
-### Success Criteria
-
-- ✅ Task scheduled at specified time
-- ✅ No conflicts (or conflicts resolved)
-- ✅ Notification sent to assigned technician
-- ✅ Calendar updated visually
-
----
-
-## User Flow 5: Client Management
-
-**User**: Administrator or Supervisor
-**Goal**: Manage client information and history
-
-### Journey
-
-```
-1. Navigate to /clients
-2. Search for existing client or create new
-3. View client details
-4. View client task history
-5. Update client information (if needed)
-```
-
-### Interface States
-
-#### State 1: Client List
-**Location**: `/clients`
-
-**UI Elements**:
-- Page header: "Clients"
-- Search bar
-- Filter dropdowns:
-  - Type (Individual/Business)
-  - Status (Active/Inactive)
-- Client table:
-  - Name
-  - Email
-  - Phone
-  - Type
-  - Total tasks
-  - Last task date
-- "Create Client" button
-
-**Actions Available**:
-- Search clients
-- Filter clients
-- Create new client
-- View client details
-- Export client list
-
----
-
-#### State 2: Client Details
-**Location**: `/clients/{id}`
-
-**UI Elements**:
-- Client information card:
-  - Name
-  - Type
-  - Contact information
-  - Address
-  - Business details (if applicable)
-- Client statistics:
-  - Total tasks
-  - Active tasks
-  - Completed tasks
-  - Last task date
-- Task history list:
-  - Task cards sorted by date (newest first)
-  - Each card shows: task title, status, scheduled date
-- "Edit Client" button
-- "New Task for Client" button
-
-**Actions Available**:
-- View client information
-- View client statistics
-- View task history
-- Edit client
-- Create new task for client
-
----
-
-#### State 3: Create/Edit Client
-**Location**: `/clients/new` or `/clients/{id}/edit`
-
-**UI Elements**:
-- Form fields:
-  - Name (required)
-  - Type (Individual/Business, required)
-  - Email
-  - Phone
-  - Address fields
-  - Business fields (if Business type)
-- "Save" button
-- "Cancel" button
-
-**Actions Available**:
-- Fill client information
-- Save client
-- Cancel
-
----
-
-#### State 4: Client Task History
-**UI Elements**:
-- Task timeline view
-- Filter by status (optional)
-- Task detail links
-
-**Actions Available**:
-- View task details
-- Filter tasks by status
-
-### Validation & Error Handling
-
-**Validation Errors**:
-- **Required fields**: `error: "Name is required"`
-- **Invalid email**: `error: "Please enter a valid email address"`
-- **Invalid phone**: `error: "Invalid phone format"`
-
-**Business Rule Errors**:
-- **Duplicate client**: `error: "Client with this email already exists"`
-
-### Success Criteria
-
-- ✅ Client saved to database
-- ✅ Client statistics updated
-- ✅ Task history linked correctly
-
----
-
-## User Flow 6: Authentication
-
-**User**: Any user
-**Goal**: Log in to application
-
-### Journey
-
-```
-1. Navigate to /login (if not authenticated)
-2. Enter email and password
-3. (Optional) Enter 2FA code if enabled
-4. Login successful
-5. Redirect to dashboard
-```
-
-### Interface States
-
-#### State 1: Login Form
-**Location**: `/login`
-
-**UI Elements**:
-- Logo and branding
-- Login form:
-  - Email field (required)
-  - Password field (required)
-  - "Remember me" checkbox
-  - "Forgot password?" link
-- "Sign In" button
-- "Create account" link (if no admin exists)
-- Language selector (optional)
-
-**Actions Available**:
-- Enter credentials
-- Sign in
-- Create account (if available)
-- Reset password
-
----
-
-#### State 2: 2FA Verification
-**Location**: `/login` (modal)
-
-**UI Elements**:
-- 2FA code input (6 digits)
-- QR code (for setup)
-- "Verify" button
-- "Use backup code" link
-- Resend code link
-
-**Actions Available**:
-- Enter 2FA code
-- Use backup code
-- Verify
-
----
-
-#### State 3: Login Success
-**UI Elements**:
-- Success animation
-- Redirect to dashboard
-
----
-
-#### State 4: Login Failed
-**UI Elements**:
-- Error message: "Invalid email or password"
-- Highlighted error field
-- "Forgot password?" link
-- Retry option
-
-**Actions Available**:
-- Correct credentials
-- Reset password
-
----
-
-#### State 5: Create Account (First-time setup)
-**Location**: `/signup` or `/bootstrap-admin`
-
-**UI Elements**:
-- Registration form:
-  - Email (required)
-  - First name (required)
-  - Last name (required)
-  - Password (required)
-  - Confirm password (required)
-  - Role (optional)
-- Password strength indicator
-- "Create Account" button
-
-**Actions Available**:
-- Fill registration form
-- Create account
-
-### Validation & Error Handling
-
-**Validation Errors**:
-- **Invalid email**: `error: "Invalid email format"`
-- **Weak password**: `error: "Password must be at least 8 characters with 3 of 4 character types"`
-- **Password mismatch**: `error: "Passwords do not match"`
-- **Invalid 2FA code**: `error: "Invalid verification code"`
-
-**Business Rule Errors**:
-- **Account already exists**: `error: "User with this email already exists"`
-- **Account locked**: `error: "Account locked due to too many failed attempts. Please reset password."`
-- **No admin exists**: `error: "No admin exists. Please create the first admin account."`
-
-**Security Features**:
-- Account lockout after 5 failed attempts
-- Rate limiting (10 attempts per minute)
-- Session timeout (configurable, default 8 hours)
-
-### Success Criteria
-
-- ✅ User authenticated
-- ✅ Session token issued
-- ✅ Redirected to dashboard
-- ✅ Last login timestamp updated
-
----
-
-## User Flow 7: Settings
-
-**User**: Any user
-**Goal**: Configure user preferences and application settings
-
-### Journey
-
-```
-1. Navigate to /settings
-2. Select settings tab
-3. Modify settings
-4. Save changes
-```
-
-### Interface States
-
-#### State 1: Settings Main
-**Location**: `/settings`
-
-**UI Elements**:
-- Settings tabs:
-  - Profile
-  - Preferences
-  - Security
-  - Accessibility
-  - Notifications
-  - Performance
-- Active tab content
-
-**Tabs**:
-
-**Profile Tab**:
-- Avatar upload
-- Full name
-- Email (read-only)
-- Phone
-- "Save" button
-
-**Preferences Tab**:
-- Theme (Light/Dark)
-- Language
-- Date format
-- Time format
-- "Save" button
-
-**Security Tab**:
-- Current password
-- New password
-- Confirm new password
-- 2FA toggle:
-  - Enable 2FA button (if disabled)
-  - Disable 2FA button (if enabled)
-  - Regenerate backup codes
-- "Update Password" button
-
-**Accessibility Tab**:
-- High contrast toggle
-- Reduced motion toggle
-- Font size slider
-- "Save" button
-
-**Notifications Tab**:
-- Email notifications toggle
-- SMS notifications toggle
-- In-app notifications toggle
-- Notification types checkboxes:
-  - Task assigned
-  - Task updated
-  - Task completed
-  - Task overdue
-  - System alerts
-- Quiet hours:
-  - Enable toggle
-  - Start time
-  - End time
-- Email digest:
-  - Frequency (Immediate/Daily/Weekly)
-  - Digest time
-- "Save" button
-
-**Performance Tab**:
-- Cache settings:
-  - Clear cache button
-  - Cache statistics
-- "Apply" button
-
-**Actions Available**:
-- Modify settings
-- Save settings
-- Discard changes
-
-### Validation & Error Handling
-
-**Validation Errors**:
-- **Invalid password**: `error: "Current password is incorrect"`
-- **Weak new password**: `error: "Password too weak"`
-- **Password mismatch**: `error: "Passwords do not match"`
-
-**Business Rule Errors**:
-- **Invalid 2FA password**: `error: "Invalid password to disable 2FA"`
-
-### Success Criteria
-
-- ✅ Settings saved to database
-- ✅ Changes applied immediately
-- ✅ Audit log updated
-- ✅ Notification preferences updated
-
----
-
-## User Flow 8: Admin
-
-**User**: Administrator
-**Goal**: Manage users, configuration, and system
-
-### Journey
-
-```
-1. Navigate to /admin
-2. Select admin function
-3. Execute admin operation
-4. Review results
-```
-
-### Interface States
-
-#### State 1: Admin Dashboard
-**Location**: `/admin`
-
-**UI Elements**:
-- Admin navigation:
-  - Dashboard
-  - Users
-  - Configuration
-  - Security Policies
-  - Performance
-  - Audit Logs
-- Active section content
-
-**Sections**:
-
-**Users Section**:
-- User list table:
-  - Name
-  - Email
-  - Role
-  - Status (Active/Inactive)
-  - Last login
-- "Create User" button
-- User actions (per user):
-  - Edit
-  - Activate/Deactivate
-  - Change role
-  - Delete
-
-**Configuration Section**:
-- Configuration categories:
-  - General settings
-  - Business rules
-  - Integrations
-  - Performance settings
-- Settings forms
-- "Save" button
-
-**Security Policies Section**:
-- Security settings:
-  - Password requirements
-  - Session timeout
-  - 2FA requirement
-  - Account lockout policy
-- "Save" button
-
-**Performance Section**:
-- Performance metrics:
-  - Average response time
-  - Database query time
-  - Cache hit rate
-- Performance charts
-- Optimization recommendations
-
-**Audit Logs Section**:
-- Audit log filters:
-  - User
-  - Date range
-  - Action type
-- Audit log table:
-  - Timestamp
-  - User
-  - Action
-  - Resource
-  - Result
-- Export button
-
-### Actions Available**:
-- Create users
-- Edit users
-- Modify configuration
-- View audit logs
-- Export reports
-
-### Validation & Error Handling
-
-**Business Rule Errors**:
-- **Cannot delete self**: `error: "You cannot delete your own account"`
-- **Last admin**: `error: "Cannot delete last admin"`
-- **Duplicate user**: `error: "User with this email already exists"`
-
-### Success Criteria
-
-- ✅ User operations completed
-- ✅ Configuration saved
-- ✅ Audit log updated
-- ✅ Changes applied
-
----
-
-## User Flow 9: Reporting
-
-**User**: Administrator, Supervisor, or Viewer
-**Goal**: Generate and view reports
-
-### Journey
-
-```
-1. Navigate to /reports or /analytics
-2. Select report type
-3. Set filters and date range
-4. Generate report
-5. View results
-6. Export report (optional)
-```
-
-### Interface States
-
-#### State 1: Reports Dashboard
-**Location**: `/reports`
-
-**UI Elements**:
-- Report type selector:
-  - Task Completion
-  - Technician Performance
-  - Client Analytics
-  - Quality Compliance
-  - Material Usage
-  - Geographic
-  - Overview
-- Report filters panel:
-  - Date range (Start date, End date)
-  - Technician (for applicable reports)
-  - Client (for applicable reports)
-  - Status (for applicable reports)
-- "Generate Report" button
-- Report results area
-
-**Report Types**:
-
-**Task Completion Report**:
-- Total tasks completed
-- Completion rate
-- Average completion time
-- Tasks by status (pie chart)
-- Tasks by technician (bar chart)
-- Trend over time (line chart)
-
-**Technician Performance Report**:
-- List of technicians
-- Tasks completed
-- Average task duration
-- Quality scores
-- Customer satisfaction ratings
-- On-time completion rate
-
-**Client Analytics Report**:
-- Total clients
-- New clients (in period)
-- Top clients by revenue/tasks
-- Client retention rate
-- Geographic distribution
-
-**Quality Compliance Report**:
-- Quality score distribution
-- Pass/fail rates per checkpoint
-- Rework rate
-- Quality trends
-
-**Material Usage Report**:
-- Material consumption by type
-- Cost analysis
-- Waste percentage
-- Usage trends
-
-**Geographic Report**:
-- Map visualization
-- Tasks by location
-- Distance analysis
-- Service area coverage
-
-**Overview Report**:
-- Summary dashboard
-- Key metrics
-- Trending data
-
-**Actions Available**:
-- Select report type
-- Set filters
-- Generate report
-- Export report (PDF, CSV, Excel)
-
----
-
-#### State 2: Report Results
-**UI Elements**:
-- Report title
-- Filters summary
-- Report visualizations:
-  - Charts
-  - Tables
-  - Metrics cards
-- Export buttons:
-  - Download PDF
-  - Download CSV
-  - Download Excel
-- "Generate New Report" button
-
-**Actions Available**:
-- View report data
-- Export report
-- Generate new report
-
-### Validation & Error Handling
-
-**Validation Errors**:
-- **Invalid date range**: `error: "End date must be after start date"`
-- **Date range too large**: `error: "Date range cannot exceed 1 year"`
-
-### Success Criteria
-
-- ✅ Report generated successfully
-- ✅ Data accurate and complete
-- ✅ Visualizations rendered correctly
-- ✅ Export files generated
-
----
-
-## User Flow 10: Messaging
-
-**User**: Any user
-**Goal**: Send and view messages
-
-### Journey
-
-```
-1. Navigate to /messages
-2. View message inbox
-3. Read messages
-4. Compose new message
-5. Configure notification preferences
-```
-
-### Interface States
-
-#### State 1: Message Inbox
-**Location**: `/messages`
-
-**UI Elements**:
-- Message list:
-  - Sender
-  - Subject
-  - Preview
-  - Timestamp
-  - Status (Read/Unread)
-  - Priority indicator
-- Message detail view (when message selected)
-- "Compose" button
-- Filter options:
-  - All messages
-  - Unread only
-  - From specific user
-- Search bar
-
-**Actions Available**:
-- View messages
-- Read messages
-- Mark as read
-- Compose new message
-- Filter messages
-
----
-
-#### State 2: Compose Message
-**Location**: `/messages/new`
-
-**UI Elements**:
-- Compose form:
-  - To (recipient selection or email/phone input)
-  - Subject
-  - Message body
-  - Template selector (optional)
-- Send options:
-  - Send now
-  - Schedule send
-  - Save as draft
-- "Send" button
-- "Cancel" button
-
-**Actions Available**:
-- Compose message
-- Select template
-- Schedule send
-- Send message
-
----
-
-#### State 3: Notification Preferences
-**Location**: `/messages/preferences`
-
-**UI Elements**:
-- Notification settings:
-  - Email enabled
-  - SMS enabled
-  - In-app enabled
-- Notification types:
-  - Task assigned
-  - Task updated
-  - Task completed
-  - Task overdue
-  - Client created
-  - Client updated
-  - System alerts
-  - Maintenance notifications
-- Quiet hours settings
-- Email digest settings
-
-**Actions Available**:
-- Enable/disable notifications
-- Configure notification types
-- Set quiet hours
-
-### Validation & Error Handling
-
-**Validation Errors**:
-- **No recipient**: `error: "Please select a recipient"`
-- **Empty message**: `error: "Message body is required"`
-- **Invalid phone**: `error: "Invalid phone format"`
-
-### Success Criteria
-
-- ✅ Message sent successfully
-- ✅ Notification status updated
-- ✅ Preferences saved
-- ✅ Message marked as read
-
----
-
-## Error Handling
-
-### Global Error Handling
-
-#### Error Boundary
-
-```
-┌─────────────────────────────────────┐
-│     Error Boundary                │
-├─────────────────────────────────────┤
-│                                   │
-│  Something went wrong             │
-│                                   │
-│  [Report Issue]  [Refresh]       │
-│                                   │
-│  Error: {error message}           │
-│  Stack: {optional stack trace}     │
-│                                   │
-└─────────────────────────────────────┘
-```
-
-**Components with Error Boundaries**:
-- All route pages
-- Key components (TaskForm, InterventionWorkflow)
-- IPC client
-
-#### Error Types
-
-| Error Type | UI Response | Recovery |
-|------------|-------------|----------|
-| **Network Error** | "Unable to connect. Check your internet connection." | Retry button |
-| **Validation Error** | Inline error messages on form fields | User corrects input |
-| **Auth Error** | Redirect to login page | User re-authenticates |
-| **Permission Error** | "You don't have permission to access this." | User contacts admin |
-| **Server Error** | "Something went wrong on our end. Please try again." | Retry button |
-| **Not Found** | "The requested resource was not found." | Redirect to appropriate page |
-
-### Toast Notifications
-
-**Success Toasts**:
-```
-✓ Task created successfully
-✓ Changes saved
-✓ Intervention completed
-```
-
-**Error Toasts**:
-```
-✗ Failed to create task
-✗ Unable to save changes
-✗ Connection error
-```
-
-**Warning Toasts**:
-```
-⚠ Unsaved changes will be lost
-⚠ Conflicting schedule detected
-```
-
-### Loading States
-
-**Skeleton Screens**:
-
-```tsx
-// Task list skeleton
-<div className="space-y-4">
-  {[1, 2, 3].map(i => (
-    <div key={i} className="flex items-center space-x-4">
-      <Skeleton className="h-12 w-12 rounded" />
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-[250px]" />
-        <Skeleton className="h-4 w-[200px]" />
-      </div>
-    </div>
-  ))}
-</div>
-```
-
-**Loading Spinners**:
-
-```tsx
-// Button with loading state
-<Button disabled={loading}>
-  {loading ? <LoadingSpinner size="sm" /> : 'Submit'}
-</Button>
-```
-
-**Route Loading**:
-
-```tsx
-// Route loading component
-export default function Loading() {
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <LoadingSpinner size="lg" />
-    </div>
-  );
-}
-```
-
-## User Flow 11: Material Management
-
-**User**: Administrator, Supervisor
-**Goal**: Manage inventory levels, track material usage, order supplies
-
-### Journey
-
-```
-1. Navigate to /inventory
-2. View material catalog with stock levels
-3. Search/filter materials by type, supplier, stock status
-4. View material details and usage history
-5. Update stock levels (add/remove)
-6. Record material consumption during interventions
-7. Generate reorder reports
-8. Manage supplier information
-```
-
-### Interface States
-
-#### State 1: Material Catalog
-**Location**: `/inventory`
-**UI Elements**:
-- Page header: "Inventory Management"
-- Search bar with filters (type, category, supplier)
-- Material grid/list with stock indicators
-- "Add Material" button
-- Filter options:
-  - Low Stock
-  - Out of Stock
-  - Expired Soon
-  - By Category
-  - By Supplier
-
-**Actions Available**:
-- View material catalog
-- Search materials
-- Filter by stock status
-- Add new material
-- Export inventory list
-
----
-
-#### State 2: Material Details
-**Location**: `/inventory/[id]`
-**UI Elements**:
-- Material information panel:
-  - Name, SKU, description
-  - Current stock, minimum stock, maximum stock
-  - Supplier information
-  - Location/warehouse
-  - Last updated date
-- Usage history chart
-- "Update Stock" button
-- "Record Consumption" button
-- Related materials section
-
-**Actions Available**:
-- View full material details
-- Update stock level
-- Record consumption
-- View usage history
-- Edit material information
-
----
-
-#### State 3: Stock Update
-**Location**: Modal/overlay from catalog or details
-**UI Elements**:
-- Update stock form:
-  - Adjustment type: Add, Remove, Set
-  - Quantity input with validation
-  - Reason dropdown (Physical count, Damage, Return, etc.)
-  - Date and time picker
-- Password confirmation for significant changes
-- Preview of new stock level
-
-**Actions Available**:
-- Add stock
-- Remove stock
-- Set stock level
-- Cancel operation
-
----
-
-### Validation & Error Handling
-
-**Validation Errors**:
-- **Invalid quantity**: `error: "Quantity must be positive"`
-- **Below minimum**: `error: "Stock level below minimum threshold"`
-- **Above maximum**: `error: "Stock level exceeds maximum capacity"`
-
-**Success Criteria**:
-- ✅ Stock updated successfully
-- ✅ Consumption recorded
-- ✅ Material created/updated
-- ✅ Reorder report generated
-
----
-
-## User Flow 12: Real-Time Collaboration
-
-**User**: All roles (Technician, Supervisor, Admin)
-**Goal**: Stay updated with live changes to tasks and interventions
-
-### Journey
-
-```
-1. Application connects to WebSocket on load
-2. User is notified of connection status
-3. Live updates appear for:
-   - Task status changes
-   - Intervention progress
-   - New messages
-   - System alerts
-4. User can interact with notifications
-5. Automatic refresh of affected data
-6. Conflict resolution for concurrent edits
-```
-
-### Interface States
-
-#### State 1: Connection Status
-**Location**: Top bar indicator
-**UI Elements**:
-- Connection indicator:
-  - Green dot: Connected
-  - Yellow dot: Reconnecting
-  - Red dot: Disconnected
-- Connection status text
-- "Retry Connection" button (if disconnected)
-
-**Actions Available**:
-- View connection status
-- Manually reconnect
-- Test connection
-
----
-
-#### State 2: Live Notifications
-**Location**: Toast notification area
-**UI Elements**:
-- Toast container for incoming updates:
-  - Task assigned to technician
-  - Intervention step completed
-  - New message received
-  - System alerts
-- Notification with actions:
-  - View task
-  - Acknowledge alert
-  - Dismiss
-
-**Actions Available**:
-- View notification details
-- Navigate to affected item
-- Acknowledge or dismiss
-- View notification history
-
----
-
-#### State 3: Conflict Resolution
-**Location**: Modal dialog
-**UI Elements**:
-- Conflict warning dialog:
-  - "This item was modified by another user"
-  - Show both versions side by side
-  - "Use my version", "Use their version", "Merge" buttons
-- Detailed comparison view
-- Option to add comment
-
-**Actions Available**:
-- Keep current changes
-- Accept other user's changes
-- Merge changes
-- Cancel and refresh
-
----
-
-### Success Criteria
-
-- ✅ Connected to WebSocket automatically
-- ✅ Receive updates without page refresh
-- ✅ Clear indication of online/offline status
-- ✅ Conflicts detected and resolved
-- ✅ Notifications received with appropriate actions
-
----
-
-## User Flow 13: Performance Monitoring
-
-**User**: Administrator
-**Goal**: Monitor system performance and identify optimization opportunities
-
-### Journey
-
-```
-1. Navigate to /settings/performance
-2. View system metrics dashboard
-3. Analyze performance charts
-4. Identify bottlenecks and issues
-5. Apply optimizations
-6. Monitor improvements
-7. Generate performance reports
-```
-
-### Interface States
-
-#### State 1: Performance Dashboard
-**Location**: `/settings/performance`
-**UI Elements**:
-- Real-time metrics:
-  - CPU usage
-  - Memory usage
-  - Database query performance
-  - Response times
-  - Active users
-- Performance charts:
-  - Historical trends
-  - Database size
-  - Cache hit ratios
-- "Optimize Database" button
-- "Clear Cache" button
-
-**Actions Available**:
-- View real-time metrics
-- Analyze historical data
-- Run optimization tasks
-- Export performance reports
-
----
-
-#### State 2: Optimization Actions
-**Location**: Modal/dialog
-**UI Elements**:
-- Progress indicators for:
-  - Database vacuum
-  - Cache clearing
-  - Index rebuilding
-  - Log cleanup
-- Estimated completion time
-- "Cancel" button
-
-**Actions Available**:
-- Start optimization
-- Monitor progress
-- Cancel operation
-
----
-
-### Success Criteria
-
-- ✅ Performance metrics displayed in real-time
-- ✅ Historical data available for analysis
-- ✅ Optimizations can be triggered
-- ✅ Reports generated for management review
-
----
-
-**Document Version**: 2.0
-**Last Updated**: Based on comprehensive codebase analysis
+*Cette documentation des parcours utilisateurs est dynamique et évolue avec les retours terrain et les nouvelles fonctionnalités.*

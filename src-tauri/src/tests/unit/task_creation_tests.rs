@@ -6,14 +6,15 @@
 use crate::commands::AppError;
 use crate::models::task::{CreateTaskRequest, TaskPriority, TaskStatus};
 use crate::services::task_creation::TaskCreationService;
-use crate::test_utils::{test_db, TestDataFactory, TestDatabase};
+use crate::test_utils::{TestDataFactory, TestDatabase};
+use crate::{test_client, test_db, test_intervention, test_task};
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_create_task_success() {
+    #[tokio::test]
+    async fn test_create_task_success() {
         let test_db = test_db!();
         let service = TaskCreationService::new(test_db.db());
 
@@ -63,8 +64,8 @@ mod tests {
         assert!(task.task_number.is_some());
     }
 
-    #[test]
-    fn test_create_task_generates_title_if_empty() {
+    #[tokio::test]
+    async fn test_create_task_generates_title_if_empty() {
         let test_db = test_db!();
         let service = TaskCreationService::new(test_db.db());
 
@@ -107,8 +108,8 @@ mod tests {
         assert!(task.title.contains("XYZ-789"));
     }
 
-    #[test]
-    fn test_create_task_missing_vehicle_plate_fails() {
+    #[tokio::test]
+    async fn test_create_task_missing_vehicle_plate_fails() {
         let test_db = test_db!();
         let service = TaskCreationService::new(test_db.db());
 
@@ -155,8 +156,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_create_task_missing_vehicle_model_fails() {
+    #[tokio::test]
+    async fn test_create_task_missing_vehicle_model_fails() {
         let test_db = test_db!();
         let service = TaskCreationService::new(test_db.db());
 
@@ -203,8 +204,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_create_task_missing_scheduled_date_fails() {
+    #[tokio::test]
+    async fn test_create_task_missing_scheduled_date_fails() {
         let test_db = test_db!();
         let service = TaskCreationService::new(test_db.db());
 
@@ -251,8 +252,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_create_task_empty_ppf_zones_fails() {
+    #[tokio::test]
+    async fn test_create_task_empty_ppf_zones_fails() {
         let test_db = test_db!();
         let service = TaskCreationService::new(test_db.db());
 
@@ -299,8 +300,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_create_task_with_valid_client() {
+    #[tokio::test]
+    async fn test_create_task_with_valid_client() {
         let test_db = test_db!();
         let service = TaskCreationService::new(test_db.db());
 
@@ -351,8 +352,8 @@ mod tests {
         assert_eq!(task.client_id, Some(client_id.to_string()));
     }
 
-    #[test]
-    fn test_create_task_with_invalid_client_fails() {
+    #[tokio::test]
+    async fn test_create_task_with_invalid_client_fails() {
         let test_db = test_db!();
         let service = TaskCreationService::new(test_db.db());
 
@@ -399,8 +400,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_create_task_generates_unique_task_number() {
+    #[tokio::test]
+    async fn test_create_task_generates_unique_task_number() {
         let test_db = test_db!();
         let service = TaskCreationService::new(test_db.db());
 
@@ -481,8 +482,8 @@ mod tests {
         assert_ne!(task_number1, task_number2);
     }
 
-    #[test]
-    fn test_create_task_adds_to_sync_queue() {
+    #[tokio::test]
+    async fn test_create_task_adds_to_sync_queue() {
         let test_db = test_db!();
         let service = TaskCreationService::new(test_db.db());
 
@@ -532,8 +533,8 @@ mod tests {
         assert_eq!(count, 1, "Task should be added to sync queue");
     }
 
-    #[test]
-    fn test_create_task_default_status_pending() {
+    #[tokio::test]
+    async fn test_create_task_default_status_pending() {
         let test_db = test_db!();
         let service = TaskCreationService::new(test_db.db());
 
@@ -574,8 +575,8 @@ mod tests {
         assert_eq!(task.status, TaskStatus::Pending);
     }
 
-    #[test]
-    fn test_create_task_default_priority_medium() {
+    #[tokio::test]
+    async fn test_create_task_default_priority_medium() {
         let test_db = test_db!();
         let service = TaskCreationService::new(test_db.db());
 
@@ -616,8 +617,8 @@ mod tests {
         assert_eq!(task.priority, TaskPriority::Medium);
     }
 
-    #[test]
-    fn test_create_task_custom_status_and_priority() {
+    #[tokio::test]
+    async fn test_create_task_custom_status_and_priority() {
         let test_db = test_db!();
         let service = TaskCreationService::new(test_db.db());
 
