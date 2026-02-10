@@ -796,7 +796,7 @@ mod tests {
         };
 
         service
-            .create_inventory_transaction(stock_out1, Some("test_user".to_string"))
+            .create_inventory_transaction(stock_out1, Some("test_user".to_string()))
             .unwrap();
 
         // Second transaction should fail due to insufficient stock
@@ -956,9 +956,9 @@ mod tests {
             material_id: material.id.clone().unwrap(),
             transaction_type: InventoryTransactionType::Waste,
             quantity: 5.0,
-            reference_number: Some("WASTE-TYPE"String::from("")),
-            reference_type: Some("Material Waste"String::from("")),
-            notes: Some("Damaged material"String::from("")),
+            reference_number: Some(String::from("WASTE-TYPE")),
+            reference_type: Some(String::from("Material Waste")),
+            notes: Some(String::from("Damaged material")),
             unit_cost: None,
             warehouse_id: None,
             location_from: None,
@@ -1037,7 +1037,8 @@ mod tests {
         };
 
         let result = service
-            .create_inventory_transaction(stock_out_invalid, Some("test_user".to_string"));
+            .create_inventory_transaction(stock_out_invalid, Some("test_user".to_string()));
+        assert!(result.is_err());
         assert!(result.is_err());
 
         let error = result.unwrap_err();
@@ -1068,8 +1069,8 @@ mod tests {
             material_id: material1.id.clone().unwrap(),
             transaction_type: InventoryTransactionType::StockOut,
             quantity: 25.0,
-            reference_number: Some("SUCCESS-TX"String::from("")),
-            reference_type: Some("Order"String::from("")),
+            reference_number: Some(String::from("SUCCESS-TX")),
+            reference_type: Some(String::from("Order")),
             notes: None,
             unit_cost: None,
             warehouse_id: None,
@@ -1106,7 +1107,8 @@ mod tests {
         };
 
         let result = service
-            .create_inventory_transaction(stock_out_fail, Some("test_user".to_string"));
+            .create_inventory_transaction(stock_out_fail, Some("test_user".to_string()));
+        assert!(result.is_err());
         assert!(result.is_err());
 
         // Verify material1's stock was updated (successful transaction)

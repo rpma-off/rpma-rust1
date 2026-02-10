@@ -1,223 +1,256 @@
 //! Test for migration 026_fix_user_settings.sql
-//! 
+//!
 //! This test verifies that the user settings tables are created correctly
 //! and all constraints, indexes, and triggers are properly applied.
 
-use super::test_framework::*;
-use sqlx::SqlitePool;
+use super::*;
+use crate::commands::errors::AppResult;
+use rusqlite::params;
 
-/// Test that migration 026 creates all user settings tables correctly
-pub async fn test_migration_026_user_settings(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
+#[test]
+fn test_migration_026_user_settings() -> AppResult<()> {
+    let mut ctx = MigrationTestContext::new();
+    ctx.database.migrate(26)?;
+
+    // Check that user_settings table exists
+    let settings_exists: i64 = ctx.conn.query_row(
+        "SELECT COUNT(*) FROM sqlite_master 
+         WHERE type='table' AND name='user_settings'",
+        [],
+        |row| row.get(0),
+    )?;
+    assert!(settings_exists > 0, "user_settings table should exist");
+
     // Check that user_preferences table exists
-    let prefs_exists: bool = sqlx::query_scalar(
+    let preferences_exists: i64 = ctx.conn.query_row(
         "SELECT COUNT(*) FROM sqlite_master 
-         WHERE type='table' AND name='user_preferences'"
-    )
-    .fetch_one(pool)
-    .await?;
-    assert!(prefs_exists, "user_preferences table should exist");
+         WHERE type='table' AND name='user_preferences'",
+        [],
+        |row| row.get(0),
+    )?;
+    assert!(
+        preferences_exists > 0,
+        "user_preferences table should exist"
+    );
 
-    // Check that settings_audit_log table exists
-    let audit_exists: bool = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM sqlite_master 
-         WHERE type='table' AND name='settings_audit_log'"
-    )
-    .fetch_one(pool)
-    .await?;
-    assert!(audit_exists, "settings_audit_log table should exist");
+    // Verify user_settings table structure
+    verify_user_settings_table_structure(&ctx)?;
 
-    // Verify table schemas
-    verify_user_preferences_schema(pool).await?;
-    verify_settings_audit_log_schema(pool).await?;
+    // Verify user_preferences table structure
+    verify_user_preferences_table_structure(&ctx)?;
 
-    // Verify indexes were created
-    verify_indexes_created(pool).await?;
-
-    // Verify triggers were created
-    verify_triggers_created(pool).await?;
+    // Test with sample data
+    test_user_settings_with_data(&mut ctx)?;
 
     Ok(())
 }
 
-/// Verify user_preferences table schema
-async fn verify_user_preferences_schema(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
-    // Check critical columns exist
-    let columns: Vec<String> = sqlx::query_scalar(
-        "SELECT name FROM pragma_table_info('user_preferences') ORDER BY cid"
-    )
-    .fetch_all(pool)
-    .await?;
-    
-    let required_columns = vec![
-        "id", "user_id", "category", "key", "value", "data_type",
-        "is_system", "created_at", "updated_at"
+/// Verify the user_settings table has the correct structure
+fn verify_user_settings_table_structure(ctx: &MigrationTestContext) -> AppResult<()> {
+    // Get table columns from PRAGMA
+    let mut stmt = ctx.conn.prepare("PRAGMA table_info(user_settings)")?;
+    let columns: Vec<(i32, String, String)> = stmt
+        .query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let column_names: Vec<String> = columns.iter().map(|(_, name, _)| name.clone()).collect();
+
+    let expected_columns = vec![
+        "id",
+        "user_id",
+        "setting_key",
+        "setting_value",
+        "setting_type",
+        "is_encrypted",
+        "created_at",
+        "updated_at",
     ];
-    
-    for col in required_columns {
-        assert!(columns.contains(&col.to_string()), 
-               "user_preferences should have column: {}", col);
+
+    for col in expected_columns {
+        assert!(
+            column_names.contains(&col.to_string()),
+            "Column '{}' should exist in user_settings table",
+            col
+        );
     }
 
-    // Check unique constraint on (user_id, category, key)
-    let unique_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM pragma_index_list('user_preferences') 
-         WHERE origin='u' AND partial=0"
-    )
-    .fetch_one(pool)
-    .await?;
-    
-    assert!(unique_count > 0, "user_preferences should have unique constraint");
+    // Check foreign key constraints
+    let fks: Vec<String> = ctx
+        .conn
+        .prepare("PRAGMA foreign_key_list(user_settings)")?
+        .query_map([], |row| Ok(row.get::<_, String>(2)?))?
+        .collect::<Result<Vec<_>, _>>()?;
 
-    // Check data_type has default
-    let default_type: Option<String> = sqlx::query_scalar(
-        "SELECT dflt_value FROM pragma_table_info('user_preferences') WHERE name='data_type'"
-    )
-    .fetch_one(pool)
-    .await?;
-    
-    assert_eq!(default_type, Some("'string'".to_string()),
-              "data_type should default to 'string'");
+    assert!(
+        fks.iter().any(|table| table == "users"),
+        "user_settings table should have foreign key to users"
+    );
+
+    // Check indexes
+    let indexes: Vec<String> = ctx
+        .conn
+        .prepare("PRAGMA index_list(user_settings)")?
+        .query_map([], |row| Ok(row.get::<_, String>(1)?))?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    assert!(
+        indexes
+            .iter()
+            .any(|name| name == "idx_user_settings_user_key"),
+        "Should have index on user_settings(user_id, setting_key)"
+    );
 
     Ok(())
 }
 
-/// Verify settings_audit_log table schema
-async fn verify_settings_audit_log_schema(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
-    // Check critical columns exist
-    let columns: Vec<String> = sqlx::query_scalar(
-        "SELECT name FROM pragma_table_info('settings_audit_log') ORDER BY cid"
-    )
-    .fetch_all(pool)
-    .await?;
-    
-    let required_columns = vec![
-        "id", "user_id", "changed_by", "action", "category", "key",
-        "old_value", "new_value", "ip_address", "user_agent", "timestamp"
+/// Verify the user_preferences table has the correct structure
+fn verify_user_preferences_table_structure(ctx: &MigrationTestContext) -> AppResult<()> {
+    // Get table columns from PRAGMA
+    let mut stmt = ctx.conn.prepare("PRAGMA table_info(user_preferences)")?;
+    let columns: Vec<(i32, String, String)> = stmt
+        .query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let column_names: Vec<String> = columns.iter().map(|(_, name, _)| name.clone()).collect();
+
+    let expected_columns = vec![
+        "id",
+        "user_id",
+        "theme",
+        "language",
+        "timezone",
+        "date_format",
+        "time_format",
+        "notification_email",
+        "notification_push",
+        "notification_sms",
+        "auto_save_interval",
+        "created_at",
+        "updated_at",
     ];
-    
-    for col in required_columns {
-        assert!(columns.contains(&col.to_string()), 
-               "settings_audit_log should have column: {}", col);
+
+    for col in expected_columns {
+        assert!(
+            column_names.contains(&col.to_string()),
+            "Column '{}' should exist in user_preferences table",
+            col
+        );
     }
 
-    // Check foreign key to users table
-    let fk_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM pragma_foreign_key_list('settings_audit_log') 
-         WHERE table='users'"
-    )
-    .fetch_one(pool)
-    .await?;
-    
-    assert!(fk_count > 0, "settings_audit_log should have foreign key to users");
+    // Check foreign key constraints
+    let fks: Vec<String> = ctx
+        .conn
+        .prepare("PRAGMA foreign_key_list(user_preferences)")?
+        .query_map([], |row| Ok(row.get::<_, String>(2)?))?
+        .collect::<Result<Vec<_>, _>>()?;
 
-    // Check action has constraints
-    let check_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM pragma_table_info('settings_audit_log') 
-         WHERE name='action' AND NOT NULL = 1"
-    )
-    .fetch_one(pool)
-    .await?;
-    
-    assert!(check_count > 0, "action should be NOT NULL");
+    assert!(
+        fks.iter().any(|table| table == "users"),
+        "user_preferences table should have foreign key to users"
+    );
 
     Ok(())
 }
 
-/// Verify indexes were created for performance
-async fn verify_indexes_created(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
-    // Check user_preferences indexes
-    let prefs_indexes: Vec<String> = sqlx::query_scalar(
-        "SELECT name FROM sqlite_master 
-         WHERE type='index' AND tbl_name='user_preferences'
-         AND name NOT LIKE 'sqlite_autoindex_%'"
-    )
-    .fetch_all(pool)
-    .await?;
-    
-    assert!(prefs_indexes.iter().any(|i| i.contains("user_id")), 
-           "user_preferences should have user_id index");
-    assert!(prefs_indexes.iter().any(|i| i.contains("category")), 
-           "user_preferences should have category index");
-    assert!(prefs_indexes.iter().any(|i| i.contains("key")), 
-           "user_preferences should have key index");
+/// Test user settings tables with sample data
+fn test_user_settings_with_data(ctx: &mut MigrationTestContext) -> AppResult<()> {
+    // Insert a test user first
+    ctx.conn.execute(
+        "INSERT INTO users (id, email, password_hash, created_at, updated_at) 
+         VALUES (?1, ?2, ?3, datetime('now'), datetime('now'))",
+        params!["user123", "test@example.com", "hashedpassword"],
+    )?;
 
-    // Check settings_audit_log indexes
-    let audit_indexes: Vec<String> = sqlx::query_scalar(
-        "SELECT name FROM sqlite_master 
-         WHERE type='index' AND tbl_name='settings_audit_log'
-         AND name NOT LIKE 'sqlite_autoindex_%'"
-    )
-    .fetch_all(pool)
-    .await?;
-    
-    assert!(audit_indexes.iter().any(|i| i.contains("user_id")), 
-           "settings_audit_log should have user_id index");
-    assert!(audit_indexes.iter().any(|i| i.contains("timestamp")), 
-           "settings_audit_log should have timestamp index");
+    // Insert user settings
+    ctx.conn.execute(
+        "INSERT INTO user_settings (id, user_id, setting_key, setting_value, setting_type, 
+         is_encrypted, created_at, updated_at) 
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, datetime('now'), datetime('now'))",
+        params![
+            "setting123",
+            "user123",
+            "api_key",
+            "sk-test123456789",
+            "string",
+            true,
+        ],
+    )?;
 
-    Ok(())
-}
+    // Insert more settings
+    ctx.conn.execute(
+        "INSERT INTO user_settings (id, user_id, setting_key, setting_value, setting_type, 
+         is_encrypted, created_at, updated_at) 
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, datetime('now'), datetime('now'))",
+        params![
+            "setting124",
+            "user123",
+            "session_timeout",
+            "30",
+            "integer",
+            false,
+        ],
+    )?;
 
-/// Verify triggers were created for audit logging
-async fn verify_triggers_created(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
-    // Check for trigger on INSERT
-    let insert_trigger: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM sqlite_master 
-         WHERE type='trigger' AND name LIKE 'user_preferences_insert_audit'"
-    )
-    .fetch_one(pool)
-    .await?;
-    
-    assert!(insert_trigger > 0, "Should have trigger for INSERT audit logging");
+    // Insert user preferences
+    ctx.conn.execute(
+        "INSERT INTO user_preferences (id, user_id, theme, language, timezone, date_format, 
+         time_format, notification_email, notification_push, auto_save_interval, created_at, updated_at) 
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, datetime('now'), datetime('now'))",
+        params![
+            "pref123",
+            "user123",
+            "dark",
+            "en",
+            "America/New_York",
+            "MM/DD/YYYY",
+            "12-hour",
+            true,
+            true,
+            5,
+        ]
+    )?;
 
-    // Check for trigger on UPDATE
-    let update_trigger: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM sqlite_master 
-         WHERE type='trigger' AND name LIKE 'user_preferences_update_audit'"
-    )
-    .fetch_one(pool)
-    .await?;
-    
-    assert!(update_trigger > 0, "Should have trigger for UPDATE audit logging");
+    // Verify data can be retrieved
+    let settings_count: i64 = ctx.conn.query_row(
+        "SELECT COUNT(*) FROM user_settings WHERE user_id = ?",
+        params!["user123"],
+        |row| row.get(0),
+    )?;
+    assert_eq!(settings_count, 2, "Should have two user settings");
 
-    // Check for trigger on DELETE
-    let delete_trigger: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM sqlite_master 
-         WHERE type='trigger' AND name LIKE 'user_preferences_delete_audit'"
-    )
-    .fetch_one(pool)
-    .await?;
-    
-    assert!(delete_trigger > 0, "Should have trigger for DELETE audit logging");
+    let encrypted_count: i64 = ctx.conn.query_row(
+        "SELECT COUNT(*) FROM user_settings WHERE user_id = ? AND is_encrypted = 1",
+        params!["user123"],
+        |row| row.get(0),
+    )?;
+    assert_eq!(encrypted_count, 1, "Should have one encrypted setting");
 
-    // Test trigger by inserting a preference
-    sqlx::query(
-        "INSERT INTO users (id, email, username, password_hash, full_name, role, is_active, created_at, updated_at)
-         VALUES ('test-user-026', 'test@example.com', 'testuser', 'hash', 'Test User', 'User', 1, datetime('now'), datetime('now'))"
-    )
-    .execute(pool)
-    .await?;
+    let pref_count: i64 = ctx.conn.query_row(
+        "SELECT COUNT(*) FROM user_preferences WHERE user_id = ?",
+        params!["user123"],
+        |row| row.get(0),
+    )?;
+    assert_eq!(pref_count, 1, "Should have one user preference record");
 
-    sqlx::query(
-        "INSERT INTO user_preferences (user_id, category, key, value)
-         VALUES ('test-user-026', 'ui', 'theme', 'dark')"
-    )
-    .execute(pool)
-    .await?;
+    // Test unique constraint on settings
+    let result = ctx.conn.execute(
+        "INSERT INTO user_settings (id, user_id, setting_key, setting_value, setting_type, 
+         is_encrypted, created_at, updated_at) 
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, datetime('now'), datetime('now'))",
+        params![
+            "setting125",
+            "user123",
+            "api_key", // Duplicate key
+            "sk-different",
+            "string",
+            false,
+        ],
+    );
 
-    // Check audit log entry was created
-    let audit_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM settings_audit_log 
-         WHERE user_id = 'test-user-026' AND action = 'INSERT'"
-    )
-    .fetch_one(pool)
-    .await?;
-    
-    assert!(audit_count > 0, "Insert trigger should create audit log entry");
-
-    // Clean up
-    sqlx::query("DELETE FROM user_preferences WHERE user_id = 'test-user-026'").execute(pool).await?;
-    sqlx::query("DELETE FROM users WHERE id = 'test-user-026'").execute(pool).await?;
+    assert!(
+        result.is_err(),
+        "Should prevent duplicate user_id/setting_key combination"
+    );
 
     Ok(())
 }

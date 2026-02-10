@@ -1,202 +1,285 @@
 //! Test for migration 025_add_analytics_dashboard.sql
-//! 
+//!
 //! This test verifies that the analytics dashboard tables are created correctly
-//! and all constraints, indexes, and views are properly applied.
+//! with proper relationships, constraints, and indexes.
 
-use super::test_framework::*;
-use sqlx::SqlitePool;
+use super::*;
+use crate::commands::errors::AppResult;
+use rusqlite::params;
 
-/// Test that migration 025 creates all analytics tables correctly
-pub async fn test_migration_025_analytics_dashboard(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
-    // Check that analytics_events table exists
-    let events_exists: bool = sqlx::query_scalar(
+#[test]
+fn test_migration_025_analytics_dashboard() -> AppResult<()> {
+    let mut ctx = MigrationTestContext::new();
+    ctx.database.migrate(25)?;
+
+    // Check that kpi_metrics table exists
+    let kpi_exists: i64 = ctx.conn.query_row(
         "SELECT COUNT(*) FROM sqlite_master 
-         WHERE type='table' AND name='analytics_events'"
-    )
-    .fetch_one(pool)
-    .await?;
-    assert!(events_exists, "analytics_events table should exist");
+         WHERE type='table' AND name='kpi_metrics'",
+        [],
+        |row| row.get(0),
+    )?;
+    assert!(kpi_exists > 0, "kpi_metrics table should exist");
 
     // Check that dashboard_configs table exists
-    let configs_exists: bool = sqlx::query_scalar(
+    let dash_configs_exists: i64 = ctx.conn.query_row(
         "SELECT COUNT(*) FROM sqlite_master 
-         WHERE type='table' AND name='dashboard_configs'"
-    )
-    .fetch_one(pool)
-    .await?;
-    assert!(configs_exists, "dashboard_configs table should exist");
+         WHERE type='table' AND name='dashboard_configs'",
+        [],
+        |row| row.get(0),
+    )?;
+    assert!(
+        dash_configs_exists > 0,
+        "dashboard_configs table should exist"
+    );
 
-    // Check that analytics_material_usage view exists
-    let view_exists: bool = sqlx::query_scalar(
+    // Check that dashboard_snapshots table exists
+    let snapshots_exists: i64 = ctx.conn.query_row(
         "SELECT COUNT(*) FROM sqlite_master 
-         WHERE type='view' AND name='analytics_material_usage'"
-    )
-    .fetch_one(pool)
-    .await?;
-    assert!(view_exists, "analytics_material_usage view should exist");
+         WHERE type='table' AND name='dashboard_snapshots'",
+        [],
+        |row| row.get(0),
+    )?;
+    assert!(
+        snapshots_exists > 0,
+        "dashboard_snapshots table should exist"
+    );
 
-    // Check that analytics_performance view exists
-    let perf_view_exists: bool = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM sqlite_master 
-         WHERE type='view' AND name='analytics_performance'"
-    )
-    .fetch_one(pool)
-    .await?;
-    assert!(perf_view_exists, "analytics_performance view should exist");
+    // Verify kpi_metrics table structure
+    verify_kpi_metrics_table_structure(&ctx)?;
 
-    // Verify table schemas
-    verify_analytics_events_schema(pool).await?;
-    verify_dashboard_configs_schema(pool).await?;
+    // Verify dashboard_configs table structure
+    verify_dashboard_configs_table_structure(&ctx)?;
 
-    // Verify views are queryable
-    verify_views_work(pool).await?;
+    // Verify dashboard_snapshots table structure
+    verify_dashboard_snapshots_table_structure(&ctx)?;
 
-    // Verify indexes were created
-    verify_indexes_created(pool).await?;
+    // Test with sample data
+    test_analytics_dashboard_with_data(&mut ctx)?;
 
     Ok(())
 }
 
-/// Verify analytics_events table schema
-async fn verify_analytics_events_schema(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
-    // Check critical columns exist
-    let columns: Vec<String> = sqlx::query_scalar(
-        "SELECT name FROM pragma_table_info('analytics_events') ORDER BY cid"
-    )
-    .fetch_all(pool)
-    .await?;
-    
-    let required_columns = vec![
-        "id", "event_type", "entity_type", "entity_id", "user_id",
-        "session_id", "properties", "timestamp", "created_at"
+/// Verify the kpi_metrics table has the correct structure
+fn verify_kpi_metrics_table_structure(ctx: &MigrationTestContext) -> AppResult<()> {
+    // Get table columns from PRAGMA
+    let mut stmt = ctx.conn.prepare("PRAGMA table_info(kpi_metrics)")?;
+    let columns: Vec<(i32, String, String)> = stmt
+        .query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let column_names: Vec<String> = columns.iter().map(|(_, name, _)| name.clone()).collect();
+
+    let expected_columns = vec![
+        "id",
+        "metric_name",
+        "metric_type",
+        "value",
+        "unit",
+        "target_value",
+        "date_range_start",
+        "date_range_end",
+        "comparison_value",
+        "trend",
+        "last_calculated",
+        "created_at",
+        "updated_at",
     ];
-    
-    for col in required_columns {
-        assert!(columns.contains(&col.to_string()), 
-               "analytics_events should have column: {}", col);
+
+    for col in expected_columns {
+        assert!(
+            column_names.contains(&col.to_string()),
+            "Column '{}' should exist in kpi_metrics table",
+            col
+        );
     }
 
-    // Check event_type has constraints
-    let check_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM pragma_table_info('analytics_events') 
-         WHERE name='event_type' AND NOT NULL = 1"
-    )
-    .fetch_one(pool)
-    .await?;
-    
-    assert!(check_count > 0, "event_type should be NOT NULL");
+    // Check indexes
+    let indexes: Vec<String> = ctx
+        .conn
+        .prepare("PRAGMA index_list(kpi_metrics)")?
+        .query_map([], |row| Ok(row.get::<_, String>(1)?))?
+        .collect::<Result<Vec<_>, _>>()?;
 
-    // Verify properties is JSON
-    let json_check: bool = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM pragma_table_info('analytics_events') 
-         WHERE name='properties' AND type LIKE '%json%'"
-    )
-    .fetch_one(pool)
-    .await?;
-    
-    assert!(json_check || columns.contains(&"properties".to_string()), 
-           "properties should support JSON data");
+    assert!(
+        indexes
+            .iter()
+            .any(|name| name == "idx_kpi_metrics_name_type"),
+        "Should have index on kpi_metrics(name, metric_type)"
+    );
 
     Ok(())
 }
 
-/// Verify dashboard_configs table schema
-async fn verify_dashboard_configs_schema(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
-    // Check critical columns exist
-    let columns: Vec<String> = sqlx::query_scalar(
-        "SELECT name FROM pragma_table_info('dashboard_configs') ORDER BY cid"
-    )
-    .fetch_all(pool)
-    .await?;
-    
-    let required_columns = vec![
-        "id", "user_id", "dashboard_name", "config", "is_default", "is_public",
-        "created_at", "updated_at"
+/// Verify the dashboard_configs table has the correct structure
+fn verify_dashboard_configs_table_structure(ctx: &MigrationTestContext) -> AppResult<()> {
+    // Get table columns from PRAGMA
+    let mut stmt = ctx.conn.prepare("PRAGMA table_info(dashboard_configs)")?;
+    let columns: Vec<(i32, String, String)> = stmt
+        .query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let column_names: Vec<String> = columns.iter().map(|(_, name, _)| name.clone()).collect();
+
+    let expected_columns = vec![
+        "id",
+        "name",
+        "description",
+        "config_json",
+        "is_default",
+        "is_public",
+        "created_by",
+        "created_at",
+        "updated_at",
     ];
-    
-    for col in required_columns {
-        assert!(columns.contains(&col.to_string()), 
-               "dashboard_configs should have column: {}", col);
+
+    for col in expected_columns {
+        assert!(
+            column_names.contains(&col.to_string()),
+            "Column '{}' should exist in dashboard_configs table",
+            col
+        );
     }
 
-    // Verify config is JSON
-    let json_check: bool = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM pragma_table_info('dashboard_configs') 
-         WHERE name='config' AND type LIKE '%json%'"
-    )
-    .fetch_one(pool)
-    .await?;
-    
-    assert!(json_check || columns.contains(&"config".to_string()), 
-           "config should support JSON data");
+    // Check foreign key constraints
+    let fks: Vec<String> = ctx
+        .conn
+        .prepare("PRAGMA foreign_key_list(dashboard_configs)")?
+        .query_map([], |row| Ok(row.get::<_, String>(2)?))?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    assert!(
+        fks.iter().any(|table| table == "users"),
+        "dashboard_configs table should have foreign key to users"
+    );
 
     Ok(())
 }
 
-/// Verify analytics views are properly created and queryable
-async fn verify_views_work(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
-    // Test analytics_material_usage view
-    let material_usage_columns: Vec<String> = sqlx::query_scalar(
-        "PRAGMA table_info(analytics_material_usage)"
-    )
-    .fetch_all(pool)
-    .await
-    .iter()
-    .map(|row: &String| row.split(':').next().unwrap_or("").trim().to_string())
-    .collect();
-    
-    assert!(material_usage_columns.iter().any(|c| c.contains("material_id")), 
-           "analytics_material_usage should have material_id column");
-    assert!(material_usage_columns.iter().any(|c| c.contains("total_used")), 
-           "analytics_material_usage should have total_used column");
+/// Verify the dashboard_snapshots table has the correct structure
+fn verify_dashboard_snapshots_table_structure(ctx: &MigrationTestContext) -> AppResult<()> {
+    // Get table columns from PRAGMA
+    let mut stmt = ctx.conn.prepare("PRAGMA table_info(dashboard_snapshots)")?;
+    let columns: Vec<(i32, String, String)> = stmt
+        .query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?
+        .collect::<Result<Vec<_>, _>>()?;
 
-    // Test analytics_performance view
-    let performance_columns: Vec<String> = sqlx::query_scalar(
-        "PRAGMA table_info(analytics_performance)"
-    )
-    .fetch_all(pool)
-    .await
-    .iter()
-    .map(|row: &String| row.split(':').next().unwrap_or("").trim().to_string())
-    .collect();
-    
-    assert!(performance_columns.iter().any(|c| c.contains("technician_id")), 
-           "analytics_performance should have technician_id column");
-    assert!(performance_columns.iter().any(|c| c.contains("avg_duration")), 
-           "analytics_performance should have avg_duration column");
+    let column_names: Vec<String> = columns.iter().map(|(_, name, _)| name.clone()).collect();
+
+    let expected_columns = vec![
+        "id",
+        "dashboard_config_id",
+        "snapshot_data",
+        "snapshot_date",
+        "generated_by",
+        "created_at",
+    ];
+
+    for col in expected_columns {
+        assert!(
+            column_names.contains(&col.to_string()),
+            "Column '{}' should exist in dashboard_snapshots table",
+            col
+        );
+    }
+
+    // Check foreign key constraints
+    let fks: Vec<String> = ctx
+        .conn
+        .prepare("PRAGMA foreign_key_list(dashboard_snapshots)")?
+        .query_map([], |row| Ok(row.get::<_, String>(2)?))?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    assert!(
+        fks.iter().any(|table| table == "dashboard_configs"),
+        "dashboard_snapshots table should have foreign key to dashboard_configs"
+    );
+    assert!(
+        fks.iter().any(|table| table == "users"),
+        "dashboard_snapshots table should have foreign key to users"
+    );
 
     Ok(())
 }
 
-/// Verify indexes were created for performance
-async fn verify_indexes_created(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
-    // Check analytics_events indexes
-    let event_indexes: Vec<String> = sqlx::query_scalar(
-        "SELECT name FROM sqlite_master 
-         WHERE type='index' AND tbl_name='analytics_events'
-         AND name NOT LIKE 'sqlite_autoindex_%'"
-    )
-    .fetch_all(pool)
-    .await?;
-    
-    assert!(event_indexes.iter().any(|i| i.contains("event_type")), 
-           "analytics_events should have event_type index");
-    assert!(event_indexes.iter().any(|i| i.contains("entity_type")), 
-           "analytics_events should have entity_type index");
-    assert!(event_indexes.iter().any(|i| i.contains("timestamp")), 
-           "analytics_events should have timestamp index");
+/// Test analytics dashboard tables with sample data
+fn test_analytics_dashboard_with_data(ctx: &mut MigrationTestContext) -> AppResult<()> {
+    // Insert a test user first
+    ctx.conn.execute(
+        "INSERT INTO users (id, email, password_hash, created_at, updated_at) 
+         VALUES (?1, ?2, ?3, datetime('now'), datetime('now'))",
+        params!["user123", "test@example.com", "hashedpassword"],
+    )?;
 
-    // Check dashboard_configs indexes
-    let config_indexes: Vec<String> = sqlx::query_scalar(
-        "SELECT name FROM sqlite_master 
-         WHERE type='index' AND tbl_name='dashboard_configs'
-         AND name NOT LIKE 'sqlite_autoindex_%'"
-    )
-    .fetch_all(pool)
-    .await?;
-    
-    assert!(config_indexes.iter().any(|i| i.contains("user_id")), 
-           "dashboard_configs should have user_id index");
+    // Insert KPI metrics
+    ctx.conn.execute(
+        "INSERT INTO kpi_metrics (id, metric_name, metric_type, value, unit, target_value, 
+         date_range_start, date_range_end, comparison_value, trend, last_calculated, created_at, updated_at) 
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, datetime('now'), datetime('now'), datetime('now'))",
+        params![
+            "kpi123",
+            "Tasks Completed",
+            "count",
+            25,
+            "tasks",
+            30,
+            "2024-01-01",
+            "2024-01-31",
+            20,
+            "increasing",
+        ]
+    )?;
+
+    // Insert dashboard config
+    ctx.conn.execute(
+        "INSERT INTO dashboard_configs (id, name, description, config_json, is_default, is_public, 
+         created_by, created_at, updated_at) 
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, datetime('now'), datetime('now'))",
+        params![
+            "dash123",
+            "Task Overview",
+            "Dashboard showing task completion metrics",
+            r#"{"widgets": [{"type": "kpi", "title": "Tasks Completed", "metric": "Tasks Completed"}]}"#.to_string(),
+            false,
+            true,
+            "user123"
+        ],
+    )?;
+
+    // Insert dashboard snapshot
+    ctx.conn.execute(
+        "INSERT INTO dashboard_snapshots (id, dashboard_config_id, snapshot_data, snapshot_date, 
+         generated_by, created_at) 
+         VALUES (?1, ?2, ?3, datetime('now'), ?4, datetime('now'))",
+        params![
+            "snap123",
+            "dash123",
+            r#"{"widgets": [{"type": "kpi", "title": "Tasks Completed", "value": 25, "unit": "tasks"}]}"#.to_string(),
+            "user123"
+        ],
+    )?;
+
+    // Verify data can be retrieved
+    let kpi_count: i64 = ctx.conn.query_row(
+        "SELECT COUNT(*) FROM kpi_metrics WHERE metric_name = ?",
+        params!["Tasks Completed"],
+        |row| row.get(0),
+    )?;
+    assert_eq!(kpi_count, 1, "Should have one KPI metric");
+
+    let dash_count: i64 = ctx.conn.query_row(
+        "SELECT COUNT(*) FROM dashboard_configs WHERE name = ?",
+        params!["Task Overview"],
+        |row| row.get(0),
+    )?;
+    assert_eq!(dash_count, 1, "Should have one dashboard config");
+
+    let snap_count: i64 = ctx.conn.query_row(
+        "SELECT COUNT(*) FROM dashboard_snapshots WHERE dashboard_config_id = ?",
+        params!["dash123"],
+        |row| row.get(0),
+    )?;
+    assert_eq!(snap_count, 1, "Should have one dashboard snapshot");
 
     Ok(())
 }

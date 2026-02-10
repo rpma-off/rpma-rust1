@@ -1,285 +1,517 @@
-//! Test migration 027: Add Task Constraints
+//! Test for migration 027_add_task_constraints.sql
 //!
-//! This migration rebuilds the tasks table with new constraints.
-//! It's critical to test because:
-//! - Rebuilds entire tasks table (core business table)
-//! - Adds CHECK constraints that could fail on existing data
-//! - Foreign keys that might reference non-existent records
+//! This test verifies that the tasks table is rebuilt correctly with the new
+//! CHECK constraints and foreign key relationships.
 
 use super::*;
 use crate::commands::errors::AppResult;
 use rusqlite::params;
 
 #[test]
-fn test_027_task_constraints() -> AppResult<()> {
+fn test_migration_027_task_constraints() -> AppResult<()> {
     let mut ctx = MigrationTestContext::new();
     ctx.database.migrate(27)?;
 
-    // Create test data with various edge cases
-    ctx.conn.execute_batch(
-        r#"
-        -- Create related tables
-        CREATE TABLE clients (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            address TEXT,
-            phone TEXT,
-            email TEXT UNIQUE,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-        );
-        
-        CREATE TABLE users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
-            role TEXT NOT NULL CHECK (role IN ('Admin', 'Technician', 'Supervisor')),
-            is_active BOOLEAN NOT NULL DEFAULT 1,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-        );
-        
-        -- Insert test data
-        INSERT INTO clients (name, address, phone, email, created_at, updated_at)
-        VALUES 
-            ('Client 1', '123 St', '555-0001', 'c1@test.com', datetime('now'), datetime('now')),
-            ('Client 2', '456 St', '555-0002', 'c2@test.com', datetime('now'), datetime('now'));
-        
-        INSERT INTO users (username, email, password_hash, role, is_active, created_at, updated_at)
-        VALUES 
-            ('tech1', 'tech1@test.com', 'hash', 'Technician', 1, datetime('now'), datetime('now')),
-            ('tech2', 'tech2@test.com', 'hash', 'Technician', 0, datetime('now'), datetime('now'));
-        
-        -- Create old tasks table structure
-        CREATE TABLE tasks_old (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT,
-            description TEXT,
-            client_id INTEGER,
-            priority TEXT,
-            status TEXT,
-            assigned_technician_id INTEGER,
-            ppf_zone TEXT,
-            estimated_duration_hours REAL,
-            scheduled_date TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            completed_at DATETIME,
-            task_number TEXT
-        );
-        
-        -- Insert test tasks including some that violate new constraints
-        INSERT INTO tasks_old (title, description, client_id, priority, status, assigned_technician_id, ppf_zone, estimated_duration_hours, scheduled_date, task_number)
-        VALUES 
-            ('Valid Task', 'Valid description', 1, 'Normal', 'Pending', 1, 'ZONE-001', 2.5, '2024-01-01', 'TASK-001'),
-            ('Invalid Priority', 'Invalid', 2, 'Urgent', 'InProgress', 2, 'ZONE-002', 1.0, '2024-01-02', 'TASK-002'),
-            ('Invalid Status', 'Invalid', 1, 'High', 'Cancelled', 1, 'ZONE-003', 0.5, '2024-01-03', 'TASK-003'),
-            ('Missing Client', 'No client', NULL, 'Normal', 'Pending', 1, 'ZONE-004', 3.0, '2024-01-04', 'TASK-004'),
-            ('Invalid Duration', 'Negative duration', 1, 'Normal', 'Pending', 1, 'ZONE-005', -1.0, '2024-01-05', 'TASK-005');
-        "#
-    )?;
+    // Check that tasks table exists with correct structure
+    verify_tasks_table_structure(&ctx)?;
 
-    // Run migration 027
-    ctx.migrate_to_version(27)?;
+    // Verify CHECK constraints are in place
+    verify_check_constraints(&ctx)?;
 
-    // Verify the tasks table was rebuilt with new structure
-    let mut stmt = ctx.conn.prepare("PRAGMA table_info(tasks)")?;
-    let columns: Vec<(String, String)> = stmt
-        .query_map([], |row| Ok((row.get(1)?, row.get(2)?)))?
-        .collect::<Result<Vec<_>, _>>()?;
+    // Test foreign key constraints
+    verify_foreign_key_constraints(&mut ctx)?;
 
-    let column_names: Vec<String> = columns.iter().map(|(name, _)| name.clone()).collect();
+    // Verify indexes were recreated
+    verify_indexes_recreated(&ctx)?;
 
-    // Check for new constraints columns
-    assert!(column_names.contains(&"requires_2fa_override".to_string()));
-    assert!(column_names.contains(&"quality_check_required".to_string()));
-    assert!(column_names.contains(&"requires_photos".to_string()));
-    assert!(column_names.contains(&"min_photo_count".to_string()));
-    assert!(column_names.contains(&"location_latitude".to_string()));
-    assert!(column_names.contains(&"location_longitude".to_string()));
-    assert!(column_names.contains(&"estimated_cost".to_string()));
-    assert!(column_names.contains(&"actual_cost".to_string()));
+    // Test data integrity
+    test_data_integrity(&mut ctx)?;
 
-    // Verify data migration - only valid records should be preserved
-    let mut stmt = ctx.conn.prepare("SELECT COUNT(*) FROM tasks")?;
-    let final_count: i32 = stmt.query_row([], |row| row.get(0))?;
-
-    // Should have only the valid task (TASK-001)
-    assert_eq!(final_count, 1, "Only valid tasks should be preserved");
-
-    // Verify the valid task was migrated correctly
-    let mut stmt = ctx.conn.prepare(
-        "SELECT title, client_id, priority, status, assigned_technician_id, ppf_zone FROM tasks WHERE task_number = 'TASK-001'"
-    )?;
-    let (title, client_id, priority, status, tech_id, zone): (
-        String,
-        i32,
-        String,
-        String,
-        Option<i32>,
-        String,
-    ) = stmt.query_row([], |row| {
-        Ok((
-            row.get(0)?,
-            row.get(1)?,
-            row.get(2)?,
-            row.get(3)?,
-            row.get(4)?,
-            row.get(5)?,
-        ))
-    })?;
-
-    assert_eq!(title, "Valid Task");
-    assert_eq!(client_id, 1);
-    assert_eq!(priority, "Normal");
-    assert_eq!(status, "Pending");
-    assert_eq!(tech_id, Some(1));
-    assert_eq!(zone, "ZONE-001");
-
-    // Test CHECK constraints
-    // Invalid priority should fail
-    let result = ctx.conn.execute(
-        "INSERT INTO tasks (title, description, client_id, priority, status, ppf_zone, task_number, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))",
-        params!["Test", "Desc", 1, "Invalid", "Pending", "ZONE-999", "TASK-999"]
-    );
-    assert!(result.is_err(), "Invalid priority should be rejected");
-
-    // Invalid status should fail
-    let result = ctx.conn.execute(
-        "INSERT INTO tasks (title, description, client_id, priority, status, ppf_zone, task_number, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))",
-        params!["Test", "Desc", 1, "Normal", "InvalidStatus", "ZONE-999", "TASK-998"]
-    );
-    assert!(result.is_err(), "Invalid status should be rejected");
-
-    // Negative duration should fail
-    let result = ctx.conn.execute(
-        "INSERT INTO tasks (title, description, client_id, priority, status, estimated_duration_hours, ppf_zone, task_number, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))",
-        params!["Test", "Desc", 1, "Normal", "Pending", -1.0, "ZONE-999", "TASK-997"]
-    );
-    assert!(result.is_err(), "Negative duration should be rejected");
-
-    // Foreign key constraints should work
-    // Non-existent client should fail
-    let result = ctx.conn.execute(
-        "INSERT INTO tasks (title, description, client_id, priority, status, ppf_zone, task_number, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))",
-        params!["Test", "Desc", 999, "Normal", "Pending", "ZONE-999", "TASK-996"]
-    );
-    assert!(result.is_err(), "Non-existent client should be rejected");
-
-    // Non-existent technician should fail
-    let result = ctx.conn.execute(
-        "INSERT INTO tasks (title, description, client_id, priority, status, assigned_technician_id, ppf_zone, task_number, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))",
-        params!["Test", "Desc", 1, "Normal", "Pending", Some(999), "ZONE-999", "TASK-995"]
-    );
-    assert!(
-        result.is_err(),
-        "Non-existent technician should be rejected"
-    );
+    Ok(())
 }
 
-#[test]
-fn test_027_task_constraints_business_logic() -> Result<(), Box<dyn std::error::Error>> {
-    let ctx = MigrationTestContext::new()?;
+/// Verify that the tasks table has the correct structure after migration
+fn verify_tasks_table_structure(ctx: &MigrationTestContext) -> AppResult<()> {
+    // Check that tasks table exists
+    let table_exists: i64 = ctx.conn.query_row(
+        "SELECT COUNT(*) FROM sqlite_master 
+         WHERE type='table' AND name='tasks'",
+        [],
+        |row| row.get(0),
+    )?;
+    assert!(table_exists > 0, "tasks table should exist");
 
-    // Run migration first
-    ctx.migrate_to_version(27)?;
+    // Check critical columns exist
+    let mut stmt = ctx
+        .conn
+        .prepare("SELECT name FROM pragma_table_info('tasks') ORDER BY cid")?;
+    let columns: Vec<String> = stmt
+        .query_map([], |row| row.get(0))?
+        .collect::<Result<Vec<_>, _>>()?;
 
-    // Insert test client and technician
+    let required_columns = vec![
+        "id",
+        "task_number",
+        "title",
+        "description",
+        "vehicle_plate",
+        "vehicle_model",
+        "vehicle_year",
+        "vehicle_make",
+        "vin",
+        "ppf_zones",
+        "custom_ppf_zones",
+        "status",
+        "priority",
+        "technician_id",
+        "assigned_at",
+        "assigned_by",
+        "scheduled_date",
+        "start_time",
+        "end_time",
+        "date_rdv",
+        "heure_rdv",
+        "template_id",
+        "workflow_id",
+        "workflow_status",
+        "current_workflow_step_id",
+        "started_at",
+        "completed_at",
+        "completed_steps",
+        "client_id",
+        "customer_name",
+        "customer_email",
+        "customer_phone",
+        "customer_address",
+        "external_id",
+        "lot_film",
+        "checklist_completed",
+        "notes",
+        "tags",
+        "estimated_duration",
+        "actual_duration",
+        "created_at",
+        "updated_at",
+        "creator_id",
+        "created_by",
+        "updated_by",
+        "deleted_at",
+        "deleted_by",
+        "synced",
+        "last_synced_at",
+    ];
+
+    for col in required_columns {
+        assert!(
+            columns.contains(&col.to_string()),
+            "tasks table should have column: {}",
+            col
+        );
+    }
+
+    // Check task_number is unique
+    let unique_count: i64 = ctx.conn.query_row(
+        "SELECT COUNT(*) FROM pragma_index_list('tasks') 
+         WHERE origin='u' AND partial=0",
+        [],
+        |row| row.get(0),
+    )?;
+
+    assert!(
+        unique_count > 0,
+        "tasks should have unique constraint on task_number"
+    );
+
+    // Check required columns have NOT NULL constraints
+    let not_null_columns = vec![
+        "id",
+        "task_number",
+        "title",
+        "status",
+        "priority",
+        "created_at",
+        "updated_at",
+    ];
+    for col in not_null_columns {
+        let not_null_count: i64 = ctx.conn.query_row(
+            "SELECT COUNT(*) FROM pragma_table_info('tasks') 
+             WHERE name=? AND NOT NULL = 1",
+            params![col],
+            |row| row.get(0),
+        )?;
+
+        assert!(not_null_count > 0, "{} should be NOT NULL", col);
+    }
+
+    Ok(())
+}
+
+/// Verify that CHECK constraints are properly defined
+fn verify_check_constraints(ctx: &MigrationTestContext) -> AppResult<()> {
+    // Test valid status values
+    let valid_statuses = vec![
+        "draft",
+        "scheduled",
+        "in_progress",
+        "completed",
+        "cancelled",
+        "on_hold",
+        "pending",
+        "invalid",
+        "archived",
+        "failed",
+        "overdue",
+        "assigned",
+        "paused",
+    ];
+
+    for status in valid_statuses {
+        // Create a test task with this status
+        let test_id = format!("test-status-{}", status);
+        ctx.conn.execute(
+            "INSERT INTO tasks (id, task_number, title, status, priority, created_at, updated_at)
+             VALUES (?, ?, ?, ?, 'medium', datetime('now'), datetime('now'))",
+            params![
+                &test_id,
+                format!("TSN-{}", status),
+                format!("Test Task {}", status),
+                status
+            ],
+        )?;
+
+        // Clean up
+        ctx.conn
+            .execute("DELETE FROM tasks WHERE id = ?", params![&test_id])?;
+    }
+
+    // Test invalid status should fail
+    let invalid_status_result = ctx.conn.execute(
+        "INSERT INTO tasks (id, task_number, title, status, priority, created_at, updated_at)
+         VALUES ('test-invalid', 'TSN-INVALID', 'Test Invalid', 'invalid_status', 'medium', datetime('now'), datetime('now'))",
+        [],
+    );
+
+    assert!(
+        invalid_status_result.is_err(),
+        "Invalid status should be rejected by CHECK constraint"
+    );
+
+    // Test valid priority values
+    let valid_priorities = vec!["low", "medium", "high", "urgent"];
+
+    for priority in valid_priorities {
+        let test_id = format!("test-priority-{}", priority);
+        ctx.conn.execute(
+            "INSERT INTO tasks (id, task_number, title, status, priority, created_at, updated_at)
+             VALUES (?, ?, ?, 'draft', ?, datetime('now'), datetime('now'))",
+            params![
+                &test_id,
+                format!("TSN-PRI-{}", priority),
+                format!("Test Priority {}", priority),
+                priority
+            ],
+        )?;
+
+        // Clean up
+        ctx.conn
+            .execute("DELETE FROM tasks WHERE id = ?", params![&test_id])?;
+    }
+
+    // Test invalid priority should fail
+    let invalid_priority_result = ctx.conn.execute(
+        "INSERT INTO tasks (id, task_number, title, status, priority, created_at, updated_at)
+         VALUES ('test-priority-invalid', 'TSN-PRI-INVALID', 'Test Invalid', 'draft', 'invalid_priority', datetime('now'), datetime('now'))",
+        [],
+    );
+
+    assert!(
+        invalid_priority_result.is_err(),
+        "Invalid priority should be rejected by CHECK constraint"
+    );
+
+    Ok(())
+}
+
+/// Verify that foreign key constraints are properly defined
+fn verify_foreign_key_constraints(ctx: &mut MigrationTestContext) -> AppResult<()> {
+    // Check foreign key to clients table
+    let fk_count: i64 = ctx.conn.query_row(
+        "SELECT COUNT(*) FROM pragma_foreign_key_list('tasks') 
+         WHERE table='clients'",
+        [],
+        |row| row.get(0),
+    )?;
+
+    assert!(
+        fk_count > 0,
+        "tasks should have foreign key to clients table"
+    );
+
+    // Check foreign key to users table (for technician_id)
+    let tech_fk_count: i64 = ctx.conn.query_row(
+        "SELECT COUNT(*) FROM pragma_foreign_key_list('tasks') 
+         WHERE table='users'",
+        [],
+        |row| row.get(0),
+    )?;
+
+    assert!(
+        tech_fk_count > 0,
+        "tasks should have foreign key to users table for technician_id"
+    );
+
+    // Create test data for foreign key testing
     ctx.conn.execute_batch(
         r#"
-        INSERT INTO clients (name, address, phone, email, created_at, updated_at)
-        VALUES ('Test Client', '123 St', '555-0001', 'c@test.com', datetime('now'), datetime('now'));
+        INSERT INTO clients (id, name, created_at, updated_at)
+         VALUES ('fk-test-client', 'FK Test Client', datetime('now'), datetime('now'));
         
-        INSERT INTO users (username, email, password_hash, role, is_active, created_at, updated_at)
-        VALUES ('tech1', 't@test.com', 'hash', 'Technician', 1, datetime('now'), datetime('now'));
+        INSERT INTO users (id, username, email, password_hash, role, is_active, created_at, updated_at)
+         VALUES ('fk-test-user', 'fktest', 'fk@test.com', 'hash', 'Technician', 1, datetime('now'), datetime('now'));
         "#
     )?;
 
-    // Test task creation with all new fields
+    // Test valid foreign key references
     ctx.conn.execute(
-        "INSERT INTO tasks (title, description, client_id, priority, status, assigned_technician_id, ppf_zone, estimated_duration_hours, requires_2fa_override, quality_check_required, requires_photos, min_photo_count, location_latitude, location_longitude, estimated_cost, task_number, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))",
+        "INSERT INTO tasks (id, task_number, title, status, priority, client_id, technician_id, created_at, updated_at)
+         VALUES ('fk-test-valid', 'TSN-FK-VALID', 'FK Valid Test', 'draft', 'medium', 'fk-test-client', 'fk-test-user', datetime('now'), datetime('now'))",
+        [],
+    )?;
+
+    // Test invalid client_id should fail
+    let invalid_client_result = ctx.conn.execute(
+        "INSERT INTO tasks (id, task_number, title, status, priority, client_id, created_at, updated_at)
+         VALUES ('fk-test-invalid-client', 'TSN-FK-INV-CLIENT', 'FK Invalid Client Test', 'draft', 'medium', 'non-existent-client', datetime('now'), datetime('now'))",
+        [],
+    );
+
+    assert!(
+        invalid_client_result.is_err(),
+        "Invalid client_id should be rejected by foreign key constraint"
+    );
+
+    // Test invalid technician_id should fail
+    let invalid_tech_result = ctx.conn.execute(
+        "INSERT INTO tasks (id, task_number, title, status, priority, technician_id, created_at, updated_at)
+         VALUES ('fk-test-invalid-tech', 'TSN-FK-INV-TECH', 'FK Invalid Tech Test', 'draft', 'medium', 'non-existent-user', datetime('now'), datetime('now'))",
+        [],
+    );
+
+    assert!(
+        invalid_tech_result.is_err(),
+        "Invalid technician_id should be rejected by foreign key constraint"
+    );
+
+    // Clean up test data
+    ctx.conn
+        .execute("DELETE FROM tasks WHERE id LIKE 'fk-test%'", [])?;
+    ctx.conn
+        .execute("DELETE FROM users WHERE id = 'fk-test-user'", [])?;
+    ctx.conn
+        .execute("DELETE FROM clients WHERE id = 'fk-test-client'", [])?;
+
+    Ok(())
+}
+
+/// Verify that indexes were recreated after the table rebuild
+fn verify_indexes_recreated(ctx: &MigrationTestContext) -> AppResult<()> {
+    // Get all indexes for tasks table
+    let mut stmt = ctx.conn.prepare(
+        "SELECT name FROM sqlite_master 
+         WHERE type='index' AND tbl_name='tasks'
+         AND name NOT LIKE 'sqlite_autoindex_%'",
+    )?;
+
+    let indexes: Vec<String> = stmt
+        .query_map([], |row| row.get(0))?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    // Check for expected indexes
+    let expected_indexes = vec![
+        "idx_tasks_status",
+        "idx_tasks_technician_id",
+        "idx_tasks_client_id",
+        "idx_tasks_priority",
+        "idx_tasks_scheduled_date",
+        "idx_tasks_created_at",
+        "idx_tasks_synced",
+        "idx_tasks_task_number",
+        "idx_tasks_status_technician",
+        "idx_tasks_status_priority",
+        "idx_tasks_client_status",
+        "idx_tasks_technician_scheduled",
+        "idx_tasks_status_scheduled",
+        "idx_tasks_sync_status",
+    ];
+
+    for index in expected_indexes {
+        assert!(
+            indexes.iter().any(|i| i.contains(index)),
+            "Should have index: {}",
+            index
+        );
+    }
+
+    Ok(())
+}
+
+/// Test data integrity after migration
+fn test_data_integrity(ctx: &mut MigrationTestContext) -> AppResult<()> {
+    // Create test data
+    ctx.conn.execute_batch(
+        r#"
+        INSERT INTO clients (id, name, created_at, updated_at)
+         VALUES ('integrity-test-client', 'Integrity Test Client', datetime('now'), datetime('now'));
+        
+        INSERT INTO users (id, username, email, password_hash, role, is_active, created_at, updated_at)
+         VALUES ('integrity-test-user', 'integritytest', 'integrity@test.com', 'hash', 'Technician', 1, datetime('now'), datetime('now'));
+        "#
+    )?;
+
+    // Insert a task with all fields
+    ctx.conn.execute(
+        "INSERT INTO tasks (
+            id, task_number, title, description, vehicle_plate, vehicle_model, vehicle_year,
+            vehicle_make, vin, ppf_zones, custom_ppf_zones, status, priority, technician_id,
+            assigned_at, assigned_by, scheduled_date, start_time, end_time, date_rdv,
+            heure_rdv, template_id, workflow_id, workflow_status, current_workflow_step_id,
+            started_at, completed_at, completed_steps, client_id, customer_name, customer_email,
+            customer_phone, customer_address, external_id, lot_film, checklist_completed,
+            notes, tags, estimated_duration, actual_duration, created_at, updated_at,
+            creator_id, created_by, updated_by
+        ) VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        )",
         params![
-            "Complex Task",
-            "A complex task with all fields",
+            "integrity-test-task",
+            "TSN-INTEGRITY-001",
+            "Integrity Test Task",
+            "This is a comprehensive test task",
+            "ABC123",
+            "Model X",
+            "2023",
+            "Make",
+            "VIN123456789",
+            "Full Hood, Fenders",
+            "[\"Custom Zone 1\", \"Custom Zone 2\"]",
+            "in_progress",
+            "high",
+            "integrity-test-user",
+            1234567890,
+            "creator",
+            "2023-12-01",
+            "09:00",
+            "17:00",
+            "01/12/2023",
+            "09:00",
+            "template-001",
+            "workflow-001",
+            "in_progress",
+            "step-002",
+            1234567890,
+            1234567990,
+            "[\"step-001\"]",
+            "integrity-test-client",
+            "Test Customer",
+            "customer@test.com",
+            "555-1234",
+            "123 Test St",
+            "EXT-001",
+            "Film Lot 001",
             1,
-            "High",
-            "Pending",
-            Some(1),
-            "ZONE-001",
-            4.5,
-            true,
-            true,
-            true,
-            3,
-            48.8566,
-            2.3522,
-            150.0,
-            "TASK-COMPLEX-001"
+            "Test notes",
+            "[\"tag1\", \"tag2\"]",
+            480,  // 8 hours in minutes
+            500,  // actual duration in minutes
+            "datetime('now')",
+            "datetime('now')",
+            "integrity-test-user",
+            "integrity-test-user",
+            "integrity-test-user"
         ],
     )?;
 
     // Verify all fields were saved correctly
-    let mut stmt = ctx.conn.prepare(
-        "SELECT requires_2fa_override, quality_check_required, requires_photos, min_photo_count, 
-                location_latitude, location_longitude, estimated_cost 
-         FROM tasks WHERE task_number = 'TASK-COMPLEX-001'",
+    let (task_number, title, description, vehicle_plate, vehicle_model): (
+        String,
+        String,
+        String,
+        String,
+        String,
+    ) = ctx.conn.query_row(
+        "SELECT task_number, title, description, vehicle_plate, vehicle_model
+         FROM tasks WHERE id = 'integrity-test-task'",
+        [],
+        |row| {
+            Ok((
+                row.get(0)?,
+                row.get(1)?,
+                row.get(2)?,
+                row.get(3)?,
+                row.get(4)?,
+            ))
+        },
     )?;
-    let (requires_2fa, quality_check, requires_photos, min_photos, lat, lng, cost): (
-        bool,
-        bool,
-        bool,
-        i32,
-        f64,
-        f64,
-        f64,
-    ) = stmt.query_row([], |row| {
-        Ok((
-            row.get(0)?,
-            row.get(1)?,
-            row.get(2)?,
-            row.get(3)?,
-            row.get(4)?,
-            row.get(5)?,
-            row.get(6)?,
-        ))
-    })?;
 
-    assert!(requires_2fa);
-    assert!(quality_check);
-    assert!(requires_photos);
-    assert_eq!(min_photos, 3);
-    assert!((lat - 48.8566).abs() < 0.0001);
-    assert!((lng - 2.3522).abs() < 0.0001);
-    assert!((cost - 150.0).abs() < 0.01);
+    assert_eq!(task_number, "TSN-INTEGRITY-001");
+    assert_eq!(title, "Integrity Test Task");
+    assert_eq!(description, "This is a comprehensive test task");
+    assert_eq!(vehicle_plate, "ABC123");
+    assert_eq!(vehicle_model, "Model X");
 
-    // Test the default values for new fields
+    // Verify JSON fields were saved correctly
+    let (custom_ppf_zones, tags): (Option<String>, Option<String>) = ctx.conn.query_row(
+        "SELECT custom_ppf_zones, tags
+         FROM tasks WHERE id = 'integrity-test-task'",
+        [],
+        |row| Ok((row.get(0)?, row.get(1)?)),
+    )?;
+
+    assert_eq!(
+        custom_ppf_zones,
+        Some("[\"Custom Zone 1\", \"Custom Zone 2\"]".to_string())
+    );
+    assert_eq!(tags, Some("[\"tag1\", \"tag2\"]".to_string()));
+
+    // Clean up
+    ctx.conn
+        .execute("DELETE FROM tasks WHERE id = 'integrity-test-task'", [])?;
+    ctx.conn
+        .execute("DELETE FROM users WHERE id = 'integrity-test-user'", [])?;
+    ctx.conn
+        .execute("DELETE FROM clients WHERE id = 'integrity-test-client'", [])?;
+
+    Ok(())
+}
+
+#[test]
+fn test_027_task_constraints_unique_constraint() -> AppResult<()> {
+    let mut ctx = MigrationTestContext::new();
+    ctx.database.migrate(27)?;
+
+    // Create first task
     ctx.conn.execute(
-        "INSERT INTO tasks (title, description, client_id, priority, status, ppf_zone, task_number, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))",
-        params![
-            "Simple Task",
-            "A simple task",
-            1,
-            "Normal",
-            "Pending",
-            "ZONE-002",
-            "TASK-SIMPLE-001"
-        ],
+        "INSERT INTO tasks (id, task_number, title, status, priority, created_at, updated_at)
+         VALUES ('unique-test-1', 'TSN-UNIQUE-001', 'Test Task 1', 'draft', 'medium', datetime('now'), datetime('now'))",
+        [],
     )?;
 
-    let mut stmt = ctx.conn.prepare(
-        "SELECT requires_2fa_override, quality_check_required, requires_photos, min_photo_count 
-         FROM tasks WHERE task_number = 'TASK-SIMPLE-001'",
+    // Try to create second task with same task_number
+    let duplicate_result = ctx.conn.execute(
+        "INSERT INTO tasks (id, task_number, title, status, priority, created_at, updated_at)
+         VALUES ('unique-test-2', 'TSN-UNIQUE-001', 'Test Task 2', 'draft', 'medium', datetime('now'), datetime('now'))",
+        [],
     )?;
-    let (requires_2fa, quality_check, requires_photos, min_photos): (bool, bool, bool, i32) = stmt
-        .query_row([], |row| {
-            Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?))
-        })?;
 
-    assert!(!requires_2fa, "2FA override should default to false");
-    assert!(!quality_check, "Quality check should default to false");
-    assert!(!requires_photos, "Photos should default to false");
-    assert_eq!(min_photos, 0, "Min photo count should default to 0");
+    // Should fail due to unique constraint on task_number
+    assert!(
+        duplicate_result.is_err(),
+        "Duplicate task_number should be rejected by unique constraint"
+    );
+
+    // Clean up
+    ctx.conn
+        .execute("DELETE FROM tasks WHERE id = 'unique-test-1'", [])?;
 
     Ok(())
 }

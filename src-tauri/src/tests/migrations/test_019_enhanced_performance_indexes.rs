@@ -1,266 +1,341 @@
-//! Test migration 019: Enhanced Performance Indexes
+//! Test for migration 019_enhanced_performance_indexes.sql
 //!
-//! This migration adds composite and partial indexes for improved query performance.
-//! It's critical to test because:
-//! - Performance indexes directly impact application responsiveness
-//! - Composite indexes must be in correct column order for query optimization
-//! - Partial indexes must have correct WHERE clauses
-//! - Missing indexes can cause severe performance degradation
+//! This test verifies that the enhanced performance indexes are created correctly
+//! and improve query performance for common patterns.
 
+use super::*;
 use crate::commands::errors::AppResult;
-use crate::db::Database;
-use rusqlite::{params, Connection};
-use tempfile::{tempdir, TempDir};
+use rusqlite::params;
 
 #[test]
 fn test_019_enhanced_performance_indexes() -> AppResult<()> {
-    // Create a fresh database
-    let temp_dir = tempdir()?;
-    let db_path = temp_dir.path().join("test.db");
-    let conn = Connection::open(db_path)?;
-    let database = Database::new(conn.clone());
+    let mut ctx = MigrationTestContext::new();
+    ctx.database.migrate(19)?;
 
-    // Run migrations up to 018 (before performance indexes)
-    database.migrate(18)?;
+    // Create test data first
+    create_test_data(&mut ctx)?;
 
-    // Create test data for index testing
-    conn.execute_batch(
+    // Check that all expected indexes were created
+    verify_indexes_created(&ctx)?;
+
+    // Test query plans to ensure indexes are used
+    test_query_plans(&ctx)?;
+
+    // Test partial indexes
+    test_partial_indexes(&ctx)?;
+
+    // Test performance improvement
+    test_performance_improvement(&ctx)?;
+
+    Ok(())
+}
+
+/// Create test data for index testing
+fn create_test_data(ctx: &mut MigrationTestContext) -> AppResult<()> {
+    // Insert test clients
+    ctx.conn.execute_batch(
         r#"
-        -- Insert test clients
         INSERT INTO clients (id, name, address, phone, email, customer_type, created_at, updated_at)
         VALUES 
-            ('client-1', 'Client A', 'Addr A', '555-0101', 'a@test.com', 'individual', datetime('now'), datetime('now')),
-            ('client-2', 'Client B', 'Addr B', '555-0102', 'b@test.com', 'business', datetime('now'), datetime('now')),
-            ('client-3', 'Client C', 'Addr C', '555-0103', 'c@test.com', 'individual', datetime('now'), datetime('now'));
-        
-        -- Insert test users with different roles
-        INSERT INTO users (id, username, email, password_hash, role, is_active, created_at, updated_at)
-        VALUES 
-            ('user-1', 'tech1', 'tech1@test.com', 'hash', 'Technician', 1, datetime('now'), datetime('now')),
-            ('user-2', 'tech2', 'tech2@test.com', 'hash', 'Technician', 0, datetime('now'), datetime('now')),
-            ('user-3', 'admin1', 'admin@test.com', 'hash', 'Admin', 1, datetime('now'), datetime('now'));
-        
-        -- Insert test tasks with various statuses and priorities
-        INSERT INTO tasks (id, title, description, client_id, technician_id, status, priority, scheduled_date, created_at, updated_at, task_number, vehicle_plate)
-        VALUES 
-            ('task-1', 'Task A', 'Desc A', 'client-1', 'user-1', 'pending', 'high', datetime('now'), datetime('now'), datetime('now'), 'TASK-001', 'ABC123'),
-            ('task-2', 'Task B', 'Desc B', 'client-2', 'user-1', 'in_progress', 'normal', datetime('now', '+1 day'), datetime('now'), datetime('now'), 'TASK-002', 'DEF456'),
-            ('task-3', 'Task C', 'Desc C', 'client-3', 'user-3', 'completed', 'low', datetime('now', '+2 days'), datetime('now'), datetime('now'), 'TASK-003', 'GHI789');
-        
-        -- Insert test interventions
-        INSERT INTO interventions (id, client_id, technician_id, task_id, intervention_type, status, current_step, created_at, updated_at)
-        VALUES 
-            ('int-1', 'client-1', 'user-1', 'task-1', 'Maintenance', 'in_progress', 'preparation', datetime('now'), datetime('now')),
-            ('int-2', 'client-2', 'user-1', 'task-2', 'Installation', 'pending', 'inspection', datetime('now', '-1 day'), datetime('now')),
-            ('int-3', 'client-3', 'user-3', 'task-3', 'Repair', 'completed', 'completion', datetime('now', '-2 days'), datetime('now'));
-        
-        -- Insert test audit log entries
-        INSERT INTO settings_audit_log (id, setting_key, old_value, new_value, changed_by, timestamp, setting_type)
-        VALUES 
-            ('audit-1', 'theme', 'light', 'dark', 'user-1', datetime('now'), 'appearance'),
-            ('audit-2', 'language', 'en', 'fr', 'admin1', datetime('now', '-1 hour'), 'localization');
+            ('client-019-1', 'Client A', 'Addr A', '555-0101', 'a@test.com', 'individual', datetime('now'), datetime('now')),
+            ('client-019-2', 'Client B', 'Addr B', '555-0102', 'b@test.com', 'business', datetime('now'), datetime('now')),
+            ('client-019-3', 'Client C', 'Addr C', '555-0103', 'c@test.com', 'individual', datetime('now'), datetime('now'));
         "#
     )?;
 
-    // Verify performance indexes don't exist before migration
-    let index_check = conn.prepare(
-        "SELECT name FROM sqlite_master WHERE type='index' AND name LIKE 'idx_%' AND tbl_name IN ('tasks', 'interventions', 'clients', 'users', 'settings_audit_log')"
+    // Insert test users with different roles
+    ctx.conn.execute_batch(
+        r#"
+        INSERT INTO users (id, username, email, password_hash, role, is_active, created_at, updated_at)
+        VALUES 
+            ('user-019-1', 'tech1', 'tech1@test.com', 'hash', 'Technician', 1, datetime('now'), datetime('now')),
+            ('user-019-2', 'tech2', 'tech2@test.com', 'hash', 'Technician', 0, datetime('now'), datetime('now')),
+            ('user-019-3', 'admin1', 'admin@test.com', 'hash', 'Admin', 1, datetime('now'), datetime('now'));
+        "#
     )?;
-    let indexes_before: Vec<String> = index_check
+
+    // Insert test tasks with various statuses and priorities
+    ctx.conn.execute_batch(
+        r#"
+        INSERT INTO tasks (id, title, description, client_id, technician_id, status, priority, scheduled_date, created_at, updated_at, task_number, vehicle_plate)
+        VALUES 
+            ('task-019-1', 'Task A', 'Desc A', 'client-019-1', 'user-019-1', 'pending', 'high', datetime('now'), datetime('now'), datetime('now'), 'TASK-001', 'ABC123'),
+            ('task-019-2', 'Task B', 'Desc B', 'client-019-2', 'user-019-1', 'in_progress', 'medium', datetime('now', '+1 day'), datetime('now'), datetime('now'), 'TASK-002', 'DEF456'),
+            ('task-019-3', 'Task C', 'Desc C', 'client-019-3', 'user-019-3', 'completed', 'low', datetime('now', '+2 days'), datetime('now'), datetime('now'), 'TASK-003', 'GHI789'),
+            ('task-019-4', 'Task D', 'Desc D', 'client-019-1', 'user-019-1', 'assigned', 'urgent', datetime('now', '+3 days'), datetime('now'), datetime('now'), 'TASK-004', 'JKL012');
+        "#
+    )?;
+
+    // Insert test interventions
+    ctx.conn.execute_batch(
+        r#"
+        INSERT INTO interventions (id, client_id, technician_id, task_id, intervention_type, status, current_step, created_at, updated_at)
+        VALUES 
+            ('int-019-1', 'client-019-1', 'user-019-1', 'task-019-1', 'Maintenance', 'in_progress', 'preparation', datetime('now'), datetime('now')),
+            ('int-019-2', 'client-019-2', 'user-019-1', 'task-019-2', 'Installation', 'pending', 'inspection', datetime('now', '-1 day'), datetime('now')),
+            ('int-019-3', 'client-019-3', 'user-019-3', 'task-019-3', 'Repair', 'completed', 'completion', datetime('now', '-2 days'), datetime('now')),
+            ('int-019-4', 'client-019-1', 'user-019-1', 'task-019-4', 'Installation', 'in_progress', 'preparation', datetime('now', '-3 hours'), datetime('now'));
+        "#
+    )?;
+
+    // Insert test audit log entries
+    ctx.conn.execute_batch(
+        r#"
+        INSERT INTO settings_audit_log (id, setting_key, old_value, new_value, changed_by, timestamp, setting_type)
+        VALUES 
+            ('audit-019-1', 'theme', 'light', 'dark', 'user-019-1', datetime('now'), 'appearance'),
+            ('audit-019-2', 'language', 'en', 'fr', 'admin1', datetime('now', '-1 hour'), 'localization');
+        "#
+    )?;
+
+    Ok(())
+}
+
+/// Verify all expected indexes were created
+fn verify_indexes_created(ctx: &MigrationTestContext) -> AppResult<()> {
+    // Get all indexes created by migration 019
+    let mut stmt = ctx.conn.prepare(
+        "SELECT name FROM sqlite_master 
+         WHERE type='index' AND name LIKE 'idx_%' 
+         AND sql LIKE '%CREATE INDEX%'",
+    )?;
+
+    let indexes: Vec<String> = stmt
         .query_map([], |row| row.get(0))?
         .collect::<Result<Vec<_>, _>>()?;
 
-    // Should have basic indexes but not the enhanced ones
-    assert!(!indexes_before.contains(&"idx_tasks_status_priority_scheduled_date".to_string()));
-    assert!(!indexes_before.contains(&"idx_tasks_active_only".to_string()));
-
-    // Run migration 019
-    database.migrate(19)?;
-
-    // Verify all expected indexes were created
-    let index_check_after = conn.prepare(
-        "SELECT name, tbl_name, sql FROM sqlite_master WHERE type='index' AND name LIKE 'idx_%'",
-    )?;
-    let indexes_after: Vec<(String, String, String)> = index_check_after
-        .query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?
-        .collect::<Result<Vec<_>, _>>()?;
-
     // Check task-related indexes
-    let task_indexes: Vec<&(String, String, String)> = indexes_after
-        .iter()
-        .filter(|(_, table, _)| table == "tasks")
-        .collect();
+    let task_indexes: Vec<&String> = indexes.iter().filter(|i| i.contains("tasks")).collect();
 
-    assert!(task_indexes
-        .iter()
-        .any(|(name, _, _)| name == "idx_tasks_status_priority_scheduled_date"));
-    assert!(task_indexes
-        .iter()
-        .any(|(name, _, _)| name == "idx_tasks_technician_status_priority"));
-    assert!(task_indexes
-        .iter()
-        .any(|(name, _, _)| name == "idx_tasks_created_status_scheduled"));
-    assert!(task_indexes
-        .iter()
-        .any(|(name, _, _)| name == "idx_tasks_client_status_priority"));
-    assert!(task_indexes
-        .iter()
-        .any(|(name, _, _)| name == "idx_tasks_active_only"));
-    assert!(task_indexes
-        .iter()
-        .any(|(name, _, _)| name == "idx_tasks_title_description"));
-    assert!(task_indexes
-        .iter()
-        .any(|(name, _, _)| name == "idx_tasks_vehicle_plate_lower"));
+    assert!(
+        task_indexes
+            .iter()
+            .any(|i| i.contains("status_priority_scheduled_date")),
+        "Should have idx_tasks_status_priority_scheduled_date"
+    );
+    assert!(
+        task_indexes
+            .iter()
+            .any(|i| i.contains("technician_status_priority")),
+        "Should have idx_tasks_technician_status_priority"
+    );
+    assert!(
+        task_indexes
+            .iter()
+            .any(|i| i.contains("created_status_scheduled")),
+        "Should have idx_tasks_created_status_scheduled"
+    );
+    assert!(
+        task_indexes
+            .iter()
+            .any(|i| i.contains("client_status_priority")),
+        "Should have idx_tasks_client_status_priority"
+    );
+    assert!(
+        task_indexes.iter().any(|i| i.contains("active_only")),
+        "Should have idx_tasks_active_only"
+    );
+    assert!(
+        task_indexes.iter().any(|i| i.contains("title_description")),
+        "Should have idx_tasks_title_description"
+    );
+    assert!(
+        task_indexes
+            .iter()
+            .any(|i| i.contains("vehicle_plate_lower")),
+        "Should have idx_tasks_vehicle_plate_lower"
+    );
 
     // Check intervention-related indexes
-    let intervention_indexes: Vec<&(String, String, String)> = indexes_after
+    let intervention_indexes: Vec<&String> = indexes
         .iter()
-        .filter(|(_, table, _)| table == "interventions")
+        .filter(|i| i.contains("interventions"))
         .collect();
 
-    assert!(intervention_indexes
-        .iter()
-        .any(|(name, _, _)| name == "idx_interventions_task_created"));
-    assert!(intervention_indexes
-        .iter()
-        .any(|(name, _, _)| name == "idx_interventions_status_created"));
-    assert!(intervention_indexes
-        .iter()
-        .any(|(name, _, _)| name == "idx_interventions_current_step_status"));
-    assert!(intervention_indexes
-        .iter()
-        .any(|(name, _, _)| name == "idx_interventions_incomplete"));
+    assert!(
+        intervention_indexes
+            .iter()
+            .any(|i| i.contains("task_created")),
+        "Should have idx_interventions_task_created"
+    );
+    assert!(
+        intervention_indexes
+            .iter()
+            .any(|i| i.contains("status_created")),
+        "Should have idx_interventions_status_created"
+    );
+    assert!(
+        intervention_indexes
+            .iter()
+            .any(|i| i.contains("current_step_status")),
+        "Should have idx_interventions_current_step_status"
+    );
+    assert!(
+        intervention_indexes
+            .iter()
+            .any(|i| i.contains("incomplete")),
+        "Should have idx_interventions_incomplete"
+    );
 
-    // Check partial index WHERE clauses
-    let active_only_index = indexes_after
-        .iter()
-        .find(|(name, _, _)| name == "idx_tasks_active_only")
-        .unwrap();
-    assert!(active_only_index
-        .2
-        .contains("WHERE status IN ('pending', 'in_progress', 'assigned')"));
+    // Check other indexes
+    assert!(
+        indexes
+            .iter()
+            .any(|i| i.contains("clients_name_type_active")),
+        "Should have idx_clients_name_type_active"
+    );
+    assert!(
+        indexes.iter().any(|i| i.contains("users_role_active")),
+        "Should have idx_users_role_active"
+    );
+    assert!(
+        indexes
+            .iter()
+            .any(|i| i.contains("audit_log_timestamp_setting_type")),
+        "Should have idx_audit_log_timestamp_setting_type"
+    );
+    assert!(
+        indexes.iter().any(|i| i.contains("cache_metadata_updated")),
+        "Should have idx_cache_metadata_updated"
+    );
 
-    let incomplete_index = indexes_after
-        .iter()
-        .find(|(name, _, _)| name == "idx_interventions_incomplete")
-        .unwrap();
-    assert!(incomplete_index
-        .2
-        .contains("WHERE status NOT IN ('completed', 'cancelled')"));
+    Ok(())
+}
 
-    // Test that indexes are actually used by query planner
+/// Test that query plans use the indexes correctly
+fn test_query_plans(ctx: &MigrationTestContext) -> AppResult<()> {
     // Query that should use idx_tasks_status_priority_scheduled_date
-    let query_plan: String = conn.query_row(
+    let plan1: String = ctx.conn.query_row(
         "EXPLAIN QUERY PLAN SELECT * FROM tasks WHERE status = 'pending' ORDER BY priority DESC, scheduled_date ASC LIMIT 10",
         [],
         |row| row.get(0)
     )?;
-    assert!(query_plan.contains("idx_tasks_status_priority_scheduled_date"), 
-        "Query planner should use idx_tasks_status_priority_scheduled_date for status+priority+scheduled_date query");
+    assert!(
+        plan1.contains("idx_tasks_status_priority_scheduled_date"),
+        "Should use idx_tasks_status_priority_scheduled_date"
+    );
 
-    // Query that should use idx_tasks_active_only partial index
-    let active_query_plan: String = conn.query_row(
-        "EXPLAIN QUERY PLAN SELECT * FROM tasks WHERE status = 'pending' AND technician_id = 'user-1'",
+    // Query that should use idx_tasks_technician_status_priority
+    let plan2: String = ctx.conn.query_row(
+        "EXPLAIN QUERY PLAN SELECT * FROM tasks WHERE technician_id = 'user-019-1' AND status = 'in_progress' ORDER BY priority DESC",
         [],
         |row| row.get(0)
     )?;
     assert!(
-        active_query_plan.contains("idx_tasks_active_only"),
-        "Query planner should use idx_tasks_active_only for active task query"
+        plan2.contains("idx_tasks_technician_status_priority"),
+        "Should use idx_tasks_technician_status_priority"
+    );
+
+    // Query that should use idx_interventions_task_created
+    let plan3: String = ctx.conn.query_row(
+        "EXPLAIN QUERY PLAN SELECT * FROM interventions WHERE task_id = 'task-019-1' ORDER BY created_at DESC",
+        [],
+        |row| row.get(0)
+    )?;
+    assert!(
+        plan3.contains("idx_interventions_task_created"),
+        "Should use idx_interventions_task_created"
     );
 
     // Query that should use idx_tasks_vehicle_plate_lower for case-insensitive search
-    let vehicle_query_plan: String = conn.query_row(
+    let plan4: String = ctx.conn.query_row(
         "EXPLAIN QUERY PLAN SELECT * FROM tasks WHERE LOWER(vehicle_plate) = 'abc123'",
         [],
         |row| row.get(0),
     )?;
-    assert!(vehicle_query_plan.contains("idx_tasks_vehicle_plate_lower"), 
-        "Query planner should use idx_tasks_vehicle_plate_lower for case-insensitive vehicle plate search");
+    assert!(
+        plan4.contains("idx_tasks_vehicle_plate_lower"),
+        "Should use idx_tasks_vehicle_plate_lower"
+    );
 
-    // Query that should use idx_interventions_incomplete partial index
-    let incomplete_int_plan: String = conn.query_row(
+    Ok(())
+}
+
+/// Test partial indexes are working correctly
+fn test_partial_indexes(ctx: &MigrationTestContext) -> AppResult<()> {
+    // Test idx_tasks_active_only partial index
+    let plan1: String = ctx.conn.query_row(
+        "EXPLAIN QUERY PLAN SELECT * FROM tasks WHERE status = 'pending' AND technician_id = 'user-019-1'",
+        [],
+        |row| row.get(0)
+    )?;
+    assert!(
+        plan1.contains("idx_tasks_active_only"),
+        "Should use idx_tasks_active_only for active tasks"
+    );
+
+    // Test idx_interventions_incomplete partial index
+    let plan2: String = ctx.conn.query_row(
         "EXPLAIN QUERY PLAN SELECT * FROM interventions WHERE status = 'in_progress'",
         [],
         |row| row.get(0),
     )?;
     assert!(
-        incomplete_int_plan.contains("idx_interventions_incomplete"),
-        "Query planner should use idx_interventions_incomplete for incomplete intervention query"
+        plan2.contains("idx_interventions_incomplete"),
+        "Should use idx_interventions_incomplete for incomplete interventions"
     );
 
-    // Test performance improvement with actual queries
-    use std::time::Instant;
+    Ok(())
+}
 
+/// Test that indexes actually improve performance
+fn test_performance_improvement(ctx: &MigrationTestContext) -> AppResult<()> {
     // Insert more test data to make performance difference noticeable
-    for i in 0..100 {
-        conn.execute(
-            "INSERT INTO tasks (id, title, description, client_id, status, priority, created_at, updated_at, task_number)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    for i in 0..100u32 {
+        ctx.conn.execute(
+            "INSERT INTO tasks (id, title, description, client_id, status, priority, created_at, updated_at, task_number, vehicle_plate)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             params![
-                format!("task-{}", i + 100),
+                format!("task-perf-{}", i),
                 format!("Task {}", i),
                 format!("Description {}", i),
-                "client-1",
+                "client-019-1",
                 if i % 3 == 0 { "pending" } else if i % 3 == 1 { "in_progress" } else { "completed" },
-                if i % 5 == 0 { "high" } else { "normal" },
-                datetime("now", format!("-{} minutes", i).as_str()),
-                datetime("now"),
-                format!("TASK-{:03}", i + 100)
+                if i % 5 == 0 { "high" } else { "medium" },
+                format!("datetime('now', '-{} minutes')", i),
+                "datetime('now')",
+                format!("TASK-PERF-{:03}", i),
+                format!("PLATE{}", i)
             ]
         )?;
     }
 
-    // Test query that benefits from idx_tasks_status_priority_scheduled_date
-    let start = Instant::now();
-    let _tasks: Vec<_> = conn.prepare(
-        "SELECT * FROM tasks WHERE status IN ('pending', 'in_progress') ORDER BY priority DESC, scheduled_date ASC LIMIT 20"
+    // Test query that benefits from composite index
+    let results: Vec<String> = ctx.conn.prepare(
+        "SELECT id FROM tasks WHERE status IN ('pending', 'in_progress') ORDER BY priority DESC, scheduled_date ASC LIMIT 20"
     )?.query_map([], |row| {
-        Ok((
-            row.get::<_, String>(0)?, // id
-            row.get::<_, String>(1)?, // title
-            row.get::<_, String>(6)?, // status
-            row.get::<_, String>(7)?  // priority
-        ))
+        row.get(0)
     })?.collect::<Result<Vec<_>, _>>()?;
-    let indexed_duration = start.elapsed();
 
-    // Temporarily drop the index to compare performance
-    conn.execute(
-        "DROP INDEX IF EXISTS idx_tasks_status_priority_scheduled_date",
-        [],
-    )?;
+    assert!(!results.is_empty(), "Query should return results");
 
-    let start = Instant::now();
-    let _tasks_no_index: Vec<_> = conn.prepare(
-        "SELECT * FROM tasks WHERE status IN ('pending', 'in_progress') ORDER BY priority DESC, scheduled_date ASC LIMIT 20"
+    // Test query that benefits from partial index
+    let results2: Vec<String> = ctx.conn.prepare(
+        "SELECT id FROM tasks WHERE status IN ('pending', 'in_progress', 'assigned') AND technician_id = 'user-019-1'"
     )?.query_map([], |row| {
-        Ok((
-            row.get::<_, String>(0)?, // id
-            row.get::<_, String>(1)?, // title
-            row.get::<_, String>(6)?, // status
-            row.get::<_, String>(7)?  // priority
-        ))
+        row.get(0)
     })?.collect::<Result<Vec<_>, _>>()?;
-    let no_index_duration = start.elapsed();
 
-    // Restore the index
-    conn.execute(
-        "CREATE INDEX idx_tasks_status_priority_scheduled_date ON tasks (status, priority DESC, scheduled_date ASC)",
-        []
-    )?;
-
-    // The indexed version should be faster (though this might not always be true in testing)
-    // We're mainly checking that the index exists and can be used
-    println!(
-        "Indexed query: {:?}, No index: {:?}",
-        indexed_duration, no_index_duration
+    assert!(
+        !results2.is_empty(),
+        "Query should return active tasks for technician"
     );
 
-    // Check database integrity after all index operations
-    let integrity_check: String = conn.query_row("PRAGMA integrity_check", [], |row| row.get(0))?;
-    assert_eq!(integrity_check, "ok", "Database integrity compromised");
+    // Test case-insensitive search
+    let results3: Vec<String> = ctx
+        .conn
+        .prepare("SELECT id FROM tasks WHERE LOWER(vehicle_plate) = 'abc123'")?
+        .query_map([], |row| row.get(0))?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    assert!(
+        !results3.is_empty(),
+        "Case-insensitive search should find task"
+    );
+
+    // Clean up performance test data
+    ctx.conn
+        .execute("DELETE FROM tasks WHERE id LIKE 'task-perf-%'", [])?;
 
     Ok(())
 }

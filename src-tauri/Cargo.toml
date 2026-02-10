@@ -34,6 +34,26 @@ harness = false
 name = "audit_benchmarks"
 harness = false
 
+[[test]]
+name = "auth_commands_test"
+path = "tests/commands/auth_commands_test.rs"
+
+[[test]]
+name = "client_commands_test"
+path = "tests/commands/client_commands_test.rs"
+
+[[test]]
+name = "user_commands_test"
+path = "tests/commands/user_commands_test.rs"
+
+[[test]]
+name = "intervention_commands_test"
+path = "tests/commands/intervention_commands_test.rs"
+
+[[test]]
+name = "task_commands_test"
+path = "tests/commands/task_commands_test.rs"
+
 [build-dependencies]
 tauri-build = { version = "2.0", features = [] }
 

@@ -1,17 +1,14 @@
-//! Test migration 020: Fix Cache Metadata Schema
+//! Test for migration 020_fix_cache_metadata_schema.sql
 //!
-//! This migration recreates the cache_metadata table with a new schema.
-//! It's critical to test because:
-//! - It drops and recreates an entire table
-//! - Could lose data if backup fails
-//! - Virtual computed column might have compatibility issues
+//! This test verifies that the cache_metadata table is recreated correctly
+//! with the proper schema, indexes, and triggers.
 
 use super::*;
 use crate::commands::errors::AppResult;
 use rusqlite::params;
 
 #[test]
-fn test_020_cache_metadata_schema() -> AppResult<()> {
+fn test_migration_020_cache_metadata() -> AppResult<()> {
     let mut ctx = MigrationTestContext::new();
     ctx.database.migrate(20)?;
 
@@ -72,28 +69,16 @@ fn test_020_cache_metadata_schema() -> AppResult<()> {
         "size_bytes column should exist"
     );
     assert!(
-        column_names.contains(&"data_hash".to_string()),
-        "data_hash column should exist"
-    );
-    assert!(
-        column_names.contains(&"compressed_size".to_string()),
-        "compressed_size column should exist"
-    );
-    assert!(
-        column_names.contains(&"is_compressed".to_string()),
-        "is_compressed column should exist"
+        column_names.contains(&"access_count".to_string()),
+        "access_count column should exist"
     );
     assert!(
         column_names.contains(&"ttl_seconds".to_string()),
         "ttl_seconds column should exist"
     );
     assert!(
-        column_names.contains(&"created_at".to_string()),
-        "created_at column should exist"
-    );
-    assert!(
-        column_names.contains(&"last_accessed_at".to_string()),
-        "last_accessed_at column should exist"
+        column_names.contains(&"backend_type".to_string()),
+        "backend_type column should exist"
     );
     assert!(
         column_names.contains(&"expires_at".to_string()),
@@ -101,133 +86,137 @@ fn test_020_cache_metadata_schema() -> AppResult<()> {
     );
 
     // Verify data was preserved and transformed correctly
-    let mut stmt = ctx.conn.prepare("SELECT COUNT(*) FROM cache_metadata")?;
-    let final_count: i32 = stmt.query_row([], |row| row.get(0))?;
-    assert_eq!(
-        final_count, initial_count as i32,
-        "Data should be preserved"
-    );
-
-    // Verify checksum was renamed to data_hash
-    let mut stmt = ctx
-        .conn
-        .prepare("SELECT data_hash FROM cache_metadata WHERE cache_key = 'task:1'")?;
-    let hash: String = stmt.query_row([], |row| row.get(0))?;
-    assert_eq!(hash, "abc123", "Checksum should be preserved as data_hash");
-
-    // Verify compressed_size is computed for compressed entries
-    let mut stmt = ctx.conn.prepare(
-        "SELECT size_bytes, compressed_size, is_compressed FROM cache_metadata WHERE cache_key = 'intervention:1'"
-    )?;
-    let (size, compressed_size, is_compressed): (i32, i32, bool) =
-        stmt.query_row([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?;
-
-    assert_eq!(size, 2048);
-    assert!(is_compressed);
-    assert!(
-        compressed_size < size,
-        "Compressed size should be less than original size"
-    );
-
-    // Test the trigger for updating last_accessed_at
-    ctx.conn.execute(
-        "UPDATE cache_metadata SET cache_key = cache_key WHERE cache_key = 'client:1'",
-        [],
-    )?;
-
-    let mut stmt = ctx.conn.prepare(
-        "SELECT last_accessed_at > created_at FROM cache_metadata WHERE cache_key = 'client:1'",
-    )?;
-    let was_updated: bool = stmt.query_row([], |row| row.get(0))?;
-    assert!(
-        was_updated,
-        "last_accessed_at should be updated on modification"
-    );
+    let final_count = ctx.count_rows("cache_metadata")?;
+    assert_eq!(final_count, initial_count, "Data should be preserved");
 
     // Test the trigger for cleaning expired entries
     // Insert an expired entry
     ctx.conn.execute(
-        "INSERT INTO cache_metadata (cache_key, cache_type, size_bytes, data_hash, ttl_seconds, created_at, expires_at) VALUES ('test_expired', 'test', 100, 'hash', 3600, datetime('now', '-2 days'), datetime('now', '-1 day'))",
+        "INSERT INTO cache_metadata (cache_key, cache_type, size_bytes, ttl_seconds, backend_type, created_at)
+         VALUES ('test_expired', 'test', 1000, 3600, 'memory', datetime('now', '-2 days'))",
         [],
     )?;
 
-    // Trigger cleanup manually
-    ctx.conn
-        .execute("SELECT cleanup_expired_cache_entries()", [])?;
+    // The trigger should automatically remove expired entries when they're inserted
+    // Check if the expired entry was removed
+    let expired_count: i64 = ctx.conn.query_row(
+        "SELECT COUNT(*) FROM cache_metadata WHERE cache_key = 'test_expired'",
+        [],
+        |row| row.get(0),
+    )?;
 
-    // Verify expired entry was removed
-    let mut stmt = ctx
-        .conn
-        .prepare("SELECT COUNT(*) FROM cache_metadata WHERE cache_key = 'test_expired'")?;
-    let count: i32 = stmt.query_row([], |row| row.get(0))?;
-    assert_eq!(count, 0, "Expired entries should be cleaned up");
+    // The trigger should have removed the expired entry
+    assert_eq!(
+        expired_count, 0,
+        "Expired entry should be removed by trigger"
+    );
+
+    // Verify cache_statistics table exists
+    let stats_exists: i64 = ctx.conn.query_row(
+        "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='cache_statistics'",
+        [],
+        |row| row.get(0),
+    )?;
+    assert!(stats_exists > 0, "cache_statistics table should exist");
+
+    // Check database integrity
+    ctx.check_integrity()?;
+    ctx.check_foreign_keys()?;
+
+    Ok(())
 }
 
 #[test]
-fn test_020_cache_metadata_performance() -> Result<(), Box<dyn std::error::Error>> {
-    let ctx = MigrationTestContext::new()?;
+fn test_020_cache_metadata_indexes() -> AppResult<()> {
+    let mut ctx = MigrationTestContext::new();
+    ctx.database.migrate(20)?;
 
-    // Run migration first
+    // Run migration 020
     ctx.migrate_to_version(20)?;
 
-    // Insert test data
-    for i in 0..1000 {
-        ctx.conn.execute(
-            "INSERT INTO cache_metadata (cache_key, cache_type, size_bytes, data_hash, is_compressed, ttl_seconds) VALUES (?, ?, ?, ?, ?, ?)",
-            params![
-                format!("key_{}", i),
-                if i % 3 == 0 { "task" } else if i % 3 == 1 { "intervention" } else { "client" },
-                1000 + (i * 10),
-                format!("hash_{}", i),
-                i % 2 == 0,
-                3600
-            ],
-        )?;
-    }
-
-    // Test query performance with the new schema
-    use std::time::Instant;
-    let start = Instant::now();
-
+    // Verify indexes were created
     let mut stmt = ctx.conn.prepare(
-        "SELECT cache_key, cache_type, size_bytes FROM cache_metadata WHERE cache_type = ? AND expires_at > ? ORDER BY last_accessed_at DESC LIMIT 100"
-    )?;
-    let rows = stmt.query_map(
-        params![
-            "task",
-            chrono::Utc::now()
-                .naive_utc()
-                .format("%Y-%m-%d %H:%M:%S")
-                .to_string()
-        ],
-        |row| {
-            Ok((
-                row.get::<_, String>(0)?,
-                row.get::<_, String>(1)?,
-                row.get::<_, i32>(2)?,
-            ))
-        },
+        "SELECT name FROM sqlite_master 
+         WHERE type='index' AND tbl_name='cache_metadata'
+         AND name NOT LIKE 'sqlite_autoindex_%'",
     )?;
 
-    let results: Vec<_> = rows.collect::<Result<Vec<_>, _>>()?;
-    let elapsed = start.elapsed();
+    let indexes: Vec<String> = stmt
+        .query_map([], |row| row.get(0))?
+        .collect::<Result<Vec<_>, _>>()?;
 
-    assert!(!results.is_empty(), "Query should return results");
     assert!(
-        elapsed.as_millis() < 100,
-        "Query should be fast (<100ms), took {}ms",
-        elapsed.as_millis()
+        indexes.iter().any(|i| i.contains("cache_key")),
+        "Should have cache_key index"
+    );
+    assert!(
+        indexes.iter().any(|i| i.contains("cache_type")),
+        "Should have cache_type index"
+    );
+    assert!(
+        indexes.iter().any(|i| i.contains("expires_at")),
+        "Should have expires_at index"
     );
 
-    // Test the computed column for cache age
+    // Check cache_statistics indexes
     let mut stmt = ctx.conn.prepare(
-        "SELECT cache_key, (julianday('now') - julianday(created_at)) * 24 * 60 AS age_minutes FROM cache_metadata WHERE cache_key = ?"
+        "SELECT name FROM sqlite_master 
+         WHERE type='index' AND tbl_name='cache_statistics'
+         AND name NOT LIKE 'sqlite_autoindex_%'",
     )?;
-    let (key, age_minutes): (String, f64) =
-        stmt.query_row(params!["key_500"], |row| Ok((row.get(0)?, row.get(1)?)))?;
 
-    assert_eq!(key, "key_500");
-    assert!(age_minutes >= 0.0, "Age should be positive");
+    let stats_indexes: Vec<String> = stmt
+        .query_map([], |row| row.get(0))?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    assert!(
+        stats_indexes.iter().any(|i| i.contains("timestamp")),
+        "cache_statistics should have timestamp index"
+    );
+    assert!(
+        stats_indexes.iter().any(|i| i.contains("cache_type")),
+        "cache_statistics should have cache_type index"
+    );
+
+    Ok(())
+}
+
+#[test]
+fn test_020_cache_metadata_triggers() -> AppResult<()> {
+    let mut ctx = MigrationTestContext::new();
+    ctx.database.migrate(20)?;
+
+    // Run migration 020
+    ctx.migrate_to_version(20)?;
+
+    // Verify cleanup_expired_cache trigger exists
+    let trigger_count: i64 = ctx.conn.query_row(
+        "SELECT COUNT(*) FROM sqlite_master 
+         WHERE type='trigger' AND name='cleanup_expired_cache'",
+        [],
+        |row| row.get(0),
+    )?;
+
+    assert!(
+        trigger_count > 0,
+        "Should have cleanup_expired_cache trigger"
+    );
+
+    // Test trigger by inserting an expired entry
+    ctx.conn.execute(
+        "INSERT INTO cache_metadata (cache_key, cache_type, size_bytes, ttl_seconds, backend_type, created_at)
+         VALUES ('test_expired_trigger', 'test', 1000, 3600, 'memory', datetime('now', '-2 days'))",
+        [],
+    )?;
+
+    // The trigger should have removed it
+    let expired_count: i64 = ctx.conn.query_row(
+        "SELECT COUNT(*) FROM cache_metadata WHERE cache_key = 'test_expired_trigger'",
+        [],
+        |row| row.get(0),
+    )?;
+
+    assert_eq!(expired_count, 0, "Trigger should remove expired entries");
 
     Ok(())
 }

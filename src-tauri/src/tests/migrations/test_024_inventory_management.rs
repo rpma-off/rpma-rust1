@@ -1,205 +1,289 @@
 //! Test for migration 024_add_inventory_management.sql
-//! 
+//!
 //! This test verifies that the inventory management tables are created correctly
-//! and all constraints, indexes, and triggers are properly applied.
+//! with proper relationships, constraints, and indexes for inventory tracking.
 
-use super::test_framework::*;
-use sqlx::SqlitePool;
+use super::*;
+use crate::commands::errors::AppResult;
+use rusqlite::params;
 
-/// Test that migration 024 creates all inventory management tables correctly
-pub async fn test_migration_024_inventory_management(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
-    // Check that inventory_items table exists
-    let items_exists: bool = sqlx::query_scalar(
+#[test]
+fn test_migration_024_inventory_management() -> AppResult<()> {
+    let mut ctx = MigrationTestContext::new();
+    ctx.database.migrate(24)?;
+
+    // Check that inventory_categories table exists
+    let categories_exists: i64 = ctx.conn.query_row(
         "SELECT COUNT(*) FROM sqlite_master 
-         WHERE type='table' AND name='inventory_items'"
-    )
-    .fetch_one(pool)
-    .await?;
-    assert!(items_exists, "inventory_items table should exist");
+         WHERE type='table' AND name='inventory_categories'",
+        [],
+        |row| row.get(0),
+    )?;
+    assert!(
+        categories_exists > 0,
+        "inventory_categories table should exist"
+    );
 
-    // Check that stock_transactions table exists
-    let transactions_exists: bool = sqlx::query_scalar(
+    // Check that inventory_locations table exists
+    let locations_exists: i64 = ctx.conn.query_row(
         "SELECT COUNT(*) FROM sqlite_master 
-         WHERE type='table' AND name='stock_transactions'"
-    )
-    .fetch_one(pool)
-    .await?;
-    assert!(transactions_exists, "stock_transactions table should exist");
+         WHERE type='table' AND name='inventory_locations'",
+        [],
+        |row| row.get(0),
+    )?;
+    assert!(
+        locations_exists > 0,
+        "inventory_locations table should exist"
+    );
 
-    // Check that stock_adjustments table exists
-    let adjustments_exists: bool = sqlx::query_scalar(
+    // Check that inventory_adjustments table exists
+    let adjustments_exists: i64 = ctx.conn.query_row(
         "SELECT COUNT(*) FROM sqlite_master 
-         WHERE type='table' AND name='stock_adjustments'"
-    )
-    .fetch_one(pool)
-    .await?;
-    assert!(adjustments_exists, "stock_adjustments table should exist");
+         WHERE type='table' AND name='inventory_adjustments'",
+        [],
+        |row| row.get(0),
+    )?;
+    assert!(
+        adjustments_exists > 0,
+        "inventory_adjustments table should exist"
+    );
 
-    // Verify table schemas
-    verify_inventory_items_schema(pool).await?;
-    verify_stock_transactions_schema(pool).await?;
-    verify_stock_adjustments_schema(pool).await?;
+    // Verify inventory_categories table structure
+    verify_inventory_categories_table_structure(&ctx)?;
 
-    // Verify indexes were created
-    verify_indexes_created(pool).await?;
+    // Verify inventory_locations table structure
+    verify_inventory_locations_table_structure(&ctx)?;
 
-    // Verify triggers were created
-    verify_triggers_created(pool).await?;
+    // Verify inventory_adjustments table structure
+    verify_inventory_adjustments_table_structure(&ctx)?;
+
+    // Test with sample data
+    test_inventory_management_with_data(&mut ctx)?;
 
     Ok(())
 }
 
-/// Verify inventory_items table schema
-async fn verify_inventory_items_schema(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
-    // Check critical columns exist
-    let columns: Vec<String> = sqlx::query_scalar(
-        "SELECT name FROM pragma_table_info('inventory_items') ORDER BY cid"
-    )
-    .fetch_all(pool)
-    .await?;
-    
-    let required_columns = vec![
-        "id", "material_id", "warehouse_id", "location", "quantity_on_hand",
-        "quantity_available", "quantity_reserved", "reorder_level", "max_stock",
-        "unit_cost", "average_cost", "last_counted_at", "created_at", "updated_at"
+/// Verify the inventory_categories table has the correct structure
+fn verify_inventory_categories_table_structure(ctx: &MigrationTestContext) -> AppResult<()> {
+    // Get table columns from PRAGMA
+    let mut stmt = ctx
+        .conn
+        .prepare("PRAGMA table_info(inventory_categories)")?;
+    let columns: Vec<(i32, String, String)> = stmt
+        .query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let column_names: Vec<String> = columns.iter().map(|(_, name, _)| name.clone()).collect();
+
+    let expected_columns = vec![
+        "id",
+        "name",
+        "description",
+        "parent_category_id",
+        "is_active",
+        "created_at",
+        "updated_at",
     ];
-    
-    for col in required_columns {
-        assert!(columns.contains(&col.to_string()), 
-               "inventory_items should have column: {}", col);
+
+    for col in expected_columns {
+        assert!(
+            column_names.contains(&col.to_string()),
+            "Column '{}' should exist in inventory_categories table",
+            col
+        );
     }
 
-    // Check constraints
-    let check_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM pragma_table_info('inventory_items') 
-         WHERE name='quantity_on_hand' AND NOT NULL = 1"
-    )
-    .fetch_one(pool)
-    .await?;
-    
-    assert!(check_count > 0, "quantity_on_hand should be NOT NULL");
+    // Check foreign key constraint
+    let fks: Vec<String> = ctx
+        .conn
+        .prepare("PRAGMA foreign_key_list(inventory_categories)")?
+        .query_map([], |row| Ok(row.get::<_, String>(2)?))?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    assert!(
+        fks.iter().any(|table| table == "inventory_categories"),
+        "inventory_categories table should have self-referencing foreign key"
+    );
 
     Ok(())
 }
 
-/// Verify stock_transactions table schema
-async fn verify_stock_transactions_schema(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
-    // Check critical columns exist
-    let columns: Vec<String> = sqlx::query_scalar(
-        "SELECT name FROM pragma_table_info('stock_transactions') ORDER BY cid"
-    )
-    .fetch_all(pool)
-    .await?;
-    
-    let required_columns = vec![
-        "id", "inventory_item_id", "transaction_type", "quantity", "reference_type",
-        "reference_number", "notes", "created_by", "created_at", "updated_at"
+/// Verify the inventory_locations table has the correct structure
+fn verify_inventory_locations_table_structure(ctx: &MigrationTestContext) -> AppResult<()> {
+    // Get table columns from PRAGMA
+    let mut stmt = ctx.conn.prepare("PRAGMA table_info(inventory_locations)")?;
+    let columns: Vec<(i32, String, String)> = stmt
+        .query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let column_names: Vec<String> = columns.iter().map(|(_, name, _)| name.clone()).collect();
+
+    let expected_columns = vec![
+        "id",
+        "name",
+        "description",
+        "address",
+        "is_active",
+        "created_at",
+        "updated_at",
     ];
-    
-    for col in required_columns {
-        assert!(columns.contains(&col.to_string()), 
-               "stock_transactions should have column: {}", col);
+
+    for col in expected_columns {
+        assert!(
+            column_names.contains(&col.to_string()),
+            "Column '{}' should exist in inventory_locations table",
+            col
+        );
     }
 
-    // Check foreign key to inventory_items
-    let fk_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM pragma_foreign_key_list('stock_transactions') 
-         WHERE table='inventory_items'"
-    )
-    .fetch_one(pool)
-    .await?;
-    
-    assert!(fk_count > 0, "stock_transactions should have foreign key to inventory_items");
-
     Ok(())
 }
 
-/// Verify stock_adjustments table schema
-async fn verify_stock_adjustments_schema(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
-    // Check critical columns exist
-    let columns: Vec<String> = sqlx::query_scalar(
-        "SELECT name FROM pragma_table_info('stock_adjustments') ORDER BY cid"
-    )
-    .fetch_all(pool)
-    .await?;
-    
-    let required_columns = vec![
-        "id", "inventory_item_id", "adjustment_type", "old_quantity", "new_quantity",
-        "difference", "reason", "approved_by", "created_at"
+/// Verify the inventory_adjustments table has the correct structure
+fn verify_inventory_adjustments_table_structure(ctx: &MigrationTestContext) -> AppResult<()> {
+    // Get table columns from PRAGMA
+    let mut stmt = ctx
+        .conn
+        .prepare("PRAGMA table_info(inventory_adjustments)")?;
+    let columns: Vec<(i32, String, String)> = stmt
+        .query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let column_names: Vec<String> = columns.iter().map(|(_, name, _)| name.clone()).collect();
+
+    let expected_columns = vec![
+        "id",
+        "material_id",
+        "location_id",
+        "adjustment_type",
+        "quantity_before",
+        "quantity_after",
+        "adjustment_quantity",
+        "reason",
+        "reference_id",
+        "reference_type",
+        "created_by",
+        "created_at",
+        "updated_at",
     ];
-    
-    for col in required_columns {
-        assert!(columns.contains(&col.to_string()), 
-               "stock_adjustments should have column: {}", col);
+
+    for col in expected_columns {
+        assert!(
+            column_names.contains(&col.to_string()),
+            "Column '{}' should exist in inventory_adjustments table",
+            col
+        );
     }
 
-    // Check foreign key to inventory_items
-    let fk_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM pragma_foreign_key_list('stock_adjustments') 
-         WHERE table='inventory_items'"
-    )
-    .fetch_one(pool)
-    .await?;
-    
-    assert!(fk_count > 0, "stock_adjustments should have foreign key to inventory_items");
+    // Check foreign key constraints
+    let fks: Vec<String> = ctx
+        .conn
+        .prepare("PRAGMA foreign_key_list(inventory_adjustments)")?
+        .query_map([], |row| Ok(row.get::<_, String>(2)?))?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    assert!(
+        fks.iter().any(|table| table == "materials"),
+        "inventory_adjustments table should have foreign key to materials"
+    );
+    assert!(
+        fks.iter().any(|table| table == "inventory_locations"),
+        "inventory_adjustments table should have foreign key to inventory_locations"
+    );
+    assert!(
+        fks.iter().any(|table| table == "users"),
+        "inventory_adjustments table should have foreign key to users"
+    );
 
     Ok(())
 }
 
-/// Verify indexes were created for performance
-async fn verify_indexes_created(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
-    // Check inventory_items indexes
-    let items_indexes: Vec<String> = sqlx::query_scalar(
-        "SELECT name FROM sqlite_master 
-         WHERE type='index' AND tbl_name='inventory_items'
-         AND name NOT LIKE 'sqlite_autoindex_%'"
-    )
-    .fetch_all(pool)
-    .await?;
-    
-    assert!(items_indexes.iter().any(|i| i.contains("material_id")), 
-           "inventory_items should have material_id index");
-    assert!(items_indexes.iter().any(|i| i.contains("warehouse_id")), 
-           "inventory_items should have warehouse_id index");
+/// Test inventory management tables with sample data
+fn test_inventory_management_with_data(ctx: &mut MigrationTestContext) -> AppResult<()> {
+    // Insert a test user first
+    ctx.conn.execute(
+        "INSERT INTO users (id, email, password_hash, created_at, updated_at) 
+         VALUES (?1, ?2, ?3, datetime('now'), datetime('now'))",
+        params!["user123", "test@example.com", "hashedpassword"],
+    )?;
 
-    // Check stock_transactions indexes
-    let trans_indexes: Vec<String> = sqlx::query_scalar(
-        "SELECT name FROM sqlite_master 
-         WHERE type='index' AND tbl_name='stock_transactions'
-         AND name NOT LIKE 'sqlite_autoindex_%'"
-    )
-    .fetch_all(pool)
-    .await?;
-    
-    assert!(trans_indexes.iter().any(|i| i.contains("inventory_item_id")), 
-           "stock_transactions should have inventory_item_id index");
-    assert!(trans_indexes.iter().any(|i| i.contains("transaction_type")), 
-           "stock_transactions should have transaction_type index");
+    // Insert test material
+    ctx.conn.execute(
+        "INSERT INTO materials (id, sku, name, description, unit_cost, quantity, 
+         reorder_point, unit_of_measure, material_type, created_at, updated_at) 
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, datetime('now'), datetime('now'))",
+        params![
+            "material123",
+            "INV001",
+            "Test Material",
+            "A test material for inventory management",
+            10.50,
+            100.0,
+            20.0,
+            "unit",
+            "consumable",
+        ],
+    )?;
 
-    Ok(())
-}
+    // Insert inventory category
+    ctx.conn.execute(
+        "INSERT INTO inventory_categories (id, name, description, is_active, created_at, updated_at) 
+         VALUES (?1, ?2, ?3, ?4, datetime('now'), datetime('now'))",
+        params!["cat123", "Test Category", "A test category", true]
+    )?;
 
-/// Verify triggers were created for data consistency
-async fn verify_triggers_created(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
-    // Check for trigger to update inventory quantities
-    let trigger_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM sqlite_master 
-         WHERE type='trigger' AND name LIKE '%update_inventory%'"
-    )
-    .fetch_one(pool)
-    .await?;
-    
-    assert!(trigger_count > 0, "Should have trigger to update inventory on transaction");
+    // Insert inventory location
+    ctx.conn.execute(
+        "INSERT INTO inventory_locations (id, name, description, address, is_active, created_at, updated_at) 
+         VALUES (?1, ?2, ?3, ?4, ?5, datetime('now'), datetime('now'))",
+        params![
+            "loc123",
+            "Main Warehouse",
+            "Primary storage location",
+            "123 Storage St, Warehouse City",
+            true
+        ]
+    )?;
 
-    // Check for trigger to prevent negative stock
-    let negative_trigger: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM sqlite_master 
-         WHERE type='trigger' AND name LIKE '%prevent_negative_stock%'"
-    )
-    .fetch_one(pool)
-    .await?;
-    
-    assert!(negative_trigger > 0, "Should have trigger to prevent negative stock");
+    // Insert inventory adjustment
+    ctx.conn.execute(
+        "INSERT INTO inventory_adjustments (id, material_id, location_id, adjustment_type, 
+         quantity_before, quantity_after, adjustment_quantity, reason, created_by, created_at, updated_at) 
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, datetime('now'), datetime('now'))",
+        params![
+            "adj123",
+            "material123",
+            "loc123",
+            "initial",
+            0.0,
+            100.0,
+            100.0,
+            "Initial inventory count",
+            "user123"
+        ]
+    )?;
+
+    // Verify data can be retrieved
+    let category_count: i64 = ctx.conn.query_row(
+        "SELECT COUNT(*) FROM inventory_categories WHERE name = ?",
+        params!["Test Category"],
+        |row| row.get(0),
+    )?;
+    assert_eq!(category_count, 1, "Should have one test category");
+
+    let location_count: i64 = ctx.conn.query_row(
+        "SELECT COUNT(*) FROM inventory_locations WHERE name = ?",
+        params!["Main Warehouse"],
+        |row| row.get(0),
+    )?;
+    assert_eq!(location_count, 1, "Should have one test location");
+
+    let adjustment_count: i64 = ctx.conn.query_row(
+        "SELECT COUNT(*) FROM inventory_adjustments WHERE material_id = ?",
+        params!["material123"],
+        |row| row.get(0),
+    )?;
+    assert_eq!(adjustment_count, 1, "Should have one inventory adjustment");
 
     Ok(())
 }

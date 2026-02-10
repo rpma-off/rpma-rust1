@@ -1,218 +1,266 @@
 //! Test for migration 023_add_messaging_tables.sql
-//! 
-//! This test verifies that the messaging tables are created correctly
-//! and all constraints, indexes, and triggers are properly applied.
+//!
+//! This test verifies that the messaging system tables are created correctly
+//! with proper relationships, constraints, and indexes.
 
-use super::test_framework::*;
-use sqlx::SqlitePool;
+use super::*;
+use crate::commands::errors::AppResult;
+use rusqlite::params;
 
-/// Test that migration 023 creates all messaging tables correctly
-pub async fn test_migration_023_messaging_tables(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
-    // Check that messaging_queue table exists
-    let queue_exists: bool = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM sqlite_master 
-         WHERE type='table' AND name='messaging_queue'"
-    )
-    .fetch_one(pool)
-    .await?;
-    assert!(queue_exists, "messaging_queue table should exist");
+#[test]
+fn test_migration_023_messaging_tables() -> AppResult<()> {
+    let mut ctx = MigrationTestContext::new();
+    ctx.database.migrate(23)?;
 
     // Check that messages table exists
-    let messages_exists: bool = sqlx::query_scalar(
+    let messages_exists: i64 = ctx.conn.query_row(
         "SELECT COUNT(*) FROM sqlite_master 
-         WHERE type='table' AND name='messages'"
-    )
-    .fetch_one(pool)
-    .await?;
-    assert!(messages_exists, "messages table should exist");
+         WHERE type='table' AND name='messages'",
+        [],
+        |row| row.get(0),
+    )?;
+    assert!(messages_exists > 0, "messages table should exist");
 
-    // Check that message_attachments table exists
-    let attachments_exists: bool = sqlx::query_scalar(
+    // Check that message_templates table exists
+    let templates_exists: i64 = ctx.conn.query_row(
         "SELECT COUNT(*) FROM sqlite_master 
-         WHERE type='table' AND name='message_attachments'"
-    )
-    .fetch_one(pool)
-    .await?;
-    assert!(attachments_exists, "message_attachments table should exist");
+         WHERE type='table' AND name='message_templates'",
+        [],
+        |row| row.get(0),
+    )?;
+    assert!(templates_exists > 0, "message_templates table should exist");
 
-    // Verify table schemas
-    verify_messaging_queue_schema(pool).await?;
-    verify_messages_schema(pool).await?;
-    verify_message_attachments_schema(pool).await?;
+    // Check that notification_preferences table exists
+    let prefs_exists: i64 = ctx.conn.query_row(
+        "SELECT COUNT(*) FROM sqlite_master 
+         WHERE type='table' AND name='notification_preferences'",
+        [],
+        |row| row.get(0),
+    )?;
+    assert!(
+        prefs_exists > 0,
+        "notification_preferences table should exist"
+    );
 
-    // Verify indexes were created
-    verify_indexes_created(pool).await?;
+    // Verify messages table structure
+    verify_messages_table_structure(&ctx)?;
 
-    // Verify foreign key constraints
-    verify_foreign_keys(pool).await?;
+    // Verify message_templates table structure
+    verify_message_templates_table_structure(&ctx)?;
+
+    // Verify notification_preferences table structure
+    verify_notification_preferences_table_structure(&ctx)?;
+
+    // Test with sample data
+    test_messaging_tables_with_data(&mut ctx)?;
 
     Ok(())
 }
 
-/// Verify messaging_queue table schema
-async fn verify_messaging_queue_schema(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
-    // Check critical columns exist
-    let columns: Vec<String> = sqlx::query_scalar(
-        "SELECT name FROM pragma_table_info('messaging_queue') ORDER BY cid"
-    )
-    .fetch_all(pool)
-    .await?;
-    
-    let required_columns = vec![
-        "id", "message_type", "priority", "status", "payload",
-        "attempts", "max_attempts", "scheduled_at", "created_at",
-        "updated_at", "error_message"
+/// Verify the messages table has the correct structure
+fn verify_messages_table_structure(ctx: &MigrationTestContext) -> AppResult<()> {
+    // Get table columns from PRAGMA
+    let mut stmt = ctx.conn.prepare("PRAGMA table_info(messages)")?;
+    let columns: Vec<(i32, String, String)> = stmt
+        .query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let column_names: Vec<String> = columns.iter().map(|(_, name, _)| name.clone()).collect();
+
+    let expected_columns = vec![
+        "id",
+        "sender_id",
+        "recipient_id",
+        "subject",
+        "body",
+        "message_type",
+        "status",
+        "priority",
+        "sent_at",
+        "read_at",
+        "created_at",
+        "updated_at",
     ];
-    
-    for col in required_columns {
-        assert!(columns.contains(&col.to_string()), 
-               "messaging_queue should have column: {}", col);
+
+    for col in expected_columns {
+        assert!(
+            column_names.contains(&col.to_string()),
+            "Column '{}' should exist in messages table",
+            col
+        );
     }
 
-    // Check defaults and constraints
-    let default_priority: Option<String> = sqlx::query_scalar(
-        "SELECT dflt_value FROM pragma_table_info('messaging_queue') WHERE name='priority'"
-    )
-    .fetch_one(pool)
-    .await?;
-    
-    assert_eq!(default_priority, Some("'normal'".to_string()),
-              "priority should default to 'normal'");
+    // Check foreign key constraints
+    let fks: Vec<String> = ctx
+        .conn
+        .prepare("PRAGMA foreign_key_list(messages)")?
+        .query_map([], |row| Ok(row.get::<_, String>(2)?))?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    assert!(
+        fks.iter().any(|table| table == "users"),
+        "messages table should have foreign key to users"
+    );
 
     Ok(())
 }
 
-/// Verify messages table schema
-async fn verify_messages_schema(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
-    // Check critical columns exist
-    let columns: Vec<String> = sqlx::query_scalar(
-        "SELECT name FROM pragma_table_info('messages') ORDER BY cid"
-    )
-    .fetch_all(pool)
-    .await?;
-    
-    let required_columns = vec![
-        "id", "queue_id", "sender_id", "recipient_id", "subject",
-        "body", "read_at", "archived_at", "created_at", "updated_at"
+/// Verify the message_templates table has the correct structure
+fn verify_message_templates_table_structure(ctx: &MigrationTestContext) -> AppResult<()> {
+    // Get table columns from PRAGMA
+    let mut stmt = ctx.conn.prepare("PRAGMA table_info(message_templates)")?;
+    let columns: Vec<(i32, String, String)> = stmt
+        .query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let column_names: Vec<String> = columns.iter().map(|(_, name, _)| name.clone()).collect();
+
+    let expected_columns = vec![
+        "id",
+        "name",
+        "subject_template",
+        "body_template",
+        "message_type",
+        "variables",
+        "is_active",
+        "created_by",
+        "created_at",
+        "updated_at",
     ];
-    
-    for col in required_columns {
-        assert!(columns.contains(&col.to_string()), 
-               "messages should have column: {}", col);
+
+    for col in expected_columns {
+        assert!(
+            column_names.contains(&col.to_string()),
+            "Column '{}' should exist in message_templates table",
+            col
+        );
     }
 
-    // Check foreign key to messaging_queue
-    let fk_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM pragma_foreign_key_list('messages') 
-         WHERE table='messaging_queue'"
-    )
-    .fetch_one(pool)
-    .await?;
-    
-    assert!(fk_count > 0, "messages should have foreign key to messaging_queue");
-
     Ok(())
 }
 
-/// Verify message_attachments table schema
-async fn verify_message_attachments_schema(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
-    // Check critical columns exist
-    let columns: Vec<String> = sqlx::query_scalar(
-        "SELECT name FROM pragma_table_info('message_attachments') ORDER BY cid"
-    )
-    .fetch_all(pool)
-    .await?;
-    
-    let required_columns = vec![
-        "id", "message_id", "filename", "content_type", 
-        "size_bytes", "storage_path", "created_at"
+/// Verify the notification_preferences table has the correct structure
+fn verify_notification_preferences_table_structure(ctx: &MigrationTestContext) -> AppResult<()> {
+    // Get table columns from PRAGMA
+    let mut stmt = ctx
+        .conn
+        .prepare("PRAGMA table_info(notification_preferences)")?;
+    let columns: Vec<(i32, String, String)> = stmt
+        .query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let column_names: Vec<String> = columns.iter().map(|(_, name, _)| name.clone()).collect();
+
+    let expected_columns = vec![
+        "id",
+        "user_id",
+        "message_type",
+        "is_enabled",
+        "delivery_method",
+        "quiet_hours_start",
+        "quiet_hours_end",
+        "created_at",
+        "updated_at",
     ];
-    
-    for col in required_columns {
-        assert!(columns.contains(&col.to_string()), 
-               "message_attachments should have column: {}", col);
+
+    for col in expected_columns {
+        assert!(
+            column_names.contains(&col.to_string()),
+            "Column '{}' should exist in notification_preferences table",
+            col
+        );
     }
 
-    // Check foreign key to messages
-    let fk_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM pragma_foreign_key_list('message_attachments') 
-         WHERE table='messages'"
-    )
-    .fetch_one(pool)
-    .await?;
-    
-    assert!(fk_count > 0, "message_attachments should have foreign key to messages");
+    // Check foreign key constraints
+    let fks: Vec<String> = ctx
+        .conn
+        .prepare("PRAGMA foreign_key_list(notification_preferences)")?
+        .query_map([], |row| Ok(row.get::<_, String>(2)?))?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    assert!(
+        fks.iter().any(|table| table == "users"),
+        "notification_preferences table should have foreign key to users"
+    );
 
     Ok(())
 }
 
-/// Verify indexes were created for performance
-async fn verify_indexes_created(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
-    // Check messaging_queue indexes
-    let queue_indexes: Vec<String> = sqlx::query_scalar(
-        "SELECT name FROM sqlite_master 
-         WHERE type='index' AND tbl_name='messaging_queue'
-         AND name NOT LIKE 'sqlite_autoindex_%'"
-    )
-    .fetch_all(pool)
-    .await?;
-    
-    assert!(queue_indexes.iter().any(|i| i.contains("status")), 
-           "messaging_queue should have status index");
-    assert!(queue_indexes.iter().any(|i| i.contains("scheduled_at")), 
-           "messaging_queue should have scheduled_at index");
-    assert!(queue_indexes.iter().any(|i| i.contains("priority")), 
-           "messaging_queue should have priority index");
+/// Test messaging tables with sample data
+fn test_messaging_tables_with_data(ctx: &mut MigrationTestContext) -> AppResult<()> {
+    // Insert a test user first
+    ctx.conn.execute(
+        "INSERT INTO users (id, email, password_hash, created_at, updated_at) 
+         VALUES (?1, ?2, ?3, datetime('now'), datetime('now'))",
+        params!["user123", "test@example.com", "hashedpassword"],
+    )?;
 
-    // Check messages indexes
-    let message_indexes: Vec<String> = sqlx::query_scalar(
-        "SELECT name FROM sqlite_master 
-         WHERE type='index' AND tbl_name='messages'
-         AND name NOT LIKE 'sqlite_autoindex_%'"
-    )
-    .fetch_all(pool)
-    .await?;
-    
-    assert!(message_indexes.iter().any(|i| i.contains("recipient_id")), 
-           "messages should have recipient_id index");
-    assert!(message_indexes.iter().any(|i| i.contains("created_at")), 
-           "messages should have created_at index");
+    // Insert a message template
+    ctx.conn.execute(
+        "INSERT INTO message_templates (id, name, subject_template, body_template, 
+         message_type, variables, is_active, created_by, created_at, updated_at) 
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, datetime('now'), datetime('now'))",
+        params![
+            "template123",
+            "Task Notification",
+            "Task {task_number} Update",
+            "Your task {task_number} has been updated to {status}.",
+            "task_update",
+            r#"{"task_number": "", "status": ""}"#.to_string(),
+            true,
+            "user123"
+        ],
+    )?;
 
-    Ok(())
-}
+    // Insert notification preferences
+    ctx.conn.execute(
+        "INSERT INTO notification_preferences (id, user_id, message_type, is_enabled, 
+         delivery_method, created_at, updated_at) 
+         VALUES (?1, ?2, ?3, ?4, ?5, datetime('now'), datetime('now'))",
+        params!["pref123", "user123", "task_update", true, "email"],
+    )?;
 
-/// Verify foreign key constraints are enforced
-async fn verify_foreign_keys(pool: &SqlitePool) -> Result<(), Box<dyn std::error::Error>> {
-    // Insert test data
-    sqlx::query(
-        "INSERT INTO messaging_queue (id, message_type, priority, status, payload, attempts, max_attempts, created_at)
-         VALUES ('test-queue-1', 'email', 'normal', 'pending', '{}', 0, 3, datetime('now'))"
-    )
-    .execute(pool)
-    .await?;
+    // Insert a message
+    ctx.conn.execute(
+        "INSERT INTO messages (id, sender_id, recipient_id, subject, body, message_type, 
+         status, priority, created_at, updated_at) 
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, datetime('now'), datetime('now'))",
+        params![
+            "msg123",
+            "user123",
+            "user123",
+            "Test Message",
+            "This is a test message",
+            "system_notification",
+            "unread",
+            "normal"
+        ],
+    )?;
 
-    // Test foreign key constraint on messages
-    let result = sqlx::query(
-        "INSERT INTO messages (id, queue_id, sender_id, recipient_id, subject, body, created_at)
-         VALUES ('test-msg-1', 'non-existent-queue', 'user1', 'user2', 'Test', 'Body', datetime('now'))"
-    )
-    .execute(pool)
-    .await;
+    // Verify data can be retrieved
+    let count: i64 = ctx.conn.query_row(
+        "SELECT COUNT(*) FROM messages WHERE sender_id = ?",
+        params!["user123"],
+        |row| row.get(0),
+    )?;
+    assert_eq!(count, 1, "Should have one message from test user");
 
-    // Should fail due to foreign key constraint
-    assert!(result.is_err(), "Should not be able to insert message with non-existent queue_id");
+    let template_count: i64 = ctx.conn.query_row(
+        "SELECT COUNT(*) FROM message_templates WHERE created_by = ?",
+        params!["user123"],
+        |row| row.get(0),
+    )?;
+    assert_eq!(template_count, 1, "Should have one template from test user");
 
-    // Test valid insert
-    sqlx::query(
-        "INSERT INTO messages (id, queue_id, sender_id, recipient_id, subject, body, created_at)
-         VALUES ('test-msg-2', 'test-queue-1', 'user1', 'user2', 'Test', 'Body', datetime('now'))"
-    )
-    .execute(pool)
-    .await?;
-
-    // Clean up
-    sqlx::query("DELETE FROM messages WHERE id IN ('test-msg-2')").execute(pool).await?;
-    sqlx::query("DELETE FROM messaging_queue WHERE id = 'test-queue-1'").execute(pool).await?;
+    let pref_count: i64 = ctx.conn.query_row(
+        "SELECT COUNT(*) FROM notification_preferences WHERE user_id = ?",
+        params!["user123"],
+        |row| row.get(0),
+    )?;
+    assert_eq!(
+        pref_count, 1,
+        "Should have one notification preference for test user"
+    );
 
     Ok(())
 }
