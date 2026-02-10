@@ -10,6 +10,12 @@ interface TaskCardProps {
   isDragging?: boolean;
 }
 
+export const getCalendarTaskLabel = (task: CalendarTask & { customer_name?: string | null }): string => {
+  const plate = task.vehicle_plate?.trim() || 'N/A';
+  const clientName = task.client_name?.trim() || task.customer_name?.trim() || 'N/A';
+  return `${plate} – ${clientName}`;
+};
+
 const getStatusColor = (status: string): string => {
   const statusLower = status.toLowerCase();
 
@@ -67,6 +73,7 @@ const TaskCardComponent = memo<TaskCardProps>(({
 }) => {
   const statusColors = getStatusColor(task.status);
   const priorityColor = getPriorityColor(task.priority);
+  const taskLabel = getCalendarTaskLabel(task);
 
   const timeDisplay = task.start_time && task.end_time
     ? `${task.start_time} - ${task.end_time}`
@@ -84,10 +91,10 @@ const TaskCardComponent = memo<TaskCardProps>(({
         onClick={onClick}
         role="button"
         tabIndex={0}
-        aria-label={`${task.task_number}: ${task.title}, Status: ${task.status}, Priority: ${task.priority}`}
+        aria-label={`${taskLabel}, Status: ${task.status}, Priority: ${task.priority}`}
       >
         <div className="text-[11px] font-medium truncate">
-          {task.task_number}: {task.title}
+          {taskLabel}
         </div>
       </div>
     );
@@ -105,7 +112,7 @@ const TaskCardComponent = memo<TaskCardProps>(({
       onClick={onClick}
       role="button"
       tabIndex={0}
-      aria-label={`${task.task_number}: ${task.title}, Status: ${task.status}, Priority: ${task.priority}`}
+      aria-label={`${taskLabel}, Status: ${task.status}, Priority: ${task.priority}`}
       style={{
         backgroundColor: statusColors,
         borderColor: priorityColor,
@@ -115,11 +122,8 @@ const TaskCardComponent = memo<TaskCardProps>(({
         <div className="flex justify-between items-start mb-2">
           <div className="flex-1">
             <h3 className="font-medium text-white text-sm truncate">
-              {task.task_number}: {task.title}
+              {taskLabel}
             </h3>
-            <p className="text-xs text-white/90 mt-1">
-              {task.client_name || 'No client'}
-            </p>
           </div>
         </div>
 
