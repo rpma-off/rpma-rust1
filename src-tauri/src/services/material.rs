@@ -68,7 +68,7 @@ pub struct CreateMaterialRequest {
     pub supplier_sku: Option<String>,
     pub quality_grade: Option<String>,
     pub certification: Option<String>,
-    pub expiry_date: Option<DateTime<Utc>>,
+    pub expiry_date: Option<i64>,
     pub batch_number: Option<String>,
     pub storage_location: Option<String>,
     pub warehouse_id: Option<String>,
@@ -149,7 +149,7 @@ pub struct CreateInventoryTransactionRequest {
     pub location_from: Option<String>,
     pub location_to: Option<String>,
     pub batch_number: Option<String>,
-    pub expiry_date: Option<DateTime<Utc>>,
+    pub expiry_date: Option<i64>,
     pub quality_status: Option<String>,
     pub intervention_id: Option<String>,
     pub step_id: Option<String>,
@@ -277,9 +277,9 @@ impl MaterialService {
             WHERE id = ?
             "#,
             params![
-                Utc::now().timestamp_millis(),
+                crate::models::common::now(),
                 deleted_by,
-                Utc::now().timestamp_millis(),
+                crate::models::common::now(),
                 deleted_by,
                 id
             ],
@@ -382,7 +382,7 @@ impl MaterialService {
         material.storage_location = updates.storage_location;
         material.warehouse_id = updates.warehouse_id;
         material.updated_by = updated_by;
-        material.updated_at = Utc::now();
+        material.updated_at = crate::models::common::now();
 
         self.save_material(&material)?;
         Ok(material)
@@ -414,7 +414,7 @@ impl MaterialService {
         }
 
         material.current_stock = new_stock;
-        material.updated_at = Utc::now();
+        material.updated_at = crate::models::common::now();
         material.updated_by = request.recorded_by.clone();
 
         self.save_material(&material)?;
@@ -575,7 +575,7 @@ impl MaterialService {
               AND expiry_date IS NOT NULL
               AND expiry_date <= ?
             "#,
-            params![Utc::now().timestamp_millis()],
+            params![crate::models::common::now()],
         )?;
 
         // Calculate total value
@@ -637,7 +637,7 @@ impl MaterialService {
 
         Ok(self
             .db
-            .query_as::<Material>(sql, params![Utc::now().timestamp_millis()])?)
+            .query_as::<Material>(sql, params![crate::models::common::now()])?)
     }
 
     // Private helper methods
@@ -712,7 +712,7 @@ impl MaterialService {
                     material.supplier_sku,
                     material.quality_grade,
                     material.certification,
-                    material.expiry_date.map(|dt| dt.timestamp_millis()),
+                    material.expiry_date,
                     material.batch_number,
                     material
                         .serial_numbers
@@ -722,10 +722,10 @@ impl MaterialService {
                     material.is_discontinued,
                     material.storage_location,
                     material.warehouse_id,
-                    material.updated_at.timestamp_millis(),
+                    material.updated_at,
                     material.updated_by,
                     material.synced,
-                    material.last_synced_at.map(|dt| dt.timestamp_millis()),
+                    material.last_synced_at,
                     material.id,
                 ],
             )?;
@@ -766,19 +766,19 @@ impl MaterialService {
                     material.supplier_sku,
                     material.quality_grade,
                     material.certification,
-                    material.expiry_date.map(|dt| dt.timestamp_millis()),
+                    material.expiry_date,
                     material.batch_number,
                     material.serial_numbers.as_ref().map(|s| serde_json::to_string(s).unwrap_or_default()),
                     material.is_active,
                     material.is_discontinued,
                     material.storage_location,
                     material.warehouse_id,
-                    material.created_at.timestamp_millis(),
-                    material.updated_at.timestamp_millis(),
+                    material.created_at,
+                    material.updated_at,
                     material.created_by,
                     material.updated_by,
                     material.synced,
-                    material.last_synced_at.map(|dt| dt.timestamp_millis()),
+                    material.last_synced_at,
                 ],
             )?;
         }
@@ -811,14 +811,14 @@ impl MaterialService {
                     consumption.waste_quantity,
                     consumption.waste_reason,
                     consumption.batch_used,
-                    consumption.expiry_used.map(|dt| dt.timestamp_millis()),
+                    consumption.expiry_used,
                     consumption.quality_notes,
                     consumption.step_number,
                     consumption.recorded_by,
-                    consumption.recorded_at.timestamp_millis(),
-                    consumption.updated_at.timestamp_millis(),
+                    consumption.recorded_at,
+                    consumption.updated_at,
                     consumption.synced,
-                    consumption.last_synced_at.map(|dt| dt.timestamp_millis()),
+                    consumption.last_synced_at,
                     consumption.id,
                 ],
             )?;
@@ -844,15 +844,15 @@ impl MaterialService {
                     consumption.waste_quantity,
                     consumption.waste_reason,
                     consumption.batch_used,
-                    consumption.expiry_used.map(|dt| dt.timestamp_millis()),
+                    consumption.expiry_used,
                     consumption.quality_notes,
                     consumption.step_number,
                     consumption.recorded_by,
-                    consumption.recorded_at.timestamp_millis(),
-                    consumption.created_at.timestamp_millis(),
-                    consumption.updated_at.timestamp_millis(),
+                    consumption.recorded_at,
+                    consumption.created_at,
+                    consumption.updated_at,
                     consumption.synced,
-                    consumption.last_synced_at.map(|dt| dt.timestamp_millis()),
+                    consumption.last_synced_at,
                 ],
             )?;
         }
@@ -882,8 +882,8 @@ impl MaterialService {
             description: request.description,
             color: request.color,
             is_active: true,
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
+            created_at: crate::models::common::now(),
+            updated_at: crate::models::common::now(),
             created_by,
             updated_by: None,
             synced: false,
@@ -949,7 +949,7 @@ impl MaterialService {
         category.level = request.level.unwrap_or(category.level);
         category.description = request.description;
         category.color = request.color;
-        category.updated_at = Utc::now();
+        category.updated_at = crate::models::common::now();
         category.updated_by = updated_by;
 
         self.save_material_category(&category)?;
@@ -992,8 +992,8 @@ impl MaterialService {
             on_time_delivery_rate: request.on_time_delivery_rate,
             notes: request.notes,
             special_instructions: request.special_instructions,
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
+            created_at: crate::models::common::now(),
+            updated_at: crate::models::common::now(),
             created_by,
             updated_by: None,
             synced: false,
@@ -1079,7 +1079,7 @@ impl MaterialService {
         supplier.on_time_delivery_rate = request.on_time_delivery_rate;
         supplier.notes = request.notes;
         supplier.special_instructions = request.special_instructions;
-        supplier.updated_at = Utc::now();
+        supplier.updated_at = crate::models::common::now();
         supplier.updated_by = updated_by;
 
         self.save_supplier(&supplier)?;
@@ -1122,30 +1122,33 @@ impl MaterialService {
 
         let id = Uuid::new_v4().to_string();
         let transaction_type = request.transaction_type.clone();
+        // Calculate total cost if unit cost is provided
+        let total_cost = request.unit_cost.map(|uc| uc * request.quantity);
+
         let transaction = InventoryTransaction {
-            id: id.clone(),
+            id: id,
             material_id: request.material_id.clone(),
-            transaction_type: transaction_type.clone(),
+            transaction_type: request.transaction_type.clone(),
             quantity: request.quantity,
-            previous_stock,
+            previous_stock: new_stock - request.quantity,
             new_stock,
-            reference_number: request.reference_number,
-            reference_type: request.reference_type,
-            notes: request.notes,
+            reference_number: request.reference_number.clone(),
+            reference_type: request.reference_type.clone(),
+            notes: request.notes.clone(),
             unit_cost: request.unit_cost,
-            total_cost: request.unit_cost.map(|cost| cost * request.quantity.abs()),
-            warehouse_id: request.warehouse_id,
-            location_from: request.location_from,
-            location_to: request.location_to,
-            batch_number: request.batch_number,
+            total_cost,
+            warehouse_id: request.warehouse_id.clone(),
+            location_from: request.location_from.clone(),
+            location_to: request.location_to.clone(),
+            batch_number: request.batch_number.clone(),
             expiry_date: request.expiry_date,
-            quality_status: request.quality_status,
-            intervention_id: request.intervention_id,
-            step_id: request.step_id,
+            quality_status: request.quality_status.clone(),
+            intervention_id: request.intervention_id.clone(),
+            step_id: request.step_id.clone(),
             performed_by: user_id.to_string(),
-            performed_at: Utc::now(),
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
+            performed_at: crate::models::common::now(),
+            created_at: crate::models::common::now(),
+            updated_at: crate::models::common::now(),
             synced: false,
             last_synced_at: None,
         };
@@ -1243,7 +1246,7 @@ impl MaterialService {
             WHERE is_active = 1 AND expiry_date IS NOT NULL
               AND expiry_date <= ?
             "#,
-            params![Utc::now().timestamp_millis()],
+            params![crate::models::common::now()],
         )?;
 
         let total_value: f64 = self.db.query_single_value(
@@ -1439,10 +1442,10 @@ impl MaterialService {
                     category.description,
                     category.color,
                     category.is_active,
-                    category.updated_at.timestamp_millis(),
+                    category.updated_at,
                     category.updated_by,
                     category.synced,
-                    category.last_synced_at.map(|dt| dt.timestamp_millis()),
+                    category.last_synced_at,
                     category.id,
                 ],
             )?;
@@ -1464,12 +1467,12 @@ impl MaterialService {
                     category.description,
                     category.color,
                     category.is_active,
-                    category.created_at.timestamp_millis(),
-                    category.updated_at.timestamp_millis(),
+                    category.created_at,
+                    category.updated_at,
                     category.created_by,
                     category.updated_by,
                     category.synced,
-                    category.last_synced_at.map(|dt| dt.timestamp_millis()),
+                    category.last_synced_at,
                 ],
             )?;
         }
@@ -1518,10 +1521,10 @@ impl MaterialService {
                     supplier.on_time_delivery_rate,
                     supplier.notes,
                     supplier.special_instructions,
-                    supplier.updated_at.timestamp_millis(),
+                    supplier.updated_at,
                     supplier.updated_by,
                     supplier.synced,
-                    supplier.last_synced_at.map(|dt| dt.timestamp_millis()),
+                    supplier.last_synced_at,
                     supplier.id,
                 ],
             )?;
@@ -1561,12 +1564,12 @@ impl MaterialService {
                     supplier.on_time_delivery_rate,
                     supplier.notes,
                     supplier.special_instructions,
-                    supplier.created_at.timestamp_millis(),
-                    supplier.updated_at.timestamp_millis(),
+                    supplier.created_at,
+                    supplier.updated_at,
                     supplier.created_by,
                     supplier.updated_by,
                     supplier.synced,
-                    supplier.last_synced_at.map(|dt| dt.timestamp_millis()),
+                    supplier.last_synced_at,
                 ],
             )?;
         }
@@ -1600,16 +1603,16 @@ impl MaterialService {
                 transaction.location_from,
                 transaction.location_to,
                 transaction.batch_number,
-                transaction.expiry_date.map(|dt| dt.timestamp_millis()),
+                transaction.expiry_date,
                 transaction.quality_status,
                 transaction.intervention_id,
                 transaction.step_id,
                 transaction.performed_by,
-                transaction.performed_at.timestamp_millis(),
-                transaction.created_at.timestamp_millis(),
-                transaction.updated_at.timestamp_millis(),
+                transaction.performed_at,
+                transaction.created_at,
+                transaction.updated_at,
                 transaction.synced,
-                transaction.last_synced_at.map(|dt| dt.timestamp_millis()),
+                transaction.last_synced_at,
             ],
         )?;
 
@@ -1619,7 +1622,7 @@ impl MaterialService {
     fn update_material_stock(&self, material_id: &str, new_stock: f64) -> MaterialResult<()> {
         self.db.execute(
             "UPDATE materials SET current_stock = ?, updated_at = ? WHERE id = ?",
-            params![new_stock, Utc::now().timestamp_millis(), material_id],
+            params![new_stock, crate::models::common::now(), material_id],
         )?;
         Ok(())
     }

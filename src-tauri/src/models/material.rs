@@ -4,6 +4,7 @@
 //! and consumption tracking for interventions.
 
 use crate::db::FromSqlRow;
+use crate::models::common::{serialize_optional_timestamp, serialize_timestamp};
 use chrono::{DateTime, Utc};
 use rusqlite::Row;
 use serde::{Deserialize, Serialize};
@@ -66,7 +67,8 @@ impl std::fmt::Display for UnitOfMeasure {
 }
 
 /// Material inventory item
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct Material {
     // Identifiers
     pub id: String,
@@ -83,6 +85,7 @@ pub struct Material {
     // Specifications
     pub brand: Option<String>,
     pub model: Option<String>,
+    #[ts(type = "any")]
     pub specifications: Option<serde_json::Value>,
 
     // Inventory
@@ -104,7 +107,9 @@ pub struct Material {
     // Quality and compliance
     pub quality_grade: Option<String>,
     pub certification: Option<String>,
-    pub expiry_date: Option<DateTime<Utc>>,
+    #[serde(serialize_with = "serialize_optional_timestamp")]
+    #[ts(type = "string | null")]
+    pub expiry_date: Option<i64>,
     pub batch_number: Option<String>,
     pub serial_numbers: Option<Vec<String>>,
 
@@ -117,20 +122,26 @@ pub struct Material {
     pub warehouse_id: Option<String>,
 
     // Audit
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    #[serde(serialize_with = "serialize_timestamp")]
+    #[ts(type = "string")]
+    pub created_at: i64,
+    #[serde(serialize_with = "serialize_timestamp")]
+    #[ts(type = "string")]
+    pub updated_at: i64,
     pub created_by: Option<String>,
     pub updated_by: Option<String>,
 
     // Sync
     pub synced: bool,
-    pub last_synced_at: Option<DateTime<Utc>>,
+    #[serde(serialize_with = "serialize_optional_timestamp")]
+    #[ts(type = "string | null")]
+    pub last_synced_at: Option<i64>,
 }
 
 impl Material {
     /// Create a new material
     pub fn new(id: String, sku: String, name: String, material_type: MaterialType) -> Self {
-        let now = Utc::now();
+        let now = crate::models::common::now();
         Self {
             id,
             sku,
@@ -185,7 +196,8 @@ impl Material {
     /// Check if material is expired
     pub fn is_expired(&self) -> bool {
         if let Some(expiry) = self.expiry_date {
-            expiry <= Utc::now()
+            let now = crate::models::common::now();
+            expiry <= now
         } else {
             false
         }
@@ -259,9 +271,7 @@ impl FromSqlRow for Material {
             supplier_sku: row.get("supplier_sku")?,
             quality_grade: row.get("quality_grade")?,
             certification: row.get("certification")?,
-            expiry_date: row
-                .get::<_, Option<i64>>("expiry_date")?
-                .map(|ts| DateTime::from_timestamp_millis(ts).unwrap_or_else(Utc::now)),
+            expiry_date: row.get("expiry_date")?,
             batch_number: row.get("batch_number")?,
             serial_numbers: row
                 .get::<_, Option<String>>("serial_numbers")?
@@ -270,22 +280,19 @@ impl FromSqlRow for Material {
             is_discontinued: row.get::<_, i32>("is_discontinued")? != 0,
             storage_location: row.get("storage_location")?,
             warehouse_id: row.get("warehouse_id")?,
-            created_at: DateTime::from_timestamp_millis(row.get("created_at")?)
-                .unwrap_or_else(Utc::now),
-            updated_at: DateTime::from_timestamp_millis(row.get("updated_at")?)
-                .unwrap_or_else(Utc::now),
+            created_at: row.get("created_at")?,
+            updated_at: row.get("updated_at")?,
             created_by: row.get("created_by")?,
             updated_by: row.get("updated_by")?,
             synced: row.get::<_, i32>("synced")? != 0,
-            last_synced_at: row
-                .get::<_, Option<i64>>("last_synced_at")?
-                .map(|ts| DateTime::from_timestamp_millis(ts).unwrap_or_else(Utc::now)),
+            last_synced_at: row.get("last_synced_at")?,
         })
     }
 }
 
 /// Material consumption record for interventions
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct MaterialConsumption {
     // Identifiers
     pub id: String,
@@ -302,21 +309,31 @@ pub struct MaterialConsumption {
 
     // Quality tracking
     pub batch_used: Option<String>,
-    pub expiry_used: Option<DateTime<Utc>>,
+    #[serde(serialize_with = "serialize_optional_timestamp")]
+    #[ts(type = "string | null")]
+    pub expiry_used: Option<i64>,
     pub quality_notes: Option<String>,
 
     // Workflow integration
     pub step_number: Option<i32>,
     pub recorded_by: Option<String>,
-    pub recorded_at: DateTime<Utc>,
+    #[serde(serialize_with = "serialize_timestamp")]
+    #[ts(type = "string")]
+    pub recorded_at: i64,
 
     // Audit
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    #[serde(serialize_with = "serialize_timestamp")]
+    #[ts(type = "string")]
+    pub created_at: i64,
+    #[serde(serialize_with = "serialize_timestamp")]
+    #[ts(type = "string")]
+    pub updated_at: i64,
 
     // Sync
     pub synced: bool,
-    pub last_synced_at: Option<DateTime<Utc>>,
+    #[serde(serialize_with = "serialize_optional_timestamp")]
+    #[ts(type = "string | null")]
+    pub last_synced_at: Option<i64>,
 }
 
 impl MaterialConsumption {
@@ -327,7 +344,7 @@ impl MaterialConsumption {
         material_id: String,
         quantity_used: f64,
     ) -> Self {
-        let now = Utc::now();
+        let now = crate::models::common::now();
         Self {
             id,
             intervention_id,
@@ -372,28 +389,22 @@ impl FromSqlRow for MaterialConsumption {
             waste_quantity: row.get("waste_quantity")?,
             waste_reason: row.get("waste_reason")?,
             batch_used: row.get("batch_used")?,
-            expiry_used: row
-                .get::<_, Option<i64>>("expiry_used")?
-                .map(|ts| DateTime::from_timestamp_millis(ts).unwrap_or_else(Utc::now)),
+            expiry_used: row.get("expiry_used")?,
             quality_notes: row.get("quality_notes")?,
             step_number: row.get("step_number")?,
             recorded_by: row.get("recorded_by")?,
-            recorded_at: DateTime::from_timestamp_millis(row.get("recorded_at")?)
-                .unwrap_or_else(Utc::now),
-            created_at: DateTime::from_timestamp_millis(row.get("created_at")?)
-                .unwrap_or_else(Utc::now),
-            updated_at: DateTime::from_timestamp_millis(row.get("updated_at")?)
-                .unwrap_or_else(Utc::now),
+            recorded_at: row.get("recorded_at")?,
+            created_at: row.get("created_at")?,
+            updated_at: row.get("updated_at")?,
             synced: row.get::<_, i32>("synced")? != 0,
-            last_synced_at: row
-                .get::<_, Option<i64>>("last_synced_at")?
-                .map(|ts| DateTime::from_timestamp_millis(ts).unwrap_or_else(Utc::now)),
+            last_synced_at: row.get("last_synced_at")?,
         })
     }
 }
 
 /// Material inventory statistics
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct MaterialStats {
     pub total_materials: i32,
     pub active_materials: i32,
@@ -404,7 +415,8 @@ pub struct MaterialStats {
 }
 
 /// Material consumption summary for an intervention
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct InterventionMaterialSummary {
     pub intervention_id: String,
     pub total_materials_used: i32,
@@ -413,7 +425,8 @@ pub struct InterventionMaterialSummary {
 }
 
 /// Summary of material consumption
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct MaterialConsumptionSummary {
     pub material_id: String,
     pub material_name: String,
@@ -425,7 +438,8 @@ pub struct MaterialConsumptionSummary {
 }
 
 /// Supplier information
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct Supplier {
     // Identifiers
     pub id: String,
@@ -465,20 +479,26 @@ pub struct Supplier {
     pub special_instructions: Option<String>,
 
     // Audit
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    #[serde(serialize_with = "serialize_timestamp")]
+    #[ts(type = "string")]
+    pub created_at: i64,
+    #[serde(serialize_with = "serialize_timestamp")]
+    #[ts(type = "string")]
+    pub updated_at: i64,
     pub created_by: Option<String>,
     pub updated_by: Option<String>,
 
     // Sync
     pub synced: bool,
-    pub last_synced_at: Option<DateTime<Utc>>,
+    #[serde(serialize_with = "serialize_optional_timestamp")]
+    #[ts(type = "string | null")]
+    pub last_synced_at: Option<i64>,
 }
 
 impl Supplier {
     /// Create a new supplier
     pub fn new(id: String, name: String) -> Self {
-        let now = Utc::now();
+        let now = crate::models::common::now();
         Self {
             id,
             name,
@@ -539,22 +559,19 @@ impl FromSqlRow for Supplier {
             on_time_delivery_rate: row.get("on_time_delivery_rate")?,
             notes: row.get("notes")?,
             special_instructions: row.get("special_instructions")?,
-            created_at: DateTime::from_timestamp_millis(row.get("created_at")?)
-                .unwrap_or_else(Utc::now),
-            updated_at: DateTime::from_timestamp_millis(row.get("updated_at")?)
-                .unwrap_or_else(Utc::now),
+            created_at: row.get("created_at")?,
+            updated_at: row.get("updated_at")?,
             created_by: row.get("created_by")?,
             updated_by: row.get("updated_by")?,
             synced: row.get::<_, i32>("synced")? != 0,
-            last_synced_at: row
-                .get::<_, Option<i64>>("last_synced_at")?
-                .map(|ts| DateTime::from_timestamp_millis(ts).unwrap_or_else(Utc::now)),
+            last_synced_at: row.get("last_synced_at")?,
         })
     }
 }
 
 /// Transaction types for inventory movements
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, ts_rs::TS)]
+#[ts(export)]
 pub enum InventoryTransactionType {
     #[serde(rename = "stock_in")]
     StockIn,
@@ -584,7 +601,8 @@ impl std::fmt::Display for InventoryTransactionType {
 }
 
 /// Material category for hierarchical organization
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct MaterialCategory {
     // Identifiers
     pub id: String,
@@ -603,20 +621,26 @@ pub struct MaterialCategory {
     pub is_active: bool,
 
     // Audit
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    #[serde(serialize_with = "serialize_timestamp")]
+    #[ts(type = "string")]
+    pub created_at: i64,
+    #[serde(serialize_with = "serialize_timestamp")]
+    #[ts(type = "string")]
+    pub updated_at: i64,
     pub created_by: Option<String>,
     pub updated_by: Option<String>,
 
     // Sync
     pub synced: bool,
-    pub last_synced_at: Option<DateTime<Utc>>,
+    #[serde(serialize_with = "serialize_optional_timestamp")]
+    #[ts(type = "string | null")]
+    pub last_synced_at: Option<i64>,
 }
 
 impl MaterialCategory {
     /// Create a new material category
     pub fn new(id: String, name: String, level: i32) -> Self {
-        let now = Utc::now();
+        let now = crate::models::common::now();
         Self {
             id,
             name,
@@ -647,22 +671,19 @@ impl FromSqlRow for MaterialCategory {
             description: row.get("description")?,
             color: row.get("color")?,
             is_active: row.get::<_, i32>("is_active")? != 0,
-            created_at: DateTime::from_timestamp_millis(row.get("created_at")?)
-                .unwrap_or_else(Utc::now),
-            updated_at: DateTime::from_timestamp_millis(row.get("updated_at")?)
-                .unwrap_or_else(Utc::now),
+            created_at: row.get("created_at")?,
+            updated_at: row.get("updated_at")?,
             created_by: row.get("created_by")?,
             updated_by: row.get("updated_by")?,
             synced: row.get::<_, i32>("synced")? != 0,
-            last_synced_at: row
-                .get::<_, Option<i64>>("last_synced_at")?
-                .map(|ts| DateTime::from_timestamp_millis(ts).unwrap_or_else(Utc::now)),
+            last_synced_at: row.get("last_synced_at")?,
         })
     }
 }
 
 /// Inventory transaction record
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
 pub struct InventoryTransaction {
     // Identifiers
     pub id: String,
@@ -690,7 +711,9 @@ pub struct InventoryTransaction {
 
     // Quality and batch tracking
     pub batch_number: Option<String>,
-    pub expiry_date: Option<DateTime<Utc>>,
+    #[serde(serialize_with = "serialize_optional_timestamp")]
+    #[ts(type = "string | null")]
+    pub expiry_date: Option<i64>,
     pub quality_status: Option<String>,
 
     // Workflow integration
@@ -699,15 +722,23 @@ pub struct InventoryTransaction {
 
     // User and audit
     pub performed_by: String,
-    pub performed_at: DateTime<Utc>,
+    #[serde(serialize_with = "serialize_timestamp")]
+    #[ts(type = "string")]
+    pub performed_at: i64,
 
     // Audit
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    #[serde(serialize_with = "serialize_timestamp")]
+    #[ts(type = "string")]
+    pub created_at: i64,
+    #[serde(serialize_with = "serialize_timestamp")]
+    #[ts(type = "string")]
+    pub updated_at: i64,
 
     // Sync
     pub synced: bool,
-    pub last_synced_at: Option<DateTime<Utc>>,
+    #[serde(serialize_with = "serialize_optional_timestamp")]
+    #[ts(type = "string | null")]
+    pub last_synced_at: Option<i64>,
 }
 
 impl InventoryTransaction {
@@ -721,7 +752,7 @@ impl InventoryTransaction {
         new_stock: f64,
         performed_by: String,
     ) -> Self {
-        let now = Utc::now();
+        let now = crate::models::common::now();
         Self {
             id,
             material_id,
@@ -787,29 +818,23 @@ impl FromSqlRow for InventoryTransaction {
             location_from: row.get("location_from")?,
             location_to: row.get("location_to")?,
             batch_number: row.get("batch_number")?,
-            expiry_date: row
-                .get::<_, Option<i64>>("expiry_date")?
-                .map(|ts| DateTime::from_timestamp_millis(ts).unwrap_or_else(Utc::now)),
+            expiry_date: row.get("expiry_date")?,
             quality_status: row.get("quality_status")?,
             intervention_id: row.get("intervention_id")?,
             step_id: row.get("step_id")?,
             performed_by: row.get("performed_by")?,
-            performed_at: DateTime::from_timestamp_millis(row.get("performed_at")?)
-                .unwrap_or_else(Utc::now),
-            created_at: DateTime::from_timestamp_millis(row.get("created_at")?)
-                .unwrap_or_else(Utc::now),
-            updated_at: DateTime::from_timestamp_millis(row.get("updated_at")?)
-                .unwrap_or_else(Utc::now),
+            performed_at: row.get("performed_at")?,
+            created_at: row.get("created_at")?,
+            updated_at: row.get("updated_at")?,
             synced: row.get::<_, i32>("synced")? != 0,
-            last_synced_at: row
-                .get::<_, Option<i64>>("last_synced_at")?
-                .map(|ts| DateTime::from_timestamp_millis(ts).unwrap_or_else(Utc::now)),
+            last_synced_at: row.get("last_synced_at")?,
         })
     }
 }
 
 /// Enhanced inventory statistics
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct InventoryStats {
     pub total_materials: i32,
     pub active_materials: i32,
@@ -823,7 +848,8 @@ pub struct InventoryStats {
 }
 
 /// Inventory movement summary
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
 pub struct InventoryMovementSummary {
     pub material_id: String,
     pub material_name: String,
@@ -831,5 +857,7 @@ pub struct InventoryMovementSummary {
     pub total_stock_out: f64,
     pub net_movement: f64,
     pub current_stock: f64,
-    pub last_transaction_date: Option<DateTime<Utc>>,
+    #[serde(serialize_with = "serialize_optional_timestamp")]
+    #[ts(type = "string | null")]
+    pub last_transaction_date: Option<i64>,
 }

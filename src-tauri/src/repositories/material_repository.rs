@@ -443,7 +443,7 @@ impl Repository<Material, String> for MaterialRepository {
             .map(|v| serde_json::to_string(&v).unwrap_or_default())
             .unwrap_or_default();
 
-        let expiry_timestamp = entity.expiry_date.map(|dt| dt.timestamp_millis());
+        let expiry_timestamp = entity.expiry_date;
 
         if exists {
             // Update existing material
