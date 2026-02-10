@@ -114,10 +114,10 @@ npm run types:drift-check
 npm run types:sync
 # Error: Error generating types: field 'urgency_level' not exportable
 
-# Check the Rust model
+# Check Rust model
 grep -n "urgency_level" src-tauri/src/models/task.rs
 
-# Fix: Add ts attribute or ensure the type is exportable
+# Fix: Add ts attribute or ensure type is exportable
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct Task {
@@ -232,7 +232,7 @@ touch src-tauri/src/commands/new_feature.rs
 
 #### 3. Synchronize Types
 ```bash
-# After creating the model
+# After creating model
 npm run types:sync
 npm run types:validate
 npm run types:drift-check
@@ -259,7 +259,7 @@ touch src-tauri/migrations/028_add_new_feature_table.sql
 #### 2. Write Migration SQL
 ```sql
 -- 028_add_new_feature_table.sql
--- Add new table for the new feature
+-- Add new table for new feature
 
 CREATE TABLE IF NOT EXISTS new_features (
     id TEXT PRIMARY KEY,
@@ -319,7 +319,7 @@ npm run types:validate
 
 ### Scenario 3: Fixing a Bug
 
-#### 1. Identify the Issue
+#### 1. Identify Issue
 ```bash
 # Check logs
 tail -f logs/tauri-app.log
@@ -361,7 +361,7 @@ npm run quality:check
 ## CI/CD Integration
 
 ### GitHub Actions Workflow
-The project includes automated CI/CD that runs the same quality checks:
+The project includes automated CI/CD that runs same quality checks:
 
 ```yaml
 # .github/workflows/quality-check.yml

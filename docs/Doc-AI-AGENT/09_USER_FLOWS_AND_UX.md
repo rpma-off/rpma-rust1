@@ -5,7 +5,7 @@
 RPMA v2 serves four primary user types with distinct workflows:
 - **Technicians**: Execute PPF installation workflows and manage their assigned tasks
 - **Supervisors**: Oversee team performance, assign tasks, and manage scheduling
-- **Admins**: Configure the system, manage users, and handle administrative tasks
+- **Admins**: Configure system, manage users, and handle administrative tasks
 - **Viewers**: Monitor reports and view task/intervention data
 
 ## 1. Task Management Flow
@@ -43,7 +43,10 @@ await ipcClient.invoke('search_clients', { query: clientSearch });
 await ipcClient.invoke('create_task', {
   title: taskTitle,
   clientId: selectedClient.id,
-  vehicleInfo: {...},
+  vehiclePlate: vehicleInfo.plate,
+  vehicleMake: vehicleInfo.make,
+  vehicleModel: vehicleInfo.model,
+  vehicleYear: vehicleInfo.year,
   ppfZones: selectedZones,
   priority: selectedPriority,
   scheduledDate: scheduleDate
@@ -54,7 +57,7 @@ await ipcClient.invoke('create_task', {
 - Client must exist and be active
 - Vehicle information must be complete
 - PPF zones must be valid for vehicle type
-- Scheduled date cannot be in the past
+- Scheduled date cannot be in past
 - Duplicate task prevention for same vehicle/date
 
 ### 1.2 Task List and Filtering (All Roles)
@@ -252,13 +255,11 @@ const client = await ipcClient.invoke('create_client', {
   lastName: formData.lastName,
   email: formData.email,
   phone: formData.phone,
-  address: {
-    line1: formData.address1,
-    line2: formData.address2,
-    city: formData.city,
-    state: formData.state,
-    zip: formData.zip
-  }
+  addressLine1: formData.address1,
+  addressLine2: formData.address2,
+  city: formData.city,
+  state: formData.state,
+  zip: formData.zip
 });
 
 // Add vehicle to client
@@ -329,7 +330,7 @@ const interventions = await ipcClient.invoke('list_interventions', {
    - Month/Week/Day view toggles
    - Color-coded task status
    - Technician filtering (Supervisor)
-   - Task cards show `license plate – client name` as the primary label
+   - Task cards show `license plate – client name` as primary label
 
 2. **Task Scheduling**:
    - Drag-and-drop task assignment

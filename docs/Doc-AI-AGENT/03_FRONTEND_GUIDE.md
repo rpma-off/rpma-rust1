@@ -309,7 +309,7 @@ export function TaskCard({ task }: { task: Task }) {
             {task.priority}
           </Badge>
         </div>
-        <CardDescription>{task.vehicle?.make} {task.vehicle?.model}</CardDescription>
+        <CardDescription>{task.vehicle_make} {task.vehicle_model}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex justify-between items-center">
@@ -446,8 +446,8 @@ async listPaginated(page: number, limit: number, filters: TaskFilters = {}): Pro
 ```typescript
 const TaskCard = React.memo(({ task }: { task: Task }) => {
   const formattedDate = useMemo(() => {
-    return new Date(task.createdAt).toLocaleDateString();
-  }, [task.createdAt]);
+    return new Date(task.created_at).toLocaleDateString();
+  }, [task.created_at]);
 
   return (
     // Component JSX

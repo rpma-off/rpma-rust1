@@ -36,7 +36,7 @@ pub fn init_pool(database_path: &str) -> Result<DbPool, AppError> {
 ```
 
 ### Database Location
-The database is stored in the platform-appropriate application data directory:
+The database is stored in platform-appropriate application data directory:
 
 ```rust
 // src-tauri/src/main.rs
@@ -453,19 +453,19 @@ node scripts/test-migration.js 028
 ### 2. Migration Checklist
 Before creating a new migration:
 
-- [ ] Understand the data impact and backup strategy
+- [ ] Understand data impact and backup strategy
 - [ ] Plan for rollback if possible
 - [ ] Consider data validation constraints
 - [ ] Test on development data first
-- [ ] Document the migration purpose
+- [ ] Document migration purpose
 - [ ] Include data migration if changing structure
 
 ### 3. Adding a Migration
 
 1. Create SQL file in `src-tauri/migrations/` with next number
 2. Write idempotent SQL (use `IF NOT EXISTS`)
-3. Add the migration to the discovery list in `migrations.rs`
-4. Write unit tests for the migration
+3. Add migration to discovery list in `migrations.rs`
+4. Write unit tests for migration
 5. Run validation scripts
 6. Update documentation if schema changes affect API
 

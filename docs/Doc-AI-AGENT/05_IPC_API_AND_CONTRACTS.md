@@ -118,7 +118,7 @@ info!("[{}] Processing request", request_id);
 - `priority: 'low' | 'medium' | 'high' | 'urgent'`
 - `scheduled_date?: string` (ISO 8601)
 **Permissions**: Technician+
-**Implemented**: `src-tauri/src/commands/task/create_task.rs`
+**Implemented**: `src-tauri/src/commands/task.rs`
 **Consumed**: `frontend/src/lib/ipc/domains/tasks.ts`
 
 #### 6. get_task
@@ -126,7 +126,7 @@ info!("[{}] Processing request", request_id);
 **Parameters**:
 - `task_id: string`
 **Permissions**: Assigned user or Admin/Supervisor
-**Implemented**: `src-tauri/src/commands/task/get_task.rs`
+**Implemented**: `src-tauri/src/commands/task.rs`
 **Consumed**: `frontend/src/lib/ipc/domains/tasks.ts`
 
 #### 7. list_tasks
@@ -144,7 +144,7 @@ info!("[{}] Processing request", request_id);
     offset?: number
   }`
 **Permissions**: Authenticated user (filtered by role)
-**Implemented**: `src-tauri/src/commands/task/list_tasks.rs`
+**Implemented**: `src-tauri/src/commands/task.rs`
 **Consumed**: `frontend/src/lib/ipc/domains/tasks.ts`
 
 #### 8. update_task_status
@@ -154,7 +154,7 @@ info!("[{}] Processing request", request_id);
 - `status: 'draft' | 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | 'on_hold'`
 - `notes?: string`
 **Permissions**: Assigned user or Admin/Supervisor
-**Implemented**: `src-tauri/src/commands/task/update_task.rs`
+**Implemented**: `src-tauri/src/commands/task.rs`
 **Consumed**: `frontend/src/lib/ipc/domains/tasks.ts`
 
 #### 9. assign_task
@@ -163,7 +163,7 @@ info!("[{}] Processing request", request_id);
 - `task_id: string`
 - `technician_id: string`
 **Permissions**: Admin/Supervisor
-**Implemented**: `src-tauri/src/commands/task/assign_task.rs`
+**Implemented**: `src-tauri/src/commands/task.rs`
 **Consumed**: `frontend/src/lib/ipc/domains/tasks.ts`
 
 ### Intervention Workflow Commands
@@ -179,7 +179,7 @@ info!("[{}] Processing request", request_id);
     humidity: number
   }`
 **Permissions**: Assigned technician
-**Implemented**: `src-tauri/src/commands/intervention/start_intervention.rs`
+**Implemented**: `src-tauri/src/commands/intervention.rs`
 **Consumed**: `frontend/src/lib/ipc/domains/interventions.ts`
 
 #### 11. get_intervention
@@ -187,7 +187,7 @@ info!("[{}] Processing request", request_id);
 **Parameters**:
 - `intervention_id: string`
 **Permissions**: Assigned user or Admin/Supervisor
-**Implemented**: `src-tauri/src/commands/intervention/get_intervention.rs`
+**Implemented**: `src-tauri/src/commands/intervention.rs`
 **Consumed**: `frontend/src/lib/ipc/domains/interventions.ts`
 
 #### 12. start_step
@@ -201,7 +201,7 @@ info!("[{}] Processing request", request_id);
     accuracy: number
   }`
 **Permissions**: Assigned technician
-**Implemented**: `src-tauri/src/commands/intervention/start_step.rs`
+**Implemented**: `src-tauri/src/commands/intervention.rs`
 **Consumed**: `frontend/src/lib/ipc/domains/interventions.ts`
 
 #### 13. complete_step
@@ -217,7 +217,7 @@ info!("[{}] Processing request", request_id);
     accuracy: number
   }`
 **Permissions**: Assigned technician
-**Implemented**: `src-tauri/src/commands/intervention/complete_step.rs`
+**Implemented**: `src-tauri/src/commands/intervention.rs`
 **Consumed**: `frontend/src/lib/ipc/domains/interventions.ts`
 
 #### 14. upload_photo
@@ -232,7 +232,7 @@ info!("[{}] Processing request", request_id);
     exif_data?: any
   }`
 **Permissions**: Assigned technician
-**Implemented**: `src-tauri/src/commands/intervention/upload_photo.rs`
+**Implemented**: `src-tauri/src/commands/intervention.rs`
 **Consumed**: `frontend/src/lib/ipc/domains/interventions.ts`
 
 ### Client Management Commands
@@ -318,7 +318,7 @@ info!("[{}] Processing request", request_id);
 - `technician_id?: string`
 - `format: 'pdf' | 'excel'`
 **Permissions**: Admin/Supervisor/Technician (own reports)
-**Implemented**: `src-tauri/src/commands/reports/generate_completion_report.rs`
+**Implemented**: `src-tauri/src/commands/reports.rs`
 **Consumed**: `frontend/src/lib/ipc/domains/reports.ts`
 
 #### 22. get_performance_metrics
@@ -327,8 +327,8 @@ info!("[{}] Processing request", request_id);
 - `period: 'week' | 'month' | 'quarter' | 'year'`
 - `technician_id?: string`
 **Permissions**: Admin/Supervisor
-**Implemented**: `src-tauri/src/commands/reports/performance.rs`
-**Consumed`: `frontend/src/lib/ipc/domains/reports.ts`
+**Implemented**: `src-tauri/src/commands/reports.rs`
+**Consumed**: `frontend/src/lib/ipc/domains/reports.ts`
 
 ### User Management Commands
 

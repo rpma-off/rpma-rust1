@@ -57,7 +57,7 @@ pub fn generate_session_token() -> String {
 ```
 
 ### Session Management
-Sessions are stored in the database with expiry timestamps and automatic cleanup:
+Sessions are stored in database with expiry timestamps and automatic cleanup:
 
 ```sql
 -- Session table structure
@@ -75,7 +75,7 @@ CREATE TABLE user_sessions (
 ## Two-Factor Authentication
 
 ### TOTP Implementation
-RPMA v2 supports Time-based One-Time Passwords (TOTP) using the RFC 6238 standard:
+RPMA v2 supports Time-based One-Time Passwords (TOTP) using RFC 6238 standard:
 
 ```rust
 // 2FA setup
@@ -143,7 +143,7 @@ RPMA v2 implements four distinct roles with escalating permissions:
 - User management (create, update, deactivate)
 - System configuration and settings
 - Full database access and exports
-- Manage all aspects of the application
+- Manage all aspects of application
 
 ### Permission Matrix
 
@@ -162,7 +162,7 @@ RPMA v2 implements four distinct roles with escalating permissions:
 | System settings         | ✗      | ✗          | ✗          | ✓     |
 
 ### Permission Enforcement
-Permissions are checked at the command level:
+Permissions are checked at command level:
 
 ```rust
 // Example permission check
@@ -227,12 +227,12 @@ pub fn list_tasks_for_user(
 
 ### Local Database Security
 - SQLite database is encrypted at rest using SQLCipher
-- Database file permissions are restricted to the current user
+- Database file permissions are restricted to current user
 - Automatic database locking when application is not in focus
 
 ### Secrets Management
 - Sensitive configuration is stored in environment variables
-- API keys and tokens are encrypted in the database
+- API keys and tokens are encrypted in database
 - Passwords are hashed using Argon2 with per-user salts
 - Session tokens are cryptographically secure UUIDs
 

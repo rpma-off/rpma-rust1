@@ -12,8 +12,8 @@ The application follows a "source of truth" approach where the local SQLite data
 - **Frontend**: Next.js 14 with React, TypeScript, and Tailwind CSS
 - **UI Components**: shadcn/ui built on Radix UI primitives
 - **Backend**: Rust with SQLite (WAL mode) for data persistence
-- **State Management**: React hooks with contexts and TanStack Query for caching
-- **Authentication**: Token-based with 2FA support and role-based access control
+- **State Management**: React hooks with contexts and Zustand for global state
+- **Authentication**: JWT with 2FA support and role-based access control
 - **Type Safety**: Automatic TypeScript generation from Rust models using `ts-rs`
 
 ## Architecture Overview

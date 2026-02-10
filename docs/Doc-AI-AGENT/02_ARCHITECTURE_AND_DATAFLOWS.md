@@ -38,9 +38,9 @@ frontend/src/
 
 ### State Management Patterns
 - **Local State**: React hooks (`useState`, `useReducer`) for component state
-- **Global State**: React Context for authentication and user session
+- **Global State**: React Context for authentication and Zustand for application state
 - **Server State**: TanStack Query for caching and synchronization
-- **Form State**: Controlled components with validation
+- **Form State**: Controlled components with validation using react-hook-form
 
 ## Backend Architecture
 
@@ -50,7 +50,7 @@ src-tauri/src/
 ├── main.rs               # Application entry point
 ├── commands/             # IPC command handlers
 │   ├── auth.rs          # Authentication commands
-│   ├── task/            # Task management
+│   ├── task.rs          # Task management
 │   ├── intervention.rs  # Intervention workflows
 │   └── [domain].rs      # Other domain commands
 ├── services/            # Business logic
@@ -101,7 +101,7 @@ App::new()
 
 **Implementation Details:**
 - Frontend: `frontend/src/lib/ipc/domains/tasks.ts`
-- IPC Command: `src-tauri/src/commands/task/create_task.rs`
+- IPC Command: `src-tauri/src/commands/task.rs`
 - Service: `src-tauri/src/services/task.rs`
 - Repository: `src-tauri/src/repositories/task_repository.rs`
 
@@ -117,14 +117,14 @@ App::new()
 │    with photos     │    │    step data    │    │ 9. Store       │
 │ 10. Load next      │◀───│ 11. Update      │◀───│    progress     │
 │    step            │    │    UI state     │    │ 12. Trigger     │
-│                    │    │                 │    │    sync queue   │
+│                   │    │                 │    │    sync queue   │
 └────────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
 **Key Components:**
-- Workflow Engine: `src-tauri/src/services/intervention_workflow.rs`
-- Step Validation: `src-tauri/src/services/step_validation.rs`
-- Photo Processing: `src-tauri/src/services/photo_processing.rs`
+- Workflow Engine: `src-tauri/src/services/intervention.rs`
+- Step Validation: `src-tauri/src/services/intervention.rs`
+- Photo Processing: `src-tauri/src/services/photo.rs`
 - Sync Queue: `src-tauri/src/sync/mod.rs`
 
 ### 3. Calendar Scheduling Updates
@@ -159,7 +159,7 @@ App::new()
 └───────────────────┘    └─────────────────────┘    └─────────────────┘
 ```
 
-**Implementation Location:** `src-tauri/src/sync/queue.rs`
+**Implementation Location:** `src-tauri/src/sync/mod.rs`
 
 ### Conflict Resolution Strategy
 1. **Last Write Wins**: For non-critical fields

@@ -11,11 +11,7 @@ src-tauri/src/
 ├── commands/               # IPC command handlers
 │   ├── mod.rs             # Command module exports
 │   ├── auth.rs            # Authentication commands
-│   ├── task/              # Task management commands
-│   │   ├── mod.rs
-│   │   ├── create_task.rs
-│   │   ├── update_task.rs
-│   │   └── list_tasks.rs
+│   ├── task.rs            # Task management commands
 │   ├── intervention.rs    # Intervention workflow commands
 │   ├── client.rs          # Client management commands
 │   ├── material.rs        # Material/inventory commands
@@ -26,9 +22,9 @@ src-tauri/src/
 │   ├── mod.rs
 │   ├── auth.rs            # Authentication service
 │   ├── task.rs            # Task business logic
-│   ├── intervention_workflow.rs # PPF workflow management
+│   ├── intervention.rs    # PPF workflow management
 │   ├── inventory.rs       # Inventory management
-│   ├── photo_processing.rs # Photo validation and processing
+│   ├── photo.rs           # Photo validation and processing
 │   └── ...                # Other domain services
 ├── repositories/          # Data access layer
 │   ├── mod.rs
@@ -67,7 +63,7 @@ src-tauri/src/
 All IPC commands follow a consistent pattern for authentication, validation, business logic execution, and response formatting.
 
 ```rust
-// src-tauri/src/commands/task/create_task.rs
+// src-tauri/src/commands/task.rs
 use crate::error::AppError;
 use crate::models::task::{CreateTaskRequest, Task};
 use crate::services::task::TaskService;

@@ -12,13 +12,13 @@ RPMA v2 revolves around a set of interconnected entities that model the PPF inst
 - `id`: Unique identifier
 - `task_number`: Human-readable unique identifier
 - `title`: Task description
-- `status`: Lifecycle state (draft, scheduled, in_progress, completed, cancelled)
+- `status`: Lifecycle state (draft, scheduled, in_progress, completed, cancelled, on_hold)
 - `priority`: Urgency level (low, medium, high, urgent)
-- `vehicle_plate`, `make`, `model`, `year`, `vin`: Vehicle details
+- `client_id`: Associated customer
+- `vehicle_plate`, `vehicle_make`, `vehicle_model`, `vehicle_year`, `vin`: Vehicle details
 - `ppf_zones`, `custom_ppf_zones`: PPF protection areas
 - `technician_id`: Assigned user
 - `scheduled_date`: Planned execution date
-- `workflow_id`, `workflow_status`, `current_workflow_step_id`: Workflow tracking
 - `created_at`, `updated_at`: Audit timestamps
 - `deleted_at`, `deleted_by`: Soft delete support
 
@@ -80,7 +80,7 @@ RPMA v2 revolves around a set of interconnected entities that model the PPF inst
 - `email`, `phone`: Contact details
 - `address_line_1`, `address_line_2`, `city`, `state`, `zip`: Address
 - `notes`: Additional information
-- `computed_statistics`: total_tasks, active_tasks, completed_tasks
+- `is_active`: Account status
 - `created_at`, `updated_at`: Audit timestamps
 
 **Storage**: `clients` table in SQLite
@@ -100,6 +100,9 @@ RPMA v2 revolves around a set of interconnected entities that model the PPF inst
 - `phone`: Contact details
 - `is_active`: Account status
 - `last_login`: Activity tracking
+- `totp_secret`: Two-factor authentication secret
+- `backup_codes`: JSON array of backup codes
+- `two_factor_enabled`: Boolean flag for 2FA status
 - `created_at`, `updated_at`: Audit timestamps
 
 **Storage**: `users` table in SQLite
