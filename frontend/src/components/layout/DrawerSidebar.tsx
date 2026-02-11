@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ChevronRight, MessageSquare, Users, Package, Workflow, Settings, Activity, BarChart3, Trash2, X, LogOut } from 'lucide-react';
+import { ChevronRight, MessageSquare, Users, Package, Workflow, Settings, Activity, BarChart3, Trash2, X, LogOut, User, Shield, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth/compatibility';
 import {
@@ -47,6 +47,7 @@ function UserDropdown({ onMobileClose }: { onMobileClose?: () => void }) {
     : profile?.email || 'User';
 
   const initials = profile?.first_name?.charAt(0) || profile?.email?.charAt(0) || 'U';
+  const userRole = profile?.role || 'viewer';
 
   const handleLogout = async () => {
     try {
@@ -63,27 +64,79 @@ function UserDropdown({ onMobileClose }: { onMobileClose?: () => void }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <div className="flex items-center justify-between px-4 py-3 hover:bg-muted/20 cursor-pointer border-t border-[hsl(var(--rpma-border))]">
+        <div className="flex items-center justify-between px-4 py-3 hover:bg-muted/20 cursor-pointer border-t border-[hsl(var(--rpma-border))] transition-colors duration-200">
           <div className="flex items-center gap-3">
-            <Avatar className="h-8 w-8 bg-muted">
-              <AvatarFallback className="text-muted-foreground font-semibold text-xs">{initials}</AvatarFallback>
+            <Avatar className="h-8 w-8 bg-gradient-to-br from-muted to-muted/80 ring-2 ring-background">
+              <AvatarFallback className="text-foreground font-semibold text-xs">{initials}</AvatarFallback>
             </Avatar>
-            <div>
-              <div className="text-xs text-muted-foreground">Signed in as</div>
-              <div className="text-sm font-semibold text-foreground truncate max-w-[140px]">{displayName}</div>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs text-muted-foreground font-medium">Signed in as</div>
+              <div className="text-sm font-semibold text-foreground truncate">{displayName}</div>
             </div>
           </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
         </div>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuItem onClick={() => { onMobileClose?.(); router.push('/settings'); }}>
-          Settings
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout} className="text-red-600">
-          <LogOut className="h-4 w-4 mr-2" />
-          Logout
+      <DropdownMenuContent 
+        align="end" 
+        side="bottom" 
+        sideOffset={4}
+        className="w-72 bg-background border-border/20 shadow-xl"
+      >
+        <div className="px-3 py-3 border-b border-border/20">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10 bg-gradient-to-br from-[hsl(var(--rpma-teal))] to-[hsl(var(--rpma-purple))]">
+              <AvatarFallback className="text-white font-semibold text-sm">{initials}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground truncate">{displayName}</p>
+              <p className="text-xs text-muted-foreground truncate">{profile?.email}</p>
+            </div>
+          </div>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[hsl(var(--rpma-teal))]/10 text-[hsl(var(--rpma-teal))] border border-[hsl(var(--rpma-teal))]/20">
+              <Shield className="h-3 w-3 mr-1" />
+              {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+            </span>
+          </div>
+        </div>
+
+        <DropdownMenuSeparator className="bg-border/20" />
+
+        <div className="py-1">
+          <DropdownMenuItem 
+            onClick={() => { onMobileClose?.(); router.push('/settings'); }}
+            className="flex items-center gap-3 px-3 py-2.5 text-sm text-foreground hover:bg-muted/10 focus:bg-muted/10 cursor-pointer"
+          >
+            <User className="h-4 w-4 text-muted-foreground" />
+            <span>Profile</span>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem 
+            onClick={() => { onMobileClose?.(); router.push('/settings'); }}
+            className="flex items-center gap-3 px-3 py-2.5 text-sm text-foreground hover:bg-muted/10 focus:bg-muted/10 cursor-pointer"
+          >
+            <Settings className="h-4 w-4 text-muted-foreground" />
+            <span>Settings</span>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem 
+            onClick={() => { onMobileClose?.(); router.push('/help'); }}
+            className="flex items-center gap-3 px-3 py-2.5 text-sm text-foreground hover:bg-muted/10 focus:bg-muted/10 cursor-pointer"
+          >
+            <HelpCircle className="h-4 w-4 text-muted-foreground" />
+            <span>Help & Support</span>
+          </DropdownMenuItem>
+        </div>
+
+        <DropdownMenuSeparator className="bg-border/20" />
+
+        <DropdownMenuItem 
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 hover:bg-red-500/10 focus:bg-red-500/10 cursor-pointer group"
+        >
+          <LogOut className="h-4 w-4 text-red-500 group-hover:text-red-600 transition-colors" />
+          <span>Logout</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

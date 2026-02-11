@@ -1,17 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/compatibility';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +29,9 @@ import {
   X,
   ChevronRight,
   LogOut,
+  User,
+  Shield,
+  HelpCircle,
 } from 'lucide-react';
 
 interface NavItem {
@@ -62,6 +60,7 @@ function UserDropdown({ onMobileClose }: { onMobileClose?: () => void }) {
     : profile?.email || 'User';
 
   const initials = profile?.first_name?.charAt(0) || profile?.email?.charAt(0) || 'U';
+  const userRole = profile?.role || 'viewer';
 
   const handleLogout = async () => {
     try {
@@ -78,27 +77,79 @@ function UserDropdown({ onMobileClose }: { onMobileClose?: () => void }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer border-t border-gray-100">
+        <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer border-t border-gray-100 transition-colors duration-200">
           <div className="flex items-center space-x-3">
-            <Avatar className="h-8 w-8 bg-gray-200">
-              <AvatarFallback className="text-gray-500 font-bold text-xs">{initials}</AvatarFallback>
+            <Avatar className="h-8 w-8 bg-gradient-to-br from-gray-200 to-gray-300 ring-2 ring-white">
+              <AvatarFallback className="text-gray-600 font-bold text-xs">{initials}</AvatarFallback>
             </Avatar>
-            <div>
-              <p className="text-xs text-gray-400">Signed in as</p>
-              <p className="text-sm font-semibold text-gray-700 truncate max-w-[140px]">{displayName}</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-gray-400 font-medium">Signed in as</p>
+              <p className="text-sm font-semibold text-gray-700 truncate">{displayName}</p>
             </div>
           </div>
-          <ChevronRight className="h-4 w-4 text-gray-400" />
+          <ChevronRight className="h-4 w-4 text-gray-400 transition-transform duration-200" />
         </div>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuItem onClick={() => { onMobileClose?.(); router.push('/settings'); }}>
-          Settings
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout} className="text-red-600">
-          <LogOut className="h-4 w-4 mr-2" />
-          Logout
+      <DropdownMenuContent 
+        align="end" 
+        side="bottom" 
+        sideOffset={4}
+        className="w-72 bg-white border-gray-200 shadow-xl"
+      >
+        <div className="px-3 py-3 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10 bg-gradient-to-br from-blue-500 to-purple-600">
+              <AvatarFallback className="text-white font-semibold text-sm">{initials}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-900 truncate">{displayName}</p>
+              <p className="text-xs text-gray-500 truncate">{profile?.email}</p>
+            </div>
+          </div>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+              <Shield className="h-3 w-3 mr-1" />
+              {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+            </span>
+          </div>
+        </div>
+
+        <DropdownMenuSeparator className="bg-gray-100" />
+
+        <div className="py-1">
+          <DropdownMenuItem 
+            onClick={() => { onMobileClose?.(); router.push('/settings'); }}
+            className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 focus:bg-gray-50 cursor-pointer"
+          >
+            <User className="h-4 w-4 text-gray-400" />
+            <span>Profile</span>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem 
+            onClick={() => { onMobileClose?.(); router.push('/settings'); }}
+            className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 focus:bg-gray-50 cursor-pointer"
+          >
+            <SettingsIcon className="h-4 w-4 text-gray-400" />
+            <span>Settings</span>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem 
+            onClick={() => { onMobileClose?.(); router.push('/help'); }}
+            className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 focus:bg-gray-50 cursor-pointer"
+          >
+            <HelpCircle className="h-4 w-4 text-gray-400" />
+            <span>Help & Support</span>
+          </DropdownMenuItem>
+        </div>
+
+        <DropdownMenuSeparator className="bg-gray-100" />
+
+        <DropdownMenuItem 
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 focus:bg-red-50 cursor-pointer group"
+        >
+          <LogOut className="h-4 w-4 text-red-500 group-hover:text-red-600 transition-colors" />
+          <span>Logout</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -107,7 +158,6 @@ function UserDropdown({ onMobileClose }: { onMobileClose?: () => void }) {
 
 export function RPMASidebar({ onMobileClose, isOpen, onToggle }: { onMobileClose?: () => void; isOpen: boolean; onToggle: () => void }) {
   const pathname = usePathname();
-  const { user, profile } = useAuth();
 
   const isActive = (href: string) => {
     if (href === '/tasks' && pathname === '/interventions') return true;
@@ -216,7 +266,6 @@ export function RPMASidebar({ onMobileClose, isOpen, onToggle }: { onMobileClose
 
 export function RPMAMobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const pathname = usePathname();
-  const { user, profile } = useAuth();
 
   const isActive = (href: string) => {
     if (href === '/tasks' && pathname === '/interventions') return true;
