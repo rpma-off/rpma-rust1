@@ -11,7 +11,7 @@ use crate::models::step::*;
 use crate::models::task::*;
 
 use chrono::Utc;
-use std::sync::{Arc, OnceLock};
+use std::sync::Arc;
 use tempfile::TempDir;
 
 /// Test database fixture that provides a clean in-memory database for each test
@@ -56,12 +56,15 @@ pub async fn setup_test_db() -> Database {
 
 /// Create a synchronous in-memory database for legacy tests
 pub fn setup_test_db_sync() -> Database {
-    static TEST_RUNTIME: OnceLock<tokio::runtime::Runtime> = OnceLock::new();
-
-    TEST_RUNTIME
-        .get_or_init(|| tokio::runtime::Runtime::new().expect("Failed to create tokio runtime"))
-        .block_on(Database::new_in_memory())
-        .expect("Failed to create in-memory database")
+    match tokio::runtime::Handle::try_current() {
+        Ok(handle) => handle
+            .block_on(Database::new_in_memory())
+            .expect("Failed to create in-memory database"),
+        Err(_) => tokio::runtime::Runtime::new()
+            .expect("Failed to create tokio runtime")
+            .block_on(Database::new_in_memory())
+            .expect("Failed to create in-memory database"),
+    }
 }
 
 /// Test data factory for creating test fixtures
