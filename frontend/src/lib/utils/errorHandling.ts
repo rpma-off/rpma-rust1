@@ -104,7 +104,7 @@ export function handleApiError(
       ErrorSeverity.MEDIUM,
       {
         context,
-        details: { stack: error.stack ?? null },
+        details: error.stack ? { stack: error.stack } : undefined,
       }
     );
   }
