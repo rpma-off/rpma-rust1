@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/compatibility';
 import { CalendarDashboard } from '@/components/dashboard/CalendarDashboard';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { PageShell } from '@/components/layout/PageShell';
+import { LoadingState } from '@/components/layout/LoadingState';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -18,12 +20,9 @@ export default function DashboardPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--rpma-teal))] mx-auto mb-4" />
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        </div>
-      </div>
+      <PageShell>
+        <LoadingState message="Chargement..." />
+      </PageShell>
     );
   }
 

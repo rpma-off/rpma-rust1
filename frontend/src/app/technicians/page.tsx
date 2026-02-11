@@ -11,6 +11,11 @@ import { ipcClient } from '@/lib/ipc';
 import type { UserAccount as BackendUserAccount } from '@/lib/backend';
 import type { UserAccount as UiUserAccount } from '@/lib/types';
 import { convertTimestamps } from '@/lib/types';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHeader } from '@/components/ui/page-header';
+import { LoadingState } from '@/components/layout/LoadingState';
+import { ErrorState } from '@/components/layout/ErrorState';
+import { EmptyState } from '@/components/layout/EmptyState';
 
 interface TechnicianStats {
   totalTechnicians: number;
@@ -70,63 +75,27 @@ export default function TechniciansPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[hsl(var(--rpma-surface))] py-6 md:py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center py-12">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 border-2 border-[hsl(var(--rpma-teal))] border-t-transparent rounded-full animate-spin" />
-              <span className="text-muted-foreground text-lg font-medium">Chargement des techniciens...</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageShell>
+        <LoadingState message="Chargement des techniciens..." />
+      </PageShell>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[hsl(var(--rpma-surface))] py-6 md:py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="rpma-shell p-4 md:p-6">
-            <div className="text-center py-12">
-              <div className="text-red-400 mb-4">
-                <svg className="w-16 h-16 mx-auto mb-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-foreground mb-2">Erreur de chargement</h3>
-              <p className="text-muted-foreground mb-6">{error}</p>
-              <Button onClick={() => window.location.reload()}>
-                Réessayer
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageShell>
+        <ErrorState message={error} onRetry={() => window.location.reload()} />
+      </PageShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[hsl(var(--rpma-surface))] py-6 md:py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-6 md:mb-8">
-          <div className="rpma-shell p-4 md:p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-[hsl(var(--rpma-surface))] border border-[hsl(var(--rpma-border))] rounded-full">
-                <Users className="w-6 h-6 text-[hsl(var(--rpma-teal))]" />
-              </div>
-              <div>
-                <h1 className="text-2xl md:text-3xl font-semibold text-foreground">
-                  Gestion des Techniciens
-                </h1>
-                <p className="text-muted-foreground mt-1 text-sm md:text-base">
-                  Gérez votre équipe de techniciens PPF et suivez leurs performances
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+    <PageShell>
+      <PageHeader
+        title="Gestion des Techniciens"
+        subtitle="Gérez votre équipe de techniciens PPF et suivez leurs performances"
+        icon={<Users className="w-6 h-6 text-[hsl(var(--rpma-teal))]" />}
+      />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -189,13 +158,11 @@ export default function TechniciansPage() {
           </CardHeader>
           <CardContent>
             {technicians.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-foreground mb-2">Aucun technicien trouvé</h3>
-                <p className="text-muted-foreground">
-                  Les utilisateurs avec le rôle &ldquo;technicien&rdquo; apparaîtront ici.
-                </p>
-              </div>
+              <EmptyState
+                icon={<Users className="h-8 w-8 text-muted-foreground" />}
+                title="Aucun technicien trouvé"
+                description="Les utilisateurs avec le rôle « technicien » apparaîtront ici."
+              />
             ) : (
               <div className="space-y-4">
                 {technicians.map((technician) => (
@@ -233,7 +200,6 @@ export default function TechniciansPage() {
             )}
           </CardContent>
         </Card>
-      </div>
-    </div>
+      </PageShell>
   );
 }
