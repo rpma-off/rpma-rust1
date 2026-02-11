@@ -371,6 +371,8 @@ impl InterventionWorkflowService {
             });
         }
 
+        self.apply_completion_requirements(&mut current_step, &logger)?;
+
         // Mark step as completed
         current_step.step_status = StepStatus::Completed;
         current_step.completed_at = TimestampString::now();
@@ -607,6 +609,64 @@ impl InterventionWorkflowService {
                 .issues
                 .as_ref()
                 .map_or(false, |issues| !issues.is_empty())
+    }
+
+    fn apply_completion_requirements(
+        &self,
+        step: &mut InterventionStep,
+        logger: &RPMARequestLogger,
+    ) -> InterventionResult<()> {
+        if !step.requires_photos {
+            return Ok(());
+        }
+
+        // Enforce inclusive minimum photo requirement.
+        if step.photo_count < step.min_photos_required {
+            let mut error_context = std::collections::HashMap::new();
+            error_context.insert("step_id".to_string(), serde_json::json!(step.id));
+            error_context.insert(
+                "required_photos".to_string(),
+                serde_json::json!(step.min_photos_required),
+            );
+            error_context.insert(
+                "current_photos".to_string(),
+                serde_json::json!(step.photo_count),
+            );
+            logger.error(
+                "Step completion blocked: missing required photos",
+                None,
+                Some(error_context),
+            );
+            return Err(InterventionError::Workflow(format!(
+                "Step {} requires at least {} photo(s); {} provided",
+                step.step_number, step.min_photos_required, step.photo_count
+            )));
+        }
+
+        if step.max_photos_allowed > 0 && step.photo_count > step.max_photos_allowed {
+            let mut error_context = std::collections::HashMap::new();
+            error_context.insert("step_id".to_string(), serde_json::json!(step.id));
+            error_context.insert(
+                "max_photos".to_string(),
+                serde_json::json!(step.max_photos_allowed),
+            );
+            error_context.insert(
+                "current_photos".to_string(),
+                serde_json::json!(step.photo_count),
+            );
+            logger.error(
+                "Step completion blocked: too many photos",
+                None,
+                Some(error_context),
+            );
+            return Err(InterventionError::Workflow(format!(
+                "Step {} allows at most {} photo(s); {} provided",
+                step.step_number, step.max_photos_allowed, step.photo_count
+            )));
+        }
+
+        step.required_photos_completed = true;
+        Ok(())
     }
 
     /// Save step progress without advancing to next step
@@ -873,5 +933,56 @@ impl InterventionWorkflowService {
             self.data
                 .list_interventions(None, None, Some(limit), Some(offset))?;
         Ok(interventions)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test_utils::TestDatabase;
+    use crate::models::step::StepType;
+
+    fn test_logger() -> RPMARequestLogger {
+        RPMARequestLogger::new("test-correlation".to_string(), None, LogDomain::Task)
+    }
+
+    #[test]
+    fn test_apply_completion_requirements_requires_photos() {
+        let test_db = TestDatabase::new().expect("Failed to create test database");
+        let service = InterventionWorkflowService::new(test_db.db());
+        let mut step = InterventionStep::new(
+            "intervention-1".to_string(),
+            1,
+            "Inspection".to_string(),
+            StepType::Inspection,
+        );
+        step.requires_photos = true;
+        step.min_photos_required = 2;
+        step.photo_count = 1;
+
+        let result = service.apply_completion_requirements(&mut step, &test_logger());
+
+        assert!(matches!(result, Err(InterventionError::Workflow(_))));
+        assert!(!step.required_photos_completed);
+    }
+
+    #[test]
+    fn test_apply_completion_requirements_marks_completed() {
+        let test_db = TestDatabase::new().expect("Failed to create test database");
+        let service = InterventionWorkflowService::new(test_db.db());
+        let mut step = InterventionStep::new(
+            "intervention-1".to_string(),
+            1,
+            "Inspection".to_string(),
+            StepType::Inspection,
+        );
+        step.requires_photos = true;
+        step.min_photos_required = 2;
+        step.photo_count = 2;
+
+        let result = service.apply_completion_requirements(&mut step, &test_logger());
+
+        assert!(result.is_ok());
+        assert!(step.required_photos_completed);
     }
 }

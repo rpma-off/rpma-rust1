@@ -8,6 +8,7 @@
 
 use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
+use crate::models::auth::{UserRole, UserSession};
 use chrono::Utc;
 use serde::Deserialize;
 
@@ -52,6 +53,45 @@ pub enum InterventionWorkflowResponse {
     },
 }
 
+fn ensure_technician_assignment(
+    session: &UserSession,
+    assigned_technician_id: Option<&str>,
+    action: &str,
+) -> Result<(), AppError> {
+    if !matches!(session.role, UserRole::Technician) {
+        return Ok(());
+    }
+
+    if assigned_technician_id != Some(session.user_id.as_str()) {
+        return Err(AppError::Authorization(format!(
+            "Technician can only {} for assigned tasks",
+            action
+        )));
+    }
+
+    Ok(())
+}
+
+async fn ensure_task_assignment(
+    state: &AppState<'_>,
+    session: &UserSession,
+    task_id: &str,
+    action: &str,
+) -> Result<(), AppError> {
+    if !matches!(session.role, UserRole::Technician) {
+        return Ok(());
+    }
+
+    let task = state
+        .task_service
+        .get_task_async(task_id)
+        .await
+        .map_err(|e| AppError::Database(format!("Failed to get task: {}", e)))?
+        .ok_or_else(|| AppError::NotFound(format!("Task {} not found", task_id)))?;
+
+    ensure_technician_assignment(session, task.technician_id.as_deref(), action)
+}
+
 /// Request structure for starting an intervention
 #[derive(Deserialize, Debug)]
 pub struct StartInterventionRequest {
@@ -87,6 +127,13 @@ pub async fn intervention_start(
 
     let session = authenticate!(&session_token, &state);
     super::ensure_intervention_permission(&session)?;
+    ensure_task_assignment(
+        &state,
+        &session,
+        &request.task_id,
+        "start interventions",
+    )
+    .await?;
 
     // Check if there's already an active intervention for this task
     match state
@@ -162,6 +209,17 @@ pub async fn intervention_update(
 
     let session = authenticate!(&session_token, &state);
     super::ensure_intervention_permission(&session)?;
+    let intervention = state
+        .intervention_service
+        .get_intervention(&id)
+        .map_err(|e| AppError::Database(format!("Failed to get intervention: {}", e)))?
+        .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", id)))?;
+
+    ensure_technician_assignment(
+        &session,
+        intervention.technician_id.as_deref(),
+        "update interventions",
+    )?;
 
     state
         .intervention_service
@@ -272,6 +330,7 @@ pub async fn intervention_workflow(
         InterventionWorkflowAction::Start { data } => {
             super::ensure_intervention_permission(&session)?;
             info!("Starting intervention workflow for task: {}", data.task_id);
+            ensure_task_assignment(&state, &session, &data.task_id, "start interventions").await?;
 
             // Check if there's already an active intervention for this task
             match state
@@ -439,6 +498,19 @@ pub async fn intervention_workflow(
 
         InterventionWorkflowAction::Finalize { data } => {
             super::ensure_intervention_permission(&session)?;
+            let intervention = state
+                .intervention_service
+                .get_intervention(&data.intervention_id)
+                .map_err(|e| AppError::Database(format!("Failed to get intervention: {}", e)))?
+                .ok_or_else(|| {
+                    AppError::NotFound(format!("Intervention {} not found", data.intervention_id))
+                })?;
+
+            ensure_technician_assignment(
+                &session,
+                intervention.technician_id.as_deref(),
+                "finalize interventions",
+            )?;
             let finalize_data = crate::services::intervention_types::FinalizeInterventionRequest {
                 intervention_id: data.intervention_id.clone(),
                 collected_data: None,
@@ -463,5 +535,54 @@ pub async fn intervention_workflow(
                 },
             ))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Utc;
+
+    fn session_with_role(role: UserRole, user_id: &str) -> UserSession {
+        let now = Utc::now().to_rfc3339();
+        UserSession {
+            id: "session-id".to_string(),
+            user_id: user_id.to_string(),
+            username: "test-user".to_string(),
+            email: "test@example.com".to_string(),
+            role,
+            token: "token".to_string(),
+            refresh_token: None,
+            expires_at: now.clone(),
+            last_activity: now.clone(),
+            created_at: now,
+            device_info: None,
+            ip_address: None,
+            user_agent: None,
+            location: None,
+            two_factor_verified: false,
+            session_timeout_minutes: None,
+        }
+    }
+
+    #[test]
+    fn test_ensure_technician_assignment_allows_admin() {
+        let session = session_with_role(UserRole::Admin, "admin-1");
+        let result = ensure_technician_assignment(&session, None, "start interventions");
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_ensure_technician_assignment_blocks_unassigned() {
+        let session = session_with_role(UserRole::Technician, "tech-1");
+        let result = ensure_technician_assignment(&session, Some("tech-2"), "finalize");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_ensure_technician_assignment_allows_assigned() {
+        let session = session_with_role(UserRole::Technician, "tech-1");
+        let result = ensure_technician_assignment(&session, Some("tech-1"), "start");
+        assert!(result.is_ok());
     }
 }
