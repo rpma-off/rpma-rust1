@@ -36,7 +36,7 @@ use crate::models::settings::StorageSettings;
 use crate::repositories::Repositories;
 use crate::services::event_bus::InMemoryEventBus;
 use crate::services::websocket_event_handler::WebSocketEventHandler;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, OnceLock};
 
 /// Service Builder
 ///
@@ -133,12 +133,6 @@ impl ServiceBuilder {
         let analytics_service =
             Arc::new(crate::services::AnalyticsService::new(db_instance.clone()));
 
-        // Initialize Report Job Service (depends on DB and CacheService)
-        let report_job_service = Arc::new(crate::services::report_jobs::ReportJobService::new(
-            self.db.clone(),
-            cache_service.clone(),
-        ));
-
         // Initialize Performance Monitor Service (depends on DB)
         let performance_monitor_service = Arc::new(
             crate::services::performance_monitor::PerformanceMonitorService::new(
@@ -189,7 +183,7 @@ impl ServiceBuilder {
             two_factor_service,
             settings_service,
             cache_service,
-            report_job_service,
+            report_job_service: OnceLock::new(),
             performance_monitor_service,
             command_performance_tracker,
             prediction_service,

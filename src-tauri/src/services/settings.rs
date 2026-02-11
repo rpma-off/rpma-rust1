@@ -5,6 +5,7 @@ use crate::models::settings::{
     UserAccessibilitySettings, UserNotificationSettings, UserPerformanceSettings, UserPreferences,
     UserProfileSettings, UserSecuritySettings, UserSettings,
 };
+use crate::services::token;
 use crate::services::validation::ValidationService;
 use rusqlite::{params, types::Value};
 use std::collections::HashSet;
@@ -933,9 +934,12 @@ impl SettingsService {
                 AppError::Database(format!("Failed to update password: {}", e))
             })?;
 
+        let current_token_hash = token::hash_token_with_env(current_session_token)
+            .map_err(|e| AppError::Configuration(format!("Token hash failed: {}", e)))?;
+
         conn.execute(
-            "DELETE FROM user_sessions WHERE user_id = ? AND token != ?",
-            params![user_id, current_session_token],
+            "DELETE FROM user_sessions WHERE user_id = ? AND token NOT IN (?, ?)",
+            params![user_id, current_token_hash, current_session_token],
         )
         .map_err(|e| {
             error!("Failed to revoke sessions for {}: {}", user_id, e);
@@ -1256,6 +1260,8 @@ mod tests {
             .db
             .get_connection()
             .expect("failed to get connection");
+        let token_hash = crate::services::token::hash_token_with_env(token)
+            .expect("failed to hash test session token");
         conn.execute(
             "INSERT INTO user_sessions (id, user_id, username, email, role, token, refresh_token, expires_at, last_activity, created_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -1265,7 +1271,7 @@ mod tests {
                 user.username,
                 user.email,
                 user.role.to_string(),
-                token,
+                token_hash,
                 Option::<String>::None,
                 (Utc::now() + chrono::Duration::hours(1)).to_rfc3339(),
                 Utc::now().to_rfc3339(),
@@ -1480,10 +1486,12 @@ mod tests {
                 |row| row.get(0),
             )
             .expect("failed to count sessions");
+        let current_token_hash = crate::services::token::hash_token_with_env("current-token")
+            .expect("failed to hash token");
         let current_exists: i64 = conn
             .query_row(
                 "SELECT COUNT(*) FROM user_sessions WHERE user_id = ? AND token = ?",
-                params![user.id, "current-token"],
+                params![user.id, current_token_hash],
                 |row| row.get(0),
             )
             .expect("failed to check current session");

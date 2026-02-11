@@ -42,8 +42,8 @@ pub struct PoolConfig {
 impl Default for PoolConfig {
     fn default() -> Self {
         Self {
-            max_connections: 100, // Scaled up for high-throughput workloads
-            min_idle: Some(10),   // Maintain more idle connections for faster response
+            max_connections: 10, // SQLite is single-writer; keep pool small to reduce contention
+            min_idle: Some(2),   // Maintain a small idle pool for responsiveness
             connection_timeout: std::time::Duration::from_secs(30),
             idle_timeout: Some(std::time::Duration::from_secs(600)), // 10 minutes
             max_lifetime: Some(std::time::Duration::from_secs(3600)), // 60 minutes

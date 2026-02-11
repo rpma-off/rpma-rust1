@@ -56,7 +56,7 @@ pub async fn submit_report_job(
 
     // Submit background job
     state
-        .report_job_service
+        .report_job_service()
         .submit_job(report_type, date_range, filters)
         .await
 }
@@ -92,7 +92,7 @@ pub async fn submit_task_completion_report_job(
 
     // Submit background job
     state
-        .report_job_service
+        .report_job_service()
         .submit_job(ReportType::Tasks, date_range, filters)
         .await
 }
@@ -108,7 +108,7 @@ pub async fn get_report_job_status(
 
     let _current_user = authenticate!(&session_token, &state);
 
-    state.report_job_service.get_job_status(&job_id).await
+    state.report_job_service().get_job_status(&job_id).await
 }
 
 /// Cancel a background report job
@@ -122,7 +122,7 @@ pub async fn cancel_report_job(
 
     let _current_user = authenticate!(&session_token, &state);
 
-    state.report_job_service.cancel_job(&job_id).await
+    state.report_job_service().cancel_job(&job_id).await
 }
 
 /// Get completed report data from a background job
@@ -138,7 +138,7 @@ pub async fn get_report_job_result(
     let _current_user = authenticate!(&session_token, &state);
 
     // Check job status first
-    let job_status = state.report_job_service.get_job_status(&job_id).await?;
+    let job_status = state.report_job_service().get_job_status(&job_id).await?;
 
     match job_status {
         Some(job) => {

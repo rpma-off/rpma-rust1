@@ -103,7 +103,7 @@ use crate::models::Client;
 use crate::services::{ClientService, SettingsService, TaskService};
 use base64::{engine::general_purpose, Engine as _};
 use serde::{Deserialize, Serialize};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, OnceLock};
 use tauri::State;
 use tracing::{debug, error, info, instrument, warn};
 // Conditional import removed
@@ -289,7 +289,7 @@ pub struct AppStateType {
     pub two_factor_service: Arc<crate::services::two_factor::TwoFactorService>,
     pub settings_service: Arc<SettingsService>,
     pub cache_service: Arc<crate::services::cache::CacheService>,
-    pub report_job_service: Arc<crate::services::report_jobs::ReportJobService>,
+    pub report_job_service: OnceLock<Arc<crate::services::report_jobs::ReportJobService>>,
     pub performance_monitor_service:
         Arc<crate::services::performance_monitor::PerformanceMonitorService>,
     pub command_performance_tracker:
@@ -302,6 +302,17 @@ pub struct AppStateType {
 }
 
 pub type AppState<'a> = State<'a, AppStateType>;
+
+impl AppStateType {
+    pub fn report_job_service(&self) -> &Arc<crate::services::report_jobs::ReportJobService> {
+        self.report_job_service.get_or_init(|| {
+            Arc::new(crate::services::report_jobs::ReportJobService::new(
+                self.db.clone(),
+                self.cache_service.clone(),
+            ))
+        })
+    }
+}
 
 /// Helper function to create a tracked command handler with automatic performance monitoring
 #[macro_export]

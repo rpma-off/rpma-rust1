@@ -1,9 +1,12 @@
 //! Secure JWT token management service
 
 use crate::models::auth::UserRole;
+use base64::{engine::general_purpose, Engine as _};
 use chrono::{DateTime, Duration, TimeZone, Utc};
+use hmac::{Hmac, Mac};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, TokenData, Validation};
 use serde::{Deserialize, Serialize};
+use sha2::Sha256;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -16,6 +19,8 @@ pub enum TokenError {
     EncodingError(String),
     #[error("Decoding error: {0}")]
     DecodingError(String),
+    #[error("Configuration error: {0}")]
+    Configuration(String),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -35,6 +40,7 @@ pub struct TokenService {
     decoding_key: DecodingKey,
     access_token_duration: Duration,
     refresh_token_duration: Duration,
+    hmac_key: Vec<u8>,
 }
 
 impl std::fmt::Debug for TokenService {
@@ -53,7 +59,16 @@ impl TokenService {
             decoding_key: DecodingKey::from_secret(secret.as_ref()),
             access_token_duration: Duration::hours(2), // 2 hours for development
             refresh_token_duration: Duration::days(7), // 7 days
+            hmac_key: secret.as_bytes().to_vec(),
         }
+    }
+
+    pub fn hash_token(&self, token: &str) -> Result<String, TokenError> {
+        type HmacSha256 = Hmac<Sha256>;
+        let mut mac = HmacSha256::new_from_slice(&self.hmac_key)
+            .map_err(|e| TokenError::EncodingError(e.to_string()))?;
+        mac.update(token.as_bytes());
+        Ok(general_purpose::STANDARD.encode(mac.finalize().into_bytes()))
     }
 
     /// Generate access token
@@ -163,6 +178,23 @@ impl TokenService {
         let claims = self.validate_access_token(token)?;
         Ok(claims.session_id)
     }
+}
+
+pub(crate) fn load_jwt_secret() -> Result<String, TokenError> {
+    let secret = std::env::var("JWT_SECRET").map_err(|_| {
+        TokenError::Configuration("JWT_SECRET environment variable not set".to_string())
+    })?;
+    if secret.len() < 32 {
+        return Err(TokenError::Configuration(
+            "JWT_SECRET too short".to_string(),
+        ));
+    }
+    Ok(secret)
+}
+
+pub fn hash_token_with_env(token: &str) -> Result<String, TokenError> {
+    let secret = load_jwt_secret()?;
+    TokenService::new(&secret).hash_token(token)
 }
 
 #[cfg(test)]

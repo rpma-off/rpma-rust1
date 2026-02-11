@@ -4,7 +4,8 @@
 //! domain events via WebSocket to connected frontend clients.
 
 use crate::commands::websocket::{broadcast_ws_message, WSMessage};
-use crate::services::event_bus::{DomainEvent, EventHandler};
+use crate::services::domain_event::DomainEvent;
+use crate::services::event_bus::EventHandler;
 use async_trait::async_trait;
 use std::sync::Arc;
 use tracing::debug;
@@ -104,21 +105,23 @@ impl WebSocketEventHandler {
             DomainEvent::TaskCreated {
                 task_id,
                 title,
-                assigned_to,
+                user_id,
                 ..
             } => Some(WSMessage::TaskCreated {
                 task: serde_json::json!({
                     "id": task_id,
                     "title": title,
-                    "assigned_to": assigned_to,
+                    "assigned_to": user_id,
                 }),
             }),
             DomainEvent::TaskUpdated {
-                task_id, changes, ..
+                task_id,
+                changed_fields,
+                ..
             } => Some(WSMessage::TaskUpdated {
                 task_id: task_id.clone(),
                 updates: serde_json::json!({
-                    "changes": changes,
+                    "changes": changed_fields,
                 }),
             }),
             DomainEvent::TaskStatusChanged {
@@ -133,12 +136,12 @@ impl WebSocketEventHandler {
             }),
             DomainEvent::TaskAssigned {
                 task_id,
-                assigned_to,
+                technician_id,
                 ..
             } => Some(WSMessage::TaskUpdated {
                 task_id: task_id.clone(),
                 updates: serde_json::json!({
-                    "assigned_to": assigned_to,
+                    "assigned_to": technician_id,
                 }),
             }),
             DomainEvent::InterventionStarted {
