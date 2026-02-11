@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -21,9 +21,10 @@ import {
    Menu
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { staggerContainer, staggerItem, pageTransition } from '@/components/ui/animations';
+import { staggerContainer, staggerItem } from '@/components/ui/animations';
 import { useLogger } from '@/hooks/useLogger';
 import { LogDomain } from '@/lib/logging/types';
+import { PageShell } from '@/components/layout/PageShell';
 
 // Lazy load tab components to reduce initial bundle size
 const SystemSettingsTab = dynamic(() => import('./components/SystemSettingsTab').then(mod => ({ default: mod.SystemSettingsTab })), {
@@ -254,18 +255,12 @@ export default function ConfigurationPage() {
   };
 
   return (
-    <motion.div 
-      className="min-h-screen bg-[hsl(var(--rpma-surface))]"
-      variants={pageTransition}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-    >
+    <PageShell>
       <motion.div 
-        className="container mx-auto p-6 space-y-8"
         variants={staggerContainer}
         initial="initial"
         animate="animate"
+        className="space-y-8"
       >
         {/* Enhanced Header */}
         <motion.div 
@@ -498,6 +493,6 @@ export default function ConfigurationPage() {
       </Card>
         </motion.div>
       </motion.div>
-    </motion.div>
+    </PageShell>
   );
 }
