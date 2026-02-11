@@ -709,6 +709,84 @@ fn configure_linux_specific() {
 }
 ```
 
+## 🔎 Audit Architecture Frontend (2026-02-11)
+
+### Problèmes architecturaux constatés (8)
+1. **Structure de dossiers dérivée des conventions (`app/`, `components/`, `hooks/`, `lib/`)**
+   - Exemples : `frontend/src/tasks`, `frontend/src/dashboard`, `frontend/src/clients`, `frontend/src/GPS`, `frontend/src/PhotoUpload`.
+   - Impact : les composants métiers sont dispersés hors des répertoires attendus, ce qui rend les responsabilités moins lisibles.
+2. **Duplication de modules entre `components/tasks` et `tasks`**
+   - Exemples : `frontend/src/components/tasks/WorkflowProgressCard.tsx` et `frontend/src/tasks/WorkflowProgressCard.tsx`.
+   - Impact : risques de divergence fonctionnelle, difficultés de réutilisation et de tests.
+3. **Couplage direct UI ↔ IPC dans les composants**
+   - Exemples : `TaskManager.tsx`, `DesktopDashboard.tsx`, `PreferencesTab.tsx`, `SecurityTab.tsx`, `TaskPhotos.tsx`.
+   - Impact : la couche UI dépend du transport IPC, ce qui complique les tests et la réutilisation côté web (ex. mocks).
+4. **Hooks qui contournent le client IPC**
+   - Exemples : `useInventory.ts`, `useInventoryStats.ts` utilisent `invoke` directement.
+   - Impact : duplication des patterns d’erreur/validation et absence d’un point unique pour le tracing.
+5. **Logique métier dans les composants UI**
+   - Exemple : `TaskManager.tsx` construit un `CreateTaskRequest`/`UpdateTaskRequest` complet avec de nombreuses valeurs par défaut.
+   - Impact : faible réutilisabilité et risque d’incohérences lorsque la logique métier évolue.
+6. **Coordination multi-appels dans l’UI des réglages**
+   - Exemple : `PreferencesTab.tsx` orchestre la mise à jour des sections et la gestion d’erreurs.
+   - Impact : logique de transaction dispersée au lieu d’être centralisée dans un service.
+7. **Filtrage et recherche dupliqués dans les composants**
+   - Exemple : `TaskList.tsx` construit `search` manuellement (`ppf_zones:${filters.ppfZone}`) alors que des hooks (`useTaskFilters`, `useTaskFiltering`) existent.
+   - Impact : règles de filtrage divergentes et évolution plus coûteuse.
+8. **Responsabilités multiples dans des hooks “fourre-tout”**
+   - Exemple : `useInventory.ts` gère listes, stats, low-stock et expirés, alors qu’un hook dédié (`useInventoryStats.ts`) existe déjà.
+   - Impact : hooks difficiles à tester et à composer.
+
+### Refactors suggérés (avant/après)
+- **Extraire l’accès IPC d’un composant UI (TaskManager)**
+  - Avant :
+    ```ts
+    const [tasksResult, clientsResult] = await Promise.all([
+      ipcClient.tasks.list(query, user.token),
+      ipcClient.clients.list(query, user.token),
+    ]);
+    ```
+  - Après :
+    ```ts
+    const { tasks, clients } = await taskService.listWithClients(query, user.token);
+    ```
+- **Centraliser la logique settings dans le service**
+  - Avant :
+    ```ts
+    await ipcClient.settings.updateUserPreferences(data.preferences, user.token);
+    await ipcClient.settings.updateUserNotifications(data.notifications, user.token);
+    ```
+  - Après :
+    ```ts
+    await SettingsService.updatePreferences(user.token, data.preferences);
+    await SettingsService.updateNotifications(user.token, data.notifications);
+    ```
+- **Standardiser les hooks inventaire via un service IPC**
+  - Avant :
+    ```ts
+    const result = await invoke<Material[]>('material_list', params);
+    ```
+  - Après :
+    ```ts
+    const result = await inventoryService.list(params, sessionToken);
+    ```
+- **Isoler les règles de filtrage des tâches**
+  - Avant :
+    ```ts
+    search: filters.ppfZone ? `ppf_zones:${filters.ppfZone}` : undefined
+    ```
+  - Après :
+    ```ts
+    search: buildTaskSearch(filters)
+    ```
+
+### Recommandation de réorganisation (incrémentale)
+1. **Phase 0 (sans déplacement)** : documenter une convention “features” et créer des `index.ts` de ré-export pour les nouveaux points d’entrée.
+2. **Phase 1** : créer `src/features/{tasks,settings,inventory,dashboard}` avec sous-dossiers `components/`, `hooks/`, `services/`, `mappers/`.
+3. **Phase 2** : déplacer `src/tasks` et `src/components/tasks` vers `src/features/tasks` en gardant des ré-exports temporaires pour éviter les gros diff.
+4. **Phase 3** : migrer `src/dashboard`, `src/clients`, `src/GPS`, `src/PhotoUpload` vers leurs features respectives.
+5. **Phase 4** : réduire `components/` aux UI partagées (shadcn/ui + primitives) et placer le métier dans `features/`.
+
 ## 🔮 Évolutions Architecturales
 
 ### 1. Microservices Préparation
