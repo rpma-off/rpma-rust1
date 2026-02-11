@@ -18,6 +18,7 @@ mod tests {
         assert!(!TaskStatus::Draft.can_transition_to(&TaskStatus::Completed));
         assert!(!TaskStatus::Completed.can_transition_to(&TaskStatus::Pending));
         assert!(!TaskStatus::Cancelled.can_transition_to(&TaskStatus::InProgress));
+        assert!(!TaskStatus::Invalid.can_transition_to(&TaskStatus::Scheduled));
         assert!(!TaskStatus::Archived.can_transition_to(&TaskStatus::Scheduled));
     }
 

@@ -620,15 +620,17 @@ impl InterventionWorkflowService {
             return Ok(());
         }
 
-        let photo_count = step.photo_count;
-        if photo_count < step.min_photos_required {
+        if step.photo_count < step.min_photos_required {
             let mut error_context = std::collections::HashMap::new();
             error_context.insert("step_id".to_string(), serde_json::json!(step.id));
             error_context.insert(
                 "required_photos".to_string(),
                 serde_json::json!(step.min_photos_required),
             );
-            error_context.insert("current_photos".to_string(), serde_json::json!(photo_count));
+            error_context.insert(
+                "current_photos".to_string(),
+                serde_json::json!(step.photo_count),
+            );
             logger.error(
                 "Step completion blocked: missing required photos",
                 None,
@@ -636,18 +638,21 @@ impl InterventionWorkflowService {
             );
             return Err(InterventionError::Workflow(format!(
                 "Step {} requires at least {} photo(s); {} provided",
-                step.step_number, step.min_photos_required, photo_count
+                step.step_number, step.min_photos_required, step.photo_count
             )));
         }
 
-        if step.max_photos_allowed > 0 && photo_count > step.max_photos_allowed {
+        if step.max_photos_allowed > 0 && step.photo_count > step.max_photos_allowed {
             let mut error_context = std::collections::HashMap::new();
             error_context.insert("step_id".to_string(), serde_json::json!(step.id));
             error_context.insert(
                 "max_photos".to_string(),
                 serde_json::json!(step.max_photos_allowed),
             );
-            error_context.insert("current_photos".to_string(), serde_json::json!(photo_count));
+            error_context.insert(
+                "current_photos".to_string(),
+                serde_json::json!(step.photo_count),
+            );
             logger.error(
                 "Step completion blocked: too many photos",
                 None,
@@ -655,7 +660,7 @@ impl InterventionWorkflowService {
             );
             return Err(InterventionError::Workflow(format!(
                 "Step {} allows at most {} photo(s); {} provided",
-                step.step_number, step.max_photos_allowed, photo_count
+                step.step_number, step.max_photos_allowed, step.photo_count
             )));
         }
 
