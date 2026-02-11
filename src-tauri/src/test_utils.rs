@@ -55,6 +55,8 @@ pub async fn setup_test_db() -> Database {
 }
 
 /// Create a synchronous in-memory database for legacy tests
+///
+/// Prefer using `setup_test_db` in async tests to avoid runtime creation here.
 pub fn setup_test_db_sync() -> Database {
     match tokio::runtime::Handle::try_current() {
         Ok(handle) => handle
