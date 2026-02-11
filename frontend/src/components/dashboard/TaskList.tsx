@@ -116,6 +116,15 @@ TaskRow.displayName = 'TaskRow';
 
 export function TaskList({ tasks, onTaskClick, className }: TaskListProps) {
   const parentRef = React.useRef<HTMLDivElement>(null);
+  const onTaskClickRef = React.useRef(onTaskClick);
+
+  React.useEffect(() => {
+    onTaskClickRef.current = onTaskClick;
+  }, [onTaskClick]);
+
+  const handleTaskClick = React.useCallback((taskId: string) => {
+    onTaskClickRef.current?.(taskId);
+  }, []);
 
   const virtualizer = useVirtualizer({
     count: tasks.length,
@@ -157,7 +166,7 @@ export function TaskList({ tasks, onTaskClick, className }: TaskListProps) {
                     task={task}
                     start={virtualItem.start}
                     size={virtualItem.size}
-                    onTaskClick={onTaskClick}
+                    onTaskClick={handleTaskClick}
                   />
                 );
               })}
