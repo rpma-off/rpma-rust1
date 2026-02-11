@@ -50,10 +50,9 @@ impl WorkflowValidationService {
                 None,
                 Some(error_context),
             );
-            return Err(InterventionError::Workflow(format!(
-                "Step {} does not belong to intervention {}",
-                current_step.id, intervention.id
-            )));
+            return Err(InterventionError::Workflow(
+                "Invalid step for this intervention".to_string(),
+            ));
         }
 
         // Check intervention status

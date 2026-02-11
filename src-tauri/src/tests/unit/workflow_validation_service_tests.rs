@@ -65,7 +65,7 @@ mod tests {
         assert!(result
             .unwrap_err()
             .to_string()
-            .contains("does not belong"));
+            .contains("Invalid step"));
     }
 
     #[tokio::test]

@@ -240,7 +240,7 @@ mod tests {
         assert!(result.is_err());
         assert!(result
             .unwrap_err()
-            .contains("must be started before completing"));
+            .contains("before completion data can be provided"));
 
         Ok(())
     }

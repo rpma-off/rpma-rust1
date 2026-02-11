@@ -12,6 +12,10 @@ use crate::commands::auth_middleware::AuthMiddleware;
 use crate::commands::AppError;
 use crate::models::auth::{UserRole, UserSession};
 
+/// Ensure the session has at least Technician permissions for intervention workflows.
+///
+/// Technicians, supervisors, and admins satisfy this check; ownership checks are enforced
+/// separately by the calling commands where needed.
 pub(crate) fn ensure_intervention_permission(session: &UserSession) -> Result<(), AppError> {
     if !AuthMiddleware::has_permission(&session.role, &UserRole::Technician) {
         return Err(AppError::Authorization(
