@@ -1,0 +1,1 @@
+-- Migration 030: Add updated_at to user_sessions (handled in Rust for idempotency)

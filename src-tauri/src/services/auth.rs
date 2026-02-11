@@ -196,7 +196,7 @@ impl AuthService {
             validated_email,
             validated_username,
             validated_first_name,
-            _validated_last_name,
+            validated_last_name,
             validated_password,
             _,
         ) = self
@@ -228,6 +228,7 @@ impl AuthService {
             validated_email.clone(),
             validated_username.clone(),
             validated_first_name.clone(),
+            validated_last_name.clone(),
             role.clone(),
             password_hash.clone(),
         );
@@ -247,14 +248,16 @@ impl AuthService {
 
         match conn.execute(
             "INSERT INTO users
-              (id, email, username, password_hash, salt, full_name, role, phone, is_active, last_login_at, login_count, preferences, synced, last_synced_at, created_at, updated_at)
-              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)",
+              (id, email, username, password_hash, salt, first_name, last_name, full_name, role, phone, is_active, last_login_at, login_count, preferences, synced, last_synced_at, created_at, updated_at)
+              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)",
             params![
                 account.id,
                 account.email,
                 account.username,
                 account.password_hash,
                 account.salt,
+                account.first_name,
+                account.last_name,
                 full_name,
                 role.to_string(),
                 account.phone,
@@ -371,7 +374,7 @@ impl AuthService {
                 notifications_digest_frequency, notifications_batch_notifications,
                 notifications_sound_enabled, notifications_sound_volume,
                 created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             params![
                 settings_id, user_id,
                 first_name, email, None::<String>, None::<String>, None::<String>,  // profile

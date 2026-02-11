@@ -224,6 +224,7 @@ impl UserAccount {
         email: String,
         username: String,
         first_name: String,
+        last_name: String,
         role: UserRole,
         password_hash: String,
     ) -> Self {
@@ -233,7 +234,7 @@ impl UserAccount {
             email,
             username,
             first_name,
-            last_name: "".to_string(), // Add last_name parameter or default
+            last_name,
             role,
             password_hash,
             salt: None,

@@ -650,6 +650,8 @@ CREATE TABLE IF NOT EXISTS users (
   salt TEXT,
 
   -- Profil
+  first_name TEXT NOT NULL DEFAULT '',
+  last_name TEXT NOT NULL DEFAULT '',
   full_name TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'technician'
     CHECK(role IN ('admin', 'technician', 'supervisor', 'viewer')),
@@ -693,6 +695,7 @@ CREATE TABLE IF NOT EXISTS user_sessions (
   expires_at TEXT NOT NULL,
   last_activity TEXT NOT NULL,
   created_at TEXT NOT NULL,
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
   FOREIGN KEY (user_id) REFERENCES users (id)
 );
 

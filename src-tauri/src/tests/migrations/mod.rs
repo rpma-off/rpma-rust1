@@ -17,6 +17,8 @@ mod test_024_inventory_management;
 mod test_025_analytics_dashboard;
 mod test_026_user_settings;
 mod test_027_task_constraints;
+mod test_029_user_name_backfill;
+mod test_030_user_sessions_updated_at;
 
 // Re-export test macros
 pub use test_framework::*;

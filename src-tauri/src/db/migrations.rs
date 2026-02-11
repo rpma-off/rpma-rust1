@@ -258,6 +258,8 @@ impl Database {
             26 => self.apply_migration_26(),
             27 => self.apply_migration_27(),
             28 => self.apply_migration_28(),
+            29 => self.apply_migration_29(),
+            30 => self.apply_migration_30(),
             _ => {
                 // Try to apply generic SQL migration for all other versions
                 // This covers 3-5, 7, 10, 13-15, 19-23, and 27+
@@ -1820,6 +1822,101 @@ impl Database {
         conn.execute(
             "INSERT INTO schema_version (version) VALUES (?1)",
             params![28],
+        )
+        .map_err(|e| e.to_string())?;
+
+        Ok(())
+    }
+
+    fn apply_migration_29(&self) -> DbResult<()> {
+        let conn = self.get_connection()?;
+        tracing::info!("Applying migration 29: Add first_name and last_name columns to users");
+
+        let first_name_exists: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM pragma_table_info('users') WHERE name='first_name'",
+                [],
+                |row| row.get(0),
+            )
+            .map_err(|e| format!("Failed to check first_name column: {}", e))?;
+
+        if first_name_exists == 0 {
+            conn.execute(
+                "ALTER TABLE users ADD COLUMN first_name TEXT NOT NULL DEFAULT ''",
+                [],
+            )
+            .map_err(|e| format!("Failed to add first_name column: {}", e))?;
+        }
+
+        let last_name_exists: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM pragma_table_info('users') WHERE name='last_name'",
+                [],
+                |row| row.get(0),
+            )
+            .map_err(|e| format!("Failed to check last_name column: {}", e))?;
+
+        if last_name_exists == 0 {
+            conn.execute(
+                "ALTER TABLE users ADD COLUMN last_name TEXT NOT NULL DEFAULT ''",
+                [],
+            )
+            .map_err(|e| format!("Failed to add last_name column: {}", e))?;
+        }
+
+        // Backfill first_name and last_name from full_name where missing
+        conn.execute_batch(
+            r#"
+            UPDATE users
+            SET
+                first_name = CASE
+                    WHEN TRIM(first_name) <> '' THEN first_name
+                    WHEN INSTR(full_name, ' ') > 0 THEN SUBSTR(full_name, 1, INSTR(full_name, ' ') - 1)
+                    ELSE full_name
+                END,
+                last_name = CASE
+                    WHEN TRIM(last_name) <> '' THEN last_name
+                    WHEN INSTR(full_name, ' ') > 0 THEN SUBSTR(full_name, INSTR(full_name, ' ') + 1)
+                    ELSE ''
+                END
+            WHERE (first_name IS NULL OR TRIM(first_name) = '')
+               OR (last_name IS NULL OR TRIM(last_name) = '');
+            "#,
+        )
+        .map_err(|e| format!("Failed to backfill user names: {}", e))?;
+
+        conn.execute(
+            "INSERT INTO schema_version (version) VALUES (?1)",
+            params![29],
+        )
+        .map_err(|e| e.to_string())?;
+
+        Ok(())
+    }
+
+    fn apply_migration_30(&self) -> DbResult<()> {
+        let conn = self.get_connection()?;
+        tracing::info!("Applying migration 30: Add updated_at to user_sessions");
+
+        let updated_at_exists: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM pragma_table_info('user_sessions') WHERE name='updated_at'",
+                [],
+                |row| row.get(0),
+            )
+            .map_err(|e| format!("Failed to check updated_at column: {}", e))?;
+
+        if updated_at_exists == 0 {
+            conn.execute(
+                "ALTER TABLE user_sessions ADD COLUMN updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)",
+                [],
+            )
+            .map_err(|e| format!("Failed to add updated_at column: {}", e))?;
+        }
+
+        conn.execute(
+            "INSERT INTO schema_version (version) VALUES (?1)",
+            params![30],
         )
         .map_err(|e| e.to_string())?;
 
