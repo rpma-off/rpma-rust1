@@ -118,8 +118,8 @@ pub mod event_factory {
     ) -> DomainEvent {
         DomainEvent::TaskCreated {
             id: Uuid::new_v4().to_string(),
-            task_id,
-            task_number: task_id.clone(),
+            task_id: task_id.clone(),
+            task_number: task_id,
             title,
             user_id: assigned_to.unwrap_or_else(|| "system".to_string()),
             timestamp: Utc::now(),

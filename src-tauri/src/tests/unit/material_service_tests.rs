@@ -515,6 +515,7 @@ mod tests {
         assert_eq!(consumption.quantity_used, 25.0);
         assert_eq!(consumption.waste_quantity, 5.0);
         assert_eq!(consumption.batch_used.unwrap(), "BATCH-001");
+        assert_eq!(consumption.recorded_by, Some("test_user".to_string()));
     }
 
     #[test]

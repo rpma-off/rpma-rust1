@@ -598,10 +598,14 @@ impl InterventionWorkflowService {
     ///
     /// Returns true when collected_data is non-empty or when photos/issues are supplied.
     fn has_completion_data(request: &AdvanceStepRequest) -> bool {
-        !matches!(
-            request.collected_data,
-            serde_json::Value::Null | serde_json::Value::Object(ref map) if map.is_empty()
-        ) || request
+        let has_collected_data = match &request.collected_data {
+            serde_json::Value::Null => false,
+            serde_json::Value::Object(map) if map.is_empty() => false,
+            _ => true,
+        };
+
+        has_collected_data
+            || request
             .photos
             .as_ref()
             .map_or(false, |photos| !photos.is_empty())
@@ -984,5 +988,43 @@ mod tests {
 
         assert!(result.is_ok());
         assert!(step.required_photos_completed);
+    }
+
+    #[test]
+    fn test_has_completion_data_with_empty_collected_data_and_no_media() {
+        let request = AdvanceStepRequest {
+            intervention_id: "int-1".to_string(),
+            step_id: "step-1".to_string(),
+            collected_data: serde_json::Value::Object(Default::default()),
+            photos: None,
+            notes: None,
+            quality_check_passed: true,
+            issues: None,
+        };
+
+        assert!(!InterventionWorkflowService::has_completion_data(&request));
+    }
+
+    #[test]
+    fn test_has_completion_data_with_collected_data_or_media() {
+        let mut request = AdvanceStepRequest {
+            intervention_id: "int-1".to_string(),
+            step_id: "step-1".to_string(),
+            collected_data: serde_json::json!({"k": "v"}),
+            photos: None,
+            notes: None,
+            quality_check_passed: true,
+            issues: None,
+        };
+
+        assert!(InterventionWorkflowService::has_completion_data(&request));
+
+        request.collected_data = serde_json::Value::Null;
+        request.photos = Some(vec!["photo-1".to_string()]);
+        assert!(InterventionWorkflowService::has_completion_data(&request));
+
+        request.photos = None;
+        request.issues = Some(vec!["issue-1".to_string()]);
+        assert!(InterventionWorkflowService::has_completion_data(&request));
     }
 }

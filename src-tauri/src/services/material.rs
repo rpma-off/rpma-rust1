@@ -536,7 +536,7 @@ impl MaterialService {
         consumption.waste_reason = request.waste_reason;
         consumption.batch_used = request.batch_used;
         consumption.quality_notes = request.quality_notes;
-        consumption.recorded_by = recorded_by.clone();
+        consumption.recorded_by = Some(recorded_by.clone());
         consumption.unit_cost = material.unit_cost;
         consumption.calculate_total_cost();
 

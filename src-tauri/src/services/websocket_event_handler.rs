@@ -169,6 +169,7 @@ impl WebSocketEventHandler {
                 debug!("Auth success for user {}", user_id);
                 None
             }
+            _ => None,
         }
     }
 }

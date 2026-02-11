@@ -17,6 +17,7 @@ pub mod dashboard;
 pub mod document_storage;
 pub mod domain_event;
 pub mod event_bus;
+pub mod event_system;
 pub mod geo;
 pub mod intervention;
 pub mod intervention_calculation;
