@@ -790,16 +790,15 @@ fn configure_linux_specific() {
 
 5. **Hasher les tokens au repos**
    ```rust
-   use argon2::{Argon2, PasswordHasher, PasswordVerifier};
-   use password_hash::{PasswordHash, SaltString};
-   use rand_core::OsRng;
+   use hmac::{Hmac, Mac};
+   use sha2::Sha256;
 
-   let salt = SaltString::generate(&mut OsRng);
-   let token_hash = Argon2::default()
-       .hash_password(session.token.as_bytes(), &salt)?
-       .to_string();
+   type HmacSha256 = Hmac<Sha256>;
+   let mut mac = HmacSha256::new_from_slice(app_secret.as_bytes())?;
+   mac.update(session.token.as_bytes());
+   let token_hash = base64::engine::general_purpose::STANDARD.encode(mac.finalize().into_bytes());
    // stocker token_hash en DB, garder le token en mémoire uniquement
-   // à la vérification : re-hasher puis verify_password(...) sur le hash stocké
+   // à la vérification : recalculer le HMAC du token entrant et comparer
    ```
 
 6. **Lazy-load des services lourds**
