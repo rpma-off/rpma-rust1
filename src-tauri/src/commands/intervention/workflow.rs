@@ -72,6 +72,26 @@ fn ensure_technician_assignment(
     Ok(())
 }
 
+async fn ensure_task_assignment(
+    state: &AppState<'_>,
+    session: &UserSession,
+    task_id: &str,
+    action: &str,
+) -> Result<(), AppError> {
+    if !matches!(session.role, UserRole::Technician) {
+        return Ok(());
+    }
+
+    let task = state
+        .task_service
+        .get_task_async(task_id)
+        .await
+        .map_err(|e| AppError::Database(format!("Failed to get task: {}", e)))?
+        .ok_or_else(|| AppError::NotFound(format!("Task {} not found", task_id)))?;
+
+    ensure_technician_assignment(session, task.technician_id.as_deref(), action)
+}
+
 /// Request structure for starting an intervention
 #[derive(Deserialize, Debug)]
 pub struct StartInterventionRequest {
@@ -107,19 +127,13 @@ pub async fn intervention_start(
 
     let session = authenticate!(&session_token, &state);
     super::ensure_intervention_permission(&session)?;
-    if matches!(session.role, UserRole::Technician) {
-        let task = state
-            .task_service
-            .get_task_async(&request.task_id)
-            .await
-            .map_err(|e| AppError::Database(format!("Failed to get task: {}", e)))?
-            .ok_or_else(|| AppError::NotFound(format!("Task {} not found", request.task_id)))?;
-        ensure_technician_assignment(
-            &session,
-            task.technician_id.as_deref(),
-            "start interventions",
-        )?;
-    }
+    ensure_task_assignment(
+        &state,
+        &session,
+        &request.task_id,
+        "start interventions",
+    )
+    .await?;
 
     // Check if there's already an active intervention for this task
     match state
@@ -316,21 +330,7 @@ pub async fn intervention_workflow(
         InterventionWorkflowAction::Start { data } => {
             super::ensure_intervention_permission(&session)?;
             info!("Starting intervention workflow for task: {}", data.task_id);
-            if matches!(session.role, UserRole::Technician) {
-                let task = state
-                    .task_service
-                    .get_task_async(&data.task_id)
-                    .await
-                    .map_err(|e| AppError::Database(format!("Failed to get task: {}", e)))?
-                    .ok_or_else(|| {
-                        AppError::NotFound(format!("Task {} not found", data.task_id))
-                    })?;
-                ensure_technician_assignment(
-                    &session,
-                    task.technician_id.as_deref(),
-                    "start interventions",
-                )?;
-            }
+            ensure_task_assignment(&state, &session, &data.task_id, "start interventions").await?;
 
             // Check if there's already an active intervention for this task
             match state
