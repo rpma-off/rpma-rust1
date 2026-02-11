@@ -379,7 +379,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }
 
     // Apply sorting
-    const sorted = filtered === tasks ? [...filtered] : filtered;
+    const sorted = [...filtered];
     sorted.sort((a, b) => {
       const aValue = a[currentSortBy as keyof DashboardTask];
       const bValue = b[currentSortBy as keyof DashboardTask];

@@ -328,7 +328,7 @@ export default function ClientsPage() {
       {/* Loading overlay */}
       {loading && clients.length > 0 && (
         <div className="fixed inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-none">
-          <div className="rpma-shell p-6 shadow-lg">
+          <div className="rpma-shell p-6 shadow-lg pointer-events-auto">
             <div className="flex items-center gap-4">
               <div className="relative">
                 <div className="w-8 h-8 border-3 border-[hsl(var(--rpma-border))] rounded-full animate-spin border-t-accent"></div>
