@@ -82,7 +82,7 @@ pub struct SyncOperation {
     pub operation_type: OperationType,
     pub entity_type: EntityType,
     pub entity_id: String,
-    #[ts(type = "any")]
+    #[ts(type = "JsonValue")]
     pub data: serde_json::Value,
     pub dependencies: Vec<String>,
     #[ts(type = "string")]

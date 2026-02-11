@@ -235,7 +235,7 @@ export const useOfflineQueue = (
       displaySuccess(`Processed ${batchToProcess.length} operations`);
     } catch (error) {
       const appError = createError('Batch processing failed', ErrorCategory.UNKNOWN, ErrorSeverity.HIGH, {
-        details: typeof error === 'object' && error !== null ? error as Record<string, unknown> : { message: String(error) }
+        details: { message: error instanceof Error ? error.message : String(error) },
       });
       displayError(appError);
     } finally {
@@ -366,7 +366,7 @@ export const useOfflineQueue = (
         displaySuccess('Queue imported successfully');
       } catch (error) {
         displayError(createError('Failed to import queue', ErrorCategory.UNKNOWN, ErrorSeverity.HIGH, {
-          details: typeof error === 'object' && error !== null ? error as Record<string, unknown> : { message: String(error) }
+          details: { message: error instanceof Error ? error.message : String(error) },
         }));
       }
     };
