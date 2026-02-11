@@ -41,7 +41,7 @@ pub async fn task_transition_status(
         details: None,
     })?;
 
-// Validate transition
+    // Validate transition
     validate_status_transition(&current, &new).map_err(|message| ApiError {
         message,
         code: "INVALID_TRANSITION".to_string(),
