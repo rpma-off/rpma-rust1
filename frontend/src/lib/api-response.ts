@@ -1,4 +1,6 @@
-export interface ApiResponse<T = unknown> {
+import type { JsonValue } from '@/types/json';
+
+export interface ApiResponse<T = JsonValue> {
   success: boolean;
   data?: T;
   error?: string;
@@ -23,12 +25,12 @@ export class ApiResponseFactory {
     };
   }
 
-  static validationError(message: string, details?: unknown): ApiResponse {
+  static validationError(message: string, details?: JsonValue | null): ApiResponse {
     return {
       success: false,
       error: message,
       code: 'VALIDATION_ERROR',
-      data: details
+      data: details ?? null
     };
   }
 }

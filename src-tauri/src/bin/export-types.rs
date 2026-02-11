@@ -27,6 +27,7 @@ use rpma_ppf_intervention::models::{
         MaterialConsumption, MaterialConsumptionSummary, MaterialStats, MaterialType, Supplier,
         UnitOfMeasure,
     },
+    material_ts::{InventoryTransactionTS, MaterialConsumptionTS, MaterialTS},
     message::{
         Message, MessageListResponse, MessagePriority, MessageQuery, MessageStatus,
         MessageTemplate, MessageTemplateRequest, MessageType, NotificationPreferences,
@@ -238,9 +239,17 @@ fn main() {
     type_definitions
         .push_str(&Material::export_to_string().expect("Failed to export Material type"));
     type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&MaterialTS::export_to_string().expect("Failed to export MaterialTS type"));
+    type_definitions.push_str("\n");
     type_definitions.push_str(
         &MaterialConsumption::export_to_string()
             .expect("Failed to export MaterialConsumption type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &MaterialConsumptionTS::export_to_string()
+            .expect("Failed to export MaterialConsumptionTS type"),
     );
     type_definitions.push_str("\n");
     type_definitions
@@ -253,6 +262,11 @@ fn main() {
     type_definitions.push_str(
         &InventoryTransaction::export_to_string()
             .expect("Failed to export InventoryTransaction type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &InventoryTransactionTS::export_to_string()
+            .expect("Failed to export InventoryTransactionTS type"),
     );
     type_definitions.push_str("\n");
     type_definitions.push_str(
@@ -1225,10 +1239,12 @@ fn main() {
         "MaterialUsageReport",
         "MaterialSummary",
         "MaterialConsumption",
+        "MaterialConsumptionTS",
         "MaterialCostAnalysis",
         "CostTrend",
         "SupplierPerformance",
         "MaterialEfficiency",
+        "MaterialTS",
         "ExportResult",
         "ReportRequest",
         "ReportResponse",
@@ -1242,6 +1258,7 @@ fn main() {
         "WorkflowRecommendation",
         "CompletionTimePrediction",
         "WorkloadPeriod",
+        "InventoryTransactionTS",
     ];
 
     // Post-process: remove import statements for types that are defined in this file

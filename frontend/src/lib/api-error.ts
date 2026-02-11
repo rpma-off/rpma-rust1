@@ -1,11 +1,12 @@
 // API error utilities
 
 import { NextResponse } from 'next/server';
+import type { JsonValue } from '@/types/json';
 
 export class ApiError extends Error {
   code?: string;
   status?: number;
-  details?: unknown;
+  details?: JsonValue | null;
   field?: string;
 
   constructor(message: string, code?: string, status?: number, field?: string) {

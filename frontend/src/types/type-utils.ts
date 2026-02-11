@@ -2,6 +2,8 @@
  * Type utilities and helper types
  */
 
+import type { JsonValue } from './json';
+
 /**
  * Make all properties of T optional except for K
  */
@@ -201,11 +203,6 @@ export function safeString(value: unknown): string {
 export function isNonNullObject(value: unknown): value is Record<string, unknown> {
   return isObject(value) && value !== null;
 }
-
-/**
- * JSON value type for type-safe JSON operations
- */
-type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
 /**
  * Try to convert value to JSON value
