@@ -5,7 +5,7 @@ import type { ApiError as BaseApiError, JsonValue } from '@/lib/backend';
 
 // Extended API error with better typing
 export interface ApiError extends BaseApiError {
-  details: JsonValue;
+  details: JsonValue | null;
 }
 
 // Helper function to create typed API errors
