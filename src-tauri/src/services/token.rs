@@ -186,7 +186,7 @@ pub(crate) fn load_jwt_secret() -> Result<String, TokenError> {
     })?;
     if secret.len() < 32 {
         return Err(TokenError::Configuration(
-            "JWT_SECRET too short".to_string(),
+            "JWT_SECRET must be at least 32 characters long".to_string(),
         ));
     }
     Ok(secret)

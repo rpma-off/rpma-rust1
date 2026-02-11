@@ -937,6 +937,7 @@ impl SettingsService {
         let current_token_hash = token::hash_token_with_env(current_session_token)
             .map_err(|e| AppError::Configuration(format!("Token hash failed: {}", e)))?;
 
+        // Legacy compatibility: keep current session if token is still stored in plain text.
         conn.execute(
             "DELETE FROM user_sessions WHERE user_id = ? AND token NOT IN (?, ?)",
             params![user_id, current_token_hash, current_session_token],

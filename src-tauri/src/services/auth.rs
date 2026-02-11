@@ -683,6 +683,7 @@ impl AuthService {
             .map_err(|e| format!("Failed to hash session token: {}", e))?;
         let token_raw = token.to_string();
 
+        // Legacy compatibility: allow lookup for hashed or plain tokens during migration.
         let mut session = conn
             .query_row(
                 "SELECT id, user_id, username, email, role, token, refresh_token, expires_at, last_activity, created_at
@@ -738,7 +739,10 @@ impl AuthService {
             "UPDATE user_sessions SET token = ? WHERE token = ?",
             params![token_hash, token],
         ) {
-            warn!("Failed to migrate session token hash: {}", e);
+            warn!(
+                "Failed to migrate session token hash (legacy format retained): {}",
+                e
+            );
         }
 
         // Update last activity

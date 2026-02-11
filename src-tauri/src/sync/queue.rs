@@ -36,7 +36,12 @@ impl From<rusqlite::Error> for SyncQueueError {
 }
 
 fn parse_status(status: &str) -> Result<SyncStatus, rusqlite::Error> {
-    let normalized = status.trim_matches('"');
+    let trimmed = status.trim();
+    let normalized = if trimmed.starts_with('"') && trimmed.ends_with('"') {
+        trimmed.trim_matches('"')
+    } else {
+        trimmed
+    };
     match normalized {
         "pending" => Ok(SyncStatus::Pending),
         "processing" => Ok(SyncStatus::Processing),
@@ -100,6 +105,7 @@ impl SyncQueue {
     pub fn dequeue_batch(&self, limit: usize) -> Result<Vec<SyncOperation>, SyncQueueError> {
         let conn = self.db.get_connection().map_err(SyncQueueError::Database)?;
 
+        // Legacy compatibility: support JSON-encoded status values until migration completes.
         let mut stmt = conn.prepare(
             "SELECT id, operation_type, entity_type, entity_id, data, dependencies,
                     timestamp_utc, retry_count, max_retries, last_error, status,
