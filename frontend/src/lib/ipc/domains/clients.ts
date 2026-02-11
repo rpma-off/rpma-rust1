@@ -1,7 +1,7 @@
 import { safeInvoke, extractAndValidate, ResponseHandlers } from '../core';
 import { createCrudOperations } from '../utils/crud-helpers';
 import { IPC_COMMANDS } from '../commands';
-import { validateClient, validateClientWithTasks, validateClientListResponse, validateClientWithTasksList, validateClientStatistics } from '@/lib/validation/backend-type-guards';
+import { parseClientStatistics, validateClient, validateClientWithTasks, validateClientListResponse, validateClientWithTasksList } from '@/lib/validation/backend-type-guards';
 import type {
   Client,
   CreateClientRequest,
@@ -96,13 +96,17 @@ const specializedOperations = {
        customer_type: filters.customer_type || undefined,
        sort_by: filters.sort_by ?? 'created_at',
        sort_order: filters.sort_order ?? 'desc'
-     }, sessionToken);
+      }, sessionToken);
 
-     // Convert Client[] to ClientWithTasks[]
-     const clientsWithTasks: ClientWithTasks[] = listResult.data.map((client: any) => ({
-       ...client,
-       tasks: [] // No tasks for now
-     }));
+      if (!validateClientListResponse(listResult)) {
+        throw new Error('Invalid response format for list clients with tasks');
+      }
+
+      // Convert Client[] to ClientWithTasks[]
+      const clientsWithTasks: ClientWithTasks[] = listResult.data.map((client) => ({
+        ...client,
+        tasks: [] // No tasks for now
+      }));
 
       return clientsWithTasks;
    },
@@ -118,7 +122,13 @@ const specializedOperations = {
         action: { action: 'Stats' },
         session_token: sessionToken
       }
-    }).then(result => extractAndValidate(result, validateClientStatistics) as unknown as ClientStatistics),
+    }).then(result => {
+      const statistics = extractAndValidate(result, parseClientStatistics);
+      if (!statistics) {
+        throw new Error('Invalid response format for client statistics');
+      }
+      return statistics;
+    }),
 };
 
 /**
