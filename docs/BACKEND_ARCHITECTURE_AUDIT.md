@@ -2,6 +2,7 @@
 
 ## Scope
 Audit of the Rust backend architecture with focus on command → service → repository boundaries, service responsibility creep, module size, dependency injection, and error propagation.
+Audit date: 2026-02-11.
 
 ## Architecture Smells
 
