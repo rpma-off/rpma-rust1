@@ -793,6 +793,7 @@ fn configure_linux_specific() {
    use sha2::{Digest, Sha256};
    let token_hash = Sha256::digest(session.token.as_bytes());
    // stocker token_hash en DB, garder le token en mémoire uniquement
+   // à la vérification : hasher le token entrant et comparer les hashes
    ```
 
 6. **Lazy-load des services lourds**
