@@ -1,10 +1,20 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ChevronRight, MessageSquare, Users, Package, Workflow, Settings, Activity, BarChart3, Trash2, X } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { ChevronRight, MessageSquare, Users, Package, Workflow, Settings, Activity, BarChart3, Trash2, X, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth/compatibility';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 
 interface NavItem {
   href?: string;
@@ -27,9 +37,61 @@ const mainItems: NavItem[] = [
 
 const settingsItem: NavItem = { href: '/settings', label: 'Settings', icon: <Settings className="h-5 w-5" /> };
 
+function UserDropdown({ onMobileClose }: { onMobileClose?: () => void }) {
+  const { profile, signOut } = useAuth();
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  const displayName = profile?.first_name && profile?.last_name
+    ? `${profile.first_name} ${profile.last_name}`
+    : profile?.email || 'User';
+
+  const initials = profile?.first_name?.charAt(0) || profile?.email?.charAt(0) || 'U';
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      queryClient.clear();
+      toast.success('Logged out successfully');
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Failed to logout');
+    }
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <div className="flex items-center justify-between px-4 py-3 hover:bg-muted/20 cursor-pointer border-t border-[hsl(var(--rpma-border))]">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-8 w-8 bg-muted">
+              <AvatarFallback className="text-muted-foreground font-semibold text-xs">{initials}</AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="text-xs text-muted-foreground">Signed in as</div>
+              <div className="text-sm font-semibold text-foreground truncate max-w-[140px]">{displayName}</div>
+            </div>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuItem onClick={() => { onMobileClose?.(); router.push('/settings'); }}>
+          Settings
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+          <LogOut className="h-4 w-4 mr-2" />
+          Logout
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function DrawerSidebar({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }) {
   const pathname = usePathname();
-  const { profile } = useAuth();
 
   const isActive = (href?: string) => {
     if (!href) return false;
@@ -67,21 +129,7 @@ export function DrawerSidebar({ isOpen, onToggle }: { isOpen: boolean; onToggle:
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </div>
-        <div className="flex items-center justify-between px-4 py-3 hover:bg-muted/20 cursor-pointer border-t border-[hsl(var(--rpma-border))]">
-          <div className="flex items-center gap-3">
-            <div className="relative h-8 w-8 rounded-md bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground">
-              {profile?.first_name?.charAt(0) || 'A'}
-              <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground">Employee</div>
-              <div className="text-sm font-semibold text-foreground">
-                {profile?.first_name} {profile?.last_name}
-              </div>
-            </div>
-          </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        </div>
+        <UserDropdown />
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-1">
@@ -135,7 +183,6 @@ export function DrawerSidebar({ isOpen, onToggle }: { isOpen: boolean; onToggle:
 
 export function DrawerSidebarMobile({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const pathname = usePathname();
-  const { profile } = useAuth();
 
   const isActive = (href?: string) => {
     if (!href) return false;
@@ -175,21 +222,7 @@ export function DrawerSidebarMobile({ isOpen, onClose }: { isOpen: boolean; onCl
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </div>
-          <div className="flex items-center justify-between px-4 py-3 hover:bg-muted/20 cursor-pointer border-t border-[hsl(var(--rpma-border))]">
-            <div className="flex items-center gap-3">
-              <div className="relative h-8 w-8 rounded-md bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground">
-                {profile?.first_name?.charAt(0) || 'A'}
-                <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground">Employee</div>
-                <div className="text-sm font-semibold text-foreground">
-                  {profile?.first_name} {profile?.last_name}
-                </div>
-              </div>
-            </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </div>
+          <UserDropdown onMobileClose={onClose} />
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-1">

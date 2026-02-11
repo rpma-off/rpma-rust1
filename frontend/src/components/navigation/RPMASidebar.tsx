@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/compatibility';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import {
   Users,
   Package,
@@ -23,6 +33,7 @@ import {
   MessageSquare,
   X,
   ChevronRight,
+  LogOut,
 } from 'lucide-react';
 
 interface NavItem {
@@ -40,6 +51,59 @@ const navItems: NavItem[] = [
   { href: '/interventions', label: 'Activity', icon: <Activity className="w-5 h-5" /> },
   { href: '/analytics', label: 'Analytics', icon: <BarChart3 className="w-5 h-5" /> },
 ];
+
+function UserDropdown({ onMobileClose }: { onMobileClose?: () => void }) {
+  const { profile, signOut } = useAuth();
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  const displayName = profile?.first_name && profile?.last_name
+    ? `${profile.first_name} ${profile.last_name}`
+    : profile?.email || 'User';
+
+  const initials = profile?.first_name?.charAt(0) || profile?.email?.charAt(0) || 'U';
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      queryClient.clear();
+      toast.success('Logged out successfully');
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Failed to logout');
+    }
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer border-t border-gray-100">
+          <div className="flex items-center space-x-3">
+            <Avatar className="h-8 w-8 bg-gray-200">
+              <AvatarFallback className="text-gray-500 font-bold text-xs">{initials}</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-xs text-gray-400">Signed in as</p>
+              <p className="text-sm font-semibold text-gray-700 truncate max-w-[140px]">{displayName}</p>
+            </div>
+          </div>
+          <ChevronRight className="h-4 w-4 text-gray-400" />
+        </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuItem onClick={() => { onMobileClose?.(); router.push('/settings'); }}>
+          Settings
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+          <LogOut className="h-4 w-4 mr-2" />
+          Logout
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 export function RPMASidebar({ onMobileClose, isOpen, onToggle }: { onMobileClose?: () => void; isOpen: boolean; onToggle: () => void }) {
   const pathname = usePathname();
@@ -104,19 +168,7 @@ export function RPMASidebar({ onMobileClose, isOpen, onToggle }: { onMobileClose
             </div>
             <ChevronRight className="h-4 w-4 text-gray-400" />
           </div>
-          <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer border-t border-gray-100">
-            <div className="flex items-center space-x-3">
-              <div className="relative bg-gray-200 rounded text-gray-500 font-bold h-8 w-8 flex items-center justify-center text-xs">
-                A
-                <span className="absolute bottom-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-1 ring-white"></span>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400">Employee</p>
-                <p className="text-sm font-semibold text-gray-700">{profile?.first_name} {profile?.last_name}</p>
-              </div>
-            </div>
-            <ChevronRight className="h-4 w-4 text-gray-400" />
-          </div>
+          <UserDropdown />
         </div>
 
         <nav className="flex-1 px-4 py-4 space-y-1">
@@ -207,19 +259,7 @@ export function RPMAMobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClos
                 </div>
                 <ChevronRight className="h-4 w-4 text-gray-400" />
               </div>
-              <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer border-t border-gray-100">
-                <div className="flex items-center space-x-3">
-                  <div className="relative bg-gray-200 rounded text-gray-500 font-bold h-8 w-8 flex items-center justify-center text-xs">
-                    A
-                    <span className="absolute bottom-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-1 ring-white"></span>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400">Employee</p>
-                    <p className="text-sm font-semibold text-gray-700">{profile?.first_name} {profile?.last_name}</p>
-                  </div>
-                </div>
-                <ChevronRight className="h-4 w-4 text-gray-400" />
-              </div>
+              <UserDropdown onMobileClose={onClose} />
             </div>
 
             <nav className="flex-1 px-4 py-4 space-y-1">

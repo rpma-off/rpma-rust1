@@ -1,64 +1,41 @@
-﻿﻿Analyze my existing codebase and generate the following complete documentation in Markdown format. Use the source code, file structure, dependencies, and patterns used to create accurate and detailed documentation.
-## Documents to create:
+﻿﻿You are working inside the RPMA v2 repository (Tauri + Rust backend + Next.js frontend).
 
-### 1. README.md
-- Project overview based on code analysis
-- Identified technical stack (frameworks, libraries, database)
-- Detected architecture (monolith, microservices, etc.)
-- Setup instructions derived from config files
-- Available scripts (package.json, Makefile, etc.)
+Goal:
+Fix the sidebar "Employee" placeholder:
+1) Display the currently authenticated user's name (first_name + last_name, fallback to email).
+2) On click, open a dropdown menu with a "Logout" action.
+3) Logout must fully work: backend session invalidation + frontend token clearing + redirect to /login + cache reset.
 
-### 2. REQUIREMENTS.md
-- Existing features identified in the code
-- User stories deduced from controllers/routes/components
-- Data models analyzed
-- Third-party integrations detected (APIs, services)
-- Technical constraints observed
-### 3. API.md
-- Endpoints extracted from the code (routes, controllers)
-- HTTP methods used
-- Authentication middleware detected
-- Validation schemas found
-- Response format based on models
+Hard constraints:
+- Follow the existing auth/session patterns described in docs, especially:
+  - frontend hooks: useAuth/useSession
+  - backend logout flow (validate session -> delete session from DB)
+- Do NOT invent new auth architecture.
+- Keep UI consistent with existing design system (shadcn/ui + Tailwind).
+- No breaking changes to existing routes/pages.
 
-### 4. DATABASE.md
-- Database schema based on models/migrations
-- Relationships between identified entities
-- Indexes and constraints detected
-- Existing migrations analyzed
+Steps:
+A) Frontend:
+- Locate the sidebar user section currently showing "Employee".
+- Replace it with an Avatar + user display name (fallbacks).
+- Use shadcn/ui DropdownMenu (or equivalent already in the codebase).
+- Implement handleLogout():
+  - call IPC logout(sessionToken)
+  - clear session token from storage
+  - reset React Query cache + any zustand auth stores
+  - navigate to /login
+  - show toast success/error
 
-### 5. ARCHITECTURE.md
-- Documented folder structure
-- Architectural patterns identified (MVC, Clean Architecture, etc.)
-- Application layers detected
-- Data flows observed in the code
-- Dependencies between modules
+B) Backend:
+- Verify there is a Tauri command `logout`.
+- Ensure it validates the session token and deletes/invalidates the session in `user_sessions`.
+- Ensure DB deletion matches the actual schema/fields used for sessions.
+- Return ApiResponse success.
 
-### 6. DEPLOYMENT.md
-- Existing deployment configuration (Docker, CI/CD)
-- Environment variables used
-- Build/deployment scripts found
-- External services configured
+C) Tests / sanity:
+- Add a minimal frontend test or e2e test for logout if tests exist.
+- Verify: after logout, protected pages redirect to /login and sidebar no longer shows old user.
 
-### 7. DESIGN.md (if applicable)
-- Identified UI components
-- Styles/CSS/themes used
-- Template/view structure
-- Assets and graphic resources
-
-### 8. USER-FLOWS.md
-- User journeys deduced from routes/pages
-- Identified interface states
-- Error handling implemented
-- Observed business workflows
-## Specific instructions:
-- Be precise and factual, basing your comments solely on what exists in the code
-- Use concrete examples taken from the source code
-- Identify any gaps or inconsistencies
-- Suggest improvements where relevant
-- Format correctly in Markdown with clear sections
-- Include ASCII art diagrams where necessary
-
-Start by analyzing the entire structure of the project, then generate each document in detail.
-
-
+Deliverables:
+- PR-ready changes with clear commit messages.
+- Short notes on the files changed and why.
