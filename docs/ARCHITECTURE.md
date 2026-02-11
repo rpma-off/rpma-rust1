@@ -805,10 +805,12 @@ fn configure_linux_specific() {
    type HmacSha256 = Hmac<Sha256>;
    // app_secret : clé secrète issue de la configuration sécurisée (env/keystore), jamais hardcodée
    let app_secret = config.hmac_secret();
-   let token_plain = session.token.clone(); // token en clair avant hashing
+   let token_plain = session.token.clone(); // token en clair à la création d'une nouvelle session
+   // migration : réémettre de nouveaux tokens pour les sessions existantes
    let mut mac = HmacSha256::new_from_slice(app_secret.as_bytes())
        .map_err(|_| AppError::Configuration("Clé HMAC invalide".to_string()))?;
-   mac.update(token_plain.as_bytes());
+   let mac_payload = format!("{}:{}", session.user_id, token_plain);
+   mac.update(mac_payload.as_bytes());
    let token_hash = base64::engine::general_purpose::STANDARD.encode(mac.finalize().into_bytes());
    // stocker token_hash en DB, garder le token en mémoire uniquement
    // à la vérification : recalculer le HMAC du token entrant et comparer
