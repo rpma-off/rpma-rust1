@@ -340,9 +340,9 @@ impl InterventionWorkflowService {
         self.validation
             .validate_step_advancement(&intervention, &current_step, &logger)?;
 
-        let has_completion_data_provided = Self::has_completion_data(&request);
+        let has_completion_data = Self::has_completion_data(&request);
 
-        if current_step.step_status == StepStatus::Pending && has_completion_data_provided {
+        if current_step.step_status == StepStatus::Pending && has_completion_data {
             // Steps must be started before completion data is accepted.
             return Err(InterventionError::Workflow(
                 "Step must be started before completion data can be provided".to_string(),
@@ -359,7 +359,7 @@ impl InterventionWorkflowService {
             current_step.started_at = TimestampString::now();
         }
 
-        if current_step.step_status == StepStatus::InProgress && !has_completion_data_provided {
+        if current_step.step_status == StepStatus::InProgress && !has_completion_data {
             // No completion indicators; persist updated progress data and return.
             self.save_step_with_retry(&current_step, &logger).await?;
             let progress_percentage = intervention.completion_percentage as f32;
@@ -594,8 +594,7 @@ impl InterventionWorkflowService {
 
     /// Determine whether the request includes completion data for a step.
     ///
-    /// Completion data is defined as non-empty collected_data, photos, or issues. These inputs
-    /// represent a completed step and should only be accepted after a step has been started.
+    /// Returns true when collected_data is non-empty or when photos/issues are supplied.
     fn has_completion_data(request: &AdvanceStepRequest) -> bool {
         !matches!(
             request.collected_data,

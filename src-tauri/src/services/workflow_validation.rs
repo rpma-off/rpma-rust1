@@ -77,58 +77,61 @@ impl WorkflowValidationService {
             )));
         }
 
-        match current_step.step_status {
-            StepStatus::Pending | StepStatus::InProgress => {
-                // Pending and in-progress are valid states for advancement.
-            }
-            StepStatus::Completed => {
-                let mut error_context = std::collections::HashMap::new();
-                error_context.insert(
-                    "step_number".to_string(),
-                    serde_json::json!(current_step.step_number),
-                );
-                error_context.insert(
-                    "step_status".to_string(),
-                    serde_json::json!(current_step.step_status),
-                );
-                logger.error(
-                    "Attempted to advance already completed step",
-                    None,
-                    Some(error_context),
-                );
-                return Err(InterventionError::Workflow(format!(
-                    "Step {} is already completed",
-                    current_step.step_number
-                )));
-            }
-            StepStatus::Paused => {
-                logger.error(
-                    "Attempted to advance paused step",
-                    None,
-                    Some(std::collections::HashMap::from([(
+        if !matches!(
+            current_step.step_status,
+            StepStatus::Pending | StepStatus::InProgress
+        ) {
+            match current_step.step_status {
+                StepStatus::Completed => {
+                    let mut error_context = std::collections::HashMap::new();
+                    error_context.insert(
                         "step_number".to_string(),
                         serde_json::json!(current_step.step_number),
-                    )])),
-                );
-                return Err(InterventionError::Workflow(format!(
-                    "Step {} is paused and cannot be advanced",
-                    current_step.step_number
-                )));
-            }
-            StepStatus::Failed | StepStatus::Skipped | StepStatus::Rework => {
-                // Treat these as terminal until explicit rework/resume flows are defined.
-                logger.error(
-                    "Attempted to advance step in terminal status",
-                    None,
-                    Some(std::collections::HashMap::from([(
+                    );
+                    error_context.insert(
                         "step_status".to_string(),
                         serde_json::json!(current_step.step_status),
-                    )])),
-                );
-                return Err(InterventionError::Workflow(format!(
-                    "Step {} is in {:?} state and cannot be advanced",
-                    current_step.step_number, current_step.step_status
-                )));
+                    );
+                    logger.error(
+                        "Attempted to advance already completed step",
+                        None,
+                        Some(error_context),
+                    );
+                    return Err(InterventionError::Workflow(format!(
+                        "Step {} is already completed",
+                        current_step.step_number
+                    )));
+                }
+                StepStatus::Paused => {
+                    logger.error(
+                        "Attempted to advance paused step",
+                        None,
+                        Some(std::collections::HashMap::from([(
+                            "step_number".to_string(),
+                            serde_json::json!(current_step.step_number),
+                        )])),
+                    );
+                    return Err(InterventionError::Workflow(format!(
+                        "Step {} is paused and cannot be advanced",
+                        current_step.step_number
+                    )));
+                }
+                StepStatus::Failed | StepStatus::Skipped | StepStatus::Rework => {
+                    // Treat these as terminal until explicit rework/resume flows are defined.
+                    logger.error(
+                        "Attempted to advance step in terminal status",
+                        None,
+                        Some(std::collections::HashMap::from([(
+                            "step_status".to_string(),
+                            serde_json::json!(current_step.step_status),
+                        )])),
+                    );
+                    return Err(InterventionError::Workflow(format!(
+                        "Step {} is in {:?} state and cannot be advanced",
+                        current_step.step_number, current_step.step_status
+                    )));
+                }
+                _ => {}
             }
         }
 
