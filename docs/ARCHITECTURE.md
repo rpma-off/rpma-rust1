@@ -736,7 +736,7 @@ fn configure_linux_specific() {
 ### ⚠️ Risques d’architecture, scalabilité et maintenabilité
 - **Événements dupliqués** : `services/event_bus.rs` et `services/event_system.rs` définissent tous deux un `DomainEvent` (structures différentes). Cela complexifie la maintenance et augmente le risque d’incohérence.
 - **Event bus verrouillé pendant des awaits** : `InMemoryEventBus::publish` conserve un `Mutex` tout en attendant `handler.handle`, ce qui peut bloquer d’autres publications et créer des risques de deadlock.
-- **Sync queue : statut sérialisé en JSON** mais filtré en SQL brut (`status = 'pending'` dans `sync/queue.rs`). Côté Rust, `serde_json::to_string(SyncStatus::Pending)` produit `\"pending\"`, donc la valeur en base peut inclure des guillemets JSON et ne pas matcher le filtre.
+- **Sync queue : statut sérialisé en JSON** mais filtré en SQL brut (`status = 'pending'` dans `sync/queue.rs`). Ici, `SyncStatus` est annoté `#[serde(rename_all = "lowercase")]`, donc `serde_json::to_string(SyncStatus::Pending)` produit `\"pending\"` ; la valeur en base peut inclure des guillemets JSON et ne pas matcher le filtre.
 - **Dépendances de sync non appliquées** : le champ `dependencies` est stocké, mais aucun filtrage n’empêche l’exécution d’opérations dont les dépendances ne sont pas complétées.
 - **Tokens de session en clair** : `repositories/session_repository.rs` stocke `token`/`refresh_token` en texte brut. Risque élevé en cas d’exfiltration locale.
 - **Pool SQLite surdimensionné** : `db/connection.rs` fixe `max_connections = 100`, ce qui peut générer contention et surcharge sur un moteur mono-writer (WAL).
@@ -808,7 +808,7 @@ fn configure_linux_specific() {
    let token_plain = session.token.clone(); // token en clair à la création d'une nouvelle session
    // migration : réémettre de nouveaux tokens pour les sessions existantes
    let mut mac = HmacSha256::new_from_slice(app_secret.as_bytes())
-       .map_err(|_| AppError::Configuration("Clé HMAC invalide".to_string()))?;
+       .map_err(|_| AppError::Configuration("Clé HMAC invalide (taille incompatible SHA-256)".to_string()))?;
    let mac_payload = format!("{}:{}", session.user_id, token_plain);
    mac.update(mac_payload.as_bytes());
    let token_hash = base64::engine::general_purpose::STANDARD.encode(mac.finalize().into_bytes());
