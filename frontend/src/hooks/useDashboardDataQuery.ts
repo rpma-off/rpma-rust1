@@ -215,10 +215,10 @@ export function useDashboardData(options: UseDashboardDataOptions = {}) {
         lastUpdated: new Date().toISOString()
       };
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     refetchInterval: opts.autoRefresh ? opts.refreshInterval : false,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
     retry: (failureCount, error) => {
       // Don't retry on authentication errors
       if (error instanceof FetchError && error.status === 401) {

@@ -49,7 +49,7 @@ export function useInterventionData(taskId: string) {
         if (result && typeof result === 'object' && 'type' in result) {
           const typedResult = result as { type: string; intervention?: any };
 
-          if (typedResult.type === 'ActiveRetrieved' && typedResult.intervention) {
+          if ((typedResult.type === 'ActiveRetrieved' || typedResult.type === 'ActiveByTask') && typedResult.intervention) {
             intervention = typedResult.intervention;
           }
         }
