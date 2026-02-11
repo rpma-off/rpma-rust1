@@ -152,8 +152,7 @@ pub trait PaginatedQuery: Query {
 }
 
 /// Pagination metadata
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, TS)]
 pub struct PaginationInfo {
     pub page: i32,
     pub limit: i32,
@@ -182,8 +181,7 @@ impl PaginationInfo {
 }
 
 /// Paginated result
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, TS)]
 pub struct PaginatedResult<T> {
     pub data: Vec<T>,
     pub pagination: PaginationInfo,

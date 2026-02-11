@@ -55,9 +55,12 @@ impl ClientValidationService {
         }
 
         // Validate location data if provided
-        if let (Some(street), Some(city), Some(state), Some(zip)) =
-            (&req.address_street, &req.address_city, &req.address_state, &req.address_zip)
-        {
+        if let (Some(street), Some(city), Some(state), Some(zip)) = (
+            &req.address_street,
+            &req.address_city,
+            &req.address_state,
+            &req.address_zip,
+        ) {
             self.validate_address(street, city, state, zip)?;
         }
 
@@ -139,9 +142,12 @@ impl ClientValidationService {
 
     /// Validate location data
     fn validate_location_data(&self, req: &CreateClientRequest) -> Result<(), String> {
-        if let (Some(ref street), Some(ref city), Some(ref state), Some(ref zip)) =
-            (&req.address_street, &req.address_city, &req.address_state, &req.address_zip)
-        {
+        if let (Some(ref street), Some(ref city), Some(ref state), Some(ref zip)) = (
+            &req.address_street,
+            &req.address_city,
+            &req.address_state,
+            &req.address_zip,
+        ) {
             self.validate_address(street, city, state, zip)?;
         }
 
@@ -155,7 +161,13 @@ impl ClientValidationService {
     }
 
     /// Validate address components
-    fn validate_address(&self, street: &str, city: &str, state: &str, zip: &str) -> Result<(), String> {
+    fn validate_address(
+        &self,
+        street: &str,
+        city: &str,
+        state: &str,
+        zip: &str,
+    ) -> Result<(), String> {
         if street.trim().is_empty() {
             return Err("Street address is required".to_string());
         }
@@ -173,8 +185,8 @@ impl ClientValidationService {
         }
 
         // Basic ZIP code validation (US format)
-        let zip_regex = Regex::new(r"^\d{5}(-\d{4})?$")
-            .map_err(|_| "Invalid ZIP regex pattern".to_string())?;
+        let zip_regex =
+            Regex::new(r"^\d{5}(-\d{4})?$").map_err(|_| "Invalid ZIP regex pattern".to_string())?;
 
         if !zip_regex.is_match(zip) {
             return Err("Invalid ZIP code format (expected 12345 or 12345-6789)".to_string());
@@ -187,7 +199,8 @@ impl ClientValidationService {
     fn check_for_duplicates(&self, req: &CreateClientRequest) -> Result<(), String> {
         // Check for duplicate email
         if let Some(ref email) = req.email {
-            let email_count: i64 = self.db
+            let email_count: i64 = self
+                .db
                 .as_ref()
                 .query_single_value(
                     "SELECT COUNT(*) FROM clients WHERE email = ? AND deleted_at IS NULL",
@@ -203,7 +216,8 @@ impl ClientValidationService {
         // Check for duplicate tax ID if provided
         if let Some(ref tax_id) = req.tax_id {
             if !tax_id.trim().is_empty() {
-                let tax_count: i64 = self.db
+                let tax_count: i64 = self
+                    .db
                     .as_ref()
                     .query_single_value(
                         "SELECT COUNT(*) FROM clients WHERE tax_id = ? AND deleted_at IS NULL",
@@ -225,24 +239,40 @@ impl ClientValidationService {
         match req.customer_type {
             crate::models::CustomerType::Business => {
                 // Business clients require company name
-                if req.company_name.as_ref().map_or(true, |name| name.trim().is_empty()) {
+                if req
+                    .company_name
+                    .as_ref()
+                    .map_or(true, |name| name.trim().is_empty())
+                {
                     return Err("Company name is required for business clients".to_string());
                 }
 
                 // Business clients require contact person
-                if req.contact_person.as_ref().map_or(true, |person| person.trim().is_empty()) {
+                if req
+                    .contact_person
+                    .as_ref()
+                    .map_or(true, |person| person.trim().is_empty())
+                {
                     return Err("Contact person is required for business clients".to_string());
                 }
 
                 // Business clients should have tax ID
-                if req.tax_id.as_ref().map_or(true, |tax| tax.trim().is_empty()) {
+                if req
+                    .tax_id
+                    .as_ref()
+                    .map_or(true, |tax| tax.trim().is_empty())
+                {
                     return Err("Tax ID is recommended for business clients".to_string());
                 }
             }
             crate::models::CustomerType::Individual => {
                 // Individual clients don't need company name or contact person
                 // But if provided, they should be reasonable
-                if req.company_name.as_ref().map_or(false, |name| name.len() > 100) {
+                if req
+                    .company_name
+                    .as_ref()
+                    .map_or(false, |name| name.len() > 100)
+                {
                     return Err("Company name cannot exceed 100 characters".to_string());
                 }
             }
@@ -282,7 +312,10 @@ impl ClientValidationService {
             .map_err(|e| format!("Failed to check active tasks: {}", e))?;
 
         if active_tasks > 0 {
-            return Err(format!("Cannot delete client with {} active tasks. Complete or cancel all tasks first.", active_tasks));
+            return Err(format!(
+                "Cannot delete client with {} active tasks. Complete or cancel all tasks first.",
+                active_tasks
+            ));
         }
 
         Ok(())

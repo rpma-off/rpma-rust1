@@ -1,9 +1,11 @@
 //! Tests for user command handlers
-//! 
+//!
 //! These tests verify that user IPC commands work correctly,
 //! including CRUD operations, validations, and search functionality.
 
-use rpma_ppf_intervention::commands::user::{user_create, client_update, client_delete, client_get_by_id, UserCrudRequest};
+use rpma_ppf_intervention::commands::user::{
+    client_delete, client_get_by_id, client_update, user_create, UserCrudRequest,
+};
 use rpma_ppf_intervention::commands::AppState;
 
 #[tokio::test]

@@ -1,5 +1,5 @@
 //! Tests for client command handlers
-//! 
+//!
 //! These tests verify that client IPC commands work correctly,
 //! focusing on CRUD operations and data structures.
 
@@ -29,7 +29,7 @@ async fn test_client_crud_request_structure() {
         contact_person: "John Doe".to_string(),
         relation_id: Some("test-123".to_string()),
     };
-    
+
     // Verify structure
     assert_eq!(req.customer_type, "Premium");
     assert_eq!(req.name, "Test Customer");

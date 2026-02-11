@@ -18,8 +18,7 @@ lazy_static! {
         Arc::new(Mutex::new(None));
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Serialize, Deserialize, TS)]
 pub struct SendNotificationRequest {
     pub user_id: String,
     pub notification_type: NotificationType,
@@ -27,8 +26,7 @@ pub struct SendNotificationRequest {
     pub variables: TemplateVariables,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Serialize, Deserialize, TS)]
 pub struct UpdateNotificationConfigRequest {
     pub email_provider: Option<String>,
     pub email_api_key: Option<String>,

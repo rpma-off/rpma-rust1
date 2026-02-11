@@ -766,10 +766,7 @@ impl InterventionWorkflowService {
             .data
             .get_intervention(intervention_id)?
             .ok_or_else(|| {
-                InterventionError::NotFound(format!(
-                    "Intervention {} not found",
-                    intervention_id
-                ))
+                InterventionError::NotFound(format!("Intervention {} not found", intervention_id))
             })?;
 
         // Check if intervention can be cancelled
@@ -819,7 +816,9 @@ impl InterventionWorkflowService {
     ) -> InterventionResult<Vec<Intervention>> {
         // Since the data service doesn't have this method, we'll implement it directly
         // Get all interventions and filter by task_id
-        let (interventions, _) = self.data.list_interventions(None, None, Some(1000), Some(0))?;
+        let (interventions, _) = self
+            .data
+            .list_interventions(None, None, Some(1000), Some(0))?;
         Ok(interventions
             .into_iter()
             .filter(|i| i.task_id == task_id)
@@ -832,7 +831,9 @@ impl InterventionWorkflowService {
         limit: i32,
         offset: i32,
     ) -> InterventionResult<Vec<Intervention>> {
-        let (interventions, _) = self.data.list_interventions(None, None, Some(limit), Some(offset))?;
+        let (interventions, _) =
+            self.data
+                .list_interventions(None, None, Some(limit), Some(offset))?;
         Ok(interventions)
     }
 }

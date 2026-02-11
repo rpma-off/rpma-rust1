@@ -106,7 +106,7 @@ fn main() {
         fs::create_dir_all(parent).expect("Failed to create directories");
     }
 
-    // Generate TypeScript definitions  
+    // Generate TypeScript definitions
     let mut type_definitions = String::new();
 
     // Add header comment
