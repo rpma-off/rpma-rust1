@@ -18,8 +18,11 @@ use std::sync::Arc;
 mod tests {
     use super::*;
 
-    fn create_validation_service(
-    ) -> (WorkflowValidationService, Arc<crate::db::Database>, tempfile::TempDir) {
+    fn create_validation_service() -> (
+        WorkflowValidationService,
+        Arc<crate::db::Database>,
+        tempfile::TempDir,
+    ) {
         let test_db = test_db!();
         let db = test_db.db();
         let service = WorkflowValidationService::new(Arc::clone(&db));
@@ -41,11 +44,7 @@ mod tests {
         let intervention = test_intervention!(status: InterventionStatus::InProgress);
         let step = TestDataFactory::create_test_step(&intervention.id, 1, None);
 
-        let result = validation_service.validate_step_advancement(
-            &intervention,
-            &step,
-            &logger,
-        );
+        let result = validation_service.validate_step_advancement(&intervention, &step, &logger);
         assert!(
             result.is_ok(),
             "Pending to InProgress should be valid for first step"
@@ -62,10 +61,7 @@ mod tests {
 
         let result = validation_service.validate_step_advancement(&intervention, &step, &logger);
         assert!(result.is_err(), "Mismatched intervention should be invalid");
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("Invalid step"));
+        assert!(result.unwrap_err().to_string().contains("Invalid step"));
     }
 
     #[tokio::test]
@@ -107,11 +103,7 @@ mod tests {
         .expect("Failed to insert previous step");
 
         let step = TestDataFactory::create_test_step(&intervention.id, 2, None);
-        let result = validation_service.validate_step_advancement(
-            &intervention,
-            &step,
-            &logger,
-        );
+        let result = validation_service.validate_step_advancement(&intervention, &step, &logger);
         assert!(
             result.is_err(),
             "Cannot advance when previous step is not completed"
@@ -143,11 +135,7 @@ mod tests {
         .expect("Failed to insert previous step");
 
         let step2 = TestDataFactory::create_test_step(&intervention.id, 2, None);
-        let result = validation_service.validate_step_advancement(
-            &intervention,
-            &step2,
-            &logger,
-        );
+        let result = validation_service.validate_step_advancement(&intervention, &step2, &logger);
         assert!(
             result.is_ok(),
             "Can advance to step 2 when step 1 is completed"
@@ -330,6 +318,9 @@ mod tests {
         let intervention = test_intervention!(status: InterventionStatus::InProgress);
 
         let result = validation_service.validate_intervention_finalization(&intervention, &logger);
-        assert!(result.is_ok(), "Intervention with no mandatory steps is finalizable");
+        assert!(
+            result.is_ok(),
+            "Intervention with no mandatory steps is finalizable"
+        );
     }
 }

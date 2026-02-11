@@ -12,5 +12,3 @@ pub mod migrations;
 
 #[cfg(feature = "legacy-tests")]
 pub mod performance;
-
-pub mod smoke;

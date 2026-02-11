@@ -218,5 +218,8 @@ fn smoke_migrations_integrity() {
 
     assert!(users_exists > 0, "users table missing after migrations");
     assert!(tasks_exists > 0, "tasks table missing after migrations");
-    assert!(sync_queue_exists > 0, "sync_queue table missing after migrations");
+    assert!(
+        sync_queue_exists > 0,
+        "sync_queue table missing after migrations"
+    );
 }

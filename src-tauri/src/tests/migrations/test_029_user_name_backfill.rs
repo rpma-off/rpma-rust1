@@ -4,8 +4,8 @@ use super::test_framework::MigrationTestContext;
 
 #[test]
 fn test_migration_029_backfills_names_from_full_name() {
-    let mut ctx = MigrationTestContext::at_version(28)
-        .expect("Failed to create migration test context");
+    let mut ctx =
+        MigrationTestContext::at_version(28).expect("Failed to create migration test context");
 
     let user_id = "user-029";
 

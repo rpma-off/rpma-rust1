@@ -179,9 +179,7 @@ impl MaterialService {
         let created_by = created_by
             .filter(|user_id| !user_id.trim().is_empty())
             .ok_or_else(|| {
-                MaterialError::Authorization(
-                    "User ID is required to create materials".to_string(),
-                )
+                MaterialError::Authorization("User ID is required to create materials".to_string())
             })?;
         self.ensure_inventory_permission(&created_by)?;
         self.validate_create_request(&request)?;
@@ -267,9 +265,7 @@ impl MaterialService {
         let deleted_by = deleted_by
             .filter(|user_id| !user_id.trim().is_empty())
             .ok_or_else(|| {
-                MaterialError::Authorization(
-                    "User ID is required to delete materials".to_string(),
-                )
+                MaterialError::Authorization("User ID is required to delete materials".to_string())
             })?;
         self.ensure_inventory_permission(&deleted_by)?;
         let material = self
@@ -371,9 +367,7 @@ impl MaterialService {
         let updated_by = updated_by
             .filter(|user_id| !user_id.trim().is_empty())
             .ok_or_else(|| {
-                MaterialError::Authorization(
-                    "User ID is required to update materials".to_string(),
-                )
+                MaterialError::Authorization("User ID is required to update materials".to_string())
             })?;
         self.ensure_inventory_permission(&updated_by)?;
         let mut material = self
@@ -437,9 +431,7 @@ impl MaterialService {
             .clone()
             .filter(|user_id| !user_id.trim().is_empty())
             .ok_or_else(|| {
-                MaterialError::Authorization(
-                    "User ID is required to update stock".to_string(),
-                )
+                MaterialError::Authorization("User ID is required to update stock".to_string())
             })?;
         self.ensure_inventory_permission(&recorded_by)?;
         self.validate_stock_update(&request)?;
@@ -1288,16 +1280,20 @@ impl MaterialService {
             ));
         }
 
-        if !matches!(request.transaction_type, InventoryTransactionType::Adjustment)
-            && request.quantity <= 0.0
+        if !matches!(
+            request.transaction_type,
+            InventoryTransactionType::Adjustment
+        ) && request.quantity <= 0.0
         {
             return Err(MaterialError::Validation(
                 "Transaction quantity must be greater than 0".to_string(),
             ));
         }
 
-        if matches!(request.transaction_type, InventoryTransactionType::Adjustment)
-            && request.quantity < 0.0
+        if matches!(
+            request.transaction_type,
+            InventoryTransactionType::Adjustment
+        ) && request.quantity < 0.0
         {
             return Err(MaterialError::Validation(
                 "Adjustment quantity cannot be negative".to_string(),
@@ -1890,10 +1886,11 @@ impl MaterialService {
         }
 
         let conn = self.db.get_connection()?;
-        let role_result: Result<String, rusqlite::Error> =
-            conn.query_row("SELECT role FROM users WHERE id = ?", params![user_id], |row| {
-                row.get(0)
-            });
+        let role_result: Result<String, rusqlite::Error> = conn.query_row(
+            "SELECT role FROM users WHERE id = ?",
+            params![user_id],
+            |row| row.get(0),
+        );
         let role_str = match role_result {
             Ok(role) => role,
             Err(rusqlite::Error::QueryReturnedNoRows) => {
@@ -1967,7 +1964,10 @@ impl MaterialService {
         Ok(())
     }
 
-    fn validate_consumption_request(&self, request: &RecordConsumptionRequest) -> MaterialResult<()> {
+    fn validate_consumption_request(
+        &self,
+        request: &RecordConsumptionRequest,
+    ) -> MaterialResult<()> {
         if request.material_id.trim().is_empty() {
             return Err(MaterialError::Validation(
                 "Material ID is required".to_string(),

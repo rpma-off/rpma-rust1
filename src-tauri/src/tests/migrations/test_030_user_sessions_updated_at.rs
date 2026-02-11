@@ -4,8 +4,8 @@ use super::test_framework::MigrationTestContext;
 
 #[test]
 fn test_migration_030_adds_user_sessions_updated_at() {
-    let mut ctx = MigrationTestContext::at_version(29)
-        .expect("Failed to create migration test context");
+    let mut ctx =
+        MigrationTestContext::at_version(29).expect("Failed to create migration test context");
 
     ctx.migrate_to_version(30)
         .expect("Failed to run migration 30");
