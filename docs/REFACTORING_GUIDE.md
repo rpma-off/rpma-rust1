@@ -18,12 +18,9 @@ This document lists low-risk refactors that improve readability, reduce duplicat
 
 ### 1) Shared `validate_sort_column`
 
-_Problem_: 8 repositories define nearly identical validation helpers.
+_Problem_: 8 repositories define nearly identical validation helpers. (Diff headers and line numbers omitted for brevity.)
 
 ```diff
---- a/src-tauri/src/repositories/message_repository.rs
-+++ b/src-tauri/src/repositories/message_repository.rs
-@@
 -    fn validate_sort_column(sort_by: &str) -> Result<String, RepoError> {
 -        let allowed_columns = [
 -            "created_at",
@@ -65,12 +62,8 @@ _Problem_: 8 repositories define nearly identical validation helpers.
 _Problem_: multiple test modules include their own `setup_test_db`.
 
 ```diff
---- a/src-tauri/src/tests/integration/task_lifecycle_tests.rs
-+++ b/src-tauri/src/tests/integration/task_lifecycle_tests.rs
-@@
 -use crate::tests::integration::task_lifecycle_tests::setup_test_db;
 +use crate::tests::support::TestDb;
-@@
 -fn setup_test_db() -> Database {
 -    let db = Database::new_in_memory().expect("test db");
 -    db.initialize().expect("init schema");
@@ -84,9 +77,6 @@ _Problem_: multiple test modules include their own `setup_test_db`.
 _Problem_: services clone request objects before spawning tasks.
 
 ```diff
---- a/src-tauri/src/services/task_creation.rs
-+++ b/src-tauri/src/services/task_creation.rs
-@@
 -        let req = req.clone();
 -        let db = self.db.clone();
 -        tokio::spawn(async move {
@@ -94,8 +84,8 @@ _Problem_: services clone request objects before spawning tasks.
 -        });
 +        let db = self.db.clone();
 +        tokio::spawn({
-+            let req = req;
-+            async move { TaskCreationService::persist_task(db, req).await }
++            let request = req;
++            async move { TaskCreationService::persist_task(db, request).await }
 +        });
 ```
 
@@ -104,9 +94,6 @@ _Problem_: services clone request objects before spawning tasks.
 _Problem_: command handlers build similar error strings.
 
 ```diff
---- a/src-tauri/src/commands/tasks.rs
-+++ b/src-tauri/src/commands/tasks.rs
-@@
 -    service
 -        .create_task(request)
 -        .await
@@ -122,9 +109,6 @@ _Problem_: command handlers build similar error strings.
 _Problem_: repeated literal arrays passed to `cache_key_builder.query`.
 
 ```diff
---- a/src-tauri/src/repositories/message_repository.rs
-+++ b/src-tauri/src/repositories/message_repository.rs
-@@
 -        let cache_key = self
 -            .cache_key_builder
 -            .query(&["type", &message_type.to_string()]);
