@@ -340,7 +340,7 @@ impl InterventionWorkflowService {
         self.validation
             .validate_step_advancement(&intervention, &current_step, &logger)?;
 
-        let has_completion_data = !matches!(
+        let has_step_completion_data = !matches!(
             request.collected_data,
             serde_json::Value::Null | serde_json::Value::Object(ref map) if map.is_empty()
         ) || request
@@ -352,7 +352,7 @@ impl InterventionWorkflowService {
                 .as_ref()
                 .map_or(false, |issues| !issues.is_empty());
 
-        if current_step.step_status == StepStatus::Pending && has_completion_data {
+        if current_step.step_status == StepStatus::Pending && has_step_completion_data {
             return Err(InterventionError::Workflow(
                 "Step must be started before completing".to_string(),
             ));
@@ -368,7 +368,8 @@ impl InterventionWorkflowService {
             current_step.started_at = TimestampString::now();
         }
 
-        if current_step.step_status == StepStatus::InProgress && !has_completion_data {
+        if current_step.step_status == StepStatus::InProgress && !has_step_completion_data {
+            // No completion data supplied; persist in-progress state and return.
             self.save_step_with_retry(&current_step, &logger).await?;
             let progress_percentage = intervention.completion_percentage as f32;
             return Ok(AdvanceStepResponse {

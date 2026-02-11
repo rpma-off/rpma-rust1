@@ -78,7 +78,9 @@ impl WorkflowValidationService {
         }
 
         match current_step.step_status {
-            StepStatus::Pending | StepStatus::InProgress => {}
+            StepStatus::Pending | StepStatus::InProgress => {
+                // Pending and in-progress are valid states for advancement.
+            }
             StepStatus::Completed => {
                 let mut error_context = std::collections::HashMap::new();
                 error_context.insert(
