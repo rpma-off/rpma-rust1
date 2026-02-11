@@ -790,6 +790,7 @@ fn configure_linux_specific() {
 
 5. **Hasher les tokens au repos**
    ```rust
+   use sha2::{Digest, Sha256};
    let token_hash = Sha256::digest(session.token.as_bytes());
    // stocker token_hash en DB, garder le token en mémoire uniquement
    ```
