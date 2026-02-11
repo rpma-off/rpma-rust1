@@ -787,7 +787,7 @@ fn configure_linux_specific() {
         AND dep.status != 'completed'
      )
    ```
-   - Note : `IN (?1, ?2, ...)` implique une génération SQL dynamique pour listes variables.
+   - Note: `IN (?1, ?2, ...)` implique une génération SQL dynamique pour listes variables.
    - Variante : stocker `dependencies` en table de jointure ou utiliser JSON1 (`json_each`) pour binder proprement.
 
 5. **Hasher les tokens au repos**
