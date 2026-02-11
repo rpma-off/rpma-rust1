@@ -318,6 +318,7 @@ npm run test:coverage
 - [Déploiement](./DEPLOYMENT.md)
 - [Design system](./DESIGN.md)
 - [Workflows utilisateur](./USER-FLOWS.md)
+- [GitHub Copilot Instructions](./.github/copilot-instructions.md) - Guide pour AI assistants
 
 ## 📄 Licence
 
