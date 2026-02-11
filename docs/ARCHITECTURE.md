@@ -789,6 +789,12 @@ fn configure_linux_specific() {
      )
    ```
    - Variante : stocker `dependencies` en table de jointure si JSON1 n’est pas disponible.
+     ```sql
+     CREATE TABLE sync_queue_dependencies (
+       operation_id INTEGER,
+       depends_on_entity_id TEXT
+     );
+     ```
 
 5. **Hasher les tokens au repos**
    ```rust
@@ -798,7 +804,7 @@ fn configure_linux_specific() {
    type HmacSha256 = Hmac<Sha256>;
    // app_secret : clé secrète issue de la configuration sécurisée (env/keystore)
    let mut mac = HmacSha256::new_from_slice(app_secret.as_bytes())
-       .map_err(|_| AppError::Configuration("Clé HMAC invalide".to_string()))?; // pseudo: adapter à l'erreur projet
+       .map_err(|_| AppError::Configuration("Clé HMAC invalide".to_string()))?; // remplacer AppError::Configuration par l'erreur du projet (ex: commands::AppError)
    mac.update(session.token.as_bytes());
    let token_hash = base64::engine::general_purpose::STANDARD.encode(mac.finalize().into_bytes());
    // stocker token_hash en DB, garder le token en mémoire uniquement
