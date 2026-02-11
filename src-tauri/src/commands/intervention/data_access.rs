@@ -34,7 +34,10 @@ pub async fn intervention_get(
 
     // Check permissions
     if intervention.technician_id.as_ref() != Some(&session.user_id)
-        && session.role != crate::models::auth::UserRole::Admin
+        && !matches!(
+            session.role,
+            crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+        )
     {
         return Err(AppError::Authorization(
             "Not authorized to view this intervention".to_string(),
@@ -62,7 +65,12 @@ pub async fn intervention_get_active_by_task(
         .check_task_assignment(&task_id, &session.user_id)
         .unwrap_or(false);
 
-    if !task_access && session.role != crate::models::auth::UserRole::Admin {
+    if !task_access
+        && !matches!(
+            session.role,
+            crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+        )
+    {
         return Err(AppError::Authorization(
             "Not authorized to view interventions for this task".to_string(),
         ));
@@ -107,7 +115,12 @@ pub async fn intervention_get_latest_by_task(
         .check_task_assignment(&task_id, &session.user_id)
         .unwrap_or(false);
 
-    if !task_access && session.role != crate::models::auth::UserRole::Admin {
+    if !task_access
+        && !matches!(
+            session.role,
+            crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+        )
+    {
         return Err(AppError::Authorization(
             "Not authorized to view interventions for this task".to_string(),
         ));
@@ -151,7 +164,10 @@ pub async fn intervention_get_step(
         .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", intervention_id)))?;
 
     if intervention.technician_id.as_ref() != Some(&session.user_id)
-        && session.role != crate::models::auth::UserRole::Admin
+        && !matches!(
+            session.role,
+            crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+        )
     {
         return Err(AppError::Authorization(
             "Not authorized to view this intervention step".to_string(),

@@ -119,8 +119,7 @@ use crate::models::client::{
 use crate::services::client::ClientStats;
 
 // User request types
-#[derive(TS)]
-#[derive(Deserialize, Debug)]
+#[derive(TS, Deserialize, Debug)]
 pub struct CreateUserRequest {
     pub email: String,
     pub first_name: String,
@@ -129,8 +128,7 @@ pub struct CreateUserRequest {
     pub password: String,
 }
 
-#[derive(TS)]
-#[derive(Deserialize, Debug)]
+#[derive(TS, Deserialize, Debug)]
 pub struct UpdateUserRequest {
     pub email: Option<String>,
     pub first_name: Option<String>,
@@ -215,8 +213,7 @@ pub enum ClientResponse {
 }
 
 /// User action types for CRUD operations
-#[derive(TS)]
-#[derive(Deserialize, Debug)]
+#[derive(TS, Deserialize, Debug)]
 #[serde(tag = "action")]
 pub enum UserAction {
     Create {
@@ -253,8 +250,7 @@ pub enum UserAction {
 }
 
 /// User list response
-#[derive(Serialize)]
-#[derive(TS)]
+#[derive(Serialize, TS)]
 pub struct UserListResponse {
     pub data: Vec<crate::models::auth::UserAccount>,
 }
@@ -342,8 +338,7 @@ macro_rules! tracked_command {
 }
 
 /// Standard API response format
-#[derive(TS)]
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(TS, Debug, Serialize, Deserialize)]
 pub struct ApiError {
     pub message: String,
     pub code: String,
@@ -353,8 +348,7 @@ pub struct ApiError {
 }
 
 /// Compressed API response for large payloads
-#[derive(TS)]
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(TS, Debug, Serialize, Deserialize)]
 pub struct CompressedApiResponse {
     pub success: bool,
     pub compressed: bool,

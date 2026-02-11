@@ -340,6 +340,15 @@ impl InterventionWorkflowService {
         self.validation
             .validate_step_advancement(&intervention, &current_step, &logger)?;
 
+        let has_completion_data = Self::has_completion_data(&request);
+
+        if current_step.step_status == StepStatus::Pending && has_completion_data {
+            // Steps must be started before completion data is accepted.
+            return Err(InterventionError::Workflow(
+                "Step must be started before completion data can be provided".to_string(),
+            ));
+        }
+
         // Update step with collected data
         self.data
             .update_step_with_data(&mut current_step, &request)?;
@@ -348,6 +357,18 @@ impl InterventionWorkflowService {
         if current_step.step_status == StepStatus::Pending {
             current_step.step_status = StepStatus::InProgress;
             current_step.started_at = TimestampString::now();
+        }
+
+        if current_step.step_status == StepStatus::InProgress && !has_completion_data {
+            // No completion indicators; persist updated progress data and return.
+            self.save_step_with_retry(&current_step, &logger).await?;
+            let progress_percentage = intervention.completion_percentage as f32;
+            return Ok(AdvanceStepResponse {
+                step: current_step,
+                next_step: None,
+                progress_percentage,
+                requirements_completed: Vec::new(),
+            });
         }
 
         // Mark step as completed
@@ -571,6 +592,23 @@ impl InterventionWorkflowService {
         }
     }
 
+    /// Determine whether the request includes completion data for a step.
+    ///
+    /// Returns true when collected_data is non-empty or when photos/issues are supplied.
+    fn has_completion_data(request: &AdvanceStepRequest) -> bool {
+        !matches!(
+            request.collected_data,
+            serde_json::Value::Null | serde_json::Value::Object(ref map) if map.is_empty()
+        ) || request
+            .photos
+            .as_ref()
+            .map_or(false, |photos| !photos.is_empty())
+            || request
+                .issues
+                .as_ref()
+                .map_or(false, |issues| !issues.is_empty())
+    }
+
     /// Save step progress without advancing to next step
     pub async fn save_step_progress(
         &self,
@@ -766,10 +804,7 @@ impl InterventionWorkflowService {
             .data
             .get_intervention(intervention_id)?
             .ok_or_else(|| {
-                InterventionError::NotFound(format!(
-                    "Intervention {} not found",
-                    intervention_id
-                ))
+                InterventionError::NotFound(format!("Intervention {} not found", intervention_id))
             })?;
 
         // Check if intervention can be cancelled
@@ -819,7 +854,9 @@ impl InterventionWorkflowService {
     ) -> InterventionResult<Vec<Intervention>> {
         // Since the data service doesn't have this method, we'll implement it directly
         // Get all interventions and filter by task_id
-        let (interventions, _) = self.data.list_interventions(None, None, Some(1000), Some(0))?;
+        let (interventions, _) = self
+            .data
+            .list_interventions(None, None, Some(1000), Some(0))?;
         Ok(interventions
             .into_iter()
             .filter(|i| i.task_id == task_id)
@@ -832,7 +869,9 @@ impl InterventionWorkflowService {
         limit: i32,
         offset: i32,
     ) -> InterventionResult<Vec<Intervention>> {
-        let (interventions, _) = self.data.list_interventions(None, None, Some(limit), Some(offset))?;
+        let (interventions, _) =
+            self.data
+                .list_interventions(None, None, Some(limit), Some(offset))?;
         Ok(interventions)
     }
 }

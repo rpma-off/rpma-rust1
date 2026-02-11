@@ -1,13 +1,13 @@
 //! Tests for authentication command handlers
-//! 
+//!
 //! These tests verify that authentication IPC commands work correctly,
 //! including login, session validation, logout, and account creation.
 
-use rpma_ppf_intervention::commands::auth::{auth_login, LoginRequest, SignupRequest};
-use rpma_ppf_intervention::commands::auth::auth_validate_session;
-use rpma_ppf_intervention::commands::auth::auth_logout;
 use rpma_ppf_intervention::commands::auth::auth_create_account;
+use rpma_ppf_intervention::commands::auth::auth_logout;
 use rpma_ppf_intervention::commands::auth::auth_refresh_token;
+use rpma_ppf_intervention::commands::auth::auth_validate_session;
+use rpma_ppf_intervention::commands::auth::{auth_login, LoginRequest, SignupRequest};
 
 #[tokio::test]
 async fn test_auth_login_request_structure() {
@@ -17,7 +17,7 @@ async fn test_auth_login_request_structure() {
         password: "password".to_string(),
         correlation_id: Some("test-123".to_string()),
     };
-    
+
     // Verify structure
     assert_eq!(login_req.email, "test@example.com");
     assert_eq!(login_req.password, "password");
@@ -35,7 +35,7 @@ async fn test_auth_create_account_request_structure() {
         role: Some("technician".to_string()),
         correlation_id: Some("test-456".to_string()),
     };
-    
+
     // Verify structure
     assert_eq!(signup_req.email, "test@example.com");
     assert_eq!(signup_req.first_name, "Test");
