@@ -1,4 +1,4 @@
-﻿import { test, expect } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import path from 'path';
 import { resetMockDb, setMockDelay, setMockFailure } from './utils/mock';
 
@@ -52,15 +52,15 @@ test.describe('Report Generation Workflow', () => {
     await page.goto('/reports');
     
     // Select tasks report type
-    await page.click('button:has-text("TÃ¢ches")');
+    await page.click('button:has-text("Tâches")');
     
     // Wait for report to load
     await expect(page.locator('[data-testid="report-content"]')).toBeVisible({ timeout: 10000 });
     
     // Verify report sections
-    await expect(page.locator('text=Rapport de Performance des TÃ¢ches')).toBeVisible();
-    await expect(page.locator('text=TÃ¢ches totales')).toBeVisible();
-    await expect(page.locator('text=Taux de complÃ©tion')).toBeVisible();
+    await expect(page.locator('text=Rapport de Performance des Tâches')).toBeVisible();
+    await expect(page.locator('text=Tâches totales')).toBeVisible();
+    await expect(page.locator('text=Taux de completion')).toBeVisible();
     
     // Verify chart is rendered
     await expect(page.locator('[data-testid="task-chart"]')).toBeVisible();
@@ -68,31 +68,32 @@ test.describe('Report Generation Workflow', () => {
     // Verify data table
     await expect(page.locator('table')).toBeVisible();
     await expect(page.locator('th:has-text("Date")')).toBeVisible();
-    await expect(page.locator('th:has-text("TÃ¢ches")')).toBeVisible();
+    await expect(page.locator('th:has-text("Tâches")')).toBeVisible();
   });
 
   test.skip('should generate intervention reports with photos', async ({ page }) => {
     await page.goto('/reports');
     
     // Select quality report type (includes interventions)
-    await page.click('button:has-text("QualitÃ©")');
+    await page.click('button:has-text("Qualité")');
     
     // Wait for report to load
     await expect(page.locator('[data-testid="report-content"]')).toBeVisible({ timeout: 10000 });
     
     // Verify intervention sections
-    await expect(page.locator('text=MÃ©triques de qualitÃ© et conformitÃ©')).toBeVisible();
+    await expect(page.locator('text=Métriques de qualité et conformité')).toBeVisible();
     await expect(page.locator('text=Interventions')).toBeVisible();
     
     // Look for photo galleries in the report
     const photoGallery = page.locator('[data-testid="intervention-photos"]');
     if (await photoGallery.isVisible()) {
-      await expect(photoGallery.locator('img')).toHaveCount.greaterThan(0);
+      const count = await photoGallery.locator('img').count();
+      expect(count).toBeGreaterThan(0);
     }
     
     // Verify quality metrics
-    await expect(page.locator('text=Taux de conformitÃ©')).toBeVisible();
-    await expect(page.locator('text=Score de qualitÃ©')).toBeVisible();
+    await expect(page.locator('text=Taux de conformité')).toBeVisible();
+    await expect(page.locator('text=Score de qualité')).toBeVisible();
   });
 
   test.skip('should generate client statistics reports', async ({ page }) => {
@@ -121,30 +122,30 @@ test.describe('Report Generation Workflow', () => {
     await page.goto('/reports');
     
     // Select materials report type
-    await page.click('button:has-text("MatÃ©riaux")');
+    await page.click('button:has-text("Matériaux")');
     
     // Wait for report to load
     await expect(page.locator('[data-testid="report-content"]')).toBeVisible({ timeout: 10000 });
     
     // Verify material usage sections
-    await expect(page.locator('text=Rapport d\'Utilisation des MatÃ©riaux')).toBeVisible();
-    await expect(page.locator('text=CoÃ»t total des matÃ©riaux')).toBeVisible();
+    await expect(page.locator('text=Rapport d\'Utilisation des Matériaux')).toBeVisible();
+    await expect(page.locator('text=Coût total des matériaux')).toBeVisible();
     await expect(page.locator('text=Taux de rotation des stocks')).toBeVisible();
     
     // Verify consumption breakdown
-    await expect(page.locator('text=Consommation par type de matÃ©riel')).toBeVisible();
-    await expect(page.locator('text=Analyse des coÃ»ts')).toBeVisible();
+    await expect(page.locator('text=Consommation par type de matériel')).toBeVisible();
+    await expect(page.locator('text=Analyse des coûts')).toBeVisible();
     
     // Check for material efficiency metrics
     await expect(page.locator('text=Taux d\'utilisation')).toBeVisible();
-    await expect(page.locator('text=Taux de rÃ©duction des dÃ©chets')).toBeVisible();
+    await expect(page.locator('text=Taux de réduction des déchets')).toBeVisible();
   });
 
   test('should export reports in PDF format', async ({ page }) => {
     await page.goto('/reports');
     
     // Select a report type
-    await page.click('button:has-text("TÃ¢ches")');
+    await page.click('button:has-text("Tâches")');
     
     // Wait for report to load
     await expect(page.locator('[data-testid="report-content"]')).toBeVisible({ timeout: 10000 });
@@ -178,7 +179,7 @@ test.describe('Report Generation Workflow', () => {
     await page.goto('/reports');
     
     // Select a report type
-    await page.click('button:has-text("MatÃ©riaux")');
+    await page.click('button:has-text("Matériaux")');
     
     // Wait for report to load
     await expect(page.locator('[data-testid="report-content"]')).toBeVisible({ timeout: 10000 });
@@ -268,7 +269,7 @@ test.describe('Report Generation Workflow', () => {
     await page.click('button:has-text("Enregistrer")');
     
     // Verify success message
-    await expect(page.locator('text=Export programmÃ© avec succÃ¨s')).toBeVisible();
+    await expect(page.locator('text=Export programmé avec succès')).toBeVisible();
   });
 
   test.skip('should apply date range filters correctly', async ({ page }) => {
@@ -285,7 +286,7 @@ test.describe('Report Generation Workflow', () => {
     await expect(page.locator('[data-testid="date-picker-modal"]')).toBeVisible();
     
     // Set custom date range
-    await page.fill('input[placeholder="Date de dÃ©but"]', testDateRange.start);
+    await page.fill('input[placeholder="Date de début"]', testDateRange.start);
     await page.fill('input[placeholder="Date de fin"]', testDateRange.end);
     
     // Apply date range
@@ -306,7 +307,7 @@ test.describe('Report Generation Workflow', () => {
     await page.goto('/reports');
     
     // Open advanced filters
-    const filtersButton = page.locator('button:has-text("Filtres avancÃ©s")');
+    const filtersButton = page.locator('button:has-text("Filtres avancés")');
     if (await filtersButton.isVisible()) {
       await filtersButton.click();
       
@@ -348,14 +349,14 @@ test.describe('Report Generation Workflow', () => {
     await dateRangePicker.click();
     
     // Set invalid date range (end before start)
-    await page.fill('input[placeholder="Date de dÃ©but"]', '2024-01-31');
+    await page.fill('input[placeholder="Date de début"]', '2024-01-31');
     await page.fill('input[placeholder="Date de fin"]', '2024-01-01');
     
     // Try to apply date range
     await page.click('button:has-text("Appliquer")');
     
     // Should show validation error
-    await expect(page.locator('text=La date de fin doit Ãªtre postÃ©rieure Ã  la date de dÃ©but')).toBeVisible();
+    await expect(page.locator('text=La date de fin doit être postérieure Ã  la date de début')).toBeVisible();
   });
 
   test('should display report generation progress indicators', async ({ page }) => {
@@ -364,7 +365,7 @@ test.describe('Report Generation Workflow', () => {
     await page.goto('/reports');
     
     // Select a report type
-    await page.click('button:has-text("TÃ¢ches")');
+    await page.click('button:has-text("Tâches")');
     
     // Should show loading indicator
     await expect(page.locator('[data-testid="loading-indicator"]')).toBeVisible();
@@ -381,7 +382,7 @@ test.describe('Report Generation Workflow', () => {
 
     await page.goto('/reports');
 
-    await page.getByRole('button', { name: /TÃ¢ches/i }).click();
+    await page.getByRole('button', { name: /Tâches/i }).click();
 
     await expect(page.getByText('Error')).toBeVisible();
     await expect(page.getByText('Report generation failed')).toBeVisible();
@@ -391,16 +392,16 @@ test.describe('Report Generation Workflow', () => {
     await page.goto('/reports');
     
     // Select a report type
-    await page.click('button:has-text("AperÃ§u")');
+    await page.click('button:has-text("Aperçu")');
     
     // Wait for overview report to load
     await expect(page.locator('[data-testid="report-content"]')).toBeVisible({ timeout: 10000 });
     
     // Verify preview sections
-    await expect(page.locator('text=Ã‰volution des TÃ¢ches')).toBeVisible();
+    await expect(page.locator('text=Évolution des Tâches')).toBeVisible();
     
     // Check for print/preview mode
-    const previewButton = page.locator('button:has-text("AperÃ§u d\'impression")');
+    const previewButton = page.locator('button:has-text("Aperçu d\'impression")');
     if (await previewButton.isVisible()) {
       await previewButton.click();
       
@@ -417,7 +418,7 @@ test.describe('Report Generation Workflow', () => {
     await dateRangePicker.click();
     
     // Set a full year range
-    await page.fill('input[placeholder="Date de dÃ©but"]', '2023-01-01');
+    await page.fill('input[placeholder="Date de début"]', '2023-01-01');
     await page.fill('input[placeholder="Date de fin"]', '2023-12-31');
     await page.click('button:has-text("Appliquer")');
     
@@ -445,10 +446,10 @@ test.describe('Report Generation Workflow', () => {
     
     // Test navigation between report types
     const reportTypes = [
-      { id: 'tasks', label: 'TÃ¢ches' },
+      { id: 'tasks', label: 'Tâches' },
       { id: 'technicians', label: 'Techniciens' },
       { id: 'clients', label: 'Clients' },
-      { id: 'materials', label: 'MatÃ©riaux' }
+      { id: 'materials', label: 'Matériaux' }
     ];
     
     for (const reportType of reportTypes) {
@@ -465,7 +466,7 @@ test.describe('Report Generation Workflow', () => {
       // Verify report-specific content
       switch (reportType.id) {
         case 'tasks':
-          await expect(page.locator('text=Rapport de Performance des TÃ¢ches')).toBeVisible();
+          await expect(page.locator('text=Rapport de Performance des Tâches')).toBeVisible();
           break;
         case 'technicians':
           await expect(page.locator('text=Rapport de Performance des Techniciens')).toBeVisible();
@@ -474,7 +475,7 @@ test.describe('Report Generation Workflow', () => {
           await expect(page.locator('text=Rapport d\'Analyse Clients')).toBeVisible();
           break;
         case 'materials':
-          await expect(page.locator('text=Rapport d\'Utilisation des MatÃ©riaux')).toBeVisible();
+          await expect(page.locator('text=Rapport d\'Utilisation des Matériaux')).toBeVisible();
           break;
       }
     }
@@ -493,7 +494,7 @@ test.describe('Report Generation Workflow', () => {
     await page.goto('/reports');
     
     // Generate and download multiple reports
-    const reportTypes = ['TÃ¢ches', 'Clients', 'MatÃ©riaux'];
+    const reportTypes = ['Tâches', 'Clients', 'Matériaux'];
     const formats = ['PDF', 'CSV', 'Excel'];
     
     for (const reportType of reportTypes) {

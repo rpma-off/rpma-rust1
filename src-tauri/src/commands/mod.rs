@@ -103,7 +103,7 @@ use crate::models::Client;
 use crate::services::{ClientService, SettingsService, TaskService};
 use base64::{engine::general_purpose, Engine as _};
 use serde::{Deserialize, Serialize};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, OnceLock};
 use tauri::State;
 use tracing::{debug, error, info, instrument, warn};
 // Conditional import removed
@@ -119,8 +119,7 @@ use crate::models::client::{
 use crate::services::client::ClientStats;
 
 // User request types
-#[derive(TS)]
-#[derive(Deserialize, Debug)]
+#[derive(TS, Deserialize, Debug)]
 pub struct CreateUserRequest {
     pub email: String,
     pub first_name: String,
@@ -129,8 +128,7 @@ pub struct CreateUserRequest {
     pub password: String,
 }
 
-#[derive(TS)]
-#[derive(Deserialize, Debug)]
+#[derive(TS, Deserialize, Debug)]
 pub struct UpdateUserRequest {
     pub email: Option<String>,
     pub first_name: Option<String>,
@@ -215,8 +213,7 @@ pub enum ClientResponse {
 }
 
 /// User action types for CRUD operations
-#[derive(TS)]
-#[derive(Deserialize, Debug)]
+#[derive(TS, Deserialize, Debug)]
 #[serde(tag = "action")]
 pub enum UserAction {
     Create {
@@ -253,8 +250,7 @@ pub enum UserAction {
 }
 
 /// User list response
-#[derive(Serialize)]
-#[derive(TS)]
+#[derive(Serialize, TS)]
 pub struct UserListResponse {
     pub data: Vec<crate::models::auth::UserAccount>,
 }
@@ -293,7 +289,7 @@ pub struct AppStateType {
     pub two_factor_service: Arc<crate::services::two_factor::TwoFactorService>,
     pub settings_service: Arc<SettingsService>,
     pub cache_service: Arc<crate::services::cache::CacheService>,
-    pub report_job_service: Arc<crate::services::report_jobs::ReportJobService>,
+    pub report_job_service: OnceLock<Arc<crate::services::report_jobs::ReportJobService>>,
     pub performance_monitor_service:
         Arc<crate::services::performance_monitor::PerformanceMonitorService>,
     pub command_performance_tracker:
@@ -306,6 +302,17 @@ pub struct AppStateType {
 }
 
 pub type AppState<'a> = State<'a, AppStateType>;
+
+impl AppStateType {
+    pub fn report_job_service(&self) -> &Arc<crate::services::report_jobs::ReportJobService> {
+        self.report_job_service.get_or_init(|| {
+            Arc::new(crate::services::report_jobs::ReportJobService::new(
+                self.db.clone(),
+                self.cache_service.clone(),
+            ))
+        })
+    }
+}
 
 /// Helper function to create a tracked command handler with automatic performance monitoring
 #[macro_export]
@@ -342,19 +349,17 @@ macro_rules! tracked_command {
 }
 
 /// Standard API response format
-#[derive(TS)]
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(TS, Debug, Serialize, Deserialize)]
 pub struct ApiError {
     pub message: String,
     pub code: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[ts(type = "any")]
+    #[ts(type = "JsonValue | null")]
     pub details: Option<serde_json::Value>,
 }
 
 /// Compressed API response for large payloads
-#[derive(TS)]
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(TS, Debug, Serialize, Deserialize)]
 pub struct CompressedApiResponse {
     pub success: bool,
     pub compressed: bool,

@@ -1,5 +1,6 @@
 import { safeInvoke } from '../core';
 import { IPC_COMMANDS } from '../commands';
+import type { JsonValue } from '@/types/json';
 
 /**
  * System operations and diagnostics
@@ -16,48 +17,48 @@ export const systemOperations = {
    * Gets detailed health status information
    * @returns Promise resolving to health status
    */
-  getHealthStatus: (): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.GET_HEALTH_STATUS),
+  getHealthStatus: (): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_HEALTH_STATUS),
 
   /**
    * Gets application performance metrics
    * @returns Promise resolving to application metrics
    */
-  getApplicationMetrics: (): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.GET_APPLICATION_METRICS),
+  getApplicationMetrics: (): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_APPLICATION_METRICS),
 
   /**
    * Diagnoses database status and health
    * @returns Promise resolving to database status
    */
-  getDatabaseStatus: (): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.DIAGNOSE_DATABASE),
+  getDatabaseStatus: (): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.DIAGNOSE_DATABASE),
 
   /**
    * Gets database statistics
    * @returns Promise resolving to database stats
    */
-  getDatabaseStats: (): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.GET_DATABASE_STATS),
+  getDatabaseStats: (): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_DATABASE_STATS),
 
   /**
    * Gets database connection pool health
    * @returns Promise resolving to pool health information
    */
-  getDatabasePoolHealth: (): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.GET_DATABASE_POOL_HEALTH),
+  getDatabasePoolHealth: (): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_DATABASE_POOL_HEALTH),
 
   /**
    * Gets application information
    * @returns Promise resolving to app info
    */
-  getAppInfo: (): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.GET_APP_INFO),
+  getAppInfo: (): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_APP_INFO),
 
   /**
    * Gets device information
    * @returns Promise resolving to device info
    */
-  getDeviceInfo: (): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.GET_DEVICE_INFO),
+  getDeviceInfo: (): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_DEVICE_INFO),
 };

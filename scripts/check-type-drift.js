@@ -201,7 +201,7 @@ function analyzeTypeConsistency() {
     // Utility types and enums
     'Pagination', 'ServiceData', 'ListResponse',
     'TaskResponse', 'ClientResponse', 'UserResponse',
-    'ApiResponseUnion', 'ApiErrorResult',
+    'ApiResponseUnion', 'ApiErrorResult', 'JsonValue', 'JsonPrimitive', 'JsonObject', 'JsonArray',
     'UserRole', 'DashboardStats', 'RecentTask',
 
     // Service layer types (no direct Rust equivalent needed)

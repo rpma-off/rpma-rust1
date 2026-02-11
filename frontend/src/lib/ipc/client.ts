@@ -1378,8 +1378,8 @@ export const ipcClient = {
        safeInvoke('get_events_for_task', { task_id: taskId, session_token: sessionToken }),
    },
 
-   // Intervention operations
-   intervention: {
+  // Intervention operations
+  intervention: {
      /**
       * Gets the active intervention for a task
       * @param taskId - Task ID
@@ -1424,11 +1424,11 @@ export const ipcClient = {
       * @param sessionToken - User's session token
       * @returns Promise resolving to intervention progress
       */
-     getProgress: (interventionId: string, sessionToken: string) =>
-       safeInvoke('intervention_get_progress', {
-         intervention_id: interventionId,
-         session_token: sessionToken
-       }),
+    getProgress: (interventionId: string, sessionToken: string) =>
+      safeInvoke('intervention_get_progress', {
+        intervention_id: interventionId,
+        session_token: sessionToken
+      }),
   },
 
   // Inventory/Material operations

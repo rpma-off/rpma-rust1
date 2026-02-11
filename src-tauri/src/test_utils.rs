@@ -11,6 +11,7 @@ use crate::models::step::*;
 use crate::models::task::*;
 
 use chrono::Utc;
+use rusqlite::params;
 use std::sync::Arc;
 use tempfile::TempDir;
 
@@ -38,12 +39,54 @@ impl TestDatabase {
         let latest_version = crate::db::Database::get_latest_migration_version();
         db.migrate(latest_version)?;
 
+        let now = Utc::now().timestamp_millis();
+        db.execute(
+            r#"
+            INSERT OR IGNORE INTO users
+            (id, email, username, password_hash, full_name, role, is_active, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            "#,
+            params![
+                "test_user",
+                "test_user@example.com",
+                "test_user",
+                "test_password_hash",
+                "Test User",
+                "technician",
+                1,
+                now,
+                now
+            ],
+        )?;
+
         Ok(TestDatabase { temp_dir, db })
     }
 
     /// Get a reference to the database
     pub fn db(&self) -> Arc<Database> {
         self.db.clone()
+    }
+}
+
+/// Create an async in-memory database for tests
+pub async fn setup_test_db() -> Database {
+    Database::new_in_memory()
+        .await
+        .expect("Failed to create in-memory database")
+}
+
+/// Create a synchronous in-memory database for legacy tests
+///
+/// Prefer using `setup_test_db` in async tests to avoid runtime creation here.
+pub fn setup_test_db_sync() -> Database {
+    match tokio::runtime::Handle::try_current() {
+        Ok(handle) => handle
+            .block_on(Database::new_in_memory())
+            .expect("Failed to create in-memory database"),
+        Err(_) => tokio::runtime::Runtime::new()
+            .expect("Failed to create tokio runtime")
+            .block_on(Database::new_in_memory())
+            .expect("Failed to create in-memory database"),
     }
 }
 

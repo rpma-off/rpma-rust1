@@ -72,23 +72,21 @@ impl ClientQuery {
     }
 
     fn validate_sort_column(sort_by: &str) -> Result<String, RepoError> {
-        let allowed_columns = [
-            "created_at",
-            "updated_at",
-            "name",
-            "email",
-            "phone",
-            "customer_type",
-            "city",
-            "total_tasks",
-            "active_tasks",
-            "completed_tasks",
-        ];
-        allowed_columns
-            .iter()
-            .find(|&&col| col == sort_by)
-            .map(|s| s.to_string())
-            .ok_or_else(|| RepoError::Validation(format!("Invalid sort column: {}", sort_by)))
+        crate::repositories::base::validate_sort_column(
+            sort_by,
+            &[
+                "created_at",
+                "updated_at",
+                "name",
+                "email",
+                "phone",
+                "customer_type",
+                "city",
+                "total_tasks",
+                "active_tasks",
+                "completed_tasks",
+            ],
+        )
     }
 
     fn build_order_by_clause(&self) -> Result<String, RepoError> {
@@ -598,7 +596,7 @@ mod tests {
     use crate::db::Database;
 
     async fn setup_test_db() -> Database {
-        Database::new_in_memory().await.unwrap()
+        crate::test_utils::setup_test_db().await
     }
 
     #[tokio::test]

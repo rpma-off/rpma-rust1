@@ -309,7 +309,7 @@ pub struct ComplianceMetrics {
 pub struct MaterialUsageReport {
     pub metadata: ReportMetadata,
     pub summary: MaterialSummary,
-    pub consumption_breakdown: Vec<MaterialConsumption>,
+    pub consumption_breakdown: Vec<ReportMaterialConsumption>,
     pub cost_analysis: MaterialCostAnalysis,
     pub efficiency_metrics: MaterialEfficiency,
 }
@@ -323,9 +323,9 @@ pub struct MaterialSummary {
     pub inventory_turnover: f64,
 }
 
-/// Material consumption data
+/// Material consumption data for reports
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-pub struct MaterialConsumption {
+pub struct ReportMaterialConsumption {
     pub material_id: String,
     pub material_name: String,
     pub material_type: String,

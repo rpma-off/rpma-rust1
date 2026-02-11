@@ -133,8 +133,7 @@ function normalizeClient(input: Partial<Client>): Client {
     deleted_at: input.deleted_at ?? null,
     deleted_by: input.deleted_by ?? null,
     synced: input.synced ?? true,
-    last_synced_at: input.last_synced_at ?? now,
-    tasks: input.tasks ?? null
+    last_synced_at: input.last_synced_at ?? now
   };
 }
 
@@ -284,7 +283,7 @@ function buildReportMetadata(title: string) {
     date_range: { start: now, end: now },
     generated_at: now,
     filters: defaultReportFilters(),
-    total_records: state.tasks.length
+    total_records: BigInt(state.tasks.length)
   };
 }
 
@@ -440,7 +439,7 @@ function buildQualityComplianceReport() {
         count: 2,
         percentage: 4,
         severity: 'low',
-        recommended_action: 'Rappeler la prise de photos Ã  chaque étape'
+        recommended_action: 'Rappeler la prise de photos à chaque étape'
       }
     ],
     compliance_metrics: {
@@ -733,7 +732,7 @@ export async function handleInvoke(command: string, args?: Record<string, any>):
               pagination: {
                 page,
                 limit,
-                total: state.clients.length,
+                total: BigInt(state.clients.length),
                 total_pages: Math.max(1, Math.ceil(state.clients.length / limit))
               },
               statistics: null
@@ -747,11 +746,16 @@ export async function handleInvoke(command: string, args?: Record<string, any>):
           }));
         }
         case 'Stats': {
+          const totalClients = BigInt(state.clients.length);
+          const individualClients = BigInt(state.clients.filter(c => c.customer_type === 'individual').length);
+          const businessClients = BigInt(state.clients.filter(c => c.customer_type === 'business').length);
+          const clientsWithTasks = BigInt(state.clients.filter(c => state.tasks.some(t => t.client_id === c.id)).length);
           const stats: ClientStatistics = {
-            total_clients: state.clients.length,
-            active_clients: state.clients.length,
-            new_clients_this_month: 0,
-            top_clients_by_tasks: []
+            total_clients: totalClients,
+            individual_clients: individualClients,
+            business_clients: businessClients,
+            clients_with_tasks: clientsWithTasks,
+            new_clients_this_month: BigInt(0)
           };
           return stats;
         }
@@ -791,7 +795,7 @@ export async function handleInvoke(command: string, args?: Record<string, any>):
             pagination: {
               page,
               limit,
-              total: state.tasks.length,
+              total: BigInt(state.tasks.length),
               total_pages: Math.max(1, Math.ceil(state.tasks.length / limit))
             },
             statistics: null
@@ -800,10 +804,19 @@ export async function handleInvoke(command: string, args?: Record<string, any>):
         case 'GetStatistics': {
           const stats: TaskStatistics = {
             total_tasks: state.tasks.length,
+            draft_tasks: state.tasks.filter(t => t.status === 'draft').length,
+            scheduled_tasks: state.tasks.filter(t => t.status === 'scheduled').length,
+            in_progress_tasks: state.tasks.filter(t => t.status === 'in_progress').length,
             completed_tasks: state.tasks.filter(t => t.status === 'completed').length,
-            pending_tasks: state.tasks.filter(t => t.status !== 'completed').length,
-            overdue_tasks: 0,
-            average_completion_time: 0
+            cancelled_tasks: state.tasks.filter(t => t.status === 'cancelled').length,
+            on_hold_tasks: state.tasks.filter(t => t.status === 'on_hold').length,
+            pending_tasks: state.tasks.filter(t => t.status === 'pending').length,
+            invalid_tasks: state.tasks.filter(t => t.status === 'invalid').length,
+            archived_tasks: state.tasks.filter(t => t.status === 'archived').length,
+            failed_tasks: state.tasks.filter(t => t.status === 'failed').length,
+            overdue_tasks: state.tasks.filter(t => t.status === 'overdue').length,
+            assigned_tasks: state.tasks.filter(t => t.status === 'assigned').length,
+            paused_tasks: state.tasks.filter(t => t.status === 'paused').length
           };
           return stats;
         }

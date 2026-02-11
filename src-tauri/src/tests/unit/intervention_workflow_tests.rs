@@ -185,7 +185,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_advance_step_invalid_transition() {
+    async fn test_advance_step_invalid_transition() -> AppResult<()> {
         let test_db = test_db!();
         let workflow_service = InterventionWorkflowService::new(test_db.db());
 
@@ -240,7 +240,80 @@ mod tests {
         assert!(result.is_err());
         assert!(result
             .unwrap_err()
-            .contains("must be started before completing"));
+            .contains("before completion data can be provided"));
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_advance_step_in_progress_without_completion_data() -> AppResult<()> {
+        let test_db = test_db!();
+        let workflow_service = InterventionWorkflowService::new(test_db.db());
+
+        // Create task and intervention
+        let task_request = test_task!(title: "In-progress step test".to_string());
+        let task = TestDataFactory::create_test_task(Some(task_request));
+
+        let request = StartInterventionRequest {
+            task_id: "task-123".to_string(),
+            intervention_number: None,
+            ppf_zones: vec!["front".to_string()],
+            custom_zones: None,
+            film_type: "standard".to_string(),
+            film_brand: None,
+            film_model: None,
+            weather_condition: "clear".to_string(),
+            lighting_condition: "good".to_string(),
+            work_location: "shop".to_string(),
+            temperature: None,
+            humidity: None,
+            technician_id: "test_user".to_string(),
+            assistant_ids: None,
+            scheduled_start: chrono::Utc::now().to_rfc3339(),
+            estimated_duration: 120,
+            gps_coordinates: None,
+            address: None,
+            notes: None,
+            customer_requirements: None,
+            special_instructions: None,
+        };
+
+        let intervention =
+            workflow_service.start_intervention(request, "test_user", "test-correlation-id")?;
+
+        let first_step = &intervention.steps[0];
+        let start_request = AdvanceStepRequest {
+            intervention_id: intervention.id.clone(),
+            step_id: first_step.id.clone(),
+            collected_data: json!({}),
+            photos: None,
+            notes: Some("Starting step".to_string()),
+            quality_check_passed: true,
+            issues: None,
+        };
+
+        let started_step = workflow_service
+            .advance_step(start_request, "test-correlation-id", Some("test_user"))
+            .await?;
+
+        assert_eq!(started_step.step_status, StepStatus::InProgress);
+
+        let continue_request = AdvanceStepRequest {
+            intervention_id: intervention.id.clone(),
+            step_id: first_step.id.clone(),
+            collected_data: json!({}),
+            photos: None,
+            notes: Some("Still working".to_string()),
+            quality_check_passed: true,
+            issues: None,
+        };
+
+        let in_progress_step = workflow_service
+            .advance_step(continue_request, "test-correlation-id", Some("test_user"))
+            .await?;
+
+        assert_eq!(in_progress_step.step_status, StepStatus::InProgress);
+        assert!(in_progress_step.completed_at.is_none());
 
         Ok(())
     }

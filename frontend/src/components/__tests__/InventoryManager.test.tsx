@@ -516,6 +516,10 @@ describe('InventoryManager', () => {
           low_stock_materials: 0,
           expired_materials: 0,
           total_value: 0,
+          materials_by_category: {},
+          recent_transactions: [],
+          stock_turnover_rate: 0,
+          average_inventory_age: 0,
         },
       });
 

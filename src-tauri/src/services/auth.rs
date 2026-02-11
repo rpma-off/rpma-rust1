@@ -34,19 +34,10 @@ impl AuthService {
     }
 
     pub fn new(db: crate::db::Database) -> Result<Self, String> {
-        let jwt_secret = match std::env::var("JWT_SECRET") {
-            Ok(secret) => {
-                if secret.len() < 32 {
-                    error!("JWT_SECRET is too short ({} bytes). Minimum 32 bytes required for security.", secret.len());
-                    return Err("JWT_SECRET too short".to_string());
-                }
-                secret
-            }
-            Err(_) => {
-                error!("JWT_SECRET environment variable not set. This is required for security. Set JWT_SECRET to a secure random string of at least 32 characters.");
-                return Err("JWT_SECRET environment variable not set".to_string());
-            }
-        };
+        let jwt_secret = crate::services::token::load_jwt_secret().map_err(|e| {
+            error!("JWT secret configuration error: {}", e);
+            e.to_string()
+        })?;
 
         let rate_limiter = Arc::new(RateLimiterService::new(db.clone()));
         let security_monitor = Arc::new(SecurityMonitorService::new(db.clone()));
@@ -634,6 +625,17 @@ impl AuthService {
             7200, // 2 hours (matches JWT access token duration)
         );
 
+        let token_hash = self
+            .token_service
+            .hash_token(&session.token)
+            .map_err(|e| format!("Failed to hash session token: {}", e))?;
+        let refresh_token_hash = session
+            .refresh_token
+            .as_deref()
+            .map(|token| self.token_service.hash_token(token))
+            .transpose()
+            .map_err(|e| format!("Failed to hash refresh token: {}", e))?;
+
         // Store session
         conn.execute(
             "INSERT INTO user_sessions
@@ -645,8 +647,8 @@ impl AuthService {
                 session.username,
                 session.email,
                 session.role.to_string(),
-                session.token,
-                session.refresh_token,
+                token_hash,
+                refresh_token_hash,
                 session.expires_at,
                 session.last_activity,
                 session.created_at,
@@ -675,42 +677,49 @@ impl AuthService {
             })?;
 
         let conn = self.db.get_connection()?;
+        let token_hash = self
+            .token_service
+            .hash_token(token)
+            .map_err(|e| format!("Failed to hash session token: {}", e))?;
+        let token_raw = token.to_string();
 
-        let mut session = conn.query_row(
-            "SELECT id, user_id, username, email, role, token, refresh_token, expires_at, last_activity, created_at
-             FROM user_sessions WHERE token = ? AND user_id = ?",
-            [token, &claims.sub],
-            |row| {
-                let role_str: String = row.get(4)?;
-                let role = match role_str.as_str() {
-                    "admin" => UserRole::Admin,
-                    "technician" => UserRole::Technician,
-                    "supervisor" => UserRole::Supervisor,
-                    "viewer" => UserRole::Viewer,
-                    _ => UserRole::Viewer,
-                };
+        // Legacy compatibility: allow lookup for hashed or plain tokens during migration.
+        let mut session = conn
+            .query_row(
+                "SELECT id, user_id, username, email, role, token, refresh_token, expires_at, last_activity, created_at
+             FROM user_sessions WHERE (token = ? OR token = ?) AND user_id = ?",
+                params![token_hash, token, &claims.sub],
+                |row| {
+                    let role_str: String = row.get(4)?;
+                    let role = match role_str.as_str() {
+                        "admin" => UserRole::Admin,
+                        "technician" => UserRole::Technician,
+                        "supervisor" => UserRole::Supervisor,
+                        "viewer" => UserRole::Viewer,
+                        _ => UserRole::Viewer,
+                    };
 
-                let token: String = row.get(5)?;
-                Ok(UserSession {
-                    id: row.get(1)?,        // database user ID
-                    user_id: row.get(1)?,   // database user ID
-                    username: row.get(2)?,
-                    email: row.get(3)?,
-                    role,
-                    token,
-                    refresh_token: row.get(6)?,
-                    expires_at: row.get(7)?,
-                    last_activity: row.get(8)?,
-                    created_at: row.get(9)?,
-                    device_info: None,
-                    ip_address: None,
-                    user_agent: None,
-                    location: None,
-                    two_factor_verified: false,
-                    session_timeout_minutes: None,
-                })
-            },
-        ).map_err(|e| match e {
+                    Ok(UserSession {
+                        id: row.get(1)?,        // database user ID
+                        user_id: row.get(1)?,   // database user ID
+                        username: row.get(2)?,
+                        email: row.get(3)?,
+                        role,
+                        token: token_raw.clone(),
+                        refresh_token: row.get(6)?,
+                        expires_at: row.get(7)?,
+                        last_activity: row.get(8)?,
+                        created_at: row.get(9)?,
+                        device_info: None,
+                        ip_address: None,
+                        user_agent: None,
+                        location: None,
+                        two_factor_verified: false,
+                        session_timeout_minutes: None,
+                    })
+                },
+            )
+            .map_err(|e| match e {
             rusqlite::Error::QueryReturnedNoRows => "Invalid session".to_string(),
             _ => format!("Database error: {}", e),
         })?;
@@ -718,15 +727,28 @@ impl AuthService {
         // Check if session is expired
         if session.is_expired() {
             // Clean up expired session
-            conn.execute("DELETE FROM user_sessions WHERE token = ?", [token])
-                .map_err(|e| format!("Failed to clean up expired session: {}", e))?;
+            conn.execute(
+                "DELETE FROM user_sessions WHERE token = ? OR token = ?",
+                params![token_hash, token],
+            )
+            .map_err(|e| format!("Failed to clean up expired session: {}", e))?;
             return Err("Session expired".to_string());
+        }
+
+        if let Err(e) = conn.execute(
+            "UPDATE user_sessions SET token = ? WHERE token = ?",
+            params![token_hash, token],
+        ) {
+            warn!(
+                "Failed to migrate session token hash (legacy format retained): {}",
+                e
+            );
         }
 
         // Update last activity
         conn.execute(
-            "UPDATE user_sessions SET last_activity = ? WHERE token = ?",
-            params![Utc::now().to_rfc3339(), token],
+            "UPDATE user_sessions SET last_activity = ? WHERE token = ? OR token = ?",
+            params![Utc::now().to_rfc3339(), token_hash, token],
         )
         .map_err(|e| format!("Failed to update session activity: {}", e))?;
 
@@ -737,9 +759,16 @@ impl AuthService {
     /// Logout (invalidate session)
     pub fn logout(&self, token: &str) -> Result<(), String> {
         let conn = self.db.get_connection()?;
+        let token_hash = self
+            .token_service
+            .hash_token(token)
+            .map_err(|e| format!("Failed to hash session token: {}", e))?;
 
-        conn.execute("DELETE FROM user_sessions WHERE token = ?", [token])
-            .map_err(|e| format!("Failed to logout: {}", e))?;
+        conn.execute(
+            "DELETE FROM user_sessions WHERE token = ? OR token = ?",
+            params![token_hash, token],
+        )
+        .map_err(|e| format!("Failed to logout: {}", e))?;
 
         Ok(())
     }
@@ -1065,12 +1094,28 @@ impl AuthService {
             7200, // 2 hours
         );
 
+        let refresh_token_hash = self
+            .token_service
+            .hash_token(refresh_token)
+            .map_err(|e| format!("Failed to hash refresh token: {}", e))?;
+
         // Invalidate old refresh token
         conn.execute(
-            "DELETE FROM user_sessions WHERE refresh_token = ?",
-            [refresh_token],
+            "DELETE FROM user_sessions WHERE refresh_token = ? OR refresh_token = ?",
+            params![refresh_token_hash, refresh_token],
         )
         .map_err(|e| format!("Failed to invalidate old refresh token: {}", e))?;
+
+        let new_token_hash = self
+            .token_service
+            .hash_token(&new_session.token)
+            .map_err(|e| format!("Failed to hash session token: {}", e))?;
+        let new_refresh_hash = new_session
+            .refresh_token
+            .as_deref()
+            .map(|token| self.token_service.hash_token(token))
+            .transpose()
+            .map_err(|e| format!("Failed to hash refresh token: {}", e))?;
 
         // Store new session
         conn.execute(
@@ -1083,8 +1128,8 @@ impl AuthService {
                 new_session.username,
                 new_session.email,
                 new_session.role.to_string(),
-                new_session.token,
-                new_session.refresh_token,
+                new_token_hash,
+                new_refresh_hash,
                 new_session.expires_at,
                 new_session.last_activity,
                 new_session.created_at,

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -78,7 +78,7 @@ export default function LoginPage() {
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Connexion</h2>
               <p className="text-muted-foreground text-sm md:text-base">
-                Accédez Ã  votre tableau de bord RPMA V2
+                Accédez à votre tableau de bord RPMA V2
               </p>
             </div>
 

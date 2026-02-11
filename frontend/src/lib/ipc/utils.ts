@@ -4,6 +4,7 @@ import { logger } from '../logging';
 import { performanceMonitor } from '../services/performance-monitor';
 import { LogDomain, CorrelationContext } from '../logging/types';
 import type { ApiError } from '../backend';
+import type { JsonValue } from '@/types/json';
 
 /**
  * Maps backend error codes to user-friendly messages
@@ -42,16 +43,16 @@ function getUserFriendlyErrorMessage(errorCode: string, originalMessage: string)
 interface LocalApiError {
   message: string;
   code: string;
-  details?: unknown;
+  details?: JsonValue | null;
 }
 
-interface ApiResponse<T = unknown> {
+interface ApiResponse<T = JsonValue> {
   success: boolean;
   data?: T;
   error?: LocalApiError;
 }
 
-interface BackendResponse<T = unknown> {
+interface BackendResponse<T = JsonValue> {
   type: string;
   payload?: T;
   error?: LocalApiError;
@@ -60,7 +61,7 @@ interface BackendResponse<T = unknown> {
 interface EnhancedError extends Error {
   code?: string;
   originalMessage?: string;
-  details?: unknown;
+  details?: JsonValue | null;
 }
 
 export async function safeInvoke<T>(

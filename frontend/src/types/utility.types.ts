@@ -4,30 +4,10 @@
  * These types help in creating more specific and safe type definitions, reducing the need for `any`.
  */
 
+import type { JsonValue } from './json';
+
 // #region JSON Types
-/**
- * Represents the primitive types allowed in JSON.
- */
-export type JsonPrimitive = string | number | boolean | null;
-
-/**
- * Represents a JSON value. Breaking the circular reference by using
- * an interface with recursive indexing for JsonObject.
- */
-export type JsonValue = JsonPrimitive | JsonArray | JsonObject;
-
-/**
- * Represents a JSON array, which is an array of JsonValue.
- */
-export type JsonArray = Array<JsonValue>;
-
-/**
- * Represents a JSON object, which is a record of string keys to JsonValue.
- * Using an interface with indexing to avoid circular reference errors.
- */
-export interface JsonObject {
-  [key: string]: JsonValue;
-}
+export type { JsonPrimitive, JsonValue, JsonArray, JsonObject } from './json';
 // #endregion
 
 // #region Record Utility Types

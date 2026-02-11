@@ -45,6 +45,15 @@ impl From<&str> for RepoError {
     }
 }
 
+/// Validate a sort column against a list of allowed column names
+pub fn validate_sort_column(sort_by: &str, allowed_columns: &[&str]) -> RepoResult<String> {
+    allowed_columns
+        .iter()
+        .find(|&&col| col == sort_by)
+        .map(|s| s.to_string())
+        .ok_or_else(|| RepoError::Validation(format!("Invalid sort column: {}", sort_by)))
+}
+
 /// Base repository trait with CRUD operations
 #[async_trait]
 pub trait Repository<T: Send, ID: Send + Sync + Clone + 'static> {
@@ -152,8 +161,7 @@ pub trait PaginatedQuery: Query {
 }
 
 /// Pagination metadata
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, TS)]
 pub struct PaginationInfo {
     pub page: i32,
     pub limit: i32,
@@ -182,8 +190,7 @@ impl PaginationInfo {
 }
 
 /// Paginated result
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, TS)]
 pub struct PaginatedResult<T> {
     pub data: Vec<T>,
     pub pagination: PaginationInfo,

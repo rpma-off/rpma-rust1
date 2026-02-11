@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { format } from "date-fns";
 import { useState } from "react";
@@ -102,7 +102,7 @@ export function CalendarHeader() {
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground pl-6">
-                        Le point quotidien est confirmé pour demain Ã  9h00
+                        Le point quotidien est confirmé pour demain à 9h00
                       </p>
                     </DropdownMenuItem>
                     <DropdownMenuItem className="flex flex-col items-start gap-1 p-3 cursor-pointer hover:bg-border/10">

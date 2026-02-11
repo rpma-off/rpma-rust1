@@ -51,7 +51,7 @@ export function StockLevelIndicator({
   };
 
   const getProgressPercentage = () => {
-    if (!material.minimum_stock && !material.maximum_stock) {
+    if (material.minimum_stock == null && material.maximum_stock == null) {
       return material.current_stock > 0 ? 100 : 0;
     }
     
@@ -60,7 +60,8 @@ export function StockLevelIndicator({
     }
     
     // When only minimum stock is set, consider 3x minimum as optimal
-    const optimalLevel = material.minimum_stock * 3;
+    const minimumStock = material.minimum_stock ?? 0;
+    const optimalLevel = Math.max(minimumStock * 3, 1);
     return Math.min((material.current_stock / optimalLevel) * 100, 100);
   };
 

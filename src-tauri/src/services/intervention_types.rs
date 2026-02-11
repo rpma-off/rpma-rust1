@@ -8,8 +8,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 /// Request to start a new intervention
-#[derive(Debug, Clone, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Deserialize, TS)]
 pub struct StartInterventionRequest {
     pub task_id: String,
     pub intervention_number: Option<String>,
@@ -35,8 +34,7 @@ pub struct StartInterventionRequest {
 }
 
 /// Response for starting an intervention
-#[derive(Debug, Serialize)]
-#[derive(TS)]
+#[derive(Debug, Serialize, TS)]
 pub struct StartInterventionResponse {
     pub intervention: crate::models::intervention::Intervention,
     pub steps: Vec<crate::models::step::InterventionStep>,
@@ -44,12 +42,11 @@ pub struct StartInterventionResponse {
 }
 
 /// Request to advance a step
-#[derive(Debug, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Deserialize, TS)]
 pub struct AdvanceStepRequest {
     pub intervention_id: String,
     pub step_id: String,
-    #[ts(type = "any")]
+    #[ts(type = "JsonValue")]
     pub collected_data: serde_json::Value,
     pub photos: Option<Vec<String>>, // Photo IDs
     pub notes: Option<String>,
@@ -58,8 +55,7 @@ pub struct AdvanceStepRequest {
 }
 
 /// Response for advancing a step
-#[derive(Debug, Serialize)]
-#[derive(TS)]
+#[derive(Debug, Serialize, TS)]
 pub struct AdvanceStepResponse {
     pub step: crate::models::step::InterventionStep,
     pub next_step: Option<crate::models::step::InterventionStep>,
@@ -68,29 +64,26 @@ pub struct AdvanceStepResponse {
 }
 
 /// Request for saving step progress without advancing
-#[derive(Debug, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Deserialize, TS)]
 pub struct SaveStepProgressRequest {
     pub step_id: String,
-    #[ts(type = "any")]
+    #[ts(type = "JsonValue")]
     pub collected_data: serde_json::Value,
     pub notes: Option<String>,
     pub photos: Option<Vec<String>>,
 }
 
 /// Response for saving step progress
-#[derive(Debug, Serialize)]
-#[derive(TS)]
+#[derive(Debug, Serialize, TS)]
 pub struct SaveStepProgressResponse {
     pub step: crate::models::step::InterventionStep,
 }
 
 /// Request to finalize an intervention
-#[derive(Deserialize, Debug)]
-#[derive(TS)]
+#[derive(Deserialize, Debug, TS)]
 pub struct FinalizeInterventionRequest {
     pub intervention_id: String,
-    #[ts(type = "any")]
+    #[ts(type = "JsonValue | null")]
     pub collected_data: Option<serde_json::Value>,
     pub photos: Option<Vec<String>>,
     pub customer_satisfaction: Option<i32>,
@@ -101,16 +94,14 @@ pub struct FinalizeInterventionRequest {
 }
 
 /// Response for finalizing an intervention
-#[derive(Debug, Serialize)]
-#[derive(TS)]
+#[derive(Debug, Serialize, TS)]
 pub struct FinalizeInterventionResponse {
     pub intervention: crate::models::intervention::Intervention,
     pub metrics: InterventionMetrics,
 }
 
 /// Intervention metrics for finalization
-#[derive(Debug, Serialize)]
-#[derive(TS)]
+#[derive(Debug, Serialize, TS)]
 pub struct InterventionMetrics {
     pub total_duration_minutes: i32,
     pub completion_rate: f32,
@@ -122,8 +113,7 @@ pub struct InterventionMetrics {
 }
 
 /// Step requirement for workflow validation
-#[derive(Debug, Serialize)]
-#[derive(TS)]
+#[derive(Debug, Serialize, TS)]
 pub struct StepRequirement {
     pub step_id: String,
     pub requirement_type: String,
@@ -133,8 +123,7 @@ pub struct StepRequirement {
 }
 
 /// GPS coordinates for location tracking
-#[derive(Debug, Clone, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Deserialize, TS)]
 pub struct GpsCoordinates {
     pub latitude: f64,
     pub longitude: f64,
@@ -142,16 +131,14 @@ pub struct GpsCoordinates {
 }
 
 /// Intervention step with associated photos
-#[derive(Debug, Serialize)]
-#[derive(TS)]
+#[derive(Debug, Serialize, TS)]
 pub struct InterventionStepWithPhotos {
     pub step: crate::models::step::InterventionStep,
     pub photos: Vec<crate::models::photo::Photo>,
 }
 
 /// Intervention with all related data
-#[derive(Debug, Serialize)]
-#[derive(TS)]
+#[derive(Debug, Serialize, TS)]
 pub struct InterventionWithDetails {
     pub intervention: crate::models::intervention::Intervention,
     pub steps: Vec<InterventionStepWithPhotos>,

@@ -1,13 +1,14 @@
 // API authentication utilities
 
 import jwt from 'jsonwebtoken';
+import type { JsonObject, JsonValue } from '@/types/json';
 
 export interface AuthenticatedRequest {
   id: string;
   email: string;
   role: string;
   username: string;
-  user_metadata?: Record<string, any>;
+  user_metadata?: JsonObject;
 }
 
 type RequestWithAuth = Request & { auth: AuthenticatedRequest };
@@ -102,7 +103,7 @@ export interface AuthValidationResult {
   userRole?: string;
   error?: string;
   statusCode?: number;
-  sanitizedBody?: unknown;
+  sanitizedBody?: JsonValue | null;
 }
 
 export const validateApiAuth = async (
@@ -145,7 +146,7 @@ export const validateApiAuth = async (
     }
 
     // Read and sanitize body if requested
-    let sanitizedBody: unknown = undefined;
+    let sanitizedBody: JsonValue | null | undefined = undefined;
     if (options?.sanitizeInput && (request.method === 'POST' || request.method === 'PUT' || request.method === 'PATCH')) {
       try {
         const contentType = request.headers.get('content-type');

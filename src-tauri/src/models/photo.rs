@@ -85,7 +85,7 @@ pub struct Photo {
     pub title: Option<String>,
     pub description: Option<String>,
     pub notes: Option<String>,
-    #[ts(type = "any")]
+    #[ts(type = "JsonValue | null")]
     pub annotations: Option<serde_json::Value>,
 
     // GPS location - separate fields to match database schema

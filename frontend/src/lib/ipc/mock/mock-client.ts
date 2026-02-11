@@ -80,12 +80,92 @@ export const ipcClient = {
   intervention: {
     getActiveByTask: (taskId: string, sessionToken: string) =>
       invoke('intervention_get_active_by_task', { task_id: taskId, session_token: sessionToken }),
-    saveStepProgress: (request: Record<string, unknown>, sessionToken: string, correlationId: string) =>
+    saveStepProgress: (request: Record<string, unknown>, sessionToken: string, correlationId?: string) =>
       invoke('intervention_save_step_progress', { request, session_token: sessionToken, correlation_id: correlationId }),
     getStep: (stepId: string, sessionToken: string) =>
       invoke('intervention_get_step', { step_id: stepId, session_token: sessionToken }),
     getProgress: (interventionId: string, sessionToken: string) =>
       invoke('intervention_get_progress', { intervention_id: interventionId, session_token: sessionToken })
+  },
+  interventions: {
+    start: (data: Record<string, unknown>, sessionToken: string) =>
+      invoke('intervention_workflow', { action: { action: 'Start', data }, session_token: sessionToken }),
+    get: (id: string, sessionToken: string) =>
+      invoke('intervention_workflow', { action: { action: 'Get', id }, session_token: sessionToken }),
+    getActiveByTask: (taskId: string, sessionToken: string) =>
+      invoke('intervention_get_active_by_task', { task_id: taskId, session_token: sessionToken }),
+    getLatestByTask: (taskId: string, sessionToken: string) =>
+      invoke('intervention_get_latest_by_task', { taskId, sessionToken }),
+    advanceStep: (request: Record<string, unknown>, sessionToken: string) =>
+      invoke('intervention_progress', { action: { action: 'AdvanceStep', ...request }, session_token: sessionToken }),
+    saveStepProgress: (request: Record<string, unknown>, sessionToken: string, correlationId: string) =>
+      invoke('intervention_save_step_progress', { request, session_token: sessionToken, correlation_id: correlationId }),
+    getStep: (stepId: string, sessionToken: string) =>
+      invoke('intervention_get_step', { step_id: stepId, session_token: sessionToken }),
+    getProgress: (interventionId: string, sessionToken: string) =>
+      invoke('intervention_get_progress', { intervention_id: interventionId, session_token: sessionToken }),
+    updateWorkflow: (id: string, data: Record<string, unknown>, sessionToken: string) =>
+      invoke('intervention_workflow', { action: { action: 'Update', id, data }, session_token: sessionToken }),
+    finalize: (data: Record<string, unknown>, sessionToken: string) =>
+      invoke('intervention_workflow', { action: { action: 'Finalize', data }, session_token: sessionToken }),
+    list: (filters: Record<string, unknown>, sessionToken: string) =>
+      invoke('intervention_management', { action: { List: { filters } }, session_token: sessionToken })
+  },
+  notifications: {
+    initialize: (config: Record<string, unknown>, sessionToken: string) =>
+      invoke('initialize_notification_service', { config, session_token: sessionToken }),
+    send: (request: Record<string, unknown>, sessionToken: string) =>
+      invoke('send_notification', { request, session_token: sessionToken }),
+    testConfig: (recipient: string, channel: 'email' | 'sms', sessionToken: string) =>
+      invoke('test_notification_config', { recipient, channel, session_token: sessionToken }),
+    getStatus: (sessionToken: string) =>
+      invoke('get_notification_status', { session_token: sessionToken }),
+    getRecentActivities: (sessionToken: string) =>
+      invoke('get_recent_activities', { session_token: sessionToken })
+  },
+  settings: {
+    getAppSettings: (sessionToken?: string) =>
+      invoke('get_app_settings', { sessionToken: sessionToken || '' }),
+    updateNotificationSettings: (request: Record<string, unknown>, sessionToken: string) =>
+      invoke('update_notification_settings', { request: { ...request, session_token: sessionToken } }),
+    getUserSettings: (sessionToken: string) =>
+      invoke('get_user_settings', { sessionToken }),
+    updateUserProfile: (request: Record<string, unknown>, sessionToken: string) =>
+      invoke('update_user_profile', { request: { ...request, session_token: sessionToken } }),
+    updateUserPreferences: (request: Record<string, unknown>, sessionToken: string) =>
+      invoke('update_user_preferences', { request: { ...request, session_token: sessionToken } }),
+    updateUserSecurity: (request: Record<string, unknown>, sessionToken: string) =>
+      invoke('update_user_security', { request: { ...request, session_token: sessionToken } }),
+    updateUserPerformance: (request: Record<string, unknown>, sessionToken: string) =>
+      invoke('update_user_performance', { request, sessionToken }),
+    updateUserAccessibility: (request: Record<string, unknown>, sessionToken: string) =>
+      invoke('update_user_accessibility', { request: { ...request, session_token: sessionToken } }),
+    updateUserNotifications: (request: Record<string, unknown>, sessionToken: string) =>
+      invoke('update_user_notifications', { request: { ...request, session_token: sessionToken } }),
+    changeUserPassword: (request: Record<string, unknown>, sessionToken: string) =>
+      invoke('change_user_password', { request: { ...request, session_token: sessionToken } }),
+    getActiveSessions: (sessionToken: string) =>
+      invoke('get_active_sessions', { sessionToken }),
+    revokeSession: (sessionId: string, sessionToken: string) =>
+      invoke('revoke_session', { sessionId, sessionToken }),
+    revokeAllSessionsExceptCurrent: (sessionToken: string) =>
+      invoke('revoke_all_sessions_except_current', { sessionToken }),
+    updateSessionTimeout: (timeoutMinutes: number, sessionToken: string) =>
+      invoke('update_session_timeout', { timeoutMinutes, sessionToken }),
+    getSessionTimeoutConfig: (sessionToken: string) =>
+      invoke('get_session_timeout_config', { sessionToken }),
+    uploadUserAvatar: (fileData: string, fileName: string, mimeType: string, sessionToken: string) =>
+      invoke('upload_user_avatar', {
+        request: { avatar_data: fileData, mime_type: mimeType, session_token: sessionToken }
+      }),
+    exportUserData: (sessionToken: string) =>
+      invoke('export_user_data', { sessionToken }),
+    deleteUserAccount: (confirmation: string, sessionToken: string) =>
+      invoke('delete_user_account', { request: { confirmation, session_token: sessionToken } }),
+    getDataConsent: (sessionToken: string) =>
+      invoke('get_data_consent', { sessionToken }),
+    updateDataConsent: (request: Record<string, unknown>, sessionToken: string) =>
+      invoke('update_data_consent', { request: { ...request, session_token: sessionToken } })
   },
   material: {
     list: (sessionToken: string, query: Record<string, unknown>) =>
@@ -147,9 +227,53 @@ export const ipcClient = {
     cancelReport: (reportId: string) =>
       invoke('cancel_report', { report_id: reportId })
   },
+  calendar: {
+    getEvents: (startDate: string, endDate: string, technicianId: string | undefined, sessionToken: string) =>
+      invoke('get_events', { start_date: startDate, end_date: endDate, technician_id: technicianId, session_token: sessionToken }),
+    getEventById: (id: string, sessionToken: string) =>
+      invoke('get_event_by_id', { id, session_token: sessionToken }),
+    createEvent: (eventData: Record<string, unknown>, sessionToken: string) =>
+      invoke('create_event', { event_data: eventData, session_token: sessionToken }),
+    updateEvent: (id: string, eventData: Record<string, unknown>, sessionToken: string) =>
+      invoke('update_event', { id, event_data: eventData, session_token: sessionToken }),
+    deleteEvent: (id: string, sessionToken: string) =>
+      invoke('delete_event', { id, session_token: sessionToken }),
+    getEventsForTechnician: (technicianId: string, sessionToken: string) =>
+      invoke('get_events_for_technician', { technician_id: technicianId, session_token: sessionToken }),
+    getEventsForTask: (taskId: string, sessionToken: string) =>
+      invoke('get_events_for_task', { task_id: taskId, session_token: sessionToken })
+  },
   dashboard: {
     getStats: (timeRange?: string) =>
       invoke('dashboard_get_stats', { timeRange })
+  },
+  users: {
+    create: (data: Record<string, unknown>, sessionToken: string) =>
+      invoke('user_crud', { request: { action: { action: 'Create', data }, session_token: sessionToken } }),
+    get: (id: string, sessionToken: string) =>
+      invoke('user_crud', { request: { action: { action: 'Get', id }, session_token: sessionToken } }),
+    list: (limit: number, offset: number, sessionToken: string) =>
+      invoke('user_crud', { request: { action: { action: 'List', limit, offset }, session_token: sessionToken } }),
+    update: (id: string, data: Record<string, unknown>, sessionToken: string) =>
+      invoke('user_crud', { request: { action: { action: 'Update', id, data }, session_token: sessionToken } }),
+    delete: (id: string, sessionToken: string) =>
+      invoke('user_crud', { request: { action: { action: 'Delete', id }, session_token: sessionToken } }),
+    changeRole: (userId: string, newRole: string, sessionToken: string) =>
+      invoke('user_crud', { request: { action: { ChangeRole: { id: userId, new_role: newRole } }, session_token: sessionToken } }),
+    updateEmail: (userId: string, newEmail: string, sessionToken: string) =>
+      invoke('user_crud', { request: { action: { action: 'Update', id: userId, data: { email: newEmail } }, session_token: sessionToken } }),
+    changePassword: (userId: string, newPassword: string, sessionToken: string) =>
+      invoke('user_crud', { request: { action: { ChangePassword: { id: userId, new_password: newPassword } }, session_token: sessionToken } }),
+    banUser: (userId: string, sessionToken: string) =>
+      invoke('user_crud', { request: { action: { Ban: { id: userId } }, session_token: sessionToken } }),
+    unbanUser: (userId: string, sessionToken: string) =>
+      invoke('user_crud', { request: { action: { Unban: { id: userId } }, session_token: sessionToken } })
+  },
+  bootstrap: {
+    firstAdmin: (userId: string) =>
+      invoke('bootstrap_first_admin', { request: { user_id: userId } }),
+    hasAdmins: () =>
+      invoke('has_admins')
   },
   sync: {
     start: () => invoke('sync_start'),
@@ -157,6 +281,44 @@ export const ipcClient = {
     getStatus: () => invoke('sync_get_status'),
     syncNow: () => invoke('sync_now'),
     getOperationsForEntity: () => invoke('sync_get_operations_for_entity')
+  },
+  performance: {
+    getStats: (sessionToken: string) =>
+      invoke('get_performance_stats', { session_token: sessionToken }),
+    getMetrics: (limit: number, sessionToken: string) =>
+      invoke('get_performance_metrics', { limit, session_token: sessionToken }),
+    cleanupMetrics: (sessionToken: string) =>
+      invoke('cleanup_performance_metrics', { session_token: sessionToken }),
+    getCacheStatistics: (sessionToken: string) =>
+      invoke('get_cache_statistics', { session_token: sessionToken }),
+    clearApplicationCache: (request: Record<string, unknown>, sessionToken: string) =>
+      invoke('clear_application_cache', { request, session_token: sessionToken }),
+    configureCacheSettings: (request: Record<string, unknown>, sessionToken: string) =>
+      invoke('configure_cache_settings', { request, session_token: sessionToken })
+  },
+  security: {
+    getMetrics: (sessionToken: string) =>
+      invoke('get_security_metrics', { session_token: sessionToken }),
+    getEvents: (limit: number, sessionToken: string) =>
+      invoke('get_security_events', { limit, session_token: sessionToken }),
+    getAlerts: (sessionToken: string) =>
+      invoke('get_security_alerts', { session_token: sessionToken }),
+    acknowledgeAlert: (alertId: string, sessionToken: string) =>
+      invoke('acknowledge_security_alert', { alert_id: alertId, session_token: sessionToken }),
+    resolveAlert: (alertId: string, actionsTaken: string[], sessionToken: string) =>
+      invoke('resolve_security_alert', { alert_id: alertId, actions_taken: actionsTaken, session_token: sessionToken }),
+    cleanupEvents: (sessionToken: string) =>
+      invoke('cleanup_security_events', { session_token: sessionToken }),
+    getActiveSessions: (sessionToken: string) =>
+      invoke('get_active_sessions', { sessionToken }),
+    revokeSession: (sessionId: string, sessionToken: string) =>
+      invoke('revoke_session', { sessionId, sessionToken }),
+    revokeAllSessionsExceptCurrent: (sessionToken: string) =>
+      invoke('revoke_all_sessions_except_current', { sessionToken }),
+    updateSessionTimeout: (timeoutMinutes: number, sessionToken: string) =>
+      invoke('update_session_timeout', { timeoutMinutes, sessionToken }),
+    getSessionTimeoutConfig: (sessionToken: string) =>
+      invoke('get_session_timeout_config', { sessionToken })
   },
   system: {
     healthCheck: () => invoke('health_check'),

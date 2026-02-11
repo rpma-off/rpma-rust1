@@ -1,25 +1,142 @@
 import { safeInvoke } from '../core';
 import { IPC_COMMANDS } from '../commands';
-import { validateMaterial, validateMaterialCategory, validateSupplier, validateMaterialWithStats } from '@/lib/validation/backend-type-guards';
 import type {
-  Material,
-  CreateMaterialRequest,
-  UpdateMaterialRequest,
-  MaterialListResponse,
-  MaterialCategory,
-  CreateMaterialCategoryRequest,
-  Supplier,
-  CreateSupplierRequest,
-  UpdateStockRequest,
-  AdjustStockRequest,
-  RecordConsumptionRequest,
-  ConsumptionHistory,
-  InventoryTransaction,
-  CreateInventoryTransactionRequest,
-  MaterialStatistics,
   InventoryMovementSummary,
-  MaterialQuery
-} from '../types/index';
+  InventoryTransaction,
+  Material,
+  MaterialCategory,
+  MaterialConsumption,
+  MaterialStats,
+  MaterialType,
+  Supplier,
+  UnitOfMeasure
+} from '@/lib/inventory';
+
+type PaginationInfo = {
+  page: number;
+  limit: number;
+  total: number | bigint;
+  total_pages: number;
+};
+
+type MaterialListResponse = {
+  data: Material[];
+  pagination: PaginationInfo;
+  statistics?: MaterialStats | null;
+};
+
+export type CreateMaterialRequest = {
+  sku: string;
+  name: string;
+  description?: string;
+  material_type: MaterialType;
+  category?: string;
+  subcategory?: string;
+  category_id?: string;
+  brand?: string;
+  model?: string;
+  specifications?: unknown;
+  unit_of_measure: UnitOfMeasure;
+  current_stock?: number;
+  minimum_stock?: number;
+  maximum_stock?: number;
+  reorder_point?: number;
+  unit_cost?: number;
+  currency?: string;
+  supplier_id?: string;
+  supplier_name?: string;
+  supplier_sku?: string;
+  quality_grade?: string;
+  certification?: string;
+  expiry_date?: string;
+  batch_number?: string;
+  serial_numbers?: string[];
+  storage_location?: string;
+  warehouse_id?: string;
+};
+
+export type UpdateMaterialRequest = Partial<CreateMaterialRequest>;
+
+export type UpdateStockRequest = {
+  material_id: string;
+  quantity: number;
+  transaction_type: 'stock_in' | 'stock_out' | 'adjustment' | 'waste';
+  notes?: string;
+  batch_number?: string;
+  expiry_date?: string;
+  unit_cost?: number;
+  reference_number?: string;
+  reference_type?: string;
+};
+
+export type AdjustStockRequest = UpdateStockRequest & {
+  reason?: string;
+};
+
+export type RecordConsumptionRequest = {
+  intervention_id: string;
+  material_id: string;
+  quantity_used: number;
+  step_id?: string;
+  unit_cost?: number;
+  waste_quantity?: number;
+  waste_reason?: string;
+  batch_used?: string;
+  expiry_used?: string;
+  quality_notes?: string;
+  step_number?: number;
+};
+
+type ConsumptionHistory = {
+  records: MaterialConsumption[];
+  pagination: PaginationInfo;
+};
+
+export type CreateInventoryTransactionRequest = {
+  material_id: string;
+  transaction_type: string;
+  quantity: number;
+  notes?: string;
+  reference_number?: string;
+  reference_type?: string;
+  unit_cost?: number;
+  warehouse_id?: string;
+};
+
+export type CreateMaterialCategoryRequest = {
+  name: string;
+  code?: string;
+  parent_id?: string;
+  level?: number;
+  description?: string;
+  color?: string;
+  is_active?: boolean;
+};
+
+export type CreateSupplierRequest = {
+  name: string;
+  code?: string;
+  contact_person?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  lead_time_days?: number;
+  is_active?: boolean;
+  is_preferred?: boolean;
+  notes?: string;
+  special_instructions?: string;
+};
+
+type MaterialQuery = {
+  material_type?: MaterialType | null;
+  category?: string | null;
+  active_only?: boolean;
+  limit?: number;
+  offset?: number;
+  page?: number;
+  sort_by?: string;
+  sort_order?: 'asc' | 'desc';
+};
 
 /**
  * Inventory management operations including CRUD and specialized inventory operations
@@ -52,9 +169,8 @@ export const materialOperations = {
         session_token: sessionToken
       }
     }).then(result => {
-      // Validate the response
       if (result && typeof result === 'object' && 'data' in result) {
-        return validateMaterial((result as { data: Material }).data);
+        return (result as { data: Material }).data;
       }
       throw new Error('Invalid response format for material create');
     }),
@@ -74,9 +190,8 @@ export const materialOperations = {
         session_token: sessionToken
       }
     }).then(result => {
-      // Validate the response
       if (result && typeof result === 'object' && 'data' in result) {
-        return validateMaterial((result as { data: Material }).data);
+        return (result as { data: Material }).data;
       }
       throw new Error('Invalid response format for material update');
     }),
@@ -92,9 +207,8 @@ export const materialOperations = {
       sessionToken,
       id
     }).then(result => {
-      // Validate the response
       if (result && typeof result === 'object' && 'data' in result) {
-        return validateMaterial((result as { data: Material }).data);
+        return (result as { data: Material }).data;
       }
       throw new Error('Invalid response format for material get');
     }),
@@ -127,9 +241,8 @@ export const stockOperations = {
         session_token: sessionToken
       }
     }).then(result => {
-      // Validate the response
       if (result && typeof result === 'object' && 'data' in result) {
-        return validateMaterial((result as { data: Material }).data);
+        return (result as { data: Material }).data;
       }
       throw new Error('Invalid response format for update stock');
     }),
@@ -147,9 +260,8 @@ export const stockOperations = {
         session_token: sessionToken
       }
     }).then(result => {
-      // Validate the response
       if (result && typeof result === 'object' && 'data' in result) {
-        return validateMaterial((result as { data: Material }).data);
+        return (result as { data: Material }).data;
       }
       throw new Error('Invalid response format for adjust stock');
     }),
@@ -251,9 +363,8 @@ export const categoryOperations = {
         session_token: sessionToken
       }
     }).then(result => {
-      // Validate the response
       if (result && typeof result === 'object' && 'data' in result) {
-        return validateMaterialCategory((result as { data: MaterialCategory }).data);
+        return (result as { data: MaterialCategory }).data;
       }
       throw new Error('Invalid response format for create category');
     }),
@@ -267,9 +378,8 @@ export const categoryOperations = {
     safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_LIST_CATEGORIES, {
       sessionToken
     }).then(result => {
-      // Validate the response
       if (result && typeof result === 'object' && 'data' in result && Array.isArray((result as { data: MaterialCategory[] }).data)) {
-        return (result as { data: MaterialCategory[] }).data.map(validateMaterialCategory);
+        return (result as { data: MaterialCategory[] }).data;
       }
       throw new Error('Invalid response format for list categories');
     }),
@@ -290,9 +400,8 @@ export const supplierOperations = {
         session_token: sessionToken
       }
     }).then(result => {
-      // Validate the response
       if (result && typeof result === 'object' && 'data' in result) {
-        return validateSupplier((result as { data: Supplier }).data);
+        return (result as { data: Supplier }).data;
       }
       throw new Error('Invalid response format for create supplier');
     }),
@@ -306,9 +415,8 @@ export const supplierOperations = {
     safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_LIST_SUPPLIERS, {
       sessionToken
     }).then(result => {
-      // Validate the response
       if (result && typeof result === 'object' && 'data' in result && Array.isArray((result as { data: Supplier[] }).data)) {
-        return (result as { data: Supplier[] }).data.map(validateSupplier);
+        return (result as { data: Supplier[] }).data;
       }
       throw new Error('Invalid response format for list suppliers');
     }),
@@ -321,13 +429,12 @@ export const reportingOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to material statistics
    */
-  getStats: (sessionToken: string): Promise<MaterialStatistics> =>
+  getStats: (sessionToken: string): Promise<MaterialStats> =>
     safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_GET_STATS, {
       sessionToken
     }).then(result => {
-      // Validate the response
       if (result && typeof result === 'object' && 'data' in result) {
-        return result.data as MaterialStatistics;
+        return result.data as MaterialStats;
       }
       throw new Error('Invalid response format for get stats');
     }),
@@ -341,9 +448,8 @@ export const reportingOperations = {
     safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_GET_LOW_STOCK_MATERIALS, {
       sessionToken
     }).then(result => {
-      // Validate the response
       if (result && typeof result === 'object' && 'data' in result && Array.isArray((result as { data: Material[] }).data)) {
-        return (result as { data: Material[] }).data.map(validateMaterial);
+        return (result as { data: Material[] }).data;
       }
       throw new Error('Invalid response format for get low stock materials');
     }),
@@ -357,9 +463,8 @@ export const reportingOperations = {
     safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_GET_EXPIRED_MATERIALS, {
       sessionToken
     }).then(result => {
-      // Validate the response
       if (result && typeof result === 'object' && 'data' in result && Array.isArray((result as { data: Material[] }).data)) {
-        return (result as { data: Material[] }).data.map(validateMaterial);
+        return (result as { data: Material[] }).data;
       }
       throw new Error('Invalid response format for get expired materials');
     }),

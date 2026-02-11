@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -148,7 +148,7 @@ export default function SignupPage() {
                   onClick={() => router.push(ROUTES.LOGIN)}
                   className="w-full bg-[hsl(var(--rpma-teal))] hover:bg-[hsl(var(--rpma-teal))]/90 text-black"
                 >
-                  Aller Ã  la connexion
+                  Aller à la connexion
                 </Button>
               </div>
             </div>
@@ -182,7 +182,7 @@ export default function SignupPage() {
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Créer un compte</h2>
               <p className="text-muted-foreground text-sm md:text-base">
-                Rejoignez RPMA V2 et commencez Ã  gérer vos projets PPF
+                Rejoignez RPMA V2 et commencez à gérer vos projets PPF
               </p>
             </div>
 
@@ -358,7 +358,7 @@ export default function SignupPage() {
             {/* Alternative Actions */}
             <div className="text-center">
               <p className="text-muted-foreground text-sm">
-                Vous avez déjÃ  un compte ?{' '}
+                Vous avez déjà un compte ?{' '}
                 <Link
                   href={ROUTES.LOGIN}
                   className="font-semibold text-[hsl(var(--rpma-teal))] hover:text-[hsl(var(--rpma-teal))]/80 transition-colors duration-150"

@@ -11,7 +11,7 @@
     "prebuild": "npm run types:sync",
     "build:analyze": "ANALYZE=true next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint . --ext .ts,.tsx --max-warnings 10000",
     "type-check": "tsc --noEmit",
     "encoding:check": "node ../scripts/check-mojibake.js src",
     "types:sync": "cd ../src-tauri && cargo run --bin export-types --features=\"ts-rs\" | node ../scripts/write-types.js",

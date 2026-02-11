@@ -132,7 +132,7 @@ pub async fn generate_material_usage_report(
         waste_quantity,
     ) in consumption_data
     {
-        consumption_breakdown.push(MaterialConsumption {
+        consumption_breakdown.push(ReportMaterialConsumption {
             material_id,
             material_name,
             material_type,

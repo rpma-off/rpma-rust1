@@ -66,6 +66,7 @@ pub async fn intervention_get_progress(
     info!("Getting progress for intervention: {}", intervention_id);
 
     let session = authenticate!(&session_token, &state);
+    super::ensure_intervention_permission(&session)?;
 
     // Check intervention access
     let intervention = state
@@ -75,7 +76,10 @@ pub async fn intervention_get_progress(
         .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", intervention_id)))?;
 
     if intervention.technician_id.as_ref() != Some(&session.user_id)
-        && session.role != crate::models::auth::UserRole::Admin
+        && !matches!(
+            session.role,
+            crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+        )
     {
         return Err(AppError::Authorization(
             "Not authorized to view this intervention progress".to_string(),
@@ -138,6 +142,7 @@ pub async fn intervention_advance_step(
     );
 
     let session = authenticate!(&session_token, &state);
+    super::ensure_intervention_permission(&session)?;
 
     // Check intervention access
     let intervention = state
@@ -147,7 +152,10 @@ pub async fn intervention_advance_step(
         .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", intervention_id)))?;
 
     if intervention.technician_id.as_ref() != Some(&session.user_id)
-        && session.role != crate::models::auth::UserRole::Admin
+        && !matches!(
+            session.role,
+            crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+        )
     {
         return Err(AppError::Authorization(
             "Not authorized to advance this intervention".to_string(),
@@ -191,6 +199,7 @@ pub async fn intervention_save_step_progress(
     );
 
     let session = authenticate!(&session_token, &state);
+    super::ensure_intervention_permission(&session)?;
 
     // Check intervention access
     let intervention = state
@@ -200,7 +209,10 @@ pub async fn intervention_save_step_progress(
         .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", intervention_id)))?;
 
     if intervention.technician_id.as_ref() != Some(&session.user_id)
-        && session.role != crate::models::auth::UserRole::Admin
+        && !matches!(
+            session.role,
+            crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+        )
     {
         return Err(AppError::Authorization(
             "Not authorized to save progress for this intervention".to_string(),
@@ -240,6 +252,7 @@ pub async fn intervention_progress(
     info!("Processing intervention progress action");
 
     let session = authenticate!(&session_token, &state);
+    super::ensure_intervention_permission(&session)?;
 
     match action {
         InterventionProgressAction::Get { intervention_id } => {
@@ -253,7 +266,11 @@ pub async fn intervention_progress(
                 })?;
 
             if intervention.technician_id.as_ref() != Some(&session.user_id)
-                && session.role != crate::models::auth::UserRole::Admin
+                && !matches!(
+                    session.role,
+                    crate::models::auth::UserRole::Admin
+                        | crate::models::auth::UserRole::Supervisor
+                )
             {
                 return Err(AppError::Authorization(
                     "Not authorized to view this intervention progress".to_string(),
@@ -324,7 +341,11 @@ pub async fn intervention_progress(
                 })?;
 
             if intervention.technician_id.as_ref() != Some(&session.user_id)
-                && session.role != crate::models::auth::UserRole::Admin
+                && !matches!(
+                    session.role,
+                    crate::models::auth::UserRole::Admin
+                        | crate::models::auth::UserRole::Supervisor
+                )
             {
                 return Err(AppError::Authorization(
                     "Not authorized to advance this intervention".to_string(),
@@ -369,7 +390,11 @@ pub async fn intervention_progress(
                 })?;
 
             if intervention.technician_id.as_ref() != Some(&session.user_id)
-                && session.role != crate::models::auth::UserRole::Admin
+                && !matches!(
+                    session.role,
+                    crate::models::auth::UserRole::Admin
+                        | crate::models::auth::UserRole::Supervisor
+                )
             {
                 return Err(AppError::Authorization(
                     "Not authorized to save progress for this intervention".to_string(),

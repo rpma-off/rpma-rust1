@@ -5,6 +5,7 @@ import { jest } from '@jest/globals';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { InventoryManager } from '@/components/InventoryManager';
 import * as inventoryOperations from '@/lib/ipc/domains/inventory';
+import type { Material } from '@/lib/inventory';
 
 // Mock the inventory operations
 jest.mock('@/lib/ipc/domains/inventory', () => ({
@@ -120,6 +121,7 @@ const createTestMaterial = (overrides = {}) => ({
   description: 'Test description',
   material_type: 'ppf_film' as const,
   category: 'Films',
+  unit_of_measure: 'meter',
   current_stock: 50,
   minimum_stock: 20,
   maximum_stock: 200,
@@ -131,6 +133,7 @@ const createTestMaterial = (overrides = {}) => ({
   is_discontinued: false,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
+  synced: true,
   ...overrides,
 });
 
@@ -151,13 +154,16 @@ const createTestStats = () => ({
   low_stock_materials: 5,
   expired_materials: 2,
   total_value: 15500.50,
-  materials_by_type: {
-    ppf_film: 15,
-    adhesive: 12,
-    cleaning_solution: 8,
-    tool: 4,
-    consumable: 3,
+  materials_by_category: {
+    Films: 15,
+    Adhesives: 12,
+    Solutions: 8,
+    Tools: 4,
+    Consumables: 3,
   },
+  recent_transactions: [],
+  stock_turnover_rate: 2.1,
+  average_inventory_age: 45,
 });
 
 describe('InventoryManager', () => {
@@ -396,7 +402,8 @@ describe('InventoryManager', () => {
 
   test('handles material creation', async () => {
     const user = userEvent.setup();
-    const mockCreateMaterial = jest.fn().mockResolvedValue(createTestMaterial());
+    const mockCreateMaterial = jest.fn<Promise<Material>, [unknown, string]>()
+      .mockResolvedValue(createTestMaterial() as Material);
     
     (useInventory as jest.Mock).mockReturnValue({
       materials: createTestMaterials(5),
@@ -430,7 +437,8 @@ describe('InventoryManager', () => {
 
   test('handles material deletion', async () => {
     const user = userEvent.setup();
-    const mockDeleteMaterial = jest.fn().mockResolvedValue(true);
+    const mockDeleteMaterial = jest.fn<Promise<boolean>, [string]>()
+      .mockResolvedValue(true);
     
     (useInventory as jest.Mock).mockReturnValue({
       materials: createTestMaterials(5),

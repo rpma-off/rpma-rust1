@@ -3,16 +3,14 @@
 //! This module provides a comprehensive event-driven architecture
 //! that enables loose coupling between different service domains.
 
-use std::sync::Arc;
 use std::collections::HashMap;
-use std::pin::Pin;
-use std::task::{Context, Poll};
-use tokio::sync::{broadcast, RwLock, Mutex};
-use tokio::stream::Stream;
-use serde::{Serialize, Deserialize};
+use std::sync::Arc;
+
+use async_stream::stream;
 use chrono::{DateTime, Utc};
-use uuid::Uuid;
-use futures_util::StreamExt;
+use futures::Stream;
+use serde::{Deserialize, Serialize};
+use tokio::sync::{broadcast, RwLock};
 
 /// Domain event types for system-wide communication
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -108,6 +106,7 @@ pub enum DomainEvent {
     InterventionStarted {
         id: String,
         intervention_id: String,
+        task_id: String,
         started_by: String,
         started_at: DateTime<Utc>,
         timestamp: DateTime<Utc>,
@@ -186,6 +185,19 @@ pub enum DomainEvent {
         metadata: Option<serde_json::Value>,
     },
     UserLoggedOut {
+        id: String,
+        user_id: String,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    AuthenticationFailed {
+        id: String,
+        user_id: Option<String>,
+        reason: String,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    AuthenticationSuccess {
         id: String,
         user_id: String,
         timestamp: DateTime<Utc>,
@@ -280,6 +292,15 @@ pub struct InMemoryEventBus {
     handlers: Arc<RwLock<HashMap<String, Vec<Arc<dyn EventHandler>>>>>,
 }
 
+impl Clone for InMemoryEventBus {
+    fn clone(&self) -> Self {
+        Self {
+            sender: self.sender.clone(),
+            handlers: Arc::clone(&self.handlers),
+        }
+    }
+}
+
 impl InMemoryEventBus {
     /// Create a new in-memory event bus
     pub fn new() -> Self {
@@ -309,7 +330,17 @@ impl InMemoryEventBus {
 
     /// Subscribe to events as a stream
     pub fn subscribe(&self) -> impl Stream<Item = DomainEvent> {
-        self.sender.subscribe()
+        let mut receiver = self.sender.subscribe();
+
+        stream! {
+            loop {
+                match receiver.recv().await {
+                    Ok(event) => yield event,
+                    Err(broadcast::error::RecvError::Lagged(_)) => continue,
+                    Err(broadcast::error::RecvError::Closed) => break,
+                }
+            }
+        }
     }
 
     /// Process events (internal method)
@@ -350,6 +381,8 @@ impl InMemoryEventBus {
             DomainEvent::UserUpdated { .. } => "UserUpdated",
             DomainEvent::UserLoggedIn { .. } => "UserLoggedIn",
             DomainEvent::UserLoggedOut { .. } => "UserLoggedOut",
+            DomainEvent::AuthenticationFailed { .. } => "AuthenticationFailed",
+            DomainEvent::AuthenticationSuccess { .. } => "AuthenticationSuccess",
             DomainEvent::SystemError { .. } => "SystemError",
             DomainEvent::SystemMaintenance { .. } => "SystemMaintenance",
             DomainEvent::PerformanceAlert { .. } => "PerformanceAlert",
@@ -380,6 +413,36 @@ impl EventPublisher for InMemoryEventBus {
             self.publish(event)?;
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use futures_util::StreamExt;
+    use std::time::Duration;
+
+    #[tokio::test]
+    async fn subscribe_stream_receives_published_event() {
+        let event_bus = InMemoryEventBus::new();
+        let mut stream = event_bus.subscribe();
+        let event = DomainEvent::UserLoggedOut {
+            id: "event-1".to_string(),
+            user_id: "user-1".to_string(),
+            timestamp: Utc::now(),
+            metadata: None,
+        };
+
+        event_bus.publish(event).unwrap();
+
+        let received = tokio::time::timeout(Duration::from_secs(1), stream.next())
+            .await
+            .expect("timed out waiting for event");
+
+        assert!(matches!(
+            received,
+            Some(DomainEvent::UserLoggedOut { user_id, .. }) if user_id == "user-1"
+        ));
     }
 }
 
@@ -451,6 +514,8 @@ impl EventProcessor {
             DomainEvent::UserUpdated { .. } => "UserUpdated",
             DomainEvent::UserLoggedIn { .. } => "UserLoggedIn",
             DomainEvent::UserLoggedOut { .. } => "UserLoggedOut",
+            DomainEvent::AuthenticationFailed { .. } => "AuthenticationFailed",
+            DomainEvent::AuthenticationSuccess { .. } => "AuthenticationSuccess",
             DomainEvent::SystemError { .. } => "SystemError",
             DomainEvent::SystemMaintenance { .. } => "SystemMaintenance",
             DomainEvent::PerformanceAlert { .. } => "PerformanceAlert",
@@ -541,6 +606,8 @@ impl EventProjection {
             DomainEvent::UserUpdated { .. } => "UserUpdated",
             DomainEvent::UserLoggedIn { .. } => "UserLoggedIn",
             DomainEvent::UserLoggedOut { .. } => "UserLoggedOut",
+            DomainEvent::AuthenticationFailed { .. } => "AuthenticationFailed",
+            DomainEvent::AuthenticationSuccess { .. } => "AuthenticationSuccess",
             DomainEvent::SystemError { .. } => "SystemError",
             DomainEvent::SystemMaintenance { .. } => "SystemMaintenance",
             DomainEvent::PerformanceAlert { .. } => "PerformanceAlert",

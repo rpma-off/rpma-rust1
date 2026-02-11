@@ -138,6 +138,26 @@ mod tests {
     }
 
     #[test]
+    fn test_create_material_validation_stock_thresholds() {
+        let test_db = TestDatabase::new().expect("Failed to create test database");
+        let service = MaterialService::new(test_db.db());
+
+        let mut request = create_basic_material_request();
+        request.minimum_stock = Some(100.0);
+        request.maximum_stock = Some(50.0);
+
+        let result = service.create_material(request, Some("test_user".to_string()));
+        assert!(result.is_err());
+
+        match result.unwrap_err() {
+            MaterialError::Validation(msg) => {
+                assert!(msg.contains("Minimum stock"));
+            }
+            _ => panic!("Expected Validation error"),
+        }
+    }
+
+    #[test]
     fn test_create_material_duplicate_sku() {
         let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
@@ -439,6 +459,34 @@ mod tests {
     }
 
     #[test]
+    fn test_update_stock_inactive_material() {
+        let test_db = TestDatabase::new().expect("Failed to create test database");
+        let service = MaterialService::new(test_db.db());
+
+        let material = create_test_material_with_stock(&service, "STOCK-004", 10.0);
+        service
+            .delete_material(&material.id, Some("test_user".to_string()))
+            .unwrap();
+
+        let update_request = UpdateStockRequest {
+            material_id: material.id.clone(),
+            quantity_change: 5.0,
+            reason: "Correction".to_string(),
+            recorded_by: Some("test_user".to_string()),
+        };
+
+        let result = service.update_stock(update_request);
+        assert!(result.is_err());
+
+        match result.unwrap_err() {
+            MaterialError::Validation(msg) => {
+                assert!(msg.contains("discontinued"));
+            }
+            _ => panic!("Expected Validation error"),
+        }
+    }
+
+    #[test]
     fn test_record_consumption_success() {
         let test_db = TestDatabase::new().expect("Failed to create test database");
         let service = MaterialService::new(test_db.db());
@@ -467,6 +515,7 @@ mod tests {
         assert_eq!(consumption.quantity_used, 25.0);
         assert_eq!(consumption.waste_quantity, 5.0);
         assert_eq!(consumption.batch_used.unwrap(), "BATCH-001");
+        assert_eq!(consumption.recorded_by, Some("test_user".to_string()));
     }
 
     #[test]
@@ -533,6 +582,43 @@ mod tests {
             }
             _ => panic!("Expected ExpiredMaterial error"),
         }
+    }
+
+    #[test]
+    fn test_record_consumption_insufficient_stock() {
+        let test_db = TestDatabase::new().expect("Failed to create test database");
+        let service = MaterialService::new(test_db.db());
+
+        let material = create_test_material_with_stock(&service, "CONSUME-INSUFF", 5.0);
+
+        let request = RecordConsumptionRequest {
+            intervention_id: "INT-INSUFF".to_string(),
+            material_id: material.id.clone(),
+            step_id: None,
+            step_number: None,
+            quantity_used: 10.0,
+            waste_quantity: Some(0.0),
+            waste_reason: None,
+            batch_used: None,
+            quality_notes: None,
+            recorded_by: Some("test_user".to_string()),
+        };
+
+        let result = service.record_consumption(request);
+        assert!(result.is_err());
+
+        match result.unwrap_err() {
+            MaterialError::InsufficientStock(msg) => {
+                assert!(msg.contains("insufficient stock"));
+            }
+            _ => panic!("Expected InsufficientStock error"),
+        }
+
+        let updated_material = service.get_material(&material.id).unwrap().unwrap();
+        assert_eq!(updated_material.current_stock, 5.0);
+
+        let consumptions = service.get_intervention_consumption("INT-INSUFF").unwrap();
+        assert!(consumptions.is_empty());
     }
 
     #[test]
@@ -1271,5 +1357,3 @@ mod tests {
         assert!(first_ids.intersection(&second_ids).count() == 0);
     }
 }
-
-

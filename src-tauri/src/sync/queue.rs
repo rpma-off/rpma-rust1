@@ -35,6 +35,30 @@ impl From<rusqlite::Error> for SyncQueueError {
     }
 }
 
+fn parse_status(status: &str) -> Result<SyncStatus, rusqlite::Error> {
+    let trimmed = status.trim();
+    let normalized = if trimmed.starts_with('"') && trimmed.ends_with('"') {
+        trimmed.trim_matches('"')
+    } else {
+        trimmed
+    };
+    match normalized {
+        "pending" => Ok(SyncStatus::Pending),
+        "processing" => Ok(SyncStatus::Processing),
+        "completed" => Ok(SyncStatus::Completed),
+        "failed" => Ok(SyncStatus::Failed),
+        "abandoned" => Ok(SyncStatus::Abandoned),
+        _ => Err(rusqlite::Error::FromSqlConversionFailure(
+            0,
+            rusqlite::types::Type::Text,
+            Box::new(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                format!("Unknown sync status: {}", status),
+            )),
+        )),
+    }
+}
+
 /// Sync queue service for managing offline operations
 #[derive(Clone, Debug)]
 pub struct SyncQueue {
@@ -68,7 +92,7 @@ impl SyncQueue {
                 operation.timestamp_utc.to_rfc3339(),
                 operation.retry_count,
                 operation.max_retries,
-                serde_json::to_string(&operation.status)?,
+                operation.status.to_string(),
                 operation.created_at.to_rfc3339(),
                 operation.updated_at.to_rfc3339(),
             ],
@@ -81,12 +105,19 @@ impl SyncQueue {
     pub fn dequeue_batch(&self, limit: usize) -> Result<Vec<SyncOperation>, SyncQueueError> {
         let conn = self.db.get_connection().map_err(SyncQueueError::Database)?;
 
+        // Legacy compatibility: support JSON-encoded status values until migration completes.
         let mut stmt = conn.prepare(
             "SELECT id, operation_type, entity_type, entity_id, data, dependencies,
                     timestamp_utc, retry_count, max_retries, last_error, status,
                     created_at, updated_at
              FROM sync_queue
-             WHERE status = 'pending'
+             WHERE status IN ('pending', '\"pending\"')
+               AND NOT EXISTS (
+                 SELECT 1
+                 FROM json_each(dependencies) dep
+                 JOIN sync_queue q ON q.entity_id = dep.value
+                 WHERE q.status NOT IN ('completed', '\"completed\"')
+               )
              ORDER BY timestamp_utc ASC
              LIMIT ?",
         )?;
@@ -145,13 +176,7 @@ impl SyncQueue {
                     retry_count: row.get(7)?,
                     max_retries: row.get(8)?,
                     last_error: row.get(9)?,
-                    status: serde_json::from_str(&status_str).map_err(|e| {
-                        rusqlite::Error::FromSqlConversionFailure(
-                            0,
-                            rusqlite::types::Type::Text,
-                            Box::new(e),
-                        )
-                    })?,
+                    status: parse_status(&status_str)?,
                     created_at: DateTime::parse_from_rfc3339(&created_at_str)
                         .map_err(|e| {
                             rusqlite::Error::FromSqlConversionFailure(
@@ -246,11 +271,11 @@ impl SyncQueue {
 
         let (pending, processing, completed, failed, abandoned) = conn.query_row(
             "SELECT
-             COUNT(CASE WHEN status = 'pending' THEN 1 END),
-             COUNT(CASE WHEN status = 'processing' THEN 1 END),
-             COUNT(CASE WHEN status = 'completed' THEN 1 END),
-             COUNT(CASE WHEN status = 'failed' THEN 1 END),
-             COUNT(CASE WHEN status = 'abandoned' THEN 1 END)
+             COUNT(CASE WHEN status IN ('pending', '\"pending\"') THEN 1 END),
+             COUNT(CASE WHEN status IN ('processing', '\"processing\"') THEN 1 END),
+             COUNT(CASE WHEN status IN ('completed', '\"completed\"') THEN 1 END),
+             COUNT(CASE WHEN status IN ('failed', '\"failed\"') THEN 1 END),
+             COUNT(CASE WHEN status IN ('abandoned', '\"abandoned\"') THEN 1 END)
              FROM sync_queue",
             [],
             |row| {
@@ -268,7 +293,7 @@ impl SyncQueue {
             .query_row(
                 "SELECT strftime('%s', 'now') - strftime('%s', timestamp_utc)
              FROM sync_queue
-             WHERE status = 'pending'
+             WHERE status IN ('pending', '\"pending\"')
              ORDER BY timestamp_utc ASC
              LIMIT 1",
                 [],
@@ -278,7 +303,7 @@ impl SyncQueue {
 
         let average_retry_count: f64 = conn
             .query_row(
-                "SELECT AVG(retry_count) FROM sync_queue WHERE status IN ('failed', 'abandoned')",
+                "SELECT AVG(retry_count) FROM sync_queue WHERE status IN ('failed', '\"failed\"', 'abandoned', '\"abandoned\"')",
                 [],
                 |row| row.get(0),
             )
@@ -358,13 +383,7 @@ impl SyncQueue {
                     retry_count: row.get(7)?,
                     max_retries: row.get(8)?,
                     last_error: row.get(9)?,
-                    status: serde_json::from_str(&status_str).map_err(|e| {
-                        rusqlite::Error::FromSqlConversionFailure(
-                            0,
-                            rusqlite::types::Type::Text,
-                            Box::new(e),
-                        )
-                    })?,
+                    status: parse_status(&status_str)?,
                     created_at: DateTime::parse_from_rfc3339(&created_at_str)
                         .map_err(|e| {
                             rusqlite::Error::FromSqlConversionFailure(
@@ -467,13 +486,7 @@ impl SyncQueue {
                     retry_count: row.get(7)?,
                     max_retries: row.get(8)?,
                     last_error: row.get(9)?,
-                    status: serde_json::from_str(&status_str).map_err(|e| {
-                        rusqlite::Error::FromSqlConversionFailure(
-                            0,
-                            rusqlite::types::Type::Text,
-                            Box::new(e),
-                        )
-                    })?,
+                    status: parse_status(&status_str)?,
                     created_at: DateTime::parse_from_rfc3339(&created_at_str)
                         .map_err(|e| {
                             rusqlite::Error::FromSqlConversionFailure(
@@ -505,10 +518,76 @@ impl SyncQueue {
         let cutoff_date = Utc::now() - chrono::Duration::days(days_old);
 
         let rows_affected = conn.execute(
-            "DELETE FROM sync_queue WHERE status = 'completed' AND updated_at < ?",
+            "DELETE FROM sync_queue WHERE status IN ('completed', '\"completed\"') AND updated_at < ?",
             [cutoff_date.to_rfc3339()],
         )?;
 
         Ok(rows_affected as i64)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::db::Database;
+    use crate::models::sync::{EntityType, OperationType, SyncOperation, SyncStatus};
+    use chrono::Utc;
+
+    fn build_operation(entity_id: &str, dependencies: Vec<String>) -> SyncOperation {
+        SyncOperation {
+            id: None,
+            operation_type: OperationType::Create,
+            entity_type: EntityType::Task,
+            entity_id: entity_id.to_string(),
+            data: serde_json::json!({}),
+            dependencies,
+            timestamp_utc: Utc::now(),
+            retry_count: 0,
+            max_retries: 3,
+            last_error: None,
+            status: SyncStatus::Pending,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_enqueue_stores_plain_status() {
+        let db = Database::new_in_memory().await.expect("create db");
+        let queue = SyncQueue::new(db.clone());
+        let operation = build_operation("task-1", vec![]);
+
+        let id = queue.enqueue(operation).expect("enqueue");
+
+        let conn = db.get_connection().expect("connection");
+        let status: String = conn
+            .query_row("SELECT status FROM sync_queue WHERE id = ?", [id], |row| {
+                row.get(0)
+            })
+            .expect("query status");
+
+        assert_eq!(status, "pending");
+    }
+
+    #[tokio::test]
+    async fn test_dequeue_respects_dependencies() {
+        let db = Database::new_in_memory().await.expect("create db");
+        let queue = SyncQueue::new(db.clone());
+
+        let parent = build_operation("task-1", vec![]);
+        let dependent = build_operation("task-2", vec!["task-1".to_string()]);
+
+        let parent_id = queue.enqueue(parent).expect("enqueue parent");
+        queue.enqueue(dependent).expect("enqueue dependent");
+
+        let first_batch = queue.dequeue_batch(10).expect("dequeue");
+        assert_eq!(first_batch.len(), 1);
+        assert_eq!(first_batch[0].entity_id, "task-1");
+
+        queue.mark_completed(parent_id).expect("mark completed");
+
+        let second_batch = queue.dequeue_batch(10).expect("dequeue second");
+        assert_eq!(second_batch.len(), 1);
+        assert_eq!(second_batch[0].entity_id, "task-2");
     }
 }

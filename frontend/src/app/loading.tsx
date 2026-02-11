@@ -1,4 +1,4 @@
-﻿export default function Loading() {
+export default function Loading() {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-background/95 backdrop-blur-sm z-50">
       <div className="text-center">
@@ -53,7 +53,7 @@
               <div>
                 <p className="text-sm font-medium text-foreground mb-1">Astuce</p>
                 <p className="text-xs text-muted-foreground">
-                  Utilisez Ctrl+K pour accéder rapidement Ã  la recherche globale
+                  Utilisez Ctrl+K pour accéder rapidement à la recherche globale
                 </p>
               </div>
             </div>

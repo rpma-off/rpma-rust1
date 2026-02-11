@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -61,7 +61,7 @@ const ErrorPage = ({ error, reset }: ErrorPageProps) => {
               Oups&thinsp;! Une erreur est survenue
             </h1>
             <p className="text-base md:text-lg text-muted-foreground mb-6 leading-relaxed">
-              Une erreur inattendue s&apos;est produite. Notre équipe a été notifiée et travaille Ã  résoudre le problème.
+              Une erreur inattendue s&apos;est produite. Notre équipe a été notifiée et travaille à résoudre le problème.
             </p>
 
             {/* Error Details for Development */}

@@ -340,6 +340,15 @@ impl InterventionWorkflowService {
         self.validation
             .validate_step_advancement(&intervention, &current_step, &logger)?;
 
+        let has_completion_data = Self::has_completion_data(&request);
+
+        if current_step.step_status == StepStatus::Pending && has_completion_data {
+            // Steps must be started before completion data is accepted.
+            return Err(InterventionError::Workflow(
+                "Step must be started before completion data can be provided".to_string(),
+            ));
+        }
+
         // Update step with collected data
         self.data
             .update_step_with_data(&mut current_step, &request)?;
@@ -349,6 +358,20 @@ impl InterventionWorkflowService {
             current_step.step_status = StepStatus::InProgress;
             current_step.started_at = TimestampString::now();
         }
+
+        if current_step.step_status == StepStatus::InProgress && !has_completion_data {
+            // No completion indicators; persist updated progress data and return.
+            self.save_step_with_retry(&current_step, &logger).await?;
+            let progress_percentage = intervention.completion_percentage as f32;
+            return Ok(AdvanceStepResponse {
+                step: current_step,
+                next_step: None,
+                progress_percentage,
+                requirements_completed: Vec::new(),
+            });
+        }
+
+        self.apply_completion_requirements(&mut current_step, &logger)?;
 
         // Mark step as completed
         current_step.step_status = StepStatus::Completed;
@@ -571,6 +594,85 @@ impl InterventionWorkflowService {
         }
     }
 
+    /// Determine whether the request includes completion data for a step.
+    ///
+    /// Returns true when collected_data is non-empty or when photos/issues are supplied.
+    fn has_completion_data(request: &AdvanceStepRequest) -> bool {
+        let has_collected_data = match &request.collected_data {
+            serde_json::Value::Null => false,
+            serde_json::Value::Object(map) if map.is_empty() => false,
+            _ => true,
+        };
+
+        has_collected_data
+            || request
+            .photos
+            .as_ref()
+            .map_or(false, |photos| !photos.is_empty())
+            || request
+                .issues
+                .as_ref()
+                .map_or(false, |issues| !issues.is_empty())
+    }
+
+    fn apply_completion_requirements(
+        &self,
+        step: &mut InterventionStep,
+        logger: &RPMARequestLogger,
+    ) -> InterventionResult<()> {
+        if !step.requires_photos {
+            return Ok(());
+        }
+
+        // Enforce inclusive minimum photo requirement.
+        if step.photo_count < step.min_photos_required {
+            let mut error_context = std::collections::HashMap::new();
+            error_context.insert("step_id".to_string(), serde_json::json!(step.id));
+            error_context.insert(
+                "required_photos".to_string(),
+                serde_json::json!(step.min_photos_required),
+            );
+            error_context.insert(
+                "current_photos".to_string(),
+                serde_json::json!(step.photo_count),
+            );
+            logger.error(
+                "Step completion blocked: missing required photos",
+                None,
+                Some(error_context),
+            );
+            return Err(InterventionError::Workflow(format!(
+                "Step {} requires at least {} photo(s); {} provided",
+                step.step_number, step.min_photos_required, step.photo_count
+            )));
+        }
+
+        if step.max_photos_allowed > 0 && step.photo_count > step.max_photos_allowed {
+            let mut error_context = std::collections::HashMap::new();
+            error_context.insert("step_id".to_string(), serde_json::json!(step.id));
+            error_context.insert(
+                "max_photos".to_string(),
+                serde_json::json!(step.max_photos_allowed),
+            );
+            error_context.insert(
+                "current_photos".to_string(),
+                serde_json::json!(step.photo_count),
+            );
+            logger.error(
+                "Step completion blocked: too many photos",
+                None,
+                Some(error_context),
+            );
+            return Err(InterventionError::Workflow(format!(
+                "Step {} allows at most {} photo(s); {} provided",
+                step.step_number, step.max_photos_allowed, step.photo_count
+            )));
+        }
+
+        step.required_photos_completed = true;
+        Ok(())
+    }
+
     /// Save step progress without advancing to next step
     pub async fn save_step_progress(
         &self,
@@ -766,10 +868,7 @@ impl InterventionWorkflowService {
             .data
             .get_intervention(intervention_id)?
             .ok_or_else(|| {
-                InterventionError::NotFound(format!(
-                    "Intervention {} not found",
-                    intervention_id
-                ))
+                InterventionError::NotFound(format!("Intervention {} not found", intervention_id))
             })?;
 
         // Check if intervention can be cancelled
@@ -819,7 +918,9 @@ impl InterventionWorkflowService {
     ) -> InterventionResult<Vec<Intervention>> {
         // Since the data service doesn't have this method, we'll implement it directly
         // Get all interventions and filter by task_id
-        let (interventions, _) = self.data.list_interventions(None, None, Some(1000), Some(0))?;
+        let (interventions, _) = self
+            .data
+            .list_interventions(None, None, Some(1000), Some(0))?;
         Ok(interventions
             .into_iter()
             .filter(|i| i.task_id == task_id)
@@ -832,7 +933,98 @@ impl InterventionWorkflowService {
         limit: i32,
         offset: i32,
     ) -> InterventionResult<Vec<Intervention>> {
-        let (interventions, _) = self.data.list_interventions(None, None, Some(limit), Some(offset))?;
+        let (interventions, _) =
+            self.data
+                .list_interventions(None, None, Some(limit), Some(offset))?;
         Ok(interventions)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test_utils::TestDatabase;
+    use crate::models::step::StepType;
+
+    fn test_logger() -> RPMARequestLogger {
+        RPMARequestLogger::new("test-correlation".to_string(), None, LogDomain::Task)
+    }
+
+    #[test]
+    fn test_apply_completion_requirements_requires_photos() {
+        let test_db = TestDatabase::new().expect("Failed to create test database");
+        let service = InterventionWorkflowService::new(test_db.db());
+        let mut step = InterventionStep::new(
+            "intervention-1".to_string(),
+            1,
+            "Inspection".to_string(),
+            StepType::Inspection,
+        );
+        step.requires_photos = true;
+        step.min_photos_required = 2;
+        step.photo_count = 1;
+
+        let result = service.apply_completion_requirements(&mut step, &test_logger());
+
+        assert!(matches!(result, Err(InterventionError::Workflow(_))));
+        assert!(!step.required_photos_completed);
+    }
+
+    #[test]
+    fn test_apply_completion_requirements_marks_completed() {
+        let test_db = TestDatabase::new().expect("Failed to create test database");
+        let service = InterventionWorkflowService::new(test_db.db());
+        let mut step = InterventionStep::new(
+            "intervention-1".to_string(),
+            1,
+            "Inspection".to_string(),
+            StepType::Inspection,
+        );
+        step.requires_photos = true;
+        step.min_photos_required = 2;
+        step.photo_count = 2;
+
+        let result = service.apply_completion_requirements(&mut step, &test_logger());
+
+        assert!(result.is_ok());
+        assert!(step.required_photos_completed);
+    }
+
+    #[test]
+    fn test_has_completion_data_with_empty_collected_data_and_no_media() {
+        let request = AdvanceStepRequest {
+            intervention_id: "int-1".to_string(),
+            step_id: "step-1".to_string(),
+            collected_data: serde_json::Value::Object(Default::default()),
+            photos: None,
+            notes: None,
+            quality_check_passed: true,
+            issues: None,
+        };
+
+        assert!(!InterventionWorkflowService::has_completion_data(&request));
+    }
+
+    #[test]
+    fn test_has_completion_data_with_collected_data_or_media() {
+        let mut request = AdvanceStepRequest {
+            intervention_id: "int-1".to_string(),
+            step_id: "step-1".to_string(),
+            collected_data: serde_json::json!({"k": "v"}),
+            photos: None,
+            notes: None,
+            quality_check_passed: true,
+            issues: None,
+        };
+
+        assert!(InterventionWorkflowService::has_completion_data(&request));
+
+        request.collected_data = serde_json::Value::Null;
+        request.photos = Some(vec!["photo-1".to_string()]);
+        assert!(InterventionWorkflowService::has_completion_data(&request));
+
+        request.photos = None;
+        request.issues = Some(vec!["issue-1".to_string()]);
+        assert!(InterventionWorkflowService::has_completion_data(&request));
     }
 }

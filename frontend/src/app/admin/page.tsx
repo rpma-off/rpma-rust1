@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   Shield,
@@ -29,6 +29,7 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/lib/auth/compatibility';
 import { useRouter } from 'next/navigation';
 import { ipcClient } from '@/lib/ipc';
+import type { CreateUserRequest, UserAccount } from '@/lib/backend';
 import { WorkflowExecutionDashboard } from '@/components/dashboard/WorkflowExecutionDashboard';
 import { QualityAssuranceDashboard } from '@/components/dashboard/QualityAssuranceDashboard';
 import { PhotoDocumentationDashboard } from '@/components/dashboard/PhotoDocumentationDashboard';
@@ -58,10 +59,9 @@ export default function AdminPage() {
   const { user, profile } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
-  const [isLoading, setIsLoading] = useState(false);
 
   // User management state
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<UserAccount[]>([]);
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [userRoleFilter, setUserRoleFilter] = useState<string>('all');
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
@@ -83,7 +83,8 @@ export default function AdminPage() {
    const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
 
    // Store dashboard stats for dashboard components
-   const [dashboardStats, setDashboardStats] = useState<Record<string, any> | null>(null);
+   type DashboardStats = Awaited<ReturnType<typeof ipcClient.dashboard.getStats>>;
+   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
 
   // Load dashboard stats
   useEffect(() => {
@@ -91,7 +92,6 @@ export default function AdminPage() {
       if (!user?.token) return;
 
       try {
-        setIsLoading(true);
         const dashboardStats = await ipcClient.dashboard.getStats();
 
          // Get real system information
@@ -144,8 +144,6 @@ export default function AdminPage() {
       } catch (error) {
         console.error('Failed to load dashboard stats:', error);
         // Keep default values on error
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -162,7 +160,7 @@ export default function AdminPage() {
    }, [profile, router]);
 
    // User management functions
-   const loadUsers = async () => {
+   const loadUsers = useCallback(async () => {
      if (!user?.token) return;
 
      try {
@@ -176,19 +174,19 @@ export default function AdminPage() {
      } finally {
        setIsLoadingUsers(false);
      }
-   };
+   }, [user?.token]);
 
-   const handleAddUser = async (userData: Record<string, unknown>) => {
+   const handleAddUser = useCallback(async (userData: CreateUserRequest) => {
      if (!user?.token) return;
 
      try {
-       await ipcClient.users.create(userData as any, user.token);
+       await ipcClient.users.create(userData, user.token);
       setShowAddUserModal(false);
       loadUsers(); // Refresh the list
     } catch (error) {
       console.error('Failed to add user:', error);
     }
-  };
+  }, [user?.token, loadUsers]);
 
   const handleDeleteUser = async (userId: string) => {
     if (!user?.token) return;
@@ -225,7 +223,7 @@ export default function AdminPage() {
     if (activeTab === 'users' && user?.token) {
       loadUsers();
     }
-  }, [activeTab, user?.token]);
+  }, [activeTab, user?.token, loadUsers]);
 
   if (!profile || (profile.role !== 'admin' && profile.role !== 'supervisor')) {
     return (
@@ -598,12 +596,12 @@ export default function AdminPage() {
             <form onSubmit={(e) => {
               e.preventDefault();
               const formData = new FormData(e.target as HTMLFormElement);
-              const userData = {
-                email: formData.get('email'),
-                first_name: formData.get('firstName'),
-                last_name: formData.get('lastName'),
-                role: formData.get('role'),
-                password: formData.get('password')
+              const userData: CreateUserRequest = {
+                email: String(formData.get('email') || ''),
+                first_name: String(formData.get('firstName') || ''),
+                last_name: String(formData.get('lastName') || ''),
+                role: String(formData.get('role') || ''),
+                password: String(formData.get('password') || '')
               };
               handleAddUser(userData);
             }}>

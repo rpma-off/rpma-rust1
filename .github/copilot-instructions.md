@@ -1,8 +1,25 @@
-# AGENTS.md 
+# GitHub Copilot Instructions for RPMA v2
 
 ## Project Overview
 
-RPMA v2 is an **offline-first desktop application** for managing Paint Protection Film (PPF) interventions. The application handles tasks, interventions, workflow steps, photo management, inventory tracking, reporting, and user management with role-based access control.
+RPMA v2 is an **offline-first desktop application** built with Tauri (Rust + system webview) for managing Paint Protection Film (PPF) interventions. The application handles tasks, interventions, workflow steps, photo management, inventory tracking, reporting, and user management with role-based access control.
+
+## 🏗️ Architecture
+
+### Four-Layer Architecture
+```
+Frontend (Next.js/React/TypeScript)
+    ↓ IPC calls
+Tauri Commands (Rust)
+    ↓
+Services (Business Logic - Rust)
+    ↓
+Repositories (Data Access - Rust)
+    ↓
+SQLite Database (WAL mode)
+```
+
+**Key Principle**: Keep layer responsibilities strictly separated. Each layer should only communicate with adjacent layers.
 
 ## 📁 Project Structure
 
@@ -30,22 +47,16 @@ rpma-rust/
 └── docs/                    # Project documentation
 ```
 
-## 🏗️ Architecture
+## 🛠️ Tech Stack
 
-### Four-Layer Architecture
-```
-Frontend (Next.js/React/TypeScript)
-    ↓ IPC calls
-Tauri Commands (Rust)
-    ↓
-Services (Business Logic - Rust)
-    ↓
-Repositories (Data Access - Rust)
-    ↓
-SQLite Database (WAL mode)
-```
-
-**Key Principle**: Keep layer responsibilities strictly separated. Each layer should only communicate with adjacent layers.
+- **Frontend**: Next.js 14, React 18, TypeScript, Tailwind CSS
+- **UI Library**: shadcn/ui (Radix UI primitives)
+- **Backend**: Rust with Tauri framework
+- **Database**: SQLite with WAL mode
+- **State Management**: React hooks, Context API, Zustand
+- **Authentication**: JWT tokens with 2FA support
+- **Type Safety**: Automatic TypeScript generation from Rust models using `ts-rs`
+- **Testing**: Vitest (frontend), Rust built-in tests (backend)
 
 ## 🔑 Critical Consistency Rules
 
@@ -208,6 +219,57 @@ npm run quality:check          # Runs all quality gates
   - ❌ Validation failures
   - 🔒 Permission failures (for protected features)
 
+## 🔒 Security Guidelines
+
+### Authentication
+- Use JWT tokens for session management
+- Support 2FA with TOTP
+- Store session tokens securely
+- Validate tokens on every protected endpoint
+
+### RBAC Implementation
+- Define user roles: Admin, Manager, Technician, Viewer
+- Check permissions at the command handler level
+- Enforce data access restrictions in repositories
+- Never expose privileged operations to unprivileged users
+
+### Input Validation
+- Validate all user inputs at command handler level
+- Use Rust's type system for compile-time safety
+- Sanitize data before database operations
+- Return clear error messages without leaking sensitive info
+
+### Data Protection
+- Use SQLite WAL mode for data integrity
+- Implement proper error handling for database operations
+- Ensure offline-first design doesn't compromise security
+- Protect sensitive data (passwords, tokens) appropriately
+
+## 📝 Coding Standards
+
+### Rust
+- Follow Rust naming conventions (snake_case for functions/variables, PascalCase for types)
+- Use `rustfmt` for consistent formatting
+- Run `clippy` and address all warnings
+- Prefer `Result<T, E>` over panics
+- Document public APIs with doc comments (`///`)
+- Use `#[derive(Serialize, Deserialize, TS)]` for models shared with frontend
+
+### TypeScript/React
+- Use functional components with hooks
+- Follow ESLint rules strictly
+- Use TypeScript's strict mode
+- Prefer interfaces over types for object shapes
+- Use meaningful variable and function names
+- Extract reusable logic into custom hooks
+- Keep components under 200 lines when possible
+
+### Tailwind CSS
+- Use utility classes consistently
+- Follow mobile-first responsive design
+- Leverage shadcn/ui components
+- Extract repeated patterns into components
+
 ## 🚫 What NOT to Do
 
 - ❌ **Never** manually edit generated TypeScript types
@@ -218,3 +280,56 @@ npm run quality:check          # Runs all quality gates
 - ❌ **Never** commit secrets, API keys, or sensitive data
 - ❌ **Never** introduce breaking changes without migration path
 - ❌ **Never** bypass quality gates before committing
+
+## 📚 Additional Resources
+
+- **Architecture**: See `docs/ARCHITECTURE.md` for detailed architecture documentation
+- **Deployment**: See `docs/DEPLOYMENT.md` for deployment guidelines
+- **API Documentation**: Auto-generated from Rust code
+- **Component Library**: shadcn/ui documentation at ui.shadcn.com
+- **Tauri Docs**: tauri.app/v1/guides
+
+## 💡 Tips for AI Assistants
+
+1. **Always prefer copying existing patterns** over creating new ones
+2. **Make the smallest possible change** that solves the problem
+3. **Keep layer responsibilities separated** - respect the architecture
+4. **Run quality checks early and often** to catch issues quickly
+5. **When in doubt, check existing code** for similar implementations
+6. **Test thoroughly** - include success and failure cases
+7. **Update documentation** if behavior changes
+8. **Keep diffs small and reviewable** - break large changes into smaller PRs
+
+## 🔄 Common Workflows
+
+### Adding a New Feature
+1. Plan which layers are affected
+2. Create/update Rust models with `#[derive(TS)]`
+3. Add repository methods for data access
+4. Implement business logic in services
+5. Create IPC command handlers
+6. Run `npm run types:sync` to generate TypeScript types
+7. Implement frontend UI and state management
+8. Add tests at each layer
+9. Run `npm run quality:check`
+10. Update documentation
+
+### Fixing a Bug
+1. Write a failing test that reproduces the bug
+2. Identify the layer where the bug exists
+3. Make the minimal fix in the appropriate layer
+4. Verify the test now passes
+5. Run `npm run quality:check`
+6. Add regression test if not already covered
+
+### Refactoring
+1. Ensure existing tests pass
+2. Make incremental changes
+3. Run tests after each change
+4. Maintain the same external behavior
+5. Run `npm run quality:check`
+6. Update documentation if public APIs changed
+
+---
+
+**Remember**: This is an offline-first application. Always design with local data storage as the source of truth, not as a cache of remote data.

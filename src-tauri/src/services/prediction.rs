@@ -11,8 +11,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 /// Completion time prediction result
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct CompletionTimePrediction {
     pub predicted_duration_minutes: f64,
     pub confidence_interval: (f64, f64), // (lower_bound, upper_bound)

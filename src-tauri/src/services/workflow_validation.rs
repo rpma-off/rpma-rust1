@@ -35,6 +35,26 @@ impl WorkflowValidationService {
         current_step: &InterventionStep,
         logger: &RPMARequestLogger,
     ) -> InterventionResult<()> {
+        if current_step.intervention_id != intervention.id {
+            let mut error_context = std::collections::HashMap::new();
+            error_context.insert(
+                "intervention_id".to_string(),
+                serde_json::json!(intervention.id),
+            );
+            error_context.insert(
+                "step_intervention_id".to_string(),
+                serde_json::json!(current_step.intervention_id),
+            );
+            logger.error(
+                "Step does not belong to intervention",
+                None,
+                Some(error_context),
+            );
+            return Err(InterventionError::Workflow(
+                "Invalid step for this intervention".to_string(),
+            ));
+        }
+
         // Check intervention status
         if intervention.status != InterventionStatus::InProgress {
             let mut error_context = std::collections::HashMap::new();
@@ -57,26 +77,62 @@ impl WorkflowValidationService {
             )));
         }
 
-        // Check step status
-        if current_step.step_status == StepStatus::Completed {
-            let mut error_context = std::collections::HashMap::new();
-            error_context.insert(
-                "step_number".to_string(),
-                serde_json::json!(current_step.step_number),
-            );
-            error_context.insert(
-                "step_status".to_string(),
-                serde_json::json!(current_step.step_status),
-            );
-            logger.error(
-                "Attempted to advance already completed step",
-                None,
-                Some(error_context),
-            );
-            return Err(InterventionError::Workflow(format!(
-                "Step {} is already completed",
-                current_step.step_number
-            )));
+        if !matches!(
+            current_step.step_status,
+            StepStatus::Pending | StepStatus::InProgress
+        ) {
+            match current_step.step_status {
+                StepStatus::Completed => {
+                    let mut error_context = std::collections::HashMap::new();
+                    error_context.insert(
+                        "step_number".to_string(),
+                        serde_json::json!(current_step.step_number),
+                    );
+                    error_context.insert(
+                        "step_status".to_string(),
+                        serde_json::json!(current_step.step_status),
+                    );
+                    logger.error(
+                        "Attempted to advance already completed step",
+                        None,
+                        Some(error_context),
+                    );
+                    return Err(InterventionError::Workflow(format!(
+                        "Step {} is already completed",
+                        current_step.step_number
+                    )));
+                }
+                StepStatus::Paused => {
+                    logger.error(
+                        "Attempted to advance paused step",
+                        None,
+                        Some(std::collections::HashMap::from([(
+                            "step_number".to_string(),
+                            serde_json::json!(current_step.step_number),
+                        )])),
+                    );
+                    return Err(InterventionError::Workflow(format!(
+                        "Step {} is paused and cannot be advanced",
+                        current_step.step_number
+                    )));
+                }
+                StepStatus::Failed | StepStatus::Skipped | StepStatus::Rework => {
+                    // Treat these as terminal until explicit rework/resume flows are defined.
+                    logger.error(
+                        "Attempted to advance step in terminal status",
+                        None,
+                        Some(std::collections::HashMap::from([(
+                            "step_status".to_string(),
+                            serde_json::json!(current_step.step_status),
+                        )])),
+                    );
+                    return Err(InterventionError::Workflow(format!(
+                        "Step {} is in {:?} state and cannot be advanced",
+                        current_step.step_number, current_step.step_status
+                    )));
+                }
+                _ => {}
+            }
         }
 
         // Check step order - ensure previous steps are completed

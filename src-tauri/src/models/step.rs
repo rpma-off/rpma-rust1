@@ -116,7 +116,7 @@ pub struct InterventionStep {
 
     // Metadata
     pub description: Option<String>,
-    #[ts(type = "any")]
+    #[ts(type = "JsonValue | null")]
     pub instructions: Option<serde_json::Value>,
     pub quality_checkpoints: Option<Vec<String>>,
 
@@ -132,11 +132,11 @@ pub struct InterventionStep {
     pub paused_at: TimestampString,
     pub duration_seconds: Option<i32>,
     pub estimated_duration_seconds: Option<i32>,
-    #[ts(type = "any")]
+    #[ts(type = "JsonValue | null")]
     pub step_data: Option<serde_json::Value>,
-    #[ts(type = "any")]
+    #[ts(type = "JsonValue | null")]
     pub collected_data: Option<serde_json::Value>,
-    #[ts(type = "any")]
+    #[ts(type = "JsonValue | null")]
     pub measurements: Option<serde_json::Value>,
     pub observations: Option<Vec<String>>,
 
@@ -144,7 +144,7 @@ pub struct InterventionStep {
     pub photo_count: i32,
     pub required_photos_completed: bool,
     pub photo_urls: Option<Vec<String>>,
-    #[ts(type = "any")]
+    #[ts(type = "JsonValue | null")]
     pub validation_data: Option<serde_json::Value>,
     pub validation_errors: Option<Vec<String>>,
     pub validation_score: Option<i32>,

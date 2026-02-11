@@ -3,6 +3,7 @@
 use crate::commands::AppError;
 use crate::db::Database;
 use crate::models::auth::UserSession;
+use crate::services::token;
 use chrono::Utc;
 use rusqlite::{params, OptionalExtension, Row};
 use std::collections::HashMap;
@@ -64,6 +65,14 @@ impl SessionRepository {
     #[instrument(skip(self), err)]
     pub async fn create_session(&self, session: &UserSession) -> Result<(), AppError> {
         let conn = self.db.get_connection()?;
+        let token_hash = token::hash_token_with_env(&session.token)
+            .map_err(|e| AppError::Configuration(format!("Token hash failed: {}", e)))?;
+        let refresh_token_hash = session
+            .refresh_token
+            .as_deref()
+            .map(token::hash_token_with_env)
+            .transpose()
+            .map_err(|e| AppError::Configuration(format!("Refresh token hash failed: {}", e)))?;
         conn.execute(
             "INSERT INTO user_sessions (
                 id, user_id, username, email, role, token, refresh_token,
@@ -77,8 +86,8 @@ impl SessionRepository {
                 session.username,
                 session.email,
                 session.role.to_string(),
-                session.token,
-                session.refresh_token,
+                token_hash,
+                refresh_token_hash,
                 session.expires_at,
                 session.last_activity,
                 session.created_at,
@@ -239,5 +248,48 @@ impl SessionRepository {
             two_factor_verified: row.get(14)?,
             session_timeout_minutes: row.get(15)?,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::auth::UserRole;
+
+    #[tokio::test]
+    async fn test_create_session_hashes_tokens() {
+        std::env::set_var("JWT_SECRET", "test_jwt_secret_32_bytes_long!");
+        let db = Arc::new(Database::new_in_memory().await.expect("create db"));
+        let repo = SessionRepository::new(db.clone());
+
+        let session = UserSession::new(
+            "user-123".to_string(),
+            "tester".to_string(),
+            "tester@example.com".to_string(),
+            UserRole::Admin,
+            "token-value".to_string(),
+            Some("refresh-token".to_string()),
+            3600,
+        );
+
+        repo.create_session(&session).await.expect("create session");
+
+        let conn = db.get_connection().expect("connection");
+        let (stored_token, stored_refresh): (String, Option<String>) = conn
+            .query_row(
+                "SELECT token, refresh_token FROM user_sessions WHERE user_id = ?",
+                [session.user_id],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )
+            .expect("query token");
+
+        let expected_token =
+            token::hash_token_with_env(&session.token).expect("hash token");
+        assert_eq!(stored_token, expected_token);
+        assert_ne!(stored_token, session.token);
+
+        let expected_refresh = token::hash_token_with_env("refresh-token")
+            .expect("hash refresh token");
+        assert_eq!(stored_refresh.as_deref(), Some(expected_refresh.as_str()));
     }
 }

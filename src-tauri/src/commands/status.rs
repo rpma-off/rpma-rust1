@@ -1,6 +1,8 @@
-use crate::commands::{AppError, AppState};
-use crate::models::status::*;
-use crate::models::task::{Task, UpdateTaskRequest};
+use crate::commands::{ApiError, AppState};
+use crate::db::FromSqlRow;
+use crate::models::status::{StatusDistribution, StatusTransitionRequest, TaskStatus};
+use crate::models::task::Task;
+use crate::services::task_validation::validate_status_transition;
 
 /// Transition a task to a new status with validation
 #[tauri::command]
@@ -47,20 +49,12 @@ pub async fn task_transition_status(
         .await
         .map_err(|e| AppError::Database(format!("Failed to update task status: {}", e)))?;
 
-    // Log transition in history (optional)
-    if let Ok(conn) = state.db.get_connection() {
-        let _ = conn.execute(
-            "INSERT OR IGNORE INTO task_history (task_id, old_status, new_status, reason, changed_at)
-             VALUES (?1, ?2, ?3, ?4, ?5)",
-            rusqlite::params![
-                request.task_id,
-                task.status,
-                request.new_status,
-                request.reason,
-                chrono::Utc::now().timestamp()
-            ],
-        );
-    }
+    // Validate transition
+    validate_status_transition(&current, &new).map_err(|message| ApiError {
+        message,
+        code: "INVALID_TRANSITION".to_string(),
+        details: None,
+    })?;
 
     Ok(updated_task)
 }
@@ -103,12 +97,12 @@ pub async fn task_get_status_distribution(
             AppError::Database(format!("Failed to map row: {}", e))
         })?;
         match status.as_str() {
-            "quote" => distribution.quote = count,
-            "scheduled" => distribution.scheduled = count,
-            "in_progress" => distribution.in_progress = count,
-            "paused" => distribution.paused = count,
-            "completed" => distribution.completed = count,
-            "cancelled" => distribution.cancelled = count,
+            "draft" | "pending" => distribution.quote += count,
+            "scheduled" | "assigned" | "overdue" => distribution.scheduled += count,
+            "in_progress" => distribution.in_progress += count,
+            "paused" | "on_hold" => distribution.paused += count,
+            "completed" | "archived" => distribution.completed += count,
+            "cancelled" | "failed" | "invalid" => distribution.cancelled += count,
             _ => {}
         }
     }

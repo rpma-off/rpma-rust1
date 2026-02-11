@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -54,7 +54,7 @@ export default function EditTaskPage() {
 
   const handleSuccess = (updatedTask?: { id: string }) => {
     if (updatedTask?.id) {
-      toast.success('Tâche mise Ã  jour avec succès !');
+      toast.success('Tâche mise à jour avec succès !');
       // Redirect to the updated task
       router.push(`/tasks/${updatedTask.id}`);
     }
@@ -94,7 +94,7 @@ export default function EditTaskPage() {
               <h3 className="text-xl font-bold text-white mb-2">Erreur de chargement</h3>
               <p className="text-muted-foreground mb-6">{error}</p>
               <Button onClick={handleCancel} variant="outline">
-                Retour Ã  la liste des tâches
+                Retour à la liste des tâches
               </Button>
             </div>
           </div>
@@ -112,7 +112,7 @@ export default function EditTaskPage() {
               <h3 className="text-xl font-bold text-white mb-2">Tâche introuvable</h3>
               <p className="text-muted-foreground mb-6">La tâche demandée n&apos;existe pas ou a été supprimée.</p>
               <Button onClick={handleCancel} variant="outline">
-                Retour Ã  la liste des tâches
+                Retour à la liste des tâches
               </Button>
             </div>
           </div>
@@ -136,7 +136,7 @@ export default function EditTaskPage() {
                   className="flex items-center gap-2 border-[hsl(var(--rpma-border))] text-muted-foreground hover:bg-[hsl(var(--rpma-surface))] hover:text-foreground hover:border-[hsl(var(--rpma-teal))]/50 transition-all duration-200"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  <span className="hidden sm:inline">Retour Ã  la liste des tâches</span>
+                  <span className="hidden sm:inline">Retour à la liste des tâches</span>
                   <span className="sm:hidden">Retour</span>
                 </Button>
 

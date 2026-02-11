@@ -7,8 +7,10 @@ if (useMock && typeof window !== 'undefined') {
   initMockIpc();
 }
 
-export const ipcClient = useMock ? mockIpcClient : realIpcClient;
-export const useIpcClient = useMock ? mockUseIpcClient : realUseIpcClient;
+type IpcClient = typeof realIpcClient;
+
+export const ipcClient = (useMock ? mockIpcClient : realIpcClient) as IpcClient;
+export const useIpcClient = (useMock ? mockUseIpcClient : realUseIpcClient) as typeof realUseIpcClient;
 export { safeInvoke } from './utils';
 export { cachedInvoke, getCacheStats, invalidateKey, clearCache, invalidatePattern } from './cache';
 export { withRetry } from './retry';

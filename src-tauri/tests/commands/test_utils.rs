@@ -116,9 +116,6 @@ pub async fn create_test_session(ctx: &TestContext) -> String {
     session.token
 }
 
-    create_test_session(ctx).await
-}
-
 /// Helper to create a test technician user
 pub async fn create_test_technician(ctx: &TestContext) -> rpma_ppf_intervention::models::auth::UserAccount {
     use rpma_ppf_intervention::services::auth::AuthService;

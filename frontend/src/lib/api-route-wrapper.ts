@@ -2,8 +2,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { handleApiError } from './api-error';
+import type { JsonValue } from '@/types/json';
 
-export interface ApiResponse<T = unknown> {
+export interface ApiResponse<T = JsonValue> {
   success: boolean;
   data?: T;
   error?: string;

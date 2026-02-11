@@ -229,11 +229,7 @@ impl InterventionDataService {
         } else {
             ((completed_steps as f32 / steps.len() as f32) * 100.0) as f64
         };
-
-        // Update status if all steps completed
-        if completed_steps == steps.len() {
-            intervention.status = InterventionStatus::Completed;
-        }
+        // Note: status is finalized explicitly in the finalization flow, even if progress reaches 100%.
 
         intervention.updated_at = now();
 

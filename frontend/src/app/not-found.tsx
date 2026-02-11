@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -45,7 +45,7 @@ export default function NotFound() {
             </h2>
             <p className="text-base md:text-lg text-muted-foreground mb-8 leading-relaxed">
               Désolé, la page que vous recherchez n&apos;existe pas ou a été déplacée.
-              Vérifiez l&apos;URL ou retournez Ã  une page connue.
+              Vérifiez l&apos;URL ou retournez à une page connue.
             </p>
           </motion.div>
 

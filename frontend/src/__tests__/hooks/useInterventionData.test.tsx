@@ -80,7 +80,7 @@ describe('useInterventionData', () => {
     };
 
     mockInterventions.getActiveByTask.mockResolvedValue({
-      type: 'ActiveRetrieved',
+      type: 'ActiveByTask',
       intervention: mockIntervention,
     });
 

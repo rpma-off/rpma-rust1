@@ -12,6 +12,7 @@ use crate::services::auth::AuthService;
 use crate::services::performance_monitor::PerformanceMonitorService;
 use crate::services::rate_limiter::RateLimiterService;
 use crate::services::security_monitor::SecurityMonitorService;
+use crate::services::token;
 use crate::services::token::TokenService;
 use crate::services::validation::ValidationService;
 use crate::test_utils::TestDataFactory;
@@ -176,6 +177,45 @@ mod tests {
         assert_eq!(session.user_id, created_user.id);
         assert!(!session.token.is_empty());
         assert!(session.expires_at > Utc::now());
+    }
+
+    #[test]
+    fn test_session_tokens_hashed_in_storage() {
+        setup_test_env();
+        let test_db = test_db!();
+        let auth_service = AuthService::new(test_db.db()).expect("Failed to create auth service");
+
+        let mut user_request = create_test_user();
+        user_request.email = "hashed@example.com".to_string();
+        let created_user = auth_service
+            .create_account(user_request, "127.0.0.1")
+            .expect("Failed to create test user");
+
+        let session = auth_service
+            .authenticate("hashed@example.com", "SecurePassword123!", "127.0.0.1")
+            .expect("Authentication should succeed");
+
+        let conn = test_db
+            .db
+            .get_connection()
+            .expect("Failed to get connection");
+        let (stored_token, stored_refresh): (String, Option<String>) = conn
+            .query_row(
+                "SELECT token, refresh_token FROM user_sessions WHERE user_id = ?",
+                [created_user.id],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )
+            .expect("Failed to read stored tokens");
+
+        let expected_token_hash =
+            token::hash_token_with_env(&session.token).expect("Failed to hash token");
+        assert_eq!(stored_token, expected_token_hash);
+
+        if let Some(refresh_token) = session.refresh_token {
+            let expected_refresh_hash =
+                token::hash_token_with_env(&refresh_token).expect("Failed to hash refresh token");
+            assert_eq!(stored_refresh.as_deref(), Some(expected_refresh_hash.as_str()));
+        }
     }
 
     #[test]
@@ -416,9 +456,11 @@ mod tests {
                     .db
                     .get_connection()
                     .expect("Failed to get connection");
+                let token_hash = token::hash_token_with_env(&session.token)
+                    .expect("Failed to hash session token");
                 conn.execute(
                     "UPDATE user_sessions SET expires_at = ?1 WHERE token = ?2",
-                    [Utc::now().timestamp() - 3600, session.token],
+                    [Utc::now().timestamp() - 3600, token_hash],
                 )
                 .expect("Failed to expire session");
             }
