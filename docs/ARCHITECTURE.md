@@ -726,6 +726,82 @@ fn configure_linux_specific() {
 - **Real-time Collaboration** : Multi-utilisateurs simultanés
 - **Mobile Extensions** : Applications iOS/Android natives
 
+## 🧭 Audit technique (2026-02-11)
+
+### ✅ Points forts observés
+- **Architecture en couches claire** (commands → services → repositories → SQLite) bien alignée avec l'offline-first.
+- **RBAC centralisé** via `commands/auth_middleware.rs`, avec un pattern cohérent sur la plupart des commandes.
+- **Sync queue et background sync** déjà structurés (`src-tauri/src/sync`), facilitant l’extension des stratégies de conflit.
+
+### ⚠️ Risques d’architecture, scalabilité et maintenabilité
+- **Événements dupliqués** : `services/event_bus.rs` et `services/event_system.rs` définissent tous deux un `DomainEvent` (structures différentes). Cela complexifie la maintenance et augmente le risque d’incohérence.
+- **Event bus verrouillé pendant des awaits** : `InMemoryEventBus::publish` conserve un `Mutex` tout en attendant `handler.handle`, ce qui peut bloquer d’autres publications et créer des risques de deadlock.
+- **Sync queue : statut sérialisé en JSON** mais filtré en SQL brut (`status = 'pending'` dans `sync/queue.rs`). La valeur stockée est `"pending"` (avec guillemets JSON), ce qui peut empêcher le dequeue.
+- **Dépendances de sync non appliquées** : le champ `dependencies` est stocké, mais aucun filtrage n’empêche l’exécution d’opérations dont les dépendances ne sont pas complétées.
+- **Tokens de session en clair** : `repositories/session_repository.rs` stocke `token`/`refresh_token` en texte brut. Risque élevé en cas d’exfiltration locale.
+- **Pool SQLite surdimensionné** : `db/connection.rs` fixe `max_connections = 100`, ce qui peut générer contention et surcharge sur un moteur mono-writer (WAL).
+- **Initialisation eager de nombreux services** : `service_builder.rs` instancie la majorité des services au démarrage (y compris PDF/reporting). Cela peut ralentir le boot et compliquer les tests ciblés.
+
+### 🔧 Refactors incrémentaux proposés (avec exemples)
+
+1. **Unifier les événements**
+   - Choisir une définition unique (`services/domain_event.rs`) et importer partout.
+   ```rust
+   // services/event_bus.rs
+   use crate::services::domain_event::DomainEvent;
+   ```
+
+2. **Déverrouiller l’event bus avant les await**
+   ```rust
+   pub async fn publish(&self, event: DomainEvent) -> Result<(), String> {
+       let handlers = {
+           let guard = self.handlers.lock().unwrap();
+           guard.get(event.event_type()).cloned().unwrap_or_default()
+       };
+       for handler in handlers {
+           if let Err(e) = handler.handle(&event).await {
+               tracing::error!("Event handler failed: {}", e);
+           }
+       }
+       Ok(())
+   }
+   ```
+
+3. **Stocker `SyncStatus` en texte brut**
+   ```rust
+   // enqueue
+   params![operation.status.to_string()]
+
+   // dequeue
+   WHERE status = ?
+   ```
+
+4. **Respecter les dépendances de sync**
+   ```sql
+   SELECT *
+   FROM sync_queue
+   WHERE status = 'pending'
+     AND NOT EXISTS (
+       SELECT 1 FROM sync_queue dep
+       WHERE dep.entity_id IN (/* dependencies */)
+         AND dep.status != 'completed'
+     )
+   ```
+
+5. **Hasher les tokens au repos**
+   ```rust
+   let token_hash = Sha256::digest(session.token.as_bytes());
+   // stocker token_hash en DB, garder le token en mémoire uniquement
+   ```
+
+6. **Lazy-load des services lourds**
+   - Remplacer l’initialisation eager par `OnceCell<Arc<...>>` pour PDF/reporting.
+
+### ⚖️ Trade-offs
+- **Unification des DomainEvent** = changement localisé mais nécessite de migrer les handlers existants.
+- **Hashing des tokens** améliore la sécurité au repos mais nécessite une recherche par hash (index sur `token_hash`).
+- **Réduction du pool SQLite** diminue la contention mais peut réduire le parallélisme de lecture.
+
 ---
 
 *Cette documentation architectural évolue avec l'application et reflète les décisions de conception actuelles.*
