@@ -352,7 +352,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   // Filtered and sorted tasks
   const filteredTasks = useMemo(() => {
-    let filtered = [...tasks];
+    let filtered = tasks;
 
     // Apply search filter
     if (searchTerm) {
@@ -379,7 +379,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }
 
     // Apply sorting
-    filtered.sort((a, b) => {
+    const sorted = filtered === tasks ? [...filtered] : filtered;
+    sorted.sort((a, b) => {
       const aValue = a[currentSortBy as keyof DashboardTask];
       const bValue = b[currentSortBy as keyof DashboardTask];
       
@@ -395,7 +396,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       }
     });
 
-    return filtered;
+    return sorted;
   }, [tasks, searchTerm, activeStatusFilter, activePriorityFilter, selectedTechnicianFilter, currentSortBy, currentSortOrder]);
 
   // Event handlers

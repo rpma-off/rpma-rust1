@@ -69,7 +69,7 @@ export function useInterventionData(taskId: string) {
         if (!intervention) return null;
 
         const existingSteps = Array.isArray((intervention as { steps?: InterventionStep[] }).steps)
-          ? (intervention as { steps?: InterventionStep[] }).steps || []
+          ? (intervention as { steps?: InterventionStep[] }).steps
           : null;
 
         if (existingSteps) {

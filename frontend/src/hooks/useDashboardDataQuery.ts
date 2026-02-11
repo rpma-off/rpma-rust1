@@ -132,10 +132,13 @@ export function useDashboardData(options: UseDashboardDataOptions = {}) {
     }).filter(Boolean) as DashboardTask[];
   };
 
-  const dashboardFilters = useMemo(
-    () => buildFilters(user?.id || '', isAdmin),
-    [user?.id, isAdmin, opts.selectedTechnicianId, opts.statusFilter, opts.searchQuery]
-  );
+  const dashboardFilters = useMemo(() => ({
+    isAdmin,
+    userId: user?.id || '',
+    selectedTechnicianId: opts.selectedTechnicianId,
+    status: opts.statusFilter,
+    search: opts.searchQuery
+  }), [user?.id, isAdmin, opts.selectedTechnicianId, opts.statusFilter, opts.searchQuery]);
 
   // Dashboard data query
   const dashboardQuery = useQuery({
