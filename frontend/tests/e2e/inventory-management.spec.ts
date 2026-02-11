@@ -533,7 +533,7 @@ test.describe('Inventory Management', () => {
     await page.click('text=Adjust Stock');
     
     await page.waitForSelector('[role="dialog"]');
-    await page.fill('input[name="transaction_type"]');
+    await page.fill('input[name="transaction_type"]', 'Stock In');
     await page.click('option:has-text("Stock In")');
     await page.fill('input[name="quantity"]', '25');
     await page.fill('textarea[name="notes"]', 'Bulk stock adjustment');

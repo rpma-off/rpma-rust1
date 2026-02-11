@@ -1,15 +1,15 @@
 import '@testing-library/jest-dom';
+import * as React from 'react';
+import { webcrypto } from 'crypto';
+import { TextDecoder, TextEncoder } from 'util';
 
 // Web crypto polyfill for tests
 if (typeof global.crypto === 'undefined') {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  global.crypto = require('crypto').webcrypto;
+  global.crypto = webcrypto;
 }
 
 // TextEncoder/TextDecoder polyfill for tests
 if (typeof global.TextEncoder === 'undefined') {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { TextEncoder, TextDecoder } = require('util');
   global.TextEncoder = TextEncoder;
   global.TextDecoder = TextDecoder;
 }
@@ -77,7 +77,6 @@ if (!HTMLElement.prototype.scrollIntoView) {
 
 // Simplified Select mock for tests (avoids Radix Select DOM requirements)
 jest.mock('@/components/ui/select', () => {
-  const React = require('react');
   const SelectContext = React.createContext({ onValueChange: (_value: string) => {} });
 
   const Select = ({ children, onValueChange }: { children: React.ReactNode; onValueChange?: (value: string) => void }) =>

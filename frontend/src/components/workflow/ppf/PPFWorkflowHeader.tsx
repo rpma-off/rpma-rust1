@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
@@ -33,7 +33,7 @@ export function PPFWorkflowHeader() {
               className="text-muted-foreground hover:text-foreground hover:bg-[hsl(var(--rpma-surface))] transition-all duration-200 rounded-lg px-3 py-2"
             >
               <ArrowLeft className="w-4 h-4 mr-2 transition-transform hover:-translate-x-1" />
-              Retour Ã  la tâche
+              Retour à la tâche
             </Button>
             <div className="h-6 w-px bg-[hsl(var(--rpma-border))]" />
             <div className="flex items-center space-x-3">

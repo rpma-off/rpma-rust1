@@ -247,6 +247,7 @@ test.describe('User Authentication Flow', () => {
     
     // Should navigate to signup page
     await page.waitForURL('/signup');
-    await expect(page.locator('h1, h2')).toContainText('Inscription', 'Créer un compte');
+    await expect(page.locator('text=Inscription')).toBeVisible();
+    await expect(page.locator('text=Créer un compte')).toBeVisible();
   });
 });

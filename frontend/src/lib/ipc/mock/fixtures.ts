@@ -69,8 +69,7 @@ export const defaultFixtures: MockFixtures = {
       deleted_at: null,
       deleted_by: null,
       synced: true,
-      last_synced_at: nowIso(),
-      tasks: null
+      last_synced_at: nowIso()
     }
   ],
   tasks: [

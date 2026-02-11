@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,11 +52,11 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, open, onOpenChange 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast.success('Tâche mise Ã  jour avec succès');
+      toast.success('Tâche mise à jour avec succès');
       onOpenChange(false);
     },
     onError: (error) => {
-      toast.error('Erreur lors de la mise Ã  jour de la tâche');
+      toast.error('Erreur lors de la mise à jour de la tâche');
       console.error('Edit task error:', error);
     }
   });
@@ -240,7 +240,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, open, onOpenChange 
               disabled={editTaskMutation.isPending || !title.trim()}
               className="bg-[hsl(var(--rpma-teal))] hover:bg-[hsl(var(--rpma-teal))]/80 text-white"
             >
-              {editTaskMutation.isPending ? 'Mise Ã  jour...' : 'Mettre Ã  jour'}
+              {editTaskMutation.isPending ? 'Mise à jour...' : 'Mettre à jour'}
             </Button>
           </div>
         </form>

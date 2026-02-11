@@ -134,13 +134,17 @@ const createTestWrapper = () => {
     },
   });
 
-  return ({ children }: { children: React.ReactNode }) => (
+  const Wrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>
       <AuthContext.Provider value={mockAuthContext}>
         {children}
       </AuthContext.Provider>
     </QueryClientProvider>
   );
+
+  Wrapper.displayName = 'TaskDetailsTestWrapper';
+
+  return Wrapper;
 };
 
 describe('TaskDetails', () => {

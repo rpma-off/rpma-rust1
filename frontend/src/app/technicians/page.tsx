@@ -8,7 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/lib/auth/compatibility';
 import { ipcClient } from '@/lib/ipc';
-import { UserAccount } from '@/types';
+import type { UserAccount as BackendUserAccount } from '@/lib/backend';
+import type { UserAccount as UiUserAccount } from '@/lib/types';
 import { convertTimestamps } from '@/lib/types';
 
 interface TechnicianStats {
@@ -20,7 +21,7 @@ interface TechnicianStats {
 
 export default function TechniciansPage() {
   const { user } = useAuth();
-  const [technicians, setTechnicians] = useState<UserAccount[]>([]);
+  const [technicians, setTechnicians] = useState<UiUserAccount[]>([]);
   const [stats, setStats] = useState<TechnicianStats>({
     totalTechnicians: 0,
     activeTechnicians: 0,
@@ -39,13 +40,13 @@ export default function TechniciansPage() {
 
         // Fetch all users and filter for technicians
         const usersResponse = await ipcClient.users.list(1000, 0, user.token);
-        const allUsers = usersResponse.data.map(user => convertTimestamps(user));
-        const technicianUsers = allUsers.filter((u) => u.role === 'technician');
+        const allUsers = usersResponse.data.map((account: BackendUserAccount) => convertTimestamps(account) as UiUserAccount);
+        const technicianUsers = allUsers.filter((account: UiUserAccount) => account.role === 'technician');
 
-        setTechnicians(technicianUsers as unknown as UserAccount[]);
+        setTechnicians(technicianUsers);
 
         // Calculate stats
-        const activeTechnicians = technicianUsers.filter((t) => t.is_active).length;
+        const activeTechnicians = technicianUsers.filter((tech: UiUserAccount) => tech.is_active).length;
 
         // For now, set basic stats - in a real implementation, you'd fetch these from the backend
         setStats({

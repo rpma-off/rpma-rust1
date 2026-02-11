@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { jest } from '@jest/globals';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MaterialForm } from '@/components/MaterialForm';
-import { MaterialType, UnitOfMeasure } from '@/lib/inventory';
+import { Material, MaterialType, UnitOfMeasure } from '@/lib/inventory';
 import * as inventoryOperations from '@/lib/ipc/domains/inventory';
 
 // Mock the inventory operations
@@ -177,6 +177,8 @@ const createTestMaterial = (overrides = {}) => ({
   is_discontinued: false,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
+  synced: true,
+  last_synced_at: null,
   ...overrides,
 });
 
@@ -204,12 +206,13 @@ describe('MaterialForm', () => {
     
     // Mock the useInventory hook
     (useInventory as jest.Mock).mockReturnValue({
-      createMaterial: jest.fn().mockResolvedValue(createTestMaterial()),
-      updateMaterial: jest.fn().mockResolvedValue(createTestMaterial()),
+      createMaterial: jest.fn<Promise<Material>, [unknown, string]>().mockResolvedValue(createTestMaterial() as Material),
+      updateMaterial: jest.fn<Promise<Material>, [string, unknown, string]>().mockResolvedValue(createTestMaterial() as Material),
     });
     
     // Mock the inventory operations
-    (inventoryOperations.materialOperations.get as jest.Mock).mockResolvedValue(createTestMaterial());
+    (inventoryOperations.materialOperations.get as jest.Mock<Promise<Material>, [string]>)
+      .mockResolvedValue(createTestMaterial() as Material);
   });
 
   const renderComponent = (material?: any) => {
@@ -219,6 +222,7 @@ describe('MaterialForm', () => {
           material={material} 
           onSuccess={mockOnSuccess} 
           onCancel={mockOnCancel} 
+          userId="test-user"
         />
       </QueryClientProvider>
     );
@@ -338,13 +342,12 @@ describe('MaterialForm', () => {
         handleSubmit: (fn: any) => (e: any) => {
           e?.preventDefault?.();
           // Simulate validation errors
-          const errors = {
+          return Promise.reject({
             sku: 'SKU is required',
             name: 'Name is required',
-          };
-          return Promise.reject(errors);
+          });
         },
-        formState: { errors },
+        formState: { errors: { sku: { message: 'SKU is required' }, name: { message: 'Name is required' } } },
         reset: jest.fn(),
         setValue: jest.fn(),
         watch: jest.fn(),
@@ -487,6 +490,7 @@ describe('MaterialForm', () => {
           material={createTestMaterial({ name: 'Material 2' })} 
           onSuccess={mockOnSuccess} 
           onCancel={mockOnCancel} 
+          userId="test-user"
         />
       </QueryClientProvider>
     );

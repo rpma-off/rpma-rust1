@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -121,7 +121,7 @@ const ReportIssueModal: React.FC<ReportIssueModalProps> = ({ task, open, onOpenC
           </div>
 
           <div className="text-sm text-muted-foreground">
-            <p>Ce signalement sera transmis Ã  l&apos;équipe de support pour résolution.</p>
+            <p>Ce signalement sera transmis à l&apos;équipe de support pour résolution.</p>
           </div>
 
           <div className="flex justify-end space-x-3 pt-4 border-t border-border">

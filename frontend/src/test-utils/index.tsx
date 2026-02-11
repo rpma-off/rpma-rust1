@@ -1,9 +1,8 @@
-import { render, RenderOptions } from '@testing-library/react';
+import { render, RenderOptions, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter } from 'react-router-dom';
+import userEvent from '@testing-library/user-event';
 import { AuthProvider } from '../contexts/AuthContext';
-import { ThemeProvider } from '../contexts/ThemeContext';
-import { NotificationProvider } from '../contexts/NotificationContext';
+import { ThemeProvider } from '@/components/theme-provider';
 import { mockIPC } from '@tauri-apps/api/mocks';
 
 // Default mock implementations
@@ -46,8 +45,7 @@ const defaultMocks = {
 // Type for custom render options
 interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
   queryClient?: QueryClient;
-  mocks?: Record<string, () => Promise<any>>;
-  initialRoute?: string;
+  mocks?: Record<string, (args?: unknown) => Promise<unknown>>;
 }
 
 // Helper function to render components with all necessary providers
@@ -61,12 +59,11 @@ export const renderWithProviders = (
       },
     }),
     mocks = {},
-    initialRoute = '/',
     ...renderOptions
   }: CustomRenderOptions = {}
 ) => {
   // Setup IPC mocks
-  const allMocks = { ...defaultMocks, ...mocks };
+  const allMocks: Record<string, (args?: unknown) => Promise<unknown>> = { ...defaultMocks, ...mocks };
   mockIPC((cmd, args) => {
     const mock = allMocks[cmd];
     if (mock) {
@@ -79,17 +76,13 @@ export const renderWithProviders = (
   // Wrapper component with all providers
   const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return (
-      <BrowserRouter>
-        <QueryClientProvider client={queryClient}>
-          <ThemeProvider>
-            <AuthProvider>
-              <NotificationProvider>
-                {children}
-              </NotificationProvider>
-            </AuthProvider>
-          </ThemeProvider>
-        </QueryClientProvider>
-      </BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider attribute="class" defaultTheme="light">
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
     );
   };
 
@@ -170,7 +163,7 @@ export const waitForAsync = () => new Promise(resolve => setTimeout(resolve, 0))
 
 // Helper to mock user permissions
 export const mockUserPermissions = (role: string = 'User') => {
-  mockIPC('get_session', () => Promise.resolve({
+  const sessionResponse = {
     success: true,
     data: {
       user: {
@@ -179,14 +172,25 @@ export const mockUserPermissions = (role: string = 'User') => {
         username: 'testuser',
         role,
         is_active: true,
-        permissions: role === 'Admin' 
+        permissions: role === 'Admin'
           ? ['read:all', 'write:all', 'delete:all']
           : ['read:own', 'write:own'],
       },
       token: 'test-token',
       expires_at: new Date(Date.now() + 3600000).toISOString(),
     },
-  }));
+  };
+
+  mockIPC((cmd, args) => {
+    if (cmd === 'get_session') {
+      return Promise.resolve(sessionResponse);
+    }
+    const mock = defaultMocks[cmd];
+    if (mock) {
+      return mock(args);
+    }
+    return Promise.reject(new Error(`No mock for ${cmd}`));
+  });
 };
 
 // Helper for testing form validation
@@ -218,6 +222,8 @@ export const testTableSorting = async (
   initialData: any[]
 ) => {
   const { getByText, rerender } = renderResult;
+  void initialData;
+  void rerender;
   
   // Click column header to sort
   const header = getByText(new RegExp(columnName, 'i'));
@@ -232,4 +238,5 @@ export const testTableSorting = async (
 
 // Export all helpers for easy importing
 export * from '@testing-library/react';
-export { userEvent } from '@testing-library/user-event';
+export { userEvent };
+export { fireEvent, waitFor };

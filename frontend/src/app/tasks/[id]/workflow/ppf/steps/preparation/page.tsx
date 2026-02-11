@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -362,7 +362,7 @@ export default function PreparationStepPage() {
                 <div className="space-y-3">
                   <Label htmlFor="temperature" className="flex items-center text-foreground font-medium">
                     <Thermometer className="h-4 w-4 mr-2 text-red-400" />
-                    Température (Â°C)
+                    Température (°C)
                   </Label>
                   <Input
                     id="temperature"
@@ -385,7 +385,7 @@ export default function PreparationStepPage() {
                   />
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-muted-foreground">
-                      Recommandé: 15-25Â°C
+                      Recommandé: 15-25°C
                     </p>
                     {environment.temperatureCelsius !== null && (
                       <span className={`text-xs px-2 py-0.5 rounded-full ${

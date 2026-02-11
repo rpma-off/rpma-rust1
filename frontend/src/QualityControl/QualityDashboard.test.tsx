@@ -6,7 +6,8 @@ import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
-import QualityDashboard from './QualityDashboard';
+import { invoke } from '@tauri-apps/api';
+import { QualityDashboard } from './QualityDashboard';
 
 // Mock the Tauri API
 jest.mock('@tauri-apps/api', () => ({
@@ -46,10 +47,9 @@ describe('QualityDashboard', () => {
   });
 
   it('renders quality dashboard header', async () => {
-    const { invoke } = require('@tauri-apps/api');
-    invoke.mockResolvedValue({ data: mockQualityData });
+    (invoke as jest.Mock).mockResolvedValue({ data: mockQualityData });
 
-    render(<QualityDashboard />);
+    render(<QualityDashboard interventionId="intervention-1" />);
     
     await waitFor(() => {
       expect(screen.getByText(/Quality Dashboard/i)).toBeInTheDocument();
@@ -58,10 +58,9 @@ describe('QualityDashboard', () => {
   });
 
   it('displays quality metrics', async () => {
-    const { invoke } = require('@tauri-apps/api');
-    invoke.mockResolvedValue({ data: mockQualityData });
+    (invoke as jest.Mock).mockResolvedValue({ data: mockQualityData });
 
-    render(<QualityDashboard />);
+    render(<QualityDashboard interventionId="intervention-1" />);
     
     await waitFor(() => {
       expect(screen.getByText(/Average Quality Score/i)).toBeInTheDocument();
@@ -72,10 +71,9 @@ describe('QualityDashboard', () => {
   });
 
   it('shows quality score distribution', async () => {
-    const { invoke } = require('@tauri-apps/api');
-    invoke.mockResolvedValue({ data: mockQualityData });
+    (invoke as jest.Mock).mockResolvedValue({ data: mockQualityData });
 
-    render(<QualityDashboard />);
+    render(<QualityDashboard interventionId="intervention-1" />);
     
     await waitFor(() => {
       expect(screen.getByText(/Quality Score Distribution/i)).toBeInTheDocument();
@@ -86,10 +84,9 @@ describe('QualityDashboard', () => {
   });
 
   it('filters quality data by date range', async () => {
-    const { invoke } = require('@tauri-apps/api');
-    invoke.mockResolvedValue({ data: mockQualityData });
+    (invoke as jest.Mock).mockResolvedValue({ data: mockQualityData });
 
-    render(<QualityDashboard />);
+    render(<QualityDashboard interventionId="intervention-1" />);
     
     await waitFor(() => {
       expect(screen.getByLabelText(/Start Date/i)).toBeInTheDocument();
@@ -114,10 +111,9 @@ describe('QualityDashboard', () => {
   });
 
   it('filters by technician', async () => {
-    const { invoke } = require('@tauri-apps/api');
-    invoke.mockResolvedValue({ data: mockQualityData });
+    (invoke as jest.Mock).mockResolvedValue({ data: mockQualityData });
 
-    render(<QualityDashboard />);
+    render(<QualityDashboard interventionId="intervention-1" />);
     
     await waitFor(() => {
       expect(screen.getByLabelText(/Technician/i)).toBeInTheDocument();
@@ -141,10 +137,9 @@ describe('QualityDashboard', () => {
   });
 
   it('displays detailed quality report cards', async () => {
-    const { invoke } = require('@tauri-apps/api');
-    invoke.mockResolvedValue({ data: mockQualityData });
+    (invoke as jest.Mock).mockResolvedValue({ data: mockQualityData });
 
-    render(<QualityDashboard />);
+    render(<QualityDashboard interventionId="intervention-1" />);
     
     await waitFor(() => {
       expect(screen.getByText(/Excellent work/i)).toBeInTheDocument();
@@ -155,10 +150,9 @@ describe('QualityDashboard', () => {
   });
 
   it('shows quality trend chart', async () => {
-    const { invoke } = require('@tauri-apps/api');
-    invoke.mockResolvedValue({ data: mockQualityData });
+    (invoke as jest.Mock).mockResolvedValue({ data: mockQualityData });
 
-    render(<QualityDashboard />);
+    render(<QualityDashboard interventionId="intervention-1" />);
     
     await waitFor(() => {
       expect(screen.getByText(/Quality Trend/i)).toBeInTheDocument();
@@ -167,10 +161,9 @@ describe('QualityDashboard', () => {
   });
 
   it('allows exporting quality reports', async () => {
-    const { invoke } = require('@tauri-apps/api');
-    invoke.mockResolvedValue({ data: mockQualityData });
+    (invoke as jest.Mock).mockResolvedValue({ data: mockQualityData });
 
-    render(<QualityDashboard />);
+    render(<QualityDashboard interventionId="intervention-1" />);
     
     const exportButton = screen.getByRole('button', { name: /Export Report/i });
     await userEvent.click(exportButton);
@@ -194,10 +187,9 @@ describe('QualityDashboard', () => {
   });
 
   it('handles no quality data gracefully', async () => {
-    const { invoke } = require('@tauri-apps/api');
-    invoke.mockResolvedValue({ data: [] });
+    (invoke as jest.Mock).mockResolvedValue({ data: [] });
 
-    render(<QualityDashboard />);
+    render(<QualityDashboard interventionId="intervention-1" />);
     
     await waitFor(() => {
       expect(screen.getByText(/No quality data available/i)).toBeInTheDocument();
@@ -221,10 +213,9 @@ describe('QualityDashboard', () => {
       },
     ];
     
-    const { invoke } = require('@tauri-apps/api');
-    invoke.mockResolvedValue({ data: lowQualityData });
+    (invoke as jest.Mock).mockResolvedValue({ data: lowQualityData });
 
-    render(<QualityDashboard />);
+    render(<QualityDashboard interventionId="intervention-1" />);
     
     await waitFor(() => {
       expect(screen.getByText(/⚠️ Quality Alert/i)).toBeInTheDocument();
@@ -234,10 +225,9 @@ describe('QualityDashboard', () => {
   });
 
   it('allows drilling down to individual quality checks', async () => {
-    const { invoke } = require('@tauri-apps/api');
-    invoke.mockResolvedValue({ data: mockQualityData });
+    (invoke as jest.Mock).mockResolvedValue({ data: mockQualityData });
 
-    render(<QualityDashboard />);
+    render(<QualityDashboard interventionId="intervention-1" />);
     
     await waitFor(() => {
       const viewDetailsButton = screen.getAllByRole('button', { name: /View Details/i });
@@ -255,10 +245,9 @@ describe('QualityDashboard', () => {
   });
 
   it('calculates quality metrics correctly', async () => {
-    const { invoke } = require('@tauri-apps/api');
-    invoke.mockResolvedValue({ data: mockQualityData });
+    (invoke as jest.Mock).mockResolvedValue({ data: mockQualityData });
 
-    render(<QualityDashboard />);
+    render(<QualityDashboard interventionId="intervention-1" />);
     
     await waitFor(() => {
       // Check if metrics are calculated correctly

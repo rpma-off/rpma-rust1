@@ -1,12 +1,11 @@
 "use client"
 
 import React from 'react';
+import type { FallbackProps } from 'react-error-boundary';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from './button';
 
-interface ErrorFallbackProps {
-  error: Error;
-  resetErrorBoundary: () => void;
+interface ErrorFallbackProps extends FallbackProps {
   className?: string;
 }
 
@@ -18,6 +17,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({
   resetErrorBoundary,
   className = '',
 }) => {
+  const message = error instanceof Error ? error.message : String(error ?? '');
   return (
     <div
       className={`p-4 rounded-lg bg-red-50 border border-red-200 ${className}`}
@@ -32,7 +32,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({
             Une erreur est survenue
           </h3>
           <div className="mt-2 text-sm text-red-700">
-            <p>{error.message || 'Une erreur inattendue s\'est produite.'}</p>
+            <p>{message || 'Une erreur inattendue s\'est produite.'}</p>
           </div>
           <div className="mt-4">
             <Button

@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -76,7 +76,7 @@ const SendMessageModal: React.FC<SendMessageModalProps> = ({ task, open, onOpenC
               </SelectTrigger>
               <SelectContent className="bg-muted border-border">
                 <SelectItem value="general" className="text-foreground hover:bg-border">Général</SelectItem>
-                <SelectItem value="update" className="text-foreground hover:bg-border">Mise Ã  jour</SelectItem>
+                <SelectItem value="update" className="text-foreground hover:bg-border">Mise à jour</SelectItem>
                 <SelectItem value="urgent" className="text-foreground hover:bg-border">Urgent</SelectItem>
                 <SelectItem value="question" className="text-foreground hover:bg-border">Question</SelectItem>
                 <SelectItem value="confirmation" className="text-foreground hover:bg-border">Confirmation</SelectItem>
@@ -98,7 +98,7 @@ const SendMessageModal: React.FC<SendMessageModalProps> = ({ task, open, onOpenC
           </div>
 
           <div className="text-sm text-muted-foreground">
-            <p>Ce message sera associé Ã  la tâche #{task.task_number}</p>
+            <p>Ce message sera associé à la tâche #{task.task_number}</p>
             {task.customer_name && (
               <p>Destinataire: {task.customer_name}</p>
             )}
