@@ -398,3 +398,8 @@ batchedUpdates @ react-dom.development.js:28844
 dispatchEventForPluginEventSystem @ react-dom.development.js:32373
 dispatchEvent @ react-dom.development.js:30141
 dispatchDiscreteEvent @ react-dom.development.js:30112
+
+2026-02-11T16:41:48.851374Z ERROR ThreadId(17) rpma_log{correlation_id=finalize-cmd user_id="a2975c76-eeda-41f8-9efe-d0741c9785a5" domain=Task operation="Attempted to finalize intervention with incomplete manda
+tory steps"}: main::logging: src-tauri\src\logging\mod.rs:183: {"context_data":{"completed_mandatory":0,"incomplete_steps":[1,2,3],"intervention_id":"f2f299a7-1acc-4c89-a9dc-3ae7c0023c3f","total_mandatory":3},"
+correlation_id":"finalize-cmd","domain":"Task","error":null,"layer":"Backend","metadata":null,"operation":"Attempted to finalize intervention with incomplete mandatory steps","severity":"Error","user_id":"a2975
+c76-eeda-41f8-9efe-d0741c9785a5"}
