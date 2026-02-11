@@ -4,10 +4,71 @@
 //! communication between services. Events are immutable facts about things
 //! that have happened in the system.
 
-pub use crate::services::event_bus::DomainEvent;
+pub use crate::services::event_system::DomainEvent;
 
 /// Re-export the event factory for convenient access
 pub use crate::services::event_bus::event_factory;
+use chrono::{DateTime, Utc};
+
+impl DomainEvent {
+    /// Get the event type name as a string
+    pub fn event_type(&self) -> &'static str {
+        match self {
+            DomainEvent::TaskCreated { .. } => "TaskCreated",
+            DomainEvent::TaskUpdated { .. } => "TaskUpdated",
+            DomainEvent::TaskAssigned { .. } => "TaskAssigned",
+            DomainEvent::TaskStatusChanged { .. } => "TaskStatusChanged",
+            DomainEvent::TaskCompleted { .. } => "TaskCompleted",
+            DomainEvent::ClientCreated { .. } => "ClientCreated",
+            DomainEvent::ClientUpdated { .. } => "ClientUpdated",
+            DomainEvent::ClientDeactivated { .. } => "ClientDeactivated",
+            DomainEvent::InterventionCreated { .. } => "InterventionCreated",
+            DomainEvent::InterventionStarted { .. } => "InterventionStarted",
+            DomainEvent::InterventionStepStarted { .. } => "InterventionStepStarted",
+            DomainEvent::InterventionStepCompleted { .. } => "InterventionStepCompleted",
+            DomainEvent::InterventionCompleted { .. } => "InterventionCompleted",
+            DomainEvent::InterventionCancelled { .. } => "InterventionCancelled",
+            DomainEvent::UserCreated { .. } => "UserCreated",
+            DomainEvent::UserUpdated { .. } => "UserUpdated",
+            DomainEvent::UserLoggedIn { .. } => "UserLoggedIn",
+            DomainEvent::UserLoggedOut { .. } => "UserLoggedOut",
+            DomainEvent::AuthenticationFailed { .. } => "AuthenticationFailed",
+            DomainEvent::AuthenticationSuccess { .. } => "AuthenticationSuccess",
+            DomainEvent::SystemError { .. } => "SystemError",
+            DomainEvent::SystemMaintenance { .. } => "SystemMaintenance",
+            DomainEvent::PerformanceAlert { .. } => "PerformanceAlert",
+        }
+    }
+
+    /// Get the timestamp of the event
+    pub fn timestamp(&self) -> DateTime<Utc> {
+        match self {
+            DomainEvent::TaskCreated { timestamp, .. } => *timestamp,
+            DomainEvent::TaskUpdated { timestamp, .. } => *timestamp,
+            DomainEvent::TaskAssigned { timestamp, .. } => *timestamp,
+            DomainEvent::TaskStatusChanged { timestamp, .. } => *timestamp,
+            DomainEvent::TaskCompleted { timestamp, .. } => *timestamp,
+            DomainEvent::ClientCreated { timestamp, .. } => *timestamp,
+            DomainEvent::ClientUpdated { timestamp, .. } => *timestamp,
+            DomainEvent::ClientDeactivated { timestamp, .. } => *timestamp,
+            DomainEvent::InterventionCreated { timestamp, .. } => *timestamp,
+            DomainEvent::InterventionStarted { timestamp, .. } => *timestamp,
+            DomainEvent::InterventionStepStarted { timestamp, .. } => *timestamp,
+            DomainEvent::InterventionStepCompleted { timestamp, .. } => *timestamp,
+            DomainEvent::InterventionCompleted { timestamp, .. } => *timestamp,
+            DomainEvent::InterventionCancelled { timestamp, .. } => *timestamp,
+            DomainEvent::UserCreated { timestamp, .. } => *timestamp,
+            DomainEvent::UserUpdated { timestamp, .. } => *timestamp,
+            DomainEvent::UserLoggedIn { timestamp, .. } => *timestamp,
+            DomainEvent::UserLoggedOut { timestamp, .. } => *timestamp,
+            DomainEvent::AuthenticationFailed { timestamp, .. } => *timestamp,
+            DomainEvent::AuthenticationSuccess { timestamp, .. } => *timestamp,
+            DomainEvent::SystemError { timestamp, .. } => *timestamp,
+            DomainEvent::SystemMaintenance { timestamp, .. } => *timestamp,
+            DomainEvent::PerformanceAlert { timestamp, .. } => *timestamp,
+        }
+    }
+}
 
 /// Event metadata for additional context
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]

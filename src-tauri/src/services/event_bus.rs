@@ -4,101 +4,11 @@
 //! Thread-safe with Arc<Mutex<>> for handler registration.
 
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use chrono::Utc;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-/// Domain event types for system-wide communication
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type")]
-pub enum DomainEvent {
-    /// Task created event
-    TaskCreated {
-        task_id: String,
-        title: String,
-        assigned_to: Option<String>,
-        timestamp: DateTime<Utc>,
-    },
-
-    /// Task updated event
-    TaskUpdated {
-        task_id: String,
-        changes: Vec<String>,
-        timestamp: DateTime<Utc>,
-    },
-
-    /// Task status changed event
-    TaskStatusChanged {
-        task_id: String,
-        old_status: String,
-        new_status: String,
-        timestamp: DateTime<Utc>,
-    },
-
-    /// Task assigned event
-    TaskAssigned {
-        task_id: String,
-        assigned_to: String,
-        timestamp: DateTime<Utc>,
-    },
-
-    /// Authentication failed event
-    AuthenticationFailed {
-        user_id: Option<String>,
-        reason: String,
-        timestamp: DateTime<Utc>,
-    },
-
-    /// Authentication success event
-    AuthenticationSuccess {
-        user_id: String,
-        timestamp: DateTime<Utc>,
-    },
-
-    /// Intervention started event
-    InterventionStarted {
-        intervention_id: String,
-        task_id: String,
-        timestamp: DateTime<Utc>,
-    },
-
-    /// Intervention completed event
-    InterventionCompleted {
-        intervention_id: String,
-        timestamp: DateTime<Utc>,
-    },
-}
-
-impl DomainEvent {
-    /// Get the event type name as a string
-    pub fn event_type(&self) -> &'static str {
-        match self {
-            DomainEvent::TaskCreated { .. } => "TaskCreated",
-            DomainEvent::TaskUpdated { .. } => "TaskUpdated",
-            DomainEvent::TaskStatusChanged { .. } => "TaskStatusChanged",
-            DomainEvent::TaskAssigned { .. } => "TaskAssigned",
-            DomainEvent::AuthenticationFailed { .. } => "AuthenticationFailed",
-            DomainEvent::AuthenticationSuccess { .. } => "AuthenticationSuccess",
-            DomainEvent::InterventionStarted { .. } => "InterventionStarted",
-            DomainEvent::InterventionCompleted { .. } => "InterventionCompleted",
-        }
-    }
-
-    /// Get the timestamp of the event
-    pub fn timestamp(&self) -> DateTime<Utc> {
-        match self {
-            DomainEvent::TaskCreated { timestamp, .. } => *timestamp,
-            DomainEvent::TaskUpdated { timestamp, .. } => *timestamp,
-            DomainEvent::TaskStatusChanged { timestamp, .. } => *timestamp,
-            DomainEvent::TaskAssigned { timestamp, .. } => *timestamp,
-            DomainEvent::AuthenticationFailed { timestamp, .. } => *timestamp,
-            DomainEvent::AuthenticationSuccess { timestamp, .. } => *timestamp,
-            DomainEvent::InterventionStarted { timestamp, .. } => *timestamp,
-            DomainEvent::InterventionCompleted { timestamp, .. } => *timestamp,
-        }
-    }
-}
+use crate::services::domain_event::DomainEvent;
 
 /// Event handler trait for subscribing to domain events
 #[async_trait]
@@ -141,14 +51,15 @@ impl InMemoryEventBus {
 
     /// Publish an event to all registered handlers
     pub async fn publish(&self, event: DomainEvent) -> Result<(), String> {
-        let handlers = self.handlers.lock().unwrap();
         let event_type = event.event_type();
+        let handlers = {
+            let handlers = self.handlers.lock().unwrap();
+            handlers.get(event_type).cloned().unwrap_or_default()
+        };
 
-        if let Some(event_handlers) = handlers.get(event_type) {
-            for handler in event_handlers {
-                if let Err(e) = handler.handle(&event).await {
-                    tracing::error!("Event handler failed for {}: {}", event_type, e);
-                }
+        for handler in handlers {
+            if let Err(e) = handler.handle(&event).await {
+                tracing::error!("Event handler failed for {}: {}", event_type, e);
             }
         }
 
@@ -198,6 +109,7 @@ pub trait EventPublisher: Send + Sync {
 /// Helper function to create domain events with current timestamp
 pub mod event_factory {
     use super::*;
+    use uuid::Uuid;
 
     pub fn task_created(
         task_id: String,
@@ -205,18 +117,26 @@ pub mod event_factory {
         assigned_to: Option<String>,
     ) -> DomainEvent {
         DomainEvent::TaskCreated {
+            id: Uuid::new_v4().to_string(),
             task_id,
+            task_number: task_id.clone(),
             title,
-            assigned_to,
+            user_id: assigned_to.unwrap_or_else(|| "system".to_string()),
             timestamp: Utc::now(),
+            metadata: None,
         }
     }
 
     pub fn task_updated(task_id: String, changes: Vec<String>) -> DomainEvent {
         DomainEvent::TaskUpdated {
+            id: Uuid::new_v4().to_string(),
             task_id,
-            changes,
+            previous_state: None,
+            new_state: None,
+            changed_fields: changes,
+            user_id: "system".to_string(),
             timestamp: Utc::now(),
+            metadata: None,
         }
     }
 
@@ -226,48 +146,70 @@ pub mod event_factory {
         new_status: String,
     ) -> DomainEvent {
         DomainEvent::TaskStatusChanged {
+            id: Uuid::new_v4().to_string(),
             task_id,
             old_status,
             new_status,
+            user_id: "system".to_string(),
             timestamp: Utc::now(),
+            metadata: None,
         }
     }
 
     pub fn task_assigned(task_id: String, assigned_to: String) -> DomainEvent {
         DomainEvent::TaskAssigned {
+            id: Uuid::new_v4().to_string(),
             task_id,
-            assigned_to,
+            technician_id: assigned_to,
+            assigned_by: "system".to_string(),
+            assigned_at: Utc::now(),
             timestamp: Utc::now(),
+            metadata: None,
         }
     }
 
     pub fn authentication_failed(user_id: Option<String>, reason: String) -> DomainEvent {
         DomainEvent::AuthenticationFailed {
+            id: Uuid::new_v4().to_string(),
             user_id,
             reason,
             timestamp: Utc::now(),
+            metadata: None,
         }
     }
 
     pub fn authentication_success(user_id: String) -> DomainEvent {
         DomainEvent::AuthenticationSuccess {
+            id: Uuid::new_v4().to_string(),
             user_id,
             timestamp: Utc::now(),
+            metadata: None,
         }
     }
 
     pub fn intervention_started(intervention_id: String, task_id: String) -> DomainEvent {
         DomainEvent::InterventionStarted {
+            id: Uuid::new_v4().to_string(),
             intervention_id,
             task_id,
+            started_by: "system".to_string(),
+            started_at: Utc::now(),
             timestamp: Utc::now(),
+            metadata: None,
         }
     }
 
     pub fn intervention_completed(intervention_id: String) -> DomainEvent {
         DomainEvent::InterventionCompleted {
+            id: Uuid::new_v4().to_string(),
             intervention_id,
+            completed_by: "system".to_string(),
+            completed_at: Utc::now(),
+            quality_score: None,
+            customer_satisfaction: None,
+            actual_duration: None,
             timestamp: Utc::now(),
+            metadata: None,
         }
     }
 }
