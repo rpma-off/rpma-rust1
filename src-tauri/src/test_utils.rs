@@ -11,6 +11,7 @@ use crate::models::step::*;
 use crate::models::task::*;
 
 use chrono::Utc;
+use rusqlite::params;
 use std::sync::Arc;
 use tempfile::TempDir;
 
@@ -37,6 +38,26 @@ impl TestDatabase {
         // Apply all migrations
         let latest_version = crate::db::Database::get_latest_migration_version();
         db.migrate(latest_version)?;
+
+        let now = Utc::now().timestamp_millis();
+        db.execute(
+            r#"
+            INSERT OR IGNORE INTO users
+            (id, email, username, password_hash, full_name, role, is_active, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            "#,
+            params![
+                "test_user",
+                "test_user@example.com",
+                "test_user",
+                "test_password_hash",
+                "Test User",
+                "technician",
+                1,
+                now,
+                now
+            ],
+        )?;
 
         Ok(TestDatabase { temp_dir, db })
     }
