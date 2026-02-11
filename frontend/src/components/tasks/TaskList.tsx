@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Button } from '@/components/ui/button';
@@ -50,11 +50,20 @@ export function TaskList() {
     autoFetch: true
   });
 
+  const handleFilterChange = useCallback((newFilters: typeof filters) => {
+    setFilters(newFilters);
+    setTasksFilters({
+      status: newFilters.status !== 'all' ? newFilters.status as TaskStatus : undefined,
+      assignedTo: newFilters.technicianId || undefined,
+      search: newFilters.ppfZone ? `ppf_zones:${newFilters.ppfZone}` : undefined,
+    });
+  }, [setTasksFilters]);
+
   const virtualizer = useVirtualizer({
     count: tasks?.length || 0,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 60, // Estimated row height
-    overscan: 5,
+    overscan: 10,
   });
 
   if (isLoading) {
@@ -104,14 +113,7 @@ export function TaskList() {
 
         <TaskFilters
           filters={filters}
-          onFilterChange={(newFilters) => {
-            setFilters(newFilters);
-            setTasksFilters({
-              status: newFilters.status !== 'all' ? newFilters.status as TaskStatus : undefined,
-              assignedTo: newFilters.technicianId || undefined,
-              search: newFilters.ppfZone ? `ppf_zones:${newFilters.ppfZone}` : undefined,
-            });
-          }}
+          onFilterChange={handleFilterChange}
         />
 
       <Card>

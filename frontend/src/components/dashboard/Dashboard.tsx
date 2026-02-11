@@ -170,18 +170,37 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   // Custom hooks for optimized computations
   const dashboardStats = useMemo<DashboardStats>(() => {
-    const total = tasks.length;
-    const completed = tasks.filter(t => t.status === 'completed').length;
-    const inProgress = tasks.filter(t => t.status === 'in_progress').length;
-    const pending = tasks.filter(t => t.status === 'scheduled').length;
-    
+    const baseStats = tasks.reduce((acc, task) => {
+      acc.total += 1;
+      if (task.status === 'completed') {
+        acc.completed += 1;
+      } else if (task.status === 'in_progress') {
+        acc.inProgress += 1;
+      } else if (task.status === 'scheduled') {
+        acc.pending += 1;
+      }
+      if (task.status === 'completed' && typeof task.duration === 'number') {
+        acc.completedDuration += task.duration;
+        acc.completedWithDuration += 1;
+      }
+      return acc;
+    }, {
+      total: 0,
+      completed: 0,
+      inProgress: 0,
+      pending: 0,
+      completedDuration: 0,
+      completedWithDuration: 0
+    });
+
+    const { total, completed, inProgress, pending } = baseStats;
+
     // Calculate completion rate
     const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
-    
+
     // Calculate average completion time from task data
-    const completedTasksWithDuration = tasks.filter(t => t.status === 'completed' && t.duration);
-    const averageCompletionTime = completedTasksWithDuration.length > 0
-      ? completedTasksWithDuration.reduce((sum, t) => sum + (typeof t.duration === 'number' ? t.duration : 0), 0) / completedTasksWithDuration.length
+    const averageCompletionTime = baseStats.completedWithDuration > 0
+      ? baseStats.completedDuration / baseStats.completedWithDuration
       : 2.5; // fallback to reasonable default
 
     // Calculate efficiency rate
@@ -360,7 +379,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }
 
     // Apply sorting
-    filtered.sort((a, b) => {
+    const sorted = [...filtered];
+    sorted.sort((a, b) => {
       const aValue = a[currentSortBy as keyof DashboardTask];
       const bValue = b[currentSortBy as keyof DashboardTask];
       
@@ -376,7 +396,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       }
     });
 
-    return filtered;
+    return sorted;
   }, [tasks, searchTerm, activeStatusFilter, activePriorityFilter, selectedTechnicianFilter, currentSortBy, currentSortOrder]);
 
   // Event handlers

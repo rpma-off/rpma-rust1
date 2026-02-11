@@ -68,6 +68,17 @@ export function useInterventionData(taskId: string) {
 
         if (!intervention) return null;
 
+        const existingSteps = Array.isArray((intervention as { steps?: InterventionStep[] }).steps)
+          ? (intervention as { steps?: InterventionStep[] }).steps
+          : null;
+
+        if (existingSteps) {
+          return {
+            ...intervention,
+            steps: existingSteps
+          };
+        }
+
         // Get steps data for this intervention
         const stepsResult = await ipcClient.interventions.getProgress(intervention.id, session.token);
 
@@ -81,6 +92,7 @@ export function useInterventionData(taskId: string) {
       }
     },
     enabled: !!session?.token && !!taskId,
+    refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }

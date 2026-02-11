@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/compatibility';
 import { clientService } from '@/lib/services/entities/client.service';
@@ -16,6 +16,8 @@ import { PullToRefresh, FloatingActionButton } from '@/components/ui/mobile-comp
 import { EnhancedEmptyState } from '@/components/ui';
 import { ClientFilters as ClientFiltersComponent } from '@/components/navigation/ClientFilters';
 import { PageHeader, StatCard } from '@/components/ui/page-header';
+
+const MemoizedClientCard = memo(ClientCard);
 
 
 export default function ClientsPage() {
@@ -33,6 +35,27 @@ export default function ClientsPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Client filters are handled centrally in AppNavigation component
+
+  const clientStats = useMemo(() => {
+    return clients.reduce((acc, client) => {
+      acc.total += 1;
+      if ((client.tasks || []).length > 0) {
+        acc.withTasks += 1;
+      }
+      if (client.customer_type === 'individual') {
+        acc.individual += 1;
+      }
+      if (client.customer_type === 'business') {
+        acc.business += 1;
+      }
+      return acc;
+    }, {
+      total: 0,
+      withTasks: 0,
+      individual: 0,
+      business: 0
+    });
+  }, [clients]);
 
   // Load clients
   const loadClients = useCallback(async () => {
@@ -76,26 +99,26 @@ export default function ClientsPage() {
   }, [user, loadClients]);
 
   // Handle search
-  const handleSearch = (query: string) => {
+  const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
     setFilters(prev => ({ ...prev, page: 1 })); // Reset to first page
-  };
+  }, []);
 
   // Handle filter changes
-  const handleFilterChange = (newFilters: Partial<ClientFilters>) => {
+  const handleFilterChange = useCallback((newFilters: Partial<ClientFilters>) => {
     setFilters(prev => ({ ...prev, ...newFilters, page: 1 }));
-  };
+  }, []);
 
   // Handle client actions
-  const handleClientSelect = (client: Client | ClientWithTasks) => {
+  const handleClientSelect = useCallback((client: Client | ClientWithTasks) => {
     router.push(`/clients/${client.id}`);
-  };
+  }, [router]);
 
-  const handleClientEdit = (client: Client | ClientWithTasks) => {
+  const handleClientEdit = useCallback((client: Client | ClientWithTasks) => {
     router.push(`/clients/${client.id}/edit`);
-  };
+  }, [router]);
 
-  const handleClientDelete = async (client: Client | ClientWithTasks) => {
+  const handleClientDelete = useCallback(async (client: Client | ClientWithTasks) => {
     if (!confirm(`Êtes-vous sûr de vouloir supprimer ${client.name} ? Cette action est irréversible.`)) {
       return;
     }
@@ -118,7 +141,11 @@ export default function ClientsPage() {
       setError('Une erreur inattendue est survenue lors de la suppression');
       console.error('Error deleting client:', err);
     }
-  };
+  }, [loadClients, user?.id, user?.token]);
+
+  const handleClientCreateTask = useCallback((client: Client | ClientWithTasks) => {
+    router.push(`/tasks/new?clientId=${client.id}`);
+  }, [router]);
 
   // Handle pull to refresh
   const handleRefresh = useCallback(async () => {
@@ -127,20 +154,7 @@ export default function ClientsPage() {
 
 
 
-  if (loading && clients.length === 0) {
-    return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="text-center">
-          <div className="relative mb-6">
-            <div className="w-16 h-16 border-4 border-muted rounded-full animate-spin border-t-accent mx-auto"></div>
-            <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full animate-ping border-t-accent mx-auto opacity-20"></div>
-          </div>
-          <h3 className="text-xl font-semibold text-foreground mb-2">Chargement des clients...</h3>
-          <p className="text-muted-foreground">Veuillez patienter pendant que nous récupérons vos données</p>
-        </div>
-      </div>
-    );
-  }
+  const isInitialLoading = loading && clients.length === 0;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-6">
@@ -161,25 +175,25 @@ export default function ClientsPage() {
         stats={
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <StatCard
-              value={clients.length}
+              value={clientStats.total}
               label="Total Clients"
               icon={Users}
               color="accent"
             />
             <StatCard
-              value={clients.filter(c => (c.tasks || []).length > 0).length}
+              value={clientStats.withTasks}
               label="Avec Tâches"
               icon={FileText}
               color="green"
             />
             <StatCard
-              value={clients.filter(c => c.customer_type === 'individual').length}
+              value={clientStats.individual}
               label="Particuliers"
               icon={User}
               color="blue"
             />
             <StatCard
-              value={clients.filter(c => c.customer_type === 'business').length}
+              value={clientStats.business}
               label="Entreprises"
               icon={Building}
               color="purple"
@@ -274,28 +288,35 @@ export default function ClientsPage() {
       {/* Clients List */}
       <PullToRefresh onRefresh={handleRefresh}>
         <div className="rpma-shell p-6">
-          {loading && clients.length === 0 ? (
+          {isInitialLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
                 <ClientCardSkeleton key={i} />
               ))}
             </div>
           ) : clients.length === 0 ? (
-            <div className="rpma-empty">
-              <SearchX />
-              <h3 className="text-lg font-semibold">No results found</h3>
-            </div>
+            <EnhancedEmptyState
+              title="Aucun client trouvé"
+              description="Aucun client ne correspond à votre recherche. Essayez d'ajuster les filtres ou créez un nouveau client."
+              icon={<SearchX className="h-6 w-6" />}
+              action={{
+                label: 'Ajouter un client',
+                onClick: () => router.push('/clients/new'),
+                icon: <Plus className="h-4 w-4" />
+              }}
+              variant="search"
+            />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {clients.map((client, index) => (
+              {clients.map((client) => (
                 <div key={client.id}>
-                  <ClientCard
+                  <MemoizedClientCard
                     client={client}
                     tasks={client.tasks || []}
                     onView={handleClientSelect}
                     onEdit={handleClientEdit}
                     onDelete={handleClientDelete}
-                    onCreateTask={() => router.push('/tasks/new?clientId=' + client.id)}
+                    onCreateTask={handleClientCreateTask}
                   />
                 </div>
               ))}
@@ -306,8 +327,8 @@ export default function ClientsPage() {
 
       {/* Loading overlay */}
       {loading && clients.length > 0 && (
-        <div className="fixed inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="rpma-shell p-6 shadow-lg">
+        <div className="fixed inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-none">
+          <div className="rpma-shell p-6 shadow-lg pointer-events-auto">
             <div className="flex items-center gap-4">
               <div className="relative">
                 <div className="w-8 h-8 border-3 border-[hsl(var(--rpma-border))] rounded-full animate-spin border-t-accent"></div>
