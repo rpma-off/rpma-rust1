@@ -214,7 +214,8 @@ pub async fn intervention_management(
             if !task_access
                 && !matches!(
                     session.role,
-                    crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+                    crate::models::auth::UserRole::Admin
+                        | crate::models::auth::UserRole::Supervisor
                 )
             {
                 return Err(AppError::Authorization(

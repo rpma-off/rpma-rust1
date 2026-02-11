@@ -57,9 +57,7 @@ pub enum InterventionProgressResponse {
     },
 }
 
-fn ensure_progress_permission(
-    session: &crate::models::auth::UserSession,
-) -> Result<(), AppError> {
+fn ensure_progress_permission(session: &crate::models::auth::UserSession) -> Result<(), AppError> {
     if !AuthMiddleware::has_permission(&session.role, &UserRole::Technician) {
         return Err(AppError::Authorization(
             "Insufficient permissions for intervention progress".to_string(),
@@ -281,7 +279,8 @@ pub async fn intervention_progress(
             if intervention.technician_id.as_ref() != Some(&session.user_id)
                 && !matches!(
                     session.role,
-                    crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+                    crate::models::auth::UserRole::Admin
+                        | crate::models::auth::UserRole::Supervisor
                 )
             {
                 return Err(AppError::Authorization(
@@ -355,7 +354,8 @@ pub async fn intervention_progress(
             if intervention.technician_id.as_ref() != Some(&session.user_id)
                 && !matches!(
                     session.role,
-                    crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+                    crate::models::auth::UserRole::Admin
+                        | crate::models::auth::UserRole::Supervisor
                 )
             {
                 return Err(AppError::Authorization(
@@ -403,7 +403,8 @@ pub async fn intervention_progress(
             if intervention.technician_id.as_ref() != Some(&session.user_id)
                 && !matches!(
                     session.role,
-                    crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+                    crate::models::auth::UserRole::Admin
+                        | crate::models::auth::UserRole::Supervisor
                 )
             {
                 return Err(AppError::Authorization(

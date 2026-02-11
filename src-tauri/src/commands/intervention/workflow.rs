@@ -77,9 +77,7 @@ pub struct FinalizeInterventionRequest {
     pub customer_comments: Option<String>,
 }
 
-fn ensure_workflow_permission(
-    session: &crate::models::auth::UserSession,
-) -> Result<(), AppError> {
+fn ensure_workflow_permission(session: &crate::models::auth::UserSession) -> Result<(), AppError> {
     if !AuthMiddleware::has_permission(&session.role, &UserRole::Technician) {
         return Err(AppError::Authorization(
             "Insufficient permissions for intervention workflow".to_string(),
