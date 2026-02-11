@@ -790,10 +790,16 @@ fn configure_linux_specific() {
 
 5. **Hasher les tokens au repos**
    ```rust
-   use sha2::{Digest, Sha256};
-   let token_hash = Sha256::digest(session.token.as_bytes());
+   use argon2::{Argon2, PasswordHasher, PasswordVerifier};
+   use password_hash::{PasswordHash, SaltString};
+   use rand_core::OsRng;
+
+   let salt = SaltString::generate(&mut OsRng);
+   let token_hash = Argon2::default()
+       .hash_password(session.token.as_bytes(), &salt)?
+       .to_string();
    // stocker token_hash en DB, garder le token en mémoire uniquement
-   // à la vérification : hasher le token entrant et comparer les hashes
+   // à la vérification : re-hasher puis verify_password(...) sur le hash stocké
    ```
 
 6. **Lazy-load des services lourds**
