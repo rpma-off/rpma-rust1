@@ -48,13 +48,14 @@ use rpma_ppf_intervention::models::{
         MaterialSummary, MaterialUsageReport, MetricValueType, OperationalIntelligenceReport,
         OverviewReport, PeakPeriod, PerformanceBenchmarks, PerformanceTrend,
         ProcessEfficiencyMetrics, QualityComplianceReport, QualityIssue, QualitySummary,
-        QualityTrend, ReportFilters, ReportMetadata, ReportRequest, ReportResponse, ReportStatus,
-        ReportType, ResourceUtilization, RetentionAnalysis, RevenueAnalysis, SearchFilters,
-        SearchResponse, SearchResult, SearchResults, SeasonalPattern, SeasonalReport, ServiceArea,
-        StatusCount, StepBottleneck, SupplierPerformance, TaskCompletionReport,
-        TaskCompletionSummary, TechnicianMetrics, TechnicianPerformance,
-        TechnicianPerformanceReport, TechnicianTaskData, TrendDirection, WeatherCorrelation,
-        WidgetPosition, WidgetSize, WidgetType, WorkflowRecommendation, WorkloadPeriod,
+        QualityTrend, ReportFilters, ReportMaterialConsumption, ReportMetadata, ReportRequest,
+        ReportResponse, ReportStatus, ReportType, ResourceUtilization, RetentionAnalysis,
+        RevenueAnalysis, SearchFilters, SearchResponse, SearchResult, SearchResults,
+        SeasonalPattern, SeasonalReport, ServiceArea, StatusCount, StepBottleneck,
+        SupplierPerformance, TaskCompletionReport, TaskCompletionSummary, TechnicianMetrics,
+        TechnicianPerformance, TechnicianPerformanceReport, TechnicianTaskData, TrendDirection,
+        WeatherCorrelation, WidgetPosition, WidgetSize, WidgetType, WorkflowRecommendation,
+        WorkloadPeriod,
     },
     settings::{
         AppSettings, AppearanceSettings, BackupSettings, DataManagementSettings, DatabaseSettings,
@@ -859,8 +860,8 @@ fn main() {
     );
     type_definitions.push_str("\n");
     type_definitions.push_str(
-        &MaterialConsumption::export_to_string()
-            .expect("Failed to export MaterialConsumption type"),
+        &ReportMaterialConsumption::export_to_string()
+            .expect("Failed to export ReportMaterialConsumption type"),
     );
     type_definitions.push_str("\n");
     type_definitions.push_str(
