@@ -787,7 +787,8 @@ fn configure_linux_specific() {
         AND dep.status != 'completed'
      )
    ```
-   - Variante : stocker `dependencies` en table de jointure ou utiliser JSON1 pour binder proprement.
+   - Note : `IN (?1, ?2, ...)` implique une génération SQL dynamique pour listes variables.
+   - Variante : stocker `dependencies` en table de jointure ou utiliser JSON1 (`json_each`) pour binder proprement.
 
 5. **Hasher les tokens au repos**
    ```rust
@@ -795,6 +796,7 @@ fn configure_linux_specific() {
    use sha2::Sha256;
 
    type HmacSha256 = Hmac<Sha256>;
+   // app_secret : clé secrète issue de la configuration sécurisée (env/keystore)
    let mut mac = HmacSha256::new_from_slice(app_secret.as_bytes())
        .map_err(|_| AppError::Configuration("Clé HMAC invalide".to_string()))?;
    mac.update(session.token.as_bytes());
