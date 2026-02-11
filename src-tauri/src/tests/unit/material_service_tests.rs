@@ -480,7 +480,7 @@ mod tests {
 
         match result.unwrap_err() {
             MaterialError::Validation(msg) => {
-                assert!(msg.contains("inactive"));
+                assert!(msg.contains("discontinued"));
             }
             _ => panic!("Expected Validation error"),
         }
@@ -1356,4 +1356,3 @@ mod tests {
         assert!(first_ids.intersection(&second_ids).count() == 0);
     }
 }
-
