@@ -108,8 +108,7 @@ const TaskRow = React.memo(({ task, start, size, onTaskClick }: TaskRowProps) =>
 ), (prev, next) => (
   prev.task.id === next.task.id &&
   prev.start === next.start &&
-  prev.size === next.size &&
-  prev.onTaskClick === next.onTaskClick
+  prev.size === next.size
 ));
 
 TaskRow.displayName = 'TaskRow';
