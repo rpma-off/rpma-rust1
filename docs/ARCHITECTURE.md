@@ -778,7 +778,7 @@ fn configure_linux_specific() {
 
 4. **Respecter les dépendances de sync**
    ```sql
-   SELECT *
+   SELECT id, entity_id, status, dependencies
    FROM sync_queue
    WHERE status = 'pending'
      AND NOT EXISTS (
@@ -794,7 +794,8 @@ fn configure_linux_specific() {
    use sha2::Sha256;
 
    type HmacSha256 = Hmac<Sha256>;
-   let mut mac = HmacSha256::new_from_slice(app_secret.as_bytes())?;
+   let mut mac = HmacSha256::new_from_slice(app_secret.as_bytes())
+       .expect("clé HMAC valide");
    mac.update(session.token.as_bytes());
    let token_hash = base64::engine::general_purpose::STANDARD.encode(mac.finalize().into_bytes());
    // stocker token_hash en DB, garder le token en mémoire uniquement
