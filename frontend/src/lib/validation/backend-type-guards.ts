@@ -47,6 +47,13 @@ const TaskPrioritySchema = z.enum(['low', 'medium', 'high', 'urgent']);
 export const CustomerTypeSchema = z.enum(['individual', 'business']);
 
 const SortOrderSchema = z.enum(['asc', 'desc']);
+const NumericLikeSchema = z.union([z.number(), z.bigint(), z.string()]);
+const PaginationInfoSchema = z.object({
+  page: z.number(),
+  limit: z.number(),
+  total: NumericLikeSchema,
+  total_pages: z.number(),
+});
 
 // Define TaskSchema first since ClientWithTasksSchema references it
 const TaskSchema = z.object({
@@ -157,10 +164,18 @@ export const ClientSchema = z.object({
   ),
 });
 
+const ClientStatisticsSchema = z.object({
+  total_clients: NumericLikeSchema,
+  individual_clients: NumericLikeSchema,
+  business_clients: NumericLikeSchema,
+  clients_with_tasks: NumericLikeSchema,
+  new_clients_this_month: NumericLikeSchema,
+});
+
 const ClientListResponseSchema = z.object({
   data: z.array(ClientSchema),
-  pagination: z.any(),
-  statistics: z.any().nullable(),
+  pagination: PaginationInfoSchema,
+  statistics: ClientStatisticsSchema.nullable(),
 });
 
 // Define TaskWithDetailsSchema as alias to TaskSchema (since it's referenced but not defined)
@@ -207,16 +222,9 @@ const ClientWithTasksSchema = z.object({
   tasks: z.array(TaskSchema).nullable(),
 });
 
-const ClientStatisticsSchema = z.object({
-  total_clients: z.number(),
-  active_clients: z.number(),
-  new_clients_this_month: z.number(),
-  top_clients_by_tasks: z.array(z.any()),
-});
-
 const TaskListResponseSchema = z.object({
   data: z.array(TaskWithDetailsSchema),
-  pagination: z.any(),
+  pagination: PaginationInfoSchema,
   statistics: z.any().nullable(),
 });
 
@@ -1353,8 +1361,8 @@ export function validateClientWithTasksList(data: unknown): data is Array<import
   return z.array(ClientWithTasksSchema).safeParse(data).success;
 }
 
-export function validateClientStatistics(data: unknown): data is import('@/lib/backend').ClientStatistics {
-  return ClientStatisticsSchema.safeParse(data).success;
+export function validateClientStatistics(data: unknown): import('@/lib/backend').ClientStatistics {
+  return ClientStatisticsSchema.parse(data);
 }
 
 export function validateTaskListResponse(data: unknown): data is import('@/lib/backend').TaskListResponse {
