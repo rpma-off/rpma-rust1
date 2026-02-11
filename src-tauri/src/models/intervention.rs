@@ -131,7 +131,7 @@ pub struct Intervention {
 
     // PPF Configuration - Box large collections to reduce stack size
     pub ppf_zones_config: Option<Vec<String>>,
-    #[ts(type = "JsonValue")]
+    #[ts(type = "JsonValue | null")]
     pub ppf_zones_extended: Option<serde_json::Value>,
     pub film_type: Option<FilmType>,
     pub film_brand: Option<String>,
@@ -168,13 +168,13 @@ pub struct Intervention {
     pub customer_comments: Option<String>,
 
     // Metadata - Box large JSON values
-    #[ts(type = "JsonValue")]
+    #[ts(type = "JsonValue | null")]
     pub metadata: Option<serde_json::Value>,
     pub notes: Option<String>,
     pub special_instructions: Option<String>,
 
     // Device - Box large JSON values
-    #[ts(type = "JsonValue")]
+    #[ts(type = "JsonValue | null")]
     pub device_info: Option<serde_json::Value>,
     pub app_version: Option<String>,
 

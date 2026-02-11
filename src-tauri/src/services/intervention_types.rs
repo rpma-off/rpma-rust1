@@ -83,7 +83,7 @@ pub struct SaveStepProgressResponse {
 #[derive(Deserialize, Debug, TS)]
 pub struct FinalizeInterventionRequest {
     pub intervention_id: String,
-    #[ts(type = "JsonValue")]
+    #[ts(type = "JsonValue | null")]
     pub collected_data: Option<serde_json::Value>,
     pub photos: Option<Vec<String>>,
     pub customer_satisfaction: Option<i32>,
