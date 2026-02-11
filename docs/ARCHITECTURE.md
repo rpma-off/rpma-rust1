@@ -736,7 +736,7 @@ fn configure_linux_specific() {
 ### ⚠️ Risques d’architecture, scalabilité et maintenabilité
 - **Événements dupliqués** : `services/event_bus.rs` et `services/event_system.rs` définissent tous deux un `DomainEvent` (structures différentes). Cela complexifie la maintenance et augmente le risque d’incohérence.
 - **Event bus verrouillé pendant des awaits** : `InMemoryEventBus::publish` conserve un `Mutex` tout en attendant `handler.handle`, ce qui peut bloquer d’autres publications et créer des risques de deadlock.
-- **Sync queue : statut sérialisé en JSON** mais filtré en SQL brut (`status = 'pending'` dans `sync/queue.rs`). La valeur stockée est `"pending"` (avec guillemets JSON), ce qui peut empêcher le dequeue.
+- **Sync queue : statut sérialisé en JSON** mais filtré en SQL brut (`status = 'pending'` dans `sync/queue.rs`). Côté Rust, `serde_json::to_string(SyncStatus::Pending)` produit `\"pending\"`, donc la valeur en base peut inclure des guillemets JSON et ne pas matcher le filtre.
 - **Dépendances de sync non appliquées** : le champ `dependencies` est stocké, mais aucun filtrage n’empêche l’exécution d’opérations dont les dépendances ne sont pas complétées.
 - **Tokens de session en clair** : `repositories/session_repository.rs` stocke `token`/`refresh_token` en texte brut. Risque élevé en cas d’exfiltration locale.
 - **Pool SQLite surdimensionné** : `db/connection.rs` fixe `max_connections = 100`, ce qui peut générer contention et surcharge sur un moteur mono-writer (WAL).
@@ -782,13 +782,13 @@ fn configure_linux_specific() {
    FROM sync_queue
    WHERE status = 'pending'
      AND NOT EXISTS (
-       SELECT 1 FROM sync_queue dep
-       WHERE dep.entity_id IN (?1, ?2 /* ... */)
-        AND dep.status != 'completed'
+       SELECT 1
+       FROM json_each(dependencies) dep
+       JOIN sync_queue q ON q.entity_id = dep.value
+       WHERE q.status != 'completed'
      )
    ```
-   - Note: `IN (?1, ?2, ...)` implique une génération SQL dynamique pour listes variables.
-   - Variante : stocker `dependencies` en table de jointure ou utiliser JSON1 (`json_each`) pour binder proprement.
+   - Variante : stocker `dependencies` en table de jointure si JSON1 n’est pas disponible.
 
 5. **Hasher les tokens au repos**
    ```rust
@@ -798,7 +798,7 @@ fn configure_linux_specific() {
    type HmacSha256 = Hmac<Sha256>;
    // app_secret : clé secrète issue de la configuration sécurisée (env/keystore)
    let mut mac = HmacSha256::new_from_slice(app_secret.as_bytes())
-       .map_err(|_| AppError::Configuration("Clé HMAC invalide".to_string()))?;
+       .map_err(|_| AppError::Configuration("Clé HMAC invalide".to_string()))?; // pseudo: adapter à l'erreur projet
    mac.update(session.token.as_bytes());
    let token_hash = base64::engine::general_purpose::STANDARD.encode(mac.finalize().into_bytes());
    // stocker token_hash en DB, garder le token en mémoire uniquement
