@@ -783,10 +783,11 @@ fn configure_linux_specific() {
    WHERE status = 'pending'
      AND NOT EXISTS (
        SELECT 1 FROM sync_queue dep
-       WHERE dep.entity_id IN (/* dependencies */)
-         AND dep.status != 'completed'
+       WHERE dep.entity_id IN (?1, ?2 /* ... */)
+        AND dep.status != 'completed'
      )
    ```
+   - Variante : stocker `dependencies` en table de jointure ou utiliser JSON1 pour binder proprement.
 
 5. **Hasher les tokens au repos**
    ```rust
@@ -795,7 +796,7 @@ fn configure_linux_specific() {
 
    type HmacSha256 = Hmac<Sha256>;
    let mut mac = HmacSha256::new_from_slice(app_secret.as_bytes())
-       .expect("clé HMAC valide");
+       .map_err(|_| AppError::Configuration("Clé HMAC invalide".to_string()))?;
    mac.update(session.token.as_bytes());
    let token_hash = base64::engine::general_purpose::STANDARD.encode(mac.finalize().into_bytes());
    // stocker token_hash en DB, garder le token en mémoire uniquement
