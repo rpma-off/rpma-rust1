@@ -6,9 +6,7 @@
 //! - Management operations
 
 use crate::authenticate;
-use crate::commands::auth_middleware::AuthMiddleware;
 use crate::commands::{ApiResponse, AppError, AppState};
-use crate::models::auth::UserRole;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
@@ -57,15 +55,6 @@ pub enum InterventionProgressResponse {
     },
 }
 
-fn ensure_progress_permission(session: &crate::models::auth::UserSession) -> Result<(), AppError> {
-    if !AuthMiddleware::has_permission(&session.role, &UserRole::Technician) {
-        return Err(AppError::Authorization(
-            "Insufficient permissions for intervention progress".to_string(),
-        ));
-    }
-    Ok(())
-}
-
 /// Get intervention progress information
 #[tauri::command]
 
@@ -77,7 +66,7 @@ pub async fn intervention_get_progress(
     info!("Getting progress for intervention: {}", intervention_id);
 
     let session = authenticate!(&session_token, &state);
-    ensure_progress_permission(&session)?;
+    super::ensure_intervention_permission(&session)?;
 
     // Check intervention access
     let intervention = state
@@ -153,7 +142,7 @@ pub async fn intervention_advance_step(
     );
 
     let session = authenticate!(&session_token, &state);
-    ensure_progress_permission(&session)?;
+    super::ensure_intervention_permission(&session)?;
 
     // Check intervention access
     let intervention = state
@@ -210,7 +199,7 @@ pub async fn intervention_save_step_progress(
     );
 
     let session = authenticate!(&session_token, &state);
-    ensure_progress_permission(&session)?;
+    super::ensure_intervention_permission(&session)?;
 
     // Check intervention access
     let intervention = state
@@ -263,7 +252,7 @@ pub async fn intervention_progress(
     info!("Processing intervention progress action");
 
     let session = authenticate!(&session_token, &state);
-    ensure_progress_permission(&session)?;
+    super::ensure_intervention_permission(&session)?;
 
     match action {
         InterventionProgressAction::Get { intervention_id } => {

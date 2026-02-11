@@ -35,6 +35,27 @@ impl WorkflowValidationService {
         current_step: &InterventionStep,
         logger: &RPMARequestLogger,
     ) -> InterventionResult<()> {
+        if current_step.intervention_id != intervention.id {
+            let mut error_context = std::collections::HashMap::new();
+            error_context.insert(
+                "intervention_id".to_string(),
+                serde_json::json!(intervention.id),
+            );
+            error_context.insert(
+                "step_intervention_id".to_string(),
+                serde_json::json!(current_step.intervention_id),
+            );
+            logger.error(
+                "Step does not belong to intervention",
+                None,
+                Some(error_context),
+            );
+            return Err(InterventionError::Workflow(format!(
+                "Step {} does not belong to intervention {}",
+                current_step.id, intervention.id
+            )));
+        }
+
         // Check intervention status
         if intervention.status != InterventionStatus::InProgress {
             let mut error_context = std::collections::HashMap::new();
@@ -54,27 +75,6 @@ impl WorkflowValidationService {
             return Err(InterventionError::Workflow(format!(
                 "Intervention is not in progress (status: {:?})",
                 intervention.status
-            )));
-        }
-
-        if current_step.intervention_id != intervention.id {
-            let mut error_context = std::collections::HashMap::new();
-            error_context.insert(
-                "intervention_id".to_string(),
-                serde_json::json!(intervention.id),
-            );
-            error_context.insert(
-                "step_intervention_id".to_string(),
-                serde_json::json!(current_step.intervention_id),
-            );
-            logger.error(
-                "Step does not belong to intervention",
-                None,
-                Some(error_context),
-            );
-            return Err(InterventionError::Workflow(format!(
-                "Step {} does not belong to intervention {}",
-                current_step.id, intervention.id
             )));
         }
 

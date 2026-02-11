@@ -7,9 +7,7 @@
 //! - Finalizing interventions
 
 use crate::authenticate;
-use crate::commands::auth_middleware::AuthMiddleware;
 use crate::commands::{ApiResponse, AppError, AppState};
-use crate::models::auth::UserRole;
 use chrono::Utc;
 use serde::Deserialize;
 
@@ -77,15 +75,6 @@ pub struct FinalizeInterventionRequest {
     pub customer_comments: Option<String>,
 }
 
-fn ensure_workflow_permission(session: &crate::models::auth::UserSession) -> Result<(), AppError> {
-    if !AuthMiddleware::has_permission(&session.role, &UserRole::Technician) {
-        return Err(AppError::Authorization(
-            "Insufficient permissions for intervention workflow".to_string(),
-        ));
-    }
-    Ok(())
-}
-
 /// Start a new intervention
 #[tauri::command]
 
@@ -97,7 +86,7 @@ pub async fn intervention_start(
     info!("Starting intervention for task: {}", request.task_id);
 
     let session = authenticate!(&session_token, &state);
-    ensure_workflow_permission(&session)?;
+    super::ensure_intervention_permission(&session)?;
 
     // Check if there's already an active intervention for this task
     match state
@@ -172,7 +161,7 @@ pub async fn intervention_update(
     info!("Updating intervention: {}", id);
 
     let session = authenticate!(&session_token, &state);
-    ensure_workflow_permission(&session)?;
+    super::ensure_intervention_permission(&session)?;
 
     state
         .intervention_service
@@ -195,7 +184,7 @@ pub async fn intervention_delete(
     info!("Deleting intervention: {}", id);
 
     let session = authenticate!(&session_token, &state);
-    ensure_workflow_permission(&session)?;
+    super::ensure_intervention_permission(&session)?;
 
     // Check permissions (only admin or assigned technician can delete)
     let intervention = state
@@ -240,7 +229,7 @@ pub async fn intervention_finalize(
     info!("Finalizing intervention: {}", request.intervention_id);
 
     let session = authenticate!(&session_token, &state);
-    ensure_workflow_permission(&session)?;
+    super::ensure_intervention_permission(&session)?;
 
     let finalize_data = crate::services::intervention_types::FinalizeInterventionRequest {
         intervention_id: request.intervention_id.clone(),
@@ -281,7 +270,7 @@ pub async fn intervention_workflow(
 
     match action {
         InterventionWorkflowAction::Start { data } => {
-            ensure_workflow_permission(&session)?;
+            super::ensure_intervention_permission(&session)?;
             info!("Starting intervention workflow for task: {}", data.task_id);
 
             // Check if there's already an active intervention for this task
@@ -418,7 +407,7 @@ pub async fn intervention_workflow(
         }
 
         InterventionWorkflowAction::Update { id, data } => {
-            ensure_workflow_permission(&session)?;
+            super::ensure_intervention_permission(&session)?;
             // Actually update the intervention with the provided data
             state
                 .intervention_service
@@ -434,7 +423,7 @@ pub async fn intervention_workflow(
         }
 
         InterventionWorkflowAction::Delete { id } => {
-            ensure_workflow_permission(&session)?;
+            super::ensure_intervention_permission(&session)?;
             state
                 .intervention_service
                 .delete_intervention(&id)
@@ -449,7 +438,7 @@ pub async fn intervention_workflow(
         }
 
         InterventionWorkflowAction::Finalize { data } => {
-            ensure_workflow_permission(&session)?;
+            super::ensure_intervention_permission(&session)?;
             let finalize_data = crate::services::intervention_types::FinalizeInterventionRequest {
                 intervention_id: data.intervention_id.clone(),
                 collected_data: None,

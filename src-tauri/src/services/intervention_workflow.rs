@@ -343,6 +343,7 @@ impl InterventionWorkflowService {
         let has_completion_data_provided = Self::has_completion_data(&request);
 
         if current_step.step_status == StepStatus::Pending && has_completion_data_provided {
+            // Steps must be started before completion data is accepted.
             return Err(InterventionError::Workflow(
                 "Step must be started before completing".to_string(),
             ));
@@ -591,6 +592,7 @@ impl InterventionWorkflowService {
         }
     }
 
+    /// Determine whether the request includes data that should complete a step.
     fn has_completion_data(request: &AdvanceStepRequest) -> bool {
         !matches!(
             request.collected_data,
