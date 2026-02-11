@@ -652,8 +652,7 @@ pub async fn user_crud(
                 ));
             }
             // Use UserService to change role
-            let user_service = crate::services::UserService::new(state.repositories.user.clone());
-            user_service
+            state.user_service
                 .change_role(&id, new_role, &current_user.user_id)
                 .await?;
             Ok(UserResponse::RoleChanged)
@@ -668,8 +667,7 @@ pub async fn user_crud(
                 return Err(AppError::Validation("You cannot ban yourself".to_string()));
             }
             // Use UserService to ban user
-            let user_service = crate::services::UserService::new(state.repositories.user.clone());
-            user_service.ban_user(&id, &current_user.user_id).await?;
+            state.user_service.ban_user(&id, &current_user.user_id).await?;
             Ok(UserResponse::UserBanned)
         }
         UserAction::Unban { id } => {
@@ -679,8 +677,7 @@ pub async fn user_crud(
                 ));
             }
             // Use UserService to unban user
-            let user_service = crate::services::UserService::new(state.repositories.user.clone());
-            user_service.unban_user(&id, &current_user.user_id).await?;
+            state.user_service.unban_user(&id, &current_user.user_id).await?;
             Ok(UserResponse::UserUnbanned)
         }
     }

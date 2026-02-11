@@ -9,37 +9,45 @@ use crate::services::task_validation::validate_status_transition;
 pub async fn task_transition_status(
     request: StatusTransitionRequest,
     state: AppState<'_>,
-) -> Result<Task, ApiError> {
-    let conn = state.db.get_connection().map_err(|e| ApiError {
-        message: e.to_string(),
-        code: "DATABASE_ERROR".to_string(),
-        details: None,
-    })?;
+) -> Result<Task, AppError> {
+    // Use TaskService to get current task
+    let task = state
+        .task_service
+        .get_task(&request.task_id)
+        .await
+        .map_err(|e| AppError::Database(format!("Failed to get task: {}", e)))?
+        .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
 
-    // Get current task status
-    let current_status: String = conn
-        .query_row(
-            "SELECT status FROM tasks WHERE id = ?1",
-            [&request.task_id],
-            |row| row.get(0),
-        )
-        .map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "TASK_NOT_FOUND".to_string(),
-            details: None,
+    // Validate status transition using TaskService
+    let current_status = TaskStatus::from_str(&task.status)
+        .ok_or_else(|| AppError::Validation("Unknown current status".to_string()))?;
+    
+    let new_status = TaskStatus::from_str(&request.new_status)
+        .ok_or_else(|| AppError::Validation("Unknown new status".to_string()))?;
+
+    state
+        .task_service
+        .validate_status_transition(&current_status, &new_status)
+        .map_err(|e| {
+            AppError::Validation(format!(
+                "Cannot transition from {} to {}: {}",
+                current_status.to_str(),
+                new_status.to_str(),
+                e
+            ))
         })?;
 
-    let current = TaskStatus::from_str(&current_status).ok_or_else(|| ApiError {
-        message: "Unknown current status".to_string(),
-        code: "INVALID_STATUS".to_string(),
-        details: None,
-    })?;
+    // Update task with new status
+    let update_request = UpdateTaskRequest {
+        status: Some(request.new_status.clone()),
+        ..Default::default()
+    };
 
-    let new = TaskStatus::from_str(&request.new_status).ok_or_else(|| ApiError {
-        message: "Unknown new status".to_string(),
-        code: "INVALID_STATUS".to_string(),
-        details: None,
-    })?;
+    let updated_task = state
+        .task_service
+        .update_task_async(&request.task_id, update_request)
+        .await
+        .map_err(|e| AppError::Database(format!("Failed to update task status: {}", e)))?;
 
     // Validate transition
     validate_status_transition(&current, &new).map_err(|message| ApiError {
@@ -48,48 +56,6 @@ pub async fn task_transition_status(
         details: None,
     })?;
 
-    // Update status
-    conn.execute(
-        "UPDATE tasks SET status = ?1, updated_at = ?2 WHERE id = ?3",
-        rusqlite::params![
-            request.new_status,
-            chrono::Utc::now().timestamp(),
-            request.task_id
-        ],
-    )
-    .map_err(|e| ApiError {
-        message: e.to_string(),
-        code: "UPDATE_ERROR".to_string(),
-        details: None,
-    })?;
-
-    // Log transition in history (if table exists)
-    conn.execute(
-        "INSERT OR IGNORE INTO task_history (task_id, old_status, new_status, reason, changed_at)
-         VALUES (?1, ?2, ?3, ?4, ?5)",
-        rusqlite::params![
-            request.task_id,
-            current_status,
-            request.new_status,
-            request.reason,
-            chrono::Utc::now().timestamp()
-        ],
-    )
-    .ok(); // Optional logging, don't fail transaction
-
-    // Fetch updated task
-    let updated_task: Task = conn
-        .query_row(
-            "SELECT * FROM tasks WHERE id = ?1",
-            [&request.task_id],
-            Task::from_row,
-        )
-        .map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "FETCH_ERROR".to_string(),
-            details: None,
-        })?;
-
     Ok(updated_task)
 }
 
@@ -97,11 +63,9 @@ pub async fn task_transition_status(
 #[tauri::command]
 pub async fn task_get_status_distribution(
     state: AppState<'_>,
-) -> Result<StatusDistribution, ApiError> {
-    let conn = state.db.get_connection().map_err(|e| ApiError {
-        message: e.to_string(),
-        code: "DATABASE_ERROR".to_string(),
-        details: None,
+) -> Result<StatusDistribution, AppError> {
+    let conn = state.db.get_connection().map_err(|e| {
+        AppError::Database(format!("Failed to get database connection: {}", e))
     })?;
 
     let mut stmt = conn
@@ -111,11 +75,7 @@ pub async fn task_get_status_distribution(
          WHERE deleted_at IS NULL
          GROUP BY status",
         )
-        .map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "QUERY_ERROR".to_string(),
-            details: None,
-        })?;
+        .map_err(|e| AppError::Database(format!("Failed to prepare query: {}", e)))?;
 
     let mut distribution = StatusDistribution {
         quote: 0,
@@ -130,17 +90,11 @@ pub async fn task_get_status_distribution(
         .query_map([], |row| {
             Ok((row.get::<_, String>(0)?, row.get::<_, i32>(1)?))
         })
-        .map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "QUERY_ERROR".to_string(),
-            details: None,
-        })?;
+        .map_err(|e| AppError::Database(format!("Query failed: {}", e)))?;
 
     for row in rows {
-        let (status, count) = row.map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "MAPPING_ERROR".to_string(),
-            details: None,
+        let (status, count) = row.map_err(|e| {
+            AppError::Database(format!("Failed to map row: {}", e))
         })?;
         match status.as_str() {
             "draft" | "pending" => distribution.quote += count,
