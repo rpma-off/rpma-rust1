@@ -2,49 +2,33 @@ use serde::{Deserialize, Serialize};
 // Conditional import removed
 use ts_rs::TS;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
-#[ts(export)]
-pub enum TaskStatus {
-    Quote,
-    Scheduled,
-    InProgress,
-    Paused,
-    Completed,
-    Cancelled,
-}
+pub use crate::models::task::TaskStatus;
+use crate::services::task_validation::validate_status_transition;
 
 impl TaskStatus {
     pub fn can_transition_to(&self, new_status: &TaskStatus) -> bool {
-        use TaskStatus::*;
-        match (self, new_status) {
-            (Quote, Scheduled) | (Quote, Cancelled) => true,
-            (Scheduled, InProgress) | (Scheduled, Cancelled) => true,
-            (InProgress, Completed) | (InProgress, Paused) | (InProgress, Cancelled) => true,
-            (Paused, InProgress) | (Paused, Cancelled) => true,
-            _ => false,
-        }
+        validate_status_transition(self, new_status).is_ok()
     }
 
     pub fn from_str(s: &str) -> Option<Self> {
-        match s {
-            "quote" => Some(TaskStatus::Quote),
-            "scheduled" => Some(TaskStatus::Scheduled),
-            "in_progress" => Some(TaskStatus::InProgress),
-            "paused" => Some(TaskStatus::Paused),
-            "completed" => Some(TaskStatus::Completed),
-            "cancelled" => Some(TaskStatus::Cancelled),
-            _ => None,
-        }
+        s.parse().ok()
     }
 
     pub fn to_str(&self) -> &'static str {
         match self {
-            TaskStatus::Quote => "quote",
+            TaskStatus::Draft => "draft",
             TaskStatus::Scheduled => "scheduled",
             TaskStatus::InProgress => "in_progress",
-            TaskStatus::Paused => "paused",
             TaskStatus::Completed => "completed",
             TaskStatus::Cancelled => "cancelled",
+            TaskStatus::OnHold => "on_hold",
+            TaskStatus::Pending => "pending",
+            TaskStatus::Invalid => "invalid",
+            TaskStatus::Archived => "archived",
+            TaskStatus::Failed => "failed",
+            TaskStatus::Overdue => "overdue",
+            TaskStatus::Assigned => "assigned",
+            TaskStatus::Paused => "paused",
         }
     }
 }

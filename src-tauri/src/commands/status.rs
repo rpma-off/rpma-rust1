@@ -1,7 +1,8 @@
 use crate::commands::{ApiError, AppState};
 use crate::db::FromSqlRow;
-use crate::models::status::*;
+use crate::models::status::{StatusDistribution, StatusTransitionRequest, TaskStatus};
 use crate::models::task::Task;
+use crate::services::task_validation::validate_status_transition;
 
 /// Transition a task to a new status with validation
 #[tauri::command]
@@ -41,17 +42,11 @@ pub async fn task_transition_status(
     })?;
 
     // Validate transition
-    if !current.can_transition_to(&new) {
-        return Err(ApiError {
-            message: format!(
-                "Cannot transition from {} to {}",
-                current.to_str(),
-                new.to_str()
-            ),
-            code: "INVALID_TRANSITION".to_string(),
-            details: None,
-        });
-    }
+    validate_status_transition(&current, &new).map_err(|message| ApiError {
+        message,
+        code: "INVALID_TRANSITION".to_string(),
+        details: None,
+    })?;
 
     // Update status
     conn.execute(
@@ -148,12 +143,12 @@ pub async fn task_get_status_distribution(
             details: None,
         })?;
         match status.as_str() {
-            "quote" => distribution.quote = count,
-            "scheduled" => distribution.scheduled = count,
-            "in_progress" => distribution.in_progress = count,
-            "paused" => distribution.paused = count,
-            "completed" => distribution.completed = count,
-            "cancelled" => distribution.cancelled = count,
+            "draft" | "pending" => distribution.quote += count,
+            "scheduled" | "assigned" | "overdue" => distribution.scheduled += count,
+            "in_progress" => distribution.in_progress += count,
+            "paused" | "on_hold" => distribution.paused += count,
+            "completed" | "archived" => distribution.completed += count,
+            "cancelled" | "failed" | "invalid" => distribution.cancelled += count,
             _ => {}
         }
     }
