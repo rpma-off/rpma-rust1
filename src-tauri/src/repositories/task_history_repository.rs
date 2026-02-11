@@ -52,12 +52,10 @@ impl TaskHistoryQuery {
     }
 
     fn validate_sort_column(sort_by: &str) -> Result<String, RepoError> {
-        let allowed_columns = ["created_at", "changed_at", "new_status", "changed_by"];
-        allowed_columns
-            .iter()
-            .find(|&&col| col == sort_by)
-            .map(|s| s.to_string())
-            .ok_or_else(|| RepoError::Validation(format!("Invalid sort column: {}", sort_by)))
+        crate::repositories::base::validate_sort_column(
+            sort_by,
+            &["created_at", "changed_at", "new_status", "changed_by"],
+        )
     }
 
     fn build_order_by_clause(&self) -> Result<String, RepoError> {
@@ -363,7 +361,7 @@ mod tests {
     use rusqlite::params;
 
     async fn setup_test_db() -> Database {
-        Database::new_in_memory().await.unwrap()
+        crate::test_utils::setup_test_db().await
     }
 
     fn seed_task(db: &Database, task_id: &str) {

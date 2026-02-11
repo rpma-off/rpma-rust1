@@ -19,11 +19,7 @@ use std::sync::Arc;
 
 /// Helper function to create a test database
 fn setup_test_db() -> Database {
-    let db = Database::in_memory().expect("Failed to create in-memory database");
-    let conn = db.get_connection().expect("Failed to get connection");
-    conn.execute_batch(include_str!("../../db/schema.sql"))
-        .expect("Failed to initialize schema");
-    db
+    crate::test_utils::setup_test_db_sync()
 }
 
 /// Helper function to create a test user

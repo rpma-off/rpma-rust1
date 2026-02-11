@@ -68,6 +68,28 @@ impl TestDatabase {
     }
 }
 
+/// Create an async in-memory database for tests
+pub async fn setup_test_db() -> Database {
+    Database::new_in_memory()
+        .await
+        .expect("Failed to create in-memory database")
+}
+
+/// Create a synchronous in-memory database for legacy tests
+///
+/// Prefer using `setup_test_db` in async tests to avoid runtime creation here.
+pub fn setup_test_db_sync() -> Database {
+    match tokio::runtime::Handle::try_current() {
+        Ok(handle) => handle
+            .block_on(Database::new_in_memory())
+            .expect("Failed to create in-memory database"),
+        Err(_) => tokio::runtime::Runtime::new()
+            .expect("Failed to create tokio runtime")
+            .block_on(Database::new_in_memory())
+            .expect("Failed to create in-memory database"),
+    }
+}
+
 /// Test data factory for creating test fixtures
 pub struct TestDataFactory;
 

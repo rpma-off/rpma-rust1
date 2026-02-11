@@ -45,6 +45,15 @@ impl From<&str> for RepoError {
     }
 }
 
+/// Validate a sort column against a list of allowed column names
+pub fn validate_sort_column(sort_by: &str, allowed_columns: &[&str]) -> RepoResult<String> {
+    allowed_columns
+        .iter()
+        .find(|&&col| col == sort_by)
+        .map(|s| s.to_string())
+        .ok_or_else(|| RepoError::Validation(format!("Invalid sort column: {}", sort_by)))
+}
+
 /// Base repository trait with CRUD operations
 #[async_trait]
 pub trait Repository<T: Send, ID: Send + Sync + Clone + 'static> {
