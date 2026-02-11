@@ -11,6 +11,7 @@ impl TaskStatus {
     }
 
     pub fn from_str(s: &str) -> Option<Self> {
+        // Delegate parsing to TaskStatus::from_str implementation.
         s.parse().ok()
     }
 

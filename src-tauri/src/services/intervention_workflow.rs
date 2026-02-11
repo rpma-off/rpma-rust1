@@ -620,6 +620,7 @@ impl InterventionWorkflowService {
             return Ok(());
         }
 
+        // Enforce inclusive minimum photo requirement.
         if step.photo_count < step.min_photos_required {
             let mut error_context = std::collections::HashMap::new();
             error_context.insert("step_id".to_string(), serde_json::json!(step.id));
