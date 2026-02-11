@@ -34,6 +34,10 @@ import { WorkflowExecutionDashboard } from '@/components/dashboard/WorkflowExecu
 import { QualityAssuranceDashboard } from '@/components/dashboard/QualityAssuranceDashboard';
 import { PhotoDocumentationDashboard } from '@/components/dashboard/PhotoDocumentationDashboard';
 import { SecurityDashboard } from '@/components/dashboard/SecurityDashboard';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHeader } from '@/components/ui/page-header';
+import { ErrorState } from '@/components/layout/ErrorState';
+import { LoadingState } from '@/components/layout/LoadingState';
 
 interface SystemStats {
   totalUsers: number;
@@ -227,13 +231,12 @@ export default function AdminPage() {
 
   if (!profile || (profile.role !== 'admin' && profile.role !== 'supervisor')) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Shield className="h-16 w-16 text-muted-foreground mx-auto" />
-          <h2 className="text-xl font-semibold text-foreground">Accès Restreint</h2>
-          <p className="text-muted-foreground">Vous n&apos;avez pas les permissions pour accéder à cette page.</p>
-        </div>
-      </div>
+      <PageShell>
+        <ErrorState
+          title="Accès Restreint"
+          message="Vous n'avez pas les permissions pour accéder à cette page."
+        />
+      </PageShell>
     );
   }
 
@@ -266,52 +269,35 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[hsl(var(--rpma-surface))]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <div className="bg-[hsl(var(--rpma-teal))] text-white rounded-[10px] shadow-[var(--rpma-shadow-soft)] p-6">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-white/15 rounded-lg">
-                <Shield className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-white">
-                  Administration Système
-                </h1>
-                <p className="text-white/80 text-sm md:text-base">
-                  Gestion et surveillance du système RPMA V2
-                </p>
-              </div>
-            </div>
-
-            {/* Quick Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-white/15 rounded-lg border border-white/20">
-                <div className="text-2xl font-bold text-white">{stats.totalUsers}</div>
-                <div className="text-xs text-white/80">Utilisateurs</div>
-              </div>
-              <div className="text-center p-4 bg-white/15 rounded-lg border border-white/20">
-                <div className="text-2xl font-bold text-white">{stats.activeUsers}</div>
-                <div className="text-xs text-white/80">Actifs</div>
-              </div>
-              <div className="text-center p-4 bg-white/15 rounded-lg border border-white/20">
-                <div className="text-2xl font-bold text-white">{stats.totalTasks}</div>
-                <div className="text-xs text-white/80">Tâches</div>
-              </div>
-              <div className="text-center p-4 bg-white/15 rounded-lg border border-white/20">
-                <Badge className={`px-3 py-1 ${getHealthColor(stats.systemHealth)}`}>
-                  {stats.systemHealth === 'healthy' ? '✓ Sain' :
-                   stats.systemHealth === 'warning' ? '⚠ Attention' : '✗ Critique'}
-                </Badge>
-              </div>
-            </div>
+    <PageShell>
+      {/* Header */}
+      <PageHeader
+        title="Administration Système"
+        subtitle="Gestion et surveillance du système RPMA V2"
+        icon={<Shield className="w-6 h-6 text-[hsl(var(--rpma-teal))]" />}
+      >
+        {/* Quick Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+          <div className="text-center p-4 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
+            <div className="text-2xl font-bold text-foreground">{stats.totalUsers}</div>
+            <div className="text-xs text-muted-foreground">Utilisateurs</div>
           </div>
-        </motion.div>
+          <div className="text-center p-4 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
+            <div className="text-2xl font-bold text-foreground">{stats.activeUsers}</div>
+            <div className="text-xs text-muted-foreground">Actifs</div>
+          </div>
+          <div className="text-center p-4 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
+            <div className="text-2xl font-bold text-foreground">{stats.totalTasks}</div>
+            <div className="text-xs text-muted-foreground">Tâches</div>
+          </div>
+          <div className="text-center p-4 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
+            <Badge className={`px-3 py-1 ${getHealthColor(stats.systemHealth)}`}>
+              {stats.systemHealth === 'healthy' ? '✓ Sain' :
+               stats.systemHealth === 'warning' ? '⚠ Attention' : '✗ Critique'}
+            </Badge>
+          </div>
+        </div>
+      </PageHeader>
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -586,7 +572,6 @@ export default function AdminPage() {
             <SecurityDashboard />
           </TabsContent>
         </Tabs>
-      </div>
 
       {/* Add User Modal */}
       {showAddUserModal && (
@@ -676,6 +661,6 @@ export default function AdminPage() {
           </div>
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }

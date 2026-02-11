@@ -16,6 +16,7 @@ import { PullToRefresh, FloatingActionButton } from '@/components/ui/mobile-comp
 import { EnhancedEmptyState } from '@/components/ui';
 import { ClientFilters as ClientFiltersComponent } from '@/components/navigation/ClientFilters';
 import { PageHeader, StatCard } from '@/components/ui/page-header';
+import { PageShell } from '@/components/layout/PageShell';
 
 const MemoizedClientCard = memo(ClientCard);
 
@@ -157,7 +158,7 @@ export default function ClientsPage() {
   const isInitialLoading = loading && clients.length === 0;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-6">
+    <PageShell>
       {/* Header */}
       <PageHeader
         title="Clients"
@@ -341,6 +342,6 @@ export default function ClientsPage() {
           </div>
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }

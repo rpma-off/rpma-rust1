@@ -19,6 +19,8 @@ import {
 import { useLogger } from '@/hooks/useLogger';
 import { LogDomain } from '@/lib/logging/types';
 import { useAuth } from '@/contexts/AuthContext';
+import { PageShell } from '@/components/layout/PageShell';
+import { LoadingState } from '@/components/layout/LoadingState';
 import { PageHeader } from '@/components/ui/page-header';
 
 // Lazy load tab components to reduce initial bundle size
@@ -174,10 +176,9 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[hsl(var(--rpma-surface))]">
-      <div className="container mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Header */}
-        <PageHeader
+    <PageShell>
+      {/* Header */}
+      <PageHeader
           title="Paramètres"
           subtitle="Gérez vos paramètres de compte et préférences"
           icon={<Settings className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />}
@@ -307,79 +308,37 @@ export default function SettingsPage() {
                {/* Tab Content */}
                <div className="mt-4 md:mt-6">
                  <TabsContent value="profile" className="mt-0">
-                   <Suspense fallback={
-                     <div className="flex items-center justify-center p-8 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
-                       <div className="text-center">
-                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--rpma-teal))] mx-auto mb-4"></div>
-                         <p className="text-muted-foreground">Chargement du profil...</p>
-                       </div>
-                     </div>
-                   }>
+                   <Suspense fallback={<LoadingState message="Chargement du profil..." />}>
                      <ProfileSettingsTab user={user || undefined} profile={profile || undefined} />
                    </Suspense>
                  </TabsContent>
 
                  <TabsContent value="preferences" className="mt-0">
-                   <Suspense fallback={
-                     <div className="flex items-center justify-center p-8 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
-                       <div className="text-center">
-                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--rpma-teal))] mx-auto mb-4"></div>
-                         <p className="text-muted-foreground">Chargement des préférences...</p>
-                       </div>
-                     </div>
-                   }>
+                   <Suspense fallback={<LoadingState message="Chargement des préférences..." />}>
                      <PreferencesTab user={user || undefined} profile={profile || undefined} />
                    </Suspense>
                  </TabsContent>
 
                  <TabsContent value="security" className="mt-0">
-                   <Suspense fallback={
-                     <div className="flex items-center justify-center p-8 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
-                       <div className="text-center">
-                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--rpma-teal))] mx-auto mb-4"></div>
-                         <p className="text-muted-foreground">Chargement de la sécurité...</p>
-                       </div>
-                     </div>
-                   }>
+                   <Suspense fallback={<LoadingState message="Chargement de la sécurité..." />}>
                      <SecurityTab user={user || undefined} profile={profile || undefined} />
                    </Suspense>
                  </TabsContent>
 
                  <TabsContent value="performance" className="mt-0">
-                   <Suspense fallback={
-                     <div className="flex items-center justify-center p-8 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
-                       <div className="text-center">
-                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--rpma-teal))] mx-auto mb-4"></div>
-                         <p className="text-muted-foreground">Chargement des performances...</p>
-                       </div>
-                     </div>
-                   }>
+                   <Suspense fallback={<LoadingState message="Chargement des performances..." />}>
                      <PerformanceTab user={user || undefined} profile={profile || undefined} />
                    </Suspense>
                  </TabsContent>
 
                  <TabsContent value="accessibility" className="mt-0">
-                   <Suspense fallback={
-                     <div className="flex items-center justify-center p-8 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
-                       <div className="text-center">
-                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--rpma-teal))] mx-auto mb-4"></div>
-                          <p className="text-muted-foreground">Chargement de l&apos;accessibilité...</p>
-                       </div>
-                     </div>
-                   }>
+                   <Suspense fallback={<LoadingState message="Chargement de l'accessibilité..." />}>
                      <AccessibilityTab user={user || undefined} profile={profile || undefined} />
                    </Suspense>
                  </TabsContent>
 
                  <TabsContent value="notifications" className="mt-0">
-                   <Suspense fallback={
-                     <div className="flex items-center justify-center p-8 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
-                       <div className="text-center">
-                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--rpma-teal))] mx-auto mb-4"></div>
-                         <p className="text-muted-foreground">Chargement des notifications...</p>
-                       </div>
-                     </div>
-                   }>
+                   <Suspense fallback={<LoadingState message="Chargement des notifications..." />}>
                      <NotificationsTab user={user || undefined} profile={profile || undefined} />
                    </Suspense>
                  </TabsContent>
@@ -387,7 +346,6 @@ export default function SettingsPage() {
             </Tabs>
           </CardContent>
         </Card>
-      </div>
-    </div>
+    </PageShell>
   );
 }
