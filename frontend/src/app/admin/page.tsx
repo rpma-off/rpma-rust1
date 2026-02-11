@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import {
   Shield,
   Users,
@@ -37,7 +36,6 @@ import { SecurityDashboard } from '@/components/dashboard/SecurityDashboard';
 import { PageShell } from '@/components/layout/PageShell';
 import { PageHeader } from '@/components/ui/page-header';
 import { ErrorState } from '@/components/layout/ErrorState';
-import { LoadingState } from '@/components/layout/LoadingState';
 
 interface SystemStats {
   totalUsers: number;
