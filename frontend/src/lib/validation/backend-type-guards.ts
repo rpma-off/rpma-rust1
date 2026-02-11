@@ -47,11 +47,15 @@ const TaskPrioritySchema = z.enum(['low', 'medium', 'high', 'urgent']);
 export const CustomerTypeSchema = z.enum(['individual', 'business']);
 
 const SortOrderSchema = z.enum(['asc', 'desc']);
-const NumericLikeSchema = z.union([z.number(), z.bigint(), z.string()]);
+const BigIntLikeSchema = z.union([
+  z.bigint(),
+  z.number().int().nonnegative().transform((value) => BigInt(value)),
+  z.string().regex(/^\d+$/).transform((value) => BigInt(value)),
+]);
 const PaginationInfoSchema = z.object({
   page: z.number(),
   limit: z.number(),
-  total: NumericLikeSchema,
+  total: BigIntLikeSchema,
   total_pages: z.number(),
 });
 
@@ -165,11 +169,11 @@ export const ClientSchema = z.object({
 });
 
 const ClientStatisticsSchema = z.object({
-  total_clients: NumericLikeSchema,
-  individual_clients: NumericLikeSchema,
-  business_clients: NumericLikeSchema,
-  clients_with_tasks: NumericLikeSchema,
-  new_clients_this_month: NumericLikeSchema,
+  total_clients: BigIntLikeSchema,
+  individual_clients: BigIntLikeSchema,
+  business_clients: BigIntLikeSchema,
+  clients_with_tasks: BigIntLikeSchema,
+  new_clients_this_month: BigIntLikeSchema,
 });
 
 const ClientListResponseSchema = z.object({
@@ -1361,8 +1365,12 @@ export function validateClientWithTasksList(data: unknown): data is Array<import
   return z.array(ClientWithTasksSchema).safeParse(data).success;
 }
 
-export function validateClientStatistics(data: unknown): import('@/lib/backend').ClientStatistics {
+export function parseClientStatistics(data: unknown): import('@/lib/backend').ClientStatistics {
   return ClientStatisticsSchema.parse(data);
+}
+
+export function validateClientStatistics(data: unknown): data is import('@/lib/backend').ClientStatistics {
+  return ClientStatisticsSchema.safeParse(data).success;
 }
 
 export function validateTaskListResponse(data: unknown): data is import('@/lib/backend').TaskListResponse {

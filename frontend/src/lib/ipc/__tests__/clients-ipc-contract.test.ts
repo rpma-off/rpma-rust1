@@ -17,6 +17,7 @@ jest.mock('@/lib/validation/backend-type-guards', () => ({
   validateClientWithTasks: jest.fn((data) => data),
   validateClientListResponse: jest.fn((data) => data),
   validateClientWithTasksList: jest.fn((data) => data),
+  parseClientStatistics: jest.fn((data) => data),
   validateClientStatistics: jest.fn((data) => data),
 }));
 
@@ -60,12 +61,14 @@ const {
   validateClientWithTasks, 
   validateClientListResponse, 
   validateClientWithTasksList, 
-  validateClientStatistics 
+  parseClientStatistics,
+  validateClientStatistics
 } = jest.requireMock('@/lib/validation/backend-type-guards') as {
   validateClient: jest.Mock;
   validateClientWithTasks: jest.Mock;
   validateClientListResponse: jest.Mock;
   validateClientWithTasksList: jest.Mock;
+  parseClientStatistics: jest.Mock;
   validateClientStatistics: jest.Mock;
 };
 
@@ -292,7 +295,7 @@ describe('clientOperations IPC contract tests', () => {
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
-      extractAndValidate.mockReturnValue(validateClientStatistics(mockResponse));
+      extractAndValidate.mockReturnValue(parseClientStatistics(mockResponse));
 
       const result = await clientOperations.stats('session-token');
 
@@ -302,7 +305,7 @@ describe('clientOperations IPC contract tests', () => {
           session_token: 'session-token'
         }
       });
-      expect(extractAndValidate).toHaveBeenCalledWith(mockResponse, validateClientStatistics);
+      expect(extractAndValidate).toHaveBeenCalledWith(mockResponse, parseClientStatistics);
     });
   });
 
@@ -506,12 +509,12 @@ describe('clientOperations IPC contract tests', () => {
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
-      extractAndValidate.mockReturnValue(validateClientStatistics(mockResponse));
+      extractAndValidate.mockReturnValue(parseClientStatistics(mockResponse));
 
       const result = await clientOperations.stats('session-token');
 
-      expect(validateClientStatistics).toHaveBeenCalledWith(mockResponse);
-      expect(result).toEqual(validateClientStatistics(mockResponse));
+      expect(parseClientStatistics).toHaveBeenCalledWith(mockResponse);
+      expect(result).toEqual(parseClientStatistics(mockResponse));
     });
 
     it('validates search response with array of clients', async () => {

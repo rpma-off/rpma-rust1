@@ -1,4 +1,5 @@
 import {
+  parseClientStatistics,
   validateClientListResponse,
   validateClientStatistics,
 } from '@/lib/validation/backend-type-guards';
@@ -34,7 +35,7 @@ const clientFixture = {
 
 describe('backend-type-guards client validations', () => {
   it('parses client statistics matching backend shape', () => {
-    const stats = validateClientStatistics({
+    const stats = parseClientStatistics({
       total_clients: 12,
       individual_clients: 8,
       business_clients: 4,
@@ -43,23 +44,23 @@ describe('backend-type-guards client validations', () => {
     });
 
     expect(stats).toEqual({
-      total_clients: 12,
-      individual_clients: 8,
-      business_clients: 4,
-      clients_with_tasks: 10,
-      new_clients_this_month: 2,
+      total_clients: 12n,
+      individual_clients: 8n,
+      business_clients: 4n,
+      clients_with_tasks: 10n,
+      new_clients_this_month: 2n,
     });
   });
 
   it('rejects invalid client statistics payloads', () => {
-    expect(() =>
+    expect(
       validateClientStatistics({
         total_clients: 1,
         individual_clients: 1,
         business_clients: 0,
         clients_with_tasks: 1,
       })
-    ).toThrow();
+    ).toBe(false);
   });
 
   it('validates client list responses with pagination', () => {

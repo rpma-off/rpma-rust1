@@ -1,7 +1,7 @@
 import { safeInvoke, extractAndValidate, ResponseHandlers } from '../core';
 import { createCrudOperations } from '../utils/crud-helpers';
 import { IPC_COMMANDS } from '../commands';
-import { validateClient, validateClientWithTasks, validateClientListResponse, validateClientWithTasksList, validateClientStatistics } from '@/lib/validation/backend-type-guards';
+import { parseClientStatistics, validateClient, validateClientWithTasks, validateClientListResponse, validateClientWithTasksList } from '@/lib/validation/backend-type-guards';
 import type {
   Client,
   CreateClientRequest,
@@ -123,7 +123,7 @@ const specializedOperations = {
         session_token: sessionToken
       }
     }).then(result => {
-      const statistics = extractAndValidate(result, validateClientStatistics);
+      const statistics = extractAndValidate(result, parseClientStatistics);
       if (!statistics) {
         throw new Error('Invalid response format for client statistics');
       }
