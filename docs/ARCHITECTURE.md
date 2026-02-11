@@ -798,14 +798,17 @@ fn configure_linux_specific() {
 
 5. **Hasher les tokens au repos**
    ```rust
+   use crate::commands::AppError;
    use hmac::{Hmac, Mac};
    use sha2::Sha256;
 
    type HmacSha256 = Hmac<Sha256>;
-   // app_secret : clé secrète issue de la configuration sécurisée (env/keystore)
+   // app_secret : clé secrète issue de la configuration sécurisée (env/keystore), jamais hardcodée
+   let app_secret = config.hmac_secret();
+   let token_plain = session.token.clone(); // token en clair avant hashing
    let mut mac = HmacSha256::new_from_slice(app_secret.as_bytes())
-       .map_err(|_| AppError::Configuration("Clé HMAC invalide".to_string()))?; // remplacer AppError::Configuration par l'erreur du projet (ex: commands::AppError)
-   mac.update(session.token.as_bytes());
+       .map_err(|_| AppError::Configuration("Clé HMAC invalide".to_string()))?;
+   mac.update(token_plain.as_bytes());
    let token_hash = base64::engine::general_purpose::STANDARD.encode(mac.finalize().into_bytes());
    // stocker token_hash en DB, garder le token en mémoire uniquement
    // à la vérification : recalculer le HMAC du token entrant et comparer
