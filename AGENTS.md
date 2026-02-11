@@ -1,123 +1,220 @@
 # AGENTS.md 
 
-RPMA v2 is an offline-first desktop app (Tauri) for managing PPF interventions: tasks, interventions, steps, photos, inventory, reporting, and user management.
+## Project Overview
 
+RPMA v2 is an **offline-first desktop application** for managing Paint Protection Film (PPF) interventions. The application handles tasks, interventions, workflow steps, photo management, inventory tracking, reporting, and user management with role-based access control.
 
-## 🗂️ Structure du Projet
+## 📁 Project Structure
 
 ```
 rpma-rust/
-├── frontend/                 # Application Next.js
+├── frontend/                 # Next.js 14 application
 │   ├── src/
-│   │   ├── app/             # Pages App Router
-│   │   ├── components/      # Composants React
-│   │   ├── hooks/           # Hooks personnalisés
-│   │   ├── lib/             # Utilitaires et IPC
-│   │   ├── types/           # Types TypeScript
-│   │   └── ui/              # Composants shadcn/ui
+│   │   ├── app/             # App Router pages
+│   │   ├── components/      # React components
+│   │   ├── hooks/           # Custom React hooks
+│   │   ├── lib/             # Utilities and IPC client
+│   │   ├── types/           # TypeScript type definitions (auto-generated from Rust)
+│   │   └── ui/              # shadcn/ui components
 │   └── package.json
-├── src-tauri/               # Application Rust
+├── src-tauri/               # Rust/Tauri backend
 │   ├── src/
-│   │   ├── commands/        # Commandes Tauri IPC
-│   │   ├── models/          # Modèles de données
-│   │   ├── repositories/    # Accès aux données
-│   │   ├── services/        # Logique métier
-│   │   └── db/              # Gestion base de données
+│   │   ├── commands/        # Tauri IPC command handlers
+│   │   ├── models/          # Data models with ts-rs exports
+│   │   ├── repositories/    # Database access layer
+│   │   ├── services/        # Business logic layer
+│   │   └── db/              # Database management
 │   └── Cargo.toml
-├── migrations/              # Migrations de base de données
-├── scripts/                 # Scripts de build et validation
-└── docs/                    # Documentation
+├── migrations/              # SQLite migrations
+├── scripts/                 # Build and validation scripts
+└── docs/                    # Project documentation
 ```
 
-## Tech Stack Summary
+## 🏗️ Architecture
 
-- **Desktop Framework**: Tauri (Rust + system webview)
-- **Frontend**: Next.js 14 with React, TypeScript, and Tailwind CSS
-- **UI Components**: shadcn/ui built on Radix UI primitives
-- **Backend**: Rust with SQLite (WAL mode) for data persistence
-- **State Management**: React hooks with contexts and Zustand for global state
-- **Authentication**: JWT with 2FA support and role-based access control
-- **Type Safety**: Automatic TypeScript generation from Rust models using `ts-rs`
+### Four-Layer Architecture
+```
+Frontend (Next.js/React/TypeScript)
+    ↓ IPC calls
+Tauri Commands (Rust)
+    ↓
+Services (Business Logic - Rust)
+    ↓
+Repositories (Data Access - Rust)
+    ↓
+SQLite Database (WAL mode)
+```
 
-## Essential Commands
+**Key Principle**: Keep layer responsibilities strictly separated. Each layer should only communicate with adjacent layers.
 
-# Start development (recommended)
-npm run dev
+## 🔑 Critical Consistency Rules
 
-# Frontend only
-npm run frontend:dev
+### Type Safety
+- **NEVER manually edit generated TypeScript types** in `frontend/src/types/`
+- Rust models are the single source of truth for types
+- Use `npm run types:sync` to regenerate TypeScript types from Rust
+- Run `npm run types:drift-check` to verify type consistency
 
-# Build for production
-npm run build
+### IPC Communication
+- All protected IPC commands **MUST** require `session_token` parameter
+- Follow the response envelope pattern: `{ success: boolean, data?: T, error?: string }`
+- Commands must be properly exported in `src-tauri/src/lib.rs`
+- Frontend IPC calls go through `frontend/src/lib/ipc/`
 
-# Type checking
-npm run frontend:type-check
+### Security & RBAC
+- Enforce Role-Based Access Control (RBAC) in command handlers
+- Use validators in `src-tauri/src/commands/validators.rs`
+- Session tokens must be validated for all protected endpoints
+- User permissions must be checked before data access
 
-# Linting
-npm run frontend:lint
+### Database
+- **NEVER** modify the database schema directly
+- Always create migrations in `migrations/` directory
+- Use the migration manager for schema changes
+- Test migrations with `node scripts/validate-migration-system.js`
 
-# Type sync (Rust → TypeScript)
-npm run types:sync
+## 📋 Essential Commands
 
-## Critical consistency rules
-- Rust models => TS types via ts-rs. Never drift.
-- IPC commands must be authenticated for protected endpoints (session_token) and follow the response envelope pattern.
-- RBAC must be enforced in command handlers and data access.
+```bash
+# Development
+npm run dev                    # Start both frontend and backend
+npm run frontend:dev           # Frontend only
+npm run backend:dev            # Backend only (Tauri)
 
-## Where to look
-- Frontend patterns: `frontend/src/app`, `frontend/src/components`, `frontend/src/lib/ipc`
-- Backend patterns: `src-tauri/src/commands`, `src-tauri/src/services`, `src-tauri/src/repositories`
-- DB + migrations: `src-tauri/migrations`, migration manager code
-- Security/RBAC: auth commands, validators, scripts
+# Building
+npm run build                  # Production build
+npm run frontend:build         # Build frontend only
 
-## ARCHITECTURE MUST MATCH PROJECT DOCS
-- 4-layer architecture: Frontend -> IPC -> Rust Services -> Repositories -> SQLite. Keep responsibilities separated.
-- Offline-first: local DB is source-of-truth; avoid designs that require constant network connectivity.
-- Types: Rust models generate TS types (ts-rs). Never hand-edit generated types.
+# Quality Checks
+npm run quality:check          # Run all quality gates (RECOMMENDED)
+npm run frontend:lint          # ESLint
+npm run frontend:type-check    # TypeScript checking
+npm run backend:check          # Cargo check
+npm run backend:clippy         # Rust linting
+npm run backend:fmt            # Rust formatting
 
-## QUALITY GATES (RUN THE RIGHT ONES)
-When relevant:
-- Frontend: `npm run frontend:lint` and `npm run frontend:type-check`
-- Backend: `npm run backend:check`, `npm run backend:clippy`, `npm run backend:fmt`
-- Types: `npm run types:sync`, `npm run types:validate`, `npm run types:drift-check`
-- DB/migrations: `node scripts/validate-migration-system.js`
-- Security: `npm run security:audit`, `node scripts/validate-rbac.js`, `node scripts/validate-session-security.js`
-- Full: `npm run quality:check` (preferred)
+# Type Management
+npm run types:sync             # Regenerate TS types from Rust
+npm run types:validate         # Validate type consistency
+npm run types:drift-check      # Check for type drift
 
-## CHANGE RULES (STRICT)
-- Any new feature must include: tests, validation, error handling, and docs update (if user-facing).
-- Never leave TODOs, “quick hacks”, or commented-out code.
-- Prefer deterministic behavior; avoid time-based flakiness in tests.
-- Keep diffs small and reviewable.
+# Security & Validation
+npm run security:audit         # Security vulnerability scan
+node scripts/validate-rbac.js  # RBAC validation
+node scripts/validate-session-security.js  # Session security check
+node scripts/validate-migration-system.js  # Migration validation
 
+# Testing
+npm test                       # Run all tests
+npm run test:frontend          # Frontend tests only
+npm run test:backend           # Backend tests only
+```
 
-## DEFAULT WORKFLOW (ALWAYS)
-A) Locate the relevant files + existing patterns. Prefer copying existing patterns over inventing new ones.
-B) Make the smallest possible change that solves the task.
-C) Run the appropriate checks (see "Quality Gates").
-D) Summarize what changed + why + how to verify.
+## 🎯 Development Workflow
 
-# Testing Rules (Strict)
+### Before Making Changes
+1. Search for existing patterns in the codebase - **copy existing patterns** rather than inventing new ones
+2. Understand the 4-layer architecture and which layer your change belongs to
+3. Check related documentation in `docs/` directory
+4. Run `npm run quality:check` to establish baseline
 
-## When you change code
-You must add or update tests that prove the change.
+### Making Changes
+1. **Frontend changes**: 
+   - Follow existing component patterns in `frontend/src/components/`
+   - Use Tailwind CSS for styling
+   - Leverage shadcn/ui components when available
+   - Keep components small and focused
 
-## Backend
-- Unit tests for services and repositories when logic changes.
-- Integration tests for IPC commands where behavior is critical.
+2. **Backend changes**:
+   - Add/modify models in `src-tauri/src/models/` with `#[derive(Serialize, TS)]`
+   - Implement business logic in `src-tauri/src/services/`
+   - Add data access methods in `src-tauri/src/repositories/`
+   - Create IPC commands in `src-tauri/src/commands/`
 
-## Frontend
-- Component tests for UI flows when UX behavior changes.
-- Hook tests if business logic is in hooks.
+3. **Database changes**:
+   - Create a new migration file in `migrations/`
+   - Follow migration naming: `YYYYMMDDHHMMSS_description.sql`
+   - Test both up and down migrations
 
-## Test quality
-- No flaky tests.
-- Prefer deterministic time and stable fixtures.
-- Keep tests fast, focused, and readable.
+### After Making Changes
+1. Run type sync: `npm run types:sync`
+2. Run appropriate linters and type checkers
+3. Add/update tests (unit, integration, or e2e as appropriate)
+4. Run `npm run quality:check` before committing
+5. Ensure all tests pass
+6. Update documentation if behavior changed
 
-## Minimum bar
-- Every bug fix requires a regression test.
+## ✅ Quality Gates
+
+Run these checks before submitting code:
+
+### Frontend
+```bash
+npm run frontend:lint          # Must pass
+npm run frontend:type-check    # Must pass
+npm run test:frontend          # Must pass
+```
+
+### Backend
+```bash
+npm run backend:check          # Must pass
+npm run backend:clippy         # Must pass
+npm run backend:fmt            # Must pass
+npm run test:backend           # Must pass
+```
+
+### Types
+```bash
+npm run types:sync             # Regenerate
+npm run types:validate         # Must pass
+npm run types:drift-check      # Must pass
+```
+
+### Security
+```bash
+npm run security:audit         # Must pass
+node scripts/validate-rbac.js  # Must pass
+node scripts/validate-session-security.js  # Must pass
+```
+
+### Full Check (Recommended)
+```bash
+npm run quality:check          # Runs all quality gates
+```
+
+## 🧪 Testing Requirements
+
+### When to Add Tests
+- **Always** when adding new features
+- **Always** when fixing bugs (regression tests)
+- **Always** when changing business logic
+
+### Test Types
+- **Unit tests**: For services and repositories (backend), hooks (frontend)
+- **Integration tests**: For IPC commands and critical workflows
+- **Component tests**: For UI components with complex logic
+- **E2E tests**: For critical user flows
+
+### Test Quality Standards
+- No flaky tests - tests must be deterministic
+- Use stable fixtures, avoid time-based dependencies
+- Keep tests fast, focused, and readable
+- Test success path AND error conditions
+
+### Minimum Coverage
+- Every bug fix requires a regression test
 - Every new feature requires tests for:
-  - success path
-  - validation failure
-  - permission failure (if protected)
+  - ✅ Success path
+  - ❌ Validation failures
+  - 🔒 Permission failures (for protected features)
+
+## 🚫 What NOT to Do
+
+- ❌ **Never** manually edit generated TypeScript types
+- ❌ **Never** commit TODOs, "quick hacks", or commented-out code
+- ❌ **Never** modify database schema without migrations
+- ❌ **Never** leave unhandled errors or panics in production code
+- ❌ **Never** skip RBAC checks for protected operations
+- ❌ **Never** commit secrets, API keys, or sensitive data
+- ❌ **Never** introduce breaking changes without migration path
+- ❌ **Never** bypass quality gates before committing
