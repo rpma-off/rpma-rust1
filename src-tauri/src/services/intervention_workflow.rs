@@ -340,17 +340,7 @@ impl InterventionWorkflowService {
         self.validation
             .validate_step_advancement(&intervention, &current_step, &logger)?;
 
-        let has_completion_data_provided = !matches!(
-            request.collected_data,
-            serde_json::Value::Null | serde_json::Value::Object(ref map) if map.is_empty()
-        ) || request
-            .photos
-            .as_ref()
-            .map_or(false, |photos| !photos.is_empty())
-            || request
-                .issues
-                .as_ref()
-                .map_or(false, |issues| !issues.is_empty());
+        let has_completion_data_provided = Self::has_completion_data(&request);
 
         if current_step.step_status == StepStatus::Pending && has_completion_data_provided {
             return Err(InterventionError::Workflow(
@@ -599,6 +589,20 @@ impl InterventionWorkflowService {
                 }
             }
         }
+    }
+
+    fn has_completion_data(request: &AdvanceStepRequest) -> bool {
+        !matches!(
+            request.collected_data,
+            serde_json::Value::Null | serde_json::Value::Object(ref map) if map.is_empty()
+        ) || request
+            .photos
+            .as_ref()
+            .map_or(false, |photos| !photos.is_empty())
+            || request
+                .issues
+                .as_ref()
+                .map_or(false, |issues| !issues.is_empty())
     }
 
     /// Save step progress without advancing to next step

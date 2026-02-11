@@ -117,6 +117,7 @@ impl WorkflowValidationService {
                 )));
             }
             StepStatus::Failed | StepStatus::Skipped | StepStatus::Rework => {
+                // Treat these as terminal until explicit rework/resume flows are defined.
                 logger.error(
                     "Attempted to advance step in terminal status",
                     None,
