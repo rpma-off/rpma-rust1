@@ -16,6 +16,7 @@ Cargo.lock
 
 # TypeScript build info
 *.tsbuildinfo
+scripts/type-drift-report.json
 
 # Backup files
 *.backup
