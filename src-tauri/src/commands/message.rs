@@ -1,97 +1,48 @@
-use crate::commands::{ApiError, AppState};
+//! Message commands using MessageService
+//! 
+//! This module provides Tauri commands for message operations,
+//! delegating business logic to the MessageService.
+
+use crate::commands::{AppError, AppState};
 use crate::models::message::*;
-use rusqlite::params;
+use crate::repositories::message_repository::MessageQuery as RepoMessageQuery;
 
 /// Send a new message
 #[tauri::command]
 pub async fn message_send(
     request: SendMessageRequest,
     state: AppState<'_>,
-) -> Result<Message, ApiError> {
-    let conn = state.db.get_connection().map_err(|e| ApiError {
-        message: e.to_string(),
-        code: "DATABASE_ERROR".to_string(),
-        details: None,
-    })?;
-
+) -> Result<Message, AppError> {
     // Generate ID
     let id = format!("{:x}", rand::random::<u128>());
-
     let now = chrono::Utc::now().timestamp();
 
-    // Insert message
-    conn.execute(
-        "INSERT INTO messages (
-            id, message_type, sender_id, recipient_id, recipient_email,
-            recipient_phone, subject, body, template_id, task_id, client_id,
-            priority, scheduled_at, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        params![
-            id,
-            request.message_type,
-            None::<String>, // sender_id - would come from session
-            request.recipient_id,
-            request.recipient_email,
-            request.recipient_phone,
-            request.subject,
-            request.body,
-            request.template_id,
-            request.task_id,
-            request.client_id,
-            request.priority.unwrap_or_else(|| "normal".to_string()),
-            request.scheduled_at,
-            now,
-            now,
-        ],
-    )
-    .map_err(|e| ApiError {
-        message: e.to_string(),
-        code: "INSERT_ERROR".to_string(),
-        details: None,
-    })?;
+    // Create message entity
+    let message = Message {
+        id: id.clone(),
+        message_type: request.message_type,
+        sender_id: None, // sender_id - would come from session
+        recipient_id: request.recipient_id,
+        recipient_email: request.recipient_email,
+        recipient_phone: request.recipient_phone,
+        subject: request.subject,
+        body: request.body,
+        template_id: request.template_id,
+        task_id: request.task_id,
+        client_id: request.client_id,
+        status: "pending".to_string(),
+        priority: request.priority.unwrap_or_else(|| "normal".to_string()),
+        scheduled_at: request.scheduled_at,
+        sent_at: None,
+        read_at: None,
+        error_message: None,
+        metadata: None,
+        created_at: now,
+        updated_at: now,
+    };
 
-    // Return the created message
-    let message = conn
-        .query_row(
-            "SELECT
-            id, message_type, sender_id, recipient_id, recipient_email,
-            recipient_phone, subject, body, template_id, task_id, client_id,
-            status, priority, scheduled_at, sent_at, read_at, error_message,
-            metadata, created_at, updated_at
-        FROM messages WHERE id = ?",
-            params![id],
-            |row| {
-                Ok(Message {
-                    id: row.get(0)?,
-                    message_type: row.get(1)?,
-                    sender_id: row.get(2)?,
-                    recipient_id: row.get(3)?,
-                    recipient_email: row.get(4)?,
-                    recipient_phone: row.get(5)?,
-                    subject: row.get(6)?,
-                    body: row.get(7)?,
-                    template_id: row.get(8)?,
-                    task_id: row.get(9)?,
-                    client_id: row.get(10)?,
-                    status: row.get(11)?,
-                    priority: row.get(12)?,
-                    scheduled_at: row.get(13)?,
-                    sent_at: row.get(14)?,
-                    read_at: row.get(15)?,
-                    error_message: row.get(16)?,
-                    metadata: row.get(17)?,
-                    created_at: row.get(18)?,
-                    updated_at: row.get(19)?,
-                })
-            },
-        )
-        .map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "FETCH_ERROR".to_string(),
-            details: None,
-        })?;
-
-    Ok(message)
+    // Send message through service
+    state.message_service.send_message(message).await
 }
 
 /// Get messages with filtering and pagination
@@ -99,256 +50,61 @@ pub async fn message_send(
 pub async fn message_get_list(
     query: MessageQuery,
     state: AppState<'_>,
-) -> Result<MessageListResponse, ApiError> {
-    let conn = state.db.get_connection().map_err(|e| ApiError {
-        message: e.to_string(),
-        code: "DATABASE_ERROR".to_string(),
-        details: None,
-    })?;
+) -> Result<MessageListResponse, AppError> {
+    // Convert MessageQuery to RepoMessageQuery
+    let repo_query = RepoMessageQuery {
+        search: None,
+        message_type: query.message_type.and_then(|t| t.parse().ok()),
+        status: query.status.and_then(|s| s.parse().ok()),
+        sender_id: query.sender_id,
+        recipient_id: query.recipient_id,
+        task_id: query.task_id,
+        client_id: query.client_id,
+        date_from: query.date_from,
+        date_to: query.date_to,
+        limit: query.limit.map(|l| l as i64),
+        offset: query.offset.map(|o| o as i64),
+        sort_by: None,
+        sort_order: None,
+    };
 
-    let mut sql = String::from(
-        "SELECT
-            id, message_type, sender_id, recipient_id, recipient_email,
-            recipient_phone, subject, body, template_id, task_id, client_id,
-            status, priority, scheduled_at, sent_at, read_at, error_message,
-            metadata, created_at, updated_at
-        FROM messages WHERE 1=1",
-    );
-    let mut owned_params = Vec::new();
-
-    // Add filters
-    if let Some(message_type) = &query.message_type {
-        sql.push_str(" AND message_type = ?");
-        owned_params.push(message_type.clone());
-    }
-
-    if let Some(sender_id) = &query.sender_id {
-        sql.push_str(" AND sender_id = ?");
-        owned_params.push(sender_id.clone());
-    }
-
-    if let Some(recipient_id) = &query.recipient_id {
-        sql.push_str(" AND recipient_id = ?");
-        owned_params.push(recipient_id.clone());
-    }
-
-    if let Some(task_id) = &query.task_id {
-        sql.push_str(" AND task_id = ?");
-        owned_params.push(task_id.clone());
-    }
-
-    if let Some(client_id) = &query.client_id {
-        sql.push_str(" AND client_id = ?");
-        owned_params.push(client_id.clone());
-    }
-
-    if let Some(priority) = &query.priority {
-        sql.push_str(" AND priority = ?");
-        owned_params.push(priority.clone());
-    }
-
-    if let Some(date_from) = query.date_from {
-        sql.push_str(" AND created_at >= ?");
-        owned_params.push(date_from.to_string());
-    }
-
-    if let Some(date_to) = query.date_to {
-        sql.push_str(" AND created_at <= ?");
-        owned_params.push(date_to.to_string());
-    }
-
-    if let Some(sender_id) = &query.sender_id {
-        sql.push_str(" AND sender_id = ?");
-        owned_params.push(sender_id.clone());
-    }
-
-    if let Some(recipient_id) = &query.recipient_id {
-        sql.push_str(" AND recipient_id = ?");
-        owned_params.push(recipient_id.clone());
-    }
-
-    if let Some(task_id) = &query.task_id {
-        sql.push_str(" AND task_id = ?");
-        owned_params.push(task_id.clone());
-    }
-
-    if let Some(client_id) = &query.client_id {
-        sql.push_str(" AND client_id = ?");
-        owned_params.push(client_id.clone());
-    }
-
-    if let Some(status) = &query.status {
-        sql.push_str(" AND status = ?");
-        owned_params.push(status.clone());
-    }
-
-    if let Some(priority) = &query.priority {
-        sql.push_str(" AND priority = ?");
-        owned_params.push(priority.clone());
-    }
-
-    if let Some(date_from) = query.date_from {
-        sql.push_str(" AND created_at >= ?");
-        owned_params.push(date_from.to_string());
-    }
-
-    if let Some(date_to) = query.date_to {
-        sql.push_str(" AND created_at <= ?");
-        owned_params.push(date_to.to_string());
-    }
-
-    if let Some(recipient_id) = &query.recipient_id {
-        sql.push_str(" AND recipient_id = ?");
-        owned_params.push(recipient_id.clone());
-    }
-
-    if let Some(task_id) = &query.task_id {
-        sql.push_str(" AND task_id = ?");
-        owned_params.push(task_id.clone());
-    }
-
-    if let Some(client_id) = &query.client_id {
-        sql.push_str(" AND client_id = ?");
-        owned_params.push(client_id.clone());
-    }
-
-    if let Some(status) = &query.status {
-        sql.push_str(" AND status = ?");
-        owned_params.push(status.clone());
-    }
-
-    if let Some(priority) = &query.priority {
-        sql.push_str(" AND priority = ?");
-        owned_params.push(priority.clone());
-    }
-
-    if let Some(date_from) = query.date_from {
-        sql.push_str(" AND created_at >= ?");
-        owned_params.push(date_from.to_string());
-    }
-
-    if let Some(date_to) = query.date_to {
-        sql.push_str(" AND created_at <= ?");
-        owned_params.push(date_to.to_string());
-    }
-
-    sql.push_str(" ORDER BY created_at DESC");
-
-    let limit = query.limit.unwrap_or(50);
+    // Get messages through service
+    let (messages, total) = state.message_service.get_messages(repo_query).await?;
+    
     let offset = query.offset.unwrap_or(0);
-
-    sql.push_str(" LIMIT ? OFFSET ?");
-    owned_params.push(limit.to_string());
-    owned_params.push(offset.to_string());
-
-    let mut stmt = conn.prepare(&sql).map_err(|e| ApiError {
-        message: e.to_string(),
-        code: "QUERY_ERROR".to_string(),
-        details: None,
-    })?;
-
-    let messages = stmt
-        .query_map(rusqlite::params_from_iter(owned_params), |row| {
-            Ok(Message {
-                id: row.get(0)?,
-                message_type: row.get(1)?,
-                sender_id: row.get(2)?,
-                recipient_id: row.get(3)?,
-                recipient_email: row.get(4)?,
-                recipient_phone: row.get(5)?,
-                subject: row.get(6)?,
-                body: row.get(7)?,
-                template_id: row.get(8)?,
-                task_id: row.get(9)?,
-                client_id: row.get(10)?,
-                status: row.get(11)?,
-                priority: row.get(12)?,
-                scheduled_at: row.get(13)?,
-                sent_at: row.get(14)?,
-                read_at: row.get(15)?,
-                error_message: row.get(16)?,
-                metadata: row.get(17)?,
-                created_at: row.get(18)?,
-                updated_at: row.get(19)?,
-            })
-        })
-        .map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "MAPPING_ERROR".to_string(),
-            details: None,
-        })?
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "COLLECTION_ERROR".to_string(),
-            details: None,
-        })?;
-
-    // Get total count
-    let mut count_sql = String::from("SELECT COUNT(*) FROM messages WHERE 1=1");
-    let mut count_params = Vec::new();
-
-    // Add same filters for count
-    if let Some(message_type) = &query.message_type {
-        count_sql.push_str(" AND message_type = ?");
-        count_params.push(message_type.as_str());
-    }
-    // ... add other filters similarly
-
-    let total: i32 = conn
-        .query_row(
-            &count_sql,
-            rusqlite::params_from_iter(count_params),
-            |row| row.get(0),
-        )
-        .unwrap_or(0);
-
-    let has_more = (offset + messages.len() as i32) < total;
+    let has_more = (offset + messages.len() as i32) < total as i32;
 
     Ok(MessageListResponse {
         messages,
-        total,
+        total: total as i32,
         has_more,
     })
 }
 
 /// Mark message as read
 #[tauri::command]
-pub async fn message_mark_read(message_id: String, state: AppState<'_>) -> Result<(), ApiError> {
-    let conn = state.db.get_connection().map_err(|e| ApiError {
-        message: e.to_string(),
-        code: "DATABASE_ERROR".to_string(),
-        details: None,
-    })?;
-
-    conn.execute(
-        "UPDATE messages SET status = 'read', read_at = ?, updated_at = ? WHERE id = ?",
-        params![
-            chrono::Utc::now().timestamp(),
-            chrono::Utc::now().timestamp(),
-            message_id
-        ],
-    )
-    .map_err(|e| ApiError {
-        message: e.to_string(),
-        code: "UPDATE_ERROR".to_string(),
-        details: None,
-    })?;
-
-    Ok(())
+pub async fn message_mark_read(
+    message_id: String,
+    state: AppState<'_>,
+) -> Result<(), AppError> {
+    state.message_service.mark_read(&message_id).await
 }
 
 /// Get message templates
+/// 
+/// Note: This function accesses message templates directly via DB
+/// as template management is not part of the MessageService scope.
+/// Consider creating a separate TemplateService if template operations grow.
 #[tauri::command]
 pub async fn message_get_templates(
     category: Option<String>,
     message_type: Option<String>,
     state: AppState<'_>,
-) -> Result<Vec<MessageTemplate>, ApiError> {
-    let conn = state.db.get_connection().map_err(|e| ApiError {
-        message: e.to_string(),
-        code: "DATABASE_ERROR".to_string(),
-        details: None,
+) -> Result<Vec<MessageTemplate>, AppError> {
+    use rusqlite::params;
+    
+    let conn = state.db.get_connection().map_err(|e| {
+        AppError::Database(format!("Failed to get database connection: {}", e))
     })?;
 
     let mut sql = String::from(
@@ -369,10 +125,8 @@ pub async fn message_get_templates(
 
     sql.push_str(" ORDER BY name");
 
-    let mut stmt = conn.prepare(&sql).map_err(|e| ApiError {
-        message: e.to_string(),
-        code: "QUERY_ERROR".to_string(),
-        details: None,
+    let mut stmt = conn.prepare(&sql).map_err(|e| {
+        AppError::Database(format!("Failed to prepare query: {}", e))
     })?;
 
     let templates = stmt
@@ -392,31 +146,26 @@ pub async fn message_get_templates(
                 updated_at: row.get(11)?,
             })
         })
-        .map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "MAPPING_ERROR".to_string(),
-            details: None,
-        })?
+        .map_err(|e| AppError::Database(format!("Failed to query templates: {}", e)))?
         .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "COLLECTION_ERROR".to_string(),
-            details: None,
-        })?;
+        .map_err(|e| AppError::Database(format!("Failed to collect templates: {}", e)))?;
 
     Ok(templates)
 }
 
 /// Get user notification preferences
+/// 
+/// Note: This function accesses notification preferences directly via DB.
+/// Consider moving to a NotificationPreferencesService if operations grow.
 #[tauri::command]
 pub async fn message_get_preferences(
     user_id: String,
     state: AppState<'_>,
-) -> Result<NotificationPreferences, ApiError> {
-    let conn = state.db.get_connection().map_err(|e| ApiError {
-        message: e.to_string(),
-        code: "DATABASE_ERROR".to_string(),
-        details: None,
+) -> Result<NotificationPreferences, AppError> {
+    use rusqlite::params;
+    
+    let conn = state.db.get_connection().map_err(|e| {
+        AppError::Database(format!("Failed to get database connection: {}", e))
     })?;
 
     let prefs = conn
@@ -453,26 +202,23 @@ pub async fn message_get_preferences(
                 })
             },
         )
-        .map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "FETCH_ERROR".to_string(),
-            details: None,
-        })?;
+        .map_err(|e| AppError::Database(format!("Failed to get notification preferences: {}", e)))?;
 
     Ok(prefs)
 }
 
 /// Update user notification preferences
+/// 
+/// Note: This function accesses notification preferences directly via DB.
+/// Consider moving to a NotificationPreferencesService if operations grow.
 #[tauri::command]
 pub async fn message_update_preferences(
     user_id: String,
     updates: UpdateNotificationPreferencesRequest,
     state: AppState<'_>,
-) -> Result<NotificationPreferences, ApiError> {
-    let conn = state.db.get_connection().map_err(|e| ApiError {
-        message: e.to_string(),
-        code: "DATABASE_ERROR".to_string(),
-        details: None,
+) -> Result<NotificationPreferences, AppError> {
+    let conn = state.db.get_connection().map_err(|e| {
+        AppError::Database(format!("Failed to get database connection: {}", e))
     })?;
 
     // Build dynamic update query
@@ -489,11 +235,7 @@ pub async fn message_update_preferences(
     params.push(user_id.clone());
 
     conn.execute(&sql, rusqlite::params_from_iter(params))
-        .map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "UPDATE_ERROR".to_string(),
-            details: None,
-        })?;
+        .map_err(|e| AppError::Database(format!("Failed to update preferences: {}", e)))?;
 
     // Return updated preferences
     message_get_preferences(user_id, state).await
