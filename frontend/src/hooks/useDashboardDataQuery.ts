@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { dashboardApiService, DashboardFilters } from '@/lib/services/dashboard/dashboard-api.service';
@@ -131,9 +132,14 @@ export function useDashboardData(options: UseDashboardDataOptions = {}) {
     }).filter(Boolean) as DashboardTask[];
   };
 
+  const dashboardFilters = useMemo(
+    () => buildFilters(user?.id || '', isAdmin),
+    [user?.id, isAdmin, opts.selectedTechnicianId, opts.statusFilter, opts.searchQuery]
+  );
+
   // Dashboard data query
   const dashboardQuery = useQuery({
-    queryKey: dashboardQueryKeys.dashboard(buildFilters(user?.id || '', isAdmin)),
+    queryKey: dashboardQueryKeys.dashboard(dashboardFilters),
     queryFn: async ({ queryKey }) => {
       validateUserAccess(); // Validate right before fetching
       const [, filters] = queryKey as [string, DashboardFilters];
@@ -171,11 +177,23 @@ export function useDashboardData(options: UseDashboardDataOptions = {}) {
       const transformedTasks = transformTasks(tasks);
 
       // Calculate stats from fetched tasks
-      const total = transformedTasks.length;
-      const completed = transformedTasks.filter(t => t.status === 'completed').length;
-      const inProgress = transformedTasks.filter(t => t.status === 'in_progress').length;
-      const pending = transformedTasks.filter(t => t.status === 'pending').length;
-      const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+      const stats = transformedTasks.reduce((acc, task) => {
+        acc.total += 1;
+        if (task.status === 'completed') {
+          acc.completed += 1;
+        } else if (task.status === 'in_progress') {
+          acc.inProgress += 1;
+        } else if (task.status === 'pending') {
+          acc.pending += 1;
+        }
+        return acc;
+      }, {
+        total: 0,
+        completed: 0,
+        inProgress: 0,
+        pending: 0
+      });
+      const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
 
       logInfo('Dashboard data loaded successfully', {
         taskCount: transformedTasks.length,
@@ -185,10 +203,10 @@ export function useDashboardData(options: UseDashboardDataOptions = {}) {
       return {
         tasks: transformedTasks,
         stats: {
-          total,
-          completed,
-          inProgress,
-          pending,
+          total: stats.total,
+          completed: stats.completed,
+          inProgress: stats.inProgress,
+          pending: stats.pending,
           completionRate
         },
         lastUpdated: new Date().toISOString()
