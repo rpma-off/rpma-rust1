@@ -211,7 +211,12 @@ pub async fn intervention_management(
                 .check_task_assignment(&task_id, &session.user_id)
                 .unwrap_or(false);
 
-            if !task_access && session.role != crate::models::auth::UserRole::Admin {
+            if !task_access
+                && !matches!(
+                    session.role,
+                    crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+                )
+            {
                 return Err(AppError::Authorization(
                     "Not authorized to view interventions for this task".to_string(),
                 ));

@@ -53,6 +53,22 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_validate_step_advancement_intervention_mismatch() {
+        let (validation_service, _db, _temp_dir) = create_validation_service();
+        let logger = create_logger();
+        let intervention = test_intervention!(status: InterventionStatus::InProgress);
+        let other_intervention = test_intervention!(status: InterventionStatus::InProgress);
+        let step = TestDataFactory::create_test_step(&other_intervention.id, 1, None);
+
+        let result = validation_service.validate_step_advancement(&intervention, &step, &logger);
+        assert!(result.is_err(), "Mismatched intervention should be invalid");
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("does not belong"));
+    }
+
+    #[tokio::test]
     async fn test_validate_step_advancement_invalid_completed_to_pending() {
         let (validation_service, _db, _temp_dir) = create_validation_service();
         let logger = create_logger();

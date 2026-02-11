@@ -230,11 +230,6 @@ impl InterventionDataService {
             ((completed_steps as f32 / steps.len() as f32) * 100.0) as f64
         };
 
-        // Update status if all steps completed
-        if completed_steps == steps.len() {
-            intervention.status = InterventionStatus::Completed;
-        }
-
         intervention.updated_at = now();
 
         self.save_intervention(intervention)?;

@@ -340,6 +340,24 @@ impl InterventionWorkflowService {
         self.validation
             .validate_step_advancement(&intervention, &current_step, &logger)?;
 
+        let has_completion_data = !matches!(
+            request.collected_data,
+            serde_json::Value::Null | serde_json::Value::Object(ref map) if map.is_empty()
+        ) || request
+            .photos
+            .as_ref()
+            .map_or(false, |photos| !photos.is_empty())
+            || request
+                .issues
+                .as_ref()
+                .map_or(false, |issues| !issues.is_empty());
+
+        if current_step.step_status == StepStatus::Pending && has_completion_data {
+            return Err(InterventionError::Workflow(
+                "Step must be started before completing".to_string(),
+            ));
+        }
+
         // Update step with collected data
         self.data
             .update_step_with_data(&mut current_step, &request)?;
@@ -348,6 +366,17 @@ impl InterventionWorkflowService {
         if current_step.step_status == StepStatus::Pending {
             current_step.step_status = StepStatus::InProgress;
             current_step.started_at = TimestampString::now();
+        }
+
+        if current_step.step_status == StepStatus::InProgress && !has_completion_data {
+            self.save_step_with_retry(&current_step, &logger).await?;
+            let progress_percentage = intervention.completion_percentage as f32;
+            return Ok(AdvanceStepResponse {
+                step: current_step,
+                next_step: None,
+                progress_percentage,
+                requirements_completed: Vec::new(),
+            });
         }
 
         // Mark step as completed
