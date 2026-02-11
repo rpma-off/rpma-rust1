@@ -85,7 +85,7 @@ pub struct Material {
     // Specifications
     pub brand: Option<String>,
     pub model: Option<String>,
-    #[ts(type = "any")]
+    #[ts(type = "JsonValue")]
     pub specifications: Option<serde_json::Value>,
 
     // Inventory

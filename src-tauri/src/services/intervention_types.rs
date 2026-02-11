@@ -46,7 +46,7 @@ pub struct StartInterventionResponse {
 pub struct AdvanceStepRequest {
     pub intervention_id: String,
     pub step_id: String,
-    #[ts(type = "any")]
+    #[ts(type = "JsonValue")]
     pub collected_data: serde_json::Value,
     pub photos: Option<Vec<String>>, // Photo IDs
     pub notes: Option<String>,
@@ -67,7 +67,7 @@ pub struct AdvanceStepResponse {
 #[derive(Debug, Deserialize, TS)]
 pub struct SaveStepProgressRequest {
     pub step_id: String,
-    #[ts(type = "any")]
+    #[ts(type = "JsonValue")]
     pub collected_data: serde_json::Value,
     pub notes: Option<String>,
     pub photos: Option<Vec<String>>,
@@ -83,7 +83,7 @@ pub struct SaveStepProgressResponse {
 #[derive(Deserialize, Debug, TS)]
 pub struct FinalizeInterventionRequest {
     pub intervention_id: String,
-    #[ts(type = "any")]
+    #[ts(type = "JsonValue")]
     pub collected_data: Option<serde_json::Value>,
     pub photos: Option<Vec<String>>,
     pub customer_satisfaction: Option<i32>,

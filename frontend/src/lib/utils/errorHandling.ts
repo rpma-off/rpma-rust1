@@ -1,5 +1,5 @@
 import { toast } from 'sonner';
-import type { ApiError } from '@/lib/backend';
+import type { ApiError, JsonValue } from '@/lib/backend';
 
 export enum ErrorSeverity {
   LOW = 'low',
@@ -22,7 +22,7 @@ export interface AppError {
   code?: string;
   category: ErrorCategory;
   severity: ErrorSeverity;
-  details?: Record<string, unknown>;
+  details?: JsonValue;
   timestamp: Date;
   context?: Record<string, unknown>;
   action?: string;
@@ -37,7 +37,7 @@ export function createError(
   severity: ErrorSeverity = ErrorSeverity.MEDIUM,
   options?: {
     code?: string;
-    details?: Record<string, unknown>;
+    details?: JsonValue;
     context?: Record<string, unknown>;
     action?: string;
   }
@@ -104,7 +104,7 @@ export function handleApiError(
       ErrorSeverity.MEDIUM,
       {
         context,
-        details: { stack: error.stack },
+        details: { stack: error.stack ?? null },
       }
     );
   }
@@ -115,7 +115,7 @@ export function handleApiError(
     ErrorSeverity.MEDIUM,
     {
       context,
-      details: { originalError: error },
+      details: { originalError: String(error) },
     }
   );
 }

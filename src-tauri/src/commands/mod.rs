@@ -354,7 +354,7 @@ pub struct ApiError {
     pub message: String,
     pub code: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[ts(type = "any")]
+    #[ts(type = "JsonValue")]
     pub details: Option<serde_json::Value>,
 }
 

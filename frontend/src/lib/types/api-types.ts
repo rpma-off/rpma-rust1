@@ -1,23 +1,23 @@
 // Extended types with better type safety
 // This file provides type-safe wrappers around auto-generated backend types
 
-import type { ApiError as BaseApiError } from '@/lib/backend';
+import type { ApiError as BaseApiError, JsonValue } from '@/lib/backend';
 
 // Extended API error with better typing
 export interface ApiError extends BaseApiError {
-  details: Record<string, unknown> | null; // More specific than 'any'
+  details: JsonValue;
 }
 
 // Helper function to create typed API errors
 export function createApiError(
   message: string,
   code: string,
-  details?: Record<string, unknown>
+  details?: JsonValue
 ): ApiError {
   return {
     message,
     code,
-    details: details || null,
+    details: details ?? null,
   };
 }
 
