@@ -808,7 +808,7 @@ fn configure_linux_specific() {
    let token_plain = session.token.clone(); // token en clair à la création d'une nouvelle session
    // migration : réémettre de nouveaux tokens pour les sessions existantes
    let mut mac = HmacSha256::new_from_slice(app_secret.as_bytes())
-       .map_err(|_| AppError::Configuration("Clé HMAC invalide (taille incompatible SHA-256)".to_string()))?;
+       .map_err(|_| AppError::Configuration("Clé HMAC invalide (≥ 32 octets recommandé pour SHA-256)".to_string()))?;
    let mac_payload = format!("{}:{}", session.user_id, token_plain);
    mac.update(mac_payload.as_bytes());
    let token_hash = base64::engine::general_purpose::STANDARD.encode(mac.finalize().into_bytes());
