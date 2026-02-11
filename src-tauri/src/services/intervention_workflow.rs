@@ -939,8 +939,8 @@ impl InterventionWorkflowService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::TestDatabase;
     use crate::models::step::StepType;
+    use crate::test_utils::TestDatabase;
 
     fn test_logger() -> RPMARequestLogger {
         RPMARequestLogger::new("test-correlation".to_string(), None, LogDomain::Task)
