@@ -1,22 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/compatibility';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users,
   Package,
@@ -54,6 +48,8 @@ function UserDropdown({ onMobileClose }: { onMobileClose?: () => void }) {
   const { profile, signOut } = useAuth();
   const queryClient = useQueryClient();
   const router = useRouter();
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const displayName = profile?.first_name && profile?.last_name
     ? `${profile.first_name} ${profile.last_name}`
@@ -62,8 +58,25 @@ function UserDropdown({ onMobileClose }: { onMobileClose?: () => void }) {
   const initials = profile?.first_name?.charAt(0) || profile?.email?.charAt(0) || 'U';
   const userRole = profile?.role || 'viewer';
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
   const handleLogout = async () => {
     try {
+      setIsOpen(false);
       await signOut();
       queryClient.clear();
       toast.success('Logged out successfully');
@@ -74,85 +87,99 @@ function UserDropdown({ onMobileClose }: { onMobileClose?: () => void }) {
     }
   };
 
+  const handleMenuClick = (path: string) => {
+    setIsOpen(false);
+    onMobileClose?.();
+    router.push(path);
+  };
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer border-t border-gray-100 transition-colors duration-200">
-          <div className="flex items-center space-x-3">
-            <Avatar className="h-8 w-8 bg-gradient-to-br from-gray-200 to-gray-300 ring-2 ring-white">
-              <AvatarFallback className="text-gray-600 font-bold text-xs">{initials}</AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-gray-400 font-medium">Signed in as</p>
-              <p className="text-sm font-semibold text-gray-700 truncate">{displayName}</p>
-            </div>
-          </div>
-          <ChevronRight className="h-4 w-4 text-gray-400 transition-transform duration-200" />
-        </div>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent 
-        align="end" 
-        side="bottom" 
-        sideOffset={4}
-        className="w-72 bg-white border-gray-200 shadow-xl"
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-between w-full px-4 py-3 hover:bg-gray-50 cursor-pointer border-t border-gray-100 transition-colors duration-200"
       >
-        <div className="px-3 py-3 border-b border-gray-100">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10 bg-gradient-to-br from-blue-500 to-purple-600">
-              <AvatarFallback className="text-white font-semibold text-sm">{initials}</AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">{displayName}</p>
-              <p className="text-xs text-gray-500 truncate">{profile?.email}</p>
+        <div className="flex items-center space-x-3">
+          <Avatar className="h-8 w-8 bg-gradient-to-br from-gray-200 to-gray-300 ring-2 ring-white">
+            <AvatarFallback className="text-gray-600 font-bold text-xs">{initials}</AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-gray-400 font-medium">Signed in as</p>
+            <p className="text-sm font-semibold text-gray-700 truncate">{displayName}</p>
+          </div>
+        </div>
+        <ChevronRight className={cn(
+          "h-4 w-4 text-gray-400 transition-transform duration-200",
+          isOpen && "rotate-90"
+        )} />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.15 }}
+            className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg border border-gray-200 shadow-xl overflow-hidden z-50"
+          >
+            <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-10 w-10 bg-gradient-to-br from-blue-500 to-purple-600 ring-2 ring-white">
+                  <AvatarFallback className="text-white font-semibold text-sm">{initials}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 truncate">{displayName}</p>
+                  <p className="text-xs text-gray-500 truncate">{profile?.email}</p>
+                </div>
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 border border-blue-200">
+                  <Shield className="h-3 w-3 mr-1" />
+                  {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+                </span>
+              </div>
             </div>
-          </div>
-          <div className="mt-2 flex items-center gap-2">
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
-              <Shield className="h-3 w-3 mr-1" />
-              {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
-            </span>
-          </div>
-        </div>
 
-        <DropdownMenuSeparator className="bg-gray-100" />
+            <div className="py-1">
+              <button
+                onClick={() => handleMenuClick('/settings')}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors text-left"
+              >
+                <User className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                <span>Profile</span>
+              </button>
 
-        <div className="py-1">
-          <DropdownMenuItem 
-            onClick={() => { onMobileClose?.(); router.push('/settings'); }}
-            className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 focus:bg-gray-50 cursor-pointer"
-          >
-            <User className="h-4 w-4 text-gray-400" />
-            <span>Profile</span>
-          </DropdownMenuItem>
+              <button
+                onClick={() => handleMenuClick('/settings')}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors text-left"
+              >
+                <SettingsIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                <span>Settings</span>
+              </button>
 
-          <DropdownMenuItem 
-            onClick={() => { onMobileClose?.(); router.push('/settings'); }}
-            className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 focus:bg-gray-50 cursor-pointer"
-          >
-            <SettingsIcon className="h-4 w-4 text-gray-400" />
-            <span>Settings</span>
-          </DropdownMenuItem>
+              <button
+                onClick={() => handleMenuClick('/help')}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors text-left"
+              >
+                <HelpCircle className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                <span>Help & Support</span>
+              </button>
+            </div>
 
-          <DropdownMenuItem 
-            onClick={() => { onMobileClose?.(); router.push('/help'); }}
-            className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 focus:bg-gray-50 cursor-pointer"
-          >
-            <HelpCircle className="h-4 w-4 text-gray-400" />
-            <span>Help & Support</span>
-          </DropdownMenuItem>
-        </div>
-
-        <DropdownMenuSeparator className="bg-gray-100" />
-
-        <DropdownMenuItem 
-          onClick={handleLogout}
-          className="flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 focus:bg-red-50 cursor-pointer group"
-        >
-          <LogOut className="h-4 w-4 text-red-500 group-hover:text-red-600 transition-colors" />
-          <span>Logout</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+            <div className="border-t border-gray-100">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-left group"
+              >
+                <LogOut className="h-4 w-4 text-red-500 group-hover:text-red-600 transition-colors flex-shrink-0" />
+                <span>Logout</span>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
