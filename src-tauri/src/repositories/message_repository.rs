@@ -89,22 +89,20 @@ impl MessageQuery {
     }
 
     fn validate_sort_column(sort_by: &str) -> Result<String, RepoError> {
-        let allowed_columns = [
-            "created_at",
-            "updated_at",
-            "message_type",
-            "status",
-            "priority",
-            "scheduled_at",
-            "sent_at",
-            "read_at",
-            "subject",
-        ];
-        allowed_columns
-            .iter()
-            .find(|&&col| col == sort_by)
-            .map(|s| s.to_string())
-            .ok_or_else(|| RepoError::Validation(format!("Invalid sort column: {}", sort_by)))
+        crate::repositories::base::validate_sort_column(
+            sort_by,
+            &[
+                "created_at",
+                "updated_at",
+                "message_type",
+                "status",
+                "priority",
+                "scheduled_at",
+                "sent_at",
+                "read_at",
+                "subject",
+            ],
+        )
     }
 
     fn build_order_by_clause(&self) -> Result<String, RepoError> {
@@ -571,7 +569,7 @@ mod tests {
     }
 
     async fn setup_test_db() -> Database {
-        let db = Database::new_in_memory().await.unwrap();
+        let db = crate::test_utils::setup_test_db().await;
         seed_user(&db, "sender-1");
         seed_user(&db, "recipient-0");
         seed_user(&db, "recipient-1");

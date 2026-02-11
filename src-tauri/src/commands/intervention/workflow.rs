@@ -127,7 +127,13 @@ pub async fn intervention_start(
 
     let session = authenticate!(&session_token, &state);
     super::ensure_intervention_permission(&session)?;
-    ensure_task_assignment(&state, &session, &request.task_id, "start interventions").await?;
+    ensure_task_assignment(
+        &state,
+        &session,
+        &request.task_id,
+        "start interventions",
+    )
+    .await?;
 
     // Check if there's already an active intervention for this task
     match state
