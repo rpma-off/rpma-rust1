@@ -117,9 +117,7 @@ pub async fn calendar_get_tasks(
         ));
     }
 
-    let calendar_service = CalendarService::new(state.db.clone());
-
-    match calendar_service
+    match state.calendar_service
         .get_tasks(request.date_range, request.technician_ids, request.statuses)
         .await
     {
@@ -169,9 +167,7 @@ pub async fn get_event_by_id(
         ));
     }
 
-    let calendar_service = CalendarEventService::new(state.db.clone());
-
-    match calendar_service.get_event_by_id(request.id).await {
+    match state.calendar_event_service.get_event_by_id(request.id).await {
         Ok(event) => {
             if event.is_some() {
                 info!("Successfully retrieved calendar event");
@@ -222,9 +218,7 @@ pub async fn create_event(
         ));
     }
 
-    let calendar_service = CalendarEventService::new(state.db.clone());
-
-    match calendar_service
+    match state.calendar_event_service
         .create_event(request.event_data, Some(current_user.user_id))
         .await
     {
@@ -271,9 +265,7 @@ pub async fn update_event(
         ));
     }
 
-    let calendar_service = CalendarEventService::new(state.db.clone());
-
-    match calendar_service
+    match state.calendar_event_service
         .update_event(request.id, request.event_data, Some(current_user.user_id))
         .await
     {
@@ -324,9 +316,7 @@ pub async fn delete_event(
         ));
     }
 
-    let calendar_service = CalendarEventService::new(state.db.clone());
-
-    match calendar_service.delete_event(request.id).await {
+    match state.calendar_event_service.delete_event(request.id).await {
         Ok(deleted) => {
             if deleted {
                 info!("Successfully deleted calendar event");
@@ -377,9 +367,7 @@ pub async fn get_events_for_technician(
         ));
     }
 
-    let calendar_service = CalendarEventService::new(state.db.clone());
-
-    match calendar_service
+    match state.calendar_event_service
         .get_events_for_technician(request.technician_id)
         .await
     {
@@ -432,9 +420,7 @@ pub async fn get_events_for_task(
         ));
     }
 
-    let calendar_service = CalendarEventService::new(state.db.clone());
-
-    match calendar_service.get_events_for_task(request.task_id).await {
+    match state.calendar_event_service.get_events_for_task(request.task_id).await {
         Ok(events) => {
             info!("Successfully retrieved {} events for task", events.len());
             Ok(ApiResponse::success(events))
@@ -481,10 +467,7 @@ pub async fn get_events(
         ));
     }
 
-    let calendar_service =
-        crate::services::calendar_event_service::CalendarEventService::new(state.db.clone());
-
-    match calendar_service
+    match state.calendar_event_service
         .get_events_in_range(start_date, end_date, technician_id)
         .await
     {
@@ -534,9 +517,7 @@ pub async fn calendar_check_conflicts(
         ));
     }
 
-    let calendar_service = CalendarService::new(state.db.clone());
-
-    match calendar_service
+    match state.calendar_service
         .check_conflicts(
             request.task_id,
             request.new_date,
