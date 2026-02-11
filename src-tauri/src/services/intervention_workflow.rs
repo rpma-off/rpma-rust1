@@ -606,9 +606,9 @@ impl InterventionWorkflowService {
 
         has_collected_data
             || request
-            .photos
-            .as_ref()
-            .map_or(false, |photos| !photos.is_empty())
+                .photos
+                .as_ref()
+                .map_or(false, |photos| !photos.is_empty())
             || request
                 .issues
                 .as_ref()
@@ -943,8 +943,8 @@ impl InterventionWorkflowService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::TestDatabase;
     use crate::models::step::StepType;
+    use crate::test_utils::TestDatabase;
 
     fn test_logger() -> RPMARequestLogger {
         RPMARequestLogger::new("test-correlation".to_string(), None, LogDomain::Task)

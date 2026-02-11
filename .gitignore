@@ -3,7 +3,6 @@
 /node_modules
 /.next
 _tmp_
-Cargo.lock
 
 # Tauri generated
 /WixTools

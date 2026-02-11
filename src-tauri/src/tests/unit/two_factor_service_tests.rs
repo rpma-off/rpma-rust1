@@ -12,7 +12,11 @@ use totp_rs::{Algorithm, TOTP};
 mod tests {
     use super::*;
 
-    fn create_2fa_service() -> (TwoFactorService, Arc<crate::db::Database>, tempfile::TempDir) {
+    fn create_2fa_service() -> (
+        TwoFactorService,
+        Arc<crate::db::Database>,
+        tempfile::TempDir,
+    ) {
         let test_db = test_db!();
         let db = test_db.db();
         let service = TwoFactorService::new(Arc::clone(&db));
@@ -98,9 +102,19 @@ mod tests {
             .await
             .expect("2FA setup generation should succeed");
 
-        assert!(!setup.secret.is_empty(), "Should generate a non-empty secret");
-        assert!(!setup.qr_code_url.is_empty(), "Should generate a QR code URL");
-        assert_eq!(setup.backup_codes.len(), 10, "Should generate 10 backup codes");
+        assert!(
+            !setup.secret.is_empty(),
+            "Should generate a non-empty secret"
+        );
+        assert!(
+            !setup.qr_code_url.is_empty(),
+            "Should generate a QR code URL"
+        );
+        assert_eq!(
+            setup.backup_codes.len(),
+            10,
+            "Should generate 10 backup codes"
+        );
 
         for backup_code in &setup.backup_codes {
             assert_eq!(backup_code.len(), 6, "Backup code should be 6 characters");
@@ -147,7 +161,10 @@ mod tests {
             .expect("Should generate second setup");
 
         assert_ne!(setup1.secret, setup2.secret, "Secrets should differ");
-        assert_ne!(setup1.qr_code_url, setup2.qr_code_url, "QR URLs should differ");
+        assert_ne!(
+            setup1.qr_code_url, setup2.qr_code_url,
+            "QR URLs should differ"
+        );
         assert_ne!(
             setup1.backup_codes, setup2.backup_codes,
             "Backup codes should differ"
@@ -206,7 +223,10 @@ mod tests {
         let result = two_fa_service
             .enable_2fa(user_id, "123456", vec!["111111".to_string()])
             .await;
-        assert!(result.is_err(), "Should reject enabling when already enabled");
+        assert!(
+            result.is_err(),
+            "Should reject enabling when already enabled"
+        );
     }
 
     #[tokio::test]

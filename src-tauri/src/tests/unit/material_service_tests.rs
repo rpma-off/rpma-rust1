@@ -555,7 +555,11 @@ mod tests {
         // Create an expired material
         let mut request = create_basic_material_request();
         request.sku = "EXPIRED-001".to_string();
-        request.expiry_date = Some(Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0).unwrap().timestamp());
+        request.expiry_date = Some(
+            Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0)
+                .unwrap()
+                .timestamp(),
+        );
         let material = service
             .create_material(request, Some("test_user".to_string()))
             .unwrap();
@@ -740,7 +744,11 @@ mod tests {
         // Create expired material
         let mut expired_request = create_basic_material_request();
         expired_request.sku = "EXP-001".to_string();
-        expired_request.expiry_date = Some(Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0).unwrap().timestamp());
+        expired_request.expiry_date = Some(
+            Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0)
+                .unwrap()
+                .timestamp(),
+        );
         let _expired_material = service
             .create_material(expired_request, Some("test_user".to_string()))
             .unwrap();
@@ -802,7 +810,11 @@ mod tests {
         // Create expired material
         let mut expired_request = create_basic_material_request();
         expired_request.sku = "EXP-001".to_string();
-        expired_request.expiry_date = Some(Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0).unwrap().timestamp());
+        expired_request.expiry_date = Some(
+            Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0)
+                .unwrap()
+                .timestamp(),
+        );
         let _expired_material = service
             .create_material(expired_request, Some("test_user".to_string()))
             .unwrap();
@@ -970,7 +982,11 @@ mod tests {
             location_from: None,
             location_to: Some("Rack A-1".to_string()),
             batch_number: Some("BATCH-001".to_string()),
-            expiry_date: Some(Utc.with_ymd_and_hms(2025, 12, 31, 0, 0, 0).unwrap().timestamp()),
+            expiry_date: Some(
+                Utc.with_ymd_and_hms(2025, 12, 31, 0, 0, 0)
+                    .unwrap()
+                    .timestamp(),
+            ),
             quality_status: Some("Good".to_string()),
             intervention_id: None,
             step_id: None,

@@ -257,7 +257,7 @@ pub enum AlertSeverity {
 pub trait EventHandler: Send + Sync {
     /// Handle a domain event
     fn handle(&self, event: &DomainEvent) -> Result<(), String>;
-    
+
     /// Get the event types this handler is interested in
     fn interested_events(&self) -> Vec<&'static str>;
 }
@@ -266,7 +266,7 @@ pub trait EventHandler: Send + Sync {
 pub trait EventPublisher: Send + Sync {
     /// Publish a domain event
     fn publish(&self, event: DomainEvent) -> Result<(), String>;
-    
+
     /// Publish multiple events
     fn publish_batch(&self, events: Vec<DomainEvent>) -> Result<(), String>;
 }
@@ -275,15 +275,27 @@ pub trait EventPublisher: Send + Sync {
 pub trait EventStore: Send + Sync {
     /// Store an event
     fn store(&self, event: &DomainEvent) -> Result<(), String>;
-    
+
     /// Get events for a specific aggregate
-    fn get_events(&self, aggregate_id: &str, from_version: Option<i64>) -> Result<Vec<DomainEvent>, String>;
-    
+    fn get_events(
+        &self,
+        aggregate_id: &str,
+        from_version: Option<i64>,
+    ) -> Result<Vec<DomainEvent>, String>;
+
     /// Get events by type
-    fn get_events_by_type(&self, event_type: &str, limit: Option<usize>) -> Result<Vec<DomainEvent>, String>;
-    
+    fn get_events_by_type(
+        &self,
+        event_type: &str,
+        limit: Option<usize>,
+    ) -> Result<Vec<DomainEvent>, String>;
+
     /// Get events in time range
-    fn get_events_in_range(&self, start: DateTime<Utc>, end: DateTime<Utc>) -> Result<Vec<DomainEvent>, String>;
+    fn get_events_in_range(
+        &self,
+        start: DateTime<Utc>,
+        end: DateTime<Utc>,
+    ) -> Result<Vec<DomainEvent>, String>;
 }
 
 /// In-memory event bus implementation
@@ -305,7 +317,7 @@ impl InMemoryEventBus {
     /// Create a new in-memory event bus
     pub fn new() -> Self {
         let (sender, _) = broadcast::channel(1000); // Buffer 1000 events
-        
+
         Self {
             sender,
             handlers: Arc::new(RwLock::new(HashMap::new())),
@@ -313,13 +325,13 @@ impl InMemoryEventBus {
     }
 
     /// Register an event handler
-    pub async fn register_handler<H>(&self, handler: H) 
-    where 
-        H: EventHandler + 'static
+    pub async fn register_handler<H>(&self, handler: H)
+    where
+        H: EventHandler + 'static,
     {
         let handler = Arc::new(handler);
         let mut handlers = self.handlers.write().await;
-        
+
         for event_type in handler.interested_events() {
             handlers
                 .entry(event_type.to_string())
@@ -347,7 +359,7 @@ impl InMemoryEventBus {
     async fn process_event(&self, event: DomainEvent) -> Result<(), String> {
         let handlers = self.handlers.read().await;
         let event_type = self.get_event_type(&event);
-        
+
         if let Some(event_handlers) = handlers.get(&event_type) {
             for handler in event_handlers {
                 if let Err(e) = handler.handle(&event) {
@@ -356,7 +368,7 @@ impl InMemoryEventBus {
                 }
             }
         }
-        
+
         Ok(())
     }
 
@@ -386,7 +398,8 @@ impl InMemoryEventBus {
             DomainEvent::SystemError { .. } => "SystemError",
             DomainEvent::SystemMaintenance { .. } => "SystemMaintenance",
             DomainEvent::PerformanceAlert { .. } => "PerformanceAlert",
-        }.to_string()
+        }
+        .to_string()
     }
 }
 
@@ -396,7 +409,7 @@ impl EventPublisher for InMemoryEventBus {
         if let Err(e) = self.sender.send(event.clone()) {
             return Err(format!("Failed to publish event: {}", e));
         }
-        
+
         // Process event synchronously for registered handlers
         let event_bus = self.clone();
         tokio::spawn(async move {
@@ -404,7 +417,7 @@ impl EventPublisher for InMemoryEventBus {
                 tracing::error!("Failed to process event: {}", e);
             }
         });
-        
+
         Ok(())
     }
 
@@ -464,7 +477,7 @@ impl EventProcessor {
     /// Add an event handler
     pub fn add_handler<H>(&mut self, handler: H)
     where
-        H: EventHandler + 'static
+        H: EventHandler + 'static,
     {
         self.handlers.push(Arc::new(handler));
     }
@@ -473,7 +486,7 @@ impl EventProcessor {
     pub async fn process_event(&self, event: DomainEvent) -> Result<(), String> {
         // Store the event first
         self.event_store.store(&event)?;
-        
+
         // Then notify all interested handlers
         for handler in &self.handlers {
             let event_type = self.get_event_type(&event);
@@ -481,7 +494,7 @@ impl EventProcessor {
                 handler.handle(&event)?;
             }
         }
-        
+
         Ok(())
     }
 
@@ -535,15 +548,19 @@ impl EventReplayer {
     }
 
     /// Replay events from a specific point
-    pub async fn replay_from(&self, aggregate_id: &str, from_version: Option<i64>) -> Result<(), String> {
+    pub async fn replay_from(
+        &self,
+        aggregate_id: &str,
+        from_version: Option<i64>,
+    ) -> Result<(), String> {
         let events = self.event_store.get_events(aggregate_id, from_version)?;
-        
+
         for event in events {
             // Process each event in order
             // This would typically rebuild the aggregate state
             tracing::info!("Replaying event: {:?}", event);
         }
-        
+
         Ok(())
     }
 
@@ -551,13 +568,13 @@ impl EventReplayer {
     pub async fn replay_all(&self) -> Result<(), String> {
         let start = Utc::now() - chrono::Duration::days(30); // Last 30 days
         let end = Utc::now();
-        
+
         let events = self.event_store.get_events_in_range(start, end)?;
-        
+
         for event in events {
             tracing::info!("Replaying event: {:?}", event);
         }
-        
+
         Ok(())
     }
 }
@@ -580,9 +597,10 @@ impl EventProjection {
     /// Add a handler for a specific event type
     pub fn add_handler<F>(&mut self, event_type: &str, handler: F)
     where
-        F: Fn(&DomainEvent) -> Result<(), String> + 'static
+        F: Fn(&DomainEvent) -> Result<(), String> + 'static,
     {
-        self.handlers.insert(event_type.to_string(), Box::new(handler));
+        self.handlers
+            .insert(event_type.to_string(), Box::new(handler));
     }
 
     /// Process an event
@@ -625,19 +643,19 @@ impl EventProjection {
 pub trait EventSourced {
     /// Get the current version of the aggregate
     fn version(&self) -> i64;
-    
+
     /// Get the aggregate ID
     fn id(&self) -> &str;
-    
+
     /// Apply an event to update state
     fn apply(&mut self, event: DomainEvent) -> Result<(), String>;
-    
+
     /// Get uncommitted events
     fn get_uncommitted_events(&self) -> Vec<DomainEvent>;
-    
+
     /// Mark events as committed
     fn mark_events_committed(&mut self);
-    
+
     /// Load from events
     fn load_from_events(&mut self, events: Vec<DomainEvent>) -> Result<(), String>;
 }
@@ -649,13 +667,11 @@ macro_rules! event_handler {
         impl $crate::event_system::EventHandler for $handler_type {
             fn handle(&self, event: &$crate::event_system::DomainEvent) -> Result<(), String> {
                 match event {
-                    $crate::event_system::DomainEvent::$event_type { .. } => {
-                        self.$handler(event)
-                    },
+                    $crate::event_system::DomainEvent::$event_type { .. } => self.$handler(event),
                     _ => Ok(()),
                 }
             }
-            
+
             fn interested_events(&self) -> Vec<&'static str> {
                 vec![$event_type]
             }
