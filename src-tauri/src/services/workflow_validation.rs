@@ -72,9 +72,10 @@ impl WorkflowValidationService {
                 None,
                 Some(error_context),
             );
-            return Err(InterventionError::Workflow(
-                "Step does not belong to the specified intervention".to_string(),
-            ));
+            return Err(InterventionError::Workflow(format!(
+                "Step {} does not belong to intervention {}",
+                current_step.id, intervention.id
+            )));
         }
 
         match current_step.step_status {
