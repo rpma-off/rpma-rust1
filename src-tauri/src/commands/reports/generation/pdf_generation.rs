@@ -26,9 +26,8 @@ pub async fn generate_intervention_pdf_report(
     // Get complete intervention data
     let intervention_data = match crate::commands::reports::export::get_intervention_with_details(
         &intervention_id,
-        &state.db,
-        Some(&state.intervention_service),
-        Some(&state.client_service),
+        &state.intervention_service,
+        &state.client_service,
     )
     .await
     {

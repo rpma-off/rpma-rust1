@@ -33,9 +33,8 @@ pub async fn export_intervention_report(
     info!("Fetching intervention data for ID: {}", intervention_id);
     let intervention_data = match get_intervention_with_details(
         &intervention_id,
-        &state.db,
-        Some(&state.intervention_service),
-        Some(&state.client_service),
+        &state.intervention_service,
+        &state.client_service,
     )
     .await
     {
@@ -135,9 +134,8 @@ pub async fn save_intervention_report(
     // Get complete intervention data
     let intervention_data = match get_intervention_with_details(
         &intervention_id,
-        &state.db,
-        Some(&state.intervention_service),
-        Some(&state.client_service),
+        &state.intervention_service,
+        &state.client_service,
     )
     .await
     {
@@ -174,43 +172,16 @@ pub async fn save_intervention_report(
 /// service/repository instances.
 pub async fn get_intervention_with_details(
     intervention_id: &str,
-    db: &crate::db::Database,
-    intervention_service: Option<&crate::services::intervention::InterventionService>,
-    client_service: Option<&crate::services::ClientService>,
+    intervention_service: &crate::services::intervention::InterventionService,
+    client_service: &crate::services::ClientService,
 ) -> AppResult<CompleteInterventionData> {
     debug!(
         "get_intervention_with_details: Starting for intervention_id: {}",
         intervention_id
     );
 
-    // Use provided service or create a new one as fallback
-    let owned_intervention_service;
-    let intervention_svc = match intervention_service {
-        Some(svc) => svc,
-        None => {
-            owned_intervention_service =
-                crate::services::intervention::InterventionService::new(std::sync::Arc::new(
-                    db.clone(),
-                ));
-            &owned_intervention_service
-        }
-    };
-
-    // Use provided client service or create a new one as fallback via service layer
-    let owned_client_service;
-    let client_svc = match client_service {
-        Some(svc) => svc,
-        None => {
-            use crate::repositories::{Cache, ClientRepository};
-            let cache = std::sync::Arc::new(Cache::new(1000));
-            let client_repo = std::sync::Arc::new(ClientRepository::new(
-                std::sync::Arc::new(db.clone()),
-                cache,
-            ));
-            owned_client_service = crate::services::client::ClientService::new(client_repo);
-            &owned_client_service
-        }
-    };
+    let intervention_svc = intervention_service;
+    let client_svc = client_service;
 
     debug!("get_intervention_with_details: Using intervention service, calling get_intervention");
     let intervention_opt = intervention_svc
@@ -326,10 +297,7 @@ pub async fn get_intervention_with_details(
             );
         });
         client_svc.get_client(client_id).await.map_err(|e| {
-            crate::commands::errors::AppError::Database(format!(
-                "Failed to get client: {}",
-                e
-            ))
+            crate::commands::errors::AppError::Database(format!("Failed to get client: {}", e))
         })?
     } else {
         let _ = std::panic::catch_unwind(|| {

@@ -10,7 +10,7 @@ use tracing::{error, info, warn};
 pub enum AlertChannel {
     Log,
     Database,
-    UI,    // For future UI notifications
+    UI,    // UI dispatch handled outside the service layer
     Email, // For future email notifications
 }
 
@@ -354,7 +354,9 @@ impl AlertingService {
             match channel {
                 AlertChannel::Log => self.send_log_alert(&alert),
                 AlertChannel::Database => self.save_alert(&alert)?,
-                AlertChannel::UI => self.send_ui_alert(&alert),
+                AlertChannel::UI => {
+                    info!("UI alert requested; dispatch is handled by the command layer");
+                }
                 AlertChannel::Email => self.send_email_alert(&alert),
             }
         }
@@ -405,12 +407,6 @@ impl AlertingService {
         ).map_err(|e| format!("Failed to save alert: {}", e))?;
 
         Ok(())
-    }
-
-    /// Send alert to UI (placeholder for future implementation)
-    fn send_ui_alert(&self, _alert: &Alert) {
-        // TODO: Implement UI notifications
-        info!("UI alert triggered (not yet implemented)");
     }
 
     /// Send alert via email (placeholder for future implementation)

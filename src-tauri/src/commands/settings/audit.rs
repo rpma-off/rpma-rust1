@@ -4,10 +4,7 @@
 //! and GDPR-compliant data operations.
 
 use crate::commands::{ApiResponse, AppError, AppState};
-use crate::services::consent::ConsentService;
-
 use serde::Deserialize;
-use std::sync::Arc;
 use tracing::info;
 
 // Import authentication macros
@@ -35,9 +32,9 @@ pub async fn get_data_consent(
     info!("Getting data consent information");
 
     let user = authenticate!(&session_token, &state);
-    let consent_service = ConsentService::new(Arc::new((*state.db).clone()));
 
-    let consent = consent_service
+    let consent = state
+        .consent_service
         .get_consent(&user.id)
         .map_err(|e| AppError::Database(format!("Failed to get consent data: {}", e)))?;
 
@@ -54,9 +51,9 @@ pub async fn update_data_consent(
     info!("Updating data consent preferences");
 
     let user = authenticate!(&request.session_token, &state);
-    let consent_service = ConsentService::new(Arc::new((*state.db).clone()));
 
-    let consent = consent_service
+    let consent = state
+        .consent_service
         .update_consent(
             &user.user_id,
             request.analytics_consent,

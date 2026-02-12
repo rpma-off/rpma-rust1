@@ -289,6 +289,7 @@ pub struct AppStateType {
     pub session_service: Arc<crate::services::session::SessionService>,
     pub two_factor_service: Arc<crate::services::two_factor::TwoFactorService>,
     pub settings_service: Arc<SettingsService>,
+    pub consent_service: Arc<crate::services::consent::ConsentService>,
     pub cache_service: Arc<crate::services::cache::CacheService>,
     pub report_job_service: OnceLock<Arc<crate::services::report_jobs::ReportJobService>>,
     pub performance_monitor_service:

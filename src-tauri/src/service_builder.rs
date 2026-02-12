@@ -15,6 +15,7 @@
 //! - **TaskImportService**: No external dependencies
 //! - **AuthService**: Database
 //! - **SettingsService**: Database
+//! - **ConsentService**: Database
 //! - **PhotoService**: Database, StorageSettings
 //! - **MaterialService**: Database
 //! - **AnalyticsService**: Database
@@ -88,6 +89,9 @@ impl ServiceBuilder {
         let intervention_service =
             Arc::new(crate::services::InterventionService::new(self.db.clone()));
         let settings_service = Arc::new(crate::services::SettingsService::new(self.db.clone()));
+        let consent_service = Arc::new(crate::services::consent::ConsentService::new(
+            self.db.clone(),
+        ));
         let task_import_service = Arc::new(crate::services::task_import::TaskImportService::new(
             self.db.clone(),
         ));
@@ -189,6 +193,7 @@ impl ServiceBuilder {
             session_service,
             two_factor_service,
             settings_service,
+            consent_service,
             cache_service,
             report_job_service: OnceLock::new(),
             performance_monitor_service,
@@ -222,7 +227,8 @@ mod tests {
         let app_data_dir = std::path::PathBuf::from("/tmp/test");
 
         let builder = ServiceBuilder::new(db, repositories, app_data_dir);
-        assert!(builder.build().is_ok());
+        let app_state = builder.build().expect("Failed to build app state");
+        assert!(Arc::strong_count(&app_state.consent_service) >= 1);
     }
 
     #[tokio::test]
