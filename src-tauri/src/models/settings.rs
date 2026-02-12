@@ -466,3 +466,15 @@ impl Default for UserNotificationSettings {
         }
     }
 }
+
+/// Data consent for GDPR compliance
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DataConsent {
+    pub user_id: String,
+    pub analytics_consent: bool,
+    pub marketing_consent: bool,
+    pub third_party_sharing: bool,
+    pub data_retention_period: u32,
+    pub consent_given_at: chrono::DateTime<chrono::Utc>,
+    pub consent_version: String,
+}

@@ -13,6 +13,7 @@ pub mod calendar_event_service;
 pub mod client;
 pub mod client_statistics;
 pub mod client_validation;
+pub mod consent;
 pub mod dashboard;
 pub mod document_storage;
 pub mod domain_event;

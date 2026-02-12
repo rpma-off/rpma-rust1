@@ -86,42 +86,11 @@ pub async fn intervention_get_progress(
         ));
     }
 
-    // Get intervention with details to calculate progress
-    let intervention_details = state
+    // Delegate progress calculation to the service layer
+    let progress = state
         .intervention_service
-        .get_intervention_with_details(&intervention_id)
-        .map_err(|e| AppError::Database(format!("Failed to get intervention details: {}", e)))?;
-
-    // Calculate progress
-    let total_steps = intervention_details.steps.len() as i32;
-    let completed_steps = intervention_details
-        .steps
-        .iter()
-        .filter(|s| {
-            matches!(
-                s.step.step_status,
-                crate::models::step::StepStatus::Completed
-            )
-        })
-        .count() as i32;
-    let _current_step = completed_steps + 1;
-    let _completion_percentage = if total_steps > 0 {
-        (completed_steps as f64 / total_steps as f64) * 100.0
-    } else {
-        0.0
-    };
-
-    // TODO: Implement get_progress method in InterventionService
-    // For now, return a placeholder progress structure
-    let progress = crate::models::intervention::InterventionProgress {
-        intervention_id: intervention_id.clone(),
-        current_step: 1,
-        completion_percentage: 0.0,
-        total_steps: 1,
-        completed_steps: 0,
-        estimated_time_remaining: Some(60),
-        status: crate::models::intervention::InterventionStatus::InProgress,
-    };
+        .get_progress(&intervention_id)
+        .map_err(|e| AppError::Database(format!("Failed to get intervention progress: {}", e)))?;
 
     Ok(ApiResponse::success(progress))
 }
