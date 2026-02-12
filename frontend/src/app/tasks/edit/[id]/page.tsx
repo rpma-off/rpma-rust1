@@ -8,6 +8,7 @@ import { ArrowLeft, Loader2, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth/compatibility';
 import { ipcClient } from '@/lib/ipc';
+import { useTranslation } from '@/hooks/useTranslation';
 
 // Dynamically import TaskForm for better performance
 const TaskForm = dynamic(() => import('@/components/TaskForm').then(mod => ({ default: mod.TaskForm })), {
@@ -23,6 +24,7 @@ const TaskForm = dynamic(() => import('@/components/TaskForm').then(mod => ({ de
 });
 
 export default function EditTaskPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useParams();
   const { user, session } = useAuth();
@@ -42,19 +44,19 @@ export default function EditTaskPage() {
         setTaskData(task);
       } catch (err) {
         console.error('Failed to fetch task:', err);
-        setError('Impossible de charger la tâche. Elle peut avoir été supprimée ou vous n\'avez pas les permissions nécessaires.');
-        toast.error('Erreur lors du chargement de la tâche');
+        setError(t('errors.taskLoadError'));
+        toast.error(t('errors.taskLoadError'));
       } finally {
         setLoading(false);
       }
     };
 
     fetchTask();
-  }, [taskId, user?.token]);
+  }, [taskId, user?.token, t]);
 
   const handleSuccess = (updatedTask?: { id: string }) => {
     if (updatedTask?.id) {
-      toast.success('Tâche mise à jour avec succès !');
+      toast.success(t('tasks.taskUpdated'));
       // Redirect to the updated task
       router.push(`/tasks/${updatedTask.id}`);
     }
@@ -72,7 +74,7 @@ export default function EditTaskPage() {
           <div className="flex items-center justify-center py-12">
             <div className="flex items-center space-x-3">
               <Loader2 className="w-8 h-8 animate-spin text-green-500" />
-              <span className="text-white text-lg font-medium">Chargement de la tâche...</span>
+              <span className="text-white text-lg font-medium">{t('tasks.loadingDetails')}</span>
             </div>
           </div>
         </div>
@@ -91,10 +93,10 @@ export default function EditTaskPage() {
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">Erreur de chargement</h3>
+              <h3 className="text-xl font-bold text-white mb-2">{t('errors.loadFailed')}</h3>
               <p className="text-muted-foreground mb-6">{error}</p>
               <Button onClick={handleCancel} variant="outline">
-                Retour à la liste des tâches
+                {t('tasks.backToTasks')}
               </Button>
             </div>
           </div>
@@ -109,10 +111,10 @@ export default function EditTaskPage() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-[hsl(var(--rpma-surface))] rounded-xl p-4 md:p-6 border border-[hsl(var(--rpma-border))]">
             <div className="text-center py-12">
-              <h3 className="text-xl font-bold text-white mb-2">Tâche introuvable</h3>
-              <p className="text-muted-foreground mb-6">La tâche demandée n&apos;existe pas ou a été supprimée.</p>
+              <h3 className="text-xl font-bold text-white mb-2">{t('tasks.notFound')}</h3>
+              <p className="text-muted-foreground mb-6">{t('tasks.notFoundById')}</p>
               <Button onClick={handleCancel} variant="outline">
-                Retour à la liste des tâches
+                {t('tasks.backToTasks')}
               </Button>
             </div>
           </div>
@@ -136,19 +138,19 @@ export default function EditTaskPage() {
                   className="flex items-center gap-2 border-[hsl(var(--rpma-border))] text-muted-foreground hover:bg-[hsl(var(--rpma-surface))] hover:text-foreground hover:border-[hsl(var(--rpma-teal))]/50 transition-all duration-200"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  <span className="hidden sm:inline">Retour à la liste des tâches</span>
-                  <span className="sm:hidden">Retour</span>
+                  <span className="hidden sm:inline">{t('tasks.backToTasks')}</span>
+                  <span className="sm:hidden">{t('common.back')}</span>
                 </Button>
 
                 {/* Breadcrumbs */}
                 <nav className="hidden sm:flex items-center text-sm text-muted-foreground">
-                  <a href="/dashboard" className="hover:text-foreground transition-colors">Dashboard</a>
+                  <a href="/dashboard" className="hover:text-foreground transition-colors">{t('nav.dashboard')}</a>
                   <span className="mx-2">/</span>
-                  <a href="/tasks" className="hover:text-foreground transition-colors">Tâches</a>
+                  <a href="/tasks" className="hover:text-foreground transition-colors">{t('nav.tasks')}</a>
                   <span className="mx-2">/</span>
                   <a href={`/tasks/${taskId}`} className="hover:text-foreground transition-colors">{taskData.task_number}</a>
                   <span className="mx-2">/</span>
-                  <span className="text-foreground font-medium">Modifier</span>
+                  <span className="text-foreground font-medium">{t('common.edit')}</span>
                 </nav>
               </div>
 
@@ -159,7 +161,7 @@ export default function EditTaskPage() {
                 </div>
                 <div>
                   <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                    Modifier la tâche {taskData.task_number}
+                    {t('tasks.editTask')} {taskData.task_number}
                   </h1>
                   <p className="text-muted-foreground mt-1 text-sm md:text-base">
                     Modifiez les informations de la tâche. Les changements seront sauvegardés automatiquement.
@@ -176,9 +178,9 @@ export default function EditTaskPage() {
                     </svg>
                   </div>
                   <div>
-                    <h4 className="text-sm font-medium text-blue-500 mb-1">Astuce rapide</h4>
+                    <h4 className="text-sm font-medium text-blue-500 mb-1">{t('tasks.quickTip')}</h4>
                     <p className="text-xs text-muted-foreground">
-                      Utilisez la touche Tab pour naviguer rapidement entre les champs. Le formulaire se sauvegarde automatiquement.
+                      {t('tasks.quickTipDesc')}
                     </p>
                   </div>
                 </div>

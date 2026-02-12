@@ -4,8 +4,8 @@ import RootClientLayout from './RootClientLayout';
 // This is a Server Component. Client Components will be imported into it.
 
 export const metadata: Metadata = {
-  title: "RPMA V2 - Professional Paint Protection Film Management",
-  description: "Comprehensive management system for PPF installation businesses",
+  title: "RPMA V2 - Gestion Professionnelle de Film de Protection",
+  description: "Système de gestion complet pour les entreprises d'installation de PPF",
 };
 
 export default function RootLayout({
@@ -14,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="fr" suppressHydrationWarning>
       <body suppressHydrationWarning>
         <RootClientLayout>
           {children}
