@@ -47,11 +47,14 @@ import { useInterventionData, useWorkflowStepData } from '@/hooks/useInterventio
 import type { Intervention, Client as BackendClient } from '@/lib/backend';
 import { reportsService } from '@/lib/services/entities/reports.service';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from '@/hooks/useTranslation';
+import { taskStatusLabels } from '@/lib/i18n/status-labels';
 
 export default function TaskCompletedPage() {
   const router = useRouter();
   const params = useParams();
   const taskId = params.id as string;
+  const { t } = useTranslation();
 
   const [task, setTask] = useState<TaskWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -103,12 +106,12 @@ export default function TaskCompletedPage() {
 
   const handleSaveReport = async () => {
     if (!task || !fullInterventionData) {
-      toast.error('Données d\'intervention non disponibles');
+      toast.error(t('errors.interventionDataUnavailable'));
       return;
     }
 
     try {
-      toast.info('Ouverture de la boîte de dialogue de sauvegarde...');
+      toast.info(t('reports.openingSaveDialog'));
 
       // Use the new save intervention report service with file dialog
       console.log('Page: Calling reportsService.saveInterventionReport for intervention:', fullInterventionData.id);
@@ -120,13 +123,13 @@ export default function TaskCompletedPage() {
       });
 
       if (response.success && response.data) {
-        toast.success(`Rapport PDF sauvegardé avec succès à l'emplacement: ${response.data}`);
+        toast.success(t('reports.pdfSavedSuccess', { path: response.data }));
       } else {
-        throw new Error('Échec de la sauvegarde du rapport');
+        throw new Error(t('reports.reportSaveFailed'));
       }
     } catch (error) {
       console.error('Erreur lors de la sauvegarde du rapport:', error);
-      toast.error('Erreur lors de la sauvegarde du rapport PDF');
+      toast.error(t('reports.pdfSaveError'));
     }
   };
 
@@ -136,9 +139,9 @@ export default function TaskCompletedPage() {
     // For now, copy task URL to clipboard
     const taskUrl = `${window.location.origin}/tasks/${task.id}`;
     navigator.clipboard.writeText(taskUrl).then(() => {
-      toast.success('Lien de l\'intervention copié dans le presse-papiers');
+      toast.success(t('reports.linkCopied'));
     }).catch(() => {
-      toast.error('Erreur lors de la copie du lien');
+      toast.error(t('reports.linkCopyError'));
     });
   };
 
@@ -148,25 +151,25 @@ export default function TaskCompletedPage() {
 
   const handlePrintReport = async () => {
     if (!task || !fullInterventionData) {
-      toast.error('Données d\'intervention non disponibles');
+      toast.error(t('errors.interventionDataUnavailable'));
       return;
     }
 
     if (isExporting) {
-      toast.info('Export déjà en cours...');
+      toast.info(t('reports.exportInProgress'));
       return;
     }
 
     setIsExporting(true);
-    setExportProgress('Préparation de l\'export...');
+    setExportProgress(t('reports.preparingExport'));
 
     try {
       // Show initial progress
-      toast.info('Génération du rapport d\'intervention...', {
+      toast.info(t('reports.generatingReport'), {
         duration: 3000,
       });
 
-      setExportProgress('Génération du PDF en cours...');
+      setExportProgress(t('reports.generatingPdf'));
 
       // Invalidate and refetch intervention data cache to ensure we have fresh data
       console.log('Invalidating and refetching intervention data for task:', taskId);
@@ -189,10 +192,10 @@ export default function TaskCompletedPage() {
       });
 
       if (!freshInterventionData?.id) {
-        throw new Error('Impossible de récupérer les données d\'intervention actualisées. Veuillez rafraîchir la page.');
+        throw new Error(t('errors.interventionDataRefreshFailed'));
       }
 
-      setExportProgress('Génération du PDF en cours...');
+      setExportProgress(t('reports.generatingPdf'));
 
       // Generate individual intervention PDF with retry logic
       console.log('Starting export for intervention:', freshInterventionData.id);
@@ -206,10 +209,10 @@ export default function TaskCompletedPage() {
 
         // Validate we have a way to access the PDF
         if (!reportData.download_url && !reportData.file_path) {
-          throw new Error('Le rapport a été généré mais aucun lien d\'accès n\'est disponible');
+          throw new Error(t('reports.reportGeneratedNoAccess'));
         }
 
-        setExportProgress('Ouverture du document...');
+        setExportProgress(t('reports.openingDocument'));
         setLastExportTime(new Date());
 
         // Determine the best URL to use
@@ -221,31 +224,31 @@ export default function TaskCompletedPage() {
         if (printWindow) {
           // Add load event listener to handle successful opening
           printWindow.onload = () => {
-            setExportProgress('Document prêt pour impression');
-            toast.success('Rapport ouvert avec succès ! Cliquez sur imprimer dans la nouvelle fenêtre.', {
+            setExportProgress(t('reports.documentReadyForPrint'));
+            toast.success(t('reports.reportOpenedSuccess'), {
               duration: 5000,
             });
           };
 
           // Add error event listener
           printWindow.onerror = () => {
-            toast.error('Erreur lors du chargement du document PDF');
+            toast.error(t('reports.pdfLoadError'));
           };
 
           // Fallback timeout in case onload doesn't fire
           setTimeout(() => {
             if (!printWindow.closed) {
               setExportProgress('');
-              toast.success('Document ouvert pour impression');
+              toast.success(t('reports.documentOpenedForPrint'));
             }
           }, 2000);
 
         } else {
           // Browser blocked popup
-          toast.error('La fenêtre d\'impression a été bloquée. Veuillez autoriser les popups pour ce site.', {
+          toast.error(t('reports.popupBlocked'), {
             duration: 8000,
             action: {
-              label: 'Réessayer',
+              label: t('common.retry'),
               onClick: () => handlePrintReport()
             }
           });
@@ -253,16 +256,16 @@ export default function TaskCompletedPage() {
 
       } else {
         // Handle specific error cases
-        const errorMessage = response.error || 'Échec de la génération du rapport';
+        const errorMessage = response.error || t('reports.reportGenerationFailed');
 
         if (errorMessage.includes('Authentification')) {
-          toast.error('Session expirée. Veuillez vous reconnecter.');
+          toast.error(t('errors.sessionExpired'));
         } else if (errorMessage.includes('autorisation') || errorMessage.includes('permission')) {
-          toast.error('Vous n\'avez pas les permissions pour exporter ce rapport.');
+          toast.error(t('errors.noPermissionToExport'));
         } else if (errorMessage.includes('tentatives')) {
-          toast.error('Échec de l\'export après plusieurs tentatives. Réessayez plus tard.');
+          toast.error(t('errors.exportFailedRetry'));
         } else {
-          toast.error(`Erreur d'export: ${errorMessage}`);
+          toast.error(t('errors.exportError', { message: errorMessage }));
         }
 
         throw new Error(errorMessage);
@@ -272,15 +275,15 @@ export default function TaskCompletedPage() {
       console.error('Erreur lors de l\'impression:', error);
 
       // Provide helpful error messages
-      let errorMessage = 'Erreur lors de la préparation de l\'impression';
+      let errorMessage = t('errors.printPreparationError');
 
       if (error instanceof Error) {
         if (error.message.includes('popup') || error.message.includes('bloquée')) {
-          errorMessage = 'Fenêtre d\'impression bloquée. Autorisez les popups et réessayez.';
+          errorMessage = t('errors.printWindowBlocked');
         } else if (error.message.includes('téléchargement')) {
-          errorMessage = 'Problème d\'accès au fichier. Le rapport peut avoir été généré correctement.';
+          errorMessage = t('errors.fileAccessProblem');
         } else if (error.message.includes('timeout')) {
-          errorMessage = 'Timeout de génération. Réessayez dans quelques instants.';
+          errorMessage = t('errors.generationTimeout');
         } else {
           errorMessage = error.message;
         }
@@ -289,7 +292,7 @@ export default function TaskCompletedPage() {
       toast.error(errorMessage, {
         duration: 6000,
         action: {
-          label: 'Réessayer',
+          label: t('common.retry'),
           onClick: () => handlePrintReport()
         }
       });
@@ -311,7 +314,7 @@ export default function TaskCompletedPage() {
   };
 
   const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return 'Non défini';
+    if (!dateString) return t('common.notDefined');
     try {
       return new Date(dateString).toLocaleDateString('fr-FR', {
         weekday: 'long',

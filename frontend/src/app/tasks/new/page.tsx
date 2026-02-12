@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/hooks/useTranslation';
 // Import test utility for debugging IPC calls
 // import '@/lib/test-task-creation';
 
@@ -24,17 +25,16 @@ const TaskForm = dynamic(() => import('@/components/TaskForm').then(mod => ({ de
 
 export default function NewTaskPage() {
   const router = useRouter();
+  const { t } = useTranslation();
 
   const handleSuccess = (createdTask?: { id: string }) => {
     if (createdTask?.id) {
-      toast.success('Tâche créée avec succès !');
-      // Rediriger vers la tâche créée
+      toast.success(t('success.taskCreated'));
       router.push(`/tasks/${createdTask.id}`);
     }
   };
 
   const handleCancel = () => {
-    // Retour à la liste des tâches
     router.push('/tasks');
   };
 
@@ -53,17 +53,17 @@ export default function NewTaskPage() {
                   className="flex items-center gap-2 border-border/60 text-muted-foreground hover:bg-border/20 hover:text-foreground hover:border-primary/50 transition-all duration-200"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  <span className="hidden sm:inline">Retour à la liste des tâches</span>
-                  <span className="sm:hidden">Retour</span>
+                  <span className="hidden sm:inline">{t('tasks.backToTasks')}</span>
+                  <span className="sm:hidden">{t('common.back')}</span>
                 </Button>
 
                 {/* Breadcrumbs */}
                 <nav className="hidden sm:flex items-center text-sm text-muted-foreground">
-                  <a href="/dashboard" className="hover:text-foreground transition-colors">Dashboard</a>
+                  <a href="/dashboard" className="hover:text-foreground transition-colors">{t('nav.dashboard')}</a>
                   <span className="mx-2">/</span>
-                  <a href="/tasks" className="hover:text-foreground transition-colors">Tâches</a>
+                  <a href="/tasks" className="hover:text-foreground transition-colors">{t('nav.tasks')}</a>
                   <span className="mx-2">/</span>
-                  <span className="text-foreground font-medium">Nouvelle tâche</span>
+                  <span className="text-foreground font-medium">{t('tasks.newTask')}</span>
                 </nav>
               </div>
 
@@ -76,10 +76,10 @@ export default function NewTaskPage() {
                 </div>
                 <div>
                   <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                    Créer une nouvelle tâche
+                    {t('tasks.createTask')}
                   </h1>
                   <p className="text-muted-foreground mt-1 text-sm md:text-base">
-                    Remplissez le formulaire étape par étape pour créer une nouvelle tâche PPF
+                    {t('tasks.fillFormSteps')}
                   </p>
                 </div>
               </div>
@@ -93,9 +93,9 @@ export default function NewTaskPage() {
                     </svg>
                   </div>
                   <div>
-                    <h4 className="text-sm font-medium text-blue-500 mb-1">Astuce rapide</h4>
+                    <h4 className="text-sm font-medium text-blue-500 mb-1">{t('tasks.quickTip')}</h4>
                     <p className="text-xs text-muted-foreground">
-                      Utilisez la touche Tab pour naviguer rapidement entre les champs. Le formulaire se sauvegarde automatiquement.
+                      {t('tasks.quickTipDesc')}
                     </p>
                   </div>
                 </div>
