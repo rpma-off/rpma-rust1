@@ -9,7 +9,7 @@ version = "0.1.0"
 authors = ["RPMA Team"]
 license = "MIT"
 edition = "2021"
-rust-version = "1.77"
+rust-version = "1.85"
 
 [profile.dev]
 panic = "abort"
