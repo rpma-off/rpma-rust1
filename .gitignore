@@ -3,13 +3,13 @@
 /node_modules
 /.next
 _tmp_
-Cargo.lock
 
 # Tauri generated
 /WixTools
 
 # Development
 .DS_Store
+desktop.ini
 
 .env
 .env.local
@@ -20,6 +20,11 @@ Cargo.lock
 # Backup files
 *.backup
 *.patch
+
+# CI/test artifacts
+type-drift-ci-report.json
+test-results/
+docs/duplication-report.json
 
 start_dev.bat
 stop_dev.bat

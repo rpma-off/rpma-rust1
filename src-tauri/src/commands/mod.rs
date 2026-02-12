@@ -282,6 +282,7 @@ pub struct AppStateType {
     pub dashboard_service: Arc<crate::services::DashboardService>,
     pub intervention_service: Arc<crate::services::InterventionService>,
     pub material_service: Arc<crate::services::MaterialService>,
+    pub message_service: Arc<crate::services::MessageService>,
     pub photo_service: Arc<crate::services::PhotoService>,
     pub analytics_service: Arc<crate::services::AnalyticsService>,
     pub auth_service: Arc<crate::services::auth::AuthService>,

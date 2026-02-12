@@ -10,8 +10,11 @@ use std::sync::Arc;
 mod tests {
     use super::*;
 
-    fn create_validation_service(
-    ) -> (TaskValidationService, Arc<crate::db::Database>, tempfile::TempDir) {
+    fn create_validation_service() -> (
+        TaskValidationService,
+        Arc<crate::db::Database>,
+        tempfile::TempDir,
+    ) {
         let test_db = test_db!();
         let db = test_db.db();
         let service = TaskValidationService::new(Arc::clone(&db));
@@ -127,7 +130,10 @@ mod tests {
         );
 
         let result = service.check_task_availability("task2");
-        assert!(!result.unwrap_or(true), "Completed task should not be available");
+        assert!(
+            !result.unwrap_or(true),
+            "Completed task should not be available"
+        );
     }
 
     #[test]

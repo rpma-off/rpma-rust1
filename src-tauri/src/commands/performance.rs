@@ -1,10 +1,10 @@
 //! Performance monitoring commands for admin interface
 
+use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
-use crate::models::auth::UserRole;
 use crate::services::cache::{CacheManager, CacheType};
 use serde::{Deserialize, Serialize};
-use tracing::info;
+use tracing::{info, instrument};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PerformanceStatsResponse {
@@ -64,7 +64,9 @@ pub struct CacheConfigRequest {
 
 /// Get performance statistics
 #[tauri::command]
+#[instrument(skip(state, session_token))]
 pub async fn get_performance_stats(
+    session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<PerformanceStatsResponse>, AppError> {
     // Start performance tracking
@@ -73,15 +75,7 @@ pub async fn get_performance_stats(
         .start_tracking("get_performance_stats", None);
 
     // Check if user is admin
-    let _current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
-        "", // No session token needed for this check in middleware
-        &state,
-        Some(UserRole::Admin),
-    )
-    .await
-    .map_err(|_| {
-        AppError::Authorization("Admin access required for performance monitoring".to_string())
-    })?;
+    let _current_user = authenticate!(&session_token, &state, crate::models::auth::UserRole::Admin);
 
     // Get real performance statistics
     let stats = state.performance_monitor_service.get_stats()?;
@@ -104,7 +98,9 @@ pub async fn get_performance_stats(
 
 /// Get recent performance metrics
 #[tauri::command]
+#[instrument(skip(state, session_token))]
 pub async fn get_performance_metrics(
+    session_token: String,
     limit: Option<usize>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<PerformanceMetricResponse>>, AppError> {
@@ -114,15 +110,7 @@ pub async fn get_performance_metrics(
         .start_tracking("get_performance_metrics", None);
 
     // Check if user is admin
-    let _current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
-        "", // No session token needed for this check in middleware
-        &state,
-        Some(UserRole::Admin),
-    )
-    .await
-    .map_err(|_| {
-        AppError::Authorization("Admin access required for performance monitoring".to_string())
-    })?;
+    let _current_user = authenticate!(&session_token, &state, crate::models::auth::UserRole::Admin);
 
     let limit = limit.unwrap_or(50).min(200); // Max 200 metrics
     let metrics = state.performance_monitor_service.get_recent_metrics(limit);
@@ -145,19 +133,13 @@ pub async fn get_performance_metrics(
 
 /// Clean up old performance metrics (admin only)
 #[tauri::command]
+#[instrument(skip(state, session_token))]
 pub async fn cleanup_performance_metrics(
+    session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
     // Check if user is admin
-    let _current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
-        "", // No session token needed for this check in middleware
-        &state,
-        Some(UserRole::Admin),
-    )
-    .await
-    .map_err(|_| {
-        AppError::Authorization("Admin access required for performance monitoring".to_string())
-    })?;
+    let _current_user = authenticate!(&session_token, &state, crate::models::auth::UserRole::Admin);
 
     // TODO: Implement performance metrics cleanup
     // For now, this is a no-op
@@ -170,19 +152,13 @@ pub async fn cleanup_performance_metrics(
 
 /// Get cache statistics
 #[tauri::command]
+#[instrument(skip(state, session_token))]
 pub async fn get_cache_statistics(
+    session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<CacheStatsResponse>, AppError> {
     // Check if user is admin
-    let _current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
-        "", // No session token needed for this check in middleware
-        &state,
-        Some(UserRole::Admin),
-    )
-    .await
-    .map_err(|_| {
-        AppError::Authorization("Admin access required for cache management".to_string())
-    })?;
+    let _current_user = authenticate!(&session_token, &state, crate::models::auth::UserRole::Admin);
 
     // Get cache stats from the cache manager
     let cache_manager = CacheManager::default()?;
@@ -214,20 +190,14 @@ pub async fn get_cache_statistics(
 
 /// Clear application cache
 #[tauri::command]
+#[instrument(skip(state, session_token, request))]
 pub async fn clear_application_cache(
+    session_token: String,
     request: CacheClearRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
     // Check if user is admin
-    let _current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
-        "", // No session token needed for this check in middleware
-        &state,
-        Some(UserRole::Admin),
-    )
-    .await
-    .map_err(|_| {
-        AppError::Authorization("Admin access required for cache management".to_string())
-    })?;
+    let _current_user = authenticate!(&session_token, &state, crate::models::auth::UserRole::Admin);
 
     let cache_manager = CacheManager::default()?;
 
@@ -258,20 +228,14 @@ pub async fn clear_application_cache(
 
 /// Configure cache settings
 #[tauri::command]
+#[instrument(skip(state, session_token, request))]
 pub async fn configure_cache_settings(
+    session_token: String,
     request: CacheConfigRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
     // Check if user is admin
-    let _current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
-        "", // No session token needed for this check in middleware
-        &state,
-        Some(UserRole::Admin),
-    )
-    .await
-    .map_err(|_| {
-        AppError::Authorization("Admin access required for cache management".to_string())
-    })?;
+    let _current_user = authenticate!(&session_token, &state, crate::models::auth::UserRole::Admin);
 
     // Note: In a real implementation, this would update the cache manager configuration
     // For now, we'll just return success

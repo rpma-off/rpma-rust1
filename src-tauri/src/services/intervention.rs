@@ -201,4 +201,38 @@ impl InterventionService {
         self.data
             .list_interventions(status, technician_id, limit, offset)
     }
+
+    /// Calculate intervention progress based on completed steps
+    pub fn get_progress(
+        &self,
+        intervention_id: &str,
+    ) -> InterventionResult<crate::models::intervention::InterventionProgress> {
+        let intervention = self.get_intervention(intervention_id)?.ok_or_else(|| {
+            InterventionError::NotFound(format!("Intervention {} not found", intervention_id))
+        })?;
+
+        let steps = self.get_intervention_steps(intervention_id)?;
+
+        let total_steps = steps.len() as i32;
+        let completed_steps = steps
+            .iter()
+            .filter(|s| matches!(s.step_status, crate::models::step::StepStatus::Completed))
+            .count() as i32;
+        let current_step = completed_steps + 1;
+        let completion_percentage = if total_steps > 0 {
+            (completed_steps as f32 / total_steps as f32) * 100.0
+        } else {
+            0.0
+        };
+
+        Ok(crate::models::intervention::InterventionProgress {
+            intervention_id: intervention_id.to_string(),
+            current_step,
+            total_steps,
+            completed_steps,
+            completion_percentage,
+            estimated_time_remaining: None,
+            status: intervention.status,
+        })
+    }
 }

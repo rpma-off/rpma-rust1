@@ -31,7 +31,14 @@ pub async fn export_intervention_report(
 
     // Get complete intervention data
     info!("Fetching intervention data for ID: {}", intervention_id);
-    let intervention_data = match get_intervention_with_details(&intervention_id, &state.db).await {
+    let intervention_data = match get_intervention_with_details(
+        &intervention_id,
+        &state.db,
+        Some(&state.intervention_service),
+        Some(&state.client_service),
+    )
+    .await
+    {
         Ok(data) => data,
         Err(e) => {
             tracing::error!(
@@ -66,7 +73,11 @@ pub async fn export_intervention_report(
     )
     .await
     {
-        Ok(result) => {
+        Ok(mut result) => {
+            // Construct download URL in the command layer (UI concern)
+            if let Some(ref path) = result.file_path {
+                result.download_url = Some(format!("file://{}", path));
+            }
             info!("Individual intervention report generated successfully: {} - file_path: {:?}, download_url: {:?}, file_size: {:?}", intervention_id, result.file_path, result.download_url, result.file_size);
             debug!(
                 "Returning InterventionReportResult: success={}, format={}",
@@ -122,7 +133,14 @@ pub async fn save_intervention_report(
     let current_user = auth::authenticate_for_export(&session_token, &state).await?;
 
     // Get complete intervention data
-    let intervention_data = match get_intervention_with_details(&intervention_id, &state.db).await {
+    let intervention_data = match get_intervention_with_details(
+        &intervention_id,
+        &state.db,
+        Some(&state.intervention_service),
+        Some(&state.client_service),
+    )
+    .await
+    {
         Ok(data) => data,
         Err(e) => {
             error!("Failed to get intervention data for save: {}", e);
@@ -150,23 +168,51 @@ pub async fn save_intervention_report(
     .await
 }
 
-/// Get complete intervention data with all related information
+/// Get complete intervention data with all related information.
+///
+/// Pass the shared services from application state to avoid creating redundant
+/// service/repository instances.
 pub async fn get_intervention_with_details(
     intervention_id: &str,
     db: &crate::db::Database,
+    intervention_service: Option<&crate::services::intervention::InterventionService>,
+    client_service: Option<&crate::services::ClientService>,
 ) -> AppResult<CompleteInterventionData> {
     debug!(
         "get_intervention_with_details: Starting for intervention_id: {}",
         intervention_id
     );
 
-    // Get base intervention data
-    use crate::services::client::ClientService;
-    use crate::services::intervention::InterventionService;
+    // Use provided service or create a new one as fallback
+    let owned_intervention_service;
+    let intervention_svc = match intervention_service {
+        Some(svc) => svc,
+        None => {
+            owned_intervention_service = crate::services::intervention::InterventionService::new(
+                std::sync::Arc::new(db.clone()),
+            );
+            &owned_intervention_service
+        }
+    };
 
-    let intervention_service = InterventionService::new(std::sync::Arc::new(db.clone()));
-    debug!("get_intervention_with_details: Created intervention service, calling get_intervention");
-    let intervention_opt = intervention_service
+    // Use provided client service or create a new one as fallback via service layer
+    let owned_client_service;
+    let client_svc = match client_service {
+        Some(svc) => svc,
+        None => {
+            use crate::repositories::{Cache, ClientRepository};
+            let cache = std::sync::Arc::new(Cache::new(1000));
+            let client_repo = std::sync::Arc::new(ClientRepository::new(
+                std::sync::Arc::new(db.clone()),
+                cache,
+            ));
+            owned_client_service = crate::services::client::ClientService::new(client_repo);
+            &owned_client_service
+        }
+    };
+
+    debug!("get_intervention_with_details: Using intervention service, calling get_intervention");
+    let intervention_opt = intervention_svc
         .get_intervention(intervention_id)
         .map_err(|e| {
             crate::commands::errors::AppError::Database(format!(
@@ -180,7 +226,6 @@ pub async fn get_intervention_with_details(
         intervention_opt.is_some()
     );
     let intervention = intervention_opt.ok_or_else(|| {
-        // Safe logging - don't crash if logging fails
         let _ = std::panic::catch_unwind(|| {
             tracing::error!(
                 "get_intervention_with_details: Intervention {} not found in database",
@@ -194,7 +239,6 @@ pub async fn get_intervention_with_details(
         ))
     })?;
 
-    // Safe logging
     let _ = std::panic::catch_unwind(|| {
         info!(
             "get_intervention_with_details: Found intervention - id: {}",
@@ -209,7 +253,7 @@ pub async fn get_intervention_with_details(
             intervention_id
         );
     });
-    let workflow_steps = intervention_service
+    let workflow_steps = intervention_svc
         .get_intervention_steps(intervention_id)
         .map_err(|e| {
             crate::commands::errors::AppError::Database(format!(
@@ -231,7 +275,7 @@ pub async fn get_intervention_with_details(
             intervention_id
         );
     });
-    let photos = intervention_service
+    let photos = intervention_svc
         .get_intervention_photos(intervention_id)
         .map_err(|e| {
             crate::commands::errors::AppError::Database(format!(
@@ -280,15 +324,11 @@ pub async fn get_intervention_with_details(
                 client_id
             );
         });
-        use crate::repositories::{Cache, ClientRepository};
-        let cache = std::sync::Arc::new(Cache::new(1000));
-        let client_repo = std::sync::Arc::new(ClientRepository::new(
-            std::sync::Arc::new(db.clone()),
-            cache,
-        ));
-        let client_service = ClientService::new(client_repo);
-        client_service.get_client(client_id).await.map_err(|e| {
-            crate::commands::errors::AppError::Database(format!("Failed to get client: {}", e))
+        client_svc.get_client(client_id).await.map_err(|e| {
+            tracing::error!(error = %e, client_id = %client_id, "Failed to get client for intervention export");
+            crate::commands::errors::AppError::Database(
+                "Failed to get client".to_string(),
+            )
         })?
     } else {
         let _ = std::panic::catch_unwind(|| {

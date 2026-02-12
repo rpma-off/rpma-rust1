@@ -6,9 +6,6 @@
  */
 
 import type {
-  Task as BackendTask,
-  Client as BackendClient,
-  UserAccount as BackendUserAccount,
   UserRole,
   PhotoType,
   TaskPriority,

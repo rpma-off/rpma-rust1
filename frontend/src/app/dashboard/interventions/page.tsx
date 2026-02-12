@@ -18,10 +18,13 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle } from 'lucide-react';
 import { InterventionWorkflowService } from '@/lib/services/ppf/intervention-workflow.service';
+import { useTranslation } from '@/hooks/useTranslation';
+import { getStatusLabel } from '@/lib/i18n/status-labels';
 
 export default function InterventionsDashboard() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(true);
 
   // Type for intervention data
@@ -82,7 +85,7 @@ export default function InterventionsDashboard() {
 
       } catch (err) {
         console.error('Error fetching interventions:', err);
-        setError(err instanceof Error ? err.message : 'Erreur lors du chargement des interventions');
+        setError(err instanceof Error ? err.message : t('interventions.errors.loadFailed'));
       } finally {
         setLoading(false);
       }
@@ -99,7 +102,7 @@ export default function InterventionsDashboard() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p className="text-gray-600">Chargement...</p>
+            <p className="text-gray-600">{t('common.loading')}</p>
           </div>
         </div>
       </div>
@@ -110,8 +113,8 @@ export default function InterventionsDashboard() {
     return (
       <div className="container mx-auto p-4">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">Accès non autorisé</h1>
-          <p className="text-gray-600">Vous devez être connecté pour accéder à cette page.</p>
+          <h1 className="text-2xl font-bold">{t('common.accessDenied')}</h1>
+          <p className="text-gray-600">{t('common.mustBeLoggedIn')}</p>
         </div>
       </div>
     );
@@ -145,7 +148,7 @@ export default function InterventionsDashboard() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p className="text-gray-600">Chargement des interventions...</p>
+            <p className="text-gray-600">{t('interventions.loadingInterventions')}</p>
           </div>
         </div>
       </div>
@@ -156,7 +159,7 @@ export default function InterventionsDashboard() {
     return (
       <div className="container mx-auto p-4">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600">Erreur</h1>
+          <h1 className="text-2xl font-bold text-red-600">{t('common.error')}</h1>
           <p className="text-gray-600">{error}</p>
         </div>
       </div>
@@ -168,13 +171,13 @@ export default function InterventionsDashboard() {
       <Tabs defaultValue="active" className="space-y-4">
         <div className="bg-[hsl(var(--rpma-teal))] text-white rounded-[10px] shadow-[var(--rpma-shadow-soft)]">
           <div className="px-5 pt-4 pb-0">
-            <h1 className="text-xl font-semibold">Activity</h1>
+            <h1 className="text-xl font-semibold">{t('dashboard.activity')}</h1>
           </div>
           <div className="px-2">
             <TabsList data-variant="underline" className="w-full justify-start">
-              <TabsTrigger value="active" data-variant="underline">All</TabsTrigger>
-              <TabsTrigger value="recent" data-variant="underline">Jobs</TabsTrigger>
-              <TabsTrigger value="analytics" data-variant="underline">Events</TabsTrigger>
+              <TabsTrigger value="active" data-variant="underline">{t('dashboard.tabs.all')}</TabsTrigger>
+              <TabsTrigger value="recent" data-variant="underline">{t('dashboard.tabs.jobs')}</TabsTrigger>
+              <TabsTrigger value="analytics" data-variant="underline">{t('dashboard.tabs.events')}</TabsTrigger>
             </TabsList>
           </div>
         </div>
@@ -183,52 +186,52 @@ export default function InterventionsDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Interventions Actives</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('interventions.metrics.activeInterventions')}</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalActive}</div>
             <p className="text-xs text-muted-foreground">
-              En cours d&apos;exécution
+              {t('interventions.metrics.inProgress')}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Complétées (7j)</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('interventions.metrics.completed7d')}</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalCompleted}</div>
             <p className="text-xs text-muted-foreground">
-              Cette semaine
+              {t('interventions.metrics.thisWeek')}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Durée Moyenne</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('interventions.metrics.averageDuration')}</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{Math.round(averageDuration)}min</div>
+            <div className="text-2xl font-bold">{Math.round(averageDuration)}{t('common.time.minutes')}</div>
             <p className="text-xs text-muted-foreground">
-              Par intervention
+              {t('interventions.metrics.perIntervention')}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Efficacité</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('interventions.metrics.efficiency')}</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">92%</div>
             <p className="text-xs text-muted-foreground">
-              Taux de succès
+              {t('interventions.metrics.successRate')}
             </p>
           </CardContent>
         </Card>
@@ -241,7 +244,7 @@ export default function InterventionsDashboard() {
             <Card className="rpma-shell">
               <CardContent className="rpma-empty">
                 <SearchX />
-                <h3 className="text-lg font-semibold">No results found</h3>
+                <h3 className="text-lg font-semibold">{t('common.noResults')}</h3>
               </CardContent>
             </Card>
           ) : (
@@ -251,45 +254,45 @@ export default function InterventionsDashboard() {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
+                                                <div className="flex items-center space-x-3 mb-2">
                            <h3 className="font-semibold">
-                             Intervention {intervention.task_id.slice(0, 8)}
+                             {t('interventions.intervention')} {intervention.task_id.slice(0, 8)}
                            </h3>
                            <Badge className={getStatusColor(intervention.status)}>
-                             {intervention.status}
+                             {getStatusLabel(intervention.status, 'intervention')}
                            </Badge>
                            <Badge variant="outline">
-                             Étape {intervention.currentStep}/4
+                             {t('interventions.step')} {intervention.currentStep}/4
                            </Badge>
                         </div>
 
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600 mb-3">
                            <div className="flex items-center">
                              <User className="h-4 w-4 mr-1" />
-                             Technicien #{intervention.technician_id?.slice(0, 8)}
+                             {t('interventions.technician')} #{intervention.technician_id?.slice(0, 8)}
                            </div>
                           <div className="flex items-center">
                             <Clock className="h-4 w-4 mr-1" />
                             {intervention.interventionStartedAt 
                               ? format(new Date(intervention.interventionStartedAt), 'HH:mm', { locale: fr })
-                              : 'Non démarrée'
+                              : t('interventions.notStarted')
                             }
                           </div>
                           {intervention.startLocation && (
                             <div className="flex items-center">
                               <MapPin className="h-4 w-4 mr-1" />
-                              Localisée
+                              {t('interventions.located')}
                             </div>
                           )}
                           <div className="flex items-center">
                             <Target className="h-4 w-4 mr-1" />
-                            {intervention.temperatureCelsius || 'N/A'}°C
+                            {intervention.temperatureCelsius || t('common.notAvailable')}°C
                           </div>
                         </div>
 
                         <div className="space-y-2">
                            <div className="flex justify-between text-sm">
-                             <span>Progression</span>
+                             <span>{t('interventions.progress')}</span>
                              <span>{Math.round(getStepProgress(intervention.currentStep || 1))}%</span>
                            </div>
                            <Progress value={getStepProgress(intervention.currentStep || 1)} />
@@ -299,7 +302,7 @@ export default function InterventionsDashboard() {
                        <div className="ml-6">
                          <Link href={`/tasks/${intervention.task_id}/intervention`}>
                            <Button>
-                            Continuer
+                            {t('interventions.continue')}
                           </Button>
                         </Link>
                       </div>
@@ -317,7 +320,7 @@ export default function InterventionsDashboard() {
             <Card className="rpma-shell">
               <CardContent className="rpma-empty">
                 <SearchX />
-                <h3 className="text-lg font-semibold">No results found</h3>
+                <h3 className="text-lg font-semibold">{t('common.noResults')}</h3>
               </CardContent>
             </Card>
           ) : (
@@ -329,36 +332,36 @@ export default function InterventionsDashboard() {
                       <div className="flex-1">
                          <div className="flex items-center space-x-3 mb-2">
                            <h3 className="font-semibold">
-                             Intervention {intervention.task_id.slice(0, 8)}
+                             {t('interventions.intervention')} {intervention.task_id.slice(0, 8)}
                            </h3>
                            <Badge className={getStatusColor(intervention.status)}>
-                             {intervention.status}
+                             {getStatusLabel(intervention.status, 'intervention')}
                            </Badge>
                          </div>
 
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
                           <div>
-                            <span className="font-medium">Durée:</span>
+                            <span className="font-medium">{t('interventions.duration')}:</span>
                             <br />
                             {intervention.totalDurationSeconds 
-                              ? Math.round(intervention.totalDurationSeconds / 60) + ' min'
-                              : 'N/A'
+                              ? Math.round(intervention.totalDurationSeconds / 60) + ' ' + t('common.time.minutes')
+                              : t('common.notAvailable')
                             }
                           </div>
                           <div>
-                            <span className="font-medium">Qualité moyenne:</span>
+                            <span className="font-medium">{t('interventions.avgQuality')}:</span>
                             <br />
-                            {intervention.averageQualityScore?.toFixed(1) || 'N/A'}/10
+                            {intervention.averageQualityScore?.toFixed(1) || t('common.notAvailable')}/10
                           </div>
                           <div>
-                            <span className="font-medium">Surface:</span>
+                            <span className="font-medium">{t('interventions.surface')}:</span>
                             <br />
-                            {intervention.totalSurfaceM2?.toFixed(1) || 'N/A'} m²
+                            {intervention.totalSurfaceM2?.toFixed(1) || t('common.notAvailable')} m²
                           </div>
                           <div>
-                            <span className="font-medium">Efficacité:</span>
+                            <span className="font-medium">{t('interventions.efficiency')}:</span>
                             <br />
-                            {intervention.materialsEfficiencyPercent || 'N/A'}%
+                            {intervention.materialsEfficiencyPercent || t('common.notAvailable')}%
                           </div>
                         </div>
                       </div>
@@ -381,25 +384,25 @@ export default function InterventionsDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Performance par Étape</CardTitle>
+                <CardTitle>{t('interventions.analytics.performanceByStep')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">Inspection</span>
-                    <span className="text-sm font-medium">12 min avg</span>
+                    <span className="text-sm">{t('interventions.steps.inspection')}</span>
+                    <span className="text-sm font-medium">12 {t('common.time.minutes')} {t('common.average')}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">Préparation</span>
-                    <span className="text-sm font-medium">18 min avg</span>
+                    <span className="text-sm">{t('interventions.steps.preparation')}</span>
+                    <span className="text-sm font-medium">18 {t('common.time.minutes')} {t('common.average')}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">Installation</span>
-                    <span className="text-sm font-medium">45 min avg</span>
+                    <span className="text-sm">{t('interventions.steps.installation')}</span>
+                    <span className="text-sm font-medium">45 {t('common.time.minutes')} {t('common.average')}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">Finalisation</span>
-                    <span className="text-sm font-medium">8 min avg</span>
+                    <span className="text-sm">{t('interventions.steps.finalization')}</span>
+                    <span className="text-sm font-medium">8 {t('common.time.minutes')} {t('common.average')}</span>
                   </div>
                 </div>
               </CardContent>
@@ -407,14 +410,14 @@ export default function InterventionsDashboard() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Tendances Qualité</CardTitle>
+                <CardTitle>{t('interventions.analytics.qualityTrends')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-8">
                   <TrendingUp className="h-8 w-8 text-green-500 mx-auto mb-2" />
                   <p className="text-2xl font-bold text-green-600">+5%</p>
                   <p className="text-sm text-gray-600">
-                    Amélioration qualité ce mois
+                    {t('interventions.analytics.qualityImprovementThisMonth')}
                   </p>
                 </div>
               </CardContent>

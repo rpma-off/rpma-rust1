@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Loader2, AlertTriangle, Workflow } from 'lucide-react';
 import { toast } from 'sonner';
@@ -30,7 +29,6 @@ export function WorkflowNavigationButton({
   onAfterNavigate,
   onError
 }: WorkflowNavigationButtonProps) {
-  const router = useRouter();
   const [isNavigating, setIsNavigating] = useState(false);
   const [navigationError, setNavigationError] = useState<string | null>(null);
 
@@ -61,8 +59,7 @@ export function WorkflowNavigationButton({
         throw new Error('Task ID must be a valid UUID');
       }
 
-      // Construct workflow URL
-      const workflowUrl = `/tasks/${taskId}/workflow`;
+      // Workflow URL: `/tasks/${taskId}/workflow`
 
       // Attempt navigation
       toast('Workflow en développement - disponible bientôt');
@@ -157,7 +154,6 @@ export function TaskWorkflowButton({ taskId, ...props }: Omit<WorkflowNavigation
 
 // Hook for programmatic navigation
 export function useWorkflowNavigation() {
-  const router = useRouter();
   const [isNavigating, setIsNavigating] = useState(false);
 
   const navigateToWorkflow = async (taskId: string): Promise<boolean> => {

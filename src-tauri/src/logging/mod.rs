@@ -2,6 +2,35 @@
 //!
 //! This module provides structured logging with correlation ID support,
 //! tracing integration, and performance monitoring.
+//!
+//! # Log Field Standard
+//!
+//! All tracing spans and log events across IPC commands MUST use the
+//! following structured fields for consistency and searchability:
+//!
+//! | Field              | Type            | Description                                       |
+//! |--------------------|-----------------|---------------------------------------------------|
+//! | `correlation_id`   | `String`        | Unique request identifier (format: `req-*`, `ipc-*`) |
+//! | `user_id`          | `String`        | Authenticated user performing the operation        |
+//! | `task_id`          | `String`        | Task being operated on (when applicable)           |
+//! | `intervention_id`  | `String`        | Intervention being operated on (when applicable)   |
+//! | `operation`        | `String`        | Human-readable name of the operation               |
+//! | `error`            | `Display`       | Internal error details (logged server-side only)   |
+//!
+//! ## Guidelines
+//!
+//! - **`#[instrument]`**: Every `#[tauri::command]` function MUST have a
+//!   `#[instrument(skip(state, session_token, ...))]` attribute that skips
+//!   sensitive parameters (state, tokens, passwords, request bodies).
+//! - **Structured fields**: Use `tracing::Span::current().record("user_id", …)`
+//!   to attach the `user_id` after authentication.
+//! - **Error sanitization**: Server-side errors (Database, Internal, Io, Network,
+//!   Sync, Configuration) MUST be sanitized via `AppError::sanitize_for_frontend()`
+//!   or the `AppError::db_sanitized()` / `AppError::internal_sanitized()` helpers
+//!   before being returned to the frontend. Raw error details are logged
+//!   server-side at `error!` level with the internal details.
+//! - **Correlation IDs**: Propagate the `correlation_id` from the request when
+//!   available; otherwise generate one via `generate_correlation_id()`.
 
 pub mod correlation;
 pub mod middleware;

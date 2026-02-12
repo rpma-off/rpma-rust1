@@ -202,7 +202,7 @@ export function WorkflowProgressCard({
     } finally {
       setIsLoading(false);
     }
-  }, [session?.token, buttonConfig.action, taskId, router]);
+  }, [session?.token, session?.id, buttonConfig.action, taskId, router]);
 
   // Don't render if no workflow data
   if (!workflowStatus && !workflowProgress) {

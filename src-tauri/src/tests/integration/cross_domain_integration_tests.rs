@@ -8,20 +8,22 @@
 
 use crate::commands::AppResult;
 use crate::models::client::{Client, CustomerType};
-use crate::models::material::{Material, MaterialType, UnitOfMeasure};
-use crate::models::task::{Task, TaskStatus, TaskPriority};
-use crate::models::user::{User, UserRole};
 use crate::models::intervention::Intervention;
-use crate::services::audit_service::{AuditService, AuditEvent};
+use crate::models::material::{Material, MaterialType, UnitOfMeasure};
+use crate::models::task::{Task, TaskPriority, TaskStatus};
+use crate::models::user::{User, UserRole};
+use crate::services::audit_service::{AuditEvent, AuditService};
+use crate::services::auth::AuthService;
 use crate::services::client::ClientService;
 use crate::services::client_statistics::ClientStatisticsService;
-use crate::services::intervention_types::{AdvanceStepRequest, FinalizeInterventionRequest, StartInterventionRequest};
+use crate::services::intervention_types::{
+    AdvanceStepRequest, FinalizeInterventionRequest, StartInterventionRequest,
+};
 use crate::services::intervention_workflow::InterventionWorkflowService;
 use crate::services::material::{
-    CreateMaterialRequest, MaterialService, RecordConsumptionRequest, UpdateStockRequest
+    CreateMaterialRequest, MaterialService, RecordConsumptionRequest, UpdateStockRequest,
 };
 use crate::services::task_crud::TaskCrudService;
-use crate::services::auth::AuthService;
 use crate::test_utils::TestDatabase;
 use crate::{test_client, test_task};
 use chrono::Utc;
@@ -53,10 +55,10 @@ impl CrossDomainTestFixture {
         let material_service = MaterialService::new(db.db());
         let audit_service = AuditService::new(db.db());
         let auth_service = AuthService::new(db.db());
-        
+
         // Initialize audit service
         audit_service.init()?;
-        
+
         Ok(CrossDomainTestFixture {
             db,
             client_service,
@@ -70,14 +72,22 @@ impl CrossDomainTestFixture {
     }
 
     /// Create a realistic dataset with hundreds of records
-    pub fn create_realistic_dataset(&self, num_clients: i32, num_tasks_per_client: i32, num_materials: i32) -> AppResult<(Vec<Client>, Vec<Task>, Vec<Material>)> {
+    pub fn create_realistic_dataset(
+        &self,
+        num_clients: i32,
+        num_tasks_per_client: i32,
+        num_materials: i32,
+    ) -> AppResult<(Vec<Client>, Vec<Task>, Vec<Material>)> {
         let mut clients = Vec::new();
         let mut tasks = Vec::new();
         let mut materials = Vec::new();
 
         println!("Creating {} clients...", num_clients);
         for i in 0..num_clients {
-            let client = self.create_test_client(&format!("Client {}", i), Some(format!("client{}@example.com", i)))?;
+            let client = self.create_test_client(
+                &format!("Client {}", i),
+                Some(format!("client{}@example.com", i)),
+            )?;
             clients.push(client);
         }
 
@@ -121,8 +131,10 @@ impl CrossDomainTestFixture {
             notes: Some("Cross-domain test client".to_string()),
             tags: Some("cross-domain,test".to_string())
         );
-        
-        self.client_service.create_client_async(client_request, "test_user").await
+
+        self.client_service
+            .create_client_async(client_request, "test_user")
+            .await
     }
 
     /// Create a test material with initial stock
@@ -160,9 +172,10 @@ impl CrossDomainTestFixture {
             warehouse_id: None,
         };
 
-        let material = self.material_service
+        let material = self
+            .material_service
             .create_material(request, Some("test_user".to_string()))?;
-        
+
         // Update stock if needed
         if stock > 0.0 {
             let update_request = UpdateStockRequest {
@@ -173,7 +186,7 @@ impl CrossDomainTestFixture {
             };
             self.material_service.update_stock(update_request)?;
         }
-        
+
         Ok(material)
     }
 
@@ -198,7 +211,7 @@ impl CrossDomainTestFixture {
             customer_name: Some(client.name.clone()),
             customer_email: client.email.clone(),
             customer_phone: client.phone.clone(),
-            customer_address: Some(format!("{}, {}, {}, {}", 
+            customer_address: Some(format!("{}, {}, {}, {}",
                 client.address_street.as_ref().unwrap_or(&String::new()),
                 client.address_city.as_ref().unwrap_or(&String::new()),
                 client.address_state.as_ref().unwrap_or(&String::new()),
@@ -207,7 +220,7 @@ impl CrossDomainTestFixture {
             notes: Some(format!("Cross-domain test task for {}", client.name)),
             tags: Some("cross-domain,test".to_string())
         );
-        
+
         self.task_service
             .create_task_async(task_request, "test_user")
             .await
@@ -239,18 +252,22 @@ impl CrossDomainTestFixture {
             estimated_duration: 120,
             gps_coordinates: None,
             address: task.customer_address.clone(),
-            notes: Some(format!("Cross-domain intervention for task: {}", task.title.as_ref().unwrap_or(&String::new()))),
+            notes: Some(format!(
+                "Cross-domain intervention for task: {}",
+                task.title.as_ref().unwrap_or(&String::new())
+            )),
             customer_requirements: Some(vec!["High quality finish".to_string()]),
             special_instructions: Some("Cross-domain test intervention".to_string()),
         };
-        
+
         let response = self.intervention_service.start_intervention(
             intervention_request,
             "test_user",
             "cross-domain-test-correlation-id",
         )?;
-        
-        self.intervention_service.get_intervention_by_id(&response.intervention_id)
+
+        self.intervention_service
+            .get_intervention_by_id(&response.intervention_id)
     }
 
     /// Consume materials during intervention steps
@@ -270,11 +287,15 @@ impl CrossDomainTestFixture {
                 quality_check_passed: true,
                 issues: None,
             };
-            
+
             self.intervention_service
-                .advance_step(start_request, "cross-domain-test", Some("cross_domain_technician"))
+                .advance_step(
+                    start_request,
+                    "cross-domain-test",
+                    Some("cross_domain_technician"),
+                )
                 .await?;
-            
+
             // Record material consumption for this step
             if i < materials.len() {
                 let consumption_request = RecordConsumptionRequest {
@@ -289,10 +310,11 @@ impl CrossDomainTestFixture {
                     quality_notes: Some("Good quality for cross-domain test".to_string()),
                     recorded_by: Some("cross_domain_technician".to_string()),
                 };
-                
-                self.material_service.record_consumption(consumption_request)?;
+
+                self.material_service
+                    .record_consumption(consumption_request)?;
             }
-            
+
             // Complete the step
             let complete_request = AdvanceStepRequest {
                 intervention_id: intervention.id.clone(),
@@ -303,12 +325,16 @@ impl CrossDomainTestFixture {
                 quality_check_passed: true,
                 issues: None,
             };
-            
+
             self.intervention_service
-                .advance_step(complete_request, "cross-domain-test", Some("cross_domain_technician"))
+                .advance_step(
+                    complete_request,
+                    "cross-domain-test",
+                    Some("cross_domain_technician"),
+                )
                 .await?;
         }
-        
+
         Ok(())
     }
 
@@ -329,11 +355,15 @@ impl CrossDomainTestFixture {
             customer_signature: None,
             customer_comments: Some("Excellent cross-domain work on my vehicle!".to_string()),
         };
-        
+
         self.intervention_service
-            .finalize_intervention(finalize_request, "cross-domain-test", Some("cross_domain_technician"))
+            .finalize_intervention(
+                finalize_request,
+                "cross-domain-test",
+                Some("cross_domain_technician"),
+            )
             .await?;
-            
+
         Ok(())
     }
 
@@ -378,10 +408,12 @@ impl CrossDomainTestFixture {
     pub async fn test_inventory_task_availability(&self) -> AppResult<()> {
         // Create materials with limited stock
         let film = self.create_test_material_with_stock("INV-FILM-001", "Limited Film", 10.0)?;
-        let adhesive = self.create_test_material_with_stock("INV-ADH-001", "Limited Adhesive", 5.0)?;
+        let adhesive =
+            self.create_test_material_with_stock("INV-ADH-001", "Limited Adhesive", 5.0)?;
 
         // Create multiple tasks that would require these materials
-        let client = self.create_test_client("Inventory Test Client", Some("inventory@test.com"))?;
+        let client =
+            self.create_test_client("Inventory Test Client", Some("inventory@test.com"))?;
         let mut tasks = Vec::new();
 
         for i in 0..5 {
@@ -395,8 +427,10 @@ impl CrossDomainTestFixture {
 
         // Convert some tasks to interventions and consume materials
         for (i, task) in tasks.iter().take(3).enumerate() {
-            let intervention = self.convert_task_to_intervention(task, vec!["hood".to_string()], None).await?;
-            
+            let intervention = self
+                .convert_task_to_intervention(task, vec!["hood".to_string()], None)
+                .await?;
+
             // Consume materials
             let consumption_request = RecordConsumptionRequest {
                 intervention_id: intervention.id.clone(),
@@ -410,34 +444,44 @@ impl CrossDomainTestFixture {
                 quality_notes: Some("Inventory test quality".to_string()),
                 recorded_by: Some("inventory_technician".to_string()),
             };
-            
-            self.material_service.record_consumption(consumption_request)?;
+
+            self.material_service
+                .record_consumption(consumption_request)?;
         }
 
         // Check remaining stock
-        let updated_film = self.material_service.get_material_by_id(&film.id.clone().unwrap())?;
+        let updated_film = self
+            .material_service
+            .get_material_by_id(&film.id.clone().unwrap())?;
         println!("Remaining film stock: {}", updated_film.current_stock);
 
         // Try to create another intervention - should fail due to insufficient materials
         if let Ok(last_task) = tasks.last() {
-            let intervention_result = self.convert_task_to_intervention(last_task, vec!["hood".to_string()], None).await;
-            
+            let intervention_result = self
+                .convert_task_to_intervention(last_task, vec!["hood".to_string()], None)
+                .await;
+
             // This might still succeed (intervention creation), but material consumption should fail
             if let Ok(intervention) = intervention_result {
-                let consumption_result = self.material_service.record_consumption(RecordConsumptionRequest {
-                    intervention_id: intervention.id.clone(),
-                    material_id: film.id.clone().unwrap(),
-                    step_id: Some(intervention.steps[0].id.clone()),
-                    step_number: Some(1),
-                    quantity_used: 5.0, // More than remaining stock
-                    waste_quantity: Some(0.5),
-                    waste_reason: Some("Should fail".to_string()),
-                    batch_used: Some("BATCH-SHOULD-FAIL".to_string()),
-                    quality_notes: Some("Should fail".to_string()),
-                    recorded_by: Some("should_fail_technician".to_string()),
-                });
+                let consumption_result =
+                    self.material_service
+                        .record_consumption(RecordConsumptionRequest {
+                            intervention_id: intervention.id.clone(),
+                            material_id: film.id.clone().unwrap(),
+                            step_id: Some(intervention.steps[0].id.clone()),
+                            step_number: Some(1),
+                            quantity_used: 5.0, // More than remaining stock
+                            waste_quantity: Some(0.5),
+                            waste_reason: Some("Should fail".to_string()),
+                            batch_used: Some("BATCH-SHOULD-FAIL".to_string()),
+                            quality_notes: Some("Should fail".to_string()),
+                            recorded_by: Some("should_fail_technician".to_string()),
+                        });
 
-                assert!(consumption_result.is_err(), "Material consumption should fail with insufficient stock");
+                assert!(
+                    consumption_result.is_err(),
+                    "Material consumption should fail with insufficient stock"
+                );
             }
         }
 
@@ -447,116 +491,146 @@ impl CrossDomainTestFixture {
     /// Test user permissions across multiple domains
     pub async fn test_user_permissions_across_domains(&self) -> AppResult<()> {
         let users = self.create_test_users()?;
-        
+
         // Create test data
-        let client = self.create_test_client("Permission Test Client", Some("permissions@test.com"))?;
-        let task = self.create_task_for_client(&client, "Permission Test Task", vec!["hood".to_string()])?;
-        let material = self.create_test_material_with_stock("PERM-MAT-001", "Permission Material", 20.0)?;
+        let client =
+            self.create_test_client("Permission Test Client", Some("permissions@test.com"))?;
+        let task =
+            self.create_task_for_client(&client, "Permission Test Task", vec!["hood".to_string()])?;
+        let material =
+            self.create_test_material_with_stock("PERM-MAT-001", "Permission Material", 20.0)?;
 
         // Test admin permissions (should have full access)
         let admin = &users[0];
-        let admin_session = self.auth_service.login("admin@crossdomain.com".to_string(), "admin123".to_string())?;
-        
+        let admin_session = self
+            .auth_service
+            .login("admin@crossdomain.com".to_string(), "admin123".to_string())?;
+
         // Admin should be able to access all domains
         let _client_access = self.client_service.get_client_by_id(&client.id)?;
         let _task_access = self.task_service.get_task_by_id_async(&task.id).await?;
-        let _material_access = self.material_service.get_material_by_id(&material.id.clone().unwrap())?;
+        let _material_access = self
+            .material_service
+            .get_material_by_id(&material.id.clone().unwrap())?;
 
         // Test technician permissions (limited access)
         let tech = &users[1];
-        let tech_session = self.auth_service.login("tech@crossdomain.com".to_string(), "tech123".to_string())?;
-        
+        let tech_session = self
+            .auth_service
+            .login("tech@crossdomain.com".to_string(), "tech123".to_string())?;
+
         // Technician should be able to access tasks and materials but not modify clients
         let _task_access_tech = self.task_service.get_task_by_id_async(&task.id).await?;
-        let _material_access_tech = self.material_service.get_material_by_id(&material.id.clone().unwrap())?;
-        
+        let _material_access_tech = self
+            .material_service
+            .get_material_by_id(&material.id.clone().unwrap())?;
+
         // Try to modify client (should fail for technician)
-        let client_modify_result = self.client_service.update_client_async(
-            client.id.clone(),
-            test_client!(name: "Modified by Technician".to_string()),
-            "tech@crossdomain.com".to_string(),
-        ).await;
-        
+        let client_modify_result = self
+            .client_service
+            .update_client_async(
+                client.id.clone(),
+                test_client!(name: "Modified by Technician".to_string()),
+                "tech@crossdomain.com".to_string(),
+            )
+            .await;
+
         // This might or might not fail depending on implementation
         // The important part is that we test the permission boundaries
 
         // Test manager permissions (middle ground)
         let manager = &users[2];
-        let _manager_session = self.auth_service.login("manager@crossdomain.com".to_string(), "manager123".to_string())?;
-        
+        let _manager_session = self.auth_service.login(
+            "manager@crossdomain.com".to_string(),
+            "manager123".to_string(),
+        )?;
+
         // Manager should have broader access than technician but less than admin
         let _client_access_manager = self.client_service.get_client_by_id(&client.id)?;
         let _task_access_manager = self.task_service.get_task_by_id_async(&task.id).await?;
-        let _material_access_manager = self.material_service.get_material_by_id(&material.id.clone().unwrap())?;
+        let _material_access_manager = self
+            .material_service
+            .get_material_by_id(&material.id.clone().unwrap())?;
 
         Ok(())
     }
 
     /// Measure performance metrics for cross-domain operations
-    pub fn measure_cross_domain_performance(&self, dataset_size: i32) -> AppResult<std::time::Duration> {
+    pub fn measure_cross_domain_performance(
+        &self,
+        dataset_size: i32,
+    ) -> AppResult<std::time::Duration> {
         let start_time = std::time::Instant::now();
-        
+
         // Create dataset
         let (clients, tasks, materials) = self.create_realistic_dataset(dataset_size, 5, 10)?;
-        
+
         // Process cross-domain workflows
         let mut processed_count = 0;
         for (i, task) in tasks.iter().take(dataset_size as usize / 2).enumerate() {
             if i >= clients.len() {
                 break;
             }
-            
+
             // Convert to intervention
-            let intervention_result = self.convert_task_to_intervention(
-                task,
-                vec!["hood".to_string()],
-                None,
-            );
-            
+            let intervention_result =
+                self.convert_task_to_intervention(task, vec!["hood".to_string()], None);
+
             if let Ok(intervention) = intervention_result {
                 // Consume materials
                 if i < materials.len() {
-                    let _ = self.consume_materials_during_intervention(&intervention, &materials[i..=i]).await;
+                    let _ = self
+                        .consume_materials_during_intervention(&intervention, &materials[i..=i])
+                        .await;
                 }
-                
+
                 // Finalize intervention
-                let _ = self.finalize_intervention(&intervention, Some(8), Some(90)).await;
+                let _ = self
+                    .finalize_intervention(&intervention, Some(8), Some(90))
+                    .await;
                 processed_count += 1;
             }
         }
-        
+
         let duration = start_time.elapsed();
-        println!("Processed {} cross-domain workflows in {:?}", processed_count, duration);
-        
+        println!(
+            "Processed {} cross-domain workflows in {:?}",
+            processed_count, duration
+        );
+
         Ok(duration)
     }
 
     /// Verify data consistency across all domains
     pub fn verify_cross_domain_consistency(&self) -> AppResult<bool> {
         let conn = self.db.db().get_connection()?;
-        
+
         // Check referential integrity
         let orphaned_tasks: i64 = conn.query_row(
             "SELECT COUNT(*) FROM tasks WHERE client_id IS NOT NULL AND client_id NOT IN (SELECT id FROM clients)",
             [],
             |row| row.get(0),
         ).unwrap_or(0);
-        
-        let orphaned_interventions: i64 = conn.query_row(
-            "SELECT COUNT(*) FROM interventions WHERE task_id NOT IN (SELECT id FROM tasks)",
-            [],
-            |row| row.get(0),
-        ).unwrap_or(0);
-        
+
+        let orphaned_interventions: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM interventions WHERE task_id NOT IN (SELECT id FROM tasks)",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap_or(0);
+
         let orphaned_consumption: i64 = conn.query_row(
             "SELECT COUNT(*) FROM material_consumption WHERE intervention_id NOT IN (SELECT id FROM interventions)",
             [],
             |row| row.get(0),
         ).unwrap_or(0);
-        
-        println!("Orphaned records: {} tasks, {} interventions, {} consumption", 
-                orphaned_tasks, orphaned_interventions, orphaned_consumption);
-        
+
+        println!(
+            "Orphaned records: {} tasks, {} interventions, {} consumption",
+            orphaned_tasks, orphaned_interventions, orphaned_consumption
+        );
+
         Ok(orphaned_tasks == 0 && orphaned_interventions == 0 && orphaned_consumption == 0)
     }
 }
@@ -569,60 +643,75 @@ mod tests {
     #[tokio::test]
     async fn test_task_intervention_material_consumption_workflow() -> AppResult<()> {
         let fixture = CrossDomainTestFixture::new()?;
-        
+
         // Create realistic dataset
         let (clients, tasks, materials) = fixture.create_realistic_dataset(10, 3, 5)?;
-        
+
         // Test the complete workflow
         for (i, task) in tasks.iter().take(5).enumerate() {
             // Convert task to intervention
-            let intervention = fixture.convert_task_to_intervention(
-                task,
-                vec!["hood".to_string(), "fender".to_string()],
-                Some(vec!["custom_trim".to_string()]),
-            ).await?;
-            
+            let intervention = fixture
+                .convert_task_to_intervention(
+                    task,
+                    vec!["hood".to_string(), "fender".to_string()],
+                    Some(vec!["custom_trim".to_string()]),
+                )
+                .await?;
+
             // Consume materials during intervention
             let material_slice = if i < materials.len() - 1 {
-                &materials[i..=i+1]
+                &materials[i..=i + 1]
             } else {
                 &materials[i..=i]
             };
-            
-            fixture.consume_materials_during_intervention(&intervention, material_slice).await?;
-            
+
+            fixture
+                .consume_materials_during_intervention(&intervention, material_slice)
+                .await?;
+
             // Finalize intervention
-            fixture.finalize_intervention(&intervention, Some(9), Some(92)).await?;
-            
+            fixture
+                .finalize_intervention(&intervention, Some(9), Some(92))
+                .await?;
+
             // Verify task status
-            let updated_task = fixture.task_service.get_task_by_id_async(&task.id).await?.unwrap();
+            let updated_task = fixture
+                .task_service
+                .get_task_by_id_async(&task.id)
+                .await?
+                .unwrap();
             assert_eq!(updated_task.status, "completed");
-            
+
             // Verify intervention status
-            let updated_intervention = fixture.intervention_service.get_intervention_by_id(&intervention.id)?;
-            assert_eq!(updated_intervention.status, crate::models::intervention::InterventionStatus::Completed);
-            
+            let updated_intervention = fixture
+                .intervention_service
+                .get_intervention_by_id(&intervention.id)?;
+            assert_eq!(
+                updated_intervention.status,
+                crate::models::intervention::InterventionStatus::Completed
+            );
+
             // Verify material consumption
-            let consumptions = fixture.material_service.get_intervention_consumption(&intervention.id)?;
+            let consumptions = fixture
+                .material_service
+                .get_intervention_consumption(&intervention.id)?;
             assert!(!consumptions.is_empty());
         }
-        
+
         // Verify cross-domain consistency
         assert!(fixture.verify_cross_domain_consistency()?);
-        
+
         Ok(())
     }
 
     #[tokio::test]
     async fn test_client_task_intervention_reporting_workflow() -> AppResult<()> {
         let fixture = CrossDomainTestFixture::new()?;
-        
+
         // Create a client
-        let client = fixture.create_test_client(
-            "Reporting Workflow Client",
-            Some("reporting@test.com")
-        )?;
-        
+        let client =
+            fixture.create_test_client("Reporting Workflow Client", Some("reporting@test.com"))?;
+
         // Create multiple tasks for the client
         let mut tasks = Vec::new();
         for i in 0..3 {
@@ -633,124 +722,151 @@ mod tests {
             )?;
             tasks.push(task);
         }
-        
+
         // Convert all tasks to interventions and complete them
         for task in &tasks {
-            let intervention = fixture.convert_task_to_intervention(task, vec!["full".to_string()], None).await?;
-            
+            let intervention = fixture
+                .convert_task_to_intervention(task, vec!["full".to_string()], None)
+                .await?;
+
             let materials = fixture.create_realistic_dataset(0, 0, 2)?.2;
-            fixture.consume_materials_during_intervention(&intervention, &materials).await?;
-            fixture.finalize_intervention(&intervention, Some(8), Some(88)).await?;
+            fixture
+                .consume_materials_during_intervention(&intervention, &materials)
+                .await?;
+            fixture
+                .finalize_intervention(&intervention, Some(8), Some(88))
+                .await?;
         }
-        
+
         // Get client statistics
-        let stats = fixture.client_stats_service.get_client_activity_metrics(&client.id)?;
+        let stats = fixture
+            .client_stats_service
+            .get_client_activity_metrics(&client.id)?;
         assert!(stats.total_tasks >= 3);
         assert!(stats.completed_tasks >= 3);
-        
+
         // Verify audit trail
-        let audit_events = fixture.audit_service.get_resource_history("client", &client.id, Some(20))?;
+        let audit_events =
+            fixture
+                .audit_service
+                .get_resource_history("client", &client.id, Some(20))?;
         assert!(!audit_events.is_empty());
-        
+
         Ok(())
     }
 
     #[tokio::test]
     async fn test_inventory_changes_affecting_task_availability() -> AppResult<()> {
         let fixture = CrossDomainTestFixture::new()?;
-        
+
         fixture.test_inventory_task_availability().await?;
-        
+
         Ok(())
     }
 
     #[tokio::test]
     async fn test_user_permissions_across_multiple_domains() -> AppResult<()> {
         let fixture = CrossDomainTestFixture::new()?;
-        
+
         fixture.test_user_permissions_across_domains().await?;
-        
+
         Ok(())
     }
 
     #[tokio::test]
     async fn test_large_dataset_cross_domain_performance() -> AppResult<()> {
         let fixture = CrossDomainTestFixture::new()?;
-        
+
         // Test performance with realistic data volume
         let duration = fixture.measure_cross_domain_performance(50)?; // 50 clients = ~250 workflows
-        
+
         // Performance should be reasonable - this is a baseline test
         // Adjust threshold based on actual performance characteristics
-        assert!(duration < Duration::from_secs(30), 
-               "Cross-domain performance regression: {:?}", duration);
-        
+        assert!(
+            duration < Duration::from_secs(30),
+            "Cross-domain performance regression: {:?}",
+            duration
+        );
+
         // Verify consistency after large dataset operations
         assert!(fixture.verify_cross_domain_consistency()?);
-        
+
         Ok(())
     }
 
     #[tokio::test]
     async fn test_concurrent_cross_domain_operations() -> AppResult<()> {
         let fixture = CrossDomainTestFixture::new()?;
-        
+
         // Create test data
         let (clients, tasks, materials) = fixture.create_realistic_dataset(5, 2, 3)?;
-        
+
         // Test concurrent operations
         let mut handles = Vec::new();
-        
+
         for (i, task) in tasks.iter().take(5).enumerate() {
             let fixture_clone = fixture.clone(); // This would need proper implementation
             let task_clone = task.clone();
-            let material_clone = if i < materials.len() { Some(materials[i].clone()) } else { None };
-            
+            let material_clone = if i < materials.len() {
+                Some(materials[i].clone())
+            } else {
+                None
+            };
+
             let handle = tokio::spawn(async move {
                 // Convert task to intervention
-                let intervention = fixture_clone.convert_task_to_intervention(
-                    &task_clone,
-                    vec!["concurrent".to_string()],
-                    None,
-                ).await?;
-                
+                let intervention = fixture_clone
+                    .convert_task_to_intervention(&task_clone, vec!["concurrent".to_string()], None)
+                    .await?;
+
                 // Consume materials if available
                 if let Some(material) = &material_clone {
-                    let _ = fixture_clone.consume_materials_during_intervention(&intervention, &[material.clone()]).await?;
+                    let _ = fixture_clone
+                        .consume_materials_during_intervention(&intervention, &[material.clone()])
+                        .await?;
                 }
-                
+
                 // Finalize intervention
-                fixture_clone.finalize_intervention(&intervention, Some(7), Some(87)).await?;
-                
+                fixture_clone
+                    .finalize_intervention(&intervention, Some(7), Some(87))
+                    .await?;
+
                 Ok::<(), crate::commands::AppError>(())
             });
-            
+
             handles.push(handle);
         }
-        
+
         // Wait for all concurrent operations to complete
         for handle in handles {
             handle.await??;
         }
-        
+
         // Verify all operations completed successfully
         assert!(fixture.verify_cross_domain_consistency()?);
-        
+
         Ok(())
     }
 
     #[tokio::test]
     async fn test_cross_domain_error_recovery() -> AppResult<()> {
         let fixture = CrossDomainTestFixture::new()?;
-        
+
         // Create test data
         let client = fixture.create_test_client("Error Recovery Client", Some("error@test.com"))?;
-        let task = fixture.create_task_for_client(&client, "Error Recovery Task", vec!["hood".to_string()])?;
-        let material = fixture.create_test_material_with_stock("ERROR-MAT-001", "Error Material", 2.0)?; // Low stock
-        
+        let task = fixture.create_task_for_client(
+            &client,
+            "Error Recovery Task",
+            vec!["hood".to_string()],
+        )?;
+        let material =
+            fixture.create_test_material_with_stock("ERROR-MAT-001", "Error Material", 2.0)?; // Low stock
+
         // Start intervention
-        let intervention = fixture.convert_task_to_intervention(task, vec!["hood".to_string()], None).await?;
-        
+        let intervention = fixture
+            .convert_task_to_intervention(task, vec!["hood".to_string()], None)
+            .await?;
+
         // Try to consume more material than available (should fail)
         let consumption_request = RecordConsumptionRequest {
             intervention_id: intervention.id.clone(),
@@ -764,14 +880,21 @@ mod tests {
             quality_notes: Some("Error recovery test".to_string()),
             recorded_by: Some("error_technician".to_string()),
         };
-        
-        let consumption_result = fixture.material_service.record_consumption(consumption_request);
-        assert!(consumption_result.is_err(), "Should fail with insufficient stock");
-        
+
+        let consumption_result = fixture
+            .material_service
+            .record_consumption(consumption_request);
+        assert!(
+            consumption_result.is_err(),
+            "Should fail with insufficient stock"
+        );
+
         // Verify material stock unchanged
-        let unchanged_material = fixture.material_service.get_material_by_id(&material.id.clone().unwrap())?;
+        let unchanged_material = fixture
+            .material_service
+            .get_material_by_id(&material.id.clone().unwrap())?;
         assert_eq!(unchanged_material.current_stock, 2.0);
-        
+
         // Try with valid consumption amount
         let valid_consumption_request = RecordConsumptionRequest {
             intervention_id: intervention.id.clone(),
@@ -785,14 +908,21 @@ mod tests {
             quality_notes: Some("Error recovery test - valid".to_string()),
             recorded_by: Some("error_technician".to_string()),
         };
-        
-        let valid_consumption_result = fixture.material_service.record_consumption(valid_consumption_request);
-        assert!(valid_consumption_result.is_ok(), "Should succeed with valid amount");
-        
+
+        let valid_consumption_result = fixture
+            .material_service
+            .record_consumption(valid_consumption_request);
+        assert!(
+            valid_consumption_result.is_ok(),
+            "Should succeed with valid amount"
+        );
+
         // Verify material stock updated correctly
-        let updated_material = fixture.material_service.get_material_by_id(&material.id.clone().unwrap())?;
+        let updated_material = fixture
+            .material_service
+            .get_material_by_id(&material.id.clone().unwrap())?;
         assert_eq!(updated_material.current_stock, 0.9); // 2.0 - 1.0 - 0.1
-        
+
         Ok(())
     }
 }

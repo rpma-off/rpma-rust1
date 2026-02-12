@@ -20,8 +20,8 @@ permissions:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
-  # Adapte si tu as une MSRV officielle différente
-  MSRV: "1.75.0"
+  # Must match rust-version in Cargo.toml
+  MSRV: "1.85.0"
   NODE_VERSION: "20"
 
 jobs:
@@ -35,6 +35,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Linux dependencies (Tauri)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.0-dev libssl-dev libgtk-3-dev \
+            libayatana-appindicator3-dev librsvg2-dev build-essential
+
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            src-tauri -> target
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -46,10 +64,13 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      # Optionnel si tu as des scripts dédiés
-      # - name: Lint
-      #   working-directory: frontend
-      #   run: npm run lint
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Type check
+        working-directory: frontend
+        run: npm run type-check
 
       - name: Encoding check (if exists)
         working-directory: frontend
@@ -59,6 +80,10 @@ jobs:
           else
             echo "No encoding:check script, skipping."
           fi
+
+      - name: Run tests
+        working-directory: frontend
+        run: npm run test:ci
 
       - name: Build
         working-directory: frontend
@@ -76,12 +101,19 @@ jobs:
         toolchain: [ stable, msrv ]
         include:
           - toolchain: msrv
-            rust: "1.75.0"
+            rust: "1.85.0"
           - toolchain: stable
             rust: "stable"
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies (Tauri)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.0-dev libssl-dev libgtk-3-dev \
+            libayatana-appindicator3-dev librsvg2-dev build-essential
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -131,7 +163,6 @@ jobs:
             src-tauri -> target
 
       - name: cargo-audit
-        working-directory: src-tauri
         run: |
           cargo install cargo-audit --locked
           cargo audit
@@ -140,9 +171,8 @@ jobs:
         uses: EmbarkStudios/cargo-deny-action@v2
         with:
           command: check
-          arguments: --all-features
-          # si ton deny.toml est ailleurs, adapte via "working-directory" non supporté ici,
-          # sinon mets deny.toml à la racine repo.
+          arguments: --all-features --workspace
+          manifest-path: src-tauri/Cargo.toml
 
   # -----------------------------
   # Coverage (Linux + stable only)
@@ -153,6 +183,13 @@ jobs:
     needs: [ rust ]
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies (Tauri)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.0-dev libssl-dev libgtk-3-dev \
+            libayatana-appindicator3-dev librsvg2-dev build-essential
 
       - name: Install Rust (stable)
         uses: dtolnay/rust-toolchain@stable

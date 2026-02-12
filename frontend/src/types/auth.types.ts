@@ -120,7 +120,7 @@ export interface AuthenticatedRequest {
   error?: string;
   isValid?: boolean;
   statusCode?: number;
-  sanitizedBody?: any;
+  sanitizedBody?: Record<string, unknown>;
   isAuthenticated?: boolean;
   userId?: string;
 }

@@ -29,7 +29,11 @@ mod tests {
 
         for i in 0..3 {
             security_service
-                .log_auth_failure(Some(&format!("user{}", i)), Some("192.168.1.100"), "invalid")
+                .log_auth_failure(
+                    Some(&format!("user{}", i)),
+                    Some("192.168.1.100"),
+                    "invalid",
+                )
                 .expect("Failed to log auth failure");
         }
 
@@ -107,7 +111,9 @@ mod tests {
             "Critical event should create an active alert"
         );
         assert!(
-            alerts.iter().any(|alert| matches!(alert.severity, AlertSeverity::Critical)),
+            alerts
+                .iter()
+                .any(|alert| matches!(alert.severity, AlertSeverity::Critical)),
             "At least one alert should be critical"
         );
     }
@@ -159,10 +165,7 @@ mod tests {
             .into_iter()
             .filter(|alert| alert.id == alert_id)
             .collect::<Vec<_>>();
-        assert!(
-            remaining.is_empty(),
-            "Resolved alert should not be active"
-        );
+        assert!(remaining.is_empty(), "Resolved alert should not be active");
     }
 
     #[test]

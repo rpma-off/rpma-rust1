@@ -39,7 +39,7 @@ export interface ListResponse<T> {
 
 export interface ApiResponse<T> {
    success: boolean;
-   data?: T extends any[] ? ListResponse<T[number]> : T;
+   data?: T extends unknown[] ? ListResponse<T[number]> : T;
    // The error field must accommodate the custom error object or a simple string
    error?: CustomError | ApiError;
 }
@@ -63,7 +63,7 @@ export function isErrorWithMessage(error: unknown): error is { message: string; 
       typeof error === 'object' &&
       error !== null &&
       'message' in error &&
-      typeof (error as any).message === 'string'
+      typeof (error as Record<string, unknown>).message === 'string'
    );
 }
 

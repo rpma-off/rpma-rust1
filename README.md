@@ -329,7 +329,7 @@ MIT License - Voir le fichier [LICENSE](LICENSE) pour les détails.
 Pour toute question ou problème :
 1. Consulter la documentation dans le dossier `/docs`
 2. Vérifier les [issues GitHub](https://github.com/your-org/rpma-v2/issues)
-3. Contacter l'équipe de support RPMA
+3. Contacter par Mail : Rayepasmonauto@gmail.com
 
 ---
 

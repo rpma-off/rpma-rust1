@@ -9,9 +9,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { logger, LogContext } from '@/lib/logger';
 import { ipcClient } from '@/lib/ipc/client';
 import { PageHeader, HeaderActionButton } from '@/components/ui/page-header';
+import { PageShell } from '@/components/layout/PageShell';
+import { LoadingState } from '@/components/layout/LoadingState';
+import { ErrorState } from '@/components/layout/ErrorState';
 import { Users, UserPlus } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function UsersPage() {
+  const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const [users, setUsers] = useState<UserAccount[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +31,7 @@ export default function UsersPage() {
 
       if (!user || !user.token) {
         logger.debug(LogContext.API, 'loadUsers: No authenticated user, setting error');
-        setError('Not authenticated');
+        setError(t('errors.unauthorized'));
         return;
       }
 
@@ -52,18 +57,18 @@ export default function UsersPage() {
   // Show loading while checking authentication
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Checking authentication...</div>
-      </div>
+      <PageShell>
+        <LoadingState message={t('common.loading')} />
+      </PageShell>
     );
   }
 
   // Redirect if not authenticated
   if (!user || !user.token) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-red-600">Please log in to access this page.</div>
-      </div>
+      <PageShell>
+        <ErrorState message={t('errors.unauthorized')} />
+      </PageShell>
     );
   }
 
@@ -90,29 +95,29 @@ export default function UsersPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading users...</div>
-      </div>
+      <PageShell>
+        <LoadingState message={t('common.loading')} />
+      </PageShell>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-red-600">Error: {error}</div>
-      </div>
+      <PageShell>
+        <ErrorState message={error} onRetry={loadUsers} />
+      </PageShell>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-6">
+    <PageShell>
       <PageHeader
-        title="Gestion des Utilisateurs"
-        subtitle="Gérer les comptes utilisateurs et les permissions"
+        title={t('users.title')}
+        subtitle={t('admin.userManagement')}
         icon={<Users className="w-6 h-6 text-[hsl(var(--rpma-teal))]" />}
         actions={
           <HeaderActionButton
-            label="Ajouter un utilisateur"
+            label={t('users.createUser')}
             icon={<UserPlus className="w-4 h-4" />}
             onClick={handleCreateUser}
           />
@@ -132,6 +137,6 @@ export default function UsersPage() {
           onSuccess={handleFormSuccess}
         />
       )}
-    </div>
+    </PageShell>
   );
 }

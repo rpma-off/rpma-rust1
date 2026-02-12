@@ -16,11 +16,14 @@ import { PullToRefresh, FloatingActionButton } from '@/components/ui/mobile-comp
 import { EnhancedEmptyState } from '@/components/ui';
 import { ClientFilters as ClientFiltersComponent } from '@/components/navigation/ClientFilters';
 import { PageHeader, StatCard } from '@/components/ui/page-header';
+import { PageShell } from '@/components/layout/PageShell';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const MemoizedClientCard = memo(ClientCard);
 
 
 export default function ClientsPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { user } = useAuth();
   const [clients, setClients] = useState<ClientWithTasks[]>([]);
@@ -76,7 +79,7 @@ export default function ClientsPage() {
       }, 5);
 
       if (response.error) {
-        setError(typeof response.error === 'string' ? response.error : response.error.message || 'Échec du chargement des clients');
+        setError(typeof response.error === 'string' ? response.error : response.error.message || t('errors.loadFailed'));
         return;
       }
 
@@ -84,12 +87,12 @@ export default function ClientsPage() {
         setClients(response.data.data);
       }
     } catch (err) {
-      setError('Une erreur inattendue est survenue');
+      setError(t('errors.unexpected'));
       console.error('Error loading clients:', err);
     } finally {
       setLoading(false);
     }
-  }, [filters, searchQuery, user?.token]);
+  }, [filters, searchQuery, user?.token, t]);
 
   // Load clients when component mounts or filters change
   useEffect(() => {
@@ -119,29 +122,29 @@ export default function ClientsPage() {
   }, [router]);
 
   const handleClientDelete = useCallback(async (client: Client | ClientWithTasks) => {
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${client.name} ? Cette action est irréversible.`)) {
+    if (!confirm(t('confirm.deleteClient', { name: client.name }))) {
       return;
     }
 
     try {
       if (!user?.id) {
-        setError('Authentification requise');
+        setError(t('errors.authRequired'));
         return;
       }
 
       const response = await clientService.deleteClient(client.id, user.token);
       if (response.error) {
-        setError(response.error || 'Échec de la suppression du client');
+        setError(response.error || t('errors.deleteFailed'));
         return;
       }
 
       // Reload clients
       loadClients();
     } catch (err) {
-      setError('Une erreur inattendue est survenue lors de la suppression');
+      setError(t('errors.unexpected'));
       console.error('Error deleting client:', err);
     }
-  }, [loadClients, user?.id, user?.token]);
+  }, [loadClients, user?.id, user?.token, t]);
 
   const handleClientCreateTask = useCallback((client: Client | ClientWithTasks) => {
     router.push(`/tasks/new?clientId=${client.id}`);
@@ -157,11 +160,11 @@ export default function ClientsPage() {
   const isInitialLoading = loading && clients.length === 0;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-6">
+    <PageShell>
       {/* Header */}
       <PageHeader
-        title="Clients"
-        subtitle="Gérer votre base de données clients et vos relations"
+        title={t('clients.title')}
+        subtitle={t('clients.subtitle')}
         icon={<User className="h-6 w-6 sm:h-8 sm:w-8 text-[hsl(var(--rpma-teal))]" />}
         actions={
           <Link
@@ -169,32 +172,32 @@ export default function ClientsPage() {
             className="bg-[hsl(var(--rpma-teal))] hover:bg-[hsl(var(--rpma-teal))]/90 text-black px-4 sm:px-6 py-3 rounded-[6px] flex items-center justify-center space-x-2 transition-all duration-200 font-semibold w-full lg:w-auto hover:shadow-sm"
           >
             <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
-            <span className="font-medium">Ajouter un client</span>
+            <span className="font-medium">{t('clients.addClient')}</span>
           </Link>
         }
         stats={
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <StatCard
               value={clientStats.total}
-              label="Total Clients"
+              label={t('clients.totalClients')}
               icon={Users}
               color="accent"
             />
             <StatCard
               value={clientStats.withTasks}
-              label="Avec Tâches"
+              label={t('clients.withTasks')}
               icon={FileText}
               color="green"
             />
             <StatCard
               value={clientStats.individual}
-              label="Particuliers"
+              label={t('clients.individual')}
               icon={User}
               color="blue"
             />
             <StatCard
               value={clientStats.business}
-              label="Entreprises"
+              label={t('clients.business')}
               icon={Building}
               color="purple"
             />
@@ -211,7 +214,7 @@ export default function ClientsPage() {
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Rechercher par nom, email, entreprise..."
+                placeholder={t('clients.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
                 className="w-full pl-12 pr-4 py-3 bg-white border border-[hsl(var(--rpma-border))] rounded-[6px] text-foreground placeholder-muted-foreground focus:outline-none focus:border-[hsl(var(--rpma-teal))] transition-all duration-200"
@@ -250,11 +253,11 @@ export default function ClientsPage() {
                   }}
                   className="pl-10 pr-8 py-2.5 rpma-shell text-foreground text-sm focus:outline-none focus:border-[hsl(var(--rpma-teal))] transition-all duration-200 appearance-none cursor-pointer hover:bg-muted/10"
                 >
-<option value="name_asc">📝 Nom A-Z</option>
-<option value="name_desc">📝 Nom Z-A</option>
-<option value="created_at_desc">🕑 Plus récent</option>
-<option value="created_at_asc">🕑 Plus ancien</option>
-<option value="total_tasks_desc">📊 Plus de tâches</option>
+<option value="name_asc">{t('clients.sortNameAsc')}</option>
+<option value="name_desc">{t('clients.sortNameDesc')}</option>
+<option value="created_at_desc">{t('clients.sortNewest')}</option>
+<option value="created_at_asc">{t('clients.sortOldest')}</option>
+<option value="total_tasks_desc">{t('clients.sortMostTasks')}</option>
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               </div>
@@ -278,7 +281,7 @@ export default function ClientsPage() {
               <AlertCircle className="h-5 w-5 text-error" />
             </div>
             <div className="flex-1">
-              <h4 className="text-foreground font-semibold mb-1">Erreur de chargement</h4>
+              <h4 className="text-foreground font-semibold mb-1">{t('errors.loadingError')}</h4>
               <p className="text-muted-foreground text-sm leading-relaxed">{error}</p>
             </div>
           </div>
@@ -296,11 +299,11 @@ export default function ClientsPage() {
             </div>
           ) : clients.length === 0 ? (
             <EnhancedEmptyState
-              title="Aucun client trouvé"
-              description="Aucun client ne correspond à votre recherche. Essayez d'ajuster les filtres ou créez un nouveau client."
+              title={t('empty.noClients')}
+              description={t('empty.noClientsDescription')}
               icon={<SearchX className="h-6 w-6" />}
               action={{
-                label: 'Ajouter un client',
+                label: t('clients.addClient'),
                 onClick: () => router.push('/clients/new'),
                 icon: <Plus className="h-4 w-4" />
               }}
@@ -334,13 +337,13 @@ export default function ClientsPage() {
                 <div className="w-8 h-8 border-3 border-[hsl(var(--rpma-border))] rounded-full animate-spin border-t-accent"></div>
               </div>
               <div>
-                <h4 className="text-foreground font-medium">Mise à jour...</h4>
-                <p className="text-muted-foreground text-sm">Actualisation de la liste des clients</p>
+                <h4 className="text-foreground font-medium">{t('common.updating')}</h4>
+                <p className="text-muted-foreground text-sm">{t('clients.refreshing')}</p>
               </div>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }

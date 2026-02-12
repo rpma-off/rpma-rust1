@@ -121,36 +121,42 @@ pub struct BulkImportResponse {
 }
 
 /// Add task note command (placeholder)
-#[tracing::instrument(skip(_state))]
+#[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn add_task_note(
-    _request: AddTaskNoteRequest,
-    _state: AppState<'_>,
+    request: AddTaskNoteRequest,
+    state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let _current_user = authenticate!(&request.session_token, &state);
+
     Ok(ApiResponse::error(AppError::Validation(
         "Add task note is not implemented yet".to_string(),
     )))
 }
 
 /// Send task message command (placeholder)
-#[tracing::instrument(skip(_state))]
+#[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn send_task_message(
-    _request: SendTaskMessageRequest,
-    _state: AppState<'_>,
+    request: SendTaskMessageRequest,
+    state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let _current_user = authenticate!(&request.session_token, &state);
+
     Ok(ApiResponse::error(AppError::Validation(
         "Send task message is not implemented yet".to_string(),
     )))
 }
 
 /// Report task issue command (placeholder)
-#[tracing::instrument(skip(_state))]
+#[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn report_task_issue(
-    _request: ReportTaskIssueRequest,
-    _state: AppState<'_>,
+    request: ReportTaskIssueRequest,
+    state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let _current_user = authenticate!(&request.session_token, &state);
+
     Ok(ApiResponse::error(AppError::Validation(
         "Report task issue is not implemented yet".to_string(),
     )))

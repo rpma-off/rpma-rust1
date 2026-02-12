@@ -214,7 +214,10 @@ mod tests {
         if let Some(refresh_token) = session.refresh_token {
             let expected_refresh_hash =
                 token::hash_token_with_env(&refresh_token).expect("Failed to hash refresh token");
-            assert_eq!(stored_refresh.as_deref(), Some(expected_refresh_hash.as_str()));
+            assert_eq!(
+                stored_refresh.as_deref(),
+                Some(expected_refresh_hash.as_str())
+            );
         }
     }
 

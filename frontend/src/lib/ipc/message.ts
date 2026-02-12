@@ -13,39 +13,40 @@ export const messageApi = {
   /**
    * Send a new message
    */
-  send: async (request: SendMessageRequest): Promise<Message> => {
-    return invoke('message_send', { request });
+  send: async (request: SendMessageRequest, sessionToken: string): Promise<Message> => {
+    return invoke('message_send', { request, session_token: sessionToken });
   },
 
   /**
    * Get messages with filtering
    */
-  getList: async (query: MessageQuery): Promise<MessageListResponse> => {
-    return invoke('message_get_list', { query });
+  getList: async (query: MessageQuery, sessionToken: string): Promise<MessageListResponse> => {
+    return invoke('message_get_list', { query, session_token: sessionToken });
   },
 
   /**
    * Mark message as read
    */
-  markRead: async (messageId: string): Promise<void> => {
-    return invoke('message_mark_read', { messageId });
+  markRead: async (messageId: string, sessionToken: string): Promise<void> => {
+    return invoke('message_mark_read', { messageId, session_token: sessionToken });
   },
 
   /**
    * Get message templates
    */
   getTemplates: async (
-    category?: string,
-    messageType?: string
+    category: string | undefined,
+    messageType: string | undefined,
+    sessionToken: string
   ): Promise<MessageTemplate[]> => {
-    return invoke('message_get_templates', { category, messageType });
+    return invoke('message_get_templates', { category, messageType, session_token: sessionToken });
   },
 
   /**
    * Get user notification preferences
    */
-  getPreferences: async (userId: string): Promise<NotificationPreferences> => {
-    return invoke('message_get_preferences', { userId });
+  getPreferences: async (userId: string, sessionToken: string): Promise<NotificationPreferences> => {
+    return invoke('message_get_preferences', { userId, session_token: sessionToken });
   },
 
   /**
@@ -53,8 +54,9 @@ export const messageApi = {
    */
   updatePreferences: async (
     userId: string,
-    updates: UpdateNotificationPreferencesRequest
+    updates: UpdateNotificationPreferencesRequest,
+    sessionToken: string
   ): Promise<NotificationPreferences> => {
-    return invoke('message_update_preferences', { userId, updates });
+    return invoke('message_update_preferences', { userId, updates, session_token: sessionToken });
   },
 };

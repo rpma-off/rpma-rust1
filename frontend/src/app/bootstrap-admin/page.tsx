@@ -7,8 +7,10 @@ import { useAuth } from '@/lib/auth/compatibility';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function BootstrapAdminPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const router = useRouter();
 
@@ -37,7 +39,7 @@ export default function BootstrapAdminPage() {
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
-            <div className="text-center">Checking admin status...</div>
+            <div className="text-center">{t('common.loading')}</div>
           </CardContent>
         </Card>
       </div>
@@ -49,23 +51,23 @@ export default function BootstrapAdminPage() {
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle>Admin Already Exists</CardTitle>
+            <CardTitle>Administrateur déjà existant</CardTitle>
             <CardDescription>
-              An administrator account has already been created.
+              Un compte administrateur a déjà été créé.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Alert>
               <AlertDescription>
-                The system already has an admin user. If you need to manage roles or create additional admins,
-                please log in with an existing admin account and use the admin panel.
+                Le système possède déjà un utilisateur administrateur. Si vous devez gérer les rôles ou créer des administrateurs supplémentaires,
+                veuillez vous connecter avec un compte administrateur existant et utiliser le panneau d&apos;administration.
               </AlertDescription>
             </Alert>
             <Button
               onClick={() => router.push('/login')}
               className="w-full mt-4"
             >
-              Go to Login
+              {t('auth.signIn')}
             </Button>
           </CardContent>
         </Card>
@@ -77,17 +79,17 @@ export default function BootstrapAdminPage() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Bootstrap First Admin</CardTitle>
+          <CardTitle>Créer le premier administrateur</CardTitle>
           <CardDescription>
-            Create the first administrator account. This can only be done once.
+            Créez le premier compte administrateur. Cela ne peut être fait qu&apos;une seule fois.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <Alert>
               <AlertDescription>
-                Promote the current logged-in user ({user?.email}) to administrator.
-                This can only be done once when no admins exist.
+                Promouvoir l&apos;utilisateur actuellement connecté ({user?.email}) en administrateur.
+                Cela ne peut être fait qu&apos;une seule fois lorsqu&apos;aucun administrateur n&apos;existe.
               </AlertDescription>
             </Alert>
 
@@ -96,13 +98,13 @@ export default function BootstrapAdminPage() {
               className="w-full"
               disabled={bootstrapMutation.isPending || !user?.user_id}
             >
-              {bootstrapMutation.isPending ? 'Creating Admin...' : 'Promote to Admin'}
+              {bootstrapMutation.isPending ? 'Création de l\'admin...' : 'Promouvoir en Admin'}
             </Button>
 
             {bootstrapMutation.isSuccess && (
               <Alert>
                 <AlertDescription>
-                  ✓ Admin created successfully! Redirecting to dashboard...
+                  ✓ Administrateur créé avec succès ! Redirection vers le tableau de bord...
                 </AlertDescription>
               </Alert>
             )}
@@ -114,7 +116,7 @@ export default function BootstrapAdminPage() {
                     console.log('Bootstrap error:', bootstrapMutation.error);
                     const error = bootstrapMutation.error as { message?: string; error?: string };
                     return error?.message || (error as { error?: string })?.error ||
-                      'Failed to create admin. User may not exist or admin already exists.';
+                      'Échec de la création de l\'admin. L\'utilisateur peut ne pas exister ou l\'admin existe déjà.';
                   })()}
                 </AlertDescription>
               </Alert>

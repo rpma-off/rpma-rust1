@@ -7,6 +7,7 @@ import { AlertCircle } from 'lucide-react';
 import { PPFWorkflowProvider, usePPFWorkflow } from '@/contexts/PPFWorkflowContext';
 import { PPFWorkflowHeader } from '@/components/workflow/ppf/PPFWorkflowHeader';
 import { PPFStepProgress } from '@/components/workflow/ppf/PPFStepProgress';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface PPFWorkflowLayoutProps {
   children: React.ReactNode;
@@ -26,6 +27,7 @@ export default function PPFWorkflowLayout({ children }: PPFWorkflowLayoutProps) 
 }
 
 function PPFWorkflowContent({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation();
   const { isLoading, error, interventionData } = usePPFWorkflow();
 
   if (isLoading) {
@@ -33,7 +35,7 @@ function PPFWorkflowContent({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading PPF workflow...</p>
+          <p className="text-muted-foreground">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -44,22 +46,22 @@ function PPFWorkflowContent({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center max-w-md">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-foreground mb-2">Error Loading Workflow</h2>
+          <h2 className="text-xl font-bold text-foreground mb-2">{t('errors.loadFailed')}</h2>
           <p className="text-muted-foreground mb-4">
-            {error?.message || 'Failed to load intervention data'}
+            {error?.message || t('errors.interventionDataUnavailable')}
           </p>
           <p className="text-muted-foreground text-sm mb-4">
-            This might happen if the intervention was not started properly or if there are database issues.
+            {t('errors.interventionDataRefreshFailed')}
           </p>
           <div className="flex gap-2 justify-center">
             <Button onClick={() => window.location.reload()}>
-              Retry
+              {t('common.retry')}
             </Button>
             <Button
               variant="outline"
               onClick={() => window.history.back()}
             >
-              Back to Task
+              {t('tasks.backToTasks')}
             </Button>
           </div>
         </div>
@@ -72,12 +74,12 @@ function PPFWorkflowContent({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center max-w-md">
           <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-foreground mb-2">No Active PPF Intervention</h2>
+          <h2 className="text-xl font-bold text-foreground mb-2">{t('errors.interventionDataUnavailable')}</h2>
           <p className="text-muted-foreground mb-4">
-            An active PPF intervention must be started for this task before accessing the workflow.
+            {t('errors.interventionDataUnavailable')}
           </p>
           <Button onClick={() => window.history.back()}>
-            Back to Task
+            {t('tasks.backToTasks')}
           </Button>
         </div>
       </div>

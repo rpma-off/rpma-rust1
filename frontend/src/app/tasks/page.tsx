@@ -21,6 +21,8 @@ import { getUserFullName } from '@/lib/types';
 import { useTasks } from '@/hooks/useTasks';
 import { useDebounce } from '@/hooks/useDebounce';
 import { ipcClient } from '@/lib/ipc/client';
+import { useTranslation } from '@/hooks/useTranslation';
+import { taskStatusLabels } from '@/lib/i18n/status-labels';
 
 import { TaskWithDetails } from '@/lib/services/entities/task.service';
 import { TaskStatus } from '@/lib/backend';
@@ -651,6 +653,7 @@ TaskFilters.displayName = 'TaskFilters';
 export default function TasksPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('all');
@@ -732,14 +735,14 @@ export default function TasksPage() {
   }, [tasks, searchTerm, statusFilter, dateFilter, technicianFilter, ppfZoneFilter]);
 
   const statusTabs = useMemo(() => ([
-    { key: 'all', label: 'All', count: tasks.length, filter: 'all' },
-    { key: 'draft', label: 'Quotes', count: tasks.filter(t => t.status === 'draft').length, filter: 'draft' },
-    { key: 'scheduled', label: 'Scheduled', count: tasks.filter(t => t.status === 'scheduled').length, filter: 'scheduled' },
-    { key: 'in_progress', label: 'In Progress', count: tasks.filter(t => t.status === 'in_progress').length, filter: 'in_progress' },
-    { key: 'completed', label: 'Completed', count: tasks.filter(t => t.status === 'completed').length, filter: 'completed' },
-    { key: 'cancelled', label: 'Canceled', count: tasks.filter(t => t.status === 'cancelled').length, filter: 'cancelled' },
-    { key: 'archived', label: 'Archived', count: tasks.filter(t => t.status === 'archived').length, filter: 'archived' },
-  ]), [tasks]);
+    { key: 'all', label: t('filters.all'), count: tasks.length, filter: 'all' },
+    { key: 'draft', label: t('tasks.statusDraft'), count: tasks.filter(t => t.status === 'draft').length, filter: 'draft' },
+    { key: 'scheduled', label: t('filters.scheduled'), count: tasks.filter(t => t.status === 'scheduled').length, filter: 'scheduled' },
+    { key: 'in_progress', label: t('tasks.statusInProgress'), count: tasks.filter(t => t.status === 'in_progress').length, filter: 'in_progress' },
+    { key: 'completed', label: t('tasks.statusCompleted'), count: tasks.filter(t => t.status === 'completed').length, filter: 'completed' },
+    { key: 'cancelled', label: t('tasks.statusCancelled'), count: tasks.filter(t => t.status === 'cancelled').length, filter: 'cancelled' },
+    { key: 'archived', label: t('tasks.statusArchived'), count: tasks.filter(t => t.status === 'archived').length, filter: 'archived' },
+  ]), [tasks, t]);
 
   const formatTaskDate = (task: TaskWithDetails) => {
     if (!task.scheduled_date) return 'Date à définir';
@@ -996,12 +999,12 @@ export default function TasksPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-foreground mb-4">Desktop App Required</h1>
+          <h1 className="text-2xl font-bold text-foreground mb-4">{t('errors.desktopAppRequired')}</h1>
           <p className="text-muted-foreground mb-4">
-            This application must be run through the Tauri desktop app, not in a browser.
+            {t('errors.desktopAppRequiredDesc')}
           </p>
           <p className="text-muted-foreground text-sm">
-            Run <code className="bg-border/20 px-2 py-1 rounded">npm run dev</code> and use the desktop window that opens.
+            {t('errors.runCommand')} <code className="bg-border/20 px-2 py-1 rounded">npm run dev</code>
           </p>
         </div>
       </div>
@@ -1012,11 +1015,11 @@ export default function TasksPage() {
     <div className="min-h-screen bg-[hsl(var(--rpma-surface))]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-semibold text-foreground">Jobs</h1>
+          <h1 className="text-2xl font-semibold text-foreground">{t('nav.tasks')}</h1>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" className="rounded-[6px] gap-2">
               <Shield className="h-4 w-4" />
-              Show progress
+              {t('tasks.showProgress')}
             </Button>
             <Button
               variant="outline"
@@ -1025,7 +1028,7 @@ export default function TasksPage() {
               onClick={() => setShowFilters(!showFilters)}
             >
               <Filter className="h-4 w-4" />
-              Filter
+              {t('common.filter')}
             </Button>
             <Button
               variant="outline"
@@ -1034,7 +1037,7 @@ export default function TasksPage() {
               onClick={handleExport}
             >
               <Download className="h-4 w-4" />
-              Export
+              {t('common.export')}
             </Button>
           </div>
         </div>
@@ -1102,7 +1105,7 @@ export default function TasksPage() {
             <div className="bg-white border border-[hsl(var(--rpma-border))] rounded-[10px] shadow-[var(--rpma-shadow-soft)]">
               <div className="rpma-empty">
                 <SearchX />
-                <h3 className="text-lg font-semibold">No results found</h3>
+                <h3 className="text-lg font-semibold">{t('tasks.noMatchingTasks')}</h3>
               </div>
             </div>
           ) : viewMode === 'table' ? (
@@ -1111,9 +1114,9 @@ export default function TasksPage() {
                 <div className="flex items-center">
                   <input type="checkbox" className="h-4 w-4 rounded border-border" aria-label="Select all" />
                 </div>
-                <div>Date / Time</div>
-                <div>Job # - Title</div>
-                <div className="text-right">Status</div>
+                <div>{t('time.dateTime')}</div>
+                <div>{t('tasks.taskNumber')} - {t('tasks.taskTitle')}</div>
+                <div className="text-right">{t('tasks.status')}</div>
                 <div />
               </div>
               <div className="divide-y divide-[hsl(var(--rpma-border))]">
@@ -1193,7 +1196,7 @@ export default function TasksPage() {
             className="h-11 px-6 rounded-full shadow-[var(--rpma-shadow-soft)] bg-[hsl(var(--rpma-teal))] text-white hover:bg-[hsl(var(--rpma-teal))]/90"
           >
             <Plus className="h-5 w-5 mr-2" />
-            + Add
+            {t('common.add')}
           </Button>
         </div>
 

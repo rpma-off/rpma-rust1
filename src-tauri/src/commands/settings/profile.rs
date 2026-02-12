@@ -3,11 +3,10 @@
 //! This module handles user profile CRUD operations including
 //! profile updates, password changes, data export, and account deletion.
 
-use crate::commands::settings::core::{authenticate_user, handle_settings_error};
+use crate::commands::settings::core::handle_settings_error;
 use crate::commands::{ApiResponse, AppError, AppState};
 
 use base64::{engine::general_purpose, Engine as _};
-use rusqlite::OptionalExtension;
 use serde::Deserialize;
 use serde_json::json;
 
@@ -95,7 +94,7 @@ pub async fn get_user_settings(
 ) -> Result<ApiResponse<crate::models::settings::UserSettings>, AppError> {
     info!("Getting user settings");
 
-    let user = authenticate_user(&session_token, &state)?;
+    let user = authenticate!(&session_token, &state);
 
     state
         .settings_service
@@ -191,7 +190,7 @@ pub async fn export_user_data(
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
     info!("Exporting user data");
 
-    let user = authenticate_user(&session_token, &state)?;
+    let user = authenticate!(&session_token, &state);
     let settings = state
         .settings_service
         .get_user_settings(&user.id)
@@ -202,29 +201,10 @@ pub async fn export_user_data(
         .get_user(&user.id)
         .map_err(|e| AppError::Database(format!("Failed to load user account: {}", e)))?;
 
-    let conn = state
-        .db
-        .get_connection()
-        .map_err(|e| AppError::Database(format!("Failed to access database: {}", e)))?;
-
-    let consent_row: Option<(String, i64, i64)> = conn
-        .query_row(
-            "SELECT consent_data, updated_at, created_at FROM user_consent WHERE user_id = ?",
-            [&user.id],
-            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
-        )
-        .optional()
-        .map_err(|e| AppError::Database(format!("Failed to load user consent: {}", e)))?;
-
-    let consent = consent_row.map(|(consent_data, updated_at, created_at)| {
-        let parsed = serde_json::from_str::<serde_json::Value>(&consent_data)
-            .unwrap_or_else(|_| json!({ "raw": consent_data }));
-        json!({
-            "data": parsed,
-            "updated_at": updated_at,
-            "created_at": created_at
-        })
-    });
+    let consent = state
+        .settings_service
+        .get_user_consent(&user.id)
+        .map_err(|e| handle_settings_error(e, "Load user consent for export"))?;
 
     let user_identity = match account {
         Some(account) => json!({
@@ -265,7 +245,7 @@ pub async fn delete_user_account(
 ) -> Result<ApiResponse<String>, AppError> {
     info!("Deleting user account");
 
-    let user = authenticate_user(&request.session_token, &state)?;
+    let user = authenticate!(&request.session_token, &state);
 
     // Validate confirmation
     if request.confirmation != "DELETE" {

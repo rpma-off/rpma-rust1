@@ -6,7 +6,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { TaskStatus } from '@/lib/backend';
 
 type TaskFiltersProps = {
   filters: {

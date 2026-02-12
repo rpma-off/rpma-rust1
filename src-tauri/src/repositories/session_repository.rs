@@ -283,13 +283,12 @@ mod tests {
             )
             .expect("query token");
 
-        let expected_token =
-            token::hash_token_with_env(&session.token).expect("hash token");
+        let expected_token = token::hash_token_with_env(&session.token).expect("hash token");
         assert_eq!(stored_token, expected_token);
         assert_ne!(stored_token, session.token);
 
-        let expected_refresh = token::hash_token_with_env("refresh-token")
-            .expect("hash refresh token");
+        let expected_refresh =
+            token::hash_token_with_env("refresh-token").expect("hash refresh token");
         assert_eq!(stored_refresh.as_deref(), Some(expected_refresh.as_str()));
     }
 }

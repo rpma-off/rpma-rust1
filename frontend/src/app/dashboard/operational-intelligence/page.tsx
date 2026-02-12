@@ -17,6 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { DateRangePicker } from '@/app/reports/components/DateRangePicker';
 import { reportsService } from '@/lib/services/entities/reports.service';
+import { useTranslation } from '@/hooks/useTranslation';
 import type {
   OperationalIntelligenceReport,
   StepBottleneck,
@@ -32,6 +33,7 @@ interface DateRange {
 }
 
 export default function OperationalIntelligencePage() {
+  const { t } = useTranslation();
   const [dateRange, setDateRange] = useState<DateRange>({
     start: new Date(new Date().setDate(new Date().getDate() - 30)), // Last 30 days
     end: new Date()
@@ -124,7 +126,7 @@ export default function OperationalIntelligencePage() {
         <div className="flex items-center justify-center py-12">
           <div className="flex items-center space-x-3">
             <RefreshCw className="w-8 h-8 animate-spin text-green-500" />
-            <span className="text-white text-lg font-medium">Chargement du rapport d&apos;intelligence opérationnelle...</span>
+            <span className="text-white text-lg font-medium">{t('common.loading')}</span>
           </div>
         </div>
       </div>
@@ -138,11 +140,11 @@ export default function OperationalIntelligencePage() {
           <CardContent className="pt-6">
             <div className="text-center">
               <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-white mb-2">Erreur de chargement</h3>
+              <h3 className="text-xl font-semibold text-white mb-2">{t('errors.loadFailed')}</h3>
               <p className="text-red-300 mb-4">{error}</p>
               <Button onClick={handleRefresh} variant="outline" className="border-red-500 text-red-300 hover:bg-red-900/30">
                 <RefreshCw className="w-4 h-4 mr-2" />
-                Réessayer
+                {t('common.retry')}
               </Button>
             </div>
           </CardContent>
@@ -156,7 +158,7 @@ export default function OperationalIntelligencePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Intelligence Opérationnelle</h1>
+          <h1 className="text-2xl font-bold text-white">{t('nav.operationalIntelligence')}</h1>
           <p className="text-gray-400 mt-1">Analyse des goulots d&apos;étranglement et optimisation des processus</p>
         </div>
         <div className="flex items-center space-x-3">
@@ -168,7 +170,7 @@ export default function OperationalIntelligencePage() {
             disabled={refreshing}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-            Actualiser
+            {t('common.refresh')}
           </Button>
           <Button
             variant="outline"
@@ -177,7 +179,7 @@ export default function OperationalIntelligencePage() {
             onClick={handleExport}
           >
             <Download className="h-4 w-4 mr-2" />
-            Exporter
+            {t('common.export')}
           </Button>
         </div>
       </div>
