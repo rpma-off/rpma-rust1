@@ -342,18 +342,12 @@ impl InterventionWorkflowService {
 
         let has_completion_data = Self::has_completion_data(&request);
 
-        if current_step.step_status == StepStatus::Pending && has_completion_data {
-            // Steps must be started before completion data is accepted.
-            return Err(InterventionError::Workflow(
-                "Step must be started before completion data can be provided".to_string(),
-            ));
-        }
-
         // Update step with collected data
         self.data
             .update_step_with_data(&mut current_step, &request)?;
 
         // Set step to in-progress if not already set
+        // This allows a single call to transition Pending → InProgress → Completed
         if current_step.step_status == StepStatus::Pending {
             current_step.step_status = StepStatus::InProgress;
             current_step.started_at = TimestampString::now();
@@ -779,35 +773,33 @@ impl InterventionWorkflowService {
         self.validation
             .validate_intervention_finalization(&intervention, &logger)?;
 
-        // Save collected data and photos to the finalization step if provided
+        // Save collected data and photos to the finalization step and mark it as completed
         let steps = self.data.get_intervention_steps(&intervention.id)?;
         if let Some(finalization_step) = steps
             .iter()
             .find(|s| s.step_type == crate::models::step::StepType::Finalization)
         {
             let mut updated_step = finalization_step.clone();
-            let mut step_updated = false;
 
             if let Some(collected_data) = &request.collected_data {
                 updated_step.collected_data = Some(collected_data.clone());
-                step_updated = true;
             }
 
             if let Some(photos) = &request.photos {
                 updated_step.photo_count = photos.len() as i32;
                 updated_step.photo_urls = Some(photos.clone());
-                step_updated = true;
             }
 
-            if step_updated {
-                updated_step.step_status = StepStatus::Completed;
-                updated_step.completed_at = TimestampString(Some(crate::models::common::now()));
-                self.data.save_step(&updated_step)?;
-                logger.debug(
-                    "Updated finalization step with collected data and/or photos",
-                    None,
-                );
+            updated_step.step_status = StepStatus::Completed;
+            updated_step.completed_at = TimestampString(Some(crate::models::common::now()));
+            if updated_step.started_at.inner().is_none() {
+                updated_step.started_at = TimestampString(Some(crate::models::common::now()));
             }
+            self.data.save_step(&updated_step)?;
+            logger.debug(
+                "Marked finalization step as completed",
+                None,
+            );
         }
 
         // Update final data

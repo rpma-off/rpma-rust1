@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CheckCircle, PenTool, User, Award, Camera, MessageSquare, Trophy } from 'lucide-react';
+import { CheckCircle, PenTool, User, Award, Camera, MessageSquare, Trophy, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePPFWorkflow } from '@/contexts/PPFWorkflowContext';
 import { SignatureCapture } from '@/components/SignatureCapture';
@@ -126,7 +126,12 @@ export default function FinalizationStepPage() {
   const allQcCompleted = qcChecklist.every(item => item.completed);
   const signatureValid = signatureData !== '' && signatoryName.trim() !== '';
 
-  const canComplete = allQcCompleted && signatureValid;
+  // Check that all prior steps (non-finalization) are completed in the backend
+  const priorSteps = steps.filter(step => step.id !== 'finalization');
+  const allPriorStepsCompleted = priorSteps.length > 0 && priorSteps.every(step => step.status === 'completed');
+  const incompletePriorSteps = priorSteps.filter(step => step.status !== 'completed');
+
+  const canComplete = allQcCompleted && signatureValid && allPriorStepsCompleted;
 
   const handleCompleteFinalization = async () => {
     setIsCompleting(true);
@@ -152,7 +157,14 @@ export default function FinalizationStepPage() {
       router.push(`/tasks/${taskId}/completed`);
     } catch (error) {
       console.error('Error completing finalization:', error);
-      toast.error('Erreur lors de la finalisation');
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('mandatory steps incomplete')) {
+        toast.error('Impossible de finaliser : des étapes obligatoires sont incomplètes');
+      } else {
+        toast.error('Erreur lors de la finalisation');
+      }
+    } finally {
+      setIsCompleting(false);
     }
   };
 
@@ -446,6 +458,32 @@ export default function FinalizationStepPage() {
         </motion.div>
       </motion.div>
 
+      {/* Warning: Incomplete prior steps */}
+      {incompletePriorSteps.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.4 }}
+        >
+          <Card className="border-yellow-500/30 bg-yellow-500/5">
+            <CardContent className="pt-6 pb-6">
+              <div className="flex items-start space-x-3">
+                <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="text-sm font-medium text-yellow-400 mb-1">
+                    Étapes précédentes incomplètes
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Veuillez compléter les étapes suivantes avant de finaliser :{' '}
+                    {incompletePriorSteps.map(s => s.title).join(', ')}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
       {/* Completion Summary */}
       {canComplete && (
         <motion.div
@@ -506,7 +544,7 @@ export default function FinalizationStepPage() {
             <p className={`text-sm font-medium ${
               canComplete ? 'text-green-400' : 'text-yellow-400'
             }`}>
-              {canComplete ? 'Prêt pour finalisation' : 'Complétez les vérifications requises'}
+              {canComplete ? 'Prêt pour finalisation' : incompletePriorSteps.length > 0 ? 'Étapes précédentes incomplètes' : 'Complétez les vérifications requises'}
             </p>
           </div>
           <p className="text-muted-foreground text-sm">

@@ -6,7 +6,7 @@
 use crate::db::{InterventionError, InterventionResult};
 use crate::logging::RPMARequestLogger;
 use crate::models::intervention::{Intervention, InterventionStatus};
-use crate::models::step::{InterventionStep, StepStatus};
+use crate::models::step::{InterventionStep, StepStatus, StepType};
 use crate::services::intervention_data::InterventionDataService;
 
 use crate::db::Database;
@@ -270,18 +270,28 @@ impl WorkflowValidationService {
                 InterventionError::Database(format!("Failed to get steps for validation: {}", e))
             })?;
 
-        let mandatory_steps = steps.iter().filter(|s| s.is_mandatory).collect::<Vec<_>>();
+        // Check that all mandatory steps (excluding the finalization step itself) are completed.
+        // The finalization step is completed as part of the finalize_intervention process.
+        let mandatory_steps = steps
+            .iter()
+            .filter(|s| s.is_mandatory && s.step_type != StepType::Finalization)
+            .collect::<Vec<_>>();
         let completed_mandatory_steps = mandatory_steps
             .iter()
             .filter(|s| s.step_status == StepStatus::Completed)
             .collect::<Vec<_>>();
 
         if mandatory_steps.len() != completed_mandatory_steps.len() {
-            let incomplete_steps: Vec<i32> = mandatory_steps
+            let incomplete_step_info: Vec<(i32, String)> = mandatory_steps
                 .iter()
                 .filter(|s| s.step_status != StepStatus::Completed)
-                .map(|s| s.step_number)
+                .map(|s| (s.step_number, s.step_name.clone()))
                 .collect();
+
+            let incomplete_steps: Vec<i32> =
+                incomplete_step_info.iter().map(|(n, _)| *n).collect();
+            let incomplete_names: Vec<&str> =
+                incomplete_step_info.iter().map(|(_, name)| name.as_str()).collect();
 
             let mut error_context = std::collections::HashMap::new();
             error_context.insert(
@@ -291,6 +301,10 @@ impl WorkflowValidationService {
             error_context.insert(
                 "incomplete_steps".to_string(),
                 serde_json::json!(incomplete_steps),
+            );
+            error_context.insert(
+                "incomplete_step_names".to_string(),
+                serde_json::json!(incomplete_names),
             );
             error_context.insert(
                 "total_mandatory".to_string(),
@@ -307,9 +321,9 @@ impl WorkflowValidationService {
             );
 
             return Err(InterventionError::Workflow(format!(
-                "Cannot finalize intervention: {} mandatory steps incomplete: {:?}",
+                "Cannot finalize intervention: {} mandatory steps incomplete: {}",
                 incomplete_steps.len(),
-                incomplete_steps
+                incomplete_names.join(", ")
             )));
         }
 
