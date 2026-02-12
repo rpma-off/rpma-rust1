@@ -304,7 +304,7 @@ export function useInterventionActions({
       const backendIntervention = result.intervention as unknown as BackendIntervention;
       const mappedIntervention = {
         id: backendIntervention.id,
-        taskId: backendIntervention.task_number ?? '',
+        taskId: backendIntervention.task_number ?? taskId ?? '',
         task_id: backendIntervention.task_number,
         intervention_number: backendIntervention.task_number,
         steps: [],
@@ -339,7 +339,7 @@ export function useInterventionActions({
         intervention_completed_at: backendIntervention.completed_at,
         estimated_duration: backendIntervention.estimated_duration,
         actual_duration: backendIntervention.actual_duration,
-        gps_coordinates: backendIntervention.start_location_lat && backendIntervention.start_location_lon ? {
+        gps_coordinates: backendIntervention.start_location_lat != null && backendIntervention.start_location_lon != null ? {
           latitude: backendIntervention.start_location_lat,
           longitude: backendIntervention.start_location_lon,
           accuracy: backendIntervention.start_location_accuracy,

@@ -159,7 +159,7 @@ export function useTaskSync({
           // Toast handled by parent component
         } else if (err.status === 403) {
           // Toast handled by parent component
-        } else if (err instanceof Error && 'status' in err && typeof (err as unknown as Record<string, unknown>).status === 'number' && ((err as unknown as Record<string, unknown>).status as number) >= 500) {
+        } else if (err instanceof ApiError && err.status != null && err.status >= 500) {
           // Toast handled by parent component
         } else {
           // Toast handled by parent component
