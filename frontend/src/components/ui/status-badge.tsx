@@ -1,7 +1,36 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Badge } from './badge';
-import { STATUS_CONFIG, type CardStatus } from './unified-card';
+import { CheckCircle2, Clock, Clock3, AlertCircle } from 'lucide-react';
+
+export const STATUS_CONFIG = {
+  pending: {
+    color: 'bg-[var(--status-primary)]/20 text-[var(--status-primary-foreground)] border-[var(--status-primary)]/40',
+    dot: 'bg-[var(--status-primary)]',
+    icon: Clock3,
+    label: 'En attente'
+  },
+  in_progress: {
+    color: 'bg-[var(--status-warning)]/20 text-[var(--status-warning-foreground)] border-[var(--status-warning)]/40',
+    dot: 'bg-[var(--status-warning)]',
+    icon: Clock,
+    label: 'En cours'
+  },
+  completed: {
+    color: 'bg-[var(--status-success)]/20 text-[var(--status-success-foreground)] border-[var(--status-success)]/40',
+    dot: 'bg-[var(--status-success)]',
+    icon: CheckCircle2,
+    label: 'Terminée'
+  },
+  cancelled: {
+    color: 'bg-[var(--status-destructive)]/20 text-[var(--status-destructive-foreground)] border-[var(--status-destructive)]/40',
+    dot: 'bg-[var(--status-destructive)]',
+    icon: AlertCircle,
+    label: 'Annulée'
+  }
+} as const;
+
+export type CardStatus = keyof typeof STATUS_CONFIG;
 
 interface StatusBadgeProps {
   status: CardStatus;
@@ -55,7 +84,3 @@ export const StatusBadge = React.memo<StatusBadgeProps>(({
 });
 
 StatusBadge.displayName = 'StatusBadge';
-
-// Export the status configuration for external use
-export { STATUS_CONFIG };
-export type { CardStatus };

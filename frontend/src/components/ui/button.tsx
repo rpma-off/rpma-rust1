@@ -44,17 +44,48 @@ const Button = React.forwardRef<
   React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
+    loading?: boolean
+    leftIcon?: React.ReactNode
+    rightIcon?: React.ReactNode
+    fullWidth?: boolean
   }
->(({ className, variant, size, asChild = false, ...props }, ref) => {
+>(({
+  className,
+  variant,
+  size,
+  asChild = false,
+  loading = false,
+  leftIcon,
+  rightIcon,
+  fullWidth = false,
+  children,
+  disabled,
+  ...props
+}, ref) => {
   const Comp = asChild ? Slot : "button"
 
   return (
     <Comp
       ref={ref}
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(
+        buttonVariants({ variant, size, className }),
+        fullWidth && "w-full"
+      )}
+      disabled={disabled || loading}
       {...props}
-    />
+    >
+      {loading && (
+        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+      )}
+      {!loading && leftIcon && (
+        <span className="mr-2 flex-shrink-0">{leftIcon}</span>
+      )}
+      <span className="flex-1 text-center">{children}</span>
+      {!loading && rightIcon && (
+        <span className="ml-2 flex-shrink-0">{rightIcon}</span>
+      )}
+    </Comp>
   )
 })
 Button.displayName = "Button"

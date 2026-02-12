@@ -2415,6 +2415,9 @@ impl Database {
 
         tx.execute_batch(
             r#"
+            DROP VIEW IF EXISTS client_statistics;
+            DROP VIEW IF EXISTS calendar_tasks;
+
             CREATE TABLE tasks_new (
                 id TEXT PRIMARY KEY,
                 task_number TEXT UNIQUE NOT NULL,
@@ -2522,6 +2525,45 @@ impl Database {
             CREATE INDEX IF NOT EXISTS idx_tasks_technician_scheduled ON tasks(technician_id, scheduled_date);
             CREATE INDEX IF NOT EXISTS idx_tasks_status_scheduled ON tasks(status, scheduled_date);
             CREATE INDEX IF NOT EXISTS idx_tasks_sync_status ON tasks(synced, status) WHERE synced = 0;
+
+            CREATE VIEW IF NOT EXISTS client_statistics AS
+            SELECT
+              c.id,
+              c.name,
+              c.customer_type,
+              c.created_at,
+              COUNT(DISTINCT t.id) as total_tasks,
+              COUNT(DISTINCT CASE WHEN t.status = 'in_progress' THEN t.id END) as active_tasks,
+              COUNT(DISTINCT CASE WHEN t.status = 'completed' THEN t.id END) as completed_tasks,
+              MAX(CASE WHEN t.status IN ('completed', 'in_progress') THEN t.updated_at END) as last_task_date
+            FROM clients c
+            LEFT JOIN tasks t ON t.client_id = c.id AND t.deleted_at IS NULL
+            WHERE c.deleted_at IS NULL
+            GROUP BY c.id, c.name, c.customer_type, c.created_at;
+
+            CREATE VIEW IF NOT EXISTS calendar_tasks AS
+            SELECT 
+              t.id,
+              t.task_number,
+              t.title,
+              t.status,
+              t.priority,
+              t.scheduled_date,
+              t.start_time,
+              t.end_time,
+              t.vehicle_plate,
+              t.vehicle_model,
+              t.technician_id,
+              u.username as technician_name,
+              t.client_id,
+              c.name as client_name,
+              t.estimated_duration,
+              t.actual_duration
+            FROM tasks t
+            LEFT JOIN users u ON t.technician_id = u.id
+            LEFT JOIN clients c ON t.client_id = c.id
+            WHERE t.scheduled_date IS NOT NULL
+              AND t.deleted_at IS NULL;
             "#,
         )
         .map_err(|e| format!("Failed to rebuild tasks table: {}", e))?;
