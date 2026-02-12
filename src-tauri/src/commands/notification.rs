@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 // Conditional import removed
+use tracing::{error, info, instrument};
 use ts_rs::TS;
 
 lazy_static! {
@@ -43,6 +44,7 @@ pub struct UpdateNotificationConfigRequest {
 
 /// Initialize the notification service with configuration
 #[tauri::command]
+#[instrument(skip(config, state, session_token))]
 pub async fn initialize_notification_service(
     config: UpdateNotificationConfigRequest,
     session_token: String,
@@ -52,7 +54,10 @@ pub async fn initialize_notification_service(
     let auth_service = state.auth_service.clone();
     let _current_user = auth_service
         .validate_session(&session_token)
-        .map_err(|e| format!("Authentication failed: {}", e))?;
+        .map_err(|e| {
+            error!(error = %e, "Authentication failed for initialize_notification_service");
+            "Authentication failed".to_string()
+        })?;
 
     let email_config = if let (Some(provider), Some(api_key), Some(from_email), Some(from_name)) = (
         config.email_provider,
@@ -112,11 +117,13 @@ pub async fn initialize_notification_service(
     let mut global_service = NOTIFICATION_SERVICE.lock().await;
     *global_service = Some(service);
 
+    info!("Notification service initialized");
     Ok(())
 }
 
 /// Send a notification
 #[tauri::command]
+#[instrument(skip(state, session_token, request), fields(user_id = %request.user_id))]
 pub async fn send_notification(
     request: SendNotificationRequest,
     session_token: String,
@@ -126,7 +133,10 @@ pub async fn send_notification(
     let auth_service = state.auth_service.clone();
     let _current_user = auth_service
         .validate_session(&session_token)
-        .map_err(|e| format!("Authentication failed: {}", e))?;
+        .map_err(|e| {
+            error!(error = %e, "Authentication failed for send_notification");
+            "Authentication failed".to_string()
+        })?;
 
     let service_guard = NOTIFICATION_SERVICE.lock().await;
     let service = service_guard
@@ -145,6 +155,7 @@ pub async fn send_notification(
 
 /// Test notification configuration
 #[tauri::command]
+#[instrument(skip(state, session_token))]
 pub async fn test_notification_config(
     recipient: String,
     channel: NotificationChannel,
@@ -155,7 +166,10 @@ pub async fn test_notification_config(
     let auth_service = state.auth_service.clone();
     let _current_user = auth_service
         .validate_session(&session_token)
-        .map_err(|e| format!("Authentication failed: {}", e))?;
+        .map_err(|e| {
+            error!(error = %e, "Authentication failed for test_notification_config");
+            "Authentication failed".to_string()
+        })?;
 
     let service_guard = NOTIFICATION_SERVICE.lock().await;
     let service = service_guard
@@ -196,6 +210,7 @@ pub async fn test_notification_config(
 
 /// Get notification service status
 #[tauri::command]
+#[instrument(skip(state, session_token))]
 pub async fn get_notification_status(
     session_token: String,
     state: AppState<'_>,
@@ -204,7 +219,10 @@ pub async fn get_notification_status(
     let auth_service = state.auth_service.clone();
     let _current_user = auth_service
         .validate_session(&session_token)
-        .map_err(|e| format!("Authentication failed: {}", e))?;
+        .map_err(|e| {
+            error!(error = %e, "Authentication failed for get_notification_status");
+            "Authentication failed".to_string()
+        })?;
 
     let service_guard = NOTIFICATION_SERVICE.lock().await;
     let _is_initialized = service_guard.is_some();
