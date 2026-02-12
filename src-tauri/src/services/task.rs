@@ -415,31 +415,28 @@ impl TaskService {
         use crate::commands::AppError;
         use crate::db::FromSqlRow;
 
-        let conn = self.crud.db.get_connection().map_err(|e| {
-            AppError::Database(format!("Database connection failed: {}", e))
-        })?;
+        let conn = self
+            .crud
+            .db
+            .get_connection()
+            .map_err(|e| AppError::Database(format!("Database connection failed: {}", e)))?;
 
         // Get current task status
         let current_status: String = conn
-            .query_row(
-                "SELECT status FROM tasks WHERE id = ?1",
-                [task_id],
-                |row| row.get(0),
-            )
+            .query_row("SELECT status FROM tasks WHERE id = ?1", [task_id], |row| {
+                row.get(0)
+            })
             .map_err(|e| AppError::NotFound(format!("Task not found: {}", e)))?;
 
         let current = TaskStatus::from_str(&current_status).ok_or_else(|| {
             AppError::Validation(format!("Unknown current status: {}", current_status))
         })?;
 
-        let new = TaskStatus::from_str(new_status).ok_or_else(|| {
-            AppError::Validation(format!("Unknown new status: {}", new_status))
-        })?;
+        let new = TaskStatus::from_str(new_status)
+            .ok_or_else(|| AppError::Validation(format!("Unknown new status: {}", new_status)))?;
 
         // Validate transition
-        validate_status_transition(&current, &new).map_err(|msg| {
-            AppError::Validation(msg)
-        })?;
+        validate_status_transition(&current, &new).map_err(|msg| AppError::Validation(msg))?;
 
         let now = chrono::Utc::now().timestamp();
 
@@ -474,15 +471,15 @@ impl TaskService {
     ///
     /// Returns counts grouped into high-level categories:
     /// quote, scheduled, in_progress, paused, completed, cancelled
-    pub fn get_status_distribution(
-        &self,
-    ) -> AppResult<crate::models::status::StatusDistribution> {
+    pub fn get_status_distribution(&self) -> AppResult<crate::models::status::StatusDistribution> {
         use crate::commands::AppError;
         use crate::models::status::StatusDistribution;
 
-        let conn = self.crud.db.get_connection().map_err(|e| {
-            AppError::Database(format!("Database connection failed: {}", e))
-        })?;
+        let conn = self
+            .crud
+            .db
+            .get_connection()
+            .map_err(|e| AppError::Database(format!("Database connection failed: {}", e)))?;
 
         let mut stmt = conn
             .prepare(
@@ -509,9 +506,8 @@ impl TaskService {
             .map_err(|e| AppError::Database(format!("Query execution failed: {}", e)))?;
 
         for row in rows {
-            let (status, count) = row.map_err(|e| {
-                AppError::Database(format!("Row mapping failed: {}", e))
-            })?;
+            let (status, count) =
+                row.map_err(|e| AppError::Database(format!("Row mapping failed: {}", e)))?;
             match status.as_str() {
                 "draft" | "pending" => distribution.quote += count,
                 "scheduled" | "assigned" | "overdue" => distribution.scheduled += count,

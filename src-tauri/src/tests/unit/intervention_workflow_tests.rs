@@ -469,8 +469,11 @@ mod tests {
             customer_comments: None,
         };
 
-        let result = workflow_service
-            .finalize_intervention(complete_request, "test-correlation-id", Some("test_user"));
+        let result = workflow_service.finalize_intervention(
+            complete_request,
+            "test-correlation-id",
+            Some("test_user"),
+        );
         assert!(result.is_err());
         let err_msg = result.unwrap_err().to_string();
         assert!(

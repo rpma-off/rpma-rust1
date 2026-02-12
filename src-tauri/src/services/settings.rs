@@ -1188,10 +1188,7 @@ impl SettingsService {
     }
 
     /// Get user consent data for export
-    pub fn get_user_consent(
-        &self,
-        user_id: &str,
-    ) -> Result<Option<serde_json::Value>, AppError> {
+    pub fn get_user_consent(&self, user_id: &str) -> Result<Option<serde_json::Value>, AppError> {
         let conn = self.db.get_connection().map_err(|e| {
             error!("Failed to get database connection: {}", e);
             AppError::Database("Database connection failed".to_string())
