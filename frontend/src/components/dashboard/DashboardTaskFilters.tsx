@@ -1,14 +1,14 @@
 'use client';
 
 import React from 'react';
-import { TaskFiltersProps } from './types';
+import { DashboardTaskFiltersProps } from './types';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, RotateCcw, SortAsc, SortDesc } from 'lucide-react';
 
-export const TaskFilters: React.FC<TaskFiltersProps> = ({
+export const DashboardTaskFilters: React.FC<DashboardTaskFiltersProps> = ({
   searchQuery,
   onSearch,
   statusFilter,
@@ -32,9 +32,9 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
 }) => {
   const defaultStatusOptions = [
     { value: 'all', label: 'All Statuses' },
-    { value: 'en_attente', label: 'Pending' },
-    { value: 'en_cours', label: 'In Progress' },
-    { value: 'termine', label: 'Completed' }
+    { value: 'scheduled', label: 'Pending' },
+    { value: 'in_progress', label: 'In Progress' },
+    { value: 'completed', label: 'Completed' }
   ];
 
   const defaultPriorityOptions = [

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Calendar, User, MoreHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { TaskListProps } from './types';
+import { TaskCardListProps } from './types';
 import { DashboardTask } from './types';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { getDashboardTaskDisplayTitle, getTaskDisplayStatus, getTaskDisplayPriority } from '@/lib/utils/task-display';
@@ -113,7 +113,7 @@ const TaskRow = React.memo(({ task, start, size, onTaskClick }: TaskRowProps) =>
 
 TaskRow.displayName = 'TaskRow';
 
-export function TaskList({ tasks, onTaskClick, className }: TaskListProps) {
+export function TaskCardList({ tasks, onTaskClick, className }: TaskCardListProps) {
   const parentRef = React.useRef<HTMLDivElement>(null);
   const onTaskClickRef = React.useRef(onTaskClick);
 

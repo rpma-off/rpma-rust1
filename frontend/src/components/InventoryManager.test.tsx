@@ -54,8 +54,8 @@ jest.mock('@/components/StockLevelIndicator', () => ({
   ),
 }));
 
-jest.mock('@/components/MaterialForm', () => ({
-  MaterialForm: ({ material, onSuccess, onCancel }: any) => (
+jest.mock('@/components/inventory/MaterialForm', () => ({
+  MaterialForm: ({ material, onClose }: any) => (
     <div data-testid="material-form">
       <input
         data-testid="material-name-input"
@@ -64,11 +64,8 @@ jest.mock('@/components/MaterialForm', () => ({
           if (material) material.name = e.target.value;
         }}
       />
-      <button data-testid="material-form-save" onClick={() => onSuccess?.(material || { name: 'New Material' })}>
-        Save
-      </button>
-      <button data-testid="material-form-cancel" onClick={onCancel}>
-        Cancel
+      <button data-testid="material-form-close" onClick={onClose}>
+        Close
       </button>
     </div>
   ),
@@ -166,11 +163,11 @@ const createTestStats = () => ({
   average_inventory_age: 45,
 });
 
+
 describe('InventoryManager', () => {
   let queryClient: QueryClient;
   
-  beforeEach(() => {
-    queryClient = new QueryClient({
+  beforeEach(() => {    queryClient = new QueryClient({
       defaultOptions: {
         queries: {
           retry: false,
@@ -192,8 +189,7 @@ describe('InventoryManager', () => {
       createMaterial: jest.fn(),
       updateMaterial: jest.fn(),
       deleteMaterial: jest.fn(),
-      updateStock: jest.fn(),
-    });
+      updateStock: jest.fn(),    });
     
     // Mock the useInventoryStats hook
     (useInventoryStats as jest.Mock).mockReturnValue({
@@ -314,8 +310,7 @@ describe('InventoryManager', () => {
       createMaterial: jest.fn(),
       updateMaterial: jest.fn(),
       deleteMaterial: jest.fn(),
-      updateStock: jest.fn(),
-    });
+      updateStock: jest.fn(),    });
     
     renderComponent();
     
@@ -336,8 +331,7 @@ describe('InventoryManager', () => {
       createMaterial: jest.fn(),
       updateMaterial: jest.fn(),
       deleteMaterial: jest.fn(),
-      updateStock: jest.fn(),
-    });
+      updateStock: jest.fn(),    });
     
     (useInventoryStats as jest.Mock).mockReturnValue({
       stats: createTestStats(),
@@ -361,8 +355,7 @@ describe('InventoryManager', () => {
       createMaterial: jest.fn(),
       updateMaterial: jest.fn(),
       deleteMaterial: jest.fn(),
-      updateStock: jest.fn(),
-    });
+      updateStock: jest.fn(),    });
     
     renderComponent();
     
@@ -380,8 +373,7 @@ describe('InventoryManager', () => {
       createMaterial: jest.fn(),
       updateMaterial: jest.fn(),
       deleteMaterial: jest.fn(),
-      updateStock: jest.fn(),
-    });
+      updateStock: jest.fn(),    });
     
     renderComponent();
     
@@ -400,21 +392,19 @@ describe('InventoryManager', () => {
     expect(stockIndicators[0]).toHaveTextContent(/50 \/ 20/);
   });
 
-  test('handles material creation', async () => {
+  test('closes create dialog and refetches', async () => {
     const user = userEvent.setup();
-    const mockCreateMaterial = jest.fn<Promise<Material>, [unknown, string]>()
-      .mockResolvedValue(createTestMaterial() as Material);
+    const mockRefetch = jest.fn();
     
     (useInventory as jest.Mock).mockReturnValue({
       materials: createTestMaterials(5),
       isLoading: false,
       error: null,
-      refetch: jest.fn(),
-      createMaterial: mockCreateMaterial,
+      refetch: mockRefetch,
+      createMaterial: jest.fn(),
       updateMaterial: jest.fn(),
       deleteMaterial: jest.fn(),
-      updateStock: jest.fn(),
-    });
+      updateStock: jest.fn(),    });
     
     renderComponent();
     
@@ -427,12 +417,12 @@ describe('InventoryManager', () => {
     await user.clear(nameInput);
     await user.type(nameInput, 'New Test Material');
     
-    // Click the save button
-    const saveButton = screen.getByTestId('material-form-save');
-    await user.click(saveButton);
+    // Click the close button
+    const closeButton = screen.getByTestId('material-form-close');
+    await user.click(closeButton);
     
-    // Verify that createMaterial was called
-    expect(mockCreateMaterial).toHaveBeenCalled();
+    // Verify that refetch was called
+    expect(mockRefetch).toHaveBeenCalled();
   });
 
   test('handles material deletion', async () => {
@@ -448,8 +438,7 @@ describe('InventoryManager', () => {
       createMaterial: jest.fn(),
       updateMaterial: jest.fn(),
       deleteMaterial: mockDeleteMaterial,
-      updateStock: jest.fn(),
-    });
+      updateStock: jest.fn(),    });
     
     renderComponent();
     
@@ -545,8 +534,7 @@ describe('InventoryManager', () => {
       createMaterial: jest.fn(),
       updateMaterial: jest.fn(),
       deleteMaterial: jest.fn(),
-      updateStock: jest.fn(),
-    });
+      updateStock: jest.fn(),    });
     
     renderComponent();
     
@@ -571,8 +559,7 @@ describe('InventoryManager', () => {
       createMaterial: jest.fn(),
       updateMaterial: jest.fn(),
       deleteMaterial: jest.fn(),
-      updateStock: jest.fn(),
-    });
+      updateStock: jest.fn(),    });
     
     renderComponent();
     
@@ -598,3 +585,7 @@ describe('InventoryManager', () => {
     expect(bulkActionButton).toBeInTheDocument();
   });
 });
+
+
+
+

@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { VirtualizedTable } from '@/components/ui/virtualized-table';
 import { StockLevelIndicator } from './StockLevelIndicator';
-import { MaterialForm } from './MaterialForm';
+import { MaterialForm } from './inventory/MaterialForm';
 import { useInventory } from '@/hooks/useInventory';
 import { useInventoryStats } from '@/hooks/useInventoryStats';
 import { Material, MaterialType, UnitOfMeasure } from '@/lib/inventory';
@@ -291,12 +291,10 @@ export function InventoryManager({ className }: InventoryManagerProps) {
                 <DialogTitle>Add New Material</DialogTitle>
               </DialogHeader>
               <MaterialForm
-                onSuccess={(material) => {
+                onClose={() => {
                   setIsCreateDialogOpen(false);
                   refetch();
                 }}
-                onCancel={() => setIsCreateDialogOpen(false)}
-                userId="current-user" // This should come from auth context
               />
             </DialogContent>
           </Dialog>
@@ -507,16 +505,11 @@ export function InventoryManager({ className }: InventoryManagerProps) {
           {selectedMaterial && (
             <MaterialForm
               material={selectedMaterial}
-              onSuccess={(material) => {
+              onClose={() => {
                 setIsEditDialogOpen(false);
                 setSelectedMaterial(null);
                 refetch();
               }}
-              onCancel={() => {
-                setIsEditDialogOpen(false);
-                setSelectedMaterial(null);
-              }}
-              userId="current-user" // This should come from auth context
             />
           )}
         </DialogContent>

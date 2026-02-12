@@ -334,7 +334,7 @@ export interface DashboardWidgetProps {
 }
 
 // Task List Props
-export interface TaskListProps {
+export interface TaskCardListProps {
   tasks: DashboardTask[];
   selectedTaskId?: string | null;
   onTaskSelect?: (taskId: string) => void;
@@ -347,7 +347,7 @@ export interface TaskListProps {
 }
 
 // Task Filters Props
-export interface TaskFiltersProps {
+export interface DashboardTaskFiltersProps {
   searchQuery: string;
   onSearch: (term: string) => void;
   statusFilter: TaskStatus | 'all';

@@ -26,8 +26,8 @@ import { cn } from '@/lib/utils';
 // Import dashboard components
 import { DashboardSection } from './DashboardSection';
 import { DashboardWidget } from './DashboardWidget';
-import { TaskList } from './TaskList';
-import { TaskFilters } from './TaskFilters';
+import { TaskCardList } from './TaskCardList';
+import { DashboardTaskFilters } from './DashboardTaskFilters';
 import { StatsGrid } from './StatsGrid';
 import { PerformanceMetrics } from './PerformanceMetrics';
 import { QuickActions } from './QuickActions';
@@ -766,7 +766,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             {currentViewMode === 'tasks' && (
               <motion.div variants={itemVariants} className="space-y-6">
                 <DashboardSection title="Task Management">
-                  <TaskFilters
+                  <DashboardTaskFilters
                     searchQuery={searchTerm}
                     onSearch={handleSearch}
                     statusFilter={activeStatusFilter}
@@ -787,7 +787,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     statusFilterOptions={statusFilterOptions}
                     priorityFilterOptions={priorityFilterOptions}
                   />
-                  <TaskList
+                  <TaskCardList
                     tasks={filteredTasks}
                     onTaskUpdate={onTaskUpdate}
                     onTaskDelete={onTaskDelete}
