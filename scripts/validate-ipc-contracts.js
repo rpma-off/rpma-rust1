@@ -80,7 +80,7 @@ class IPCContractValidator {
       info: '\x1b[36m',
     };
     const reset = '\x1b[0m';
-    const prefix = { error: '❌', warning: '⚠️ ', success: '✅', info: 'ℹ️ ' };
+    const prefix = { error: '❌', warning: '⚠️', success: '✅', info: 'ℹ️' };
     console.log(`${colors[type] || colors.info}${prefix[type] || ''} ${message}${reset}`);
   }
 
@@ -216,7 +216,9 @@ class IPCContractValidator {
           const content = fs.readFileSync(fullPath, 'utf8');
           const relativePath = path.relative(COMMANDS_DIR, fullPath);
 
-          // Find tauri::command functions
+          // Match #[tauri::command] (or #[command]) attribute, optional additional
+          // attributes, optional pub/async modifiers, function name, and return type.
+          // Capture group 1: function name, Capture group 2: return type
           const cmdRegex =
             /#\[(?:tauri::)?command\]\s*\n\s*(?:#\[.*\]\s*\n\s*)*(?:pub\s+)?(?:async\s+)?fn\s+(\w+)[^{]*->\s*(.*?)\s*\{/gs;
           let match;
