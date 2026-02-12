@@ -7,7 +7,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, UserPlus, Edit3, Trash, Play, XCircle, CheckCircle } from 'lucide-react';
-import { Task, TaskStatus, UpdateTaskRequest } from '@/lib/backend';
+import { TaskStatus, UpdateTaskRequest } from '@/lib/backend';
 import { getUserFullName } from '@/lib/types';
 import { TaskWithDetails } from '@/types/task.types';
 import { TaskChecklist } from './TaskChecklist';

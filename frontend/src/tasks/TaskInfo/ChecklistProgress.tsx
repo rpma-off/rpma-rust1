@@ -15,7 +15,7 @@ export interface ChecklistProgressProps {
 /**
  * Component to display and manage checklist progress
  */
-export function ChecklistProgress({ taskId, checklistItems, onItemUpdate }: ChecklistProgressProps) {
+export function ChecklistProgress({ taskId: _taskId, checklistItems, onItemUpdate }: ChecklistProgressProps) {
   const totalItems = checklistItems.length;
   const completedItems = checklistItems.filter(item => item.is_completed).length;
   const progressPercentage = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;

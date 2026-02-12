@@ -3,6 +3,7 @@ import { useWebSocket } from '../lib/websocket';
 import { useTasks } from './useTasks';
 import { toast } from 'sonner';
 import { logger, LogDomain } from '../lib/logging';
+import type { TaskStatus } from '@/lib/backend';
 
 interface UseRealTimeUpdatesOptions {
   enableTaskUpdates?: boolean;
@@ -26,17 +27,17 @@ export function useRealTimeUpdates(options: UseRealTimeUpdatesOptions = {}) {
 
   // WebSocket event handlers
   const wsHandlers = {
-    onTaskCreated: useCallback((task: any) => {
+    onTaskCreated: useCallback((task: Record<string, unknown>) => {
       if (!enableTaskUpdates) return;
       logger.info(LogDomain.TASK, 'Real-time: Task created', task);
-      toast.success(`New task created: ${task.title || 'Unknown'}`);
+      toast.success(`New task created: ${(task.title as string) || 'Unknown'}`);
     }, [enableTaskUpdates]),
 
-    onTaskUpdated: useCallback((taskId: string, updates: any) => {
+    onTaskUpdated: useCallback((taskId: string, updates: Record<string, unknown>) => {
       if (!enableTaskUpdates) return;
       logger.info(LogDomain.TASK, 'Real-time: Task updated', { taskId, updates });
       // Update local state optimistically
-      updateTask(taskId, { status: updates as any }).catch(err => {
+      updateTask(taskId, { status: updates.status as TaskStatus }).catch(err => {
         logger.warn(LogDomain.TASK, 'Failed to update task from real-time event', err);
       });
     }, [enableTaskUpdates, updateTask]),
@@ -51,7 +52,7 @@ export function useRealTimeUpdates(options: UseRealTimeUpdatesOptions = {}) {
       if (!enableTaskUpdates) return;
       logger.info(LogDomain.TASK, 'Real-time: Task status changed', { taskId, oldStatus, newStatus });
       // Update local state
-      updateTask(taskId, { status: newStatus as any }).catch(err => {
+      updateTask(taskId, { status: newStatus as TaskStatus }).catch(err => {
         logger.warn(LogDomain.TASK, 'Failed to update task status from real-time event', err);
       });
       toast.info(`Task status changed from ${oldStatus} to ${newStatus}`);
@@ -63,7 +64,7 @@ export function useRealTimeUpdates(options: UseRealTimeUpdatesOptions = {}) {
       toast.success('Intervention started for task');
     }, [enableInterventionUpdates]),
 
-    onInterventionUpdated: useCallback((interventionId: string, updates: any) => {
+    onInterventionUpdated: useCallback((interventionId: string, updates: Record<string, unknown>) => {
       if (!enableInterventionUpdates) return;
       logger.info(LogDomain.TASK, 'Real-time: Intervention updated', { interventionId, updates });
     }, [enableInterventionUpdates]),
@@ -80,13 +81,13 @@ export function useRealTimeUpdates(options: UseRealTimeUpdatesOptions = {}) {
       toast.info(`Intervention advanced to step ${stepNumber}`);
     }, [enableInterventionUpdates]),
 
-    onClientCreated: useCallback((client: any) => {
+    onClientCreated: useCallback((client: Record<string, unknown>) => {
       if (!enableClientUpdates) return;
       logger.info(LogDomain.CLIENT, 'Real-time: Client created', client);
-      toast.success(`New client added: ${client.name || 'Unknown'}`);
+      toast.success(`New client added: ${(client.name as string) || 'Unknown'}`);
     }, [enableClientUpdates]),
 
-    onClientUpdated: useCallback((clientId: string, updates: any) => {
+    onClientUpdated: useCallback((clientId: string, updates: Record<string, unknown>) => {
       if (!enableClientUpdates) return;
       logger.info(LogDomain.CLIENT, 'Real-time: Client updated', { clientId, updates });
     }, [enableClientUpdates]),
@@ -167,7 +168,7 @@ export function useRealTimeBroadcast() {
   const broadcastTaskUpdate = useCallback(async (
     taskId: string,
     updateType: string,
-    data: any
+    data: Record<string, unknown>
   ) => {
     try {
       const { invoke } = await import('@tauri-apps/api/core');
@@ -184,7 +185,7 @@ export function useRealTimeBroadcast() {
   const broadcastInterventionUpdate = useCallback(async (
     interventionId: string,
     updateType: string,
-    data: any
+    data: Record<string, unknown>
   ) => {
     try {
       const { invoke } = await import('@tauri-apps/api/core');
@@ -201,7 +202,7 @@ export function useRealTimeBroadcast() {
   const broadcastClientUpdate = useCallback(async (
     clientId: string,
     updateType: string,
-    data: any
+    data: Record<string, unknown>
   ) => {
     try {
       const { invoke } = await import('@tauri-apps/api/core');

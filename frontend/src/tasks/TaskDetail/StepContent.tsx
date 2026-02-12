@@ -211,7 +211,7 @@ export function StepContent({
             </Alert>
 
             <SignatureCapture
-              onSignatureCapture={(signature: string) => {
+              onSignatureCapture={(_signature: string) => {
                 // Signature handling will trigger completion
                 handleComplete();
               }}
