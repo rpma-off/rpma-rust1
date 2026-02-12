@@ -38,7 +38,7 @@ These holes cross the Rust↔TypeScript boundary and cause cascading type unsafe
 | 1.6 | `src-tauri/src/commands/intervention/` (8 uses) | Workflow, queries, and relationship commands use `Value` | Intervention workflows lose type safety at IPC |
 | 1.7 | `src-tauri/src/commands/ipc_optimization.rs` (4 uses) | `decompress_and_validate_json`, `get_ipc_stats` return `Value` | Meta-IPC operations are themselves untyped |
 | 1.8 | `src-tauri/src/commands/settings/profile.rs` (4 uses) | Profile setup and log events use `Value` | Settings page consumes untyped responses |
-| 1.9 | `src-tauri/src/commands/navigation.rs` (2 uses) | Navigation update and shortcut registration use `Value` params | Navigation actions have no input validation |
+| 1.9 | `src-tauri/src/commands/navigation.rs` (2 uses) | Navigation update and shortcut registration use `Value` params | Navigation parameters lack compile-time type checking; callers cannot rely on parameter structure |
 | 1.10 | `src-tauri/src/models/user.rs` | `UserRole` and `User` structs missing `#[derive(TS)]` | No auto-generated TypeScript types for user model |
 
 ### Priority 2 — Model Layer (High)
@@ -370,15 +370,23 @@ After each PR:
 After all PRs are merged, validate with:
 
 ```bash
-# Frontend: should return 0 matches
-grep -rn ": any\b" frontend/src/lib/ipc/ frontend/src/hooks/ frontend/src/components/
-grep -rn "as any" frontend/src/lib/ipc/ frontend/src/hooks/ frontend/src/components/
+# Frontend: should return 0 matches (excluding test files)
+grep -rn ": any\b" frontend/src/lib/ipc/ frontend/src/hooks/ frontend/src/components/ --include="*.ts" --include="*.tsx" | grep -v ".test."
+grep -rn "as any" frontend/src/lib/ipc/ frontend/src/hooks/ frontend/src/components/ --include="*.ts" --include="*.tsx" | grep -v ".test."
 
-# Backend: should return 0 matches in commands/
-grep -rn "serde_json::Value" src-tauri/src/commands/
+# Backend: should return 0 matches in commands/ (excluding intentional uses)
+grep -rn "serde_json::Value" src-tauri/src/commands/ | grep -v "type-safety: intentional Value"
 
-# Backend models: only acceptable in sync.rs (generic payload)
-grep -rn "serde_json::Value" src-tauri/src/models/
+# Backend models: only acceptable where marked intentional
+grep -rn "serde_json::Value" src-tauri/src/models/ | grep -v "type-safety: intentional Value"
+```
+
+### Convention for intentional `serde_json::Value` usage
+
+Some uses of `serde_json::Value` are intentionally flexible (e.g., `sync.rs` generic payload for arbitrary sync data). Mark these with an inline comment so future audits can automatically exclude them:
+
+```rust
+pub data: serde_json::Value, // type-safety: intentional Value — sync payload is heterogeneous by design
 ```
 
 ---
@@ -390,5 +398,5 @@ grep -rn "serde_json::Value" src-tauri/src/models/
 | Existing JSON data doesn't match new typed schemas | Use `#[serde(default)]` and `Option<>` wrappers; add migration tests |
 | Frontend breaks after backend type changes | Run `npm run types:sync` immediately after each backend PR |
 | Too many PRs cause merge conflicts | Keep PRs small and merge quickly; use dependency graph to sequence |
-| `serde_json::Value` is intentionally flexible in some cases | Mark acceptable uses with `// type-safety: intentional Value` comment and exclude from future audits |
+| `serde_json::Value` is intentionally flexible in some cases | Mark acceptable uses with `// type-safety: intentional Value` comment and exclude from future audits (see Section 6 verification patterns) |
 | Test files contain `as any` for mocking purposes | Test files are acceptable — focus auditing on production code only |
