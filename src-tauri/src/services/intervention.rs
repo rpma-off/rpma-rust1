@@ -216,12 +216,7 @@ impl InterventionService {
         let total_steps = steps.len() as i32;
         let completed_steps = steps
             .iter()
-            .filter(|s| {
-                matches!(
-                    s.step_status,
-                    crate::models::step::StepStatus::Completed
-                )
-            })
+            .filter(|s| matches!(s.step_status, crate::models::step::StepStatus::Completed))
             .count() as i32;
         let current_step = completed_steps + 1;
         let completion_percentage = if total_steps > 0 {

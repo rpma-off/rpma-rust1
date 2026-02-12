@@ -285,13 +285,10 @@ pub async fn disable_2fa(
     )
     .await?;
 
-    let conn = state
-        .db
-        .get_connection()
-        .map_err(|e| {
-            error!(error = %e, "Failed to access database for 2FA disable");
-            AppError::Database("Failed to access database".to_string())
-        })?;
+    let conn = state.db.get_connection().map_err(|e| {
+        error!(error = %e, "Failed to access database for 2FA disable");
+        AppError::Database("Failed to access database".to_string())
+    })?;
     let stored_hash: String = conn
         .query_row(
             "SELECT password_hash FROM users WHERE id = ? AND is_active = 1",

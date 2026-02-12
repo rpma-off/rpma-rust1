@@ -52,12 +52,10 @@ pub async fn initialize_notification_service(
 ) -> Result<(), String> {
     // Validate session
     let auth_service = state.auth_service.clone();
-    let _current_user = auth_service
-        .validate_session(&session_token)
-        .map_err(|e| {
-            error!(error = %e, "Authentication failed for initialize_notification_service");
-            "Authentication failed".to_string()
-        })?;
+    let _current_user = auth_service.validate_session(&session_token).map_err(|e| {
+        error!(error = %e, "Authentication failed for initialize_notification_service");
+        "Authentication failed".to_string()
+    })?;
 
     let email_config = if let (Some(provider), Some(api_key), Some(from_email), Some(from_name)) = (
         config.email_provider,
@@ -131,12 +129,10 @@ pub async fn send_notification(
 ) -> Result<(), String> {
     // Validate session
     let auth_service = state.auth_service.clone();
-    let _current_user = auth_service
-        .validate_session(&session_token)
-        .map_err(|e| {
-            error!(error = %e, "Authentication failed for send_notification");
-            "Authentication failed".to_string()
-        })?;
+    let _current_user = auth_service.validate_session(&session_token).map_err(|e| {
+        error!(error = %e, "Authentication failed for send_notification");
+        "Authentication failed".to_string()
+    })?;
 
     let service_guard = NOTIFICATION_SERVICE.lock().await;
     let service = service_guard
@@ -164,12 +160,10 @@ pub async fn test_notification_config(
 ) -> Result<String, String> {
     // Validate session
     let auth_service = state.auth_service.clone();
-    let _current_user = auth_service
-        .validate_session(&session_token)
-        .map_err(|e| {
-            error!(error = %e, "Authentication failed for test_notification_config");
-            "Authentication failed".to_string()
-        })?;
+    let _current_user = auth_service.validate_session(&session_token).map_err(|e| {
+        error!(error = %e, "Authentication failed for test_notification_config");
+        "Authentication failed".to_string()
+    })?;
 
     let service_guard = NOTIFICATION_SERVICE.lock().await;
     let service = service_guard
@@ -217,12 +211,10 @@ pub async fn get_notification_status(
 ) -> Result<serde_json::Value, String> {
     // Validate session
     let auth_service = state.auth_service.clone();
-    let _current_user = auth_service
-        .validate_session(&session_token)
-        .map_err(|e| {
-            error!(error = %e, "Authentication failed for get_notification_status");
-            "Authentication failed".to_string()
-        })?;
+    let _current_user = auth_service.validate_session(&session_token).map_err(|e| {
+        error!(error = %e, "Authentication failed for get_notification_status");
+        "Authentication failed".to_string()
+    })?;
 
     let service_guard = NOTIFICATION_SERVICE.lock().await;
     let _is_initialized = service_guard.is_some();

@@ -8,27 +8,28 @@
 
 use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
-use tracing::info;
+use tracing::{error, info, instrument};
 
 /// Get a specific intervention by ID
 #[tauri::command]
-
+#[instrument(skip(state, session_token), fields(user_id))]
 pub async fn intervention_get(
     id: String,
     session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<crate::models::intervention::Intervention>, AppError> {
-    info!("Getting intervention: {}", id);
-
     let session = authenticate!(&session_token, &state);
+    tracing::Span::current().record("user_id", &session.user_id.as_str());
+
+    info!(intervention_id = %id, "Getting intervention");
 
     // Check if user has access to this intervention
     let intervention = state
         .intervention_service
         .get_intervention(&id)
         .map_err(|e| {
-            tracing::error!("Failed to get intervention {}: {}", id, e);
-            AppError::Database(format!("Failed to get intervention: {}", e))
+            error!(error = %e, intervention_id = %id, "Failed to get intervention");
+            AppError::Database("Failed to get intervention".to_string())
         })?
         .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", id)))?;
 
@@ -49,15 +50,16 @@ pub async fn intervention_get(
 
 /// Get active interventions for a specific task
 #[tauri::command]
-
+#[instrument(skip(state, session_token), fields(user_id))]
 pub async fn intervention_get_active_by_task(
     task_id: String,
     session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<crate::models::intervention::Intervention>>, AppError> {
-    info!("Getting active interventions for task: {}", task_id);
-
     let session = authenticate!(&session_token, &state);
+    tracing::Span::current().record("user_id", &session.user_id.as_str());
+
+    info!(task_id = %task_id, "Getting active interventions for task");
 
     // Check task access
     let task_access = state
@@ -82,85 +84,60 @@ pub async fn intervention_get_active_by_task(
     {
         Ok(Some(intervention)) => Ok(ApiResponse::success(vec![intervention])),
         Ok(None) => Ok(ApiResponse::success(vec![])),
-        Err(e) => Err(AppError::Database(format!(
-            "Failed to get active interventions: {}",
-            e
-        ))),
+        Err(e) => {
+            error!(error = %e, task_id = %task_id, "Failed to get active interventions");
+            Err(AppError::Database(
+                "Failed to get active interventions".to_string(),
+            ))
+        }
     }
-    .map_err(|e| {
-        tracing::error!(
-            "Failed to get active interventions for task {}: {}",
-            task_id,
-            e
-        );
-        AppError::Database(format!("Failed to get active interventions: {}", e))
-    })
 }
 
 /// Get the latest intervention for a specific task
 #[tauri::command]
-
+#[instrument(skip(state, session_token), fields(user_id))]
 pub async fn intervention_get_latest_by_task(
     task_id: String,
     session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Option<crate::models::intervention::Intervention>>, AppError> {
-    info!("Getting latest intervention for task: {}", task_id);
-
     let session = authenticate!(&session_token, &state);
+    tracing::Span::current().record("user_id", &session.user_id.as_str());
 
-    // Check task access
-    let task_access = state
-        .task_service
-        .check_task_assignment(&task_id, &session.user_id)
-        .unwrap_or(false);
-
-    if !task_access
-        && !matches!(
-            session.role,
-            crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
-        )
-    {
-        return Err(AppError::Authorization(
-            "Not authorized to view interventions for this task".to_string(),
-        ));
-    }
+    info!(task_id = %task_id, "Getting latest intervention for task");
 
     state
         .intervention_service
         .get_latest_intervention_by_task(&task_id)
         .map(ApiResponse::success)
         .map_err(|e| {
-            tracing::error!(
-                "Failed to get latest intervention for task {}: {}",
-                task_id,
-                e
-            );
-            AppError::Database(format!("Failed to get latest intervention: {}", e))
+            error!(error = %e, task_id = %task_id, "Failed to get latest intervention");
+            AppError::Database("Failed to get latest intervention".to_string())
         })
 }
 
 /// Get a specific intervention step
 #[tauri::command]
-
+#[instrument(skip(state, session_token), fields(user_id))]
 pub async fn intervention_get_step(
     intervention_id: String,
     step_id: String,
     session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<crate::models::step::InterventionStep>, AppError> {
-    info!(
-        "Getting intervention step {} for intervention {}",
-        step_id, intervention_id
-    );
-
     let session = authenticate!(&session_token, &state);
+    tracing::Span::current().record("user_id", &session.user_id.as_str());
+
+    info!(intervention_id = %intervention_id, step_id = %step_id, "Getting intervention step");
 
     // Check intervention access
     let intervention = state
         .intervention_service
         .get_intervention(&intervention_id)
-        .map_err(|e| AppError::Database(format!("Failed to get intervention: {}", e)))?
+        .map_err(|e| {
+            error!(error = %e, intervention_id = %intervention_id, "Failed to get intervention for step access check");
+            AppError::Database("Failed to get intervention".to_string())
+        })?
         .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", intervention_id)))?;
 
     if intervention.technician_id.as_ref() != Some(&session.user_id)
@@ -177,13 +154,19 @@ pub async fn intervention_get_step(
     let _step = state
         .intervention_service
         .get_step(&step_id)
-        .map_err(|e| AppError::Database(format!("Failed to get intervention step: {}", e)))?
+        .map_err(|e| {
+            error!(error = %e, step_id = %step_id, "Failed to get intervention step");
+            AppError::Database("Failed to get intervention step".to_string())
+        })?
         .ok_or_else(|| AppError::NotFound(format!("Step {} not found", step_id)))?;
 
     let response = state
         .intervention_service
         .get_step(&step_id)
-        .map_err(|e| AppError::Database(format!("Failed to get intervention step: {}", e)))?
+        .map_err(|e| {
+            error!(error = %e, step_id = %step_id, "Failed to get intervention step");
+            AppError::Database("Failed to get intervention step".to_string())
+        })?
         .ok_or_else(|| AppError::NotFound(format!("Step {} not found", step_id)))?;
 
     Ok(ApiResponse::success(response))

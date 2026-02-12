@@ -29,7 +29,10 @@ pub async fn material_create(
         }
         Err(e) => {
             error!(error = %e, "Failed to create material");
-            Err(crate::commands::AppError::internal_sanitized("create_material", &e))
+            Err(crate::commands::AppError::internal_sanitized(
+                "create_material",
+                &e,
+            ))
         }
     }
 }
@@ -50,7 +53,10 @@ pub async fn material_get(
         Ok(material) => Ok(ApiResponse::success(material)),
         Err(e) => {
             error!(error = %e, material_id = %id, "Failed to get material");
-            Err(crate::commands::AppError::internal_sanitized("get_material", &e))
+            Err(crate::commands::AppError::internal_sanitized(
+                "get_material",
+                &e,
+            ))
         }
     }
 }
@@ -71,7 +77,10 @@ pub async fn material_get_by_sku(
         Ok(material) => Ok(ApiResponse::success(material)),
         Err(e) => {
             error!(error = %e, sku = %sku, "Failed to get material by SKU");
-            Err(crate::commands::AppError::internal_sanitized("get_material_by_sku", &e))
+            Err(crate::commands::AppError::internal_sanitized(
+                "get_material_by_sku",
+                &e,
+            ))
         }
     }
 }
@@ -106,7 +115,10 @@ pub async fn material_list(
         Ok(materials) => Ok(ApiResponse::success(materials)),
         Err(e) => {
             error!(error = %e, "Failed to list materials");
-            Err(crate::commands::AppError::internal_sanitized("list_materials", &e))
+            Err(crate::commands::AppError::internal_sanitized(
+                "list_materials",
+                &e,
+            ))
         }
     }
 }
@@ -131,7 +143,10 @@ pub async fn material_update(
         }
         Err(e) => {
             error!(error = %e, material_id = %id, "Failed to update material");
-            Err(crate::commands::AppError::internal_sanitized("update_material", &e))
+            Err(crate::commands::AppError::internal_sanitized(
+                "update_material",
+                &e,
+            ))
         }
     }
 }
@@ -155,7 +170,10 @@ pub async fn material_update_stock(
         }
         Err(e) => {
             error!(error = %e, "Failed to update material stock");
-            Err(crate::commands::AppError::internal_sanitized("update_stock", &e))
+            Err(crate::commands::AppError::internal_sanitized(
+                "update_stock",
+                &e,
+            ))
         }
     }
 }
@@ -179,7 +197,10 @@ pub async fn material_record_consumption(
         }
         Err(e) => {
             error!(error = %e, "Failed to record material consumption");
-            Err(crate::commands::AppError::internal_sanitized("record_consumption", &e))
+            Err(crate::commands::AppError::internal_sanitized(
+                "record_consumption",
+                &e,
+            ))
         }
     }
 }
@@ -201,7 +222,10 @@ pub async fn material_get_intervention_consumption(
         Ok(consumptions) => Ok(ApiResponse::success(consumptions)),
         Err(e) => {
             error!(error = %e, intervention_id = %intervention_id, "Failed to get intervention consumption");
-            Err(crate::commands::AppError::internal_sanitized("get_intervention_consumption", &e))
+            Err(crate::commands::AppError::internal_sanitized(
+                "get_intervention_consumption",
+                &e,
+            ))
         }
     }
 }
@@ -225,7 +249,10 @@ pub async fn material_get_intervention_summary(
         Ok(summary) => Ok(ApiResponse::success(summary)),
         Err(e) => {
             error!(error = %e, intervention_id = %intervention_id, "Failed to get intervention material summary");
-            Err(crate::commands::AppError::internal_sanitized("get_intervention_material_summary", &e))
+            Err(crate::commands::AppError::internal_sanitized(
+                "get_intervention_material_summary",
+                &e,
+            ))
         }
     }
 }
@@ -245,7 +272,10 @@ pub async fn material_get_stats(
         Ok(stats) => Ok(ApiResponse::success(stats)),
         Err(e) => {
             error!(error = %e, "Failed to get material stats");
-            Err(crate::commands::AppError::internal_sanitized("get_material_stats", &e))
+            Err(crate::commands::AppError::internal_sanitized(
+                "get_material_stats",
+                &e,
+            ))
         }
     }
 }
@@ -265,7 +295,10 @@ pub async fn material_get_low_stock(
         Ok(materials) => Ok(ApiResponse::success(materials)),
         Err(e) => {
             error!(error = %e, "Failed to get low stock materials");
-            Err(crate::commands::AppError::internal_sanitized("get_low_stock_materials", &e))
+            Err(crate::commands::AppError::internal_sanitized(
+                "get_low_stock_materials",
+                &e,
+            ))
         }
     }
 }
@@ -285,7 +318,10 @@ pub async fn material_get_expired(
         Ok(materials) => Ok(ApiResponse::success(materials)),
         Err(e) => {
             error!(error = %e, "Failed to get expired materials");
-            Err(crate::commands::AppError::internal_sanitized("get_expired_materials", &e))
+            Err(crate::commands::AppError::internal_sanitized(
+                "get_expired_materials",
+                &e,
+            ))
         }
     }
 }
@@ -305,7 +341,10 @@ pub async fn inventory_get_stats(
         Ok(stats) => Ok(ApiResponse::success(stats)),
         Err(e) => {
             error!(error = %e, "Failed to get inventory stats");
-            Err(crate::commands::AppError::internal_sanitized("get_inventory_stats", &e))
+            Err(crate::commands::AppError::internal_sanitized(
+                "get_inventory_stats",
+                &e,
+            ))
         }
     }
 }

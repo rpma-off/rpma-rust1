@@ -58,7 +58,11 @@ pub async fn get_security_metrics(
     state: AppState<'_>,
 ) -> Result<ApiResponse<SecurityMetricsResponse>, AppError> {
     // Check if user is admin
-    let _current_user = authenticate!(&request.session_token, &state, crate::models::auth::UserRole::Admin);
+    let _current_user = authenticate!(
+        &request.session_token,
+        &state,
+        crate::models::auth::UserRole::Admin
+    );
 
     // Get real security metrics from the security monitor service
     let auth_service = state.auth_service.clone();
@@ -90,7 +94,11 @@ pub async fn get_security_events(
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<SecurityEventResponse>>, AppError> {
     // Check if user is admin
-    let _current_user = authenticate!(&request.session_token, &state, crate::models::auth::UserRole::Admin);
+    let _current_user = authenticate!(
+        &request.session_token,
+        &state,
+        crate::models::auth::UserRole::Admin
+    );
 
     let limit = request.limit.unwrap_or(50).min(200); // Max 200 events
 
@@ -129,7 +137,11 @@ pub async fn get_security_alerts(
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<SecurityAlertResponse>>, AppError> {
     // Check if user is admin
-    let _current_user = authenticate!(&request.session_token, &state, crate::models::auth::UserRole::Admin);
+    let _current_user = authenticate!(
+        &request.session_token,
+        &state,
+        crate::models::auth::UserRole::Admin
+    );
 
     // Get real security alerts from the security monitor service
     let auth_service = state.auth_service.clone();
@@ -170,7 +182,11 @@ pub async fn acknowledge_security_alert(
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
     // Check if user is admin
-    let current_user = authenticate!(&request.session_token, &state, crate::models::auth::UserRole::Admin);
+    let current_user = authenticate!(
+        &request.session_token,
+        &state,
+        crate::models::auth::UserRole::Admin
+    );
 
     // Acknowledge the alert using the security monitor service
     let auth_service = state.auth_service.clone();
@@ -203,7 +219,11 @@ pub async fn resolve_security_alert(
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
     // Check if user is admin
-    let _current_user = authenticate!(&request.session_token, &state, crate::models::auth::UserRole::Admin);
+    let _current_user = authenticate!(
+        &request.session_token,
+        &state,
+        crate::models::auth::UserRole::Admin
+    );
 
     // Resolve the alert using the security monitor service
     let auth_service = state.auth_service.clone();
@@ -234,7 +254,11 @@ pub async fn cleanup_security_events(
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
     // Check if user is admin
-    let _current_user = authenticate!(&request.session_token, &state, crate::models::auth::UserRole::Admin);
+    let _current_user = authenticate!(
+        &request.session_token,
+        &state,
+        crate::models::auth::UserRole::Admin
+    );
 
     // Clean up old events using the security monitor service
     let auth_service = state.auth_service.clone();

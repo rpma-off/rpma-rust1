@@ -187,9 +187,7 @@ impl AppError {
             }
             AppError::Internal(ref msg) => {
                 tracing::error!(internal_error = %msg, "Internal error (sanitized for frontend)");
-                AppError::Internal(
-                    "An internal error occurred. Please try again.".to_string(),
-                )
+                AppError::Internal("An internal error occurred. Please try again.".to_string())
             }
             AppError::Io(ref msg) => {
                 tracing::error!(internal_error = %msg, "I/O error (sanitized for frontend)");
@@ -197,7 +195,9 @@ impl AppError {
             }
             AppError::Network(ref msg) => {
                 tracing::error!(internal_error = %msg, "Network error (sanitized for frontend)");
-                AppError::Network("A network error occurred. Please check your connection.".to_string())
+                AppError::Network(
+                    "A network error occurred. Please check your connection.".to_string(),
+                )
             }
             AppError::Sync(ref msg) => {
                 tracing::error!(internal_error = %msg, "Sync error (sanitized for frontend)");
@@ -387,18 +387,29 @@ mod tests {
     #[test]
     fn test_sanitize_for_frontend_strips_server_errors() {
         // Database errors should be sanitized
-        let db_err = AppError::Database("SELECT * FROM users WHERE id = 'abc123' failed: SQLITE_BUSY".to_string());
+        let db_err = AppError::Database(
+            "SELECT * FROM users WHERE id = 'abc123' failed: SQLITE_BUSY".to_string(),
+        );
         let sanitized = db_err.sanitize_for_frontend();
         match &sanitized {
-            AppError::Database(msg) => assert!(!msg.contains("SELECT"), "Database error leaked SQL: {}", msg),
+            AppError::Database(msg) => assert!(
+                !msg.contains("SELECT"),
+                "Database error leaked SQL: {}",
+                msg
+            ),
             _ => panic!("Expected Database variant"),
         }
 
         // Internal errors should be sanitized
-        let internal_err = AppError::Internal("thread 'main' panicked at src/services/auth.rs:42".to_string());
+        let internal_err =
+            AppError::Internal("thread 'main' panicked at src/services/auth.rs:42".to_string());
         let sanitized = internal_err.sanitize_for_frontend();
         match &sanitized {
-            AppError::Internal(msg) => assert!(!msg.contains("panicked"), "Internal error leaked stack trace: {}", msg),
+            AppError::Internal(msg) => assert!(
+                !msg.contains("panicked"),
+                "Internal error leaked stack trace: {}",
+                msg
+            ),
             _ => panic!("Expected Internal variant"),
         }
 
@@ -406,7 +417,11 @@ mod tests {
         let io_err = AppError::Io("/home/user/.config/rpma/rpma.db: permission denied".to_string());
         let sanitized = io_err.sanitize_for_frontend();
         match &sanitized {
-            AppError::Io(msg) => assert!(!msg.contains("/home"), "I/O error leaked file path: {}", msg),
+            AppError::Io(msg) => assert!(
+                !msg.contains("/home"),
+                "I/O error leaked file path: {}",
+                msg
+            ),
             _ => panic!("Expected Io variant"),
         }
 
@@ -414,7 +429,9 @@ mod tests {
         let net_err = AppError::Network("Connection to 192.168.1.100:5432 refused".to_string());
         let sanitized = net_err.sanitize_for_frontend();
         match &sanitized {
-            AppError::Network(msg) => assert!(!msg.contains("192.168"), "Network error leaked IP: {}", msg),
+            AppError::Network(msg) => {
+                assert!(!msg.contains("192.168"), "Network error leaked IP: {}", msg)
+            }
             _ => panic!("Expected Network variant"),
         }
     }
@@ -451,7 +468,11 @@ mod tests {
         let err = AppError::db_sanitized("get_user", "no such table: users");
         match &err {
             AppError::Database(msg) => {
-                assert!(!msg.contains("no such table"), "db_sanitized leaked raw error: {}", msg);
+                assert!(
+                    !msg.contains("no such table"),
+                    "db_sanitized leaked raw error: {}",
+                    msg
+                );
             }
             _ => panic!("Expected Database variant"),
         }
@@ -459,10 +480,17 @@ mod tests {
 
     #[test]
     fn test_internal_sanitized_does_not_leak_details() {
-        let err = AppError::internal_sanitized("process_payment", "Stripe API key invalid: sk_test_abc123");
+        let err = AppError::internal_sanitized(
+            "process_payment",
+            "Stripe API key invalid: sk_test_abc123",
+        );
         match &err {
             AppError::Internal(msg) => {
-                assert!(!msg.contains("sk_test"), "internal_sanitized leaked API key: {}", msg);
+                assert!(
+                    !msg.contains("sk_test"),
+                    "internal_sanitized leaked API key: {}",
+                    msg
+                );
             }
             _ => panic!("Expected Internal variant"),
         }

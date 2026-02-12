@@ -7,8 +7,13 @@ use tracing::{error, info, instrument};
 /// Start the background sync service
 #[tauri::command]
 #[instrument(skip(state, session_token))]
-pub async fn sync_start_background_service(session_token: String, state: AppState<'_>) -> Result<(), String> {
-    state.auth_service.validate_session(&session_token)
+pub async fn sync_start_background_service(
+    session_token: String,
+    state: AppState<'_>,
+) -> Result<(), String> {
+    state
+        .auth_service
+        .validate_session(&session_token)
         .map_err(|e| {
             error!(error = %e, "Authentication failed for sync_start_background_service");
             "Authentication failed".to_string()
@@ -23,13 +28,10 @@ pub async fn sync_start_background_service(session_token: String, state: AppStat
         service.clone()
     };
 
-    service_clone
-        .start_async()
-        .await
-        .map_err(|e| {
-            error!(error = %e, "Failed to start background sync");
-            "Failed to start background sync".to_string()
-        })?;
+    service_clone.start_async().await.map_err(|e| {
+        error!(error = %e, "Failed to start background sync");
+        "Failed to start background sync".to_string()
+    })?;
 
     info!("Background sync service started");
     Ok(())
@@ -38,8 +40,13 @@ pub async fn sync_start_background_service(session_token: String, state: AppStat
 /// Stop the background sync service
 #[tauri::command]
 #[instrument(skip(state, session_token))]
-pub async fn sync_stop_background_service(session_token: String, state: AppState<'_>) -> Result<(), String> {
-    state.auth_service.validate_session(&session_token)
+pub async fn sync_stop_background_service(
+    session_token: String,
+    state: AppState<'_>,
+) -> Result<(), String> {
+    state
+        .auth_service
+        .validate_session(&session_token)
         .map_err(|e| {
             error!(error = %e, "Authentication failed for sync_stop_background_service");
             "Authentication failed".to_string()
@@ -54,13 +61,10 @@ pub async fn sync_stop_background_service(session_token: String, state: AppState
         service.clone()
     };
 
-    service_clone
-        .stop_async()
-        .await
-        .map_err(|e| {
-            error!(error = %e, "Failed to stop background sync");
-            "Failed to stop background sync".to_string()
-        })?;
+    service_clone.stop_async().await.map_err(|e| {
+        error!(error = %e, "Failed to stop background sync");
+        "Failed to stop background sync".to_string()
+    })?;
 
     info!("Background sync service stopped");
     Ok(())
@@ -70,7 +74,9 @@ pub async fn sync_stop_background_service(session_token: String, state: AppState
 #[tauri::command]
 #[instrument(skip(state, session_token))]
 pub async fn sync_now(session_token: String, state: AppState<'_>) -> Result<SyncResult, String> {
-    state.auth_service.validate_session(&session_token)
+    state
+        .auth_service
+        .validate_session(&session_token)
         .map_err(|e| {
             error!(error = %e, "Authentication failed for sync_now");
             "Authentication failed".to_string()
@@ -85,13 +91,10 @@ pub async fn sync_now(session_token: String, state: AppState<'_>) -> Result<Sync
         service.clone()
     };
 
-    let result = service_clone
-        .sync_now_async()
-        .await
-        .map_err(|e| {
-            error!(error = %e, "Failed to sync now");
-            "Sync operation failed".to_string()
-        })?;
+    let result = service_clone.sync_now_async().await.map_err(|e| {
+        error!(error = %e, "Failed to sync now");
+        "Sync operation failed".to_string()
+    })?;
 
     info!("Immediate sync completed");
     Ok(result)
@@ -100,8 +103,13 @@ pub async fn sync_now(session_token: String, state: AppState<'_>) -> Result<Sync
 /// Get current sync status
 #[tauri::command]
 #[instrument(skip(state, session_token))]
-pub async fn sync_get_status(session_token: String, state: AppState<'_>) -> Result<serde_json::Value, String> {
-    state.auth_service.validate_session(&session_token)
+pub async fn sync_get_status(
+    session_token: String,
+    state: AppState<'_>,
+) -> Result<serde_json::Value, String> {
+    state
+        .auth_service
+        .validate_session(&session_token)
         .map_err(|e| {
             error!(error = %e, "Authentication failed for sync_get_status");
             "Authentication failed".to_string()
@@ -116,13 +124,10 @@ pub async fn sync_get_status(session_token: String, state: AppState<'_>) -> Resu
         service.clone()
     };
 
-    let status = service_clone
-        .get_status_async()
-        .await
-        .map_err(|e| {
-            error!(error = %e, "Failed to get sync status");
-            "Failed to get sync status".to_string()
-        })?;
+    let status = service_clone.get_status_async().await.map_err(|e| {
+        error!(error = %e, "Failed to get sync status");
+        "Failed to get sync status".to_string()
+    })?;
 
     // Transform to match frontend expectations
     Ok(serde_json::json!({
@@ -147,7 +152,9 @@ pub fn sync_get_operations_for_entity(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<Vec<crate::models::SyncOperation>, String> {
-    state.auth_service.validate_session(&session_token)
+    state
+        .auth_service
+        .validate_session(&session_token)
         .map_err(|e| {
             error!(error = %e, "Authentication failed for sync_get_operations_for_entity");
             "Authentication failed".to_string()
