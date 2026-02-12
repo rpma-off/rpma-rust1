@@ -73,7 +73,11 @@ pub async fn export_intervention_report(
     )
     .await
     {
-        Ok(result) => {
+        Ok(mut result) => {
+            // Construct download URL in the command layer (UI concern)
+            if let Some(ref path) = result.file_path {
+                result.download_url = Some(format!("file://{}", path));
+            }
             info!("Individual intervention report generated successfully: {} - file_path: {:?}, download_url: {:?}, file_size: {:?}", intervention_id, result.file_path, result.download_url, result.file_size);
             debug!(
                 "Returning InterventionReportResult: success={}, format={}",
@@ -166,9 +170,8 @@ pub async fn save_intervention_report(
 
 /// Get complete intervention data with all related information.
 ///
-/// When called from command handlers, pass the shared services from application state
-/// to avoid creating redundant service/repository instances. The services are optional
-/// to maintain backward compatibility with callers that only have a `db` reference.
+/// Pass the shared services from application state to avoid creating redundant
+/// service/repository instances.
 pub async fn get_intervention_with_details(
     intervention_id: &str,
     db: &crate::db::Database,
