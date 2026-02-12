@@ -8,7 +8,7 @@ use rusqlite::{params, OptionalExtension};
 use std::sync::Arc;
 use tracing::info;
 
-use crate::commands::settings::audit::DataConsent;
+use crate::models::settings::DataConsent;
 
 /// Service for managing user data consent
 #[derive(Debug)]

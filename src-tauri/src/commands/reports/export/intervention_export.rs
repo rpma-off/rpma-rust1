@@ -164,7 +164,11 @@ pub async fn save_intervention_report(
     .await
 }
 
-/// Get complete intervention data with all related information
+/// Get complete intervention data with all related information.
+///
+/// When called from command handlers, pass the shared services from application state
+/// to avoid creating redundant service/repository instances. The services are optional
+/// to maintain backward compatibility with callers that only have a `db` reference.
 pub async fn get_intervention_with_details(
     intervention_id: &str,
     db: &crate::db::Database,

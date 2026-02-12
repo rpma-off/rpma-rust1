@@ -7,23 +7,15 @@ use crate::commands::settings::core::authenticate_user;
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::services::consent::ConsentService;
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::sync::Arc;
 use tracing::info;
 
 // Import authentication macros
 use crate::authenticate;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DataConsent {
-    pub user_id: String,
-    pub analytics_consent: bool,
-    pub marketing_consent: bool,
-    pub third_party_sharing: bool,
-    pub data_retention_period: u32,
-    pub consent_given_at: chrono::DateTime<chrono::Utc>,
-    pub consent_version: String,
-}
+// Re-export DataConsent from models for backward compatibility
+pub use crate::models::settings::DataConsent;
 
 #[derive(Deserialize)]
 pub struct UpdateDataConsentRequest {
