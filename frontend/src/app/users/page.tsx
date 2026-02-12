@@ -13,8 +13,10 @@ import { PageShell } from '@/components/layout/PageShell';
 import { LoadingState } from '@/components/layout/LoadingState';
 import { ErrorState } from '@/components/layout/ErrorState';
 import { Users, UserPlus } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function UsersPage() {
+  const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const [users, setUsers] = useState<UserAccount[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,7 +31,7 @@ export default function UsersPage() {
 
       if (!user || !user.token) {
         logger.debug(LogContext.API, 'loadUsers: No authenticated user, setting error');
-        setError('Not authenticated');
+        setError(t('errors.unauthorized'));
         return;
       }
 
@@ -56,7 +58,7 @@ export default function UsersPage() {
   if (authLoading) {
     return (
       <PageShell>
-        <LoadingState message="Vérification de l'authentification..." />
+        <LoadingState message={t('common.loading')} />
       </PageShell>
     );
   }
@@ -65,7 +67,7 @@ export default function UsersPage() {
   if (!user || !user.token) {
     return (
       <PageShell>
-        <ErrorState message="Veuillez vous connecter pour accéder à cette page." />
+        <ErrorState message={t('errors.unauthorized')} />
       </PageShell>
     );
   }
@@ -94,7 +96,7 @@ export default function UsersPage() {
   if (loading) {
     return (
       <PageShell>
-        <LoadingState message="Chargement des utilisateurs..." />
+        <LoadingState message={t('common.loading')} />
       </PageShell>
     );
   }
@@ -110,12 +112,12 @@ export default function UsersPage() {
   return (
     <PageShell>
       <PageHeader
-        title="Gestion des Utilisateurs"
-        subtitle="Gérer les comptes utilisateurs et les permissions"
+        title={t('users.title')}
+        subtitle={t('admin.userManagement')}
         icon={<Users className="w-6 h-6 text-[hsl(var(--rpma-teal))]" />}
         actions={
           <HeaderActionButton
-            label="Ajouter un utilisateur"
+            label={t('users.createUser')}
             icon={<UserPlus className="w-4 h-4" />}
             onClick={handleCreateUser}
           />

@@ -16,6 +16,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { LoadingState } from '@/components/layout/LoadingState';
 import { ErrorState } from '@/components/layout/ErrorState';
 import { EmptyState } from '@/components/layout/EmptyState';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface TechnicianStats {
   totalTechnicians: number;
@@ -25,6 +26,7 @@ interface TechnicianStats {
 }
 
 export default function TechniciansPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [technicians, setTechnicians] = useState<UiUserAccount[]>([]);
   const [stats, setStats] = useState<TechnicianStats>({
@@ -63,8 +65,8 @@ export default function TechniciansPage() {
 
       } catch (err) {
         console.error('Failed to fetch technicians:', err);
-        setError('Erreur lors du chargement des techniciens');
-        toast.error('Erreur lors du chargement des techniciens');
+        setError(t('errors.loadFailed'));
+        toast.error(t('errors.loadFailed'));
       } finally {
         setLoading(false);
       }
@@ -76,7 +78,7 @@ export default function TechniciansPage() {
   if (loading) {
     return (
       <PageShell>
-        <LoadingState message="Chargement des techniciens..." />
+        <LoadingState message={t('common.loading')} />
       </PageShell>
     );
   }
@@ -92,8 +94,8 @@ export default function TechniciansPage() {
   return (
     <PageShell>
       <PageHeader
-        title="Gestion des Techniciens"
-        subtitle="Gérez votre équipe de techniciens PPF et suivez leurs performances"
+        title={t('team.technicians')}
+        subtitle={t('team.title')}
         icon={<Users className="w-6 h-6 text-[hsl(var(--rpma-teal))]" />}
       />
 
@@ -102,7 +104,7 @@ export default function TechniciansPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Techniciens
+                {t('team.technicians')}
               </CardTitle>
               <Users className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
             </CardHeader>
@@ -114,7 +116,7 @@ export default function TechniciansPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Techniciens Actifs
+                {t('users.active')}
               </CardTitle>
               <UserCheck className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
             </CardHeader>
@@ -126,7 +128,7 @@ export default function TechniciansPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Tâches Aujourd&apos;hui
+                {t('tasks.title')}
               </CardTitle>
               <Clock className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
             </CardHeader>
@@ -138,7 +140,7 @@ export default function TechniciansPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Moyenne par Technicien
+                {t('analytics.metrics')}
               </CardTitle>
               <TrendingUp className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
             </CardHeader>
@@ -151,17 +153,17 @@ export default function TechniciansPage() {
         {/* Technicians List */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-foreground">Liste des Techniciens</CardTitle>
+            <CardTitle className="text-foreground">{t('team.technicians')}</CardTitle>
             <CardDescription className="text-muted-foreground">
-              {technicians.length} technicien{technicians.length !== 1 ? 's' : ''} trouvé{technicians.length !== 1 ? 's' : ''}
+              {technicians.length} {t('team.technicians').toLowerCase()}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {technicians.length === 0 ? (
               <EmptyState
                 icon={<Users className="h-8 w-8 text-muted-foreground" />}
-                title="Aucun technicien trouvé"
-                description="Les utilisateurs avec le rôle « technicien » apparaîtront ici."
+                title={t('users.noUsers')}
+                description={t('empty.noData')}
               />
             ) : (
               <div className="space-y-4">
@@ -191,7 +193,7 @@ export default function TechniciansPage() {
                           : "bg-muted text-muted-foreground border-border"
                         }
                       >
-                        {technician.is_active ? 'Actif' : 'Inactif'}
+                        {technician.is_active ? t('users.active') : t('users.inactive')}
                       </Badge>
                     </div>
                   </div>

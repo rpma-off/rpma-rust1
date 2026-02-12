@@ -44,6 +44,13 @@ export const fr = {
     retry: "Réessayer",
     notDefined: "Non défini",
     navigation: "Navigation",
+    system: "Système",
+    availability: "Disponibilité",
+    size: "Taille",
+    cpuLoad: "Charge CPU",
+    memory: "Mémoire",
+    critical: "Critique",
+    useCtrlKeys: "Utilisez Ctrl+1-6 pour naviguer rapidement (desktop)",
   },
 
   // Navigation
@@ -406,6 +413,7 @@ export const fr = {
     disable2FA: "Désactiver l'A2F",
     preferences: "Préférences",
     account: "Compte",
+    accessibility: "Accessibilité",
     
     // Messages
     settingsSaved: "Paramètres enregistrés",

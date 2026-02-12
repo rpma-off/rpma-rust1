@@ -22,6 +22,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { PageShell } from '@/components/layout/PageShell';
 import { LoadingState } from '@/components/layout/LoadingState';
 import { PageHeader } from '@/components/ui/page-header';
+import { useTranslation } from '@/hooks/useTranslation';
 
 // Lazy load tab components to reduce initial bundle size
 const ProfileSettingsTab = dynamic(() => import('@/components/settings/ProfileSettingsTab').then(mod => ({ default: mod.ProfileSettingsTab })), {
@@ -49,40 +50,43 @@ const NotificationsTab = dynamic(() => import('@/components/settings/Notificatio
 });
 
 // Tab configuration
-const tabConfig = [
+// Tab configuration will use translations
+const getTabConfig = (t: any) => [
   {
     id: 'profile',
-    label: 'Profil',
+    label: t('nav.profile'),
     icon: User
   },
   {
     id: 'preferences',
-    label: 'Préférences',
+    label: t('settings.preferences'),
     icon: Bell
   },
   {
     id: 'security',
-    label: 'Sécurité',
+    label: t('settings.security'),
     icon: Shield
   },
   {
     id: 'performance',
-    label: 'Performance',
+    label: t('analytics.performance'),
     icon: Zap
   },
   {
     id: 'accessibility',
-    label: 'Accessibilité',
+    label: t('settings.accessibility'),
     icon: Eye
   },
   {
     id: 'notifications',
-    label: 'Notifications',
+    label: t('settings.notifications'),
     icon: Bell
   }
 ];
 
 export default function SettingsPage() {
+  const { t } = useTranslation();
+  const tabConfig = getTabConfig(t);
   const [activeTab, setActiveTab] = useState('profile');
   const { user, profile, loading: authLoading } = useAuth();
 
@@ -179,8 +183,8 @@ export default function SettingsPage() {
     <PageShell>
       {/* Header */}
       <PageHeader
-          title="Paramètres"
-          subtitle="Gérez vos paramètres de compte et préférences"
+          title={t('settings.title')}
+          subtitle={t('settings.account')}
           icon={<Settings className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />}
           actions={
             <>
@@ -188,7 +192,7 @@ export default function SettingsPage() {
                 <kbd className="px-1.5 py-0.5 text-xs bg-border/20 rounded">Ctrl</kbd>
                 <span>+</span>
                 <kbd className="px-1.5 py-0.5 text-xs bg-border/20 rounded">1-6</kbd>
-                <span>pour naviguer</span>
+                <span>{t('common.navigation').toLowerCase()}</span>
               </div>
               <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-muted/10">
                 <HelpCircle className="h-4 w-4" />
@@ -205,9 +209,9 @@ export default function SettingsPage() {
                 <User className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />
               </div>
               <div>
-                <CardTitle className="text-lg font-semibold text-foreground">Paramètres personnels</CardTitle>
+                <CardTitle className="text-lg font-semibold text-foreground">{t('settings.title')}</CardTitle>
                 <CardDescription className="text-muted-foreground">
-                  Configurez vos informations personnelles, préférences et paramètres de sécurité
+                  {t('settings.account')}
                 </CardDescription>
               </div>
             </div>

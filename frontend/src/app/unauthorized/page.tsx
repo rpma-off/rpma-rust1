@@ -4,8 +4,10 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Shield, ArrowLeft, Home } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function UnauthorizedPage() {
+  const { t } = useTranslation();
   const router = useRouter();
 
   return (
@@ -16,13 +18,12 @@ export default function UnauthorizedPage() {
             <Shield className="h-8 w-8 text-red-600" />
           </div>
           <CardTitle className="text-xl text-gray-900">
-            Accès Refusé
+            {t('auth.accessDenied')}
           </CardTitle>
         </CardHeader>
         <CardContent className="text-center">
           <p className="text-gray-600 mb-6">
-            Vous n&apos;avez pas les permissions nécessaires pour accéder à cette page.
-            Veuillez contacter votre administrateur si vous pensez qu&apos;il s&apos;agit d&apos;une erreur.
+            {t('errors.permissionDenied')}
           </p>
           
           <div className="space-y-3">
@@ -32,7 +33,7 @@ export default function UnauthorizedPage() {
               className="w-full"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Retour
+              {t('common.back')}
             </Button>
             
             <Button 
@@ -40,7 +41,7 @@ export default function UnauthorizedPage() {
               className="w-full"
             >
               <Home className="h-4 w-4 mr-2" />
-              Accueil
+              {t('nav.home')}
             </Button>
           </div>
         </CardContent>
