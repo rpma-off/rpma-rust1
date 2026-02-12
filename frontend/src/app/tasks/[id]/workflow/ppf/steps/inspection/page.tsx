@@ -108,7 +108,7 @@ export default function InspectionStepPage() {
   };
 
   const stepIndex = steps.findIndex(step => step.id === 'inspection');
-  const stepLabel = stepIndex >= 0 ? t('interventions.stepNumber', { number: `${stepIndex + 1} ${t('common.on')} ${steps.length}` }) : t('interventions.steps');
+  const stepLabel = stepIndex >= 0 ? `${t('interventions.steps')} ${stepIndex + 1}/${steps.length}` : t('interventions.steps');
 
   const containerVariants = {
     hidden: { opacity: 0 },
