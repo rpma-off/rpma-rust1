@@ -73,7 +73,11 @@ pub async fn export_intervention_report(
     )
     .await
     {
-        Ok(result) => {
+        Ok(mut result) => {
+            // Construct download URL in the command layer (UI concern)
+            if let Some(ref path) = result.file_path {
+                result.download_url = Some(format!("file://{}", path));
+            }
             info!("Individual intervention report generated successfully: {} - file_path: {:?}, download_url: {:?}, file_size: {:?}", intervention_id, result.file_path, result.download_url, result.file_size);
             debug!(
                 "Returning InterventionReportResult: success={}, format={}",
@@ -166,9 +170,8 @@ pub async fn save_intervention_report(
 
 /// Get complete intervention data with all related information.
 ///
-/// When called from command handlers, pass the shared services from application state
-/// to avoid creating redundant service/repository instances. The services are optional
-/// to maintain backward compatibility with callers that only have a `db` reference.
+/// Pass the shared services from application state to avoid creating redundant
+/// service/repository instances.
 pub async fn get_intervention_with_details(
     intervention_id: &str,
     db: &crate::db::Database,
@@ -190,6 +193,22 @@ pub async fn get_intervention_with_details(
                     db.clone(),
                 ));
             &owned_intervention_service
+        }
+    };
+
+    // Use provided client service or create a new one as fallback via service layer
+    let owned_client_service;
+    let client_svc = match client_service {
+        Some(svc) => svc,
+        None => {
+            use crate::repositories::{Cache, ClientRepository};
+            let cache = std::sync::Arc::new(Cache::new(1000));
+            let client_repo = std::sync::Arc::new(ClientRepository::new(
+                std::sync::Arc::new(db.clone()),
+                cache,
+            ));
+            owned_client_service = crate::services::client::ClientService::new(client_repo);
+            &owned_client_service
         }
     };
 
@@ -306,33 +325,12 @@ pub async fn get_intervention_with_details(
                 client_id
             );
         });
-        match client_service {
-            Some(svc) => svc.get_client(client_id).await.map_err(|e| {
-                crate::commands::errors::AppError::Database(format!(
-                    "Failed to get client: {}",
-                    e
-                ))
-            })?,
-            None => {
-                use crate::repositories::{Cache, ClientRepository};
-                let cache = std::sync::Arc::new(Cache::new(1000));
-                let client_repo = std::sync::Arc::new(ClientRepository::new(
-                    std::sync::Arc::new(db.clone()),
-                    cache,
-                ));
-                let fallback_client_service =
-                    crate::services::client::ClientService::new(client_repo);
-                fallback_client_service
-                    .get_client(client_id)
-                    .await
-                    .map_err(|e| {
-                        crate::commands::errors::AppError::Database(format!(
-                            "Failed to get client: {}",
-                            e
-                        ))
-                    })?
-            }
-        }
+        client_svc.get_client(client_id).await.map_err(|e| {
+            crate::commands::errors::AppError::Database(format!(
+                "Failed to get client: {}",
+                e
+            ))
+        })?
     } else {
         let _ = std::panic::catch_unwind(|| {
             info!("get_intervention_with_details: No client_id associated with intervention");

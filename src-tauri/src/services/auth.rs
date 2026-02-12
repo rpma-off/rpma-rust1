@@ -800,6 +800,20 @@ impl AuthService {
         Ok(result.is_ok())
     }
 
+    /// Verify a user's password by looking up the stored hash from the database
+    pub fn verify_user_password(&self, user_id: &str, password: &str) -> Result<bool, String> {
+        let conn = self.db.get_connection()?;
+        let stored_hash: String = conn
+            .query_row(
+                "SELECT password_hash FROM users WHERE id = ? AND is_active = 1",
+                [user_id],
+                |row| row.get(0),
+            )
+            .map_err(|_| "User not found or inactive".to_string())?;
+
+        self.verify_password(password, &stored_hash)
+    }
+
     /// List all users with optional filters
     pub fn list_users(
         &self,
