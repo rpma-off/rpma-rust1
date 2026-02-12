@@ -220,7 +220,7 @@ class IPCContractValidator {
           // attributes, optional pub/async modifiers, function name, and return type.
           // Capture group 1: function name, Capture group 2: return type
           const cmdRegex =
-            /#\[(?:tauri::)?command\]\s*\n\s*(?:#\[.*\]\s*\n\s*)*(?:pub\s+)?(?:async\s+)?fn\s+(\w+)[^{]*->\s*(.*?)\s*\{/gs;
+            /#\[(?:tauri::)?command\]\n(?:#\[[^\]]*\]\n)*\s*(?:pub\s+)?(?:async\s+)?fn\s+(\w+)[^{]*->\s*(.*?)\s*\{/gs;
           let match;
           while ((match = cmdRegex.exec(content)) !== null) {
             const funcName = match[1];
