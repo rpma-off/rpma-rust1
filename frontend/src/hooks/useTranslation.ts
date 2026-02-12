@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { fr, TranslationKeys } from '@/lib/i18n/fr';
 
 type TranslationKey = string;
@@ -15,7 +16,7 @@ function getNestedValue(obj: any, path: string): string {
 }
 
 export function useTranslation() {
-  const t = (key: string, params?: Record<string, string | number>): string => {
+  const t = useCallback((key: string, params?: Record<string, string | number>): string => {
     let value = getNestedValue(fr, key);
     
     // Replace parameters like {count}, {min}, {max}
@@ -26,7 +27,7 @@ export function useTranslation() {
     }
     
     return value;
-  };
+  }, []);
 
   return { t, locale: 'fr' };
 }
