@@ -5,8 +5,13 @@ use crate::sync::background::SyncResult;
 
 /// Start the background sync service
 #[tauri::command]
-pub async fn sync_start_background_service(session_token: String, state: AppState<'_>) -> Result<(), String> {
-    state.auth_service.validate_session(&session_token)
+pub async fn sync_start_background_service(
+    session_token: String,
+    state: AppState<'_>,
+) -> Result<(), String> {
+    state
+        .auth_service
+        .validate_session(&session_token)
         .map_err(|e| format!("Authentication failed: {}", e))?;
     let service_arc = std::sync::Arc::clone(&state.background_sync);
 
@@ -23,8 +28,13 @@ pub async fn sync_start_background_service(session_token: String, state: AppStat
 
 /// Stop the background sync service
 #[tauri::command]
-pub async fn sync_stop_background_service(session_token: String, state: AppState<'_>) -> Result<(), String> {
-    state.auth_service.validate_session(&session_token)
+pub async fn sync_stop_background_service(
+    session_token: String,
+    state: AppState<'_>,
+) -> Result<(), String> {
+    state
+        .auth_service
+        .validate_session(&session_token)
         .map_err(|e| format!("Authentication failed: {}", e))?;
     let service_arc = std::sync::Arc::clone(&state.background_sync);
 
@@ -42,7 +52,9 @@ pub async fn sync_stop_background_service(session_token: String, state: AppState
 /// Trigger immediate sync
 #[tauri::command]
 pub async fn sync_now(session_token: String, state: AppState<'_>) -> Result<SyncResult, String> {
-    state.auth_service.validate_session(&session_token)
+    state
+        .auth_service
+        .validate_session(&session_token)
         .map_err(|e| format!("Authentication failed: {}", e))?;
     let service_arc = std::sync::Arc::clone(&state.background_sync);
 
@@ -59,8 +71,13 @@ pub async fn sync_now(session_token: String, state: AppState<'_>) -> Result<Sync
 
 /// Get current sync status
 #[tauri::command]
-pub async fn sync_get_status(session_token: String, state: AppState<'_>) -> Result<serde_json::Value, String> {
-    state.auth_service.validate_session(&session_token)
+pub async fn sync_get_status(
+    session_token: String,
+    state: AppState<'_>,
+) -> Result<serde_json::Value, String> {
+    state
+        .auth_service
+        .validate_session(&session_token)
         .map_err(|e| format!("Authentication failed: {}", e))?;
     let service_arc = std::sync::Arc::clone(&state.background_sync);
 
@@ -96,7 +113,9 @@ pub fn sync_get_operations_for_entity(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<Vec<crate::models::SyncOperation>, String> {
-    state.auth_service.validate_session(&session_token)
+    state
+        .auth_service
+        .validate_session(&session_token)
         .map_err(|e| format!("Authentication failed: {}", e))?;
     let queue = std::sync::Arc::clone(&state.sync_queue);
     queue
