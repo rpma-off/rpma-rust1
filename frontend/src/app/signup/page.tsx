@@ -13,10 +13,12 @@ import { FadeIn } from '@/components/animations/FadeIn';
 import { UILoader } from '@/components/animations/UILoader';
 import PasswordStrengthMeter from '@/components/auth/PasswordStrengthMeter';
 import { PasswordValidationResult } from '@/lib/auth/password-validator';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const logger = createLogger('SignupPage');
 
 export default function SignupPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const auth = useAuth();
   const [formData, setFormData] = useState({
@@ -45,22 +47,22 @@ export default function SignupPage() {
 
   const validateForm = () => {
     if (!formData.email || !formData.password || !formData.confirmPassword || !formData.firstName || !formData.lastName) {
-      setError('Tous les champs sont obligatoires');
+      setError(t('errors.allFieldsRequired'));
       return false;
     }
 
     if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
-      setError('Veuillez entrer une adresse email valide');
+      setError(t('errors.invalidEmail'));
       return false;
     }
 
     if (!isPasswordValid) {
-      setError('Veuillez choisir un mot de passe plus sécurisé.');
+      setError(t('errors.weakPassword'));
       return false;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Les mots de passe ne correspondent pas');
+      setError(t('errors.passwordMismatch'));
       return false;
     }
 
@@ -93,13 +95,13 @@ export default function SignupPage() {
           router.push(ROUTES.LOGIN);
         }, 3000);
       } else {
-        const errorMessage = response.error || 'Une erreur est survenue lors de l\'inscription';
+        const errorMessage = response.error || t('errors.signupFailed');
         logger.error('Échec de l\'inscription', { email: formData.email, error: errorMessage });
         setError(errorMessage);
       }
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Une erreur inconnue est survenue';
+      const errorMessage = error instanceof Error ? error.message : t('errors.unknownError');
       logger.error('Erreur lors de l\'inscription', {
         email: formData.email,
         error: errorMessage
@@ -123,9 +125,9 @@ export default function SignupPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Inscription réussie !</h2>
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">{t('auth.signupSuccess')}</h2>
                 <p className="text-muted-foreground text-sm md:text-base">
-                  Votre compte a été créé avec succès. Vous allez être redirigé vers la page de connexion.
+                  {t('auth.signupSuccessMessage')}
                 </p>
               </div>
 
@@ -138,8 +140,8 @@ export default function SignupPage() {
                       </svg>
                     </div>
                     <div>
-                      <h4 className="text-sm font-medium text-[hsl(var(--rpma-teal))] mb-1">Bienvenue sur RPMA V2 !</h4>
-                      <p className="text-sm text-muted-foreground">Votre compte a été créé avec succès.</p>
+                      <h4 className="text-sm font-medium text-[hsl(var(--rpma-teal))] mb-1">{t('auth.welcomeToRPMA')}</h4>
+                      <p className="text-sm text-muted-foreground">{t('auth.accountCreatedSuccess')}</p>
                     </div>
                   </div>
                 </div>
@@ -148,7 +150,7 @@ export default function SignupPage() {
                   onClick={() => router.push(ROUTES.LOGIN)}
                   className="w-full bg-[hsl(var(--rpma-teal))] hover:bg-[hsl(var(--rpma-teal))]/90 text-black"
                 >
-                  Aller à la connexion
+                  {t('auth.goToLogin')}
                 </Button>
               </div>
             </div>
@@ -180,9 +182,9 @@ export default function SignupPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                 </svg>
               </div>
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Créer un compte</h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">{t('auth.createAccount')}</h2>
               <p className="text-muted-foreground text-sm md:text-base">
-                Rejoignez RPMA V2 et commencez à gérer vos projets PPF
+                {t('auth.signupSubtitle')}
               </p>
             </div>
 
@@ -202,7 +204,7 @@ export default function SignupPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label htmlFor="firstName" className="block text-sm font-semibold text-foreground">
-                      Prénom
+                      {t('forms.firstName')}
                     </label>
                     <div className="relative">
                       <input
@@ -213,7 +215,7 @@ export default function SignupPage() {
                         value={formData.firstName}
                         onChange={handleChange}
                         className="w-full px-4 py-3 bg-white border border-[hsl(var(--rpma-border))] rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(var(--rpma-teal))]/20 focus:border-[hsl(var(--rpma-teal))] transition-all duration-200"
-                        placeholder="Jean"
+                        placeholder={t('forms.firstNamePlaceholder')}
                       />
                       <svg className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-border" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -223,7 +225,7 @@ export default function SignupPage() {
 
                   <div className="space-y-2">
                     <label htmlFor="lastName" className="block text-sm font-semibold text-foreground">
-                      Nom
+                      {t('forms.lastName')}
                     </label>
                     <div className="relative">
                       <input
@@ -234,7 +236,7 @@ export default function SignupPage() {
                       value={formData.lastName}
                       onChange={handleChange}
                       className="w-full px-4 py-3 bg-white border border-[hsl(var(--rpma-border))] rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(var(--rpma-teal))]/20 focus:border-[hsl(var(--rpma-teal))] transition-all duration-200"
-                      placeholder="Dupont"
+                      placeholder={t('forms.lastNamePlaceholder')}
                     />
                     <svg className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-border" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -246,7 +248,7 @@ export default function SignupPage() {
               {/* Email Field */}
               <div className="space-y-2">
                 <label htmlFor="email" className="block text-sm font-semibold text-foreground">
-                  Adresse email
+                  {t('forms.email')}
                 </label>
                 <div className="relative">
                   <input
@@ -258,7 +260,7 @@ export default function SignupPage() {
                     value={formData.email}
                     onChange={handleChange}
                     className="w-full px-4 py-3 bg-white border border-[hsl(var(--rpma-border))] rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(var(--rpma-teal))]/20 focus:border-[hsl(var(--rpma-teal))] transition-all duration-200"
-                    placeholder="votre@email.com"
+                    placeholder={t('forms.emailPlaceholder')}
                   />
                   <svg className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-border" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
@@ -269,7 +271,7 @@ export default function SignupPage() {
               {/* Password Fields */}
               <div className="space-y-2">
                 <label htmlFor="password" className="block text-sm font-semibold text-foreground">
-                  Mot de passe
+                  {t('forms.password')}
                 </label>
                 <div className="relative">
                   <input
@@ -281,7 +283,7 @@ export default function SignupPage() {
                     value={formData.password}
                     onChange={handleChange}
                     className="w-full px-4 py-3 bg-white border border-[hsl(var(--rpma-border))] rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(var(--rpma-teal))]/20 focus:border-[hsl(var(--rpma-teal))] transition-all duration-200"
-                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                    placeholder={t('forms.passwordPlaceholder')}
                   />
                   <svg className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-border" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -297,7 +299,7 @@ export default function SignupPage() {
               {/* Confirm Password Field */}
               <div className="space-y-2">
                 <label htmlFor="confirmPassword" className="block text-sm font-semibold text-foreground">
-                  Confirmer le mot de passe
+                  {t('forms.confirmPassword')}
                 </label>
                 <div className="relative">
                   <input
@@ -313,7 +315,7 @@ export default function SignupPage() {
                         ? 'border-red-500/50 focus:ring-red-500/50 focus:border-red-500'
                         : 'border-[hsl(var(--rpma-border))] focus:ring-[hsl(var(--rpma-teal))]/20 focus:border-[hsl(var(--rpma-teal))]'
                     }`}
-                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                    placeholder={t('forms.passwordPlaceholder')}
                   />
                   <svg className={`absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 ${
                     formData.confirmPassword && formData.password !== formData.confirmPassword
@@ -328,7 +330,7 @@ export default function SignupPage() {
                   </svg>
                 </div>
                 {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                  <p className="text-xs text-red-400 mt-1">Les mots de passe ne correspondent pas</p>
+                  <p className="text-xs text-red-400 mt-1">{t('errors.passwordMismatch')}</p>
                 )}
               </div>
             </div>
@@ -343,11 +345,11 @@ export default function SignupPage() {
               {isLoading ? (
                 <>
                   <UILoader size="sm" className="mr-3" />
-                  Création en cours...
+                  {t('auth.creatingAccount')}
                 </>
               ) : (
                 <>
-                  Créer mon compte
+                  {t('auth.createMyAccount')}
                   <svg className="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
@@ -358,12 +360,12 @@ export default function SignupPage() {
             {/* Alternative Actions */}
             <div className="text-center">
               <p className="text-muted-foreground text-sm">
-                Vous avez déjà un compte ?{' '}
+                {t('auth.alreadyHaveAccount')}{' '}
                 <Link
                   href={ROUTES.LOGIN}
                   className="font-semibold text-[hsl(var(--rpma-teal))] hover:text-[hsl(var(--rpma-teal))]/80 transition-colors duration-150"
                 >
-                  Se connecter
+                  {t('auth.login')}
                 </Link>
               </p>
             </div>
@@ -372,7 +374,7 @@ export default function SignupPage() {
           {/* Terms and Conditions */}
           <div className="pt-4 border-t border-[hsl(var(--rpma-border))]">
             <p className="text-center text-xs text-muted-foreground leading-relaxed">
-              En vous inscrivant, vous acceptez nos conditions d&apos;utilisation et notre politique de confidentialité.
+              {t('auth.termsAgreement')}
             </p>
           </div>
         </form>
