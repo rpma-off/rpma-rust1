@@ -120,6 +120,12 @@ impl ServiceBuilder {
         // Initialize Material Service (depends on DB)
         let material_service = Arc::new(crate::services::MaterialService::new(db_instance.clone()));
 
+        // Initialize Message Service (depends on MessageRepository and DB)
+        let message_service = Arc::new(crate::services::MessageService::new(
+            self.repositories.message.clone(),
+            self.db.clone(),
+        ));
+
         // Initialize Sync Services
         let sync_queue = Arc::new(crate::sync::SyncQueue::new(db_instance.clone()));
         let background_sync = Arc::new(Mutex::new(crate::sync::BackgroundSyncService::new(
@@ -176,6 +182,7 @@ impl ServiceBuilder {
             dashboard_service,
             intervention_service,
             material_service,
+            message_service,
             photo_service,
             analytics_service,
             auth_service,

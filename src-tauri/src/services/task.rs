@@ -390,6 +390,142 @@ impl TaskService {
         validate_status_transition(current, new)
     }
 
+    /// Perform a complete status transition: validate, update, and log history
+    ///
+    /// This method encapsulates the full status transition workflow:
+    /// 1. Fetches the current task status from the database
+    /// 2. Validates the transition is allowed
+    /// 3. Updates the task status
+    /// 4. Logs the transition in task_history
+    ///
+    /// # Arguments
+    /// * `task_id` - The task to transition
+    /// * `new_status` - The target status string
+    /// * `reason` - Optional reason for the transition
+    ///
+    /// # Returns
+    /// * `Ok(Task)` - The updated task
+    /// * `Err(AppError)` - If the transition is invalid or database operation fails
+    pub fn transition_status(
+        &self,
+        task_id: &str,
+        new_status: &str,
+        reason: Option<&str>,
+    ) -> AppResult<Task> {
+        use crate::commands::AppError;
+        use crate::db::FromSqlRow;
+
+        let conn = self.crud.db.get_connection().map_err(|e| {
+            AppError::Database(format!("Database connection failed: {}", e))
+        })?;
+
+        // Get current task status
+        let current_status: String = conn
+            .query_row(
+                "SELECT status FROM tasks WHERE id = ?1",
+                [task_id],
+                |row| row.get(0),
+            )
+            .map_err(|e| AppError::NotFound(format!("Task not found: {}", e)))?;
+
+        let current = TaskStatus::from_str(&current_status).ok_or_else(|| {
+            AppError::Validation(format!("Unknown current status: {}", current_status))
+        })?;
+
+        let new = TaskStatus::from_str(new_status).ok_or_else(|| {
+            AppError::Validation(format!("Unknown new status: {}", new_status))
+        })?;
+
+        // Validate transition
+        validate_status_transition(&current, &new).map_err(|msg| {
+            AppError::Validation(msg)
+        })?;
+
+        let now = chrono::Utc::now().timestamp();
+
+        // Update status
+        conn.execute(
+            "UPDATE tasks SET status = ?1, updated_at = ?2 WHERE id = ?3",
+            rusqlite::params![new_status, now, task_id],
+        )
+        .map_err(|e| AppError::Database(format!("Failed to update status: {}", e)))?;
+
+        // Log transition in history (optional, don't fail)
+        conn.execute(
+            "INSERT OR IGNORE INTO task_history (task_id, old_status, new_status, reason, changed_at)
+             VALUES (?1, ?2, ?3, ?4, ?5)",
+            rusqlite::params![task_id, current_status, new_status, reason, now],
+        )
+        .ok();
+
+        // Fetch updated task
+        let updated_task: Task = conn
+            .query_row(
+                "SELECT * FROM tasks WHERE id = ?1",
+                [task_id],
+                Task::from_row,
+            )
+            .map_err(|e| AppError::Database(format!("Failed to fetch updated task: {}", e)))?;
+
+        Ok(updated_task)
+    }
+
+    /// Get simplified status distribution for all tasks
+    ///
+    /// Returns counts grouped into high-level categories:
+    /// quote, scheduled, in_progress, paused, completed, cancelled
+    pub fn get_status_distribution(
+        &self,
+    ) -> AppResult<crate::models::status::StatusDistribution> {
+        use crate::commands::AppError;
+        use crate::models::status::StatusDistribution;
+
+        let conn = self.crud.db.get_connection().map_err(|e| {
+            AppError::Database(format!("Database connection failed: {}", e))
+        })?;
+
+        let mut stmt = conn
+            .prepare(
+                "SELECT status, COUNT(*) as count
+                 FROM tasks
+                 WHERE deleted_at IS NULL
+                 GROUP BY status",
+            )
+            .map_err(|e| AppError::Database(format!("Query preparation failed: {}", e)))?;
+
+        let mut distribution = StatusDistribution {
+            quote: 0,
+            scheduled: 0,
+            in_progress: 0,
+            paused: 0,
+            completed: 0,
+            cancelled: 0,
+        };
+
+        let rows = stmt
+            .query_map([], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, i32>(1)?))
+            })
+            .map_err(|e| AppError::Database(format!("Query execution failed: {}", e)))?;
+
+        for row in rows {
+            let (status, count) = row.map_err(|e| {
+                AppError::Database(format!("Row mapping failed: {}", e))
+            })?;
+            match status.as_str() {
+                "draft" | "pending" => distribution.quote += count,
+                "scheduled" | "assigned" | "overdue" => distribution.scheduled += count,
+                "in_progress" => distribution.in_progress += count,
+                "paused" | "on_hold" => distribution.paused += count,
+                "completed" | "archived" => distribution.completed += count,
+                "cancelled" | "failed" | "invalid" => distribution.cancelled += count,
+                _ => {}
+            }
+        }
+
+        Ok(distribution)
+    }
+
     /// Validate task availability
     pub fn validate_availability(&self, task_id: &str) -> AppResult<bool> {
         self.validation

@@ -337,71 +337,13 @@ pub async fn bootstrap_first_admin(
     request: BootstrapFirstAdminRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    use rusqlite::params;
     let user_id = request.user_id;
     info!("Attempting to bootstrap first admin for user: {}", user_id);
 
-    let conn = state.db.get_connection().map_err(|e| {
-        error!("Failed to get database connection: {}", e);
-        AppError::Database("Database connection failed".to_string())
-    })?;
+    let user_service = crate::services::UserService::new(state.repositories.user.clone());
+    let message = user_service.bootstrap_first_admin(&user_id).await?;
 
-    // Check if any admin exists
-    let admin_count: i64 = conn
-        .query_row(
-            "SELECT COUNT(*) FROM users WHERE role = 'admin'",
-            [],
-            |row| row.get(0),
-        )
-        .map_err(|e| {
-            error!("Failed to check admin count: {}", e);
-            AppError::Database("Failed to check existing admins".to_string())
-        })?;
-
-    if admin_count > 0 {
-        warn!("Bootstrap attempt failed: admin already exists");
-        return Err(AppError::Validation(
-            "An admin user already exists. Use the admin panel to manage roles.".to_string(),
-        ));
-    }
-
-    // Find user by id
-    let user_email: String = conn
-        .query_row(
-            "SELECT email FROM users WHERE id = ?",
-            params![user_id],
-            |row| row.get(0),
-        )
-        .map_err(|_| {
-            error!("User not found for bootstrap: {}", user_id);
-            AppError::NotFound("User not found".to_string())
-        })?;
-
-    // Update to admin
-    conn.execute(
-        "UPDATE users SET role = 'admin', updated_at = ? WHERE id = ?",
-        params![chrono::Utc::now().timestamp_millis(), user_id],
-    )
-    .map_err(|e| {
-        error!("Failed to update user role: {}", e);
-        AppError::Database("Failed to update user role".to_string())
-    })?;
-
-    // Audit log
-    conn.execute(
-        "INSERT INTO audit_logs (user_id, user_email, action, entity_type, entity_id, old_values, new_values)
-         VALUES (?, ?, 'bootstrap_admin', 'user', ?, 'viewer', 'admin')",
-        params![user_id, user_email, user_id],
-    ).map_err(|e| {
-        error!("Failed to create audit log: {}", e);
-        AppError::Database("Failed to create audit log".to_string())
-    })?;
-
-    info!("Successfully bootstrapped admin for user: {}", user_email);
-    Ok(ApiResponse::success(format!(
-        "User {} has been promoted to admin. Please log in again to apply new permissions.",
-        user_email
-    )))
+    Ok(ApiResponse::success(message))
 }
 
 /// Check if any admin users exist in the system
@@ -410,23 +352,9 @@ pub async fn bootstrap_first_admin(
 pub async fn has_admins(state: AppState<'_>) -> Result<ApiResponse<bool>, AppError> {
     debug!("Checking if admin users exist");
 
-    let conn = state.db.get_connection().map_err(|e| {
-        error!("Failed to get database connection: {}", e);
-        AppError::Database("Database connection failed".to_string())
-    })?;
+    let user_service = crate::services::UserService::new(state.repositories.user.clone());
+    let has_admin = user_service.has_admins().await?;
 
-    // Check if any admin exists
-    let admin_count: i64 = conn
-        .query_row(
-            "SELECT COUNT(*) FROM users WHERE role = 'admin'",
-            [],
-            |row| row.get(0),
-        )
-        .map_err(|e| {
-            error!("Failed to check admin count: {}", e);
-            AppError::Database("Failed to check existing admins".to_string())
-        })?;
-
-    debug!("Admin check completed: {} admins found", admin_count);
-    Ok(ApiResponse::success(admin_count > 0))
+    debug!("Admin check completed: has_admins={}", has_admin);
+    Ok(ApiResponse::success(has_admin))
 }

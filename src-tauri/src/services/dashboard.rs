@@ -190,4 +190,82 @@ impl DashboardService {
 
         Ok(Value::Object(stats))
     }
+
+    /// Get recent activities for admin dashboard
+    pub fn get_recent_activities(&self) -> Result<Vec<Value>, String> {
+        let conn = self
+            .db
+            .get_connection()
+            .map_err(|e| format!("Failed to get connection: {}", e))?;
+
+        let mut activities = Vec::new();
+
+        // Get recent user sessions (logins)
+        if let Ok(mut stmt) = conn.prepare(
+            "SELECT s.user_id, u.username, s.last_activity
+             FROM user_sessions s
+             JOIN users u ON s.user_id = u.id
+             ORDER BY s.last_activity DESC
+             LIMIT 10",
+        ) {
+            if let Ok(session_iter) = stmt.query_map([], |row| {
+                Ok(serde_json::json!({
+                    "id": format!("session_{}", row.get::<_, String>(0)?),
+                    "type": "user_login",
+                    "description": format!("{} s'est connecté", row.get::<_, String>(1)?),
+                    "timestamp": row.get::<_, String>(2)?,
+                    "user": row.get::<_, String>(1)?,
+                    "severity": "low"
+                }))
+            }) {
+                for activity in session_iter {
+                    if let Ok(act) = activity {
+                        activities.push(act);
+                    }
+                }
+            }
+        }
+
+        // Get recent tasks
+        if let Ok(mut stmt) = conn.prepare(
+            "SELECT t.id, t.title, t.created_at, u.username
+             FROM tasks t
+             LEFT JOIN users u ON t.assigned_to = u.id
+             ORDER BY t.created_at DESC
+             LIMIT 5",
+        ) {
+            if let Ok(task_iter) = stmt.query_map([], |row| {
+                let task_id: String = row.get(0)?;
+                let title: String = row.get(1)?;
+                let created_at: String = row.get(2)?;
+                let username: Option<String> = row.get(3).ok();
+
+                Ok(serde_json::json!({
+                    "id": format!("task_{}", task_id),
+                    "type": "task_created",
+                    "description": format!("Tâche créée: {}", title),
+                    "timestamp": created_at,
+                    "user": username.unwrap_or_else(|| "Système".to_string()),
+                    "severity": "low"
+                }))
+            }) {
+                for activity in task_iter {
+                    if let Ok(act) = activity {
+                        activities.push(act);
+                    }
+                }
+            }
+        }
+
+        // Sort by timestamp (most recent first) and limit
+        activities.sort_by(|a, b| {
+            let a_time = a.get("timestamp").and_then(|t| t.as_str()).unwrap_or("");
+            let b_time = b.get("timestamp").and_then(|t| t.as_str()).unwrap_or("");
+            b_time.cmp(a_time)
+        });
+
+        activities.truncate(15);
+
+        Ok(activities)
+    }
 }
