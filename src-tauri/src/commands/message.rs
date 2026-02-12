@@ -57,11 +57,7 @@ pub async fn message_get_list(
 
 /// Mark message as read
 #[tauri::command]
-pub async fn message_mark_read(
-    message_id: String,
-    session_token: String,
-    state: AppState<'_>,
-) -> Result<(), ApiError> {
+pub async fn message_mark_read(message_id: String, session_token: String, state: AppState<'_>) -> Result<(), ApiError> {
     let auth_service = state.auth_service.clone();
     let _current_user = auth_service
         .validate_session(&session_token)

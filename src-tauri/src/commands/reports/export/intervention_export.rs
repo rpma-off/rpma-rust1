@@ -185,9 +185,10 @@ pub async fn get_intervention_with_details(
     let intervention_svc = match intervention_service {
         Some(svc) => svc,
         None => {
-            owned_intervention_service = crate::services::intervention::InterventionService::new(
-                std::sync::Arc::new(db.clone()),
-            );
+            owned_intervention_service =
+                crate::services::intervention::InterventionService::new(std::sync::Arc::new(
+                    db.clone(),
+                ));
             &owned_intervention_service
         }
     };
@@ -307,7 +308,10 @@ pub async fn get_intervention_with_details(
         });
         match client_service {
             Some(svc) => svc.get_client(client_id).await.map_err(|e| {
-                crate::commands::errors::AppError::Database(format!("Failed to get client: {}", e))
+                crate::commands::errors::AppError::Database(format!(
+                    "Failed to get client: {}",
+                    e
+                ))
             })?,
             None => {
                 use crate::repositories::{Cache, ClientRepository};

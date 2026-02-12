@@ -263,7 +263,8 @@ pub fn calculate_productivity_trends(
         trends.insert("volume_change".to_string(), volume_change);
 
         // Efficiency trend (completed tasks change)
-        let efficiency_change = current_stats.completed_tasks as f64 - prev.completed_tasks as f64;
+        let efficiency_change =
+            current_stats.completed_tasks as f64 - prev.completed_tasks as f64;
         trends.insert("efficiency_change".to_string(), efficiency_change);
     }
 
