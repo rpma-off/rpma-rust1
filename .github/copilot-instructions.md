@@ -1,25 +1,8 @@
 # GitHub Copilot Instructions for RPMA v2
-
+ 
 ## Project Overview
 
-RPMA v2 is an **offline-first desktop application** built with Tauri (Rust + system webview) for managing Paint Protection Film (PPF) interventions. The application handles tasks, interventions, workflow steps, photo management, inventory tracking, reporting, and user management with role-based access control.
-
-## 🏗️ Architecture
-
-### Four-Layer Architecture
-```
-Frontend (Next.js/React/TypeScript)
-    ↓ IPC calls
-Tauri Commands (Rust)
-    ↓
-Services (Business Logic - Rust)
-    ↓
-Repositories (Data Access - Rust)
-    ↓
-SQLite Database (WAL mode)
-```
-
-**Key Principle**: Keep layer responsibilities strictly separated. Each layer should only communicate with adjacent layers.
+RPMA v2 is an **offline-first desktop application** for managing Paint Protection Film (PPF) interventions. The application handles tasks, interventions, workflow steps, photo management, inventory tracking, reporting, and user management with role-based access control.
 
 ## 📁 Project Structure
 
@@ -47,16 +30,22 @@ rpma-rust/
 └── docs/                    # Project documentation
 ```
 
-## 🛠️ Tech Stack
+## 🏗️ Architecture
 
-- **Frontend**: Next.js 14, React 18, TypeScript, Tailwind CSS
-- **UI Library**: shadcn/ui (Radix UI primitives)
-- **Backend**: Rust with Tauri framework
-- **Database**: SQLite with WAL mode
-- **State Management**: React hooks, Context API, Zustand
-- **Authentication**: JWT tokens with 2FA support
-- **Type Safety**: Automatic TypeScript generation from Rust models using `ts-rs`
-- **Testing**: Vitest (frontend), Rust built-in tests (backend)
+### Four-Layer Architecture
+```
+Frontend (Next.js/React/TypeScript)
+    ↓ IPC calls
+Tauri Commands (Rust)
+    ↓
+Services (Business Logic - Rust)
+    ↓
+Repositories (Data Access - Rust)
+    ↓
+SQLite Database (WAL mode)
+```
+**Key Principle**: Keep layer responsibilities strictly separated. Each layer should only communicate with adjacent layers.
+
 
 ## 🔑 Critical Consistency Rules
 
@@ -96,8 +85,8 @@ npm run backend:dev            # Backend only (Tauri)
 npm run build                  # Production build
 npm run frontend:build         # Build frontend only
 
-# Quality Checks
-npm run quality:check          # Run all quality gates (RECOMMENDED)
+
+(RECOMMENDED)
 npm run frontend:lint          # ESLint
 npm run frontend:type-check    # TypeScript checking
 npm run backend:check          # Cargo check
@@ -114,12 +103,6 @@ npm run security:audit         # Security vulnerability scan
 node scripts/validate-rbac.js  # RBAC validation
 node scripts/validate-session-security.js  # Session security check
 node scripts/validate-migration-system.js  # Migration validation
-
-# Testing
-npm test                       # Run all tests
-npm run test:frontend          # Frontend tests only
-npm run test:backend           # Backend tests only
-```
 
 ## 🎯 Development Workflow
 
@@ -147,23 +130,33 @@ npm run test:backend           # Backend tests only
    - Follow migration naming: `YYYYMMDDHHMMSS_description.sql`
    - Test both up and down migrations
 
-### After Making Changes
-1. Run type sync: `npm run types:sync`
-2. Run appropriate linters and type checkers
-3. Add/update tests (unit, integration, or e2e as appropriate)
-4. Run `npm run quality:check` before committing
-5. Ensure all tests pass
-6. Update documentation if behavior changed
+## ✅ Tests Gates
 
-## ✅ Quality Gates
+Run these tests before submitting code:
 
-Run these checks before submitting code:
+# All backend tests (Rust)
+cd src-tauri && cargo test --lib
+
+# Database migration tests
+cd src-tauri && cargo test migration
+
+# Performance tests
+cd src-tauri && cargo test performance
+
+# Frontend tests (TypeScript/React)
+cd frontend && npm test
+
+# E2E tests with Playwright
+cd frontend && npm run test:e2e
+
+# Code coverage
+npm run test:coverage
+```
 
 ### Frontend
 ```bash
 npm run frontend:lint          # Must pass
 npm run frontend:type-check    # Must pass
-npm run test:frontend          # Must pass
 ```
 
 ### Backend
@@ -171,7 +164,6 @@ npm run test:frontend          # Must pass
 npm run backend:check          # Must pass
 npm run backend:clippy         # Must pass
 npm run backend:fmt            # Must pass
-npm run test:backend           # Must pass
 ```
 
 ### Types
@@ -188,10 +180,6 @@ node scripts/validate-rbac.js  # Must pass
 node scripts/validate-session-security.js  # Must pass
 ```
 
-### Full Check (Recommended)
-```bash
-npm run quality:check          # Runs all quality gates
-```
 
 ## 🧪 Testing Requirements
 
@@ -319,16 +307,14 @@ npm run quality:check          # Runs all quality gates
 2. Identify the layer where the bug exists
 3. Make the minimal fix in the appropriate layer
 4. Verify the test now passes
-5. Run `npm run quality:check`
-6. Add regression test if not already covered
+5. Add regression test if not already covered
 
 ### Refactoring
 1. Ensure existing tests pass
 2. Make incremental changes
 3. Run tests after each change
 4. Maintain the same external behavior
-5. Run `npm run quality:check`
-6. Update documentation if public APIs changed
+5. Update documentation if public APIs changed
 
 ---
 
