@@ -185,12 +185,12 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_advance_step_invalid_transition() -> AppResult<()> {
+    async fn test_advance_step_pending_with_completion_data() -> AppResult<()> {
         let test_db = test_db!();
         let workflow_service = InterventionWorkflowService::new(test_db.db());
 
         // Create task and intervention
-        let task_request = test_task!(title: "Invalid transition test".to_string());
+        let task_request = test_task!(title: "Pending with data test".to_string());
         let task = TestDataFactory::create_test_task(Some(task_request));
 
         let request = StartInterventionRequest {
@@ -223,13 +223,14 @@ mod tests {
 
         let first_step = &intervention.steps[0];
 
-        // Try to complete step without starting it
+        // Advancing a Pending step with completion data should succeed
+        // (transition Pending → InProgress → Completed in a single call)
         let complete_request = AdvanceStepRequest {
             intervention_id: intervention.id.clone(),
             step_id: first_step.id.clone(),
             collected_data: json!({"duration": 30}),
             photos: None,
-            notes: Some("Trying to complete without starting".to_string()),
+            notes: Some("Completing from pending".to_string()),
             quality_check_passed: true,
             issues: None,
         };
@@ -237,10 +238,11 @@ mod tests {
         let result = workflow_service
             .advance_step(complete_request, "test-correlation-id", Some("test_user"))
             .await;
-        assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .contains("before completion data can be provided"));
+        assert!(result.is_ok());
+        let response = result.unwrap();
+        assert_eq!(response.step.step_status, StepStatus::Completed);
+        assert!(response.step.started_at.inner().is_some());
+        assert!(response.step.completed_at.inner().is_some());
 
         Ok(())
     }
@@ -468,10 +470,14 @@ mod tests {
         };
 
         let result = workflow_service
-            .finalize_intervention(complete_request, "test-correlation-id", Some("test_user"))
-            .await;
+            .finalize_intervention(complete_request, "test-correlation-id", Some("test_user"));
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("all steps must be completed"));
+        let err_msg = result.unwrap_err().to_string();
+        assert!(
+            err_msg.contains("mandatory steps incomplete"),
+            "Expected error about mandatory steps incomplete, got: {}",
+            err_msg
+        );
 
         Ok(())
     }
