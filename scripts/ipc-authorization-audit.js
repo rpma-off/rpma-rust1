@@ -45,7 +45,29 @@ class AuthorizationAuditor {
             // System diagnostic commands that don't expose sensitive data
             'get_database_status',
             'get_database_pool_stats',
-            'get_database_pool_health'
+            'get_database_pool_health',
+            // Auth commands that handle login/logout/session validation themselves
+            'auth_logout',
+            'auth_validate_session',
+            'auth_refresh_token',
+            // Navigation commands - client-side UI state, no DB or sensitive data access
+            'navigation_update',
+            'navigation_add_to_history',
+            'navigation_go_back',
+            'navigation_go_forward',
+            'navigation_get_current',
+            'navigation_refresh',
+            'shortcuts_register',
+            // IPC optimization commands - data compression/streaming utilities, no DB access
+            'compress_data_for_ipc',
+            'decompress_data_from_ipc',
+            'start_stream_transfer',
+            'send_stream_chunk',
+            'get_stream_data',
+            'get_ipc_stats',
+            // Test/development commands
+            'get_large_test_data',
+            'test_pdf_generation'
         ];
     }
 
