@@ -43,6 +43,7 @@ export const fr = {
     send: "Envoyer",
     retry: "Réessayer",
     notDefined: "Non défini",
+    navigation: "Navigation",
   },
 
   // Navigation
@@ -188,6 +189,8 @@ export const fr = {
     noMatchingTasks: "Aucune tâche ne correspond aux filtres",
     adjustFilters: "Ajustez vos filtres ou recherchez autre chose",
     showProgress: "Afficher la progression",
+    viewFullDetails: "Voir les détails complets",
+    notFoundById: "Aucune tâche trouvée avec cet identifiant.",
   },
 
   // Clients
@@ -381,6 +384,10 @@ export const fr = {
     documentOpenedForPrint: "Document ouvert pour impression",
     popupBlocked: "La fenêtre d'impression a été bloquée. Veuillez autoriser les popups pour ce site.",
     reportGenerationFailed: "Échec de la génération du rapport",
+    savePdfReport: "Sauvegarder le rapport PDF",
+    shareIntervention: "Partager l'intervention",
+    generatingInProgress: "Génération en cours...",
+    printReport: "Imprimer le rapport",
   },
 
   // Settings
@@ -550,6 +557,8 @@ export const fr = {
     printWindowBlocked: "Fenêtre d'impression bloquée. Autorisez les popups et réessayez.",
     fileAccessProblem: "Problème d'accès au fichier. Le rapport peut avoir été généré correctement.",
     generationTimeout: "Timeout de génération. Réessayez dans quelques instants.",
+    invalidTime: "Heure invalide",
+    taskLoadError: "Une erreur est survenue lors du chargement de la tâche",
   },
 
   // Success Messages

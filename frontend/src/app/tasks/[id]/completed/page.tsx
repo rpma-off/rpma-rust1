@@ -328,14 +328,14 @@ export default function TaskCompletedPage() {
   };
 
   const formatTime = (timeString: string | null | undefined) => {
-    if (!timeString) return 'Non défini';
+    if (!timeString) return t('common.notDefined');
     try {
       return new Date(timeString).toLocaleTimeString('fr-FR', {
         hour: '2-digit',
         minute: '2-digit'
       });
     } catch {
-      return 'Heure invalide';
+      return t('errors.invalidTime');
     }
   };
 
@@ -366,7 +366,7 @@ export default function TaskCompletedPage() {
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Une erreur est survenue lors du chargement de la tâche: {error}
+            {t('errors.taskLoadError')}: {error}
           </AlertDescription>
         </Alert>
       </div>
@@ -380,7 +380,7 @@ export default function TaskCompletedPage() {
         <Alert>
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Aucune tâche trouvée avec cet identifiant.
+            {t('tasks.notFoundById')}
           </AlertDescription>
         </Alert>
       </div>
@@ -1716,7 +1716,7 @@ export default function TaskCompletedPage() {
                        size="lg"
                      >
                        <Download className="h-4 w-4 mr-2" />
-                       Sauvegarder le rapport PDF
+                       {t('reports.savePdfReport')}
                      </Button>
 
                     <Button
@@ -1725,7 +1725,7 @@ export default function TaskCompletedPage() {
                       className="w-full"
                     >
                       <Share2 className="h-4 w-4 mr-2" />
-                      Partager l&apos;intervention
+                      {t('reports.shareIntervention')}
                     </Button>
 
                     <Button
@@ -1737,12 +1737,12 @@ export default function TaskCompletedPage() {
                       {isExporting ? (
                         <>
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 mr-2"></div>
-                          {exportProgress || 'Génération en cours...'}
+                          {exportProgress || t('reports.generatingInProgress')}
                         </>
                       ) : (
                         <>
                           <Printer className="h-4 w-4 mr-2" />
-                          Imprimer le rapport
+                          {t('reports.printReport')}
                         </>
                       )}
                     </Button>
@@ -1752,7 +1752,7 @@ export default function TaskCompletedPage() {
 
                   {/* Navigation Links */}
                   <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-gray-700">Navigation</h4>
+                    <h4 className="text-sm font-medium text-gray-700">{t('common.navigation')}</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       <Button
                         variant="outline"
@@ -1761,7 +1761,7 @@ export default function TaskCompletedPage() {
                         onClick={() => router.push(`/tasks/${taskId}`)}
                       >
                         <FileText className="h-4 w-4 mr-2" />
-                        Voir les détails complets
+                        {t('tasks.viewFullDetails')}
                       </Button>
 
                       <Button
@@ -1771,7 +1771,7 @@ export default function TaskCompletedPage() {
                         onClick={() => router.push('/tasks')}
                       >
                         <Home className="h-4 w-4 mr-2" />
-                        Retour aux tâches
+                        {t('tasks.backToTasks')}
                       </Button>
                     </div>
                   </div>
