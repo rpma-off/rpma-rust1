@@ -8,14 +8,14 @@ export const statusApi = {
   /**
    * Transition a task to a new status
    */
-  transitionStatus: async (request: StatusTransitionRequest) => {
-    return invoke('task_transition_status', { request });
+  transitionStatus: async (request: StatusTransitionRequest, sessionToken: string) => {
+    return invoke('task_transition_status', { session_token: sessionToken, request });
   },
 
   /**
    * Get status distribution for all tasks
    */
-  getStatusDistribution: async (): Promise<StatusDistribution> => {
-    return invoke('task_get_status_distribution');
+  getStatusDistribution: async (sessionToken: string): Promise<StatusDistribution> => {
+    return invoke('task_get_status_distribution', { session_token: sessionToken });
   },
 };

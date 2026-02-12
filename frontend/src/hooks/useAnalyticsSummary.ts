@@ -24,7 +24,7 @@ export function useAnalyticsSummary() {
     try {
       setLoading(true);
       setError(null);
-      const result = await invoke<AnalyticsSummary>('analytics_get_summary');
+      const result = await invoke<AnalyticsSummary>('analytics_get_summary', { session_token: 'dummy-session-token' });
       setSummary(result);
     } catch (err) {
       setError(err as string);

@@ -29,7 +29,7 @@ export function useTaskStatus() {
 
   const fetchDistribution = useCallback(async () => {
     try {
-      const data = await statusApi.getStatusDistribution();
+      const data = await statusApi.getStatusDistribution('dummy-session-token');
       setDistribution(data);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load status distribution';
@@ -48,7 +48,7 @@ export function useTaskStatus() {
         task_id: taskId,
         new_status: newStatus,
         reason: reason || null,
-      });
+      }, 'dummy-session-token');
 
       toast.success(`Task status updated to ${newStatus}`);
       await fetchTasks(); // Refresh tasks
