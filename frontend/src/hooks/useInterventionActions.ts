@@ -13,6 +13,60 @@ import type {
   InterventionFinalizationResponse
 } from '@/types/ppf-intervention';
 
+interface BackendStep {
+  id: string;
+  intervention_id: string;
+  step_number: number;
+  step_name: string;
+  step_type: string;
+  step_status: string;
+  description?: string;
+  started_at?: string;
+  completed_at?: string;
+  duration_seconds?: number;
+  requires_photos?: boolean;
+  min_photos_required?: number;
+  photo_count?: number;
+  quality_checkpoints?: Record<string, unknown>[];
+  approved_by?: string;
+  observations?: string[];
+  collected_data?: Record<string, unknown>;
+  paused_at?: number | null;
+  created_at?: string;
+  updated_at?: string;
+  is_mandatory?: boolean;
+}
+
+interface BackendIntervention {
+  id: string;
+  task_number?: string;
+  status: string;
+  completion_percentage?: number;
+  current_step?: number;
+  currentStep?: number;
+  created_at?: string;
+  updated_at?: string;
+  technician_id?: string;
+  created_by?: string;
+  client_id?: string;
+  vehicle_make?: string;
+  vehicle_model?: string;
+  vehicle_year?: number;
+  vehicle_vin?: string;
+  weather_condition?: string;
+  temperature_celsius?: number;
+  started_at?: string;
+  scheduled_at?: string;
+  completed_at?: string;
+  estimated_duration?: number;
+  actual_duration?: number;
+  start_location_lat?: number;
+  start_location_lon?: number;
+  start_location_accuracy?: number;
+  ppf_zones_config?: string[];
+  notes?: string;
+}
+
 interface UseInterventionActionsProps {
   taskId?: string;
   onError?: (error: string, originalError?: unknown) => void;
@@ -57,7 +111,7 @@ export function useInterventionActions({
       }
 
       // Map backend steps to frontend format
-      const mappedSteps = (responseData.steps || []).map((step: any) => ({
+      const mappedSteps = ((responseData.steps || []) as unknown as BackendStep[]).map((step: BackendStep) => ({
         id: step.id,
         interventionId: step.intervention_id,
         intervention_id: step.intervention_id,
@@ -141,8 +195,8 @@ export function useInterventionActions({
       const typedResponseData = responseData as StepProgressResponse;
 
       if (typedResponseData.next_step) {
-        const backendStep = typedResponseData.next_step as any;
-        const mappedNextStep: PPFInterventionStep = {
+        const backendStep = typedResponseData.next_step as unknown as BackendStep;
+        const mappedNextStep = {
           id: backendStep.id,
           interventionId: backendStep.intervention_id,
           intervention_id: backendStep.intervention_id,
@@ -171,11 +225,11 @@ export function useInterventionActions({
           created_at: backendStep.created_at,
           updated_at: backendStep.updated_at,
           required: !backendStep.is_mandatory ? false : true,
-        };
+        } as PPFInterventionStep;
         onStepUpdate?.(mappedNextStep);
       } else if (typedResponseData.updated_step) {
-        const backendUpdatedStep = typedResponseData.updated_step as any;
-        const mappedUpdatedStep: Partial<PPFInterventionStep> = {
+        const backendUpdatedStep = typedResponseData.updated_step as unknown as BackendStep;
+        const mappedUpdatedStep = {
           status: backendUpdatedStep.step_status,
           step_status: backendUpdatedStep.step_status,
           completedAt: backendUpdatedStep.completed_at,
@@ -247,21 +301,21 @@ export function useInterventionActions({
       return result.data as InterventionFinalizationResponse;
     },
     onSuccess: (result) => {
-      const backendIntervention = result.intervention as any;
-      const mappedIntervention: PPFInterventionData = {
+      const backendIntervention = result.intervention as unknown as BackendIntervention;
+      const mappedIntervention = {
         id: backendIntervention.id,
-        taskId: backendIntervention.task_number,
+        taskId: backendIntervention.task_number ?? '',
         task_id: backendIntervention.task_number,
         intervention_number: backendIntervention.task_number,
         steps: [],
-        status: backendIntervention.status as any,
-        progress: backendIntervention.completion_percentage,
+        status: backendIntervention.status,
+        progress: backendIntervention.completion_percentage ?? 0,
         progress_percentage: backendIntervention.completion_percentage,
-        currentStep: backendIntervention.current_step,
+        currentStep: backendIntervention.current_step ?? 0,
         completion_percentage: backendIntervention.completion_percentage,
-        createdAt: backendIntervention.created_at,
+        createdAt: backendIntervention.created_at ?? '',
         created_at: backendIntervention.created_at,
-        updatedAt: backendIntervention.updated_at,
+        updatedAt: backendIntervention.updated_at ?? '',
         updated_at: backendIntervention.updated_at,
         technician_id: backendIntervention.technician_id,
         created_by: backendIntervention.created_by,
@@ -276,7 +330,7 @@ export function useInterventionActions({
           year: backendIntervention.vehicle_year,
           vin: backendIntervention.vehicle_vin,
         } : undefined,
-        weather_condition: backendIntervention.weather_condition as any,
+        weather_condition: backendIntervention.weather_condition,
         temperature_celsius: backendIntervention.temperature_celsius,
         started_at: backendIntervention.started_at,
         actual_start: backendIntervention.started_at,
@@ -285,14 +339,14 @@ export function useInterventionActions({
         intervention_completed_at: backendIntervention.completed_at,
         estimated_duration: backendIntervention.estimated_duration,
         actual_duration: backendIntervention.actual_duration,
-        gps_coordinates: backendIntervention.start_location_lat ? {
+        gps_coordinates: backendIntervention.start_location_lat && backendIntervention.start_location_lon ? {
           latitude: backendIntervention.start_location_lat,
           longitude: backendIntervention.start_location_lon,
           accuracy: backendIntervention.start_location_accuracy,
         } : undefined,
         ppf_zones: backendIntervention.ppf_zones_config,
         notes: backendIntervention.notes,
-      };
+      } as PPFInterventionData;
 
       onInterventionUpdate?.(mappedIntervention);
       queryClient.invalidateQueries({ queryKey: interventionKeys.byTask(taskId || '') });

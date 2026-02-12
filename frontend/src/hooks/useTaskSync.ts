@@ -106,7 +106,7 @@ export function useTaskSync({
       const result = await Promise.race([
         taskService.getTasks(cleanParams),
         timeoutPromise
-      ]) as any;
+      ]) as { success?: boolean; data?: { data: TaskWithDetails[]; pagination?: Record<string, unknown> }; error?: Error | null };
 
       logger.debug('useTaskSync: TaskService result received', {
         success: result.success,
@@ -131,12 +131,12 @@ export function useTaskSync({
         requestId,
       });
 
-      const paginationSource = data.pagination;
+      const paginationSource = data.pagination as Record<string, unknown> | undefined;
       const pagination: TaskPagination = {
-        page: paginationSource?.page ?? page,
+        page: (paginationSource?.page as number) ?? page,
         total: Number(paginationSource?.total ?? 0),
-        totalPages: (paginationSource as any)?.totalPages ?? (paginationSource as any)?.total_pages ?? 1,
-        limit: (paginationSource as any)?.pageSize ?? (paginationSource as any)?.limit ?? pageSize,
+        totalPages: (paginationSource?.totalPages as number) ?? (paginationSource?.total_pages as number) ?? 1,
+        limit: (paginationSource?.pageSize as number) ?? (paginationSource?.limit as number) ?? pageSize,
       };
 
       onTasksLoaded?.(data.data, pagination);
@@ -159,7 +159,7 @@ export function useTaskSync({
           // Toast handled by parent component
         } else if (err.status === 403) {
           // Toast handled by parent component
-        } else if (err && typeof err === 'object' && 'status' in err && (err as any).status >= 500) {
+        } else if (err instanceof Error && 'status' in err && typeof (err as unknown as Record<string, unknown>).status === 'number' && ((err as unknown as Record<string, unknown>).status as number) >= 500) {
           // Toast handled by parent component
         } else {
           // Toast handled by parent component
