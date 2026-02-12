@@ -85,6 +85,9 @@ jobs:
         working-directory: frontend
         run: npm run test:ci
 
+      - name: Type drift check
+        run: npm run types:ci-drift-check
+
       - name: Build
         working-directory: frontend
         run: npm run build

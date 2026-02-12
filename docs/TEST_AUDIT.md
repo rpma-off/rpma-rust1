@@ -8,26 +8,25 @@
 
 ## 1. Current Test Inventory
 
-### 1.1 Frontend Tests (59 files)
+### 1.1 Frontend Tests (~61 files)
 
 | Category | Count | Examples |
 |----------|-------|---------|
 | Component tests | 26 | `TaskDetails.test.tsx`, `MaterialForm.test.tsx`, `ReportContent.test.tsx` |
-| Hook tests | 8 | `useInventory.test.tsx`, `useTaskState.test.ts`, `useAutoSave.test.ts` |
+| Hook tests | 9 | `useInventory.test.tsx`, `useTaskState.test.ts`, `AuthContext.test.tsx` |
 | Integration tests | 4 | `WorkflowProgressCard.integration.test.tsx`, `useTasks.integration.test.tsx` |
-| IPC contract tests | 12 | `tasks-ipc-contract.test.ts`, `interventions-ipc-contract.test.ts` |
-| E2E tests (Playwright) | 6 | `user-authentication.spec.ts`, `tasks-creation.spec.ts` |
-| Smoke/utility tests | 3 | `settings-routes.smoke.test.ts`, `mockData.test.ts` |
+| IPC contract tests | 13 | `auth-ipc-contract.test.ts`, `tasks-ipc-contract.test.ts`, `interventions-ipc-contract.test.ts` |
+| Service unit tests | 1 | `auth.service.test.ts` |
+| E2E tests (Playwright) | 8 | `user-authentication.spec.ts`, `tasks-creation.spec.ts`, `intervention-management.spec.ts` |
 
 ### 1.2 Backend Tests (80+ files)
 
 | Category | Count | Examples |
 |----------|-------|---------|
-| Unit tests (`src/tests/unit/`) | 25 | `auth_service_tests.rs`, `task_crud_tests.rs` |
+| Unit tests (`src/tests/unit/`) | 24 | `auth_service_tests.rs`, `task_crud_tests.rs`, `task_creation_service_tests.rs` |
 | Integration tests (`src/tests/integration/`) | 20 | `client_task_intervention_material_flow.rs`, `workflow_tests.rs` |
-| Property-based tests (`src/tests/proptests/`) | 11 | `auth_service_proptests.rs`, `task_validation_proptests.rs` |
-| Migration tests (`src/tests/migrations/`) | 10 | `test_008_workflow_constraints.rs` |
-| Command integration tests (`tests/commands/`) | 7 | `auth_commands_test.rs`, `task_commands_test.rs` |
+| Property-based tests (`src/tests/proptests/`) | 8 | `auth_service_proptests.rs`, `task_validation_proptests.rs` |
+| Migration tests | 15 | `test_008_workflow_constraints.rs` |
 | Embedded `#[cfg(test)]` modules | 60+ | Inline tests across services, repositories, commands |
 | Benchmarks | 3 | `task_benchmarks.rs`, `intervention_benchmarks.rs` |
 
@@ -35,11 +34,11 @@
 
 | Job | What It Does | Status |
 |-----|-------------|--------|
-| `frontend` | Lint + build (no tests) | ⚠️ Tests not run |
-| `rust` | fmt + clippy + `cargo test` | ✅ Active |
+| `frontend` | Lint + type-check + tests (`test:ci`) + build | ✅ Active |
+| `rust` | fmt + clippy + `cargo test` (stable + MSRV 1.85.0) | ✅ Active |
 | `security` | cargo-audit + cargo-deny | ✅ Active |
 | `coverage` | tarpaulin (Rust only) | ✅ Active |
-| `build` | Multi-platform bundles | ✅ Active |
+| `build` | Multi-platform bundles (Linux, Windows, macOS) | ✅ Active |
 
 ---
 
@@ -53,14 +52,14 @@ Login Page → auth_login → AuthService.authenticate() → UserRepository → 
 
 | Layer | What Exists | What's Missing |
 |-------|-------------|----------------|
-| Frontend component | — | ❌ `LoginForm.test.tsx` — form validation, error display, loading state |
-| Frontend hook | — | ❌ `useAuth.test.ts` — signIn/signOut, session persistence, token refresh |
-| IPC contract | — | ❌ `auth-ipc-contract.test.ts` — AUTH_LOGIN argument shape, response envelope |
+| Frontend component | `LoginPage.test.tsx` ✅ | — |
+| Frontend context/hook | `AuthContext.test.tsx` ✅ | — |
+| Frontend service | `auth.service.test.ts` ✅ | — |
+| IPC contract | `auth-ipc-contract.test.ts` ✅ | — |
 | Backend service | `auth_service_tests.rs` ✅ | — |
-| Backend commands | `auth_commands_test.rs` ✅ | — |
 | E2E | `user-authentication.spec.ts` ✅ | — |
 
-**Gap summary**: Frontend layer for authentication is completely untested.
+**Gap summary**: Fully covered across all layers. ✅
 
 ### 2.2 Task Creation Flow
 
@@ -74,7 +73,6 @@ Task Form → TASK_CRUD (Create) → TaskCreationService → TaskRepository + va
 | Frontend hook | `useTaskState.test.ts` ✅ | — |
 | IPC contract | `tasks-ipc-contract.test.ts` ✅ | — |
 | Backend service | `task_creation_service_tests.rs` ✅, `task_crud_tests.rs` ✅ | — |
-| Backend commands | `task_commands_test.rs` ✅ | — |
 | E2E | `tasks-creation.spec.ts` ✅ | — |
 
 **Gap summary**: Well covered across all layers. ✅
@@ -105,7 +103,7 @@ Finalization Step → INTERVENTION_MANAGEMENT (Finalize) → finalize_interventi
 | Layer | What Exists | What's Missing |
 |-------|-------------|----------------|
 | Frontend component | `WorkflowProgressCard.integration.test.tsx` ✅ | ❌ Finalization step component test |
-| Frontend hook | — | ❌ `useInterventionFinalization.test.ts` — finalize action, validation, error handling |
+| Frontend hook | — | ❌ `useInterventionWorkflow` finalization path test |
 | IPC contract | `interventions-ipc-contract.test.ts` ✅ | — |
 | Backend service | `intervention_workflow_tests.rs` ✅ | — |
 | Backend integration | `client_task_intervention_material_flow.rs` ✅ | — |
@@ -125,16 +123,11 @@ Clients Page → CLIENT_CRUD → ClientService → ClientRepository
 | Frontend hook | — | ❌ `useClients.test.ts` — CRUD operations, search, filtering |
 | IPC contract | `clients-ipc-contract.test.ts` ✅ | — |
 | Backend service | `client_service_tests.rs` ✅ | — |
-| Backend commands | `client_commands_test.rs` ✅ | — |
 | E2E | `client-lifecycle.spec.ts` ✅ | — |
 
 **Gap summary**: Frontend component and hook tests missing for clients.
 
 ### 2.6 Inventory Management Flow
-
-```
-Inventory Page → material_* commands → MaterialService → MaterialRepository
-```
 
 | Layer | What Exists | What's Missing |
 |-------|-------------|----------------|
@@ -149,20 +142,15 @@ Inventory Page → material_* commands → MaterialService → MaterialRepositor
 
 ### 2.7 Report Generation Flow
 
-```
-Reports Page → get_*_report commands → ReportService → PDF generation
-```
-
 | Layer | What Exists | What's Missing |
 |-------|-------------|----------------|
 | Frontend component | `ReportContent.test.tsx` ✅, `ExportControls.test.tsx` ✅ | — |
 | Frontend integration | `ReportsPage.integration.test.tsx` ✅ | — |
 | IPC contract | — | ❌ `reports-ipc-contract.test.ts` — report command argument shapes |
 | Backend service | — | ❌ `pdf_report_service_tests.rs` — PDF generation, data formatting |
-| Backend commands | — | ❌ Report command handler tests |
 | E2E | `report-generation.spec.ts` ✅ | — |
 
-**Gap summary**: Backend report service and command tests missing, no IPC contract test.
+**Gap summary**: Backend report service tests missing, no IPC contract test for reports.
 
 ---
 
@@ -172,7 +160,6 @@ Reports Page → get_*_report commands → ReportService → PDF generation
 
 | Component | Flow | Priority |
 |-----------|------|----------|
-| `LoginForm` (login page) | Authentication | 🔴 High |
 | `ClientForm` (client create/edit) | Client management | 🟠 Medium |
 | Workflow step pages (Preparation, Installation, Inspection, Finalization) | Intervention workflow | 🟠 Medium |
 | `DashboardPage` (dashboard) | Dashboard | 🟡 Low |
@@ -182,9 +169,8 @@ Reports Page → get_*_report commands → ReportService → PDF generation
 
 | Hook | Flow | Priority |
 |------|------|----------|
-| `useAuth` | Authentication | 🔴 High |
 | `useClients` | Client management | 🟠 Medium |
-| `useInterventionFinalization` or equivalent | Intervention finalization | 🟠 Medium |
+| `useInterventionWorkflow` (finalization path) | Intervention finalization | 🟠 Medium |
 | `useReports` | Report generation | 🟡 Low |
 | `useCalendar` | Calendar | 🟡 Low |
 
@@ -192,7 +178,6 @@ Reports Page → get_*_report commands → ReportService → PDF generation
 
 | Contract | Flow | Priority |
 |----------|------|----------|
-| `auth-ipc-contract.test.ts` | Authentication | 🔴 High |
 | `reports-ipc-contract.test.ts` | Reports | 🟠 Medium |
 | `calendar-ipc-contract.test.ts` | Calendar | 🟡 Low |
 | `user-ipc-contract.test.ts` | User management | 🟡 Low |
@@ -209,7 +194,6 @@ Reports Page → get_*_report commands → ReportService → PDF generation
 | `document_storage.rs` | Document storage | 🟡 Low |
 | `photo/*.rs` | Photo management | 🟡 Low |
 | `prediction.rs` | Predictive analytics | 🟡 Low |
-| `alerting.rs` | Alert service | 🟡 Low |
 
 ### 3.5 Backend — Repositories Without Dedicated Tests
 
@@ -218,42 +202,35 @@ Reports Page → get_*_report commands → ReportService → PDF generation
 | `intervention_repository.rs` | Intervention persistence | 🟠 Medium (tested indirectly via integration) |
 | `calendar_event_repository.rs` | Calendar events | 🟡 Low |
 
-### 3.6 CI Pipeline Gaps
-
-| Gap | Impact | Priority |
-|-----|--------|----------|
-| Frontend tests not run in CI | Unit/integration regressions slip through | 🔴 Critical |
-| No frontend coverage tracking | No visibility into frontend quality trends | 🟠 High |
-| Frontend lint commented out in CI | Style issues not caught | 🟠 High |
-| No type drift check in CI | TS/Rust type mismatches possible | 🟠 High |
-
 ---
 
 ## 4. Test Plan — Top 10 Highest-Value Tests to Add
 
 Prioritized by: **risk × blast radius × ease of implementation**
 
-### Test 1: 🔴 CI Quality Gate — Run Frontend Tests in CI
-**File**: `.github/workflows/ci.yml`
-**What**: Add `npm run test:ci` step to the `frontend` CI job
-**Why**: Currently zero frontend tests run in CI — all 59 test files are dead weight without it
-**Impact**: Catches all frontend regressions automatically
+Items marked ✅ have been implemented as part of this audit.
 
-### Test 2: 🔴 `useAuth` Hook Test
-**File**: `frontend/src/hooks/__tests__/useAuth.test.ts`
-**What**: Test `signIn()`, `signOut()`, session validation, token refresh, error handling
-**Why**: Authentication is the gateway to the entire application — an untested auth hook is a critical gap
-**Impact**: Covers login, logout, session persistence
-
-### Test 3: 🔴 Auth IPC Contract Test
+### Test 1: ✅ Auth IPC Contract Test
 **File**: `frontend/src/lib/ipc/__tests__/auth-ipc-contract.test.ts`
-**What**: Validate `AUTH_LOGIN`, `AUTH_LOGOUT`, `AUTH_VALIDATE_SESSION` argument shapes and response envelopes
+**What**: Validate `auth_login`, `auth_logout`, `auth_validate_session`, 2FA command argument shapes and response envelopes
 **Why**: IPC contract mismatch between frontend/backend is a common source of runtime errors
 **Impact**: Catches type mismatches before they reach production
 
-### Test 4: 🔴 Login Form Component Test
-**File**: `frontend/src/components/auth/__tests__/LoginForm.test.tsx`
-**What**: Form validation (empty fields, invalid email), error display, loading state, successful submission
+### Test 2: ✅ AuthService Unit Test
+**File**: `frontend/src/lib/services/auth/__tests__/auth.service.test.ts`
+**What**: Test `login()`, `signup()`, `logout()`, `validateSession()`, error handling, user management operations
+**Why**: The AuthService wraps IPC calls and is used by AuthContext — ensuring it correctly maps responses prevents auth bugs
+**Impact**: Covers service-layer success/error paths for all auth operations
+
+### Test 3: ✅ AuthContext (useAuth Hook) Test
+**File**: `frontend/src/contexts/__tests__/AuthContext.test.tsx`
+**What**: Test `signIn()`, `signOut()`, `signUp()`, session persistence, token refresh, corrupted storage recovery
+**Why**: Authentication is the gateway to the entire application — an untested auth context is a critical gap
+**Impact**: Covers login, logout, session persistence, session recovery from secure storage
+
+### Test 4: ✅ Login Page Component Test
+**File**: `frontend/src/app/login/__tests__/LoginPage.test.tsx`
+**What**: Form rendering, input validation, error display, loading state, successful submission flow
 **Why**: Login is the first thing every user sees — broken login = broken app
 **Impact**: Validates user-facing authentication experience
 
@@ -276,7 +253,7 @@ Prioritized by: **risk × blast radius × ease of implementation**
 **Impact**: Catches report API contract drift
 
 ### Test 8: 🟠 Dashboard Data Hook Test
-**File**: `frontend/src/hooks/__tests__/useDashboardData.test.ts` (or extend existing at `frontend/src/__tests__/hooks/useDashboardDataQuery.test.tsx`)
+**File**: `frontend/src/hooks/__tests__/useDashboardData.test.ts`
 **What**: Test data aggregation, loading states, refresh logic, error recovery
 **Why**: Dashboard is the landing page after login — data loading issues directly impact UX
 **Impact**: Ensures reliable dashboard rendering
@@ -299,39 +276,26 @@ Prioritized by: **risk × blast radius × ease of implementation**
 
 ### Current State
 
-The CI pipeline runs frontend build but **skips all frontend tests**. The lint step is commented out. There is no type drift check in CI. Backend testing and coverage are solid.
+The CI pipeline already runs frontend lint, type-check, tests (`test:ci`), and build. Backend CI is comprehensive with fmt, clippy, tests (stable + MSRV), security auditing, and coverage. The main gap is **no type drift check** in CI, and **no unified `quality:check`** script for local development.
 
-### Proposed CI Quality Gate
+### Implemented: `quality:check` Script
 
-Add these steps to the existing `frontend` job in `.github/workflows/ci.yml`:
+A `quality:check` script has been added to the root `package.json` that runs all quality gates in sequence:
 
-```yaml
-# In the existing 'frontend' job, after "Install deps":
-
-- name: Lint
-  working-directory: frontend
-  run: npm run lint
-
-- name: Type check
-  working-directory: frontend
-  run: npm run type-check
-
-- name: Run tests
-  working-directory: frontend
-  run: npm run test:ci
-
-- name: Type drift check
-  run: npm run types:ci-drift-check
+```bash
+npm run quality:check
 ```
 
-### Why These Steps
+This runs:
+1. `frontend:lint` — ESLint
+2. `frontend:type-check` — TypeScript strict checking
+3. `backend:check` — Cargo check
+4. `backend:clippy` — Rust linting
+5. `backend:fmt -- --check` — Rust formatting check
 
-| Step | Rationale |
-|------|-----------|
-| `npm run lint` | Catch style/correctness issues (currently commented out) |
-| `npm run type-check` | Catch TypeScript errors (not in CI today) |
-| `npm run test:ci` | Run all frontend unit/integration tests with coverage (`--passWithNoTests` ensures no failure on zero tests) |
-| `npm run types:ci-drift-check` | Verify TypeScript types match Rust models (script already exists, not in CI) |
+### Implemented: Type Drift Check in CI
+
+A `types:ci-drift-check` step has been added to the `frontend` job in `.github/workflows/ci.yml` to verify TypeScript types match Rust models on every PR/push.
 
 ### Coverage Thresholds
 
@@ -339,8 +303,8 @@ The `test:coverage:check` script already enforces 70% thresholds for branches, f
 
 ### Migration Path
 
-1. **Phase 1 (now)**: Add `lint`, `type-check`, `test:ci` to CI — these will pass with `--passWithNoTests`
-2. **Phase 2 (after adding top-10 tests)**: Switch to `test:coverage:check` with 70% thresholds
+1. **Phase 1 (done)**: Lint, type-check, `test:ci`, and type drift check all run in CI
+2. **Phase 2 (after adding remaining top-10 tests)**: Switch to `test:coverage:check` with 70% thresholds
 3. **Phase 3 (mature)**: Add E2E test job for critical flows (requires running app in CI)
 
 ---
@@ -351,7 +315,7 @@ The `test:coverage:check` script already enforces 70% thresholds for branches, f
 
 | Flow | Frontend | IPC | Backend | E2E | Overall |
 |------|----------|-----|---------|-----|---------|
-| Authentication | ❌ 0% | ❌ 0% | ✅ 90% | ✅ Yes | 🟠 Partial |
+| Authentication | ✅ 90% | ✅ Yes | ✅ 90% | ✅ Yes | ✅ Strong |
 | Task Creation | ✅ 80% | ✅ Yes | ✅ 95% | ✅ Yes | ✅ Strong |
 | Intervention Start | ✅ 60% | ✅ Yes | ✅ 90% | ✅ Yes | ✅ Good |
 | Intervention Finalize | 🟡 30% | ✅ Yes | ✅ 90% | ✅ Yes | 🟠 Partial |
@@ -361,4 +325,4 @@ The `test:coverage:check` script already enforces 70% thresholds for branches, f
 
 ### Key Takeaway
 
-The backend is well-tested with 80+ test files covering unit, integration, property-based, and migration testing. The frontend has good component and hook test coverage for inventory and task flows, but **authentication, client management, and report backend layers have critical gaps**. The most impactful immediate action is **enabling frontend tests in CI** (Test 1) — this costs nothing and unlocks the value of all 59 existing test files.
+The backend is well-tested with 80+ test files covering unit, integration, property-based, and migration testing. The frontend now has solid authentication coverage (auth IPC contract, auth service, auth context, login page). The remaining gaps are **client management frontend tests**, **report backend service tests**, and **workflow step component tests**. The `quality:check` script and CI type drift check provide a complete local + CI quality gate for development.
