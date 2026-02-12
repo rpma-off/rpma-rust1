@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { messageApi } from '@/lib/ipc/message';
+import { useAuth } from '@/contexts/AuthContext';
 import type {
   Message,
   MessageQuery,
@@ -12,6 +13,7 @@ import type {
 import { toast } from 'sonner';
 
 export function useMessage() {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +22,7 @@ export function useMessage() {
 
   const sendMessage = useCallback(async (request: SendMessageRequest) => {
     try {
-      const message = await messageApi.send(request);
+      const message = await messageApi.send(request, user?.token ?? '');
       toast.success('Message sent successfully');
       return { success: true, data: message };
     } catch (err) {
@@ -28,7 +30,7 @@ export function useMessage() {
       toast.error(message);
       return { success: false, error: message };
     }
-  }, []);
+  }, [user?.token]);
 
   const fetchMessages = useCallback(async (query: MessageQuery = {
     message_type: null,
@@ -46,7 +48,7 @@ export function useMessage() {
     try {
       setLoading(true);
       setError(null);
-      const response: MessageListResponse = await messageApi.getList(query);
+      const response: MessageListResponse = await messageApi.getList(query, user?.token ?? '');
       setMessages(response.messages);
       setTotal(response.total);
       setHasMore(response.has_more);
@@ -57,11 +59,11 @@ export function useMessage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.token]);
 
   const markAsRead = useCallback(async (messageId: string) => {
     try {
-      await messageApi.markRead(messageId);
+      await messageApi.markRead(messageId, user?.token ?? '');
       setMessages(prev =>
         prev.map(msg =>
           msg.id === messageId
@@ -73,7 +75,7 @@ export function useMessage() {
       const message = err instanceof Error ? err.message : 'Failed to mark message as read';
       toast.error(message);
     }
-  }, []);
+  }, [user?.token]);
 
   return {
     messages,
@@ -88,6 +90,7 @@ export function useMessage() {
 }
 
 export function useMessageTemplates() {
+  const { user } = useAuth();
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -99,7 +102,7 @@ export function useMessageTemplates() {
     try {
       setLoading(true);
       setError(null);
-      const data = await messageApi.getTemplates(category, messageType);
+      const data = await messageApi.getTemplates(category, messageType, user?.token ?? '');
       setTemplates(data);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load templates';
@@ -108,7 +111,7 @@ export function useMessageTemplates() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.token]);
 
   useEffect(() => {
     fetchTemplates();
@@ -123,6 +126,7 @@ export function useMessageTemplates() {
 }
 
 export function useNotificationPreferences(userId?: string) {
+  const { user } = useAuth();
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -131,7 +135,7 @@ export function useNotificationPreferences(userId?: string) {
     try {
       setLoading(true);
       setError(null);
-      const data = await messageApi.getPreferences(uid);
+      const data = await messageApi.getPreferences(uid, user?.token ?? '');
       setPreferences(data);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load preferences';
@@ -140,14 +144,14 @@ export function useNotificationPreferences(userId?: string) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.token]);
 
   const updatePreferences = useCallback(async (
     uid: string,
     updates: UpdateNotificationPreferencesRequest
   ) => {
     try {
-      const data = await messageApi.updatePreferences(uid, updates);
+      const data = await messageApi.updatePreferences(uid, updates, user?.token ?? '');
       setPreferences(data);
       toast.success('Preferences updated successfully');
       return { success: true, data };
@@ -156,7 +160,7 @@ export function useNotificationPreferences(userId?: string) {
       toast.error(message);
       return { success: false, error: message };
     }
-  }, []);
+  }, [user?.token]);
 
   useEffect(() => {
     if (userId) {
