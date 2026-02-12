@@ -7,7 +7,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Icons } from '@/components/icons';
-import { Task, TaskStatus } from '@/lib/backend';
+import { TaskStatus } from '@/lib/backend';
 import { TaskWithDetails } from '@/types/task.types';
 import { TaskChecklist } from './TaskChecklist';
 import { TaskPhotos } from './TaskPhotos';
