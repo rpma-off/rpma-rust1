@@ -106,6 +106,23 @@ pub async fn intervention_get_latest_by_task(
 
     info!(task_id = %task_id, "Getting latest intervention for task");
 
+    // Check task access
+    let task_access = state
+        .task_service
+        .check_task_assignment(&task_id, &session.user_id)
+        .unwrap_or(false);
+
+    if !task_access
+        && !matches!(
+            session.role,
+            crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+        )
+    {
+        return Err(AppError::Authorization(
+            "Not authorized to view interventions for this task".to_string(),
+        ));
+    }
+
     state
         .intervention_service
         .get_latest_intervention_by_task(&task_id)
