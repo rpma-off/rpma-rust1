@@ -32,7 +32,7 @@ function generateFreshTypes() {
     }
 
     // Run type generation
-    const command = 'cd src-tauri && cargo run --bin export-types --features="ts-rs"';
+    const command = 'cd src-tauri && cargo run --bin export-types';
     const output = execSync(command, { encoding: 'utf8' });
 
     // Write to temp file

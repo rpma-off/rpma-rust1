@@ -17,7 +17,7 @@ codegen-units = 16
 opt-level = 0
 debug = true
 incremental = true
-overflow-checks = false
+overflow-checks = true
 
 [profile.release]
 panic = "abort"
@@ -25,4 +25,4 @@ codegen-units = 1
 lto = true
 opt-level = "z"
 strip = true
-overflow-checks = false
+overflow-checks = true
