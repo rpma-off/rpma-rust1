@@ -288,10 +288,11 @@ impl WorkflowValidationService {
                 .map(|s| (s.step_number, s.step_name.clone()))
                 .collect();
 
-            let incomplete_steps: Vec<i32> =
-                incomplete_step_info.iter().map(|(n, _)| *n).collect();
-            let incomplete_names: Vec<&str> =
-                incomplete_step_info.iter().map(|(_, name)| name.as_str()).collect();
+            let incomplete_steps: Vec<i32> = incomplete_step_info.iter().map(|(n, _)| *n).collect();
+            let incomplete_names: Vec<&str> = incomplete_step_info
+                .iter()
+                .map(|(_, name)| name.as_str())
+                .collect();
 
             let mut error_context = std::collections::HashMap::new();
             error_context.insert(

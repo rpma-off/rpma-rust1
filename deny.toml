@@ -1,0 +1,70 @@
+# cargo-deny configuration
+# https://embarkstudios.github.io/cargo-deny/
+
+[graph]
+targets = []
+all-features = true
+
+[advisories]
+ignore = [
+    # unic-* crates: unmaintained, transitive dep from tauri via urlpattern
+    { id = "RUSTSEC-2025-0075", reason = "transitive dep from tauri/urlpattern" },
+    { id = "RUSTSEC-2025-0080", reason = "transitive dep from tauri/urlpattern" },
+    { id = "RUSTSEC-2025-0081", reason = "transitive dep from tauri/urlpattern" },
+    { id = "RUSTSEC-2025-0098", reason = "transitive dep from tauri/urlpattern" },
+    { id = "RUSTSEC-2025-0100", reason = "transitive dep from tauri/urlpattern" },
+    # gtk-rs GTK3 bindings: unmaintained, transitive dep from tauri (Linux only)
+    { id = "RUSTSEC-2024-0411", reason = "transitive dep from tauri (gdkwayland-sys)" },
+    { id = "RUSTSEC-2024-0412", reason = "transitive dep from tauri (gdk)" },
+    { id = "RUSTSEC-2024-0413", reason = "transitive dep from tauri (atk)" },
+    { id = "RUSTSEC-2024-0414", reason = "transitive dep from tauri (gdkx11-sys)" },
+    { id = "RUSTSEC-2024-0415", reason = "transitive dep from tauri (gtk)" },
+    { id = "RUSTSEC-2024-0416", reason = "transitive dep from tauri (atk-sys)" },
+    { id = "RUSTSEC-2024-0417", reason = "transitive dep from tauri (gdkx11)" },
+    { id = "RUSTSEC-2024-0418", reason = "transitive dep from tauri (gdk-sys)" },
+    { id = "RUSTSEC-2024-0419", reason = "transitive dep from tauri (gtk3-macros)" },
+    { id = "RUSTSEC-2024-0420", reason = "transitive dep from tauri (gtk-sys)" },
+    # Other transitive unmaintained deps
+    { id = "RUSTSEC-2020-0020", reason = "stb_truetype, transitive dep from genpdf" },
+    { id = "RUSTSEC-2020-0056", reason = "stdweb, transitive dep" },
+    { id = "RUSTSEC-2020-0144", reason = "lzw, transitive dep from genpdf" },
+    { id = "RUSTSEC-2021-0140", reason = "rusttype, transitive dep from genpdf" },
+    { id = "RUSTSEC-2021-0153", reason = "encoding, transitive dep" },
+    { id = "RUSTSEC-2024-0370", reason = "proc-macro-error, transitive dep" },
+    { id = "RUSTSEC-2025-0057", reason = "fxhash, transitive dep" },
+    { id = "RUSTSEC-2025-0134", reason = "rustls-pemfile, transitive dep" },
+]
+
+[licenses]
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "MPL-2.0",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+    "CC0-1.0",
+    "OpenSSL",
+    "BSL-1.0",
+    "CDLA-Permissive-2.0",
+]
+confidence-threshold = 0.8
+
+[[licenses.clarify]]
+name = "ring"
+expression = "MIT AND ISC AND OpenSSL"
+license-files = [{ path = "LICENSE", hash = 0xbd0eed23 }]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "allow"
+
+[sources]
+unknown-registry = "warn"
+unknown-git = "warn"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []

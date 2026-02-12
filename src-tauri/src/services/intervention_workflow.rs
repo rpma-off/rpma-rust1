@@ -796,10 +796,7 @@ impl InterventionWorkflowService {
                 updated_step.started_at = TimestampString(Some(crate::models::common::now()));
             }
             self.data.save_step(&updated_step)?;
-            logger.debug(
-                "Marked finalization step as completed",
-                None,
-            );
+            logger.debug("Marked finalization step as completed", None);
         }
 
         // Update final data
