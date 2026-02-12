@@ -29,6 +29,7 @@
     "performance:test": "node scripts/performance-regression-test.js",
     "performance:update-baseline": "node scripts/performance-regression-test.js --update-baseline",
     "security:audit": "node scripts/security-audit.js",
+    "duplication:detect": "node scripts/detect-duplication.js",
     "code-review:check": "node scripts/code-review-check.js",
     "install": "npm run frontend:install",
     "clean": "npm run frontend:clean && cd src-tauri && cargo clean",
