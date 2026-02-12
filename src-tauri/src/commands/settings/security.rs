@@ -4,13 +4,16 @@
 //! authentication configuration, password policies, and security preferences.
 
 use crate::commands::settings::core::{
-    authenticate_user, handle_settings_error, load_app_settings, update_app_settings,
+    handle_settings_error, load_app_settings, update_app_settings,
 };
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::models::settings::UserSecuritySettings;
 
 use serde::Deserialize;
 use tracing::info;
+
+// Import authentication macros
+use crate::authenticate;
 
 #[derive(Deserialize)]
 pub struct UpdateUserSecurityRequest {
@@ -39,7 +42,7 @@ pub async fn update_security_settings(
 ) -> Result<ApiResponse<String>, AppError> {
     info!("Updating security settings");
 
-    let user = authenticate_user(&request.session_token, &state)?;
+    let user = authenticate!(&request.session_token, &state);
 
     // Only admins can update system security settings
     if !matches!(user.role, crate::models::auth::UserRole::Admin) {
@@ -83,7 +86,7 @@ pub async fn update_user_security(
 ) -> Result<ApiResponse<String>, AppError> {
     info!("Updating user security settings");
 
-    let user = authenticate_user(&request.session_token, &state)?;
+    let user = authenticate!(&request.session_token, &state);
 
     let mut security_settings: UserSecuritySettings = state
         .settings_service

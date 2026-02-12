@@ -4,7 +4,7 @@
 //! including appearance, general settings, and performance preferences.
 
 use crate::commands::settings::core::{
-    authenticate_user, handle_settings_error, load_app_settings, update_app_settings,
+    handle_settings_error, load_app_settings, update_app_settings,
 };
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::models::settings::UserPreferences;
@@ -96,7 +96,7 @@ pub async fn update_user_preferences(
 ) -> Result<ApiResponse<String>, AppError> {
     info!("Updating user preferences");
 
-    let user = authenticate_user(&request.session_token, &state)?;
+    let user = authenticate!(&request.session_token, &state);
 
     let mut preferences: UserPreferences = state
         .settings_service
@@ -170,7 +170,7 @@ pub async fn update_user_performance(
 ) -> Result<ApiResponse<String>, AppError> {
     info!("Updating user performance settings");
 
-    let user = authenticate_user(&session_token, &state)?;
+    let user = authenticate!(&session_token, &state);
 
     state
         .settings_service

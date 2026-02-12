@@ -3,7 +3,6 @@
 //! This module handles data consent management, audit logging,
 //! and GDPR-compliant data operations.
 
-use crate::commands::settings::core::authenticate_user;
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::services::consent::ConsentService;
 
@@ -35,7 +34,7 @@ pub async fn get_data_consent(
 ) -> Result<ApiResponse<DataConsent>, AppError> {
     info!("Getting data consent information");
 
-    let user = authenticate_user(&session_token, &state)?;
+    let user = authenticate!(&session_token, &state);
     let consent_service = ConsentService::new(Arc::new((*state.db).clone()));
 
     let consent = consent_service
