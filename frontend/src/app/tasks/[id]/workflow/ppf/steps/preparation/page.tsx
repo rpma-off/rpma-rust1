@@ -12,6 +12,7 @@ import { ArrowRight, CheckCircle, Thermometer, Droplets, Wrench, AlertTriangle, 
 import { usePPFWorkflow } from '@/contexts/PPFWorkflowContext';
 import { getNextPPFStepId, getPPFStepPath } from '@/lib/ppf-workflow';
 import { PhotoUpload } from '@/components/PhotoUpload/PhotoUpload';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface PreparationChecklistItem {
   id: string;
@@ -61,6 +62,7 @@ const defaultChecklist: PreparationChecklistItem[] = [
 ];
 
 export default function PreparationStepPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { taskId, advanceToStep, stepsData, steps, currentStep } = usePPFWorkflow();
   const [isCompleting, setIsCompleting] = useState(false);
@@ -171,7 +173,7 @@ export default function PreparationStepPage() {
   };
 
   const stepIndex = steps.findIndex(step => step.id === 'preparation');
-  const stepLabel = stepIndex >= 0 ? `Étape ${stepIndex + 1} sur ${steps.length}` : 'Étape';
+  const stepLabel = stepIndex >= 0 ? `${t('interventions.steps')} ${stepIndex + 1}/${steps.length}` : t('interventions.steps');
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -541,7 +543,7 @@ export default function PreparationStepPage() {
           }`}
         >
           <span className="flex items-center justify-center space-x-2">
-            <span>{isCompleting ? 'Finalisation...' : 'Étape suivante'}</span>
+            <span>{isCompleting ? t('common.loading') : t('common.next')}</span>
             <ArrowRight className={`h-5 w-5 transition-transform ${isCompleting ? '' : 'group-hover:translate-x-1'}`} />
           </span>
         </Button>

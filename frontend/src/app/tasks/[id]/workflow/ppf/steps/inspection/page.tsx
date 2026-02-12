@@ -10,6 +10,7 @@ import { usePPFWorkflow } from '@/contexts/PPFWorkflowContext';
 import { getNextPPFStepId, getPPFStepPath } from '@/lib/ppf-workflow';
 import { VehicleDiagram, Defect } from '@/components/workflow/ppf/VehicleDiagram';
 import { PhotoUpload } from '@/components/PhotoUpload/PhotoUpload';
+import { useTranslation } from '@/hooks/useTranslation';
 
 type InspectionDefectPayload = {
   id: string;
@@ -27,6 +28,7 @@ type InspectionCollectedData = {
 };
 
 export default function InspectionStepPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { taskId, advanceToStep, stepsData, steps, currentStep } = usePPFWorkflow();
   const [defects, setDefects] = useState<Array<Defect>>([]);
@@ -106,7 +108,7 @@ export default function InspectionStepPage() {
   };
 
   const stepIndex = steps.findIndex(step => step.id === 'inspection');
-  const stepLabel = stepIndex >= 0 ? `Étape ${stepIndex + 1} sur ${steps.length}` : 'Étape';
+  const stepLabel = stepIndex >= 0 ? t('interventions.stepNumber', { number: `${stepIndex + 1} ${t('common.on')} ${steps.length}` }) : t('interventions.steps');
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -286,7 +288,7 @@ export default function InspectionStepPage() {
                       onClick={() => setDefects(defects.filter(d => d.id !== defect.id))}
                       className="text-red-400 hover:text-red-300 hover:bg-red-500/10 ml-3 shrink-0"
                     >
-                      Supprimer
+                      {t('common.remove')}
                     </Button>
                   </motion.div>
                 ))}
@@ -317,7 +319,7 @@ export default function InspectionStepPage() {
           className="min-w-40 h-12 text-base font-medium bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/25 transition-all duration-300 hover:shadow-xl hover:shadow-blue-600/30"
         >
           <span className="flex items-center justify-center space-x-2">
-            <span>{isCompleting ? 'Finalisation...' : 'Étape suivante'}</span>
+            <span>{isCompleting ? t('common.loading') : t('common.next')}</span>
             <ArrowRight className={`h-5 w-5 transition-transform ${isCompleting ? '' : 'group-hover:translate-x-1'}`} />
           </span>
         </Button>

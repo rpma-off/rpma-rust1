@@ -8,8 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ArrowRight, CheckCircle, Clock, AlertCircle, Shield, Sparkles } from 'lucide-react';
 import { usePPFWorkflow } from '@/contexts/PPFWorkflowContext';
 import { getPPFStepPath } from '@/lib/ppf-workflow';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function PPFWorkflowPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { taskId, currentStep, steps, canAdvanceToStep } = usePPFWorkflow();
 
@@ -86,10 +88,10 @@ export default function PPFWorkflowPage() {
           <Sparkles className="h-6 w-6 text-primary animate-pulse" />
         </div>
         <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-3">
-          PPF Installation Workflow
+          {t('interventions.title')}
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          Guided process for professional PPF application with precision and quality control
+          {t('common.loading')}
         </p>
       </motion.div>
 
@@ -168,9 +170,9 @@ export default function PPFWorkflowPage() {
                   >
                     <span className="flex items-center justify-center space-x-2">
                       <span>
-                        {status === 'completed' ? 'Review' :
-                         status === 'current' ? 'Continue' :
-                         status === 'available' ? 'Start' : 'Locked'}
+                        {status === 'completed' ? t('common.view') :
+                         status === 'current' ? t('common.next') :
+                         status === 'available' ? t('interventions.startIntervention') : 'Verrouillé'}
                       </span>
                       <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
                     </span>
@@ -190,7 +192,7 @@ export default function PPFWorkflowPage() {
         transition={{ delay: 0.8, duration: 0.6 }}
       >
         <p className="text-muted-foreground text-sm">
-          Complete each step in order for optimal PPF installation results
+          {t('interventions.steps')}
         </p>
       </motion.div>
     </motion.div>

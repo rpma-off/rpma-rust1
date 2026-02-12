@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { usePPFWorkflow } from '@/contexts/PPFWorkflowContext';
 import { SignatureCapture } from '@/components/SignatureCapture';
 import { PhotoUpload } from '@/components/PhotoUpload/PhotoUpload';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface QCItem {
   id: string;
@@ -70,6 +71,7 @@ const defaultQCChecklist: QCItem[] = [
 ];
 
 export default function FinalizationStepPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { taskId, finalizeIntervention, stepsData, steps } = usePPFWorkflow();
   const [isCompleting, setIsCompleting] = useState(false);
@@ -159,9 +161,9 @@ export default function FinalizationStepPage() {
       console.error('Error completing finalization:', error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage.includes('mandatory steps incomplete')) {
-        toast.error('Impossible de finaliser : des étapes obligatoires sont incomplètes');
+        toast.error(t('errors.validationError'));
       } else {
-        toast.error('Erreur lors de la finalisation');
+        toast.error(t('errors.generic'));
       }
     } finally {
       setIsCompleting(false);
@@ -169,7 +171,7 @@ export default function FinalizationStepPage() {
   };
 
   const stepIndex = steps.findIndex(step => step.id === 'finalization');
-  const stepLabel = stepIndex >= 0 ? `Étape ${stepIndex + 1} sur ${steps.length}` : 'Étape';
+  const stepLabel = stepIndex >= 0 ? `${t('interventions.steps')} ${stepIndex + 1}/${steps.length}` : t('interventions.steps');
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -563,7 +565,7 @@ export default function FinalizationStepPage() {
         >
           <span className="flex items-center justify-center space-x-2">
             <Trophy className="h-5 w-5" />
-            <span>{isCompleting ? 'Finalisation...' : 'Terminer l\'intervention'}</span>
+            <span>{isCompleting ? t('common.loading') : t('interventions.finalizeIntervention')}</span>
           </span>
         </Button>
       </motion.div>
