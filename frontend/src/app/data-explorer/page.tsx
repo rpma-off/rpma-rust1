@@ -10,15 +10,17 @@ import { DataExplorer } from '@/app/reports/components/data-explorer/DataExplore
 import { PageShell } from '@/components/layout/PageShell';
 import { PageHeader } from '@/components/ui/page-header';
 import { SectionCard } from '@/components/layout/SectionCard';
+import { useTranslation } from '@/hooks/useTranslation';
 
 
 
 export default function DataExplorerPage() {
+  const { t } = useTranslation();
   return (
     <TooltipProvider>
       <PageShell>
         <PageHeader
-          title="Explorateur de Données"
+          title={t('nav.dataExplorer')}
           subtitle="Explorez, recherchez et analysez votre base de données PPF en temps réel"
           icon={<Database className="w-6 h-6 text-[hsl(var(--rpma-teal))]" />}
         >
@@ -53,7 +55,7 @@ export default function DataExplorerPage() {
               className="border-border text-foreground hover:bg-[hsl(var(--rpma-surface))] flex-1 sm:flex-none"
             >
               <BarChart3 className="h-5 w-5 mr-2" />
-              Voir les Statistiques
+              {t('reports.statistics')}
             </Button>
             <Button
               variant="outline"
@@ -61,7 +63,7 @@ export default function DataExplorerPage() {
               className="border-border text-foreground hover:bg-[hsl(var(--rpma-surface))] flex-1 sm:flex-none"
             >
               <RefreshCw className="h-5 w-5 mr-2" />
-              Actualiser
+              {t('common.refresh')}
             </Button>
           </div>
         </SectionCard>

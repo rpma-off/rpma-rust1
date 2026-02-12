@@ -36,6 +36,7 @@ import { SecurityDashboard } from '@/components/dashboard/SecurityDashboard';
 import { PageShell } from '@/components/layout/PageShell';
 import { PageHeader } from '@/components/ui/page-header';
 import { ErrorState } from '@/components/layout/ErrorState';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface SystemStats {
   totalUsers: number;
@@ -58,6 +59,7 @@ interface RecentActivity {
 }
 
 export default function AdminPage() {
+  const { t } = useTranslation();
   const { user, profile } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
@@ -193,7 +195,7 @@ export default function AdminPage() {
   const handleDeleteUser = async (userId: string) => {
     if (!user?.token) return;
 
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
+    if (!confirm(t('users.confirmDelete'))) {
       return;
     }
 
@@ -231,8 +233,8 @@ export default function AdminPage() {
     return (
       <PageShell>
         <ErrorState
-          title="Accès Restreint"
-          message="Vous n'avez pas les permissions pour accéder à cette page."
+          title={t('errors.unauthorized')}
+          message={t('errors.permissionDenied')}
         />
       </PageShell>
     );
@@ -270,28 +272,28 @@ export default function AdminPage() {
     <PageShell>
       {/* Header */}
       <PageHeader
-        title="Administration Système"
-        subtitle="Gestion et surveillance du système RPMA V2"
+        title={t('admin.title')}
+        subtitle={t('admin.systemSettings')}
         icon={<Shield className="w-6 h-6 text-[hsl(var(--rpma-teal))]" />}
       >
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
           <div className="text-center p-4 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
             <div className="text-2xl font-bold text-foreground">{stats.totalUsers}</div>
-            <div className="text-xs text-muted-foreground">Utilisateurs</div>
+            <div className="text-xs text-muted-foreground">{t('users.title')}</div>
           </div>
           <div className="text-center p-4 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
             <div className="text-2xl font-bold text-foreground">{stats.activeUsers}</div>
-            <div className="text-xs text-muted-foreground">Actifs</div>
+            <div className="text-xs text-muted-foreground">{t('users.active')}</div>
           </div>
           <div className="text-center p-4 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
             <div className="text-2xl font-bold text-foreground">{stats.totalTasks}</div>
-            <div className="text-xs text-muted-foreground">Tâches</div>
+            <div className="text-xs text-muted-foreground">{t('tasks.title')}</div>
           </div>
           <div className="text-center p-4 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
             <Badge className={`px-3 py-1 ${getHealthColor(stats.systemHealth)}`}>
-              {stats.systemHealth === 'healthy' ? '✓ Sain' :
-               stats.systemHealth === 'warning' ? '⚠ Attention' : '✗ Critique'}
+              {stats.systemHealth === 'healthy' ? `✓ ${t('admin.systemHealth')}` :
+               stats.systemHealth === 'warning' ? `⚠ ${t('common.warning')}` : `✗ ${t('common.critical')}`}
             </Badge>
           </div>
         </div>
@@ -302,19 +304,19 @@ export default function AdminPage() {
           <TabsList data-variant="underline" className="w-full justify-start bg-[hsl(var(--rpma-teal))] text-white rounded-[10px] px-2">
             <TabsTrigger value="overview" data-variant="underline">
               <BarChart3 className="h-4 w-4 mr-2" />
-              Vue d&apos;ensemble
+              {t('analytics.overview')}
             </TabsTrigger>
             <TabsTrigger value="users" data-variant="underline">
               <Users className="h-4 w-4 mr-2" />
-              Utilisateurs
+              {t('users.title')}
             </TabsTrigger>
             <TabsTrigger value="system" data-variant="underline">
               <Server className="h-4 w-4 mr-2" />
-              Système
+              {t('common.system')}
             </TabsTrigger>
             <TabsTrigger value="security" data-variant="underline">
               <Lock className="h-4 w-4 mr-2" />
-              Sécurité
+              {t('settings.security')}
             </TabsTrigger>
           </TabsList>
 
@@ -326,23 +328,23 @@ export default function AdminPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-foreground">
                     <Activity className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />
-                    Santé Système
+                    {t('admin.systemHealth')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Statut</span>
+                    <span className="text-muted-foreground">{t('tasks.status')}</span>
                     <Badge className={getHealthColor(stats.systemHealth)}>
-                      {stats.systemHealth === 'healthy' ? '✓ Sain' :
-                       stats.systemHealth === 'warning' ? '⚠ Attention' : '✗ Critique'}
+                      {stats.systemHealth === 'healthy' ? `✓ ${t('admin.systemHealth')}` :
+                       stats.systemHealth === 'warning' ? `⚠ ${t('common.warning')}` : `✗ ${t('common.critical')}`}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Disponibilité</span>
+                    <span className="text-muted-foreground">{t('common.availability')}</span>
                     <span className="text-foreground font-medium">{stats.uptime}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Base de données</span>
+                    <span className="text-muted-foreground">{t('admin.database')}</span>
                     <span className="text-foreground font-medium">{stats.databaseSize}</span>
                   </div>
                 </CardContent>
@@ -353,7 +355,7 @@ export default function AdminPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-foreground">
                     <Clock className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />
-                    Activité Récente
+                    {t('audit.activity')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -397,14 +399,14 @@ export default function AdminPage() {
             <Card className="border-[hsl(var(--rpma-border))] bg-white">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-foreground">Gestion des Utilisateurs</CardTitle>
+                  <CardTitle className="text-foreground">{t('admin.userManagement')}</CardTitle>
                   <Button>
                     <Plus className="h-4 w-4 mr-2" />
-                    Ajouter Utilisateur
+                    {t('users.createUser')}
                   </Button>
                 </div>
                 <CardDescription className="text-muted-foreground">
-                  Gérez les comptes utilisateurs et leurs permissions
+                  {t('users.title')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -515,26 +517,26 @@ export default function AdminPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-foreground">
                     <Database className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />
-                    Base de Données
+                    {t('admin.database')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Taille</span>
+                    <span className="text-muted-foreground">{t('common.size')}</span>
                     <span className="text-foreground font-medium">{stats.databaseSize}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Dernière sauvegarde</span>
+                    <span className="text-muted-foreground">{t('admin.backup')}</span>
                     <span className="text-foreground font-medium">{stats.lastBackup}</span>
                   </div>
                   <div className="flex justify-end gap-2">
                     <Button size="sm" variant="outline" className="border-border/60 text-muted-foreground hover:bg-border/20">
                       <Download className="h-4 w-4 mr-2" />
-                      Exporter
+                      {t('common.export')}
                     </Button>
                     <Button size="sm">
                       <RefreshCw className="h-4 w-4 mr-2" />
-                      Sauvegarder
+                      {t('admin.backup')}
                     </Button>
                   </div>
                 </CardContent>
@@ -544,20 +546,20 @@ export default function AdminPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-foreground">
                     <Server className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />
-                    Performance
+                    {t('analytics.performance')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Disponibilité</span>
+                    <span className="text-muted-foreground">{t('common.availability')}</span>
                     <span className="text-foreground font-medium">{stats.uptime}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Charge CPU</span>
+                    <span className="text-muted-foreground">{t('common.cpuLoad')}</span>
                     <span className="text-green-400 font-medium">23%</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Mémoire</span>
+                    <span className="text-muted-foreground">{t('common.memory')}</span>
                     <span className="text-yellow-400 font-medium">67%</span>
                   </div>
                 </CardContent>
@@ -575,7 +577,7 @@ export default function AdminPage() {
       {showAddUserModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-[hsl(var(--rpma-surface))] border border-[hsl(var(--rpma-border))] rounded-lg p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Ajouter un Utilisateur</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">{t('users.createUser')}</h3>
             <form onSubmit={(e) => {
               e.preventDefault();
               const formData = new FormData(e.target as HTMLFormElement);
@@ -590,7 +592,7 @@ export default function AdminPage() {
             }}>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-1">Email</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">{t('users.email')}</label>
                   <Input
                     name="email"
                     type="email"
@@ -600,7 +602,7 @@ export default function AdminPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-muted-foreground mb-1">Prénom</label>
+                    <label className="block text-sm font-medium text-muted-foreground mb-1">{t('users.firstName')}</label>
                     <Input
                       name="firstName"
                       required
@@ -608,7 +610,7 @@ export default function AdminPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-muted-foreground mb-1">Nom</label>
+                    <label className="block text-sm font-medium text-muted-foreground mb-1">{t('users.lastName')}</label>
                     <Input
                       name="lastName"
                       required
@@ -617,20 +619,20 @@ export default function AdminPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-1">Rôle</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">{t('users.role')}</label>
                   <select
                     name="role"
                     required
                     className="w-full px-3 py-2 bg-white border border-[hsl(var(--rpma-border))] rounded-[6px] text-foreground"
                   >
-                    <option value="viewer">Observateur</option>
-                    <option value="technician">Technicien</option>
-                    <option value="supervisor">Superviseur</option>
-                    <option value="admin">Administrateur</option>
+                    <option value="viewer">{t('users.roleViewer')}</option>
+                    <option value="technician">{t('users.roleTechnician')}</option>
+                    <option value="supervisor">{t('users.roleSupervisor')}</option>
+                    <option value="admin">{t('users.roleAdmin')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-1">Mot de passe</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">{t('auth.password')}</label>
                   <Input
                     name="password"
                     type="password"
@@ -646,13 +648,13 @@ export default function AdminPage() {
                   onClick={() => setShowAddUserModal(false)}
                   className="flex-1 border-border/60 text-muted-foreground hover:bg-border/20"
                 >
-                  Annuler
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   type="submit"
                   className="flex-1 font-medium"
                 >
-                  Ajouter
+                  {t('common.add')}
                 </Button>
               </div>
             </form>

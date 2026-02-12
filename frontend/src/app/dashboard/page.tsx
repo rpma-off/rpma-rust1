@@ -7,10 +7,12 @@ import { CalendarDashboard } from '@/components/dashboard/CalendarDashboard';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { PageShell } from '@/components/layout/PageShell';
 import { LoadingState } from '@/components/layout/LoadingState';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function DashboardPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { t } = useTranslation();
 
   React.useEffect(() => {
     if (!authLoading && !user) {
@@ -21,7 +23,7 @@ export default function DashboardPage() {
   if (authLoading) {
     return (
       <PageShell>
-        <LoadingState message="Chargement..." />
+        <LoadingState message={t('common.loading')} />
       </PageShell>
     );
   }

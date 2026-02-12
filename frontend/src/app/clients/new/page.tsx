@@ -13,10 +13,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import type { CreateClientDTO } from '@/types/client.types';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function NewClientPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<CreateClientDTO>({
     name: '',
@@ -33,7 +35,7 @@ export default function NewClientPage() {
     e.preventDefault();
 
     if (!user) {
-      toast.error('You must be logged in to create a client');
+      toast.error(t('errors.unauthorized'));
       return;
     }
 
@@ -42,7 +44,7 @@ export default function NewClientPage() {
       setErrors({});
 
       if (!user?.id) {
-        setErrors({ general: 'Authentication required' });
+        setErrors({ general: t('auth.authRequired') });
         return;
       }
 
@@ -57,7 +59,7 @@ export default function NewClientPage() {
       }
     } catch (error) {
       console.error('Error creating client:', error);
-      setErrors({ general: 'An unexpected error occurred' });
+      setErrors({ general: t('errors.unexpectedError') });
     } finally {
       setLoading(false);
     }
@@ -85,15 +87,15 @@ export default function NewClientPage() {
               className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
-              <span className="text-sm">Back to Clients</span>
+              <span className="text-sm">{t('clients.backToClients')}</span>
             </Link>
             <div className="flex items-center space-x-4">
               <div className="p-3 bg-green-600/20 rounded-full">
                 <UserPlus className="h-8 w-8 text-green-400" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-foreground">New Client</h1>
-                <p className="text-muted-foreground mt-1">Add a new client to the system</p>
+                <h1 className="text-3xl font-bold text-foreground">{t('clients.newClient')}</h1>
+                <p className="text-muted-foreground mt-1">{t('clients.addToSystem')}</p>
               </div>
             </div>
           </div>
@@ -103,7 +105,7 @@ export default function NewClientPage() {
       {/* Form */}
       <Card>
         <CardHeader>
-          <CardTitle>Client Information</CardTitle>
+          <CardTitle>{t('clients.clientDetails')}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-8">
@@ -117,7 +119,7 @@ export default function NewClientPage() {
             {/* Name */}
             <div className="space-y-2">
               <label htmlFor="name" className="block text-sm font-medium text-muted-foreground">
-                Client Name *
+                {t('clients.name')} *
               </label>
               <Input
                 type="text"
@@ -125,7 +127,7 @@ export default function NewClientPage() {
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 className={errors.name ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                placeholder="Enter client name"
+                placeholder={t('forms.placeholder', { field: t('clients.name').toLowerCase() })}
                 required
               />
               {errors.name && <p className="text-red-400 text-sm">{errors.name}</p>}
@@ -134,7 +136,7 @@ export default function NewClientPage() {
             {/* Customer Type */}
             <div className="space-y-3">
               <label className="block text-sm font-medium text-muted-foreground">
-                Customer Type *
+                {t('clients.customerType')} *
               </label>
               <div className="flex space-x-6">
                 <label className="flex items-center space-x-2 cursor-pointer">
@@ -148,7 +150,7 @@ export default function NewClientPage() {
                   />
                   <div className="flex items-center space-x-2">
                     <User className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-foreground">Individual</span>
+                    <span className="text-foreground">{t('clients.individual')}</span>
                   </div>
                 </label>
                 <label className="flex items-center space-x-2 cursor-pointer">
@@ -162,7 +164,7 @@ export default function NewClientPage() {
                   />
                   <div className="flex items-center space-x-2">
                     <Building className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-foreground">Business</span>
+                    <span className="text-foreground">{t('clients.business')}</span>
                   </div>
                 </label>
               </div>
@@ -171,7 +173,7 @@ export default function NewClientPage() {
             {/* Email */}
             <div className="space-y-2">
               <label htmlFor="email" className="block text-sm font-medium text-muted-foreground">
-                Email Address
+                {t('clients.email')}
               </label>
               <Input
                 type="email"
@@ -179,7 +181,7 @@ export default function NewClientPage() {
                 value={formData.email || ''}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 className={errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                placeholder="Enter email address"
+                placeholder={t('forms.placeholder', { field: t('clients.email').toLowerCase() })}
               />
               {errors.email && <p className="text-red-400 text-sm">{errors.email}</p>}
             </div>
@@ -187,7 +189,7 @@ export default function NewClientPage() {
             {/* Phone */}
             <div className="space-y-2">
               <label htmlFor="phone" className="block text-sm font-medium text-muted-foreground">
-                Phone Number
+                {t('clients.phone')}
               </label>
               <Input
                 type="tel"
@@ -195,7 +197,7 @@ export default function NewClientPage() {
                 value={formData.phone || ''}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 className={errors.phone ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                placeholder="Enter phone number"
+                placeholder={t('forms.placeholder', { field: t('clients.phone').toLowerCase() })}
               />
               {errors.phone && <p className="text-red-400 text-sm">{errors.phone}</p>}
             </div>
@@ -203,14 +205,14 @@ export default function NewClientPage() {
             {/* Address */}
             <div className="space-y-2">
               <label htmlFor="address_street" className="block text-sm font-medium text-muted-foreground">
-                Address
+                {t('clients.address')}
               </label>
               <Textarea
                 id="address_street"
                 value={formData.address_street || ''}
                 onChange={(e) => handleInputChange('address_street', e.target.value)}
                 className={errors.address_street ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                placeholder="Enter full address"
+                placeholder={t('forms.placeholder', { field: t('clients.address').toLowerCase() })}
                 rows={3}
               />
               {errors.address_street && <p className="text-red-400 text-sm">{errors.address_street}</p>}
@@ -220,7 +222,7 @@ export default function NewClientPage() {
             {formData.customer_type === 'business' && (
               <div className="space-y-2">
                 <label htmlFor="company_name" className="block text-sm font-medium text-muted-foreground">
-                  Company Name
+                  {t('clients.companyName')}
                 </label>
                 <Input
                   type="text"
@@ -228,7 +230,7 @@ export default function NewClientPage() {
                   value={formData.company_name || ''}
                   onChange={(e) => handleInputChange('company_name', e.target.value)}
                   className={errors.company_name ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                  placeholder="Enter company name"
+                  placeholder={t('forms.placeholder', { field: t('clients.companyName').toLowerCase() })}
                 />
                 {errors.company_name && <p className="text-red-400 text-sm">{errors.company_name}</p>}
               </div>
@@ -237,14 +239,14 @@ export default function NewClientPage() {
             {/* Notes */}
             <div className="space-y-2">
               <label htmlFor="notes" className="block text-sm font-medium text-muted-foreground">
-                Additional Notes
+                {t('clients.notes')}
               </label>
               <Textarea
                 id="notes"
                 value={formData.notes || ''}
                 onChange={(e) => handleInputChange('notes', e.target.value)}
                 className={errors.notes ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                placeholder="Enter any additional notes about the client"
+                placeholder={t('forms.placeholder', { field: t('clients.notes').toLowerCase() })}
                 rows={4}
               />
               {errors.notes && <p className="text-red-400 text-sm">{errors.notes}</p>}
@@ -259,7 +261,7 @@ export default function NewClientPage() {
                 className="flex items-center space-x-2"
               >
                 <X className="h-4 w-4" />
-                <span>Cancel</span>
+                <span>{t('common.cancel')}</span>
               </Button>
               <Button
                 type="submit"
@@ -271,7 +273,7 @@ export default function NewClientPage() {
                 ) : (
                   <Save className="h-4 w-4" />
                 )}
-                <span>{loading ? 'Creating...' : 'Create Client'}</span>
+                <span>{loading ? t('common.loading') : t('clients.createClient')}</span>
               </Button>
             </div>
           </form>

@@ -18,19 +18,22 @@ import { handleError } from '@/lib/utils/error-handler';
 import { LogDomain } from '@/lib/logging/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { ipcClient } from '@/lib/ipc';
+import { useTranslation } from '@/hooks/useTranslation';
+import { taskStatusLabels } from '@/lib/i18n/status-labels';
 
 const QUICK_NAV_SECTIONS = [
-  { id: 'task-actions', label: 'Actions' },
-  { id: 'task-overview', label: 'Vue d\'ensemble' },
-  { id: 'task-attachments', label: 'Pièces jointes' },
-  { id: 'task-timeline', label: 'Historique' },
-  { id: 'task-admin', label: 'Administration' }
+  { id: 'task-actions', label: 'tasks.actions' },
+  { id: 'task-overview', label: 'tasks.overview' },
+  { id: 'task-attachments', label: 'tasks.attachments' },
+  { id: 'task-timeline', label: 'tasks.history' },
+  { id: 'task-admin', label: 'tasks.administration' }
 ] as const;
 
 export default function TaskDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const taskId = params.id as string;
 
   const [task, setTask] = useState<TaskWithDetails | null>(null);
@@ -53,13 +56,13 @@ export default function TaskDetailPage() {
 
         if (result.error) {
           if (result.status === 404) {
-            setError('Tâche non trouvée');
-            toast.error('Tâche non trouvée');
+            setError(t('tasks.notFound'));
+            toast.error(t('tasks.notFound'));
           } else if (result.status === 403) {
-            setError('Accès non autorisé à cette tâche');
-            toast.error('Accès non autorisé à cette tâche');
+            setError(t('tasks.unauthorized'));
+            toast.error(t('tasks.unauthorized'));
           } else {
-            const errorMessage = result.error || 'Erreur lors du chargement de la tâche';
+            const errorMessage = result.error || t('errors.loadFailed');
             setError(errorMessage);
             toast.error(errorMessage);
           }
@@ -86,21 +89,21 @@ export default function TaskDetailPage() {
             });
 
             if (validationError.message?.includes('authentication') || validationError.message?.includes('token')) {
-              handleError(new Error('Votre session a expiré. Veuillez vous reconnecter.'), 'Authentication failed during task validation', {
+              handleError(new Error(t('errors.sessionExpired')), 'Authentication failed during task validation', {
                 domain: LogDomain.API,
                 userId: user?.user_id,
                 component: 'TaskValidation',
                 showToast: true
               });
             } else if (validationError.message?.includes('authorization') || validationError.message?.includes('permission')) {
-              handleError(new Error('Vous n\'avez pas la permission de consulter cette affectation.'), 'Authorization failed during task validation', {
+              handleError(new Error(t('errors.permissionDenied')), 'Authorization failed during task validation', {
                 domain: LogDomain.API,
                 userId: user?.user_id,
                 component: 'TaskValidation',
                 showToast: true
               });
             } else if (validationError.message?.includes('rate limit')) {
-              handleError(new Error('Trop de requêtes. Veuillez patienter avant de réessayer.'), 'Rate limit exceeded during task validation', {
+              handleError(new Error(t('errors.rateLimitExceeded')), 'Rate limit exceeded during task validation', {
                 domain: LogDomain.API,
                 userId: user?.user_id,
                 component: 'TaskValidation',
@@ -112,7 +115,7 @@ export default function TaskDetailPage() {
           }
         }
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Erreur de connexion';
+        const errorMessage = err instanceof Error ? err.message : t('errors.connectionError');
         setError(errorMessage);
         handleError(err, 'Failed to fetch task details', {
           domain: LogDomain.TASK,
@@ -156,11 +159,11 @@ export default function TaskDetailPage() {
 
   const formatDate = (timestamp: bigint | string | null | undefined) => {
     try {
-      if (!timestamp) return 'N/A';
+      if (!timestamp) return t('common.noData');
       const date = typeof timestamp === 'bigint' ? new Date(bigintToNumber(timestamp) || 0) : new Date(timestamp);
       return date.toLocaleDateString('fr-FR');
     } catch {
-      return 'Date invalide';
+      return t('errors.invalidDate');
     }
   };
 
@@ -188,7 +191,7 @@ export default function TaskDetailPage() {
   }, [task]);
 
   const statusMeta = {
-    label: task?.status === 'completed' ? 'Terminée' : task?.status === 'in_progress' ? 'En cours' : task?.status === 'pending' ? 'En attente' : 'Brouillon',
+    label: taskStatusLabels[task?.status || ''] || task?.status || t('tasks.statusDraft'),
     color:
       task?.status === 'completed'
         ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
@@ -206,7 +209,7 @@ export default function TaskDetailPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-          <p className="text-foreground">Chargement des détails de la tâche...</p>
+          <p className="text-foreground">{t('tasks.loadingDetails')}</p>
         </div>
       </div>
     );
@@ -219,7 +222,7 @@ export default function TaskDetailPage() {
           <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto">
             <AlertCircle className="h-8 w-8 text-red-400" />
           </div>
-          <h2 className="text-xl font-semibold text-foreground">Erreur</h2>
+          <h2 className="text-xl font-semibold text-foreground">{t('tasks.error')}</h2>
           <p className="text-border-light">{error}</p>
           <Button
             onClick={() => router.back()}
@@ -227,7 +230,7 @@ export default function TaskDetailPage() {
             className="border-border text-border-light hover:text-foreground hover:border-primary"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Retour
+            {t('common.back')}
           </Button>
         </div>
       </div>
@@ -238,14 +241,14 @@ export default function TaskDetailPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
-          <p className="text-foreground">Tâche non trouvée</p>
+          <p className="text-foreground">{t('tasks.notFound')}</p>
           <Button
             onClick={() => router.back()}
             variant="outline"
             className="border-border text-border-light hover:text-foreground hover:border-primary"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Retour
+            {t('common.back')}
           </Button>
         </div>
       </div>
@@ -266,16 +269,16 @@ export default function TaskDetailPage() {
                   className="text-border-light hover:text-foreground hover:bg-border/20 border border-border/30 hover:border-primary/50 transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  <span className="hidden sm:inline">Retour</span>
+                  <span className="hidden sm:inline">{t('common.back')}</span>
                 </Button>
 
                 <nav className="hidden sm:flex items-center gap-2 text-xs md:text-sm text-border-light">
                   <a href="/dashboard" className="flex items-center hover:text-foreground transition-colors p-1 rounded hover:bg-border/20">
                     <Home className="w-3 h-3 md:w-4 md:h-4 mr-1" />
-                    <span>Dashboard</span>
+                    <span>{t('nav.dashboard')}</span>
                   </a>
                   <span className="text-border/50">/</span>
-                  <a href="/tasks" className="hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-border/20">Tâches</a>
+                  <a href="/tasks" className="hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-border/20">{t('nav.tasks')}</a>
                   <span className="text-border/50">/</span>
                   <span className="text-foreground font-medium px-2 py-1 bg-border/20 rounded">{getTaskDisplayTitle(task)}</span>
                 </nav>
@@ -291,25 +294,25 @@ export default function TaskDetailPage() {
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground leading-tight">{getTaskDisplayTitle(task)}</h1>
                 <div className="flex flex-wrap items-center gap-2 text-sm text-border-light">
                   <span className="inline-flex items-center gap-1"><Car className="w-3.5 h-3.5" />
-                    {task.vehicle_make && task.vehicle_model ? `${task.vehicle_make} ${task.vehicle_model}` : 'Véhicule non spécifié'}
+                    {task.vehicle_make && task.vehicle_model ? `${task.vehicle_make} ${task.vehicle_model}` : t('tasks.vehicleNotSpecified')}
                   </span>
                   {task.vehicle_plate && (
                     <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-border/20 text-foreground font-medium">
                       {task.vehicle_plate}
                     </span>
                   )}
-                  <span className="inline-flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />Planifiée: {formatDate(task.scheduled_date)}</span>
+                  <span className="inline-flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{t('tasks.planned')}: {formatDate(task.scheduled_date)}</span>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 text-sm">
                   <span className="inline-flex items-center gap-1 text-border-light"><User className="w-3.5 h-3.5" />
-                    Client: <span className="text-foreground font-medium">{task.customer_name || 'Non spécifié'}</span>
+                    {t('tasks.client')}: <span className="text-foreground font-medium">{task.customer_name || t('tasks.customerNotSpecified')}</span>
                   </span>
                 </div>
               </div>
 
               <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))] p-4 space-y-3">
                 <div className="flex items-center justify-between text-xs uppercase tracking-wide text-border-light">
-                  <span className="inline-flex items-center gap-1"><Gauge className="w-3.5 h-3.5" /> Progression</span>
+                  <span className="inline-flex items-center gap-1"><Gauge className="w-3.5 h-3.5" /> {t('tasks.progress')}</span>
                   <span className="text-foreground font-semibold text-sm">{progressValue}%</span>
                 </div>
                 <div className="h-2 rounded-full bg-border/60 overflow-hidden">
@@ -337,7 +340,7 @@ export default function TaskDetailPage() {
                         : 'border-border/70 bg-background/70 text-border-light hover:text-foreground hover:border-primary/30'
                     }`}
                   >
-                    {section.label}
+                    {t(section.label)}
                   </button>
                 ))}
               </div>
@@ -372,29 +375,29 @@ export default function TaskDetailPage() {
 
             <aside id="task-admin" className="space-y-4 md:space-y-6">
               <div className="xl:sticky xl:top-24 rounded-xl border border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))] p-4">
-                <h3 className="text-sm font-semibold text-foreground mb-3">Administration</h3>
+                <h3 className="text-sm font-semibold text-foreground mb-3">{t('tasks.administration')}</h3>
 
                 <details className="group md:hidden">
                   <summary className="list-none cursor-pointer rounded-lg border border-border/60 px-3 py-2 text-sm text-border-light hover:text-foreground hover:border-primary/40">
-                    Afficher les informations administratives
+                    {t('tasks.showAdminInfo')}
                   </summary>
                   <dl className="mt-3 space-y-2 text-sm">
-                    <div className="flex justify-between gap-3"><dt className="text-border-light">ID tâche</dt><dd className="font-mono text-foreground">{task.id?.slice(-8) || 'N/A'}</dd></div>
-                    <div className="flex justify-between gap-3"><dt className="text-border-light">Créée</dt><dd className="text-foreground">{formatDate(task.created_at as unknown as string)}</dd></div>
-                    <div className="flex justify-between gap-3"><dt className="text-border-light">Mise à jour</dt><dd className="text-foreground">{formatDate(task.updated_at as unknown as string)}</dd></div>
-                    {task.external_id && <div className="flex justify-between gap-3"><dt className="text-border-light">Réf. externe</dt><dd className="text-foreground">{task.external_id}</dd></div>}
-                    {task.task_number && <div className="flex justify-between gap-3"><dt className="text-border-light">N° tâche</dt><dd className="text-foreground">{task.task_number}</dd></div>}
+                    <div className="flex justify-between gap-3"><dt className="text-border-light">{t('tasks.taskId')}</dt><dd className="font-mono text-foreground">{task.id?.slice(-8) || t('common.noData')}</dd></div>
+                    <div className="flex justify-between gap-3"><dt className="text-border-light">{t('tasks.createdOn')}</dt><dd className="text-foreground">{formatDate(task.created_at as unknown as string)}</dd></div>
+                    <div className="flex justify-between gap-3"><dt className="text-border-light">{t('tasks.updated')}</dt><dd className="text-foreground">{formatDate(task.updated_at as unknown as string)}</dd></div>
+                    {task.external_id && <div className="flex justify-between gap-3"><dt className="text-border-light">{t('tasks.externalRef')}</dt><dd className="text-foreground">{task.external_id}</dd></div>}
+                    {task.task_number && <div className="flex justify-between gap-3"><dt className="text-border-light">{t('tasks.taskNum')}</dt><dd className="text-foreground">{task.task_number}</dd></div>}
                   </dl>
                 </details>
 
                 <dl className="hidden md:block space-y-2 text-sm">
-                  <div className="flex justify-between gap-3"><dt className="text-border-light">ID tâche</dt><dd className="font-mono text-foreground">{task.id?.slice(-8) || 'N/A'}</dd></div>
-                  <div className="flex justify-between gap-3"><dt className="text-border-light">Créée</dt><dd className="text-foreground">{formatDate(task.created_at as unknown as string)}</dd></div>
-                  <div className="flex justify-between gap-3"><dt className="text-border-light">Mise à jour</dt><dd className="text-foreground">{formatDate(task.updated_at as unknown as string)}</dd></div>
-                  {task.external_id && <div className="flex justify-between gap-3"><dt className="text-border-light">Réf. externe</dt><dd className="text-foreground">{task.external_id}</dd></div>}
-                  {task.task_number && <div className="flex justify-between gap-3"><dt className="text-border-light">N° tâche</dt><dd className="text-foreground">{task.task_number}</dd></div>}
+                  <div className="flex justify-between gap-3"><dt className="text-border-light">{t('tasks.taskId')}</dt><dd className="font-mono text-foreground">{task.id?.slice(-8) || t('common.noData')}</dd></div>
+                  <div className="flex justify-between gap-3"><dt className="text-border-light">{t('tasks.createdOn')}</dt><dd className="text-foreground">{formatDate(task.created_at as unknown as string)}</dd></div>
+                  <div className="flex justify-between gap-3"><dt className="text-border-light">{t('tasks.updated')}</dt><dd className="text-foreground">{formatDate(task.updated_at as unknown as string)}</dd></div>
+                  {task.external_id && <div className="flex justify-between gap-3"><dt className="text-border-light">{t('tasks.externalRef')}</dt><dd className="text-foreground">{task.external_id}</dd></div>}
+                  {task.task_number && <div className="flex justify-between gap-3"><dt className="text-border-light">{t('tasks.taskNum')}</dt><dd className="text-foreground">{task.task_number}</dd></div>}
                   {task.template_id && (
-                    <div className="flex justify-between gap-3"><dt className="text-border-light">Template</dt><dd className="font-mono text-foreground">{task.template_id.slice(-8)}</dd></div>
+                    <div className="flex justify-between gap-3"><dt className="text-border-light">{t('tasks.template')}</dt><dd className="font-mono text-foreground">{task.template_id.slice(-8)}</dd></div>
                   )}
                 </dl>
               </div>
