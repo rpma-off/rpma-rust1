@@ -265,7 +265,7 @@ impl Database {
             33 => self.apply_migration_33(),
             _ => {
                 // Try to apply generic SQL migration for all other versions
-                // This covers 3-5, 7, 10, 13-15, 19-23, and 27+
+                // This covers 3-5, 7, 10, 13-15, 19-23, 34, 35, and any future SQL-only migrations
                 // Note: Versions 2, 6, 8, 9, 24, 25, 26 now have custom handlers for idempotency
                 if version == 24 || version == 25 || version == 26 {
                     return Err(format!(
@@ -1928,7 +1928,9 @@ impl Database {
 
     fn apply_migration_31(&self) -> DbResult<()> {
         let conn = self.get_connection()?;
-        tracing::info!("Applying migration 31: Add non-negative CHECK constraints to inventory tables");
+        tracing::info!(
+            "Applying migration 31: Add non-negative CHECK constraints to inventory tables"
+        );
 
         // --- Rebuild inventory_transactions with CHECK constraints ---
         let inv_tx_exists: i64 = conn
@@ -1940,9 +1942,19 @@ impl Database {
             .map_err(|e| e.to_string())?;
 
         if inv_tx_exists > 0 {
-            let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
+            // Check if CHECK constraint already present
+            let table_sql: String = conn
+                .query_row(
+                    "SELECT sql FROM sqlite_master WHERE type='table' AND name='inventory_transactions'",
+                    [],
+                    |row| row.get(0),
+                )
+                .map_err(|e| format!("Failed to get inventory_transactions SQL: {}", e))?;
 
-            tx.execute_batch(
+            if !table_sql.contains("quantity >= 0") {
+                let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
+
+                tx.execute_batch(
                 r#"
                 CREATE TABLE inventory_transactions_new (
                   id TEXT PRIMARY KEY NOT NULL,
@@ -1992,7 +2004,8 @@ impl Database {
             )
             .map_err(|e| format!("Failed to rebuild inventory_transactions: {}", e))?;
 
-            tx.commit().map_err(|e| e.to_string())?;
+                tx.commit().map_err(|e| e.to_string())?;
+            }
         }
 
         // --- Rebuild materials with CHECK constraints on stock fields ---
@@ -2005,14 +2018,16 @@ impl Database {
             .map_err(|e| e.to_string())?;
 
         if materials_exists > 0 {
-            // Check if CHECK constraint already present by trying an invalid insert
-            let needs_rebuild = conn
-                .execute(
-                    "CREATE TABLE _migration_31_check_test (v REAL CHECK(v >= 0))",
+            // Check if non-negative CHECK constraint already present on current_stock
+            let table_sql: String = conn
+                .query_row(
+                    "SELECT sql FROM sqlite_master WHERE type='table' AND name='materials'",
                     [],
+                    |row| row.get(0),
                 )
-                .and_then(|_| conn.execute("DROP TABLE _migration_31_check_test", []))
-                .is_ok();
+                .map_err(|e| format!("Failed to get materials table SQL: {}", e))?;
+
+            let needs_rebuild = !table_sql.contains("current_stock >= 0");
 
             if needs_rebuild {
                 let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
@@ -2110,9 +2125,19 @@ impl Database {
             .map_err(|e| e.to_string())?;
 
         if mc_exists > 0 {
-            let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
+            // Check if CHECK constraint already present
+            let table_sql: String = conn
+                .query_row(
+                    "SELECT sql FROM sqlite_master WHERE type='table' AND name='material_consumption'",
+                    [],
+                    |row| row.get(0),
+                )
+                .map_err(|e| format!("Failed to get material_consumption SQL: {}", e))?;
 
-            tx.execute_batch(
+            if !table_sql.contains("quantity_used >= 0") {
+                let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
+
+                tx.execute_batch(
                 r#"
                 CREATE TABLE material_consumption_new (
                   id TEXT PRIMARY KEY NOT NULL,
@@ -2165,7 +2190,8 @@ impl Database {
             )
             .map_err(|e| format!("Failed to rebuild material_consumption: {}", e))?;
 
-            tx.commit().map_err(|e| e.to_string())?;
+                tx.commit().map_err(|e| e.to_string())?;
+            }
         }
 
         conn.execute(
