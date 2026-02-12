@@ -116,8 +116,8 @@ RPMA v2 follows a strict **four-layer architecture** that separates concerns and
 ```
 
 **Code Paths**:
-- Frontend: `frontend/src/app/tasks/new/page.tsx` → `frontend/src/lib/ipc/domains/task.ts`
-- Command: `src-tauri/src/commands/task/create.rs`
+- Frontend: `frontend/src/app/tasks/new/page.tsx` → `frontend/src/lib/ipc/domains/tasks.ts`
+- Command: `src-tauri/src/commands/task/facade.rs` (handled via `task_crud` command with `TaskAction::Create`)
 - Service: `src-tauri/src/services/task_creation.rs`
 - Repository: `src-tauri/src/repositories/task_repository.rs`
 
@@ -179,7 +179,7 @@ RPMA v2 follows a strict **four-layer architecture** that separates concerns and
 
 **Code Paths**:
 - Frontend: `frontend/src/components/tasks/TaskDetailView.tsx` → `frontend/src/lib/ipc/domains/intervention.ts`
-- Command: `src-tauri/src/commands/intervention/start.rs`
+- Command: `src-tauri/src/commands/intervention/workflow.rs` (handled via `intervention_start` or `intervention_workflow` commands)
 - Service: `src-tauri/src/services/intervention_workflow.rs`
 - Repository: `src-tauri/src/repositories/intervention_repository.rs`
 
@@ -247,9 +247,9 @@ RPMA v2 follows a strict **four-layer architecture** that separates concerns and
 ```
 
 **Code Paths**:
-- Frontend: `frontend/src/components/workflow/InterventionStepExecutor.tsx`
-- Command: `src-tauri/src/commands/intervention/advance_step.rs`
-- Service: `src-tauri/src/services/intervention_workflow.rs`, `photo/save.rs`
+- Frontend: `frontend/src/components/workflow/ppf/` components
+- Command: `src-tauri/src/commands/intervention/workflow.rs`
+- Service: `src-tauri/src/services/intervention_workflow.rs`, `src-tauri/src/services/photo/` (upload.rs, storage.rs, processing.rs)
 - Repository: `src-tauri/src/repositories/photo_repository.rs`
 
 **Business Rules**:
@@ -308,9 +308,9 @@ RPMA v2 follows a strict **four-layer architecture** that separates concerns and
 ```
 
 **Code Paths**:
-- Frontend: `frontend/src/app/schedule/page.tsx` → `frontend/src/lib/ipc/calendar.ts`
+- Frontend: `frontend/src/app/schedule/page.tsx` → `frontend/src/lib/ipc/domains/calendar.ts`
 - Command: `src-tauri/src/commands/calendar.rs`
-- Service: `src-tauri/src/services/calendar.rs`
+- Service: `src-tauri/src/services/calendar.rs`, `src-tauri/src/services/calendar_event_service.rs`
 - Repository: `src-tauri/src/repositories/calendar_event_repository.rs`
 
 **Business Rules**:
@@ -388,11 +388,27 @@ RPMA v2 uses an **in-memory event bus** to decouple domain events from their sid
 
 ### Example Events
 
-- `TaskCreated { task_id }`
-- `TaskAssigned { task_id, technician_id }`
-- `InterventionStarted { intervention_id, task_id }`
-- `InterventionCompleted { intervention_id, task_id }`
-- `MaterialConsumed { material_id, quantity, intervention_id }`
+**Task Events:**
+- `TaskCreated { task_id, task_number, title, user_id }`
+- `TaskAssigned { task_id, technician_id, assigned_by }`
+- `TaskUpdated { task_id, changed_fields }`
+- `TaskStatusChanged { task_id, old_status, new_status }`
+- `TaskCompleted { task_id }`
+
+**Intervention Events:**
+- `InterventionStarted { intervention_id, task_id, started_by }`
+- `InterventionStepStarted { intervention_id, step_id }`
+- `InterventionStepCompleted { intervention_id, step_id }`
+- `InterventionCompleted { intervention_id, completed_by, quality_score }`
+- `InterventionCancelled { intervention_id, reason }`
+
+**Authentication Events:**
+- `AuthenticationSuccess { user_id }`
+- `AuthenticationFailed { user_id, reason }`
+
+**System Events:**
+- `SystemError { error_code, message }`
+- `PerformanceAlert { metric, threshold, current_value }`
 
 **Benefits**:
 - Decouples core logic from side effects
@@ -452,12 +468,14 @@ async_db.with_transaction_async(move |tx| {
 - Access stats: `db.get_performance_stats()`
 
 ### 3. Prepared Statement Caching
-- `PreparedStatementCache` reuses compiled SQL statements
+- `PreparedStatementCache` tracks prepared statement usage statistics
+- rusqlite handles caching internally via `prepare_cached()`
 - Cache stats: `db.stmt_cache().stats()`
 
 ### 4. Streaming Large Result Sets
-- Use `ChunkedQuery` for paginated results
-- Avoids loading all rows into memory
+- `ChunkedQuery` in `src-tauri/src/db/connection.rs` provides paginated streaming
+- `StreamingTaskRepository` in `src-tauri/src/repositories/task_repository_streaming.rs`
+- `StreamingConfig` with configurable chunk_size (default 1000) and streaming_threshold (default 5000)
 - Example: Task list with 10,000+ tasks
 
 ---

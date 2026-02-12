@@ -88,30 +88,34 @@ The application is designed to work **completely offline** with a local SQLite d
 rpma-rust/
 ├── src-tauri/                # Rust/Tauri backend
 │   ├── src/
-│   │   ├── commands/         # IPC command handlers (~60 files)
+│   │   ├── commands/         # IPC command handlers (~25 files by domain)
+│   │   │                     # auth.rs, client.rs, material.rs, calendar.rs,
+│   │   │                     # user.rs, message.rs, notification.rs, analytics.rs,
+│   │   │                     # performance.rs, system.rs, settings/, task/, intervention/, reports/
 │   │   ├── services/         # Business logic layer (~60 services)
-│   │   ├── repositories/     # Data access layer (~18 repositories)
-│   │   ├── models/           # Data models with ts-rs exports (~20 files)
+│   │   ├── repositories/     # Data access layer (~15 repositories)
+│   │   ├── models/           # Data models with ts-rs exports (~15 files)
 │   │   ├── db/               # Database management & migrations
 │   │   ├── sync/             # Offline sync queue
 │   │   ├── logging/          # Structured logging
 │   │   └── main.rs           # Application entry point
-│   ├── migrations/           # SQLite migrations (~28 files)
+│   ├── migrations/           # SQLite migrations (33+ migrations)
 │   └── Cargo.toml            # Rust dependencies
 ├── frontend/                 # Next.js application
 │   ├── src/
-│   │   ├── app/              # Next.js App Router pages
-│   │   ├── components/       # React components (~270 files)
+│   │   ├── app/              # Next.js App Router pages (40+ routes)
+│   │   ├── components/       # React components (~180 files, organized by domain)
 │   │   ├── lib/
-│   │   │   ├── ipc/          # IPC client modules (~65 files)
+│   │   │   ├── ipc/          # IPC client modules (19 domain modules, ~65 files total)
 │   │   │   ├── services/     # Frontend business logic
 │   │   │   └── utils/        # Utility functions
-│   │   ├── types/            # TypeScript types (auto-generated from Rust)
-│   │   ├── hooks/            # Custom React hooks (~65 files)
-│   │   └── contexts/         # React contexts
-│   └── package.json          # Frontend dependencies
-├── scripts/                  # Build and validation scripts (~24 files)
+│   │   ├── types/            # TypeScript types (20+ files, auto-generated from Rust)
+│   │   ├── hooks/            # Custom React hooks (~65 hooks)
+│   │   └── contexts/         # React contexts (4 contexts)
+│   └── package.json          # Frontend dependencies (20 npm scripts)
+├── scripts/                  # Build and validation scripts
 ├── migrations/               # Root-level migration symlink
+├── package.json              # Root package.json (45 npm scripts)
 └── docs/                     # Documentation
     └── agent-pack/           # AI agent onboarding docs (this directory!)
 ```

@@ -83,11 +83,25 @@ interface ApiResponse<T> {
 
 ---
 
-##  Top 30 Most Important IPC Commands
+## IPC Commands Reference
 
-### Authentication & Authorization (5 commands)
+### Authentication & Authorization Commands
 
-#### 1. `login`
+| Command | Description | Permissions |
+|---------|-------------|-------------|
+| `auth_login` | Authenticate user and create session | Public |
+| `auth_create_account` | Create new user account | Public |
+| `auth_logout` | Invalidate session token | Authenticated |
+| `auth_validate_session` | Check if session token is valid | Any |
+| `auth_refresh_token` | Extend session using refresh token | Public |
+| `enable_2fa` | Generate 2FA setup for current user | Authenticated |
+| `verify_2fa_setup` | Verify 2FA setup and enable 2FA | Authenticated |
+| `disable_2fa` | Disable 2FA for current user | Authenticated |
+| `verify_2fa_code` | Verify 2FA code during sensitive operations | Authenticated |
+| `is_2fa_enabled` | Check if 2FA is enabled for current user | Authenticated |
+| `regenerate_backup_codes` | Regenerate 2FA backup codes | Authenticated |
+
+#### `auth_login`
 
 **Purpose**: Authenticate user and create session
 
@@ -95,23 +109,20 @@ interface ApiResponse<T> {
 ```typescript
 {
   email: string,
-  password: string
+  password: string,
+  correlation_id?: string
 }
 ```
 
-**Returns**: `ApiResponse<{ user: UserAccount, session_token: string, refresh_token: string }>`
+**Returns**: `ApiResponse<UserSession>`
 
-**Permissions**: Public (no session required)
-
-**Backend**: `src-tauri/src/commands/auth.rs::login`
-
-**Frontend**: `frontend/src/lib/ipc/domains/auth.ts::login`
+**Backend**: `src-tauri/src/commands/auth.rs::auth_login`
 
 ---
 
-#### 2. `logout`
+#### `enable_2fa`
 
-**Purpose**: Invalidate session token
+**Purpose**: Generate 2FA setup data for the current user
 
 **Parameters**:
 ```typescript
@@ -120,495 +131,179 @@ interface ApiResponse<T> {
 }
 ```
 
-**Returns**: `ApiResponse<void>`
+**Returns**: `ApiResponse<TwoFactorSetup>`
 
-**Permissions**: Authenticated user
-
-**Backend**: `src-tauri/src/commands/auth.rs::logout`
+**Backend**: `src-tauri/src/commands/auth.rs::enable_2fa`
 
 ---
 
-#### 3. `validate_session`
+### Task Management Commands
 
-**Purpose**: Check if session token is still valid
+| Command | Description | Permissions |
+|---------|-------------|-------------|
+| `task_crud` | Unified CRUD for tasks (Create, Get, Update, Delete, List, GetStatistics) | Role-based |
+| `edit_task` | Edit an existing task | Admin, Supervisor, Assigned Technician |
+| `delay_task` | Reschedule a task with reason | Admin, Supervisor, Assigned Technician |
+| `add_task_note` | Add a note to a task | Authenticated |
+| `send_task_message` | Send message related to a task | Authenticated |
+| `report_task_issue` | Report an issue with a task | Authenticated |
+| `export_tasks_csv` | Export tasks to CSV format | Authenticated |
+| `import_tasks_bulk` | Bulk import tasks from CSV | Admin, Supervisor |
+| `get_tasks_with_clients` | Get tasks with client information | Authenticated |
+| `get_user_assigned_tasks` | Get tasks assigned to a user | Authenticated |
+| `get_task_statistics` | Get task statistics | Authenticated |
+| `get_completion_rate` | Get task completion rate | Authenticated |
+| `get_average_duration_by_status` | Get average duration by status | Authenticated |
+| `get_priority_distribution` | Get task priority distribution | Authenticated |
+| `check_task_assignment` | Check if task is assigned to user | Authenticated |
+| `check_task_availability` | Check task availability | Authenticated |
+| `validate_task_assignment_change` | Validate task assignment change | Authenticated |
 
-**Parameters**:
-```typescript
-{
-  session_token: string
-}
-```
+#### `task_crud`
 
-**Returns**: `ApiResponse<{ valid: boolean, user?: UserAccount }>`
-
-**Permissions**: Any
-
-**Backend**: `src-tauri/src/commands/auth.rs::validate_session`
-
----
-
-#### 4. `refresh_session`
-
-**Purpose**: Extend session using refresh token
-
-**Parameters**:
-```typescript
-{
-  refresh_token: string
-}
-```
-
-**Returns**: `ApiResponse<{ session_token: string, refresh_token: string }>`
-
-**Permissions**: Public
-
-**Backend**: `src-tauri/src/commands/auth.rs::refresh_session`
-
----
-
-#### 5. `get_current_user`
-
-**Purpose**: Get authenticated user details
-
-**Parameters**:
-```typescript
-{
-  session_token: string
-}
-```
-
-**Returns**: `ApiResponse<UserAccount>`
-
-**Permissions**: Authenticated
-
-**Backend**: `src-tauri/src/commands/auth.rs::get_current_user`
-
----
-
-### Task Management (8 commands)
-
-#### 6. `task_create`
-
-**Purpose**: Create a new task
+**Purpose**: Unified CRUD operations for tasks
 
 **Parameters**:
 ```typescript
 {
   session_token: string,
-  data: {
-    title: string,
+  action: TaskAction,
+  correlation_id?: string
+}
+
+// TaskAction variants:
+// - Create { data: CreateTaskRequest }
+// - Get { id: string }
+// - Update { id: string, data: UpdateTaskRequest }
+// - Delete { id: string }
+// - List { filters: TaskQuery }
+// - GetStatistics
+```
+
+**Returns**: `ApiResponse<TaskResponse>`
+
+**Backend**: `src-tauri/src/commands/task/facade.rs::task_crud`
+
+---
+
+#### `edit_task`
+
+**Purpose**: Edit an existing task
+
+**Parameters**:
+```typescript
+{
+  session_token: string,
+  task_id: string,
+  data: UpdateTaskRequest,
+  correlation_id?: string
+}
+```
+
+**Returns**: `ApiResponse<Task>`
+
+**Backend**: `src-tauri/src/commands/task/facade.rs::edit_task`
+
+---
+
+#### `export_tasks_csv`
+
+**Purpose**: Export tasks to CSV format
+
+**Parameters**:
+```typescript
+{
+  session_token: string,
+  filter?: TaskFilter,
+  include_client_data?: boolean,
+  correlation_id?: string
+}
+```
+
+**Returns**: `ApiResponse<string>` (CSV content)
+
+**Backend**: `src-tauri/src/commands/task/facade.rs::export_tasks_csv`
+
+---
+
+### Client Management Commands
+
+| Command | Description | Permissions |
+|---------|-------------|-------------|
+| `client_crud` | Unified CRUD for clients | Role-based |
+
+#### `client_crud`
+
+**Purpose**: Unified CRUD operations for clients
+
+**Parameters**:
+```typescript
+{
+  session_token: string,
+  action: ClientAction
+}
+
+// ClientAction variants:
+// - Create { data: CreateClientRequest }
+// - Get { id: string }
+// - GetWithTasks { id: string }
+// - Update { id: string, data: UpdateClientRequest }
+// - Delete { id: string }
+// - List { filters: ClientQuery }
+// - ListWithTasks { filters: ClientQuery, limit_tasks?: number }
+// - Search { query: string, limit: number }
+// - Stats
+```
+
+**Returns**: `ApiResponse<serde_json::Value>`
+
+**Backend**: `src-tauri/src/commands/client.rs::client_crud`
+
+---
+
+### Intervention Workflow Commands
+
+| Command | Description | Permissions |
+|---------|-------------|-------------|
+| `intervention_workflow` | Unified workflow (Start, Get, GetActiveByTask, Update, Delete, Finalize) | Role-based |
+| `intervention_start` | Start a new intervention | Technician, Supervisor, Admin |
+| `intervention_get` | Get intervention by ID | Authenticated |
+| `intervention_get_active_by_task` | Get active intervention for a task | Authenticated |
+| `intervention_get_latest_by_task` | Get latest intervention for a task | Authenticated |
+| `intervention_update` | Update intervention data | Assigned Technician, Supervisor, Admin |
+| `intervention_delete` | Delete an intervention | Assigned Technician, Supervisor, Admin |
+| `intervention_finalize` | Mark intervention as completed | Assigned Technician, Supervisor, Admin |
+| `intervention_advance_step` | Advance to next workflow step | Assigned Technician, Supervisor, Admin |
+| `intervention_save_step_progress` | Save progress for current step | Assigned Technician, Supervisor, Admin |
+| `intervention_get_progress` | Get intervention progress | Authenticated |
+| `intervention_get_step` | Get a specific intervention step | Authenticated |
+| `intervention_management` | Management operations | Admin, Supervisor |
+
+#### `intervention_start`
+
+**Purpose**: Start a new intervention for a task
+
+**Parameters**:
+```typescript
+{
+  session_token: string,
+  request: {
+    task_id: string,
+    intervention_type: string,
+    priority: string,
     description?: string,
-    client_id?: string,
-    vehicle_plate: string,
-    vehicle_model?: string,
-    priority?: 'low' | 'medium' | 'high' | 'urgent',
-    ppf_zones?: string[],
-    scheduled_date?: string  // ISO 8601
+    estimated_duration_minutes?: number
   }
-}
-```
-
-**Returns**: `ApiResponse<Task>`
-
-**Permissions**: Admin, Supervisor
-
-**Backend**: `src-tauri/src/commands/task/facade.rs::task_create`
-
-**Frontend**: `frontend/src/lib/ipc/domains/task.ts::createTask`
-
----
-
-#### 7. `task_update`
-
-**Purpose**: Update an existing task
-
-**Parameters**:
-```typescript
-{
-  session_token: string,
-  task_id: string,
-  data: {
-    title?: string,
-    description?: string,
-    status?: TaskStatus,
-    priority?: TaskPriority,
-    technician_id?: string,
-    scheduled_date?: string
-  }
-}
-```
-
-**Returns**: `ApiResponse<Task>`
-
-**Permissions**: Admin, Supervisor (or assigned Technician for limited fields)
-
-**Backend**: `src-tauri/src/commands/task/facade.rs::task_update`
-
----
-
-#### 8. `task_get`
-
-**Purpose**: Get task by ID
-
-**Parameters**:
-```typescript
-{
-  session_token: string,
-  task_id: string
-}
-```
-
-**Returns**: `ApiResponse<Task>`
-
-**Permissions**: All authenticated
-
-**Backend**: `src-tauri/src/commands/task/facade.rs::task_get`
-
----
-
-#### 9. `task_list`
-
-**Purpose**: List tasks with filtering and pagination
-
-**Parameters**:
-```typescript
-{
-  session_token: string,
-  filters?: {
-    status?: TaskStatus,
-    priority?: TaskPriority,
-    technician_id?: string,
-    client_id?: string,
-    search?: string,
-    limit?: number,
-    offset?: number,
-    sort_field?: string,
-    sort_order?: 'asc' | 'desc'
-  }
-}
-```
-
-**Returns**: `ApiResponse<{ data: Task[], total: number, limit: number, offset: number }>`
-
-**Permissions**: All authenticated (Technicians see only assigned tasks unless Admin/Supervisor)
-
-**Backend**: `src-tauri/src/commands/task/facade.rs::task_list`
-
----
-
-#### 10. `task_delete`
-
-**Purpose**: Delete a task (soft or hard delete)
-
-**Parameters**:
-```typescript
-{
-  session_token: string,
-  task_id: string
-}
-```
-
-**Returns**: `ApiResponse<void>`
-
-**Permissions**: Admin only
-
-**Backend**: `src-tauri/src/commands/task/facade.rs::task_delete`
-
----
-
-#### 11. `task_assign`
-
-**Purpose**: Assign task to technician
-
-**Parameters**:
-```typescript
-{
-  session_token: string,
-  task_id: string,
-  technician_id: string,
-  scheduled_date?: string
-}
-```
-
-**Returns**: `ApiResponse<Task>`
-
-**Permissions**: Admin, Supervisor
-
-**Backend**: `src-tauri/src/commands/task/facade.rs::task_assign`
-
----
-
-#### 12. `task_get_statistics`
-
-**Purpose**: Get task statistics (counts by status, priority, etc.)
-
-**Parameters**:
-```typescript
-{
-  session_token: string,
-  filters?: { ... }
-}
-```
-
-**Returns**: `ApiResponse<TaskStatistics>`
-
-**Permissions**: All authenticated
-
-**Backend**: `src-tauri/src/commands/task/facade.rs::task_get_statistics`
-
----
-
-#### 13. `task_import_batch`
-
-**Purpose**: Bulk import tasks from external data (CSV, Excel)
-
-**Parameters**:
-```typescript
-{
-  session_token: string,
-  tasks: CreateTaskRequest[],
-  validation_mode?: 'strict' | 'lenient'
-}
-```
-
-**Returns**: `ApiResponse<{ imported: number, failed: number, errors?: string[] }>`
-
-**Permissions**: Admin, Supervisor
-
-**Backend**: `src-tauri/src/commands/task/facade.rs::task_import_batch`
-
----
-
-### Client Management (4 commands)
-
-#### 14. `client_create`
-
-**Purpose**: Create a new client
-
-**Parameters**:
-```typescript
-{
-  session_token: string,
-  data: {
-    name: string,
-    email?: string,
-    phone?: string,
-    address?: string,
-    customer_type?: 'individual' | 'business',
-    company_name?: string,
-    siret?: string
-  }
-}
-```
-
-**Returns**: `ApiResponse<Client>`
-
-**Permissions**: Admin, Supervisor, Technician
-
-**Backend**: `src-tauri/src/commands/client.rs::client_create`
-
-**Frontend**: `frontend/src/lib/ipc/domains/client.ts::createClient`
-
----
-
-#### 15. `client_update`
-
-**Purpose**: Update client information
-
-**Parameters**:
-```typescript
-{
-  session_token: string,
-  client_id: string,
-  data: { name?: string, email?: string, ... }
-}
-```
-
-**Returns**: `ApiResponse<Client>`
-
-**Permissions**: Admin, Supervisor, Technician
-
-**Backend**: `src-tauri/src/commands/client.rs::client_update`
-
----
-
-#### 16. `client_get`
-
-**Purpose**: Get client by ID
-
-**Parameters**:
-```typescript
-{
-  session_token: string,
-  client_id: string
-}
-```
-
-**Returns**: `ApiResponse<Client>`
-
-**Permissions**: All authenticated
-
-**Backend**: `src-tauri/src/commands/client.rs::client_get`
-
----
-
-#### 17. `client_list`
-
-**Purpose**: List clients with pagination
-
-**Parameters**:
-```typescript
-{
-  session_token: string,
-  filters?: {
-    search?: string,
-    customer_type?: CustomerType,
-    limit?: number,
-    offset?: number
-  }
-}
-```
-
-**Returns**: `ApiResponse<{ data: Client[], total: number }>`
-
-**Permissions**: All authenticated
-
-**Backend**: `src-tauri/src/commands/client.rs::client_list`
-
----
-
-### Intervention Workflow (7 commands)
-
-#### 18. `intervention_start`
-
-**Purpose**: Start an intervention for a task
-
-**Parameters**:
-```typescript
-{
-  session_token: string,
-  task_id: string,
-  task_number: string,
-  vehicle_plate: string
 }
 ```
 
 **Returns**: `ApiResponse<Intervention>`
 
-**Permissions**: Assigned Technician, Supervisor, Admin
-
-**Backend**: `src-tauri/src/commands/intervention/start.rs::intervention_start`
-
-**Frontend**: `frontend/src/lib/ipc/domains/intervention.ts::startIntervention`
+**Backend**: `src-tauri/src/commands/intervention/workflow.rs::intervention_start`
 
 ---
 
-#### 19. `intervention_get`
-
-**Purpose**: Get intervention details
-
-**Parameters**:
-```typescript
-{
-  session_token: string,
-  intervention_id: string
-}
-```
-
-**Returns**: `ApiResponse<Intervention>`
-
-**Permissions**: All authenticated
-
-**Backend**: `src-tauri/src/commands/intervention/get.rs::intervention_get`
-
----
-
-#### 20. `intervention_get_active_by_task`
-
-**Purpose**: Get active intervention for a task (if any)
-
-**Parameters**:
-```typescript
-{
-  session_token: string,
-  task_id: string
-}
-```
-
-**Returns**: `ApiResponse<Intervention | null>`
-
-**Permissions**: All authenticated
-
-**Backend**: `src-tauri/src/commands/intervention/get.rs::intervention_get_active_by_task`
-
----
-
-#### 21. `intervention_advance_step`
-
-**Purpose**: Mark current step as complete and advance to next step
-
-**Parameters**:
-```typescript
-{
-  session_token: string,
-  intervention_id: string,
-  step_id: string,
-  notes?: string,
-  photo_file?: string,  // base64-encoded image
-  material_consumption?: { material_id: string, quantity: number }[]
-}
-```
-
-**Returns**: `ApiResponse<Intervention>`
-
-**Permissions**: Assigned Technician, Supervisor, Admin
-
-**Backend**: `src-tauri/src/commands/intervention/advance_step.rs::intervention_advance_step`
-
----
-
-#### 22. `intervention_pause`
-
-**Purpose**: Pause an in-progress intervention
-
-**Parameters**:
-```typescript
-{
-  session_token: string,
-  intervention_id: string,
-  pause_reason?: string
-}
-```
-
-**Returns**: `ApiResponse<Intervention>`
-
-**Permissions**: Assigned Technician, Supervisor, Admin
-
-**Backend**: `src-tauri/src/commands/intervention/pause.rs::intervention_pause`
-
----
-
-#### 23. `intervention_resume`
-
-**Purpose**: Resume a paused intervention
-
-**Parameters**:
-```typescript
-{
-  session_token: string,
-  intervention_id: string
-}
-```
-
-**Returns**: `ApiResponse<Intervention>`
-
-**Permissions**: Assigned Technician, Supervisor, Admin
-
-**Backend**: `src-tauri/src/commands/intervention/resume.rs::intervention_resume`
-
----
-
-#### 24. `intervention_finalize`
+#### `intervention_finalize`
 
 **Purpose**: Mark intervention as completed
 
@@ -616,94 +311,105 @@ interface ApiResponse<T> {
 ```typescript
 {
   session_token: string,
-  intervention_id: string,
-  quality_score?: number,  // 0-100
-  final_notes?: string
-}
-```
-
-**Returns**: `ApiResponse<Intervention>`
-
-**Permissions**: Assigned Technician, Supervisor, Admin
-
-**Backend**: `src-tauri/src/commands/intervention/finalize.rs::intervention_finalize`
-
----
-
-### Material Management (3 commands)
-
-#### 25. `material_list`
-
-**Purpose**: List all materials/inventory items
-
-**Parameters**:
-```typescript
-{
-  session_token: string,
-  filters?: {
-    category?: 'film' | 'tool' | 'consumable' | 'accessory',
-    low_stock?: boolean,
-    limit?: number,
-    offset?: number
+  request: {
+    intervention_id: string,
+    collected_data?: any,
+    photos?: string[],
+    customer_satisfaction?: number,
+    quality_score?: number,
+    final_observations?: string[],
+    customer_signature?: string,
+    customer_comments?: string
   }
 }
 ```
 
-**Returns**: `ApiResponse<Material[]>`
+**Returns**: `ApiResponse<FinalizeInterventionResponse>`
 
-**Permissions**: All authenticated
-
-**Backend**: `src-tauri/src/commands/material.rs::material_list`
+**Backend**: `src-tauri/src/commands/intervention/workflow.rs::intervention_finalize`
 
 ---
 
-#### 26. `material_update_stock`
+### Material/Inventory Commands
 
-**Purpose**: Adjust material stock level
+| Command | Description | Permissions |
+|---------|-------------|-------------|
+| `material_create` | Create a new material | Authenticated |
+| `material_get` | Get material by ID | Authenticated |
+| `material_get_by_sku` | Get material by SKU | Authenticated |
+| `material_list` | List materials with filtering | Authenticated |
+| `material_update` | Update material | Authenticated |
+| `material_update_stock` | Adjust material stock level | Authenticated |
+| `material_record_consumption` | Record material usage | Authenticated |
+| `material_get_intervention_consumption` | Get consumption for an intervention | Authenticated |
+| `material_get_intervention_summary` | Get consumption summary for intervention | Authenticated |
+| `material_get_stats` | Get material statistics | Authenticated |
+| `material_get_low_stock` | Get low stock materials | Authenticated |
+| `material_get_expired` | Get expired materials | Authenticated |
+
+#### `material_create`
+
+**Purpose**: Create a new material/inventory item
 
 **Parameters**:
 ```typescript
 {
   session_token: string,
-  material_id: string,
-  quantity_delta: number,  // Can be negative
-  reason?: string
+  request: CreateMaterialRequest
 }
 ```
 
 **Returns**: `ApiResponse<Material>`
 
-**Permissions**: Admin, Supervisor
-
-**Backend**: `src-tauri/src/commands/material.rs::material_update_stock`
+**Backend**: `src-tauri/src/commands/material.rs::material_create`
 
 ---
 
-#### 27. `material_record_consumption`
+#### `material_list`
 
-**Purpose**: Record material usage during an intervention
+**Purpose**: List materials with filtering
 
 **Parameters**:
 ```typescript
 {
   session_token: string,
-  intervention_id: string,
-  material_id: string,
-  quantity: number
+  material_type?: string,  // "ppf_film", "adhesive", "cleaning_solution", "tool", "consumable"
+  category?: string,
+  active_only?: boolean,
+  limit?: number,
+  offset?: number
 }
 ```
 
-**Returns**: `ApiResponse<void>`
+**Returns**: `ApiResponse<Material[]>`
 
-**Permissions**: Assigned Technician, Supervisor, Admin
-
-**Backend**: `src-tauri/src/commands/material.rs::material_record_consumption`
+**Backend**: `src-tauri/src/commands/material.rs::material_list`
 
 ---
 
-### Reports & Analytics (3 commands)
+### Reports Commands
 
-#### 28. `get_task_completion_report`
+| Command | Description | Permissions |
+|---------|-------------|-------------|
+| `get_task_completion_report` | Task completion report for date range | Admin, Supervisor (Technicians see own) |
+| `get_technician_performance_report` | Technician performance metrics | Admin, Supervisor (Technicians see own) |
+| `get_client_analytics_report` | Client analytics and statistics | Admin, Supervisor |
+| `get_quality_compliance_report` | Quality compliance metrics | Admin, Supervisor |
+| `get_geographic_report` | Geographic distribution analysis | Admin, Supervisor |
+| `get_material_usage_report` | Material consumption summary | Admin, Supervisor |
+| `get_overview_report` | Combined dashboard overview | Admin, Supervisor |
+| `get_seasonal_report` | Seasonal trend analysis | Admin, Supervisor |
+| `get_operational_intelligence_report` | Operational insights and metrics | Admin, Supervisor |
+| `get_available_report_types` | List available report types for user | Authenticated |
+| `search_records` | Search records across entities | Authenticated |
+| `get_entity_counts` | Get counts for all entity types | Authenticated |
+| `export_report_data` | Export report data | Admin, Supervisor |
+| `export_intervention_report` | Export intervention report | Authenticated |
+| `save_intervention_report` | Save intervention report | Authenticated |
+| `get_report_status` | Get report generation status | Authenticated |
+| `cancel_report` | Cancel ongoing report generation | Authenticated |
+
+#### `get_task_completion_report`
 
 **Purpose**: Generate task completion report for date range
 
@@ -711,46 +417,108 @@ interface ApiResponse<T> {
 ```typescript
 {
   session_token: string,
-  start_date: string,  // ISO 8601
-  end_date: string,
-  format?: 'json' | 'pdf',
-  filters?: { technician_id?: string, status?: TaskStatus }
+  date_range: DateRange,
+  filters: ReportFilters
 }
 ```
 
-**Returns**: `ApiResponse<TaskCompletionReport>` or PDF file URL
+**Returns**: `ApiResponse<TaskCompletionReport>`
 
-**Permissions**: Admin, Supervisor
-
-**Backend**: `src-tauri/src/commands/reports/task_completion.rs::get_task_completion_report`
+**Backend**: `src-tauri/src/commands/reports/core.rs::get_task_completion_report`
 
 ---
 
-#### 29. `get_material_usage_report`
+### Calendar Commands
 
-**Purpose**: Get material consumption summary
+| Command | Description | Permissions |
+|---------|-------------|-------------|
+| `get_events` | Get events within date range | Authenticated |
+| `get_event_by_id` | Get a single event by ID | Authenticated |
+| `create_event` | Create a new calendar event | Authenticated |
+| `update_event` | Update an existing event | Authenticated |
+| `delete_event` | Delete a calendar event | Authenticated |
+| `get_events_for_technician` | Get events for a technician | Authenticated |
+| `get_events_for_task` | Get events linked to a task | Authenticated |
+| `calendar_get_tasks` | Get calendar tasks with filtering | Authenticated |
+| `calendar_check_conflicts` | Check for scheduling conflicts | Authenticated |
+
+#### `calendar_get_tasks`
+
+**Purpose**: Get calendar tasks with filtering
 
 **Parameters**:
 ```typescript
 {
   session_token: string,
-  start_date: string,
-  end_date: string,
-  material_ids?: string[]
+  date_range: CalendarDateRange,
+  technician_ids?: string[],
+  statuses?: string[],
+  correlation_id?: string
 }
 ```
 
-**Returns**: `ApiResponse<MaterialUsageReport>`
+**Returns**: `ApiResponse<CalendarTask[]>`
 
-**Permissions**: Admin, Supervisor
-
-**Backend**: `src-tauri/src/commands/reports/material_usage.rs::get_material_usage_report`
+**Backend**: `src-tauri/src/commands/calendar.rs::calendar_get_tasks`
 
 ---
 
-#### 30. `get_dashboard_analytics`
+### User Management Commands
 
-**Purpose**: Get dashboard summary (task counts, interventions, alerts)
+| Command | Description | Permissions |
+|---------|-------------|-------------|
+| `user_crud` | Unified CRUD for users (Create, Get, Update, Delete, List, ChangePassword, ChangeRole, Ban, Unban) | Role-based |
+| `bootstrap_first_admin` | Bootstrap first admin if none exists | Any |
+| `has_admins` | Check if admin users exist | Any |
+| `get_users` | List all users | Admin, Supervisor |
+| `create_user` | Create a new user | Admin, Supervisor |
+| `update_user` | Update user information | Admin, Supervisor |
+| `update_user_status` | Update user active status | Admin |
+| `delete_user` | Delete a user | Admin |
+
+#### `user_crud`
+
+**Purpose**: Unified CRUD operations for users
+
+**Parameters**:
+```typescript
+{
+  session_token: string,
+  action: UserAction
+}
+
+// UserAction variants:
+// - Create { data: CreateUserRequest }
+// - Get { id: string }
+// - Update { id: string, data: UpdateUserRequest }
+// - Delete { id: string }
+// - List { limit?: number, offset?: number }
+// - ChangePassword { id: string, new_password: string }
+// - ChangeRole { id: string, new_role: string }
+// - Ban { id: string }
+// - Unban { id: string }
+```
+
+**Returns**: `ApiResponse<UserResponse>`
+
+**Backend**: `src-tauri/src/commands/user.rs::user_crud`
+
+---
+
+### Performance Commands
+
+| Command | Description | Permissions |
+|---------|-------------|-------------|
+| `get_performance_stats` | Get performance statistics | Admin |
+| `get_performance_metrics` | Get recent performance metrics | Admin |
+| `cleanup_performance_metrics` | Clean up old metrics | Admin |
+| `get_cache_statistics` | Get cache statistics | Admin |
+| `clear_application_cache` | Clear application cache | Admin |
+| `configure_cache_settings` | Configure cache settings | Admin |
+
+#### `get_performance_stats`
+
+**Purpose**: Get performance statistics for the application
 
 **Parameters**:
 ```typescript
@@ -759,11 +527,204 @@ interface ApiResponse<T> {
 }
 ```
 
-**Returns**: `ApiResponse<DashboardAnalytics>`
+**Returns**: `ApiResponse<PerformanceStatsResponse>`
 
-**Permissions**: All authenticated
+**Backend**: `src-tauri/src/commands/performance.rs::get_performance_stats`
 
-**Backend**: `src-tauri/src/commands/analytics.rs::get_dashboard_analytics`
+---
+
+### System Commands
+
+| Command | Description | Permissions |
+|---------|-------------|-------------|
+| `health_check` | Database health check | Any |
+| `diagnose_database` | Database diagnostics | Any |
+| `get_database_stats` | Database statistics | Any |
+| `get_app_info` | Application version and build info | Any |
+| `get_device_info` | Device information for fingerprinting | Any |
+| `get_database_pool_health` | Database connection pool health | Any |
+| `get_large_test_data` | Get large test data for testing | Any |
+| `vacuum_database` | Vacuum database | Any |
+| `force_wal_checkpoint` | Force WAL checkpoint | Any |
+
+#### `get_app_info`
+
+**Purpose**: Get application version and build information
+
+**Parameters**: None
+
+**Returns**: `ApiResponse<{ version, name, description, build_time, git_sha, rustc_version, platform, arch }>`
+
+**Backend**: `src-tauri/src/commands/system.rs::get_app_info`
+
+---
+
+### Security Commands
+
+| Command | Description | Permissions |
+|---------|-------------|-------------|
+| `get_security_metrics` | Get security metrics | Admin |
+| `get_security_events` | Get security events | Admin |
+| `get_security_alerts` | Get security alerts | Admin |
+| `acknowledge_security_alert` | Acknowledge a security alert | Admin |
+| `resolve_security_alert` | Resolve a security alert | Admin |
+| `cleanup_security_events` | Clean up old security events | Admin |
+| `get_active_sessions` | Get active user sessions | Admin |
+| `revoke_session` | Revoke a user session | Admin |
+| `revoke_all_sessions_except_current` | Revoke all sessions except current | Authenticated |
+| `update_session_timeout` | Update session timeout | Admin |
+| `get_session_timeout_config` | Get session timeout configuration | Authenticated |
+
+---
+
+### Notification Commands
+
+| Command | Description | Permissions |
+|---------|-------------|-------------|
+| `initialize_notification_service` | Initialize notification service | Authenticated |
+| `send_notification` | Send a notification | Authenticated |
+| `test_notification_config` | Test notification configuration | Authenticated |
+| `get_notification_status` | Get notification service status | Authenticated |
+
+---
+
+### Message Commands
+
+| Command | Description | Permissions |
+|---------|-------------|-------------|
+| `message_send` | Send a message | Authenticated |
+| `message_get_list` | Get list of messages | Authenticated |
+| `message_mark_read` | Mark message as read | Authenticated |
+| `message_get_templates` | Get message templates | Authenticated |
+| `message_get_preferences` | Get message preferences | Authenticated |
+| `message_update_preferences` | Update message preferences | Authenticated |
+
+---
+
+### Sync Commands
+
+| Command | Description | Permissions |
+|---------|-------------|-------------|
+| `sync_start_background_service` | Start background sync service | Authenticated |
+| `sync_stop_background_service` | Stop background sync service | Authenticated |
+| `sync_now` | Trigger immediate sync | Authenticated |
+| `sync_get_status` | Get sync status | Authenticated |
+| `sync_get_operations_for_entity` | Get sync operations for entity | Authenticated |
+
+---
+
+### Queue Commands
+
+| Command | Description | Permissions |
+|---------|-------------|-------------|
+| `sync_enqueue` | Enqueue a sync operation | Authenticated |
+| `sync_dequeue_batch` | Dequeue batch of operations | Authenticated |
+| `sync_get_metrics` | Get queue metrics | Authenticated |
+| `sync_mark_completed` | Mark operation as completed | Authenticated |
+| `sync_mark_failed` | Mark operation as failed | Authenticated |
+| `sync_get_operation` | Get operation by ID | Authenticated |
+| `sync_cleanup_old_operations` | Clean up old operations | Authenticated |
+
+---
+
+### Status Commands
+
+| Command | Description | Permissions |
+|---------|-------------|-------------|
+| `task_transition_status` | Transition task status | Authenticated |
+| `task_get_status_distribution` | Get status distribution | Authenticated |
+
+---
+
+### Navigation Commands
+
+| Command | Description | Permissions |
+|---------|-------------|-------------|
+| `navigation_update` | Update current navigation | Authenticated |
+| `navigation_add_to_history` | Add to navigation history | Authenticated |
+| `navigation_go_back` | Go back in history | Authenticated |
+| `navigation_go_forward` | Go forward in history | Authenticated |
+| `navigation_get_current` | Get current navigation | Authenticated |
+| `navigation_refresh` | Refresh current navigation | Authenticated |
+| `shortcuts_register` | Register keyboard shortcuts | Authenticated |
+
+---
+
+### UI Commands
+
+| Command | Description | Permissions |
+|---------|-------------|-------------|
+| `ui_window_minimize` | Minimize window | Any |
+| `ui_window_maximize` | Maximize window | Any |
+| `ui_window_close` | Close window | Any |
+| `ui_shell_open_url` | Open URL in shell | Any |
+| `ui_initiate_customer_call` | Initiate customer call | Authenticated |
+| `get_recent_activities` | Get recent activities | Authenticated |
+| `ui_gps_get_current_position` | Get current GPS position | Authenticated |
+| `ui_window_get_state` | Get window state | Any |
+| `ui_window_set_always_on_top` | Set window always on top | Any |
+| `dashboard_get_stats` | Get dashboard statistics | Authenticated |
+
+---
+
+### WebSocket Commands
+
+| Command | Description | Permissions |
+|---------|-------------|-------------|
+| `init_websocket_server` | Initialize WebSocket server | Admin |
+| `broadcast_websocket_message` | Broadcast message to all clients | Admin |
+| `send_websocket_message_to_client` | Send message to specific client | Admin |
+| `get_websocket_stats` | Get WebSocket statistics | Admin |
+| `shutdown_websocket_server` | Shutdown WebSocket server | Admin |
+| `broadcast_task_update` | Broadcast task update | Authenticated |
+| `broadcast_intervention_update` | Broadcast intervention update | Authenticated |
+| `broadcast_client_update` | Broadcast client update | Authenticated |
+| `broadcast_system_notification` | Broadcast system notification | Admin |
+
+---
+
+### IPC Optimization Commands
+
+| Command | Description | Permissions |
+|---------|-------------|-------------|
+| `compress_data_for_ipc` | Compress data for IPC transfer | Authenticated |
+| `decompress_data_from_ipc` | Decompress IPC data | Authenticated |
+| `start_stream_transfer` | Start streaming transfer | Authenticated |
+| `send_stream_chunk` | Send a stream chunk | Authenticated |
+| `get_stream_data` | Get stream data | Authenticated |
+| `get_ipc_stats` | Get IPC statistics | Authenticated |
+
+---
+
+### Settings Commands
+
+| Command | Description | Permissions |
+|---------|-------------|-------------|
+| `get_app_settings` | Get application settings | Authenticated |
+| `update_general_settings` | Update general settings | Authenticated |
+| `update_security_settings` | Update security settings | Authenticated |
+| `update_notification_settings` | Update notification settings | Authenticated |
+| `get_user_settings` | Get user-specific settings | Authenticated |
+| `update_user_profile` | Update user profile | Authenticated |
+| `update_user_preferences` | Update user preferences | Authenticated |
+| `update_user_security` | Update user security settings | Authenticated |
+| `update_user_performance` | Update user performance settings | Authenticated |
+| `update_user_accessibility` | Update accessibility settings | Authenticated |
+| `update_user_notifications` | Update user notification settings | Authenticated |
+| `change_user_password` | Change user password | Authenticated |
+| `export_user_data` | Export user data | Authenticated |
+| `delete_user_account` | Delete user account | Authenticated |
+| `get_data_consent` | Get data consent status | Authenticated |
+| `update_data_consent` | Update data consent | Authenticated |
+| `upload_user_avatar` | Upload user avatar | Authenticated |
+
+---
+
+### Analytics Commands
+
+| Command | Description | Permissions |
+|---------|-------------|-------------|
+| `analytics_get_summary` | Get analytics summary | Authenticated |
 
 ---
 
@@ -796,9 +757,11 @@ export async function createTask(
   data: CreateTaskRequest
 ): Promise<ApiResponse<Task>> {
   try {
-    return await invoke<ApiResponse<Task>>('task_create', {
-      session_token: sessionToken,
-      data
+    return await invoke<ApiResponse<Task>>('task_crud', {
+      request: {
+        session_token: sessionToken,
+        action: { Create: { data } }
+      }
     });
   } catch (error) {
     // Network or serialization error (not business logic error)

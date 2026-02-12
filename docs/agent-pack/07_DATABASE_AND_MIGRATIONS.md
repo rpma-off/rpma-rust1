@@ -21,10 +21,10 @@ PRAGMA journal_mode = WAL;
 ```
 
 **Benefits of WAL Mode**:
-- ✅ **Concurrent reads** while writing
-- ✅ **Better performance** for writes
-- ✅ **Crash recovery** via checkpoint
-- ✅ **Reduced lock contention**
+- **Concurrent reads** while writing
+- **Better performance** for writes
+- **Crash recovery** via checkpoint
+- **Reduced lock contention**
 
 **Other PRAGMA Settings**:
 ```sql
@@ -43,17 +43,60 @@ PRAGMA mmap_size = 30000000000;  -- Memory-mapped I/O (30GB limit)
 
 ### Overview
 
-RPMA uses a **custom migration system** that:
-- ✅ Tracks applied migrations in `schema_version` table
-- ✅ Applies migrations in **sequential order** based on filename numbering
-- ✅ **Idempotent**: Safe to run multiple times (uses `CREATE IF NOT EXISTS`, `ALTER IF NOT EXISTS`)
-- ✅ **Validation**: Checks migration integrity before applying
+RPMA uses a **hybrid migration system** with:
+- **SQL migration files** in `migrations/` directory (embedded via `include_dir!`)
+- **Rust-implemented migrations** in `src-tauri/src/db/migrations.rs` for complex schema transformations
+
+The system:
+- Tracks applied migrations in `schema_version` table
+- Applies migrations in **sequential order** based on version number
+- **Idempotent**: Safe to run multiple times (uses `CREATE IF NOT EXISTS`, column existence checks)
+- **Validation**: Checks migration integrity before applying
+
+**Current Version**: 33+ migrations
+
+---
+
+### Migration Types
+
+#### SQL-Only Migrations
+Located in `migrations/` directory, applied via `apply_sql_migration()`:
+- `003` - `007`: Schema additions
+- `010`, `013` - `015`, `019`, `021` - `023`: Feature additions
+- `020_calendar_enhancements.sql`: Calendar indexes and task_conflicts table
+- `025_audit_logging.sql`, `026_performance_indexes.sql`
+- `029_add_users_first_last_name.sql`, `030_add_user_sessions_updated_at.sql`
+
+#### Rust-Implemented Migrations
+Complex migrations requiring logic beyond SQL, implemented in `migrations.rs`:
+
+| Version | Description |
+|---------|-------------|
+| 002 | Rename `ppf_zone` to `ppf_zones` column (table rebuild) |
+| 006 | Add location columns to `intervention_steps` |
+| 008 | Add workflow triggers for task/intervention sync |
+| 009 | Add `task_number` column to interventions |
+| 11 | Add `task_id` FK to interventions (table rebuild) |
+| 12 | Add unique constraint for active interventions per task |
+| 16 | Add task assignment validation indexes |
+| 17 | Add `cache_metadata` table |
+| 18 | Add `settings_audit_log` table |
+| 24 | Enhanced inventory: `material_categories`, `inventory_transactions` |
+| 25 | Add `audit_events` table for security audit trail |
+| 26 | Add performance optimization indexes |
+| 27 | Add CHECK constraints to tasks table (table rebuild) |
+| 28 | Add 2FA columns: `backup_codes`, `verified_at` |
+| 29 | Add `first_name`, `last_name` columns to users |
+| 30 | Add `updated_at` column to user_sessions |
+| 31 | Add non-negative CHECK constraints to inventory tables |
+| 32 | Add FK for `interventions.task_id -> tasks(id)` |
+| 33 | Add FKs for `tasks.workflow_id` and `tasks.current_workflow_step_id` |
 
 ---
 
 ### Migration File Structure
 
-**Location**: `src-tauri/migrations/`
+**Location**: `migrations/`
 
 **Naming Convention**: `NNN_description.sql`
 - `NNN`: Zero-padded sequential number (e.g., `002`, `024`, `100`)
@@ -61,9 +104,10 @@ RPMA uses a **custom migration system** that:
 
 **Example**:
 ```
-002_rename_ppf_zone.sql
-003_add_client_stats_triggers.sql
-024_add_inventory_management.sql
+020_calendar_enhancements.sql
+025_audit_logging.sql
+026_performance_indexes.sql
+029_add_users_first_last_name.sql
 ```
 
 ---
@@ -217,28 +261,28 @@ CREATE INDEX IF NOT EXISTS idx_tasks_vehicle ON tasks(vehicle_id);
 
 ```rust
 impl Database {
-    pub fn discover_migrations(&self) -> DbResult<Vec<Migration>> {
-        let migration_dir = Path::new("migrations/");
-        let mut migrations = Vec::new();
+    pub fn get_latest_migration_version() -> i32 {
+        let mut max_version = 0;
 
-        for entry in fs::read_dir(migration_dir)? {
-            let path = entry?.path();
-            if path.extension().and_then(|s| s.to_str()) == Some("sql") {
-                let filename = path.file_name().unwrap().to_str().unwrap();
-                let version = parse_version_from_filename(filename)?;
-                let sql = fs::read_to_string(&path)?;
-                
-                migrations.push(Migration {
-                    version,
-                    name: filename.to_string(),
-                    sql,
-                });
+        for file in MIGRATIONS_DIR.files() {
+            if let Some(name) = file.path().file_name().and_then(|n| n.to_str()) {
+                // Try to parse version from filename (e.g., "025_add_analytics.sql")
+                if let Some(version_part) = name.split('_').next() {
+                    if let Ok(version) = version_part.parse::<i32>() {
+                        if version > max_version {
+                            max_version = version;
+                        }
+                    }
+                }
             }
         }
 
-        // Sort by version number
-        migrations.sort_by_key(|m| m.version);
-        Ok(migrations)
+        // Ensure we at least cover the hardcoded Rust migrations (up to 33)
+        if max_version < 33 {
+            max_version = 33;
+        }
+
+        max_version
     }
 }
 ```
@@ -258,15 +302,24 @@ CREATE TABLE IF NOT EXISTS schema_version (
 
 **Current Version Query**:
 ```rust
-pub fn get_version(&self) -> DbResult<i64> {
+pub fn get_version(&self) -> DbResult<i32> {
     let conn = self.get_connection()?;
-    let version: Option<i64> = conn
-        .query_row(
-            "SELECT MAX(version) FROM schema_version",
-            [],
-            |row| row.get(0)
-        )
-        .optional()?;
+
+    // Create version table if not exists
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS schema_version (
+             version INTEGER PRIMARY KEY,
+             applied_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+         )",
+        [],
+    ).map_err(|e| e.to_string())?;
+
+    let version: Result<i32, _> = conn
+        .query_row("SELECT MAX(version) FROM schema_version", [], |row| {
+            row.get(0)
+        })
+        .map_err(|e| e.to_string());
+
     Ok(version.unwrap_or(0))
 }
 ```
@@ -279,39 +332,16 @@ pub fn get_version(&self) -> DbResult<i64> {
 
 ```rust
 impl Database {
-    pub fn migrate(&self, target_version: i64) -> DbResult<()> {
+    pub fn migrate(&self, target_version: i32) -> DbResult<()> {
         let current_version = self.get_version()?;
-        let migrations = self.discover_migrations()?;
 
-        // Filter out already-applied migrations
-        let pending: Vec<_> = migrations
-            .into_iter()
-            .filter(|m| m.version > current_version && m.version <= target_version)
-            .collect();
-
-        if pending.is_empty() {
-            info!("No pending migrations");
+        if current_version >= target_version {
             return Ok(());
         }
 
-        // Apply each migration in a transaction
-        for migration in pending {
-            info!("Applying migration {}: {}", migration.version, migration.name);
-            
-            self.with_transaction(|tx| {
-                // Execute migration SQL
-                tx.execute_batch(&migration.sql)?;
-                
-                // Record migration as applied
-                tx.execute(
-                    "INSERT INTO schema_version (version) VALUES (?)",
-                    params![migration.version],
-                )?;
-                
-                Ok(())
-            })?;
-            
-            info!("Migration {} applied successfully", migration.version);
+        // Apply migrations sequentially
+        for version in (current_version + 1)..=target_version {
+            self.apply_migration(version)?;
         }
 
         Ok(())
@@ -331,26 +361,29 @@ impl Database {
 ### Step 1: Determine Next Migration Number
 
 ```bash
-ls src-tauri/migrations/*.sql | sort | tail -1
-# Output: 028_add_two_factor_user_columns.sql
-# Next number: 029
+ls migrations/*.sql | sort | tail -1
+# Output: 030_add_user_sessions_updated_at.sql
+# Next number: 031
 ```
 
 ---
 
-### Step 2: Create Migration File
+### Step 2: Create Migration File or Rust Implementation
 
+**Option A: SQL-only migration**
 ```bash
-# Create file
-touch src-tauri/migrations/029_add_task_templates.sql
+touch migrations/031_add_task_templates.sql
 ```
+
+**Option B: Rust-implemented migration** (for complex logic)
+Add a new `apply_migration_NN` function in `src-tauri/src/db/migrations.rs` and update the match statement in `apply_migration()`.
 
 ---
 
 ### Step 3: Write Migration SQL
 
 ```sql
--- Migration 029: Add task templates
+-- Migration 031: Add task templates
 -- Allows users to save and reuse task configurations
 
 CREATE TABLE IF NOT EXISTS task_templates (
@@ -378,14 +411,14 @@ npm run dev
 
 **Option B: Test migration script**:
 ```bash
-node scripts/test-migrations.js 029
+node scripts/test-migrations.js 031
 ```
 
 **Check Logs**:
 ```
-[INFO] Applying migration 029: 029_add_task_templates.sql
-[INFO] Migration 029 applied successfully
-[INFO] Current schema version: 029
+[INFO] Applying migration 031: 031_add_task_templates.sql
+[INFO] Migration 031 applied successfully
+[INFO] Current schema version: 031
 ```
 
 ---
@@ -397,18 +430,18 @@ node scripts/validate-migration-system.js
 ```
 
 **Checks**:
-- ✅ All migration files are numbered sequentially
-- ✅ No duplicate migration numbers
-- ✅ All migrations are idempotent (can run multiple times safely)
-- ✅ Foreign key constraints are valid
-- ✅ Syntax is correct
+- All migration files are numbered sequentially
+- No duplicate migration numbers
+- All migrations are idempotent (can run multiple times safely)
+- Foreign key constraints are valid
+- Syntax is correct
 
 **Example Output**:
 ```
-✅ Migration file numbering is sequential
-✅ All migrations use CREATE IF NOT EXISTS
-✅ Foreign key references are valid
-✅ No syntax errors detected
+Migration file numbering is sequential
+All migrations use CREATE IF NOT EXISTS
+Foreign key references are valid
+No syntax errors detected
 ```
 
 ---
@@ -419,11 +452,11 @@ node scripts/validate-migration-system.js
 
 ```rust
 #[tokio::test]
-async fn test_migration_029() {
+async fn test_migration_031() {
     let db = Database::new_in_memory().await.unwrap();
     
     // Apply migration
-    let result = db.migrate(29);
+    let result = db.migrate(31);
     assert!(result.is_ok());
     
     // Verify schema
@@ -465,10 +498,10 @@ node scripts/test-migrations.js
 
 **Fix**: Use `CREATE TABLE IF NOT EXISTS`
 ```sql
--- ❌ BAD
+-- BAD
 CREATE TABLE new_table (...);
 
--- ✅ GOOD
+-- GOOD
 CREATE TABLE IF NOT EXISTS new_table (...);
 ```
 
@@ -561,7 +594,7 @@ npm run dev  # Migrations re-apply from scratch
 
 **Example**:
 ```bash
-node scripts/test-migrations.js 029
+node scripts/test-migrations.js 031
 ```
 
 ---
@@ -571,18 +604,133 @@ node scripts/test-migrations.js 029
 For a complete reference of all tables, columns, and relationships, see:
 - **Domain Model**: [01_DOMAIN_MODEL.md](./01_DOMAIN_MODEL.md)
 - **Codebase**: `src-tauri/src/models/*.rs` (model definitions)
+- **Schema SQL**: `src-tauri/src/db/schema.sql`
 
-**Key Tables**:
-- `tasks` - Work orders
-- `clients` - Customers
-- `interventions` - PPF installations
-- `intervention_steps` - Workflow steps
-- `photos` - Captured images
-- `materials` - Inventory items
-- `users` - System users
-- `user_sessions` - Active sessions
-- `audit_logs` - Security audit trail
-- `sync_queue` - Pending sync operations
+---
+
+## Database Schema Overview
+
+### Tables by Domain
+
+#### User Management
+| Table | Description |
+|-------|-------------|
+| `users` | System users with roles and authentication |
+| `user_sessions` | Active login sessions |
+| `user_settings` | User preferences and settings |
+| `user_consent` | GDPR consent tracking |
+
+#### Task Management
+| Table | Description |
+|-------|-------------|
+| `tasks` | Work orders and task management |
+| `task_history` | Task status transition audit |
+| `task_conflicts` | Scheduling conflict detection |
+
+#### Intervention/Workflow
+| Table | Description |
+|-------|-------------|
+| `interventions` | PPF installation records |
+| `intervention_steps` | Workflow step execution |
+| `photos` | Captured images with EXIF/GPS |
+
+#### Client Management
+| Table | Description |
+|-------|-------------|
+| `clients` | Customer records |
+| `client_statistics` *(view)* | Aggregated client task counts |
+
+#### Inventory/Materials
+| Table | Description |
+|-------|-------------|
+| `suppliers` | Material supplier master data |
+| `materials` | Inventory items |
+| `material_categories` | Material categorization hierarchy |
+| `material_consumption` | Material usage per intervention |
+| `inventory_transactions` | Stock movements (in/out/adjustments) |
+
+#### Calendar/Scheduling
+| Table | Description |
+|-------|-------------|
+| `calendar_events` | Calendar events and appointments |
+| `calendar_tasks` *(view)* | Tasks with scheduled dates |
+
+#### Messaging/Notifications
+| Table | Description |
+|-------|-------------|
+| `messages` | Outgoing/in-app messages |
+| `message_templates` | Reusable message templates |
+| `notification_preferences` | User notification settings |
+
+#### Settings/Audit
+| Table | Description |
+|-------|-------------|
+| `settings_audit_log` | Settings change audit |
+| `audit_events` | Security audit trail |
+| `audit_logs` | General audit logging |
+
+#### Sync/Caching
+| Table | Description |
+|-------|-------------|
+| `sync_queue` | Pending sync operations |
+| `cache_metadata` | Cache key-value store |
+| `cache_statistics` | Cache performance metrics |
+
+---
+
+### Views
+
+| View | Description |
+|------|-------------|
+| `client_statistics` | Aggregated client task counts (total, active, completed) |
+| `calendar_tasks` | Tasks with scheduled dates joined with technician/client names |
+| `clients_fts` | Full-text search index for clients |
+
+---
+
+### Key Tables (Detailed)
+
+#### Core Tables
+- `users` - User accounts with RBAC roles (admin, technician, supervisor, viewer)
+- `user_sessions` - JWT session management with expiration
+- `clients` - Customer records with FTS support
+- `tasks` - Work orders with status workflow, soft delete
+- `task_history` - Audit trail of status changes
+- `task_conflicts` - Detected scheduling conflicts
+
+#### Intervention Tables
+- `interventions` - PPF work records linked to tasks
+- `intervention_steps` - Step-by-step workflow execution
+- `photos` - Photo capture with EXIF, GPS, quality scores
+
+#### Inventory Tables
+- `suppliers` - Supplier master data with ratings
+- `materials` - Inventory with stock tracking, CHECK constraints
+- `material_categories` - Hierarchical categorization
+- `material_consumption` - Usage tracking per intervention
+- `inventory_transactions` - Stock movement audit trail
+
+#### Settings/Preferences
+- `user_settings` - Comprehensive user preferences
+- `settings_audit_log` - Settings change history
+- `user_consent` - GDPR consent
+- `notification_preferences` - Notification settings
+
+#### Messaging
+- `messages` - Email/SMS/in-app messages
+- `message_templates` - Reusable templates
+
+#### Scheduling
+- `calendar_events` - Calendar events with recurrence support
+
+#### Sync/Cache
+- `sync_queue` - Offline sync queue with retry logic
+- `cache_metadata` - Key-value cache with TTL
+- `cache_statistics` - Cache hit/miss metrics
+
+#### Audit
+- `audit_events` - Comprehensive security audit trail
+- `audit_logs` - General audit logging
 
 ---
 

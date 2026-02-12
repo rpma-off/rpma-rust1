@@ -139,20 +139,31 @@ npm run backend:check && npm run backend:clippy && npm run backend:fmt
 ### Frontend Tests
 
 ```bash
-# Run all frontend tests (Jest)
-npm run test:frontend
+# Run all frontend tests (Vitest)
+cd frontend && npm test
 
 # Run tests in watch mode
-npm run test:frontend -- --watch
+cd frontend && npm run test:watch
 
 # Run specific test file
-npm run test:frontend -- TaskCard.test.tsx
+cd frontend && npm test -- TaskCard.test.tsx
 
 # Generate coverage report
-npm run test:frontend -- --coverage
+cd frontend && npm run test:coverage
+
+# Run tests with coverage threshold enforcement
+cd frontend && npm run test:coverage:check
+
+# Run targeted test suites
+cd frontend && npm run test:components    # Component tests only
+cd frontend && npm run test:hooks         # Hook tests only
+cd frontend && npm run test:integration   # Integration tests only
+
+# Debug tests
+cd frontend && npm run test:debug
 ```
 
-**Test Location**: `frontend/src/__tests__/`
+**Test Location**: `frontend/src/__tests__/`, `frontend/tests/`
 
 ---
 
@@ -160,7 +171,10 @@ npm run test:frontend -- --coverage
 
 ```bash
 # Run all Rust tests
-npm run test:backend
+cd src-tauri && cargo test
+
+# Run library tests only
+cd src-tauri && cargo test --lib
 
 # Run specific test
 cd src-tauri && cargo test test_create_task
@@ -170,6 +184,12 @@ cd src-tauri && cargo test -- --nocapture
 
 # Run integration tests only
 cd src-tauri && cargo test --test '*'
+
+# Run migration tests
+cd src-tauri && cargo test migration
+
+# Run performance tests
+cd src-tauri && cargo test performance
 ```
 
 **Test Locations**:
@@ -182,13 +202,22 @@ cd src-tauri && cargo test --test '*'
 
 ```bash
 # Run E2E tests
-npm run test:e2e
+cd frontend && npm run test:e2e
 
 # Run specific test file
-npm run test:e2e -- login.spec.ts
+cd frontend && npm run test:e2e -- login.spec.ts
 
 # Run in UI mode (interactive)
-npm run test:e2e -- --ui
+cd frontend && npm run test:e2e:ui
+
+# Debug E2E tests
+cd frontend && npm run test:e2e:debug
+
+# Generate E2E test code
+cd frontend && npm run test:e2e:codegen
+
+# Run client lifecycle E2E tests
+cd frontend && npm run test:e2e:client-lifecycle
 ```
 
 **Test Location**: `frontend/tests/e2e/*.spec.ts`
@@ -197,9 +226,117 @@ npm run test:e2e -- --ui
 
 ## Scripts Reference
 
-RPMA v2 has **24 validation and automation scripts** in `scripts/`.
+RPMA v2 has **65 npm scripts** (45 root + 20 frontend) across multiple categories.
 
-### Type Management Scripts
+### Root Package.json Scripts (45 scripts)
+
+#### Development
+- `dev` - Start full development environment (frontend + backend)
+- `tauri` - Start Tauri development mode
+
+#### Build
+- `build` - Production build
+
+#### Frontend
+- `frontend:dev` - Start Next.js dev server
+- `frontend:build` - Build frontend only
+- `frontend:install` - Install frontend dependencies
+- `frontend:lint` - Run ESLint
+- `frontend:type-check` - Run TypeScript type checking
+- `frontend:encoding-check` - Check for encoding issues
+- `frontend:clean` - Clean frontend build artifacts
+
+#### Backend
+- `backend:build` - Build backend (debug)
+- `backend:build:release` - Build backend (release/optimized)
+- `backend:check` - Run cargo check
+- `backend:clippy` - Run Clippy linter
+- `backend:fmt` - Format Rust code
+
+#### Type Management
+- `types:sync` - Regenerate TypeScript types from Rust
+- `types:validate` - Validate type consistency
+- `types:drift-check` - Check for type drift between Rust and TS
+- `types:ci-drift-check` - CI-specific drift check
+- `types:generate-docs` - Generate type documentation
+
+#### CI/CD
+- `ci:validate` - Run all CI validation checks
+
+#### Bundle/Performance
+- `bundle:analyze` - Analyze bundle composition
+- `bundle:check-size` - Check bundle size limits
+- `performance:test` - Run performance tests
+- `performance:update-baseline` - Update performance baselines
+
+#### Security/Quality
+- `security:audit` - Run security vulnerability scan
+- `duplication:detect` - Detect code duplication
+- `quality:check` - Run all quality gates
+- `code_review:check` - Code review validation
+
+#### Git Workflow
+- `git:start-feature` - Start a new feature branch
+- `git:sync-feature` - Sync feature branch with main
+- `git:finish-feature` - Finish and merge feature
+- `git:cleanup-feature` - Clean up merged branches
+- `git:guard-main` - Guard main branch from direct commits
+
+#### Utility
+- `install` - Install all dependencies
+- `clean` - Clean all build artifacts
+- `fix:encoding` - Fix encoding issues
+- `prepare` - Prepare environment (post-install hooks)
+
+---
+
+### Frontend Package.json Scripts (20 scripts)
+
+#### Development
+- `dev` - Start Tauri dev (with Next.js)
+- `dev:next` - Start Next.js dev server only
+- `predev` - Pre-dev hook
+
+#### Build
+- `build` - Build for production
+- `prebuild` - Pre-build hook
+- `build:analyze` - Build with bundle analysis
+- `start` - Start production server
+
+#### Lint/Type Check
+- `lint` - Run ESLint
+- `type-check` - Run TypeScript type checking
+- `encoding:check` - Check for encoding issues
+
+#### Type Management
+- `types:sync` - Sync types from backend
+
+#### Unit/Integration Tests
+- `test` - Run all tests
+- `test:watch` - Run tests in watch mode
+- `test:coverage` - Run tests with coverage
+- `test:coverage:check` - Run tests with coverage threshold enforcement
+- `test:ci` - CI test runner
+- `test:debug` - Debug tests
+- `test:components` - Run component tests only
+- `test:hooks` - Run hook tests only
+- `test:integration` - Run integration tests only
+
+#### E2E Tests
+- `test:e2e` - Run Playwright E2E tests
+- `test:e2e:ui` - Run E2E tests in UI mode
+- `test:e2e:debug` - Debug E2E tests
+- `test:e2e:codegen` - Generate E2E test code
+- `test:e2e:client-lifecycle` - Run client lifecycle E2E tests
+
+#### Analysis
+- `analyze` - Analyze bundle
+
+---
+
+### Validation Scripts in `scripts/` Directory
+
+#### Type Management Scripts
 
 #### 1. `check-type-drift.js`
 
@@ -418,9 +555,36 @@ Bundle Size Report:
 
 ---
 
+#### 17. `detect-duplication.js`
+
+**Purpose**: Detect code duplication across the codebase
+
+**Usage**: `npm run duplication:detect`
+
+**Checks**:
+- Duplicate code blocks in TypeScript/JavaScript
+- Duplicate code blocks in Rust
+- Reports duplication percentage and locations
+
+---
+
+#### 18. `code-review-check.js`
+
+**Purpose**: Code review validation
+
+**Usage**: `npm run code_review:check`
+
+**Checks**:
+- Code complexity metrics
+- Documentation coverage
+- Naming conventions
+- Best practices adherence
+
+---
+
 ### Git Workflow Scripts
 
-#### 17. `git-workflow.js`
+#### 19. `git-workflow.js`
 
 **Purpose**: Automated Git workflow management
 

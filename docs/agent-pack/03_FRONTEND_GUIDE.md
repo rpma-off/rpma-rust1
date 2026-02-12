@@ -7,48 +7,92 @@ RPMA v2 uses **Next.js 14 App Router** with TypeScript, React, and Tailwind CSS.
 ```
 frontend/
 ├── src/
-│   ├── app/                      # Next.js App Router (routes/pages)
+│   ├── app/                      # Next.js App Router (40+ page routes)
 │   │   ├── layout.tsx            # Root layout
 │   │   ├── page.tsx              # Home page (/)
+│   │   ├── dashboard/            # /dashboard routes
 │   │   ├── tasks/                # /tasks/* routes
 │   │   ├── clients/              # /clients/* routes
 │   │   ├── interventions/        # /interventions/* routes
-│   │   ├── schedule/             # /schedule (calendar)
 │   │   ├── inventory/            # /inventory (materials)
+│   │   ├── schedule/             # /schedule (calendar)
 │   │   ├── reports/              # /reports/* routes
 │   │   ├── settings/             # /settings
+│   │   ├── users/                # /users routes
+│   │   ├── technicians/          # /technicians routes
+│   │   ├── team/                 # /team routes
+│   │   ├── messages/             # /messages routes
+│   │   ├── audit/                # /audit routes
+│   │   ├── analytics/            # /analytics routes
+│   │   ├── configuration/        # /configuration routes
+│   │   ├── data-explorer/        # /data-explorer routes
+│   │   ├── admin/                # /admin routes
 │   │   ├── login/                # /login
 │   │   └── unauthorized/         # /unauthorized (access denied)
-│   ├── components/               # Reusable React components
+│   ├── components/               # 180+ Reusable React components
 │   │   ├── tasks/                # Task-specific components
 │   │   ├── clients/              # Client components
 │   │   ├── workflow/             # Intervention workflow components
+│   │   ├── calendar/             # Calendar/scheduling components
+│   │   ├── analytics/            # Analytics dashboard components
+│   │   ├── inventory/            # Inventory/material components
+│   │   ├── auth/                 # Authentication components
+│   │   ├── settings/             # Settings page components
+│   │   ├── messages/             # Messaging components
+│   │   ├── users/                # User management components
+│   │   ├── sync/                 # Sync status components
+│   │   ├── dashboard/            # Dashboard widgets
+│   │   ├── layout/               # Layout components (nav, header)
 │   │   ├── forms/                # Form components
-│   │   ├── ui/                   # shadcn/ui primitives
-│   │   └── layout/               # Layout components (nav, header)
-│   ├── hooks/                    # Custom React hooks
+│   │   └── ui/                   # shadcn/ui primitives
+│   ├── hooks/                    # 65+ Custom React hooks
 │   │   ├── useAuth.ts            # Authentication hook
 │   │   ├── useSession.ts         # Session management
+│   │   ├── useDashboardStats.ts  # Dashboard statistics
 │   │   ├── useTasks.ts           # Task queries/mutations
+│   │   ├── useClients.ts         # Client queries/mutations
+│   │   ├── useInterventions.ts   # Intervention queries
+│   │   ├── useMaterials.ts       # Material queries
+│   │   ├── useSyncStatus.ts      # Sync status tracking
+│   │   ├── useOfflineSync.ts     # Offline sync management
 │   │   └── ...
 │   ├── lib/
 │   │   ├── ipc/                  # IPC client modules (MOST IMPORTANT)
 │   │   │   ├── client.ts         # Low-level IPC invoker
-│   │   │   ├── domains/          # Domain-specific IPC wrappers
-│   │   │   │   ├── task.ts       # Task IPC functions
-│   │   │   │   ├── client.ts     # Client IPC functions
-│   │   │   │   ├── intervention.ts
+│   │   │   ├── domains/          # 19 domain-specific IPC wrappers
+│   │   │   │   ├── auth.ts       # Auth IPC functions
+│   │   │   │   ├── tasks.ts      # Task IPC functions
+│   │   │   │   ├── clients.ts    # Client IPC functions
+│   │   │   │   ├── interventions.ts
+│   │   │   │   ├── inventory.ts
+│   │   │   │   ├── settings.ts
+│   │   │   │   ├── security.ts
+│   │   │   │   ├── system.ts
+│   │   │   │   ├── dashboard.ts
+│   │   │   │   ├── users.ts
+│   │   │   │   ├── reports.ts
+│   │   │   │   ├── photos.ts
+│   │   │   │   ├── calendar.ts
+│   │   │   │   ├── notifications.ts
+│   │   │   │   ├── performance.ts
+│   │   │   │   ├── sync.ts
+│   │   │   │   ├── ui.ts
+│   │   │   │   ├── bootstrap.ts
+│   │   │   │   ├── material.ts
 │   │   │   │   └── ...
 │   │   │   └── types/            # IPC request/response types
 │   │   ├── services/             # Frontend business logic
 │   │   ├── utils/                # Utility functions
 │   │   └── validation/           # Zod schemas for forms
-│   ├── types/                    # AUTO-GENERATED TypeScript types
+│   ├── types/                    # 20+ AUTO-GENERATED TypeScript types
 │   │   ├── database.types.ts     # ⚠️  DO NOT EDIT MANUALLY
 │   │   ├── unified.ts            # ⚠️  DO NOT EDIT MANUALLY
 │   │   └── ...
-│   └── contexts/                 # React contexts
+│   └── contexts/                 # 4 React contexts
 │       ├── AuthContext.tsx       # Auth state provider
+│       ├── TaskContext.tsx       # Task state provider
+│       ├── WorkflowContext.tsx   # Workflow state provider
+│       ├── PPFWorkflowContext.tsx # PPF-specific workflow
 │       └── ...
 └── package.json
 ```
@@ -118,7 +162,11 @@ function CreateTaskForm() {
 
 **IPC Client Locations**:
 - **Base client**: `frontend/src/lib/ipc/client.ts`
-- **Domain wrappers**: `frontend/src/lib/ipc/domains/*.ts`
+- **Domain wrappers**: `frontend/src/lib/ipc/domains/*.ts` (19 files)
+  - `auth.ts`, `tasks.ts`, `clients.ts`, `interventions.ts`, `inventory.ts`
+  - `settings.ts`, `security.ts`, `system.ts`, `dashboard.ts`, `users.ts`
+  - `reports.ts`, `photos.ts`, `calendar.ts`, `notifications.ts`, `performance.ts`
+  - `sync.ts`, `ui.ts`, `bootstrap.ts`, `material.ts`
 - **Secure client** (with retry logic): `frontend/src/lib/ipc/secure-client.ts`
 
 ---
@@ -267,12 +315,13 @@ export default function TasksLayout({ children }: { children: React.ReactNode })
 
 ---
 
-### 5. **Component Standards**
+### 5. **Component Standards** (180+ Components)
 
 **Component Naming**:
-- **Pages**: `page.tsx` (Next.js convention)
+- **Pages**: `page.tsx` (Next.js convention, 40+ routes)
 - **Components**: `PascalCase.tsx` (e.g., `TaskCard.tsx`, `ClientForm.tsx`)
-- **Hooks**: `use*.ts` (e.g., `useTasks.ts`, `useAuth.ts`)
+- **Hooks**: `use*.ts` (e.g., `useTasks.ts`, `useAuth.ts`, 65+ hooks)
+- **Contexts**: `*Context.tsx` (e.g., `AuthContext.tsx`, 4 contexts)
 
 **Component Structure**:
 ```typescript
@@ -489,10 +538,24 @@ import { Input } from '@/components/ui/input';
 |------|---------|----------|
 | `useAuth()` | Get current user, login/logout | `hooks/useAuth.ts` |
 | `useSession()` | Get session token | `hooks/useSession.ts` |
+| `useDashboardStats()` | Dashboard statistics | `hooks/useDashboardStats.ts` |
+| `useDashboardData()` | Dashboard data aggregation | `hooks/useDashboardData.ts` |
+| `useAdvancedAnalytics()` | Advanced analytics metrics | `hooks/useAdvancedAnalytics.ts` |
 | `useTasks()` | Query tasks | `hooks/useTasks.ts` |
 | `useClients()` | Query clients | `hooks/useClients.ts` |
 | `useInterventions()` | Query interventions | `hooks/useInterventions.ts` |
+| `useInterventionWorkflow()` | Intervention workflow state | `hooks/useInterventionWorkflow.ts` |
+| `useInterventionActions()` | Intervention actions | `hooks/useInterventionActions.ts` |
+| `useInterventionData()` | Intervention data fetching | `hooks/useInterventionData.ts` |
 | `useMaterials()` | Query materials | `hooks/useMaterials.ts` |
+| `useInventory()` | Inventory management | `hooks/useInventory.ts` |
+| `useInventoryStats()` | Inventory statistics | `hooks/useInventoryStats.ts` |
+| `useMaterialForm()` | Material form handling | `hooks/useMaterialForm.ts` |
+| `useSyncStatus()` | Sync status tracking | `hooks/useSyncStatus.ts` |
+| `useOfflineSync()` | Offline sync management | `hooks/useOfflineSync.ts` |
+| `useOfflineQueue()` | Offline queue operations | `hooks/useOfflineQueue.ts` |
+| `usePerformanceMonitor()` | Performance monitoring | `hooks/usePerformanceMonitor.ts` |
+| `useVirtualScrolling()` | Virtual scrolling for lists | `hooks/useVirtualScrolling.ts` |
 
 ---
 

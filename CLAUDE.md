@@ -11,18 +11,18 @@ rpma-rust/
 ├── frontend/                 # Next.js 14 application
 │   ├── src/
 │   │   ├── app/             # App Router pages
-│   │   ├── components/      # React components
-│   │   ├── hooks/           # Custom React hooks
-│   │   ├── lib/             # Utilities and IPC client
+│   │   ├── components/      # 180+ React components
+│   │   ├── hooks/           # 65+ custom hooks
+│   │   ├── lib/             # Utilities and IPC client (19 domain modules)
 │   │   ├── types/           # TypeScript type definitions (auto-generated from Rust)
 │   │   └── ui/              # shadcn/ui components
 │   └── package.json
 ├── src-tauri/               # Rust/Tauri backend
 │   ├── src/
-│   │   ├── commands/        # Tauri IPC command handlers
-│   │   ├── models/          # Data models with ts-rs exports
-│   │   ├── repositories/    # Database access layer
-│   │   ├── services/        # Business logic layer
+│   │   ├── commands/        # ~25+ IPC command files (organized in domain folders)
+│   │   ├── models/          # ~15 data models with ts-rs exports
+│   │   ├── repositories/    # ~15 repository files
+│   │   ├── services/        # ~60+ service files
 │   │   └── db/              # Database management
 │   └── Cargo.toml
 ├── migrations/              # SQLite migrations
@@ -85,13 +85,23 @@ npm run backend:dev            # Backend only (Tauri)
 npm run build                  # Production build
 npm run frontend:build         # Build frontend only
 
+# Quality check (RECOMMENDED)
+npm run quality:check          # Run all quality checks
 
-(RECOMMENDED)
+# Linting/Type-checking
 npm run frontend:lint          # ESLint
 npm run frontend:type-check    # TypeScript checking
 npm run backend:check          # Cargo check
 npm run backend:clippy         # Rust linting
 npm run backend:fmt            # Rust formatting
+
+# Performance testing
+npm run performance:test       # Run performance tests
+npm run bundle:analyze         # Analyze bundle size
+
+# Git workflow
+npm run git:start-feature      # Start a new feature branch
+npm run git:finish-feature     # Finish and merge feature branch
 
 # Type Management
 npm run types:sync             # Regenerate TS types from Rust
@@ -103,6 +113,7 @@ npm run security:audit         # Security vulnerability scan
 node scripts/validate-rbac.js  # RBAC validation
 node scripts/validate-session-security.js  # Session security check
 node scripts/validate-migration-system.js  # Migration validation
+```
 
 ## 🎯 Development Workflow
 
@@ -130,10 +141,11 @@ node scripts/validate-migration-system.js  # Migration validation
    - Follow migration naming: `YYYYMMDDHHMMSS_description.sql`
    - Test both up and down migrations
 
-## ✅ Tests Gates
+## ✅ Test Gates
 
 Run these tests before submitting code:
 
+```bash
 # All backend tests (Rust)
 cd src-tauri && cargo test --lib
 

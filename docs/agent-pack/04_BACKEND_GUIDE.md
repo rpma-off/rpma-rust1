@@ -9,33 +9,61 @@ src-tauri/src/
 ├── commands/                # IPC command handlers (Layer 1: Entry points)
 │   ├── mod.rs               # Re-exports all commands
 │   ├── auth.rs              # Authentication commands
-│   ├── task/                # Task commands (folder for complex domain)
-│   │   ├── create.rs
-│   │   ├── update.rs
-│   │   └── list.rs
+│   ├── task/                # Task commands (~7 files: facade, queries, validation, etc.)
+│   ├── intervention/        # Intervention workflow commands (~5 files)
+│   ├── reports/             # Reports commands with subfolders
+│   │   ├── generation/      # Report generation commands
+│   │   └── export/          # Export commands (PDF, data, etc.)
+│   ├── settings/            # Settings commands (~7 files: profile, security, preferences, etc.)
 │   ├── client.rs            # Client CRUD commands
-│   ├── intervention/        # Intervention workflow commands
 │   ├── material.rs          # Material/inventory commands
 │   ├── calendar.rs          # Calendar/scheduling commands
+│   ├── security.rs          # Security-related commands
+│   ├── analytics.rs         # Analytics commands
+│   ├── notification.rs      # Notification commands
+│   ├── websocket.rs         # WebSocket commands
 │   └── ...
-├── services/                # Business logic layer (Layer 2)
+├── services/                # Business logic layer (Layer 2) - ~80 files
 │   ├── mod.rs
 │   ├── task.rs              # Core task service
 │   ├── task_validation.rs   # Task validation logic
 │   ├── task_creation.rs     # Task creation workflow
+│   ├── task_update.rs       # Task update operations
+│   ├── task_deletion.rs     # Task deletion logic
+│   ├── task_queries.rs      # Task query operations
+│   ├── task_statistics.rs   # Task statistics
 │   ├── intervention.rs
 │   ├── intervention_workflow.rs
+│   ├── intervention_validation.rs
 │   ├── auth.rs              # Authentication service
 │   ├── session.rs           # Session management
+│   ├── two_factor.rs        # Two-factor authentication
+│   ├── token.rs             # Token management
+│   ├── rate_limiter.rs      # Rate limiting
+│   ├── security_monitor.rs  # Security monitoring
 │   ├── material.rs
+│   ├── geo.rs               # Geolocation services
+│   ├── prediction.rs        # Prediction/analytics
+│   ├── dashboard.rs         # Dashboard aggregation
+│   ├── audit_service.rs     # Audit logging
+│   ├── photo/               # Photo services (upload, storage, processing, etc.)
+│   ├── reports/             # Report generation services (~13 files)
 │   └── ...
-├── repositories/            # Data access layer (Layer 3)
+├── repositories/            # Data access layer (Layer 3) - ~18 files
 │   ├── mod.rs
 │   ├── base.rs              # Repository trait
+│   ├── factory.rs           # Repository factory pattern
 │   ├── task_repository.rs
+│   ├── task_history_repository.rs
 │   ├── client_repository.rs
 │   ├── intervention_repository.rs
 │   ├── user_repository.rs
+│   ├── session_repository.rs
+│   ├── material_repository.rs
+│   ├── photo_repository.rs
+│   ├── notification_repository.rs
+│   ├── calendar_event_repository.rs
+│   ├── audit_repository.rs
 │   └── ...
 ├── models/                  # Data models (DTOs, entities)
 │   ├── mod.rs
@@ -651,11 +679,23 @@ impl Repository<Task, String> for TaskRepository {
 | Service | Purpose | Location |
 |---------|---------|----------|
 | `AuthService` | User authentication, session management | `services/auth.rs` |
+| `SessionService` | Session lifecycle management | `services/session.rs` |
+| `TwoFactorService` | Two-factor authentication | `services/two_factor.rs` |
+| `TokenService` | JWT token management | `services/token.rs` |
+| `RateLimiterService` | Request rate limiting | `services/rate_limiter.rs` |
+| `SecurityMonitorService` | Security event monitoring | `services/security_monitor.rs` |
 | `TaskService` | Task CRUD, assignment, validation | `services/task.rs` |
+| `TaskCreationService` | Task creation workflow | `services/task_creation.rs` |
+| `TaskValidationService` | Task validation logic | `services/task_validation.rs` |
 | `InterventionService` | Intervention workflow, step progression | `services/intervention.rs` |
+| `InterventionWorkflowService` | Intervention state machine | `services/intervention_workflow.rs` |
 | `MaterialService` | Inventory management, stock tracking | `services/material.rs` |
 | `CacheService` | In-memory caching | `services/cache.rs` |
 | `EventBus` | Domain event publishing | `services/event_bus.rs` |
+| `PredictionService` | Analytics predictions | `services/prediction.rs` |
+| `GeoService` | Geolocation services | `services/geo.rs` |
+| `DashboardService` | Dashboard data aggregation | `services/dashboard.rs` |
+| `AuditService` | Audit trail logging | `services/audit_service.rs` |
 
 ---
 
