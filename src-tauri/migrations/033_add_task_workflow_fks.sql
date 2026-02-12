@@ -1,0 +1,2 @@
+-- Migration 033: Add FKs for tasks.workflow_id and tasks.current_workflow_step_id
+-- Handled in Rust for idempotency (table rebuild required for FK constraints)

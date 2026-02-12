@@ -57,7 +57,7 @@ impl ClientQueriesService {
 
         // Search functionality using FTS
         if let Some(search) = &query.search {
-            sql.push_str(" AND id IN (SELECT rowid FROM clients_fts WHERE clients_fts MATCH ?)");
+            sql.push_str(" AND c.rowid IN (SELECT rowid FROM clients_fts WHERE clients_fts MATCH ?)");
             params_vec.push(search.clone());
         }
 
@@ -123,7 +123,7 @@ impl ClientQueriesService {
         }
 
         if let Some(search) = &query.search {
-            count_sql.push_str(" AND id IN (SELECT rowid FROM clients_fts WHERE clients_fts MATCH ?)");
+            count_sql.push_str(" AND c.rowid IN (SELECT rowid FROM clients_fts WHERE clients_fts MATCH ?)");
             count_params.push(search.clone());
         }
 
@@ -168,7 +168,7 @@ impl ClientQueriesService {
                 c.last_task_date, c.created_at, c.updated_at, c.created_by, c.deleted_at,
                 c.deleted_by, c.synced, c.last_synced_at
             FROM clients c
-            INNER JOIN clients_fts fts ON c.id = fts.rowid
+            INNER JOIN clients_fts fts ON c.rowid = fts.rowid
             WHERE fts MATCH ? AND c.deleted_at IS NULL
             ORDER BY fts.rank
             LIMIT ? OFFSET ?

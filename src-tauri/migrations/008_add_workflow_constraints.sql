@@ -1,19 +1,12 @@
 -- Add foreign key constraints and synchronization triggers for Task/Intervention workflow
 -- This migration addresses the critical database schema issues identified in the intervention audit
-
--- Add foreign key constraints to tasks table
-ALTER TABLE tasks ADD CONSTRAINT fk_tasks_workflow_id
-    FOREIGN KEY (workflow_id) REFERENCES interventions(id) ON DELETE SET NULL;
-
-ALTER TABLE tasks ADD CONSTRAINT fk_tasks_current_step_id
-    FOREIGN KEY (current_workflow_step_id) REFERENCES intervention_steps(id) ON DELETE SET NULL;
-
--- Add constraint to ensure task_number is not null in interventions
-ALTER TABLE interventions ADD CONSTRAINT check_task_number_not_null
-    CHECK (task_number IS NOT NULL);
+-- NOTE: ALTER TABLE ADD CONSTRAINT is not supported in SQLite.
+-- Foreign key constraints for tasks.workflow_id and tasks.current_workflow_step_id
+-- are enforced in schema.sql for new databases.
+-- For existing databases, migration 033 performs the necessary table rebuild.
 
 -- Ensure only one active intervention per task
-CREATE UNIQUE INDEX idx_active_intervention_per_task
+CREATE UNIQUE INDEX IF NOT EXISTS idx_active_intervention_per_task
 ON interventions(task_id)
 WHERE status IN ('pending', 'in_progress', 'paused');
 

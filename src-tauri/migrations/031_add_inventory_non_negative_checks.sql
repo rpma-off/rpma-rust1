@@ -1,0 +1,2 @@
+-- Migration 031: Add non-negative CHECK constraints to inventory tables
+-- Handled in Rust for idempotency (table rebuild required for CHECK constraints)
