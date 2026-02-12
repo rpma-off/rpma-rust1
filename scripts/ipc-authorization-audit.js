@@ -57,7 +57,8 @@ class AuthorizationAuditor {
             // Some system commands may be admin-only internally
             'diagnose_database',
             'get_database_stats',
-            'vacuum_database'
+            'vacuum_database',
+            'force_wal_checkpoint'
         ];
     }
 
