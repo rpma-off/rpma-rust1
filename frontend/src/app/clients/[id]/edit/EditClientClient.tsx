@@ -9,6 +9,7 @@ import Link from 'next/link';
 import type { Client } from '@/types';
 import { convertTimestamps } from '@/lib/types';
 import { ipcClient } from '@/lib/ipc/client';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface EditClientClientProps {
   params: {
@@ -17,6 +18,7 @@ interface EditClientClientProps {
 }
 
 export default function EditClientClient({ params }: EditClientClientProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { user } = useAuth();
   const [client, setClient] = useState<Client | null>(null);
@@ -49,7 +51,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
       const clientData = await ipcClient.clients.get(params.id, user?.token || '');
 
       if (!clientData) {
-        setError('Client not found');
+        setError(t('clients.notFound'));
         return;
       }
 
@@ -68,12 +70,12 @@ export default function EditClientClient({ params }: EditClientClientProps) {
         notes: clientData.notes || ''
       });
     } catch (err) {
-      setError('An unexpected error occurred');
+      setError(t('errors.unexpected'));
       console.error('Error loading client:', err);
     } finally {
       setLoading(false);
     }
-  }, [params?.id, user?.token]);
+  }, [params?.id, user?.token, t]);
 
   useEffect(() => {
     if (params?.id && user) {
@@ -85,7 +87,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
     e.preventDefault();
 
     if (!params?.id || !user) {
-      toast.error('Invalid request');
+      toast.error(t('errors.invalidRequest'));
       return;
     }
 
@@ -94,7 +96,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
       setFormErrors({});
 
       if (!user?.id) {
-        setFormErrors({ general: 'Authentication required' });
+        setFormErrors({ general: t('errors.authRequired') });
         return;
       }
 
@@ -103,7 +105,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
       router.push(`/clients/${params.id}`);
     } catch (error) {
       console.error('Error updating client:', error);
-      setFormErrors({ general: 'An unexpected error occurred' });
+      setFormErrors({ general: t('errors.unexpected') });
     } finally {
       setSubmitting(false);
     }
@@ -139,11 +141,11 @@ export default function EditClientClient({ params }: EditClientClientProps) {
             className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Back to Clients</span>
+            <span>{t('clients.backToClients')}</span>
           </Link>
         </div>
         <div className="bg-red-900/50 border border-red-700 rounded-lg p-8 text-center">
-          <p className="text-red-400">{error || 'Client not found'}</p>
+          <p className="text-red-400">{error || t('clients.notFound')}</p>
         </div>
       </div>
     );
@@ -159,11 +161,11 @@ export default function EditClientClient({ params }: EditClientClientProps) {
             className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Back to {client.name}</span>
+            <span>{t('clients.backTo')} {client.name}</span>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Edit Client</h1>
-            <p className="text-muted-foreground mt-1">Update client information</p>
+            <h1 className="text-2xl font-bold text-foreground">{t('clients.editClient')}</h1>
+            <p className="text-muted-foreground mt-1">{t('clients.updateClientInfo')}</p>
           </div>
         </div>
       </div>
@@ -181,7 +183,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
           {/* Name */}
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-muted-foreground mb-2">
-              Name *
+              {t('forms.name')} *
             </label>
             <input
               type="text"
@@ -191,7 +193,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
               className={`w-full px-3 py-2 bg-[hsl(var(--rpma-surface))] border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:border-green-500 ${
                 formErrors.name ? 'border-red-500' : 'border-[hsl(var(--rpma-border))]'
               }`}
-              placeholder="Enter client name"
+              placeholder={t('forms.enterClientName')}
               required
             />
             {formErrors.name && <p className="text-red-400 text-sm mt-1">{formErrors.name}</p>}
@@ -200,7 +202,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
           {/* Customer Type */}
           <div>
             <label className="block text-sm font-medium text-muted-foreground mb-2">
-              Customer Type *
+              {t('clients.customerType')} *
             </label>
             <div className="flex space-x-4">
               <label className="flex items-center">
@@ -212,7 +214,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
                   onChange={(e) => handleInputChange('customer_type', e.target.value as 'individual' | 'business')}
                   className="mr-2"
                 />
-                <span className="text-muted-foreground">Individual</span>
+                <span className="text-muted-foreground">{t('clients.individual')}</span>
               </label>
               <label className="flex items-center">
                 <input
@@ -223,7 +225,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
                   onChange={(e) => handleInputChange('customer_type', e.target.value as 'individual' | 'business')}
                   className="mr-2"
                 />
-                <span className="text-muted-foreground">Business</span>
+                <span className="text-muted-foreground">{t('clients.business')}</span>
               </label>
             </div>
           </div>
@@ -231,7 +233,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
           {/* Email */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-muted-foreground mb-2">
-              Email
+              {t('clients.email')}
             </label>
             <input
               type="email"
@@ -241,7 +243,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
               className={`w-full px-3 py-2 bg-[hsl(var(--rpma-surface))] border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:border-green-500 ${
                 formErrors.email ? 'border-red-500' : 'border-[hsl(var(--rpma-border))]'
               }`}
-              placeholder="Enter email address"
+              placeholder={t('forms.enterEmail')}
             />
             {formErrors.email && <p className="text-red-400 text-sm mt-1">{formErrors.email}</p>}
           </div>
@@ -249,7 +251,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
           {/* Phone */}
           <div>
             <label htmlFor="phone" className="block text-sm font-medium text-muted-foreground mb-2">
-              Phone
+              {t('clients.phone')}
             </label>
             <input
               type="tel"
@@ -259,7 +261,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
               className={`w-full px-3 py-2 bg-[hsl(var(--rpma-surface))] border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:border-green-500 ${
                 formErrors.phone ? 'border-red-500' : 'border-[hsl(var(--rpma-border))]'
               }`}
-              placeholder="Enter phone number"
+              placeholder={t('forms.enterPhone')}
             />
             {formErrors.phone && <p className="text-red-400 text-sm mt-1">{formErrors.phone}</p>}
           </div>
@@ -267,7 +269,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
           {/* Address */}
           <div>
             <label htmlFor="address" className="block text-sm font-medium text-muted-foreground mb-2">
-              Address
+              {t('clients.address')}
             </label>
             <textarea
               id="address_street"
@@ -277,7 +279,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
               className={`w-full px-3 py-2 bg-[hsl(var(--rpma-surface))] border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:border-green-500 ${
                 formErrors.address_street ? 'border-red-500' : 'border-[hsl(var(--rpma-border))]'
               }`}
-              placeholder="Enter address"
+              placeholder={t('forms.enterAddress')}
             />
             {formErrors.address && <p className="text-red-400 text-sm mt-1">{formErrors.address}</p>}
           </div>
@@ -286,7 +288,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
           {formData.customer_type === 'business' && (
             <div>
               <label htmlFor="company_name" className="block text-sm font-medium text-muted-foreground mb-2">
-                Company Name
+                {t('clients.company')}
               </label>
               <input
                 type="text"
@@ -296,7 +298,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
                 className={`w-full px-3 py-2 bg-[hsl(var(--rpma-surface))] border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:border-green-500 ${
                   formErrors.company_name ? 'border-red-500' : 'border-[hsl(var(--rpma-border))]'
                 }`}
-                placeholder="Enter company name"
+                placeholder={t('forms.enterCompanyName')}
               />
               {formErrors.company_name && <p className="text-red-400 text-sm mt-1">{formErrors.company_name}</p>}
             </div>
@@ -305,7 +307,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
           {/* Notes */}
           <div>
             <label htmlFor="notes" className="block text-sm font-medium text-muted-foreground mb-2">
-              Notes
+              {t('clients.notes')}
             </label>
             <textarea
               id="notes"
@@ -315,7 +317,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
               className={`w-full px-3 py-2 bg-[hsl(var(--rpma-surface))] border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:border-green-500 ${
                 formErrors.notes ? 'border-red-500' : 'border-[hsl(var(--rpma-border))]'
               }`}
-              placeholder="Enter any additional notes"
+              placeholder={t('forms.enterNotes')}
             />
             {formErrors.notes && <p className="text-red-400 text-sm mt-1">{formErrors.notes}</p>}
           </div>
@@ -328,7 +330,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
               className="px-4 py-2 text-muted-foreground hover:text-foreground transition-colors flex items-center space-x-2"
             >
               <X className="h-4 w-4" />
-              <span>Cancel</span>
+              <span>{t('common.cancel')}</span>
             </button>
             <button
               type="submit"
@@ -340,7 +342,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
               ) : (
                 <Save className="h-4 w-4" />
               )}
-              <span>{submitting ? 'Updating...' : 'Update Client'}</span>
+              <span>{submitting ? t('common.updating') : t('clients.updateClient')}</span>
             </button>
           </div>
         </form>

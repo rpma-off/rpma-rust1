@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ClientWithTasks, Task } from '@/types';
 import { convertTimestamps } from '@/lib/types';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface ClientDetailPageProps {
   params: {
@@ -20,6 +21,7 @@ interface ClientDetailPageProps {
 }
 
 export default function ClientDetailPage({ params }: ClientDetailPageProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { user } = useAuth();
   const [client, setClient] = useState<ClientWithTasks | null>(null);
@@ -38,7 +40,7 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
       if (!response.success || !response.data) {
         const errorMessage = typeof response.error === 'string'
           ? response.error
-          : response.error?.message || 'Client not found';
+          : response.error?.message || t('clients.notFound');
         setError(errorMessage);
         return;
       }
@@ -49,12 +51,12 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
       }
       setClient(convertedClient);
     } catch (err) {
-      setError('An unexpected error occurred');
+      setError(t('errors.unexpected'));
       console.error('Error loading client:', err);
     } finally {
       setLoading(false);
     }
-  }, [params?.id, user?.token]);
+  }, [params?.id, user?.token, t]);
 
   useEffect(() => {
     if (params?.id && user) {
@@ -71,25 +73,25 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
   const handleDelete = async () => {
     if (!client || !params?.id) return;
 
-    if (!confirm(`Are you sure you want to delete ${client.name}? This action cannot be undone.`)) {
+    if (!confirm(t('confirm.deleteClient', { name: client.name }))) {
       return;
     }
 
     try {
       if (!user?.id) {
-        setError('Authentication required');
+        setError(t('errors.authRequired'));
         return;
       }
 
       const response = await clientService.deleteClient(params.id, user.token);
       if (response.error) {
-        setError(response.error || 'Failed to delete client');
+        setError(response.error || t('errors.deleteFailed'));
         return;
       }
 
       router.push('/clients');
     } catch (err) {
-      setError('An unexpected error occurred while deleting the client');
+      setError(t('errors.unexpected'));
       console.error('Error deleting client:', err);
     }
   };
@@ -117,14 +119,14 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
             className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Back to Clients</span>
+            <span>{t('clients.backToClients')}</span>
           </Link>
         </div>
         <Card className="border-red-700/50 bg-red-900/20">
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-red-400 text-lg font-medium">{error || 'Client not found'}</p>
-              <p className="text-muted-foreground text-sm mt-2">Please check the client ID or try again later.</p>
+              <p className="text-red-400 text-lg font-medium">{error || t('clients.notFound')}</p>
+              <p className="text-muted-foreground text-sm mt-2">{t('clients.checkId')}</p>
             </div>
           </CardContent>
         </Card>
@@ -143,8 +145,8 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
               className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors mt-2 flex-shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
-              <span className="text-sm hidden sm:inline">Back to Clients</span>
-              <span className="text-sm sm:hidden">Back</span>
+              <span className="text-sm hidden sm:inline">{t('clients.backToClients')}</span>
+              <span className="text-sm sm:hidden">{t('common.back')}</span>
             </Link>
             <div className="flex items-center space-x-3 md:space-x-4 min-w-0 flex-1">
               <Avatar className="h-12 w-12 md:h-16 md:w-16 flex-shrink-0">
@@ -156,10 +158,10 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
                 <h1 className="text-2xl md:text-3xl font-bold text-foreground truncate">{client.name}</h1>
                 <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 mt-2">
                   <Badge variant={client.customer_type === 'business' ? 'secondary' : 'default'} className="w-fit">
-                    {client.customer_type === 'business' ? 'Business Client' : 'Individual Client'}
+                    {client.customer_type === 'business' ? t('clients.businessClient') : t('clients.individualClient')}
                   </Badge>
                   <span className="text-muted-foreground text-sm">
-                    Since {client.created_at ? new Date(client.created_at as unknown as string).toLocaleDateString() : 'N/A'}
+                    {t('clients.since')} {client.created_at ? new Date(client.created_at as unknown as string).toLocaleDateString() : 'N/A'}
                   </span>
                 </div>
               </div>
@@ -168,15 +170,15 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
           <div className="flex items-center space-x-2 md:space-x-3 flex-shrink-0">
             <Button onClick={handleCreateTask} size="sm" className="bg-green-600 hover:bg-green-700">
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">New Task</span>
+              <span className="hidden sm:inline">{t('tasks.newTask')}</span>
             </Button>
             <Button onClick={handleEdit} variant="outline" size="sm">
               <Edit className="h-4 w-4" />
-              <span className="hidden sm:inline">Edit</span>
+              <span className="hidden sm:inline">{t('common.edit')}</span>
             </Button>
             <Button onClick={handleDelete} variant="destructive" size="sm">
               <Trash2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Delete</span>
+              <span className="hidden sm:inline">{t('common.delete')}</span>
             </Button>
           </div>
         </div>
@@ -189,7 +191,7 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
           {/* Contact Information */}
           <Card>
             <CardHeader>
-              <CardTitle>Contact Information</CardTitle>
+              <CardTitle>{t('clients.contactInformation')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -197,7 +199,7 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
                   <div className="flex items-center space-x-3 p-3 bg-[hsl(var(--rpma-surface))] rounded-lg">
                     <Mail className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                     <div>
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Email</p>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide">{t('clients.email')}</p>
                       <p className="text-foreground font-medium">{client.email}</p>
                     </div>
                   </div>
@@ -206,7 +208,7 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
                   <div className="flex items-center space-x-3 p-3 bg-[hsl(var(--rpma-surface))] rounded-lg">
                     <Phone className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                     <div>
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Phone</p>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide">{t('clients.phone')}</p>
                       <p className="text-foreground font-medium">{client.phone}</p>
                     </div>
                   </div>
@@ -215,7 +217,7 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
                   <div className="flex items-center space-x-3 p-3 bg-[hsl(var(--rpma-surface))] rounded-lg">
                     <Building2 className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                     <div>
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Company</p>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide">{t('clients.company')}</p>
                       <p className="text-foreground font-medium">{client.company_name}</p>
                     </div>
                   </div>
@@ -224,7 +226,7 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
                   <div className="flex items-center space-x-3 p-3 bg-[hsl(var(--rpma-surface))] rounded-lg">
                     <MapPin className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                     <div>
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Address</p>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide">{t('clients.address')}</p>
                       <p className="text-foreground font-medium">
                         {[client.address_street, client.address_city, client.address_zip, client.address_country]
                           .filter(Boolean)
@@ -241,13 +243,13 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Recent Tasks</CardTitle>
+                <CardTitle>{t('clients.recentTasks')}</CardTitle>
                 {client.tasks && client.tasks.length > 5 && (
                   <Link
                     href={`/tasks?clientId=${params.id}`}
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    View all ({client.tasks.length})
+                    {t('clients.viewAll')} ({client.tasks.length})
                   </Link>
                 )}
               </div>
@@ -265,8 +267,8 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
                         <div className="flex-1">
                           <p className="text-foreground font-medium mb-1">{task.title}</p>
                           <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                            {task.vehicle_plate && <span>Plate: {task.vehicle_plate}</span>}
-                            {task.vehicle_model && <span>Model: {task.vehicle_model}</span>}
+                            {task.vehicle_plate && <span>{t('tasks.plate')}: {task.vehicle_plate}</span>}
+                            {task.vehicle_model && <span>{t('tasks.model')}: {task.vehicle_model}</span>}
                           </div>
                         </div>
                         <div className="text-right space-y-2">
@@ -289,10 +291,10 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground mb-4">No tasks found for this client</p>
+                  <p className="text-muted-foreground mb-4">{t('clients.noTasks')}</p>
                   <Button onClick={handleCreateTask} variant="outline" size="sm">
                     <Plus className="h-4 w-4 mr-2" />
-                    Create First Task
+                    {t('clients.createFirstTask')}
                   </Button>
                 </div>
               )}
@@ -305,36 +307,36 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
           {/* Quick Stats */}
           <Card>
             <CardHeader>
-              <CardTitle>Client Overview</CardTitle>
+              <CardTitle>{t('clients.clientOverview')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center p-3 bg-[hsl(var(--rpma-surface))] rounded-lg">
                   <div className="text-2xl font-bold text-foreground">{client.tasks?.length || 0}</div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wide">Total Tasks</div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide">{t('clients.totalTasks')}</div>
                 </div>
                 <div className="text-center p-3 bg-green-900/20 rounded-lg">
                   <div className="text-2xl font-bold text-green-400">
                     {client.tasks?.filter(t => t.status === 'completed').length || 0}
                   </div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wide">Completed</div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide">{t('clients.completed')}</div>
                 </div>
               </div>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground text-sm">In Progress</span>
+                  <span className="text-muted-foreground text-sm">{t('clients.inProgress')}</span>
                   <Badge variant="default">
                     {client.tasks?.filter(t => t.status === 'in_progress').length || 0}
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground text-sm">Pending</span>
+                  <span className="text-muted-foreground text-sm">{t('clients.pending')}</span>
                   <Badge variant="secondary">
                     {client.tasks?.filter(t => t.status === 'pending').length || 0}
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground text-sm">Client Since</span>
+                  <span className="text-muted-foreground text-sm">{t('clients.clientSince')}</span>
                   <span className="text-foreground text-sm font-medium">
                     {client.created_at ? new Date(client.created_at as unknown as string).toLocaleDateString() : 'N/A'}
                   </span>
@@ -346,7 +348,7 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
           {/* Recent Activity */}
           <Card>
             <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
+              <CardTitle>{t('clients.recentActivity')}</CardTitle>
             </CardHeader>
             <CardContent>
               {client.tasks && client.tasks.length > 0 ? (
@@ -371,12 +373,12 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
                       href={`/tasks?clientId=${params.id}`}
                       className="text-sm text-muted-foreground hover:text-foreground transition-colors block text-center pt-2"
                     >
-                      View all activity →
+                      {t('clients.viewAllActivity')} →
                     </Link>
                   )}
                 </div>
               ) : (
-                <p className="text-muted-foreground text-sm text-center py-4">No recent activity</p>
+                <p className="text-muted-foreground text-sm text-center py-4">{t('clients.noRecentActivity')}</p>
               )}
             </CardContent>
           </Card>
@@ -385,7 +387,7 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
           {client.notes && (
             <Card>
               <CardHeader>
-                <CardTitle>Notes</CardTitle>
+                <CardTitle>{t('clients.notes')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground text-sm leading-relaxed">{client.notes}</p>
