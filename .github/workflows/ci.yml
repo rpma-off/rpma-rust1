@@ -20,8 +20,8 @@ permissions:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
-  # Adapte si tu as une MSRV officielle différente
-  MSRV: "1.75.0"
+  # Must match rust-version in Cargo.toml
+  MSRV: "1.77.0"
   NODE_VERSION: "20"
 
 jobs:
@@ -76,7 +76,7 @@ jobs:
         toolchain: [ stable, msrv ]
         include:
           - toolchain: msrv
-            rust: "1.75.0"
+            rust: "1.77.0"
           - toolchain: stable
             rust: "stable"
 
@@ -131,7 +131,6 @@ jobs:
             src-tauri -> target
 
       - name: cargo-audit
-        working-directory: src-tauri
         run: |
           cargo install cargo-audit --locked
           cargo audit
@@ -140,9 +139,8 @@ jobs:
         uses: EmbarkStudios/cargo-deny-action@v2
         with:
           command: check
-          arguments: --all-features
-          # si ton deny.toml est ailleurs, adapte via "working-directory" non supporté ici,
-          # sinon mets deny.toml à la racine repo.
+          arguments: --all-features --workspace
+          manifest-path: src-tauri/Cargo.toml
 
   # -----------------------------
   # Coverage (Linux + stable only)

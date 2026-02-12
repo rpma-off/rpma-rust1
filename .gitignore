@@ -9,6 +9,7 @@ _tmp_
 
 # Development
 .DS_Store
+desktop.ini
 
 .env
 .env.local
@@ -19,6 +20,10 @@ _tmp_
 # Backup files
 *.backup
 *.patch
+
+# CI/test artifacts
+type-drift-ci-report.json
+test-results/
 
 start_dev.bat
 stop_dev.bat
