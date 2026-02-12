@@ -549,7 +549,6 @@ export const fr = {
     runCommand: "Exécutez",
     interventionDataUnavailable: "Données d'intervention non disponibles",
     interventionDataRefreshFailed: "Impossible de récupérer les données d'intervention actualisées. Veuillez rafraîchir la page.",
-    sessionExpired: "Session expirée. Veuillez vous reconnecter.",
     noPermissionToExport: "Vous n'avez pas les permissions pour exporter ce rapport.",
     exportFailedRetry: "Échec de l'export après plusieurs tentatives. Réessayez plus tard.",
     exportError: "Erreur d'export: {message}",
