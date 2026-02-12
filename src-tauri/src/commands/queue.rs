@@ -5,7 +5,9 @@ use crate::models::sync::{SyncOperation, SyncQueueMetrics};
 
 /// Enqueue a sync operation
 #[tauri::command]
-pub fn sync_enqueue(operation: SyncOperation, state: AppState) -> Result<i64, String> {
+pub fn sync_enqueue(operation: SyncOperation, session_token: String, state: AppState) -> Result<i64, String> {
+    state.auth_service.validate_session(&session_token)
+        .map_err(|e| format!("Authentication failed: {}", e))?;
     state
         .sync_queue
         .enqueue(operation)
@@ -14,7 +16,9 @@ pub fn sync_enqueue(operation: SyncOperation, state: AppState) -> Result<i64, St
 
 /// Dequeue a batch of pending operations
 #[tauri::command]
-pub fn sync_dequeue_batch(limit: usize, state: AppState) -> Result<Vec<SyncOperation>, String> {
+pub fn sync_dequeue_batch(limit: usize, session_token: String, state: AppState) -> Result<Vec<SyncOperation>, String> {
+    state.auth_service.validate_session(&session_token)
+        .map_err(|e| format!("Authentication failed: {}", e))?;
     state
         .sync_queue
         .dequeue_batch(limit)
@@ -23,7 +27,9 @@ pub fn sync_dequeue_batch(limit: usize, state: AppState) -> Result<Vec<SyncOpera
 
 /// Get sync queue metrics
 #[tauri::command]
-pub fn sync_get_metrics(state: AppState) -> Result<SyncQueueMetrics, String> {
+pub fn sync_get_metrics(session_token: String, state: AppState) -> Result<SyncQueueMetrics, String> {
+    state.auth_service.validate_session(&session_token)
+        .map_err(|e| format!("Authentication failed: {}", e))?;
     state
         .sync_queue
         .get_metrics()
@@ -32,7 +38,9 @@ pub fn sync_get_metrics(state: AppState) -> Result<SyncQueueMetrics, String> {
 
 /// Mark an operation as completed
 #[tauri::command]
-pub fn sync_mark_completed(operation_id: i64, state: AppState) -> Result<(), String> {
+pub fn sync_mark_completed(operation_id: i64, session_token: String, state: AppState) -> Result<(), String> {
+    state.auth_service.validate_session(&session_token)
+        .map_err(|e| format!("Authentication failed: {}", e))?;
     state
         .sync_queue
         .mark_completed(operation_id)
@@ -41,7 +49,9 @@ pub fn sync_mark_completed(operation_id: i64, state: AppState) -> Result<(), Str
 
 /// Mark an operation as failed
 #[tauri::command]
-pub fn sync_mark_failed(operation_id: i64, error: String, state: AppState) -> Result<(), String> {
+pub fn sync_mark_failed(operation_id: i64, error: String, session_token: String, state: AppState) -> Result<(), String> {
+    state.auth_service.validate_session(&session_token)
+        .map_err(|e| format!("Authentication failed: {}", e))?;
     state
         .sync_queue
         .mark_failed(operation_id, &error)
@@ -50,7 +60,9 @@ pub fn sync_mark_failed(operation_id: i64, error: String, state: AppState) -> Re
 
 /// Get a specific operation by ID
 #[tauri::command]
-pub fn sync_get_operation(operation_id: i64, state: AppState) -> Result<SyncOperation, String> {
+pub fn sync_get_operation(operation_id: i64, session_token: String, state: AppState) -> Result<SyncOperation, String> {
+    state.auth_service.validate_session(&session_token)
+        .map_err(|e| format!("Authentication failed: {}", e))?;
     state
         .sync_queue
         .get_operation(operation_id)
@@ -59,7 +71,9 @@ pub fn sync_get_operation(operation_id: i64, state: AppState) -> Result<SyncOper
 
 /// Clean up old completed operations
 #[tauri::command]
-pub fn sync_cleanup_old_operations(days_old: i64, state: AppState) -> Result<i64, String> {
+pub fn sync_cleanup_old_operations(days_old: i64, session_token: String, state: AppState) -> Result<i64, String> {
+    state.auth_service.validate_session(&session_token)
+        .map_err(|e| format!("Authentication failed: {}", e))?;
     state
         .sync_queue
         .cleanup_old_operations(days_old)

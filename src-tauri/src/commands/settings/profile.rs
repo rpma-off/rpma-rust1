@@ -3,7 +3,7 @@
 //! This module handles user profile CRUD operations including
 //! profile updates, password changes, data export, and account deletion.
 
-use crate::commands::settings::core::{authenticate_user, handle_settings_error};
+use crate::commands::settings::core::handle_settings_error;
 use crate::commands::{ApiResponse, AppError, AppState};
 
 use base64::{engine::general_purpose, Engine as _};
@@ -94,7 +94,7 @@ pub async fn get_user_settings(
 ) -> Result<ApiResponse<crate::models::settings::UserSettings>, AppError> {
     info!("Getting user settings");
 
-    let user = authenticate_user(&session_token, &state)?;
+    let user = authenticate!(&session_token, &state);
 
     state
         .settings_service
@@ -190,7 +190,7 @@ pub async fn export_user_data(
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
     info!("Exporting user data");
 
-    let user = authenticate_user(&session_token, &state)?;
+    let user = authenticate!(&session_token, &state);
     let settings = state
         .settings_service
         .get_user_settings(&user.id)
@@ -245,7 +245,7 @@ pub async fn delete_user_account(
 ) -> Result<ApiResponse<String>, AppError> {
     info!("Deleting user account");
 
-    let user = authenticate_user(&request.session_token, &state)?;
+    let user = authenticate!(&request.session_token, &state);
 
     // Validate confirmation
     if request.confirmation != "DELETE" {

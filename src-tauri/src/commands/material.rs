@@ -2,6 +2,7 @@
 //!
 //! Provides IPC endpoints for material inventory management and consumption tracking.
 
+use crate::authenticate;
 use crate::commands::{ApiResponse, AppState};
 use crate::models::material::MaterialType;
 use crate::services::material::{
@@ -12,12 +13,13 @@ use crate::services::material::{
 #[tauri::command]
 pub async fn material_create(
     state: AppState<'_>,
+    session_token: String,
     request: CreateMaterialRequest,
-    user_id: String,
 ) -> Result<ApiResponse<crate::models::material::Material>, crate::commands::AppError> {
+    let current_user = authenticate!(&session_token, &state);
     let service = state.material_service.clone();
 
-    match service.create_material(request, Some(user_id)) {
+    match service.create_material(request, Some(current_user.user_id)) {
         Ok(material) => Ok(ApiResponse::success(material)),
         Err(e) => Err(crate::commands::AppError::from(e.to_string())),
     }
@@ -27,8 +29,10 @@ pub async fn material_create(
 #[tauri::command]
 pub async fn material_get(
     state: AppState<'_>,
+    session_token: String,
     id: String,
 ) -> Result<ApiResponse<Option<crate::models::material::Material>>, crate::commands::AppError> {
+    let _current_user = authenticate!(&session_token, &state);
     let service = state.material_service.clone();
 
     match service.get_material(&id) {
@@ -41,8 +45,10 @@ pub async fn material_get(
 #[tauri::command]
 pub async fn material_get_by_sku(
     state: AppState<'_>,
+    session_token: String,
     sku: String,
 ) -> Result<ApiResponse<Option<crate::models::material::Material>>, crate::commands::AppError> {
+    let _current_user = authenticate!(&session_token, &state);
     let service = state.material_service.clone();
 
     match service.get_material_by_sku(&sku) {
@@ -55,12 +61,14 @@ pub async fn material_get_by_sku(
 #[tauri::command]
 pub async fn material_list(
     state: AppState<'_>,
+    session_token: String,
     material_type: Option<String>,
     category: Option<String>,
     active_only: Option<bool>,
     limit: Option<i32>,
     offset: Option<i32>,
 ) -> Result<ApiResponse<Vec<crate::models::material::Material>>, crate::commands::AppError> {
+    let _current_user = authenticate!(&session_token, &state);
     let service = state.material_service.clone();
 
     // Parse material type
@@ -83,13 +91,14 @@ pub async fn material_list(
 #[tauri::command]
 pub async fn material_update(
     state: AppState<'_>,
+    session_token: String,
     id: String,
     request: CreateMaterialRequest,
-    user_id: String,
 ) -> Result<ApiResponse<crate::models::material::Material>, crate::commands::AppError> {
+    let current_user = authenticate!(&session_token, &state);
     let service = state.material_service.clone();
 
-    match service.update_material(&id, request, Some(user_id)) {
+    match service.update_material(&id, request, Some(current_user.user_id)) {
         Ok(material) => Ok(ApiResponse::success(material)),
         Err(e) => Err(crate::commands::AppError::from(e.to_string())),
     }
@@ -99,8 +108,10 @@ pub async fn material_update(
 #[tauri::command]
 pub async fn material_update_stock(
     state: AppState<'_>,
+    session_token: String,
     request: UpdateStockRequest,
 ) -> Result<ApiResponse<crate::models::material::Material>, crate::commands::AppError> {
+    let _current_user = authenticate!(&session_token, &state);
     let service = state.material_service.clone();
 
     match service.update_stock(request) {
@@ -113,8 +124,10 @@ pub async fn material_update_stock(
 #[tauri::command]
 pub async fn material_record_consumption(
     state: AppState<'_>,
+    session_token: String,
     request: RecordConsumptionRequest,
 ) -> Result<ApiResponse<crate::models::material::MaterialConsumption>, crate::commands::AppError> {
+    let _current_user = authenticate!(&session_token, &state);
     let service = state.material_service.clone();
 
     match service.record_consumption(request) {
@@ -127,9 +140,11 @@ pub async fn material_record_consumption(
 #[tauri::command]
 pub async fn material_get_intervention_consumption(
     state: AppState<'_>,
+    session_token: String,
     intervention_id: String,
 ) -> Result<ApiResponse<Vec<crate::models::material::MaterialConsumption>>, crate::commands::AppError>
 {
+    let _current_user = authenticate!(&session_token, &state);
     let service = state.material_service.clone();
 
     match service.get_intervention_consumption(&intervention_id) {
@@ -142,11 +157,13 @@ pub async fn material_get_intervention_consumption(
 #[tauri::command]
 pub async fn material_get_intervention_summary(
     state: AppState<'_>,
+    session_token: String,
     intervention_id: String,
 ) -> Result<
     ApiResponse<crate::models::material::InterventionMaterialSummary>,
     crate::commands::AppError,
 > {
+    let _current_user = authenticate!(&session_token, &state);
     let service = state.material_service.clone();
 
     match service.get_intervention_material_summary(&intervention_id) {
@@ -159,7 +176,9 @@ pub async fn material_get_intervention_summary(
 #[tauri::command]
 pub async fn material_get_stats(
     state: AppState<'_>,
+    session_token: String,
 ) -> Result<ApiResponse<crate::models::material::MaterialStats>, crate::commands::AppError> {
+    let _current_user = authenticate!(&session_token, &state);
     let service = state.material_service.clone();
 
     match service.get_material_stats() {
@@ -172,7 +191,9 @@ pub async fn material_get_stats(
 #[tauri::command]
 pub async fn material_get_low_stock(
     state: AppState<'_>,
+    session_token: String,
 ) -> Result<ApiResponse<Vec<crate::models::material::Material>>, crate::commands::AppError> {
+    let _current_user = authenticate!(&session_token, &state);
     let service = state.material_service.clone();
 
     match service.get_low_stock_materials() {
@@ -185,7 +206,9 @@ pub async fn material_get_low_stock(
 #[tauri::command]
 pub async fn material_get_expired(
     state: AppState<'_>,
+    session_token: String,
 ) -> Result<ApiResponse<Vec<crate::models::material::Material>>, crate::commands::AppError> {
+    let _current_user = authenticate!(&session_token, &state);
     let service = state.material_service.clone();
 
     match service.get_expired_materials() {
@@ -198,7 +221,9 @@ pub async fn material_get_expired(
 #[tauri::command]
 pub async fn inventory_get_stats(
     state: AppState<'_>,
+    session_token: String,
 ) -> Result<ApiResponse<crate::models::material::InventoryStats>, crate::commands::AppError> {
+    let _current_user = authenticate!(&session_token, &state);
     let service = state.material_service.clone();
 
     match service.get_inventory_stats() {

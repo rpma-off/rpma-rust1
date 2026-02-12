@@ -5,8 +5,18 @@ use crate::models::message::*;
 #[tauri::command]
 pub async fn message_send(
     request: SendMessageRequest,
+    session_token: String,
     state: AppState<'_>,
 ) -> Result<Message, ApiError> {
+    let auth_service = state.auth_service.clone();
+    let _current_user = auth_service
+        .validate_session(&session_token)
+        .map_err(|e| ApiError {
+            message: format!("Authentication failed: {}", e),
+            code: "AUTH_ERROR".to_string(),
+            details: None,
+        })?;
+
     state
         .message_service
         .send_message(&request)
@@ -22,8 +32,18 @@ pub async fn message_send(
 #[tauri::command]
 pub async fn message_get_list(
     query: MessageQuery,
+    session_token: String,
     state: AppState<'_>,
 ) -> Result<MessageListResponse, ApiError> {
+    let auth_service = state.auth_service.clone();
+    let _current_user = auth_service
+        .validate_session(&session_token)
+        .map_err(|e| ApiError {
+            message: format!("Authentication failed: {}", e),
+            code: "AUTH_ERROR".to_string(),
+            details: None,
+        })?;
+
     state
         .message_service
         .get_messages(&query)
@@ -37,7 +57,16 @@ pub async fn message_get_list(
 
 /// Mark message as read
 #[tauri::command]
-pub async fn message_mark_read(message_id: String, state: AppState<'_>) -> Result<(), ApiError> {
+pub async fn message_mark_read(message_id: String, session_token: String, state: AppState<'_>) -> Result<(), ApiError> {
+    let auth_service = state.auth_service.clone();
+    let _current_user = auth_service
+        .validate_session(&session_token)
+        .map_err(|e| ApiError {
+            message: format!("Authentication failed: {}", e),
+            code: "AUTH_ERROR".to_string(),
+            details: None,
+        })?;
+
     state
         .message_service
         .mark_read(&message_id)
@@ -54,8 +83,18 @@ pub async fn message_mark_read(message_id: String, state: AppState<'_>) -> Resul
 pub async fn message_get_templates(
     category: Option<String>,
     message_type: Option<String>,
+    session_token: String,
     state: AppState<'_>,
 ) -> Result<Vec<MessageTemplate>, ApiError> {
+    let auth_service = state.auth_service.clone();
+    let _current_user = auth_service
+        .validate_session(&session_token)
+        .map_err(|e| ApiError {
+            message: format!("Authentication failed: {}", e),
+            code: "AUTH_ERROR".to_string(),
+            details: None,
+        })?;
+
     state
         .message_service
         .get_templates(category.as_deref(), message_type.as_deref())
@@ -71,8 +110,18 @@ pub async fn message_get_templates(
 #[tauri::command]
 pub async fn message_get_preferences(
     user_id: String,
+    session_token: String,
     state: AppState<'_>,
 ) -> Result<NotificationPreferences, ApiError> {
+    let auth_service = state.auth_service.clone();
+    let _current_user = auth_service
+        .validate_session(&session_token)
+        .map_err(|e| ApiError {
+            message: format!("Authentication failed: {}", e),
+            code: "AUTH_ERROR".to_string(),
+            details: None,
+        })?;
+
     state
         .message_service
         .get_preferences(&user_id)
@@ -89,8 +138,18 @@ pub async fn message_get_preferences(
 pub async fn message_update_preferences(
     user_id: String,
     updates: UpdateNotificationPreferencesRequest,
+    session_token: String,
     state: AppState<'_>,
 ) -> Result<NotificationPreferences, ApiError> {
+    let auth_service = state.auth_service.clone();
+    let _current_user = auth_service
+        .validate_session(&session_token)
+        .map_err(|e| ApiError {
+            message: format!("Authentication failed: {}", e),
+            code: "AUTH_ERROR".to_string(),
+            details: None,
+        })?;
+
     state
         .message_service
         .update_preferences(&user_id, &updates)
