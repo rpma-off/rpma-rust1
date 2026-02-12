@@ -82,7 +82,9 @@ pub async fn get_tasks_with_clients(
     let mut filter = request.filter.unwrap_or_default();
 
     // Delegate role-based filtering to the service layer
-    state.task_service.apply_role_based_filters(&mut filter, &session);
+    state
+        .task_service
+        .apply_role_based_filters(&mut filter, &session);
 
     // Set pagination defaults
     let page = request.page.unwrap_or(1).max(1);

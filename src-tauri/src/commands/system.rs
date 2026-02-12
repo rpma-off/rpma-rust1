@@ -195,11 +195,9 @@ pub async fn force_wal_checkpoint(pool: State<'_, Database>) -> Result<String, S
 pub async fn health_check(pool: State<'_, Database>) -> Result<String, String> {
     let pool = pool.pool().clone();
 
-    tokio::task::spawn_blocking(move || {
-        crate::services::system::SystemService::health_check(&pool)
-    })
-    .await
-    .map_err(|e| format!("Task join error: {}", e))?
+    tokio::task::spawn_blocking(move || crate::services::system::SystemService::health_check(&pool))
+        .await
+        .map_err(|e| format!("Task join error: {}", e))?
 }
 
 /// Get database statistics

@@ -237,7 +237,10 @@ impl TaskService {
     pub fn get_tasks_with_client_details(
         &self,
         query: TaskQuery,
-    ) -> AppResult<(Vec<crate::models::task::TaskWithDetails>, crate::models::task::PaginationInfo)> {
+    ) -> AppResult<(
+        Vec<crate::models::task::TaskWithDetails>,
+        crate::models::task::PaginationInfo,
+    )> {
         let result = self.client_integration.get_tasks_with_clients(query)?;
 
         let tasks = result

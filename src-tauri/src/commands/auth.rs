@@ -209,6 +209,7 @@ pub async fn auth_refresh_token(
 
 /// Enable 2FA for the current user
 #[tauri::command]
+#[instrument(skip(state, session_token))]
 pub async fn enable_2fa(
     session_token: String,
     state: AppState<'_>,
@@ -226,14 +227,18 @@ pub async fn enable_2fa(
         .two_factor_service
         .generate_setup(&current_user.user_id)
         .await
-        .map_err(|e| AppError::Internal(format!("Failed to generate 2FA setup: {}", e)))?;
+        .map_err(|e| {
+            error!(error = %e, user_id = %current_user.user_id, "Failed to generate 2FA setup");
+            AppError::Internal("Failed to generate 2FA setup".to_string())
+        })?;
 
-    info!("Generated 2FA setup for user: {}", current_user.username);
+    info!(user_id = %current_user.user_id, "Generated 2FA setup");
     Ok(ApiResponse::success(setup))
 }
 
 /// Verify 2FA setup and enable 2FA
 #[tauri::command]
+#[instrument(skip(state, session_token, verification_code, backup_codes))]
 pub async fn verify_2fa_setup(
     verification_code: String,
     backup_codes: Vec<String>,
@@ -253,9 +258,12 @@ pub async fn verify_2fa_setup(
         .two_factor_service
         .enable_2fa(&current_user.user_id, &verification_code, backup_codes)
         .await
-        .map_err(|e| AppError::Internal(format!("Failed to enable 2FA: {}", e)))?;
+        .map_err(|e| {
+            error!(error = %e, user_id = %current_user.user_id, "Failed to enable 2FA");
+            AppError::Internal("Failed to enable 2FA".to_string())
+        })?;
 
-    info!("2FA enabled for user: {}", current_user.username);
+    info!(user_id = %current_user.user_id, "2FA enabled");
     Ok(ApiResponse::success(
         "Two-factor authentication has been enabled successfully".to_string(),
     ))
@@ -263,6 +271,7 @@ pub async fn verify_2fa_setup(
 
 /// Disable 2FA for the current user
 #[tauri::command]
+#[instrument(skip(state, session_token, password))]
 pub async fn disable_2fa(
     password: String,
     session_token: String,
@@ -280,7 +289,10 @@ pub async fn disable_2fa(
     let is_valid_password = state
         .auth_service
         .verify_user_password(&current_user.user_id, &password)
-        .map_err(|e| AppError::Internal(format!("Password verification failed: {}", e)))?;
+        .map_err(|e| {
+            error!(error = %e, user_id = %current_user.user_id, "Password verification failed during 2FA disable");
+            AppError::Internal("Password verification failed".to_string())
+        })?;
 
     if !is_valid_password {
         return Err(AppError::Authentication("Invalid password".to_string()));
@@ -291,9 +303,12 @@ pub async fn disable_2fa(
         .two_factor_service
         .disable_2fa(&current_user.user_id)
         .await
-        .map_err(|e| AppError::Internal(format!("Failed to disable 2FA: {}", e)))?;
+        .map_err(|e| {
+            error!(error = %e, user_id = %current_user.user_id, "Failed to disable 2FA");
+            AppError::Internal("Failed to disable 2FA".to_string())
+        })?;
 
-    info!("2FA disabled for user: {}", current_user.username);
+    info!(user_id = %current_user.user_id, "2FA disabled");
     Ok(ApiResponse::success(
         "Two-factor authentication has been disabled".to_string(),
     ))
@@ -301,6 +316,7 @@ pub async fn disable_2fa(
 
 /// Regenerate backup codes for 2FA
 #[tauri::command]
+#[instrument(skip(state, session_token))]
 pub async fn regenerate_backup_codes(
     session_token: String,
     state: AppState<'_>,
@@ -318,17 +334,18 @@ pub async fn regenerate_backup_codes(
         .two_factor_service
         .regenerate_backup_codes(&current_user.user_id)
         .await
-        .map_err(|e| AppError::Internal(format!("Failed to regenerate backup codes: {}", e)))?;
+        .map_err(|e| {
+            error!(error = %e, user_id = %current_user.user_id, "Failed to regenerate backup codes");
+            AppError::Internal("Failed to regenerate backup codes".to_string())
+        })?;
 
-    info!(
-        "Backup codes regenerated for user: {}",
-        current_user.username
-    );
+    info!(user_id = %current_user.user_id, "Backup codes regenerated");
     Ok(ApiResponse::success(backup_codes))
 }
 
 /// Verify 2FA code (used during login or other sensitive operations)
 #[tauri::command]
+#[instrument(skip(state, session_token, code))]
 pub async fn verify_2fa_code(
     code: String,
     session_token: String,
@@ -347,15 +364,15 @@ pub async fn verify_2fa_code(
         .two_factor_service
         .verify_code(&current_user.user_id, &code)
         .await
-        .map_err(|e| AppError::Internal(format!("Failed to verify 2FA code: {}", e)))?;
+        .map_err(|e| {
+            error!(error = %e, user_id = %current_user.user_id, "Failed to verify 2FA code");
+            AppError::Internal("Failed to verify 2FA code".to_string())
+        })?;
 
     if is_valid {
-        info!("2FA code verified for user: {}", current_user.username);
+        info!(user_id = %current_user.user_id, "2FA code verified");
     } else {
-        warn!(
-            "Invalid 2FA code attempt for user: {}",
-            current_user.username
-        );
+        warn!(user_id = %current_user.user_id, "Invalid 2FA code attempt");
     }
 
     Ok(ApiResponse::success(is_valid))
@@ -363,6 +380,7 @@ pub async fn verify_2fa_code(
 
 /// Check if 2FA is enabled for the current user
 #[tauri::command]
+#[instrument(skip(state, session_token))]
 pub async fn is_2fa_enabled(
     session_token: String,
     state: AppState<'_>,
@@ -380,7 +398,10 @@ pub async fn is_2fa_enabled(
         .two_factor_service
         .is_enabled(&current_user.user_id)
         .await
-        .map_err(|e| AppError::Internal(format!("Failed to check 2FA status: {}", e)))?;
+        .map_err(|e| {
+            error!(error = %e, user_id = %current_user.user_id, "Failed to check 2FA status");
+            AppError::Internal("Failed to check 2FA status".to_string())
+        })?;
 
     Ok(ApiResponse::success(is_enabled))
 }

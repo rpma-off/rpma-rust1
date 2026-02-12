@@ -12,7 +12,7 @@ use crate::models::auth::{UserRole, UserSession};
 use chrono::Utc;
 use serde::Deserialize;
 
-use tracing::info;
+use tracing::{error, info, instrument, warn};
 
 /// Workflow action types
 #[derive(Deserialize, Debug)]
@@ -86,7 +86,10 @@ async fn ensure_task_assignment(
         .task_service
         .get_task_async(task_id)
         .await
-        .map_err(|e| AppError::Database(format!("Failed to get task: {}", e)))?
+        .map_err(|e| {
+            tracing::error!(error = %e, task_id = task_id, "Failed to get task for assignment check");
+            AppError::Database("Failed to get task".to_string())
+        })?
         .ok_or_else(|| AppError::NotFound(format!("Task {} not found", task_id)))?;
 
     ensure_technician_assignment(session, task.technician_id.as_deref(), action)
@@ -117,7 +120,7 @@ pub struct FinalizeInterventionRequest {
 
 /// Start a new intervention
 #[tauri::command]
-
+#[instrument(skip(state, session_token, request), fields(task_id = %request.task_id, user_id))]
 pub async fn intervention_start(
     request: StartInterventionRequest,
     session_token: String,
@@ -126,6 +129,7 @@ pub async fn intervention_start(
     info!("Starting intervention for task: {}", request.task_id);
 
     let session = authenticate!(&session_token, &state);
+    tracing::Span::current().record("user_id", &session.user_id.as_str());
     super::ensure_intervention_permission(&session)?;
     ensure_task_assignment(&state, &session, &request.task_id, "start interventions").await?;
 
@@ -135,7 +139,7 @@ pub async fn intervention_start(
         .get_active_intervention_by_task(&request.task_id)
     {
         Ok(Some(active_intervention)) => {
-            tracing::warn!("Attempted to start intervention for task {} but active intervention already exists: {}", request.task_id, active_intervention.id);
+            warn!(task_id = %request.task_id, active_intervention_id = %active_intervention.id, "Attempted to start intervention but active intervention already exists");
             return Err(AppError::Validation(format!(
                 "An active intervention already exists for task {}",
                 request.task_id
@@ -145,11 +149,10 @@ pub async fn intervention_start(
             // No active intervention, proceed
         }
         Err(e) => {
-            tracing::error!("Failed to check for existing active interventions: {}", e);
-            return Err(AppError::Database(format!(
-                "Failed to validate existing interventions: {}",
-                e
-            )));
+            error!(error = %e, task_id = %request.task_id, "Failed to check for existing active interventions");
+            return Err(AppError::Database(
+                "Failed to validate existing interventions".to_string(),
+            ));
         }
     }
 
@@ -185,14 +188,14 @@ pub async fn intervention_start(
         .start_intervention(intervention_data, &session.user_id, &correlation_id)
         .map(|response| ApiResponse::success(response.intervention))
         .map_err(|e| {
-            tracing::error!("Failed to start intervention: {}", e);
-            AppError::Database(format!("Failed to start intervention: {}", e))
+            error!(error = %e, task_id = %request.task_id, "Failed to start intervention");
+            AppError::Database("Failed to start intervention".to_string())
         })
 }
 
 /// Update an intervention
 #[tauri::command]
-
+#[instrument(skip(state, session_token, data), fields(user_id))]
 pub async fn intervention_update(
     id: String,
     data: serde_json::Value,
@@ -202,11 +205,15 @@ pub async fn intervention_update(
     info!("Updating intervention: {}", id);
 
     let session = authenticate!(&session_token, &state);
+    tracing::Span::current().record("user_id", &session.user_id.as_str());
     super::ensure_intervention_permission(&session)?;
     let intervention = state
         .intervention_service
         .get_intervention(&id)
-        .map_err(|e| AppError::Database(format!("Failed to get intervention: {}", e)))?
+        .map_err(|e| {
+            error!(error = %e, intervention_id = %id, "Failed to get intervention for update");
+            AppError::Database("Failed to get intervention".to_string())
+        })?
         .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", id)))?;
 
     ensure_technician_assignment(
@@ -220,14 +227,14 @@ pub async fn intervention_update(
         .update_intervention(&id, data)
         .map(ApiResponse::success)
         .map_err(|e| {
-            tracing::error!("Failed to update intervention {}: {}", id, e);
-            AppError::Database(format!("Failed to update intervention: {}", e))
+            error!(error = %e, intervention_id = %id, "Failed to update intervention");
+            AppError::Database("Failed to update intervention".to_string())
         })
 }
 
 /// Delete an intervention
 #[tauri::command]
-
+#[instrument(skip(state, session_token), fields(user_id))]
 pub async fn intervention_delete(
     id: String,
     session_token: String,
@@ -236,6 +243,7 @@ pub async fn intervention_delete(
     info!("Deleting intervention: {}", id);
 
     let session = authenticate!(&session_token, &state);
+    tracing::Span::current().record("user_id", &session.user_id.as_str());
     super::ensure_intervention_permission(&session)?;
 
     // Check permissions (only admin or assigned technician can delete)
@@ -243,8 +251,8 @@ pub async fn intervention_delete(
         .intervention_service
         .get_intervention(&id)
         .map_err(|e| {
-            tracing::error!("Failed to get intervention for deletion: {}", e);
-            AppError::Database(format!("Failed to get intervention: {}", e))
+            error!(error = %e, intervention_id = %id, "Failed to get intervention for deletion");
+            AppError::Database("Failed to get intervention".to_string())
         })?
         .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", id)))?;
 
@@ -264,14 +272,14 @@ pub async fn intervention_delete(
         .delete_intervention(&id)
         .map(|_| ApiResponse::success("Intervention deleted successfully".to_string()))
         .map_err(|e| {
-            tracing::error!("Failed to delete intervention {}: {}", id, e);
-            AppError::Database(format!("Failed to delete intervention: {}", e))
+            error!(error = %e, intervention_id = %id, "Failed to delete intervention");
+            AppError::Database("Failed to delete intervention".to_string())
         })
 }
 
 /// Finalize an intervention
 #[tauri::command]
-
+#[instrument(skip(state, session_token, request), fields(intervention_id = %request.intervention_id, user_id))]
 pub async fn intervention_finalize(
     request: FinalizeInterventionRequest,
     session_token: String,
@@ -281,6 +289,7 @@ pub async fn intervention_finalize(
     info!("Finalizing intervention: {}", request.intervention_id);
 
     let session = authenticate!(&session_token, &state);
+    tracing::Span::current().record("user_id", &session.user_id.as_str());
     super::ensure_intervention_permission(&session)?;
 
     let finalize_data = crate::services::intervention_types::FinalizeInterventionRequest {
@@ -299,18 +308,14 @@ pub async fn intervention_finalize(
         .finalize_intervention(finalize_data, "finalize-cmd", Some(&session.user_id))
         .map(ApiResponse::success)
         .map_err(|e| {
-            tracing::error!(
-                "Failed to finalize intervention {}: {}",
-                request.intervention_id,
-                e
-            );
-            AppError::Database(format!("Failed to finalize intervention: {}", e))
+            error!(error = %e, intervention_id = %request.intervention_id, "Failed to finalize intervention");
+            AppError::Database("Failed to finalize intervention".to_string())
         })
 }
 
 /// Main intervention workflow command (unified interface)
 #[tauri::command]
-
+#[instrument(skip(state, session_token, action), fields(user_id))]
 pub async fn intervention_workflow(
     action: InterventionWorkflowAction,
     session_token: String,
@@ -319,6 +324,7 @@ pub async fn intervention_workflow(
     info!("Processing intervention workflow action");
 
     let session = authenticate!(&session_token, &state);
+    tracing::Span::current().record("user_id", &session.user_id.as_str());
 
     match action {
         InterventionWorkflowAction::Start { data } => {
@@ -332,7 +338,7 @@ pub async fn intervention_workflow(
                 .get_active_intervention_by_task(&data.task_id)
             {
                 Ok(Some(active_intervention)) => {
-                    tracing::warn!("Attempted to start intervention workflow for task {} but active intervention already exists: {}", data.task_id, active_intervention.id);
+                    warn!(task_id = %data.task_id, active_intervention_id = %active_intervention.id, "Attempted to start intervention workflow but active intervention already exists");
                     return Err(AppError::Validation(format!(
                         "An active intervention already exists for task {}",
                         data.task_id
@@ -345,15 +351,10 @@ pub async fn intervention_workflow(
                     );
                 }
                 Err(e) => {
-                    tracing::error!(
-                        "Failed to check for existing active interventions for task {}: {}",
-                        data.task_id,
-                        e
-                    );
-                    return Err(AppError::Database(format!(
-                        "Failed to validate existing interventions: {}",
-                        e
-                    )));
+                    error!(error = %e, task_id = %data.task_id, "Failed to check for existing active interventions");
+                    return Err(AppError::Database(
+                        "Failed to validate existing interventions".to_string(),
+                    ));
                 }
             }
 
@@ -394,12 +395,8 @@ pub async fn intervention_workflow(
                 .intervention_service
                 .start_intervention(service_request, &session.user_id, &correlation_id)
                 .map_err(|e| {
-                    tracing::error!(
-                        "Failed to start intervention for task {}: {}",
-                        data.task_id,
-                        e
-                    );
-                    AppError::Database(format!("Failed to start intervention: {}", e))
+                    error!(error = %e, task_id = %data.task_id, "Failed to start intervention via workflow");
+                    AppError::Database("Failed to start intervention".to_string())
                 })?;
 
             info!(
@@ -421,7 +418,10 @@ pub async fn intervention_workflow(
             let intervention = state
                 .intervention_service
                 .get_intervention(&id)
-                .map_err(|e| AppError::Database(format!("Failed to get intervention: {}", e)))?
+                .map_err(|e| {
+                    error!(error = %e, intervention_id = %id, "Failed to get intervention via workflow");
+                    AppError::Database("Failed to get intervention".to_string())
+                })?
                 .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", id)))?;
 
             Ok(ApiResponse::success(
@@ -436,7 +436,8 @@ pub async fn intervention_workflow(
                 .intervention_service
                 .get_active_intervention_by_task(&task_id)
                 .map_err(|e| {
-                    AppError::Database(format!("Failed to get active intervention: {}", e))
+                    error!(error = %e, task_id = %task_id, "Failed to get active intervention via workflow");
+                    AppError::Database("Failed to get active intervention".to_string())
                 })?;
 
             // Log the result for debugging
@@ -465,7 +466,10 @@ pub async fn intervention_workflow(
             state
                 .intervention_service
                 .update_intervention(&id, data)
-                .map_err(|e| AppError::Database(format!("Failed to update intervention: {}", e)))?;
+                .map_err(|e| {
+                    error!(error = %e, intervention_id = %id, "Failed to update intervention via workflow");
+                    AppError::Database("Failed to update intervention".to_string())
+                })?;
 
             Ok(ApiResponse::success(
                 InterventionWorkflowResponse::Updated {
@@ -480,7 +484,10 @@ pub async fn intervention_workflow(
             state
                 .intervention_service
                 .delete_intervention(&id)
-                .map_err(|e| AppError::Database(format!("Failed to delete intervention: {}", e)))?;
+                .map_err(|e| {
+                    error!(error = %e, intervention_id = %id, "Failed to delete intervention via workflow");
+                    AppError::Database("Failed to delete intervention".to_string())
+                })?;
 
             Ok(ApiResponse::success(
                 InterventionWorkflowResponse::Deleted {
@@ -495,7 +502,10 @@ pub async fn intervention_workflow(
             let intervention = state
                 .intervention_service
                 .get_intervention(&data.intervention_id)
-                .map_err(|e| AppError::Database(format!("Failed to get intervention: {}", e)))?
+                .map_err(|e| {
+                    error!(error = %e, intervention_id = %data.intervention_id, "Failed to get intervention for finalization via workflow");
+                    AppError::Database("Failed to get intervention".to_string())
+                })?
                 .ok_or_else(|| {
                     AppError::NotFound(format!("Intervention {} not found", data.intervention_id))
                 })?;
@@ -520,7 +530,8 @@ pub async fn intervention_workflow(
                 .intervention_service
                 .finalize_intervention(finalize_data, "finalize-cmd", Some(&session.user_id))
                 .map_err(|e| {
-                    AppError::Database(format!("Failed to finalize intervention: {}", e))
+                    error!(error = %e, intervention_id = %data.intervention_id, "Failed to finalize intervention via workflow");
+                    AppError::Database("Failed to finalize intervention".to_string())
                 })?;
 
             Ok(ApiResponse::success(

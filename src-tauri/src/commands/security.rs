@@ -4,6 +4,7 @@ use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::models::auth::UserRole;
 use serde::{Deserialize, Serialize};
+use tracing::{error, info, instrument};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SecurityMetricsResponse {
@@ -51,12 +52,17 @@ pub struct GetSecurityMetricsRequest {
 
 /// Get security metrics
 #[tauri::command]
+#[instrument(skip(state, request))]
 pub async fn get_security_metrics(
     request: GetSecurityMetricsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<SecurityMetricsResponse>, AppError> {
     // Check if user is admin
-    let _current_user = authenticate!(&request.session_token, &state, crate::models::auth::UserRole::Admin);
+    let _current_user = authenticate!(
+        &request.session_token,
+        &state,
+        crate::models::auth::UserRole::Admin
+    );
 
     // Get real security metrics from the security monitor service
     let auth_service = state.auth_service.clone();
@@ -82,12 +88,17 @@ pub struct GetSecurityEventsRequest {
 
 /// Get recent security events
 #[tauri::command]
+#[instrument(skip(state, request))]
 pub async fn get_security_events(
     request: GetSecurityEventsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<SecurityEventResponse>>, AppError> {
     // Check if user is admin
-    let _current_user = authenticate!(&request.session_token, &state, crate::models::auth::UserRole::Admin);
+    let _current_user = authenticate!(
+        &request.session_token,
+        &state,
+        crate::models::auth::UserRole::Admin
+    );
 
     let limit = request.limit.unwrap_or(50).min(200); // Max 200 events
 
@@ -120,12 +131,17 @@ pub struct GetSecurityAlertsRequest {
 
 /// Get active security alerts
 #[tauri::command]
+#[instrument(skip(state, request))]
 pub async fn get_security_alerts(
     request: GetSecurityAlertsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<SecurityAlertResponse>>, AppError> {
     // Check if user is admin
-    let _current_user = authenticate!(&request.session_token, &state, crate::models::auth::UserRole::Admin);
+    let _current_user = authenticate!(
+        &request.session_token,
+        &state,
+        crate::models::auth::UserRole::Admin
+    );
 
     // Get real security alerts from the security monitor service
     let auth_service = state.auth_service.clone();
@@ -160,20 +176,29 @@ pub struct AcknowledgeSecurityAlertRequest {
 
 /// Acknowledge a security alert
 #[tauri::command]
+#[instrument(skip(state, request), fields(alert_id = %request.alert_id))]
 pub async fn acknowledge_security_alert(
     request: AcknowledgeSecurityAlertRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
     // Check if user is admin
-    let current_user = authenticate!(&request.session_token, &state, crate::models::auth::UserRole::Admin);
+    let current_user = authenticate!(
+        &request.session_token,
+        &state,
+        crate::models::auth::UserRole::Admin
+    );
 
     // Acknowledge the alert using the security monitor service
     let auth_service = state.auth_service.clone();
     auth_service
         .security_monitor()
         .acknowledge_alert(&request.alert_id, &current_user.user_id)
-        .map_err(|e| AppError::Internal(format!("Failed to acknowledge alert: {}", e)))?;
+        .map_err(|e| {
+            error!(error = %e, alert_id = %request.alert_id, "Failed to acknowledge security alert");
+            AppError::Internal("Failed to acknowledge alert".to_string())
+        })?;
 
+    info!(alert_id = %request.alert_id, user_id = %current_user.user_id, "Security alert acknowledged");
     Ok(ApiResponse::success(
         "Alert acknowledged successfully".to_string(),
     ))
@@ -188,20 +213,29 @@ pub struct ResolveSecurityAlertRequest {
 
 /// Resolve a security alert
 #[tauri::command]
+#[instrument(skip(state, request), fields(alert_id = %request.alert_id))]
 pub async fn resolve_security_alert(
     request: ResolveSecurityAlertRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
     // Check if user is admin
-    let _current_user = authenticate!(&request.session_token, &state, crate::models::auth::UserRole::Admin);
+    let _current_user = authenticate!(
+        &request.session_token,
+        &state,
+        crate::models::auth::UserRole::Admin
+    );
 
     // Resolve the alert using the security monitor service
     let auth_service = state.auth_service.clone();
     auth_service
         .security_monitor()
         .resolve_alert(&request.alert_id, request.actions_taken)
-        .map_err(|e| AppError::Internal(format!("Failed to resolve alert: {}", e)))?;
+        .map_err(|e| {
+            error!(error = %e, alert_id = %request.alert_id, "Failed to resolve security alert");
+            AppError::Internal("Failed to resolve alert".to_string())
+        })?;
 
+    info!(alert_id = %request.alert_id, "Security alert resolved");
     Ok(ApiResponse::success(
         "Alert resolved successfully".to_string(),
     ))
@@ -214,20 +248,29 @@ pub struct CleanupSecurityEventsRequest {
 
 /// Clean up old security events (admin only)
 #[tauri::command]
+#[instrument(skip(state, request))]
 pub async fn cleanup_security_events(
     request: CleanupSecurityEventsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
     // Check if user is admin
-    let _current_user = authenticate!(&request.session_token, &state, crate::models::auth::UserRole::Admin);
+    let _current_user = authenticate!(
+        &request.session_token,
+        &state,
+        crate::models::auth::UserRole::Admin
+    );
 
     // Clean up old events using the security monitor service
     let auth_service = state.auth_service.clone();
     auth_service
         .security_monitor()
         .cleanup_old_events()
-        .map_err(|e| AppError::Internal(format!("Failed to cleanup security events: {}", e)))?;
+        .map_err(|e| {
+            error!(error = %e, "Failed to cleanup security events");
+            AppError::Internal("Failed to cleanup security events".to_string())
+        })?;
 
+    info!("Security events cleaned up");
     Ok(ApiResponse::success(
         "Security events cleaned up successfully".to_string(),
     ))
@@ -235,6 +278,7 @@ pub async fn cleanup_security_events(
 
 /// Get active sessions for the current user
 #[tauri::command]
+#[instrument(skip(state, session_token))]
 pub async fn get_active_sessions(
     session_token: String,
     state: AppState<'_>,
@@ -252,13 +296,17 @@ pub async fn get_active_sessions(
         .session_service
         .get_user_active_sessions(&current_user.user_id)
         .await
-        .map_err(|e| AppError::Internal(format!("Failed to get active sessions: {}", e)))?;
+        .map_err(|e| {
+            error!(error = %e, user_id = %current_user.user_id, "Failed to get active sessions");
+            AppError::Internal("Failed to get active sessions".to_string())
+        })?;
 
     Ok(ApiResponse::success(sessions))
 }
 
 /// Revoke a specific session
 #[tauri::command]
+#[instrument(skip(state, session_token))]
 pub async fn revoke_session(
     session_id: String,
     session_token: String,
@@ -286,8 +334,12 @@ pub async fn revoke_session(
             .session_service
             .revoke_session(&session_id)
             .await
-            .map_err(|e| AppError::Internal(format!("Failed to revoke session: {}", e)))?;
+            .map_err(|e| {
+                error!(error = %e, session_id = %session_id, "Failed to revoke session");
+                AppError::Internal("Failed to revoke session".to_string())
+            })?;
 
+        info!(session_id = %session_id, user_id = %current_user.user_id, "Session revoked");
         Ok(ApiResponse::success(
             "Session revoked successfully".to_string(),
         ))
@@ -298,6 +350,7 @@ pub async fn revoke_session(
 
 /// Revoke all sessions except the current one
 #[tauri::command]
+#[instrument(skip(state, session_token))]
 pub async fn revoke_all_sessions_except_current(
     session_token: String,
     state: AppState<'_>,
@@ -322,13 +375,18 @@ pub async fn revoke_all_sessions_except_current(
         .session_service
         .revoke_all_sessions_except_current(&current_user.user_id, &current_session.id)
         .await
-        .map_err(|e| AppError::Internal(format!("Failed to revoke sessions: {}", e)))?;
+        .map_err(|e| {
+            error!(error = %e, user_id = %current_user.user_id, "Failed to revoke other sessions");
+            AppError::Internal("Failed to revoke sessions".to_string())
+        })?;
 
+    info!(user_id = %current_user.user_id, revoked_count = revoked_count, "Revoked all other sessions");
     Ok(ApiResponse::success(revoked_count))
 }
 
 /// Update session timeout configuration (admin only)
 #[tauri::command]
+#[instrument(skip(state, session_token))]
 pub async fn update_session_timeout(
     timeout_minutes: u32,
     session_token: String,
@@ -357,8 +415,12 @@ pub async fn update_session_timeout(
         .session_service
         .update_session_timeout(timeout_minutes)
         .await
-        .map_err(|e| AppError::Internal(format!("Failed to update session timeout: {}", e)))?;
+        .map_err(|e| {
+            error!(error = %e, timeout_minutes = timeout_minutes, "Failed to update session timeout");
+            AppError::Internal("Failed to update session timeout".to_string())
+        })?;
 
+    info!(timeout_minutes = timeout_minutes, "Session timeout updated");
     Ok(ApiResponse::success(format!(
         "Session timeout updated to {} minutes",
         timeout_minutes
@@ -367,6 +429,7 @@ pub async fn update_session_timeout(
 
 /// Get session timeout configuration
 #[tauri::command]
+#[instrument(skip(state, session_token))]
 pub async fn get_session_timeout_config(
     session_token: String,
     state: AppState<'_>,

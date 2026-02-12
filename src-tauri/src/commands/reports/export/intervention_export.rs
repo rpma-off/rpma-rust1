@@ -188,10 +188,9 @@ pub async fn get_intervention_with_details(
     let intervention_svc = match intervention_service {
         Some(svc) => svc,
         None => {
-            owned_intervention_service =
-                crate::services::intervention::InterventionService::new(std::sync::Arc::new(
-                    db.clone(),
-                ));
+            owned_intervention_service = crate::services::intervention::InterventionService::new(
+                std::sync::Arc::new(db.clone()),
+            );
             &owned_intervention_service
         }
     };
@@ -326,10 +325,10 @@ pub async fn get_intervention_with_details(
             );
         });
         client_svc.get_client(client_id).await.map_err(|e| {
-            crate::commands::errors::AppError::Database(format!(
-                "Failed to get client: {}",
-                e
-            ))
+            tracing::error!(error = %e, client_id = %client_id, "Failed to get client for intervention export");
+            crate::commands::errors::AppError::Database(
+                "Failed to get client".to_string(),
+            )
         })?
     } else {
         let _ = std::panic::catch_unwind(|| {

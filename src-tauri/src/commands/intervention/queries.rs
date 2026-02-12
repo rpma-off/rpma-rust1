@@ -8,7 +8,7 @@
 use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
 use serde::{Deserialize, Serialize};
-use tracing::info;
+use tracing::{error, info, instrument};
 
 #[derive(Deserialize)]
 pub struct InterventionProgressQueryRequest {
@@ -57,22 +57,26 @@ pub enum InterventionProgressResponse {
 
 /// Get intervention progress information
 #[tauri::command]
-
+#[instrument(skip(state, session_token), fields(user_id))]
 pub async fn intervention_get_progress(
     intervention_id: String,
     session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<crate::models::intervention::InterventionProgress>, AppError> {
-    info!("Getting progress for intervention: {}", intervention_id);
-
     let session = authenticate!(&session_token, &state);
+    tracing::Span::current().record("user_id", &session.user_id.as_str());
     super::ensure_intervention_permission(&session)?;
+
+    info!(intervention_id = %intervention_id, "Getting intervention progress");
 
     // Check intervention access
     let intervention = state
         .intervention_service
         .get_intervention(&intervention_id)
-        .map_err(|e| AppError::Database(format!("Failed to get intervention: {}", e)))?
+        .map_err(|e| {
+            error!(error = %e, intervention_id = %intervention_id, "Failed to get intervention for progress check");
+            AppError::Database("Failed to get intervention".to_string())
+        })?
         .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", intervention_id)))?;
 
     if intervention.technician_id.as_ref() != Some(&session.user_id)
@@ -90,14 +94,17 @@ pub async fn intervention_get_progress(
     let progress = state
         .intervention_service
         .get_progress(&intervention_id)
-        .map_err(|e| AppError::Database(format!("Failed to get intervention progress: {}", e)))?;
+        .map_err(|e| {
+            error!(error = %e, intervention_id = %intervention_id, "Failed to get intervention progress");
+            AppError::Database("Failed to get intervention progress".to_string())
+        })?;
 
     Ok(ApiResponse::success(progress))
 }
 
 /// Advance an intervention step
 #[tauri::command]
-
+#[instrument(skip(state, session_token), fields(user_id))]
 pub async fn intervention_advance_step(
     intervention_id: String,
     step_id: String,
@@ -105,19 +112,20 @@ pub async fn intervention_advance_step(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<crate::models::step::InterventionStep>, AppError> {
-    info!(
-        "Advancing step {} for intervention {}",
-        step_id, intervention_id
-    );
-
     let session = authenticate!(&session_token, &state);
+    tracing::Span::current().record("user_id", &session.user_id.as_str());
     super::ensure_intervention_permission(&session)?;
+
+    info!(intervention_id = %intervention_id, step_id = %step_id, "Advancing intervention step");
 
     // Check intervention access
     let intervention = state
         .intervention_service
         .get_intervention(&intervention_id)
-        .map_err(|e| AppError::Database(format!("Failed to get intervention: {}", e)))?
+        .map_err(|e| {
+            error!(error = %e, intervention_id = %intervention_id, "Failed to get intervention for step advance");
+            AppError::Database("Failed to get intervention".to_string())
+        })?
         .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", intervention_id)))?;
 
     if intervention.technician_id.as_ref() != Some(&session.user_id)
@@ -147,14 +155,14 @@ pub async fn intervention_advance_step(
         .await
         .map(|response| ApiResponse::success(response.step))
         .map_err(|e| {
-            tracing::error!("Failed to advance intervention step {}: {}", step_id, e);
-            AppError::Database(format!("Failed to advance intervention step: {}", e))
+            error!(error = %e, intervention_id = %intervention_id, step_id = %step_id, "Failed to advance intervention step");
+            AppError::Database("Failed to advance intervention step".to_string())
         })
 }
 
 /// Save step progress for an intervention
 #[tauri::command]
-
+#[instrument(skip(state, session_token, progress_data), fields(user_id))]
 pub async fn intervention_save_step_progress(
     intervention_id: String,
     step_id: String,
@@ -162,19 +170,20 @@ pub async fn intervention_save_step_progress(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    info!(
-        "Saving step progress for intervention {} step {}",
-        intervention_id, step_id
-    );
-
     let session = authenticate!(&session_token, &state);
+    tracing::Span::current().record("user_id", &session.user_id.as_str());
     super::ensure_intervention_permission(&session)?;
+
+    info!(intervention_id = %intervention_id, step_id = %step_id, "Saving step progress");
 
     // Check intervention access
     let intervention = state
         .intervention_service
         .get_intervention(&intervention_id)
-        .map_err(|e| AppError::Database(format!("Failed to get intervention: {}", e)))?
+        .map_err(|e| {
+            error!(error = %e, intervention_id = %intervention_id, "Failed to get intervention for progress save");
+            AppError::Database("Failed to get intervention".to_string())
+        })?
         .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", intervention_id)))?;
 
     if intervention.technician_id.as_ref() != Some(&session.user_id)
@@ -205,23 +214,24 @@ pub async fn intervention_save_step_progress(
         .await
         .map(|_| ApiResponse::success("Step progress saved successfully".to_string()))
         .map_err(|e| {
-            tracing::error!("Failed to save step progress for {}: {}", step_id, e);
-            AppError::Database(format!("Failed to save step progress: {}", e))
+            error!(error = %e, intervention_id = %intervention_id, step_id = %step_id, "Failed to save step progress");
+            AppError::Database("Failed to save step progress".to_string())
         })
 }
 
 /// Main intervention progress command (unified interface)
 #[tauri::command]
-
+#[instrument(skip(state, session_token, action), fields(user_id))]
 pub async fn intervention_progress(
     action: InterventionProgressAction,
     session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<InterventionProgressResponse>, AppError> {
-    info!("Processing intervention progress action");
-
     let session = authenticate!(&session_token, &state);
+    tracing::Span::current().record("user_id", &session.user_id.as_str());
     super::ensure_intervention_permission(&session)?;
+
+    info!("Processing intervention progress action");
 
     match action {
         InterventionProgressAction::Get { intervention_id } => {
@@ -229,7 +239,10 @@ pub async fn intervention_progress(
             let intervention = state
                 .intervention_service
                 .get_intervention(&intervention_id)
-                .map_err(|e| AppError::Database(format!("Failed to get intervention: {}", e)))?
+                .map_err(|e| {
+                    error!(error = %e, "Failed to get intervention");
+                    AppError::Database("Failed to get intervention".to_string())
+                })?
                 .ok_or_else(|| {
                     AppError::NotFound(format!("Intervention {} not found", intervention_id))
                 })?;
@@ -251,7 +264,8 @@ pub async fn intervention_progress(
                 .intervention_service
                 .get_progress(&intervention_id)
                 .map_err(|e| {
-                    AppError::Database(format!("Failed to get intervention progress: {}", e))
+                    error!(error = %e, "Failed to get intervention progress");
+                    AppError::Database("Failed to get intervention progress".to_string())
                 })?;
 
             // Get steps for the response
@@ -259,14 +273,12 @@ pub async fn intervention_progress(
                 .intervention_service
                 .get_intervention_steps(&intervention_id)
                 .map_err(|e| {
-                    AppError::Database(format!("Failed to get intervention steps: {}", e))
+                    error!(error = %e, "Failed to get intervention steps");
+                    AppError::Database("Failed to get intervention steps".to_string())
                 })?;
 
             Ok(ApiResponse::success(
-                InterventionProgressResponse::Retrieved {
-                    progress,
-                    steps,
-                },
+                InterventionProgressResponse::Retrieved { progress, steps },
             ))
         }
 
@@ -279,7 +291,10 @@ pub async fn intervention_progress(
             let intervention = state
                 .intervention_service
                 .get_intervention(&intervention_id)
-                .map_err(|e| AppError::Database(format!("Failed to get intervention: {}", e)))?
+                .map_err(|e| {
+                    error!(error = %e, "Failed to get intervention");
+                    AppError::Database("Failed to get intervention".to_string())
+                })?
                 .ok_or_else(|| {
                     AppError::NotFound(format!("Intervention {} not found", intervention_id))
                 })?;
@@ -310,7 +325,10 @@ pub async fn intervention_progress(
                 .intervention_service
                 .advance_step(advance_request, "advance-cmd", Some(&session.user_id))
                 .await
-                .map_err(|e| AppError::Database(format!("Failed to advance step: {}", e)))?;
+                .map_err(|e| {
+                    error!(error = %e, "Failed to advance step");
+                    AppError::Database("Failed to advance step".to_string())
+                })?;
 
             Ok(ApiResponse::success(
                 InterventionProgressResponse::StepAdvanced {
@@ -328,7 +346,10 @@ pub async fn intervention_progress(
             let intervention = state
                 .intervention_service
                 .get_intervention(&intervention_id)
-                .map_err(|e| AppError::Database(format!("Failed to get intervention: {}", e)))?
+                .map_err(|e| {
+                    error!(error = %e, "Failed to get intervention");
+                    AppError::Database("Failed to get intervention".to_string())
+                })?
                 .ok_or_else(|| {
                     AppError::NotFound(format!("Intervention {} not found", intervention_id))
                 })?;
@@ -360,7 +381,10 @@ pub async fn intervention_progress(
                     Some(&session.user_id),
                 )
                 .await
-                .map_err(|e| AppError::Database(format!("Failed to save progress: {}", e)))?;
+                .map_err(|e| {
+                    error!(error = %e, "Failed to save progress");
+                    AppError::Database("Failed to save progress".to_string())
+                })?;
 
             Ok(ApiResponse::success(
                 InterventionProgressResponse::ProgressSaved {

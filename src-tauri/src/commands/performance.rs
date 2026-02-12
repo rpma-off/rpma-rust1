@@ -4,7 +4,7 @@ use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::services::cache::{CacheManager, CacheType};
 use serde::{Deserialize, Serialize};
-use tracing::info;
+use tracing::{info, instrument};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PerformanceStatsResponse {
@@ -64,6 +64,7 @@ pub struct CacheConfigRequest {
 
 /// Get performance statistics
 #[tauri::command]
+#[instrument(skip(state, session_token))]
 pub async fn get_performance_stats(
     session_token: String,
     state: AppState<'_>,
@@ -97,6 +98,7 @@ pub async fn get_performance_stats(
 
 /// Get recent performance metrics
 #[tauri::command]
+#[instrument(skip(state, session_token))]
 pub async fn get_performance_metrics(
     session_token: String,
     limit: Option<usize>,
@@ -131,6 +133,7 @@ pub async fn get_performance_metrics(
 
 /// Clean up old performance metrics (admin only)
 #[tauri::command]
+#[instrument(skip(state, session_token))]
 pub async fn cleanup_performance_metrics(
     session_token: String,
     state: AppState<'_>,
@@ -149,6 +152,7 @@ pub async fn cleanup_performance_metrics(
 
 /// Get cache statistics
 #[tauri::command]
+#[instrument(skip(state, session_token))]
 pub async fn get_cache_statistics(
     session_token: String,
     state: AppState<'_>,
@@ -186,6 +190,7 @@ pub async fn get_cache_statistics(
 
 /// Clear application cache
 #[tauri::command]
+#[instrument(skip(state, session_token, request))]
 pub async fn clear_application_cache(
     session_token: String,
     request: CacheClearRequest,
@@ -223,6 +228,7 @@ pub async fn clear_application_cache(
 
 /// Configure cache settings
 #[tauri::command]
+#[instrument(skip(state, session_token, request))]
 pub async fn configure_cache_settings(
     session_token: String,
     request: CacheConfigRequest,
