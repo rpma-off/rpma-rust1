@@ -797,7 +797,7 @@ impl InterventionWorkflowService {
             }
             self.data.save_step(&updated_step)?;
             logger.debug(
-                "Updated finalization step with collected data and/or photos",
+                "Marked finalization step as completed",
                 None,
             );
         }
