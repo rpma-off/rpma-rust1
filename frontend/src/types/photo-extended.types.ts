@@ -34,41 +34,42 @@ export interface PhotoExtended extends Omit<BasePhoto, 'annotations' | 'gps_loca
 
 // Type guards for photo types
 export function isPhotoAnnotation(obj: unknown): obj is PhotoAnnotation {
+  if (obj === null || typeof obj !== 'object') return false;
+  const record = obj as Record<string, unknown>;
   return (
-    obj !== null &&
-    typeof obj === 'object' &&
-    'id' in obj &&
-    'text' in obj &&
-    'x' in obj &&
-    'y' in obj &&
-    'type' in obj &&
-    ['note', 'defect', 'measurement'].includes((obj as any).type)
+    'id' in record &&
+    'text' in record &&
+    'x' in record &&
+    'y' in record &&
+    'type' in record &&
+    typeof record.type === 'string' &&
+    ['note', 'defect', 'measurement'].includes(record.type)
   );
 }
 
 export function isPhotoLocation(obj: unknown): obj is PhotoLocation {
+  if (obj === null || typeof obj !== 'object') return false;
+  const record = obj as Record<string, unknown>;
   return (
-    obj !== null &&
-    typeof obj === 'object' &&
-    'latitude' in obj &&
-    'longitude' in obj &&
-    typeof (obj as any).latitude === 'number' &&
-    typeof (obj as any).longitude === 'number' &&
-    ((obj as any).accuracy === undefined || typeof (obj as any).accuracy === 'number')
+    'latitude' in record &&
+    'longitude' in record &&
+    typeof record.latitude === 'number' &&
+    typeof record.longitude === 'number' &&
+    (record.accuracy === undefined || typeof record.accuracy === 'number')
   );
 }
 
 export function isPhotoQualityMetrics(obj: unknown): obj is PhotoQualityMetrics {
+  if (obj === null || typeof obj !== 'object') return false;
+  const record = obj as Record<string, unknown>;
   return (
-    obj !== null &&
-    typeof obj === 'object' &&
-    'score' in obj &&
-    'blur' in obj &&
-    'exposure' in obj &&
-    'composition' in obj &&
-    typeof (obj as any).score === 'number' &&
-    typeof (obj as any).blur === 'number' &&
-    typeof (obj as any).exposure === 'number' &&
-    typeof (obj as any).composition === 'number'
+    'score' in record &&
+    'blur' in record &&
+    'exposure' in record &&
+    'composition' in record &&
+    typeof record.score === 'number' &&
+    typeof record.blur === 'number' &&
+    typeof record.exposure === 'number' &&
+    typeof record.composition === 'number'
   );
 }
