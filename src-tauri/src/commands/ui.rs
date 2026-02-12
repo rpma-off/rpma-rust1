@@ -133,7 +133,7 @@ pub async fn get_recent_activities(
     session_token: String,
     state: super::AppState<'_>,
 ) -> Result<Vec<serde_json::Value>, String> {
-    use tracing::{debug, error};
+    use tracing::debug;
 
     // Validate session
     let auth_service = state.auth_service.clone();
@@ -151,104 +151,8 @@ pub async fn get_recent_activities(
         current_user.username
     );
 
-    let db = &state.db;
-    let mut activities = Vec::new();
-
-    // Get recent user sessions (logins)
-    match db.get_connection() {
-        Ok(conn) => {
-            let mut stmt = match conn.prepare(
-                "SELECT s.user_id, u.username, s.last_activity
-                 FROM user_sessions s
-                 JOIN users u ON s.user_id = u.id
-                 ORDER BY s.last_activity DESC
-                 LIMIT 10",
-            ) {
-                Ok(stmt) => stmt,
-                Err(e) => {
-                    error!("Failed to prepare user sessions query: {}", e);
-                    return Err(format!("Failed to query user sessions: {}", e));
-                }
-            };
-
-            let session_iter = match stmt.query_map([], |row| {
-                Ok(serde_json::json!({
-                    "id": format!("session_{}", row.get::<_, String>(0)?),
-                    "type": "user_login",
-                    "description": format!("{} s'est connecté", row.get::<_, String>(1)?),
-                    "timestamp": row.get::<_, String>(2)?,
-                    "user": row.get::<_, String>(1)?,
-                    "severity": "low"
-                }))
-            }) {
-                Ok(iter) => iter,
-                Err(e) => {
-                    error!("Failed to query user sessions: {}", e);
-                    return Err(format!("Failed to query user sessions: {}", e));
-                }
-            };
-
-            for activity in session_iter {
-                match activity {
-                    Ok(act) => activities.push(act),
-                    Err(e) => error!("Error processing session activity: {}", e),
-                }
-            }
-        }
-        Err(e) => {
-            error!("Failed to get database connection: {}", e);
-        }
-    }
-
-    // Get recent tasks (if table exists)
-    match db.get_connection() {
-        Ok(conn) => {
-            let task_query = "
-                SELECT t.id, t.title, t.created_at, u.username
-                FROM tasks t
-                LEFT JOIN users u ON t.assigned_to = u.id
-                ORDER BY t.created_at DESC
-                LIMIT 5
-            ";
-
-            if let Ok(mut stmt) = conn.prepare(task_query) {
-                if let Ok(task_iter) = stmt.query_map([], |row| {
-                    let task_id: String = row.get(0)?;
-                    let title: String = row.get(1)?;
-                    let created_at: String = row.get(2)?;
-                    let username: Option<String> = row.get(3).ok();
-
-                    Ok(serde_json::json!({
-                        "id": format!("task_{}", task_id),
-                        "type": "task_created",
-                        "description": format!("Tâche créée: {}", title),
-                        "timestamp": created_at,
-                        "user": username.unwrap_or_else(|| "Système".to_string()),
-                        "severity": "low"
-                    }))
-                }) {
-                    for activity in task_iter {
-                        match activity {
-                            Ok(act) => activities.push(act),
-                            Err(e) => error!("Error processing task activity: {}", e),
-                        }
-                    }
-                }
-            }
-        }
-        Err(e) => {
-            error!("Failed to get database connection for tasks: {}", e);
-        }
-    }
-
-    // Sort by timestamp (most recent first) and limit to 15 items
-    activities.sort_by(|a, b| {
-        let a_time = a.get("timestamp").and_then(|t| t.as_str()).unwrap_or("");
-        let b_time = b.get("timestamp").and_then(|t| t.as_str()).unwrap_or("");
-        b_time.cmp(a_time) // Reverse order for most recent first
-    });
-
-    activities.truncate(15);
+    let dashboard_service = state.dashboard_service.clone();
+    let activities = dashboard_service.get_recent_activities()?;
 
     debug!(
         "Recent activities retrieved successfully: {} items",

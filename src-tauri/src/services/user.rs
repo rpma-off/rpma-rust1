@@ -199,12 +199,67 @@ impl UserService {
                 AppError::Database("Failed to unban user".to_string())
             })?;
 
-        // TODO: Add audit log to database directly since we don't have an audit repository yet
         info!(
             "Successfully unbanned user {} by admin {}",
             user_id, admin_id
         );
 
         Ok(())
+    }
+
+    /// Check if any admin users exist in the system
+    pub async fn has_admins(&self) -> Result<bool, AppError> {
+        let users = self
+            .user_repo
+            .find_by_role(crate::models::user::UserRole::Admin)
+            .await
+            .map_err(|e| {
+                error!("Failed to check admin users: {}", e);
+                AppError::Database("Failed to check existing admins".to_string())
+            })?;
+
+        Ok(!users.is_empty())
+    }
+
+    /// Bootstrap the first admin user - only works if no admin exists
+    pub async fn bootstrap_first_admin(&self, user_id: &str) -> Result<String, AppError> {
+        // Check if any admin exists
+        if self.has_admins().await? {
+            return Err(AppError::Validation(
+                "An admin user already exists. Use the admin panel to manage roles.".to_string(),
+            ));
+        }
+
+        // Get user
+        let repo_user = self
+            .user_repo
+            .find_by_id(user_id.to_string())
+            .await
+            .map_err(|e| {
+                error!("Failed to find user for bootstrap: {}", e);
+                AppError::Database("Failed to find user".to_string())
+            })?
+            .ok_or_else(|| {
+                error!("User not found for bootstrap: {}", user_id);
+                AppError::NotFound("User not found".to_string())
+            })?;
+
+        let user_email = repo_user.email.clone();
+
+        // Update to admin
+        let mut updated_user = repo_user;
+        updated_user.role = crate::models::user::UserRole::Admin;
+        updated_user.updated_at = chrono::Utc::now().timestamp_millis();
+
+        self.user_repo.save(updated_user).await.map_err(|e| {
+            error!("Failed to update user role: {}", e);
+            AppError::Database("Failed to update user role".to_string())
+        })?;
+
+        info!("Successfully bootstrapped admin for user: {}", user_email);
+        Ok(format!(
+            "User {} has been promoted to admin. Please log in again to apply new permissions.",
+            user_email
+        ))
     }
 }

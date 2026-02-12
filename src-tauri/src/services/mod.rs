@@ -26,6 +26,7 @@ pub mod intervention_types;
 pub mod intervention_validation;
 pub mod intervention_workflow;
 pub mod material;
+pub mod message;
 pub mod notification;
 pub mod operational_intelligence;
 pub mod pdf_generation;
@@ -70,6 +71,7 @@ pub use dashboard::DashboardService;
 
 pub use intervention::InterventionService;
 pub use material::MaterialService;
+pub use message::MessageService;
 pub use photo::PhotoService;
 pub use settings::SettingsService;
 pub use task::TaskService;
