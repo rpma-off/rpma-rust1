@@ -16,6 +16,8 @@ const fs = require('fs');
 const path = require('path');
 
 class DuplicationDetector {
+    static EXCLUDED_DIRS = ['node_modules', '__tests__', '.next', 'dist', 'target'];
+
     constructor() {
         this.projectRoot = path.join(__dirname, '..');
         this.frontendSrc = path.join(this.projectRoot, 'frontend', 'src');
@@ -866,7 +868,7 @@ class DuplicationDetector {
             const entries = fs.readdirSync(dir, { withFileTypes: true });
             for (const entry of entries) {
                 const fullPath = path.join(dir, entry.name);
-                if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules' && entry.name !== '__tests__') {
+                if (entry.isDirectory() && !entry.name.startsWith('.') && !DuplicationDetector.EXCLUDED_DIRS.includes(entry.name)) {
                     results.push(...this.findFiles(fullPath, pattern));
                 } else if (entry.isFile() && pattern.test(entry.name)) {
                     results.push(fullPath);
