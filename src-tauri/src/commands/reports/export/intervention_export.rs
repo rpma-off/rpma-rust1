@@ -192,6 +192,22 @@ pub async fn get_intervention_with_details(
         }
     };
 
+    // Use provided client service or create a new one as fallback via service layer
+    let owned_client_service;
+    let client_svc = match client_service {
+        Some(svc) => svc,
+        None => {
+            use crate::repositories::{Cache, ClientRepository};
+            let cache = std::sync::Arc::new(Cache::new(1000));
+            let client_repo = std::sync::Arc::new(ClientRepository::new(
+                std::sync::Arc::new(db.clone()),
+                cache,
+            ));
+            owned_client_service = crate::services::client::ClientService::new(client_repo);
+            &owned_client_service
+        }
+    };
+
     debug!("get_intervention_with_details: Using intervention service, calling get_intervention");
     let intervention_opt = intervention_svc
         .get_intervention(intervention_id)
@@ -305,30 +321,12 @@ pub async fn get_intervention_with_details(
                 client_id
             );
         });
-        match client_service {
-            Some(svc) => svc.get_client(client_id).await.map_err(|e| {
-                crate::commands::errors::AppError::Database(format!("Failed to get client: {}", e))
-            })?,
-            None => {
-                use crate::repositories::{Cache, ClientRepository};
-                let cache = std::sync::Arc::new(Cache::new(1000));
-                let client_repo = std::sync::Arc::new(ClientRepository::new(
-                    std::sync::Arc::new(db.clone()),
-                    cache,
-                ));
-                let fallback_client_service =
-                    crate::services::client::ClientService::new(client_repo);
-                fallback_client_service
-                    .get_client(client_id)
-                    .await
-                    .map_err(|e| {
-                        crate::commands::errors::AppError::Database(format!(
-                            "Failed to get client: {}",
-                            e
-                        ))
-                    })?
-            }
-        }
+        client_svc.get_client(client_id).await.map_err(|e| {
+            tracing::error!(error = %e, client_id = %client_id, "Failed to get client for intervention export");
+            crate::commands::errors::AppError::Database(
+                "Failed to get client".to_string(),
+            )
+        })?
     } else {
         let _ = std::panic::catch_unwind(|| {
             info!("get_intervention_with_details: No client_id associated with intervention");

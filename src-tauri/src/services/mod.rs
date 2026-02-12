@@ -41,6 +41,7 @@ pub mod reports;
 pub mod security_monitor;
 pub mod session;
 pub mod settings;
+pub mod system;
 pub mod task;
 pub mod task_client_integration;
 pub mod task_constants;

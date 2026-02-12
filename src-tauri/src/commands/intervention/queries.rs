@@ -259,53 +259,26 @@ pub async fn intervention_progress(
                 ));
             }
 
-            // Get intervention with details to calculate progress
-            let intervention_details = state
+            // Delegate progress calculation to the service layer
+            let progress = state
                 .intervention_service
-                .get_intervention_with_details(&intervention_id)
+                .get_progress(&intervention_id)
                 .map_err(|e| {
-                    error!(error = %e, "Failed to get intervention details");
-                    AppError::Database("Failed to get intervention details".to_string())
+                    error!(error = %e, "Failed to get intervention progress");
+                    AppError::Database("Failed to get intervention progress".to_string())
                 })?;
 
-            // Calculate progress
-            let total_steps = intervention_details.steps.len() as i32;
-            let completed_steps = intervention_details
-                .steps
-                .iter()
-                .filter(|s| {
-                    matches!(
-                        s.step.step_status,
-                        crate::models::step::StepStatus::Completed
-                    )
-                })
-                .count() as i32;
-            let current_step = completed_steps + 1;
-            let completion_percentage = if total_steps > 0 {
-                ((completed_steps as f64 / total_steps as f64) * 100.0) as f32
-            } else {
-                0.0
-            };
-
-            let progress = crate::models::intervention::InterventionProgress {
-                intervention_id: intervention_id.clone(),
-                current_step,
-                completion_percentage,
-                total_steps,
-                completed_steps,
-                estimated_time_remaining: intervention.estimated_duration,
-                status: intervention.status,
-            };
+            // Get steps for the response
+            let steps = state
+                .intervention_service
+                .get_intervention_steps(&intervention_id)
+                .map_err(|e| {
+                    error!(error = %e, "Failed to get intervention steps");
+                    AppError::Database("Failed to get intervention steps".to_string())
+                })?;
 
             Ok(ApiResponse::success(
-                InterventionProgressResponse::Retrieved {
-                    progress,
-                    steps: intervention_details
-                        .steps
-                        .into_iter()
-                        .map(|s| s.step)
-                        .collect(),
-                },
+                InterventionProgressResponse::Retrieved { progress, steps },
             ))
         }
 

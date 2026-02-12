@@ -81,27 +81,10 @@ pub async fn get_tasks_with_clients(
     // Build filter based on user role
     let mut filter = request.filter.unwrap_or_default();
 
-    // Apply role-based filtering
-    match session.role {
-        crate::models::auth::UserRole::Admin => {
-            // Admin can see all tasks
-        }
-        crate::models::auth::UserRole::Supervisor => {
-            // Supervisor can see tasks in their regions/departments
-            // TODO: Add region filtering when UserSession has region field
-            // if let Some(region) = &session.region {
-            //     filter.region = Some(region.clone());
-            // }
-        }
-        crate::models::auth::UserRole::Technician => {
-            // Technician can only see their assigned tasks
-            filter.assigned_to = Some(session.user_id.clone());
-        }
-        crate::models::auth::UserRole::Viewer => {
-            // Viewer has limited access
-            filter.assigned_to = Some(session.user_id.clone());
-        }
-    }
+    // Delegate role-based filtering to the service layer
+    state
+        .task_service
+        .apply_role_based_filters(&mut filter, &session);
 
     // Set pagination defaults
     let page = request.page.unwrap_or(1).max(1);
@@ -135,46 +118,20 @@ pub async fn get_tasks_with_clients(
         sort_order: crate::models::task::SortOrder::Desc,
     };
 
-    // Get tasks with client information
-    let result = state
+    // Delegate client data merging to the service layer
+    let (tasks, pagination) = state
         .task_service
-        .get_tasks_with_clients(query)
+        .get_tasks_with_client_details(query)
         .map_err(|e| {
-            debug!("Failed to get tasks with clients: {}", e);
+            debug!("Failed to get tasks with client details: {}", e);
             AppError::Database(format!("Failed to retrieve tasks: {}", e))
         })?;
 
-    // Convert TaskWithClient to TaskWithDetails
-    let data_len = result.data.len();
-    let tasks: Vec<crate::models::task::TaskWithDetails> = result
-        .data
-        .into_iter()
-        .map(|task_with_client| {
-            let mut task = task_with_client.task;
-
-            // Merge client information if task doesn't have it
-            if let Some(client_info) = task_with_client.client_info {
-                if task.customer_name.is_none() {
-                    task.customer_name = Some(client_info.name);
-                }
-                if task.customer_email.is_none() {
-                    task.customer_email = client_info.email;
-                }
-                if task.customer_phone.is_none() {
-                    task.customer_phone = client_info.phone;
-                }
-                if task.client_id.is_none() {
-                    task.client_id = Some(client_info.id);
-                }
-            }
-
-            crate::models::task::TaskWithDetails { task }
-        })
-        .collect();
+    let data_len = tasks.len();
 
     let response = TaskListResponse {
         data: tasks,
-        pagination: result.pagination,
+        pagination,
         statistics: None,
     };
 
