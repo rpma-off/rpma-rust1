@@ -1,6 +1,7 @@
 import { safeInvoke, extractAndValidate, ResponseHandlers } from '../core';
 import { createCrudOperations } from '../utils/crud-helpers';
 import { IPC_COMMANDS } from '../commands';
+import { logger, LogContext } from '@/lib/logger';
 import { parseClientStatistics, validateClient, validateClientWithTasks, validateClientListResponse, validateClientWithTasksList } from '@/lib/validation/backend-type-guards';
 import type {
   Client,
@@ -88,7 +89,7 @@ const specializedOperations = {
     ): Promise<ClientWithTasks[]> => {
      // TEMPORARY: Use the regular list function and convert to ClientWithTasks
      // This bypasses the complex task fetching that seems to be failing
-     console.log('[DEBUG] Using simplified listWithTasks implementation');
+     logger.debug(LogContext.API, '[IPC] Using simplified listWithTasks implementation');
      const listResult = await clientCrud.list({
        page: filters.page ?? 1,
        limit: filters.limit ?? 20,

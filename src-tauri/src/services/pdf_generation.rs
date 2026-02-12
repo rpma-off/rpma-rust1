@@ -831,10 +831,10 @@ impl PdfGenerationService {
 
                 // Approval status
                 if step.requires_supervisor_approval {
-                    if step.approved_by.is_some() {
+                    if let Some(approved_by) = &step.approved_by {
                         step_details.push(format!(
                             "Approuvé par: {}",
-                            step.approved_by.as_ref().unwrap()
+                            approved_by
                         ));
                     } else {
                         step_details.push("En attente d'approbation".to_string());

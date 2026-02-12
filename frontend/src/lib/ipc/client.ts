@@ -1,6 +1,7 @@
 import './mock/init';
 import { safeInvoke } from './utils';
 import { cachedInvoke, invalidatePattern } from './cache';
+import { logger, LogContext } from '@/lib/logger';
 import type { ApiError } from '@/lib/backend';
 import type {
   UserSession,
@@ -808,7 +809,7 @@ export const ipcClient = {
 
       getActiveByTask: async (taskId: string, sessionToken: string) => {
         try {
-          console.debug('[IPC] getActiveByTask called for task:', taskId);
+          logger.debug(LogContext.API, '[IPC] getActiveByTask called for task', { taskId });
 
           const result = await safeInvoke<unknown>('intervention_workflow', {
             action: { action: 'GetActiveByTask', task_id: taskId },
@@ -817,13 +818,13 @@ export const ipcClient = {
             task_id: taskId
           });
 
-          console.debug('[IPC] getActiveByTask raw result:', result);
+          logger.debug(LogContext.API, '[IPC] getActiveByTask raw result received');
 
           // Handle InterventionWorkflowResponse directly
           // Expected: { type: "ActiveRetrieved", intervention: Intervention | null }
           if (result && typeof result === 'object' && 'type' in result) {
             const workflowResponse = result as { type: string; intervention: any };
-            console.debug('[IPC] getActiveByTask workflow response:', workflowResponse);
+            logger.debug(LogContext.API, '[IPC] getActiveByTask workflow response', { type: workflowResponse.type });
 
             if (workflowResponse.type === 'ActiveByTask') {
               return workflowResponse;
@@ -831,24 +832,24 @@ export const ipcClient = {
           }
 
           // Fallback: return as-is if structure doesn't match
-          console.warn('[IPC] getActiveByTask unexpected structure, returning as-is:', result);
+          logger.warn(LogContext.API, '[IPC] getActiveByTask unexpected structure, returning as-is');
           return result;
         } catch (error) {
-          console.error('[IPC] getActiveByTask error:', error);
+          logger.error(LogContext.API, '[IPC] getActiveByTask error', { error: String(error) });
           throw error;
         }
       },
 
       getLatestByTask: async (taskId: string, sessionToken: string) => {
         try {
-          console.debug('[IPC] getLatestByTask called for task:', taskId);
+          logger.debug(LogContext.API, '[IPC] getLatestByTask called for task', { taskId });
 
           const result = await safeInvoke<unknown>('intervention_get_latest_by_task', {
             taskId: taskId,
             sessionToken: sessionToken
           });
 
-          console.debug('[IPC] getLatestByTask raw result:', result);
+          logger.debug(LogContext.API, '[IPC] getLatestByTask raw result received');
 
           // Handle the response - backend returns ApiResponse with data containing InterventionWorkflowResponse
           if (result && typeof result === 'object' && 'data' in result) {
@@ -862,10 +863,10 @@ export const ipcClient = {
           }
 
           // Fallback: return as-is if structure doesn't match
-          console.warn('[IPC] getLatestByTask unexpected structure, returning as-is:', result);
+          logger.warn(LogContext.API, '[IPC] getLatestByTask unexpected structure, returning as-is');
           return result;
         } catch (error) {
-          console.error('[IPC] getLatestByTask error:', error);
+          logger.error(LogContext.API, '[IPC] getLatestByTask error', { error: String(error) });
           throw error;
         }
       },

@@ -1,4 +1,5 @@
 import type { BackendResponse } from './types';
+import { logger, LogContext } from '@/lib/logger';
 
 /**
  * Type-safe response extraction for IPC calls
@@ -11,7 +12,7 @@ export function extractAndValidate<T>(
   const { handleNotFound = false, expectedTypes = [] } = options;
 
   if (!result || typeof result !== 'object') {
-    console.warn('[IPC] Invalid response format:', result);
+    logger.warn(LogContext.API, '[IPC] Invalid response format', { result });
     return null;
   }
 
@@ -20,7 +21,7 @@ export function extractAndValidate<T>(
   // Handle ApiResponse wrapper format: { success: boolean, data?: T, error?: ApiError }
   if ('success' in response) {
     if (!response.success) {
-      console.error('[IPC] API call failed:', response.error);
+      logger.error(LogContext.API, '[IPC] API call failed', { error: response.error });
       return null;
     }
     const data = response.data;
@@ -36,7 +37,7 @@ export function extractAndValidate<T>(
 
     // Validate expected types if provided
     if (expectedTypes.length > 0 && !expectedTypes.includes(response.type)) {
-      console.warn(`[IPC] Unexpected response type: ${response.type}, expected one of: ${expectedTypes.join(', ')}`);
+      logger.warn(LogContext.API, `[IPC] Unexpected response type: ${response.type}, expected one of: ${expectedTypes.join(', ')}`);
       return null;
     }
 

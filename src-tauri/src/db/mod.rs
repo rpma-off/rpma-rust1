@@ -73,8 +73,21 @@ impl QueryBuilder {
     }
 
     pub fn order_by(mut self, column: &str, direction: &str) -> Self {
+        // Validate column name to prevent SQL injection: only allow alphanumeric and underscores
+        let safe_column = if column
+            .chars()
+            .all(|c| c.is_alphanumeric() || c == '_' || c == '.')
+        {
+            column
+        } else {
+            "created_at"
+        };
+        let safe_direction = match direction.to_uppercase().as_str() {
+            "ASC" => "ASC",
+            _ => "DESC",
+        };
         self.sql
-            .push_str(&format!(" ORDER BY {} {}", column, direction));
+            .push_str(&format!(" ORDER BY {} {}", safe_column, safe_direction));
         self
     }
 

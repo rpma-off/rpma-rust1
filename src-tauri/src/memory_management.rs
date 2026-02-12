@@ -115,9 +115,11 @@ where
 {
     /// Create a new TTL LRU cache
     pub fn new(config: MemoryConfig) -> Self {
+        let max_entries = config.max_cache_entries.max(1);
         Self {
             cache: Mutex::new(LruCache::new(
-                std::num::NonZeroUsize::new(config.max_cache_entries).unwrap(),
+                std::num::NonZeroUsize::new(max_entries)
+                    .expect("max_cache_entries guaranteed > 0 by max(1)"),
             )),
             config,
             stats: Arc::new(Mutex::new(CacheStats::default())),

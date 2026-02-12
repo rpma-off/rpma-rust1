@@ -1,5 +1,6 @@
 import { safeInvoke } from '../core';
 import { IPC_COMMANDS } from '../commands';
+import { logger, LogContext } from '@/lib/logger';
 import {
   validateIntervention,
   validateInterventionStep,
@@ -88,7 +89,7 @@ export const interventionOperations = {
     }
 
     // Fallback: return as-is if structure doesn't match
-    console.warn('[IPC] getActiveByTask unexpected structure, returning as-is:', result);
+    logger.warn(LogContext.API, '[IPC] getActiveByTask unexpected structure, returning as-is', { result });
     return result;
   },
 

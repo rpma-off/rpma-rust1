@@ -1,3 +1,5 @@
+import { logger, LogContext } from '@/lib/logger';
+
 /**
  * Retry configuration
  */
@@ -104,7 +106,7 @@ export async function withRetry<T>(
       }
 
       const delay = calculateDelay(attempt, finalConfig);
-      console.log(`[IPC Retry] Attempt ${attempt} failed, retrying in ${delay}ms:`, error);
+      logger.warn(LogContext.API, `[IPC Retry] Attempt ${attempt} failed, retrying in ${delay}ms`, { error: String(error) });
       await sleep(delay);
     }
   }

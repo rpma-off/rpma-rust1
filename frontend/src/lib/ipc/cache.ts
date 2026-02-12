@@ -1,4 +1,5 @@
 import { invoke as tauriInvoke } from '@tauri-apps/api/core';
+import { logger, LogContext } from '@/lib/logger';
 
 interface CacheEntry<T> {
   data: T;
@@ -124,12 +125,12 @@ export async function cachedInvoke<T>(
   // Check cache first
   const cached = getCached<T>(cacheKey);
   if (cached !== undefined) {
-    console.log(`[IPC Cache] ${command} -> cache hit for key: ${cacheKey}`);
+    logger.debug(LogContext.PERFORMANCE, `[IPC Cache] ${command} -> cache hit for key: ${cacheKey}`);
     return cached;
   }
 
   // Cache miss, invoke and cache
-  console.log(`[IPC Cache] ${command} -> cache miss for key: ${cacheKey}, invoking...`);
+  logger.debug(LogContext.PERFORMANCE, `[IPC Cache] ${command} -> cache miss for key: ${cacheKey}, invoking...`);
 
   const rawResult = await tauriInvoke(command, args) as ApiResponse<T> | T;
 

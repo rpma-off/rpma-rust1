@@ -23,10 +23,20 @@ pub async fn generate_seasonal_report(year: i32, db: &Database) -> AppResult<Sea
 
     let start_date = DateTime::parse_from_rfc3339(&start_of_year)
         .map(|dt| dt.with_timezone(&Utc))
-        .unwrap_or_else(|_| Utc::now().with_day(1).unwrap().with_month(1).unwrap());
+        .unwrap_or_else(|_| {
+            Utc::now()
+                .with_day(1)
+                .and_then(|d| d.with_month(1))
+                .unwrap_or_else(|| Utc::now())
+        });
     let end_date = DateTime::parse_from_rfc3339(&end_of_year)
         .map(|dt| dt.with_timezone(&Utc))
-        .unwrap_or_else(|_| Utc::now().with_day(31).unwrap().with_month(12).unwrap());
+        .unwrap_or_else(|_| {
+            Utc::now()
+                .with_month(12)
+                .and_then(|d| d.with_day(31))
+                .unwrap_or_else(|| Utc::now())
+        });
 
     let date_range = DateRange {
         start: start_date,
