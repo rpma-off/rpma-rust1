@@ -111,7 +111,8 @@ CREATE TABLE IF NOT EXISTS interventions (
 
   -- Foreign Keys
   FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,
-  FOREIGN KEY (technician_id) REFERENCES users(id) ON DELETE SET NULL
+  FOREIGN KEY (technician_id) REFERENCES users(id) ON DELETE SET NULL,
+  FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
 );
 
 -- Indexes for interventions
@@ -369,6 +370,8 @@ CREATE TABLE IF NOT EXISTS tasks (
     -- Foreign keys
     FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,
     FOREIGN KEY (technician_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (workflow_id) REFERENCES interventions(id) ON DELETE SET NULL,
+    FOREIGN KEY (current_workflow_step_id) REFERENCES intervention_steps(id) ON DELETE SET NULL,
 
     -- CHECK constraints
     CHECK(status IN (
@@ -396,6 +399,9 @@ CREATE INDEX IF NOT EXISTS idx_tasks_client_status ON tasks(client_id, status);
 CREATE INDEX IF NOT EXISTS idx_tasks_technician_scheduled ON tasks(technician_id, scheduled_date);
 CREATE INDEX IF NOT EXISTS idx_tasks_status_scheduled ON tasks(status, scheduled_date);
 CREATE INDEX IF NOT EXISTS idx_tasks_sync_status ON tasks(synced, status) WHERE synced = 0;
+CREATE INDEX IF NOT EXISTS idx_tasks_active
+  ON tasks(status, created_at)
+  WHERE deleted_at IS NULL;
 
 -- Table 4.5: task_history
 -- Tracks task status transitions for auditing
@@ -703,6 +709,8 @@ CREATE TABLE IF NOT EXISTS user_sessions (
 CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_sessions_token ON user_sessions(token);
 CREATE INDEX IF NOT EXISTS idx_user_sessions_expires_at ON user_sessions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_user_expires_activity
+  ON user_sessions(user_id, expires_at, last_activity DESC);
 
 -- Table 8: audit_logs (optionnel)
 CREATE TABLE IF NOT EXISTS audit_logs (
@@ -1015,10 +1023,14 @@ CREATE TABLE IF NOT EXISTS materials (
   -- Inventory
   unit_of_measure TEXT NOT NULL DEFAULT 'piece'
     CHECK(unit_of_measure IN ('piece', 'meter', 'liter', 'gram', 'roll')),
-  current_stock REAL NOT NULL DEFAULT 0,
-  minimum_stock REAL DEFAULT 0,
-  maximum_stock REAL,
-  reorder_point REAL,
+  current_stock REAL NOT NULL DEFAULT 0
+    CHECK(current_stock >= 0),
+  minimum_stock REAL DEFAULT 0
+    CHECK(minimum_stock IS NULL OR minimum_stock >= 0),
+  maximum_stock REAL
+    CHECK(maximum_stock IS NULL OR maximum_stock >= 0),
+  reorder_point REAL
+    CHECK(reorder_point IS NULL OR reorder_point >= 0),
 
   -- Pricing
   unit_cost REAL,
@@ -1076,10 +1088,12 @@ CREATE TABLE IF NOT EXISTS material_consumption (
   step_id TEXT,
 
   -- Consumption details
-  quantity_used REAL NOT NULL,
+  quantity_used REAL NOT NULL
+    CHECK(quantity_used >= 0),
   unit_cost REAL,
   total_cost REAL,
-  waste_quantity REAL DEFAULT 0,
+  waste_quantity REAL DEFAULT 0
+    CHECK(waste_quantity IS NULL OR waste_quantity >= 0),
   waste_reason TEXT,
 
   -- Quality tracking
