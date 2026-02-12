@@ -64,10 +64,13 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      # Optionnel si tu as des scripts dédiés
-      # - name: Lint
-      #   working-directory: frontend
-      #   run: npm run lint
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Type check
+        working-directory: frontend
+        run: npm run type-check
 
       - name: Encoding check (if exists)
         working-directory: frontend
@@ -77,6 +80,10 @@ jobs:
           else
             echo "No encoding:check script, skipping."
           fi
+
+      - name: Run tests
+        working-directory: frontend
+        run: npm run test:ci
 
       - name: Build
         working-directory: frontend
