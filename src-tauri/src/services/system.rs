@@ -2,7 +2,9 @@
 
 use serde_json::json;
 
-/// System service for database diagnostics and health checks
+/// System service providing business logic for database health monitoring
+/// and diagnostics operations such as integrity checks, WAL checkpoint
+/// management, and table statistics retrieval.
 pub struct SystemService;
 
 impl SystemService {
@@ -109,10 +111,12 @@ impl SystemService {
             })
             .map_err(|e| format!("Failed to get database path: {}", e))?;
 
-        let size_bytes = if let Ok(metadata) = std::fs::metadata(&db_path) {
-            metadata.len() as i64
-        } else {
-            0
+        let size_bytes = match std::fs::metadata(&db_path) {
+            Ok(metadata) => metadata.len() as i64,
+            Err(e) => {
+                tracing::warn!("Could not determine database file size: {}", e);
+                0
+            }
         };
 
         let users_count: i64 = conn

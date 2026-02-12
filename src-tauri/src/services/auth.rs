@@ -800,7 +800,10 @@ impl AuthService {
         Ok(result.is_ok())
     }
 
-    /// Verify a user's password by looking up the stored hash from the database
+    /// Verify a user's password by looking up the stored hash from the database.
+    ///
+    /// Returns `Ok(true)` if the password matches, `Ok(false)` if the password is invalid.
+    /// Returns `Err` if the user is not found, inactive, or a database error occurs.
     pub fn verify_user_password(&self, user_id: &str, password: &str) -> Result<bool, String> {
         let conn = self.db.get_connection()?;
         let stored_hash: String = conn
