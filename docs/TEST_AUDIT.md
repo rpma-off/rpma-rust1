@@ -276,7 +276,7 @@ Prioritized by: **risk × blast radius × ease of implementation**
 **Impact**: Catches report API contract drift
 
 ### Test 8: 🟠 Dashboard Data Hook Test
-**File**: `frontend/src/__tests__/hooks/useDashboardData.test.ts` (extend existing)
+**File**: `frontend/src/hooks/__tests__/useDashboardData.test.ts` (or extend existing at `frontend/src/__tests__/hooks/useDashboardDataQuery.test.tsx`)
 **What**: Test data aggregation, loading states, refresh logic, error recovery
 **Why**: Dashboard is the landing page after login — data loading issues directly impact UX
 **Impact**: Ensures reliable dashboard rendering
