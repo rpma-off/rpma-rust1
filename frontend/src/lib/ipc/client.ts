@@ -57,6 +57,161 @@ interface InterventionReportResult {
   file_size?: number;
   generated_at: string;
 }
+
+// Typed response interfaces for IPC workflow responses (replacing inline `any` casts)
+interface InterventionWorkflowStartedResponse {
+  type: string;
+  intervention: Intervention;
+  steps: InterventionStep[];
+}
+
+interface InterventionWorkflowRetrievedResponse {
+  type: string;
+  intervention: Intervention;
+}
+
+interface InterventionWorkflowActiveByTaskResponse {
+  type: string;
+  intervention: Intervention | null;
+}
+
+interface InterventionWorkflowActiveRetrievedResponse {
+  type: string;
+  intervention: Intervention | null;
+}
+
+interface InterventionStepAdvancedResponse {
+  type: string;
+  step: InterventionStep;
+  next_step: InterventionStep | null;
+  progress_percentage: number;
+}
+
+interface InterventionProgressRetrievedResponse {
+  type: string;
+  steps: InterventionStep[];
+  progress: { completion_percentage?: number };
+}
+
+interface InterventionStepProgressSavedResponse {
+  type: string;
+  step?: unknown;
+}
+
+interface InterventionWorkflowUpdatedResponse {
+  type: string;
+  id: string;
+  message: string;
+}
+
+interface InterventionWorkflowFinalizedResponse {
+  type: string;
+  intervention: Intervention;
+  metrics: Record<string, unknown>;
+}
+
+interface InterventionListRetrievedResponse {
+  type: string;
+  interventions: Intervention[];
+  total: number;
+}
+
+interface NotificationConfig {
+  provider?: string;
+  api_key?: string;
+  sender_email?: string;
+  sender_phone?: string;
+  enabled_channels?: string[];
+  [key: string]: unknown;
+}
+
+interface MaterialQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  category_id?: string;
+  sort_by?: string;
+  sort_order?: string;
+}
+
+interface MaterialCreateRequest {
+  name: string;
+  description?: string;
+  category_id?: string;
+  unit?: string;
+  unit_price?: number;
+  current_stock?: number;
+  minimum_stock?: number;
+  supplier_id?: string;
+  [key: string]: unknown;
+}
+
+interface MaterialUpdateRequest {
+  name?: string;
+  description?: string;
+  category_id?: string;
+  unit?: string;
+  unit_price?: number;
+  minimum_stock?: number;
+  supplier_id?: string;
+  [key: string]: unknown;
+}
+
+interface StockUpdateRequest {
+  material_id: string;
+  quantity: number;
+  operation: 'add' | 'subtract' | 'set';
+  reason?: string;
+  [key: string]: unknown;
+}
+
+interface StockAdjustmentRequest {
+  material_id: string;
+  quantity: number;
+  reason: string;
+  [key: string]: unknown;
+}
+
+interface ConsumptionRecordRequest {
+  material_id: string;
+  intervention_id: string;
+  quantity: number;
+  notes?: string;
+  [key: string]: unknown;
+}
+
+interface InventoryTransactionRequest {
+  material_id: string;
+  transaction_type: string;
+  quantity: number;
+  reference?: string;
+  notes?: string;
+  [key: string]: unknown;
+}
+
+interface CategoryCreateRequest {
+  name: string;
+  description?: string;
+  [key: string]: unknown;
+}
+
+interface SupplierCreateRequest {
+  name: string;
+  contact_email?: string;
+  contact_phone?: string;
+  address?: string;
+  [key: string]: unknown;
+}
+
+interface ConsumptionHistoryQuery {
+  page?: number;
+  limit?: number;
+}
+
+interface TransactionHistoryQuery {
+  page?: number;
+  limit?: number;
+}
 import type { CreateEventInput, UpdateEventInput } from '@/types/calendar';
 import {
   validateUserSession,
@@ -783,7 +938,7 @@ export const ipcClient = {
           });
           // Extract Started response from InterventionWorkflowResponse
           if (result && typeof result === 'object' && 'type' in result) {
-            const workflowResponse = result as { type: string; intervention: any; steps: any };
+            const workflowResponse = result as InterventionWorkflowStartedResponse;
             if (workflowResponse.type === 'Started') {
               return validateStartInterventionResponse(workflowResponse);
             }
@@ -799,7 +954,7 @@ export const ipcClient = {
       });
       // Extract intervention from Retrieved response
       if (result && typeof result === 'object' && 'type' in result) {
-        const workflowResponse = result as { type: string; intervention: any };
+        const workflowResponse = result as InterventionWorkflowRetrievedResponse;
         if (workflowResponse.type === 'Retrieved') {
           return validateIntervention(workflowResponse.intervention);
         }
@@ -823,7 +978,7 @@ export const ipcClient = {
           // Handle InterventionWorkflowResponse directly
           // Expected: { type: "ActiveRetrieved", intervention: Intervention | null }
           if (result && typeof result === 'object' && 'type' in result) {
-            const workflowResponse = result as { type: string; intervention: any };
+            const workflowResponse = result as InterventionWorkflowActiveByTaskResponse;
             logger.debug(LogContext.API, '[IPC] getActiveByTask workflow response', { type: workflowResponse.type });
 
             if (workflowResponse.type === 'ActiveByTask') {
@@ -853,9 +1008,9 @@ export const ipcClient = {
 
           // Handle the response - backend returns ApiResponse with data containing InterventionWorkflowResponse
           if (result && typeof result === 'object' && 'data' in result) {
-            const apiResponse = result as { data: any };
+            const apiResponse = result as { data: unknown };
             if (apiResponse.data && typeof apiResponse.data === 'object' && 'type' in apiResponse.data) {
-              const workflowResponse = apiResponse.data as { type: string; intervention: any };
+              const workflowResponse = apiResponse.data as InterventionWorkflowActiveRetrievedResponse;
               if (workflowResponse.type === 'ActiveRetrieved') {
                 return workflowResponse;
               }
@@ -888,7 +1043,7 @@ export const ipcClient = {
         });
         // Return the full StepAdvanced response
         if (result && typeof result === 'object' && 'type' in result) {
-          const progressResponse = result as { type: string; step: any; next_step: any; progress_percentage: number };
+          const progressResponse = result as InterventionStepAdvancedResponse;
           if (progressResponse.type === 'StepAdvanced') {
             return progressResponse;
           }
@@ -913,7 +1068,7 @@ export const ipcClient = {
       });
       // Extract progress data from Retrieved response
       if (result && typeof result === 'object' && 'type' in result) {
-        const progressResponse = result as { type: string; steps: any; progress: { completion_percentage?: number } };
+        const progressResponse = result as InterventionProgressRetrievedResponse;
         if (progressResponse.type === 'Retrieved') {
           return {
             steps: progressResponse.steps,
@@ -967,7 +1122,7 @@ export const ipcClient = {
       });
       // Return the full Finalized response
       if (result && typeof result === 'object' && 'type' in result) {
-        const workflowResponse = result as { type: string; intervention: any; metrics: any };
+        const workflowResponse = result as InterventionWorkflowFinalizedResponse;
         if (workflowResponse.type === 'Finalized') {
           return workflowResponse;
         }
@@ -984,7 +1139,7 @@ export const ipcClient = {
       });
       // Extract interventions from ListRetrieved response
       if (result && typeof result === 'object' && 'type' in result) {
-        const managementResponse = result as { type: string; interventions: any[]; total: number };
+        const managementResponse = result as InterventionListRetrievedResponse;
         if (managementResponse.type === 'ListRetrieved') {
           return {
             interventions: managementResponse.interventions,
@@ -998,7 +1153,7 @@ export const ipcClient = {
 
   // Notification operations
   notifications: {
-    initialize: (config: any, sessionToken: string) =>
+    initialize: (config: NotificationConfig, sessionToken: string) =>
       safeInvoke<void>('initialize_notification_service', { config, session_token: sessionToken }),
 
     send: (request: SendNotificationRequest, sessionToken: string) =>
@@ -1440,7 +1595,7 @@ export const ipcClient = {
      * @param query - Query parameters for filtering and pagination
      * @returns Promise resolving to paginated material list
      */
-    list: (sessionToken: string, query: any) =>
+    list: (sessionToken: string, query: MaterialQueryParams) =>
       safeInvoke('material_list', {
         sessionToken,
         ...query
@@ -1452,7 +1607,7 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving to created material
      */
-    create: (data: any, sessionToken: string) =>
+    create: (data: MaterialCreateRequest, sessionToken: string) =>
       safeInvoke('material_create', {
         request: {
           ...data,
@@ -1467,7 +1622,7 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving to updated material
      */
-    update: (id: string, data: any, sessionToken: string) => {
+    update: (id: string, data: MaterialUpdateRequest, sessionToken: string) => {
       invalidatePattern('materials:*');
       invalidatePattern('material:*');
       return safeInvoke('material_update', {
@@ -1512,7 +1667,7 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving to updated material with current stock
      */
-    updateStock: (data: any, sessionToken: string) => {
+    updateStock: (data: StockUpdateRequest, sessionToken: string) => {
       invalidatePattern('materials:*');
       invalidatePattern('material:*');
       return safeInvoke('material_update_stock', {
@@ -1529,7 +1684,7 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving to updated material with current stock
      */
-    adjustStock: (data: any, sessionToken: string) =>
+    adjustStock: (data: StockAdjustmentRequest, sessionToken: string) =>
       safeInvoke('material_adjust_stock', {
         request: {
           ...data,
@@ -1543,7 +1698,7 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving to consumption record
      */
-    recordConsumption: (data: any, sessionToken: string) => {
+    recordConsumption: (data: ConsumptionRecordRequest, sessionToken: string) => {
       invalidatePattern('materials:*');
       invalidatePattern('material:*');
       return safeInvoke('material_record_consumption', {
@@ -1561,7 +1716,7 @@ export const ipcClient = {
      * @param query - Query parameters for pagination and filtering
      * @returns Promise resolving to consumption history
      */
-    getConsumptionHistory: (materialId: string, sessionToken: string, query?: any) =>
+    getConsumptionHistory: (materialId: string, sessionToken: string, query?: ConsumptionHistoryQuery) =>
       safeInvoke('material_get_consumption_history', {
         sessionToken,
         material_id: materialId,
@@ -1575,7 +1730,7 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving to created transaction
      */
-    createInventoryTransaction: (data: any, sessionToken: string) => {
+    createInventoryTransaction: (data: InventoryTransactionRequest, sessionToken: string) => {
       invalidatePattern('materials:*');
       invalidatePattern('material:*');
       return safeInvoke('material_create_inventory_transaction', {
@@ -1593,7 +1748,7 @@ export const ipcClient = {
      * @param query - Query parameters for pagination and filtering
      * @returns Promise resolving to transaction history
      */
-    getTransactionHistory: (materialId: string, sessionToken: string, query?: any) =>
+    getTransactionHistory: (materialId: string, sessionToken: string, query?: TransactionHistoryQuery) =>
       safeInvoke('material_get_transaction_history', {
         sessionToken,
         material_id: materialId,
@@ -1607,7 +1762,7 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving to created category
      */
-    createCategory: (data: any, sessionToken: string) =>
+    createCategory: (data: CategoryCreateRequest, sessionToken: string) =>
       safeInvoke('material_create_category', {
         request: {
           ...data,
@@ -1631,7 +1786,7 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving to created supplier
      */
-    createSupplier: (data: any, sessionToken: string) =>
+    createSupplier: (data: SupplierCreateRequest, sessionToken: string) =>
       safeInvoke('material_create_supplier', {
         request: {
           ...data,
