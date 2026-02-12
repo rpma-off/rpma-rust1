@@ -79,12 +79,9 @@ impl ExportReportService {
             .map(|m| m.len())
             .unwrap_or(0);
 
-        // Create file URL for Tauri
-        let download_url = format!("file://{}", output_path.display());
-
         Ok(InterventionReportResult {
             success: true,
-            download_url: Some(download_url),
+            download_url: None,
             file_path: Some(output_path.to_string_lossy().to_string()),
             file_name: Some(file_name),
             format: "pdf".to_string(),

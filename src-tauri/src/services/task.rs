@@ -230,6 +230,44 @@ impl TaskService {
         self.client_integration.get_tasks_with_clients(query)
     }
 
+    /// Get tasks with client data merged into TaskWithDetails
+    ///
+    /// Fetches tasks with their associated client information and merges
+    /// client fields (name, email, phone) into the task when they are missing.
+    pub fn get_tasks_with_client_details(
+        &self,
+        query: TaskQuery,
+    ) -> AppResult<(Vec<crate::models::task::TaskWithDetails>, crate::models::task::PaginationInfo)> {
+        let result = self.client_integration.get_tasks_with_clients(query)?;
+
+        let tasks = result
+            .data
+            .into_iter()
+            .map(|task_with_client| {
+                let mut task = task_with_client.task;
+
+                if let Some(client_info) = task_with_client.client_info {
+                    if task.customer_name.is_none() {
+                        task.customer_name = Some(client_info.name);
+                    }
+                    if task.customer_email.is_none() {
+                        task.customer_email = client_info.email;
+                    }
+                    if task.customer_phone.is_none() {
+                        task.customer_phone = client_info.phone;
+                    }
+                    if task.client_id.is_none() {
+                        task.client_id = Some(client_info.id);
+                    }
+                }
+
+                crate::models::task::TaskWithDetails { task }
+            })
+            .collect();
+
+        Ok((tasks, result.pagination))
+    }
+
     /// Get comprehensive task statistics
     ///
     /// Calculates various metrics about the task system including counts by status,
