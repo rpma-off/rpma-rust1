@@ -95,7 +95,7 @@ export async function withRetry<T>(
 ): Promise<T> {
   const finalConfig = { ...defaultRetryConfig, ...config };
 
-  let lastError: RetryError = new Error('Unknown error');
+  let lastError: RetryError | undefined;
 
   for (let attempt = 1; attempt <= finalConfig.maxRetries + 1; attempt++) {
     try {
@@ -112,6 +112,10 @@ export async function withRetry<T>(
       console.log(`[IPC Retry] Attempt ${attempt} failed, retrying in ${delay}ms:`, error);
       await sleep(delay);
     }
+  }
+
+  if (!lastError) {
+    throw new Error('Retry failed without captured error');
   }
 
   throw lastError;
