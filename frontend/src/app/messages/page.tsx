@@ -48,21 +48,21 @@ export default function MessagesPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList>
-          <TabsTrigger value="inbox" className="flex items-center gap-2">
-            <Inbox className="h-4 w-4" />
-            <span className="hidden sm:inline">{t('messages.inbox')}</span>
-            <span className="sm:hidden">Inbox</span>
-          </TabsTrigger>
-          <TabsTrigger value="compose" className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">{t('messages.compose')}</span>
-            <span className="sm:hidden">Compose</span>
-          </TabsTrigger>
-          <TabsTrigger value="preferences" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            <span className="hidden sm:inline">{t('settings.preferences')}</span>
-            <span className="sm:hidden">Settings</span>
-          </TabsTrigger>
+            <TabsTrigger value="inbox" className="flex items-center gap-2">
+              <Inbox className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('messages.inbox')}</span>
+              <span className="sm:hidden">{t('messages.inbox')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="compose" className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('messages.compose')}</span>
+              <span className="sm:hidden">{t('messages.compose')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="preferences" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('settings.preferences')}</span>
+              <span className="sm:hidden">{t('settings.preferences')}</span>
+            </TabsTrigger>
         </TabsList>
 
         <TabsContent value="inbox" className="mt-4">
