@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ClientWithTasks, Task } from '@/types';
 import { convertTimestamps } from '@/lib/types';
 import { useTranslation } from '@/hooks/useTranslation';
+import { formatClientDate } from './date-format';
 
 interface ClientDetailPageProps {
   params: {
@@ -161,7 +162,7 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
                     {client.customer_type === 'business' ? t('clients.businessClient') : t('clients.individualClient')}
                   </Badge>
                   <span className="text-muted-foreground text-sm">
-                    {t('clients.since')} {client.created_at ? new Date(client.created_at as unknown as string).toLocaleDateString() : 'N/A'}
+                    {t('clients.since')} {formatClientDate(client.created_at as unknown as string)}
                   </span>
                 </div>
               </div>
@@ -282,7 +283,7 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
                             {task.status?.replace('_', ' ')}
                           </Badge>
                           <p className="text-muted-foreground text-xs">
-                            {task.created_at ? new Date(task.created_at as unknown as string).toLocaleDateString() : 'N/A'}
+                            {formatClientDate(task.created_at as unknown as string)}
                           </p>
                         </div>
                       </div>
@@ -338,7 +339,7 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground text-sm">{t('clients.clientSince')}</span>
                   <span className="text-foreground text-sm font-medium">
-                    {client.created_at ? new Date(client.created_at as unknown as string).toLocaleDateString() : 'N/A'}
+                    {formatClientDate(client.created_at as unknown as string)}
                   </span>
                 </div>
               </div>
@@ -363,7 +364,7 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-foreground truncate">{task.title}</p>
                         <p className="text-xs text-muted-foreground">
-                          {task.created_at ? new Date(task.created_at as unknown as string).toLocaleDateString() : 'N/A'}
+                          {formatClientDate(task.created_at as unknown as string)}
                         </p>
                       </div>
                     </div>
