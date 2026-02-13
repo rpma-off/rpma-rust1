@@ -12,7 +12,7 @@ use crate::models::auth::{UserRole, UserSession};
 use chrono::Utc;
 use serde::Deserialize;
 
-use tracing::{error, info, instrument, warn};
+use tracing::{debug, error, info, instrument, warn};
 
 /// Workflow action types
 #[derive(Deserialize, Debug)]
@@ -279,7 +279,7 @@ pub async fn intervention_delete(
 
 /// Finalize an intervention
 #[tauri::command]
-#[instrument(skip(state, session_token, request), fields(intervention_id = %request.intervention_id, user_id))]
+#[instrument(skip(state, session_token, request), fields(intervention_id = %request.intervention_id, user_id, correlation_id))]
 pub async fn intervention_finalize(
     request: FinalizeInterventionRequest,
     session_token: String,
@@ -290,7 +290,15 @@ pub async fn intervention_finalize(
 
     let session = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &session.user_id.as_str());
+    let correlation_id = crate::logging::correlation::generate_correlation_id();
+    tracing::Span::current().record("correlation_id", &correlation_id.as_str());
     super::ensure_intervention_permission(&session)?;
+
+    debug!(
+        correlation_id = %correlation_id,
+        intervention_id = %request.intervention_id,
+        "Finalizing intervention via command"
+    );
 
     let finalize_data = crate::services::intervention_types::FinalizeInterventionRequest {
         intervention_id: request.intervention_id.clone(),
@@ -305,7 +313,7 @@ pub async fn intervention_finalize(
 
     state
         .intervention_service
-        .finalize_intervention(finalize_data, "finalize-cmd", Some(&session.user_id))
+        .finalize_intervention(finalize_data, &correlation_id, Some(&session.user_id))
         .map(ApiResponse::success)
         .map_err(|e| {
             error!(error = %e, intervention_id = %request.intervention_id, "Failed to finalize intervention");
@@ -315,16 +323,18 @@ pub async fn intervention_finalize(
 
 /// Main intervention workflow command (unified interface)
 #[tauri::command]
-#[instrument(skip(state, session_token, action), fields(user_id))]
+#[instrument(skip(state, session_token, action), fields(user_id, correlation_id))]
 pub async fn intervention_workflow(
     action: InterventionWorkflowAction,
     session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<InterventionWorkflowResponse>, AppError> {
-    info!("Processing intervention workflow action");
-
     let session = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &session.user_id.as_str());
+    let correlation_id = crate::logging::correlation::generate_correlation_id();
+    tracing::Span::current().record("correlation_id", &correlation_id.as_str());
+
+    info!(correlation_id = %correlation_id, "Processing intervention workflow action");
 
     match action {
         InterventionWorkflowAction::Start { data } => {
@@ -499,6 +509,11 @@ pub async fn intervention_workflow(
 
         InterventionWorkflowAction::Finalize { data } => {
             super::ensure_intervention_permission(&session)?;
+            debug!(
+                correlation_id = %correlation_id,
+                intervention_id = %data.intervention_id,
+                "Finalizing intervention via workflow"
+            );
             let intervention = state
                 .intervention_service
                 .get_intervention(&data.intervention_id)
@@ -517,18 +532,18 @@ pub async fn intervention_workflow(
             )?;
             let finalize_data = crate::services::intervention_types::FinalizeInterventionRequest {
                 intervention_id: data.intervention_id.clone(),
-                collected_data: None,
-                photos: None,
+                collected_data: data.collected_data,
+                photos: data.photos,
                 customer_satisfaction: data.customer_satisfaction,
-                quality_score: None,
+                quality_score: data.quality_score,
                 final_observations: data.final_observations,
-                customer_signature: None,
-                customer_comments: None,
+                customer_signature: data.customer_signature,
+                customer_comments: data.customer_comments,
             };
 
             let response = state
                 .intervention_service
-                .finalize_intervention(finalize_data, "finalize-cmd", Some(&session.user_id))
+                .finalize_intervention(finalize_data, &correlation_id, Some(&session.user_id))
                 .map_err(|e| {
                     error!(error = %e, intervention_id = %data.intervention_id, "Failed to finalize intervention via workflow");
                     AppError::Database("Failed to finalize intervention".to_string())

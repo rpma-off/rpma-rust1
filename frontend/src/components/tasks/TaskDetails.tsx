@@ -16,6 +16,7 @@ import { TaskHistory } from './TaskHistory';
 import { useTasks } from '@/hooks/useTasks';
 import { useAuth } from '@/contexts/AuthContext';
 import { taskService } from '@/lib/services/entities/task.service';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface TaskDetailsProps {
   task: TaskWithDetails | null;
@@ -27,6 +28,7 @@ interface TaskDetailsProps {
 export function TaskDetails({ task, open, onOpenChange, onTaskUpdated }: TaskDetailsProps) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('checklist');
   const { deleteTask } = useTasks();
 
@@ -176,83 +178,81 @@ export function TaskDetails({ task, open, onOpenChange, onTaskUpdated }: TaskDet
             </div>
              <div className="flex gap-2">
                <Button
-                 variant="outline"
-                 size="sm"
-                 onClick={() => assignToMeMutation.mutate()}
-                 disabled={assignToMeMutation.isPending}
-               >
-                 {assignToMeMutation.isPending ? (
-                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                 ) : (
-                   <UserPlus className="h-4 w-4 mr-2" />
-                 )}
-                 Assign to Me
-               </Button>
-               <Button variant="outline" size="sm">
-                 <Edit3 className="h-4 w-4 mr-2" />
-                 Edit
-               </Button>
-               <AlertDialog>
-                 <AlertDialogTrigger asChild>
-                   <Button
-                     variant="destructive"
-                     size="sm"
-                     disabled={deleteTaskMutation.isPending}
-                   >
-                     {deleteTaskMutation.isPending ? (
-                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                     ) : (
-                       <Trash className="h-4 w-4 mr-2" />
-                     )}
-                     Delete
-                   </Button>
-                 </AlertDialogTrigger>
-                 <AlertDialogContent>
-                   <AlertDialogHeader>
-                     <AlertDialogTitle>Are you sure you want to delete this task?</AlertDialogTitle>
-                     <AlertDialogDescription>
-                       This action cannot be undone. This will permanently delete the task
-                       and all associated data including photos, checklist items, workflow history,
-                       and intervention records.
-                     </AlertDialogDescription>
-                   </AlertDialogHeader>
-                   <AlertDialogFooter>
-                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                     <AlertDialogAction
-                       onClick={() => deleteTaskMutation.mutate()}
-                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                     >
-                       Delete Task
-                     </AlertDialogAction>
-                   </AlertDialogFooter>
-                 </AlertDialogContent>
-               </AlertDialog>
-             </div>
+                  variant="outline"
+                  size="sm"
+                  onClick={() => assignToMeMutation.mutate()}
+                  disabled={assignToMeMutation.isPending}
+                >
+                  {assignToMeMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <UserPlus className="h-4 w-4 mr-2" />
+                  )}
+                  {t('tasks.assignToMe')}
+                </Button>
+                <Button variant="outline" size="sm">
+                  <Edit3 className="h-4 w-4 mr-2" />
+                  {t('common.edit')}
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      disabled={deleteTaskMutation.isPending}
+                    >
+                      {deleteTaskMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : (
+                        <Trash className="h-4 w-4 mr-2" />
+                      )}
+                      {t('common.delete')}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>{t('tasks.deleteConfirm.title')}</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {t('tasks.deleteConfirm.description')}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => deleteTaskMutation.mutate()}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        {t('tasks.deleteTask')}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
           </div>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-1">
-              <h4 className="text-sm font-medium text-muted-foreground">PPF Zone</h4>
-              <p>{task.ppf_zones?.join(', ') || 'N/A'}</p>
-            </div>
-            <div className="space-y-1">
-              <h4 className="text-sm font-medium text-muted-foreground">Technician</h4>
-              <p>{task.technician ? getUserFullName(task.technician) : 'Unassigned'}</p>
-            </div>
-            <div className="space-y-1">
-              <h4 className="text-sm font-medium text-muted-foreground">Scheduled</h4>
-              <p>{task.scheduled_date ? format(new Date(task.scheduled_date), 'PPp') : 'Not scheduled'}</p>
-            </div>
-          </div>
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+             <div className="space-y-1">
+               <h4 className="text-sm font-medium text-muted-foreground">{t('tasks.ppfZone')}</h4>
+               <p>{task.ppf_zones?.join(', ') || 'N/A'}</p>
+             </div>
+             <div className="space-y-1">
+               <h4 className="text-sm font-medium text-muted-foreground">{t('tasks.assignedTechnician')}</h4>
+               <p>{task.technician ? getUserFullName(task.technician) : t('tasks.unassigned')}</p>
+             </div>
+             <div className="space-y-1">
+               <h4 className="text-sm font-medium text-muted-foreground">{t('tasks.scheduledDate')}</h4>
+               <p>{task.scheduled_date ? format(new Date(task.scheduled_date), 'PPp') : t('tasks.notScheduled')}</p>
+             </div>
+           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="checklist">Checklist</TabsTrigger>
-              <TabsTrigger value="photos">Photos</TabsTrigger>
-              <TabsTrigger value="history">History</TabsTrigger>
-            </TabsList>
+           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
+             <TabsList className="grid w-full grid-cols-3">
+               <TabsTrigger value="checklist">{t('tasks.tabs.checklist')}</TabsTrigger>
+               <TabsTrigger value="photos">{t('tasks.tabs.photos')}</TabsTrigger>
+               <TabsTrigger value="history">{t('tasks.tabs.history')}</TabsTrigger>
+             </TabsList>
 
             <TabsContent value="checklist" className="mt-6">
               <TaskChecklist taskId={task.id} />
@@ -273,41 +273,41 @@ export function TaskDetails({ task, open, onOpenChange, onTaskUpdated }: TaskDet
              <Button
                variant="secondary"
                onClick={() => updateStatusMutation.mutate('in_progress')}
-              disabled={updateStatusMutation.isPending}
-            >
-              {updateStatusMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Play className="h-4 w-4 mr-2" />
-              )}
-              Start Task
-            </Button>
-          )}
+               disabled={updateStatusMutation.isPending}
+             >
+               {updateStatusMutation.isPending ? (
+                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
+               ) : (
+                 <Play className="h-4 w-4 mr-2" />
+               )}
+               {t('tasks.startTask')}
+             </Button>
+           )}
 
            {task.status === 'in_progress' && (
              <>
                <Button
                  variant="outline"
                  onClick={() => updateStatusMutation.mutate('cancelled')}
-                disabled={updateStatusMutation.isPending}
-              >
-                <XCircle className="h-4 w-4 mr-2" />
-                Mark as Invalid
-              </Button>
-              <Button
+                 disabled={updateStatusMutation.isPending}
+               >
+                 <XCircle className="h-4 w-4 mr-2" />
+                 {t('tasks.markInvalid')}
+               </Button>
+               <Button
                  onClick={() => updateStatusMutation.mutate('completed')}
-                disabled={updateStatusMutation.isPending}
-              >
-                {updateStatusMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                )}
-                Complete Task
-              </Button>
-            </>
-          )}
-        </div>
+                 disabled={updateStatusMutation.isPending}
+               >
+                 {updateStatusMutation.isPending ? (
+                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                 ) : (
+                   <CheckCircle className="h-4 w-4 mr-2" />
+                 )}
+                 {t('tasks.completeTask')}
+               </Button>
+             </>
+           )}
+         </div>
       </DialogContent>
     </Dialog>
   );

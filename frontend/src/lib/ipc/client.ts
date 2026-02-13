@@ -122,7 +122,7 @@ interface NotificationConfig {
   sender_email?: string;
   sender_phone?: string;
   enabled_channels?: string[];
-  [key: string]: JsonValue;
+  [key: string]: JsonValue | undefined;
 }
 
 interface MaterialQueryParams {
@@ -143,7 +143,7 @@ interface MaterialCreateRequest {
   current_stock?: number;
   minimum_stock?: number;
   supplier_id?: string;
-  [key: string]: JsonValue;
+  [key: string]: JsonValue | undefined;
 }
 
 interface MaterialUpdateRequest {
@@ -154,7 +154,7 @@ interface MaterialUpdateRequest {
   unit_price?: number;
   minimum_stock?: number;
   supplier_id?: string;
-  [key: string]: JsonValue;
+  [key: string]: JsonValue | undefined;
 }
 
 interface StockUpdateRequest {
@@ -162,14 +162,14 @@ interface StockUpdateRequest {
   quantity: number;
   operation: 'add' | 'subtract' | 'set';
   reason?: string;
-  [key: string]: JsonValue;
+  [key: string]: JsonValue | undefined;
 }
 
 interface StockAdjustmentRequest {
   material_id: string;
   quantity: number;
   reason: string;
-  [key: string]: JsonValue;
+  [key: string]: JsonValue | undefined;
 }
 
 interface ConsumptionRecordRequest {
@@ -177,7 +177,7 @@ interface ConsumptionRecordRequest {
   intervention_id: string;
   quantity: number;
   notes?: string;
-  [key: string]: JsonValue;
+  [key: string]: JsonValue | undefined;
 }
 
 interface InventoryTransactionRequest {
@@ -186,13 +186,13 @@ interface InventoryTransactionRequest {
   quantity: number;
   reference?: string;
   notes?: string;
-  [key: string]: JsonValue;
+  [key: string]: JsonValue | undefined;
 }
 
 interface CategoryCreateRequest {
   name: string;
   description?: string;
-  [key: string]: JsonValue;
+  [key: string]: JsonValue | undefined;
 }
 
 interface SupplierCreateRequest {
@@ -200,7 +200,7 @@ interface SupplierCreateRequest {
   contact_email?: string;
   contact_phone?: string;
   address?: string;
-  [key: string]: JsonValue;
+  [key: string]: JsonValue | undefined;
 }
 
 interface ConsumptionHistoryQuery {
@@ -240,7 +240,7 @@ function extractAndValidate<T>(
 ): T | null {
   // Handle NotFound case
   if (handleNotFound && result && typeof result === 'object' && 'type' in result) {
-    const response = result as BackendResponse;
+    const response = result as unknown as BackendResponse;
     if (response.type === 'NotFound') {
       return null;
     }
@@ -248,8 +248,8 @@ function extractAndValidate<T>(
 
   // Extract data from response wrapper
   if (result && typeof result === 'object' && 'data' in result) {
-    const response = result as BackendResponse;
-    const data = response.data;
+    const response = result as unknown as BackendResponse;
+    const data = response.data as JsonValue;
     return validator ? validator(data) : data as T;
   }
 
@@ -434,7 +434,7 @@ export const ipcClient = {
       }).then(result => {
         // task_crud returns TaskListResponse which itself has a `data` field,
         // so avoid extractAndValidate (it would strip pagination).
-        const data = result as TaskListResponse;
+        const data = result as unknown as TaskListResponse;
         if (!validateTaskListResponse(data)) {
           throw new Error('Invalid response format for task list');
         }
@@ -938,7 +938,7 @@ export const ipcClient = {
           });
           // Extract Started response from InterventionWorkflowResponse
           if (result && typeof result === 'object' && 'type' in result) {
-            const workflowResponse = result as InterventionWorkflowStartedResponse;
+            const workflowResponse = result as unknown as InterventionWorkflowStartedResponse;
             if (workflowResponse.type === 'Started') {
               return validateStartInterventionResponse(workflowResponse);
             }
@@ -954,7 +954,7 @@ export const ipcClient = {
       });
       // Extract intervention from Retrieved response
       if (result && typeof result === 'object' && 'type' in result) {
-        const workflowResponse = result as InterventionWorkflowRetrievedResponse;
+        const workflowResponse = result as unknown as InterventionWorkflowRetrievedResponse;
         if (workflowResponse.type === 'Retrieved') {
           return validateIntervention(workflowResponse.intervention);
         }
@@ -978,7 +978,7 @@ export const ipcClient = {
           // Handle InterventionWorkflowResponse directly
           // Expected: { type: "ActiveRetrieved", intervention: Intervention | null }
           if (result && typeof result === 'object' && 'type' in result) {
-            const workflowResponse = result as InterventionWorkflowActiveByTaskResponse;
+            const workflowResponse = result as unknown as InterventionWorkflowActiveByTaskResponse;
             console.debug('[IPC] getActiveByTask workflow response:', workflowResponse);
 
             if (workflowResponse.type === 'ActiveByTask') {
@@ -1010,7 +1010,7 @@ export const ipcClient = {
           if (result && typeof result === 'object' && 'data' in result) {
             const apiResponse = result as { data: JsonValue };
             if (apiResponse.data && typeof apiResponse.data === 'object' && 'type' in apiResponse.data) {
-              const workflowResponse = apiResponse.data as InterventionWorkflowActiveRetrievedResponse;
+              const workflowResponse = apiResponse.data as unknown as InterventionWorkflowActiveRetrievedResponse;
               if (workflowResponse.type === 'ActiveRetrieved') {
                 return workflowResponse;
               }
@@ -1043,7 +1043,7 @@ export const ipcClient = {
         });
         // Return the full StepAdvanced response
         if (result && typeof result === 'object' && 'type' in result) {
-          const progressResponse = result as InterventionStepAdvancedResponse;
+          const progressResponse = result as unknown as InterventionStepAdvancedResponse;
           if (progressResponse.type === 'StepAdvanced') {
             return progressResponse;
           }
@@ -1068,7 +1068,7 @@ export const ipcClient = {
       });
       // Extract progress data from Retrieved response
       if (result && typeof result === 'object' && 'type' in result) {
-        const progressResponse = result as InterventionProgressRetrievedResponse;
+        const progressResponse = result as unknown as InterventionProgressRetrievedResponse;
         if (progressResponse.type === 'Retrieved') {
           return {
             steps: progressResponse.steps,
@@ -1122,7 +1122,7 @@ export const ipcClient = {
       });
       // Return the full Finalized response
       if (result && typeof result === 'object' && 'type' in result) {
-        const workflowResponse = result as InterventionWorkflowFinalizedResponse;
+        const workflowResponse = result as unknown as InterventionWorkflowFinalizedResponse;
         if (workflowResponse.type === 'Finalized') {
           return workflowResponse;
         }
@@ -1139,7 +1139,7 @@ export const ipcClient = {
       });
       // Extract interventions from ListRetrieved response
       if (result && typeof result === 'object' && 'type' in result) {
-        const managementResponse = result as InterventionListRetrievedResponse;
+        const managementResponse = result as unknown as InterventionListRetrievedResponse;
         if (managementResponse.type === 'ListRetrieved') {
           return {
             interventions: managementResponse.interventions,
@@ -1519,10 +1519,10 @@ export const ipcClient = {
       safeInvoke('get_event_by_id', { id, session_token: sessionToken }),
 
     createEvent: (eventData: CreateEventInput, sessionToken: string) =>
-      safeInvoke('create_event', { event_data: eventData, session_token: sessionToken }),
+      safeInvoke('create_event', { event_data: eventData as unknown as JsonObject, session_token: sessionToken }),
 
     updateEvent: (id: string, eventData: UpdateEventInput, sessionToken: string) =>
-      safeInvoke('update_event', { id, event_data: eventData, session_token: sessionToken }),
+      safeInvoke('update_event', { id, event_data: eventData as unknown as JsonObject, session_token: sessionToken }),
 
     deleteEvent: (id: string, sessionToken: string) =>
       safeInvoke('delete_event', { id, session_token: sessionToken }),

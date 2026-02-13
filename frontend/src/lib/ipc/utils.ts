@@ -55,7 +55,7 @@ interface BackendResponse<T = JsonValue> {
 interface EnhancedError extends Error {
   code?: string;
   originalMessage?: string;
-  details?: JsonValue | null;
+  details?: Record<string, unknown> | null;
 }
 
 export async function safeInvoke<T>(
@@ -133,8 +133,11 @@ export async function safeInvoke<T>(
       // Handle backend response format
       const backendResult = result as BackendResponse<T>;
       if (backendResult.error) {
-        const errorMsg = backendResult.error.message;
-        const errorCode = backendResult.error.code;
+        const errObj = typeof backendResult.error === 'string'
+          ? { message: backendResult.error, code: 'UNKNOWN', details: undefined }
+          : backendResult.error;
+        const errorMsg = errObj.message;
+        const errorCode = errObj.code;
 
         logger.error(LogDomain.API, `IPC call failed: ${command}`, {
           command,
@@ -148,7 +151,7 @@ export async function safeInvoke<T>(
         const error: EnhancedError = new Error(userFriendlyMessage);
         error.code = errorCode;
         error.originalMessage = errorMsg;
-        error.details = backendResult.error.details;
+        error.details = (errObj.details as Record<string, unknown> | null) ?? null;
         throw error;
       }
       const payload = backendResult.payload as JsonValue;
@@ -197,7 +200,7 @@ export async function safeInvoke<T>(
         message: error.message,
         stack: error.stack ?? null,
         code: enhancedError.code ?? null,
-        details: enhancedError.details ?? null
+        details: (enhancedError.details ?? null) as JsonValue
       };
     } else if (typeof error === 'object' && error !== null) {
       // Handle backend ApiError format
@@ -277,7 +280,7 @@ function sanitizeArgs(args?: JsonObject): JsonObject | undefined {
       for (const [key, entryValue] of entries) {
         if (sensitiveFields.has(key.toLowerCase())) {
           sanitizedObject[key] = '[REDACTED]';
-        } else {
+        } else if (entryValue !== undefined) {
           sanitizedObject[key] = sanitizeValue(entryValue);
         }
       }

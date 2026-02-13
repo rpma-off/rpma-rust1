@@ -137,7 +137,7 @@ export function PerformanceTab({ user }: PerformanceSettingsTabProps) {
 
         // Load real cache statistics
         try {
-          const cacheStatsResponse = await ipcClient.performance.getCacheStatistics(user.token) as CacheStats;
+          const cacheStatsResponse = await ipcClient.performance.getCacheStatistics(user.token) as unknown as CacheStats;
           setCacheStats(cacheStatsResponse);
         } catch (error) {
           logError('Failed to load cache statistics', { error: error instanceof Error ? error.message : error });
@@ -224,7 +224,7 @@ export function PerformanceTab({ user }: PerformanceSettingsTabProps) {
       await ipcClient.performance.clearApplicationCache({}, user.token);
 
       // Reload cache statistics
-      const cacheStatsResponse = await ipcClient.performance.getCacheStatistics(user.token) as CacheStats;
+      const cacheStatsResponse = await ipcClient.performance.getCacheStatistics(user.token) as unknown as CacheStats;
       setCacheStats(cacheStatsResponse);
 
       logInfo('Cache cleared successfully');

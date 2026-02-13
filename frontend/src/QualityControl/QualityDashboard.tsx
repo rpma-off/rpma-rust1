@@ -28,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { QualityControlService, QualityCheckpoint, QualityControlWorkflow } from '@/lib/services/ppf/quality-control.service';
 import { QualityIssue } from '@/types/ppf-intervention';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface QualityDashboardProps {
   interventionId: string;
@@ -40,6 +41,7 @@ export const QualityDashboard: React.FC<QualityDashboardProps> = ({
   onQualityIssue: _onQualityIssue,
   onEscalationRequired
 }) => {
+  const { t } = useTranslation();
   const [workflow, setWorkflow] = useState<QualityControlWorkflow | null>(null);
   const [checkpoints, setCheckpoints] = useState<QualityCheckpoint[]>([]);
   const [_selectedCheckpoint, _setSelectedCheckpoint] = useState<QualityCheckpoint | null>(null);
@@ -138,7 +140,7 @@ export const QualityDashboard: React.FC<QualityDashboardProps> = ({
       <Card>
         <CardContent className="p-6 text-center">
           <div className="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p>Loading quality dashboard...</p>
+          <p>{t('qualityControl.loadingDashboard')}</p>
         </CardContent>
       </Card>
     );
@@ -149,9 +151,9 @@ export const QualityDashboard: React.FC<QualityDashboardProps> = ({
       <Card>
         <CardContent className="p-6 text-center">
           <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Error Loading Dashboard</h3>
+          <h3 className="text-lg font-semibold mb-2">{t('qualityControl.errorLoading')}</h3>
           <p className="text-gray-600 mb-4">{error}</p>
-          <Button onClick={loadQualityData}>Retry</Button>
+          <Button onClick={loadQualityData}>{t('common.retry')}</Button>
         </CardContent>
       </Card>
     );
@@ -169,7 +171,7 @@ export const QualityDashboard: React.FC<QualityDashboardProps> = ({
                 <div className="text-2xl font-bold text-green-600">
                   {checkpoints.filter(cp => cp.status === 'passed').length}
                 </div>
-                <div className="text-sm text-gray-600">Passed</div>
+                <div className="text-sm text-gray-600">{t('qualityControl.passed')}</div>
               </div>
             </div>
           </CardContent>
@@ -183,7 +185,7 @@ export const QualityDashboard: React.FC<QualityDashboardProps> = ({
                 <div className="text-2xl font-bold text-red-600">
                   {checkpoints.filter(cp => cp.status === 'failed').length}
                 </div>
-                <div className="text-sm text-gray-600">Failed</div>
+                <div className="text-sm text-gray-600">{t('qualityControl.failed')}</div>
               </div>
             </div>
           </CardContent>
@@ -197,7 +199,7 @@ export const QualityDashboard: React.FC<QualityDashboardProps> = ({
                 <div className="text-2xl font-bold text-orange-600">
                   {checkpoints.filter(cp => cp.status === 'escalated').length}
                 </div>
-                <div className="text-sm text-gray-600">Escalated</div>
+                <div className="text-sm text-gray-600">{t('qualityControl.escalated')}</div>
               </div>
             </div>
           </CardContent>
@@ -211,7 +213,7 @@ export const QualityDashboard: React.FC<QualityDashboardProps> = ({
                 <div className="text-2xl font-bold text-blue-600">
                   {workflow ? Math.round(workflow.qualityScore) : 0}%
                 </div>
-                <div className="text-sm text-gray-600">Quality Score</div>
+                <div className="text-sm text-gray-600">{t('qualityControl.qualityScore')}</div>
               </div>
             </div>
           </CardContent>
@@ -222,18 +224,18 @@ export const QualityDashboard: React.FC<QualityDashboardProps> = ({
       {workflow && (
         <Card>
           <CardHeader>
-            <CardTitle>Overall Quality Score</CardTitle>
+            <CardTitle>{t('qualityControl.overallQualityScore')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>Quality Compliance</span>
+                <span>{t('qualityControl.qualityCompliance')}</span>
                 <span>{Math.round(workflow.qualityScore)}%</span>
               </div>
               <Progress value={workflow.qualityScore} className="h-3" />
               <div className="flex justify-between text-xs text-gray-600">
-                <span>Critical Issues: {workflow.criticalIssues}</span>
-                <span>Review Required: {workflow.reviewRequired ? 'Yes' : 'No'}</span>
+                <span>{t('qualityControl.criticalIssues')} {workflow.criticalIssues}</span>
+                <span>{t('qualityControl.reviewRequired')} {workflow.reviewRequired ? t('common.yes') : t('common.no')}</span>
               </div>
             </div>
           </CardContent>
@@ -243,20 +245,20 @@ export const QualityDashboard: React.FC<QualityDashboardProps> = ({
       {/* Detailed Checkpoints */}
       <Card>
         <CardHeader>
-          <CardTitle>Quality Checkpoints</CardTitle>
+          <CardTitle>{t('qualityControl.qualityCheckpoints')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="all" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="all">All ({checkpoints.length})</TabsTrigger>
+              <TabsTrigger value="all">{t('qualityControl.all')} ({checkpoints.length})</TabsTrigger>
               <TabsTrigger value="passed">
-                Passed ({checkpoints.filter(cp => cp.status === 'passed').length})
+                {t('qualityControl.passed')} ({checkpoints.filter(cp => cp.status === 'passed').length})
               </TabsTrigger>
               <TabsTrigger value="failed">
-                Failed ({checkpoints.filter(cp => cp.status === 'failed').length})
+                {t('qualityControl.failed')} ({checkpoints.filter(cp => cp.status === 'failed').length})
               </TabsTrigger>
               <TabsTrigger value="escalated">
-                Escalated ({checkpoints.filter(cp => cp.status === 'escalated').length})
+                {t('qualityControl.escalated')} ({checkpoints.filter(cp => cp.status === 'escalated').length})
               </TabsTrigger>
             </TabsList>
 
@@ -279,7 +281,7 @@ export const QualityDashboard: React.FC<QualityDashboardProps> = ({
                           {checkpoint.status}
                         </Badge>
                         {checkpoint.reviewRequired && (
-                          <Badge variant="destructive">Review Required</Badge>
+                          <Badge variant="destructive">{t('qualityControl.reviewRequiredBadge')}</Badge>
                         )}
                       </div>
                     </div>
@@ -308,7 +310,7 @@ export const QualityDashboard: React.FC<QualityDashboardProps> = ({
                                       variant="outline"
                                       onClick={() => handleEscalateIssue(checkpoint)}
                                     >
-                                      Escalate
+                                      {t('qualityControl.escalate')}
                                     </Button>
                                   )}
                                 </div>
@@ -321,7 +323,7 @@ export const QualityDashboard: React.FC<QualityDashboardProps> = ({
 
                     {checkpoint.correctiveActions.length > 0 && (
                       <div className="mt-3">
-                        <div className="text-sm font-medium mb-2">Corrective Actions:</div>
+                        <div className="text-sm font-medium mb-2">{t('qualityControl.correctiveActions')}</div>
                         <ul className="text-sm text-gray-600 space-y-1">
                           {checkpoint.correctiveActions.map((action, index) => (
                             <li key={index}>• {action.description}</li>
@@ -346,7 +348,7 @@ export const QualityDashboard: React.FC<QualityDashboardProps> = ({
                         <div>
                           <div className="font-medium">Step {checkpoint.stepId}</div>
                           <div className="text-sm text-gray-600">
-                            Passed • {checkpoint.performedBy}
+                            {t('qualityControl.passed')} • {checkpoint.performedBy}
                           </div>
                         </div>
                       </div>
@@ -367,7 +369,7 @@ export const QualityDashboard: React.FC<QualityDashboardProps> = ({
                           <div>
                             <div className="font-medium">Step {checkpoint.stepId}</div>
                             <div className="text-sm text-gray-600">
-                              Failed • {checkpoint.issues.length} issues
+                              {t('qualityControl.failed')} • {checkpoint.issues.length} issues
                             </div>
                           </div>
                         </div>
@@ -376,7 +378,7 @@ export const QualityDashboard: React.FC<QualityDashboardProps> = ({
                           variant="outline"
                           onClick={() => handleEscalateIssue(checkpoint)}
                         >
-                          Escalate
+                          {t('qualityControl.escalate')}
                         </Button>
                       </div>
                     </CardContent>
@@ -395,7 +397,7 @@ export const QualityDashboard: React.FC<QualityDashboardProps> = ({
                         <div>
                           <div className="font-medium">Step {checkpoint.stepId}</div>
                           <div className="text-sm text-gray-600">
-                            Escalated for review
+                            {t('qualityControl.escalatedForReview')}
                           </div>
                         </div>
                       </div>

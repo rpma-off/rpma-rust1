@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import type { Client } from '@/lib/backend';
 import type { UpdateClientDTO, ClientType } from '@/types/client.types';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface EditClientPageProps {
   params: {
@@ -24,6 +25,7 @@ interface EditClientPageProps {
 export default function EditClientPage({ params }: EditClientPageProps) {
   const router = useRouter();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [client, setClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -152,14 +154,14 @@ export default function EditClientPage({ params }: EditClientPageProps) {
             className="flex items-center space-x-2 text-muted-foreground hover:text-white transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Back to Clients</span>
+            <span>{t('clients.backToClients')}</span>
           </Link>
         </div>
         <Card className="border-red-700/50 bg-red-900/20">
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-red-400 text-lg font-medium">{error || 'Client not found'}</p>
-              <p className="text-muted-foreground text-sm mt-2">Please check the client ID or try again later.</p>
+              <p className="text-red-400 text-lg font-medium">{error || t('clients.notFound')}</p>
+              <p className="text-muted-foreground text-sm mt-2">{t('clients.checkIdOrRetry')}</p>
             </div>
           </CardContent>
         </Card>
@@ -178,15 +180,15 @@ export default function EditClientPage({ params }: EditClientPageProps) {
               className="flex items-center space-x-2 text-muted-foreground hover:text-white transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
-              <span className="text-sm">Back to {client.name}</span>
+              <span className="text-sm">{t('common.back')} {client.name}</span>
             </Link>
             <div className="flex items-center space-x-4">
               <div className="p-3 bg-blue-600/20 rounded-full">
                 <Edit className="h-8 w-8 text-blue-400" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-white">Edit Client</h1>
-                <p className="text-muted-foreground mt-1">Update client information</p>
+                <h1 className="text-3xl font-bold text-white">{t('clients.editClient')}</h1>
+                <p className="text-muted-foreground mt-1">{t('clients.updateClientInfo')}</p>
               </div>
             </div>
           </div>
@@ -196,7 +198,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
       {/* Form */}
       <Card>
         <CardHeader>
-          <CardTitle>Client Information</CardTitle>
+          <CardTitle>{t('clients.clientInformation')}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-8">
@@ -210,7 +212,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
             {/* Name */}
             <div className="space-y-2">
               <label htmlFor="name" className="block text-sm font-medium text-muted-foreground">
-                Client Name *
+                {t('clients.clientName')} *
               </label>
               <Input
                 type="text"
@@ -218,7 +220,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 className={formErrors.name ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                placeholder="Enter client name"
+                placeholder={t('clients.enterClientName')}
                 required
               />
               {formErrors.name && <p className="text-red-400 text-sm">{formErrors.name}</p>}
@@ -227,7 +229,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
             {/* Customer Type */}
             <div className="space-y-3">
               <label className="block text-sm font-medium text-muted-foreground">
-                Customer Type *
+                {t('clients.customerType')} *
               </label>
               <div className="flex space-x-6">
                 <label className="flex items-center space-x-2 cursor-pointer">
@@ -241,7 +243,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
                   />
                   <div className="flex items-center space-x-2">
                     <User className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-foreground">Individual</span>
+                    <span className="text-foreground">{t('clients.individual')}</span>
                   </div>
                 </label>
                 <label className="flex items-center space-x-2 cursor-pointer">
@@ -255,7 +257,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
                   />
                   <div className="flex items-center space-x-2">
                     <Building className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-foreground">Business</span>
+                    <span className="text-foreground">{t('clients.business')}</span>
                   </div>
                 </label>
               </div>
@@ -264,7 +266,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
             {/* Email */}
             <div className="space-y-2">
               <label htmlFor="email" className="block text-sm font-medium text-muted-foreground">
-                Email Address
+                {t('clients.emailAddress')}
               </label>
               <Input
                 type="email"
@@ -272,7 +274,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
                 value={formData.email ?? ''}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 className={formErrors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                placeholder="Enter email address"
+                placeholder={t('clients.enterEmailAddress')}
               />
               {formErrors.email && <p className="text-red-400 text-sm">{formErrors.email}</p>}
             </div>
@@ -280,7 +282,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
             {/* Phone */}
             <div className="space-y-2">
               <label htmlFor="phone" className="block text-sm font-medium text-muted-foreground">
-                Phone Number
+                {t('clients.phoneNumber')}
               </label>
               <Input
                 type="tel"
@@ -288,19 +290,19 @@ export default function EditClientPage({ params }: EditClientPageProps) {
                 value={formData.phone ?? ''}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 className={formErrors.phone ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                placeholder="Enter phone number"
+                placeholder={t('clients.enterPhoneNumber')}
               />
               {formErrors.phone && <p className="text-red-400 text-sm">{formErrors.phone}</p>}
             </div>
 
             {/* Address */}
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-foreground border-b border-[hsl(var(--rpma-border))] pb-2">Address Information</h3>
+              <h3 className="text-lg font-semibold text-foreground border-b border-[hsl(var(--rpma-border))] pb-2">{t('clients.address')}</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label htmlFor="address_street" className="block text-sm font-medium text-muted-foreground">
-                    Street Address
+                    {t('clients.streetAddress')}
                   </label>
                   <Input
                     type="text"
@@ -308,14 +310,14 @@ export default function EditClientPage({ params }: EditClientPageProps) {
                     value={formData.address_street ?? ''}
                     onChange={(e) => handleInputChange('address_street', e.target.value)}
                     className={formErrors.address_street ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                    placeholder="Street address"
+                    placeholder={t('clients.enterStreetAddress')}
                   />
                   {formErrors.address_street && <p className="text-red-400 text-sm">{formErrors.address_street}</p>}
                 </div>
 
                 <div className="space-y-2">
                   <label htmlFor="address_city" className="block text-sm font-medium text-muted-foreground">
-                    City
+                    {t('clients.city')}
                   </label>
                   <Input
                     type="text"
@@ -323,7 +325,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
                     value={formData.address_city ?? ''}
                     onChange={(e) => handleInputChange('address_city', e.target.value)}
                     className={formErrors.address_city ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                    placeholder="City"
+                    placeholder={t('clients.enterCity')}
                   />
                   {formErrors.address_city && <p className="text-red-400 text-sm">{formErrors.address_city}</p>}
                 </div>
@@ -332,7 +334,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
                   <label htmlFor="address_state" className="block text-sm font-medium text-muted-foreground">
-                    State/Region
+                    {t('clients.stateRegion')}
                   </label>
                   <Input
                     type="text"
@@ -340,14 +342,14 @@ export default function EditClientPage({ params }: EditClientPageProps) {
                     value={formData.address_state ?? ''}
                     onChange={(e) => handleInputChange('address_state', e.target.value)}
                     className={formErrors.address_state ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                    placeholder="State or region"
+                    placeholder={t('clients.enterStateRegion')}
                   />
                   {formErrors.address_state && <p className="text-red-400 text-sm">{formErrors.address_state}</p>}
                 </div>
 
                 <div className="space-y-2">
                   <label htmlFor="address_zip" className="block text-sm font-medium text-muted-foreground">
-                    Postal Code
+                    {t('clients.postalCode')}
                   </label>
                   <Input
                     type="text"
@@ -355,14 +357,14 @@ export default function EditClientPage({ params }: EditClientPageProps) {
                     value={formData.address_zip ?? ''}
                     onChange={(e) => handleInputChange('address_zip', e.target.value)}
                     className={formErrors.address_zip ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                    placeholder="Postal code"
+                    placeholder={t('clients.enterPostalCode')}
                   />
                   {formErrors.address_zip && <p className="text-red-400 text-sm">{formErrors.address_zip}</p>}
                 </div>
 
                 <div className="space-y-2">
                   <label htmlFor="address_country" className="block text-sm font-medium text-muted-foreground">
-                    Country
+                    {t('clients.country')}
                   </label>
                   <Input
                     type="text"
@@ -370,7 +372,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
                     value={formData.address_country ?? ''}
                     onChange={(e) => handleInputChange('address_country', e.target.value)}
                     className={formErrors.address_country ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                    placeholder="Country"
+                    placeholder={t('clients.enterCountry')}
                   />
                   {formErrors.address_country && <p className="text-red-400 text-sm">{formErrors.address_country}</p>}
                 </div>
@@ -381,7 +383,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
             {formData.customer_type === 'business' && (
               <div className="space-y-2">
                 <label htmlFor="company_name" className="block text-sm font-medium text-muted-foreground">
-                  Company Name
+                  {t('clients.companyName')}
                 </label>
                 <Input
                   type="text"
@@ -389,7 +391,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
                   value={formData.company_name ?? ''}
                   onChange={(e) => handleInputChange('company_name', e.target.value)}
                   className={formErrors.company_name ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                  placeholder="Enter company name"
+                  placeholder={t('clients.enterCompanyName')}
                 />
                 {formErrors.company_name && <p className="text-red-400 text-sm">{formErrors.company_name}</p>}
               </div>
@@ -398,14 +400,14 @@ export default function EditClientPage({ params }: EditClientPageProps) {
             {/* Notes */}
             <div className="space-y-2">
               <label htmlFor="notes" className="block text-sm font-medium text-muted-foreground">
-                Additional Notes
+                {t('clients.additionalNotes')}
               </label>
               <Textarea
                 id="notes"
                 value={formData.notes ?? ''}
                 onChange={(e) => handleInputChange('notes', e.target.value)}
                 className={formErrors.notes ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                placeholder="Enter any additional notes about the client"
+                placeholder={t('clients.enterNotes')}
                 rows={4}
               />
               {formErrors.notes && <p className="text-red-400 text-sm">{formErrors.notes}</p>}
@@ -420,7 +422,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
                 className="flex items-center space-x-2"
               >
                 <X className="h-4 w-4" />
-                <span>Cancel</span>
+                <span>{t('common.cancel')}</span>
               </Button>
               <Button
                 type="submit"
@@ -432,7 +434,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
                 ) : (
                   <Save className="h-4 w-4" />
                 )}
-                <span>{submitting ? 'Updating...' : 'Update Client'}</span>
+                <span>{submitting ? t('clients.updating') : t('clients.updateClient')}</span>
               </Button>
             </div>
           </form>

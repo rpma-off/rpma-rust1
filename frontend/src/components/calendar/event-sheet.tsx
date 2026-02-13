@@ -28,6 +28,7 @@ import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import type { CalendarEvent } from "@/types/calendar";
 import { useState } from "react";
 import { Kbd } from "@/components/ui/kbd";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface EventSheetProps {
   event: CalendarEvent | null;
@@ -90,6 +91,7 @@ function copyToClipboard(text: string) {
 }
 
 export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
+  const { t } = useTranslation();
   const [rsvpStatus, setRsvpStatus] = useState<"yes" | "no" | "maybe" | null>(
     null
   );
@@ -107,7 +109,7 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
   const organizerEmail = organizer.email || getParticipantEmail(organizer.id);
   const otherParticipants = event.participants.slice(1);
 
-  const mockParticipants = [
+  const participants = [
     {
       id: organizer.id,
       name: organizerName,
@@ -132,7 +134,7 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
     },
   ];
 
-  const yesCount = mockParticipants.filter((p) => p.rsvp === "yes").length;
+  const yesCount = participants.filter((p) => p.rsvp === "yes").length;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -200,15 +202,15 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
             </div>
 
             <Button variant="outline">
-              <span>Propose new time</span>
-              <ArrowUpRight className="size-4" />
-            </Button>
-          </SheetHeader>
+               <span>{t('schedule.proposeNewTime')}</span>
+               <ArrowUpRight className="size-4" />
+             </Button>
+           </SheetHeader>
 
           <div className="flex-1 overflow-y-auto px-4 py-4">
             <div className="flex flex-col gap-4 max-w-[512px] mx-auto">
               <div className="flex flex-col gap-4">
-                {mockParticipants.map((participant) => (
+                {participants.map((participant) => (
                   <div
                     key={participant.id}
                     className="flex items-start gap-3 relative"
@@ -290,63 +292,63 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
               </div>
 
               {event.meetingLink && (
-                <div className="flex flex-col gap-2 pt-4 border-t border-border">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="size-6 shrink-0">
-                      <svg
-                        viewBox="0 0 24 24"
-                        className="size-full"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"
-                          fill="#22C55E"
-                        />
-                      </svg>
-                    </div>
-                    <p className="text-xs font-medium text-muted-foreground flex-1">
-                      Meeting in Google Meet
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Code: {meetingCode}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      className="flex-1 h-8 bg-foreground text-background hover:bg-foreground/90 text-xs font-medium gap-2 shadow-sm"
-                      onClick={() => {
-                        if (event.meetingLink) {
-                          window.open(event.meetingLink, "_blank");
-                        }
-                      }}
-                    >
-                      <span>Join Google Meet meeting</span>
-                      <div className="flex gap-0.5">
-                        <Kbd className="bg-white/14 text-white text-[10.8px] px-1.5 py-1 rounded">
-                          ⌘
-                        </Kbd>
-                        <Kbd className="bg-white/14 text-white text-[10.8px] px-1.5 py-1 rounded w-[18px]">
-                          J
-                        </Kbd>
-                      </div>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 gap-2 text-xs border-border"
-                      onClick={() => {
-                        if (event.meetingLink) {
-                          copyToClipboard(event.meetingLink);
-                        }
-                      }}
-                    >
-                      <LinkIcon className="size-4" />
-                      <span>Copy link</span>
-                    </Button>
-                  </div>
-                </div>
-              )}
+                 <div className="flex flex-col gap-2 pt-4 border-t border-border">
+                   <div className="flex items-center gap-2 mb-2">
+                     <div className="size-6 shrink-0">
+                       <svg
+                         viewBox="0 0 24 24"
+                         className="size-full"
+                         fill="none"
+                         xmlns="http://www.w3.org/2000/svg"
+                       >
+                         <path
+                           d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"
+                           fill="#22C55E"
+                         />
+                       </svg>
+                     </div>
+                     <p className="text-xs font-medium text-muted-foreground flex-1">
+                       {t('schedule.meetingInGoogleMeet')}
+                     </p>
+                     <p className="text-xs text-muted-foreground">
+                       Code: {meetingCode}
+                     </p>
+                   </div>
+                   <div className="flex gap-2">
+                     <Button
+                       className="flex-1 h-8 bg-foreground text-background hover:bg-foreground/90 text-xs font-medium gap-2 shadow-sm"
+                       onClick={() => {
+                         if (event.meetingLink) {
+                           window.open(event.meetingLink, "_blank");
+                         }
+                       }}
+                     >
+                       <span>{t('schedule.joinGoogleMeet')}</span>
+                       <div className="flex gap-0.5">
+                         <Kbd className="bg-white/14 text-white text-[10.8px] px-1.5 py-1 rounded">
+                           ⌘
+                         </Kbd>
+                         <Kbd className="bg-white/14 text-white text-[10.8px] px-1.5 py-1 rounded w-[18px]">
+                           J
+                         </Kbd>
+                       </div>
+                     </Button>
+                     <Button
+                       variant="outline"
+                       size="sm"
+                       className="h-8 gap-2 text-xs border-border"
+                       onClick={() => {
+                         if (event.meetingLink) {
+                           copyToClipboard(event.meetingLink);
+                         }
+                       }}
+                     >
+                       <LinkIcon className="size-4" />
+                       <span>{t('schedule.copyLink')}</span>
+                     </Button>
+                   </div>
+                 </div>
+               )}
 
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -372,7 +374,7 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
                     <Users className="size-4" />
                   </div>
                   <span>
-                    {mockParticipants.length} persons
+                    {participants.length} persons
                     <span className="mx-1">•</span>
                     {yesCount} yes
                   </span>
@@ -384,6 +386,42 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
                   <span>Notes from Organizer</span>
                 </div>
               </div>
+               <div className="flex flex-col gap-2 pt-4 border-t border-border">
+                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                   <div className="p-1">
+                     <Bell className="size-4" />
+                   </div>
+                   <span>{t('schedule.reminder30min')}</span>
+                 </div>
+                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                   <div className="p-1">
+                     <CalendarIcon className="size-4" />
+                   </div>
+                   <span>{t('schedule.organizerLabel')} {organizerEmail}</span>
+                 </div>
+                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                   <div className="p-1">
+                     <Phone className="size-4" />
+                   </div>
+                   <span>(US) +1 904-330-1131</span>
+                 </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                   <div className="p-1">
+                     <Users className="size-4" />
+                   </div>
+                   <span>
+                     {participants.length} {t('schedule.persons')}
+                     <span className="mx-1">•</span>
+                     {yesCount} {t('schedule.yes_lower')}
+                   </span>
+                 </div>
+                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                   <div className="p-1">
+                     <FilePlus className="size-4" />
+                   </div>
+                   <span>{t('schedule.notesFromOrganizer')}</span>
+                 </div>
+               </div>
 
               <div className="pt-4 border-t border-border">
                 <p className="text-xs text-muted-foreground leading-[1.6]">

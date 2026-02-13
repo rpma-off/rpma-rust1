@@ -67,9 +67,9 @@ export function SecurityDashboard({ onRefresh }: SecurityDashboardProps) {
         ipcClient.security.getActiveSessions(user.token),
       ]);
 
-      setMetrics(metricsData as SecurityMetrics);
-      setAlerts(alertsData as SecurityAlert[]);
-      setSessions(sessionsData as UserSession[]);
+      setMetrics(metricsData as unknown as SecurityMetrics);
+      setAlerts(alertsData as unknown as SecurityAlert[]);
+      setSessions(sessionsData as unknown as UserSession[]);
     } catch (err) {
       console.error('Failed to load security data:', err);
       setError('Erreur lors du chargement des données de sécurité');

@@ -25,7 +25,7 @@ export function createCrudOperations<
           action: { action: 'Create', data },
           session_token: sessionToken
         }
-      }, ResponseHandlers.discriminatedUnion('Created', validator));
+      } as unknown as JsonObject, ResponseHandlers.discriminatedUnion('Created', validator));
       invalidatePattern(`${cachePrefix}:`);
       return result;
     },
@@ -39,7 +39,7 @@ export function createCrudOperations<
           action: { action: 'Get', id },
           session_token: sessionToken
         }
-      }, ResponseHandlers.discriminatedUnionNullable('Found', validator)),
+      }, ResponseHandlers.discriminatedUnionNullable('Found', validator)) as Promise<T | null>,
 
     /**
      * Update an existing entity
@@ -50,7 +50,7 @@ export function createCrudOperations<
           action: { action: 'Update', id, data },
           session_token: sessionToken
         }
-      }, ResponseHandlers.discriminatedUnion('Updated', validator));
+      } as unknown as JsonObject, ResponseHandlers.discriminatedUnion('Updated', validator));
       invalidatePattern(`${cachePrefix}:`);
       return result;
     },
@@ -77,7 +77,7 @@ export function createCrudOperations<
           action: { action: 'List', filters },
           session_token: sessionToken
         }
-      }, ResponseHandlers.list((data: JsonValue) => data as ListResponse)),
+      } as unknown as JsonObject, ResponseHandlers.list((data: JsonValue) => data as ListResponse)),
 
     /**
      * Get statistics for the entity type

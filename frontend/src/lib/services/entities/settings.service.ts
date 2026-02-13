@@ -1,4 +1,5 @@
 import { ipcClient } from '@/lib/ipc';
+import type { JsonObject } from '@/types/json';
 import type {
   UserSettings,
   UserPreferences,
@@ -231,7 +232,7 @@ export class SettingsService {
         profilePayload.avatar_url = data.profile_picture;
       }
 
-      await ipcClient.settings.updateUserProfile(profilePayload, token);
+      await ipcClient.settings.updateUserProfile(profilePayload as JsonObject, token);
       return this.getUserSettings(token);
     } catch (error) {
       return fail(error, 'Failed to update profile');

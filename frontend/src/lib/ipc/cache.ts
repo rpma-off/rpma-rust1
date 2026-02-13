@@ -2,7 +2,7 @@ import { invoke as tauriInvoke } from '@tauri-apps/api/core';
 import type { ApiResponse } from '@/types/api';
 import type { JsonObject, JsonValue } from '@/types/json';
 
-interface CacheEntry<T extends JsonValue> {
+interface CacheEntry<T> {
   data: T;
   timestamp: number;
   ttl: number;
@@ -15,7 +15,7 @@ interface CacheStats {
   invalidations: number;
 }
 
-const cache = new Map<string, CacheEntry<JsonValue>>();
+const cache = new Map<string, CacheEntry<unknown>>();
 let stats: CacheStats = {
   hits: 0,
   misses: 0,
@@ -40,14 +40,14 @@ export function resetCacheStats(): void {
 /**
  * Check if cache entry is expired
  */
-function isExpired(entry: CacheEntry<JsonValue>): boolean {
+function isExpired(entry: CacheEntry<unknown>): boolean {
   return Date.now() - entry.timestamp > entry.ttl;
 }
 
 /**
  * Get cached data if valid
  */
-export function getCached<T extends JsonValue>(key: string): T | undefined {
+export function getCached<T>(key: string): T | undefined {
   const entry = cache.get(key) as CacheEntry<T> | undefined;
   if (!entry) {
     stats.misses++;
@@ -65,7 +65,7 @@ export function getCached<T extends JsonValue>(key: string): T | undefined {
 /**
  * Set cache entry
  */
-export function setCached<T extends JsonValue>(key: string, data: T, ttl: number = 60000): void {
+export function setCached<T>(key: string, data: T, ttl: number = 60000): void {
   cache.set(key, {
     data,
     timestamp: Date.now(),
@@ -110,7 +110,7 @@ export function invalidatePattern(pattern: string): void {
  * Cached invoke wrapper for read operations
  * Automatically caches results with TTL and handles cache invalidation
  */
-export async function cachedInvoke<T extends JsonValue>(
+export async function cachedInvoke<T>(
   cacheKey: string,
   command: string,
   args?: JsonObject,
@@ -134,7 +134,7 @@ export async function cachedInvoke<T extends JsonValue>(
   if (rawResult && typeof rawResult === 'object' && 'success' in rawResult) {
     const apiResult = rawResult as ApiResponse<T>;
     if (!apiResult.success) {
-      throw new Error(apiResult.error || 'Unknown error');
+      throw new Error(typeof apiResult.error === 'string' ? apiResult.error : apiResult.error?.message || 'Unknown error');
     }
     result = apiResult.data as T;
   } else {
@@ -142,7 +142,7 @@ export async function cachedInvoke<T extends JsonValue>(
   }
 
   // Validate if validator provided
-  const data = validator ? validator(result) : result;
+  const data = validator ? validator(result as unknown as JsonValue) : result;
 
   // Cache the result
   setCached(cacheKey, data, ttl);

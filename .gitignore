@@ -25,6 +25,7 @@ desktop.ini
 type-drift-ci-report.json
 test-results/
 docs/duplication-report.json
+migration-tests/results/
 
 start_dev.bat
 stop_dev.bat

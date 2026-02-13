@@ -16,7 +16,7 @@ export function extractAndValidate<T>(
     return null;
   }
 
-  const response = result as BackendResponse;
+  const response = result as unknown as BackendResponse;
 
   // Handle ApiResponse wrapper format: { success: boolean, data?: T, error?: ApiError }
   if ('success' in response) {
@@ -25,7 +25,7 @@ export function extractAndValidate<T>(
       return null;
     }
     const data = response.data;
-    return validator ? validator(data) : data as T;
+    return validator ? validator(data as JsonValue) : data as T;
   }
 
   // Handle discriminated union format: { type: "VariantName", ...fields }
@@ -43,7 +43,7 @@ export function extractAndValidate<T>(
 
     // For discriminated unions, the entire response object (minus type) is the data
     const { type, ...data } = response;
-    return validator ? validator(data) : data as T;
+    return validator ? validator(data as JsonValue) : data as T;
   }
 
   // Fallback: treat as direct data

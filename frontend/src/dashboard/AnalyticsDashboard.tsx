@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useTranslation } from '@/hooks/useTranslation';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -86,6 +87,7 @@ interface AnalyticsDashboardProps {
 }
 
 export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
+  const { t } = useTranslation();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('30d');
@@ -136,7 +138,7 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
         <Card>
           <CardContent className="flex items-center justify-center p-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <span className="ml-2">Loading analytics...</span>
+            <span className="ml-2">{t('analytics.loading')}</span>
           </CardContent>
         </Card>
       </div>
@@ -150,13 +152,13 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
           <CardContent className="flex items-center justify-center p-8">
             <div className="text-center">
               <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No analytics data available</h3>
+              <h3 className="text-lg font-medium mb-2">{t('analytics.noData')}</h3>
               <p className="text-muted-foreground mb-4">
-                Analytics data will appear once you have completed tasks and workflows.
+                {t('analytics.noDataDesc')}
               </p>
               <Button onClick={loadAnalytics}>
                 <RefreshCw className="h-4 w-4 mr-2" />
-                Retry
+                {t('common.retry')}
               </Button>
             </div>
           </CardContent>
@@ -170,8 +172,8 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Analytics Dashboard</h1>
-          <p className="text-muted-foreground">Performance insights and business metrics</p>
+          <h1 className="text-2xl font-bold">{t('analytics.dashboard')}</h1>
+          <p className="text-muted-foreground">{t('analytics.dashboardDesc')}</p>
         </div>
         <div className="flex items-center gap-4">
           <Select value={timeRange} onValueChange={setTimeRange}>
@@ -179,19 +181,19 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="7d">Last 7 days</SelectItem>
-              <SelectItem value="30d">Last 30 days</SelectItem>
-              <SelectItem value="90d">Last 90 days</SelectItem>
-              <SelectItem value="1y">Last year</SelectItem>
+              <SelectItem value="7d">{t('analytics.last7days')}</SelectItem>
+              <SelectItem value="30d">{t('analytics.last30days')}</SelectItem>
+              <SelectItem value="90d">{t('analytics.last90days')}</SelectItem>
+              <SelectItem value="1y">{t('analytics.lastYear')}</SelectItem>
             </SelectContent>
           </Select>
           <Button onClick={loadAnalytics} variant="outline">
             <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
+            {t('common.refresh')}
           </Button>
           <Button variant="outline">
             <Download className="h-4 w-4 mr-2" />
-            Export
+            {t('common.export')}
           </Button>
         </div>
       </div>
@@ -199,10 +201,10 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
       {/* Navigation Tabs */}
       <div className="flex space-x-1 mb-6">
         {[
-          { id: 'overview', label: 'Overview', icon: BarChart3 },
-          { id: 'performance', label: 'Performance', icon: TrendingUp },
-          { id: 'quality', label: 'Quality', icon: CheckCircle },
-          { id: 'trends', label: 'Trends', icon: Activity }
+          { id: 'overview', label: t('analytics.overview'), icon: BarChart3 },
+          { id: 'performance', label: t('analytics.performance'), icon: TrendingUp },
+          { id: 'quality', label: t('analytics.quality'), icon: CheckCircle },
+          { id: 'trends', label: t('analytics.trends'), icon: Activity }
         ].map((tab) => (
           <Button
             key={tab.id}
@@ -225,7 +227,7 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Total Tasks</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('analytics.totalTasks')}</p>
                     <p className="text-2xl font-bold">{analytics.overview.totalTasks}</p>
                   </div>
                   <CheckCircle className="h-8 w-8 text-blue-600" />
@@ -237,7 +239,7 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Completion Rate</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('analytics.completionRate')}</p>
                     <p className="text-2xl font-bold text-green-600">
                       {analytics.overview.completionRate.toFixed(1)}%
                     </p>
@@ -251,7 +253,7 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Avg Completion Time</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('analytics.avgCompletionTimeShort')}</p>
                     <p className="text-2xl font-bold text-purple-600">
                       {formatDuration(analytics.overview.avgCompletionTime)}
                     </p>
@@ -265,7 +267,7 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Quality Score</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('analytics.quality')}</p>
                     <p className="text-2xl font-bold text-orange-600">
                       {analytics.overview.qualityScore.toFixed(1)}/10
                     </p>
@@ -281,8 +283,8 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
             {/* Task Completion Trend */}
             <Card>
               <CardHeader>
-                <CardTitle>Task Completion Trend</CardTitle>
-                <CardDescription>Daily task completion over time</CardDescription>
+                <CardTitle>{t('analytics.taskCompletionTrend')}</CardTitle>
+                <CardDescription>{t('analytics.taskCompletionTrendDesc')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -300,8 +302,8 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
             {/* Task Status Distribution */}
             <Card>
               <CardHeader>
-                <CardTitle>Task Status Distribution</CardTitle>
-                <CardDescription>Current task status breakdown</CardDescription>
+                <CardTitle>{t('analytics.taskStatusDistribution')}</CardTitle>
+                <CardDescription>{t('analytics.taskStatusDistributionDesc')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -340,8 +342,8 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
           {/* Technician Performance */}
           <Card>
             <CardHeader>
-              <CardTitle>Technician Performance</CardTitle>
-              <CardDescription>Individual technician metrics and efficiency</CardDescription>
+              <CardTitle>{t('analytics.technicianPerformance')}</CardTitle>
+              <CardDescription>{t('analytics.technicianPerformanceDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -354,21 +356,21 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
                       <div>
                         <p className="font-medium">{tech.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          {tech.tasksCompleted} tasks completed
+                          {tech.tasksCompleted} {t('analytics.tasksCompleted')}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-6">
                       <div className="text-center">
-                        <p className="text-sm text-muted-foreground">Avg Time</p>
+                        <p className="text-sm text-muted-foreground">{t('analytics.avgTime')}</p>
                         <p className="font-medium">{formatDuration(tech.avgTime)}</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-sm text-muted-foreground">Quality</p>
+                        <p className="text-sm text-muted-foreground">{t('analytics.quality')}</p>
                         <p className="font-medium">{tech.qualityScore.toFixed(1)}/10</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-sm text-muted-foreground">Efficiency</p>
+                        <p className="text-sm text-muted-foreground">{t('analytics.efficiency')}</p>
                         <Badge variant={tech.efficiency > 80 ? 'default' : tech.efficiency > 60 ? 'secondary' : 'destructive'}>
                           {tech.efficiency.toFixed(0)}%
                         </Badge>
@@ -383,8 +385,8 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
           {/* Template Performance */}
           <Card>
             <CardHeader>
-              <CardTitle>Template Performance</CardTitle>
-              <CardDescription>SOP template usage and effectiveness</CardDescription>
+              <CardTitle>{t('analytics.templatePerformance')}</CardTitle>
+              <CardDescription>{t('analytics.templatePerformanceDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -393,16 +395,16 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
                     <div>
                       <p className="font-medium">{template.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        Used {template.usageCount} times
+                        {t('analytics.usedTimes', { count: template.usageCount })}
                       </p>
                     </div>
                     <div className="flex items-center gap-6">
                       <div className="text-center">
-                        <p className="text-sm text-muted-foreground">Avg Time</p>
+                        <p className="text-sm text-muted-foreground">{t('analytics.avgTime')}</p>
                         <p className="font-medium">{formatDuration(template.avgCompletionTime)}</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-sm text-muted-foreground">Success Rate</p>
+                        <p className="text-sm text-muted-foreground">{t('analytics.successRate')}</p>
                         <Badge variant={template.successRate > 90 ? 'default' : template.successRate > 70 ? 'secondary' : 'destructive'}>
                           {template.successRate.toFixed(0)}%
                         </Badge>
@@ -422,8 +424,8 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
           {/* Quality Issues */}
           <Card>
             <CardHeader>
-              <CardTitle>Quality Issues</CardTitle>
-              <CardDescription>Common quality issues and their frequency</CardDescription>
+              <CardTitle>{t('analytics.qualityIssues')}</CardTitle>
+              <CardDescription>{t('analytics.qualityIssuesDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -432,7 +434,7 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
                     <div>
                       <p className="font-medium">{issue.type}</p>
                       <p className="text-sm text-muted-foreground">
-                        {issue.count} occurrences
+                        {issue.count} {t('analytics.occurrences')}
                       </p>
                     </div>
                     <div className="flex items-center gap-4">
@@ -453,8 +455,8 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
           {/* Quality Improvements */}
           <Card>
             <CardHeader>
-              <CardTitle>Quality Improvements</CardTitle>
-              <CardDescription>Metrics showing quality improvements over time</CardDescription>
+              <CardTitle>{t('analytics.qualityImprovements')}</CardTitle>
+              <CardDescription>{t('analytics.qualityImprovementsDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -486,8 +488,8 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
           {/* Weekly Trends */}
           <Card>
             <CardHeader>
-              <CardTitle>Weekly Performance Trends</CardTitle>
-              <CardDescription>Task completion and performance over weeks</CardDescription>
+              <CardTitle>{t('analytics.weeklyTrends')}</CardTitle>
+              <CardDescription>{t('analytics.weeklyTrendsDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={400}>
@@ -506,8 +508,8 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
           {/* Monthly Trends */}
           <Card>
             <CardHeader>
-              <CardTitle>Monthly Trends</CardTitle>
-              <CardDescription>Long-term performance trends</CardDescription>
+              <CardTitle>{t('analytics.monthlyTrendsTitle')}</CardTitle>
+              <CardDescription>{t('analytics.monthlyTrendsDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={400}>

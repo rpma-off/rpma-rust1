@@ -111,7 +111,7 @@ export function SecurityTab({ user }: SecuritySettingsTabProps) {
         // Load active sessions from backend
         const sessionsResponse = await ipcClient.settings.getActiveSessions(user.token);
         if (sessionsResponse && Array.isArray(sessionsResponse)) {
-          const formattedSessions = (sessionsResponse as SessionResponse[]).map((session) => ({
+          const formattedSessions = (sessionsResponse as unknown as SessionResponse[]).map((session) => ({
             id: session.id,
             device: session.device_info?.device_name || session.device_info?.device_type || 'Unknown Device',
             browser: session.user_agent || 'Unknown Browser',

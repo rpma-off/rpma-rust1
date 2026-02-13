@@ -1,7 +1,10 @@
 import type { UserSession, Task, Client, ClientStatistics, TaskStatistics } from '@/lib/backend';
 import type { Material, Supplier, MaterialCategory, InventoryStats, MaterialStats, MaterialConsumption, InterventionMaterialSummary } from '@/lib/inventory';
-import type { JsonObject, JsonValue } from '@/types/json';
+import type { JsonObject } from '@/types/json';
 import { defaultFixtures, type MockFixtures, type MockUser } from './fixtures';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyRecord = Record<string, any>;
 
 type DelayEntry = { ms: number };
 type FailureEntry = { message: string };
@@ -656,7 +659,7 @@ function buildOverviewReport() {
   };
 }
 
-export async function handleInvoke(command: string, args?: JsonObject): Promise<JsonValue> {
+export async function handleInvoke(command: string, args?: JsonObject): Promise<unknown> {
   const delay = consumeDelay(command);
   if (delay) {
     await new Promise(resolve => setTimeout(resolve, delay.ms));
@@ -668,7 +671,7 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
 
   switch (command) {
     case 'auth_login': {
-      const request = args?.request ?? args ?? {};
+      const request = (args?.request ?? args ?? {}) as AnyRecord;
       const email = request.email;
       const password = request.password;
       const user = state.users.find(u => u.email === email && u.password === password);
@@ -694,8 +697,8 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
       return null;
     }
     case 'client_crud': {
-      const request = args?.request ?? args ?? {};
-      const action = request.action || {};
+      const request = (args?.request ?? args ?? {}) as AnyRecord;
+      const action = (request.action || {}) as AnyRecord;
       switch (action.action) {
         case 'Create': {
           const created = normalizeClient(action.data || {});
@@ -765,8 +768,8 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
       }
     }
     case 'task_crud': {
-      const request = args?.request ?? args ?? {};
-      const action = request.action || {};
+      const request = (args?.request ?? args ?? {}) as AnyRecord;
+      const action = (request.action || {}) as AnyRecord;
       switch (action.action) {
         case 'Create': {
           const created = normalizeTask(action.data || {});
@@ -835,7 +838,7 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
       return state.materials.find(m => m.sku === args?.sku) || null;
     }
     case 'material_create': {
-      const request = args?.request ?? {};
+      const request = (args?.request ?? {}) as AnyRecord;
       const created = normalizeMaterial(request);
       if (state.materials.some(m => m.sku === created.sku)) {
         throw new Error('SKU already exists');
@@ -844,7 +847,7 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
       return created;
     }
     case 'material_create_category': {
-      const request = args?.request ?? {};
+      const request = (args?.request ?? {}) as AnyRecord;
       const category: MaterialCategory = {
         id: generateId('category'),
         name: request.name || 'Category',
@@ -867,7 +870,7 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
       return state.categories;
     }
     case 'material_create_supplier': {
-      const request = args?.request ?? {};
+      const request = (args?.request ?? {}) as AnyRecord;
       const supplier: Supplier = {
         id: generateId('supplier'),
         name: request.name || 'Supplier',
@@ -906,11 +909,11 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
       return state.suppliers;
     }
     case 'material_update': {
-      const request = args?.request ?? {};
+      const request = (args?.request ?? {}) as AnyRecord;
       const id = args?.id;
       const index = state.materials.findIndex(m => m.id === id);
       if (index === -1) throw new Error('Material not found');
-      state.materials[index] = normalizeMaterial({ ...state.materials[index], ...request, id, updated_at: nowIso() });
+      state.materials[index] = normalizeMaterial({ ...state.materials[index], ...request, id: id as string, updated_at: nowIso() });
       return state.materials[index];
     }
     case 'material_delete': {
@@ -919,7 +922,7 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
       return true;
     }
     case 'material_update_stock': {
-      const request = args?.request ?? {};
+      const request = (args?.request ?? {}) as AnyRecord;
       const index = state.materials.findIndex(m => m.id === request.material_id);
       if (index === -1) throw new Error('Material not found');
       const existing = state.materials[index];
@@ -928,7 +931,7 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
       return state.materials[index];
     }
     case 'material_adjust_stock': {
-      const request = args?.request ?? {};
+      const request = (args?.request ?? {}) as AnyRecord;
       const index = state.materials.findIndex(m => m.id === request.material_id);
       if (index === -1) throw new Error('Material not found');
       const existing = state.materials[index];
@@ -937,7 +940,7 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
       return state.materials[index];
     }
     case 'material_record_consumption': {
-      const request = args?.request ?? {};
+      const request = (args?.request ?? {}) as AnyRecord;
       const record: MaterialConsumption = {
         id: generateId('consumption'),
         intervention_id: request.intervention_id,
@@ -970,7 +973,7 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
       const interventionId = args?.interventionId;
       const records = state.materialConsumptions.filter(c => c.intervention_id === interventionId);
       const summary: InterventionMaterialSummary = {
-        intervention_id: interventionId,
+        intervention_id: interventionId as string,
         total_materials_used: records.reduce((sum, r) => sum + r.quantity_used, 0),
         total_cost: records.reduce((sum, r) => sum + (r.total_cost || 0), 0),
         materials: records.map(r => ({

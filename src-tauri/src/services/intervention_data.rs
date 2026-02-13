@@ -10,8 +10,9 @@ use crate::db::Database;
 use crate::db::{InterventionError, InterventionResult};
 use crate::models::common::*;
 use crate::models::intervention::{Intervention, InterventionStatus, InterventionType};
-use crate::models::step::{InterventionStep, StepStatus, StepType};
+use crate::models::step::{InterventionStep, StepType};
 use crate::repositories::InterventionRepository;
+use crate::services::intervention_calculation::InterventionCalculationService;
 use crate::services::intervention_types::{AdvanceStepRequest, StartInterventionRequest};
 use rusqlite::{params, OptionalExtension, Transaction};
 use std::str::FromStr;
@@ -216,19 +217,11 @@ impl InterventionDataService {
         // Get all steps
         let steps = self.get_intervention_steps(&intervention.id)?;
 
-        // Count completed steps
-        let completed_steps = steps
-            .iter()
-            .filter(|s| s.step_status == StepStatus::Completed)
-            .count();
+        let summary = InterventionCalculationService::summarize_steps(&steps);
 
         // Update current step and progress
-        intervention.current_step = completed_steps as i32;
-        intervention.completion_percentage = if steps.is_empty() {
-            100.0
-        } else {
-            ((completed_steps as f32 / steps.len() as f32) * 100.0) as f64
-        };
+        intervention.current_step = summary.completed_steps as i32;
+        intervention.completion_percentage = summary.completion_percentage;
         // Note: status is finalized explicitly in the finalization flow, even if progress reaches 100%.
 
         intervention.updated_at = now();

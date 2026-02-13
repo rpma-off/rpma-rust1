@@ -38,59 +38,57 @@ const DefaultGlobalErrorFallback: React.FC<GlobalErrorFallbackProps> = ({
   const getGlobalErrorMessage = (error: Error): { title: string; description: string; isRecoverable: boolean } => {
     const message = error.message.toLowerCase();
 
-    // Critical errors that require full app reload
     if (message.includes('chunkloaderror') || message.includes('loading chunk')) {
       return {
-        title: 'Application Update Required',
-        description: 'A new version of the application is available. Please reload the page to get the latest updates.',
+        title: 'Mise à jour de l\'application requise',
+        description: 'Une nouvelle version de l\'application est disponible. Veuillez recharger la page pour obtenir les dernières mises à jour.',
         isRecoverable: true
       };
     }
 
     if (message.includes('script error') || message.includes('unexpected token')) {
       return {
-        title: 'Application Loading Error',
-        description: 'There was a problem loading the application. This might be due to a network issue or corrupted files.',
+        title: 'Erreur de chargement de l\'application',
+        description: 'Un problème est survenu lors du chargement de l\'application. Cela peut être dû à un problème de réseau ou à des fichiers corrompus.',
         isRecoverable: true
       };
     }
 
     if (message.includes('out of memory') || message.includes('maximum call stack')) {
       return {
-        title: 'Application Performance Error',
-        description: 'The application has encountered a memory issue. Please reload the page to continue.',
+        title: 'Erreur de performance de l\'application',
+        description: 'L\'application a rencontré un problème de mémoire. Veuillez recharger la page pour continuer.',
         isRecoverable: true
       };
     }
 
     if (message.includes('network') || message.includes('fetch')) {
       return {
-        title: 'Connection Error',
-        description: 'Unable to connect to the RPMA servers. Please check your internet connection and try again.',
+        title: 'Erreur de connexion',
+        description: 'Impossible de se connecter aux serveurs RPMA. Veuillez vérifier votre connexion internet et réessayer.',
         isRecoverable: true
       };
     }
 
     if (message.includes('unauthorized') || message.includes('forbidden')) {
       return {
-        title: 'Authentication Error',
-        description: 'Your session has expired or you do not have permission to access this application. Please log in again.',
+        title: 'Erreur d\'authentification',
+        description: 'Votre session a expiré ou vous n\'avez pas la permission d\'accéder à cette application. Veuillez vous reconnecter.',
         isRecoverable: false
       };
     }
 
     if (message.includes('cors')) {
       return {
-        title: 'Configuration Error',
-        description: 'There is a configuration issue with the application. Please contact support.',
+        title: 'Erreur de configuration',
+        description: 'Il y a un problème de configuration avec l\'application. Veuillez contacter le support.',
         isRecoverable: false
       };
     }
 
-    // Generic application error
     return {
-      title: 'Application Error',
-      description: 'An unexpected error has occurred. The application may not function correctly until reloaded.',
+      title: 'Erreur de l\'application',
+      description: 'Une erreur inattendue s\'est produite. L\'application peut ne pas fonctionner correctement jusqu\'à ce qu\'elle soit rechargée.',
       isRecoverable: true
     };
   };
@@ -147,90 +145,90 @@ Stack: ${error.stack}
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Error Context */}
-          <div className="bg-red-50 border border-red-200 rounded-md p-4">
-            <h4 className="text-sm font-medium text-red-800 mb-2">Error Information</h4>
-            <div className="text-sm text-red-700 space-y-1">
-              <p><strong>Message:</strong> {error.message}</p>
-              <p><strong>Time:</strong> {new Date().toLocaleString()}</p>
-              <p><strong>Location:</strong> {window.location.pathname}</p>
-            </div>
-          </div>
+           {/* Error Context */}
+           <div className="bg-red-50 border border-red-200 rounded-md p-4">
+             <h4 className="text-sm font-medium text-red-800 mb-2">Informations sur l'erreur</h4>
+             <div className="text-sm text-red-700 space-y-1">
+               <p><strong>Message :</strong> {error.message}</p>
+               <p><strong>Heure :</strong> {new Date().toLocaleString()}</p>
+               <p><strong>Emplacement :</strong> {window.location.pathname}</p>
+             </div>
+           </div>
 
-          {/* Recovery Actions */}
-          <div className="space-y-4">
-            <div className="grid gap-3">
-              {isRecoverable ? (
-                <>
-                  <Button
-                    onClick={handleReloadApplication}
-                    className="w-full flex items-center justify-center space-x-2"
-                    size="lg"
-                  >
-                    <RefreshCw className="h-5 w-5" />
-                    <span>Reload Application</span>
-                  </Button>
+           {/* Recovery Actions */}
+           <div className="space-y-4">
+             <div className="grid gap-3">
+               {isRecoverable ? (
+                 <>
+                   <Button
+                     onClick={handleReloadApplication}
+                     className="w-full flex items-center justify-center space-x-2"
+                     size="lg"
+                   >
+                     <RefreshCw className="h-5 w-5" />
+                     <span>Recharger l'application</span>
+                   </Button>
 
-                  <Button
-                    variant="outline"
-                    onClick={onRetry}
-                    className="w-full flex items-center justify-center space-x-2"
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                    <span>Try Again</span>
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button
-                    onClick={handleGoToLogin}
-                    className="w-full flex items-center justify-center space-x-2"
-                    size="lg"
-                  >
-                    <Home className="h-5 w-5" />
-                    <span>Go to Login</span>
-                  </Button>
+                   <Button
+                     variant="outline"
+                     onClick={onRetry}
+                     className="w-full flex items-center justify-center space-x-2"
+                   >
+                     <RefreshCw className="h-4 w-4" />
+                     <span>Réessayer</span>
+                   </Button>
+                 </>
+               ) : (
+                 <>
+                   <Button
+                     onClick={handleGoToLogin}
+                     className="w-full flex items-center justify-center space-x-2"
+                     size="lg"
+                   >
+                     <Home className="h-5 w-5" />
+                     <span>Aller à la connexion</span>
+                   </Button>
 
-                  <Button
-                    variant="outline"
-                    onClick={handleReloadApplication}
-                    className="w-full flex items-center justify-center space-x-2"
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                    <span>Reload Application</span>
-                  </Button>
-                </>
-              )}
+                   <Button
+                     variant="outline"
+                     onClick={handleReloadApplication}
+                     className="w-full flex items-center justify-center space-x-2"
+                   >
+                     <RefreshCw className="h-4 w-4" />
+                     <span>Recharger l'application</span>
+                   </Button>
+                 </>
+               )}
 
-              <Button
-                variant="ghost"
-                onClick={handleContactSupport}
-                className="w-full flex items-center justify-center space-x-2"
-              >
-                <Mail className="h-4 w-4" />
-                <span>Contact Support</span>
-              </Button>
-            </div>
-          </div>
+               <Button
+                 variant="ghost"
+                 onClick={handleContactSupport}
+                 className="w-full flex items-center justify-center space-x-2"
+               >
+                 <Mail className="h-4 w-4" />
+                 <span>Contacter le support</span>
+               </Button>
+             </div>
+           </div>
 
-          {/* User Guidance */}
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-            <h4 className="text-sm font-medium text-blue-800 mb-2">What you can do:</h4>
-            <ul className="text-sm text-blue-700 list-disc list-inside space-y-1">
-              <li>Try reloading the page - this fixes most issues</li>
-              <li>Check your internet connection</li>
-              <li>Clear your browser cache and cookies</li>
-              <li>Try using a different browser or incognito mode</li>
-              <li>Contact support if the problem persists</li>
-            </ul>
-          </div>
+           {/* User Guidance */}
+           <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+             <h4 className="text-sm font-medium text-blue-800 mb-2">Ce que vous pouvez faire :</h4>
+             <ul className="text-sm text-blue-700 list-disc list-inside space-y-1">
+               <li>Essayez de recharger la page - cela résout la plupart des problèmes</li>
+               <li>Vérifiez votre connexion internet</li>
+               <li>Videz le cache et les cookies de votre navigateur</li>
+               <li>Essayez d'utiliser un autre navigateur ou le mode incognito</li>
+               <li>Contactez le support si le problème persiste</li>
+             </ul>
+           </div>
 
-          {/* Application Info */}
-          <div className="text-center text-xs text-gray-500 space-y-1">
-            <p>RPMA v2 - PPF Task Management System</p>
-            <p>If this error persists, please report it to your system administrator</p>
-          </div>
-        </CardContent>
+           {/* Application Info */}
+           <div className="text-center text-xs text-gray-500 space-y-1">
+             <p>RPMA v2 - Système de gestion des tâches PPF</p>
+             <p>Si cette erreur persiste, veuillez la signaler à votre administrateur système</p>
+           </div>
+         </CardContent>
       </Card>
     </div>
   );
