@@ -401,6 +401,87 @@ impl InterventionRepository {
         Ok(())
     }
 
+    pub fn update_intervention_with_tx(
+        &self,
+        tx: &Transaction,
+        intervention: &Intervention,
+    ) -> InterventionResult<()> {
+        // Convert enums to strings for storage
+        let status_str = intervention.status.to_string();
+        let intervention_type_str = intervention.intervention_type.to_string();
+        let weather_condition_str = intervention
+            .weather_condition
+            .as_ref()
+            .map(|wc| wc.to_string());
+        let lighting_condition_str = intervention
+            .lighting_condition
+            .as_ref()
+            .map(|lc| lc.to_string());
+        let work_location_str = intervention.work_location.as_ref().map(|wl| wl.to_string());
+        let film_type_str = intervention.film_type.as_ref().map(|ft| ft.to_string());
+
+        // Convert Vec<String> to JSON string
+        let ppf_zones_config_json = intervention
+            .ppf_zones_config
+            .as_ref()
+            .map(|zones| serde_json::to_string(zones).unwrap_or_default());
+        let ppf_zones_extended_json = intervention
+            .ppf_zones_extended
+            .as_ref()
+            .map(|zones| serde_json::to_string(zones).unwrap_or_default());
+        let final_observations_json = intervention
+            .final_observations
+            .as_ref()
+            .map(|obs| serde_json::to_string(obs).unwrap_or_default());
+        let metadata_json = intervention
+            .metadata
+            .as_ref()
+            .map(|meta| serde_json::to_string(meta).unwrap_or_default());
+        let device_info_json = intervention
+            .device_info
+            .as_ref()
+            .map(|info| serde_json::to_string(info).unwrap_or_default());
+
+        tx.execute(
+            "UPDATE interventions SET
+                status = ?, vehicle_plate = ?, vehicle_model = ?, vehicle_make = ?, vehicle_year = ?,
+                vehicle_color = ?, vehicle_vin = ?, client_id = ?, client_name = ?, client_email = ?, client_phone = ?,
+                technician_id = ?, technician_name = ?, intervention_type = ?, current_step = ?, completion_percentage = ?,
+                ppf_zones_config = ?, ppf_zones_extended = ?, film_type = ?, film_brand = ?, film_model = ?,
+                scheduled_at = ?, started_at = ?, completed_at = ?, paused_at = ?, estimated_duration = ?, actual_duration = ?,
+                weather_condition = ?, lighting_condition = ?, work_location = ?, temperature_celsius = ?, humidity_percentage = ?,
+                start_location_lat = ?, start_location_lon = ?, start_location_accuracy = ?,
+                end_location_lat = ?, end_location_lon = ?, end_location_accuracy = ?,
+                customer_satisfaction = ?, quality_score = ?, final_observations = ?, customer_signature = ?, customer_comments = ?,
+                metadata = ?, notes = ?, special_instructions = ?, device_info = ?, app_version = ?,
+                synced = ?, last_synced_at = ?, sync_error = ?, updated_at = ?, updated_by = ?
+            WHERE id = ?",
+            params![
+                status_str, intervention.vehicle_plate, intervention.vehicle_model, intervention.vehicle_make, intervention.vehicle_year,
+                intervention.vehicle_color, intervention.vehicle_vin, intervention.client_id,
+                intervention.client_name, intervention.client_email, intervention.client_phone,
+                intervention.technician_id, intervention.technician_name, intervention_type_str,
+                intervention.current_step, intervention.completion_percentage,
+                ppf_zones_config_json, ppf_zones_extended_json, film_type_str,
+                intervention.film_brand, intervention.film_model, intervention.scheduled_at.inner(),
+                intervention.started_at.inner(), intervention.completed_at.inner(), intervention.paused_at.inner(),
+                intervention.estimated_duration, intervention.actual_duration,
+                weather_condition_str, lighting_condition_str, work_location_str,
+                intervention.temperature_celsius, intervention.humidity_percentage,
+                intervention.start_location_lat, intervention.start_location_lon, intervention.start_location_accuracy,
+                intervention.end_location_lat, intervention.end_location_lon, intervention.end_location_accuracy,
+                intervention.customer_satisfaction, intervention.quality_score,
+                final_observations_json, intervention.customer_signature, intervention.customer_comments,
+                metadata_json, intervention.notes, intervention.special_instructions,
+                device_info_json, intervention.app_version, intervention.synced,
+                intervention.last_synced_at, intervention.sync_error, intervention.updated_at, intervention.updated_by,
+                intervention.id
+            ],
+        )?;
+
+        Ok(())
+    }
+
     pub fn save_step_with_tx(
         &self,
         tx: &Transaction,
