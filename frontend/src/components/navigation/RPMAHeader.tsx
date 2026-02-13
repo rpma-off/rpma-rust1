@@ -41,7 +41,7 @@ export function RPMAHeader({
 }: RPMAHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, profile } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
@@ -50,6 +50,11 @@ export function RPMAHeader({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  const displayName = profile?.first_name && profile?.last_name
+    ? `${profile.first_name} ${profile.last_name}`
+    : user?.username || '';
+  const displayInitial = profile?.first_name?.charAt(0) || user?.username?.charAt(0)?.toUpperCase() || 'U';
 
   const filteredTasks = tasks.filter(task =>
     task.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -228,11 +233,11 @@ export function RPMAHeader({
             >
               <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
                 <span className="text-white text-sm font-semibold">
-                  {profile?.first_name?.charAt(0) || 'U'}
+                  {displayInitial}
                 </span>
               </div>
               <span className="text-sm text-white hidden xl:block">
-                {profile?.first_name} {profile?.last_name}
+                {displayName}
               </span>
               <ChevronDown className="w-4 h-4 text-white hidden xl:block" />
             </button>
@@ -252,7 +257,9 @@ export function RPMAHeader({
                 </a>
                 <div className="px-3 py-2 border-t border-gray-100">
                   <button
-                    onClick={() => {
+                    onClick={async () => {
+                      setShowUserMenu(false);
+                      await signOut();
                       router.push('/login');
                     }}
                     className="flex items-center text-sm text-red-600 hover:text-red-700 transition-colors"
@@ -268,7 +275,7 @@ export function RPMAHeader({
           <div className="md:hidden">
             <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
               <span className="text-white text-sm font-semibold">
-                {profile?.first_name?.charAt(0) || 'U'}
+                {displayInitial}
               </span>
             </div>
           </div>

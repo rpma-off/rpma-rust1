@@ -150,7 +150,10 @@ pub async fn auth_create_account(
 /// Logout command
 #[tauri::command]
 #[instrument(skip(state), fields(token_hash = %format!("{:x}", Sha256::digest(token.as_bytes()))))]
-pub async fn auth_logout(token: String, state: AppState<'_>) -> Result<(), AppError> {
+pub async fn auth_logout(
+    token: String,
+    state: AppState<'_>,
+) -> Result<ApiResponse<String>, AppError> {
     info!("User logout attempt");
 
     // Use consistent authentication pattern - clone to avoid lock issues
@@ -162,7 +165,7 @@ pub async fn auth_logout(token: String, state: AppState<'_>) -> Result<(), AppEr
     })?;
 
     info!("User logged out successfully");
-    Ok(())
+    Ok(ApiResponse::success("Logged out successfully".to_string()))
 }
 
 /// Validate session command

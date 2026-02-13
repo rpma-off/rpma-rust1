@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { AuthService } from '@/lib/tauri';
 import { AuthSecureStorage, SecureStorage } from '@/lib/secureStorage';
+import { clearCache } from '@/lib/ipc/cache';
 import type { UserSession } from '@/lib/backend';
 import type { UserAccount, AuthContextType, AuthState, AuthResponse } from '@/types/auth.types';
 import { convertTimestamps } from '@/lib/types';
@@ -331,8 +332,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      // Clear secure storage regardless of backend response
+      // Clear secure storage and cached queries regardless of backend response
       await AuthSecureStorage.clearSession();
+      clearCache();
 
       setState({
         user: null,
