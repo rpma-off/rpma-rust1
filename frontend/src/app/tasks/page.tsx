@@ -803,11 +803,21 @@ export default function TasksPage() {
     }
   }, [user?.token]);
 
-  // Update task status - now uses the hook
-  const handleStatusChange = useCallback(async (_taskId: string, _newStatus: TaskStatus) => {
-    // This function is defined but not used - kept for reference
-    console.warn('handleStatusChange is called but not implemented');
-   }, []);
+  // Update task status via backend
+  const handleStatusChange = useCallback(async (taskId: string, newStatus: TaskStatus) => {
+    try {
+      if (!user?.token) {
+        enhancedToast.error('Authentification requise');
+        return;
+      }
+      await ipcClient.tasks.editTask(taskId, { status: newStatus }, user.token);
+      enhancedToast.success('Statut mis à jour avec succès');
+      await refetch();
+    } catch (err) {
+      logger.error('Failed to update task status', { taskId, newStatus, error: err });
+      enhancedToast.error('Erreur lors de la mise à jour du statut');
+    }
+   }, [user?.token, refetch]);
 
   // Handle task actions
   const handleViewTask = useCallback((task: TaskWithDetails) => {

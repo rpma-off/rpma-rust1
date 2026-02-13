@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +20,9 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TaskWithDetails } from '@/types/task.types';
+import { useAuth } from '@/contexts/AuthContext';
+import { reportOperations } from '@/lib/ipc/domains/reports';
+import toast from 'react-hot-toast';
 
 interface ActionButtonsProps {
   task: TaskWithDetails;
@@ -37,26 +41,46 @@ export function ActionButtons({
   onStartTask,
   onCompleteTask
 }: ActionButtonsProps) {
+  const router = useRouter();
+  const { user } = useAuth();
   const canComplete = completedSteps.size === 5; // All 5 steps completed
 
   const handleViewPhotos = () => {
-    // Implementation would open a photo gallery modal
-    console.log('View photos');
+    router.push(`/tasks/${task.id}/photos`);
   };
 
   const handleViewReport = () => {
-    // Implementation would generate and show task report
-    console.log('View report');
+    router.push(`/tasks/${task.id}/completed`);
   };
 
-  const handleDownloadReport = () => {
-    // Implementation would download PDF report
-    console.log('Download report');
+  const handleDownloadReport = async () => {
+    try {
+      if (!user?.token) {
+        toast.error('Authentification requise');
+        return;
+      }
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      await reportOperations.exportReport(
+        'tasks',
+        { start: thirtyDaysAgo.toISOString(), end: now.toISOString() },
+        { technician_ids: null, client_ids: null, statuses: null, priorities: null, ppf_zones: null, vehicle_models: null },
+        'pdf',
+        user.token
+      );
+      toast.success('Rapport téléchargé avec succès');
+    } catch {
+      toast.error('Erreur lors du téléchargement du rapport');
+    }
   };
 
-  const handleShareTask = () => {
-    // Implementation would share task details
-    console.log('Share task');
+  const handleShareTask = async () => {
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/tasks/${task.id}`);
+      toast.success('Lien copié dans le presse-papier');
+    } catch {
+      toast.error('Impossible de copier le lien');
+    }
   };
 
   const calculateDuration = () => {
