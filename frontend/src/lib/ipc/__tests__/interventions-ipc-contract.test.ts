@@ -20,9 +20,10 @@ jest.mock('@/lib/validation/backend-type-guards', () => ({
 
 jest.mock('../core', () => ({
   extractAndValidate: jest.fn(),
+  safeInvoke: jest.fn(),
 }));
 
-const { safeInvoke } = jest.requireMock('../utils') as {
+const { safeInvoke } = jest.requireMock('../core') as {
   safeInvoke: jest.Mock;
 };
 
@@ -33,6 +34,7 @@ const { cachedInvoke, invalidatePattern } = jest.requireMock('../cache') as {
 
 const { extractAndValidate } = jest.requireMock('../core') as {
   extractAndValidate: jest.Mock;
+  safeInvoke: jest.Mock;
 };
 
 const { validateIntervention, validateInterventionStep, validateStartInterventionResponse } = jest.requireMock('@/lib/validation/backend-type-guards') as {
@@ -367,12 +369,14 @@ describe('interventionOperations IPC contract tests', () => {
       };
       
       const mockResponse = {
-        type: 'ListRetrieved',
+        type: 'List',
         interventions: [
           { id: 'intervention-123', status: 'in_progress' },
           { id: 'intervention-456', status: 'in_progress' }
         ],
-        total: 2
+        total: 2,
+        page: 1,
+        limit: 20
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
@@ -380,8 +384,8 @@ describe('interventionOperations IPC contract tests', () => {
       const result = await interventionOperations.list(filters, 'session-token');
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_management', {
-        action: { List: { filters } },
-        sessionToken: 'session-token'
+        action: { action: 'List', query: { status: 'in_progress', technician_id: 'tech-123', limit: 20, page: 1 } },
+        session_token: 'session-token'
       });
       expect(result).toEqual({
         interventions: mockResponse.interventions,
@@ -398,6 +402,29 @@ describe('interventionOperations IPC contract tests', () => {
       } catch (error) {
         expect(error.message).toBe('Invalid response format for intervention list');
       }
+    });
+
+    it('sends correct action shape matching backend tagged enum', async () => {
+      const mockResponse = {
+        type: 'List',
+        interventions: [],
+        total: 0,
+        page: 1,
+        limit: 50
+      };
+      safeInvoke.mockResolvedValue(mockResponse);
+
+      await interventionOperations.list({ status: 'active' }, 'token-abc');
+
+      const callArgs = safeInvoke.mock.calls[0];
+      expect(callArgs[0]).toBe('intervention_management');
+      // Verify the action shape uses tagged enum format: { action: "List", query: {...} }
+      // NOT the old format: { List: { filters: {...} } }
+      expect(callArgs[1].action).toHaveProperty('action', 'List');
+      expect(callArgs[1].action).toHaveProperty('query');
+      expect(callArgs[1].action).not.toHaveProperty('List');
+      // Verify session_token is at top level (not sessionToken)
+      expect(callArgs[1]).toHaveProperty('session_token', 'token-abc');
     });
   });
 
@@ -459,8 +486,8 @@ describe('interventionOperations IPC contract tests', () => {
       await interventionOperations.list(invalidFilters, 'session-token');
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_management', {
-        action: { List: { filters: invalidFilters } },
-        sessionToken: 'session-token'
+        action: { action: 'List', query: { status: 'invalid_status', limit: -1, page: 2 } },
+        session_token: 'session-token'
       });
     });
   });

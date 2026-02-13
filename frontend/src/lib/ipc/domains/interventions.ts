@@ -289,15 +289,23 @@ export const interventionOperations = {
     limit?: number;
     offset?: number
   }, sessionToken: string) => {
+    // Backend expects InterventionManagementAction with #[serde(tag = "action")]
+    // So the action must be: { action: "List", query: { ... } }
+    const query: Record<string, string | number> = {};
+    if (filters.status) query.status = filters.status;
+    if (filters.technician_id) query.technician_id = filters.technician_id;
+    if (filters.limit !== undefined) query.limit = filters.limit;
+    if (filters.offset !== undefined) query.page = Math.floor(filters.offset / (filters.limit || 50)) + 1;
+
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_MANAGEMENT, {
-      action: { List: { filters } },
-      sessionToken: sessionToken
+      action: { action: 'List', query },
+      session_token: sessionToken
     });
 
-    // Extract interventions from ListRetrieved response
+    // Extract interventions from List response
     if (result && typeof result === 'object' && 'type' in result) {
-      const managementResponse = result as { type: string; interventions: Intervention[]; total: number };
-      if (managementResponse.type === 'ListRetrieved') {
+      const managementResponse = result as { type: string; interventions: Intervention[]; total: number; page: number; limit: number };
+      if (managementResponse.type === 'List') {
         return {
           interventions: managementResponse.interventions,
           total: managementResponse.total
