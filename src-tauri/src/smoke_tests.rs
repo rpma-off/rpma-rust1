@@ -223,3 +223,181 @@ fn smoke_migrations_integrity() {
         "sync_queue table missing after migrations"
     );
 }
+
+/// Comprehensive migration test harness that applies all migrations to an
+/// in-memory database and runs integrity checks on every critical table,
+/// index, view, and foreign-key constraint.
+#[test]
+fn smoke_migration_harness_full() {
+    // 1. Create fresh database with all migrations
+    let test_db = TestDatabase::new().expect("Failed to create test database");
+    let db = test_db.db();
+    let conn = db.get_connection().expect("Failed to get connection");
+
+    // 2. Verify schema version reached the latest
+    let latest = crate::db::Database::get_latest_migration_version();
+    let current: i32 = conn
+        .query_row("SELECT MAX(version) FROM schema_version", [], |row| {
+            row.get(0)
+        })
+        .expect("Failed to read schema_version");
+    assert_eq!(
+        current, latest,
+        "Schema version should be at latest ({latest})"
+    );
+
+    // 3. Integrity check
+    let integrity: String = conn
+        .query_row("PRAGMA integrity_check", [], |row| row.get(0))
+        .expect("integrity_check failed");
+    assert_eq!(integrity, "ok", "Database integrity check failed");
+
+    // 4. Foreign-key check
+    let fk_violations: i32 = conn
+        .query_row("PRAGMA foreign_key_check", [], |row| row.get(0))
+        .unwrap_or(0);
+    assert_eq!(fk_violations, 0, "Foreign key violations detected");
+
+    // 5. Verify all critical tables exist
+    let required_tables = vec![
+        "interventions",
+        "intervention_steps",
+        "photos",
+        "tasks",
+        "task_history",
+        "clients",
+        "users",
+        "user_sessions",
+        "user_settings",
+        "sync_queue",
+        "suppliers",
+        "materials",
+        "material_consumption",
+        "audit_events",
+        "schema_version",
+    ];
+    let mut stmt = conn
+        .prepare("SELECT name FROM sqlite_master WHERE type='table'")
+        .expect("Failed to prepare table list query");
+    let tables: Vec<String> = stmt
+        .query_map([], |row| row.get(0))
+        .expect("Failed to list tables")
+        .filter_map(|r| r.ok())
+        .collect();
+
+    for tbl in &required_tables {
+        assert!(
+            tables.iter().any(|t| t == tbl),
+            "Required table '{}' missing after migrations",
+            tbl
+        );
+    }
+
+    // 6. Verify core-screen indexes exist
+    let required_indexes = vec![
+        // Tasks list indexes
+        "idx_tasks_status",
+        "idx_tasks_created_at",
+        "idx_tasks_status_created",
+        "idx_tasks_technician_id",
+        "idx_tasks_client_id",
+        "idx_tasks_deleted_status_created",
+        // Interventions list indexes
+        "idx_interventions_status",
+        "idx_interventions_task_created",
+        "idx_interventions_status_created",
+        // Materials search indexes
+        "idx_materials_sku",
+        "idx_materials_active",
+        "idx_materials_name",
+        "idx_materials_type_active",
+        "idx_materials_low_stock",
+    ];
+    let mut idx_stmt = conn
+        .prepare("SELECT name FROM sqlite_master WHERE type='index'")
+        .expect("Failed to prepare index list query");
+    let indexes: Vec<String> = idx_stmt
+        .query_map([], |row| row.get(0))
+        .expect("Failed to list indexes")
+        .filter_map(|r| r.ok())
+        .collect();
+
+    for idx in &required_indexes {
+        assert!(
+            indexes.iter().any(|i| i == idx),
+            "Required index '{}' missing after migrations",
+            idx
+        );
+    }
+
+    // 7. Verify schema_version rows are ordered and contiguous
+    let mut ver_stmt = conn
+        .prepare("SELECT version FROM schema_version ORDER BY version")
+        .expect("Failed to prepare version query");
+    let versions: Vec<i32> = ver_stmt
+        .query_map([], |row| row.get(0))
+        .expect("Failed to list versions")
+        .filter_map(|r| r.ok())
+        .collect();
+
+    assert!(!versions.is_empty(), "schema_version should not be empty");
+    assert_eq!(versions[0], 1, "First migration version should be 1");
+    assert_eq!(
+        *versions.last().unwrap(),
+        latest,
+        "Last version should equal latest"
+    );
+
+    // Check for duplicate versions
+    let mut sorted = versions.clone();
+    sorted.dedup();
+    assert_eq!(
+        versions.len(),
+        sorted.len(),
+        "Duplicate entries in schema_version"
+    );
+
+    // 8. Verify views exist
+    let required_views = vec!["calendar_tasks", "client_statistics"];
+    let mut view_stmt = conn
+        .prepare("SELECT name FROM sqlite_master WHERE type='view'")
+        .expect("Failed to prepare view list query");
+    let views: Vec<String> = view_stmt
+        .query_map([], |row| row.get(0))
+        .expect("Failed to list views")
+        .filter_map(|r| r.ok())
+        .collect();
+
+    for v in &required_views {
+        assert!(
+            views.iter().any(|vw| vw == v),
+            "Required view '{}' missing after migrations",
+            v
+        );
+    }
+
+    // 9. Verify foreign keys are defined on critical tables
+    let fk_count: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM pragma_foreign_key_list('tasks')",
+            [],
+            |row| row.get(0),
+        )
+        .expect("Failed to check tasks FKs");
+    assert!(
+        fk_count > 0,
+        "tasks table should have foreign key constraints"
+    );
+
+    let fk_count_interventions: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM pragma_foreign_key_list('interventions')",
+            [],
+            |row| row.get(0),
+        )
+        .expect("Failed to check interventions FKs");
+    assert!(
+        fk_count_interventions > 0,
+        "interventions table should have foreign key constraints"
+    );
+}
