@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMessage, useMessageTemplates } from '@/hooks/useMessage';
+import { useTranslation } from '@/hooks/useTranslation';
 import type { SendMessageRequest, MessageTemplate } from '@/lib/backend';
 import { toast } from 'sonner';
 import { Send, FileText, Users, Mail, MessageSquare } from 'lucide-react';
@@ -43,6 +44,7 @@ export function MessageComposer({
 
   const { sendMessage } = useMessage();
   const { templates } = useMessageTemplates();
+  const { t } = useTranslation();
 
   // Filter templates by message type
   const availableTemplates = templates.filter(t => t.message_type === messageType);
@@ -124,7 +126,7 @@ export function MessageComposer({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Send className="h-5 w-5" />
-          Compose Message
+          {t('messages.composeMessage')}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -147,7 +149,7 @@ export function MessageComposer({
           <TabsContent value="email" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email">{t('messages.emailAddress')}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -157,27 +159,27 @@ export function MessageComposer({
                 />
               </div>
               <div>
-                <Label htmlFor="priority">Priority</Label>
+                <Label htmlFor="priority">{t('messages.priority')}</Label>
                 <Select value={priority} onValueChange={(value: any) => setPriority(value)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="normal">Normal</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
+                    <SelectItem value="low">{t('messages.low')}</SelectItem>
+                    <SelectItem value="normal">{t('messages.normal')}</SelectItem>
+                    <SelectItem value="high">{t('messages.high')}</SelectItem>
+                    <SelectItem value="urgent">{t('messages.urgent')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div>
-              <Label htmlFor="subject">Subject</Label>
+              <Label htmlFor="subject">{t('messages.subject')}</Label>
               <Input
                 id="subject"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                placeholder="Message subject"
+                placeholder={t('messages.messageSubject')}
               />
             </div>
           </TabsContent>
@@ -185,7 +187,7 @@ export function MessageComposer({
           <TabsContent value="sms" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="phone">Phone Number</Label>
+                <Label htmlFor="phone">{t('messages.phoneNumber')}</Label>
                 <Input
                   id="phone"
                   value={recipientPhone}
@@ -194,16 +196,16 @@ export function MessageComposer({
                 />
               </div>
               <div>
-                <Label htmlFor="priority">Priority</Label>
+                <Label htmlFor="priority">{t('messages.priority')}</Label>
                 <Select value={priority} onValueChange={(value: any) => setPriority(value)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="normal">Normal</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
+                    <SelectItem value="low">{t('messages.low')}</SelectItem>
+                    <SelectItem value="normal">{t('messages.normal')}</SelectItem>
+                    <SelectItem value="high">{t('messages.high')}</SelectItem>
+                    <SelectItem value="urgent">{t('messages.urgent')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -213,30 +215,30 @@ export function MessageComposer({
           <TabsContent value="in_app" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="recipient">Recipient</Label>
+                <Label htmlFor="recipient">{t('messages.recipient')}</Label>
                 <Input
                   id="recipient"
                   value={recipientId}
                   onChange={(e) => setRecipientId(e.target.value)}
-                  placeholder="User ID"
+                  placeholder={t('messages.userId')}
                 />
                 {defaultRecipient?.name && (
                   <p className="text-sm text-muted-foreground mt-1">
-                    Sending to: {defaultRecipient.name}
+                    {t('messages.sendingTo')} {defaultRecipient.name}
                   </p>
                 )}
               </div>
               <div>
-                <Label htmlFor="priority">Priority</Label>
+                <Label htmlFor="priority">{t('messages.priority')}</Label>
                 <Select value={priority} onValueChange={(value: any) => setPriority(value)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="normal">Normal</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
+                    <SelectItem value="low">{t('messages.low')}</SelectItem>
+                    <SelectItem value="normal">{t('messages.normal')}</SelectItem>
+                    <SelectItem value="high">{t('messages.high')}</SelectItem>
+                    <SelectItem value="urgent">{t('messages.urgent')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -246,13 +248,13 @@ export function MessageComposer({
           {/* Template Selection */}
           {availableTemplates.length > 0 && (
             <div className="space-y-2">
-              <Label>Templates</Label>
+              <Label>{t('messages.templates')}</Label>
               <Select onValueChange={(templateId) => {
                 const template = availableTemplates.find(t => t.id === templateId);
                 if (template) loadTemplate(template);
               }}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a template (optional)" />
+                  <SelectValue placeholder={t('messages.selectTemplateOptional')} />
                 </SelectTrigger>
                 <SelectContent>
                   {availableTemplates.map((template) => (
@@ -267,7 +269,7 @@ export function MessageComposer({
               </Select>
               {selectedTemplate && (
                 <Badge variant="secondary" className="w-fit">
-                  Using template: {selectedTemplate.name}
+                  {t('messages.usingTemplate')} {selectedTemplate.name}
                 </Badge>
               )}
             </div>
@@ -275,18 +277,18 @@ export function MessageComposer({
 
           {/* Message Body */}
           <div>
-            <Label htmlFor="body">Message</Label>
+            <Label htmlFor="body">{t('messages.message')}</Label>
             <Textarea
               id="body"
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder="Type your message here..."
+              placeholder={t('messages.typeYourMessage')}
               rows={6}
               className="resize-none"
             />
             {messageType === 'sms' && (
               <p className="text-sm text-muted-foreground mt-1">
-                {body.length}/160 characters
+                {body.length}/160 {t('messages.characters')}
               </p>
             )}
           </div>
@@ -301,11 +303,11 @@ export function MessageComposer({
                 setSelectedTemplate(null);
               }}
             >
-              Clear
+              {t('common.clear')}
             </Button>
             <Button onClick={handleSend}>
               <Send className="h-4 w-4 mr-2" />
-              Send Message
+              {t('messages.sendMessage')}
             </Button>
           </div>
         </Tabs>

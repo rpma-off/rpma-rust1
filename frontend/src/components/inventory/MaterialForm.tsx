@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useMaterialForm } from '@/hooks/useMaterialForm';
+import { useTranslation } from '@/hooks/useTranslation';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface MaterialFormProps {
@@ -16,6 +17,7 @@ interface MaterialFormProps {
 }
 
 export function MaterialForm({ material, onClose }: MaterialFormProps) {
+  const { t } = useTranslation();
   const { formData, loading, error, updateFormData, saveMaterial } = useMaterialForm(material);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -35,7 +37,7 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
       {/* Basic Information */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="sku" className="text-foreground">SKU *</Label>
+          <Label htmlFor="sku" className="text-foreground">{t('inventory.skuLabel')} *</Label>
           <Input
             id="sku"
             value={formData.sku}
@@ -44,7 +46,7 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
           />
         </div>
         <div>
-          <Label htmlFor="name" className="text-foreground">Name *</Label>
+          <Label htmlFor="name" className="text-foreground">{t('inventory.nameLabel')} *</Label>
           <Input
             id="name"
             value={formData.name}
@@ -55,7 +57,7 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
       </div>
 
       <div>
-        <Label htmlFor="description" className="text-foreground">Description</Label>
+        <Label htmlFor="description" className="text-foreground">{t('inventory.description')}</Label>
         <Textarea
           id="description"
           value={formData.description}
@@ -67,43 +69,43 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
       {/* Material Type and Category */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <Label htmlFor="material_type" className="text-foreground">Material Type *</Label>
+          <Label htmlFor="material_type" className="text-foreground">{t('inventory.materialType')} *</Label>
           <Select
             value={formData.material_type}
             onValueChange={(value) => updateFormData('material_type', value)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select type" />
+              <SelectValue placeholder={t('inventory.selectType')} />
             </SelectTrigger>
             <SelectContent className="bg-white border-[hsl(var(--rpma-border))]">
-              <SelectItem value="ppf_film">PPF Film</SelectItem>
-              <SelectItem value="adhesive">Adhesive</SelectItem>
-              <SelectItem value="cleaning_solution">Cleaning Solution</SelectItem>
-              <SelectItem value="tool">Tool</SelectItem>
-              <SelectItem value="consumable">Consumable</SelectItem>
+              <SelectItem value="ppf_film">{t('inventory.typePpfFilm')}</SelectItem>
+              <SelectItem value="adhesive">{t('inventory.typeAdhesive')}</SelectItem>
+              <SelectItem value="cleaning_solution">{t('inventory.typeCleaningSolution')}</SelectItem>
+              <SelectItem value="tool">{t('inventory.typeTool')}</SelectItem>
+              <SelectItem value="consumable">{t('inventory.typeConsumable')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div>
-          <Label htmlFor="unit_of_measure" className="text-foreground">Unit of Measure *</Label>
+          <Label htmlFor="unit_of_measure" className="text-foreground">{t('inventory.unitOfMeasure')} *</Label>
           <Select
             value={formData.unit_of_measure}
             onValueChange={(value) => updateFormData('unit_of_measure', value)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select unit" />
+              <SelectValue placeholder={t('inventory.selectUnit')} />
             </SelectTrigger>
             <SelectContent className="bg-white border-[hsl(var(--rpma-border))]">
-              <SelectItem value="piece">Piece</SelectItem>
-              <SelectItem value="meter">Meter</SelectItem>
-              <SelectItem value="liter">Liter</SelectItem>
-              <SelectItem value="gram">Gram</SelectItem>
-              <SelectItem value="roll">Roll</SelectItem>
+              <SelectItem value="piece">{t('inventory.unitPiece')}</SelectItem>
+              <SelectItem value="meter">{t('inventory.unitMeter')}</SelectItem>
+              <SelectItem value="liter">{t('inventory.unitLiter')}</SelectItem>
+              <SelectItem value="gram">{t('inventory.unitGram')}</SelectItem>
+              <SelectItem value="roll">{t('inventory.unitRoll')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div>
-          <Label htmlFor="currency" className="text-foreground">Currency</Label>
+          <Label htmlFor="currency" className="text-foreground">{t('inventory.currency')}</Label>
           <Input
             id="currency"
             value={formData.currency}
@@ -116,7 +118,7 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
       {/* Inventory Levels */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <Label htmlFor="current_stock" className="text-foreground">Current Stock</Label>
+          <Label htmlFor="current_stock" className="text-foreground">{t('inventory.currentStock')}</Label>
           <Input
             id="current_stock"
             type="number"
@@ -126,7 +128,7 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
           />
         </div>
         <div>
-          <Label htmlFor="minimum_stock" className="text-foreground">Minimum Stock</Label>
+          <Label htmlFor="minimum_stock" className="text-foreground">{t('inventory.minimumStock')}</Label>
           <Input
             id="minimum_stock"
             type="number"
@@ -136,7 +138,7 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
           />
         </div>
         <div>
-          <Label htmlFor="maximum_stock" className="text-foreground">Maximum Stock</Label>
+          <Label htmlFor="maximum_stock" className="text-foreground">{t('inventory.maximumStock')}</Label>
           <Input
             id="maximum_stock"
             type="number"
@@ -150,7 +152,7 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
       {/* Pricing */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="unit_cost" className="text-foreground">Unit Cost</Label>
+          <Label htmlFor="unit_cost" className="text-foreground">{t('inventory.unitCost')}</Label>
           <Input
             id="unit_cost"
             type="number"
@@ -160,7 +162,7 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
           />
         </div>
         <div>
-          <Label htmlFor="reorder_point" className="text-foreground">Reorder Point</Label>
+          <Label htmlFor="reorder_point" className="text-foreground">{t('inventory.reorderPoint')}</Label>
           <Input
             id="reorder_point"
             type="number"
@@ -178,12 +180,12 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
           checked={formData.is_active}
           onCheckedChange={(checked) => updateFormData('is_active', checked)}
         />
-        <Label htmlFor="is_active" className="text-foreground">Active</Label>
+        <Label htmlFor="is_active" className="text-foreground">{t('inventory.active')}</Label>
       </div>
 
       {error && (
         <div className="text-red-500 text-sm">
-          Error: {error}
+          {t('errors.generic')}: {error}
         </div>
       )}
 
@@ -194,13 +196,13 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
           variant="outline"
           onClick={onClose}
         >
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           type="submit"
           disabled={loading}
         >
-          {loading ? 'Saving...' : (material ? 'Update Material' : 'Create Material')}
+          {loading ? t('inventory.saving') : (material ? t('inventory.updateMaterial') : t('inventory.createMaterialBtn'))}
         </Button>
       </div>
     </form>

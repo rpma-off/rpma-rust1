@@ -23,6 +23,7 @@ import {
 import { useCalendarStore } from "@/lib/stores/calendarStore";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/hooks/useTranslation";
 import type { CreateEventInput } from "@/types/calendar";
 
 interface CreateEventDialogProps {
@@ -36,6 +37,7 @@ export function CreateEventDialog({
 }: CreateEventDialogProps) {
   const { addEvent, goToDate } = useCalendarStore();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const sessionToken = user?.token || "";
   const [title, setTitle] = useState("");
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -95,18 +97,18 @@ export function CreateEventDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Create Event</DialogTitle>
+          <DialogTitle>{t('schedule.createEvent')}</DialogTitle>
           <DialogDescription>
-            Add a new event to your calendar. Fill in the details below.
+            {t('schedule.createEventDesc')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="title">Title</Label>
+              <Label htmlFor="title">{t('schedule.title')}</Label>
               <Input
                 id="title"
-                placeholder="Event title"
+                placeholder={t('schedule.eventTitlePlaceholder')}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
@@ -114,7 +116,7 @@ export function CreateEventDialog({
             </div>
 
             <div className="grid gap-2">
-              <Label>Date</Label>
+              <Label>{t('schedule.date')}</Label>
               <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -125,7 +127,7 @@ export function CreateEventDialog({
                     )}
                   >
                     <CalendarIcon className="mr-2 size-4" />
-                    {date ? format(date, "PPP") : <span>Pick a date</span>}
+                    {date ? format(date, "PPP") : <span>{t('schedule.pickDate')}</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -144,7 +146,7 @@ export function CreateEventDialog({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="startTime">Start Time</Label>
+                <Label htmlFor="startTime">{t('schedule.startTime')}</Label>
                 <div className="relative">
                   <Clock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                   <Input
@@ -159,7 +161,7 @@ export function CreateEventDialog({
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="endTime">End Time</Label>
+                <Label htmlFor="endTime">{t('schedule.endTime')}</Label>
                 <div className="relative">
                   <Clock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                   <Input
@@ -176,7 +178,7 @@ export function CreateEventDialog({
 
             <div className="grid gap-2">
               <Label htmlFor="participants">
-                Participants (comma-separated)
+                {t('schedule.participants')}
               </Label>
               <Input
                 id="participants"
@@ -187,7 +189,7 @@ export function CreateEventDialog({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="meetingLink">Meeting Link (optional)</Label>
+              <Label htmlFor="meetingLink">{t('schedule.meetingLink')}</Label>
               <Input
                 id="meetingLink"
                 type="url"
@@ -198,7 +200,7 @@ export function CreateEventDialog({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="timezone">Timezone (optional)</Label>
+              <Label htmlFor="timezone">{t('schedule.timezone')}</Label>
               <Input
                 id="timezone"
                 placeholder="GMT+7 Pontianak"
@@ -213,9 +215,9 @@ export function CreateEventDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
-            <Button type="submit">Create Event</Button>
+            <Button type="submit">{t('schedule.createEvent')}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

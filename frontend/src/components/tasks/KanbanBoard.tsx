@@ -5,18 +5,20 @@ import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea
 import { StatusColumn } from './StatusColumn';
 import { TaskCard } from './TaskCard';
 import { useTaskStatus } from '@/hooks/useTaskStatus';
+import { useTranslation } from '@/hooks/useTranslation';
 import type { Task } from '@/lib/backend';
 
-const STATUS_COLUMNS = [
-  { id: 'quote', label: 'QUOTES', color: 'bg-gray-500' },
-  { id: 'scheduled', label: 'SCHEDULED', color: 'bg-blue-500' },
-  { id: 'in_progress', label: 'IN PROGRESS', color: 'bg-yellow-500' },
-  { id: 'paused', label: 'PAUSED', color: 'bg-purple-500' },
-  { id: 'completed', label: 'COMPLETED', color: 'bg-green-500' },
-  { id: 'cancelled', label: 'CANCELLED', color: 'bg-red-500' },
+const STATUS_COLUMNS: Array<{ id: string; labelKey: string; color: string }> = [
+  { id: 'quote', labelKey: 'tasks.kanban.quotes', color: 'bg-gray-500' },
+  { id: 'scheduled', labelKey: 'tasks.kanban.scheduled', color: 'bg-blue-500' },
+  { id: 'in_progress', labelKey: 'tasks.kanban.inProgress', color: 'bg-yellow-500' },
+  { id: 'paused', labelKey: 'tasks.kanban.paused', color: 'bg-purple-500' },
+  { id: 'completed', labelKey: 'tasks.kanban.completed', color: 'bg-green-500' },
+  { id: 'cancelled', labelKey: 'tasks.kanban.cancelled', color: 'bg-red-500' },
 ];
 
 export function KanbanBoard() {
+  const { t } = useTranslation();
   const { tasks, loading, error, distribution, transitionStatus } = useTaskStatus();
 
   const tasksByStatus = useMemo(() => {
@@ -65,7 +67,7 @@ export function KanbanBoard() {
   if (error) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-red-500">Error: {error}</div>
+        <div className="text-red-500">{t('errors.error')}: {error}</div>
       </div>
     );
   }
@@ -77,7 +79,7 @@ export function KanbanBoard() {
         {STATUS_COLUMNS.map(col => (
           <div key={col.id} className="text-center">
             <div className="text-sm font-medium text-muted-foreground">
-              {col.label}
+              {t(col.labelKey)}
             </div>
             <div className="text-2xl font-bold">
               {distribution ? distribution[col.id as keyof typeof distribution] || 0 : 0}
@@ -98,7 +100,7 @@ export function KanbanBoard() {
                   <StatusColumn
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    title={column.label}
+                    title={t(column.labelKey)}
                     count={columnTasks.length}
                     color={column.color}
                     isDraggingOver={snapshot.isDraggingOver}

@@ -28,6 +28,7 @@ import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import type { CalendarEvent } from "@/types/calendar";
 import { useState } from "react";
 import { Kbd } from "@/components/ui/kbd";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface EventSheetProps {
   event: CalendarEvent | null;
@@ -90,6 +91,7 @@ function copyToClipboard(text: string) {
 }
 
 export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
+  const { t } = useTranslation();
   const [rsvpStatus, setRsvpStatus] = useState<"yes" | "no" | "maybe" | null>(
     null
   );
@@ -200,190 +202,190 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
             </div>
 
             <Button variant="outline">
-              <span>Propose new time</span>
-              <ArrowUpRight className="size-4" />
-            </Button>
-          </SheetHeader>
+               <span>{t('schedule.proposeNewTime')}</span>
+               <ArrowUpRight className="size-4" />
+             </Button>
+           </SheetHeader>
 
-          <div className="flex-1 overflow-y-auto px-4 py-4">
-            <div className="flex flex-col gap-4 max-w-[512px] mx-auto">
-              <div className="flex flex-col gap-4">
-                {mockParticipants.map((participant) => (
-                  <div
-                    key={participant.id}
-                    className="flex items-start gap-3 relative"
-                  >
-                    <Avatar className="size-7 border-[1.4px] border-background shrink-0">
-                      <AvatarImage
-                        src={`https://api.dicebear.com/9.x/glass/svg?seed=${participant.id}`}
-                      />
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start gap-2 relative">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5 mb-1 relative">
-                            <p className="text-[13px] font-medium text-foreground leading-[18px]">
-                              {participant.name}
-                            </p>
-                            {participant.isOrganizer && (
-                              <span className="text-[10px] font-medium text-cyan-500 px-0.5 py-0.5 rounded-full">
-                                Organizer
-                              </span>
-                            )}
-                            {participant.isYou && (
-                              <span className="text-[10px] font-medium text-foreground px-0.5 py-0.5 rounded-full">
-                                You
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground leading-none">
-                            {participant.email}
-                          </p>
-                        </div>
-                        <CheckCircle2 className="size-3 text-green-500 shrink-0 absolute right-0 top-[17px]" />
-                      </div>
-                      {participant.isYou && (
-                        <div className="mt-3 flex gap-1.5 bg-muted/50 rounded-lg p-1.5">
-                          <Button
-                            variant={rsvpStatus === "yes" ? "default" : "ghost"}
-                            size="sm"
-                            className={`flex-1 h-[30px] text-xs font-medium ${
-                              rsvpStatus === "yes"
-                                ? "bg-foreground text-background hover:bg-foreground/90 shadow-sm"
-                                : "text-muted-foreground"
-                            }`}
-                            onClick={() => setRsvpStatus("yes")}
-                          >
-                            Yes
-                          </Button>
-                          <Button
-                            variant={rsvpStatus === "no" ? "default" : "ghost"}
-                            size="sm"
-                            className={`flex-1 h-[30px] text-xs font-medium ${
-                              rsvpStatus === "no"
-                                ? "bg-foreground text-background hover:bg-foreground/90 shadow-sm"
-                                : "text-muted-foreground"
-                            }`}
-                            onClick={() => setRsvpStatus("no")}
-                          >
-                            No
-                          </Button>
-                          <Button
-                            variant={
-                              rsvpStatus === "maybe" ? "default" : "ghost"
-                            }
-                            size="sm"
-                            className={`flex-1 h-[30px] text-xs font-medium ${
-                              rsvpStatus === "maybe"
-                                ? "bg-foreground text-background hover:bg-foreground/90 shadow-sm"
-                                : "text-muted-foreground"
-                            }`}
-                            onClick={() => setRsvpStatus("maybe")}
-                          >
-                            Maybe
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
+           <div className="flex-1 overflow-y-auto px-4 py-4">
+             <div className="flex flex-col gap-4 max-w-[512px] mx-auto">
+               <div className="flex flex-col gap-4">
+                 {mockParticipants.map((participant) => (
+                   <div
+                     key={participant.id}
+                     className="flex items-start gap-3 relative"
+                   >
+                     <Avatar className="size-7 border-[1.4px] border-background shrink-0">
+                       <AvatarImage
+                         src={`https://api.dicebear.com/9.x/glass/svg?seed=${participant.id}`}
+                       />
+                     </Avatar>
+                     <div className="flex-1 min-w-0">
+                       <div className="flex items-start gap-2 relative">
+                         <div className="flex-1 min-w-0">
+                           <div className="flex items-center gap-1.5 mb-1 relative">
+                             <p className="text-[13px] font-medium text-foreground leading-[18px]">
+                               {participant.name}
+                             </p>
+                             {participant.isOrganizer && (
+                               <span className="text-[10px] font-medium text-cyan-500 px-0.5 py-0.5 rounded-full">
+                                 {t('schedule.organizer')}
+                               </span>
+                             )}
+                             {participant.isYou && (
+                               <span className="text-[10px] font-medium text-foreground px-0.5 py-0.5 rounded-full">
+                                 {t('schedule.you')}
+                               </span>
+                             )}
+                           </div>
+                           <p className="text-xs text-muted-foreground leading-none">
+                             {participant.email}
+                           </p>
+                         </div>
+                         <CheckCircle2 className="size-3 text-green-500 shrink-0 absolute right-0 top-[17px]" />
+                       </div>
+                       {participant.isYou && (
+                         <div className="mt-3 flex gap-1.5 bg-muted/50 rounded-lg p-1.5">
+                           <Button
+                             variant={rsvpStatus === "yes" ? "default" : "ghost"}
+                             size="sm"
+                             className={`flex-1 h-[30px] text-xs font-medium ${
+                               rsvpStatus === "yes"
+                                 ? "bg-foreground text-background hover:bg-foreground/90 shadow-sm"
+                                 : "text-muted-foreground"
+                             }`}
+                             onClick={() => setRsvpStatus("yes")}
+                           >
+                             {t('common.yes')}
+                           </Button>
+                           <Button
+                             variant={rsvpStatus === "no" ? "default" : "ghost"}
+                             size="sm"
+                             className={`flex-1 h-[30px] text-xs font-medium ${
+                               rsvpStatus === "no"
+                                 ? "bg-foreground text-background hover:bg-foreground/90 shadow-sm"
+                                 : "text-muted-foreground"
+                             }`}
+                             onClick={() => setRsvpStatus("no")}
+                           >
+                             {t('common.no')}
+                           </Button>
+                           <Button
+                             variant={
+                               rsvpStatus === "maybe" ? "default" : "ghost"
+                             }
+                             size="sm"
+                             className={`flex-1 h-[30px] text-xs font-medium ${
+                               rsvpStatus === "maybe"
+                                 ? "bg-foreground text-background hover:bg-foreground/90 shadow-sm"
+                                 : "text-muted-foreground"
+                             }`}
+                             onClick={() => setRsvpStatus("maybe")}
+                           >
+                             Maybe
+                           </Button>
+                         </div>
+                       )}
+                     </div>
+                   </div>
+                 ))}
+               </div>
 
               {event.meetingLink && (
-                <div className="flex flex-col gap-2 pt-4 border-t border-border">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="size-6 shrink-0">
-                      <svg
-                        viewBox="0 0 24 24"
-                        className="size-full"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"
-                          fill="#22C55E"
-                        />
-                      </svg>
-                    </div>
-                    <p className="text-xs font-medium text-muted-foreground flex-1">
-                      Meeting in Google Meet
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Code: {meetingCode}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      className="flex-1 h-8 bg-foreground text-background hover:bg-foreground/90 text-xs font-medium gap-2 shadow-sm"
-                      onClick={() => {
-                        if (event.meetingLink) {
-                          window.open(event.meetingLink, "_blank");
-                        }
-                      }}
-                    >
-                      <span>Join Google Meet meeting</span>
-                      <div className="flex gap-0.5">
-                        <Kbd className="bg-white/14 text-white text-[10.8px] px-1.5 py-1 rounded">
-                          ⌘
-                        </Kbd>
-                        <Kbd className="bg-white/14 text-white text-[10.8px] px-1.5 py-1 rounded w-[18px]">
-                          J
-                        </Kbd>
-                      </div>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 gap-2 text-xs border-border"
-                      onClick={() => {
-                        if (event.meetingLink) {
-                          copyToClipboard(event.meetingLink);
-                        }
-                      }}
-                    >
-                      <LinkIcon className="size-4" />
-                      <span>Copy link</span>
-                    </Button>
-                  </div>
-                </div>
-              )}
+                 <div className="flex flex-col gap-2 pt-4 border-t border-border">
+                   <div className="flex items-center gap-2 mb-2">
+                     <div className="size-6 shrink-0">
+                       <svg
+                         viewBox="0 0 24 24"
+                         className="size-full"
+                         fill="none"
+                         xmlns="http://www.w3.org/2000/svg"
+                       >
+                         <path
+                           d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"
+                           fill="#22C55E"
+                         />
+                       </svg>
+                     </div>
+                     <p className="text-xs font-medium text-muted-foreground flex-1">
+                       {t('schedule.meetingInGoogleMeet')}
+                     </p>
+                     <p className="text-xs text-muted-foreground">
+                       Code: {meetingCode}
+                     </p>
+                   </div>
+                   <div className="flex gap-2">
+                     <Button
+                       className="flex-1 h-8 bg-foreground text-background hover:bg-foreground/90 text-xs font-medium gap-2 shadow-sm"
+                       onClick={() => {
+                         if (event.meetingLink) {
+                           window.open(event.meetingLink, "_blank");
+                         }
+                       }}
+                     >
+                       <span>{t('schedule.joinGoogleMeet')}</span>
+                       <div className="flex gap-0.5">
+                         <Kbd className="bg-white/14 text-white text-[10.8px] px-1.5 py-1 rounded">
+                           ⌘
+                         </Kbd>
+                         <Kbd className="bg-white/14 text-white text-[10.8px] px-1.5 py-1 rounded w-[18px]">
+                           J
+                         </Kbd>
+                       </div>
+                     </Button>
+                     <Button
+                       variant="outline"
+                       size="sm"
+                       className="h-8 gap-2 text-xs border-border"
+                       onClick={() => {
+                         if (event.meetingLink) {
+                           copyToClipboard(event.meetingLink);
+                         }
+                       }}
+                     >
+                       <LinkIcon className="size-4" />
+                       <span>{t('schedule.copyLink')}</span>
+                     </Button>
+                   </div>
+                 </div>
+               )}
 
-              <div className="flex flex-col gap-2 pt-4 border-t border-border">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <div className="p-1">
-                    <Bell className="size-4" />
-                  </div>
-                  <span>Reminder: 30min before</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <div className="p-1">
-                    <CalendarIcon className="size-4" />
-                  </div>
-                  <span>Organizer: {organizerEmail}</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <div className="p-1">
-                    <Phone className="size-4" />
-                  </div>
-                  <span>(US) +1 904-330-1131</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <div className="p-1">
-                    <Users className="size-4" />
-                  </div>
-                  <span>
-                    {mockParticipants.length} persons
-                    <span className="mx-1">•</span>
-                    {yesCount} yes
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <div className="p-1">
-                    <FilePlus className="size-4" />
-                  </div>
-                  <span>Notes from Organizer</span>
-                </div>
-              </div>
+               <div className="flex flex-col gap-2 pt-4 border-t border-border">
+                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                   <div className="p-1">
+                     <Bell className="size-4" />
+                   </div>
+                   <span>{t('schedule.reminder30min')}</span>
+                 </div>
+                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                   <div className="p-1">
+                     <CalendarIcon className="size-4" />
+                   </div>
+                   <span>{t('schedule.organizerLabel')} {organizerEmail}</span>
+                 </div>
+                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                   <div className="p-1">
+                     <Phone className="size-4" />
+                   </div>
+                   <span>(US) +1 904-330-1131</span>
+                 </div>
+                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                   <div className="p-1">
+                     <Users className="size-4" />
+                   </div>
+                   <span>
+                     {mockParticipants.length} {t('schedule.persons')}
+                     <span className="mx-1">•</span>
+                     {yesCount} {t('schedule.yes_lower')}
+                   </span>
+                 </div>
+                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                   <div className="p-1">
+                     <FilePlus className="size-4" />
+                   </div>
+                   <span>{t('schedule.notesFromOrganizer')}</span>
+                 </div>
+               </div>
 
               <div className="pt-4 border-t border-border">
                 <p className="text-xs text-muted-foreground leading-[1.6]">
