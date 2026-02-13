@@ -118,7 +118,7 @@ const TOTPSetup: React.FC<TOTPSetupProps> = ({ sessionToken, onSetupComplete }) 
             onClick={() => {
               // Copy to clipboard
               navigator.clipboard.writeText(recoveryCodes.join('\n'));
-              toast.success('Recovery codes copied to clipboard');
+              toast.success('Codes de récupération copiés dans le presse-papiers');
             }}
           >
             Copy codes to clipboard
@@ -185,7 +185,7 @@ const TOTPSetup: React.FC<TOTPSetupProps> = ({ sessionToken, onSetupComplete }) 
                   className="text-xs text-blue-600 hover:text-blue-800 mt-1"
                   onClick={() => {
                     navigator.clipboard.writeText(secret);
-                    toast.success('Secret code copied to clipboard');
+                    toast.success('Code secret copié dans le presse-papiers');
                   }}
                 >
                   Copy to clipboard

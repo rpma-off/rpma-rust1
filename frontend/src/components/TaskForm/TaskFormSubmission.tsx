@@ -165,7 +165,7 @@ export const useTaskFormSubmission = ({
 
       // Submit to the Tauri backend
       const createdTask = await ipcClient.tasks.create(taskData, sessionToken);
-      toast.success('Task created successfully!');
+      toast.success('Tâche créée avec succès !');
 
       if (onSuccess) {
         onSuccess(createdTask as { id: string });

@@ -520,7 +520,6 @@ export const fr = {
     lastNameRequired: "Le nom est obligatoire",
     passwordRequired: "Le mot de passe est obligatoire",
     passwordMinLength: "Le mot de passe doit contenir au moins 6 caractères",
-    editUser: "Modifier l'utilisateur",
     createNewUser: "Créer un nouvel utilisateur",
     saving: "Enregistrement...",
     signedInAs: "Connecté en tant que",

@@ -137,7 +137,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
           }
         }
 
-       toast.success('Workflow started successfully');
+       toast.success('Flux de travail démarré avec succès');
        return workflow;
     } catch (err: unknown) {
       const normalizedError = normalizeError(err);
@@ -173,7 +173,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
       // Refresh workflow to get updated state
       await fetchWorkflow();
 
-      toast.success('Step completed successfully');
+      toast.success('Étape terminée avec succès');
       return result;
     } catch (err: unknown) {
       const normalizedError = normalizeError(err);
@@ -209,7 +209,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
 
       setStepTiming(timing as any);
 
-      toast.success('Timer started');
+      toast.success('Minuterie démarrée');
       return timing;
     } catch (err) {
       console.error('Failed to start step timing:', err);
@@ -238,7 +238,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
          user?.id || workflow.createdBy || ''
        );
 
-       toast.success('Timer paused');
+       toast.success('Minuterie en pause');
       return result;
     } catch (err) {
       console.error('Failed to pause step timing:', err);
@@ -267,7 +267,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
          user?.id || workflow.createdBy || ''
        );
 
-       toast.success('Timer resumed');
+       toast.success('Minuterie reprise');
       return result;
     } catch (err) {
       console.error('Failed to resume step timing:', err);
@@ -326,7 +326,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
           setCurrentStep(null);
         }
 
-      toast.success(`${urls.length} photo(s) uploaded successfully`);
+      toast.success(`${urls.length} photo(s) téléversée(s) avec succès`);
       return urls;
     } catch (err) {
       console.error('Failed to upload photos:', err);
@@ -395,7 +395,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
         if (updatedWorkflow.success && updatedWorkflow.data) {
           setWorkflow(updatedWorkflow.data);
         }
-      toast.success('Workflow paused');
+      toast.success('Flux de travail en pause');
       return updatedWorkflow;
     } catch (err) {
       console.error('Failed to pause workflow:', err);
@@ -441,7 +441,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
           }
         }
 
-      toast.success('Workflow resumed');
+      toast.success('Flux de travail repris');
       return updatedWorkflow;
     } catch (err) {
       console.error('Failed to resume workflow:', err);

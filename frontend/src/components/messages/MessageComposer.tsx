@@ -76,22 +76,22 @@ export function MessageComposer({
   // Handle form submission
   const handleSend = async () => {
     if (!body.trim()) {
-      toast.error('Message body is required');
+      toast.error('Le corps du message est obligatoire');
       return;
     }
 
     if (messageType === 'email' && !recipientEmail.trim()) {
-      toast.error('Email address is required');
+      toast.error('L'adresse e-mail est obligatoire');
       return;
     }
 
     if (messageType === 'sms' && !recipientPhone.trim()) {
-      toast.error('Phone number is required');
+      toast.error('Le numéro de téléphone est obligatoire');
       return;
     }
 
     if (messageType === 'in_app' && !recipientId.trim()) {
-      toast.error('Recipient is required');
+      toast.error('Le destinataire est obligatoire');
       return;
     }
 

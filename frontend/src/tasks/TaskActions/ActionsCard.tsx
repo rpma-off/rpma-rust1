@@ -52,7 +52,7 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
 
   const handleStartWorkflow = async () => {
     if (!session?.token) {
-      toast.error('Authentication required');
+      toast.error('Authentification requise');
       return;
     }
 
@@ -80,17 +80,17 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
       const result = await InterventionWorkflowService.startIntervention(task.id, startData, session.token);
       
       if (!result.success) {
-        toast.error(result.error?.message || 'Failed to start intervention');
+        toast.error(result.error?.message || 'Échec du démarrage de l\'intervention');
         return;
       }
 
-      toast.success('Intervention started successfully');
+      toast.success('Intervention démarrée avec succès');
       
       // Navigate to workflow after successful start
       router.push(`/tasks/${task.id}/workflow/ppf`);
     } catch (error) {
       console.error('Failed to start intervention:', error);
-      toast.error('Failed to start intervention');
+      toast.error('Échec du démarrage de l\'intervention');
     } finally {
       setIsStarting(false);
     }

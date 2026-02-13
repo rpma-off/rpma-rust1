@@ -66,7 +66,7 @@ export function UserList({ users, onEdit, onRefresh }: UserListProps) {
         : new Date(timestamp);
       return date.toLocaleDateString();
     } catch {
-      return t('errors.invalidDate');
+      return t('users.invalidDate');
     }
   };
 

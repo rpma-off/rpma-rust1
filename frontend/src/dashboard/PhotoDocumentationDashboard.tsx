@@ -57,21 +57,21 @@ const mockPhotoData = {
   qualityIssues: [
     {
       id: '1',
-      type: 'Low Resolution',
+      type: 'Basse résolution',
       count: 12,
-      description: 'Photos with resolution below 1920x1080'
+      description: 'Photos avec une résolution inférieure à 1920x1080'
     },
     {
       id: '2',
-      type: 'Poor Lighting',
+      type: 'Mauvais éclairage',
       count: 8,
-      description: 'Insufficient lighting affecting photo quality'
+      description: 'Éclairage insuffisant affectant la qualité des photos'
     },
     {
       id: '3',
-      type: 'Blurry Images',
+      type: 'Images floues',
       count: 5,
-      description: 'Motion blur or focus issues'
+      description: 'Flou de mouvement ou problèmes de mise au point'
     }
   ]
 };
@@ -152,7 +152,7 @@ export function PhotoDocumentationDashboard({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Photos</CardTitle>
+            <CardTitle className="text-sm font-medium">Total photos</CardTitle>
             <Camera className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>

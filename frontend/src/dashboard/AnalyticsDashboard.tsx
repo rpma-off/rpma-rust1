@@ -308,9 +308,9 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
                   <RechartsPieChart>
                     <Pie
                       data={[
-                        { name: 'Completed', value: analytics.overview.completedTasks, color: '#00C49F' },
-                        { name: 'Active', value: analytics.overview.activeTasks, color: '#0088FE' },
-                        { name: 'Pending', value: analytics.overview.totalTasks - analytics.overview.completedTasks - analytics.overview.activeTasks, color: '#FFBB28' }
+                        { name: 'Terminées', value: analytics.overview.completedTasks, color: '#00C49F' },
+                        { name: 'Actives', value: analytics.overview.activeTasks, color: '#0088FE' },
+                        { name: 'En attente', value: analytics.overview.totalTasks - analytics.overview.completedTasks - analytics.overview.activeTasks, color: '#FFBB28' }
                       ]}
                       cx="50%"
                       cy="50%"
@@ -318,9 +318,9 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
                       dataKey="value"
                     >
                       {[
-                        { name: 'Completed', value: analytics.overview.completedTasks, color: '#00C49F' },
-                        { name: 'Active', value: analytics.overview.activeTasks, color: '#0088FE' },
-                        { name: 'Pending', value: analytics.overview.totalTasks - analytics.overview.completedTasks - analytics.overview.activeTasks, color: '#FFBB28' }
+                        { name: 'Terminées', value: analytics.overview.completedTasks, color: '#00C49F' },
+                        { name: 'Actives', value: analytics.overview.activeTasks, color: '#0088FE' },
+                        { name: 'En attente', value: analytics.overview.totalTasks - analytics.overview.completedTasks - analytics.overview.activeTasks, color: '#FFBB28' }
                       ].map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}

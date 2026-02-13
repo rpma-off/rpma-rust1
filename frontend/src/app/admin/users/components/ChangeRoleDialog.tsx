@@ -30,10 +30,10 @@ export function ChangeRoleDialog({
   const [isLoading, setIsLoading] = useState(false);
 
   const roles = [
-    { value: 'viewer', label: 'Viewer' },
-    { value: 'technician', label: 'Technician' },
-    { value: 'supervisor', label: 'Supervisor' },
-    { value: 'admin', label: 'Admin' }
+    { value: 'viewer', label: 'Observateur' },
+    { value: 'technician', label: 'Technicien' },
+    { value: 'supervisor', label: 'Superviseur' },
+    { value: 'admin', label: 'Administrateur' }
   ];
 
   const handleSave = async () => {
@@ -43,9 +43,9 @@ export function ChangeRoleDialog({
     try {
       await ipcClient.users.changeRole(userId, selectedRole, user.token);
       onOpenChange(false);
-      toast.success('Role updated successfully');
+      toast.success('Rôle mis à jour avec succès');
     } catch (error) {
-      toast.error('Failed to update role: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      toast.error('Échec de la mise à jour du rôle : ' + (error instanceof Error ? error.message : ''));
     } finally {
       setIsLoading(false);
     }
@@ -55,15 +55,15 @@ export function ChangeRoleDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Change User Role</DialogTitle>
+          <DialogTitle>Changer le rôle de l&apos;utilisateur</DialogTitle>
           <DialogDescription>
-            Change the role for {userName} ({userEmail})
+            Changer le rôle de {userName} ({userEmail})
           </DialogDescription>
         </DialogHeader>
 
         <div className="py-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            New Role
+            Nouveau rôle
           </label>
           <Select value={selectedRole} onValueChange={setSelectedRole}>
             <SelectTrigger>
@@ -81,10 +81,10 @@ export function ChangeRoleDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            Annuler
           </Button>
           <Button onClick={handleSave} disabled={isLoading || selectedRole === currentRole}>
-            {isLoading ? 'Saving...' : 'Save Changes'}
+            {isLoading ? 'Enregistrement...' : 'Enregistrer'}
           </Button>
         </DialogFooter>
       </DialogContent>
