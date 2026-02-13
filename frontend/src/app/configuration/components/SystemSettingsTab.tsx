@@ -111,18 +111,23 @@ export function SystemSettingsTab() {
       // Transform AppSettings into SystemConfiguration[] for the UI
       const appSettings = data as Record<string, JsonValue>;
       const generalSettings = (appSettings?.general || {}) as Record<string, JsonValue>;
+      const inferDataType = (value: JsonValue): 'boolean' | 'number' | 'string' => {
+        if (typeof value === 'boolean') return 'boolean';
+        if (typeof value === 'number') return 'number';
+        return 'string';
+      };
       const configs: SystemConfiguration[] = Object.entries(generalSettings).map(([key, value]) => ({
         id: `general-${key}`,
         category: 'general',
         key,
         value: value as string | number | boolean,
         description: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-        data_type: typeof value === 'boolean' ? 'boolean' as const : typeof value === 'number' ? 'number' as const : 'string' as const,
+        data_type: inferDataType(value),
         is_required: false,
         isRequired: false,
         system_level: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        created_at: '',
+        updated_at: '',
       }));
 
       setConfigurations(configs);

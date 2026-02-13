@@ -4,6 +4,13 @@ jest.mock('../utils', () => ({
   safeInvoke: jest.fn(),
 }));
 
+jest.mock('../core', () => ({
+  safeInvoke: jest.fn(),
+  cachedInvoke: jest.fn(),
+  invalidatePattern: jest.fn(),
+  extractAndValidate: jest.fn(),
+}));
+
 jest.mock('../cache', () => ({
   cachedInvoke: jest.fn(),
   invalidatePattern: jest.fn(),
@@ -12,7 +19,7 @@ jest.mock('../cache', () => ({
   clearCache: jest.fn(),
 }));
 
-const { safeInvoke } = jest.requireMock('../utils') as {
+const { safeInvoke } = jest.requireMock('../core') as {
   safeInvoke: jest.Mock;
 };
 
