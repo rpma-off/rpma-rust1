@@ -155,7 +155,7 @@ export async function GET(request: Request) {
       const dayAvgTime = dayCompleted > 0 ? avgCompletionTime : 0;
       
       dailyTrends.push({
-        date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        date: date.toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' }),
         tasks: dayTasks.length,
         completed: dayCompleted,
         avgTime: dayAvgTime
@@ -184,7 +184,7 @@ export async function GET(request: Request) {
       const weekAvgTime = weekCompleted > 0 ? avgCompletionTime : 0;
       
       weeklyTrends.push({
-        week: `Week ${4 - i}`,
+        week: `Semaine ${4 - i}`,
         tasks: weekTasks.length,
         completed: weekCompleted,
         avgTime: weekAvgTime
@@ -212,7 +212,7 @@ export async function GET(request: Request) {
       const monthAvgTime = monthCompleted > 0 ? avgCompletionTime : 0;
       
       monthlyTrends.push({
-        month: month.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+        month: month.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' }),
         tasks: monthTasks.length,
         completed: monthCompleted,
         avgTime: monthAvgTime

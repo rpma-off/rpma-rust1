@@ -26,7 +26,7 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
 
     switch (viewMode) {
       case 'month':
-        return new Intl.DateTimeFormat('en-US', {
+        return new Intl.DateTimeFormat('fr-FR', {
           year: 'numeric',
           month: 'long',
         }).format(currentDate);
@@ -35,19 +35,19 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
         startOfWeek.setDate(day - currentDate.getDay());
         const endOfWeek = new Date(startOfWeek);
         endOfWeek.setDate(startOfWeek.getDate() + 6);
-        return `${startOfWeek.toLocaleDateString()} - ${endOfWeek.toLocaleDateString()}`;
+        return `${startOfWeek.toLocaleDateString('fr-FR')} - ${endOfWeek.toLocaleDateString('fr-FR')}`;
       }
       case 'day':
-        return new Intl.DateTimeFormat('en-US', {
+        return new Intl.DateTimeFormat('fr-FR', {
           weekday: 'long',
           year: 'numeric',
           month: 'long',
           day: 'numeric',
         }).format(currentDate);
       case 'agenda':
-        return `Agenda - Starting ${currentDate.toLocaleDateString()}`;
+        return `Agenda - À partir du ${currentDate.toLocaleDateString('fr-FR')}`;
       default:
-        return currentDate.toLocaleDateString();
+        return currentDate.toLocaleDateString('fr-FR');
     }
   };
 
@@ -73,9 +73,9 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   };
 
   const viewModeOptions: Array<{ mode: CalendarViewMode; label: string; icon: React.ReactNode }> = [
-    { mode: 'month', label: 'Month', icon: <Grid3X3 className="w-4 h-4" /> },
-    { mode: 'week', label: 'Week', icon: <Calendar className="w-4 h-4" /> },
-    { mode: 'day', label: 'Day', icon: <Clock className="w-4 h-4" /> },
+    { mode: 'month', label: 'Mois', icon: <Grid3X3 className="w-4 h-4" /> },
+    { mode: 'week', label: 'Semaine', icon: <Calendar className="w-4 h-4" /> },
+    { mode: 'day', label: 'Jour', icon: <Clock className="w-4 h-4" /> },
     { mode: 'agenda', label: 'Agenda', icon: <List className="w-4 h-4" /> },
   ];
 
@@ -86,7 +86,7 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
         <button
           onClick={() => navigateDate('prev')}
           className="p-2 hover:bg-gray-100 rounded-md transition-colors"
-          aria-label="Previous period"
+          aria-label="Période précédente"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
@@ -95,13 +95,13 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
           onClick={onTodayClick}
           className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
         >
-          Today
+          Aujourd'hui
         </button>
 
         <button
           onClick={() => navigateDate('next')}
           className="p-2 hover:bg-gray-100 rounded-md transition-colors"
-          aria-label="Next period"
+          aria-label="Période suivante"
         >
           <ChevronRight className="w-5 h-5" />
         </button>

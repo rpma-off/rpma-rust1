@@ -19,18 +19,18 @@ interface NavItem {
 }
 
 const mainItems: NavItem[] = [
-  { href: '/messages', label: 'Message Center', icon: <MessageSquare className="h-5 w-5" /> },
-  { href: '/team', label: 'Employees/Resources', icon: <Users className="h-5 w-5" /> },
-  { href: '/inventory', label: 'Inventory', icon: <Package className="h-5 w-5" /> },
-  { href: '/configuration', label: 'Integrations', icon: <Workflow className="h-5 w-5" /> },
-  { href: '/settings', label: 'Preferences', icon: <Settings className="h-5 w-5" /> },
-  { href: '/tasks', label: 'Workflows', icon: <Workflow className="h-5 w-5" /> },
-  { href: '/interventions', label: 'Activity', icon: <Activity className="h-5 w-5" /> },
-  { href: '/analytics', label: 'Analytics', icon: <BarChart3 className="h-5 w-5" /> },
-  { label: 'Trash', icon: <Trash2 className="h-5 w-5" />, disabled: true },
+  { href: '/messages', label: 'Centre de messages', icon: <MessageSquare className="h-5 w-5" /> },
+  { href: '/team', label: 'Employés/Ressources', icon: <Users className="h-5 w-5" /> },
+  { href: '/inventory', label: 'Inventaire', icon: <Package className="h-5 w-5" /> },
+  { href: '/configuration', label: 'Intégrations', icon: <Workflow className="h-5 w-5" /> },
+  { href: '/settings', label: 'Préférences', icon: <Settings className="h-5 w-5" /> },
+  { href: '/tasks', label: 'Flux de travail', icon: <Workflow className="h-5 w-5" /> },
+  { href: '/interventions', label: 'Activité', icon: <Activity className="h-5 w-5" /> },
+  { href: '/analytics', label: 'Analytique', icon: <BarChart3 className="h-5 w-5" /> },
+  { label: 'Corbeille', icon: <Trash2 className="h-5 w-5" />, disabled: true },
 ];
 
-const settingsItem: NavItem = { href: '/settings', label: 'Settings', icon: <Settings className="h-5 w-5" /> };
+const settingsItem: NavItem = { href: '/settings', label: 'Paramètres', icon: <Settings className="h-5 w-5" /> };
 
 function UserDropdown({ onMobileClose }: { onMobileClose?: () => void }) {
   const { profile, signOut } = useAuth();
@@ -67,11 +67,11 @@ function UserDropdown({ onMobileClose }: { onMobileClose?: () => void }) {
       setIsOpen(false);
       await signOut();
       queryClient.clear();
-      toast.success('Logged out successfully');
+      toast.success('Déconnexion réussie');
       router.push('/login');
     } catch (error) {
       console.error('Logout error:', error);
-      toast.error('Failed to logout');
+      toast.error('Échec de la déconnexion');
     }
   };
 
@@ -92,7 +92,7 @@ function UserDropdown({ onMobileClose }: { onMobileClose?: () => void }) {
             <AvatarFallback className="text-foreground font-semibold text-xs">{initials}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <div className="text-xs text-muted-foreground font-medium">Signed in as</div>
+            <div className="text-xs text-muted-foreground font-medium">Connecté en tant que</div>
             <div className="text-sm font-semibold text-foreground truncate">{displayName}</div>
           </div>
         </div>
@@ -135,7 +135,7 @@ function UserDropdown({ onMobileClose }: { onMobileClose?: () => void }) {
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted/10 transition-colors text-left"
               >
                 <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <span>Profile</span>
+                <span>Profil</span>
               </button>
 
               <button
@@ -143,7 +143,7 @@ function UserDropdown({ onMobileClose }: { onMobileClose?: () => void }) {
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted/10 transition-colors text-left"
               >
                 <Settings className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <span>Settings</span>
+                <span>Paramètres</span>
               </button>
 
               <button
@@ -151,7 +151,7 @@ function UserDropdown({ onMobileClose }: { onMobileClose?: () => void }) {
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted/10 transition-colors text-left"
               >
                 <HelpCircle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <span>Help & Support</span>
+                <span>Aide & Support</span>
               </button>
             </div>
 
@@ -161,7 +161,7 @@ function UserDropdown({ onMobileClose }: { onMobileClose?: () => void }) {
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-500/10 transition-colors text-left group"
               >
                 <LogOut className="h-4 w-4 text-red-500 group-hover:text-red-600 transition-colors flex-shrink-0" />
-                <span>Logout</span>
+                <span>Déconnexion</span>
               </button>
             </div>
           </motion.div>
@@ -204,7 +204,7 @@ export function DrawerSidebar({ isOpen, onToggle }: { isOpen: boolean; onToggle:
               R
             </div>
             <div>
-              <div className="text-xs text-muted-foreground">Business</div>
+              <div className="text-xs text-muted-foreground">Entreprise</div>
               <div className="text-sm font-semibold text-foreground">RPMA</div>
             </div>
           </div>
@@ -221,7 +221,7 @@ export function DrawerSidebar({ isOpen, onToggle }: { isOpen: boolean; onToggle:
               ? 'bg-[hsl(var(--rpma-surface))] text-foreground font-semibold'
               : 'text-muted-foreground hover:bg-muted/20 hover:text-foreground',
             item.disabled && 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-muted-foreground',
-            item.label === 'Message Center' && 'border border-border/60 justify-center gap-2 font-medium text-foreground'
+            item.label === 'Centre de messages' && 'border border-border/60 justify-center gap-2 font-medium text-foreground'
           );
 
             const activeBar = isActive(item.href) ? (
@@ -297,7 +297,7 @@ export function DrawerSidebarMobile({ isOpen, onClose }: { isOpen: boolean; onCl
                 R
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">Business</div>
+                <div className="text-xs text-muted-foreground">Entreprise</div>
                 <div className="text-sm font-semibold text-foreground">RPMA</div>
               </div>
             </div>
@@ -314,7 +314,7 @@ export function DrawerSidebarMobile({ isOpen, onClose }: { isOpen: boolean; onCl
                 ? 'bg-[hsl(var(--rpma-surface))] text-foreground font-semibold'
                 : 'text-muted-foreground hover:bg-muted/20 hover:text-foreground',
               item.disabled && 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-muted-foreground',
-              item.label === 'Message Center' && 'border border-border/60 justify-center gap-2 font-medium text-foreground'
+              item.label === 'Centre de messages' && 'border border-border/60 justify-center gap-2 font-medium text-foreground'
             );
 
             const activeBar = isActive(item.href) ? (

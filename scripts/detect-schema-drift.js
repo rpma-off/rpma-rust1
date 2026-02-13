@@ -331,7 +331,16 @@ class SchemaDriftDetector {
 // Run drift detection if called directly
 if (require.main === module) {
     const detector = new SchemaDriftDetector();
-    detector.detectDrift().catch(console.error);
+    detector.detectDrift().then(issues => {
+        const critical = issues.filter(i => i.severity === 'CRITICAL').length;
+        const high = issues.filter(i => i.severity === 'HIGH').length;
+        if (critical > 0 || high > 0) {
+            process.exit(1);
+        }
+    }).catch(err => {
+        console.error(err);
+        process.exit(1);
+    });
 }
 
 module.exports = SchemaDriftDetector;

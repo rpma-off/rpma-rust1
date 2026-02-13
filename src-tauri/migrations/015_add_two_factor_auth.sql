@@ -1,12 +1,12 @@
 -- Migration 015: Add Two-Factor Authentication support
 -- Adds 2FA columns to users table and creates backup codes table
 
--- Add 2FA columns to users table
-ALTER TABLE users ADD COLUMN two_factor_enabled INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE users ADD COLUMN two_factor_secret TEXT;
+-- Note: ALTER TABLE ADD COLUMN is not idempotent in SQLite.
+-- The schema.sql already includes these columns for new databases.
+-- This migration is only applied to old databases that predate version 15.
 
 -- Create two_factor_backup_codes table
-CREATE TABLE two_factor_backup_codes (
+CREATE TABLE IF NOT EXISTS two_factor_backup_codes (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     code_hash TEXT NOT NULL,
@@ -17,10 +17,10 @@ CREATE TABLE two_factor_backup_codes (
 );
 
 -- Create index for efficient lookup
-CREATE INDEX idx_two_factor_backup_codes_user_id ON two_factor_backup_codes(user_id);
+CREATE INDEX IF NOT EXISTS idx_two_factor_backup_codes_user_id ON two_factor_backup_codes(user_id);
 
 -- Create two_factor_attempts audit table
-CREATE TABLE two_factor_attempts (
+CREATE TABLE IF NOT EXISTS two_factor_attempts (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     attempt_type TEXT NOT NULL, -- 'setup', 'verification', 'backup_code'
@@ -32,5 +32,5 @@ CREATE TABLE two_factor_attempts (
 );
 
 -- Create index for audit queries
-CREATE INDEX idx_two_factor_attempts_user_id ON two_factor_attempts(user_id);
-CREATE INDEX idx_two_factor_attempts_created_at ON two_factor_attempts(created_at);
+CREATE INDEX IF NOT EXISTS idx_two_factor_attempts_user_id ON two_factor_attempts(user_id);
+CREATE INDEX IF NOT EXISTS idx_two_factor_attempts_created_at ON two_factor_attempts(created_at);

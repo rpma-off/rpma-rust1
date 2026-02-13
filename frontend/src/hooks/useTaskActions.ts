@@ -97,10 +97,10 @@ export function useTaskActions({
       onTaskUpdate?.(taskId, updatedTask);
 
       const statusLabels = {
-        pending: 'Pending',
-        in_progress: 'In Progress',
-        completed: 'Completed',
-        cancelled: 'Cancelled'
+        pending: 'En attente',
+        in_progress: 'En cours',
+        completed: 'Terminée',
+        cancelled: 'Annulée'
       };
 
       logger.info('useTaskActions: task status updated successfully', {
@@ -109,7 +109,7 @@ export function useTaskActions({
         requestId,
       });
 
-      toast.success(`Task status updated to ${statusLabels[status as keyof typeof statusLabels] || status}`);
+      toast.success(`Statut de la tâche mis à jour : ${statusLabels[status as keyof typeof statusLabels] || status}`);
     } catch (err) {
       logger.error('useTaskActions: failed to update task status', {
         taskId,
@@ -118,7 +118,7 @@ export function useTaskActions({
         requestId,
       });
 
-      let errorMessage = 'Failed to update task status';
+      let errorMessage = 'Échec de la mise à jour du statut de la tâche';
       if (err instanceof ApiError) {
         errorMessage = err.message;
       } else if (err instanceof Error) {
@@ -188,13 +188,13 @@ export function useTaskActions({
       // Update the task in the local state
       onTaskUpdate?.(taskId, updates);
 
-      toast.success('Task updated successfully');
+      toast.success('Tâche mise à jour avec succès');
       logger.info('Task updated', { taskId, updates });
 
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to update task');
       onError?.(error);
-      toast.error(`Failed to update task: ${error.message}`);
+      toast.error(`Échec de la mise à jour de la tâche : ${error.message}`);
       logger.error('Task update failed', { taskId, error: error.message });
       throw error;
     } finally {
@@ -222,7 +222,7 @@ export function useTaskActions({
         requestId,
       });
 
-      toast.success('Task deleted successfully');
+      toast.success('Tâche supprimée avec succès');
       return true;
     } catch (err) {
       logger.error('useTaskActions: failed to delete task', {
@@ -302,7 +302,7 @@ export function useTaskActions({
       // Add the new task to the current tasks immediately for better UX
       onTaskAdd?.(newTask! as TaskWithDetails);
 
-      toast.success('Task created successfully');
+      toast.success('Tâche créée avec succès');
       return newTask;
     } catch (err) {
       logger.error('useTaskActions: failed to create task', {

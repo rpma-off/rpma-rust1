@@ -28,8 +28,8 @@ export function ConfirmDialog({
   onOpenChange,
   title,
   description,
-  confirmText = "Confirm",
-  cancelText = "Cancel",
+  confirmText = "Confirmer",
+  cancelText = "Annuler",
   variant = "default",
   onConfirm,
 }: ConfirmDialogProps) {

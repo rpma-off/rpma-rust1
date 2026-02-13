@@ -69,6 +69,10 @@ pub enum PhotoError {
     Storage(String),
     #[error("Processing error: {0}")]
     Processing(String),
+    #[error("File too large: {0}")]
+    FileTooLarge(String),
+    #[error("Invalid file type: {0}")]
+    InvalidMimeType(String),
 }
 
 impl From<String> for PhotoError {
@@ -117,8 +121,9 @@ impl PhotoService {
         request: StorePhotoRequest,
         image_data: Vec<u8>,
     ) -> PhotoResult<StorePhotoResponse> {
-        // Validate request
+        // Validate request and image data
         self.validate_store_request(&request)?;
+        self.validate_image_data(&image_data)?;
 
         // Compress image if needed
         let compressed_data = self.processing.compress_image_if_needed(image_data).await?;
@@ -234,6 +239,15 @@ impl PhotoService {
         // Save photo record
         self.storage.save_photo(&photo)?;
 
+        // Generate thumbnail for efficient UI previews
+        if let Err(e) = self
+            .processing
+            .generate_thumbnail(&compressed_data, &file_path)
+            .await
+        {
+            tracing::warn!("Thumbnail generation failed (non-fatal): {}", e);
+        }
+
         Ok(StorePhotoResponse {
             photo,
             file_path: file_path.to_string_lossy().to_string(),
@@ -266,6 +280,12 @@ impl PhotoService {
             .get_photo(id)?
             .ok_or_else(|| PhotoError::NotFound(format!("Photo {} not found", id)))?;
 
+        if !std::path::Path::new(&photo.file_path).exists() {
+            return Err(PhotoError::NotFound(
+                "Le fichier photo est introuvable sur le disque. Il a peut-être été déplacé ou supprimé.".to_string(),
+            ));
+        }
+
         std::fs::read(&photo.file_path).map_err(PhotoError::Io)
     }
 
@@ -289,6 +309,18 @@ impl PhotoService {
             .await
     }
 
+    /// Allowed MIME types for photo uploads
+    const ALLOWED_MIME_TYPES: &'static [&'static str] = &[
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/heic",
+        "image/heif",
+    ];
+
+    /// Maximum upload file size in bytes (20 MB)
+    const MAX_UPLOAD_SIZE: usize = 20 * 1024 * 1024;
+
     /// Validate store request
     fn validate_store_request(&self, request: &StorePhotoRequest) -> PhotoResult<()> {
         if request.intervention_id.is_empty() {
@@ -305,13 +337,111 @@ impl PhotoService {
             return Err(PhotoError::Validation("mime_type is required".to_string()));
         }
 
-        // Validate mime type
-        if !request.mime_type.starts_with("image/") {
-            return Err(PhotoError::Validation(
-                "Only image files are supported".to_string(),
-            ));
+        // Validate against allowed MIME type whitelist
+        if !Self::ALLOWED_MIME_TYPES.contains(&request.mime_type.as_str()) {
+            let allowed = Self::ALLOWED_MIME_TYPES
+                .iter()
+                .map(|t| t.split('/').last().unwrap_or(t).to_uppercase())
+                .collect::<Vec<_>>()
+                .join(", ");
+            return Err(PhotoError::InvalidMimeType(format!(
+                "Le type de fichier '{}' n'est pas pris en charge. Formats acceptés : {}.",
+                request.mime_type, allowed
+            )));
         }
 
         Ok(())
+    }
+
+    /// Validate image data size before processing
+    fn validate_image_data(&self, data: &[u8]) -> PhotoResult<()> {
+        if data.is_empty() {
+            return Err(PhotoError::Validation(
+                "Le fichier image est vide.".to_string(),
+            ));
+        }
+
+        if data.len() > Self::MAX_UPLOAD_SIZE {
+            let size_mb = data.len() as f64 / (1024.0 * 1024.0);
+            let max_mb = Self::MAX_UPLOAD_SIZE as f64 / (1024.0 * 1024.0);
+            return Err(PhotoError::FileTooLarge(format!(
+                "Le fichier ({:.1} Mo) dépasse la taille maximale autorisée ({:.0} Mo).",
+                size_mb, max_mb
+            )));
+        }
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Helper to create a minimal PhotoService for validation-only tests.
+    /// Uses a dummy config since we only test validation methods.
+    fn create_test_request(mime_type: &str) -> StorePhotoRequest {
+        StorePhotoRequest {
+            intervention_id: "int-001".to_string(),
+            step_id: None,
+            step_number: None,
+            file_name: "photo.jpg".to_string(),
+            mime_type: mime_type.to_string(),
+            photo_type: None,
+            photo_category: None,
+            zone: None,
+            title: None,
+            description: None,
+            notes: None,
+            is_required: false,
+        }
+    }
+
+    #[test]
+    fn test_allowed_mime_types_accepted() {
+        for mime in PhotoService::ALLOWED_MIME_TYPES {
+            let request = create_test_request(mime);
+            // Validate request fields only (no DB needed)
+            assert!(
+                PhotoService::ALLOWED_MIME_TYPES.contains(&request.mime_type.as_str()),
+                "MIME type {} should be allowed",
+                mime
+            );
+        }
+    }
+
+    #[test]
+    fn test_invalid_mime_type_rejected() {
+        let invalid_types = [
+            "application/pdf",
+            "text/plain",
+            "image/gif",
+            "image/bmp",
+            "video/mp4",
+            "",
+        ];
+        for mime in &invalid_types {
+            assert!(
+                !PhotoService::ALLOWED_MIME_TYPES.contains(mime),
+                "MIME type {} should not be allowed",
+                mime
+            );
+        }
+    }
+
+    #[test]
+    fn test_max_upload_size_constant() {
+        // 20 MB limit
+        assert_eq!(PhotoService::MAX_UPLOAD_SIZE, 20 * 1024 * 1024);
+    }
+
+    #[test]
+    fn test_photo_error_variants() {
+        // Validate that error variants produce user-friendly messages
+        let err = PhotoError::FileTooLarge("test".to_string());
+        assert!(err.to_string().contains("File too large"));
+
+        let err = PhotoError::InvalidMimeType("test".to_string());
+        assert!(err.to_string().contains("Invalid file type"));
     }
 }

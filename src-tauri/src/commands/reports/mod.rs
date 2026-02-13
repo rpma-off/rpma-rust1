@@ -2,7 +2,7 @@ mod core;
 mod export;
 pub mod generation;
 mod search;
-mod utils;
+pub(crate) mod utils;
 
 // Re-export main command functions for backward compatibility
 pub use core::*;

@@ -72,7 +72,7 @@ export default function ClientDetailClient({ params }: ClientDetailClientProps) 
 
     try {
       if (!user?.id) {
-        setError('Authentication required');
+        setError('Authentification requise');
         return;
       }
 
@@ -80,7 +80,7 @@ export default function ClientDetailClient({ params }: ClientDetailClientProps) 
 
       router.push('/clients');
     } catch (err) {
-      setError('An unexpected error occurred while deleting the client');
+      setError('Une erreur inattendue s\'est produite lors de la suppression du client');
       console.error('Error deleting client:', err);
     }
   };

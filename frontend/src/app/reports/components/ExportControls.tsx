@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import type { ReportType, ExportFormat, ReportFilters } from '@/lib/backend';
 import { reportsService } from '@/lib/services/entities/reports.service';
+import { enhancedToast } from '@/lib/enhanced-toast';
 
 interface DateRange {
   start: Date;
@@ -36,11 +37,56 @@ interface ExportControlsProps {
   onExport: (format: ExportFormat, reportType: ReportType) => void;
 }
 
+const VALID_STATUSES = ['pending', 'in_progress', 'completed', 'cancelled'];
+const VALID_PRIORITIES = ['low', 'medium', 'high', 'urgent'];
+
+function validateFilters(filters: FrontendFilters): string | null {
+  if (filters.statuses?.length) {
+    const invalid = filters.statuses.filter(s => !VALID_STATUSES.includes(s));
+    if (invalid.length > 0) {
+      return `Statut(s) invalide(s) : ${invalid.join(', ')}`;
+    }
+  }
+  if (filters.priorities?.length) {
+    const invalid = filters.priorities.filter(p => !VALID_PRIORITIES.includes(p));
+    if (invalid.length > 0) {
+      return `Priorité(s) invalide(s) : ${invalid.join(', ')}`;
+    }
+  }
+  return null;
+}
+
+function validateDateRange(dateRange: DateRange): string | null {
+  if (dateRange.start >= dateRange.end) {
+    return 'La date de début doit être antérieure à la date de fin';
+  }
+  const diffMs = dateRange.end.getTime() - dateRange.start.getTime();
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  if (diffDays > 365) {
+    return 'La plage de dates ne peut pas dépasser 365 jours';
+  }
+  return null;
+}
+
 export function ExportControls({ reportType, dateRange, filters, onExport }: ExportControlsProps) {
   const [isExporting, setIsExporting] = useState<ExportFormat | null>(null);
 
   const handleExport = async (format: ExportFormat) => {
+    // Client-side validation
+    const dateError = validateDateRange(dateRange);
+    if (dateError) {
+      enhancedToast.error(dateError);
+      return;
+    }
+
+    const filterError = validateFilters(filters);
+    if (filterError) {
+      enhancedToast.error(filterError);
+      return;
+    }
+
     setIsExporting(format);
+    const toastId = enhancedToast.loading('Exportation en cours...');
     try {
       // Convert frontend date range to backend format
       const backendDateRange = {
@@ -75,6 +121,8 @@ export function ExportControls({ reportType, dateRange, filters, onExport }: Exp
         link.click();
         document.body.removeChild(link);
 
+        enhancedToast.update(toastId, 'Export terminé avec succès', 'success');
+
         // Call the onExport callback for any additional handling
         onExport(format, reportType);
       } else {
@@ -82,8 +130,8 @@ export function ExportControls({ reportType, dateRange, filters, onExport }: Exp
       }
 
     } catch (error) {
-      console.error('Export failed:', error);
-      // You might want to show a toast notification here
+      const message = error instanceof Error ? error.message : 'Erreur lors de l\'exportation';
+      enhancedToast.update(toastId, message, 'error');
     } finally {
       setIsExporting(null);
     }

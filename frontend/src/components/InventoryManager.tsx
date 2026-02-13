@@ -15,6 +15,7 @@ import { StockLevelIndicator } from './StockLevelIndicator';
 import { MaterialForm } from './inventory/MaterialForm';
 import { useInventory } from '@/hooks/useInventory';
 import { useInventoryStats } from '@/hooks/useInventoryStats';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Material, MaterialType, UnitOfMeasure } from '@/lib/inventory';
 import { 
   Plus, 
@@ -36,6 +37,7 @@ interface InventoryManagerProps {
 }
 
 export function InventoryManager({ className }: InventoryManagerProps) {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<MaterialType | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -74,11 +76,11 @@ export function InventoryManager({ className }: InventoryManagerProps) {
   );
 
   const materialTypeOptions = [
-    { value: 'ppf_film' as MaterialType, label: 'PPF Film' },
-    { value: 'adhesive' as MaterialType, label: 'Adhesive' },
-    { value: 'cleaning_solution' as MaterialType, label: 'Cleaning Solution' },
-    { value: 'tool' as MaterialType, label: 'Tool' },
-    { value: 'consumable' as MaterialType, label: 'Consumable' },
+    { value: 'ppf_film' as MaterialType, label: 'Film PPF' },
+    { value: 'adhesive' as MaterialType, label: 'Adhésif' },
+    { value: 'cleaning_solution' as MaterialType, label: 'Solution de nettoyage' },
+    { value: 'tool' as MaterialType, label: 'Outil' },
+    { value: 'consumable' as MaterialType, label: 'Consommable' },
   ];
 
   const getUniqueCategories = () => {
@@ -124,7 +126,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
   };
 
   const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: currency,
     }).format(amount);
@@ -148,7 +150,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
     },
     {
       key: 'name',
-      header: 'Name',
+      header: 'Nom',
       render: (material: Material) => (
         <div className="max-w-[200px]">
           <div className="font-medium truncate">{material.name}</div>
@@ -169,7 +171,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
     },
     {
       key: 'stock',
-      header: 'Stock Level',
+      header: 'Niveau de stock',
       render: (material: Material) => (
         <div className="min-w-[120px]">
           <StockLevelIndicator material={material} />
@@ -178,7 +180,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
     },
     {
       key: 'unit_cost',
-      header: 'Unit Cost',
+      header: 'Coût unitaire',
       render: (material: Material) => (
         <div>
           {material.unit_cost ? (
@@ -191,7 +193,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
     },
     {
       key: 'location',
-      header: 'Location',
+      header: 'Emplacement',
       render: (material: Material) => (
         <div className="max-w-[100px]">
           {material.storage_location ? (
@@ -204,7 +206,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
     },
     {
       key: 'status',
-      header: 'Status',
+      header: 'Statut',
       render: (material: Material) => {
         const getStatusIcon = () => {
           if (material.is_expired) return <XCircle className="h-4 w-4" />;
@@ -214,9 +216,9 @@ export function InventoryManager({ className }: InventoryManagerProps) {
         };
 
         const getStatusText = () => {
-          if (material.is_expired) return 'Expired';
-          if (material.is_discontinued) return 'Discontinued';
-          if (material.is_low_stock) return 'Low';
+          if (material.is_expired) return 'Expiré';
+          if (material.is_discontinued) return 'Abandonné';
+          if (material.is_low_stock) return 'Faible';
           return 'OK';
         };
 
@@ -259,9 +261,9 @@ export function InventoryManager({ className }: InventoryManagerProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Inventory Management</h2>
+          <h2 className="text-2xl font-bold">Gestion de l&apos;inventaire</h2>
           <p className="text-muted-foreground">
-            Manage your material inventory and track stock levels
+            Gérez votre inventaire de matériaux et suivez les niveaux de stock
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -270,25 +272,25 @@ export function InventoryManager({ className }: InventoryManagerProps) {
             onClick={importInventory}
           >
             <Upload className="mr-2 h-4 w-4" />
-            Import
+            Importer
           </Button>
           <Button
             variant="outline"
             onClick={exportInventory}
           >
             <Download className="mr-2 h-4 w-4" />
-            Export
+            Exporter
           </Button>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
-                Add Material
+                Ajouter un matériau
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Add New Material</DialogTitle>
+                <DialogTitle>Ajouter un nouveau matériau</DialogTitle>
               </DialogHeader>
               <MaterialForm
                 onClose={() => {
@@ -305,41 +307,41 @@ export function InventoryManager({ className }: InventoryManagerProps) {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Materials</CardTitle>
+            <CardTitle className="text-sm font-medium">Total matériaux</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.total_materials || 0}</div>
-            <p className="text-xs text-muted-foreground">Active inventory items</p>
+            <p className="text-xs text-muted-foreground">Articles actifs de l&apos;inventaire</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
+            <CardTitle className="text-sm font-medium">Articles en stock faible</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
               {stats?.low_stock_materials || 0}
             </div>
-            <p className="text-xs text-muted-foreground">Require attention</p>
+            <p className="text-xs text-muted-foreground">Nécessitent une attention</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Expired Items</CardTitle>
+            <CardTitle className="text-sm font-medium">Articles expirés</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
               {stats?.expired_materials || 0}
             </div>
-            <p className="text-xs text-muted-foreground">Should be removed</p>
+            <p className="text-xs text-muted-foreground">À retirer de l&apos;inventaire</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Value</CardTitle>
+            <CardTitle className="text-sm font-medium">Valeur totale</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -348,7 +350,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
                 : '€0.00'
               }
             </div>
-            <p className="text-xs text-muted-foreground">Current inventory value</p>
+            <p className="text-xs text-muted-foreground">Valeur actuelle de l&apos;inventaire</p>
           </CardContent>
         </Card>
       </div>
@@ -358,8 +360,8 @@ export function InventoryManager({ className }: InventoryManagerProps) {
         <Alert>
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            {lowStockMaterials.length} material(s) are running low on stock. 
-            Consider reordering soon to avoid shortages.
+            {lowStockMaterials.length} matériau(x) sont en stock faible. 
+            Pensez à recommander prochainement pour éviter les ruptures.
           </AlertDescription>
         </Alert>
       )}
@@ -368,7 +370,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
         <Alert variant="destructive">
           <XCircle className="h-4 w-4" />
           <AlertDescription>
-            {expiredMaterials.length} material(s) have expired and should be removed from inventory.
+            {expiredMaterials.length} matériau(x) ont expiré et doivent être retirés de l&apos;inventaire.
           </AlertDescription>
         </Alert>
       )}
@@ -378,7 +380,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Filter className="h-5 w-5" />
-            Filters
+            Filtres
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -386,7 +388,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search materials..."
+                placeholder="Rechercher des matériaux..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-8"
@@ -398,10 +400,10 @@ export function InventoryManager({ className }: InventoryManagerProps) {
               onValueChange={(value) => setSelectedType(value as MaterialType | null)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select type" />
+                <SelectValue placeholder="Sélectionner le type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Types</SelectItem>
+                <SelectItem value="">Tous les types</SelectItem>
                 {materialTypeOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
@@ -415,10 +417,10 @@ export function InventoryManager({ className }: InventoryManagerProps) {
               onValueChange={(value) => setSelectedCategory(value || null)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select category" />
+                <SelectValue placeholder="Sélectionner la catégorie" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="">Toutes les catégories</SelectItem>
                 {getUniqueCategories().map((category) => (
                   <SelectItem key={category} value={category}>
                     {category}
@@ -434,7 +436,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
                 onClick={() => setShowInactive(!showInactive)}
                 className={showInactive ? 'bg-secondary' : ''}
               >
-                Show Inactive
+                Afficher inactifs
               </Button>
               <Button
                 variant="outline"
@@ -454,7 +456,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Package className="h-5 w-5" />
-            Materials ({filteredMaterials.length})
+            Matériaux ({filteredMaterials.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -471,17 +473,17 @@ export function InventoryManager({ className }: InventoryManagerProps) {
           ) : filteredMaterials.length === 0 ? (
             <div className="text-center py-8">
               <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No materials found</h3>
+              <h3 className="text-lg font-medium mb-2">Aucun matériau trouvé</h3>
               <p className="text-muted-foreground mb-4">
                 {searchTerm || selectedType || selectedCategory
-                  ? 'Try adjusting your filters or search terms.'
-                  : 'Get started by adding your first material to the inventory.'
+                  ? 'Essayez de modifier vos filtres ou termes de recherche.'
+                  : 'Commencez par ajouter votre premier matériau à l\'inventaire.'
                 }
               </p>
               {!searchTerm && !selectedType && !selectedCategory && (
                 <Button onClick={() => setIsCreateDialogOpen(true)}>
                   <Plus className="mr-2 h-4 w-4" />
-                  Add First Material
+                  Ajouter le premier matériau
                 </Button>
               )}
             </div>
@@ -500,7 +502,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Material</DialogTitle>
+            <DialogTitle>Modifier le matériau</DialogTitle>
           </DialogHeader>
           {selectedMaterial && (
             <MaterialForm
@@ -519,7 +521,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
       <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Material Details</DialogTitle>
+            <DialogTitle>Détails du matériau</DialogTitle>
           </DialogHeader>
           {selectedMaterial && (
             <StockLevelIndicator
@@ -534,11 +536,9 @@ export function InventoryManager({ className }: InventoryManagerProps) {
       <ConfirmDialog
         open={!!deletingMaterial}
         onOpenChange={(open) => !open && setDeletingMaterial(null)}
-        title="Delete Material"
-        description={`Are you sure you want to delete "${deletingMaterial?.name}"? This action cannot be undone.`}
+        title={t('inventory.deleteMaterial')}
+        description={t('inventory.confirmDeleteMaterial', { name: deletingMaterial?.name || '' })}
         onConfirm={confirmDelete}
-        confirmText="Delete"
-        cancelText="Cancel"
         variant="destructive"
       />
     </div>

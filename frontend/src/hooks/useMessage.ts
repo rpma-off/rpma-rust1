@@ -23,7 +23,7 @@ export function useMessage() {
   const sendMessage = useCallback(async (request: SendMessageRequest) => {
     try {
       const message = await messageApi.send(request, user?.token ?? '');
-      toast.success('Message sent successfully');
+      toast.success('Message envoyé avec succès');
       return { success: true, data: message };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to send message';
@@ -153,7 +153,7 @@ export function useNotificationPreferences(userId?: string) {
     try {
       const data = await messageApi.updatePreferences(uid, updates, user?.token ?? '');
       setPreferences(data);
-      toast.success('Preferences updated successfully');
+      toast.success('Préférences mises à jour avec succès');
       return { success: true, data };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to update preferences';

@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { UserAccount, UserRole } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { ipcClient } from '@/lib/ipc';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface UserFormProps {
   user?: UserAccount | null;
@@ -14,6 +15,7 @@ interface UserFormProps {
 
 export function UserForm({ user, onClose, onSuccess }: UserFormProps) {
   const { user: authUser } = useAuth();
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     id: '',
     email: '',
@@ -46,25 +48,25 @@ export function UserForm({ user, onClose, onSuccess }: UserFormProps) {
     const newErrors: Record<string, string> = {};
 
     if (!formData.email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = t('users.emailRequired');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Invalid email format';
+      newErrors.email = t('users.invalidEmail');
     }
 
 
 
     if (!formData.first_name) {
-      newErrors.first_name = 'First name is required';
+      newErrors.first_name = t('users.firstNameRequired');
     }
 
     if (!formData.last_name) {
-      newErrors.last_name = 'Last name is required';
+      newErrors.last_name = t('users.lastNameRequired');
     }
 
     if (!isEditing && !formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = t('users.passwordRequired');
     } else if (!isEditing && formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = t('users.passwordMinLength');
     }
 
     setErrors(newErrors);
@@ -82,7 +84,7 @@ export function UserForm({ user, onClose, onSuccess }: UserFormProps) {
       setLoading(true);
 
       if (!authUser || !authUser.token) {
-        toast.error('Not authenticated');
+        toast.error(t('users.notAuthenticated'));
         return;
       }
 
@@ -107,9 +109,9 @@ export function UserForm({ user, onClose, onSuccess }: UserFormProps) {
       }
 
       onSuccess();
-      toast.success(isEditing ? 'User updated successfully' : 'User created successfully');
+      toast.success(isEditing ? t('users.userUpdated') : t('users.userCreated'));
     } catch (error) {
-      toast.error('Failed to save user: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      toast.error(t('users.saveFailed') + (error instanceof Error ? error.message : ''));
     } finally {
       setLoading(false);
     }
@@ -128,13 +130,13 @@ export function UserForm({ user, onClose, onSuccess }: UserFormProps) {
       <div className="relative top-20 mx-auto p-5 border border-border w-96 shadow-lg rounded-md bg-background">
         <div className="mt-3">
           <h3 className="text-lg font-medium text-gray-900 mb-4">
-            {isEditing ? 'Edit User' : 'Create New User'}
+            {isEditing ? t('users.editUser') : t('users.createNewUser')}
           </h3>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="user-email" className="block text-sm font-medium text-foreground">
-                Email
+                {t('users.email')}
               </label>
               <input
                 id="user-email"
@@ -155,7 +157,7 @@ export function UserForm({ user, onClose, onSuccess }: UserFormProps) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label htmlFor="user-first-name" className="block text-sm font-medium text-foreground">
-                  First Name
+                  {t('users.firstName')}
                 </label>
                 <input
                   id="user-first-name"
@@ -173,7 +175,7 @@ export function UserForm({ user, onClose, onSuccess }: UserFormProps) {
 
               <div>
                 <label htmlFor="user-last-name" className="block text-sm font-medium text-foreground">
-                  Last Name
+                  {t('users.lastName')}
                 </label>
                 <input
                   id="user-last-name"
@@ -192,7 +194,7 @@ export function UserForm({ user, onClose, onSuccess }: UserFormProps) {
 
             <div>
               <label htmlFor="user-role" className="block text-sm font-medium text-gray-700">
-                Role
+                {t('users.role')}
               </label>
               <select
                 id="user-role"
@@ -200,17 +202,17 @@ export function UserForm({ user, onClose, onSuccess }: UserFormProps) {
                 onChange={(e) => handleInputChange('role', e.target.value)}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               >
-                <option value="viewer">Viewer</option>
-                <option value="technician">Technician</option>
-                <option value="supervisor">Supervisor</option>
-                <option value="admin">Admin</option>
+                <option value="viewer">{t('users.roleViewer')}</option>
+                <option value="technician">{t('users.roleTechnician')}</option>
+                <option value="supervisor">{t('users.roleSupervisor')}</option>
+                <option value="admin">{t('users.roleAdmin')}</option>
               </select>
             </div>
 
             {!isEditing && (
               <div>
                 <label htmlFor="user-password" className="block text-sm font-medium text-foreground">
-                  Password
+                  {t('auth.password')}
                 </label>
                 <input
                   id="user-password"
@@ -237,7 +239,7 @@ export function UserForm({ user, onClose, onSuccess }: UserFormProps) {
                   className="h-4 w-4 text-primary focus:ring-ring border-input rounded"
                 />
                 <label htmlFor="is_active" className="ml-2 block text-sm text-foreground">
-                  Active
+                  {t('users.active')}
                 </label>
               </div>
             )}
@@ -248,14 +250,14 @@ export function UserForm({ user, onClose, onSuccess }: UserFormProps) {
                 onClick={onClose}
                 className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-input rounded-md hover:bg-[hsl(var(--rpma-teal))]/10 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 type="submit"
                 disabled={loading}
                 className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary border border-transparent rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50"
               >
-                {loading ? 'Saving...' : (isEditing ? 'Update' : 'Create')}
+                {loading ? t('users.saving') : (isEditing ? t('common.update') : t('common.create'))}
               </button>
             </div>
           </form>
