@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useMaterialForm } from '@/hooks/useMaterialForm';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface MaterialFormProps {
   material?: any;
@@ -16,6 +17,7 @@ interface MaterialFormProps {
 }
 
 export function MaterialForm({ material, onClose }: MaterialFormProps) {
+  const { t } = useTranslation();
   const { formData, loading, error, updateFormData, saveMaterial } = useMaterialForm(material);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -73,14 +75,14 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
             onValueChange={(value) => updateFormData('material_type', value)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select type" />
+              <SelectValue placeholder={t('inventory.selectType')} />
             </SelectTrigger>
             <SelectContent className="bg-white border-[hsl(var(--rpma-border))]">
-              <SelectItem value="ppf_film">PPF Film</SelectItem>
-              <SelectItem value="adhesive">Adhesive</SelectItem>
-              <SelectItem value="cleaning_solution">Cleaning Solution</SelectItem>
-              <SelectItem value="tool">Tool</SelectItem>
-              <SelectItem value="consumable">Consumable</SelectItem>
+              <SelectItem value="ppf_film">{t('inventory.categoryFilm')}</SelectItem>
+              <SelectItem value="adhesive">{t('inventory.adhesive')}</SelectItem>
+              <SelectItem value="cleaning_solution">{t('inventory.cleaningSolution')}</SelectItem>
+              <SelectItem value="tool">{t('inventory.tool')}</SelectItem>
+              <SelectItem value="consumable">{t('inventory.consumable')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -91,7 +93,7 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
             onValueChange={(value) => updateFormData('unit_of_measure', value)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select unit" />
+              <SelectValue placeholder={t('inventory.selectUnit')} />
             </SelectTrigger>
             <SelectContent className="bg-white border-[hsl(var(--rpma-border))]">
               <SelectItem value="piece">Piece</SelectItem>
