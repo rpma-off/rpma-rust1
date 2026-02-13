@@ -44,6 +44,6 @@ CREATE TABLE IF NOT EXISTS task_conflicts (
   FOREIGN KEY (conflicting_task_id) REFERENCES tasks(id)
 );
 
-CREATE INDEX idx_conflicts_unresolved 
+CREATE INDEX IF NOT EXISTS idx_conflicts_unresolved 
 ON task_conflicts(resolved_at) 
 WHERE resolved_at IS NULL;

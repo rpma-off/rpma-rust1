@@ -146,6 +146,24 @@ jobs:
         run: cargo test --all --verbose
 
   # -----------------------------
+  # Database schema drift check
+  # -----------------------------
+  database:
+    name: Database (schema drift)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Schema drift detection
+        run: node scripts/detect-schema-drift.js
+
+  # -----------------------------
   # Security audit (stable only)
   # -----------------------------
   security:
