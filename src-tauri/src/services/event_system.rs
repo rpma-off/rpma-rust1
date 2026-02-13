@@ -156,6 +156,18 @@ pub enum DomainEvent {
         metadata: Option<serde_json::Value>,
     },
 
+    // Material Events
+    MaterialConsumed {
+        id: String,
+        material_id: String,
+        intervention_id: String,
+        quantity: f64,
+        unit: String,
+        consumed_by: String,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+
     // User Events
     UserCreated {
         id: String,
@@ -389,6 +401,7 @@ impl InMemoryEventBus {
             DomainEvent::InterventionStepCompleted { .. } => "InterventionStepCompleted",
             DomainEvent::InterventionCompleted { .. } => "InterventionCompleted",
             DomainEvent::InterventionCancelled { .. } => "InterventionCancelled",
+            DomainEvent::MaterialConsumed { .. } => "MaterialConsumed",
             DomainEvent::UserCreated { .. } => "UserCreated",
             DomainEvent::UserUpdated { .. } => "UserUpdated",
             DomainEvent::UserLoggedIn { .. } => "UserLoggedIn",
@@ -433,12 +446,13 @@ impl EventPublisher for InMemoryEventBus {
 mod tests {
     use super::*;
     use futures_util::StreamExt;
+    use std::pin::pin;
     use std::time::Duration;
 
     #[tokio::test]
     async fn subscribe_stream_receives_published_event() {
         let event_bus = InMemoryEventBus::new();
-        let mut stream = event_bus.subscribe();
+        let mut stream = pin!(event_bus.subscribe());
         let event = DomainEvent::UserLoggedOut {
             id: "event-1".to_string(),
             user_id: "user-1".to_string(),
@@ -523,6 +537,7 @@ impl EventProcessor {
             DomainEvent::InterventionStepCompleted { .. } => "InterventionStepCompleted",
             DomainEvent::InterventionCompleted { .. } => "InterventionCompleted",
             DomainEvent::InterventionCancelled { .. } => "InterventionCancelled",
+            DomainEvent::MaterialConsumed { .. } => "MaterialConsumed",
             DomainEvent::UserCreated { .. } => "UserCreated",
             DomainEvent::UserUpdated { .. } => "UserUpdated",
             DomainEvent::UserLoggedIn { .. } => "UserLoggedIn",
@@ -620,6 +635,7 @@ impl EventProjection {
             DomainEvent::InterventionStepCompleted { .. } => "InterventionStepCompleted",
             DomainEvent::InterventionCompleted { .. } => "InterventionCompleted",
             DomainEvent::InterventionCancelled { .. } => "InterventionCancelled",
+            DomainEvent::MaterialConsumed { .. } => "MaterialConsumed",
             DomainEvent::UserCreated { .. } => "UserCreated",
             DomainEvent::UserUpdated { .. } => "UserUpdated",
             DomainEvent::UserLoggedIn { .. } => "UserLoggedIn",
