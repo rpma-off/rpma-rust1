@@ -1195,17 +1195,17 @@ impl Database {
 
             // Create indexes
             conn.execute(
-                "CREATE INDEX idx_material_categories_parent ON material_categories(parent_id)",
+                "CREATE INDEX IF NOT EXISTS idx_material_categories_parent ON material_categories(parent_id)",
                 [],
             )
             .map_err(|e| format!("Failed to create material_categories index: {}", e))?;
             conn.execute(
-                "CREATE INDEX idx_material_categories_level ON material_categories(level)",
+                "CREATE INDEX IF NOT EXISTS idx_material_categories_level ON material_categories(level)",
                 [],
             )
             .map_err(|e| format!("Failed to create material_categories index: {}", e))?;
             conn.execute(
-                "CREATE INDEX idx_material_categories_active ON material_categories(is_active)",
+                "CREATE INDEX IF NOT EXISTS idx_material_categories_active ON material_categories(is_active)",
                 [],
             )
             .map_err(|e| format!("Failed to create material_categories index: {}", e))?;
@@ -1279,15 +1279,15 @@ impl Database {
             .map_err(|e| format!("Failed to create inventory_transactions table: {}", e))?;
 
             // Create indexes
-            conn.execute("CREATE INDEX idx_inventory_transactions_material ON inventory_transactions(material_id)", [])
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_inventory_transactions_material ON inventory_transactions(material_id)", [])
                 .map_err(|e| format!("Failed to create inventory_transactions index: {}", e))?;
-            conn.execute("CREATE INDEX idx_inventory_transactions_type ON inventory_transactions(transaction_type)", [])
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_inventory_transactions_type ON inventory_transactions(transaction_type)", [])
                 .map_err(|e| format!("Failed to create inventory_transactions index: {}", e))?;
-            conn.execute("CREATE INDEX idx_inventory_transactions_date ON inventory_transactions(performed_at)", [])
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_inventory_transactions_date ON inventory_transactions(performed_at)", [])
                 .map_err(|e| format!("Failed to create inventory_transactions index: {}", e))?;
-            conn.execute("CREATE INDEX idx_inventory_transactions_reference ON inventory_transactions(reference_number)", [])
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_inventory_transactions_reference ON inventory_transactions(reference_number)", [])
                 .map_err(|e| format!("Failed to create inventory_transactions index: {}", e))?;
-            conn.execute("CREATE INDEX idx_inventory_transactions_intervention ON inventory_transactions(intervention_id)", [])
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_inventory_transactions_intervention ON inventory_transactions(intervention_id)", [])
                 .map_err(|e| format!("Failed to create inventory_transactions index: {}", e))?;
         } else {
             tracing::info!("inventory_transactions table already exists, skipping creation");
@@ -1447,43 +1447,43 @@ impl Database {
         // Create indexes for optimal audit log performance
         tracing::info!("Migration 25: Creating audit event indexes");
         conn.execute(
-            "CREATE INDEX idx_audit_events_user_id ON audit_events(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_audit_events_user_id ON audit_events(user_id)",
             [],
         )
         .map_err(|e| format!("Failed to create user_id index: {}", e))?;
 
         conn.execute(
-            "CREATE INDEX idx_audit_events_timestamp ON audit_events(timestamp)",
+            "CREATE INDEX IF NOT EXISTS idx_audit_events_timestamp ON audit_events(timestamp)",
             [],
         )
         .map_err(|e| format!("Failed to create timestamp index: {}", e))?;
 
         conn.execute(
-            "CREATE INDEX idx_audit_events_resource ON audit_events(resource_type, resource_id)",
+            "CREATE INDEX IF NOT EXISTS idx_audit_events_resource ON audit_events(resource_type, resource_id)",
             [],
         )
         .map_err(|e| format!("Failed to create resource index: {}", e))?;
 
         conn.execute(
-            "CREATE INDEX idx_audit_events_event_type ON audit_events(event_type)",
+            "CREATE INDEX IF NOT EXISTS idx_audit_events_event_type ON audit_events(event_type)",
             [],
         )
         .map_err(|e| format!("Failed to create event_type index: {}", e))?;
 
         conn.execute(
-            "CREATE INDEX idx_audit_events_result ON audit_events(result)",
+            "CREATE INDEX IF NOT EXISTS idx_audit_events_result ON audit_events(result)",
             [],
         )
         .map_err(|e| format!("Failed to create result index: {}", e))?;
 
         // Composite indexes for common audit queries
         conn.execute(
-            "CREATE INDEX idx_audit_events_user_timestamp ON audit_events(user_id, timestamp DESC)",
+            "CREATE INDEX IF NOT EXISTS idx_audit_events_user_timestamp ON audit_events(user_id, timestamp DESC)",
             [],
         )
         .map_err(|e| format!("Failed to create user_timestamp composite index: {}", e))?;
 
-        conn.execute("CREATE INDEX idx_audit_events_resource_timestamp ON audit_events(resource_type, resource_id, timestamp DESC)", [])
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_events_resource_timestamp ON audit_events(resource_type, resource_id, timestamp DESC)", [])
             .map_err(|e| format!("Failed to create resource_timestamp composite index: {}", e))?;
 
         tracing::info!("Migration 25: Audit logging system created successfully");
