@@ -53,450 +53,331 @@
 
 ---
 
-##  Core User Flows
+## Core User Flows
 
 ### Flow 1: Login and Authentication
 
-```
-┌─────────────────────────────────────────────┐
-│ 1. User opens application                  │
-│    - If session exists and valid → Dashboard│
-│    - If no session → Login screen           │
-└─────────────────┬───────────────────────────┘
-                  ↓
-┌─────────────────────────────────────────────┐
-│ 2. Login screen (/login)                    │
-│    - Enter email                            │
-│    - Enter password                         │
-│    - Click "Sign In"                        │
-└─────────────────┬───────────────────────────┘
-                  ↓ IPC: login { email, password }
-┌─────────────────────────────────────────────┐
-│ 3. Backend validates credentials            │
-│    - If valid → Returns session_token       │
-│    - If 2FA enabled → Prompt for code       │
-│    - If invalid → Show error                │
-└─────────────────┬───────────────────────────┘
-                  ↓ (Success)
-┌─────────────────────────────────────────────┐
-│ 4. Frontend stores session_token            │
-│    - Save to localStorage/sessionStorage    │
-│    - Redirect to /dashboard                 │
-└─────────────────────────────────────────────┘
-```
+**Route**: `/login`
+
+**Steps**:
+1. User opens application
+   - If session exists → Dashboard
+   - If no session → Login screen
+2. Enter email + password
+3. Click "Sign In"
+4. Backend validates via `auth_login`
+   - If 2FA enabled → Prompt for code
+   - If invalid → Show error
+5. Frontend stores session_token
+6. Redirect to `/dashboard`
 
 **UX Details**:
-- Form validation: Email format, password min length (8 chars)
-- Error messages: "Invalid credentials" (generic for security)
+- Form validation: Email format, password min 8 chars
+- Error messages: Generic for security
 - Loading state: Disable button, show spinner
-- "Remember me" checkbox (optional): Extends session TTL
-- "Forgot password" link (TODO: verify implementation)
 
-**Frontend Components**:
-- `frontend/src/app/login/page.tsx`
-- `frontend/src/components/auth/LoginForm.tsx`
+**Frontend**: `frontend/src/app/login/page.tsx`, `frontend/src/components/auth/LoginForm.tsx`
 
-**Backend Commands**:
-- `login`
-- `validate_session`
+**Backend**: `auth_login` command
 
 ---
 
 ### Flow 2: Create Task (Supervisor)
 
-```
-┌─────────────────────────────────────────────┐
-│ 1. Supervisor navigates to /tasks/new       │
-│    - Clicks "New Task" button from dashboard│
-└─────────────────┬───────────────────────────┘
-                  ↓
-┌─────────────────────────────────────────────┐
-│ 2. Create Task form                         │
-│    - Fill in task details:                  │
-│      • Title*                               │
-│      • Description                          │
-│      • Client (search/select)               │
-│      • Vehicle plate*                       │
-│      • Vehicle make/model/year              │
-│      • Priority (Low/Medium/High/Urgent)    │
-│      • PPF zones (select from checklist)    │
-│      • Scheduled date (calendar picker)     │
-│    - Click "Create Task"                    │
-└─────────────────┬───────────────────────────┘
-                  ↓ Client-side validation
-┌─────────────────────────────────────────────┐
-│ 3. Frontend validates form                  │
-│    - Required fields present                │
-│    - Valid formats (email, plate, etc.)     │
-│    - If errors → Show inline errors         │
-└─────────────────┬───────────────────────────┘
-                  ↓ (Valid) IPC: task_create
-┌─────────────────────────────────────────────┐
-│ 4. Backend creates task                     │
-│    - Validates business rules               │
-│    - Generates task_number (e.g., T-20260211-001)
-│    - Stores in database                     │
-│    - Returns created task                   │
-└─────────────────┬───────────────────────────┘
-                  ↓ (Success)
-┌─────────────────────────────────────────────┐
-│ 5. Frontend shows success                   │
-│    - Toast: "Task T-20260211-001 created!"  │
-│    - Redirect to /tasks/[id] (task detail)  │
-└─────────────────────────────────────────────┘
-```
+**Route**: `/tasks/new`
+
+**Steps**:
+1. Navigate to `/tasks/new` from dashboard
+2. Fill in form:
+   - Title* (required)
+   - Description
+   - Client (search/select)
+   - Vehicle plate* (required)
+   - Vehicle make/model/year
+   - Priority (Low/Medium/High/Urgent)
+   - PPF zones (visual diagram)
+   - Scheduled date (calendar)
+3. Client-side validation
+4. Submit via `task_crud { Create }`
+5. Backend generates task_number
+6. Success: Toast + redirect to `/tasks/[id]`
 
 **UX Details**:
-- Form autosave: Save draft to localStorage every 30 seconds
-- Client autocomplete: Search clients as user types
-- PPF zone selection: Visual vehicle diagram with clickable zones
-- Validation feedback: Inline errors below each field
-- Loading state: Disable submit button, show spinner
+- Autosave draft to localStorage
+- Client autocomplete search
+- PPF zone visual selection
+- Inline validation errors
 
-**Frontend Components**:
-- `frontend/src/app/tasks/new/page.tsx`
-- `frontend/src/components/tasks/CreateTaskForm.tsx`
-- `frontend/src/components/clients/ClientSearchInput.tsx`
+**Frontend**: `frontend/src/app/tasks/new/page.tsx`
 
-**Backend Commands**:
-- `task_create`
-- `client_list` (for client search)
+**Backend**: `task_crud` command with `TaskAction::Create`
 
 ---
 
 ### Flow 3: Assign Task to Technician (Supervisor)
 
-```
-┌─────────────────────────────────────────────┐
-│ 1. Supervisor views task detail (/tasks/[id])│
-│    - Task status: "Draft"                   │
-│    - Clicks "Assign Technician" button      │
-└─────────────────┬───────────────────────────┘
-                  ↓
-┌─────────────────────────────────────────────┐
-│ 2. Assignment modal opens                   │
-│    - Select technician (dropdown)           │
-│    - Select scheduled date (calendar)       │
-│    - Optionally add assignment note         │
-│    - Click "Assign"                         │
-└─────────────────┬───────────────────────────┘
-                  ↓ IPC: task_assign
-┌─────────────────────────────────────────────┐
-│ 3. Backend assigns task                     │
-│    - Updates task.technician_id             │
-│    - Updates task.scheduled_date            │
-│    - Changes task.status = "Assigned"       │
-│    - Creates notification for technician    │
-└─────────────────┬───────────────────────────┘
-                  ↓ (Success)
-┌─────────────────────────────────────────────┐
-│ 4. UI updates                               │
-│    - Toast: "Task assigned to Thomas"       │
-│    - Task detail page shows updated status  │
-│    - Technician receives notification       │
-└─────────────────────────────────────────────┘
-```
+**Route**: `/tasks/[id]`
+
+**Steps**:
+1. View task detail (status: "Draft")
+2. Click "Assign Technician"
+3. Modal opens:
+   - Select technician (dropdown)
+   - Select scheduled date
+   - Optional note
+4. Submit via `task_assign` or update
+5. Backend:
+   - Updates technician_id
+   - Changes status to "Assigned"
+   - Creates notification
+6. UI: Toast + updated status
 
 **UX Details**:
-- Technician dropdown: Filter by role (only show Technicians)
-- Calendar view: Show technician's existing appointments (conflict detection)
-- Conflict warning: "Thomas is already booked at this time"
+- Technician filter by role
+- Calendar shows conflicts
+- Warning for double-booking
 
-**Frontend Components**:
-- `frontend/src/components/tasks/AssignTaskModal.tsx`
-- `frontend/src/components/calendar/TechnicianSchedule.tsx`
+**Frontend**: `frontend/src/components/tasks/AssignTaskModal.tsx`
 
-**Backend Commands**:
-- `task_assign`
-- `calendar_schedule_task`
-- `notification_create`
+**Backend**: Task update with assignment
 
 ---
 
 ### Flow 4: Start Intervention (Technician)
 
-```
-┌─────────────────────────────────────────────┐
-│ 1. Technician views assigned tasks          │
-│    - Navigates to /dashboard                │
-│    - Sees "My Tasks" list                   │
-│    - Clicks on task T-20260211-001          │
-└─────────────────┬───────────────────────────┘
-                  ↓
-┌─────────────────────────────────────────────┐
-│ 2. Task detail page                         │
-│    - Status: "Assigned"                     │
-│    - Vehicle: BMW 3 Series (Plate: AB-123-CD)│
-│    - Clicks "Start Intervention" button     │
-└─────────────────┬───────────────────────────┘
-                  ↓ IPC: intervention_start
-┌─────────────────────────────────────────────┐
-│ 3. Backend starts intervention              │
-│    - Creates intervention record            │
-│    - Generates workflow steps (from template)│
-│    - Updates task.status = "In Progress"    │
-│    - Returns intervention with steps        │
-└─────────────────┬───────────────────────────┘
-                  ↓ (Success)
-┌─────────────────────────────────────────────┐
-│ 4. Redirect to intervention execution       │
-│    - Navigate to /interventions/[id]/execute│
-│    - Show workflow step interface           │
-└─────────────────────────────────────────────┘
-```
+**Route**: `/tasks/[id]`
+
+**Steps**:
+1. Technician views assigned tasks on dashboard
+2. Clicks task to view details
+3. Status: "Assigned"
+4. Click "Start Intervention"
+5. Backend via `intervention_start`:
+   - Creates intervention record
+   - Generates workflow steps
+   - Updates task status to "In Progress"
+6. Redirect to intervention execution
 
 **UX Details**:
-- Confirmation modal: "Starting intervention will lock this task. Continue?"
-- GPS capture: Request location permission (for photo geotagging)
-- Offline support: Intervention can start offline, syncs when online
+- Confirmation modal
+- GPS permission request
+- Offline support
 
-**Frontend Components**:
-- `frontend/src/app/interventions/[id]/execute/page.tsx`
-- `frontend/src/components/workflow/InterventionStepExecutor.tsx`
+**Frontend**: `frontend/src/app/tasks/[id]/workflow/ppf/`
 
-**Backend Commands**:
-- `intervention_start`
+**Backend**: `intervention_start` command
 
 ---
 
 ### Flow 5: Execute Intervention Steps (Technician)
 
-```
-┌─────────────────────────────────────────────┐
-│ 1. Intervention execution screen            │
-│    - Shows current step (e.g., "Step 1/5: Vehicle Preparation")
-│    - Step instructions displayed            │
-│    - Fields: Notes, Photo upload, Material consumption
-└─────────────────┬───────────────────────────┘
-                  ↓
-┌─────────────────────────────────────────────┐
-│ 2. Technician completes step                │
-│    - Adds notes: "Cleaned with isopropanol" │
-│    - Takes photo (camera or file upload)    │
-│    - Records materials used (optional)      │
-│    - Clicks "Complete Step"                 │
-└─────────────────┬───────────────────────────┘
-                  ↓ IPC: intervention_advance_step
-┌─────────────────────────────────────────────┐
-│ 3. Backend processes step completion        │
-│    - Saves photo to disk                    │
-│    - Records material consumption           │
-│    - Marks step as "Completed"              │
-│    - Advances to next step (if available)   │
-└─────────────────┬───────────────────────────┘
-                  ↓ (Success)
-┌─────────────────────────────────────────────┐
-│ 4. UI updates to next step                  │
-│    - Progress bar: 20% → 40%                │
-│    - Show "Step 2/5: Film Application"      │
-│    - Repeat until all steps completed       │
-└─────────────────────────────────────────────┘
-```
+**Route**: `/tasks/[id]/workflow/ppf/steps/[step]`
+
+**Steps**:
+1. Show current step (e.g., "Step 1/5: Vehicle Preparation")
+2. Display instructions
+3. Technician:
+   - Adds notes
+   - Takes photo (camera/upload)
+   - Records materials (optional)
+4. Click "Complete Step"
+5. Backend via `intervention_advance_step`:
+   - Saves photo
+   - Records consumption
+   - Marks step completed
+6. Advance to next step
+7. Repeat until all steps done
 
 **UX Details**:
-- Progress indicator: Visual progress bar at top
-- Photo preview: Show thumbnail after upload
-- Material search: Autocomplete for material selection
-- Validation: Required steps cannot be skipped
-- Offline mode: Cache photos and sync later
+- Progress bar at top
+- Photo preview thumbnail
+- Material autocomplete
+- Required steps cannot be skipped
+- Offline mode: Cache photos
 
-**Frontend Components**:
-- `frontend/src/components/workflow/StepExecutionCard.tsx`
-- `frontend/src/components/photo/PhotoCapture.tsx`
-- `frontend/src/components/materials/MaterialConsumptionForm.tsx`
+**Frontend**: `frontend/src/components/workflow/ppf/`
 
-**Backend Commands**:
-- `intervention_advance_step`
-- `material_record_consumption`
+**Backend**: `intervention_advance_step` command
 
 ---
 
 ### Flow 6: Finalize Intervention (Technician)
 
-```
-┌─────────────────────────────────────────────┐
-│ 1. All steps completed                      │
-│    - Progress: 100%                         │
-│    - All required steps marked as completed │
-│    - "Finalize Intervention" button enabled │
-└─────────────────┬───────────────────────────┘
-                  ↓
-┌─────────────────────────────────────────────┐
-│ 2. Finalization form                        │
-│    - Quality score (1-100 slider)           │
-│    - Final notes (optional)                 │
-│    - Customer signature (canvas signature)  │
-│    - Click "Finalize"                       │
-└─────────────────┬───────────────────────────┘
-                  ↓ IPC: intervention_finalize
-┌─────────────────────────────────────────────┐
-│ 3. Backend finalizes intervention           │
-│    - Updates intervention.status = "Completed"
-│    - Updates task.status = "Completed"      │
-│    - Calculates total duration              │
-│    - Stores quality score                   │
-│    - Triggers completion notifications      │
-└─────────────────┬───────────────────────────┘
-                  ↓ (Success)
-┌─────────────────────────────────────────────┐
-│ 4. Success screen                           │
-│    - Confetti animation 🎉                  │
-│    - Summary: Duration, materials used, photos taken
-│    - "View Task" or "Return to Dashboard"   │
-└─────────────────────────────────────────────┘
-```
+**Steps**:
+1. All steps completed (100%)
+2. "Finalize Intervention" button enabled
+3. Finalization form:
+   - Quality score (1-100 slider)
+   - Final notes
+   - Customer signature (canvas)
+4. Submit via `intervention_finalize`
+5. Backend:
+   - Updates intervention.status = "Completed"
+   - Updates task.status = "Completed"
+   - Calculates duration
+   - Triggers notifications
+6. Success screen with summary
 
 **UX Details**:
-- Signature canvas: Touch/mouse drawing for customer signature
-- Summary preview: Show intervention highlights before finalizing
-- Final photo: Option to take "finished product" photo
-- Celebration: Positive reinforcement for completion
+- Signature canvas for touch/mouse
+- Summary preview before finalize
+- Celebration animation
 
-**Frontend Components**:
-- `frontend/src/components/workflow/FinalizeInterventionForm.tsx`
-- `frontend/src/components/signature/SignatureCanvas.tsx`
+**Frontend**: `frontend/src/components/workflow/FinalizeInterventionForm.tsx`
 
-**Backend Commands**:
-- `intervention_finalize`
-- `notification_create`
+**Backend**: `intervention_finalize` command
 
 ---
 
 ### Flow 7: View Reports (Supervisor)
 
-```
-┌─────────────────────────────────────────────┐
-│ 1. Supervisor navigates to /reports         │
-│    - Sees report types:                     │
-│      • Task Completion Report               │
-│      • Material Usage Report                │
-│      • Technician Performance Report        │
-│      • Client Activity Report               │
-└─────────────────┬───────────────────────────┘
-                  ↓
-┌─────────────────────────────────────────────┐
-│ 2. Selects report type                      │
-│    - Example: "Task Completion Report"      │
-│    - Set filters:                           │
-│      • Date range (last 30 days)            │
-│      • Technician (All or specific)         │
-│      • Status (Completed, Cancelled)        │
-│    - Click "Generate Report"                │
-└─────────────────┬───────────────────────────┘
-                  ↓ IPC: get_task_completion_report
-┌─────────────────────────────────────────────┐
-│ 3. Backend generates report                 │
-│    - Queries database with filters          │
-│    - Aggregates statistics                  │
-│    - Returns report data (JSON)             │
-└─────────────────┬───────────────────────────┘
-                  ↓ (Success)
-┌─────────────────────────────────────────────┐
-│ 4. Display report                           │
-│    - Table: Task list with details          │
-│    - Charts: Pie (by status), Bar (by tech) │
-│    - KPIs: Total tasks, avg duration, completion rate
-│    - Export options: PDF, Excel, CSV        │
-└─────────────────────────────────────────────┘
-```
+**Route**: `/reports`
+
+**Steps**:
+1. Navigate to `/reports`
+2. Select report type:
+   - Task Completion Report
+   - Material Usage Report
+   - Technician Performance Report
+   - Client Activity Report
+3. Set filters:
+   - Date range (presets + custom)
+   - Technician
+   - Status
+4. Click "Generate Report"
+5. Backend via `get_task_completion_report`
+6. Display:
+   - Table with task list
+   - Charts (pie, bar)
+   - KPIs
+   - Export options (PDF, CSV)
 
 **UX Details**:
-- Date range picker: Presets (Last 7 days, Last 30 days, This Month, Custom)
-- Live preview: Chart updates as filters change
-- Export: Generate PDF with company logo and branding
+- Date range presets (7 days, 30 days, this month)
+- Live chart preview
+- PDF with branding
 
-**Frontend Components**:
-- `frontend/src/app/reports/page.tsx`
-- `frontend/src/components/reports/TaskCompletionReport.tsx`
-- `frontend/src/components/charts/BarChart.tsx`
+**Frontend**: `frontend/src/app/reports/page.tsx`
 
-**Backend Commands**:
-- `get_task_completion_report`
-- `get_material_usage_report`
+**Backend**: Report commands in `commands/reports/`
 
 ---
 
-##  Common UI Patterns
+### Flow 8: Manage Inventory
+
+**Route**: `/inventory`
+
+**Steps**:
+1. View material list with stock levels
+2. Low stock alerts highlighted
+3. Actions:
+   - Add new material
+   - Update stock levels
+   - Record consumption
+   - View expiry dates
+4. Backend via `material_*` commands
+
+**Frontend**: `frontend/src/app/inventory/page.tsx`
+
+**Backend**: `material_list`, `material_create`, `material_update_stock`
+
+---
+
+### Flow 9: Manage Clients
+
+**Routes**: `/clients`, `/clients/new`, `/clients/[id]`
+
+**Steps**:
+1. View client list with search
+2. Create new client:
+   - Name, email, phone
+   - Customer type (Individual/Business)
+   - Company info (if business)
+3. View client details:
+   - Contact info
+   - Task history
+   - Statistics
+4. Edit/Delete (Admin/Supervisor only)
+
+**Frontend**: `frontend/src/app/clients/`
+
+**Backend**: `client_crud` command
+
+---
+
+### Flow 10: View Calendar/Schedule
+
+**Route**: `/schedule`
+
+**Steps**:
+1. View calendar (day/week/month/agenda views)
+2. See tasks scheduled for dates
+3. Click task to view details
+4. Drag to reschedule (if permission)
+5. Conflict detection warnings
+
+**Frontend**: `frontend/src/app/schedule/page.tsx`, `frontend/src/components/calendar/`
+
+**Backend**: `calendar_get_tasks`, `calendar_check_conflicts`
+
+---
+
+## Common UI Patterns
 
 ### 1. Data Tables
-
-**Used for**: Task lists, client lists, material inventory
-
-**Features**:
 - Pagination (25, 50, 100 rows)
-- Sorting (click column header)
-- Filtering (search, status, date range)
+- Sorting (click header)
+- Filtering (search, status, date)
 - Row actions (view, edit, delete)
-- Bulk actions (select multiple, archive)
+- Bulk actions
 
-**Component**: `frontend/src/components/ui/DataTable.tsx`
-
----
+**Component**: `frontend/src/components/ui/DataTable.tsx`, `DesktopTable.tsx`
 
 ### 2. Modals
+- Confirmation: "Are you sure?"
+- Form: Quick create
+- Detail: View-only
 
-**Used for**: Confirmations, quick forms, details
-
-**Types**:
-- Confirmation modal: "Are you sure you want to delete?"
-- Form modal: Quick create (client, material)
-- Detail modal: View-only information
-
-**Component**: `frontend/src/components/ui/Dialog.tsx` (shadcn/ui)
-
----
+**Component**: `frontend/src/components/ui/dialog.tsx`, `sheet.tsx`
 
 ### 3. Toast Notifications
-
-**Used for**: Success, error, info messages
-
-**Examples**:
 - Success: "Task created successfully"
-- Error: "Failed to save changes"
-- Info: "Syncing data..."
-- Warning: "Low stock alert: PPF Film"
+- Error: "Failed to save"
+- Warning: "Low stock alert"
 
-**Component**: `frontend/src/components/ui/Toast.tsx`
-
----
+**Component**: `frontend/src/components/ui/toast.tsx`
 
 ### 4. Loading States
+- Button: Spinner + disabled
+- Page: Full-page spinner
+- Inline: Skeleton for rows
 
-**Patterns**:
-- Button loading: Spinner + disabled state
-- Page loading: Full-page spinner or skeleton
-- Inline loading: Skeleton for table rows
-- Lazy loading: Load more on scroll
-
-**Component**: `frontend/src/components/ui/Spinner.tsx`, `Skeleton.tsx`
+**Component**: `frontend/src/components/ui/skeleton.tsx`, `loading-spinner.tsx`
 
 ---
 
-## Accessibility (a11y) Considerations
+## Accessibility (a11y)
 
 ### Keyboard Navigation
-
-- ✅ All interactive elements accessible via Tab
-- ✅ Enter to submit forms
-- ✅ Esc to close modals
-- ✅ Arrow keys for navigation in lists
+- All interactive elements via Tab
+- Enter to submit
+- Esc to close modals
+- Arrow keys for lists
 
 ### Screen Reader Support
-
-- ✅ ARIA labels on icons
-- ✅ ARIA live regions for notifications
-- ✅ Semantic HTML (headings, landmarks)
+- ARIA labels on icons
+- ARIA live regions for notifications
+- Semantic HTML
 
 ### Color Contrast
-
-- ✅ WCAG AA compliance (4.5:1 for text)
-- ✅ Don't rely on color alone for status indication
+- WCAG AA compliance (4.5:1)
+- Status not by color alone
 
 ---
 
 ## Mobile Responsiveness
 
-**RPMA v2 is desktop-first** (Tauri desktop app), but the web frontend is responsive.
+**Desktop-first** (Tauri app), but web frontend is responsive.
 
 **Breakpoints**:
 - `sm`: 640px
@@ -504,40 +385,38 @@
 - `lg`: 1024px
 - `xl`: 1280px
 
-**Mobile-specific UX**:
-- Navigation: Collapsible sidebar → hamburger menu
-- Tables: Horizontal scroll or card view
-- Forms: Stack inputs vertically
+**Mobile adaptations**:
+- Collapsible sidebar → hamburger menu
+- Tables → horizontal scroll or card view
+- Forms → stacked inputs
 
 ---
 
-##  Design System Quick Reference
+## Design System Quick Reference
 
 | Element | Usage | Component |
 |---------|-------|-----------|
-| Primary Button | Main actions (Submit, Create) | `<Button variant="default">` |
-| Secondary Button | Alternative actions (Cancel, Back) | `<Button variant="outline">` |
-| Danger Button | Destructive actions (Delete) | `<Button variant="destructive">` |
-| Input Field | Text entry | `<Input type="text">` |
-| Select Dropdown | Choose from options | `<Select>` |
-| Checkbox | Boolean selection | `<Checkbox>` |
-| Radio Buttons | Exclusive selection | `<Radio>` |
-| Date Picker | Date selection | `<DatePicker>` |
-| Modal | Overlay dialog | `<Dialog>` |
+| Primary Button | Main actions | `<Button variant="default">` |
+| Secondary Button | Alternative | `<Button variant="outline">` |
+| Danger Button | Destructive | `<Button variant="destructive">` |
+| Input Field | Text entry | `<Input>` |
+| Select Dropdown | Options | `<Select>` |
+| Checkbox | Boolean | `<Checkbox>` |
+| Date Picker | Date | `<Calendar>` |
+| Modal | Overlay | `<Dialog>` |
 | Toast | Notification | `toast.success()` |
 
 **Color Palette**:
-- Primary: Blue (#3B82F6)
-- Success: Green (#10B981)
-- Warning: Yellow (#F59E0B)
-- Danger: Red (#EF4444)
-- Neutral: Gray (#6B7280)
+- Primary: Blue
+- Success: Green
+- Warning: Yellow
+- Danger: Red
+- Neutral: Gray
 
 **Typography**:
-- Font family: Inter (from Google Fonts)
+- Font: Inter
 - Headings: 700 weight
 - Body: 400 weight
-- Code: JetBrains Mono
 
 ---
 

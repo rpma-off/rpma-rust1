@@ -380,11 +380,8 @@ mod tests {
             counter: counter_clone,
         });
 
-        let event = event_factory::task_created(
-            "task-panic-1".to_string(),
-            "Panic Test".to_string(),
-            None,
-        );
+        let event =
+            event_factory::task_created("task-panic-1".to_string(), "Panic Test".to_string(), None);
         // publish should succeed even though PanickingHandler panics
         let result = event_bus.publish(event).await;
         assert!(result.is_ok());

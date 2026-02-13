@@ -226,7 +226,8 @@ mod tests {
         };
         let err = validate_date_range(&range).unwrap_err();
         assert!(
-            err.to_string().contains("Start date must be before end date"),
+            err.to_string()
+                .contains("Start date must be before end date"),
             "Expected start-before-end error, got: {}",
             err
         );
@@ -269,7 +270,8 @@ mod tests {
         };
         let err = validate_date_range(&range).unwrap_err();
         assert!(
-            err.to_string().contains("Start date must be before end date"),
+            err.to_string()
+                .contains("Start date must be before end date"),
             "Expected start-before-end error, got: {}",
             err
         );
@@ -337,7 +339,11 @@ mod tests {
     #[test]
     fn test_validate_filters_valid_priorities() {
         let filters = ReportFilters {
-            priorities: Some(vec!["low".to_string(), "high".to_string(), "urgent".to_string()]),
+            priorities: Some(vec![
+                "low".to_string(),
+                "high".to_string(),
+                "urgent".to_string(),
+            ]),
             ..ReportFilters::default()
         };
         assert!(validate_filters(&filters).is_ok());

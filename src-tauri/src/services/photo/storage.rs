@@ -547,7 +547,9 @@ mod tests {
     use super::*;
 
     async fn make_test_service(base_path: PathBuf) -> PhotoStorageService {
-        let db = crate::db::Database::new_in_memory().await.expect("create db");
+        let db = crate::db::Database::new_in_memory()
+            .await
+            .expect("create db");
         PhotoStorageService {
             db,
             storage_provider: StorageProvider::Local,

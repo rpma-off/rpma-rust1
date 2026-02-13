@@ -332,8 +332,7 @@ pub async fn delay_task(
     check_task_permissions(&session, &task, "edit")?;
 
     // Use CalendarService.schedule_task to update both task and calendar_events atomically
-    let calendar_service =
-        crate::services::calendar::CalendarService::new(state.db.clone());
+    let calendar_service = crate::services::calendar::CalendarService::new(state.db.clone());
     calendar_service
         .schedule_task(
             request.task_id.clone(),
@@ -482,9 +481,7 @@ pub fn check_task_permissions(
 ) -> Result<(), AppError> {
     match session.role {
         crate::models::auth::UserRole::Admin => Ok(()),
-        crate::models::auth::UserRole::Supervisor => {
-            Ok(())
-        }
+        crate::models::auth::UserRole::Supervisor => Ok(()),
         crate::models::auth::UserRole::Technician => {
             // Technician can only operate on their assigned tasks
             if task.technician_id.as_ref() == Some(&session.user_id) {

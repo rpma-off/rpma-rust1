@@ -13,7 +13,7 @@
 
 ### Offline-First Philosophy
 
-The application is designed to work **completely offline** with a local SQLite database. All data is stored locally, and future sync capabilities will push changes to a central server when online.
+The application is designed to work **completely offline** with a local SQLite database. All data is stored locally, and sync capabilities push changes to a central server when online.
 
 **Source of Truth**: The **local SQLite database** is the single source of truth for all application data.
 
@@ -38,7 +38,7 @@ The application is designed to work **completely offline** with a local SQLite d
 
 ### 1. **Tasks** 
 - Task creation, assignment, scheduling
-- Task lifecycle: Draft → Assigned → In Progress → Completed
+- Task lifecycle: Draft → Scheduled → In Progress → Completed
 - Integration with clients
 
 ### 2. **Clients**
@@ -88,33 +88,39 @@ The application is designed to work **completely offline** with a local SQLite d
 rpma-rust/
 ├── src-tauri/                # Rust/Tauri backend
 │   ├── src/
-│   │   ├── commands/         # IPC command handlers (~25 files by domain)
-│   │   │                     # auth.rs, client.rs, material.rs, calendar.rs,
-│   │   │                     # user.rs, message.rs, notification.rs, analytics.rs,
-│   │   │                     # performance.rs, system.rs, settings/, task/, intervention/, reports/
-│   │   ├── services/         # Business logic layer (~60 services)
-│   │   ├── repositories/     # Data access layer (~15 repositories)
-│   │   ├── models/           # Data models with ts-rs exports (~15 files)
+│   │   ├── commands/         # IPC command handlers
+│   │   │   ├── mod.rs        # Module exports, ApiResponse, AppState
+│   │   │   ├── auth.rs       # Authentication commands
+│   │   │   ├── client.rs     # Client CRUD
+│   │   │   ├── material.rs   # Inventory commands
+│   │   │   ├── calendar.rs   # Scheduling commands
+│   │   │   ├── user.rs       # User management
+│   │   │   ├── task/         # Task commands submodule
+│   │   │   ├── intervention/ # Intervention workflow submodule
+│   │   │   ├── reports/      # Reports submodule
+│   │   │   └── settings/     # Settings submodule
+│   │   ├── services/         # Business logic layer (~60 files)
+│   │   ├── repositories/     # Data access layer (~15 files)
+│   │   ├── models/           # Data models with ts-rs exports
 │   │   ├── db/               # Database management & migrations
 │   │   ├── sync/             # Offline sync queue
-│   │   ├── logging/          # Structured logging
-│   │   └── main.rs           # Application entry point
-│   ├── migrations/           # SQLite migrations (33+ migrations)
-│   └── Cargo.toml            # Rust dependencies
+│   │   └── lib.rs            # Module exports
+│   ├── Cargo.toml            # Rust dependencies
+│   └── src/bin/export-types.rs  # Type export binary
 ├── frontend/                 # Next.js application
 │   ├── src/
 │   │   ├── app/              # Next.js App Router pages (40+ routes)
-│   │   ├── components/       # React components (~180 files, organized by domain)
+│   │   ├── components/       # React components (~180 files)
 │   │   ├── lib/
-│   │   │   ├── ipc/          # IPC client modules (19 domain modules, ~65 files total)
-│   │   │   ├── services/     # Frontend business logic
-│   │   │   └── utils/        # Utility functions
-│   │   ├── types/            # TypeScript types (20+ files, auto-generated from Rust)
+│   │   │   ├── ipc/          # IPC client (client.ts, domains/, utils.ts, cache.ts)
+│   │   │   ├── stores/       # Zustand stores
+│   │   │   ├── services/     # Frontend services
+│   │   │   └── backend.ts    # Auto-generated types from Rust
 │   │   ├── hooks/            # Custom React hooks (~65 hooks)
 │   │   └── contexts/         # React contexts (4 contexts)
-│   └── package.json          # Frontend dependencies (20 npm scripts)
+│   └── package.json
 ├── scripts/                  # Build and validation scripts
-├── migrations/               # Root-level migration symlink
+├── migrations/               # SQLite migration files
 ├── package.json              # Root package.json (45 npm scripts)
 └── docs/                     # Documentation
     └── agent-pack/           # AI agent onboarding docs (this directory!)
@@ -140,21 +146,21 @@ Database (SQLite)
 ### 2. **Type Safety Everywhere**
 - Rust models use `#[derive(Serialize, TS)]` to export TypeScript types
 - Frontend uses **auto-generated** types from backend
-- **Never manually edit** `frontend/src/types/*.ts`
+- **Never manually edit** `frontend/src/lib/backend.ts`
 
 ### 3. **Offline-First + Event Bus**
 - All operations work offline
-- Domain events track state changes
-- Future sync queue will handle server synchronization
+- Domain events track state changes via `InMemoryEventBus`
+- Sync queue handles server synchronization
 
 ### 4. **Security by Default**
 - All protected IPC commands require `session_token`
-- RBAC enforcement at the command handler level
+- RBAC enforcement at the command handler level via `AuthMiddleware`
 - Audit logging for sensitive operations
 
 ---
 
-##  "Golden Paths" - Start Here
+## "Golden Paths" - Start Here
 
 ### For Backend Development:
 1. Read **[04_BACKEND_GUIDE.md](./04_BACKEND_GUIDE.md)** - How to add a new IPC command
@@ -205,8 +211,21 @@ npm run build
 
 - **Rust files**: `snake_case.rs` (e.g., `task_service.rs`, `client_repository.rs`)
 - **TypeScript files**: `kebab-case.ts` or `PascalCase.tsx` for components
-- **IPC commands**: `domain_action` format (e.g., `task_create`, `intervention_start`)
+- **IPC commands**: `domain_action` format (e.g., `task_crud`, `intervention_start`)
 - **Database tables**: `snake_case` (e.g., `tasks`, `interventions`, `intervention_steps`)
+
+---
+
+## Key Entry Points
+
+| Component | Entry Point | Location |
+|-----------|-------------|----------|
+| Frontend App | Root Layout | `frontend/src/app/layout.tsx` |
+| IPC Client | `ipcClient` | `frontend/src/lib/ipc/client.ts` |
+| Auth Middleware | `authenticate!` macro | `src-tauri/src/commands/auth_middleware.rs` |
+| Database Init | `Database::new()` | `src-tauri/src/db/mod.rs` |
+| Migrations | `Database::migrate()` | `src-tauri/src/db/migrations.rs` |
+| Type Export | `export-types` binary | `src-tauri/src/bin/export-types.rs` |
 
 ---
 

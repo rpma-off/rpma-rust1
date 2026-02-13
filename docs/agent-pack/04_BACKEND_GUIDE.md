@@ -6,100 +6,136 @@ The Rust/Tauri backend is organized into distinct layers following clean archite
 
 ```
 src-tauri/src/
-├── commands/                # IPC command handlers (Layer 1: Entry points)
-│   ├── mod.rs               # Re-exports all commands
+├── commands/                # IPC command handlers (Layer 1)
+│   ├── mod.rs               # Exports ApiResponse, AppState
+│   ├── errors.rs            # AppError enum
+│   ├── auth_middleware.rs   # authenticate! macro, permission checks
 │   ├── auth.rs              # Authentication commands
-│   ├── task/                # Task commands (~7 files: facade, queries, validation, etc.)
-│   ├── intervention/        # Intervention workflow commands (~5 files)
-│   ├── reports/             # Reports commands with subfolders
-│   │   ├── generation/      # Report generation commands
-│   │   └── export/          # Export commands (PDF, data, etc.)
-│   ├── settings/            # Settings commands (~7 files: profile, security, preferences, etc.)
-│   ├── client.rs            # Client CRUD commands
+│   ├── client.rs            # Client CRUD (client_crud)
 │   ├── material.rs          # Material/inventory commands
-│   ├── calendar.rs          # Calendar/scheduling commands
-│   ├── security.rs          # Security-related commands
-│   ├── analytics.rs         # Analytics commands
-│   ├── notification.rs      # Notification commands
-│   ├── websocket.rs         # WebSocket commands
-│   └── ...
-├── services/                # Business logic layer (Layer 2) - ~80 files
+│   ├── calendar.rs          # Calendar/scheduling
+│   ├── user.rs              # User management
+│   ├── analytics.rs         # Analytics
+│   ├── notification.rs      # Notifications
+│   ├── performance.rs       # Performance metrics
+│   ├── system.rs            # System info, health checks
+│   ├── task/                # Task commands submodule
+│   │   ├── mod.rs
+│   │   ├── facade.rs        # task_crud, edit_task, delay_task, etc.
+│   │   ├── queries.rs       # get_tasks_with_clients, statistics
+│   │   ├── validation.rs    # check_task_availability, assignment
+│   │   └── statistics.rs
+│   ├── intervention/        # Intervention workflow submodule
+│   │   ├── mod.rs
+│   │   ├── workflow.rs      # intervention_start, advance_step, finalize
+│   │   ├── queries.rs       # get, get_active_by_task, progress
+│   │   └── data_access.rs   # update, get_step
+│   ├── reports/             # Reports submodule
+│   │   ├── mod.rs           # export_report_data, save_intervention_report
+│   │   ├── core.rs
+│   │   ├── search.rs
+│   │   ├── generation/
+│   │   └── export/
+│   └── settings/            # Settings submodule
+│       ├── mod.rs
+│       ├── core.rs
+│       ├── profile.rs
+│       ├── preferences.rs
+│       └── security.rs
+├── services/                # Business logic (Layer 2) - ~80 files
 │   ├── mod.rs
-│   ├── task.rs              # Core task service
-│   ├── task_validation.rs   # Task validation logic
-│   ├── task_creation.rs     # Task creation workflow
-│   ├── task_update.rs       # Task update operations
-│   ├── task_deletion.rs     # Task deletion logic
-│   ├── task_queries.rs      # Task query operations
-│   ├── task_statistics.rs   # Task statistics
-│   ├── intervention.rs
+│   ├── auth.rs              # AuthService: login, password hashing (Argon2)
+│   ├── session.rs           # SessionService: lifecycle management
+│   ├── token.rs             # TokenService: JWT generation/validation
+│   ├── two_factor.rs        # TwoFactorService: TOTP setup/verification
+│   ├── rate_limiter.rs      # RateLimiterService: request limiting
+│   ├── security_monitor.rs  # SecurityMonitorService: event monitoring
+│   ├── user.rs              # UserService
+│   ├── client.rs            # ClientService
+│   ├── client_validation.rs
+│   ├── client_statistics.rs
+│   ├── task.rs              # TaskService
+│   ├── task_creation.rs     # TaskCreationService
+│   ├── task_update.rs
+│   ├── task_deletion.rs
+│   ├── task_validation.rs
+│   ├── task_queries.rs
+│   ├── task_statistics.rs
+│   ├── intervention.rs      # InterventionService
 │   ├── intervention_workflow.rs
 │   ├── intervention_validation.rs
-│   ├── auth.rs              # Authentication service
-│   ├── session.rs           # Session management
-│   ├── two_factor.rs        # Two-factor authentication
-│   ├── token.rs             # Token management
-│   ├── rate_limiter.rs      # Rate limiting
-│   ├── security_monitor.rs  # Security monitoring
-│   ├── material.rs
-│   ├── geo.rs               # Geolocation services
-│   ├── prediction.rs        # Prediction/analytics
-│   ├── dashboard.rs         # Dashboard aggregation
-│   ├── audit_service.rs     # Audit logging
-│   ├── photo/               # Photo services (upload, storage, processing, etc.)
-│   ├── reports/             # Report generation services (~13 files)
+│   ├── material.rs          # MaterialService
+│   ├── calendar.rs          # CalendarService
+│   ├── calendar_event_service.rs
+│   ├── dashboard.rs         # DashboardService
+│   ├── analytics.rs         # AnalyticsService
+│   ├── cache.rs             # CacheService
+│   ├── event_bus.rs         # InMemoryEventBus
+│   ├── event_system.rs      # Domain event definitions
+│   ├── domain_event.rs      # EventEnvelope, EventMetadata
+│   ├── audit_service.rs     # AuditService
+│   ├── validation.rs        # ValidationService
+│   ├── photo/               # Photo services
+│   ├── reports/             # Report generation
 │   └── ...
-├── repositories/            # Data access layer (Layer 3) - ~18 files
+├── repositories/            # Data access (Layer 3) - ~18 files
 │   ├── mod.rs
-│   ├── base.rs              # Repository trait
-│   ├── factory.rs           # Repository factory pattern
+│   ├── base.rs              # Repository trait, RepoError, RepoResult
+│   ├── factory.rs           # Repositories container
+│   ├── cache.rs             # In-memory cache
+│   ├── user_repository.rs
+│   ├── client_repository.rs
 │   ├── task_repository.rs
 │   ├── task_history_repository.rs
-│   ├── client_repository.rs
+│   ├── task_repository_streaming.rs
 │   ├── intervention_repository.rs
-│   ├── user_repository.rs
-│   ├── session_repository.rs
 │   ├── material_repository.rs
 │   ├── photo_repository.rs
-│   ├── notification_repository.rs
+│   ├── session_repository.rs
 │   ├── calendar_event_repository.rs
 │   ├── audit_repository.rs
 │   └── ...
-├── models/                  # Data models (DTOs, entities)
+├── models/                  # Data models with ts-rs exports
 │   ├── mod.rs
-│   ├── task.rs              # Task + related types
-│   ├── client.rs
-│   ├── intervention.rs
-│   ├── auth.rs              # User, Session, UserRole
-│   ├── material.rs
+│   ├── task.rs              # Task, TaskStatus, TaskPriority, CreateTaskRequest
+│   ├── client.rs            # Client, CustomerType, ClientQuery
+│   ├── intervention.rs      # Intervention, InterventionStatus
+│   ├── step.rs              # InterventionStep, StepStatus
+│   ├── auth.rs              # UserSession, UserRole, UserAccount, DeviceInfo
+│   ├── user.rs              # UserRole
+│   ├── material.rs          # Material, MaterialType, InventoryTransaction
+│   ├── photo.rs             # Photo
+│   ├── calendar.rs          # CalendarEvent
+│   ├── calendar_event.rs
+│   ├── settings.rs          # Settings types
+│   ├── sync.rs              # SyncOperation, SyncStatus
 │   └── ...
 ├── db/                      # Database management
-│   ├── mod.rs               # Database wrapper
-│   ├── connection.rs        # Connection pooling
-│   ├── migrations.rs        # Migration runner
-│   └── ...
-├── sync/                    # Sync queue & background worker
+│   ├── mod.rs               # Database, AsyncDatabase wrappers
+│   ├── connection.rs        # PoolConfig, QueryPerformanceMonitor
+│   ├── migrations.rs        # Migration runner (versions 1-33+)
+│   ├── schema.sql           # Base schema
+│   └── utils.rs
+├── sync/                    # Sync queue
+│   ├── queue.rs             # SyncQueue service
+│   └── background.rs        # BackgroundSyncService
 ├── logging/                 # Structured logging
-├── lib.rs                   # Library entry (for export-types binary)
-└── main.rs                  # Application entry point
+├── lib.rs                   # Module exports
+└── bin/
+    └── export-types.rs      # Type export binary for ts-rs
 ```
 
 ---
 
-##  How to Implement a New IPC Command (End-to-End)
+## How to Implement a New IPC Command (End-to-End)
 
 ### Example: Add "Archive Task" Feature
 
-We want to add a new IPC command: `task_archive(task_id: String) -> ApiResponse<Task>`
-
----
-
-#### Step 1: Define Model / Request Types (if needed)
+#### Step 1: Define Model (if needed)
 
 **Location**: `src-tauri/src/models/task.rs`
 
 ```rust
-// If we need a custom request type:
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct ArchiveTaskRequest {
@@ -108,368 +144,188 @@ pub struct ArchiveTaskRequest {
 }
 ```
 
-**Note**: For simple operations, we often reuse existing types. Here, we can just pass `task_id` directly.
-
----
-
 #### Step 2: Add Repository Method
 
 **Location**: `src-tauri/src/repositories/task_repository.rs`
 
 ```rust
-use crate::db::{Database, RepoResult};
-use crate::models::task::Task;
-
 impl TaskRepository {
-    /// Archive a task by ID
     pub fn archive_task(&self, task_id: &str) -> RepoResult<Task> {
         let conn = self.db.get_connection()
-            .map_err(|e| RepoError::ConnectionError(e.to_string()))?;
+            .map_err(|e| RepoError::Database(e.to_string()))?;
 
-        // Update task status to 'archived'
-        let updated_count = conn.execute(
+        conn.execute(
             "UPDATE tasks SET status = ?, updated_at = ? WHERE id = ?",
             params!["archived", chrono::Utc::now().timestamp_millis(), task_id],
-        ).map_err(|e| RepoError::QueryError(format!("Failed to archive task: {}", e)))?;
+        ).map_err(|e| RepoError::Database(e.to_string()))?;
 
-        if updated_count == 0 {
-            return Err(RepoError::NotFound(format!("Task {} not found", task_id)));
-        }
-
-        // Fetch and return updated task
-        self.get_by_id(task_id)
+        self.get_by_id(task_id)?.ok_or(RepoError::NotFound(format!("Task {} not found", task_id)))
     }
 }
 ```
 
----
-
-#### Step 3: Add Service Method (Business Logic)
+#### Step 3: Add Service Method
 
 **Location**: `src-tauri/src/services/task.rs`
 
 ```rust
-use crate::repositories::TaskRepository;
-use crate::commands::AppError;
-use crate::models::Task;
-
-pub struct TaskService {
-    task_repo: Arc<TaskRepository>,
-}
-
 impl TaskService {
-    /// Archive a task
-    /// 
-    /// Business rules:
-    /// - Task must be in 'completed' or 'cancelled' status
-    /// - User must have Admin or Supervisor role
     pub async fn archive_task(
         &self,
         task_id: &str,
-        user_id: &str,
         user_role: &UserRole,
     ) -> Result<Task, AppError> {
-        // 1. Authorization check
         if !matches!(user_role, UserRole::Admin | UserRole::Supervisor) {
-            return Err(AppError::Authorization(
-                "Only admins and supervisors can archive tasks".into()
-            ));
+            return Err(AppError::Authorization("Only admins and supervisors can archive".into()));
         }
 
-        // 2. Load task to validate status
-        let task = self.task_repo.get_by_id(task_id)
-            .map_err(|e| AppError::Database(format!("Failed to load task: {}", e)))?
-            .ok_or_else(|| AppError::NotFound(format!("Task {} not found", task_id)))?;
+        let task = self.task_repo.get_by_id(task_id)?
+            .ok_or(AppError::NotFound("Task not found".into()))?;
 
-        // 3. Validate business rule
         if !matches!(task.status, TaskStatus::Completed | TaskStatus::Cancelled) {
-            return Err(AppError::Validation(
-                "Only completed or cancelled tasks can be archived".into()
-            ));
+            return Err(AppError::Validation("Only completed/cancelled tasks can be archived".into()));
         }
 
-        // 4. Archive the task
-        let archived_task = self.task_repo.archive_task(task_id)
-            .map_err(|e| AppError::Database(format!("Failed to archive task: {}", e)))?;
-
-        // 5. Optional: Publish domain event
-        // self.event_bus.publish(TaskArchived { task_id: task_id.to_string() });
-
-        Ok(archived_task)
+        self.task_repo.archive_task(task_id)
+            .map_err(|e| AppError::Database(e.to_string()))
     }
 }
 ```
 
----
-
 #### Step 4: Add Command Handler
 
-**Location**: `src-tauri/src/commands/task/archive.rs`
+**Location**: `src-tauri/src/commands/task/facade.rs`
 
 ```rust
-use crate::commands::{AppError, ApiResponse, AppState};
-use crate::models::Task;
-use serde::{Deserialize, Serialize};
-use tauri::State;
-use tracing::instrument;
-
-#[derive(Debug, Deserialize)]
-pub struct ArchiveTaskParams {
-    pub task_id: String,
-    pub session_token: String,
-}
-
-/// Archive a task
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn task_archive(
-    params: ArchiveTaskParams,
-    state: AppState<'_>,
+    session_token: String,
+    task_id: String,
+    state: State<'_, AppState>,
 ) -> Result<ApiResponse<Task>, AppError> {
-    // 1. Authenticate
-    let session = state.auth_service
-        .validate_session(&params.session_token)
-        .await?
-        .ok_or(AppError::Authentication("Invalid session".into()))?;
-
-    // 2. Execute service method
+    let session = authenticate!(&session_token, &state);
+    
     let task = state.task_service
-        .archive_task(&params.task_id, &session.user_id, &session.user_role)
+        .archive_task(&task_id, &session.role)
         .await?;
 
-    // 3. Return success response
     Ok(ApiResponse::success(task))
 }
 ```
 
----
-
-#### Step 5: Register Command in `main.rs`
+#### Step 5: Register Command
 
 **Location**: `src-tauri/src/main.rs`
 
 ```rust
-// Import the new command
-use commands::task::task_archive;
-
-// Register in invoke_handler
-fn main() {
-    tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![
-            // ... existing commands
-            task_create,
-            task_update,
-            task_archive,  // ← Add this line
-            // ... more commands
-        ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
-}
+.invoke_handler(tauri::generate_handler![
+    // ... existing
+    task_archive,
+])
 ```
 
----
-
 #### Step 6: Run Type Sync
-
-**This regenerates TypeScript types for the frontend.**
 
 ```bash
 npm run types:sync
 ```
 
-This will:
-1. Run `cargo run --bin export-types` (exports Rust types to JSON)
-2. Parse JSON and generate `frontend/src/types/*.ts`
-
----
-
 #### Step 7: Add Frontend IPC Function
 
-**Location**: `frontend/src/lib/ipc/domains/task.ts`
+**Location**: `frontend/src/lib/ipc/domains/tasks.ts`
 
 ```typescript
-import { invoke } from '@tauri-apps/api/core';
-import type { ApiResponse, Task } from '@/types';
-
 export async function archiveTask(
   sessionToken: string,
   taskId: string
 ): Promise<ApiResponse<Task>> {
-  return await invoke('task_archive', {
-    params: { task_id: taskId, session_token: sessionToken }
-  });
+  return await invoke('task_archive', { sessionToken, taskId });
 }
-```
-
----
-
-#### Step 8: Use in Frontend
-
-```typescript
-import { archiveTask } from '@/lib/ipc/domains/task';
-
-const handleArchive = async (taskId: string) => {
-  const result = await archiveTask(sessionToken, taskId);
-  if (result.success) {
-    toast.success('Task archived!');
-  } else {
-    toast.error(result.error?.message || 'Failed to archive task');
-  }
-};
 ```
 
 ---
 
 ## Error Model & Handling
 
-### AppError Enum
-
-**Location**: `src-tauri/src/commands/errors.rs`
+### AppError Enum (`src-tauri/src/commands/errors.rs`)
 
 ```rust
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[serde(tag = "type", content = "message")]
 pub enum AppError {
-    // Authentication errors
     Authentication(String),
     Authorization(String),
-    
-    // Validation errors
     Validation(String),
     NotFound(String),
-    
-    // Database errors
     Database(String),
-    
-    // Business logic errors
+    Internal(String),
+    Network(String),
+    RateLimit(String),
+    Sync(String),
     InterventionAlreadyActive(String),
     InterventionInvalidState(String),
-    InterventionStepNotFound(String),
-    InterventionStepOutOfOrder(String),
-    
-    // Internal errors
-    Internal(String),
-}
-
-impl AppError {
-    pub fn code(&self) -> &str {
-        match self {
-            AppError::Authentication(_) => "AUTH_ERROR",
-            AppError::Authorization(_) => "AUTHORIZATION_ERROR",
-            AppError::Validation(_) => "VALIDATION_ERROR",
-            AppError::NotFound(_) => "NOT_FOUND",
-            AppError::Database(_) => "DATABASE_ERROR",
-            AppError::InterventionAlreadyActive(_) => "INTERVENTION_ALREADY_ACTIVE",
-            AppError::Internal(_) => "INTERNAL_ERROR",
-            _ => "UNKNOWN_ERROR",
-        }
-    }
+    TaskInvalidTransition(String),
+    TaskDuplicateNumber(String),
+    // ...
 }
 ```
 
 ### Error Handling Best Practices
 
-**✅ Do**:
 ```rust
-// Return specific error types
+// ✅ Return specific error types
 if task.status != TaskStatus::Draft {
     return Err(AppError::Validation(
         format!("Cannot edit task in '{}' status", task.status)
     ));
 }
 
-// Use map_err to convert repository errors
+// ✅ Use map_err to convert repository errors
 task_repo.get_by_id(task_id)
     .map_err(|e| AppError::Database(format!("Failed to fetch task: {}", e)))?;
-```
 
-**❌ Don't**:
-```rust
-// Too generic
-return Err(AppError::Internal("Something went wrong".into()));
-
-// Exposing internal details to frontend
-return Err(AppError::Internal(format!("SQL error: {}", e)));
+// ❌ Don't expose internal details
+return Err(AppError::Internal(format!("SQL error: {}", e)));  // BAD
+return Err(AppError::Database("Failed to fetch task".into())); // GOOD
 ```
 
 ---
 
-##  Validation Patterns
+## Authentication Middleware
 
-### Input Validation (Command Layer)
-
-```rust
-#[tauri::command]
-pub async fn task_create(
-    params: CreateTaskParams,
-    state: AppState<'_>,
-) -> Result<ApiResponse<Task>, AppError> {
-    // 1. Validate session token
-    let session = authenticate!(&params.session_token, &state);
-
-    // 2. Validate input data
-    if params.data.title.trim().is_empty() {
-        return Err(AppError::Validation("Title cannot be empty".into()));
-    }
-
-    if params.data.priority.is_none() {
-        return Err(AppError::Validation("Priority is required".into()));
-    }
-
-    // 3. Delegate to service
-    let task = state.task_service.create_task(params.data, &session.user_id).await?;
-    Ok(ApiResponse::success(task))
-}
-```
-
-### Business Validation (Service Layer)
+### authenticate! Macro (`src-tauri/src/commands/auth_middleware.rs`)
 
 ```rust
-impl InterventionService {
-    pub async fn start_intervention(&self, task_id: &str, user_id: &str) -> Result<Intervention, AppError> {
-        // 1. Load task
-        let task = self.task_repo.get_by_id(task_id)?
-            .ok_or(AppError::NotFound("Task not found".into()))?;
+// Basic authentication
+let session = authenticate!(&session_token, &state);
 
-        // 2. Business rules
-        if task.status != TaskStatus::Assigned {
-            return Err(AppError::Validation(
-                format!("Cannot start intervention: task is in '{}' status", task.status)
-            ));
-        }
+// With required role
+let session = authenticate!(&session_token, &state, UserRole::Admin);
 
-        // 3. Check for active interventions
-        if let Some(active) = self.intervention_repo.get_active_by_task(task_id)? {
-            return Err(AppError::InterventionAlreadyActive(
-                format!("Intervention {} is already active for this task", active.id)
-            ));
-        }
-
-        // 4. Create intervention
-        // ...
-    }
-}
+// Permission checks
+check_task_permission!(&user.role, "delete");
+check_client_permission!(&user.role, "update");
 ```
+
+### AuthMiddleware Methods
+
+| Method | Purpose | Location |
+|--------|---------|----------|
+| `authenticate()` | Validates session token | Line 27-66 |
+| `has_permission()` | Checks role hierarchy | Line 76-95 |
+| `can_perform_task_operation()` | Task-specific permissions | Line 107-126 |
+| `can_perform_client_operation()` | Client permissions | Line 136-139 |
+| `can_perform_user_operation()` | User management | Line 150-177 |
 
 ---
 
-##  Logging & Tracing
-
-RPMA uses **tracing** for structured logging.
-
-### Adding Instrumentation
+## Logging & Tracing
 
 ```rust
 use tracing::{info, warn, error, instrument};
 
 #[instrument(skip(state), fields(task_id = %params.task_id))]
-pub async fn task_archive(
-    params: ArchiveTaskParams,
-    state: AppState<'_>,
-) -> Result<ApiResponse<Task>, AppError> {
+pub async fn task_archive(...) -> Result<ApiResponse<Task>, AppError> {
     info!("Archiving task");
-
-    // Business logic...
 
     if let Err(e) = result {
         error!(error = %e, "Failed to archive task");
@@ -481,225 +337,47 @@ pub async fn task_archive(
 }
 ```
 
-**Logging Levels**:
-- `trace!()` - Very detailed (disabled in production)
-- `debug!()` - Development debugging
-- `info!()` - Normal operation events
-- `warn!()` - Recoverable issues
-- `error!()` - Unrecoverable errors
-
-**Structured Fields**:
-```rust
-info!(
-    task_id = %task_id,
-    user_id = %user_id,
-    status = %task.status,
-    "Task created"
-);
-```
-
 ---
 
-##  Performance Best Practices
-
-### 1. Use Async Database Wrapper for Non-Blocking Operations
-
-```rust
-// ❌ Blocks async runtime
-let result = db.execute_sync(query);
-
-// ✅ Non-blocking
-let result = async_db.execute_async(query).await;
-```
-
-### 2. Batch Operations
-
-```rust
-// ❌ N+1 query problem
-for material_id in material_ids {
-    material_repo.get_by_id(material_id)?;
-}
-
-// ✅ Batch query
-let materials = material_repo.get_by_ids(&material_ids)?;
-```
-
-### 3. Use Transactions for Multi-Step Operations
-
-```rust
-db.with_transaction(|tx| {
-    // All operations within the same transaction
-    intervention_repo.create(tx, intervention)?;
-    step_repo.create_batch(tx, steps)?;
-    task_repo.update_status(tx, task_id, TaskStatus::InProgress)?;
-    Ok(intervention)
-})?;
-```
-
-### 4. Cache Expensive Queries
-
-```rust
-// Use CacheService for frequently accessed data
-let stats = cache_service.get_or_insert(
-    "dashboard_stats",
-    Duration::from_secs(300), // 5 min TTL
-    || dashboard_service.compute_stats()
-).await?;
-```
-
----
-
-##  Testing Backend Code
-
-### Unit Tests
-
-**Location**: `src-tauri/src/services/task_validation.rs`
-
-```rust
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_validate_task_title() {
-        let result = validate_title("");
-        assert!(result.is_err());
-
-        let result = validate_title("Valid Title");
-        assert!(result.is_ok());
-    }
-
-    #[tokio::test]
-    async fn test_create_task() {
-        let db = Database::new_in_memory().await.unwrap();
-        let task_repo = TaskRepository::new(db.clone());
-        let task_service = TaskService::new(task_repo);
-
-        let request = CreateTaskRequest {
-            title: "Test Task".into(),
-            priority: Some(TaskPriority::Medium),
-            ..Default::default()
-        };
-
-        let result = task_service.create_task(request, "user_123").await;
-        assert!(result.is_ok());
-    }
-}
-```
-
-### Integration Tests
-
-**Location**: `src-tauri/tests/intervention_workflow_test.rs`
-
-```rust
-#[tokio::test]
-async fn test_full_intervention_workflow() {
-    // 1. Setup test database
-    let db = Database::new_in_memory().await.unwrap();
-
-    // 2. Create task
-    let task = create_test_task(&db).await;
-
-    // 3. Start intervention
-    let intervention = start_intervention(&db, &task.id).await;
-    assert_eq!(intervention.status, InterventionStatus::InProgress);
-
-    // 4. Complete steps
-    for step in intervention.steps {
-        complete_step(&db, &step.id).await;
-    }
-
-    // 5. Verify intervention completed
-    let intervention = load_intervention(&db, &intervention.id).await;
-    assert_eq!(intervention.status, InterventionStatus::Completed);
-}
-```
-
-**Run Tests**:
-```bash
-cd src-tauri
-cargo test
-```
-
----
-
-##  Code Patterns & Macros
-
-### Authentication Macro
-
-**Usage**:
-```rust
-use crate::authenticate;
-
-#[tauri::command]
-pub async fn protected_command(
-    session_token: String,
-    state: AppState<'_>,
-) -> Result<ApiResponse<Data>, AppError> {
-    // Validates session and extracts user
-    let current_user = authenticate!(&session_token, &state);
-
-    // current_user is a Session struct with user_id, user_role, etc.
-    // ...
-}
-```
-
-**Definition**: `src-tauri/src/commands/auth_middleware.rs`
-
----
-
-##  Repository Trait
-
-**Location**: `src-tauri/src/repositories/base.rs`
-
-```rust
-pub trait Repository<T, ID> {
-    fn create(&self, entity: &T) -> RepoResult<T>;
-    fn get_by_id(&self, id: ID) -> RepoResult<Option<T>>;
-    fn update(&self, entity: &T) -> RepoResult<T>;
-    fn delete(&self, id: ID) -> RepoResult<()>;
-    fn list(&self, filters: Option<QueryFilters>) -> RepoResult<Vec<T>>;
-}
-```
-
-**Example Implementation**:
-```rust
-impl Repository<Task, String> for TaskRepository {
-    fn create(&self, task: &Task) -> RepoResult<Task> {
-        // Implementation
-    }
-    // ...
-}
-```
-
----
-
-##  Key Services Reference
+## Key Services Reference
 
 | Service | Purpose | Location |
 |---------|---------|----------|
-| `AuthService` | User authentication, session management | `services/auth.rs` |
-| `SessionService` | Session lifecycle management | `services/session.rs` |
-| `TwoFactorService` | Two-factor authentication | `services/two_factor.rs` |
-| `TokenService` | JWT token management | `services/token.rs` |
-| `RateLimiterService` | Request rate limiting | `services/rate_limiter.rs` |
+| `AuthService` | Authentication, password hashing | `services/auth.rs` |
+| `SessionService` | Session lifecycle | `services/session.rs` |
+| `TokenService` | JWT generation (2h access, 7d refresh) | `services/token.rs` |
+| `TwoFactorService` | TOTP 2FA (6-digit, 30s window) | `services/two_factor.rs` |
+| `RateLimiterService` | Request limiting (5 attempts, 15m lockout) | `services/rate_limiter.rs` |
 | `SecurityMonitorService` | Security event monitoring | `services/security_monitor.rs` |
-| `TaskService` | Task CRUD, assignment, validation | `services/task.rs` |
-| `TaskCreationService` | Task creation workflow | `services/task_creation.rs` |
-| `TaskValidationService` | Task validation logic | `services/task_validation.rs` |
-| `InterventionService` | Intervention workflow, step progression | `services/intervention.rs` |
-| `InterventionWorkflowService` | Intervention state machine | `services/intervention_workflow.rs` |
-| `MaterialService` | Inventory management, stock tracking | `services/material.rs` |
+| `TaskService` | Task CRUD, assignment | `services/task.rs` |
+| `InterventionService` | Workflow management | `services/intervention.rs` |
+| `MaterialService` | Inventory management | `services/material.rs` |
+| `CalendarService` | Scheduling | `services/calendar.rs` |
 | `CacheService` | In-memory caching | `services/cache.rs` |
-| `EventBus` | Domain event publishing | `services/event_bus.rs` |
-| `PredictionService` | Analytics predictions | `services/prediction.rs` |
-| `GeoService` | Geolocation services | `services/geo.rs` |
-| `DashboardService` | Dashboard data aggregation | `services/dashboard.rs` |
-| `AuditService` | Audit trail logging | `services/audit_service.rs` |
+| `InMemoryEventBus` | Domain events | `services/event_bus.rs` |
+| `SyncQueue` | Offline sync queue | `sync/queue.rs` |
 
 ---
 
-##  Next Steps
+## Testing Backend Code
+
+```bash
+# All tests
+cd src-tauri && cargo test --lib
+
+# Specific test
+cd src-tauri && cargo test test_create_task
+
+# Migration tests
+cd src-tauri && cargo test migration
+
+# Performance tests
+cd src-tauri && cargo test performance
+```
+
+---
+
+## Next Steps
 
 - **IPC API reference**: [05_IPC_API_AND_CONTRACTS.md](./05_IPC_API_AND_CONTRACTS.md)
 - **Security & RBAC**: [06_SECURITY_AND_RBAC.md](./06_SECURITY_AND_RBAC.md)

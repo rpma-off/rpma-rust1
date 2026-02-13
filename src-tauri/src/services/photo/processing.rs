@@ -398,16 +398,14 @@ impl PhotoProcessingService {
         let thumb_path = Self::thumbnail_path(original_path);
 
         let target_path = thumb_path.clone();
-        tokio::task::spawn_blocking(move || {
-            Self::generate_thumbnail_blocking(&data, &target_path)
-        })
-        .await
-        .map_err(|e| {
-            crate::services::photo::PhotoError::Processing(format!(
-                "Thumbnail generation task failed: {}",
-                e
-            ))
-        })??;
+        tokio::task::spawn_blocking(move || Self::generate_thumbnail_blocking(&data, &target_path))
+            .await
+            .map_err(|e| {
+                crate::services::photo::PhotoError::Processing(format!(
+                    "Thumbnail generation task failed: {}",
+                    e
+                ))
+            })??;
 
         Ok(thumb_path)
     }
@@ -469,10 +467,7 @@ impl PhotoProcessingService {
             ))
         })?;
 
-        tracing::info!(
-            "Thumbnail generated: {}",
-            output_path.display()
-        );
+        tracing::info!("Thumbnail generated: {}", output_path.display());
         Ok(())
     }
 

@@ -187,11 +187,7 @@ mod tests {
             };
 
             workflow_service
-                .advance_step(
-                    complete_request,
-                    "test-correlation-id",
-                    Some("test_user"),
-                )
+                .advance_step(complete_request, "test-correlation-id", Some("test_user"))
                 .await?;
         }
 
@@ -226,7 +222,11 @@ mod tests {
             finalize_response.intervention.final_observations,
             Some(vec!["Excellent quality work".to_string()])
         );
-        assert!(finalize_response.intervention.completed_at.inner().is_some());
+        assert!(finalize_response
+            .intervention
+            .completed_at
+            .inner()
+            .is_some());
 
         Ok(())
     }
@@ -303,8 +303,7 @@ mod tests {
             .steps
             .iter()
             .filter(|s| {
-                s.is_mandatory
-                    && s.step_type != crate::models::step::StepType::Finalization
+                s.is_mandatory && s.step_type != crate::models::step::StepType::Finalization
             })
             .collect();
 
@@ -360,8 +359,7 @@ mod tests {
         );
         let err_msg = result.unwrap_err().to_string();
         assert!(
-            err_msg.contains("previous step")
-                || err_msg.contains("not completed"),
+            err_msg.contains("previous step") || err_msg.contains("not completed"),
             "Error should mention previous step not completed, got: {}",
             err_msg
         );
@@ -397,8 +395,7 @@ mod tests {
             workflow_service.start_intervention(request, "test_user", "test-correlation-id")?;
 
         // Get intervention by ID
-        let retrieved =
-            workflow_service.get_intervention_by_id(&response.intervention.id)?;
+        let retrieved = workflow_service.get_intervention_by_id(&response.intervention.id)?;
 
         assert!(retrieved.is_some());
         let intervention = retrieved.unwrap();

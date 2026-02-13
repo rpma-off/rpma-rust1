@@ -310,7 +310,12 @@ impl CalendarService {
     ) -> Result<ConflictDetection, AppError> {
         // Check for conflicts first
         let conflicts = self
-            .check_conflicts(task_id.clone(), new_date.clone(), new_start.clone(), new_end.clone())
+            .check_conflicts(
+                task_id.clone(),
+                new_date.clone(),
+                new_start.clone(),
+                new_end.clone(),
+            )
             .await?;
 
         if conflicts.has_conflict {
@@ -329,7 +334,6 @@ impl CalendarService {
         })
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -386,12 +390,33 @@ mod tests {
         let service = CalendarService::new(db.clone());
 
         // Existing task: 09:00-11:00
-        insert_test_task(&db, "task-existing", "tech1", "2025-06-15", Some("09:00"), Some("11:00"), "pending");
+        insert_test_task(
+            &db,
+            "task-existing",
+            "tech1",
+            "2025-06-15",
+            Some("09:00"),
+            Some("11:00"),
+            "pending",
+        );
         // New task: 10:00-12:00 (overlaps)
-        insert_test_task(&db, "task-new", "tech1", "2025-06-15", None, None, "pending");
+        insert_test_task(
+            &db,
+            "task-new",
+            "tech1",
+            "2025-06-15",
+            None,
+            None,
+            "pending",
+        );
 
         let result = service
-            .check_conflicts("task-new".to_string(), "2025-06-15".to_string(), Some("10:00".to_string()), Some("12:00".to_string()))
+            .check_conflicts(
+                "task-new".to_string(),
+                "2025-06-15".to_string(),
+                Some("10:00".to_string()),
+                Some("12:00".to_string()),
+            )
             .await
             .expect("check_conflicts failed");
 
@@ -407,12 +432,33 @@ mod tests {
         let service = CalendarService::new(db.clone());
 
         // Existing task: 09:00-10:00
-        insert_test_task(&db, "task-existing", "tech1", "2025-06-15", Some("09:00"), Some("10:00"), "pending");
+        insert_test_task(
+            &db,
+            "task-existing",
+            "tech1",
+            "2025-06-15",
+            Some("09:00"),
+            Some("10:00"),
+            "pending",
+        );
         // New task: 10:00-11:00 (adjacent, not overlapping)
-        insert_test_task(&db, "task-new", "tech1", "2025-06-15", None, None, "pending");
+        insert_test_task(
+            &db,
+            "task-new",
+            "tech1",
+            "2025-06-15",
+            None,
+            None,
+            "pending",
+        );
 
         let result = service
-            .check_conflicts("task-new".to_string(), "2025-06-15".to_string(), Some("10:00".to_string()), Some("11:00".to_string()))
+            .check_conflicts(
+                "task-new".to_string(),
+                "2025-06-15".to_string(),
+                Some("10:00".to_string()),
+                Some("11:00".to_string()),
+            )
             .await
             .expect("check_conflicts failed");
 
@@ -426,16 +472,40 @@ mod tests {
         let service = CalendarService::new(db.clone());
 
         // Existing task: 10:00-11:00
-        insert_test_task(&db, "task-existing", "tech1", "2025-06-15", Some("10:00"), Some("11:00"), "pending");
+        insert_test_task(
+            &db,
+            "task-existing",
+            "tech1",
+            "2025-06-15",
+            Some("10:00"),
+            Some("11:00"),
+            "pending",
+        );
         // New task: 09:00-12:00 (fully contains existing)
-        insert_test_task(&db, "task-new", "tech1", "2025-06-15", None, None, "pending");
+        insert_test_task(
+            &db,
+            "task-new",
+            "tech1",
+            "2025-06-15",
+            None,
+            None,
+            "pending",
+        );
 
         let result = service
-            .check_conflicts("task-new".to_string(), "2025-06-15".to_string(), Some("09:00".to_string()), Some("12:00".to_string()))
+            .check_conflicts(
+                "task-new".to_string(),
+                "2025-06-15".to_string(),
+                Some("09:00".to_string()),
+                Some("12:00".to_string()),
+            )
             .await
             .expect("check_conflicts failed");
 
-        assert!(result.has_conflict, "Should detect when new fully contains existing");
+        assert!(
+            result.has_conflict,
+            "Should detect when new fully contains existing"
+        );
     }
 
     #[tokio::test]
@@ -444,16 +514,40 @@ mod tests {
         let service = CalendarService::new(db.clone());
 
         // Existing task: 09:00-12:00
-        insert_test_task(&db, "task-existing", "tech1", "2025-06-15", Some("09:00"), Some("12:00"), "pending");
+        insert_test_task(
+            &db,
+            "task-existing",
+            "tech1",
+            "2025-06-15",
+            Some("09:00"),
+            Some("12:00"),
+            "pending",
+        );
         // New task: 10:00-11:00 (fully inside existing)
-        insert_test_task(&db, "task-new", "tech1", "2025-06-15", None, None, "pending");
+        insert_test_task(
+            &db,
+            "task-new",
+            "tech1",
+            "2025-06-15",
+            None,
+            None,
+            "pending",
+        );
 
         let result = service
-            .check_conflicts("task-new".to_string(), "2025-06-15".to_string(), Some("10:00".to_string()), Some("11:00".to_string()))
+            .check_conflicts(
+                "task-new".to_string(),
+                "2025-06-15".to_string(),
+                Some("10:00".to_string()),
+                Some("11:00".to_string()),
+            )
             .await
             .expect("check_conflicts failed");
 
-        assert!(result.has_conflict, "Should detect when existing fully contains new");
+        assert!(
+            result.has_conflict,
+            "Should detect when existing fully contains new"
+        );
     }
 
     // --- Multi-technician Isolation ---
@@ -464,16 +558,40 @@ mod tests {
         let service = CalendarService::new(db.clone());
 
         // tech1 task: 09:00-11:00
-        insert_test_task(&db, "task-tech1", "tech1", "2025-06-15", Some("09:00"), Some("11:00"), "pending");
+        insert_test_task(
+            &db,
+            "task-tech1",
+            "tech1",
+            "2025-06-15",
+            Some("09:00"),
+            Some("11:00"),
+            "pending",
+        );
         // tech2 task (same time): should NOT conflict
-        insert_test_task(&db, "task-tech2", "tech2", "2025-06-15", None, None, "pending");
+        insert_test_task(
+            &db,
+            "task-tech2",
+            "tech2",
+            "2025-06-15",
+            None,
+            None,
+            "pending",
+        );
 
         let result = service
-            .check_conflicts("task-tech2".to_string(), "2025-06-15".to_string(), Some("09:00".to_string()), Some("11:00".to_string()))
+            .check_conflicts(
+                "task-tech2".to_string(),
+                "2025-06-15".to_string(),
+                Some("09:00".to_string()),
+                Some("11:00".to_string()),
+            )
             .await
             .expect("check_conflicts failed");
 
-        assert!(!result.has_conflict, "Different technicians should NOT conflict");
+        assert!(
+            !result.has_conflict,
+            "Different technicians should NOT conflict"
+        );
     }
 
     #[tokio::test]
@@ -482,17 +600,45 @@ mod tests {
         let service = CalendarService::new(db.clone());
 
         // Two tasks for the same technician overlapping
-        insert_test_task(&db, "task-a", "tech1", "2025-06-15", Some("09:00"), Some("11:00"), "pending");
-        insert_test_task(&db, "task-b", "tech1", "2025-06-15", Some("10:00"), Some("12:00"), "pending");
+        insert_test_task(
+            &db,
+            "task-a",
+            "tech1",
+            "2025-06-15",
+            Some("09:00"),
+            Some("11:00"),
+            "pending",
+        );
+        insert_test_task(
+            &db,
+            "task-b",
+            "tech1",
+            "2025-06-15",
+            Some("10:00"),
+            Some("12:00"),
+            "pending",
+        );
         insert_test_task(&db, "task-c", "tech1", "2025-06-15", None, None, "pending");
 
         let result = service
-            .check_conflicts("task-c".to_string(), "2025-06-15".to_string(), Some("10:30".to_string()), Some("11:30".to_string()))
+            .check_conflicts(
+                "task-c".to_string(),
+                "2025-06-15".to_string(),
+                Some("10:30".to_string()),
+                Some("11:30".to_string()),
+            )
             .await
             .expect("check_conflicts failed");
 
-        assert!(result.has_conflict, "Same technician should conflict with overlapping tasks");
-        assert_eq!(result.conflicting_tasks.len(), 2, "Should find both overlapping tasks");
+        assert!(
+            result.has_conflict,
+            "Same technician should conflict with overlapping tasks"
+        );
+        assert_eq!(
+            result.conflicting_tasks.len(),
+            2,
+            "Should find both overlapping tasks"
+        );
     }
 
     // --- Completed/Cancelled tasks should not conflict ---
@@ -502,15 +648,39 @@ mod tests {
         let (db, _test_db) = setup_test_db();
         let service = CalendarService::new(db.clone());
 
-        insert_test_task(&db, "task-done", "tech1", "2025-06-15", Some("09:00"), Some("11:00"), "completed");
-        insert_test_task(&db, "task-new", "tech1", "2025-06-15", None, None, "pending");
+        insert_test_task(
+            &db,
+            "task-done",
+            "tech1",
+            "2025-06-15",
+            Some("09:00"),
+            Some("11:00"),
+            "completed",
+        );
+        insert_test_task(
+            &db,
+            "task-new",
+            "tech1",
+            "2025-06-15",
+            None,
+            None,
+            "pending",
+        );
 
         let result = service
-            .check_conflicts("task-new".to_string(), "2025-06-15".to_string(), Some("09:00".to_string()), Some("11:00".to_string()))
+            .check_conflicts(
+                "task-new".to_string(),
+                "2025-06-15".to_string(),
+                Some("09:00".to_string()),
+                Some("11:00".to_string()),
+            )
             .await
             .expect("check_conflicts failed");
 
-        assert!(!result.has_conflict, "Completed tasks should not cause conflicts");
+        assert!(
+            !result.has_conflict,
+            "Completed tasks should not cause conflicts"
+        );
     }
 
     #[tokio::test]
@@ -518,15 +688,39 @@ mod tests {
         let (db, _test_db) = setup_test_db();
         let service = CalendarService::new(db.clone());
 
-        insert_test_task(&db, "task-cancel", "tech1", "2025-06-15", Some("09:00"), Some("11:00"), "cancelled");
-        insert_test_task(&db, "task-new", "tech1", "2025-06-15", None, None, "pending");
+        insert_test_task(
+            &db,
+            "task-cancel",
+            "tech1",
+            "2025-06-15",
+            Some("09:00"),
+            Some("11:00"),
+            "cancelled",
+        );
+        insert_test_task(
+            &db,
+            "task-new",
+            "tech1",
+            "2025-06-15",
+            None,
+            None,
+            "pending",
+        );
 
         let result = service
-            .check_conflicts("task-new".to_string(), "2025-06-15".to_string(), Some("09:00".to_string()), Some("11:00".to_string()))
+            .check_conflicts(
+                "task-new".to_string(),
+                "2025-06-15".to_string(),
+                Some("09:00".to_string()),
+                Some("11:00".to_string()),
+            )
             .await
             .expect("check_conflicts failed");
 
-        assert!(!result.has_conflict, "Cancelled tasks should not cause conflicts");
+        assert!(
+            !result.has_conflict,
+            "Cancelled tasks should not cause conflicts"
+        );
     }
 
     // --- Date-only conflict detection (no times) ---
@@ -536,8 +730,24 @@ mod tests {
         let (db, _test_db) = setup_test_db();
         let service = CalendarService::new(db.clone());
 
-        insert_test_task(&db, "task-existing", "tech1", "2025-06-15", Some("09:00"), Some("11:00"), "pending");
-        insert_test_task(&db, "task-new", "tech1", "2025-06-15", None, None, "pending");
+        insert_test_task(
+            &db,
+            "task-existing",
+            "tech1",
+            "2025-06-15",
+            Some("09:00"),
+            Some("11:00"),
+            "pending",
+        );
+        insert_test_task(
+            &db,
+            "task-new",
+            "tech1",
+            "2025-06-15",
+            None,
+            None,
+            "pending",
+        );
 
         // Without time params, any task on the same date for the same tech is a conflict
         let result = service
@@ -545,7 +755,10 @@ mod tests {
             .await
             .expect("check_conflicts failed");
 
-        assert!(result.has_conflict, "Date-only check should flag same-date tasks");
+        assert!(
+            result.has_conflict,
+            "Date-only check should flag same-date tasks"
+        );
     }
 
     // --- No technician assigned ---
@@ -565,11 +778,19 @@ mod tests {
         ).expect("insert failed");
 
         let result = service
-            .check_conflicts("task-no-tech".to_string(), "2025-06-15".to_string(), Some("09:00".to_string()), Some("11:00".to_string()))
+            .check_conflicts(
+                "task-no-tech".to_string(),
+                "2025-06-15".to_string(),
+                Some("09:00".to_string()),
+                Some("11:00".to_string()),
+            )
             .await
             .expect("check_conflicts failed");
 
-        assert!(!result.has_conflict, "Task with no technician should never conflict");
+        assert!(
+            !result.has_conflict,
+            "Task with no technician should never conflict"
+        );
     }
 
     // --- schedule_task transactional consistency ---
@@ -696,8 +917,24 @@ mod tests {
         let (db, _test_db) = setup_test_db();
         let service = CalendarService::new(db.clone());
 
-        insert_test_task(&db, "task-existing", "tech1", "2025-06-15", Some("09:00"), Some("11:00"), "pending");
-        insert_test_task(&db, "task-new", "tech1", "2025-06-15", None, None, "pending");
+        insert_test_task(
+            &db,
+            "task-existing",
+            "tech1",
+            "2025-06-15",
+            Some("09:00"),
+            Some("11:00"),
+            "pending",
+        );
+        insert_test_task(
+            &db,
+            "task-new",
+            "tech1",
+            "2025-06-15",
+            None,
+            None,
+            "pending",
+        );
 
         let result = service
             .schedule_task_with_conflict_check(
@@ -729,8 +966,24 @@ mod tests {
         let (db, _test_db) = setup_test_db();
         let service = CalendarService::new(db.clone());
 
-        insert_test_task(&db, "task-existing", "tech1", "2025-06-15", Some("09:00"), Some("10:00"), "pending");
-        insert_test_task(&db, "task-new", "tech1", "2025-06-15", None, None, "pending");
+        insert_test_task(
+            &db,
+            "task-existing",
+            "tech1",
+            "2025-06-15",
+            Some("09:00"),
+            Some("10:00"),
+            "pending",
+        );
+        insert_test_task(
+            &db,
+            "task-new",
+            "tech1",
+            "2025-06-15",
+            None,
+            None,
+            "pending",
+        );
 
         let result = service
             .schedule_task_with_conflict_check(
@@ -743,6 +996,9 @@ mod tests {
             .await
             .expect("schedule_task_with_conflict_check failed");
 
-        assert!(!result.has_conflict, "Adjacent events should allow scheduling");
+        assert!(
+            !result.has_conflict,
+            "Adjacent events should allow scheduling"
+        );
     }
 }

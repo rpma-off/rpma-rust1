@@ -66,10 +66,7 @@ impl InMemoryEventBus {
             let event_type_owned = event_type.to_string();
 
             // Spawn each handler in its own task so panics are isolated
-            let join_result = tokio::spawn(async move {
-                handler.handle(&event_clone).await
-            })
-            .await;
+            let join_result = tokio::spawn(async move { handler.handle(&event_clone).await }).await;
 
             match join_result {
                 Ok(Ok(())) => {}

@@ -395,11 +395,19 @@ mod tests {
 
         // Create two sessions
         let session1 = auth_service
-            .authenticate("multi_session@example.com", "SecurePassword123!", "127.0.0.1")
+            .authenticate(
+                "multi_session@example.com",
+                "SecurePassword123!",
+                "127.0.0.1",
+            )
             .expect("First authentication should succeed");
 
         let session2 = auth_service
-            .authenticate("multi_session@example.com", "SecurePassword123!", "127.0.0.1")
+            .authenticate(
+                "multi_session@example.com",
+                "SecurePassword123!",
+                "127.0.0.1",
+            )
             .expect("Second authentication should succeed");
 
         // Logout session 1
@@ -409,10 +417,7 @@ mod tests {
 
         // Session 1 should be invalid
         let result = auth_service.validate_session(&session1.token);
-        assert!(
-            result.is_err(),
-            "Logged out session should be invalid"
-        );
+        assert!(result.is_err(), "Logged out session should be invalid");
 
         // Session 2 should still be valid
         let result = auth_service.validate_session(&session2.token);

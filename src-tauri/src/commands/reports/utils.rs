@@ -254,17 +254,19 @@ pub fn format_report_data_for_csv(report_data: &serde_json::Value) -> String {
             }
 
             let mut csv_lines = Vec::new();
-            csv_lines.push(headers.iter().map(|h| csv_escape(h)).collect::<Vec<_>>().join(","));
+            csv_lines.push(
+                headers
+                    .iter()
+                    .map(|h| csv_escape(h))
+                    .collect::<Vec<_>>()
+                    .join(","),
+            );
 
             for item in arr {
                 if let serde_json::Value::Object(map) = item {
                     let row: Vec<String> = headers
                         .iter()
-                        .map(|h| {
-                            map.get(h)
-                                .map(json_value_to_csv_string)
-                                .unwrap_or_default()
-                        })
+                        .map(|h| map.get(h).map(json_value_to_csv_string).unwrap_or_default())
                         .collect();
                     csv_lines.push(row.join(","));
                 }
@@ -280,7 +282,11 @@ pub fn format_report_data_for_csv(report_data: &serde_json::Value) -> String {
             entries.sort_by_key(|(k, _)| k.clone());
 
             for (key, value) in entries {
-                csv_lines.push(format!("{},{}", csv_escape(key), json_value_to_csv_string(value)));
+                csv_lines.push(format!(
+                    "{},{}",
+                    csv_escape(key),
+                    json_value_to_csv_string(value)
+                ));
             }
 
             csv_lines.join("\n")
@@ -391,8 +397,8 @@ mod tests {
         let csv = format_report_data_for_csv(&data);
         let lines: Vec<&str> = csv.lines().collect();
         assert_eq!(lines[0], "a,b,c");
-        assert_eq!(lines[1], "1,2,");  // missing c
-        assert_eq!(lines[2], "3,,4");  // missing b
+        assert_eq!(lines[1], "1,2,"); // missing c
+        assert_eq!(lines[2], "3,,4"); // missing b
     }
 
     #[test]

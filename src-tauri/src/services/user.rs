@@ -3,8 +3,8 @@
 use crate::commands::AppError;
 use crate::models::auth::{UserAccount, UserRole};
 use crate::models::user::User as RepoUser; // Import as RepoUser to distinguish
-use crate::repositories::{Repository, UserRepository};
 use crate::repositories::base::RepoError;
+use crate::repositories::{Repository, UserRepository};
 use std::sync::Arc;
 use tracing::{debug, error, info, warn};
 
@@ -313,7 +313,10 @@ mod tests {
         let repo = Arc::new(UserRepository::new(db, cache));
         let service = UserService::new(repo);
 
-        let err = service.bootstrap_first_admin("missing-user").await.unwrap_err();
+        let err = service
+            .bootstrap_first_admin("missing-user")
+            .await
+            .unwrap_err();
         assert!(matches!(err, AppError::NotFound(_)));
     }
 
