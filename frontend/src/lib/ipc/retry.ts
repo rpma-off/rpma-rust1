@@ -95,7 +95,7 @@ export async function withRetry<T>(
 ): Promise<T> {
   const finalConfig = { ...defaultRetryConfig, ...config };
 
-  let lastError: RetryError | undefined;
+  let lastError: RetryError = new Error('Unknown error');
 
   for (let attempt = 1; attempt <= finalConfig.maxRetries + 1; attempt++) {
     try {
@@ -114,5 +114,5 @@ export async function withRetry<T>(
     }
   }
 
-  throw lastError ?? new Error('Unknown error');
+  throw lastError;
 }

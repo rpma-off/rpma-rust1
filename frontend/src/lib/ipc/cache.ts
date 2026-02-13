@@ -67,6 +67,7 @@ export function getCached<T>(key: string): T | undefined {
  */
 export function setCached<T>(key: string, data: T, ttl: number = 60000): void {
   cache.set(key, {
+    // Cache stores JSON-serializable IPC payloads.
     data: data as JsonValue,
     timestamp: Date.now(),
     ttl,

@@ -9,12 +9,14 @@ export interface E2eMockControls {
   delayNext: (command: string, ms: number) => void;
 }
 
+type TauriEventHandler = (payload: JsonValue) => void;
+
 interface MockWindow extends Window {
   __E2E_MOCKS__?: E2eMockControls;
   __TAURI_INTERNALS__?: {
     invoke: (command: string, args?: JsonObject) => Promise<JsonValue>;
-    listen: () => Promise<void>;
-    emit: () => Promise<void>;
+    listen: (event: string, handler: TauriEventHandler) => Promise<void>;
+    emit: (event: string, payload?: JsonValue) => Promise<void>;
   };
 }
 
@@ -37,7 +39,7 @@ export function installMockControls(): void {
   // Provide a Tauri IPC shim for direct invoke() calls
   mockWindow.__TAURI_INTERNALS__ = {
     invoke: (command: string, args?: JsonObject) => handleInvoke(command, args),
-    listen: () => Promise.resolve(),
-    emit: () => Promise.resolve()
+    listen: (_event: string, _handler: TauriEventHandler) => Promise.resolve(),
+    emit: (_event: string, _payload?: JsonValue) => Promise.resolve()
   };
 }
