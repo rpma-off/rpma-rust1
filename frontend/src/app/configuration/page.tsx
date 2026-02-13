@@ -212,11 +212,16 @@ export default function ConfigurationPage() {
     logUserAction('Page refresh initiated');
     
     try {
-      // Simulate refresh
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const result = await safeInvoke<JsonValue>(IPC_COMMANDS.HEALTH_CHECK, {});
+      if (result && typeof result === 'object' && 'status' in result) {
+        const status = result as { status: string };
+        const newStatus = status.status === 'healthy' ? 'healthy' as const : 'warning' as const;
+        setSystemStatus(newStatus);
+      }
       logInfo('Page refresh completed');
     } catch (error) {
       logError('Page refresh failed', { error: error instanceof Error ? error.message : error });
+      setSystemStatus('error');
     } finally {
       setIsRefreshing(false);
       timer();
