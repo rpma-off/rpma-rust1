@@ -477,24 +477,32 @@ impl TaskService {
             .ok_or_else(|| AppError::Validation(format!("Unknown new status: {}", new_status)))?;
 
         // Validate transition
-        validate_status_transition(&current, &new).map_err(|msg| AppError::Validation(msg))?;
+        validate_status_transition(&current, &new)
+            .map_err(|msg| AppError::TaskInvalidTransition(msg))?;
 
         let now = chrono::Utc::now().timestamp();
 
-        // Update status
-        conn.execute(
+        // Update status and updated_at in a single transaction
+        let tx = conn
+            .unchecked_transaction()
+            .map_err(|e| AppError::Database(format!("Failed to start transaction: {}", e)))?;
+
+        tx.execute(
             "UPDATE tasks SET status = ?1, updated_at = ?2 WHERE id = ?3",
             rusqlite::params![new_status, now, task_id],
         )
         .map_err(|e| AppError::Database(format!("Failed to update status: {}", e)))?;
 
-        // Log transition in history (optional, don't fail)
-        conn.execute(
+        // Log transition in history
+        tx.execute(
             "INSERT OR IGNORE INTO task_history (task_id, old_status, new_status, reason, changed_at)
              VALUES (?1, ?2, ?3, ?4, ?5)",
             rusqlite::params![task_id, current_status, new_status, reason, now],
         )
         .ok();
+
+        tx.commit()
+            .map_err(|e| AppError::Database(format!("Failed to commit transaction: {}", e)))?;
 
         // Fetch updated task
         let updated_task: Task = conn

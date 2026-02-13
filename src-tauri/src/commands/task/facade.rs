@@ -385,6 +385,11 @@ pub async fn edit_task(
     // Check permissions
     check_task_permissions(&session, &task, "edit")?;
 
+    // Enforce field restrictions for Technician role
+    if session.role == crate::models::auth::UserRole::Technician {
+        enforce_technician_field_restrictions(&request.data)?;
+    }
+
     // Create UpdateTaskRequest from the incoming data
     let update_request = crate::models::task::UpdateTaskRequest {
         id: Some(request.task_id.clone()),
@@ -440,7 +445,7 @@ pub fn validate_status_change(
     new: &crate::models::task::TaskStatus,
 ) -> Result<(), AppError> {
     crate::services::task_validation::validate_status_transition(current, new)
-        .map_err(AppError::Validation)
+        .map_err(AppError::TaskInvalidTransition)
 }
 
 /// Check permissions for task operations
@@ -452,14 +457,6 @@ pub fn check_task_permissions(
     match session.role {
         crate::models::auth::UserRole::Admin => Ok(()),
         crate::models::auth::UserRole::Supervisor => {
-            // Supervisor can operate on tasks in their region
-            // TODO: Add region check when UserSession has region field
-            // if let Some(session_region) = &session.region {
-            //     // For now, allow all supervisors - region logic can be added later if needed
-            //     Ok(())
-            // } else {
-            //     Ok(()) // Allow if region info is missing
-            // }
             Ok(())
         }
         crate::models::auth::UserRole::Technician => {
@@ -481,6 +478,95 @@ pub fn check_task_permissions(
                 )),
             }
         }
+    }
+}
+
+/// Fields that a Technician is allowed to modify on their assigned tasks.
+const TECHNICIAN_ALLOWED_FIELDS: &[&str] = &[
+    "status",
+    "notes",
+    "checklist_completed",
+    "lot_film",
+    "actual_duration",
+];
+
+/// Validate that a Technician is not attempting to change restricted fields.
+///
+/// Returns an error listing any forbidden fields that the request tries to modify.
+pub fn enforce_technician_field_restrictions(
+    req: &crate::models::task::UpdateTaskRequest,
+) -> Result<(), AppError> {
+    let mut forbidden: Vec<&str> = Vec::new();
+
+    if req.title.is_some() {
+        forbidden.push("title");
+    }
+    if req.description.is_some() {
+        forbidden.push("description");
+    }
+    if req.priority.is_some() {
+        forbidden.push("priority");
+    }
+    if req.vehicle_plate.is_some() {
+        forbidden.push("vehicle_plate");
+    }
+    if req.vehicle_model.is_some() {
+        forbidden.push("vehicle_model");
+    }
+    if req.vehicle_year.is_some() {
+        forbidden.push("vehicle_year");
+    }
+    if req.vehicle_make.is_some() {
+        forbidden.push("vehicle_make");
+    }
+    if req.vin.is_some() {
+        forbidden.push("vin");
+    }
+    if req.ppf_zones.is_some() {
+        forbidden.push("ppf_zones");
+    }
+    if req.custom_ppf_zones.is_some() {
+        forbidden.push("custom_ppf_zones");
+    }
+    if req.client_id.is_some() {
+        forbidden.push("client_id");
+    }
+    if req.customer_name.is_some() {
+        forbidden.push("customer_name");
+    }
+    if req.customer_email.is_some() {
+        forbidden.push("customer_email");
+    }
+    if req.customer_phone.is_some() {
+        forbidden.push("customer_phone");
+    }
+    if req.customer_address.is_some() {
+        forbidden.push("customer_address");
+    }
+    if req.scheduled_date.is_some() {
+        forbidden.push("scheduled_date");
+    }
+    if req.estimated_duration.is_some() {
+        forbidden.push("estimated_duration");
+    }
+    if req.technician_id.is_some() {
+        forbidden.push("technician_id");
+    }
+    if req.template_id.is_some() {
+        forbidden.push("template_id");
+    }
+    if req.workflow_id.is_some() {
+        forbidden.push("workflow_id");
+    }
+
+    if forbidden.is_empty() {
+        Ok(())
+    } else {
+        Err(AppError::Authorization(format!(
+            "Technician cannot modify fields: {}. Allowed: {}",
+            forbidden.join(", "),
+            TECHNICIAN_ALLOWED_FIELDS.join(", ")
+        )))
     }
 }
 
@@ -663,6 +749,231 @@ pub async fn task_crud(
                     crate::commands::AppError::NotFound("Statistics not available".to_string()),
                 )),
             }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::commands::AppError;
+    use crate::models::auth::{UserRole, UserSession};
+    use crate::models::task::{Task, TaskPriority, TaskStatus, UpdateTaskRequest};
+
+    fn make_task(technician_id: Option<&str>, status: TaskStatus) -> Task {
+        Task {
+            id: "task-1".to_string(),
+            task_number: "20250101-001".to_string(),
+            title: "Test".to_string(),
+            description: None,
+            vehicle_plate: Some("ABC123".to_string()),
+            vehicle_model: Some("Model X".to_string()),
+            vehicle_year: None,
+            vehicle_make: None,
+            vin: None,
+            ppf_zones: None,
+            custom_ppf_zones: None,
+            status,
+            priority: TaskPriority::Medium,
+            technician_id: technician_id.map(|s| s.to_string()),
+            assigned_at: None,
+            assigned_by: None,
+            scheduled_date: None,
+            start_time: None,
+            end_time: None,
+            date_rdv: None,
+            heure_rdv: None,
+            template_id: None,
+            workflow_id: None,
+            workflow_status: None,
+            current_workflow_step_id: None,
+            started_at: None,
+            completed_at: None,
+            completed_steps: None,
+            client_id: None,
+            customer_name: None,
+            customer_email: None,
+            customer_phone: None,
+            customer_address: None,
+            external_id: None,
+            lot_film: None,
+            checklist_completed: false,
+            notes: None,
+            tags: None,
+            estimated_duration: None,
+            actual_duration: None,
+            created_at: 0,
+            updated_at: 0,
+            creator_id: None,
+            created_by: None,
+            updated_by: None,
+            deleted_at: None,
+            deleted_by: None,
+            synced: false,
+            last_synced_at: None,
+        }
+    }
+
+    fn make_session(user_id: &str, role: UserRole) -> UserSession {
+        UserSession {
+            id: "session-1".to_string(),
+            user_id: user_id.to_string(),
+            username: "testuser".to_string(),
+            email: "test@example.com".to_string(),
+            role,
+            token: "tok".to_string(),
+            refresh_token: None,
+            expires_at: "2099-01-01T00:00:00Z".to_string(),
+            last_activity: "2025-01-01T00:00:00Z".to_string(),
+            created_at: "2025-01-01T00:00:00Z".to_string(),
+            device_info: None,
+            ip_address: None,
+            user_agent: None,
+            location: None,
+            two_factor_verified: false,
+            session_timeout_minutes: None,
+        }
+    }
+
+    // ── check_task_permissions tests ────────────────────────────────
+
+    #[test]
+    fn test_admin_can_edit_any_task() {
+        let session = make_session("admin-1", UserRole::Admin);
+        let task = make_task(Some("tech-1"), TaskStatus::InProgress);
+        assert!(check_task_permissions(&session, &task, "edit").is_ok());
+    }
+
+    #[test]
+    fn test_supervisor_can_edit_any_task() {
+        let session = make_session("sup-1", UserRole::Supervisor);
+        let task = make_task(Some("tech-1"), TaskStatus::InProgress);
+        assert!(check_task_permissions(&session, &task, "edit").is_ok());
+    }
+
+    #[test]
+    fn test_technician_can_edit_own_assigned_task() {
+        let session = make_session("tech-1", UserRole::Technician);
+        let task = make_task(Some("tech-1"), TaskStatus::InProgress);
+        assert!(check_task_permissions(&session, &task, "edit").is_ok());
+    }
+
+    #[test]
+    fn test_technician_cannot_edit_unassigned_task() {
+        let session = make_session("tech-1", UserRole::Technician);
+        let task = make_task(Some("tech-other"), TaskStatus::InProgress);
+        let result = check_task_permissions(&session, &task, "edit");
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            AppError::Authorization(msg) => {
+                assert!(msg.contains("assigned"));
+            }
+            _ => panic!("Expected Authorization error"),
+        }
+    }
+
+    #[test]
+    fn test_viewer_cannot_edit_task() {
+        let session = make_session("viewer-1", UserRole::Viewer);
+        let task = make_task(None, TaskStatus::Pending);
+        let result = check_task_permissions(&session, &task, "edit");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_viewer_can_view_task() {
+        let session = make_session("viewer-1", UserRole::Viewer);
+        let task = make_task(None, TaskStatus::Pending);
+        assert!(check_task_permissions(&session, &task, "view").is_ok());
+    }
+
+    // ── enforce_technician_field_restrictions tests ─────────────────
+
+    #[test]
+    fn test_technician_allowed_fields_pass() {
+        let req = UpdateTaskRequest {
+            notes: Some("Updated note".to_string()),
+            status: Some(TaskStatus::InProgress),
+            checklist_completed: Some(true),
+            lot_film: Some("LOT-123".to_string()),
+            ..Default::default()
+        };
+        assert!(enforce_technician_field_restrictions(&req).is_ok());
+    }
+
+    #[test]
+    fn test_technician_forbidden_title_change() {
+        let req = UpdateTaskRequest {
+            title: Some("New Title".to_string()),
+            ..Default::default()
+        };
+        let result = enforce_technician_field_restrictions(&req);
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            AppError::Authorization(msg) => {
+                assert!(msg.contains("title"));
+                assert!(msg.contains("Technician cannot modify"));
+            }
+            _ => panic!("Expected Authorization error"),
+        }
+    }
+
+    #[test]
+    fn test_technician_forbidden_technician_id_change() {
+        let req = UpdateTaskRequest {
+            technician_id: Some("other-tech".to_string()),
+            ..Default::default()
+        };
+        let result = enforce_technician_field_restrictions(&req);
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            AppError::Authorization(msg) => {
+                assert!(msg.contains("technician_id"));
+            }
+            _ => panic!("Expected Authorization error"),
+        }
+    }
+
+    #[test]
+    fn test_technician_forbidden_multiple_fields() {
+        let req = UpdateTaskRequest {
+            title: Some("New Title".to_string()),
+            priority: Some(TaskPriority::High),
+            vehicle_plate: Some("NEW-PLATE".to_string()),
+            ..Default::default()
+        };
+        let result = enforce_technician_field_restrictions(&req);
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            AppError::Authorization(msg) => {
+                assert!(msg.contains("title"));
+                assert!(msg.contains("priority"));
+                assert!(msg.contains("vehicle_plate"));
+            }
+            _ => panic!("Expected Authorization error"),
+        }
+    }
+
+    #[test]
+    fn test_technician_empty_request_passes() {
+        let req = UpdateTaskRequest::default();
+        assert!(enforce_technician_field_restrictions(&req).is_ok());
+    }
+
+    // ── validate_status_change tests ───────────────────────────────
+
+    #[test]
+    fn test_validate_status_change_valid() {
+        assert!(validate_status_change(&TaskStatus::Draft, &TaskStatus::Pending).is_ok());
+    }
+
+    #[test]
+    fn test_validate_status_change_invalid_returns_task_invalid_transition() {
+        let result = validate_status_change(&TaskStatus::Completed, &TaskStatus::Draft);
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            AppError::TaskInvalidTransition(_) => {}
+            other => panic!("Expected TaskInvalidTransition, got: {:?}", other),
         }
     }
 }
