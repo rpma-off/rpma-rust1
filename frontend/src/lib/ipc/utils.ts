@@ -211,7 +211,7 @@ export async function safeInvoke<T>(
       }
     } else {
       errorMessage = String(error);
-      errorDetails = errorMessage;
+      errorDetails = { message: errorMessage };
     }
 
     logger.error(LogDomain.API, `IPC call error: ${command}`, error instanceof Error ? error : new Error(errorMessage), {

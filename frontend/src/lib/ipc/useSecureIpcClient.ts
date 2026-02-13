@@ -8,5 +8,5 @@ import type { UserAccount } from '@/lib/backend';
 export function useSecureIpcClient() {
   const { profile } = useAuth();
 
-  return useMemo(() => createSecureIpcClient((profile as UserAccount | null) ?? null), [profile]);
+  return useMemo(() => createSecureIpcClient(profile as UserAccount | null), [profile]);
 }
