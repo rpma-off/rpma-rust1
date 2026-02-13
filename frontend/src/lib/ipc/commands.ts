@@ -89,6 +89,7 @@ export const IPC_COMMANDS = {
 
   // Settings commands
   GET_APP_SETTINGS: 'get_app_settings',
+  UPDATE_GENERAL_SETTINGS: 'update_general_settings',
   UPDATE_NOTIFICATION_SETTINGS: 'update_notification_settings',
   GET_USER_SETTINGS: 'get_user_settings',
   UPDATE_USER_PROFILE: 'update_user_profile',

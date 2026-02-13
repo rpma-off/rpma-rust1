@@ -212,11 +212,20 @@ export function SystemSettingsTab() {
     logFormEvent('Save configurations initiated', { configurationsCount: configurations.length });
     
     try {
-      // Save via IPC - configurations are managed through settings operations
+      const sessionToken = session?.token || '';
       logInfoRef.current('Saving configurations via IPC', { count: configurations.length });
       
-      // For now, configurations are saved through the app settings IPC
-      // In a full implementation, this would call a dedicated save command
+      // Build update request from current configuration values
+      const updateRequest: Record<string, string | number | boolean | undefined> = {};
+      for (const config of configurations) {
+        updateRequest[config.key] = config.value;
+      }
+
+      await settingsOperations.updateGeneralSettings(
+        updateRequest as unknown as import('@/types/json').JsonObject,
+        sessionToken
+      );
+
       logFormSubmit(configurations, true);
       toast.success('Configurations sauvegardées avec succès');
       setHasChanges(false);
@@ -224,7 +233,6 @@ export function SystemSettingsTab() {
     } catch (error) {
       logFormSubmit(configurations, false, error);
       logErrorRef.current('Error saving configurations', { error: error instanceof Error ? error.message : error });
-      console.error('Error saving configurations:', error);
       toast.error('Erreur lors de la sauvegarde');
     } finally {
       setSaving(false);
