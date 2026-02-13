@@ -98,20 +98,29 @@ export function WorkflowExecutionDashboard({
   const [workflowData, setWorkflowData] = useState(mockWorkflowData);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Use provided data or fallback to mock data
   useEffect(() => {
     if (data && data.length > 0) {
-      // Transform provided data if needed
-      setWorkflowData(mockWorkflowData); // For now, keep mock data
+      setWorkflowData(prev => ({
+        ...prev,
+        totalWorkflows: data.length,
+        activeWorkflows: data.filter((w: WorkflowExecution) => w.status === 'in_progress').length,
+        completedToday: data.filter((w: WorkflowExecution) => {
+          if (!w.completed_at) return false;
+          const today = new Date();
+          const completedDate = new Date(w.completed_at);
+          return completedDate.toDateString() === today.toDateString();
+        }).length,
+      }));
     }
   }, [data]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    onRefresh?.();
-    setIsRefreshing(false);
+    try {
+      onRefresh?.();
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const getStatusColor = (status: string) => {

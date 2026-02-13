@@ -89,7 +89,6 @@ export function PhotoDocumentationDashboard({
   const [photoData, setPhotoData] = useState(mockPhotoData);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Use provided data or fallback to mock data
   useEffect(() => {
     if (data && Object.keys(data).length > 0) {
       setPhotoData(data as typeof mockPhotoData);
@@ -98,10 +97,11 @@ export function PhotoDocumentationDashboard({
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    onRefresh?.();
-    setIsRefreshing(false);
+    try {
+      onRefresh?.();
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const getQualityColor = (quality: number) => {
