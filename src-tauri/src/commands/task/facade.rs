@@ -331,24 +331,50 @@ pub async fn delay_task(
     // Check permissions
     check_task_permissions(&session, &task, "edit")?;
 
-    // Update task with new scheduled date
-    let update_request = crate::models::task::UpdateTaskRequest {
-        id: Some(request.task_id.clone()),
-        scheduled_date: Some(request.new_scheduled_date.clone()),
-        notes: request.additional_notes.clone(),
-        ..Default::default()
-    };
-
-    let updated_task = state
-        .task_service
-        .update_task_async(update_request, &session.user_id)
+    // Use CalendarService.schedule_task to update both task and calendar_events atomically
+    let calendar_service =
+        crate::services::calendar::CalendarService::new(state.db.clone());
+    calendar_service
+        .schedule_task(
+            request.task_id.clone(),
+            request.new_scheduled_date.clone(),
+            None,
+            None,
+            &session.user_id,
+        )
         .await
         .map_err(|e| {
             error!("Task delay failed: {}", e);
             AppError::Database(format!("Failed to delay task: {}", e))
         })?;
 
-    // TODO: Add audit log entry for task delay
+    // Update notes if provided
+    if request.additional_notes.is_some() {
+        let update_request = crate::models::task::UpdateTaskRequest {
+            id: Some(request.task_id.clone()),
+            notes: request.additional_notes.clone(),
+            ..Default::default()
+        };
+        state
+            .task_service
+            .update_task_async(update_request, &session.user_id)
+            .await
+            .map_err(|e| {
+                error!("Task notes update failed: {}", e);
+                AppError::Database(format!("Failed to update task notes: {}", e))
+            })?;
+    }
+
+    // Re-fetch the updated task
+    let updated_task = state
+        .task_service
+        .get_task_async(&request.task_id)
+        .await
+        .map_err(|e| {
+            error!("Failed to re-fetch task: {}", e);
+            AppError::Database(format!("Failed to re-fetch task: {}", e))
+        })?
+        .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
 
     info!(
         "Task {} delayed to {}",

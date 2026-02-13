@@ -74,7 +74,7 @@ pub use performance::{
 
 // Re-export calendar commands
 #[allow(unused_imports)]
-pub use calendar::{calendar_check_conflicts, calendar_get_tasks};
+pub use calendar::{calendar_check_conflicts, calendar_get_tasks, calendar_schedule_task};
 
 // Re-export material commands
 pub use material::{

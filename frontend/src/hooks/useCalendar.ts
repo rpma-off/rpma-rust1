@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { getCalendarTasks, checkCalendarConflicts, rescheduleTask, createCalendarFilter } from '@/lib/ipc/calendar';
+import { getCalendarTasks, checkCalendarConflicts, scheduleTask, createCalendarFilter } from '@/lib/ipc/calendar';
 import type { CalendarTask, ConflictDetection } from '@/lib/backend';
 import { useAuth } from '@/lib/auth/compatibility';
 
@@ -173,7 +173,7 @@ export function useCalendar(initialDate?: Date, initialViewMode?: CalendarViewMo
     newStart?: string,
     newEnd?: string,
     reason?: string
-  ): Promise<{ success: boolean; error?: string }> => {
+  ): Promise<{ success: boolean; error?: string; conflicting_tasks?: CalendarTask[] }> => {
     try {
       if (!user?.token) {
         return {
@@ -182,17 +182,17 @@ export function useCalendar(initialDate?: Date, initialViewMode?: CalendarViewMo
         };
       }
 
-      // First check for conflicts
-      const conflictCheck = await checkConflicts(taskId, newDate, newStart, newEnd);
-      if (conflictCheck.has_conflict) {
+      // Use atomic schedule_task command that checks conflicts
+      // and updates both task + calendar_events in a single transaction
+      const result = await scheduleTask(taskId, newDate, user.token, newStart, newEnd);
+
+      if (result.has_conflict) {
         return {
           success: false,
-          error: conflictCheck.message || 'Scheduling conflict detected',
+          error: result.message || 'Scheduling conflict detected',
+          conflicting_tasks: result.conflicting_tasks,
         };
       }
-
-      // No conflicts, proceed with rescheduling
-      await rescheduleTask(taskId, newDate, user.token, newStart, newEnd, reason);
 
       // Refresh tasks after successful rescheduling
       await refreshTasks();
@@ -205,7 +205,7 @@ export function useCalendar(initialDate?: Date, initialViewMode?: CalendarViewMo
         error: error instanceof Error ? error.message : 'Failed to reschedule task',
       };
     }
-  }, [checkConflicts, refreshTasks, user?.token]);
+  }, [refreshTasks, user?.token]);
 
   // Fetch tasks when dependencies change
   useEffect(() => {

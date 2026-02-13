@@ -41,6 +41,31 @@ export async function checkCalendarConflicts(
   });
 }
 
+/**
+ * Schedule a task atomically - checks conflicts and updates both
+ * tasks.scheduled_date and calendar_events in a single transaction.
+ * Returns ConflictDetection: if has_conflict is true, scheduling was blocked.
+ */
+export async function scheduleTask(
+  taskId: string,
+  newDate: string,
+  sessionToken: string,
+  newStart?: string,
+  newEnd?: string,
+  force?: boolean
+): Promise<ConflictDetection> {
+  return await safeInvoke<ConflictDetection>(IPC_COMMANDS.CALENDAR_SCHEDULE_TASK, {
+    request: {
+      session_token: sessionToken,
+      task_id: taskId,
+      new_date: newDate,
+      new_start: newStart,
+      new_end: newEnd,
+      force: force ?? false,
+    },
+  });
+}
+
 export async function rescheduleTask(
   taskId: string,
   newScheduledDate: string,

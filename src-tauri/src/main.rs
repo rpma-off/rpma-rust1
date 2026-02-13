@@ -249,6 +249,7 @@ fn main() {
             commands::calendar::get_events_for_task,
             commands::calendar::calendar_get_tasks,
             commands::calendar::calendar_check_conflicts,
+            commands::calendar::calendar_schedule_task,
             // Status transition commands
             commands::status::task_transition_status,
             commands::status::task_get_status_distribution,
