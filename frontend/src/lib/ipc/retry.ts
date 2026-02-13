@@ -114,9 +114,5 @@ export async function withRetry<T>(
     }
   }
 
-  if (!lastError) {
-    throw new Error('Retry failed without captured error');
-  }
-
-  throw lastError;
+  throw lastError!;
 }
