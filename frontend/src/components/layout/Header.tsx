@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useLayoutStore } from '@/lib/stores/layoutStore';
 import { useAuth } from '@/lib/auth/compatibility';
 import { Menu, Search, Star, Bell, X, RefreshCw, ChevronDown, UserCircle, Settings, LogOut } from 'lucide-react';
@@ -33,7 +34,8 @@ export function Header({
   isRefreshing = false
 }: HeaderProps) {
   const { toggleSidebar } = useLayoutStore();
-  const { user, profile } = useAuth();
+  const router = useRouter();
+  const { user, profile, signOut } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
@@ -242,11 +244,13 @@ export function Header({
             >
               <div className="h-8 w-8 rounded-full bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center">
                 <span className="text-white text-sm font-semibold">
-                  {profile?.first_name?.charAt(0) || 'U'}
+                  {profile?.first_name?.charAt(0) || user?.username?.charAt(0)?.toUpperCase() || 'U'}
                 </span>
               </div>
               <span className="text-sm text-gray-700">
-                {profile?.first_name} {profile?.last_name}
+                {profile?.first_name && profile?.last_name
+                  ? `${profile.first_name} ${profile.last_name}`
+                  : user?.username || ''}
               </span>
             </button>
             
@@ -265,8 +269,10 @@ export function Header({
                 </a>
                 <div className="px-3 py-2 border-t border-gray-100">
                   <button
-                    onClick={() => {
-                      // Implement logout
+                    onClick={async () => {
+                      setShowUserMenu(false);
+                      await signOut();
+                      router.push('/login');
                     }}
                     className="flex items-center text-sm text-red-600 hover:text-red-700 transition-colors"
                   >

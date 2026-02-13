@@ -1,9 +1,11 @@
 'use client';
 
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Bell, Menu, Search, X, CalendarDays, Wrench, FileText, Users } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Bell, Menu, Search, X, CalendarDays, Wrench, FileText, Users, ChevronDown, UserCircle, Settings, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/lib/auth/compatibility';
 
 interface TopbarProps {
   onMenuToggle: () => void;
@@ -20,6 +22,28 @@ const navTabs = [
 
 export function Topbar({ onMenuToggle, onSidebarToggle, isSidebarOpen }: TopbarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, profile, signOut } = useAuth();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  const displayName = profile?.first_name && profile?.last_name
+    ? `${profile.first_name} ${profile.last_name}`
+    : user?.username || '';
+  const displayInitial = profile?.first_name?.charAt(0) || user?.username?.charAt(0)?.toUpperCase() || 'U';
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const activeTab = (() => {
     if (pathname === '/dashboard') return 'calendar';
@@ -85,6 +109,61 @@ export function Topbar({ onMenuToggle, onSidebarToggle, isSidebarOpen }: TopbarP
             <Bell className="h-5 w-5" />
             <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-white" />
           </button>
+
+          <div className="relative" ref={userMenuRef}>
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="flex items-center gap-2 p-1 rounded-full hover:bg-white/15 transition-colors"
+              aria-label="User menu"
+            >
+              <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
+                <span className="text-white text-sm font-semibold">
+                  {displayInitial}
+                </span>
+              </div>
+              <span className="text-sm text-white hidden xl:block">
+                {displayName}
+              </span>
+              <ChevronDown className="w-4 h-4 text-white hidden xl:block" />
+            </button>
+
+            {showUserMenu && (
+              <div className="absolute top-full right-0 mt-2 bg-white rounded-[6px] shadow-lg border border-gray-200 py-2 z-50 min-w-48">
+                <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-100">
+                  Account
+                </div>
+                <Link
+                  href="/settings"
+                  className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                  onClick={() => setShowUserMenu(false)}
+                >
+                  <UserCircle className="w-4 h-4 mr-2" />
+                  Profile
+                </Link>
+                <Link
+                  href="/settings"
+                  className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                  onClick={() => setShowUserMenu(false)}
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Settings
+                </Link>
+                <div className="px-3 py-2 border-t border-gray-100">
+                  <button
+                    onClick={async () => {
+                      setShowUserMenu(false);
+                      await signOut();
+                      router.push('/login');
+                    }}
+                    className="flex items-center text-sm text-red-600 hover:text-red-700 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign out
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>

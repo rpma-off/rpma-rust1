@@ -1159,3 +1159,134 @@ impl AuthService {
         Ok(new_session)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test_db;
+
+    fn setup_test_env() {
+        std::env::set_var("JWT_SECRET", "test_jwt_secret_32_bytes_long!");
+    }
+
+    fn create_test_auth_service() -> (AuthService, tempfile::TempDir) {
+        setup_test_env();
+        let test_db = test_db!();
+        let auth_service = AuthService::new(test_db.db()).expect("Failed to create auth service");
+        (auth_service, test_db.temp_dir)
+    }
+
+    fn create_and_authenticate(
+        auth_service: &AuthService,
+        email: &str,
+    ) -> UserSession {
+        auth_service
+            .create_account(email, "testuser", "Test", "User", UserRole::Technician, "SecurePassword123!")
+            .expect("Failed to create account");
+        auth_service
+            .authenticate(email, "SecurePassword123!", Some("127.0.0.1"))
+            .expect("Authentication should succeed")
+    }
+
+    #[test]
+    fn test_login_success_returns_valid_session() {
+        let (auth_service, _dir) = create_test_auth_service();
+
+        auth_service
+            .create_account(
+                "login_success@example.com",
+                "login_user",
+                "Login",
+                "User",
+                UserRole::Technician,
+                "SecurePassword123!",
+            )
+            .expect("Account creation should succeed");
+
+        let session = auth_service
+            .authenticate("login_success@example.com", "SecurePassword123!", Some("127.0.0.1"))
+            .expect("Login should succeed");
+
+        assert!(!session.token.is_empty(), "Token should not be empty");
+        assert_eq!(session.email, "login_success@example.com");
+        assert!(!session.is_expired(), "Session should not be expired");
+    }
+
+    #[test]
+    fn test_validate_session_returns_user_data() {
+        let (auth_service, _dir) = create_test_auth_service();
+        let session = create_and_authenticate(&auth_service, "validate@example.com");
+
+        let validated = auth_service
+            .validate_session(&session.token)
+            .expect("Session validation should succeed");
+
+        assert_eq!(validated.email, "validate@example.com");
+        assert_eq!(validated.user_id, session.user_id);
+    }
+
+    #[test]
+    fn test_validate_session_rejects_invalid_token() {
+        let (auth_service, _dir) = create_test_auth_service();
+
+        let result = auth_service.validate_session("totally_invalid_token");
+        assert!(result.is_err(), "Invalid token should fail validation");
+    }
+
+    #[test]
+    fn test_logout_invalidates_token() {
+        let (auth_service, _dir) = create_test_auth_service();
+        let session = create_and_authenticate(&auth_service, "logout_test@example.com");
+
+        // Logout
+        auth_service
+            .logout(&session.token)
+            .expect("Logout should succeed");
+
+        // Session should no longer be valid
+        let result = auth_service.validate_session(&session.token);
+        assert!(
+            result.is_err(),
+            "Session should be invalid after logout"
+        );
+    }
+
+    #[test]
+    fn test_logout_only_invalidates_target_session() {
+        let (auth_service, _dir) = create_test_auth_service();
+
+        auth_service
+            .create_account(
+                "multi@example.com",
+                "multiuser",
+                "Multi",
+                "User",
+                UserRole::Technician,
+                "SecurePassword123!",
+            )
+            .expect("Account creation should succeed");
+
+        let session1 = auth_service
+            .authenticate("multi@example.com", "SecurePassword123!", Some("127.0.0.1"))
+            .expect("First auth should succeed");
+
+        let session2 = auth_service
+            .authenticate("multi@example.com", "SecurePassword123!", Some("127.0.0.1"))
+            .expect("Second auth should succeed");
+
+        // Logout session1 only
+        auth_service.logout(&session1.token).expect("Logout should succeed");
+
+        // session1 is invalid
+        assert!(
+            auth_service.validate_session(&session1.token).is_err(),
+            "Logged-out session should be invalid"
+        );
+
+        // session2 should still work
+        assert!(
+            auth_service.validate_session(&session2.token).is_ok(),
+            "Other session should remain valid"
+        );
+    }
+}
