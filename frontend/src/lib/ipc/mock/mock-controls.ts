@@ -38,7 +38,7 @@ export function installMockControls(): void {
 
   // Provide a Tauri IPC shim for direct invoke() calls
   mockWindow.__TAURI_INTERNALS__ = {
-    invoke: (command: string, args?: JsonObject) => handleInvoke(command, args),
+    invoke: (command: string, args?: JsonObject) => handleInvoke(command, args) as Promise<JsonValue>,
     listen: (_event: string, _handler: TauriEventHandler) => Promise.resolve(),
     emit: (_event: string, _payload?: JsonValue) => Promise.resolve()
   };

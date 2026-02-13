@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import type { JsonObject } from '@/types/json';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,7 +48,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, open, onOpenChange 
   const editTaskMutation = useMutation({
     mutationFn: async (updates: Record<string, unknown>) => {
       if (!user?.token) throw new Error('User not authenticated');
-      return await ipcClient.tasks.editTask(task.id, updates, user.token);
+      return await ipcClient.tasks.editTask(task.id, updates as JsonObject, user.token);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
