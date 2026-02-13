@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -24,6 +24,9 @@ import { LogDomain } from '@/lib/logging/types';
 import { PageShell } from '@/components/layout/PageShell';
 import { LoadingState } from '@/components/layout/LoadingState';
 import { PageHeader, StatCard } from '@/components/ui/page-header';
+import { safeInvoke } from '@/lib/ipc/core';
+import { IPC_COMMANDS } from '@/lib/ipc/commands';
+import type { JsonValue } from '@/types/json';
 
 // Lazy load tab components to reduce initial bundle size
 const SystemSettingsTab = dynamic(() => import('./components/SystemSettingsTab').then(mod => ({ default: mod.SystemSettingsTab })), {
@@ -90,9 +93,17 @@ export default function ConfigurationPage() {
     enablePerformanceLogging: true
   });
 
-  // Log page load
+  // Use refs for logger functions to prevent useEffect re-runs
+  const logInfoRef = useRef(logInfo);
+  const logErrorRef = useRef(logError);
+  const logPerformanceRef = useRef(logPerformance);
+  logInfoRef.current = logInfo;
+  logErrorRef.current = logError;
+  logPerformanceRef.current = logPerformance;
+
+  // Log page load (only once on mount)
   useEffect(() => {
-    logInfo('Configuration page loaded', {
+    logInfoRef.current('Configuration page loaded', {
       initialTab: activeTab,
       userAgent: navigator.userAgent,
       viewport: {
@@ -100,7 +111,8 @@ export default function ConfigurationPage() {
         height: window.innerHeight
       }
     });
-  }, [logInfo, activeTab]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Keyboard navigation
   useEffect(() => {
@@ -158,25 +170,29 @@ export default function ConfigurationPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeTab, logUserAction]);
 
-  // Simulate system status check
+  // System status check via IPC (instead of HTTP)
   useEffect(() => {
+    let cancelled = false;
     const checkSystemStatus = async () => {
-      const timer = logPerformance('System status check');
+      const timer = logPerformanceRef.current('System status check');
       try {
-        logInfo('Checking system status');
-        const response = await fetch('/api/admin/configuration/status');
-        if (response.ok) {
-          const status = await response.json();
-          const newStatus = status.overall === 'healthy' ? 'healthy' : 'warning';
-          setSystemStatus(newStatus);
-          logInfo('System status updated', { status: newStatus, details: status });
-        } else {
-          logError('Failed to check system status', { status: response.status });
-          setSystemStatus('error');
+        logInfoRef.current('Checking system status via IPC');
+        const result = await safeInvoke<JsonValue>(IPC_COMMANDS.HEALTH_CHECK, {});
+        if (!cancelled) {
+          if (result && typeof result === 'object' && 'status' in result) {
+            const status = result as { status: string };
+            const newStatus = status.status === 'healthy' ? 'healthy' as const : 'warning' as const;
+            setSystemStatus(newStatus);
+            logInfoRef.current('System status updated', { status: newStatus });
+          } else {
+            setSystemStatus('healthy');
+          }
         }
       } catch (error) {
-        logError('System status check failed', { error: error instanceof Error ? error.message : error });
-        setSystemStatus('error');
+        if (!cancelled) {
+          logErrorRef.current('System status check failed', { error: error instanceof Error ? error.message : error });
+          setSystemStatus('error');
+        }
       } finally {
         timer();
       }
@@ -184,8 +200,11 @@ export default function ConfigurationPage() {
     
     checkSystemStatus();
     const interval = setInterval(checkSystemStatus, 30000); // Check every 30 seconds
-    return () => clearInterval(interval);
-  }, [logInfo, logError, logPerformance]);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
 
   const handleRefresh = async () => {
     const timer = logPerformance('Page refresh');
