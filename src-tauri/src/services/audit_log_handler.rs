@@ -186,12 +186,13 @@ impl AuditLogHandler {
                 session_id: None,
                 request_id: None,
             },
-            // Fallback for other event types
+            // Fallback for other event types — should not normally trigger
+            // since interested_events() limits which events reach this handler.
             _ => {
                 let event_type_str = event.event_type();
                 AuditEvent {
                     id: uuid::Uuid::new_v4().to_string(),
-                    event_type: AuditEventType::SystemError,
+                    event_type: AuditEventType::DataCreated,
                     user_id: "system".to_string(),
                     action: event_type_str.to_string(),
                     resource_id: None,
