@@ -1,6 +1,7 @@
 ﻿'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { DragDropContext } from '@hello-pangea/dnd';
 import { CalendarHeader } from './CalendarHeader';
 import { MonthView } from '@/components/calendar/MonthView';
@@ -16,6 +17,7 @@ import { QuickAddDialog } from './QuickAddDialog';
 import { FilterDrawer } from './FilterDrawer';
 
 export function CalendarDashboard() {
+  const router = useRouter();
   const {
     currentView,
     currentDate,
@@ -45,8 +47,12 @@ export function CalendarDashboard() {
   }, [isFilterDrawerOpen, isQuickAddOpen, toggleFilterDrawer, toggleQuickAdd]);
 
   const handleDragEnd = () => {
-    console.log('Drag end detected (not yet implemented)');
+    // Drag-and-drop rescheduling is not yet implemented
   };
+
+  const handleTaskClick = useCallback((task: { id: string }) => {
+    router.push(`/tasks/${task.id}`);
+  }, [router]);
 
   const renderView = () => {
     switch (currentView) {
@@ -55,7 +61,7 @@ export function CalendarDashboard() {
           <MonthView
             tasks={tasks}
             currentDate={currentDate}
-            onTaskClick={(task) => console.log('Task clicked:', task.id)}
+            onTaskClick={handleTaskClick}
           />
         );
       case 'week':
@@ -64,7 +70,7 @@ export function CalendarDashboard() {
             <WeekView
               tasks={tasks}
               currentDate={currentDate}
-              onTaskClick={(task) => console.log('Task clicked:', task.id)}
+              onTaskClick={handleTaskClick}
             />
           </DragDropContext>
         );
@@ -74,7 +80,7 @@ export function CalendarDashboard() {
             <DayView
               tasks={tasks}
               currentDate={currentDate}
-              onTaskClick={(task) => console.log('Task clicked:', task.id)}
+              onTaskClick={handleTaskClick}
             />
           </DragDropContext>
         );
@@ -83,7 +89,7 @@ export function CalendarDashboard() {
           <AgendaView
             tasks={tasks}
             currentDate={currentDate}
-            onTaskClick={(task) => console.log('Task clicked:', task.id)}
+            onTaskClick={handleTaskClick}
           />
         );
       default:

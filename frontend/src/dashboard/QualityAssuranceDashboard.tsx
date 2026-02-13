@@ -71,7 +71,6 @@ export function QualityAssuranceDashboard({
   const [qualityData, setQualityData] = useState(mockQualityData);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Use provided data or fallback to mock data
   useEffect(() => {
     if (data && Object.keys(data).length > 0) {
       setQualityData(data as typeof mockQualityData);
@@ -80,10 +79,11 @@ export function QualityAssuranceDashboard({
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    onRefresh?.();
-    setIsRefreshing(false);
+    try {
+      onRefresh?.();
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const getSeverityColor = (severity: string) => {

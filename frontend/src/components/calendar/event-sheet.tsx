@@ -107,7 +107,7 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
   const organizerEmail = organizer.email || getParticipantEmail(organizer.id);
   const otherParticipants = event.participants.slice(1);
 
-  const mockParticipants = [
+  const participants = [
     {
       id: organizer.id,
       name: organizerName,
@@ -132,7 +132,7 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
     },
   ];
 
-  const yesCount = mockParticipants.filter((p) => p.rsvp === "yes").length;
+  const yesCount = participants.filter((p) => p.rsvp === "yes").length;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -208,7 +208,7 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
           <div className="flex-1 overflow-y-auto px-4 py-4">
             <div className="flex flex-col gap-4 max-w-[512px] mx-auto">
               <div className="flex flex-col gap-4">
-                {mockParticipants.map((participant) => (
+                {participants.map((participant) => (
                   <div
                     key={participant.id}
                     className="flex items-start gap-3 relative"
@@ -372,7 +372,7 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
                     <Users className="size-4" />
                   </div>
                   <span>
-                    {mockParticipants.length} persons
+                    {participants.length} persons
                     <span className="mx-1">•</span>
                     {yesCount} yes
                   </span>
