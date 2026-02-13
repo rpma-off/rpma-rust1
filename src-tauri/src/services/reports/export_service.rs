@@ -7,6 +7,7 @@ use crate::db::Database;
 use crate::models::reports::*;
 use crate::services::document_storage::DocumentStorageService;
 use crate::services::pdf_generation::PdfGenerationService;
+use crate::services::reports::validation::{validate_date_range, validate_filters};
 use chrono::Utc;
 use std::path::Path;
 use tracing::debug;
@@ -105,5 +106,30 @@ impl ExportReportService {
             file_size: None,
             generated_at: Utc::now(),
         })
+    }
+
+    /// Generate CSV export for task completion report
+    ///
+    /// Produces a deterministic CSV with sorted headers and proper escaping.
+    pub async fn generate_task_completion_csv(
+        date_range: &DateRange,
+        filters: &ReportFilters,
+        db: &Database,
+    ) -> AppResult<String> {
+        validate_date_range(date_range).map_err(crate::commands::AppError::from)?;
+        validate_filters(filters).map_err(crate::commands::AppError::from)?;
+
+        let report = crate::services::reports::task_report::generate_task_completion_report(
+            date_range, filters, db,
+        )
+        .await?;
+
+        let json_value = serde_json::to_value(&report.daily_breakdown).map_err(|e| {
+            crate::commands::AppError::Internal(format!("Failed to serialize report data: {}", e))
+        })?;
+
+        Ok(crate::commands::reports::utils::format_report_data_for_csv(
+            &json_value,
+        ))
     }
 }
