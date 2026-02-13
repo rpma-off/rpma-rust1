@@ -8,6 +8,7 @@ import Link from 'next/link';
 import type { Client, Task } from '@/types';
 import { convertTimestamps } from '@/lib/types';
 import { ipcClient } from '@/lib/ipc/client';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface ClientDetailClientProps {
   params: {
@@ -18,6 +19,7 @@ interface ClientDetailClientProps {
 export default function ClientDetailClient({ params }: ClientDetailClientProps) {
   const router = useRouter();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [client, setClient] = useState<Client | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,14 +39,14 @@ export default function ClientDetailClient({ params }: ClientDetailClientProps) 
       ]);
 
       if (!clientData) {
-        setError('Client not found');
+        setError(t('clients.clientNotFound'));
         return;
       }
 
       setClient(convertTimestamps(clientData) as unknown as Client);
       setTasks(tasksResponse.data.map(task => convertTimestamps(task)) as unknown as Task[]);
     } catch (err) {
-      setError('An unexpected error occurred');
+      setError(t('clients.unexpectedError'));
       console.error('Error loading client:', err);
     } finally {
       setLoading(false);
@@ -108,11 +110,11 @@ export default function ClientDetailClient({ params }: ClientDetailClientProps) 
             className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Back to Clients</span>
+            <span>{t('clients.backToClients')}</span>
           </Link>
         </div>
         <div className="bg-red-900/50 border border-red-700 rounded-lg p-8 text-center">
-          <p className="text-red-400 text-lg">{error || 'Client not found'}</p>
+          <p className="text-red-400 text-lg">{error || t('clients.clientNotFound')}</p>
         </div>
       </div>
     );
@@ -168,7 +170,7 @@ export default function ClientDetailClient({ params }: ClientDetailClientProps) 
         <div className="lg:col-span-2 space-y-6">
           {/* Contact Information */}
           <div className="bg-white rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-foreground mb-4">Contact Information</h2>
+            <h2 className="text-lg font-semibold text-foreground mb-4">{t('clients.contactInformation')}</h2>
             <div className="space-y-3">
               {client.email && (
                 <div className="flex items-center space-x-3">
@@ -203,7 +205,7 @@ export default function ClientDetailClient({ params }: ClientDetailClientProps) 
 
           {/* Tasks */}
           <div className="bg-white rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-foreground mb-4">Recent Tasks</h2>
+            <h2 className="text-lg font-semibold text-foreground mb-4">{t('clients.recentTasks')}</h2>
             {tasks && tasks.length > 0 ? (
               <div className="space-y-3">
                 {tasks.slice(0, 5).map((task) => (
@@ -211,7 +213,7 @@ export default function ClientDetailClient({ params }: ClientDetailClientProps) 
                     <div>
                       <p className="text-foreground font-medium">{task.title}</p>
                           <p className="text-muted-foreground text-sm">
-                            {task.vehicle_plate && `Plate: ${task.vehicle_plate}`}
+                            {task.vehicle_plate && `${t('clients.plate')}: ${task.vehicle_plate}`}
                             {task.vehicle_model && ` • ${task.vehicle_model}`}
                           </p>
                     </div>
@@ -233,7 +235,7 @@ export default function ClientDetailClient({ params }: ClientDetailClientProps) 
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground">No tasks found for this client</p>
+              <p className="text-muted-foreground">{t('clients.noTasksFound')}</p>
             )}
           </div>
         </div>
@@ -242,20 +244,20 @@ export default function ClientDetailClient({ params }: ClientDetailClientProps) 
         <div className="space-y-6">
           {/* Stats */}
           <div className="bg-white rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-foreground mb-4">Statistics</h2>
+            <h2 className="text-lg font-semibold text-foreground mb-4">{t('reports.statistics')}</h2>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Total Tasks</span>
+                <span className="text-muted-foreground">{t('clients.totalTasks')}</span>
                 <span className="text-foreground font-semibold">{tasks?.length || 0}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Completed Tasks</span>
+                <span className="text-muted-foreground">{t('clients.completedTasks')}</span>
                 <span className="text-foreground font-semibold">
                   {tasks?.filter(t => t.status === 'completed').length || 0}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Created</span>
+                <span className="text-muted-foreground">{t('clients.created')}</span>
                   <span className="text-foreground font-semibold">
                     {client.created_at ? new Date(client.created_at).toLocaleDateString() : 'N/A'}
                   </span>
@@ -266,7 +268,7 @@ export default function ClientDetailClient({ params }: ClientDetailClientProps) 
           {/* Notes */}
           {client.notes && (
             <div className="bg-white rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-foreground mb-4">Notes</h2>
+              <h2 className="text-lg font-semibold text-foreground mb-4">{t('clients.notes')}</h2>
               <p className="text-muted-foreground">{client.notes}</p>
             </div>
           )}

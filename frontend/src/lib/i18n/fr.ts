@@ -273,6 +273,11 @@ export const fr = {
     failedToUpdate: "Échec de la mise à jour du client",
     unexpectedError: "Une erreur inattendue s'est produite",
     invalidRequest: "Requête invalide",
+    contactInformation: "Informations de contact",
+    recentTasks: "Tâches récentes",
+    noTasksFound: "Aucune tâche trouvée pour ce client",
+    created: "Créé",
+    plate: "Plaque",
   },
 
   // Interventions
