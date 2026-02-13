@@ -34,6 +34,8 @@ use crate::commands::AppStateType;
 use crate::db::Database;
 use crate::models::settings::StorageSettings;
 use crate::repositories::Repositories;
+use crate::services::audit_log_handler::AuditLogHandler;
+use crate::services::audit_service::AuditService;
 use crate::services::event_bus::InMemoryEventBus;
 use crate::services::websocket_event_handler::WebSocketEventHandler;
 use std::sync::{Arc, Mutex, OnceLock};
@@ -165,10 +167,17 @@ impl ServiceBuilder {
         let websocket_handler = WebSocketEventHandler::new();
         event_bus.register_handler(websocket_handler);
 
+        // Register Audit Log Handler for audit trail
+        let audit_service = Arc::new(AuditService::new(self.db.clone()));
+        if let Err(e) = audit_service.init() {
+            tracing::warn!("Audit service init failed (non-fatal): {}", e);
+        }
+        let audit_log_handler = AuditLogHandler::new(audit_service);
+        event_bus.register_handler(audit_log_handler);
+
         // Note: Additional handlers can be registered here:
         // - SecurityMonitorHandler for security events
         // - NotificationServiceHandler for push notifications
-        // - AuditLogHandler for audit trail
         // - AnalyticsHandler for metrics collection
 
         // Build and return AppStateType
