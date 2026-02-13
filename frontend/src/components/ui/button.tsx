@@ -62,10 +62,25 @@ const Button = React.forwardRef<
   disabled,
   ...props
 }, ref) => {
-  const Comp = asChild ? Slot : "button"
+  if (asChild) {
+    return (
+      <Slot
+        ref={ref}
+        data-slot="button"
+        className={cn(
+          buttonVariants({ variant, size, className }),
+          fullWidth && "w-full"
+        )}
+        disabled={disabled || loading}
+        {...props}
+      >
+        {children}
+      </Slot>
+    )
+  }
 
   return (
-    <Comp
+    <button
       ref={ref}
       data-slot="button"
       className={cn(
@@ -85,7 +100,7 @@ const Button = React.forwardRef<
       {!loading && rightIcon && (
         <span className="ml-2 flex-shrink-0">{rightIcon}</span>
       )}
-    </Comp>
+    </button>
   )
 })
 Button.displayName = "Button"
