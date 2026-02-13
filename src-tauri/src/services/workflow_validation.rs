@@ -6,7 +6,8 @@
 use crate::db::{InterventionError, InterventionResult};
 use crate::logging::RPMARequestLogger;
 use crate::models::intervention::{Intervention, InterventionStatus};
-use crate::models::step::{InterventionStep, StepStatus, StepType};
+use crate::models::step::{InterventionStep, StepStatus};
+use crate::services::intervention_calculation::InterventionCalculationService;
 use crate::services::intervention_data::InterventionDataService;
 
 use crate::db::Database;
@@ -270,26 +271,35 @@ impl WorkflowValidationService {
                 InterventionError::Database(format!("Failed to get steps for validation: {}", e))
             })?;
 
-        // Check that all mandatory steps (excluding the finalization step itself) are completed.
-        // The finalization step is completed as part of the finalize_intervention process.
-        let mandatory_steps = steps
-            .iter()
-            .filter(|s| s.is_mandatory && s.step_type != StepType::Finalization)
-            .collect::<Vec<_>>();
-        let completed_mandatory_steps = mandatory_steps
-            .iter()
-            .filter(|s| s.step_status == StepStatus::Completed)
-            .collect::<Vec<_>>();
+        let summary = InterventionCalculationService::summarize_steps(&steps);
+        logger.debug(
+            "Finalization step summary",
+            Some(std::collections::HashMap::from([
+                ("total_steps".to_string(), serde_json::json!(summary.total_steps)),
+                (
+                    "completed_steps".to_string(),
+                    serde_json::json!(summary.completed_steps),
+                ),
+                (
+                    "mandatory_total".to_string(),
+                    serde_json::json!(summary.mandatory_total),
+                ),
+                (
+                    "mandatory_completed".to_string(),
+                    serde_json::json!(summary.mandatory_completed),
+                ),
+                (
+                    "incomplete_mandatory".to_string(),
+                    serde_json::json!(summary.incomplete_mandatory),
+                ),
+            ])),
+        );
 
-        if mandatory_steps.len() != completed_mandatory_steps.len() {
-            let incomplete_step_info: Vec<(i32, String)> = mandatory_steps
-                .iter()
-                .filter(|s| s.step_status != StepStatus::Completed)
-                .map(|s| (s.step_number, s.step_name.clone()))
-                .collect();
-
-            let incomplete_steps: Vec<i32> = incomplete_step_info.iter().map(|(n, _)| *n).collect();
-            let incomplete_names: Vec<&str> = incomplete_step_info
+        if summary.mandatory_total != summary.mandatory_completed {
+            let incomplete_steps: Vec<i32> =
+                summary.incomplete_mandatory.iter().map(|(n, _)| *n).collect();
+            let incomplete_names: Vec<&str> = summary
+                .incomplete_mandatory
                 .iter()
                 .map(|(_, name)| name.as_str())
                 .collect();
@@ -309,11 +319,11 @@ impl WorkflowValidationService {
             );
             error_context.insert(
                 "total_mandatory".to_string(),
-                serde_json::json!(mandatory_steps.len()),
+                serde_json::json!(summary.mandatory_total),
             );
             error_context.insert(
                 "completed_mandatory".to_string(),
-                serde_json::json!(completed_mandatory_steps.len()),
+                serde_json::json!(summary.mandatory_completed),
             );
             logger.error(
                 "Attempted to finalize intervention with incomplete mandatory steps",

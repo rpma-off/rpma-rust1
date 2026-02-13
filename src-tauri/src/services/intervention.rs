@@ -14,6 +14,7 @@ use crate::models::intervention::Intervention;
 use crate::models::step::InterventionStep;
 use crate::services::intervention_data::InterventionDataService;
 use crate::services::intervention_workflow::InterventionWorkflowService;
+use crate::services::intervention_calculation::InterventionCalculationService;
 
 use std::sync::Arc;
 
@@ -213,14 +214,16 @@ impl InterventionService {
 
         let steps = self.get_intervention_steps(intervention_id)?;
 
-        let total_steps = steps.len() as i32;
-        let completed_steps = steps
-            .iter()
-            .filter(|s| matches!(s.step_status, crate::models::step::StepStatus::Completed))
-            .count() as i32;
-        let current_step = completed_steps + 1;
+        let summary = InterventionCalculationService::summarize_steps(&steps);
+        let total_steps = summary.total_steps as i32;
+        let completed_steps = summary.completed_steps as i32;
+        let current_step = if total_steps > 0 {
+            completed_steps + 1
+        } else {
+            0
+        };
         let completion_percentage = if total_steps > 0 {
-            (completed_steps as f32 / total_steps as f32) * 100.0
+            summary.completion_percentage as f32
         } else {
             0.0
         };

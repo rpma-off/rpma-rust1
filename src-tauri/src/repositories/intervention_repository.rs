@@ -4,6 +4,7 @@ use crate::models::intervention::Intervention;
 use crate::models::step::InterventionStep;
 use rusqlite::{params, OptionalExtension, Transaction};
 use std::sync::Arc;
+use tracing::debug;
 
 #[derive(Debug)]
 pub struct InterventionRepository {
@@ -529,7 +530,7 @@ impl InterventionRepository {
             .as_ref()
             .and_then(|ve| serde_json::to_string(ve).ok());
 
-        tx.execute(
+        let rows_affected = tx.execute(
             "INSERT OR REPLACE INTO intervention_steps (
                 id, intervention_id, step_number, step_name, step_type, step_status,
                 description, instructions, quality_checkpoints, is_mandatory, requires_photos,
@@ -551,6 +552,14 @@ params![
                 step.created_at, step.updated_at
             ],
         )?;
+
+        debug!(
+            step_id = %step.id,
+            intervention_id = %step.intervention_id,
+            step_number = step.step_number,
+            rows_affected = rows_affected,
+            "Saved intervention step (transaction)"
+        );
 
         Ok(())
     }
@@ -600,7 +609,7 @@ params![
             .as_ref()
             .and_then(|ve| serde_json::to_string(ve).ok());
 
-        conn.execute(
+        let rows_affected = conn.execute(
             "INSERT OR REPLACE INTO intervention_steps (
                 id, intervention_id, step_number, step_name, step_type, step_status,
                 description, instructions, quality_checkpoints, is_mandatory, requires_photos,
@@ -624,6 +633,14 @@ params![
                 step.created_at, step.updated_at
             ],
         )?;
+
+        debug!(
+            step_id = %step.id,
+            intervention_id = %step.intervention_id,
+            step_number = step.step_number,
+            rows_affected = rows_affected,
+            "Saved intervention step"
+        );
 
         Ok(())
     }

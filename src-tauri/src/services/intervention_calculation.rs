@@ -8,11 +8,21 @@
 
 use crate::db::InterventionResult;
 use crate::models::intervention::Intervention;
-use crate::models::step::InterventionStep;
+use crate::models::step::{InterventionStep, StepStatus, StepType};
 use crate::services::intervention_types::{InterventionMetrics, StepRequirement};
 
 /// Service for calculating intervention metrics and requirements
 pub struct InterventionCalculationService;
+
+#[derive(Debug, Clone)]
+pub struct StepCompletionSummary {
+    pub total_steps: usize,
+    pub completed_steps: usize,
+    pub completion_percentage: f64,
+    pub mandatory_total: usize,
+    pub mandatory_completed: usize,
+    pub incomplete_mandatory: Vec<(i32, String)>,
+}
 
 impl Default for InterventionCalculationService {
     fn default() -> Self {
@@ -24,6 +34,47 @@ impl InterventionCalculationService {
     /// Create new calculation service
     pub fn new() -> Self {
         Self
+    }
+
+    /// Summarize step completion status for progress and validation.
+    pub fn summarize_steps(steps: &[InterventionStep]) -> StepCompletionSummary {
+        let total_steps = steps.len();
+        let completed_steps = steps
+            .iter()
+            .filter(|s| s.step_status == StepStatus::Completed)
+            .count();
+
+        let completion_percentage = if total_steps == 0 {
+            100.0
+        } else {
+            (completed_steps as f64 / total_steps as f64) * 100.0
+        };
+
+        let mandatory_steps: Vec<&InterventionStep> = steps
+            .iter()
+            .filter(|s| s.is_mandatory && s.step_type != StepType::Finalization)
+            .collect();
+
+        let mandatory_total = mandatory_steps.len();
+        let mandatory_completed = mandatory_steps
+            .iter()
+            .filter(|s| s.step_status == StepStatus::Completed)
+            .count();
+
+        let incomplete_mandatory = mandatory_steps
+            .iter()
+            .filter(|s| s.step_status != StepStatus::Completed)
+            .map(|s| (s.step_number, s.step_name.clone()))
+            .collect();
+
+        StepCompletionSummary {
+            total_steps,
+            completed_steps,
+            completion_percentage,
+            mandatory_total,
+            mandatory_completed,
+            incomplete_mandatory,
+        }
     }
 
     /// Calculate initial requirements for workflow steps

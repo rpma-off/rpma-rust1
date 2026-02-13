@@ -5,7 +5,7 @@
 
 use crate::commands::AppResult;
 use crate::models::intervention::InterventionStatus;
-use crate::models::step::StepStatus;
+use crate::models::step::{StepStatus, StepType};
 use crate::services::audit_service::AuditService;
 use crate::services::intervention_types::{
     AdvanceStepRequest, FinalizeInterventionRequest, StartInterventionRequest,
@@ -20,6 +20,15 @@ use serde_json::json;
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn build_photos(count: i32) -> Vec<String> {
+        if count <= 0 {
+            return Vec::new();
+        }
+        (0..count)
+            .map(|idx| format!("photo-{}", idx + 1))
+            .collect()
+    }
 
     #[tokio::test]
     async fn test_create_task_and_intervention_workflow() -> AppResult<()> {
@@ -488,6 +497,280 @@ mod tests {
         assert!(result
             .unwrap_err()
             .contains("before completion data can be provided"));
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_step_completion_persists_to_db() -> AppResult<()> {
+        let test_db = test_db!();
+        let task_service = TaskCrudService::new(test_db.db());
+        let intervention_service = InterventionWorkflowService::new(test_db.db());
+
+        let task_request = test_task!(
+            title: "Step Persistence Task".to_string(),
+            vehicle_plate: Some("STEP123".to_string())
+        );
+        let created_task = task_service
+            .create_task_async(task_request, "test_user")
+            .await?;
+
+        let intervention_request = StartInterventionRequest {
+            task_id: created_task.id.clone(),
+            intervention_number: None,
+            ppf_zones: vec!["front".to_string(), "rear".to_string(), "hood".to_string()],
+            custom_zones: None,
+            film_type: "premium".to_string(),
+            film_brand: None,
+            film_model: None,
+            weather_condition: "clear".to_string(),
+            lighting_condition: "good".to_string(),
+            work_location: "shop".to_string(),
+            temperature: None,
+            humidity: None,
+            technician_id: "test_user".to_string(),
+            assistant_ids: None,
+            scheduled_start: chrono::Utc::now().to_rfc3339(),
+            estimated_duration: 120,
+            gps_coordinates: None,
+            address: None,
+            notes: Some("Persistence test".to_string()),
+            customer_requirements: None,
+            special_instructions: None,
+        };
+
+        let response = intervention_service.start_intervention(
+            intervention_request,
+            "test_user",
+            "test-correlation-id",
+        )?;
+
+        let mut steps = response.steps.clone();
+        steps.sort_by_key(|step| step.step_number);
+        let step_one = steps.get(0).expect("Missing step 1");
+        let step_two = steps.get(1).expect("Missing step 2");
+
+        let advance_request_one = AdvanceStepRequest {
+            intervention_id: response.intervention.id.clone(),
+            step_id: step_one.id.clone(),
+            collected_data: json!({"completed": true}),
+            photos: Some(build_photos(step_one.min_photos_required)),
+            notes: Some("Completed step 1".to_string()),
+            quality_check_passed: true,
+            issues: None,
+        };
+
+        intervention_service
+            .advance_step(advance_request_one, "test-correlation-id", Some("test_user"))
+            .await?;
+
+        let advance_request_two = AdvanceStepRequest {
+            intervention_id: response.intervention.id.clone(),
+            step_id: step_two.id.clone(),
+            collected_data: json!({"completed": true}),
+            photos: Some(build_photos(step_two.min_photos_required)),
+            notes: Some("Completed step 2".to_string()),
+            quality_check_passed: true,
+            issues: None,
+        };
+
+        intervention_service
+            .advance_step(advance_request_two, "test-correlation-id", Some("test_user"))
+            .await?;
+
+        let saved_step_one = intervention_service
+            .get_step(&step_one.id)?
+            .expect("Step 1 not found");
+        let saved_step_two = intervention_service
+            .get_step(&step_two.id)?
+            .expect("Step 2 not found");
+
+        assert_eq!(saved_step_one.step_status, StepStatus::Completed);
+        assert_eq!(saved_step_two.step_status, StepStatus::Completed);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_finalize_fails_with_incomplete_mandatory_steps() -> AppResult<()> {
+        let test_db = test_db!();
+        let task_service = TaskCrudService::new(test_db.db());
+        let intervention_service = InterventionWorkflowService::new(test_db.db());
+
+        let task_request = test_task!(
+            title: "Finalize Failure Task".to_string(),
+            vehicle_plate: Some("FINALFAIL".to_string())
+        );
+        let created_task = task_service
+            .create_task_async(task_request, "test_user")
+            .await?;
+
+        let intervention_request = StartInterventionRequest {
+            task_id: created_task.id.clone(),
+            intervention_number: None,
+            ppf_zones: vec!["front".to_string(), "rear".to_string(), "hood".to_string()],
+            custom_zones: None,
+            film_type: "premium".to_string(),
+            film_brand: None,
+            film_model: None,
+            weather_condition: "clear".to_string(),
+            lighting_condition: "good".to_string(),
+            work_location: "shop".to_string(),
+            temperature: None,
+            humidity: None,
+            technician_id: "test_user".to_string(),
+            assistant_ids: None,
+            scheduled_start: chrono::Utc::now().to_rfc3339(),
+            estimated_duration: 120,
+            gps_coordinates: None,
+            address: None,
+            notes: Some("Finalize should fail".to_string()),
+            customer_requirements: None,
+            special_instructions: None,
+        };
+
+        let response = intervention_service.start_intervention(
+            intervention_request,
+            "test_user",
+            "test-correlation-id",
+        )?;
+
+        let mut steps = response.steps.clone();
+        steps.sort_by_key(|step| step.step_number);
+        let step_one = steps.first().expect("Missing step 1");
+        let advance_request_one = AdvanceStepRequest {
+            intervention_id: response.intervention.id.clone(),
+            step_id: step_one.id.clone(),
+            collected_data: json!({"completed": true}),
+            photos: Some(build_photos(step_one.min_photos_required)),
+            notes: Some("Completed step 1".to_string()),
+            quality_check_passed: true,
+            issues: None,
+        };
+
+        intervention_service
+            .advance_step(advance_request_one, "test-correlation-id", Some("test_user"))
+            .await?;
+
+        let finalize_request = FinalizeInterventionRequest {
+            intervention_id: response.intervention.id.clone(),
+            collected_data: Some(json!({"final": true})),
+            photos: None,
+            customer_satisfaction: None,
+            quality_score: None,
+            final_observations: None,
+            customer_signature: None,
+            customer_comments: None,
+        };
+
+        let result = intervention_service.finalize_intervention(
+            finalize_request,
+            "test-correlation-id",
+            Some("test_user"),
+        );
+
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(err
+            .to_string()
+            .contains("mandatory steps incomplete"));
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_finalize_succeeds_after_mandatory_steps_completed() -> AppResult<()> {
+        let test_db = test_db!();
+        let task_service = TaskCrudService::new(test_db.db());
+        let intervention_service = InterventionWorkflowService::new(test_db.db());
+
+        let task_request = test_task!(
+            title: "Finalize Success Task".to_string(),
+            vehicle_plate: Some("FINOK123".to_string())
+        );
+        let created_task = task_service
+            .create_task_async(task_request, "test_user")
+            .await?;
+
+        let intervention_request = StartInterventionRequest {
+            task_id: created_task.id.clone(),
+            intervention_number: None,
+            ppf_zones: vec!["front".to_string(), "rear".to_string(), "hood".to_string()],
+            custom_zones: None,
+            film_type: "premium".to_string(),
+            film_brand: None,
+            film_model: None,
+            weather_condition: "clear".to_string(),
+            lighting_condition: "good".to_string(),
+            work_location: "shop".to_string(),
+            temperature: None,
+            humidity: None,
+            technician_id: "test_user".to_string(),
+            assistant_ids: None,
+            scheduled_start: chrono::Utc::now().to_rfc3339(),
+            estimated_duration: 120,
+            gps_coordinates: None,
+            address: None,
+            notes: Some("Finalize should succeed".to_string()),
+            customer_requirements: None,
+            special_instructions: None,
+        };
+
+        let response = intervention_service.start_intervention(
+            intervention_request,
+            "test_user",
+            "test-correlation-id",
+        )?;
+
+        let mut steps = response.steps.clone();
+        steps.sort_by_key(|step| step.step_number);
+
+        for step in steps
+            .iter()
+            .filter(|s| s.step_type != StepType::Finalization)
+        {
+            let advance_request = AdvanceStepRequest {
+                intervention_id: response.intervention.id.clone(),
+                step_id: step.id.clone(),
+                collected_data: json!({"completed": true}),
+                photos: Some(build_photos(step.min_photos_required)),
+                notes: Some(format!("Completed step {}", step.step_number)),
+                quality_check_passed: true,
+                issues: None,
+            };
+
+            intervention_service
+                .advance_step(advance_request, "test-correlation-id", Some("test_user"))
+                .await?;
+        }
+
+        let finalize_request = FinalizeInterventionRequest {
+            intervention_id: response.intervention.id.clone(),
+            collected_data: Some(json!({"final": true})),
+            photos: Some(build_photos(2)),
+            customer_satisfaction: Some(9),
+            quality_score: Some(95),
+            final_observations: Some(vec!["All good".to_string()]),
+            customer_signature: None,
+            customer_comments: None,
+        };
+
+        let finalize_response = intervention_service.finalize_intervention(
+            finalize_request,
+            "test-correlation-id",
+            Some("test_user"),
+        )?;
+
+        assert_eq!(
+            finalize_response.intervention.status,
+            InterventionStatus::Completed
+        );
+
+        let updated_task = task_service
+            .get_task_by_id_async(&created_task.id)
+            .await?
+            .expect("Task not found after finalize");
+        assert_eq!(updated_task.status, "completed");
 
         Ok(())
     }

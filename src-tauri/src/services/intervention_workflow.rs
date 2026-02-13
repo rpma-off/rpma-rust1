@@ -342,6 +342,28 @@ impl InterventionWorkflowService {
 
         let has_completion_data = Self::has_completion_data(&request);
 
+        logger.debug(
+            "Advance step state",
+            Some(std::collections::HashMap::from([
+                (
+                    "step_number".to_string(),
+                    serde_json::json!(current_step.step_number),
+                ),
+                (
+                    "step_status".to_string(),
+                    serde_json::json!(current_step.step_status),
+                ),
+                (
+                    "has_completion_data".to_string(),
+                    serde_json::json!(has_completion_data),
+                ),
+                (
+                    "photo_count".to_string(),
+                    serde_json::json!(request.photos.as_ref().map(|p| p.len()).unwrap_or(0)),
+                ),
+            ])),
+        );
+
         // Update step with collected data
         self.data
             .update_step_with_data(&mut current_step, &request)?;
