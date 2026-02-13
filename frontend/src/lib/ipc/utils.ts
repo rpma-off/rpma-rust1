@@ -3,8 +3,8 @@ import { recordMetric } from './metrics';
 import { logger } from '../logging';
 import { performanceMonitor } from '../services/performance-monitor';
 import { LogDomain, CorrelationContext } from '../logging/types';
-import type { ApiError } from '../backend';
-import type { JsonValue } from '@/types/json';
+import type { ApiResponse } from '@/types/api';
+import type { JsonObject, JsonValue } from '@/types/json';
 
 /**
  * Maps backend error codes to user-friendly messages
@@ -46,12 +46,6 @@ interface LocalApiError {
   details?: JsonValue | null;
 }
 
-interface ApiResponse<T = JsonValue> {
-  success: boolean;
-  data?: T;
-  error?: LocalApiError;
-}
-
 interface BackendResponse<T = JsonValue> {
   type: string;
   payload?: T;
@@ -66,8 +60,8 @@ interface EnhancedError extends Error {
 
 export async function safeInvoke<T>(
   command: string,
-  args?: Record<string, unknown>,
-  validator?: (data: unknown) => T,
+  args?: JsonObject,
+  validator?: (data: JsonValue) => T,
   timeoutMs: number = 120000 // Increased to 120 seconds to handle database locking
 ): Promise<T> {
   const startTime = performance.now();
@@ -76,8 +70,8 @@ export async function safeInvoke<T>(
   const correlationId = CorrelationContext.getCurrentId() || CorrelationContext.generateNew();
 
   // Ensure correlation ID is in the args
-  const argsWithCorrelation = {
-    ...args,
+  const argsWithCorrelation: JsonObject = {
+    ...(args ?? {}),
     correlation_id: correlationId,
   };
 
@@ -133,7 +127,8 @@ export async function safeInvoke<T>(
       }
 
       // Success with wrapper
-      data = validator ? validator(apiResult.data) : apiResult.data as T;
+      const apiData = apiResult.data as JsonValue;
+      data = validator ? validator(apiData) : apiData as T;
     } else if (result && typeof result === 'object' && 'type' in result) {
       // Handle backend response format
       const backendResult = result as BackendResponse<T>;
@@ -156,10 +151,11 @@ export async function safeInvoke<T>(
         error.details = backendResult.error.details;
         throw error;
       }
-      data = validator ? validator(backendResult.payload) : backendResult.payload as T;
+      const payload = backendResult.payload as JsonValue;
+      data = validator ? validator(payload) : payload as T;
     } else {
       // Direct result (array or object)
-      data = validator ? validator(result) : result as T;
+      data = validator ? validator(result as JsonValue) : result as T;
     }
 
     // Log successful response
@@ -192,7 +188,7 @@ export async function safeInvoke<T>(
 
     // Properly serialize error for logging
     let errorMessage: string;
-    let errorDetails: unknown = error;
+    let errorDetails: JsonValue = null;
 
     if (error instanceof Error) {
       const enhancedError = error as EnhancedError;
@@ -206,14 +202,16 @@ export async function safeInvoke<T>(
     } else if (typeof error === 'object' && error !== null) {
       // Handle backend ApiError format
       if ('error' in error) {
-        errorMessage = String((error as any).error);
-        errorDetails = error;
+        const errorValue = (error as { error?: JsonValue }).error;
+        errorMessage = String(errorValue);
+        errorDetails = error as JsonObject;
       } else {
         errorMessage = JSON.stringify(error);
-        errorDetails = error;
+        errorDetails = error as JsonObject;
       }
     } else {
       errorMessage = String(error);
+      errorDetails = errorMessage;
     }
 
     logger.error(LogDomain.API, `IPC call error: ${command}`, error instanceof Error ? error : new Error(errorMessage), {
@@ -245,7 +243,7 @@ export async function safeInvoke<T>(
 }
 
 // Helper function to sanitize arguments for logging
-function sanitizeArgs(args?: Record<string, unknown>): Record<string, unknown> | undefined {
+function sanitizeArgs(args?: JsonObject): JsonObject | undefined {
   if (!args) return undefined;
 
   const sensitiveFields = new Set([
@@ -260,7 +258,7 @@ function sanitizeArgs(args?: Record<string, unknown>): Record<string, unknown> |
     'authorization',
   ]);
 
-  const sanitizeValue = (value: unknown): unknown => {
+  const sanitizeValue = (value: JsonValue): JsonValue => {
     if (typeof value === 'string') {
       return value.length > 100 ? `${value.substring(0, 100)}...[truncated]` : value;
     }
@@ -271,11 +269,11 @@ function sanitizeArgs(args?: Record<string, unknown>): Record<string, unknown> |
       return value.map(sanitizeValue);
     }
     if (value && typeof value === 'object') {
-      const entries = Object.entries(value as Record<string, unknown>);
+      const entries = Object.entries(value as JsonObject);
       if (entries.length > 10) {
         return `[Object(${entries.length} keys)]`;
       }
-      const sanitizedObject: Record<string, unknown> = {};
+      const sanitizedObject: JsonObject = {};
       for (const [key, entryValue] of entries) {
         if (sensitiveFields.has(key.toLowerCase())) {
           sanitizedObject[key] = '[REDACTED]';
@@ -288,5 +286,5 @@ function sanitizeArgs(args?: Record<string, unknown>): Record<string, unknown> |
     return value;
   };
 
-  return sanitizeValue(args) as Record<string, unknown>;
+  return sanitizeValue(args) as JsonObject;
 }

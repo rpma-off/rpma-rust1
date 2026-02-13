@@ -1,4 +1,6 @@
 import { invoke as tauriInvoke } from '@tauri-apps/api/core';
+import type { ApiResponse } from '@/types/api';
+import type { JsonObject, JsonValue } from '@/types/json';
 
 interface CacheEntry<T> {
   data: T;
@@ -13,13 +15,7 @@ interface CacheStats {
   invalidations: number;
 }
 
-interface ApiResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
-
-const cache = new Map<string, CacheEntry<unknown>>();
+const cache = new Map<string, CacheEntry<JsonValue>>();
 let stats: CacheStats = {
   hits: 0,
   misses: 0,
@@ -44,7 +40,7 @@ export function resetCacheStats(): void {
 /**
  * Check if cache entry is expired
  */
-function isExpired(entry: CacheEntry<unknown>): boolean {
+function isExpired(entry: CacheEntry<JsonValue>): boolean {
   return Date.now() - entry.timestamp > entry.ttl;
 }
 
@@ -71,7 +67,7 @@ export function getCached<T>(key: string): T | undefined {
  */
 export function setCached<T>(key: string, data: T, ttl: number = 60000): void {
   cache.set(key, {
-    data,
+    data: data as JsonValue,
     timestamp: Date.now(),
     ttl,
   });
@@ -117,8 +113,8 @@ export function invalidatePattern(pattern: string): void {
 export async function cachedInvoke<T>(
   cacheKey: string,
   command: string,
-  args?: Record<string, unknown>,
-  validator?: (data: unknown) => T,
+  args?: JsonObject,
+  validator?: (data: JsonValue) => T,
   ttl: number = 60000
 ): Promise<T> {
   // Check cache first
