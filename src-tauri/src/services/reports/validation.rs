@@ -200,3 +200,240 @@ pub fn sanitize_string(input: &str) -> String {
         .trim()
         .to_string()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::reports::{DateRange, ReportFilters};
+    use chrono::{Duration, Utc};
+
+    // -- Date range validation tests --
+
+    #[test]
+    fn test_validate_date_range_valid() {
+        let range = DateRange {
+            start: Utc::now() - Duration::days(30),
+            end: Utc::now(),
+        };
+        assert!(validate_date_range(&range).is_ok());
+    }
+
+    #[test]
+    fn test_validate_date_range_start_after_end() {
+        let range = DateRange {
+            start: Utc::now(),
+            end: Utc::now() - Duration::days(30),
+        };
+        let err = validate_date_range(&range).unwrap_err();
+        assert!(
+            err.to_string().contains("Start date must be before end date"),
+            "Expected start-before-end error, got: {}",
+            err
+        );
+    }
+
+    #[test]
+    fn test_validate_date_range_too_far_in_past() {
+        let range = DateRange {
+            start: Utc::now() - Duration::days(800),
+            end: Utc::now() - Duration::days(750),
+        };
+        let err = validate_date_range(&range).unwrap_err();
+        assert!(
+            err.to_string().contains("in the past"),
+            "Expected past-limit error, got: {}",
+            err
+        );
+    }
+
+    #[test]
+    fn test_validate_date_range_too_far_in_future() {
+        let range = DateRange {
+            start: Utc::now(),
+            end: Utc::now() + Duration::days(60),
+        };
+        let err = validate_date_range(&range).unwrap_err();
+        assert!(
+            err.to_string().contains("in the future"),
+            "Expected future-limit error, got: {}",
+            err
+        );
+    }
+
+    #[test]
+    fn test_validate_date_range_same_start_end() {
+        let now = Utc::now();
+        let range = DateRange {
+            start: now,
+            end: now,
+        };
+        let err = validate_date_range(&range).unwrap_err();
+        assert!(
+            err.to_string().contains("Start date must be before end date"),
+            "Expected start-before-end error, got: {}",
+            err
+        );
+    }
+
+    // -- Filter validation tests --
+
+    #[test]
+    fn test_validate_filters_default() {
+        let filters = ReportFilters::default();
+        assert!(validate_filters(&filters).is_ok());
+    }
+
+    #[test]
+    fn test_validate_filters_valid_statuses() {
+        let filters = ReportFilters {
+            statuses: Some(vec!["completed".to_string(), "pending".to_string()]),
+            ..ReportFilters::default()
+        };
+        assert!(validate_filters(&filters).is_ok());
+    }
+
+    #[test]
+    fn test_validate_filters_invalid_status() {
+        let filters = ReportFilters {
+            statuses: Some(vec!["invalid_status".to_string()]),
+            ..ReportFilters::default()
+        };
+        let err = validate_filters(&filters).unwrap_err();
+        assert!(
+            err.to_string().contains("Invalid status"),
+            "Expected invalid-status error, got: {}",
+            err
+        );
+    }
+
+    #[test]
+    fn test_validate_filters_empty_statuses() {
+        let filters = ReportFilters {
+            statuses: Some(vec![]),
+            ..ReportFilters::default()
+        };
+        let err = validate_filters(&filters).unwrap_err();
+        assert!(
+            err.to_string().contains("cannot be empty"),
+            "Expected empty-list error, got: {}",
+            err
+        );
+    }
+
+    #[test]
+    fn test_validate_filters_invalid_priority() {
+        let filters = ReportFilters {
+            priorities: Some(vec!["critical".to_string()]),
+            ..ReportFilters::default()
+        };
+        let err = validate_filters(&filters).unwrap_err();
+        assert!(
+            err.to_string().contains("Invalid priority"),
+            "Expected invalid-priority error, got: {}",
+            err
+        );
+    }
+
+    #[test]
+    fn test_validate_filters_valid_priorities() {
+        let filters = ReportFilters {
+            priorities: Some(vec!["low".to_string(), "high".to_string(), "urgent".to_string()]),
+            ..ReportFilters::default()
+        };
+        assert!(validate_filters(&filters).is_ok());
+    }
+
+    #[test]
+    fn test_validate_filters_duplicate_technician_ids() {
+        let filters = ReportFilters {
+            technician_ids: Some(vec!["t1".to_string(), "t1".to_string()]),
+            ..ReportFilters::default()
+        };
+        let err = validate_filters(&filters).unwrap_err();
+        assert!(
+            err.to_string().contains("Duplicate technician ID"),
+            "Expected duplicate error, got: {}",
+            err
+        );
+    }
+
+    #[test]
+    fn test_validate_filters_too_many_technician_ids() {
+        let ids: Vec<String> = (0..101).map(|i| format!("t{}", i)).collect();
+        let filters = ReportFilters {
+            technician_ids: Some(ids),
+            ..ReportFilters::default()
+        };
+        let err = validate_filters(&filters).unwrap_err();
+        assert!(
+            err.to_string().contains("more than 100"),
+            "Expected too-many error, got: {}",
+            err
+        );
+    }
+
+    #[test]
+    fn test_validate_filters_duplicate_client_ids() {
+        let filters = ReportFilters {
+            client_ids: Some(vec!["c1".to_string(), "c1".to_string()]),
+            ..ReportFilters::default()
+        };
+        let err = validate_filters(&filters).unwrap_err();
+        assert!(
+            err.to_string().contains("Duplicate client ID"),
+            "Expected duplicate error, got: {}",
+            err
+        );
+    }
+
+    // -- Year validation tests --
+
+    #[test]
+    fn test_validate_year_valid() {
+        assert!(validate_year(2024).is_ok());
+    }
+
+    #[test]
+    fn test_validate_year_too_old() {
+        let err = validate_year(2019).unwrap_err();
+        assert!(
+            err.to_string().contains("cannot be before"),
+            "Expected year-too-old error, got: {}",
+            err
+        );
+    }
+
+    #[test]
+    fn test_validate_year_too_future() {
+        let err = validate_year(2099).unwrap_err();
+        assert!(
+            err.to_string().contains("cannot be after"),
+            "Expected year-too-future error, got: {}",
+            err
+        );
+    }
+
+    // -- Sanitize string tests --
+
+    #[test]
+    fn test_sanitize_string_removes_special_chars() {
+        assert_eq!(sanitize_string("hello<script>world"), "helloscriptworld");
+    }
+
+    #[test]
+    fn test_sanitize_string_allows_hyphens_underscores() {
+        assert_eq!(sanitize_string("my-report_name"), "my-report_name");
+    }
+
+    #[test]
+    fn test_sanitize_string_limits_length() {
+        let long_input = "a".repeat(200);
+        let result = sanitize_string(&long_input);
+        assert_eq!(result.len(), 100);
+    }
+
+    #[test]
+    fn test_sanitize_string_trims_whitespace() {
+        assert_eq!(sanitize_string("  hello  "), "hello");
+    }
+}
