@@ -38,59 +38,57 @@ const DefaultGlobalErrorFallback: React.FC<GlobalErrorFallbackProps> = ({
   const getGlobalErrorMessage = (error: Error): { title: string; description: string; isRecoverable: boolean } => {
     const message = error.message.toLowerCase();
 
-    // Critical errors that require full app reload
     if (message.includes('chunkloaderror') || message.includes('loading chunk')) {
       return {
-        title: 'Application Update Required',
-        description: 'A new version of the application is available. Please reload the page to get the latest updates.',
+        title: 'Mise à jour de l\'application requise',
+        description: 'Une nouvelle version de l\'application est disponible. Veuillez recharger la page pour obtenir les dernières mises à jour.',
         isRecoverable: true
       };
     }
 
     if (message.includes('script error') || message.includes('unexpected token')) {
       return {
-        title: 'Application Loading Error',
-        description: 'There was a problem loading the application. This might be due to a network issue or corrupted files.',
+        title: 'Erreur de chargement de l\'application',
+        description: 'Un problème est survenu lors du chargement de l\'application. Cela peut être dû à un problème de réseau ou à des fichiers corrompus.',
         isRecoverable: true
       };
     }
 
     if (message.includes('out of memory') || message.includes('maximum call stack')) {
       return {
-        title: 'Application Performance Error',
-        description: 'The application has encountered a memory issue. Please reload the page to continue.',
+        title: 'Erreur de performance de l\'application',
+        description: 'L\'application a rencontré un problème de mémoire. Veuillez recharger la page pour continuer.',
         isRecoverable: true
       };
     }
 
     if (message.includes('network') || message.includes('fetch')) {
       return {
-        title: 'Connection Error',
-        description: 'Unable to connect to the RPMA servers. Please check your internet connection and try again.',
+        title: 'Erreur de connexion',
+        description: 'Impossible de se connecter aux serveurs RPMA. Veuillez vérifier votre connexion internet et réessayer.',
         isRecoverable: true
       };
     }
 
     if (message.includes('unauthorized') || message.includes('forbidden')) {
       return {
-        title: 'Authentication Error',
-        description: 'Your session has expired or you do not have permission to access this application. Please log in again.',
+        title: 'Erreur d\'authentification',
+        description: 'Votre session a expiré ou vous n\'avez pas la permission d\'accéder à cette application. Veuillez vous reconnecter.',
         isRecoverable: false
       };
     }
 
     if (message.includes('cors')) {
       return {
-        title: 'Configuration Error',
-        description: 'There is a configuration issue with the application. Please contact support.',
+        title: 'Erreur de configuration',
+        description: 'Il y a un problème de configuration avec l\'application. Veuillez contacter le support.',
         isRecoverable: false
       };
     }
 
-    // Generic application error
     return {
-      title: 'Application Error',
-      description: 'An unexpected error has occurred. The application may not function correctly until reloaded.',
+      title: 'Erreur de l\'application',
+      description: 'Une erreur inattendue s\'est produite. L\'application peut ne pas fonctionner correctement jusqu\'à ce qu\'elle soit rechargée.',
       isRecoverable: true
     };
   };

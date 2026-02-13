@@ -123,27 +123,26 @@ export class BaseErrorBoundary extends Component<BaseErrorBoundaryProps, ErrorBo
 
   private getErrorMessage = (): string => {
     const { error } = this.state;
-    if (!error) return 'An unexpected error occurred';
+    if (!error) return 'Une erreur inattendue s\'est produite';
 
-    // Extract meaningful error messages
     if (error.message.includes('ChunkLoadError')) {
-      return 'Failed to load application resources. This may be due to a network issue.';
+      return 'Échec du chargement des ressources de l\'application. Cela peut être dû à un problème de réseau.';
     }
     if (error.message.includes('Network Error')) {
-      return 'Network connection error. Please check your internet connection.';
+      return 'Erreur de connexion réseau. Veuillez vérifier votre connexion internet.';
     }
     if (error.message.includes('fetch')) {
-      return 'Failed to load data. Please check your connection and try again.';
+      return 'Échec du chargement des données. Veuillez vérifier votre connexion et réessayer.';
     }
 
-    return error.message || 'An unexpected error occurred';
+    return error.message || 'Une erreur inattendue s\'est produite';
   };
 
   render() {
     if (this.state.hasError) {
       const {
-        fallbackTitle = 'Something went wrong',
-        fallbackDescription = 'An unexpected error has occurred. Please try refreshing the page.',
+        fallbackTitle = 'Une erreur s\'est produite',
+        fallbackDescription = 'Une erreur inattendue s\'est produite. Veuillez essayer de rafraîchir la page.',
         showRetry = true,
         showHome = true,
         className = ''
@@ -172,85 +171,85 @@ export class BaseErrorBoundary extends Component<BaseErrorBoundaryProps, ErrorBo
             </CardHeader>
 
             <CardContent className="space-y-4">
-              {/* Error Message */}
-              <div className="bg-red-50 border border-red-200 rounded-md p-4">
-                <h4 className="text-sm font-medium text-red-800 mb-2">Error Details</h4>
-                <p className="text-sm text-red-700">{errorMessage}</p>
-              </div>
+               {/* Error Message */}
+               <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                 <h4 className="text-sm font-medium text-red-800 mb-2">Détails de l'erreur</h4>
+                 <p className="text-sm text-red-700">{errorMessage}</p>
+               </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3">
-                {showRetry && (
-                  <Button onClick={this.handleRetry} className="flex items-center space-x-2">
-                    <RefreshCw className="h-4 w-4" />
-                    <span>Try Again</span>
-                  </Button>
-                )}
+               {/* Action Buttons */}
+               <div className="flex flex-wrap gap-3">
+                 {showRetry && (
+                   <Button onClick={this.handleRetry} className="flex items-center space-x-2">
+                     <RefreshCw className="h-4 w-4" />
+                     <span>Réessayer</span>
+                   </Button>
+                 )}
 
-                {showHome && (
-                  <Button variant="outline" onClick={this.handleGoHome} className="flex items-center space-x-2">
-                    <Home className="h-4 w-4" />
-                    <span>Go to Dashboard</span>
-                  </Button>
-                )}
+                 {showHome && (
+                   <Button variant="outline" onClick={this.handleGoHome} className="flex items-center space-x-2">
+                     <Home className="h-4 w-4" />
+                     <span>Aller au tableau de bord</span>
+                   </Button>
+                 )}
 
-                <Button
-                  variant="ghost"
-                  onClick={() => window.location.reload()}
-                  className="flex items-center space-x-2"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  <span>Reload Page</span>
-                </Button>
-              </div>
+                 <Button
+                   variant="ghost"
+                   onClick={() => window.location.reload()}
+                   className="flex items-center space-x-2"
+                 >
+                   <RefreshCw className="h-4 w-4" />
+                   <span>Recharger la page</span>
+                 </Button>
+               </div>
 
-              {/* Technical Details Toggle */}
-              {process.env.NODE_ENV === 'development' && (error || errorInfo) && (
-                <div className="border-t pt-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={this.toggleDetails}
-                    className="flex items-center space-x-2 text-gray-600"
-                  >
-                    {showDetails ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    <span>{showDetails ? 'Hide' : 'Show'} Technical Details</span>
-                  </Button>
+               {/* Technical Details Toggle */}
+               {process.env.NODE_ENV === 'development' && (error || errorInfo) && (
+                 <div className="border-t pt-4">
+                   <Button
+                     variant="ghost"
+                     size="sm"
+                     onClick={this.toggleDetails}
+                     className="flex items-center space-x-2 text-gray-600"
+                   >
+                     {showDetails ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                     <span>{showDetails ? 'Masquer' : 'Afficher'} les détails techniques</span>
+                   </Button>
 
-                  {showDetails && (
-                    <div className="mt-3 space-y-3">
-                      {error && (
-                        <div className="bg-gray-50 border border-gray-200 rounded-md p-3">
-                          <h5 className="text-xs font-medium text-gray-700 mb-1">Error Stack</h5>
-                          <pre className="text-xs text-gray-600 whitespace-pre-wrap overflow-auto max-h-32">
-                            {error.stack}
-                          </pre>
-                        </div>
-                      )}
+                   {showDetails && (
+                     <div className="mt-3 space-y-3">
+                       {error && (
+                         <div className="bg-gray-50 border border-gray-200 rounded-md p-3">
+                           <h5 className="text-xs font-medium text-gray-700 mb-1">Pile d'erreur</h5>
+                           <pre className="text-xs text-gray-600 whitespace-pre-wrap overflow-auto max-h-32">
+                             {error.stack}
+                           </pre>
+                         </div>
+                       )}
 
-                      {errorInfo && (
-                        <div className="bg-gray-50 border border-gray-200 rounded-md p-3">
-                          <h5 className="text-xs font-medium text-gray-700 mb-1">Component Stack</h5>
-                          <pre className="text-xs text-gray-600 whitespace-pre-wrap overflow-auto max-h-32">
-                            {errorInfo.componentStack}
-                          </pre>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
+                       {errorInfo && (
+                         <div className="bg-gray-50 border border-gray-200 rounded-md p-3">
+                           <h5 className="text-xs font-medium text-gray-700 mb-1">Pile du composant</h5>
+                           <pre className="text-xs text-gray-600 whitespace-pre-wrap overflow-auto max-h-32">
+                             {errorInfo.componentStack}
+                           </pre>
+                         </div>
+                       )}
+                     </div>
+                   )}
+                 </div>
+               )}
 
-              {/* User Guidance */}
-              <div className="text-xs text-gray-500">
-                <p>If this problem persists, please:</p>
-                <ul className="list-disc list-inside mt-1 space-y-1">
-                  <li>Clear your browser cache and cookies</li>
-                  <li>Check your internet connection</li>
-                  <li>Contact support if the issue continues</li>
-                </ul>
-              </div>
-            </CardContent>
+               {/* User Guidance */}
+               <div className="text-xs text-gray-500">
+                 <p>Si ce problème persiste, veuillez :</p>
+                 <ul className="list-disc list-inside mt-1 space-y-1">
+                   <li>Vider le cache et les cookies de votre navigateur</li>
+                   <li>Vérifier votre connexion internet</li>
+                   <li>Contacter le support si le problème continue</li>
+                 </ul>
+               </div>
+             </CardContent>
           </Card>
         </div>
       );
