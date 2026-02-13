@@ -312,6 +312,13 @@ fn smoke_migration_harness_full() {
         "idx_materials_name",
         "idx_materials_type_active",
         "idx_materials_low_stock",
+        "idx_materials_active_discontinued",
+        "idx_materials_sku_active",
+        // Tasks soft-delete indexes
+        "idx_tasks_deleted_status_created",
+        "idx_tasks_deleted_task_number",
+        // Interventions task lookup
+        "idx_interventions_task_created",
     ];
     let mut idx_stmt = conn
         .prepare("SELECT name FROM sqlite_master WHERE type='index'")
