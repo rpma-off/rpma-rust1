@@ -35,6 +35,19 @@ pub struct CheckConflictsRequest {
     pub correlation_id: Option<String>,
 }
 
+/// Schedule task request - schedules a task updating both task and calendar event
+#[derive(Deserialize, Debug)]
+pub struct ScheduleTaskRequest {
+    pub session_token: String,
+    pub task_id: String,
+    pub new_date: String,
+    pub new_start: Option<String>,
+    pub new_end: Option<String>,
+    pub force: Option<bool>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
+}
+
 // Request structures for calendar event commands
 #[derive(Deserialize, Debug)]
 pub struct GetEventByIdRequest {
@@ -555,6 +568,102 @@ pub async fn calendar_check_conflicts(
                 "Failed to check scheduling conflicts: {}",
                 e
             )))
+        }
+    }
+}
+
+/// Schedule a task - updates both task and calendar event atomically with conflict checking
+#[tauri::command]
+#[instrument(skip(state))]
+pub async fn calendar_schedule_task(
+    request: ScheduleTaskRequest,
+    state: AppState<'_>,
+) -> Result<ApiResponse<crate::models::calendar::ConflictDetection>, AppError> {
+    let session_token = request.session_token;
+    let correlation_id = request
+        .correlation_id
+        .unwrap_or_else(crate::logging::correlation::generate_correlation_id);
+
+    info!(
+        "calendar_schedule_task command received - task_id: {}, new_date: {}, correlation_id: {}",
+        request.task_id, request.new_date, correlation_id
+    );
+
+    // Authentication
+    let current_user = authenticate!(&session_token, &state);
+
+    // Rate limiting
+    let rate_limiter = state.auth_service.rate_limiter();
+    let rate_limit_key = format!("calendar_ops:{}", current_user.user_id);
+    if !rate_limiter
+        .check_and_record(&rate_limit_key, 200, 60)
+        .map_err(|e| AppError::Internal(format!("Rate limit check failed: {}", e)))?
+    {
+        return Err(AppError::Validation(
+            "Rate limit exceeded. Please try again later.".to_string(),
+        ));
+    }
+
+    let calendar_service = CalendarService::new(state.db.clone());
+
+    let force = request.force.unwrap_or(false);
+
+    if force {
+        // Skip conflict check, schedule directly
+        match calendar_service
+            .schedule_task(
+                request.task_id.clone(),
+                request.new_date,
+                request.new_start,
+                request.new_end,
+                &current_user.user_id,
+            )
+            .await
+        {
+            Ok(()) => {
+                info!("Task {} scheduled (force mode)", request.task_id);
+                Ok(ApiResponse::success(ConflictDetection {
+                    has_conflict: false,
+                    conflict_type: None,
+                    conflicting_tasks: vec![],
+                    message: None,
+                }))
+            }
+            Err(e) => {
+                error!("Failed to schedule task: {}", e);
+                Err(AppError::Internal(format!(
+                    "Failed to schedule task: {}",
+                    e
+                )))
+            }
+        }
+    } else {
+        // Check conflicts first, then schedule if no conflicts
+        match calendar_service
+            .schedule_task_with_conflict_check(
+                request.task_id.clone(),
+                request.new_date,
+                request.new_start,
+                request.new_end,
+                &current_user.user_id,
+            )
+            .await
+        {
+            Ok(result) => {
+                if result.has_conflict {
+                    info!("Task {} has scheduling conflicts", request.task_id);
+                } else {
+                    info!("Task {} scheduled successfully", request.task_id);
+                }
+                Ok(ApiResponse::success(result))
+            }
+            Err(e) => {
+                error!("Failed to schedule task: {}", e);
+                Err(AppError::Internal(format!(
+                    "Failed to schedule task: {}",
+                    e
+                )))
+            }
         }
     }
 }
