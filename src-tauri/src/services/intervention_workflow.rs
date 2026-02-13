@@ -773,31 +773,30 @@ impl InterventionWorkflowService {
         self.validation
             .validate_intervention_finalization(&intervention, &logger)?;
 
-        // Save collected data and photos to the finalization step and mark it as completed
+        // Prepare the finalization step update outside the transaction
         let steps = self.data.get_intervention_steps(&intervention.id)?;
-        if let Some(finalization_step) = steps
+        let finalization_step = steps
             .iter()
             .find(|s| s.step_type == crate::models::step::StepType::Finalization)
-        {
-            let mut updated_step = finalization_step.clone();
+            .cloned();
 
+        let updated_step = finalization_step.map(|mut step| {
             if let Some(collected_data) = &request.collected_data {
-                updated_step.collected_data = Some(collected_data.clone());
+                step.collected_data = Some(collected_data.clone());
             }
 
             if let Some(photos) = &request.photos {
-                updated_step.photo_count = photos.len() as i32;
-                updated_step.photo_urls = Some(photos.clone());
+                step.photo_count = photos.len() as i32;
+                step.photo_urls = Some(photos.clone());
             }
 
-            updated_step.step_status = StepStatus::Completed;
-            updated_step.completed_at = TimestampString(Some(crate::models::common::now()));
-            if updated_step.started_at.inner().is_none() {
-                updated_step.started_at = TimestampString(Some(crate::models::common::now()));
+            step.step_status = StepStatus::Completed;
+            step.completed_at = TimestampString(Some(crate::models::common::now()));
+            if step.started_at.inner().is_none() {
+                step.started_at = TimestampString(Some(crate::models::common::now()));
             }
-            self.data.save_step(&updated_step)?;
-            logger.debug("Marked finalization step as completed", None);
-        }
+            step
+        });
 
         // Update final data
         intervention.customer_satisfaction = request.customer_satisfaction;
@@ -817,15 +816,37 @@ impl InterventionWorkflowService {
             intervention.actual_duration = Some(((end - start) / 60000) as i32);
         }
 
-        // Save intervention
-        self.data.save_intervention(&intervention)?;
+        // Wrap step save, intervention save, and task status update in a single transaction
+        let task_id = intervention.task_id.clone();
+        self.db
+            .with_transaction(|tx| {
+                // Save finalization step within the transaction
+                if let Some(ref step) = updated_step {
+                    self.data
+                        .save_step_with_tx(tx, step)
+                        .map_err(|e| e.to_string())?;
+                }
 
-        // Update associated task status to completed
-        let now = crate::models::common::now();
-        self.db.get_connection()?.execute(
-            "UPDATE tasks SET status = 'completed', completed_at = ?, updated_at = ? WHERE id = ?",
-            rusqlite::params![now, now, intervention.task_id],
-        ).map_err(|e| InterventionError::Database(format!("Failed to update task status: {}", e)))?;
+                // Save intervention within the transaction
+                self.data
+                    .save_intervention_with_tx(tx, &intervention)
+                    .map_err(|e| e.to_string())?;
+
+                // Update associated task status to completed
+                let now = crate::models::common::now();
+                tx.execute(
+                    "UPDATE tasks SET status = 'completed', completed_at = ?, updated_at = ? WHERE id = ?",
+                    rusqlite::params![now, now, task_id],
+                )
+                .map_err(|e| format!("Failed to update task status: {}", e))?;
+
+                Ok(())
+            })
+            .map_err(InterventionError::Database)?;
+
+        if updated_step.is_some() {
+            logger.debug("Marked finalization step as completed", None);
+        }
 
         // Calculate basic metrics
         let metrics = crate::services::intervention_types::InterventionMetrics {
