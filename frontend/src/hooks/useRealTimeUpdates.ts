@@ -30,7 +30,7 @@ export function useRealTimeUpdates(options: UseRealTimeUpdatesOptions = {}) {
     onTaskCreated: useCallback((task: Record<string, unknown>) => {
       if (!enableTaskUpdates) return;
       logger.info(LogDomain.TASK, 'Real-time: Task created', task);
-      toast.success(`New task created: ${(task.title as string) || 'Unknown'}`);
+      toast.success(`Nouvelle tâche créée : ${(task.title as string) || 'Inconnue'}`);
     }, [enableTaskUpdates]),
 
     onTaskUpdated: useCallback((taskId: string, updates: Record<string, unknown>) => {
@@ -61,7 +61,7 @@ export function useRealTimeUpdates(options: UseRealTimeUpdatesOptions = {}) {
     onInterventionStarted: useCallback((interventionId: string, taskId: string) => {
       if (!enableInterventionUpdates) return;
       logger.info(LogDomain.TASK, 'Real-time: Intervention started', { interventionId, taskId });
-      toast.success('Intervention started for task');
+      toast.success('Intervention démarrée pour la tâche');
     }, [enableInterventionUpdates]),
 
     onInterventionUpdated: useCallback((interventionId: string, updates: Record<string, unknown>) => {
@@ -72,7 +72,7 @@ export function useRealTimeUpdates(options: UseRealTimeUpdatesOptions = {}) {
     onInterventionCompleted: useCallback((interventionId: string) => {
       if (!enableInterventionUpdates) return;
       logger.info(LogDomain.TASK, 'Real-time: Intervention completed', { interventionId });
-      toast.success('Intervention completed successfully');
+      toast.success('Intervention terminée avec succès');
     }, [enableInterventionUpdates]),
 
     onInterventionStepAdvanced: useCallback((interventionId: string, stepNumber: number) => {
@@ -84,7 +84,7 @@ export function useRealTimeUpdates(options: UseRealTimeUpdatesOptions = {}) {
     onClientCreated: useCallback((client: Record<string, unknown>) => {
       if (!enableClientUpdates) return;
       logger.info(LogDomain.CLIENT, 'Real-time: Client created', client);
-      toast.success(`New client added: ${(client.name as string) || 'Unknown'}`);
+      toast.success(`Nouveau client ajouté : ${(client.name as string) || 'Inconnu'}`);
     }, [enableClientUpdates]),
 
     onClientUpdated: useCallback((clientId: string, updates: Record<string, unknown>) => {
@@ -119,7 +119,7 @@ export function useRealTimeUpdates(options: UseRealTimeUpdatesOptions = {}) {
 
     onConnected: useCallback(() => {
       logger.info(LogDomain.SYSTEM, 'Real-time: WebSocket connected');
-      toast.success('Real-time updates connected');
+      toast.success('Mises à jour en temps réel connectées');
     }, []),
 
     onDisconnected: useCallback(() => {
@@ -129,7 +129,7 @@ export function useRealTimeUpdates(options: UseRealTimeUpdatesOptions = {}) {
 
     onError: useCallback((error: Event) => {
       logger.error(LogDomain.SYSTEM, 'Real-time: WebSocket error', error);
-      toast.error('Real-time connection error');
+      toast.error('Erreur de connexion en temps réel');
     }, []),
   };
 

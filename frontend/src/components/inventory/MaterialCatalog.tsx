@@ -63,7 +63,7 @@ export function MaterialCatalog() {
       <Card className="rpma-shell">
         <CardContent className="p-6">
           <div className="text-center text-muted-foreground">
-            Error loading materials: {error}
+            Erreur lors du chargement des matériaux : {error}
           </div>
         </CardContent>
       </Card>
@@ -75,20 +75,20 @@ export function MaterialCatalog() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Material Catalog</h2>
-          <p className="text-muted-foreground">Manage your PPF materials and supplies</p>
+          <h2 className="text-2xl font-bold text-foreground">Catalogue de matériaux</h2>
+          <p className="text-muted-foreground">Gérez vos matériaux PPF et fournitures</p>
         </div>
         <Dialog open={showForm} onOpenChange={setShowForm}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Add Material
+              Ajouter un matériau
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white border-[hsl(var(--rpma-border))]">
             <DialogHeader>
               <DialogTitle className="text-foreground">
-                {editingMaterial ? 'Edit Material' : 'Add New Material'}
+                {editingMaterial ? 'Modifier le matériau' : 'Ajouter un nouveau matériau'}
               </DialogTitle>
             </DialogHeader>
             <MaterialForm
@@ -107,7 +107,7 @@ export function MaterialCatalog() {
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search materials..."
+                  placeholder="Rechercher des matériaux..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -116,23 +116,23 @@ export function MaterialCatalog() {
             </div>
             <Select value={materialTypeFilter} onValueChange={setMaterialTypeFilter}>
               <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Material Type" />
+                <SelectValue placeholder="Type de matériau" />
               </SelectTrigger>
               <SelectContent className="bg-white border-[hsl(var(--rpma-border))]">
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="ppf_film">PPF Film</SelectItem>
-                <SelectItem value="adhesive">Adhesive</SelectItem>
-                <SelectItem value="cleaning_solution">Cleaning Solution</SelectItem>
-                <SelectItem value="tool">Tool</SelectItem>
-                <SelectItem value="consumable">Consumable</SelectItem>
+                <SelectItem value="all">Tous les types</SelectItem>
+                <SelectItem value="ppf_film">Film PPF</SelectItem>
+                <SelectItem value="adhesive">Adhésif</SelectItem>
+                <SelectItem value="cleaning_solution">Solution de nettoyage</SelectItem>
+                <SelectItem value="tool">Outil</SelectItem>
+                <SelectItem value="consumable">Consommable</SelectItem>
               </SelectContent>
             </Select>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Category" />
+                <SelectValue placeholder="Catégorie" />
               </SelectTrigger>
               <SelectContent className="bg-white border-[hsl(var(--rpma-border))]">
-                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="all">Toutes les catégories</SelectItem>
                 {stats?.materials_by_category && Object.keys(stats.materials_by_category).map(category => (
                   <SelectItem key={category} value={category}>
                     {category} ({stats.materials_by_category[category]})
@@ -148,7 +148,7 @@ export function MaterialCatalog() {
       <Card className="rpma-shell">
         <CardHeader>
           <CardTitle className="text-foreground">
-            Materials ({filteredMaterials.length})
+            Matériaux ({filteredMaterials.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -156,11 +156,11 @@ export function MaterialCatalog() {
             <TableHeader>
               <TableRow className="rpma-table-header">
                 <TableHead>SKU</TableHead>
-                <TableHead>Name</TableHead>
+                <TableHead>Nom</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Stock</TableHead>
-                <TableHead>Unit Cost</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Coût unitaire</TableHead>
+                <TableHead>Statut</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -196,7 +196,7 @@ export function MaterialCatalog() {
                       variant={material.is_active ? "default" : "secondary"}
                       className={material.is_active ? "bg-[hsl(var(--rpma-teal))] text-white" : ""}
                     >
-                      {material.is_active ? 'Active' : 'Inactive'}
+                      {material.is_active ? 'Actif' : 'Inactif'}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -217,7 +217,7 @@ export function MaterialCatalog() {
           {filteredMaterials.length === 0 && (
             <div className="rpma-empty">
               <Package className="w-12 h-12 mx-auto mb-4" />
-              <p className="text-muted-foreground">No materials found</p>
+              <p className="text-muted-foreground">Aucun matériau trouvé</p>
             </div>
           )}
         </CardContent>

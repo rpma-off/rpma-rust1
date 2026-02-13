@@ -35,13 +35,13 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { href: '/team', label: 'Employees/Resources', icon: <Users className="w-5 h-5" /> },
-  { href: '/inventory', label: 'Inventory', icon: <Package className="w-5 h-5" /> },
-  { href: '/configuration', label: 'Integrations', icon: <Workflow className="w-5 h-5" /> },
-  { href: '/settings', label: 'Preferences', icon: <SettingsIcon className="w-5 h-5" /> },
-  { href: '/tasks', label: 'Workflows', icon: <Workflow className="w-5 h-5" /> },
-  { href: '/interventions', label: 'Activity', icon: <Activity className="w-5 h-5" /> },
-  { href: '/analytics', label: 'Analytics', icon: <BarChart3 className="w-5 h-5" /> },
+  { href: '/team', label: 'Employés/Ressources', icon: <Users className="w-5 h-5" /> },
+  { href: '/inventory', label: 'Inventaire', icon: <Package className="w-5 h-5" /> },
+  { href: '/configuration', label: 'Intégrations', icon: <Workflow className="w-5 h-5" /> },
+  { href: '/settings', label: 'Préférences', icon: <SettingsIcon className="w-5 h-5" /> },
+  { href: '/tasks', label: 'Flux de travail', icon: <Workflow className="w-5 h-5" /> },
+  { href: '/interventions', label: 'Activité', icon: <Activity className="w-5 h-5" /> },
+  { href: '/analytics', label: 'Analytique', icon: <BarChart3 className="w-5 h-5" /> },
 ];
 
 function UserDropdown({ onMobileClose }: { onMobileClose?: () => void }) {
@@ -79,11 +79,11 @@ function UserDropdown({ onMobileClose }: { onMobileClose?: () => void }) {
       setIsOpen(false);
       await signOut();
       queryClient.clear();
-      toast.success('Logged out successfully');
+      toast.success('Déconnexion réussie');
       router.push('/login');
     } catch (error) {
       console.error('Logout error:', error);
-      toast.error('Failed to logout');
+      toast.error('Échec de la déconnexion');
     }
   };
 
@@ -104,7 +104,7 @@ function UserDropdown({ onMobileClose }: { onMobileClose?: () => void }) {
             <AvatarFallback className="text-gray-600 font-bold text-xs">{initials}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-gray-400 font-medium">Signed in as</p>
+            <p className="text-xs text-gray-400 font-medium">Connecté en tant que</p>
             <p className="text-sm font-semibold text-gray-700 truncate">{displayName}</p>
           </div>
         </div>
@@ -147,7 +147,7 @@ function UserDropdown({ onMobileClose }: { onMobileClose?: () => void }) {
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors text-left"
               >
                 <User className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                <span>Profile</span>
+                <span>Profil</span>
               </button>
 
               <button
@@ -155,7 +155,7 @@ function UserDropdown({ onMobileClose }: { onMobileClose?: () => void }) {
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors text-left"
               >
                 <SettingsIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                <span>Settings</span>
+                <span>Paramètres</span>
               </button>
 
               <button
@@ -163,7 +163,7 @@ function UserDropdown({ onMobileClose }: { onMobileClose?: () => void }) {
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors text-left"
               >
                 <HelpCircle className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                <span>Help & Support</span>
+                <span>Aide & Support</span>
               </button>
             </div>
 
@@ -173,7 +173,7 @@ function UserDropdown({ onMobileClose }: { onMobileClose?: () => void }) {
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-left group"
               >
                 <LogOut className="h-4 w-4 text-red-500 group-hover:text-red-600 transition-colors flex-shrink-0" />
-                <span>Logout</span>
+                <span>Déconnexion</span>
               </button>
             </div>
           </motion.div>
@@ -239,7 +239,7 @@ export function RPMASidebar({ onMobileClose, isOpen, onToggle }: { onMobileClose
             <div className="flex items-center space-x-3">
               <div className="bg-gray-200 rounded text-gray-500 font-bold h-8 w-8 flex items-center justify-center text-xs">R</div>
               <div>
-                <p className="text-xs text-gray-400">Business</p>
+                <p className="text-xs text-gray-400">Entreprise</p>
                 <p className="text-sm font-semibold text-gray-700">RPMA</p>
               </div>
             </div>
@@ -258,7 +258,7 @@ export function RPMASidebar({ onMobileClose, isOpen, onToggle }: { onMobileClose
               onClick={() => onMobileClose?.()}
             >
               <MessageSquare className="h-5 w-5" />
-              <span>Message Center</span>
+              <span>Centre de messages</span>
             </Button>
           </Link>
 
@@ -281,7 +281,7 @@ export function RPMASidebar({ onMobileClose, isOpen, onToggle }: { onMobileClose
               )}
             >
               <SettingsIcon className="w-5 h-5 flex-shrink-0" />
-              <span className="ml-3 text-sm">Settings</span>
+              <span className="ml-3 text-sm">Paramètres</span>
             </Button>
           </Link>
         </div>
@@ -329,7 +329,7 @@ export function RPMAMobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClos
                 <div className="flex items-center space-x-3">
                   <div className="bg-gray-200 rounded text-gray-500 font-bold h-8 w-8 flex items-center justify-center text-xs">R</div>
                   <div>
-                    <p className="text-xs text-gray-400">Business</p>
+                    <p className="text-xs text-gray-400">Entreprise</p>
                     <p className="text-sm font-semibold text-gray-700">RPMA</p>
                   </div>
                 </div>
@@ -348,7 +348,7 @@ export function RPMAMobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClos
                   onClick={onClose}
                 >
                   <MessageSquare className="h-5 w-5" />
-                  <span>Message Center</span>
+                  <span>Centre de messages</span>
                 </Button>
               </Link>
 
@@ -384,7 +384,7 @@ export function RPMAMobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClos
                   onClick={onClose}
                 >
                   <SettingsIcon className="w-5 h-5 flex-shrink-0" />
-                  <span className="ml-3 text-sm">Settings</span>
+                  <span className="ml-3 text-sm">Paramètres</span>
                 </Button>
               </Link>
             </div>

@@ -8,6 +8,7 @@ import { bigintToNumber } from '@/lib/utils/timestamp-conversion';
 import { ipcClient } from '@/lib/ipc';
 import { ChangeRoleDialog } from '@/app/admin/users/components/ChangeRoleDialog';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface UserListProps {
   users: UserAccount[];
@@ -17,6 +18,7 @@ interface UserListProps {
 
 export function UserList({ users, onEdit, onRefresh }: UserListProps) {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [roleChangeUser, setRoleChangeUser] = useState<{
     id: string;
@@ -34,18 +36,18 @@ export function UserList({ users, onEdit, onRefresh }: UserListProps) {
       setDeletingId(userToDelete.id);
 
       if (!user || !user.token) {
-        toast.error('Not authenticated');
+        toast.error(t('users.notAuthenticated'));
         return;
       }
 
       await ipcClient.users.delete(userToDelete.id, user.token);
 
       onRefresh();
-      toast.success('User deactivated successfully');
+      toast.success(t('users.deactivatedSuccess'));
       setDeleteConfirmOpen(false);
       setUserToDelete(null);
     } catch (error) {
-      toast.error('Failed to delete user: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      toast.error(t('users.deleteFailed') + (error instanceof Error ? error.message : ''));
     } finally {
       setDeletingId(null);
     }
@@ -57,14 +59,14 @@ export function UserList({ users, onEdit, onRefresh }: UserListProps) {
   };
 
   const formatDate = (timestamp: bigint | string | null | undefined) => {
-    if (!timestamp) return 'Never';
+    if (!timestamp) return t('users.never');
     try {
       const date = typeof timestamp === 'bigint'
         ? new Date(bigintToNumber(timestamp) || 0)
         : new Date(timestamp);
       return date.toLocaleDateString();
     } catch {
-      return 'Invalid date';
+      return t('users.invalidDate');
     }
   };
 
@@ -86,25 +88,25 @@ export function UserList({ users, onEdit, onRefresh }: UserListProps) {
             <thead className="rpma-table-header">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Name
+                  {t('users.fullName')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Email
+                  {t('users.email')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Role
+                  {t('users.role')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Status
+                  {t('users.status')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Last Login
+                  {t('users.lastLogin')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Created
+                  {t('users.createdAt')}
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Actions
+                  {t('common.actions')}
                 </th>
               </tr>
             </thead>
@@ -133,11 +135,11 @@ export function UserList({ users, onEdit, onRefresh }: UserListProps) {
                         ? 'bg-green-100 text-green-800'
                         : 'bg-red-100 text-red-800'
                     }`}>
-                      {user.is_active ? 'Active' : 'Inactive'}
+                      {user.is_active ? t('users.active') : t('users.inactive')}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                    {user.last_login ? formatDate(user.last_login) : 'Never'}
+                    {user.last_login ? formatDate(user.last_login) : t('users.never')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {formatDate(user.created_at)}
@@ -147,7 +149,7 @@ export function UserList({ users, onEdit, onRefresh }: UserListProps) {
                        onClick={() => onEdit(user)}
                        className="text-indigo-600 hover:text-indigo-900 mr-4"
                      >
-                       Edit
+                       {t('common.edit')}
                      </button>
                      <button
                        onClick={() => setRoleChangeUser({
@@ -158,14 +160,14 @@ export function UserList({ users, onEdit, onRefresh }: UserListProps) {
                        })}
                        className="text-blue-600 hover:text-blue-900 mr-4"
                      >
-                       Change Role
+                       {t('users.changeRole')}
                      </button>
                      <button
                        onClick={() => confirmDeleteUser(user)}
                        disabled={deletingId === user.id}
                        className="text-red-600 hover:text-red-900 disabled:opacity-50"
                      >
-                       {deletingId === user.id ? 'Deleting...' : 'Delete'}
+                       {deletingId === user.id ? t('users.deleting') : t('common.delete')}
                      </button>
                    </td>
                 </tr>
@@ -176,7 +178,7 @@ export function UserList({ users, onEdit, onRefresh }: UserListProps) {
 
         {users.length === 0 && (
           <div className="rpma-empty">
-            <div className="text-muted-foreground">No users found</div>
+            <div className="text-muted-foreground">{t('users.noUsers')}</div>
           </div>
         )}
       </div>
@@ -195,10 +197,9 @@ export function UserList({ users, onEdit, onRefresh }: UserListProps) {
       <ConfirmDialog
         open={deleteConfirmOpen}
         onOpenChange={setDeleteConfirmOpen}
-        title="Deactivate User"
-        description={`Are you sure you want to deactivate ${userToDelete?.first_name} ${userToDelete?.last_name}? This action cannot be undone.`}
-        confirmText="Deactivate"
-        cancelText="Cancel"
+        title={t('users.deactivateUser')}
+        description={t('users.deactivateConfirm', { name: `${userToDelete?.first_name} ${userToDelete?.last_name}` })}
+        confirmText={t('users.deactivate')}
         variant="destructive"
         onConfirm={handleDelete}
       />

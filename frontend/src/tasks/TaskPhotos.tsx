@@ -32,6 +32,8 @@ export function TaskPhotos({ taskId }: TaskPhotosProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [activeTab, setActiveTab] = useState<'Before' | 'After'>('Before');
 
+  const tabLabel = (tab: 'Before' | 'After') => tab === 'Before' ? 'Avant' : 'Après';
+
   // Fetch photos for the task
   const { data: photos, isLoading, error } = useQuery<TaskPhoto[]>({
     queryKey: ['tasks', taskId, 'photos'],
@@ -96,8 +98,8 @@ export function TaskPhotos({ taskId }: TaskPhotosProps) {
       }
       
       toast({
-        title: 'Success',
-        description: 'Photo uploaded successfully',
+        title: 'Succès',
+        description: 'Photo téléversée avec succès',
       });
       
       // Refresh the photos list
@@ -106,8 +108,8 @@ export function TaskPhotos({ taskId }: TaskPhotosProps) {
     } catch (error) {
       console.error('Error uploading photo:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to upload photo',
+        title: 'Erreur',
+        description: 'Échec du téléversement de la photo',
         variant: 'destructive',
       });
     } finally {
@@ -141,14 +143,14 @@ export function TaskPhotos({ taskId }: TaskPhotosProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', taskId, 'photos'] });
       toast({
-        title: 'Success',
-        description: 'Photo deleted successfully',
+        title: 'Succès',
+        description: 'Photo supprimée avec succès',
       });
     },
     onError: () => {
       toast({
-        title: 'Error',
-        description: 'Failed to delete photo',
+        title: 'Erreur',
+        description: 'Échec de la suppression de la photo',
         variant: 'destructive',
       });
     }
@@ -177,7 +179,7 @@ export function TaskPhotos({ taskId }: TaskPhotosProps) {
           <AlertCircle className="h-5 w-5 text-red-400" />
           <div className="ml-3">
             <h3 className="text-sm font-medium text-red-800">
-              Error loading photos
+              Erreur lors du chargement des photos
             </h3>
             <div className="mt-2 text-sm text-red-700">
               {error.message}
@@ -207,7 +209,7 @@ export function TaskPhotos({ taskId }: TaskPhotosProps) {
             }}
           >
             <Camera className="h-4 w-4 mr-2" />
-            Before
+            Avant
           </Button>
           <Button
             variant={activeTab === 'After' ? 'default' : 'outline'}
@@ -222,7 +224,7 @@ export function TaskPhotos({ taskId }: TaskPhotosProps) {
             }}
           >
             <Camera className="h-4 w-4 mr-2" />
-            After
+            Après
           </Button>
         </div>
         
@@ -230,21 +232,21 @@ export function TaskPhotos({ taskId }: TaskPhotosProps) {
           <Button asChild variant="outline">
             <label className="cursor-pointer">
               <Upload className="h-4 w-4 mr-2" />
-              Upload {activeTab} Photo
+              Téléverser photo {tabLabel(activeTab)}
               <input
                 type="file"
                 className="sr-only"
                 accept="image/*"
                 onChange={(e) => handleFileChange(e, activeTab)}
                 disabled={isUploading}
-                aria-label={`Upload ${activeTab} Photo`}
+                aria-label={`Téléverser photo ${tabLabel(activeTab)}`}
               />
             </label>
           </Button>
           {isUploading && (
             <div className="absolute -top-2 -right-2" aria-live="polite">
               <Skeleton className="h-5 w-5 animate-spin text-primary" />
-              <span className="sr-only">Uploading photo...</span>
+              <span className="sr-only">Téléversement de la photo...</span>
             </div>
           )}
         </div>
@@ -255,12 +257,12 @@ export function TaskPhotos({ taskId }: TaskPhotosProps) {
         <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed rounded-lg">
           <ImageIcon className="h-12 w-12 text-muted-foreground mb-4" />
           <p className="text-muted-foreground mb-4">
-            No {activeTab.toLowerCase()} photos uploaded yet
+            Aucune photo {tabLabel(activeTab).toLowerCase()} téléversée pour le moment
           </p>
           <Button asChild variant="outline">
             <label className="cursor-pointer">
               <Upload className="h-4 w-4 mr-2" />
-              Upload {activeTab} Photo
+              Téléverser photo {tabLabel(activeTab)}
               <input
                 type="file"
                 className="sr-only"
@@ -278,7 +280,7 @@ export function TaskPhotos({ taskId }: TaskPhotosProps) {
               <div className="relative aspect-square">
                 <Image
                   src={photo.url}
-                  alt={`${photo.type} photo uploaded on ${new Date(photo.uploaded_at).toLocaleDateString()}${photo.uploaded_by ? ` by ${photo.uploaded_by.full_name}` : ''}`}
+                  alt={`Photo ${tabLabel(photo.type)} téléversée le ${new Date(photo.uploaded_at).toLocaleDateString()}${photo.uploaded_by ? ` par ${photo.uploaded_by.full_name}` : ''}`}
                   fill
                   className="w-full h-full object-cover"
                 />
@@ -288,7 +290,7 @@ export function TaskPhotos({ taskId }: TaskPhotosProps) {
                     size="sm"
                     onClick={() => deletePhotoMutation.mutate(photo.id)}
                     disabled={deletePhotoMutation.isPending}
-                    aria-label={`Delete ${photo.type} photo`}
+                    aria-label={`Supprimer photo ${tabLabel(photo.type)}`}
                     onKeyDown={(e) => {
                       if (KeyboardNavigation.isActivationKey(e.key) && !deletePhotoMutation.isPending) {
                         deletePhotoMutation.mutate(photo.id);
@@ -306,14 +308,14 @@ export function TaskPhotos({ taskId }: TaskPhotosProps) {
               </div>
               <CardHeader className="p-3">
                 <CardTitle className="text-sm font-medium flex items-center justify-between">
-                  <span>{photo.type} Photo</span>
+                  <span>Photo {tabLabel(photo.type)}</span>
                   <span className="text-xs text-muted-foreground">
                     {new Date(photo.uploaded_at).toLocaleDateString()}
                   </span>
                 </CardTitle>
                 {photo.uploaded_by && (
                   <p className="text-xs text-muted-foreground">
-                    Uploaded by {photo.uploaded_by.full_name}
+                    Téléversée par {photo.uploaded_by.full_name}
                   </p>
                 )}
               </CardHeader>

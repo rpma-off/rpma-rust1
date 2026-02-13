@@ -25,6 +25,8 @@ export function TaskPhotos({ taskId, interventionId }: TaskPhotosProps) {
   const [activeTab, setActiveTab] = useState<'Before' | 'After'>('Before');
   const galleryRef = useRef<HTMLDivElement>(null);
 
+  const tabLabel = (tab: 'Before' | 'After') => tab === 'Before' ? 'Avant' : 'Après';
+
   // Fetch photos for the intervention
   const { data: photos, isLoading, error } = useQuery<Photo[]>({
     queryKey: ['interventions', interventionId || taskId, 'photos'],
@@ -45,8 +47,8 @@ export function TaskPhotos({ taskId, interventionId }: TaskPhotosProps) {
   const uploadPhoto = async (file: File, type: 'Before' | 'After') => {
     if (!user?.token) {
       toast({
-        title: 'Error',
-        description: 'User not authenticated',
+        title: 'Erreur',
+        description: 'Utilisateur non authentifié',
         variant: 'destructive',
       });
       return;
@@ -58,8 +60,8 @@ export function TaskPhotos({ taskId, interventionId }: TaskPhotosProps) {
       // Upload the photo using Tauri command
       if (!interventionId) {
         toast({
-          title: 'Error',
-          description: 'No active intervention found',
+          title: 'Erreur',
+          description: 'Aucune intervention active trouvée',
           variant: 'destructive',
         });
         return;
@@ -67,8 +69,8 @@ export function TaskPhotos({ taskId, interventionId }: TaskPhotosProps) {
       await ipcClient.photos.upload(interventionId, (file as { path?: string }).path || file.name, type, user.token);
 
       toast({
-        title: 'Success',
-        description: 'Photo uploaded successfully',
+        title: 'Succès',
+        description: 'Photo téléversée avec succès',
       });
 
       // Refresh the photos list
@@ -77,8 +79,8 @@ export function TaskPhotos({ taskId, interventionId }: TaskPhotosProps) {
     } catch (error) {
       console.error('Error uploading photo:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to upload photo',
+        title: 'Erreur',
+        description: 'Échec du téléversement de la photo',
         variant: 'destructive',
       });
     } finally {
@@ -107,14 +109,14 @@ export function TaskPhotos({ taskId, interventionId }: TaskPhotosProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['interventions', interventionId || taskId, 'photos'] });
       toast({
-        title: 'Success',
-        description: 'Photo deleted successfully',
+        title: 'Succès',
+        description: 'Photo supprimée avec succès',
       });
     },
     onError: () => {
       toast({
-        title: 'Error',
-        description: 'Failed to delete photo',
+        title: 'Erreur',
+        description: 'Échec de la suppression de la photo',
         variant: 'destructive',
       });
     }
@@ -185,7 +187,7 @@ export function TaskPhotos({ taskId, interventionId }: TaskPhotosProps) {
             }}
           >
             <Camera className="h-4 w-4 mr-2" />
-            Before
+            Avant
           </Button>
           <Button
             variant={activeTab === 'After' ? 'default' : 'outline'}
@@ -200,7 +202,7 @@ export function TaskPhotos({ taskId, interventionId }: TaskPhotosProps) {
             }}
           >
             <Camera className="h-4 w-4 mr-2" />
-            After
+            Après
           </Button>
         </div>
 
@@ -208,21 +210,21 @@ export function TaskPhotos({ taskId, interventionId }: TaskPhotosProps) {
           <Button asChild variant="outline">
             <label className="cursor-pointer">
               <Upload className="h-4 w-4 mr-2" />
-              Upload {activeTab} Photo
+              Téléverser photo {tabLabel(activeTab)}
               <input
                 type="file"
                 className="sr-only"
                 accept="image/*"
                 onChange={(e) => handleFileChange(e, activeTab)}
                 disabled={isUploading}
-                aria-label={`Upload ${activeTab} Photo`}
+                aria-label={`Téléverser photo ${tabLabel(activeTab)}`}
               />
             </label>
           </Button>
           {isUploading && (
             <div className="absolute -top-2 -right-2" aria-live="polite">
               <Skeleton className="h-5 w-5 animate-spin text-primary" />
-              <span className="sr-only">Uploading photo...</span>
+              <span className="sr-only">Téléversement de la photo...</span>
             </div>
           )}
         </div>
@@ -232,7 +234,7 @@ export function TaskPhotos({ taskId, interventionId }: TaskPhotosProps) {
          id="photos-gallery"
          ref={galleryRef}
          aria-live="polite"
-         aria-label="Photo gallery"
+         aria-label="Galerie de photos"
          role="grid"
          aria-rowcount={Math.ceil(filteredPhotos.length / 3)}
          aria-colcount={3}
@@ -241,12 +243,12 @@ export function TaskPhotos({ taskId, interventionId }: TaskPhotosProps) {
         <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed rounded-lg">
           <ImageIcon className="h-12 w-12 text-muted-foreground mb-4" />
           <p className="text-muted-foreground mb-4">
-            No {activeTab.toLowerCase()} photos uploaded yet
+            Aucune photo {tabLabel(activeTab).toLowerCase()} téléversée pour le moment
           </p>
           <Button asChild variant="outline">
             <label className="cursor-pointer">
               <Upload className="h-4 w-4 mr-2" />
-              Upload {activeTab} Photo
+              Téléverser photo {tabLabel(activeTab)}
               <input
                 type="file"
                 className="sr-only"
@@ -307,9 +309,9 @@ export function TaskPhotos({ taskId, interventionId }: TaskPhotosProps) {
               </div>
               <CardHeader className="p-3">
                 <CardTitle className="text-sm font-medium flex items-center justify-between">
-                  <span>{photo.photo_type || 'Unknown'} Photo</span>
+                  <span>{photo.photo_type || 'Inconnu'} Photo</span>
                   <span className="text-xs text-muted-foreground">
-                     {photo.created_at ? new Date(photo.created_at as unknown as string).toLocaleDateString() : 'Unknown'}
+                     {photo.created_at ? new Date(photo.created_at as unknown as string).toLocaleDateString() : 'Inconnu'}
                   </span>
                 </CardTitle>
 

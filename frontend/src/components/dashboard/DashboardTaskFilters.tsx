@@ -31,25 +31,25 @@ export const DashboardTaskFilters: React.FC<DashboardTaskFiltersProps> = ({
   className
 }) => {
   const defaultStatusOptions = [
-    { value: 'all', label: 'All Statuses' },
-    { value: 'scheduled', label: 'Pending' },
-    { value: 'in_progress', label: 'In Progress' },
-    { value: 'completed', label: 'Completed' }
+    { value: 'all', label: 'Tous les statuts' },
+    { value: 'scheduled', label: 'En attente' },
+    { value: 'in_progress', label: 'En cours' },
+    { value: 'completed', label: 'Terminé' }
   ];
 
   const defaultPriorityOptions = [
-    { value: 'all', label: 'All Priorities' },
-    { value: 'low', label: 'Low' },
-    { value: 'medium', label: 'Medium' },
-    { value: 'high', label: 'High' },
-    { value: 'normale', label: 'Normal' }
+    { value: 'all', label: 'Toutes les priorités' },
+    { value: 'low', label: 'Basse' },
+    { value: 'medium', label: 'Moyenne' },
+    { value: 'high', label: 'Haute' },
+    { value: 'normale', label: 'Normale' }
   ];
 
   const sortOptions = [
-    { value: 'created_at', label: 'Created Date' },
-    { value: 'title', label: 'Title' },
-    { value: 'status', label: 'Status' },
-    { value: 'priority', label: 'Priority' }
+    { value: 'created_at', label: 'Date de création' },
+    { value: 'title', label: 'Titre' },
+    { value: 'status', label: 'Statut' },
+    { value: 'priority', label: 'Priorité' }
   ];
 
   const statusOptions = statusFilterOptions || defaultStatusOptions;
@@ -65,7 +65,7 @@ export const DashboardTaskFilters: React.FC<DashboardTaskFiltersProps> = ({
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
                 type="text"
-                placeholder="Search tasks..."
+                placeholder="Rechercher des tâches..."
                 value={searchQuery}
                 onChange={(e) => onSearch(e.target.value)}
                 className="pl-10"
@@ -79,7 +79,7 @@ export const DashboardTaskFilters: React.FC<DashboardTaskFiltersProps> = ({
           <div className="sm:w-48">
             <Select value={statusFilter} onValueChange={onStatusFilterChange}>
               <SelectTrigger>
-                <SelectValue placeholder="Status" />
+                <SelectValue placeholder="Statut" />
               </SelectTrigger>
               <SelectContent>
                 {statusOptions.map((option) => (
@@ -97,7 +97,7 @@ export const DashboardTaskFilters: React.FC<DashboardTaskFiltersProps> = ({
           <div className="sm:w-48">
             <Select value={priorityFilter} onValueChange={onPriorityFilterChange}>
               <SelectTrigger>
-                <SelectValue placeholder="Priority" />
+                <SelectValue placeholder="Priorité" />
               </SelectTrigger>
               <SelectContent>
                 {priorityOptions.map((option) => (
@@ -115,10 +115,10 @@ export const DashboardTaskFilters: React.FC<DashboardTaskFiltersProps> = ({
           <div className="sm:w-48">
             <Select value={technicianFilter || 'all'} onValueChange={(value) => onTechnicianFilterChange(value === 'all' ? '' : value)}>
               <SelectTrigger>
-                <SelectValue placeholder="Technician" />
+                <SelectValue placeholder="Technicien" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Technicians</SelectItem>
+                <SelectItem value="all">Tous les techniciens</SelectItem>
                 {technicians.map((tech) => (
                   <SelectItem key={tech.id} value={tech.id}>
                     {tech.name || `${tech.first_name} ${tech.last_name}`}
@@ -133,7 +133,7 @@ export const DashboardTaskFilters: React.FC<DashboardTaskFiltersProps> = ({
         <div className="sm:w-48">
           <Select value={sortBy} onValueChange={onSortChange}>
             <SelectTrigger>
-              <SelectValue placeholder="Sort by" />
+              <SelectValue placeholder="Trier par" />
             </SelectTrigger>
             <SelectContent>
               {sortOptions.map((option) => (
@@ -158,7 +158,7 @@ export const DashboardTaskFilters: React.FC<DashboardTaskFiltersProps> = ({
           className="flex items-center space-x-2"
         >
           <RotateCcw className="h-4 w-4" />
-          <span className="hidden sm:inline">Reset</span>
+          <span className="hidden sm:inline">Réinitialiser</span>
         </Button>
       </div>
     </div>
