@@ -240,8 +240,8 @@ class SchemaDriftDetector {
             }
 
             // Check for data type consistency
-            if (table.name === 'tasks' && !definition.includes('vehicle_year integer')) {
-                issues.push(`Table ${table.name} should have vehicle_year as INTEGER`);
+            if (table.name === 'tasks' && !definition.includes('vehicle_year text')) {
+                issues.push(`Table ${table.name} should have vehicle_year as TEXT`);
             }
         }
 
