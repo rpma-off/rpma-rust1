@@ -59,15 +59,7 @@ export function ActionButtons({
         toast.error('Authentification requise');
         return;
       }
-      const now = new Date();
-      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      await reportOperations.exportReport(
-        'tasks',
-        { start: thirtyDaysAgo.toISOString(), end: now.toISOString() },
-        { technician_ids: null, client_ids: null, statuses: null, priorities: null, ppf_zones: null, vehicle_models: null },
-        'pdf',
-        user.token
-      );
+      await reportOperations.exportInterventionReport(task.id, user.token);
       toast.success('Rapport téléchargé avec succès');
     } catch {
       toast.error('Erreur lors du téléchargement du rapport');
