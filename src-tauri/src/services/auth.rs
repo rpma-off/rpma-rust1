@@ -1172,7 +1172,8 @@ mod tests {
     fn create_test_auth_service() -> (AuthService, tempfile::TempDir) {
         setup_test_env();
         let test_db = test_db!();
-        let auth_service = AuthService::new(test_db.db()).expect("Failed to create auth service");
+        let db: crate::db::Database = (*test_db.db()).clone();
+        let auth_service = AuthService::new(db).expect("Failed to create auth service");
         (auth_service, test_db.temp_dir)
     }
 
