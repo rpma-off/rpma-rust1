@@ -95,7 +95,7 @@ export async function withRetry<T>(
 ): Promise<T> {
   const finalConfig = { ...defaultRetryConfig, ...config };
 
-  let lastError: RetryError | undefined;
+  let lastError: RetryError = new Error('Retry loop exited unexpectedly');
 
   for (let attempt = 1; attempt <= finalConfig.maxRetries + 1; attempt++) {
     try {
@@ -114,5 +114,5 @@ export async function withRetry<T>(
     }
   }
 
-  throw lastError!;
+  throw lastError;
 }
