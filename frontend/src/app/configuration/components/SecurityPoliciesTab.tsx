@@ -42,6 +42,7 @@ export function SecurityPoliciesTab() {
   // Form state for creating/editing policies
   const [formData, setFormData] = useState({
     name: '',
+    description: '',
     type: 'password' as SecurityPolicyType,
     isActive: true,
     settings: {
@@ -96,7 +97,7 @@ export function SecurityPoliciesTab() {
       const newPolicy: SecurityPolicy = {
         id: editingPolicy?.id || crypto.randomUUID(),
         name: formData.name,
-        description: formData.name,
+        description: formData.description || formData.name,
         policy_type: formData.type,
         type: formData.type,
         is_active: formData.isActive,
@@ -177,6 +178,7 @@ export function SecurityPoliciesTab() {
   const resetForm = () => {
     setFormData({
       name: '',
+      description: '',
       type: 'password',
       isActive: true,
       settings: {
@@ -205,6 +207,7 @@ export function SecurityPoliciesTab() {
     setEditingPolicy(policy);
     setFormData({
       name: policy.name,
+      description: policy.description || '',
       type: policy.type as SecurityPolicyType,
       isActive: policy.isActive || policy.is_active || false,
       settings: { ...formData.settings, ...policy.settings },

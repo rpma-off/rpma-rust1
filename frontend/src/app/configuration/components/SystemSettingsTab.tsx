@@ -233,7 +233,7 @@ export function SystemSettingsTab() {
     } catch (error) {
       logFormSubmit(configurations, false, error);
       logErrorRef.current('Error saving configurations', { error: error instanceof Error ? error.message : error });
-      toast.error('Erreur lors de la sauvegarde');
+      toast.error(`Erreur lors de la sauvegarde: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     } finally {
       setSaving(false);
       timer();

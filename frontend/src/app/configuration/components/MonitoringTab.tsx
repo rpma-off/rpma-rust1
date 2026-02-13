@@ -34,31 +34,34 @@ export function MonitoringTab() {
       const result = await safeInvoke<JsonValue>(IPC_COMMANDS.HEALTH_CHECK, {});
       if (result && typeof result === 'object') {
         const healthData = result as Record<string, JsonValue>;
+        const overallStatus = (healthData.status as string) === 'healthy' ? 'healthy' as const : 'warning' as const;
+        const now = new Date().toISOString();
+
+        // Derive component statuses from the overall health check result
+        const components: Record<string, { status: 'healthy' | 'warning' | 'error'; message?: string; lastChecked: string }> = {};
+        if (healthData.components && typeof healthData.components === 'object') {
+          for (const [key, val] of Object.entries(healthData.components as Record<string, JsonValue>)) {
+            const comp = val as Record<string, JsonValue>;
+            components[key] = {
+              status: (comp.status as string) === 'healthy' ? 'healthy' : (comp.status as string) === 'warning' ? 'warning' : 'error',
+              message: (comp.message as string) || '',
+              lastChecked: (comp.lastChecked as string) || now
+            };
+          }
+        }
+
+        // Fallback: if no components in response, derive from overall status
+        if (Object.keys(components).length === 0) {
+          components.database = { status: overallStatus, message: overallStatus === 'healthy' ? 'Base de données opérationnelle' : 'Vérification requise', lastChecked: now };
+          components.api = { status: overallStatus, message: overallStatus === 'healthy' ? 'API backend accessible' : 'Vérification requise', lastChecked: now };
+          components.storage = { status: overallStatus, message: overallStatus === 'healthy' ? 'Stockage disponible' : 'Vérification requise', lastChecked: now };
+          components.auth = { status: overallStatus, message: overallStatus === 'healthy' ? 'Authentification opérationnelle' : 'Vérification requise', lastChecked: now };
+        }
+
         const status: SystemStatus = {
-          status: (healthData.status as string) === 'healthy' ? 'healthy' : 'warning',
-          components: {
-            database: {
-              status: 'healthy',
-              message: 'Base de données opérationnelle',
-              lastChecked: new Date().toISOString()
-            },
-            api: {
-              status: 'healthy',
-              message: 'API backend accessible',
-              lastChecked: new Date().toISOString()
-            },
-            storage: {
-              status: 'healthy',
-              message: 'Stockage disponible',
-              lastChecked: new Date().toISOString()
-            },
-            auth: {
-              status: 'healthy',
-              message: 'Authentification opérationnelle',
-              lastChecked: new Date().toISOString()
-            }
-          },
-          timestamp: new Date().toISOString()
+          status: overallStatus,
+          components,
+          timestamp: now
         };
         setSystemStatus(status);
       }

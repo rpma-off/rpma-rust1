@@ -171,13 +171,13 @@ export function IntegrationsTab() {
         toast.error('Intégration introuvable');
         return;
       }
-      // Validate connectivity based on integration type
+      // Validate configuration locally
       if (integration.type === 'email' && integration.settings?.smtpHost) {
-        toast.success('Test réussi: Connexion au serveur SMTP vérifiée');
+        toast.success('Validation réussie: Configuration SMTP valide');
       } else if (integration.type === 'webhook' && integration.settings?.url) {
-        toast.success('Test réussi: URL du webhook accessible');
+        toast.success('Validation réussie: Configuration webhook valide');
       } else {
-        toast.info('Test terminé: Vérification locale effectuée');
+        toast.info('Validation terminée: Configuration locale vérifiée');
       }
     } catch (error) {
       console.error('Error testing integration:', error);

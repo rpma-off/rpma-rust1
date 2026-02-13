@@ -221,11 +221,11 @@ export function BusinessRulesTab() {
       }
       // Validate rule structure locally
       if (rule.conditions.length === 0) {
-        toast.warning('Test terminé: La règle n\'a aucune condition définie');
+        toast.warning('Validation: La règle n\'a aucune condition définie');
       } else if (rule.actions.length === 0) {
-        toast.warning('Test terminé: La règle n\'a aucune action définie');
+        toast.warning('Validation: La règle n\'a aucune action définie');
       } else {
-        toast.success('Test de règle réussi: Structure valide');
+        toast.success('Validation réussie: Structure de règle valide');
       }
     } catch (error) {
       console.error('Error testing rule:', error);
