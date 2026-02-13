@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { mfaService } from '@/lib/services/auth/mfa.service';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface TOTPSetupProps {
   sessionToken: string;
@@ -11,6 +12,7 @@ interface TOTPSetupProps {
 }
 
 const TOTPSetup: React.FC<TOTPSetupProps> = ({ sessionToken, onSetupComplete }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [setupComplete, setSetupComplete] = useState(false);
   const [verifying, setVerifying] = useState(false);
@@ -92,17 +94,15 @@ const TOTPSetup: React.FC<TOTPSetupProps> = ({ sessionToken, onSetupComplete }) 
   if (setupComplete && recoveryCodes.length > 0) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold mb-4">Two-Factor Authentication Enabled</h2>
+        <h2 className="text-xl font-semibold mb-4">{t('auth.twoFactorEnabled')}</h2>
         <p className="mb-4 text-green-600">
-          Two-factor authentication has been successfully enabled for your account.
+          {t('auth.twoFactorEnabledDesc')}
         </p>
 
         <div className="mb-6">
-          <h3 className="text-lg font-medium mb-2">Recovery Codes</h3>
+          <h3 className="text-lg font-medium mb-2">{t('auth.recoveryCodes')}</h3>
           <p className="text-sm text-gray-600 mb-3">
-            Please save these recovery codes in a secure location. If you lose access to your
-            authenticator app, you can use one of these codes to sign in.
-            Each code can only be used once.
+            {t('auth.recoveryCodesDesc')}
           </p>
 
           <div className="bg-gray-100 p-4 rounded-md font-mono text-sm mb-3">
@@ -116,19 +116,17 @@ const TOTPSetup: React.FC<TOTPSetupProps> = ({ sessionToken, onSetupComplete }) 
           <button
             className="text-sm text-blue-600 hover:text-blue-800"
             onClick={() => {
-              // Copy to clipboard
               navigator.clipboard.writeText(recoveryCodes.join('\n'));
               toast.success('Codes de récupération copiés dans le presse-papiers');
             }}
           >
-            Copy codes to clipboard
+            {t('auth.copyCodesToClipboard')}
           </button>
         </div>
 
         <div className="mt-4 text-sm text-gray-600">
           <p>
-            <strong>Important:</strong> Without your authenticator app or recovery codes,
-            you will lose access to your account.
+            <strong>Important :</strong> {t('auth.importantWithoutAuth')}
           </p>
         </div>
       </div>
@@ -137,10 +135,9 @@ const TOTPSetup: React.FC<TOTPSetupProps> = ({ sessionToken, onSetupComplete }) 
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-xl font-semibold mb-4">Set Up Two-Factor Authentication</h2>
+      <h2 className="text-xl font-semibold mb-4">{t('auth.setupTwoFactor')}</h2>
       <p className="mb-6 text-gray-600">
-        Two-factor authentication adds an extra layer of security to your account.
-        You&apos;ll need an authenticator app like Google Authenticator, Microsoft Authenticator, or Authy.
+        {t('auth.setupTwoFactorDesc')}
       </p>
 
       {loading ? (
@@ -150,9 +147,9 @@ const TOTPSetup: React.FC<TOTPSetupProps> = ({ sessionToken, onSetupComplete }) 
       ) : (
         <>
           <div className="mb-6">
-            <h3 className="text-lg font-medium mb-2">Step 1: Scan QR Code</h3>
+            <h3 className="text-lg font-medium mb-2">{t('auth.step1ScanQR')}</h3>
             <p className="text-sm text-gray-600 mb-3">
-              Open your authenticator app and scan the QR code below.
+              {t('auth.step1ScanQRDesc')}
             </p>
 
             {qrCode && (
@@ -160,7 +157,7 @@ const TOTPSetup: React.FC<TOTPSetupProps> = ({ sessionToken, onSetupComplete }) 
                 <div className="p-2 bg-white border rounded-md inline-block">
                   <Image
                     src={qrCode}
-                    alt="QR Code for authenticator app"
+                    alt={t('auth.qrCodeAlt')}
                     width={200}
                     height={200}
                     priority
@@ -174,12 +171,12 @@ const TOTPSetup: React.FC<TOTPSetupProps> = ({ sessionToken, onSetupComplete }) 
               className="text-sm text-blue-600 hover:text-blue-800"
               onClick={() => setShowManualEntry(!showManualEntry)}
             >
-              {showManualEntry ? "Hide manual entry" : "Can't scan the code?"}
+              {showManualEntry ? t('auth.hideManualEntry') : t('auth.cantScanCode')}
             </button>
 
             {showManualEntry && secret && (
               <div className="mt-3 p-3 bg-gray-100 rounded-md">
-                <p className="text-sm mb-1 font-medium">Manual entry code:</p>
+                <p className="text-sm mb-1 font-medium">{t('auth.manualEntryCode')}</p>
                 <p className="font-mono text-sm break-all">{secret}</p>
                 <button
                   className="text-xs text-blue-600 hover:text-blue-800 mt-1"
@@ -188,7 +185,7 @@ const TOTPSetup: React.FC<TOTPSetupProps> = ({ sessionToken, onSetupComplete }) 
                     toast.success('Code secret copié dans le presse-papiers');
                   }}
                 >
-                  Copy to clipboard
+                  {t('auth.copyToClipboard')}
                 </button>
               </div>
             )}
@@ -196,16 +193,16 @@ const TOTPSetup: React.FC<TOTPSetupProps> = ({ sessionToken, onSetupComplete }) 
 
           <form onSubmit={handleVerify}>
             <div className="mb-6">
-              <h3 className="text-lg font-medium mb-2">Step 2: Enter Code</h3>
+              <h3 className="text-lg font-medium mb-2">{t('auth.step2EnterCode')}</h3>
               <p className="text-sm text-gray-600 mb-3">
-                Enter the 6-digit code from your authenticator app.
+                {t('auth.step2EnterCodeDesc')}
               </p>
               <div className="flex space-x-2">
                 <input
                   type="text"
                   maxLength={6}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter 6-digit code"
+                  placeholder={t('auth.enter6DigitCode')}
                   value={code}
                   onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, ''))}
                   required
@@ -215,7 +212,7 @@ const TOTPSetup: React.FC<TOTPSetupProps> = ({ sessionToken, onSetupComplete }) 
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
                   disabled={verifying || code.length !== 6}
                 >
-                  {verifying ? 'Verifying...' : 'Verify'}
+                  {verifying ? t('auth.verifying') : t('auth.verify')}
                 </button>
               </div>
               {error && <p className="mt-2 text-red-600 text-sm">{error}</p>}

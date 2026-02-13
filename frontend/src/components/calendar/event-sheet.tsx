@@ -405,12 +405,12 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
                    </div>
                    <span>(US) +1 904-330-1131</span>
                  </div>
-                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
                    <div className="p-1">
                      <Users className="size-4" />
                    </div>
                    <span>
-                     {mockParticipants.length} {t('schedule.persons')}
+                     {participants.length} {t('schedule.persons')}
                      <span className="mx-1">•</span>
                      {yesCount} {t('schedule.yes_lower')}
                    </span>
