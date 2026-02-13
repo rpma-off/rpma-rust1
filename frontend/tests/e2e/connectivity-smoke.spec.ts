@@ -1,13 +1,13 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { resetMockDb } from './utils/mock';
 
-async function login(page: import('@playwright/test').Page) {
+async function login(page: Page) {
   await page.goto('/login');
   await resetMockDb(page);
   await page.fill('input[name="email"]', 'test@example.com');
   await page.fill('input[name="password"]', 'testpassword');
   await page.click('button[type="submit"]');
-  await page.waitForURL(/\/(dashboard|tasks|$)/, { timeout: 15000 });
+  await page.waitForURL(/\/(dashboard|tasks)(\/|$)/, { timeout: 15000 });
 }
 
 test.describe('Connectivity smoke', () => {
@@ -39,7 +39,7 @@ test.describe('Connectivity smoke', () => {
       await expect(completedMarker).toBeVisible({ timeout: 10000 });
 
       await page.reload();
-      await expect(completedMarker).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('.step.completed, text=/terminée|completed/i').first()).toBeVisible({ timeout: 10000 });
     }
 
     const logoutButton = page.locator('button:has-text("Déconnexion"), a:has-text("Déconnexion"), button:has-text("Logout")').first();

@@ -13,13 +13,11 @@ Static connectivity scan across `frontend/src/app/**/page.tsx`.
 | `/clients/[id]` | `ClientDetailPage` | `onClick` | `handleCreateTask` | `-` | **MISSING** | No IPC/API call detected in handler segment |
 | `/clients/[id]` | `ClientDetailPage` | `onClick` | `handleEdit` | `-` | **MISSING** | No IPC/API call detected in handler segment |
 | `/clients/[id]` | `ClientDetailPage` | `onClick` | `handleDelete` | `-` | **MISSING** | No IPC/API call detected in handler segment |
-| `/clients/[id]` | `ClientDetailPage` | `onClick` | `handleCreateTask` | `-` | **MISSING** | No IPC/API call detected in handler segment |
 | `/clients/new` | `NewClientPage` | `onSubmit` | `handleSubmit` | `-` | **MISSING** | No IPC/API call detected in handler segment |
 | `/clients/new` | `NewClientPage` | `onClick` | `handleCancel` | `-` | **MISSING** | No IPC/API call detected in handler segment |
 | `/clients` | `ClientsPage` | `N/A` | `N/A` | `-` | **MISSING** | No explicit JSX handler in page file |
 | `/configuration` | `ConfigurationPage` | `onClick` | `handleRefresh` | `-` | **DEAD** | Placeholder/local-only behavior detected |
 | `/dashboard/interventions` | `InterventionsDashboard` | `N/A` | `N/A` | `-` | **MISSING** | No explicit JSX handler in page file |
-| `/dashboard/operational-intelligence` | `OperationalIntelligencePage` | `onClick` | `handleRefresh` | `-` | **DEAD** | Placeholder/local-only behavior detected |
 | `/dashboard/operational-intelligence` | `OperationalIntelligencePage` | `onClick` | `handleRefresh` | `-` | **DEAD** | Placeholder/local-only behavior detected |
 | `/dashboard/operational-intelligence` | `OperationalIntelligencePage` | `onClick` | `handleExport` | `-` | **MISSING** | No IPC/API call detected in handler segment |
 | `/dashboard` | `DashboardPage` | `N/A` | `N/A` | `-` | **MISSING** | No explicit JSX handler in page file |
@@ -28,7 +26,6 @@ Static connectivity scan across `frontend/src/app/**/page.tsx`.
 | `/inventory` | `InventoryPage` | `N/A` | `N/A` | `-` | **MISSING** | No explicit JSX handler in page file |
 | `/login` | `LoginPage` | `onSubmit` | `handleSubmit` | `-` | **MISSING** | No IPC/API call detected in handler segment |
 | `/login` | `LoginPage` | `onChange` | `handleChange` | `-` | **MISSING** | No IPC/API call detected in handler segment |
-| `/login` | `LoginPage` | `onChange` | `handleChange` | `-` | **MISSING** | No IPC/API call detected in handler segment |
 | `/messages` | `MessagesPage` | `N/A` | `N/A` | `-` | **MISSING** | No explicit JSX handler in page file |
 | `/` | `Home` | `N/A` | `N/A` | `-` | **MISSING** | No explicit JSX handler in page file |
 | `/reports` | `Reports` | `N/A` | `N/A` | `-` | **MISSING** | No explicit JSX handler in page file |
@@ -36,11 +33,7 @@ Static connectivity scan across `frontend/src/app/**/page.tsx`.
 | `/settings` | `SettingsPage` | `N/A` | `N/A` | `-` | **MISSING** | No explicit JSX handler in page file |
 | `/signup` | `SignupPage` | `onSubmit` | `handleSubmit` | `-` | **DEAD** | Placeholder/local-only behavior detected |
 | `/signup` | `SignupPage` | `onChange` | `handleChange` | `-` | **DEAD** | Placeholder/local-only behavior detected |
-| `/signup` | `SignupPage` | `onChange` | `handleChange` | `-` | **DEAD** | Placeholder/local-only behavior detected |
-| `/signup` | `SignupPage` | `onChange` | `handleChange` | `-` | **DEAD** | Placeholder/local-only behavior detected |
-| `/signup` | `SignupPage` | `onChange` | `handleChange` | `-` | **DEAD** | Placeholder/local-only behavior detected |
 | `/signup` | `SignupPage` | `onChange` | `handlePasswordValidationChange` | `-` | **DEAD** | Placeholder/local-only behavior detected |
-| `/signup` | `SignupPage` | `onChange` | `handleChange` | `-` | **DEAD** | Placeholder/local-only behavior detected |
 | `/tasks/[id]/completed` | `TaskCompletedPage` | `onClick` | `handleSaveReport` | `-` | **DEAD** | Placeholder/local-only behavior detected |
 | `/tasks/[id]/completed` | `TaskCompletedPage` | `onClick` | `handleShareTask` | `-` | **DEAD** | Placeholder/local-only behavior detected |
 | `/tasks/[id]/completed` | `TaskCompletedPage` | `onClick` | `handlePrintReport` | `-` | **DEAD** | Placeholder/local-only behavior detected |
@@ -51,8 +44,6 @@ Static connectivity scan across `frontend/src/app/**/page.tsx`.
 | `/tasks/[id]/workflow/ppf/steps/installation` | `InstallationStepPage` | `onClick` | `handleCompleteInstallation` | `-` | **MISSING** | No IPC/API call detected in handler segment |
 | `/tasks/[id]/workflow/ppf/steps/preparation` | `PreparationStepPage` | `onClick` | `handleCompletePreparation` | `-` | **MISSING** | No IPC/API call detected in handler segment |
 | `/tasks/[id]/workflow/steps/[step]` | `WorkflowStepRedirect` | `N/A` | `N/A` | `-` | **MISSING** | No explicit JSX handler in page file |
-| `/tasks/edit/[id]` | `EditTaskPage` | `onClick` | `handleCancel` | `-` | **MISSING** | No IPC/API call detected in handler segment |
-| `/tasks/edit/[id]` | `EditTaskPage` | `onClick` | `handleCancel` | `-` | **MISSING** | No IPC/API call detected in handler segment |
 | `/tasks/edit/[id]` | `EditTaskPage` | `onClick` | `handleCancel` | `-` | **MISSING** | No IPC/API call detected in handler segment |
 | `/tasks/new` | `NewTaskPage` | `onClick` | `handleCancel` | `-` | **MISSING** | No IPC/API call detected in handler segment |
 | `/tasks` | `TasksPage` | `onClick` | `onImport` | `-` | **MISSING** | Handler delegated to child component or prop |

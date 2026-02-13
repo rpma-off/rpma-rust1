@@ -20,13 +20,11 @@
 | `/clients/[id]` | `frontend/src/app/clients/[id]/page.tsx` | `98` | `onClick / handleCreateTask` | **MISSING** | Wire handler to existing IPC/API wrapper and invalidate/refetch state after mutation. |
 | `/clients/[id]` | `frontend/src/app/clients/[id]/page.tsx` | `66` | `onClick / handleEdit` | **MISSING** | Wire handler to existing IPC/API wrapper and invalidate/refetch state after mutation. |
 | `/clients/[id]` | `frontend/src/app/clients/[id]/page.tsx` | `72` | `onClick / handleDelete` | **MISSING** | Wire handler to existing IPC/API wrapper and invalidate/refetch state after mutation. |
-| `/clients/[id]` | `frontend/src/app/clients/[id]/page.tsx` | `98` | `onClick / handleCreateTask` | **MISSING** | Wire handler to existing IPC/API wrapper and invalidate/refetch state after mutation. |
 | `/clients/new` | `frontend/src/app/clients/new/page.tsx` | `33` | `onSubmit / handleSubmit` | **MISSING** | Wire handler to existing IPC/API wrapper and invalidate/refetch state after mutation. |
 | `/clients/new` | `frontend/src/app/clients/new/page.tsx` | `67` | `onClick / handleCancel` | **MISSING** | Wire handler to existing IPC/API wrapper and invalidate/refetch state after mutation. |
 | `/clients` | `frontend/src/app/clients/page.tsx` | `-` | `N/A / N/A` | **MISSING** | Wire handler to existing IPC/API wrapper and invalidate/refetch state after mutation. |
 | `/configuration` | `frontend/src/app/configuration/page.tsx` | `208` | `onClick / handleRefresh` | **DEAD** | Wire handler to existing IPC/API wrapper and invalidate/refetch state after mutation. |
 | `/dashboard/interventions` | `frontend/src/app/dashboard/interventions/page.tsx` | `-` | `N/A / N/A` | **MISSING** | Wire handler to existing IPC/API wrapper and invalidate/refetch state after mutation. |
-| `/dashboard/operational-intelligence` | `frontend/src/app/dashboard/operational-intelligence/page.tsx` | `83` | `onClick / handleRefresh` | **DEAD** | Wire handler to existing IPC/API wrapper and invalidate/refetch state after mutation. |
 | `/dashboard/operational-intelligence` | `frontend/src/app/dashboard/operational-intelligence/page.tsx` | `83` | `onClick / handleRefresh` | **DEAD** | Wire handler to existing IPC/API wrapper and invalidate/refetch state after mutation. |
 | `/dashboard/operational-intelligence` | `frontend/src/app/dashboard/operational-intelligence/page.tsx` | `90` | `onClick / handleExport` | **MISSING** | Wire handler to existing IPC/API wrapper and invalidate/refetch state after mutation. |
 | `/dashboard` | `frontend/src/app/dashboard/page.tsx` | `-` | `N/A / N/A` | **MISSING** | Wire handler to existing IPC/API wrapper and invalidate/refetch state after mutation. |
