@@ -15,6 +15,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { TaskService } from '@/lib/services/entities/task.service';
+import { PageShell } from '@/components/layout/PageShell';
 import {
   CheckCircle,
   Download,
@@ -342,7 +343,7 @@ export default function TaskCompletedPage() {
   // Loading state
   if (loading) {
     return (
-      <div className="container mx-auto py-8 space-y-6">
+      <PageShell>
         <div className="space-y-3">
           <Skeleton className="h-12 w-3/4" />
           <Skeleton className="h-6 w-1/2" />
@@ -355,42 +356,42 @@ export default function TaskCompletedPage() {
             <Skeleton className="h-64" />
           </div>
         </div>
-      </div>
+      </PageShell>
     );
   }
 
   // Error state
   if (error) {
     return (
-      <div className="container mx-auto py-8">
+      <PageShell>
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
             {t('errors.taskLoadError')}: {error}
           </AlertDescription>
         </Alert>
-      </div>
+      </PageShell>
     );
   }
 
   // No task found
   if (!task) {
     return (
-      <div className="container mx-auto py-8">
+      <PageShell>
         <Alert>
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
             {t('tasks.notFoundById')}
           </AlertDescription>
         </Alert>
-      </div>
+      </PageShell>
     );
   }
 
   const duration = calculateDuration();
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <PageShell>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -1838,6 +1839,6 @@ export default function TaskCompletedPage() {
 
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 }

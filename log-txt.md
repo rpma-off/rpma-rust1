@@ -1,64 +1,25 @@
-﻿﻿app-index.tsx:25  Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render.
-window.console.error @ app-index.tsx:25
-app-index.tsx:25  Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render.
-    at ClientsPage (webpack-internal:///(app-pages-browser)/./src/app/clients/page.tsx:49:78)
-    at ClientPageRoot (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/client-page.js:14:11)
-    at InnerLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:243:11)
-    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
-    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
-    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
-    at LoadingBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:349:11)
-    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
-    at InnerScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:153:9)
-    at ScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:228:11)
-    at RenderFromTemplateContext (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
-    at OuterLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:370:11)
-    at InnerLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:243:11)
-    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
-    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
-    at NotFoundErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:76:9)
-    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
-    at Suspense
-    at LoadingBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:349:11)
-    at ErrorBoundaryHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:113:9)
-    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
-    at InnerScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:153:9)
-    at ScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:228:11)
-    at RenderFromTemplateContext (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
-    at OuterLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:370:11)
-    at div
-    at main
-    at div
-    at div
-    at AppShell (webpack-internal:///(app-pages-browser)/./src/components/layout/AppShell.tsx:16:11)
-    at RPMALayout (webpack-internal:///(app-pages-browser)/./src/components/RPMALayout.tsx:10:11)
-    at AppNavigation (webpack-internal:///(app-pages-browser)/./src/components/AppNavigation.tsx:15:11)
-    at AppLayout (webpack-internal:///(app-pages-browser)/./src/app/RootClientLayout.tsx:47:11)
-    at V (webpack-internal:///(app-pages-browser)/./node_modules/next-themes/dist/index.mjs:54:24)
-    at J (webpack-internal:///(app-pages-browser)/./node_modules/next-themes/dist/index.mjs:47:47)
-    at ThemeProvider (webpack-internal:///(app-pages-browser)/./src/components/theme-provider.tsx:13:11)
-    at AuthProvider (webpack-internal:///(app-pages-browser)/./src/contexts/AuthContext.tsx:27:11)
-    at QueryClientProvider (webpack-internal:///(app-pages-browser)/./node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js:27:11)
-    at Providers (webpack-internal:///(app-pages-browser)/./src/components/providers.tsx:23:11)
-    at GlobalErrorWrapper (webpack-internal:///(app-pages-browser)/./src/error-boundaries/GlobalErrorBoundary.tsx:625:9)
-    at BaseErrorBoundary (webpack-internal:///(app-pages-browser)/./src/error-boundaries/BaseErrorBoundary.tsx:402:9)
-    at GlobalErrorBoundary (webpack-internal:///(app-pages-browser)/./src/error-boundaries/GlobalErrorBoundary.tsx:499:11)
-    at div
-    at RootClientLayout (webpack-internal:///(app-pages-browser)/./src/app/RootClientLayout.tsx:200:11)
-    at body
-    at html
-    at RootLayout (Server)
-    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
-    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
-    at NotFoundErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:76:9)
-    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
-    at DevRootNotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/dev-root-not-found-boundary.js:33:11)
-    at ReactDevOverlay (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/react-dev-overlay/app/ReactDevOverlay.js:87:9)
-    at HotReload (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/react-dev-overlay/app/hot-reloader-client.js:321:11)
-    at Router (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/app-router.js:207:11)
-    at ErrorBoundaryHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:113:9)
-    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
-    at AppRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/app-router.js:585:13)
-    at ServerRoot (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:112:27)
-    at Root (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:117:11)
-window.console.error @ app-index.tsx:25
+﻿﻿warning: `rpma-ppf-intervention` (bin "main") generated 484 warnings (30 duplicates) (run `cargo fix --bin "main"` to apply 11 suggestions)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.93s
+     Running `target\debug\main.exe`
+2026-02-12T22:10:10.696819Z  INFO ThreadId(01) main: src-tauri\src\main.rs:281: Initializing application setup
+2026-02-12T22:10:10.698090Z DEBUG ThreadId(01) main: src-tauri\src\main.rs:288: App data directory: "C:\\Users\\emaMA\\AppData\\Roaming\\com.rpma.ppf-intervention"
+2026-02-12T22:10:10.698890Z DEBUG ThreadId(01) main: src-tauri\src\main.rs:292: Created app data directory
+2026-02-12T22:10:10.699231Z  INFO ThreadId(01) main: src-tauri\src\main.rs:296: Database path: "C:\\Users\\emaMA\\AppData\\Roaming\\com.rpma.ppf-intervention\\rpma.db"
+2026-02-12T22:10:10.699684Z  INFO ThreadId(01) main: src-tauri\src\main.rs:311: Database file exists: true, size: 901120 bytes
+2026-02-12T22:10:10.728677Z  INFO ThreadId(01) main: src-tauri\src\main.rs:321: Database connection established
+2026-02-12T22:10:10.730831Z  INFO ThreadId(01) main: src-tauri\src\main.rs:331: Database health check passed
+2026-02-12T22:10:10.732586Z DEBUG ThreadId(01) main::db::migrations: src-tauri\src\db\migrations.rs:115: All critical tables found, database appears initialized
+2026-02-12T22:10:10.733110Z  INFO ThreadId(01) main: src-tauri\src\main.rs:340: Database already initialized, checking for migrations
+2026-02-12T22:10:10.733744Z  INFO ThreadId(01) main: src-tauri\src\main.rs:344: Current version: 32, Target version: 35
+2026-02-12T22:10:10.734202Z  INFO ThreadId(01) main::db::migrations: src-tauri\src\db\migrations.rs:2391: Applying migration 33: Add FKs for tasks.workflow_id and tasks.current_workflow_step_id
+2026-02-12T22:10:10.755842Z ERROR ThreadId(01) main: src-tauri\src\main.rs:350: Failed to apply migrations: Failed to rebuild tasks table: error in view client_statistics: no such table: main.tasks
+
+thread 'main' panicked at C:\Users\emaMA\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-2.10.2\src\app.rs:1299:11:
+Failed to setup app: error encountered during setup hook: Failed to rebuild tasks table: error in view client_statistics: no such table: main.tasks
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+[0212/231010.759:ERROR:ui\gfx\win\window_impl.cc:124] Failed to unregister class Chrome_WidgetWin_0. Error = 1412
+error: process didn't exit successfully: `target\debug\main.exe` (exit code: 101)
+ ✓ Ready in 3.5s
+
+emaMA@LAPTOP-76DN517M MINGW64 /d/rpma-rust (v2-UX)
+$

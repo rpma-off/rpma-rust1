@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useTranslation } from '@/hooks/useTranslation';
+import { logger, LogDomain } from '@/lib/logging';
+import { useEffect } from 'react';
 
 export default function BootstrapAdminPage() {
   const { t } = useTranslation();
@@ -20,18 +22,40 @@ export default function BootstrapAdminPage() {
     queryFn: () => ipcClient.bootstrap.hasAdmins(),
   });
 
+  useEffect(() => {
+    if (!checkingAdmins) {
+      logger.debug(LogDomain.AUTH, 'Bootstrap admin status loaded', {
+        has_admins: hasAdmins,
+        user_id: user?.user_id
+      });
+    }
+  }, [checkingAdmins, hasAdmins, user?.user_id]);
+
   const bootstrapMutation = useMutation({
-    mutationFn: (userId: string) => ipcClient.bootstrap.firstAdmin(userId),
+    mutationFn: ({ userId, sessionToken }: { userId: string; sessionToken: string }) =>
+      ipcClient.bootstrap.firstAdmin(userId, sessionToken),
     onSuccess: () => {
+      logger.info(LogDomain.AUTH, 'Bootstrap admin succeeded', {
+        user_id: user?.user_id
+      });
       setTimeout(() => router.push('/dashboard'), 3000);
+    },
+    onError: (error) => {
+      logger.error(LogDomain.AUTH, 'Bootstrap admin failed', error, {
+        user_id: user?.user_id
+      });
     }
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (user?.user_id) {
-      bootstrapMutation.mutate(user.user_id);
+    if (!user?.user_id || !user?.token) {
+      logger.warn(LogDomain.AUTH, 'Bootstrap admin blocked: missing session', {
+        user_id: user?.user_id
+      });
+      return;
     }
+    bootstrapMutation.mutate({ userId: user.user_id, sessionToken: user.token });
   };
 
   if (checkingAdmins) {
@@ -96,7 +120,7 @@ export default function BootstrapAdminPage() {
             <Button
               type="submit"
               className="w-full"
-              disabled={bootstrapMutation.isPending || !user?.user_id}
+              disabled={bootstrapMutation.isPending || !user?.user_id || !user?.token}
             >
               {bootstrapMutation.isPending ? 'Création de l\'admin...' : 'Promouvoir en Admin'}
             </Button>
@@ -113,7 +137,6 @@ export default function BootstrapAdminPage() {
               <Alert variant="destructive">
                 <AlertDescription>
                   {(() => {
-                    console.log('Bootstrap error:', bootstrapMutation.error);
                     const error = bootstrapMutation.error as { message?: string; error?: string };
                     return error?.message || (error as { error?: string })?.error ||
                       'Échec de la création de l\'admin. L\'utilisateur peut ne pas exister ou l\'admin existe déjà.';

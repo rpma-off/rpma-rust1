@@ -8,17 +8,18 @@ import type {
   ClientStatistics
 } from '@/lib/backend';
 import type { Material, MaterialStats, InventoryStats } from '@/lib/inventory';
+import type { JsonObject } from '@/types/json';
 import { handleInvoke } from './mock-db';
 import { installMockControls } from './mock-controls';
 
-const invoke = <T>(command: string, args?: Record<string, unknown>) =>
+const invoke = <T>(command: string, args?: JsonObject) =>
   handleInvoke(command, args) as Promise<T>;
 
 export const ipcClient = {
   auth: {
     login: (email: string, password: string) =>
       invoke<UserSession>('auth_login', { request: { email, password } }),
-    createAccount: (request: Record<string, unknown>) =>
+    createAccount: (request: JsonObject) =>
       invoke<UserSession>('auth_create_account', { request }),
     refreshToken: (refreshToken: string) =>
       invoke<UserSession>('auth_refresh_token', { refreshToken }),
@@ -33,7 +34,7 @@ export const ipcClient = {
     is2FAEnabled: (_sessionToken: string) => invoke('is_2fa_enabled')
   },
   clients: {
-    create: (data: Record<string, unknown>, sessionToken: string) =>
+    create: (data: JsonObject, sessionToken: string) =>
       invoke<Client>('client_crud', { request: { action: { action: 'Create', data }, session_token: sessionToken } }),
     get: (id: string, sessionToken: string) =>
       invoke<Client | null>('client_crud', { request: { action: { action: 'Get', id }, session_token: sessionToken } }),
@@ -41,25 +42,25 @@ export const ipcClient = {
       invoke<Client | null>('client_crud', { request: { action: { action: 'GetWithTasks', id }, session_token: sessionToken } }),
     search: (query: string, limit: number, sessionToken: string) =>
       invoke<Client[]>('client_crud', { request: { action: { action: 'Search', query, limit }, session_token: sessionToken } }),
-    list: (filters: Record<string, unknown>, sessionToken: string) =>
+    list: (filters: JsonObject, sessionToken: string) =>
       invoke<ClientListResponse>('client_crud', { request: { action: { action: 'List', filters }, session_token: sessionToken } }),
-    listWithTasks: (filters: Record<string, unknown>, limitTasks: number, sessionToken: string) =>
+    listWithTasks: (filters: JsonObject, limitTasks: number, sessionToken: string) =>
       invoke<Client[]>('client_crud', { request: { action: { action: 'ListWithTasks', filters, limit_tasks: limitTasks }, session_token: sessionToken } }),
     stats: (sessionToken: string) =>
       invoke<ClientStatistics>('client_crud', { request: { action: { action: 'Stats' }, session_token: sessionToken } }),
-    update: (id: string, data: Record<string, unknown>, sessionToken: string) =>
+    update: (id: string, data: JsonObject, sessionToken: string) =>
       invoke<Client>('client_crud', { request: { action: { action: 'Update', id, data }, session_token: sessionToken } }),
     delete: (id: string, sessionToken: string) =>
       invoke<void>('client_crud', { request: { action: { action: 'Delete', id }, session_token: sessionToken } })
   },
   tasks: {
-    create: (data: Record<string, unknown>, sessionToken: string) =>
+    create: (data: JsonObject, sessionToken: string) =>
       invoke<Task>('task_crud', { request: { action: { action: 'Create', data }, session_token: sessionToken } }),
     get: (id: string, sessionToken: string) =>
       invoke<Task | null>('task_crud', { request: { action: { action: 'Get', id }, session_token: sessionToken } }),
-    update: (id: string, data: Record<string, unknown>, sessionToken: string) =>
+    update: (id: string, data: JsonObject, sessionToken: string) =>
       invoke<Task>('task_crud', { request: { action: { action: 'Update', id, data }, session_token: sessionToken } }),
-    list: (filters: Record<string, unknown>, sessionToken: string) =>
+    list: (filters: JsonObject, sessionToken: string) =>
       invoke<TaskListResponse>('task_crud', { request: { action: { action: 'List', filters }, session_token: sessionToken } }),
     delete: (id: string, sessionToken: string) =>
       invoke<void>('task_crud', { request: { action: { action: 'Delete', id }, session_token: sessionToken } }),
@@ -68,7 +69,7 @@ export const ipcClient = {
     checkTaskAssignment: (_taskId: string, _userId: string, _sessionToken: string) => invoke('check_task_assignment'),
     checkTaskAvailability: (_taskId: string, _sessionToken: string) => invoke('check_task_availability'),
     validateTaskAssignmentChange: (_taskId: string, _oldUserId: string | null, _newUserId: string, _sessionToken: string) => invoke('validate_task_assignment_change'),
-    editTask: (taskId: string, updates: Record<string, unknown>, sessionToken: string) =>
+    editTask: (taskId: string, updates: JsonObject, sessionToken: string) =>
       invoke<Task>('edit_task', { request: { task_id: taskId, data: updates, session_token: sessionToken } }),
     addTaskNote: () => invoke('add_task_note'),
     sendTaskMessage: () => invoke('send_task_message'),
@@ -80,7 +81,7 @@ export const ipcClient = {
   intervention: {
     getActiveByTask: (taskId: string, sessionToken: string) =>
       invoke('intervention_get_active_by_task', { task_id: taskId, session_token: sessionToken }),
-    saveStepProgress: (request: Record<string, unknown>, sessionToken: string, correlationId?: string) =>
+    saveStepProgress: (request: JsonObject, sessionToken: string, correlationId?: string) =>
       invoke('intervention_save_step_progress', { request, session_token: sessionToken, correlation_id: correlationId }),
     getStep: (stepId: string, sessionToken: string) =>
       invoke('intervention_get_step', { step_id: stepId, session_token: sessionToken }),
@@ -88,7 +89,7 @@ export const ipcClient = {
       invoke('intervention_get_progress', { intervention_id: interventionId, session_token: sessionToken })
   },
   interventions: {
-    start: (data: Record<string, unknown>, sessionToken: string) =>
+    start: (data: JsonObject, sessionToken: string) =>
       invoke('intervention_workflow', { action: { action: 'Start', data }, session_token: sessionToken }),
     get: (id: string, sessionToken: string) =>
       invoke('intervention_workflow', { action: { action: 'Get', id }, session_token: sessionToken }),
@@ -96,25 +97,25 @@ export const ipcClient = {
       invoke('intervention_get_active_by_task', { task_id: taskId, session_token: sessionToken }),
     getLatestByTask: (taskId: string, sessionToken: string) =>
       invoke('intervention_get_latest_by_task', { taskId, sessionToken }),
-    advanceStep: (request: Record<string, unknown>, sessionToken: string) =>
+    advanceStep: (request: JsonObject, sessionToken: string) =>
       invoke('intervention_progress', { action: { action: 'AdvanceStep', ...request }, session_token: sessionToken }),
-    saveStepProgress: (request: Record<string, unknown>, sessionToken: string, correlationId: string) =>
+    saveStepProgress: (request: JsonObject, sessionToken: string, correlationId: string) =>
       invoke('intervention_save_step_progress', { request, session_token: sessionToken, correlation_id: correlationId }),
     getStep: (stepId: string, sessionToken: string) =>
       invoke('intervention_get_step', { step_id: stepId, session_token: sessionToken }),
     getProgress: (interventionId: string, sessionToken: string) =>
       invoke('intervention_get_progress', { intervention_id: interventionId, session_token: sessionToken }),
-    updateWorkflow: (id: string, data: Record<string, unknown>, sessionToken: string) =>
+    updateWorkflow: (id: string, data: JsonObject, sessionToken: string) =>
       invoke('intervention_workflow', { action: { action: 'Update', id, data }, session_token: sessionToken }),
-    finalize: (data: Record<string, unknown>, sessionToken: string) =>
+    finalize: (data: JsonObject, sessionToken: string) =>
       invoke('intervention_workflow', { action: { action: 'Finalize', data }, session_token: sessionToken }),
-    list: (filters: Record<string, unknown>, sessionToken: string) =>
+    list: (filters: JsonObject, sessionToken: string) =>
       invoke('intervention_management', { action: { List: { filters } }, session_token: sessionToken })
   },
   notifications: {
-    initialize: (config: Record<string, unknown>, sessionToken: string) =>
+    initialize: (config: JsonObject, sessionToken: string) =>
       invoke('initialize_notification_service', { config, session_token: sessionToken }),
-    send: (request: Record<string, unknown>, sessionToken: string) =>
+    send: (request: JsonObject, sessionToken: string) =>
       invoke('send_notification', { request, session_token: sessionToken }),
     testConfig: (recipient: string, channel: 'email' | 'sms', sessionToken: string) =>
       invoke('test_notification_config', { recipient, channel, session_token: sessionToken }),
@@ -126,23 +127,23 @@ export const ipcClient = {
   settings: {
     getAppSettings: (sessionToken?: string) =>
       invoke('get_app_settings', { sessionToken: sessionToken || '' }),
-    updateNotificationSettings: (request: Record<string, unknown>, sessionToken: string) =>
+    updateNotificationSettings: (request: JsonObject, sessionToken: string) =>
       invoke('update_notification_settings', { request: { ...request, session_token: sessionToken } }),
     getUserSettings: (sessionToken: string) =>
       invoke('get_user_settings', { sessionToken }),
-    updateUserProfile: (request: Record<string, unknown>, sessionToken: string) =>
+    updateUserProfile: (request: JsonObject, sessionToken: string) =>
       invoke('update_user_profile', { request: { ...request, session_token: sessionToken } }),
-    updateUserPreferences: (request: Record<string, unknown>, sessionToken: string) =>
+    updateUserPreferences: (request: JsonObject, sessionToken: string) =>
       invoke('update_user_preferences', { request: { ...request, session_token: sessionToken } }),
-    updateUserSecurity: (request: Record<string, unknown>, sessionToken: string) =>
+    updateUserSecurity: (request: JsonObject, sessionToken: string) =>
       invoke('update_user_security', { request: { ...request, session_token: sessionToken } }),
-    updateUserPerformance: (request: Record<string, unknown>, sessionToken: string) =>
+    updateUserPerformance: (request: JsonObject, sessionToken: string) =>
       invoke('update_user_performance', { request, sessionToken }),
-    updateUserAccessibility: (request: Record<string, unknown>, sessionToken: string) =>
+    updateUserAccessibility: (request: JsonObject, sessionToken: string) =>
       invoke('update_user_accessibility', { request: { ...request, session_token: sessionToken } }),
-    updateUserNotifications: (request: Record<string, unknown>, sessionToken: string) =>
+    updateUserNotifications: (request: JsonObject, sessionToken: string) =>
       invoke('update_user_notifications', { request: { ...request, session_token: sessionToken } }),
-    changeUserPassword: (request: Record<string, unknown>, sessionToken: string) =>
+    changeUserPassword: (request: JsonObject, sessionToken: string) =>
       invoke('change_user_password', { request: { ...request, session_token: sessionToken } }),
     getActiveSessions: (sessionToken: string) =>
       invoke('get_active_sessions', { sessionToken }),
@@ -164,34 +165,34 @@ export const ipcClient = {
       invoke('delete_user_account', { request: { confirmation, session_token: sessionToken } }),
     getDataConsent: (sessionToken: string) =>
       invoke('get_data_consent', { sessionToken }),
-    updateDataConsent: (request: Record<string, unknown>, sessionToken: string) =>
+    updateDataConsent: (request: JsonObject, sessionToken: string) =>
       invoke('update_data_consent', { request: { ...request, session_token: sessionToken } })
   },
   material: {
-    list: (sessionToken: string, query: Record<string, unknown>) =>
+    list: (sessionToken: string, query: JsonObject) =>
       invoke<Material[]>('material_list', { sessionToken, ...query }),
-    create: (data: Record<string, unknown>, sessionToken: string) =>
+    create: (data: JsonObject, sessionToken: string) =>
       invoke<Material>('material_create', { request: { ...data, session_token: sessionToken } }),
-    update: (id: string, data: Record<string, unknown>, sessionToken: string) =>
+    update: (id: string, data: JsonObject, sessionToken: string) =>
       invoke<Material>('material_update', { id, request: { ...data, session_token: sessionToken } }),
     get: (id: string, sessionToken: string) =>
       invoke<Material | null>('material_get', { id, sessionToken }),
     delete: (id: string, sessionToken: string) =>
       invoke('material_delete', { id, sessionToken }),
-    updateStock: (data: Record<string, unknown>, sessionToken: string) =>
+    updateStock: (data: JsonObject, sessionToken: string) =>
       invoke('material_update_stock', { request: { ...data, session_token: sessionToken } }),
-    adjustStock: (data: Record<string, unknown>, sessionToken: string) =>
+    adjustStock: (data: JsonObject, sessionToken: string) =>
       invoke('material_adjust_stock', { request: { ...data, session_token: sessionToken } }),
-    recordConsumption: (data: Record<string, unknown>, sessionToken: string) =>
+    recordConsumption: (data: JsonObject, sessionToken: string) =>
       invoke('material_record_consumption', { request: { ...data, session_token: sessionToken } }),
     getConsumptionHistory: () => invoke('material_get_consumption_history'),
     createInventoryTransaction: () => invoke('material_create_inventory_transaction'),
     getTransactionHistory: () => invoke('material_get_transaction_history'),
-    createCategory: (data: Record<string, unknown>, sessionToken: string) =>
+    createCategory: (data: JsonObject, sessionToken: string) =>
       invoke('material_create_category', { request: { ...data, session_token: sessionToken } }),
     listCategories: (sessionToken: string) =>
       invoke('material_list_categories', { sessionToken }),
-    createSupplier: (data: Record<string, unknown>, sessionToken: string) =>
+    createSupplier: (data: JsonObject, sessionToken: string) =>
       invoke('material_create_supplier', { request: { ...data, session_token: sessionToken } }),
     listSuppliers: (sessionToken: string) =>
       invoke('material_list_suppliers', { sessionToken }),
@@ -204,19 +205,19 @@ export const ipcClient = {
     getInventoryMovementSummary: () => invoke('material_get_inventory_movement_summary')
   },
   reports: {
-    getTaskCompletionReport: (dateRange: Record<string, unknown>, filters?: Record<string, unknown>) =>
+    getTaskCompletionReport: (dateRange: JsonObject, filters?: JsonObject) =>
       invoke('get_task_completion_report', { date_range: dateRange, filters: filters || {} }),
-    getTechnicianPerformanceReport: (dateRange: Record<string, unknown>, filters?: Record<string, unknown>) =>
+    getTechnicianPerformanceReport: (dateRange: JsonObject, filters?: JsonObject) =>
       invoke('get_technician_performance_report', { date_range: dateRange, filters: filters || {} }),
-    getClientAnalyticsReport: (dateRange: Record<string, unknown>, filters?: Record<string, unknown>) =>
+    getClientAnalyticsReport: (dateRange: JsonObject, filters?: JsonObject) =>
       invoke('get_client_analytics_report', { date_range: dateRange, filters: filters || {} }),
-    getQualityComplianceReport: (dateRange: Record<string, unknown>, filters?: Record<string, unknown>) =>
+    getQualityComplianceReport: (dateRange: JsonObject, filters?: JsonObject) =>
       invoke('get_quality_compliance_report', { date_range: dateRange, filters: filters || {} }),
-    getMaterialUsageReport: (dateRange: Record<string, unknown>, filters?: Record<string, unknown>) =>
+    getMaterialUsageReport: (dateRange: JsonObject, filters?: JsonObject) =>
       invoke('get_material_usage_report', { date_range: dateRange, filters: filters || {} }),
-    getOverviewReport: (dateRange: Record<string, unknown>, filters?: Record<string, unknown>) =>
+    getOverviewReport: (dateRange: JsonObject, filters?: JsonObject) =>
       invoke('get_overview_report', { date_range: dateRange, filters: filters || {} }),
-    exportReport: (reportType: string, dateRange: Record<string, unknown>, filters: Record<string, unknown>, format: string) =>
+    exportReport: (reportType: string, dateRange: JsonObject, filters: JsonObject, format: string) =>
       invoke('export_report_data', { report_type: reportType, date_range: dateRange, filters, format }),
     exportInterventionReport: (interventionId: string) =>
       invoke('export_intervention_report', { intervention_id: interventionId }),
@@ -232,9 +233,9 @@ export const ipcClient = {
       invoke('get_events', { start_date: startDate, end_date: endDate, technician_id: technicianId, session_token: sessionToken }),
     getEventById: (id: string, sessionToken: string) =>
       invoke('get_event_by_id', { id, session_token: sessionToken }),
-    createEvent: (eventData: Record<string, unknown>, sessionToken: string) =>
+    createEvent: (eventData: JsonObject, sessionToken: string) =>
       invoke('create_event', { event_data: eventData, session_token: sessionToken }),
-    updateEvent: (id: string, eventData: Record<string, unknown>, sessionToken: string) =>
+    updateEvent: (id: string, eventData: JsonObject, sessionToken: string) =>
       invoke('update_event', { id, event_data: eventData, session_token: sessionToken }),
     deleteEvent: (id: string, sessionToken: string) =>
       invoke('delete_event', { id, session_token: sessionToken }),
@@ -248,13 +249,13 @@ export const ipcClient = {
       invoke('dashboard_get_stats', { timeRange })
   },
   users: {
-    create: (data: Record<string, unknown>, sessionToken: string) =>
+    create: (data: JsonObject, sessionToken: string) =>
       invoke('user_crud', { request: { action: { action: 'Create', data }, session_token: sessionToken } }),
     get: (id: string, sessionToken: string) =>
       invoke('user_crud', { request: { action: { action: 'Get', id }, session_token: sessionToken } }),
     list: (limit: number, offset: number, sessionToken: string) =>
       invoke('user_crud', { request: { action: { action: 'List', limit, offset }, session_token: sessionToken } }),
-    update: (id: string, data: Record<string, unknown>, sessionToken: string) =>
+    update: (id: string, data: JsonObject, sessionToken: string) =>
       invoke('user_crud', { request: { action: { action: 'Update', id, data }, session_token: sessionToken } }),
     delete: (id: string, sessionToken: string) =>
       invoke('user_crud', { request: { action: { action: 'Delete', id }, session_token: sessionToken } }),
@@ -270,8 +271,8 @@ export const ipcClient = {
       invoke('user_crud', { request: { action: { Unban: { id: userId } }, session_token: sessionToken } })
   },
   bootstrap: {
-    firstAdmin: (userId: string) =>
-      invoke('bootstrap_first_admin', { request: { user_id: userId } }),
+    firstAdmin: (userId: string, sessionToken: string) =>
+      invoke('bootstrap_first_admin', { request: { user_id: userId, session_token: sessionToken } }),
     hasAdmins: () =>
       invoke('has_admins')
   },
@@ -291,9 +292,9 @@ export const ipcClient = {
       invoke('cleanup_performance_metrics', { session_token: sessionToken }),
     getCacheStatistics: (sessionToken: string) =>
       invoke('get_cache_statistics', { session_token: sessionToken }),
-    clearApplicationCache: (request: Record<string, unknown>, sessionToken: string) =>
+    clearApplicationCache: (request: JsonObject, sessionToken: string) =>
       invoke('clear_application_cache', { request, session_token: sessionToken }),
-    configureCacheSettings: (request: Record<string, unknown>, sessionToken: string) =>
+    configureCacheSettings: (request: JsonObject, sessionToken: string) =>
       invoke('configure_cache_settings', { request, session_token: sessionToken })
   },
   security: {
@@ -332,7 +333,7 @@ export const ipcClient = {
     windowMinimize: () => invoke('ui_window_minimize'),
     windowMaximize: () => invoke('ui_window_maximize'),
     windowClose: () => invoke('ui_window_close'),
-    navigate: (path: string, options?: Record<string, unknown>) => invoke('navigation_update', { path, options }),
+    navigate: (path: string, options?: JsonObject) => invoke('navigation_update', { path, options }),
     goBack: () => invoke('navigation_go_back'),
     goForward: () => invoke('navigation_go_forward'),
     getCurrent: () => invoke('navigation_get_current'),

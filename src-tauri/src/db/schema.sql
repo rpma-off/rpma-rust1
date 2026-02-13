@@ -111,7 +111,8 @@ CREATE TABLE IF NOT EXISTS interventions (
 
   -- Foreign Keys
   FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,
-  FOREIGN KEY (technician_id) REFERENCES users(id) ON DELETE SET NULL
+  FOREIGN KEY (technician_id) REFERENCES users(id) ON DELETE SET NULL,
+  FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
 );
 
 -- Indexes for interventions
@@ -369,6 +370,8 @@ CREATE TABLE IF NOT EXISTS tasks (
     -- Foreign keys
     FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,
     FOREIGN KEY (technician_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (workflow_id) REFERENCES interventions(id) ON DELETE SET NULL,
+    FOREIGN KEY (current_workflow_step_id) REFERENCES intervention_steps(id) ON DELETE SET NULL,
 
     -- CHECK constraints
     CHECK(status IN (
@@ -396,6 +399,9 @@ CREATE INDEX IF NOT EXISTS idx_tasks_client_status ON tasks(client_id, status);
 CREATE INDEX IF NOT EXISTS idx_tasks_technician_scheduled ON tasks(technician_id, scheduled_date);
 CREATE INDEX IF NOT EXISTS idx_tasks_status_scheduled ON tasks(status, scheduled_date);
 CREATE INDEX IF NOT EXISTS idx_tasks_sync_status ON tasks(synced, status) WHERE synced = 0;
+CREATE INDEX IF NOT EXISTS idx_tasks_active
+  ON tasks(status, created_at)
+  WHERE deleted_at IS NULL;
 
 -- Table 4.5: task_history
 -- Tracks task status transitions for auditing
@@ -703,6 +709,8 @@ CREATE TABLE IF NOT EXISTS user_sessions (
 CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_sessions_token ON user_sessions(token);
 CREATE INDEX IF NOT EXISTS idx_user_sessions_expires_at ON user_sessions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_user_expires_activity
+  ON user_sessions(user_id, expires_at, last_activity DESC);
 
 -- Table 8: audit_logs (optionnel)
 CREATE TABLE IF NOT EXISTS audit_logs (
@@ -735,6 +743,36 @@ CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_logs(entity_type, entity_id);
 CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp);
 CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_logs(action);
+
+-- Table 8.1: audit_events
+-- Comprehensive security audit trail (kept in sync with migration 025)
+CREATE TABLE IF NOT EXISTS audit_events (
+  id TEXT PRIMARY KEY,
+  event_type TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  action TEXT NOT NULL,
+  resource_id TEXT,
+  resource_type TEXT,
+  description TEXT NOT NULL,
+  ip_address TEXT,
+  user_agent TEXT,
+  result TEXT NOT NULL,
+  previous_state TEXT,
+  new_state TEXT,
+  timestamp INTEGER NOT NULL,
+  metadata TEXT,
+  session_id TEXT,
+  request_id TEXT,
+  created_at INTEGER DEFAULT (unixepoch() * 1000)
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_events_user_id ON audit_events(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_events_timestamp ON audit_events(timestamp);
+CREATE INDEX IF NOT EXISTS idx_audit_events_resource ON audit_events(resource_type, resource_id);
+CREATE INDEX IF NOT EXISTS idx_audit_events_event_type ON audit_events(event_type);
+CREATE INDEX IF NOT EXISTS idx_audit_events_result ON audit_events(result);
+CREATE INDEX IF NOT EXISTS idx_audit_events_user_timestamp ON audit_events(user_id, timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_events_resource_timestamp ON audit_events(resource_type, resource_id, timestamp DESC);
 
 -- Table 9: user_settings
 -- User-specific settings and preferences
@@ -1015,10 +1053,14 @@ CREATE TABLE IF NOT EXISTS materials (
   -- Inventory
   unit_of_measure TEXT NOT NULL DEFAULT 'piece'
     CHECK(unit_of_measure IN ('piece', 'meter', 'liter', 'gram', 'roll')),
-  current_stock REAL NOT NULL DEFAULT 0,
-  minimum_stock REAL DEFAULT 0,
-  maximum_stock REAL,
-  reorder_point REAL,
+  current_stock REAL NOT NULL DEFAULT 0
+    CHECK(current_stock >= 0),
+  minimum_stock REAL DEFAULT 0
+    CHECK(minimum_stock IS NULL OR minimum_stock >= 0),
+  maximum_stock REAL
+    CHECK(maximum_stock IS NULL OR maximum_stock >= 0),
+  reorder_point REAL
+    CHECK(reorder_point IS NULL OR reorder_point >= 0),
 
   -- Pricing
   unit_cost REAL,
@@ -1076,10 +1118,12 @@ CREATE TABLE IF NOT EXISTS material_consumption (
   step_id TEXT,
 
   -- Consumption details
-  quantity_used REAL NOT NULL,
+  quantity_used REAL NOT NULL
+    CHECK(quantity_used >= 0),
   unit_cost REAL,
   total_cost REAL,
-  waste_quantity REAL DEFAULT 0,
+  waste_quantity REAL DEFAULT 0
+    CHECK(waste_quantity IS NULL OR waste_quantity >= 0),
   waste_reason TEXT,
 
   -- Quality tracking
@@ -1246,6 +1290,13 @@ CREATE TABLE IF NOT EXISTS schema_version (
     applied_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
 );
 
--- Initialize schema version to 25 (current version)
--- This ensures new databases don't run unnecessary migrations
-INSERT OR IGNORE INTO schema_version (version) VALUES (25);
+-- Initialize baseline schema versions 1..25 to keep version history contiguous.
+WITH RECURSIVE baseline_versions(version) AS (
+    SELECT 1
+    UNION ALL
+    SELECT version + 1
+    FROM baseline_versions
+    WHERE version < 25
+)
+INSERT OR IGNORE INTO schema_version (version)
+SELECT version FROM baseline_versions;

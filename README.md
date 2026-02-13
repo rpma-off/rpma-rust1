@@ -113,6 +113,13 @@ npm run bundle:analyze
 - `npm run frontend:build` - Build frontend
 - `npm run frontend:lint` - Linting du code frontend
 - `npm run frontend:type-check` - Vérification des types TypeScript
+- `npm run test` - Lancer les tests unitaires
+- `npm run test:watch` - Tests en mode watch
+- `npm run test:coverage` - Tests avec couverture
+- `npm run test:coverage:check` - Vérifier le seuil de couverture
+- `npm run test:e2e` - Tests end-to-end
+- `npm run test:e2e:ui` - Tests E2E avec interface visuelle
+- `npm run analyze` - Analyse du bundle frontend
 
 ### Scripts Backend
 - `npm run backend:build` - Build Rust en mode debug
@@ -121,22 +128,29 @@ npm run bundle:analyze
 - `npm run backend:clippy` - Analyse avec Clippy
 - `npm run backend:fmt` - Formatage du code Rust
 
+### Qualité
+- `npm run quality:check` - Combinaison de lint, type-check, clippy et fmt
+- `npm run security:audit` - Audit de sécurité
+
 ### Synchronisation des Types
 - `npm run types:sync` - Synchroniser les types Rust → TypeScript
 - `npm run types:validate` - Valider la synchronisation des types
 - `npm run types:drift-check` - Détecter les divergences de types
 - `npm run types:ci-drift-check` - Vérification CI des types
 
-### Tests et Qualité
-- `npm run test` - Lancer les tests unitaires
-- `npm run test:coverage` - Tests avec couverture
-- `npm run test:e2e` - Tests end-to-end
-- `npm run security:audit` - Audit de sécurité
+### Git Workflow
+- `npm run git:start-feature` - Démarrer une nouvelle branche de fonctionnalité
+- `npm run git:sync-feature` - Synchroniser la branche avec develop
+- `npm run git:finish-feature` - Finaliser et merger la fonctionnalité
+- `npm run git:cleanup-feature` - Nettoyer les branches fusionnées
+
+### Bundle et Performance
+- `npm run bundle:analyze` - Analyser la taille du bundle
+- `npm run bundle:check-size` - Vérifier les limites de taille
 - `npm run performance:test` - Tests de performance
 
 ### Utilitaires
 - `npm run clean` - Nettoyer les builds et node_modules
-- `npm run git:start-feature` - Démarrer une nouvelle branche de fonctionnalité
 - `npm run fix:encoding` - Corriger les problèmes d'encodage
 
 ## 🗂️ Structure du Projet
@@ -146,10 +160,11 @@ rpma-rust/
 ├── frontend/                 # Application Next.js
 │   ├── src/
 │   │   ├── app/             # Pages App Router
-│   │   ├── components/      # Composants React
-│   │   ├── hooks/           # Hooks personnalisés
+│   │   ├── components/      # 180+ composants React
+│   │   ├── hooks/           # 65+ hooks personnalisés
 │   │   ├── lib/             # Utilitaires et IPC
-│   │   ├── types/           # Types TypeScript
+│   │   │   └── ipc/         # 19 modules IPC par domaine
+│   │   ├── types/           # Types TypeScript (auto-générés)
 │   │   └── ui/              # Composants shadcn/ui
 │   └── package.json
 ├── src-tauri/               # Application Rust
@@ -249,20 +264,17 @@ RPMA utilise une stratégie de test multi-niveaux pour garantir la qualité :
 # Tous les tests backend (Rust)
 cd src-tauri && cargo test --lib
 
+# Tests frontend avec couverture
+cd frontend && npm run test:coverage
+
+# Tests E2E avec Playwright
+cd frontend && npm run test:e2e
+
 # Tests de migration de base de données
 cd src-tauri && cargo test migration
 
 # Tests de performance
 cd src-tauri && cargo test performance
-
-# Tests frontend (TypeScript/React)
-cd frontend && npm test
-
-# Tests E2E avec Playwright
-cd frontend && npm run test:e2e
-
-# Couverture de code
-npm run test:coverage
 ```
 
 ### Types de Tests

@@ -153,7 +153,7 @@ impl PhotoStorageService {
         }
     }
 
-    /// Store photo locally (async)
+    /// Store photo locally (async) using atomic write (write to temp then rename)
     pub async fn store_locally(
         &self,
         intervention_id: &str,
@@ -172,15 +172,21 @@ impl PhotoStorageService {
             })?;
         }
 
-        // Write image data to file asynchronously
-        fs::write(&file_path, data).await.map_err(|e| {
+        // Atomic write: write to temp file first, then rename
+        let tmp_path = file_path.with_extension("tmp");
+        fs::write(&tmp_path, data).await.map_err(|e| {
             crate::services::photo::PhotoError::Storage(format!("Failed to write file: {}", e))
+        })?;
+        fs::rename(&tmp_path, &file_path).await.map_err(|e| {
+            // Clean up temp file on rename failure
+            let _ = std::fs::remove_file(&tmp_path);
+            crate::services::photo::PhotoError::Storage(format!("Failed to finalize file: {}", e))
         })?;
 
         Ok(file_path)
     }
 
-    /// Store photo locally with custom path (async)
+    /// Store photo locally with custom path (async) using atomic write
     pub async fn store_locally_with_path(
         &self,
         base_path: &Path,
@@ -203,9 +209,14 @@ impl PhotoStorageService {
             })?;
         }
 
-        // Write image data to file asynchronously
-        fs::write(&file_path, data).await.map_err(|e| {
+        // Atomic write: write to temp file first, then rename
+        let tmp_path = file_path.with_extension("tmp");
+        fs::write(&tmp_path, data).await.map_err(|e| {
             crate::services::photo::PhotoError::Storage(format!("Failed to write file: {}", e))
+        })?;
+        fs::rename(&tmp_path, &file_path).await.map_err(|e| {
+            let _ = std::fs::remove_file(&tmp_path);
+            crate::services::photo::PhotoError::Storage(format!("Failed to finalize file: {}", e))
         })?;
 
         Ok(file_path)
@@ -528,5 +539,87 @@ impl PhotoStorageService {
     #[allow(dead_code)]
     pub fn database(&self) -> &Database {
         &self.db
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    async fn make_test_service(base_path: PathBuf) -> PhotoStorageService {
+        let db = crate::db::Database::new_in_memory()
+            .await
+            .expect("create db");
+        PhotoStorageService {
+            db,
+            storage_provider: StorageProvider::Local,
+            local_storage_path: base_path,
+        }
+    }
+
+    #[tokio::test]
+    async fn test_store_locally_atomic_write() {
+        let tmp_dir = std::env::temp_dir().join("rpma_test_atomic");
+        let _ = std::fs::remove_dir_all(&tmp_dir);
+
+        let service = make_test_service(tmp_dir.clone()).await;
+
+        let data = b"test image data";
+        let result = service.store_locally("int-001", "test.jpg", data).await;
+
+        assert!(result.is_ok());
+        let path = result.unwrap();
+        assert!(path.exists(), "Final file should exist");
+        assert_eq!(std::fs::read(&path).unwrap(), data);
+
+        // Ensure no temp file is left behind
+        let tmp_path = path.with_extension("tmp");
+        assert!(!tmp_path.exists(), "Temp file should be cleaned up");
+
+        let _ = std::fs::remove_dir_all(&tmp_dir);
+    }
+
+    #[tokio::test]
+    async fn test_store_locally_with_path_atomic_write() {
+        let tmp_dir = std::env::temp_dir().join("rpma_test_atomic_path");
+        let _ = std::fs::remove_dir_all(&tmp_dir);
+
+        let service = make_test_service(tmp_dir.clone()).await;
+
+        let data = b"test image content";
+        let result = service
+            .store_locally_with_path(&tmp_dir, "int-002", "photo.png", data)
+            .await;
+
+        assert!(result.is_ok());
+        let path = result.unwrap();
+        assert!(path.exists());
+        assert_eq!(std::fs::read(&path).unwrap(), data);
+
+        let _ = std::fs::remove_dir_all(&tmp_dir);
+    }
+
+    #[tokio::test]
+    async fn test_generate_file_path_consistency() {
+        let tmp_dir = std::env::temp_dir().join("rpma_test_path");
+        let service = make_test_service(tmp_dir.clone()).await;
+
+        let path1 = service.generate_file_path("int-001", "photo.jpg");
+        let path2 = service.generate_file_path("int-001", "photo.jpg");
+        assert_eq!(path1, path2, "Same inputs should produce same path");
+
+        // Path should include intervention_id/photos/filename
+        assert!(path1.to_string_lossy().contains("int-001"));
+        assert!(path1.to_string_lossy().contains("photos"));
+        assert!(path1.to_string_lossy().contains("photo.jpg"));
+    }
+
+    #[tokio::test]
+    async fn test_read_missing_file_returns_error() {
+        let tmp_dir = std::env::temp_dir().join("rpma_test_read_missing");
+        let service = make_test_service(tmp_dir.clone()).await;
+
+        let result = service.read_photo_file("nonexistent", "ghost.jpg").await;
+        assert!(result.is_err());
     }
 }

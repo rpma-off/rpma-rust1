@@ -5,6 +5,7 @@ import {
   validateInterventionStep,
   validateStartInterventionResponse
 } from '@/lib/validation/backend-type-guards';
+import type { JsonObject, JsonValue } from '@/types/json';
 import type {
   Intervention,
   InterventionStep,
@@ -27,7 +28,7 @@ export const interventionOperations = {
    * @returns Promise resolving to intervention start response
    */
   start: async (data: StartInterventionRequest, sessionToken: string) => {
-    const result = await safeInvoke<unknown>(IPC_COMMANDS.INTERVENTION_WORKFLOW, {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_WORKFLOW, {
       action: { action: 'Start', data },
       sessionToken: sessionToken
     });
@@ -49,7 +50,7 @@ export const interventionOperations = {
    * @returns Promise resolving to intervention data
    */
   get: async (id: string, sessionToken: string) => {
-    const result = await safeInvoke<unknown>(IPC_COMMANDS.INTERVENTION_WORKFLOW, {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_WORKFLOW, {
       action: { action: 'Get', id },
       sessionToken: sessionToken
     });
@@ -71,7 +72,7 @@ export const interventionOperations = {
    * @returns Promise resolving to active intervention data
    */
   getActiveByTask: async (taskId: string, sessionToken: string) => {
-    const result = await safeInvoke<unknown>(IPC_COMMANDS.INTERVENTION_WORKFLOW, {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_WORKFLOW, {
       action: { action: 'GetActiveByTask', task_id: taskId },
       sessionToken: sessionToken
     });
@@ -99,7 +100,7 @@ export const interventionOperations = {
    * @returns Promise resolving to latest intervention data
    */
   getLatestByTask: async (taskId: string, sessionToken: string) => {
-    const result = await safeInvoke<unknown>(IPC_COMMANDS.INTERVENTION_GET_LATEST_BY_TASK, {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_GET_LATEST_BY_TASK, {
       taskId: taskId,
       sessionToken: sessionToken
     });
@@ -124,7 +125,7 @@ export const interventionOperations = {
    * @returns Promise resolving to step advancement response
    */
   advanceStep: async (stepData: AdvanceStepRequest, sessionToken: string) => {
-    const result = await safeInvoke<unknown>(IPC_COMMANDS.INTERVENTION_PROGRESS, {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_PROGRESS, {
       action: {
         action: 'AdvanceStep',
         intervention_id: stepData.intervention_id,
@@ -160,7 +161,7 @@ export const interventionOperations = {
    * @returns Promise resolving to step data
    */
   getStep: async (stepId: string, sessionToken: string) => {
-    const result = await safeInvoke<unknown>(IPC_COMMANDS.INTERVENTION_PROGRESS, {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_PROGRESS, {
       action: { action: 'GetStep', step_id: stepId },
       sessionToken: sessionToken
     });
@@ -182,7 +183,7 @@ export const interventionOperations = {
    * @returns Promise resolving to progress data
    */
   getProgress: async (interventionId: string, sessionToken: string) => {
-    const result = await safeInvoke<unknown>(IPC_COMMANDS.INTERVENTION_PROGRESS, {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_PROGRESS, {
       action: { action: 'Get', intervention_id: interventionId },
       sessionToken: sessionToken
     });
@@ -212,7 +213,7 @@ export const interventionOperations = {
    * @returns Promise resolving to updated step
    */
   saveStepProgress: async (stepData: SaveStepProgressRequest, sessionToken: string) => {
-    const result = await safeInvoke<unknown>(IPC_COMMANDS.INTERVENTION_PROGRESS, {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_PROGRESS, {
       action: { action: 'SaveStepProgress', ...stepData },
       sessionToken: sessionToken
     });
@@ -234,8 +235,8 @@ export const interventionOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to updated intervention
    */
-  updateWorkflow: async (id: string, data: Record<string, unknown>, sessionToken: string) => {
-    const result = await safeInvoke<unknown>(IPC_COMMANDS.INTERVENTION_WORKFLOW, {
+  updateWorkflow: async (id: string, data: JsonObject, sessionToken: string) => {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_WORKFLOW, {
       action: { action: 'Update', id, data },
       sessionToken: sessionToken
     });
@@ -257,7 +258,7 @@ export const interventionOperations = {
    * @returns Promise resolving to finalization response
    */
   finalize: async (data: FinalizeInterventionRequest, sessionToken: string) => {
-    const result = await safeInvoke<unknown>(IPC_COMMANDS.INTERVENTION_WORKFLOW, {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_WORKFLOW, {
       action: { action: 'Finalize', data },
       sessionToken: sessionToken
     });
@@ -288,7 +289,7 @@ export const interventionOperations = {
     limit?: number;
     offset?: number
   }, sessionToken: string) => {
-    const result = await safeInvoke<unknown>(IPC_COMMANDS.INTERVENTION_MANAGEMENT, {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_MANAGEMENT, {
       action: { List: { filters } },
       sessionToken: sessionToken
     });

@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { TaskList } from '../TaskList';
+import { TaskCardList } from '../TaskCardList';
 import type { DashboardTask } from '../types';
 
 jest.mock('@tanstack/react-virtual', () => ({
@@ -37,9 +37,9 @@ const baseTask: DashboardTask = {
   updatedAt: '2024-01-01',
 };
 
-describe('TaskList', () => {
+describe('TaskCardList', () => {
   it('shows the empty state when no tasks are available', () => {
-    render(<TaskList tasks={[]} />);
+    render(<TaskCardList tasks={[]} />);
 
     expect(screen.getByText('Aucune tâche trouvée')).toBeInTheDocument();
   });
@@ -51,7 +51,7 @@ describe('TaskList', () => {
       { ...baseTask, id: 'task-2', title: 'Contrôle qualité' },
     ];
 
-    render(<TaskList tasks={tasks} onTaskClick={onTaskClick} />);
+    render(<TaskCardList tasks={tasks} onTaskClick={onTaskClick} />);
 
     const taskTitle = screen.getByText('Installation PPF');
     fireEvent.click(taskTitle);

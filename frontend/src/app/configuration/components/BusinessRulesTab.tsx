@@ -494,7 +494,7 @@ export function BusinessRulesTab() {
                                 {rule.category.replace('_', ' ')}
                               </Badge>
                               <Badge variant={rule.isActive ? 'default' : 'secondary'}>
-                                {rule.isActive ? 'Active' : 'Inactive'}
+                                {rule.isActive ? 'Actif' : 'Inactif'}
                               </Badge>
                               <Badge variant="outline">
                                 Priorité {rule.priority}

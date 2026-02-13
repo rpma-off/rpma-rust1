@@ -3,9 +3,10 @@
 use crate::commands::AppError;
 use crate::models::auth::{UserAccount, UserRole};
 use crate::models::user::User as RepoUser; // Import as RepoUser to distinguish
+use crate::repositories::base::RepoError;
 use crate::repositories::{Repository, UserRepository};
 use std::sync::Arc;
-use tracing::{error, info};
+use tracing::{debug, error, info, warn};
 
 #[derive(Clone, Debug)]
 pub struct UserService {
@@ -209,57 +210,127 @@ impl UserService {
 
     /// Check if any admin users exist in the system
     pub async fn has_admins(&self) -> Result<bool, AppError> {
-        let users = self
-            .user_repo
-            .find_by_role(crate::models::user::UserRole::Admin)
-            .await
-            .map_err(|e| {
-                error!("Failed to check admin users: {}", e);
-                AppError::Database("Failed to check existing admins".to_string())
-            })?;
+        let admin_count = self.user_repo.count_admins().await.map_err(|e| {
+            error!("Failed to count admin users: {}", e);
+            AppError::Database("Failed to check existing admins".to_string())
+        })?;
 
-        Ok(!users.is_empty())
+        debug!(admin_count, "Admin user count retrieved");
+        Ok(admin_count > 0)
     }
 
     /// Bootstrap the first admin user - only works if no admin exists
     pub async fn bootstrap_first_admin(&self, user_id: &str) -> Result<String, AppError> {
-        // Check if any admin exists
-        if self.has_admins().await? {
-            return Err(AppError::Validation(
-                "An admin user already exists. Use the admin panel to manage roles.".to_string(),
-            ));
-        }
-
-        // Get user
-        let repo_user = self
+        let user_email = self
             .user_repo
-            .find_by_id(user_id.to_string())
+            .bootstrap_first_admin(user_id)
             .await
             .map_err(|e| {
-                error!("Failed to find user for bootstrap: {}", e);
-                AppError::Database("Failed to find user".to_string())
-            })?
-            .ok_or_else(|| {
-                error!("User not found for bootstrap: {}", user_id);
-                AppError::NotFound("User not found".to_string())
+                warn!("Bootstrap admin failed in repository: {}", e);
+                match e {
+                    RepoError::NotFound(msg) => AppError::NotFound(msg),
+                    RepoError::Validation(msg) => AppError::Validation(msg),
+                    RepoError::Conflict(msg) => AppError::Validation(msg),
+                    RepoError::Database(msg) => AppError::Database(msg),
+                    RepoError::Cache(msg) => AppError::Internal(msg),
+                }
             })?;
-
-        let user_email = repo_user.email.clone();
-
-        // Update to admin
-        let mut updated_user = repo_user;
-        updated_user.role = crate::models::user::UserRole::Admin;
-        updated_user.updated_at = chrono::Utc::now().timestamp_millis();
-
-        self.user_repo.save(updated_user).await.map_err(|e| {
-            error!("Failed to update user role: {}", e);
-            AppError::Database("Failed to update user role".to_string())
-        })?;
 
         info!("Successfully bootstrapped admin for user: {}", user_email);
         Ok(format!(
             "User {} has been promoted to admin. Please log in again to apply new permissions.",
             user_email
         ))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::user::{User as RepoUser, UserRole as RepoUserRole};
+    use crate::repositories::cache::Cache;
+    use crate::test_utils::setup_test_db;
+    use std::sync::Arc;
+
+    fn build_user(id: &str, role: RepoUserRole, is_active: bool) -> RepoUser {
+        RepoUser {
+            id: id.to_string(),
+            email: format!("{}@example.com", id),
+            username: id.to_string(),
+            password_hash: "hashed".to_string(),
+            full_name: format!("User {}", id),
+            role,
+            phone: None,
+            is_active,
+            last_login_at: None,
+            login_count: 0,
+            preferences: None,
+            synced: false,
+            last_synced_at: None,
+            created_at: chrono::Utc::now().timestamp_millis(),
+            updated_at: chrono::Utc::now().timestamp_millis(),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_bootstrap_first_admin_success() {
+        let db = Arc::new(setup_test_db().await);
+        let cache = Arc::new(Cache::new(100));
+        let repo = Arc::new(UserRepository::new(Arc::clone(&db), cache));
+        let service = UserService::new(repo.clone());
+
+        let user = build_user("bootstrap-success", RepoUserRole::Viewer, true);
+        repo.save(user.clone()).await.unwrap();
+
+        let result = service.bootstrap_first_admin(&user.id).await;
+        assert!(result.is_ok());
+
+        let has_admins = service.has_admins().await.unwrap();
+        assert!(has_admins);
+    }
+
+    #[tokio::test]
+    async fn test_bootstrap_first_admin_admin_exists() {
+        let db = Arc::new(setup_test_db().await);
+        let cache = Arc::new(Cache::new(100));
+        let repo = Arc::new(UserRepository::new(Arc::clone(&db), cache));
+        let service = UserService::new(repo.clone());
+
+        let admin = build_user("admin-user", RepoUserRole::Admin, true);
+        repo.save(admin).await.unwrap();
+
+        let user = build_user("bootstrap-conflict", RepoUserRole::Viewer, true);
+        repo.save(user.clone()).await.unwrap();
+
+        let err = service.bootstrap_first_admin(&user.id).await.unwrap_err();
+        assert!(matches!(err, AppError::Validation(_)));
+    }
+
+    #[tokio::test]
+    async fn test_bootstrap_first_admin_user_not_found() {
+        let db = Arc::new(setup_test_db().await);
+        let cache = Arc::new(Cache::new(100));
+        let repo = Arc::new(UserRepository::new(db, cache));
+        let service = UserService::new(repo);
+
+        let err = service
+            .bootstrap_first_admin("missing-user")
+            .await
+            .unwrap_err();
+        assert!(matches!(err, AppError::NotFound(_)));
+    }
+
+    #[tokio::test]
+    async fn test_bootstrap_first_admin_inactive_user() {
+        let db = Arc::new(setup_test_db().await);
+        let cache = Arc::new(Cache::new(100));
+        let repo = Arc::new(UserRepository::new(Arc::clone(&db), cache));
+        let service = UserService::new(repo.clone());
+
+        let user = build_user("inactive-user", RepoUserRole::Viewer, false);
+        repo.save(user.clone()).await.unwrap();
+
+        let err = service.bootstrap_first_admin(&user.id).await.unwrap_err();
+        assert!(matches!(err, AppError::Validation(_)));
     }
 }

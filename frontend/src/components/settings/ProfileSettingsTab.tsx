@@ -450,27 +450,27 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
                 <h4 className="text-sm font-medium text-muted-foreground">Informations du compte</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                    <div className="space-y-1">
-                     <Label className="text-sm text-muted-foreground">Role</Label>
+                      <Label className="text-sm text-muted-foreground">Rôle</Label>
                      <div className="flex items-center gap-2">
                        <Badge variant="secondary">{profile?.role || user?.role || 'technician'}</Badge>
                      </div>
                    </div>
                    <div className="space-y-1">
-                     <Label className="text-sm text-muted-foreground">Last login</Label>
-                     <p className="text-sm">
-                        {profile?.last_login ? new Date(profile.last_login as string).toLocaleString('en-US') : 'Never'}
-                     </p>
-                   </div>
-                   <div className="space-y-1">
-                     <Label className="text-sm text-muted-foreground">Login count</Label>
-                     <p className="text-sm">{profile?.login_count || 0}</p>
-                   </div>
-                   <div className="space-y-1">
-                     <Label className="text-sm text-muted-foreground">Member since</Label>
-                     <p className="text-sm">
-                       {profile?.created_at ? new Date(profile.created_at as string).toLocaleDateString('en-US') : 'N/A'}
-                     </p>
-                   </div>
+                      <Label className="text-sm text-muted-foreground">Dernière connexion</Label>
+                      <p className="text-sm">
+                        {profile?.last_login ? new Date(profile.last_login as string).toLocaleString('fr-FR') : 'Jamais'}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm text-muted-foreground">Nombre de connexions</Label>
+                      <p className="text-sm">{profile?.login_count || 0}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm text-muted-foreground">Membre depuis</Label>
+                      <p className="text-sm">
+                        {profile?.created_at ? new Date(profile.created_at as string).toLocaleDateString('fr-FR') : 'N/D'}
+                      </p>
+                    </div>
                 </div>
               </div>
 

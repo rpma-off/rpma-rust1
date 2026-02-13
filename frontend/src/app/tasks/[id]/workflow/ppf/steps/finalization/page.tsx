@@ -160,7 +160,12 @@ export default function FinalizationStepPage() {
     } catch (error) {
       console.error('Error completing finalization:', error);
       const errorMessage = error instanceof Error ? error.message : String(error);
-      if (errorMessage.includes('mandatory steps incomplete')) {
+      // Parse the backend error to extract incomplete step names
+      const incompleteMatch = errorMessage.match(/mandatory steps incomplete:\s*(.+)/i);
+      if (incompleteMatch) {
+        const stepNames = incompleteMatch[1];
+        toast.error(`Étapes obligatoires incomplètes : ${stepNames}`, { duration: 8000 });
+      } else if (errorMessage.includes('mandatory steps') || errorMessage.includes('incomplete')) {
         toast.error(t('errors.validationError'));
       } else {
         toast.error(t('errors.generic'));
@@ -472,13 +477,17 @@ export default function FinalizationStepPage() {
               <div className="flex items-start space-x-3">
                 <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="text-sm font-medium text-yellow-400 mb-1">
+                  <h4 className="text-sm font-medium text-yellow-400 mb-2">
                     Étapes précédentes incomplètes
                   </h4>
-                  <p className="text-sm text-muted-foreground">
-                    Veuillez compléter les étapes suivantes avant de finaliser :{' '}
-                    {incompletePriorSteps.map(s => s.title).join(', ')}
-                  </p>
+                  <ul className="space-y-1">
+                    {incompletePriorSteps.map(s => (
+                      <li key={s.id} className="text-sm text-muted-foreground flex items-center space-x-2">
+                        <span className="w-2 h-2 rounded-full bg-yellow-500/60 flex-shrink-0" />
+                        <span>{s.title}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
             </CardContent>

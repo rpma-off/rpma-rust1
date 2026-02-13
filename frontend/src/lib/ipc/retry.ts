@@ -1,6 +1,10 @@
 /**
  * Retry configuration
  */
+import type { JsonValue } from '@/types/json';
+
+type RetryError = Error | JsonValue;
+
 export interface RetryConfig {
   maxRetries?: number;
   baseDelay?: number; // in ms
@@ -23,7 +27,7 @@ const defaultRetryConfig: Required<RetryConfig> = {
 /**
  * Check if an error is retryable
  */
-export function isRetryableError(error: unknown): boolean {
+export function isRetryableError(error: RetryError): boolean {
   if (!(error instanceof Error)) return false;
 
   const message = error.message.toLowerCase();
@@ -91,16 +95,17 @@ export async function withRetry<T>(
 ): Promise<T> {
   const finalConfig = { ...defaultRetryConfig, ...config };
 
-  let lastError: unknown;
+  let lastError: RetryError = new Error('Retry loop exited unexpectedly');
 
   for (let attempt = 1; attempt <= finalConfig.maxRetries + 1; attempt++) {
     try {
       return await fn();
     } catch (error) {
-      lastError = error;
+      const caughtError = error as RetryError;
+      lastError = caughtError;
 
-      if (attempt > finalConfig.maxRetries || !isRetryableError(error)) {
-        throw error;
+      if (attempt > finalConfig.maxRetries || !isRetryableError(caughtError)) {
+        throw caughtError;
       }
 
       const delay = calculateDelay(attempt, finalConfig);

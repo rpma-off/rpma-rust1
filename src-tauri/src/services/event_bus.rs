@@ -50,6 +50,9 @@ impl InMemoryEventBus {
     }
 
     /// Publish an event to all registered handlers
+    ///
+    /// Handler errors are logged but never propagate to the caller.
+    /// Handler panics are caught so one faulty handler cannot break others.
     pub async fn publish(&self, event: DomainEvent) -> Result<(), String> {
         let event_type = event.event_type();
         let handlers = {
@@ -58,8 +61,24 @@ impl InMemoryEventBus {
         };
 
         for handler in handlers {
-            if let Err(e) = handler.handle(&event).await {
-                tracing::error!("Event handler failed for {}: {}", event_type, e);
+            let handler = handler.clone();
+            let event_clone = event.clone();
+            let event_type_owned = event_type.to_string();
+
+            // Spawn each handler in its own task so panics are isolated
+            let join_result = tokio::spawn(async move { handler.handle(&event_clone).await }).await;
+
+            match join_result {
+                Ok(Ok(())) => {}
+                Ok(Err(e)) => {
+                    tracing::error!("Event handler failed for {}: {}", event_type_owned, e);
+                }
+                Err(_) => {
+                    tracing::error!(
+                        "Event handler panicked for {}, isolating failure",
+                        event_type_owned
+                    );
+                }
             }
         }
 
@@ -67,9 +86,12 @@ impl InMemoryEventBus {
     }
 
     /// Publish multiple events
+    ///
+    /// All events are published even if individual handlers fail.
     pub async fn publish_batch(&self, events: Vec<DomainEvent>) -> Result<(), String> {
         for event in events {
-            self.publish(event).await?;
+            // publish() never returns Err — handler errors are logged internally
+            let _ = self.publish(event).await;
         }
         Ok(())
     }
@@ -212,6 +234,24 @@ pub mod event_factory {
             metadata: None,
         }
     }
+
+    pub fn material_consumed(
+        material_id: String,
+        intervention_id: String,
+        quantity: f64,
+        unit: String,
+    ) -> DomainEvent {
+        DomainEvent::MaterialConsumed {
+            id: Uuid::new_v4().to_string(),
+            material_id,
+            intervention_id,
+            quantity,
+            unit,
+            consumed_by: "system".to_string(),
+            timestamp: Utc::now(),
+            metadata: None,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -341,6 +381,14 @@ mod tests {
         let intervention_started =
             event_factory::intervention_started("int-123".to_string(), "task-123".to_string());
         assert_eq!(intervention_started.event_type(), "InterventionStarted");
+
+        let material_consumed = event_factory::material_consumed(
+            "mat-1".to_string(),
+            "int-1".to_string(),
+            1.5,
+            "m²".to_string(),
+        );
+        assert_eq!(material_consumed.event_type(), "MaterialConsumed");
     }
 
     #[test]

@@ -3,6 +3,7 @@ import { cachedInvoke, invalidatePattern } from './cache';
 import type { ApiError } from '@/lib/backend';
 import type { UserAccount } from '@/lib/backend';
 import { createPermissionChecker, withPermissionCheck } from '@/lib/rbac';
+import type { JsonObject, JsonValue } from '@/types/json';
 import type {
   UserSession,
   UserSettings,
@@ -69,7 +70,7 @@ import {
   validateStartInterventionResponse,
 } from '@/lib/validation/backend-type-guards';
 
-interface BackendResponse<T = unknown> {
+interface BackendResponse<T = JsonValue> {
   type: string;
   data?: T;
   error?: string | ApiError;
@@ -79,8 +80,8 @@ interface BackendResponse<T = unknown> {
  * Helper function to extract and validate data from IPC response wrapper
  */
 function extractAndValidate<T>(
-  result: unknown,
-  validator?: (data: unknown) => T,
+  result: JsonValue,
+  validator?: (data: JsonValue) => T,
   handleNotFound: boolean = false
 ): T | null {
   // Handle NotFound case
@@ -144,7 +145,7 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
       // 2FA operations require admin permissions
       enable2FA: (sessionToken: string) =>
         withPermissionCheck(currentUser, 'settings:write', () =>
-          safeInvoke<unknown>('enable_2fa', { session_token: sessionToken })
+          safeInvoke<JsonValue>('enable_2fa', { session_token: sessionToken })
         ),
 
       verify2FASetup: (verificationCode: string, backupCodes: string[], sessionToken: string) =>
@@ -163,7 +164,7 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
 
       regenerateBackupCodes: (sessionToken: string) =>
         withPermissionCheck(currentUser, 'settings:write', () =>
-          safeInvoke<unknown>('regenerate_backup_codes', { session_token: sessionToken })
+          safeInvoke<JsonValue>('regenerate_backup_codes', { session_token: sessionToken })
         ),
 
       is2FAEnabled: (sessionToken: string) =>
@@ -184,7 +185,7 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
         };
 
         const result = await withPermissionCheck(currentUser, 'task:write', () =>
-          safeInvoke<unknown>('task_crud', {
+          safeInvoke<JsonValue>('task_crud', {
             request: {
               action: { action: 'Create', data: sanitizedData },
               session_token: sessionToken
@@ -201,7 +202,7 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
             action: { action: 'Get', id },
             session_token: sessionToken
           }
-        }, (data: unknown) => extractAndValidate(data, validateTask, true) as Task | null),
+        }, (data: JsonValue) => extractAndValidate(data, validateTask, true) as Task | null),
 
       update: async (id: string, data: UpdateTaskRequest, sessionToken: string): Promise<Task> => {
         // Sanitize update data
@@ -213,7 +214,7 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
         };
 
         const result = await withPermissionCheck(currentUser, 'task:update', () =>
-          safeInvoke<unknown>('task_crud', {
+          safeInvoke<JsonValue>('task_crud', {
             request: {
               action: { action: 'Update', id, data: sanitizedData },
               session_token: sessionToken
@@ -226,7 +227,7 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
 
       list: async (filters: Partial<TaskQuery>, sessionToken: string): Promise<TaskListResponse> => {
         const result = await withPermissionCheck(currentUser, 'task:read', () =>
-          safeInvoke<unknown>('task_crud', {
+          safeInvoke<JsonValue>('task_crud', {
             request: {
               action: {
                 action: 'List',
@@ -268,7 +269,7 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
 
       statistics: async (sessionToken: string): Promise<TaskStatistics> => {
         const result = await withPermissionCheck(currentUser, 'task:read', () =>
-          safeInvoke<unknown>('task_crud', {
+          safeInvoke<JsonValue>('task_crud', {
             request: {
               action: { action: 'GetStatistics' },
               session_token: sessionToken
@@ -284,7 +285,7 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
       // Additional task operations with permission checks...
       checkTaskAssignment: (taskId: string, userId: string, sessionToken: string) =>
         withPermissionCheck(currentUser, 'task:update', () =>
-          safeInvoke<unknown>('check_task_assignment', {
+          safeInvoke<JsonValue>('check_task_assignment', {
             request: { task_id: taskId, user_id: userId, session_token: sessionToken }
           })
         ),
@@ -332,7 +333,7 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
         };
 
         const result = await withPermissionCheck(currentUser, 'client:write', () =>
-          safeInvoke<unknown>('client_crud', {
+          safeInvoke<JsonValue>('client_crud', {
             request: {
               action: { action: 'Create', data: sanitizedData },
               session_token: sessionToken
@@ -349,11 +350,11 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
             action: { action: 'Get', id },
             session_token: sessionToken
           }
-        }, (data: unknown) => extractAndValidate(data, validateClient, true) as Client | null),
+        }, (data: JsonValue) => extractAndValidate(data, validateClient, true) as Client | null),
 
       list: async (filters: Partial<ClientQuery>, sessionToken: string): Promise<ClientListResponse> => {
         const result = await withPermissionCheck(currentUser, 'client:read', () =>
-          safeInvoke<unknown>('client_crud', {
+          safeInvoke<JsonValue>('client_crud', {
             request: {
               action: {
                 action: 'List',
@@ -381,7 +382,7 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
         };
 
         const result = await withPermissionCheck(currentUser, 'client:update', () =>
-          safeInvoke<unknown>('client_crud', {
+          safeInvoke<JsonValue>('client_crud', {
             request: {
               action: { action: 'Update', id, data: sanitizedData },
               session_token: sessionToken
@@ -407,9 +408,9 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
 
     // User operations with stricter permission checks
     users: {
-      create: async (data: CreateUserRequest, sessionToken: string): Promise<unknown> => {
+      create: async (data: CreateUserRequest, sessionToken: string): Promise<JsonValue> => {
         const result = await withPermissionCheck(currentUser, 'user:write', () =>
-          safeInvoke<unknown>('user_crud', {
+          safeInvoke<JsonValue>('user_crud', {
             request: {
               action: { action: 'Create', data },
               session_token: sessionToken
@@ -424,7 +425,7 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
 
       list: async (limit: number, offset: number, sessionToken: string): Promise<UserListResponse> => {
         const result = await withPermissionCheck(currentUser, 'user:read', () =>
-          safeInvoke<unknown>('user_crud', {
+          safeInvoke<JsonValue>('user_crud', {
             request: {
               action: { action: 'List', limit, offset },
               session_token: sessionToken
@@ -437,9 +438,9 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
         return extractAndValidate(result.data) as UserListResponse;
       },
 
-      update: async (id: string, data: UpdateUserRequest, sessionToken: string): Promise<unknown> => {
+      update: async (id: string, data: UpdateUserRequest, sessionToken: string): Promise<JsonValue> => {
         const result = await withPermissionCheck(currentUser, 'user:update', () =>
-          safeInvoke<unknown>('user_crud', {
+          safeInvoke<JsonValue>('user_crud', {
             request: {
               action: { action: 'Update', id, data },
               session_token: sessionToken
@@ -483,9 +484,9 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
       },
 
       // User management operations require admin role
-      banUser: (userId: string, sessionToken: string): Promise<unknown> =>
+      banUser: (userId: string, sessionToken: string): Promise<JsonValue> =>
         withPermissionCheck(currentUser, 'user:delete', () =>
-          safeInvoke<unknown>('user_crud', {
+          safeInvoke<JsonValue>('user_crud', {
             request: {
               action: { Ban: { id: userId } },
               session_token: sessionToken
@@ -561,23 +562,23 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
       getUserSettings: (sessionToken: string) =>
         cachedInvoke<UserSettings>(getUserSettingsCacheKey(sessionToken), 'get_user_settings', { sessionToken }, undefined, 30000),
 
-      updateUserProfile: (request: Record<string, unknown>, sessionToken: string) =>
+      updateUserProfile: (request: JsonObject, sessionToken: string) =>
         withPermissionCheck(currentUser, 'settings:write', () => {
           const sanitizedRequest = {
             ...request,
             full_name: request.full_name ? sanitizeInput(request.full_name as string) : undefined,
             email: request.email ? sanitizeInput(request.email as string) : undefined,
           };
-          return safeInvoke<unknown>('update_user_profile', { request: { ...sanitizedRequest, session_token: sessionToken } })
+          return safeInvoke<JsonValue>('update_user_profile', { request: { ...sanitizedRequest, session_token: sessionToken } })
             .then((result) => {
               invalidateUserSettingsCache(sessionToken);
               return result;
             });
         }),
 
-      updateUserPreferences: (request: Record<string, unknown>, sessionToken: string) =>
+      updateUserPreferences: (request: JsonObject, sessionToken: string) =>
         withPermissionCheck(currentUser, 'settings:write', () =>
-          safeInvoke<unknown>('update_user_preferences', { request: { ...request, session_token: sessionToken } })
+          safeInvoke<JsonValue>('update_user_preferences', { request: { ...request, session_token: sessionToken } })
             .then((result) => {
               invalidateUserSettingsCache(sessionToken);
               return result;
@@ -585,16 +586,16 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
         ),
 
       // Security settings require special permissions
-      updateUserSecurity: (request: Record<string, unknown>, sessionToken: string) =>
+      updateUserSecurity: (request: JsonObject, sessionToken: string) =>
         withPermissionCheck(currentUser, 'settings:write', () =>
-          safeInvoke<unknown>('update_user_security', { request: { ...request, session_token: sessionToken } })
+          safeInvoke<JsonValue>('update_user_security', { request: { ...request, session_token: sessionToken } })
             .then((result) => {
               invalidateUserSettingsCache(sessionToken);
               return result;
             })
         ),
 
-      changeUserPassword: (request: Record<string, unknown>, sessionToken: string) =>
+      changeUserPassword: (request: JsonObject, sessionToken: string) =>
         withPermissionCheck(currentUser, 'settings:write', () =>
           safeInvoke<string>('change_user_password', { request: { ...request, session_token: sessionToken } })
             .then((result) => {

@@ -1,11 +1,12 @@
 import type { BackendResponse } from './types';
+import type { JsonValue } from '@/types/json';
 
 /**
  * Type-safe response extraction for IPC calls
  */
 export function extractAndValidate<T>(
-  result: unknown,
-  validator?: (data: unknown) => T,
+  result: JsonValue,
+  validator?: (data: JsonValue) => T,
   options: { handleNotFound?: boolean; expectedTypes?: string[] } = {}
 ): T | null {
   const { handleNotFound = false, expectedTypes = [] } = options;
@@ -58,8 +59,8 @@ export const ResponseHandlers = {
    */
   discriminatedUnion: <T>(
     expectedType: string,
-    validator?: (data: unknown) => T
-  ) => (result: unknown): T => {
+    validator?: (data: JsonValue) => T
+  ) => (result: JsonValue): T => {
     return extractAndValidate(result, validator, { expectedTypes: [expectedType] })!;
   },
 
@@ -68,8 +69,8 @@ export const ResponseHandlers = {
    */
   discriminatedUnionNullable: <T>(
     expectedType: string,
-    validator?: (data: unknown) => T
-  ) => (result: unknown): T | null => {
+    validator?: (data: JsonValue) => T
+  ) => (result: JsonValue): T | null => {
     return extractAndValidate(result, validator, {
       handleNotFound: true,
       expectedTypes: [expectedType, 'NotFound']
@@ -80,8 +81,8 @@ export const ResponseHandlers = {
    * Handle list responses
    */
   list: <T>(
-    validator?: (data: unknown) => T
-  ) => (result: unknown): T => {
+    validator?: (data: JsonValue) => T
+  ) => (result: JsonValue): T => {
     return extractAndValidate(result, validator, { expectedTypes: ['List'] })!;
   },
 
@@ -89,8 +90,8 @@ export const ResponseHandlers = {
    * Handle statistics responses
    */
   statistics: <T>(
-    validator?: (data: unknown) => T
-  ) => (result: unknown): T => {
+    validator?: (data: JsonValue) => T
+  ) => (result: JsonValue): T => {
     return extractAndValidate(result, validator, { expectedTypes: ['Statistics'] })!;
   },
 
@@ -98,8 +99,8 @@ export const ResponseHandlers = {
    * Handle ApiResponse wrapper responses
    */
   apiResponse: <T>(
-    validator?: (data: unknown) => T
-  ) => (result: unknown): T => {
+    validator?: (data: JsonValue) => T
+  ) => (result: JsonValue): T => {
     return extractAndValidate(result, validator)!;
   }
 };

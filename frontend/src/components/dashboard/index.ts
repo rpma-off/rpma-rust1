@@ -4,7 +4,8 @@ export * from './types';
 // Components
 export { StatsGrid } from './StatsGrid';
 export { QuickActions } from './QuickActions';
-export { TaskList } from './TaskList';
+export { TaskCardList } from './TaskCardList';
+export { DashboardTaskFilters } from './DashboardTaskFilters';
 export { DashboardFilters } from './DashboardFilters';
 export { RecentTasksPreview } from './RecentTasksPreview';
 export { SystemHealthWidget } from './SystemHealthWidget';

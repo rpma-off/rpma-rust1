@@ -2,6 +2,7 @@ import './mock/init';
 import { safeInvoke } from './utils';
 import { cachedInvoke, invalidatePattern } from './cache';
 import type { ApiError } from '@/lib/backend';
+import type { JsonObject, JsonValue } from '@/types/json';
 import type {
   UserSession,
   UserSettings,
@@ -94,7 +95,7 @@ interface InterventionProgressRetrievedResponse {
 
 interface InterventionStepProgressSavedResponse {
   type: string;
-  step?: unknown;
+  step?: JsonValue;
 }
 
 interface InterventionWorkflowUpdatedResponse {
@@ -106,7 +107,7 @@ interface InterventionWorkflowUpdatedResponse {
 interface InterventionWorkflowFinalizedResponse {
   type: string;
   intervention: Intervention;
-  metrics: Record<string, unknown>;
+  metrics: JsonObject;
 }
 
 interface InterventionListRetrievedResponse {
@@ -121,7 +122,7 @@ interface NotificationConfig {
   sender_email?: string;
   sender_phone?: string;
   enabled_channels?: string[];
-  [key: string]: unknown;
+  [key: string]: JsonValue;
 }
 
 interface MaterialQueryParams {
@@ -142,7 +143,7 @@ interface MaterialCreateRequest {
   current_stock?: number;
   minimum_stock?: number;
   supplier_id?: string;
-  [key: string]: unknown;
+  [key: string]: JsonValue;
 }
 
 interface MaterialUpdateRequest {
@@ -153,7 +154,7 @@ interface MaterialUpdateRequest {
   unit_price?: number;
   minimum_stock?: number;
   supplier_id?: string;
-  [key: string]: unknown;
+  [key: string]: JsonValue;
 }
 
 interface StockUpdateRequest {
@@ -161,14 +162,14 @@ interface StockUpdateRequest {
   quantity: number;
   operation: 'add' | 'subtract' | 'set';
   reason?: string;
-  [key: string]: unknown;
+  [key: string]: JsonValue;
 }
 
 interface StockAdjustmentRequest {
   material_id: string;
   quantity: number;
   reason: string;
-  [key: string]: unknown;
+  [key: string]: JsonValue;
 }
 
 interface ConsumptionRecordRequest {
@@ -176,7 +177,7 @@ interface ConsumptionRecordRequest {
   intervention_id: string;
   quantity: number;
   notes?: string;
-  [key: string]: unknown;
+  [key: string]: JsonValue;
 }
 
 interface InventoryTransactionRequest {
@@ -185,13 +186,13 @@ interface InventoryTransactionRequest {
   quantity: number;
   reference?: string;
   notes?: string;
-  [key: string]: unknown;
+  [key: string]: JsonValue;
 }
 
 interface CategoryCreateRequest {
   name: string;
   description?: string;
-  [key: string]: unknown;
+  [key: string]: JsonValue;
 }
 
 interface SupplierCreateRequest {
@@ -199,7 +200,7 @@ interface SupplierCreateRequest {
   contact_email?: string;
   contact_phone?: string;
   address?: string;
-  [key: string]: unknown;
+  [key: string]: JsonValue;
 }
 
 interface ConsumptionHistoryQuery {
@@ -223,7 +224,7 @@ import {
   validateTaskListResponse,
 } from '@/lib/validation/backend-type-guards';
 
-interface BackendResponse<T = unknown> {
+interface BackendResponse<T = JsonValue> {
   type: string;
   data?: T;
   error?: string | ApiError;
@@ -233,8 +234,8 @@ interface BackendResponse<T = unknown> {
  * Helper function to extract and validate data from IPC response wrapper
  */
 function extractAndValidate<T>(
-  result: unknown,
-  validator?: (data: unknown) => T,
+  result: JsonValue,
+  validator?: (data: JsonValue) => T,
   handleNotFound: boolean = false
 ): T | null {
   // Handle NotFound case
@@ -311,7 +312,7 @@ export const ipcClient = {
      * @returns Promise resolving to 2FA setup data
      */
     enable2FA: (sessionToken: string) =>
-      safeInvoke<unknown>('enable_2fa', { session_token: sessionToken }),
+      safeInvoke<JsonValue>('enable_2fa', { session_token: sessionToken }),
 
     /**
      * Verifies 2FA setup with verification code
@@ -340,7 +341,7 @@ export const ipcClient = {
      * @returns Promise resolving to new backup codes
      */
     regenerateBackupCodes: (sessionToken: string) =>
-      safeInvoke<unknown>('regenerate_backup_codes', { session_token: sessionToken }),
+      safeInvoke<JsonValue>('regenerate_backup_codes', { session_token: sessionToken }),
 
     /**
      * Checks if 2FA is enabled for a user
@@ -361,7 +362,7 @@ export const ipcClient = {
      * @returns Promise resolving to the created task
      */
     create: async (data: CreateTaskRequest, sessionToken: string): Promise<Task> => {
-      const result = await safeInvoke<unknown>('task_crud', {
+      const result = await safeInvoke<JsonValue>('task_crud', {
         request: {
           action: { action: 'Create', data },
           session_token: sessionToken
@@ -383,7 +384,7 @@ export const ipcClient = {
           action: { action: 'Get', id },
           session_token: sessionToken
         }
-      }, (data: unknown) => extractAndValidate(data, validateTask, true) as Task | null),
+      }, (data: JsonValue) => extractAndValidate(data, validateTask, true) as Task | null),
 
     /**
      * Updates an existing task
@@ -393,7 +394,7 @@ export const ipcClient = {
      * @returns Promise resolving to the updated task
      */
     update: async (id: string, data: UpdateTaskRequest, sessionToken: string): Promise<Task> => {
-      const result = await safeInvoke<unknown>('task_crud', {
+      const result = await safeInvoke<JsonValue>('task_crud', {
         request: {
           action: { action: 'Update', id, data },
           session_token: sessionToken
@@ -410,7 +411,7 @@ export const ipcClient = {
      * @returns Promise resolving to paginated task list response
      */
     list: (filters: Partial<TaskQuery>, sessionToken: string): Promise<TaskListResponse> =>
-      safeInvoke<unknown>('task_crud', {
+      safeInvoke<JsonValue>('task_crud', {
         request: {
           action: {
             action: 'List',
@@ -462,7 +463,7 @@ export const ipcClient = {
      * @returns Promise resolving to task statistics
      */
     statistics: (sessionToken: string): Promise<TaskStatistics> =>
-      safeInvoke<unknown>('task_crud', {
+      safeInvoke<JsonValue>('task_crud', {
         request: {
           action: { action: 'GetStatistics' },
           session_token: sessionToken
@@ -477,7 +478,7 @@ export const ipcClient = {
      * @returns Promise resolving to assignment validation result
      */
     checkTaskAssignment: (taskId: string, userId: string, sessionToken: string) =>
-      safeInvoke<unknown>('check_task_assignment', {
+      safeInvoke<JsonValue>('check_task_assignment', {
         request: { task_id: taskId, user_id: userId, session_token: sessionToken }
       }),
 
@@ -488,7 +489,7 @@ export const ipcClient = {
      * @returns Promise resolving to availability check result
      */
     checkTaskAvailability: (taskId: string, sessionToken: string) =>
-      safeInvoke<unknown>('check_task_availability', {
+      safeInvoke<JsonValue>('check_task_availability', {
         request: { task_id: taskId, session_token: sessionToken }
       }),
 
@@ -501,7 +502,7 @@ export const ipcClient = {
      * @returns Promise resolving to validation result
      */
     validateTaskAssignmentChange: (taskId: string, oldUserId: string | null, newUserId: string, sessionToken: string) =>
-      safeInvoke<unknown>('validate_task_assignment_change', {
+      safeInvoke<JsonValue>('validate_task_assignment_change', {
         request: { task_id: taskId, old_user_id: oldUserId, new_user_id: newUserId, session_token: sessionToken }
       }),
 
@@ -512,8 +513,8 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving to the updated task
      */
-    editTask: async (taskId: string, updates: Record<string, unknown>, sessionToken: string): Promise<Task> => {
-      const result = await safeInvoke<unknown>('edit_task', {
+    editTask: async (taskId: string, updates: JsonObject, sessionToken: string): Promise<Task> => {
+      const result = await safeInvoke<JsonValue>('edit_task', {
         request: {
           task_id: taskId,
           data: updates,
@@ -783,7 +784,7 @@ export const ipcClient = {
   // Client operations
   clients: {
     create: async (data: CreateClientRequest, sessionToken: string): Promise<Client> => {
-      const result = await safeInvoke<unknown>('client_crud', {
+      const result = await safeInvoke<JsonValue>('client_crud', {
         request: {
           action: { action: 'Create', data },
           session_token: sessionToken,
@@ -801,7 +802,7 @@ export const ipcClient = {
           session_token: sessionToken,
           sessionToken: sessionToken
         }
-      }, (data: unknown) => extractAndValidate(data, validateClient, true) as Client | null),
+      }, (data: JsonValue) => extractAndValidate(data, validateClient, true) as Client | null),
 
     getWithTasks: (id: string, sessionToken: string): Promise<Client | null> =>
       cachedInvoke(`client-with-tasks:${id}`, 'client_crud', {
@@ -810,10 +811,10 @@ export const ipcClient = {
           session_token: sessionToken,
           sessionToken: sessionToken
         }
-      }, (data: unknown) => extractAndValidate(data, validateClient, true) as Client | null),
+      }, (data: JsonValue) => extractAndValidate(data, validateClient, true) as Client | null),
 
     search: (query: string, limit: number, sessionToken: string): Promise<Client[]> =>
-      safeInvoke<unknown>('client_crud', {
+      safeInvoke<JsonValue>('client_crud', {
         request: {
           action: { action: 'Search', query, limit },
           session_token: sessionToken,
@@ -822,7 +823,7 @@ export const ipcClient = {
       }).then(result => extractAndValidate(result) as Client[]),
 
     list: async (filters: Partial<ClientQuery>, sessionToken: string): Promise<ClientListResponse> => {
-      const result = await safeInvoke<unknown>('client_crud', {
+      const result = await safeInvoke<JsonValue>('client_crud', {
         request: {
           action: {
             action: 'List',
@@ -843,7 +844,7 @@ export const ipcClient = {
     },
 
     listWithTasks: async (filters: Partial<ClientQuery>, limitTasks: number, sessionToken: string): Promise<ClientWithTasks[]> => {
-      const result = await safeInvoke<unknown>('client_crud', {
+      const result = await safeInvoke<JsonValue>('client_crud', {
         request: {
           action: {
             action: 'ListWithTasks',
@@ -865,7 +866,7 @@ export const ipcClient = {
     },
 
     stats: (sessionToken: string): Promise<ClientStatistics> =>
-      safeInvoke<unknown>('client_crud', {
+      safeInvoke<JsonValue>('client_crud', {
         request: {
           action: { action: 'Stats' },
           session_token: sessionToken,
@@ -874,7 +875,7 @@ export const ipcClient = {
       }).then(result => extractAndValidate(result) as ClientStatistics),
 
     update: async (id: string, data: UpdateClientRequest, sessionToken: string): Promise<Client> => {
-      const result = await safeInvoke<unknown>('client_crud', {
+      const result = await safeInvoke<JsonValue>('client_crud', {
         request: {
           action: { action: 'Update', id, data },
           session_token: sessionToken,
@@ -929,7 +930,7 @@ export const ipcClient = {
     // Intervention operations
   interventions: {
         start: async (data: StartInterventionRequest, sessionToken: string) => {
-          const result = await safeInvoke<unknown>('intervention_workflow', {
+          const result = await safeInvoke<JsonValue>('intervention_workflow', {
             action: { action: 'Start', data },
             session_token: sessionToken,
             sessionToken: sessionToken,
@@ -946,7 +947,7 @@ export const ipcClient = {
         },
 
     get: async (id: string, sessionToken: string) => {
-      const result = await safeInvoke<unknown>('intervention_workflow', {
+      const result = await safeInvoke<JsonValue>('intervention_workflow', {
         action: { action: 'Get', id },
         session_token: sessionToken,
         sessionToken: sessionToken
@@ -965,7 +966,7 @@ export const ipcClient = {
         try {
           console.debug('[IPC] getActiveByTask called for task:', taskId);
 
-          const result = await safeInvoke<unknown>('intervention_workflow', {
+          const result = await safeInvoke<JsonValue>('intervention_workflow', {
             action: { action: 'GetActiveByTask', task_id: taskId },
             session_token: sessionToken,
             sessionToken: sessionToken,
@@ -998,7 +999,7 @@ export const ipcClient = {
         try {
           console.debug('[IPC] getLatestByTask called for task:', taskId);
 
-          const result = await safeInvoke<unknown>('intervention_get_latest_by_task', {
+          const result = await safeInvoke<JsonValue>('intervention_get_latest_by_task', {
             taskId: taskId,
             sessionToken: sessionToken
           });
@@ -1007,7 +1008,7 @@ export const ipcClient = {
 
           // Handle the response - backend returns ApiResponse with data containing InterventionWorkflowResponse
           if (result && typeof result === 'object' && 'data' in result) {
-            const apiResponse = result as { data: unknown };
+            const apiResponse = result as { data: JsonValue };
             if (apiResponse.data && typeof apiResponse.data === 'object' && 'type' in apiResponse.data) {
               const workflowResponse = apiResponse.data as InterventionWorkflowActiveRetrievedResponse;
               if (workflowResponse.type === 'ActiveRetrieved') {
@@ -1026,7 +1027,7 @@ export const ipcClient = {
       },
 
       advanceStep: async (stepData: AdvanceStepRequest, sessionToken: string) => {
-        const result = await safeInvoke<unknown>('intervention_progress', {
+        const result = await safeInvoke<JsonValue>('intervention_progress', {
           action: {
             action: 'AdvanceStep',
             intervention_id: stepData.intervention_id,
@@ -1051,7 +1052,7 @@ export const ipcClient = {
       },
 
     getStep: async (stepId: string, sessionToken: string) => {
-      const result = await safeInvoke<unknown>('intervention_get_step', {
+      const result = await safeInvoke<JsonValue>('intervention_get_step', {
         step_id: stepId,
         session_token: sessionToken,
         sessionToken: sessionToken
@@ -1060,7 +1061,7 @@ export const ipcClient = {
     },
 
     getProgress: async (interventionId: string, sessionToken: string) => {
-      const result = await safeInvoke<unknown>('intervention_progress', {
+      const result = await safeInvoke<JsonValue>('intervention_progress', {
         action: { action: 'Get', intervention_id: interventionId },
         session_token: sessionToken,
         sessionToken: sessionToken
@@ -1079,7 +1080,7 @@ export const ipcClient = {
     },
 
     saveStepProgress: async (stepData: SaveStepProgressRequest, sessionToken: string) => {
-      const result = await safeInvoke<unknown>('intervention_progress', {
+      const result = await safeInvoke<JsonValue>('intervention_progress', {
         action: {
           action: 'SaveStepProgress',
           ...stepData,
@@ -1089,7 +1090,7 @@ export const ipcClient = {
       });
       // Extract updated step from StepProgressSaved response
       if (result && typeof result === 'object' && 'type' in result) {
-        const progressResponse = result as { type: string; step?: unknown };
+        const progressResponse = result as { type: string; step?: JsonValue };
         if (progressResponse.type === 'StepProgressSaved' && progressResponse.step) {
           return validateInterventionStep(progressResponse.step);
         }
@@ -1097,8 +1098,8 @@ export const ipcClient = {
       throw new Error('Invalid response format for save step progress');
     },
 
-    updateWorkflow: async (id: string, data: Record<string, unknown>, sessionToken: string) => {
-      const result = await safeInvoke<unknown>('intervention_workflow', {
+    updateWorkflow: async (id: string, data: JsonObject, sessionToken: string) => {
+      const result = await safeInvoke<JsonValue>('intervention_workflow', {
         action: { action: 'Update', id, data },
         session_token: sessionToken,
         sessionToken: sessionToken
@@ -1114,7 +1115,7 @@ export const ipcClient = {
     },
 
     finalize: async (data: FinalizeInterventionRequest, sessionToken: string) => {
-      const result = await safeInvoke<unknown>('intervention_workflow', {
+      const result = await safeInvoke<JsonValue>('intervention_workflow', {
         action: { action: 'Finalize', data },
         session_token: sessionToken,
         sessionToken: sessionToken
@@ -1130,7 +1131,7 @@ export const ipcClient = {
     },
 
     list: async (filters: { status?: string; technician_id?: string; limit?: number; offset?: number }, sessionToken: string) => {
-      const result = await safeInvoke<unknown>('intervention_management', {
+      const result = await safeInvoke<JsonValue>('intervention_management', {
         request: {
           action: { List: { filters } },
           session_token: sessionToken
@@ -1162,62 +1163,62 @@ export const ipcClient = {
       safeInvoke<string>('test_notification_config', { recipient, channel, session_token: sessionToken }),
 
     getStatus: (sessionToken: string) =>
-      safeInvoke<unknown>('get_notification_status', { session_token: sessionToken }),
+      safeInvoke<JsonValue>('get_notification_status', { session_token: sessionToken }),
 
     // Recent activities for admin dashboard
     getRecentActivities: (sessionToken: string) =>
-      safeInvoke<unknown[]>('get_recent_activities', { session_token: sessionToken }),
+      safeInvoke<JsonValue[]>('get_recent_activities', { session_token: sessionToken }),
   },
 
   // Settings operations
   settings: {
     getAppSettings: (sessionToken?: string) =>
-      safeInvoke<unknown>('get_app_settings', { sessionToken: sessionToken || '' }),
+      safeInvoke<JsonValue>('get_app_settings', { sessionToken: sessionToken || '' }),
 
-    updateNotificationSettings: (request: Record<string, unknown>, sessionToken: string) =>
-      safeInvoke<unknown>('update_notification_settings', { request: { ...request, session_token: sessionToken } }),
+    updateNotificationSettings: (request: JsonObject, sessionToken: string) =>
+      safeInvoke<JsonValue>('update_notification_settings', { request: { ...request, session_token: sessionToken } }),
 
     // User settings operations
     getUserSettings: (sessionToken: string) =>
       cachedInvoke<UserSettings>(getUserSettingsCacheKey(sessionToken), 'get_user_settings', { sessionToken }, undefined, 30000),
 
-    updateUserProfile: async (request: Record<string, unknown>, sessionToken: string) => {
-      const result = await safeInvoke<unknown>('update_user_profile', { request: { ...request, session_token: sessionToken } });
+    updateUserProfile: async (request: JsonObject, sessionToken: string) => {
+      const result = await safeInvoke<JsonValue>('update_user_profile', { request: { ...request, session_token: sessionToken } });
       invalidateUserSettingsCache(sessionToken);
       return result;
     },
 
-    updateUserPreferences: async (request: Record<string, unknown>, sessionToken: string) => {
-      const result = await safeInvoke<unknown>('update_user_preferences', { request: { ...request, session_token: sessionToken } });
+    updateUserPreferences: async (request: JsonObject, sessionToken: string) => {
+      const result = await safeInvoke<JsonValue>('update_user_preferences', { request: { ...request, session_token: sessionToken } });
       invalidateUserSettingsCache(sessionToken);
       return result;
     },
 
-    updateUserSecurity: async (request: Record<string, unknown>, sessionToken: string) => {
-      const result = await safeInvoke<unknown>('update_user_security', { request: { ...request, session_token: sessionToken } });
+    updateUserSecurity: async (request: JsonObject, sessionToken: string) => {
+      const result = await safeInvoke<JsonValue>('update_user_security', { request: { ...request, session_token: sessionToken } });
       invalidateUserSettingsCache(sessionToken);
       return result;
     },
 
-    updateUserPerformance: async (request: Record<string, unknown>, sessionToken: string) => {
-      const result = await safeInvoke<unknown>('update_user_performance', { request, sessionToken });
+    updateUserPerformance: async (request: JsonObject, sessionToken: string) => {
+      const result = await safeInvoke<JsonValue>('update_user_performance', { request, sessionToken });
       invalidateUserSettingsCache(sessionToken);
       return result;
     },
 
-    updateUserAccessibility: async (request: Record<string, unknown>, sessionToken: string) => {
-      const result = await safeInvoke<unknown>('update_user_accessibility', { request: { ...request, session_token: sessionToken } });
+    updateUserAccessibility: async (request: JsonObject, sessionToken: string) => {
+      const result = await safeInvoke<JsonValue>('update_user_accessibility', { request: { ...request, session_token: sessionToken } });
       invalidateUserSettingsCache(sessionToken);
       return result;
     },
 
-    updateUserNotifications: async (request: Record<string, unknown>, sessionToken: string) => {
-      const result = await safeInvoke<unknown>('update_user_notifications', { request: { ...request, session_token: sessionToken } });
+    updateUserNotifications: async (request: JsonObject, sessionToken: string) => {
+      const result = await safeInvoke<JsonValue>('update_user_notifications', { request: { ...request, session_token: sessionToken } });
       invalidateUserSettingsCache(sessionToken);
       return result;
     },
 
-    changeUserPassword: async (request: Record<string, unknown>, sessionToken: string) => {
+    changeUserPassword: async (request: JsonObject, sessionToken: string) => {
       const result = await safeInvoke<string>('change_user_password', { request: { ...request, session_token: sessionToken } });
       invalidateUserSettingsCache(sessionToken);
       return result;
@@ -1225,7 +1226,7 @@ export const ipcClient = {
 
     // Security operations
     getActiveSessions: (sessionToken: string) =>
-      safeInvoke<unknown>('get_active_sessions', { sessionToken }),
+      safeInvoke<JsonValue>('get_active_sessions', { sessionToken }),
 
     revokeSession: (sessionId: string, sessionToken: string) =>
       safeInvoke<void>('revoke_session', { sessionId, sessionToken }),
@@ -1237,7 +1238,7 @@ export const ipcClient = {
       safeInvoke<void>('update_session_timeout', { timeoutMinutes, sessionToken }),
 
     getSessionTimeoutConfig: (sessionToken: string) =>
-      safeInvoke<unknown>('get_session_timeout_config', { sessionToken }),
+      safeInvoke<JsonValue>('get_session_timeout_config', { sessionToken }),
 
     uploadUserAvatar: (fileData: string, fileName: string, mimeType: string, sessionToken: string) =>
       safeInvoke<string>('upload_user_avatar', {
@@ -1248,7 +1249,7 @@ export const ipcClient = {
       }),
 
     exportUserData: (sessionToken: string) =>
-      safeInvoke<Record<string, unknown>>('export_user_data', { sessionToken }),
+      safeInvoke<JsonObject>('export_user_data', { sessionToken }),
 
     deleteUserAccount: async (confirmation: string, sessionToken: string) => {
       const result = await safeInvoke<string>('delete_user_account', {
@@ -1259,10 +1260,10 @@ export const ipcClient = {
     },
 
     getDataConsent: (sessionToken: string) =>
-      safeInvoke<Record<string, unknown>>('get_data_consent', { sessionToken }),
+      safeInvoke<JsonObject>('get_data_consent', { sessionToken }),
 
-    updateDataConsent: (request: Record<string, unknown>, sessionToken: string) =>
-      safeInvoke<Record<string, unknown>>('update_data_consent', {
+    updateDataConsent: (request: JsonObject, sessionToken: string) =>
+      safeInvoke<JsonObject>('update_data_consent', {
         request: { ...request, session_token: sessionToken }
       }),
   },
@@ -1275,32 +1276,32 @@ export const ipcClient = {
 
   // User operations
     users: {
-      create: (data: CreateUserRequest, sessionToken: string): Promise<unknown> =>
-        safeInvoke<unknown>('user_crud', {
+      create: (data: CreateUserRequest, sessionToken: string): Promise<JsonValue> =>
+        safeInvoke<JsonValue>('user_crud', {
           request: {
             action: { action: 'Create', data },
             session_token: sessionToken
           }
         }),
 
-      get: (id: string, sessionToken: string): Promise<unknown> =>
-        safeInvoke<unknown>('user_crud', {
+      get: (id: string, sessionToken: string): Promise<JsonValue> =>
+        safeInvoke<JsonValue>('user_crud', {
           request: {
             action: { action: 'Get', id },
             session_token: sessionToken
           }
-        }, (data: unknown) => extractAndValidate(data, undefined, true)),
+        }, (data: JsonValue) => extractAndValidate(data, undefined, true)),
 
       list: (limit: number, offset: number, sessionToken: string): Promise<UserListResponse> =>
-        safeInvoke<unknown>('user_crud', {
+        safeInvoke<JsonValue>('user_crud', {
           request: {
             action: { action: 'List', limit, offset },
             session_token: sessionToken
           }
         }).then(result => extractAndValidate(result) as UserListResponse),
 
-      update: (id: string, data: UpdateUserRequest, sessionToken: string): Promise<unknown> =>
-        safeInvoke<unknown>('user_crud', {
+      update: (id: string, data: UpdateUserRequest, sessionToken: string): Promise<JsonValue> =>
+        safeInvoke<JsonValue>('user_crud', {
           request: {
             action: { action: 'Update', id, data },
             session_token: sessionToken
@@ -1323,8 +1324,8 @@ export const ipcClient = {
           }
         }),
 
-      updateEmail: (userId: string, newEmail: string, sessionToken: string): Promise<unknown> =>
-        safeInvoke<unknown>('user_crud', {
+      updateEmail: (userId: string, newEmail: string, sessionToken: string): Promise<JsonValue> =>
+        safeInvoke<JsonValue>('user_crud', {
           request: {
             action: { action: 'Update', id: userId, data: { email: newEmail } },
             session_token: sessionToken
@@ -1339,16 +1340,16 @@ export const ipcClient = {
           }
         }),
 
-      banUser: (userId: string, sessionToken: string): Promise<unknown> =>
-        safeInvoke<unknown>('user_crud', {
+      banUser: (userId: string, sessionToken: string): Promise<JsonValue> =>
+        safeInvoke<JsonValue>('user_crud', {
           request: {
             action: { Ban: { id: userId } },
             session_token: sessionToken
           }
         }),
 
-      unbanUser: (userId: string, sessionToken: string): Promise<unknown> =>
-        safeInvoke<unknown>('user_crud', {
+      unbanUser: (userId: string, sessionToken: string): Promise<JsonValue> =>
+        safeInvoke<JsonValue>('user_crud', {
           request: {
             action: { Unban: { id: userId } },
             session_token: sessionToken
@@ -1358,8 +1359,8 @@ export const ipcClient = {
 
   // Bootstrap operations
   bootstrap: {
-    firstAdmin: (userId: string) =>
-      safeInvoke<string>('bootstrap_first_admin', { request: { user_id: userId } }),
+    firstAdmin: (userId: string, sessionToken: string) =>
+      safeInvoke<string>('bootstrap_first_admin', { request: { user_id: userId, session_token: sessionToken } }),
     hasAdmins: () =>
       safeInvoke<boolean>('has_admins'),
   },
@@ -1379,7 +1380,7 @@ export const ipcClient = {
       safeInvoke<void>('sync_now'),
 
      getOperationsForEntity: (entityId: string, entityType: string) =>
-       safeInvoke<unknown>('sync_get_operations_for_entity', {
+       safeInvoke<JsonValue>('sync_get_operations_for_entity', {
          entity_id: entityId,
          entity_type: entityType
        }),
@@ -1388,60 +1389,60 @@ export const ipcClient = {
   // Performance operations
   performance: {
     getStats: (sessionToken: string) =>
-      safeInvoke<unknown>('get_performance_stats', { session_token: sessionToken }),
+      safeInvoke<JsonValue>('get_performance_stats', { session_token: sessionToken }),
 
     getMetrics: (limit: number, sessionToken: string) =>
-      safeInvoke<unknown>('get_performance_metrics', { limit, session_token: sessionToken }),
+      safeInvoke<JsonValue>('get_performance_metrics', { limit, session_token: sessionToken }),
 
     cleanupMetrics: (sessionToken: string) =>
-      safeInvoke<unknown>('cleanup_performance_metrics', { session_token: sessionToken }),
+      safeInvoke<JsonValue>('cleanup_performance_metrics', { session_token: sessionToken }),
 
     // Cache management
     getCacheStatistics: (sessionToken: string) =>
-      safeInvoke<unknown>('get_cache_statistics', { session_token: sessionToken }),
+      safeInvoke<JsonValue>('get_cache_statistics', { session_token: sessionToken }),
 
     clearApplicationCache: (request: { cache_types?: string[] }, sessionToken: string) =>
-      safeInvoke<unknown>('clear_application_cache', { request, session_token: sessionToken }),
+      safeInvoke<JsonValue>('clear_application_cache', { request, session_token: sessionToken }),
 
     configureCacheSettings: (request: { max_memory_mb?: number; default_ttl_seconds?: number; enable_disk_cache?: boolean }, sessionToken: string) =>
-      safeInvoke<unknown>('configure_cache_settings', { request, session_token: sessionToken }),
+      safeInvoke<JsonValue>('configure_cache_settings', { request, session_token: sessionToken }),
   },
 
   // Security operations
   security: {
     getMetrics: (sessionToken: string) =>
-      safeInvoke<unknown>('get_security_metrics', { session_token: sessionToken }),
+      safeInvoke<JsonValue>('get_security_metrics', { session_token: sessionToken }),
 
     getEvents: (limit: number, sessionToken: string) =>
-      safeInvoke<unknown>('get_security_events', { limit, session_token: sessionToken }),
+      safeInvoke<JsonValue>('get_security_events', { limit, session_token: sessionToken }),
 
     getAlerts: (sessionToken: string) =>
-      safeInvoke<unknown>('get_security_alerts', { session_token: sessionToken }),
+      safeInvoke<JsonValue>('get_security_alerts', { session_token: sessionToken }),
 
     acknowledgeAlert: (alertId: string, sessionToken: string) =>
-      safeInvoke<unknown>('acknowledge_security_alert', { alert_id: alertId, session_token: sessionToken }),
+      safeInvoke<JsonValue>('acknowledge_security_alert', { alert_id: alertId, session_token: sessionToken }),
 
     resolveAlert: (alertId: string, actionsTaken: string[], sessionToken: string) =>
-      safeInvoke<unknown>('resolve_security_alert', { alert_id: alertId, actions_taken: actionsTaken, session_token: sessionToken }),
+      safeInvoke<JsonValue>('resolve_security_alert', { alert_id: alertId, actions_taken: actionsTaken, session_token: sessionToken }),
 
     cleanupEvents: (sessionToken: string) =>
-      safeInvoke<unknown>('cleanup_security_events', { session_token: sessionToken }),
+      safeInvoke<JsonValue>('cleanup_security_events', { session_token: sessionToken }),
 
     // Session management
     getActiveSessions: (sessionToken: string) =>
-      safeInvoke<unknown[]>('get_active_sessions', { sessionToken }),
+      safeInvoke<JsonValue[]>('get_active_sessions', { sessionToken }),
 
     revokeSession: (sessionId: string, sessionToken: string) =>
-      safeInvoke<unknown>('revoke_session', { sessionId, sessionToken }),
+      safeInvoke<JsonValue>('revoke_session', { sessionId, sessionToken }),
 
     revokeAllSessionsExceptCurrent: (sessionToken: string) =>
-      safeInvoke<unknown>('revoke_all_sessions_except_current', { sessionToken }),
+      safeInvoke<JsonValue>('revoke_all_sessions_except_current', { sessionToken }),
 
     updateSessionTimeout: (timeoutMinutes: number, sessionToken: string) =>
-      safeInvoke<unknown>('update_session_timeout', { timeoutMinutes, sessionToken }),
+      safeInvoke<JsonValue>('update_session_timeout', { timeoutMinutes, sessionToken }),
 
     getSessionTimeoutConfig: (sessionToken: string) =>
-      safeInvoke<unknown>('get_session_timeout_config', { sessionToken }),
+      safeInvoke<JsonValue>('get_session_timeout_config', { sessionToken }),
   },
 
   // System operations
@@ -1450,16 +1451,16 @@ export const ipcClient = {
         safeInvoke<string>('health_check'),
 
       getDatabaseStatus: () =>
-        safeInvoke<unknown>('diagnose_database'),
+        safeInvoke<JsonValue>('diagnose_database'),
 
       getDatabaseStats: () =>
-        safeInvoke<unknown>('get_database_stats'),
+        safeInvoke<JsonValue>('get_database_stats'),
 
       getDatabasePoolStats: () =>
-        safeInvoke<unknown>('get_database_pool_stats'),
+        safeInvoke<JsonValue>('get_database_pool_stats'),
 
       getAppInfo: () =>
-        safeInvoke<unknown>('get_app_info'),
+        safeInvoke<JsonValue>('get_app_info'),
 
       vacuumDatabase: () =>
         safeInvoke<void>('vacuum_database'),
@@ -1476,7 +1477,7 @@ export const ipcClient = {
     windowClose: () =>
       safeInvoke<void>('ui_window_close'),
 
-    navigate: (path: string, options?: Record<string, unknown>) =>
+    navigate: (path: string, options?: JsonObject) =>
       safeInvoke<void>('navigation_update', { path, options: options || {} }),
 
     goBack: () =>
@@ -1486,12 +1487,12 @@ export const ipcClient = {
       safeInvoke<string>('navigation_go_forward'),
 
     getCurrent: () =>
-      safeInvoke<unknown>('navigation_get_current'),
+      safeInvoke<JsonValue>('navigation_get_current'),
 
     addToHistory: (path: string) =>
       safeInvoke<void>('navigation_add_to_history', { path }),
 
-    registerShortcuts: (shortcuts: Record<string, unknown>) =>
+    registerShortcuts: (shortcuts: JsonObject) =>
       safeInvoke<void>('shortcuts_register', { shortcuts }),
 
     shellOpen: (url: string) =>

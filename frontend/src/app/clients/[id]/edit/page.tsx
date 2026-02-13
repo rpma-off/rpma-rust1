@@ -102,13 +102,13 @@ export default function EditClientPage({ params }: EditClientPageProps) {
       setFormErrors({});
 
       if (!user?.token) {
-        setFormErrors({ general: 'Authentication required' });
+        setFormErrors({ general: 'Authentification requise' });
         return;
       }
 
       const response = await clientService.updateClient(params.id, formData, user.token);
       if (response.error) {
-        setFormErrors({ general: response.error || 'Failed to update client' });
+        setFormErrors({ general: response.error || 'Échec de la mise à jour du client' });
         return;
       }
 

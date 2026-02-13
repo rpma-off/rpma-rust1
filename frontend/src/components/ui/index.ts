@@ -9,12 +9,10 @@ export * from './button';
 export * from './card';
 export * from './checkbox';
 export * from './collapsible-section';
-export * from './unified-card';
 export * from './command';
 export * from './dialog';
 export * from './dropdown-menu';
 export * from './empty-state';
-export * from './enhanced-button';
 export * from './enhanced-empty-state';
 export * from './form';
 export * from './input';
@@ -40,7 +38,6 @@ export { useToast } from './use-toast';
 export { toast } from './use-toast';
 
 // Utility Components
-export { AccessibleCard } from './AccessibleCard';
 export { 
   Breadcrumb,
   BreadcrumbList,

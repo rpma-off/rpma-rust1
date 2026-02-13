@@ -68,10 +68,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       if (result.success) {
         onTaskReschedule(taskId, newDate, newStartTime);
       } else {
-        toast.error(`Cannot reschedule task: ${result.error}`);
+        toast.error(`Impossible de replanifier la tâche : ${result.error}`);
       }
     } catch (error) {
-      toast.error('An error occurred while rescheduling the task.');
+      toast.error('Une erreur s\'est produite lors de la replanification de la tâche.');
     }
   };
 

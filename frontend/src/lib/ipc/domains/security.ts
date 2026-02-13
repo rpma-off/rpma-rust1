@@ -1,5 +1,6 @@
 import { safeInvoke } from '../core';
 import { IPC_COMMANDS } from '../commands';
+import type { JsonValue } from '@/types/json';
 
 /**
  * Security monitoring and management operations
@@ -10,8 +11,8 @@ export const securityOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to security metrics
    */
-  getMetrics: (sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.GET_SECURITY_METRICS, {
+  getMetrics: (sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_SECURITY_METRICS, {
       session_token: sessionToken
     }),
 
@@ -21,8 +22,8 @@ export const securityOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to security events
    */
-  getEvents: (limit: number, sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.GET_SECURITY_EVENTS, {
+  getEvents: (limit: number, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_SECURITY_EVENTS, {
       limit,
       session_token: sessionToken
     }),
@@ -32,8 +33,8 @@ export const securityOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to security alerts
    */
-  getAlerts: (sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.GET_SECURITY_ALERTS, {
+  getAlerts: (sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_SECURITY_ALERTS, {
       session_token: sessionToken
     }),
 
@@ -43,8 +44,8 @@ export const securityOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving when alert is acknowledged
    */
-  acknowledgeAlert: (alertId: string, sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.ACKNOWLEDGE_SECURITY_ALERT, {
+  acknowledgeAlert: (alertId: string, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.ACKNOWLEDGE_SECURITY_ALERT, {
       alert_id: alertId,
       session_token: sessionToken
     }),
@@ -56,8 +57,8 @@ export const securityOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving when alert is resolved
    */
-  resolveAlert: (alertId: string, actionsTaken: string[], sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.RESOLVE_SECURITY_ALERT, {
+  resolveAlert: (alertId: string, actionsTaken: string[], sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.RESOLVE_SECURITY_ALERT, {
       alert_id: alertId,
       actions_taken: actionsTaken,
       session_token: sessionToken
@@ -68,8 +69,8 @@ export const securityOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving when cleanup is complete
    */
-  cleanupEvents: (sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.CLEANUP_SECURITY_EVENTS, {
+  cleanupEvents: (sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.CLEANUP_SECURITY_EVENTS, {
       session_token: sessionToken
     }),
 
@@ -79,8 +80,8 @@ export const securityOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to active sessions
    */
-  getActiveSessions: (sessionToken: string): Promise<unknown[]> =>
-    safeInvoke<unknown[]>(IPC_COMMANDS.GET_ACTIVE_SESSIONS, {
+  getActiveSessions: (sessionToken: string): Promise<JsonValue[]> =>
+    safeInvoke<JsonValue[]>(IPC_COMMANDS.GET_ACTIVE_SESSIONS, {
       sessionToken
     }),
 
@@ -90,8 +91,8 @@ export const securityOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving when session is revoked
    */
-  revokeSession: (sessionId: string, sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.REVOKE_SESSION, {
+  revokeSession: (sessionId: string, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.REVOKE_SESSION, {
       sessionId,
       sessionToken
     }),
@@ -101,8 +102,8 @@ export const securityOperations = {
    * @param sessionToken - Current session token
    * @returns Promise resolving when sessions are revoked
    */
-  revokeAllSessionsExceptCurrent: (sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.REVOKE_ALL_SESSIONS_EXCEPT_CURRENT, {
+  revokeAllSessionsExceptCurrent: (sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.REVOKE_ALL_SESSIONS_EXCEPT_CURRENT, {
       sessionToken
     }),
 
@@ -112,8 +113,8 @@ export const securityOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving when timeout is updated
    */
-  updateSessionTimeout: (timeoutMinutes: number, sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.UPDATE_SESSION_TIMEOUT, {
+  updateSessionTimeout: (timeoutMinutes: number, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.UPDATE_SESSION_TIMEOUT, {
       timeoutMinutes,
       sessionToken
     }),
@@ -123,8 +124,8 @@ export const securityOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to timeout configuration
    */
-  getSessionTimeoutConfig: (sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.GET_SESSION_TIMEOUT_CONFIG, {
+  getSessionTimeoutConfig: (sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_SESSION_TIMEOUT_CONFIG, {
       sessionToken
     }),
 
@@ -136,8 +137,8 @@ export const securityOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving when IP is blocked
    */
-  blockIpAddress: (ipAddress: string, reason: string, sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.BLOCK_IP_ADDRESS, {
+  blockIpAddress: (ipAddress: string, reason: string, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.BLOCK_IP_ADDRESS, {
       ip_address: ipAddress,
       reason,
       session_token: sessionToken
@@ -149,8 +150,8 @@ export const securityOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving when IP is unblocked
    */
-  unblockIpAddress: (ipAddress: string, sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.UNBLOCK_IP_ADDRESS, {
+  unblockIpAddress: (ipAddress: string, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.UNBLOCK_IP_ADDRESS, {
       ip_address: ipAddress,
       session_token: sessionToken
     }),
@@ -160,8 +161,8 @@ export const securityOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to blocked IPs
    */
-  getBlockedIps: (sessionToken: string): Promise<unknown[]> =>
-    safeInvoke<unknown[]>(IPC_COMMANDS.GET_BLOCKED_IPS, {
+  getBlockedIps: (sessionToken: string): Promise<JsonValue[]> =>
+    safeInvoke<JsonValue[]>(IPC_COMMANDS.GET_BLOCKED_IPS, {
       session_token: sessionToken
     }),
 };

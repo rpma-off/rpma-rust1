@@ -176,13 +176,13 @@ export const useTaskForm = (userId?: string, initialData?: Partial<TaskFormData>
     const zoneExists = existingZones.some(zone => zone.toLowerCase() === zoneText.toLowerCase());
       
     if (zoneExists) {
-      toast.error('This zone has already been added');
+      toast.error('Cette zone a déjà été ajoutée');
       return;
     }
     
     // Limit the number of custom zones
     if ((formData.custom_ppf_zones?.length || 0) >= 10) {
-      toast.error('You cannot add more than 10 custom zones');
+      toast.error('Vous ne pouvez pas ajouter plus de 10 zones personnalisées');
       return;
     }
     
@@ -198,7 +198,7 @@ export const useTaskForm = (userId?: string, initialData?: Partial<TaskFormData>
       }
     });
     
-    toast.success('Custom zone added');
+    toast.success('Zone personnalisée ajoutée');
   }, [formData.ppf_zones, formData.custom_ppf_zones, formData.customZones, updateFormData]);
 
   const removeCustomZone = useCallback((zoneText: string) => {
@@ -217,7 +217,7 @@ export const useTaskForm = (userId?: string, initialData?: Partial<TaskFormData>
       customZones: newCustomZones
     });
     
-    toast.success('Custom zone removed');
+    toast.success('Zone personnalisée supprimée');
   }, [formData.custom_ppf_zones, formData.ppf_zones, formData.customZones, updateFormData]);
 
   const validateStep = useCallback((step: FormStep): ValidationResult => {

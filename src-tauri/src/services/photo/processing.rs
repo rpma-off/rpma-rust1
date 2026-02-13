@@ -382,6 +382,113 @@ impl Default for PhotoProcessingService {
     }
 }
 
+/// Thumbnail dimensions
+const THUMBNAIL_MAX_WIDTH: u32 = 300;
+const THUMBNAIL_MAX_HEIGHT: u32 = 300;
+
+impl PhotoProcessingService {
+    /// Generate a thumbnail for efficient UI previews.
+    /// Saves the thumbnail alongside the original file with a `_thumb` suffix.
+    pub async fn generate_thumbnail(
+        &self,
+        image_data: &[u8],
+        original_path: &std::path::Path,
+    ) -> crate::services::photo::PhotoResult<std::path::PathBuf> {
+        let data = image_data.to_vec();
+        let thumb_path = Self::thumbnail_path(original_path);
+
+        let target_path = thumb_path.clone();
+        tokio::task::spawn_blocking(move || Self::generate_thumbnail_blocking(&data, &target_path))
+            .await
+            .map_err(|e| {
+                crate::services::photo::PhotoError::Processing(format!(
+                    "Thumbnail generation task failed: {}",
+                    e
+                ))
+            })??;
+
+        Ok(thumb_path)
+    }
+
+    /// Compute the thumbnail file path for a given original path.
+    pub fn thumbnail_path(original_path: &std::path::Path) -> std::path::PathBuf {
+        let stem = original_path
+            .file_stem()
+            .unwrap_or_default()
+            .to_string_lossy();
+        let ext = original_path
+            .extension()
+            .unwrap_or_default()
+            .to_string_lossy();
+        let thumb_name = format!("{}_thumb.{}", stem, ext);
+        original_path.with_file_name(thumb_name)
+    }
+
+    /// Blocking thumbnail generation
+    fn generate_thumbnail_blocking(
+        data: &[u8],
+        output_path: &std::path::Path,
+    ) -> crate::services::photo::PhotoResult<()> {
+        let img = image::load_from_memory(data).map_err(|e| {
+            crate::services::photo::PhotoError::Processing(format!(
+                "Failed to load image for thumbnail: {}",
+                e
+            ))
+        })?;
+
+        let thumbnail = img.thumbnail(THUMBNAIL_MAX_WIDTH, THUMBNAIL_MAX_HEIGHT);
+        let output_format = Self::thumbnail_format_for_path(output_path);
+
+        // Atomic write for thumbnail
+        let tmp_name = output_path
+            .file_name()
+            .map(|name| format!("{}.tmp", name.to_string_lossy()))
+            .unwrap_or_else(|| "thumbnail.tmp".to_string());
+        let tmp_path = output_path.with_file_name(tmp_name);
+
+        thumbnail
+            .save_with_format(&tmp_path, output_format)
+            .map_err(|e| {
+                crate::services::photo::PhotoError::Processing(format!(
+                    "Failed to save thumbnail: {}",
+                    e
+                ))
+            })?;
+
+        if output_path.exists() {
+            let _ = std::fs::remove_file(output_path);
+        }
+
+        std::fs::rename(&tmp_path, output_path).map_err(|e| {
+            let _ = std::fs::remove_file(&tmp_path);
+            crate::services::photo::PhotoError::Processing(format!(
+                "Failed to finalize thumbnail: {}",
+                e
+            ))
+        })?;
+
+        tracing::info!("Thumbnail generated: {}", output_path.display());
+        Ok(())
+    }
+
+    fn thumbnail_format_for_path(path: &std::path::Path) -> ImageFormat {
+        match path
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .map(|ext| ext.to_ascii_lowercase())
+            .as_deref()
+        {
+            Some("jpg") | Some("jpeg") => ImageFormat::Jpeg,
+            Some("png") => ImageFormat::Png,
+            Some("webp") => ImageFormat::WebP,
+            Some("bmp") => ImageFormat::Bmp,
+            Some("gif") => ImageFormat::Gif,
+            Some("tif") | Some("tiff") => ImageFormat::Tiff,
+            _ => ImageFormat::Jpeg,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -436,5 +543,39 @@ mod tests {
         let service = PhotoProcessingService::with_settings(90, 1024 * 1024);
         assert_eq!(service.jpeg_quality, 90);
         assert_eq!(service.max_file_size, 1024 * 1024);
+    }
+
+    #[tokio::test]
+    async fn test_generate_thumbnail() {
+        let service = PhotoProcessingService::new();
+        let test_data = create_test_image(800, 600);
+        let tmp_dir = std::env::temp_dir().join("rpma_test_thumb");
+        let _ = std::fs::create_dir_all(&tmp_dir);
+        let original_path = tmp_dir.join("test_photo.jpg");
+        std::fs::write(&original_path, &test_data).unwrap();
+
+        let result = service.generate_thumbnail(&test_data, &original_path).await;
+        assert!(result.is_ok());
+
+        let thumb_path = result.unwrap();
+        assert!(thumb_path.exists(), "Thumbnail file should exist");
+        assert!(thumb_path.to_string_lossy().contains("_thumb"));
+
+        // Clean up
+        let _ = std::fs::remove_dir_all(&tmp_dir);
+    }
+
+    #[test]
+    fn test_thumbnail_path_generation() {
+        let original = std::path::Path::new("photos")
+            .join("intervention1")
+            .join("photos")
+            .join("image.jpg");
+        let thumb = PhotoProcessingService::thumbnail_path(&original);
+        assert_eq!(thumb.parent(), original.parent());
+        assert_eq!(
+            thumb.file_name().and_then(|name| name.to_str()),
+            Some("image_thumb.jpg")
+        );
     }
 }

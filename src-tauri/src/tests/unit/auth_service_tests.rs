@@ -24,7 +24,7 @@ use tempfile::TempDir;
 
 // Set JWT_SECRET for tests
 fn setup_test_env() {
-    std::env::set_var("JWT_SECRET", "test_jwt_secret_32_bytes_long!");
+    std::env::set_var("JWT_SECRET", "test_jwt_secret_32_bytes_long__ok");
 }
 
 #[cfg(test)]
@@ -379,6 +379,90 @@ mod tests {
         // Session should no longer be valid
         let result = auth_service.validate_session(&session.token);
         assert!(result.is_err(), "Logged out session should be invalid");
+    }
+
+    #[test]
+    fn test_logout_invalidates_only_target_session() {
+        let (auth_service, _temp_dir) = create_test_auth_service();
+
+        // Create user
+        let mut user_request = create_test_user();
+        user_request.email = "multi_session@example.com".to_string();
+
+        auth_service
+            .create_account(user_request, "127.0.0.1")
+            .expect("Failed to create test user");
+
+        // Create two sessions
+        let session1 = auth_service
+            .authenticate(
+                "multi_session@example.com",
+                "SecurePassword123!",
+                "127.0.0.1",
+            )
+            .expect("First authentication should succeed");
+
+        let session2 = auth_service
+            .authenticate(
+                "multi_session@example.com",
+                "SecurePassword123!",
+                "127.0.0.1",
+            )
+            .expect("Second authentication should succeed");
+
+        // Logout session 1
+        auth_service
+            .logout(&session1.token)
+            .expect("Logout should succeed");
+
+        // Session 1 should be invalid
+        let result = auth_service.validate_session(&session1.token);
+        assert!(result.is_err(), "Logged out session should be invalid");
+
+        // Session 2 should still be valid
+        let result = auth_service.validate_session(&session2.token);
+        assert!(
+            result.is_ok(),
+            "Other session should remain valid after logging out a different session"
+        );
+    }
+
+    #[test]
+    fn test_login_after_logout() {
+        let (auth_service, _temp_dir) = create_test_auth_service();
+
+        // Create user and authenticate
+        let mut user_request = create_test_user();
+        user_request.email = "relogin@example.com".to_string();
+
+        auth_service
+            .create_account(user_request, "127.0.0.1")
+            .expect("Failed to create test user");
+
+        let session = auth_service
+            .authenticate("relogin@example.com", "SecurePassword123!", "127.0.0.1")
+            .expect("Authentication should succeed");
+
+        // Logout
+        auth_service
+            .logout(&session.token)
+            .expect("Logout should succeed");
+
+        // Should be able to re-authenticate after logout
+        let new_session = auth_service
+            .authenticate("relogin@example.com", "SecurePassword123!", "127.0.0.1")
+            .expect("Re-authentication after logout should succeed");
+
+        // New session should be valid
+        let result = auth_service.validate_session(&new_session.token);
+        assert!(result.is_ok(), "New session after re-login should be valid");
+
+        // Old session should still be invalid
+        let result = auth_service.validate_session(&session.token);
+        assert!(
+            result.is_err(),
+            "Old session should remain invalid after re-login"
+        );
     }
 
     #[test]

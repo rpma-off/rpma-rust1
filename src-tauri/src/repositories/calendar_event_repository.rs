@@ -127,6 +127,8 @@ impl CalendarEventRepository {
     }
 
     /// Check for conflicts with existing events
+    /// Uses canonical overlap formula: two intervals [A_start, A_end) and [B_start, B_end)
+    /// overlap iff A_start < B_end AND A_end > B_start.
     pub async fn check_conflicts(
         &self,
         start_datetime: &str,
@@ -144,21 +146,13 @@ impl CalendarEventRepository {
             FROM calendar_events
             WHERE deleted_at IS NULL
             AND status != 'cancelled'
-            AND (
-                (start_datetime <= ? AND end_datetime > ?) OR
-                (start_datetime < ? AND end_datetime >= ?) OR
-                (start_datetime >= ? AND end_datetime <= ?)
-            )
+            AND start_datetime < ? AND end_datetime > ?
         "#
         .to_string();
 
         let mut params_vec: Vec<rusqlite::types::Value> = vec![
-            start_datetime.to_string().into(),
-            start_datetime.to_string().into(),
-            end_datetime.to_string().into(),
             end_datetime.to_string().into(),
             start_datetime.to_string().into(),
-            end_datetime.to_string().into(),
         ];
 
         if let Some(tech_id) = technician_id {

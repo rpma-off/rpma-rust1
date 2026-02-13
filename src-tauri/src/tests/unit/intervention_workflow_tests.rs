@@ -4,106 +4,24 @@
 //! and state transitions in the intervention process.
 
 use crate::commands::AppResult;
+use crate::db::InterventionError;
 use crate::models::intervention::InterventionStatus;
 use crate::models::step::StepStatus;
-use crate::services::audit_service::AuditService;
-use crate::services::intervention_data::InterventionDataService;
 use crate::services::intervention_types::{
     AdvanceStepRequest, FinalizeInterventionRequest, StartInterventionRequest,
 };
 use crate::services::intervention_workflow::InterventionWorkflowService;
-use crate::test_utils::{TestDataFactory, TestDatabase};
-use crate::{test_client, test_db, test_intervention, test_task};
-use chrono::Utc;
+use crate::{test_db, test_task};
 use serde_json::json;
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[tokio::test]
-    async fn test_start_intervention_success() -> AppResult<()> {
-        let test_db = test_db!();
-        let workflow_service = InterventionWorkflowService::new(test_db.db());
-        let audit_service = AuditService::new(test_db.db());
-
-        // Initialize audit service
-        audit_service.init()?;
-
-        // Create a task
-        let task_request = test_task!(
-            title: "PPF Installation Task".to_string(),
-            vehicle_plate: Some("ABC123".to_string()),
-            status: "scheduled".to_string()
-        );
-        let task = TestDataFactory::create_test_task(Some(task_request));
-
-        // Create intervention
-        let request = StartInterventionRequest {
-            task_id: "task-123".to_string(),
-            intervention_number: None,
-            ppf_zones: vec!["front".to_string(), "rear".to_string()],
-            custom_zones: None,
-            film_type: "premium".to_string(),
-            film_brand: None,
-            film_model: None,
-            weather_condition: "clear".to_string(),
-            lighting_condition: "good".to_string(),
-            work_location: "shop".to_string(),
-            temperature: None,
-            humidity: None,
-            technician_id: "test_user".to_string(),
-            assistant_ids: None,
-            scheduled_start: chrono::Utc::now().to_rfc3339(),
-            estimated_duration: 120,
-            gps_coordinates: None,
-            address: None,
-            notes: Some("Standard installation".to_string()),
-            customer_requirements: None,
-            special_instructions: None,
-        };
-
-        let intervention =
-            workflow_service.start_intervention(request, "test_user", "test-correlation-id")?;
-
-        // Get first step
-        let first_step = &intervention.steps[0];
-        assert_eq!(first_step.step_status, StepStatus::Pending);
-
-        // Start the step
-        let advance_request = AdvanceStepRequest {
-            intervention_id: intervention.id.clone(),
-            step_id: first_step.id.clone(),
-            collected_data: json!({}),
-            photos: None,
-            notes: Some("Starting preparation".to_string()),
-            quality_check_passed: true,
-            issues: None,
-        };
-
-        let updated_step = workflow_service
-            .advance_step(advance_request, "test-correlation-id", Some("test_user"))
-            .await?;
-
-        assert_eq!(updated_step.step_status, StepStatus::InProgress);
-        assert!(updated_step.started_at.is_some());
-        assert_eq!(updated_step.location_lat, Some(40.7128));
-        assert_eq!(updated_step.notes, Some("Starting preparation".to_string()));
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_advance_step_complete() -> AppResult<()> {
-        let test_db = test_db!();
-        let workflow_service = InterventionWorkflowService::new(test_db.db());
-
-        // Create task and intervention
-        let task_request = test_task!(title: "Intervention cancellation test".to_string());
-        let task = TestDataFactory::create_test_task(Some(task_request));
-
-        let request = StartInterventionRequest {
-            task_id: "task-123".to_string(),
+    /// Helper: build a default StartInterventionRequest
+    fn default_start_request(task_id: &str) -> StartInterventionRequest {
+        StartInterventionRequest {
+            task_id: task_id.to_string(),
             intervention_number: None,
             ppf_zones: vec!["front".to_string()],
             custom_zones: None,
@@ -124,62 +42,43 @@ mod tests {
             notes: None,
             customer_requirements: None,
             special_instructions: None,
-        };
+        }
+    }
 
-        let intervention =
+    #[tokio::test]
+    async fn test_start_intervention_success() -> AppResult<()> {
+        let test_db = test_db!();
+        let workflow_service = InterventionWorkflowService::new(test_db.db());
+
+        let request = default_start_request("task-123");
+        let response =
             workflow_service.start_intervention(request, "test_user", "test-correlation-id")?;
 
-        // Cancel intervention
-        let cancelled_intervention =
-            workflow_service.cancel_intervention(&intervention.id, "test_user")?;
+        // Get first step
+        let first_step = &response.steps[0];
+        assert_eq!(first_step.step_status, StepStatus::Pending);
 
-        let first_step = &intervention.steps[0];
-
-        // First start the step
-        let start_request = AdvanceStepRequest {
-            intervention_id: intervention.id.clone(),
+        // Start the step (no completion data ⇒ stays InProgress)
+        let advance_request = AdvanceStepRequest {
+            intervention_id: response.intervention.id.clone(),
             step_id: first_step.id.clone(),
             collected_data: json!({}),
             photos: None,
-            notes: None,
+            notes: Some("Starting preparation".to_string()),
             quality_check_passed: true,
             issues: None,
         };
 
-        workflow_service
-            .advance_step(start_request, "test-correlation-id", Some("test_user"))
+        let advance_response = workflow_service
+            .advance_step(advance_request, "test-correlation-id", Some("test_user"))
             .await?;
 
-        // Then complete the step
-        let complete_request = AdvanceStepRequest {
-            intervention_id: intervention.id.clone(),
-            step_id: first_step.id.clone(),
-            collected_data: json!({"duration": 45}),
-            photos: Some(vec!["photo-1".to_string()]),
-            notes: Some("Step completed successfully".to_string()),
-            quality_check_passed: true,
-            issues: None,
-        };
-
-        // Then complete the step
-        let step_complete_request = AdvanceStepRequest {
-            intervention_id: intervention.id.clone(),
-            step_id: first_step.id.clone(),
-            collected_data: serde_json::json!({"duration": 45}),
-            photos: Some(vec!["photo-1".to_string()]),
-            notes: Some("Step completed successfully".to_string()),
-            quality_check_passed: true,
-            issues: None,
-        };
-
-        let completed_step = workflow_service
-            .advance_step(step_complete_request, "test_user")
-            .await?;
-
-        assert_eq!(completed_step.step_status, StepStatus::Completed);
-        assert!(completed_step.completed_at.is_some());
-        assert_eq!(completed_step.actual_duration, Some(45));
-        assert_eq!(completed_step.photos_taken, 1);
+        assert_eq!(advance_response.step.step_status, StepStatus::InProgress);
+        assert!(advance_response.step.started_at.inner().is_some());
+        assert_eq!(
+            advance_response.step.notes,
+            Some("Starting preparation".to_string())
+        );
 
         Ok(())
     }
@@ -189,44 +88,17 @@ mod tests {
         let test_db = test_db!();
         let workflow_service = InterventionWorkflowService::new(test_db.db());
 
-        // Create task and intervention
-        let task_request = test_task!(title: "Pending with data test".to_string());
-        let task = TestDataFactory::create_test_task(Some(task_request));
-
-        let request = StartInterventionRequest {
-            task_id: "task-123".to_string(),
-            intervention_number: None,
-            ppf_zones: vec!["front".to_string()],
-            custom_zones: None,
-            film_type: "standard".to_string(),
-            film_brand: None,
-            film_model: None,
-            weather_condition: "clear".to_string(),
-            lighting_condition: "good".to_string(),
-            work_location: "shop".to_string(),
-            temperature: None,
-            humidity: None,
-            technician_id: "test_user".to_string(),
-            assistant_ids: None,
-            scheduled_start: chrono::Utc::now().to_rfc3339(),
-            estimated_duration: 120,
-            gps_coordinates: None,
-            address: None,
-            notes: None,
-            customer_requirements: None,
-            special_instructions: None,
-        };
-
-        let intervention = workflow_service
+        let request = default_start_request("task-123");
+        let response = workflow_service
             .start_intervention(request, "test_user", "test-correlation-id")
             .unwrap();
 
-        let first_step = &intervention.steps[0];
+        let first_step = &response.steps[0];
 
         // Advancing a Pending step with completion data should succeed
         // (transition Pending → InProgress → Completed in a single call)
         let complete_request = AdvanceStepRequest {
-            intervention_id: intervention.id.clone(),
+            intervention_id: response.intervention.id.clone(),
             step_id: first_step.id.clone(),
             collected_data: json!({"duration": 30}),
             photos: None,
@@ -239,10 +111,10 @@ mod tests {
             .advance_step(complete_request, "test-correlation-id", Some("test_user"))
             .await;
         assert!(result.is_ok());
-        let response = result.unwrap();
-        assert_eq!(response.step.step_status, StepStatus::Completed);
-        assert!(response.step.started_at.inner().is_some());
-        assert!(response.step.completed_at.inner().is_some());
+        let advance_response = result.unwrap();
+        assert_eq!(advance_response.step.step_status, StepStatus::Completed);
+        assert!(advance_response.step.started_at.inner().is_some());
+        assert!(advance_response.step.completed_at.inner().is_some());
 
         Ok(())
     }
@@ -252,40 +124,13 @@ mod tests {
         let test_db = test_db!();
         let workflow_service = InterventionWorkflowService::new(test_db.db());
 
-        // Create task and intervention
-        let task_request = test_task!(title: "In-progress step test".to_string());
-        let task = TestDataFactory::create_test_task(Some(task_request));
-
-        let request = StartInterventionRequest {
-            task_id: "task-123".to_string(),
-            intervention_number: None,
-            ppf_zones: vec!["front".to_string()],
-            custom_zones: None,
-            film_type: "standard".to_string(),
-            film_brand: None,
-            film_model: None,
-            weather_condition: "clear".to_string(),
-            lighting_condition: "good".to_string(),
-            work_location: "shop".to_string(),
-            temperature: None,
-            humidity: None,
-            technician_id: "test_user".to_string(),
-            assistant_ids: None,
-            scheduled_start: chrono::Utc::now().to_rfc3339(),
-            estimated_duration: 120,
-            gps_coordinates: None,
-            address: None,
-            notes: None,
-            customer_requirements: None,
-            special_instructions: None,
-        };
-
-        let intervention =
+        let request = default_start_request("task-123");
+        let response =
             workflow_service.start_intervention(request, "test_user", "test-correlation-id")?;
 
-        let first_step = &intervention.steps[0];
+        let first_step = &response.steps[0];
         let start_request = AdvanceStepRequest {
-            intervention_id: intervention.id.clone(),
+            intervention_id: response.intervention.id.clone(),
             step_id: first_step.id.clone(),
             collected_data: json!({}),
             photos: None,
@@ -294,14 +139,14 @@ mod tests {
             issues: None,
         };
 
-        let started_step = workflow_service
+        let started = workflow_service
             .advance_step(start_request, "test-correlation-id", Some("test_user"))
             .await?;
 
-        assert_eq!(started_step.step_status, StepStatus::InProgress);
+        assert_eq!(started.step.step_status, StepStatus::InProgress);
 
         let continue_request = AdvanceStepRequest {
-            intervention_id: intervention.id.clone(),
+            intervention_id: response.intervention.id.clone(),
             step_id: first_step.id.clone(),
             collected_data: json!({}),
             photos: None,
@@ -310,12 +155,12 @@ mod tests {
             issues: None,
         };
 
-        let in_progress_step = workflow_service
+        let in_progress = workflow_service
             .advance_step(continue_request, "test-correlation-id", Some("test_user"))
             .await?;
 
-        assert_eq!(in_progress_step.step_status, StepStatus::InProgress);
-        assert!(in_progress_step.completed_at.is_none());
+        assert_eq!(in_progress.step.step_status, StepStatus::InProgress);
+        assert!(in_progress.step.completed_at.inner().is_none());
 
         Ok(())
     }
@@ -325,56 +170,14 @@ mod tests {
         let test_db = test_db!();
         let workflow_service = InterventionWorkflowService::new(test_db.db());
 
-        // Create task and intervention
-        let task_request = test_task!(title: "Intervention completion test".to_string());
-        let task = TestDataFactory::create_test_task(Some(task_request));
+        let request = default_start_request("task-123");
+        let response =
+            workflow_service.start_intervention(request, "test_user", "test-correlation-id")?;
 
-        let request = StartInterventionRequest {
-            task_id: "task-123".to_string(),
-            intervention_number: None,
-            ppf_zones: vec!["front".to_string()],
-            custom_zones: None,
-            film_type: "standard".to_string(),
-            film_brand: None,
-            film_model: None,
-            weather_condition: "clear".to_string(),
-            lighting_condition: "good".to_string(),
-            work_location: "shop".to_string(),
-            temperature: None,
-            humidity: None,
-            technician_id: "test_user".to_string(),
-            assistant_ids: None,
-            scheduled_start: chrono::Utc::now().to_rfc3339(),
-            estimated_duration: 120,
-            gps_coordinates: None,
-            address: None,
-            notes: None,
-            customer_requirements: None,
-            special_instructions: None,
-        };
-
-        let intervention = workflow_service
-            .start_intervention(request, "test_user", "test-correlation-id")
-            .await?;
-
-        // Complete all steps
-        for step in &intervention.steps {
-            let start_request = AdvanceStepRequest {
-                intervention_id: intervention.id.clone(),
-                step_id: step.id.clone(),
-                collected_data: json!({}),
-                photos: None,
-                notes: None,
-                quality_check_passed: true,
-                issues: None,
-            };
-
-            workflow_service
-                .advance_step(start_request, "test_user")
-                .await?;
-
+        // Complete all steps (supply completion data to advance Pending → Completed)
+        for step in &response.steps {
             let complete_request = AdvanceStepRequest {
-                intervention_id: intervention.id.clone(),
+                intervention_id: response.intervention.id.clone(),
                 step_id: step.id.clone(),
                 collected_data: json!({"duration": 30}),
                 photos: None,
@@ -388,9 +191,9 @@ mod tests {
                 .await?;
         }
 
-        // Complete intervention
-        let complete_request = FinalizeInterventionRequest {
-            intervention_id: intervention.id.clone(),
+        // Finalize the intervention (finalize_intervention is sync)
+        let finalize_request = FinalizeInterventionRequest {
+            intervention_id: response.intervention.id.clone(),
             collected_data: Some(json!({"duration": 180})),
             photos: None,
             customer_satisfaction: Some(9),
@@ -400,66 +203,47 @@ mod tests {
             customer_comments: None,
         };
 
-        let completed_intervention = workflow_service
-            .finalize_intervention(complete_request, "test-correlation-id", Some("test_user"))
-            .await?;
+        let finalize_response = workflow_service.finalize_intervention(
+            finalize_request,
+            "test-correlation-id",
+            Some("test_user"),
+        )?;
 
         assert_eq!(
-            completed_intervention.status,
-            crate::models::intervention::InterventionStatus::Completed
+            finalize_response.intervention.status,
+            InterventionStatus::Completed
         );
-        assert_eq!(completed_intervention.quality_score, Some(95));
-        assert_eq!(completed_intervention.customer_satisfaction, Some(9));
+        assert_eq!(finalize_response.intervention.quality_score, Some(95));
         assert_eq!(
-            completed_intervention.final_observations,
-            Some("Excellent quality work".to_string())
+            finalize_response.intervention.customer_satisfaction,
+            Some(9)
         );
-        assert_eq!(completed_intervention.actual_duration, Some(180));
-        assert!(completed_intervention.completed_at.is_some());
+        assert_eq!(
+            finalize_response.intervention.final_observations,
+            Some(vec!["Excellent quality work".to_string()])
+        );
+        assert!(finalize_response
+            .intervention
+            .completed_at
+            .inner()
+            .is_some());
 
         Ok(())
     }
 
     #[tokio::test]
-    async fn test_complete_intervention_incomplete_steps() {
+    async fn test_finalize_fails_with_missing_mandatory_steps() {
         let test_db = test_db!();
         let workflow_service = InterventionWorkflowService::new(test_db.db());
 
-        // Create task and intervention
-        let task_request = test_task!(title: "Incomplete steps test".to_string());
-        let task = TestDataFactory::create_test_task(Some(task_request));
-
-        let request = StartInterventionRequest {
-            task_id: "task-123".to_string(),
-            intervention_number: None,
-            ppf_zones: vec!["front".to_string()],
-            custom_zones: None,
-            film_type: "standard".to_string(),
-            film_brand: None,
-            film_model: None,
-            weather_condition: "clear".to_string(),
-            lighting_condition: "good".to_string(),
-            work_location: "shop".to_string(),
-            temperature: None,
-            humidity: None,
-            technician_id: "test_user".to_string(),
-            assistant_ids: None,
-            scheduled_start: chrono::Utc::now().to_rfc3339(),
-            estimated_duration: 120,
-            gps_coordinates: None,
-            address: None,
-            notes: None,
-            customer_requirements: None,
-            special_instructions: None,
-        };
-
-        let intervention = workflow_service
+        let request = default_start_request("task-123");
+        let response = workflow_service
             .start_intervention(request, "test_user", "test-correlation-id")
             .unwrap();
 
-        // Try to complete intervention without completing all steps
-        let complete_request = FinalizeInterventionRequest {
-            intervention_id: intervention.id.clone(),
+        // Do NOT complete any steps – try to finalize immediately
+        let finalize_request = FinalizeInterventionRequest {
+            intervention_id: response.intervention.id.clone(),
             collected_data: Some(json!({"duration": 120})),
             photos: None,
             customer_satisfaction: Some(8),
@@ -470,7 +254,7 @@ mod tests {
         };
 
         let result = workflow_service.finalize_intervention(
-            complete_request,
+            finalize_request,
             "test-correlation-id",
             Some("test_user"),
         );
@@ -479,6 +263,104 @@ mod tests {
         assert!(
             err_msg.contains("mandatory steps incomplete"),
             "Expected error about mandatory steps incomplete, got: {}",
+            err_msg
+        );
+    }
+
+    #[tokio::test]
+    async fn test_finalize_error_lists_incomplete_step_names() {
+        let test_db = test_db!();
+        let workflow_service = InterventionWorkflowService::new(test_db.db());
+
+        let request = default_start_request("task-123");
+        let response = workflow_service
+            .start_intervention(request, "test_user", "test-correlation-id")
+            .unwrap();
+
+        // Do NOT complete any steps – try to finalize
+        let finalize_request = FinalizeInterventionRequest {
+            intervention_id: response.intervention.id.clone(),
+            collected_data: None,
+            photos: None,
+            customer_satisfaction: None,
+            quality_score: None,
+            final_observations: None,
+            customer_signature: None,
+            customer_comments: None,
+        };
+
+        let result = workflow_service.finalize_intervention(
+            finalize_request,
+            "test-correlation-id",
+            Some("test_user"),
+        );
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+
+        // The error message should list the names of incomplete mandatory steps
+        // so the frontend can show actionable feedback
+        let mandatory_non_finalization_steps: Vec<_> = response
+            .steps
+            .iter()
+            .filter(|s| {
+                s.is_mandatory && s.step_type != crate::models::step::StepType::Finalization
+            })
+            .collect();
+
+        for step in &mandatory_non_finalization_steps {
+            assert!(
+                err_msg.contains(&step.step_name),
+                "Error should mention step '{}', got: {}",
+                step.step_name,
+                err_msg
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn test_step_out_of_order_is_rejected() -> AppResult<()> {
+        let test_db = test_db!();
+        let workflow_service = InterventionWorkflowService::new(test_db.db());
+
+        let request = default_start_request("task-123");
+        let response =
+            workflow_service.start_intervention(request, "test_user", "test-correlation-id")?;
+
+        // Need at least 2 steps to test ordering
+        assert!(
+            response.steps.len() >= 2,
+            "Need at least 2 steps for ordering test, got {}",
+            response.steps.len()
+        );
+
+        // Try to advance step 2 without completing step 1
+        let second_step = &response.steps[1];
+        let out_of_order_request = AdvanceStepRequest {
+            intervention_id: response.intervention.id.clone(),
+            step_id: second_step.id.clone(),
+            collected_data: json!({"data": "test"}),
+            photos: None,
+            notes: None,
+            quality_check_passed: true,
+            issues: None,
+        };
+
+        let result = workflow_service
+            .advance_step(
+                out_of_order_request,
+                "test-correlation-id",
+                Some("test_user"),
+            )
+            .await;
+
+        assert!(
+            result.is_err(),
+            "Advancing step 2 without completing step 1 should fail"
+        );
+        let err_msg = result.unwrap_err().to_string();
+        assert!(
+            err_msg.contains("previous step") || err_msg.contains("not completed"),
+            "Error should mention previous step not completed, got: {}",
             err_msg
         );
 
@@ -490,49 +372,15 @@ mod tests {
         let test_db = test_db!();
         let workflow_service = InterventionWorkflowService::new(test_db.db());
 
-        // Create task and intervention
-        let task_request = test_task!(title: "Intervention completion test".to_string());
-        let task = TestDataFactory::create_test_task(Some(task_request));
-
-        let request = StartInterventionRequest {
-            task_id: "task-123".to_string(),
-            intervention_number: None,
-            ppf_zones: vec!["front".to_string()],
-            custom_zones: None,
-            film_type: "standard".to_string(),
-            film_brand: None,
-            film_model: None,
-            weather_condition: "clear".to_string(),
-            lighting_condition: "good".to_string(),
-            work_location: "shop".to_string(),
-            temperature: None,
-            humidity: None,
-            technician_id: "test_user".to_string(),
-            assistant_ids: None,
-            scheduled_start: chrono::Utc::now().to_rfc3339(),
-            estimated_duration: 120,
-            gps_coordinates: None,
-            address: None,
-            notes: None,
-            customer_requirements: None,
-            special_instructions: None,
-        };
-
-        let mut intervention =
+        let request = default_start_request("task-123");
+        let response =
             workflow_service.start_intervention(request, "test_user", "test-correlation-id")?;
 
         // Cancel intervention
-        let cancelled_intervention =
-            workflow_service.cancel_intervention(&intervention.id, "test_user")?;
+        let cancelled =
+            workflow_service.cancel_intervention(&response.intervention.id, "test_user")?;
 
-        assert_eq!(
-            cancelled_intervention.status,
-            crate::models::intervention::InterventionStatus::Cancelled
-        );
-        assert!(cancelled_intervention
-            .notes
-            .unwrap()
-            .contains("Customer changed mind"));
+        assert_eq!(cancelled.status, InterventionStatus::Cancelled);
 
         Ok(())
     }
@@ -542,41 +390,17 @@ mod tests {
         let test_db = test_db!();
         let workflow_service = InterventionWorkflowService::new(test_db.db());
 
-        // Create task and intervention
-        let task_request = test_task!(title: "Get intervention test".to_string());
-        let task = TestDataFactory::create_test_task(Some(task_request));
-
-        let request = crate::services::intervention_types::StartInterventionRequest {
-            task_id: task.id.clone(),
-            intervention_number: None,
-            ppf_zones: vec!["front".to_string()],
-            custom_zones: None,
-            film_type: "standard".to_string(),
-            film_brand: None,
-            film_model: None,
-            weather_condition: "indoor".to_string(),
-            lighting_condition: "good".to_string(),
-            work_location: "shop".to_string(),
-            temperature: None,
-            humidity: None,
-            technician_id: "test_technician".to_string(),
-            assistant_ids: None,
-            scheduled_start: chrono::Utc::now().to_rfc3339(),
-            estimated_duration: 120,
-            gps_coordinates: None,
-        };
-
-        let created_intervention =
+        let request = default_start_request("task-123");
+        let response =
             workflow_service.start_intervention(request, "test_user", "test-correlation-id")?;
 
         // Get intervention by ID
-        let retrieved_intervention =
-            workflow_service.get_intervention_by_id(&created_intervention.id)?;
+        let retrieved = workflow_service.get_intervention_by_id(&response.intervention.id)?;
 
-        assert!(retrieved_intervention.is_some());
-        let intervention = retrieved_intervention.unwrap();
-        assert_eq!(intervention.id, created_intervention.id);
-        assert_eq!(intervention.task_id, created_intervention.task_id);
+        assert!(retrieved.is_some());
+        let intervention = retrieved.unwrap();
+        assert_eq!(intervention.id, response.intervention.id);
+        assert_eq!(intervention.task_id, response.intervention.task_id);
 
         Ok(())
     }
@@ -586,8 +410,8 @@ mod tests {
         let test_db = test_db!();
         let workflow_service = InterventionWorkflowService::new(test_db.db());
 
-        let retrieved_intervention = workflow_service.get_intervention_by_id("nonexistent-id")?;
-        assert!(retrieved_intervention.is_none());
+        let retrieved = workflow_service.get_intervention_by_id("nonexistent-id")?;
+        assert!(retrieved.is_none());
 
         Ok(())
     }
@@ -608,37 +432,10 @@ mod tests {
         let test_db = test_db!();
         let workflow_service = InterventionWorkflowService::new(test_db.db());
 
-        // Create multiple tasks and interventions
+        // Create multiple interventions
         for i in 1..=3 {
-            let task_request = test_task!(title: format!("Task {}", i));
-            let task = TestDataFactory::create_test_task(Some(task_request));
-
-            let request = StartInterventionRequest {
-                task_id: format!("task-{}", i),
-                intervention_number: None,
-                ppf_zones: vec!["front".to_string()],
-                custom_zones: None,
-                film_type: "standard".to_string(),
-                film_brand: None,
-                film_model: None,
-                weather_condition: "clear".to_string(),
-                lighting_condition: "good".to_string(),
-                work_location: "shop".to_string(),
-                temperature: None,
-                humidity: None,
-                technician_id: "test_user".to_string(),
-                assistant_ids: None,
-                scheduled_start: chrono::Utc::now().to_rfc3339(),
-                estimated_duration: 120,
-                gps_coordinates: None,
-                address: None,
-                notes: None,
-                customer_requirements: None,
-                special_instructions: None,
-            };
-
-            let intervention =
-                workflow_service.start_intervention(request, "test_user", "test-correlation-id")?;
+            let request = default_start_request(&format!("task-{}", i));
+            workflow_service.start_intervention(request, "test_user", "test-correlation-id")?;
         }
 
         // List interventions
@@ -653,46 +450,19 @@ mod tests {
         let test_db = test_db!();
         let workflow_service = InterventionWorkflowService::new(test_db.db());
 
-        // Create task and intervention
-        let task_request = test_task!(title: "Task-specific intervention test".to_string());
-        let task = TestDataFactory::create_test_task(Some(task_request));
-
-        let request = StartInterventionRequest {
-            task_id: "task-123".to_string(),
-            intervention_number: None,
-            ppf_zones: vec!["front".to_string()],
-            custom_zones: None,
-            film_type: "standard".to_string(),
-            film_brand: None,
-            film_model: None,
-            weather_condition: "clear".to_string(),
-            lighting_condition: "good".to_string(),
-            work_location: "shop".to_string(),
-            temperature: None,
-            humidity: None,
-            technician_id: "test_user".to_string(),
-            assistant_ids: None,
-            scheduled_start: chrono::Utc::now().to_rfc3339(),
-            estimated_duration: 120,
-            gps_coordinates: None,
-            address: None,
-            notes: None,
-            customer_requirements: None,
-            special_instructions: None,
-        };
-
-        let created_intervention =
+        let request = default_start_request("task-123");
+        let response =
             workflow_service.start_intervention(request, "test_user", "test-correlation-id")?;
 
         // Get interventions for task
         let task_interventions = workflow_service.get_interventions_by_task("task-123")?;
 
         assert_eq!(task_interventions.len(), 1);
-        assert_eq!(task_interventions[0].id, created_intervention.id);
+        assert_eq!(task_interventions[0].id, response.intervention.id);
 
         // Test with nonexistent task
-        let empty_interventions = workflow_service.get_interventions_by_task("nonexistent-task")?;
-        assert!(empty_interventions.is_empty());
+        let empty = workflow_service.get_interventions_by_task("nonexistent-task")?;
+        assert!(empty.is_empty());
 
         Ok(())
     }

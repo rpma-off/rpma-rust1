@@ -73,29 +73,52 @@ function AppLayout({ children }: { children: React.ReactNode }) {
    useEffect(() => {
      const checkAdminRedirect = async () => {
        if (!authLoading && !isAuthenticating && user) {
-         console.log('checkAdminRedirect running', { pathname, user: user.id });
+         logger.debug(LogDomain.AUTH, 'Admin redirect check started', {
+           pathname,
+           user_id: user.id
+         });
          try {
            const { ipcClient } = await import('@/lib/ipc');
            const hasAdmins = await ipcClient.bootstrap.hasAdmins();
-           console.log('hasAdmins result', hasAdmins);
+           logger.debug(LogDomain.AUTH, 'Admin check result', {
+             has_admins: hasAdmins,
+             pathname,
+             user_id: user.id
+           });
 
            if (!hasAdmins && pathname !== '/bootstrap-admin') {
              // No admins exist and not already on bootstrap page, redirect to bootstrap-admin
-             console.log('Redirecting to /bootstrap-admin');
+             logger.info(LogDomain.AUTH, 'Redirecting to /bootstrap-admin', {
+               pathname,
+               user_id: user.id
+             });
              router.push('/bootstrap-admin');
            } else if ((pathname === '/login' || pathname === '/signup') && hasAdmins) {
              // User is authenticated, on login/signup page, and admins exist, redirect to dashboard
-             console.log('Redirecting to /dashboard from login/signup');
+             logger.info(LogDomain.AUTH, 'Redirecting to /dashboard from login/signup', {
+               pathname,
+               user_id: user.id
+             });
              router.push('/dashboard');
            } else if ((pathname === '/login' || pathname === '/signup') && !hasAdmins) {
              // User is authenticated, on login/signup page, and no admins exist, redirect to bootstrap-admin
-             console.log('Redirecting to /bootstrap-admin from login/signup');
+             logger.info(LogDomain.AUTH, 'Redirecting to /bootstrap-admin from login/signup', {
+               pathname,
+               user_id: user.id
+             });
              router.push('/bootstrap-admin');
            } else {
-             console.log('No redirect needed', { hasAdmins, pathname });
+             logger.debug(LogDomain.AUTH, 'No redirect needed', {
+               has_admins: hasAdmins,
+               pathname,
+               user_id: user.id
+             });
            }
          } catch (error) {
-           console.error('Failed to check admin status:', error);
+           logger.error(LogDomain.AUTH, 'Failed to check admin status', error, {
+             pathname,
+             user_id: user.id
+           });
            // Default to dashboard on error
            if (pathname === '/login' || pathname === '/signup') {
              router.push('/dashboard');
@@ -113,7 +136,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="fixed inset-0 bg-background text-foreground z-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[hsl(var(--rpma-teal))] mx-auto mb-4"></div>
-          <p className="text-muted-foreground">{authLoading || isAuthenticating ? 'Loading...' : 'Redirecting to login...'}</p>
+          <p className="text-muted-foreground">{authLoading || isAuthenticating ? 'Chargement...' : 'Redirection vers la connexion...'}</p>
         </div>
       </div>
     );

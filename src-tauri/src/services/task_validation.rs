@@ -51,84 +51,77 @@ use std::sync::Arc;
 /// assert!(validate_status_transition(&TaskStatus::Completed, &TaskStatus::Pending).is_err());
 /// ```
 pub fn validate_status_transition(current: &TaskStatus, new: &TaskStatus) -> Result<(), String> {
-    match (current, new) {
-        // Valid transitions from Draft
-        (TaskStatus::Draft, TaskStatus::Pending) => Ok(()),
-        (TaskStatus::Draft, TaskStatus::Scheduled) => Ok(()),
-        (TaskStatus::Draft, TaskStatus::Cancelled) => Ok(()),
+    if current == new {
+        return Err(format!("Task is already in status '{}'", current));
+    }
 
-        // Valid transitions from Pending
-        (TaskStatus::Pending, TaskStatus::InProgress) => Ok(()),
-        (TaskStatus::Pending, TaskStatus::Scheduled) => Ok(()),
-        (TaskStatus::Pending, TaskStatus::Cancelled) => Ok(()),
-        (TaskStatus::Pending, TaskStatus::OnHold) => Ok(()),
-        (TaskStatus::Pending, TaskStatus::Assigned) => Ok(()),
+    let allowed = allowed_transitions(current);
+    if allowed.contains(new) {
+        Ok(())
+    } else {
+        Err(format!(
+            "Cannot transition from '{}' to '{}'. Allowed transitions: {}",
+            current,
+            new,
+            allowed
+                .iter()
+                .map(|s| format!("'{}'", s))
+                .collect::<Vec<_>>()
+                .join(", ")
+        ))
+    }
+}
 
-        // Valid transitions from Scheduled
-        (TaskStatus::Scheduled, TaskStatus::InProgress) => Ok(()),
-        (TaskStatus::Scheduled, TaskStatus::OnHold) => Ok(()),
-        (TaskStatus::Scheduled, TaskStatus::Cancelled) => Ok(()),
-        (TaskStatus::Scheduled, TaskStatus::Assigned) => Ok(()),
-
-        // Valid transitions from Assigned
-        (TaskStatus::Assigned, TaskStatus::InProgress) => Ok(()),
-        (TaskStatus::Assigned, TaskStatus::OnHold) => Ok(()),
-        (TaskStatus::Assigned, TaskStatus::Cancelled) => Ok(()),
-
-        // Valid transitions from InProgress
-        (TaskStatus::InProgress, TaskStatus::Completed) => Ok(()),
-        (TaskStatus::InProgress, TaskStatus::OnHold) => Ok(()),
-        (TaskStatus::InProgress, TaskStatus::Paused) => Ok(()),
-        (TaskStatus::InProgress, TaskStatus::Cancelled) => Ok(()),
-
-        // Valid transitions from Paused
-        (TaskStatus::Paused, TaskStatus::InProgress) => Ok(()),
-        (TaskStatus::Paused, TaskStatus::Cancelled) => Ok(()),
-
-        // Valid transitions from OnHold
-        (TaskStatus::OnHold, TaskStatus::Pending) => Ok(()),
-        (TaskStatus::OnHold, TaskStatus::Scheduled) => Ok(()),
-        (TaskStatus::OnHold, TaskStatus::InProgress) => Ok(()),
-        (TaskStatus::OnHold, TaskStatus::Cancelled) => Ok(()),
-
-        // Valid transition from Completed
-        (TaskStatus::Completed, TaskStatus::Archived) => Ok(()),
-
-        // Invalid transitions from Completed (can only go to Archived)
-        (TaskStatus::Completed, TaskStatus::Pending) => {
-            Err("Cannot move completed task back to pending".to_string())
-        }
-        (TaskStatus::Completed, TaskStatus::InProgress) => {
-            Err("Cannot move completed task back to in progress".to_string())
-        }
-        (TaskStatus::Completed, TaskStatus::Scheduled) => {
-            Err("Cannot move completed task back to scheduled".to_string())
-        }
-
-        // Invalid transitions from Cancelled (terminal state)
-        (TaskStatus::Cancelled, TaskStatus::Pending) => {
-            Err("Cannot move cancelled task back to pending".to_string())
-        }
-        (TaskStatus::Cancelled, TaskStatus::InProgress) => {
-            Err("Cannot move cancelled task back to in progress".to_string())
-        }
-        (TaskStatus::Cancelled, TaskStatus::Scheduled) => {
-            Err("Cannot move cancelled task back to scheduled".to_string())
-        }
-
-        // Invalid transitions from Archived (terminal state)
-        (TaskStatus::Archived, TaskStatus::Pending) => {
-            Err("Cannot move archived task back to pending".to_string())
-        }
-        (TaskStatus::Archived, TaskStatus::InProgress) => {
-            Err("Cannot move archived task back to in progress".to_string())
-        }
-
-        // Catch-all for undefined transitions
-        _ => Err(format!(
-            "Invalid status transition from {:?} to {:?}",
-            current, new
-        )),
+/// Return the list of statuses that `current` may transition to.
+///
+/// Every variant is handled exhaustively so that adding a new `TaskStatus`
+/// forces a compiler error here, ensuring the transition table stays in sync.
+pub fn allowed_transitions(current: &TaskStatus) -> Vec<TaskStatus> {
+    match current {
+        TaskStatus::Draft => vec![
+            TaskStatus::Pending,
+            TaskStatus::Scheduled,
+            TaskStatus::Cancelled,
+        ],
+        TaskStatus::Pending => vec![
+            TaskStatus::InProgress,
+            TaskStatus::Scheduled,
+            TaskStatus::OnHold,
+            TaskStatus::Cancelled,
+            TaskStatus::Assigned,
+        ],
+        TaskStatus::Scheduled => vec![
+            TaskStatus::InProgress,
+            TaskStatus::OnHold,
+            TaskStatus::Cancelled,
+            TaskStatus::Assigned,
+        ],
+        TaskStatus::Assigned => vec![
+            TaskStatus::InProgress,
+            TaskStatus::OnHold,
+            TaskStatus::Cancelled,
+        ],
+        TaskStatus::InProgress => vec![
+            TaskStatus::Completed,
+            TaskStatus::OnHold,
+            TaskStatus::Paused,
+            TaskStatus::Cancelled,
+        ],
+        TaskStatus::Paused => vec![TaskStatus::InProgress, TaskStatus::Cancelled],
+        TaskStatus::OnHold => vec![
+            TaskStatus::Pending,
+            TaskStatus::Scheduled,
+            TaskStatus::InProgress,
+            TaskStatus::Cancelled,
+        ],
+        TaskStatus::Completed => vec![TaskStatus::Archived],
+        // Terminal states – no transitions allowed
+        TaskStatus::Cancelled => vec![],
+        TaskStatus::Archived => vec![],
+        // Operational/system statuses – can only be cancelled
+        TaskStatus::Failed => vec![TaskStatus::Cancelled],
+        TaskStatus::Overdue => vec![TaskStatus::InProgress, TaskStatus::Cancelled],
+        TaskStatus::Invalid => vec![TaskStatus::Cancelled],
     }
 }
 
@@ -599,5 +592,219 @@ impl TaskValidationService {
             Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
             Err(e) => Err(format!("Database error: {}", e)),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::task::TaskStatus;
+
+    // ── Status transition: happy-path tests ──────────────────────────
+
+    #[test]
+    fn test_valid_transitions_from_draft() {
+        assert!(validate_status_transition(&TaskStatus::Draft, &TaskStatus::Pending).is_ok());
+        assert!(validate_status_transition(&TaskStatus::Draft, &TaskStatus::Scheduled).is_ok());
+        assert!(validate_status_transition(&TaskStatus::Draft, &TaskStatus::Cancelled).is_ok());
+    }
+
+    #[test]
+    fn test_valid_transitions_from_pending() {
+        assert!(validate_status_transition(&TaskStatus::Pending, &TaskStatus::InProgress).is_ok());
+        assert!(validate_status_transition(&TaskStatus::Pending, &TaskStatus::Scheduled).is_ok());
+        assert!(validate_status_transition(&TaskStatus::Pending, &TaskStatus::OnHold).is_ok());
+        assert!(validate_status_transition(&TaskStatus::Pending, &TaskStatus::Cancelled).is_ok());
+        assert!(validate_status_transition(&TaskStatus::Pending, &TaskStatus::Assigned).is_ok());
+    }
+
+    #[test]
+    fn test_valid_transitions_from_scheduled() {
+        assert!(
+            validate_status_transition(&TaskStatus::Scheduled, &TaskStatus::InProgress).is_ok()
+        );
+        assert!(validate_status_transition(&TaskStatus::Scheduled, &TaskStatus::OnHold).is_ok());
+        assert!(validate_status_transition(&TaskStatus::Scheduled, &TaskStatus::Cancelled).is_ok());
+        assert!(validate_status_transition(&TaskStatus::Scheduled, &TaskStatus::Assigned).is_ok());
+    }
+
+    #[test]
+    fn test_valid_transitions_from_assigned() {
+        assert!(validate_status_transition(&TaskStatus::Assigned, &TaskStatus::InProgress).is_ok());
+        assert!(validate_status_transition(&TaskStatus::Assigned, &TaskStatus::OnHold).is_ok());
+        assert!(validate_status_transition(&TaskStatus::Assigned, &TaskStatus::Cancelled).is_ok());
+    }
+
+    #[test]
+    fn test_valid_transitions_from_in_progress() {
+        assert!(
+            validate_status_transition(&TaskStatus::InProgress, &TaskStatus::Completed).is_ok()
+        );
+        assert!(validate_status_transition(&TaskStatus::InProgress, &TaskStatus::OnHold).is_ok());
+        assert!(validate_status_transition(&TaskStatus::InProgress, &TaskStatus::Paused).is_ok());
+        assert!(
+            validate_status_transition(&TaskStatus::InProgress, &TaskStatus::Cancelled).is_ok()
+        );
+    }
+
+    #[test]
+    fn test_valid_transitions_from_paused() {
+        assert!(validate_status_transition(&TaskStatus::Paused, &TaskStatus::InProgress).is_ok());
+        assert!(validate_status_transition(&TaskStatus::Paused, &TaskStatus::Cancelled).is_ok());
+    }
+
+    #[test]
+    fn test_valid_transitions_from_on_hold() {
+        assert!(validate_status_transition(&TaskStatus::OnHold, &TaskStatus::Pending).is_ok());
+        assert!(validate_status_transition(&TaskStatus::OnHold, &TaskStatus::Scheduled).is_ok());
+        assert!(validate_status_transition(&TaskStatus::OnHold, &TaskStatus::InProgress).is_ok());
+        assert!(validate_status_transition(&TaskStatus::OnHold, &TaskStatus::Cancelled).is_ok());
+    }
+
+    #[test]
+    fn test_valid_transition_completed_to_archived() {
+        assert!(validate_status_transition(&TaskStatus::Completed, &TaskStatus::Archived).is_ok());
+    }
+
+    // ── Status transition: invalid transitions ──────────────────────
+
+    #[test]
+    fn test_invalid_transition_same_status() {
+        let err = validate_status_transition(&TaskStatus::Draft, &TaskStatus::Draft);
+        assert!(err.is_err());
+        assert!(err.unwrap_err().contains("already in status"));
+    }
+
+    #[test]
+    fn test_invalid_transition_draft_to_completed() {
+        let err = validate_status_transition(&TaskStatus::Draft, &TaskStatus::Completed);
+        assert!(err.is_err());
+        assert!(err.unwrap_err().contains("Cannot transition"));
+    }
+
+    #[test]
+    fn test_invalid_transition_draft_to_in_progress() {
+        assert!(validate_status_transition(&TaskStatus::Draft, &TaskStatus::InProgress).is_err());
+    }
+
+    #[test]
+    fn test_invalid_transition_completed_to_pending() {
+        let err = validate_status_transition(&TaskStatus::Completed, &TaskStatus::Pending);
+        assert!(err.is_err());
+        assert!(err.unwrap_err().contains("Cannot transition"));
+    }
+
+    #[test]
+    fn test_invalid_transition_completed_to_in_progress() {
+        assert!(
+            validate_status_transition(&TaskStatus::Completed, &TaskStatus::InProgress).is_err()
+        );
+    }
+
+    // ── Terminal states: no further transitions ─────────────────────
+
+    #[test]
+    fn test_cancelled_is_terminal() {
+        assert!(validate_status_transition(&TaskStatus::Cancelled, &TaskStatus::Pending).is_err());
+        assert!(
+            validate_status_transition(&TaskStatus::Cancelled, &TaskStatus::InProgress).is_err()
+        );
+        assert!(
+            validate_status_transition(&TaskStatus::Cancelled, &TaskStatus::Scheduled).is_err()
+        );
+        assert!(validate_status_transition(&TaskStatus::Cancelled, &TaskStatus::Draft).is_err());
+    }
+
+    #[test]
+    fn test_archived_is_terminal() {
+        assert!(validate_status_transition(&TaskStatus::Archived, &TaskStatus::Pending).is_err());
+        assert!(
+            validate_status_transition(&TaskStatus::Archived, &TaskStatus::InProgress).is_err()
+        );
+        assert!(validate_status_transition(&TaskStatus::Archived, &TaskStatus::Draft).is_err());
+    }
+
+    // ── Operational/system statuses ─────────────────────────────────
+
+    #[test]
+    fn test_failed_can_only_cancel() {
+        assert!(validate_status_transition(&TaskStatus::Failed, &TaskStatus::Cancelled).is_ok());
+        assert!(validate_status_transition(&TaskStatus::Failed, &TaskStatus::InProgress).is_err());
+        assert!(validate_status_transition(&TaskStatus::Failed, &TaskStatus::Pending).is_err());
+    }
+
+    #[test]
+    fn test_overdue_transitions() {
+        assert!(validate_status_transition(&TaskStatus::Overdue, &TaskStatus::InProgress).is_ok());
+        assert!(validate_status_transition(&TaskStatus::Overdue, &TaskStatus::Cancelled).is_ok());
+        assert!(validate_status_transition(&TaskStatus::Overdue, &TaskStatus::Draft).is_err());
+    }
+
+    #[test]
+    fn test_invalid_status_can_only_cancel() {
+        assert!(validate_status_transition(&TaskStatus::Invalid, &TaskStatus::Cancelled).is_ok());
+        assert!(validate_status_transition(&TaskStatus::Invalid, &TaskStatus::Pending).is_err());
+    }
+
+    // ── Full lifecycle: create → assign → in_progress → completed → archived ──
+
+    #[test]
+    fn test_full_lifecycle_happy_path() {
+        // Draft → Pending
+        assert!(validate_status_transition(&TaskStatus::Draft, &TaskStatus::Pending).is_ok());
+        // Pending → Assigned
+        assert!(validate_status_transition(&TaskStatus::Pending, &TaskStatus::Assigned).is_ok());
+        // Assigned → InProgress
+        assert!(validate_status_transition(&TaskStatus::Assigned, &TaskStatus::InProgress).is_ok());
+        // InProgress → Completed
+        assert!(
+            validate_status_transition(&TaskStatus::InProgress, &TaskStatus::Completed).is_ok()
+        );
+        // Completed → Archived
+        assert!(validate_status_transition(&TaskStatus::Completed, &TaskStatus::Archived).is_ok());
+    }
+
+    #[test]
+    fn test_full_lifecycle_with_pause() {
+        assert!(validate_status_transition(&TaskStatus::Draft, &TaskStatus::Pending).is_ok());
+        assert!(validate_status_transition(&TaskStatus::Pending, &TaskStatus::Assigned).is_ok());
+        assert!(validate_status_transition(&TaskStatus::Assigned, &TaskStatus::InProgress).is_ok());
+        // Pause
+        assert!(validate_status_transition(&TaskStatus::InProgress, &TaskStatus::Paused).is_ok());
+        // Resume
+        assert!(validate_status_transition(&TaskStatus::Paused, &TaskStatus::InProgress).is_ok());
+        assert!(
+            validate_status_transition(&TaskStatus::InProgress, &TaskStatus::Completed).is_ok()
+        );
+        assert!(validate_status_transition(&TaskStatus::Completed, &TaskStatus::Archived).is_ok());
+    }
+
+    // ── allowed_transitions exhaustiveness ──────────────────────────
+
+    #[test]
+    fn test_allowed_transitions_returns_correct_lists() {
+        assert_eq!(
+            allowed_transitions(&TaskStatus::Draft),
+            vec![
+                TaskStatus::Pending,
+                TaskStatus::Scheduled,
+                TaskStatus::Cancelled
+            ]
+        );
+        assert!(allowed_transitions(&TaskStatus::Cancelled).is_empty());
+        assert!(allowed_transitions(&TaskStatus::Archived).is_empty());
+        assert_eq!(
+            allowed_transitions(&TaskStatus::Completed),
+            vec![TaskStatus::Archived]
+        );
+    }
+
+    #[test]
+    fn test_error_message_lists_allowed_transitions() {
+        let err =
+            validate_status_transition(&TaskStatus::Draft, &TaskStatus::Completed).unwrap_err();
+        // Should mention allowed transitions
+        assert!(err.contains("Allowed transitions"));
+        assert!(err.contains("pending"));
     }
 }

@@ -1,5 +1,6 @@
 import { safeInvoke, cachedInvoke } from '../core';
 import { IPC_COMMANDS } from '../commands';
+import type { JsonValue } from '@/types/json';
 
 /**
  * Data synchronization operations
@@ -23,15 +24,15 @@ export const syncOperations = {
    * Gets the current synchronization status
    * @returns Promise resolving to sync status
    */
-  getStatus: (): Promise<unknown> =>
+  getStatus: (): Promise<JsonValue> =>
     cachedInvoke('sync:status', IPC_COMMANDS.SYNC_GET_STATUS, undefined, undefined, 5000),
 
   /**
    * Triggers an immediate synchronization
    * @returns Promise resolving to sync result
    */
-  syncNow: (): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.SYNC_NOW),
+  syncNow: (): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.SYNC_NOW),
 
   /**
    * Gets synchronization operations for a specific entity
@@ -39,8 +40,8 @@ export const syncOperations = {
    * @param entityType - Entity type
    * @returns Promise resolving to sync operations for the entity
    */
-  getOperationsForEntity: (entityId: string, entityType: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.SYNC_GET_OPERATIONS_FOR_ENTITY, {
+  getOperationsForEntity: (entityId: string, entityType: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.SYNC_GET_OPERATIONS_FOR_ENTITY, {
       entity_id: entityId,
       entity_type: entityType
     }),

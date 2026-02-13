@@ -1,4 +1,5 @@
 import { safeInvoke, cachedInvoke, invalidatePattern, ResponseHandlers } from '../core';
+import type { JsonObject, JsonValue } from '@/types/json';
 
 /**
  * Generic CRUD operation helpers to eliminate code duplication across domains
@@ -7,11 +8,11 @@ export function createCrudOperations<
   T,
   CreateData,
   UpdateData,
-  ListFilters = Record<string, unknown>,
+  ListFilters = JsonObject,
   ListResponse = T[]
 >(
   commandBase: string,
-  validator: (data: unknown) => T,
+  validator: (data: JsonValue) => T,
   cachePrefix: string
 ) {
   return {
@@ -76,12 +77,12 @@ export function createCrudOperations<
           action: { action: 'List', filters },
           session_token: sessionToken
         }
-      }, ResponseHandlers.list((data: unknown) => data as ListResponse)),
+      }, ResponseHandlers.list((data: JsonValue) => data as ListResponse)),
 
     /**
      * Get statistics for the entity type
      */
-    statistics: (sessionToken: string): Promise<unknown> =>
+    statistics: (sessionToken: string): Promise<JsonValue> =>
       safeInvoke(commandBase, {
         request: {
           action: { action: 'GetStatistics' },

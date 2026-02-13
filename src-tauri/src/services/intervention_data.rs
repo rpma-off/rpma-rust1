@@ -303,6 +303,16 @@ impl InterventionDataService {
         self.repository.update_intervention(intervention)
     }
 
+    /// Save intervention within a transaction
+    pub fn save_intervention_with_tx(
+        &self,
+        tx: &Transaction,
+        intervention: &Intervention,
+    ) -> InterventionResult<()> {
+        self.repository
+            .update_intervention_with_tx(tx, intervention)
+    }
+
     /// Save step
     pub fn save_step_with_tx(
         &self,

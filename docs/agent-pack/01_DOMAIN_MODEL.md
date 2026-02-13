@@ -10,266 +10,235 @@ This document describes the primary business entities, their relationships, life
 
 ```
 ┌─────────┐         ┌──────────┐         ┌──────────────┐
-│  Client │1──────*0│   Task   │1────────│ Intervention │
+│  Client │1──────*│   Task   │1────────│ Intervention │
 └─────────┘         └──────────┘         └──────────────┘
-                         │                        │
-                         │                        │
-                         │                        │1
-                         │                        │
-                         │                        │
-                    ┌────┴────┐         ┌─────────┴─────────┐
-                    │  User   │         │ InterventionStep  │
-                    └─────────┘         └───────────────────┘
-                         │                        │
-                         │                        │*
-                         │                        │
-                    ┌────┴────┐             ┌────┴────┐
-                    │ Session │             │  Photo  │
-                    └─────────┘             └─────────┘
-                                                 │
-                                            ┌────┴────┐
-                                            │Material │
-                                            └─────────┘
+     │                    │                        │
+     │                    │                        │1
+     │                    │                        │
+     │                    │                        │
+                ┌─────────┴─────────┐     ┌────────┴────────┐
+                │       User        │     │ InterventionStep│
+                └───────────────────┘     └─────────────────┘
+                     │     │                        │
+                     │     │                        │*
+                     │     │                        │
+                ┌────┴──┐  │                ┌───────┴───────┐
+                │Session│  │                │     Photo     │
+                └───────┘  │                └───────────────┘
+                           │                       │
+                     ┌─────┴─────┐           ┌─────┴─────┐
+                     │ Calendar  │           │  Material │
+                     │  Event    │           └───────────┘
+                     └───────────┘
 ```
 
 ---
 
-##  1. Task
+## 1. Task
 
 **Purpose**: Represents a work order or intervention request. Tasks are the top-level unit of work.
 
-**Key Fields**:
-- `id`: TEXT (UUID primary key)
-- `task_number`: TEXT (unique, human-readable identifier, e.g., "T-20260211-001")
-- `title`: TEXT (short description)
-- `description`: TEXT (detailed information)
-- `status`: TEXT (draft | assigned | in_progress | completed | cancelled | archived)
-- `priority`: TEXT (low | medium | high | urgent)
-- `client_id`: TEXT (foreign key → `clients.id`)
-- `technician_id`: TEXT (assigned user ID)
-- `scheduled_date`: TEXT (ISO 8601 date)
-- `vehicle_plate`, `vehicle_model`, `vehicle_year`, `vehicle_make`, `vin`: TEXT
-- `ppf_zones`: TEXT (JSON array of PPF zones to protect)
-- `workflow_status`: TEXT (workflow progression status)
-- `current_workflow_step_id`: TEXT (active intervention step ID)
-- `created_at`, `updated_at`: INTEGER (Unix timestamp ms)
+**Model**: `src-tauri/src/models/task.rs`
 
-**Lifecycle / Status Enum**:
+**Key Fields**:
+- `id`: String (UUID primary key)
+- `task_number`: String (unique, human-readable identifier, e.g., "T-20260211-001")
+- `title`: String (short description)
+- `description`: Option<String>
+- `status`: TaskStatus enum
+- `priority`: TaskPriority enum (Low, Medium, High, Urgent)
+- `client_id`: Option<String> (foreign key → `clients.id`)
+- `technician_id`: Option<String> (assigned user ID)
+- `scheduled_date`: Option<String> (ISO 8601 date)
+- `vehicle_plate`, `vehicle_model`, `vehicle_year`, `vehicle_make`, `vin`: Option<String>
+- `ppf_zones`: Option<String> (JSON array of PPF zones)
+- `workflow_status`: Option<String>
+- `current_workflow_step_id`: Option<String>
+- `synced`: bool, `last_synced_at`: Option<i64>
+- `created_at`, `updated_at`: i64 (Unix timestamp ms)
+
+**Status Enum** (`src-tauri/src/models/task.rs`):
 ```rust
 pub enum TaskStatus {
-    Draft,        // Created but not yet assigned
-    Assigned,     // Assigned to a technician
-    InProgress,   // Intervention has started
-    Completed,    // Intervention finished successfully
-    Cancelled,    // Task cancelled before completion
-    Archived,     // Completed task archived for records
-    Failed,       // Task failed or aborted
-    Overdue,      // Scheduled date passed without completion
-    Paused,       // Temporarily paused
+    Draft, Scheduled, InProgress, Completed, Cancelled, 
+    OnHold, Pending, Invalid, Archived, Failed, Overdue, Assigned, Paused
 }
 ```
 
+**Priority Enum**:
+```rust
+pub enum TaskPriority { Low, Medium, High, Urgent }
+```
+
 **Relations**:
-- **1 Task → 0..1 Client** (via `client_id`)
-- **1 Task → 0..* Interventions** (a task may have multiple intervention attempts)
-- **1 Task → 0..1 User** (assigned technician)
+- 1 Task → 0..1 Client (via `client_id`)
+- 1 Task → 0..* Interventions
+- 1 Task → 0..1 User (assigned technician)
 
 **Storage**:
-- **Table**: `tasks`
-- **Soft Delete**: No (hard delete or archive)
-- **Audit**: Yes (via `audit_logs` table for sensitive operations)
+- Table: `tasks`
+- Indexes: `task_number`, `status`, `client_id`, `technician_id`, `scheduled_date`
 
-**Domain Rules** (from REQUIREMENTS):
+**Domain Rules**:
 - A task must have a unique `task_number`
 - A task can only have one active intervention at a time
-- Status transitions must be valid (e.g., can't go from `cancelled` to `in_progress`)
-- Tasks with status `in_progress` must have an active intervention
-- Technicians can only be assigned tasks matching their role permissions
+- Status transitions must be valid
 
 **Code Paths**:
 - Model: `src-tauri/src/models/task.rs`
-- Service: `src-tauri/src/services/task.rs`, `task_validation.rs`, `task_crud.rs`
+- Service: `src-tauri/src/services/task.rs`, `task_validation.rs`, `task_creation.rs`
 - Repository: `src-tauri/src/repositories/task_repository.rs`
-- Commands: `src-tauri/src/commands/task/`
+- Commands: `src-tauri/src/commands/task/facade.rs`
 
 ---
 
-##  2. Client
+## 2. Client
 
 **Purpose**: Represents a customer (individual or business) who owns vehicles requiring PPF installation.
 
-**Key Fields**:
-- `id`: TEXT (UUID)
-- `name`: TEXT (full name or business name)
-- `email`: TEXT (nullable, unique if provided)
-- `phone`: TEXT (nullable)
-- `address`: TEXT (nullable)
-- `customer_type`: TEXT (individual | business)
-- `company_name`: TEXT (for business clients)
-- `siret`: TEXT (business registration number, France)
-- `notes`: TEXT (internal notes)
-- `total_tasks`: INTEGER (computed/cached count)
-- `completed_tasks`: INTEGER (computed/cached count)
-- `created_at`, `updated_at`: INTEGER (Unix timestamp ms)
+**Model**: `src-tauri/src/models/client.rs`
 
-**Lifecycle**:
-- Clients are created when needed
-- No formal status enum (active by default)
-- Can be soft-deleted or archived (TODO: verify in code)
+**Key Fields**:
+- `id`: String (UUID)
+- `name`: String (full name or business name)
+- `email`: Option<String> (unique if provided)
+- `phone`: Option<String>
+- `address`: Option<String>
+- `customer_type`: CustomerType enum (Individual, Business)
+- `company_name`: Option<String>
+- `siret`: Option<String> (business registration number)
+- `notes`: Option<String>
+- `total_tasks`: i32, `completed_tasks`: i32 (cached counts)
+- `synced`: bool, `last_synced_at`: Option<i64>
+- `created_at`, `updated_at`: i64
 
 **Relations**:
-- **1 Client → 0..* Tasks**
+- 1 Client → 0..* Tasks
 
 **Storage**:
-- **Table**: `clients`
-- **Indexes**: `idx_clients_email`, `idx_clients_phone`
-- **Soft Delete**: TODO (verify in code)
-
-**Domain Rules**:
-- Email must be valid format if provided
-- A client must have at least a `name`
-- Statistics (`total_tasks`, `completed_tasks`) are maintained via triggers
+- Table: `clients`
+- Indexes: `email`, `phone`
+- View: `client_statistics` (aggregated counts)
+- FTS: `clients_fts` (FTS5 virtual table for search)
 
 **Code Paths**:
 - Model: `src-tauri/src/models/client.rs`
-- Service: `src-tauri/src/services/client.rs`, `client_validation.rs`, `client_statistics.rs`
+- Service: `src-tauri/src/services/client.rs`, `client_validation.rs`
 - Repository: `src-tauri/src/repositories/client_repository.rs`
 - Commands: `src-tauri/src/commands/client.rs`
 
 ---
 
-##  3. Intervention
+## 3. Intervention
 
-**Purpose**: Represents the execution of a task. An intervention tracks the actual work being performed, including step-by-step progression.
+**Purpose**: Represents the execution of a task. Tracks the actual work being performed, including step-by-step progression.
+
+**Model**: `src-tauri/src/models/intervention.rs`
 
 **Key Fields**:
-- `id`: TEXT (UUID)
-- `task_id`: TEXT (foreign key → `tasks.id`)
-- `task_number`: TEXT (denormalized for quick access)
-- `status`: TEXT (pending | in_progress | paused | completed | cancelled)
-- `intervention_type`: TEXT (ppf | ceramic | detailing | other)
-- `vehicle_plate`: TEXT (denormalized from task)
-- `started_at`: INTEGER (when intervention began)
-- `completed_at`: INTEGER (nullable, when intervention finished)
-- `paused_at`: INTEGER (nullable)
-- `total_duration_seconds`: INTEGER (calculated duration)
-- `notes`: TEXT (technician notes)
-- `quality_score`: INTEGER (nullable, 0-100)
-- `created_at`, `updated_at`: INTEGER
+- `id`: String (UUID)
+- `task_id`: Option<String> (FK → `tasks.id`)
+- `task_number`: Option<String> (denormalized)
+- `status`: InterventionStatus enum
+- `intervention_type`: InterventionType enum (Ppf, Ceramic, Detailing, Other)
+- `vehicle_plate`: Option<String>
+- `technician_id`, `client_id`: Option<String>
+- `started_at`, `completed_at`, `paused_at`: Option<i64>
+- `total_duration_seconds`: Option<i64>
+- `quality_score`: Option<i32>
+- Environmental: `temperature`, `humidity`
+- GPS: `start_location_lat/lon`, `end_location_lat/lon`
+- `synced`: bool, `last_synced_at`: Option<i64>
 
-**Lifecycle / Status Enum**:
+**Status Enum**:
 ```rust
 pub enum InterventionStatus {
-    Pending,      // Created but not started
-    InProgress,   // Currently being executed
-    Paused,       // Temporarily paused
-    Completed,    // Successfully finished
-    Cancelled,    // Aborted
+    Pending, InProgress, Paused, Completed, Cancelled
 }
 ```
 
 **Relations**:
-- **1 Intervention → 1 Task** (via `task_id`)
-- **1 Intervention → 0..* InterventionSteps** (workflow steps)
-- **1 Intervention → 0..* Photos** (captured during execution)
+- 1 Intervention → 1 Task (via `task_id`)
+- 1 Intervention → 0..* InterventionSteps
+- 1 Intervention → 0..* Photos
 
 **Storage**:
-- **Table**: `interventions`
-- **Indexes**: `idx_interventions_task_id`, `idx_interventions_status`
-
-**Domain Rules**:
-- Only one intervention can be `in_progress` per task at a time
-- Intervention must be started before steps can be executed
-- Cannot complete an intervention with incomplete required steps
-- Photos must be associated with specific steps
+- Table: `interventions`
+- Indexes: `task_id`, `status`
+- Constraint: Only one active intervention per task (unique constraint)
 
 **Code Paths**:
 - Model: `src-tauri/src/models/intervention.rs`
-- Service: `src-tauri/src/services/intervention.rs`, `intervention_workflow.rs`, `intervention_validation.rs`
+- Service: `src-tauri/src/services/intervention.rs`, `intervention_workflow.rs`
 - Repository: `src-tauri/src/repositories/intervention_repository.rs`
-- Commands: `src-tauri/src/commands/intervention/`
+- Commands: `src-tauri/src/commands/intervention/workflow.rs`
 
 ---
 
-##  4. InterventionStep
+## 4. InterventionStep
 
-**Purpose**: Represents a single step in the intervention workflow (e.g., "Vehicle Preparation", "Film Application", "Final Inspection").
+**Purpose**: Represents a single step in the intervention workflow (e.g., "Vehicle Preparation", "Film Application").
+
+**Model**: `src-tauri/src/models/step.rs`
 
 **Key Fields**:
-- `id`: TEXT (UUID)
-- `intervention_id`: TEXT (foreign key → `interventions.id`)
-- `step_number`: INTEGER (order in workflow)
-- `step_type`: TEXT (preparation | application | inspection | cleanup | quality_check)
-- `title`: TEXT (step name)
-- `description`: TEXT (detailed instructions)
-- `status`: TEXT (pending | in_progress | completed | skipped)
-- `started_at`: INTEGER (nullable)
-- `completed_at`: INTEGER (nullable)
-- `duration_seconds`: INTEGER (calculated)
-- `notes`: TEXT (technician notes for this step)
-- `location_latitude`, `location_longitude`: REAL (GPS capture, nullable)
-- `required`: INTEGER (boolean, 1 if step must be completed)
-- `created_at`, `updated_at`: INTEGER
+- `id`: String (UUID)
+- `intervention_id`: String (FK → `interventions.id`)
+- `step_number`: i32 (order in workflow)
+- `step_type`: Option<String>
+- `title`: String
+- `description`: Option<String>
+- `status`: StepStatus enum
+- `started_at`, `completed_at`: Option<i64>
+- `duration_seconds`: Option<i64>
+- `notes`: Option<String>
+- `location_latitude`, `location_longitude`: Option<f64>
+- `required`: bool
+- `synced`: bool, `last_synced_at`: Option<i64>
 
-**Lifecycle / Status Enum**:
+**Status Enum**:
 ```rust
-pub enum StepStatus {
-    Pending,     // Not started yet
-    InProgress,  // Currently executing
-    Completed,   // Finished
-    Skipped,     // Optionally skipped (only for non-required steps)
-}
+pub enum StepStatus { Pending, InProgress, Completed, Skipped }
 ```
 
 **Relations**:
-- **1 Step → 1 Intervention**
-- **1 Step → 0..* Photos** (photos taken during this step)
+- 1 Step → 1 Intervention
+- 1 Step → 0..* Photos
 
 **Storage**:
-- **Table**: `intervention_steps`
-- **Indexes**: `idx_steps_intervention_id`, `idx_steps_status`
-
-**Domain Rules**:
-- Steps must be executed in order (enforced by `step_number`)
-- Required steps cannot be skipped
-- Cannot mark intervention as complete if required steps are not completed
+- Table: `intervention_steps`
+- Indexes: `intervention_id`, `status`, `step_number`
 
 **Code Paths**:
 - Model: `src-tauri/src/models/step.rs`
-- Service: `src-tauri/src/services/intervention_workflow.rs`, `workflow_progression.rs`
+- Service: `src-tauri/src/services/intervention_workflow.rs`
 - Commands: `src-tauri/src/commands/intervention/`
 
 ---
 
-##  5. Photo
+## 5. Photo
 
 **Purpose**: Captures visual documentation at various stages of the intervention.
 
-**Key Fields**:
-- `id`: TEXT (UUID)
-- `intervention_id`: TEXT (foreign key → `interventions.id`)
-- `step_id`: TEXT (nullable, foreign key → `intervention_steps.id`)
-- `file_path`: TEXT (path to photo on disk)
-- `file_size`: INTEGER (bytes)
-- `mime_type`: TEXT (e.g., "image/jpeg")
-- `caption`: TEXT (nullable, user-provided description)
-- `latitude`, `longitude`: REAL (GPS coordinates, nullable)
-- `taken_at`: INTEGER (Unix timestamp ms)
-- `created_at`: INTEGER
+**Model**: `src-tauri/src/models/photo.rs`
 
-**Relations**:
-- **1 Photo → 1 Intervention**
-- **1 Photo → 0..1 InterventionStep** (optional association with specific step)
+**Key Fields**:
+- `id`: String (UUID)
+- `intervention_id`: String (FK → `interventions.id`)
+- `step_id`: Option<String> (FK → `intervention_steps.id`)
+- `file_path`: String
+- `file_size`: Option<i64>
+- `mime_type`: Option<String>
+- `caption`: Option<String>
+- `latitude`, `longitude`: Option<f64>
+- `quality_score`: Option<i32>
+- `taken_at`: Option<i64>
+- `upload_retry_count`: i32, `upload_error`: Option<String>
+- `synced`: bool, `last_synced_at`: Option<i64>
 
 **Storage**:
-- **Table**: `photos`
-- **Indexes**: `idx_photos_intervention_id`, `idx_photos_step_id`
-- **File Storage**: Local filesystem (path stored in DB)
-
-**Domain Rules**:
-- Photos are immutable once created
-- File path must exist on local filesystem
-- Photos should be associated with a step when possible for better organization
+- Table: `photos`
+- Indexes: `intervention_id`, `step_id`
 
 **Code Paths**:
 - Model: `src-tauri/src/models/photo.rs`
@@ -278,37 +247,30 @@ pub enum StepStatus {
 
 ---
 
-##  6. Material
+## 6. Material
 
 **Purpose**: Tracks inventory items (PPF rolls, tools, consumables) used during interventions.
 
-**Key Fields**:
-- `id`: TEXT (UUID)
-- `sku`: TEXT (unique stock keeping unit)
-- `name`: TEXT
-- `description`: TEXT (nullable)
-- `category`: TEXT (film | tool | consumable | accessory)
-- `unit`: TEXT (m2 | liter | piece | roll)
-- `quantity_in_stock`: REAL (current stock level)
-- `minimum_stock`: REAL (alert threshold)
-- `unit_cost`: REAL (price per unit)
-- `supplier_id`: TEXT (nullable, foreign key → `suppliers.id`)
-- `lot_number`: TEXT (nullable, batch tracking)
-- `expiry_date`: TEXT (nullable, ISO 8601)
-- `created_at`, `updated_at`: INTEGER
+**Model**: `src-tauri/src/models/material.rs`
 
-**Relations**:
-- **1 Material → 0..* MaterialConsumption** (usage records)
-- **1 Material → 0..1 Supplier**
+**Key Fields**:
+- `id`: String (UUID)
+- `sku`: String (unique)
+- `name`: String
+- `description`: Option<String>
+- `material_type`: MaterialType enum (PpfFilm, Adhesive, CleaningSolution, Tool, Consumable)
+- `unit_of_measure`: UnitOfMeasure enum (Piece, Meter, Liter, Gram, Roll)
+- `current_stock`: f64
+- `minimum_stock`: Option<f64>
+- `unit_cost`: Option<f64>
+- `supplier_id`: Option<String>
+- `lot_number`: Option<String>
+- `expiry_date`: Option<String>
+- `synced`: bool, `last_synced_at`: Option<i64>
 
 **Storage**:
-- **Table**: `materials`
-- **Indexes**: `idx_materials_sku`, `idx_materials_category`
-
-**Domain Rules**:
-- Stock cannot go negative (enforced in business logic)
-- Low stock alerts trigger when `quantity_in_stock < minimum_stock`
-- Expired materials should be flagged (expiry_date < current date)
+- Table: `materials`
+- Related: `material_consumption`, `inventory_transactions`, `material_categories`
 
 **Code Paths**:
 - Model: `src-tauri/src/models/material.rs`
@@ -318,119 +280,87 @@ pub enum StepStatus {
 
 ---
 
-##  7. User
+## 7. User
 
-**Purpose**: Represents system users with authentication and role-based permissions.
+**Purpose**: System users with authentication and role-based permissions.
+
+**Model**: `src-tauri/src/models/auth.rs`, `src-tauri/src/models/user.rs`
 
 **Key Fields**:
-- `id`: TEXT (UUID)
-- `email`: TEXT (unique, used for login)
-- `first_name`: TEXT
-- `last_name`: TEXT
-- `password_hash`: TEXT (Argon2 hashed password)
-- `role`: TEXT (admin | supervisor | technician | viewer)
-- `is_active`: INTEGER (boolean, 1 if account is active)
-- `two_factor_enabled`: INTEGER (boolean)
-- `two_factor_secret`: TEXT (nullable, TOTP secret)
-- `avatar_url`: TEXT (nullable)
-- `created_at`, `updated_at`: INTEGER
-- `last_login_at`: INTEGER (nullable)
+- `id`: String (UUID)
+- `email`: String (unique)
+- `username`: String
+- `first_name`, `last_name`: Option<String>
+- `password_hash`: String (Argon2)
+- `role`: UserRole enum
+- `is_active`: bool
+- `two_factor_enabled`: bool
+- `two_factor_secret`: Option<String>
+- `backup_codes`: Option<String> (JSON)
+- `last_login`: Option<i64>
+- `synced`: bool, `last_synced_at`: Option<i64>
 
-**Role Enum**:
+**Role Enum** (`src-tauri/src/models/auth.rs:31-41`):
 ```rust
-pub enum UserRole {
-    Admin,       // Full system access
-    Supervisor,  // Manage tasks, users, view all data
-    Technician,  // Execute tasks, view assigned data
-    Viewer,      // Read-only access
-}
+pub enum UserRole { Admin, Technician, Supervisor, Viewer }
 ```
 
-**Relations**:
-- **1 User → 0..* Tasks** (assigned tasks)
-- **1 User → 0..* Sessions** (active login sessions)
-- **1 User → 0..* AuditLogs** (actions performed)
-
 **Storage**:
-- **Table**: `users`
-- **Indexes**: `idx_users_email`, `idx_users_role`
-
-**Domain Rules**:
-- Email must be unique
-- Password must be hashed with Argon2
-- Inactive users cannot log in
-- Role determines access permissions (see RBAC matrix in 06_SECURITY_AND_RBAC.md)
+- Table: `users`
+- Indexes: `email`, `role`
 
 **Code Paths**:
-- Model: `src-tauri/src/models/auth.rs`, `user.rs`
+- Model: `src-tauri/src/models/auth.rs`
 - Service: `src-tauri/src/services/auth.rs`, `user.rs`
 - Repository: `src-tauri/src/repositories/user_repository.rs`
 - Commands: `src-tauri/src/commands/auth.rs`, `user.rs`
 
 ---
 
-##  8. Session
+## 8. Session (UserSession)
 
 **Purpose**: Manages authenticated user sessions with token-based authentication.
 
-**Key Fields**:
-- `id`: TEXT (UUID)
-- `user_id`: TEXT (foreign key → `users.id`)
-- `session_token`: TEXT (unique, JWT or random token)
-- `refresh_token`: TEXT (unique, for token renewal)
-- `expires_at`: INTEGER (Unix timestamp ms)
-- `created_at`: INTEGER
-- `updated_at`: INTEGER
-- `last_activity_at`: INTEGER (for session timeout tracking)
+**Model**: `src-tauri/src/models/auth.rs`
 
-**Relations**:
-- **1 Session → 1 User**
+**Key Fields**:
+- `id`: String (UUID)
+- `user_id`: String (FK → `users.id`)
+- `token`: String (JWT)
+- `refresh_token`: Option<String>
+- `expires_at`: i64
+- `last_activity`: Option<i64>
+- `device_info`: Option<DeviceInfo>
+- `two_factor_verified`: bool
 
 **Storage**:
-- **Table**: `user_sessions`
-- **Indexes**: `idx_sessions_token`, `idx_sessions_user_id`
-
-**Domain Rules**:
-- Session tokens expire after a configured duration (default: 24 hours)
-- Refresh tokens allow extending session without re-login
-- Expired sessions must be cleaned up periodically
-- Each user can have multiple active sessions (different devices)
+- Table: `user_sessions`
+- Indexes: `token`, `user_id`
 
 **Code Paths**:
 - Model: `src-tauri/src/models/auth.rs`
-- Service: `src-tauri/src/services/session.rs`
+- Service: `src-tauri/src/services/session.rs`, `token.rs`
 - Repository: `src-tauri/src/repositories/session_repository.rs`
 
 ---
 
-##  9. CalendarEvent
+## 9. CalendarEvent
 
-**Purpose**: Represents scheduled appointments and task bookings on the calendar.
+**Purpose**: Scheduled appointments and task bookings.
+
+**Model**: `src-tauri/src/models/calendar_event.rs`
 
 **Key Fields**:
-- `id`: TEXT (UUID)
-- `task_id`: TEXT (nullable, foreign key → `tasks.id`)
-- `title`: TEXT
-- `description`: TEXT (nullable)
-- `start_time`: INTEGER (Unix timestamp ms)
-- `end_time`: INTEGER (Unix timestamp ms)
-- `all_day`: INTEGER (boolean)
-- `recurrence_rule`: TEXT (nullable, RRULE format for recurring events)
-- `technician_id`: TEXT (nullable, assigned user)
-- `created_at`, `updated_at`: INTEGER
-
-**Relations**:
-- **1 CalendarEvent → 0..1 Task**
-- **1 CalendarEvent → 0..1 User** (technician)
+- `id`: String (UUID)
+- `task_id`: Option<String>
+- `title`: String
+- `start_datetime`, `end_datetime`: i64
+- `technician_id`: Option<String>
+- `synced`: bool, `last_synced_at`: Option<i64>
 
 **Storage**:
-- **Table**: `calendar_events`
-- **Indexes**: `idx_calendar_start_time`, `idx_calendar_task_id`
-
-**Domain Rules**:
-- `start_time` must be before `end_time`
-- Calendar conflict detection prevents double-booking technicians
-- Recurring events follow iCalendar RRULE standard
+- Table: `calendar_events`
+- View: `calendar_tasks`
 
 **Code Paths**:
 - Model: `src-tauri/src/models/calendar_event.rs`
@@ -440,81 +370,62 @@ pub enum UserRole {
 
 ---
 
-##  10. Message / Notification
+## 10. SyncOperation
 
-**Purpose**: Internal messaging and notification system for user communication.
+**Purpose**: Tracks pending operations for server synchronization.
 
-**Key Fields** (Message):
-- `id`: TEXT (UUID)
-- `sender_id`: TEXT (foreign key → `users.id`, nullable for system messages)
-- `receiver_id`: TEXT (foreign key → `users.id`)
-- `subject`: TEXT
-- `body`: TEXT
-- `read_at`: INTEGER (nullable, Unix timestamp when read)
-- `archived`: INTEGER (boolean)
-- `created_at`: INTEGER
+**Model**: `src-tauri/src/models/sync.rs`
 
-**Key Fields** (Notification):
-- `id`: TEXT (UUID)
-- `user_id`: TEXT (foreign key → `users.id`)
-- `type`: TEXT (task_assigned | intervention_completed | low_stock | etc.)
-- `title`: TEXT
-- `message`: TEXT
-- `read`: INTEGER (boolean)
-- `action_url`: TEXT (nullable, deep link to relevant screen)
-- `created_at`: INTEGER
+**Key Fields**:
+- `id`: Option<i64>
+- `operation_type`: OperationType (Create, Update, Delete)
+- `entity_type`: EntityType (Task, Client, Intervention, Step, Photo, User)
+- `entity_id`: String
+- `data`: JSON
+- `dependencies`: Vec<String>
+- `status`: SyncStatus (Pending, Processing, Completed, Failed, Abandoned)
+- `retry_count`, `max_retries`: i32
 
 **Storage**:
-- **Tables**: `messages`, `notifications`
-- **Indexes**: `idx_messages_receiver`, `idx_notifications_user_id`
-
-**Domain Rules**:
-- System-generated notifications have `sender_id = NULL`
-- Notifications can be marked as read
-- Messages support archive functionality
+- Table: `sync_queue`
 
 **Code Paths**:
-- Model: `src-tauri/src/models/message.rs`, `notification.rs`
-- Service: `src-tauri/src/services/notification.rs`
-- Repository: `src-tauri/src/repositories/message_repository.rs`, `notification_repository.rs`
-- Commands: `src-tauri/src/commands/message.rs`, `notification.rs`
+- Model: `src-tauri/src/models/sync.rs`
+- Service: `src-tauri/src/sync/queue.rs`, `background.rs`
+- Commands: `src-tauri/src/commands/sync.rs`, `queue.rs`
 
 ---
 
-##  Supporting Tables (not primary entities)
+## Supporting Tables
 
-### `audit_logs`
-Tracks sensitive operations for security and compliance.
-
-**Fields**: `id`, `user_id`, `action`, `entity_type`, `entity_id`, `changes`, `ip_address`, `user_agent`, `created_at`
-
-### `sync_queue`
-Stores pending operations for future server synchronization.
-
-**Fields**: `id`, `operation_type`, `entity_type`, `entity_id`, `payload`, `status`, `created_at`, `synced_at`
-
-### `schema_version`
-Migration tracking table.
-
-**Fields**: `version` (INTEGER, current schema version)
+| Table | Purpose |
+|-------|---------|
+| `audit_logs` | Sensitive operation tracking |
+| `audit_events` | Comprehensive security audit trail |
+| `settings_audit_log` | Settings change audit |
+| `cache_metadata` | Key-value cache with TTL |
+| `task_conflicts` | Scheduling conflict detection |
+| `schema_version` | Migration version tracking |
+| `user_settings` | User preferences |
+| `notification_preferences` | Notification settings |
+| `message_templates` | Reusable message templates |
 
 ---
 
 ## Quick Reference: Table Names
 
-| Entity | Table Name | Primary Key | Main Indexes |
-|--------|-----------|-------------|--------------|
+| Entity | Table | Primary Key | Main Indexes |
+|--------|-------|-------------|--------------|
 | Task | `tasks` | `id` (TEXT) | `task_number`, `status`, `client_id`, `technician_id` |
 | Client | `clients` | `id` (TEXT) | `email`, `phone` |
 | Intervention | `interventions` | `id` (TEXT) | `task_id`, `status` |
-| InterventionStep | `intervention_steps` | `id` (TEXT) | `intervention_id`, `status`, `step_number` |
+| InterventionStep | `intervention_steps` | `id` (TEXT) | `intervention_id`, `status` |
 | Photo | `photos` | `id` (TEXT) | `intervention_id`, `step_id` |
-| Material | `materials` | `id` (TEXT) | `sku`, `category` |
+| Material | `materials` | `id` (TEXT) | `sku`, `material_type` |
 | User | `users` | `id` (TEXT) | `email`, `role` |
-| Session | `user_sessions` | `id` (TEXT) | `session_token`, `user_id` |
-| CalendarEvent | `calendar_events` | `id` (TEXT) | `task_id`, `start_time` |
-| Message | `messages` | `id` (TEXT) | `receiver_id`, `sender_id` |
-| Notification | `notifications` | `id` (TEXT) | `user_id`, `read` |
+| Session | `user_sessions` | `id` (TEXT) | `token`, `user_id` |
+| CalendarEvent | `calendar_events` | `id` (TEXT) | `task_id`, `start_datetime` |
+| SyncOperation | `sync_queue` | `id` (INTEGER) | `entity_type`, `status` |
 
 ---
 

@@ -44,8 +44,8 @@ Repositories (Data Access - Rust)
     ↓
 SQLite Database (WAL mode)
 ```
-
 **Key Principle**: Keep layer responsibilities strictly separated. Each layer should only communicate with adjacent layers.
+
 
 ## 🔑 Critical Consistency Rules
 
@@ -85,8 +85,8 @@ npm run backend:dev            # Backend only (Tauri)
 npm run build                  # Production build
 npm run frontend:build         # Build frontend only
 
-# Quality Checks
-npm run quality:check          # Run all quality gates (RECOMMENDED)
+
+(RECOMMENDED)
 npm run frontend:lint          # ESLint
 npm run frontend:type-check    # TypeScript checking
 npm run backend:check          # Cargo check
@@ -103,12 +103,6 @@ npm run security:audit         # Security vulnerability scan
 node scripts/validate-rbac.js  # RBAC validation
 node scripts/validate-session-security.js  # Session security check
 node scripts/validate-migration-system.js  # Migration validation
-
-# Testing
-npm test                       # Run all tests
-npm run test:frontend          # Frontend tests only
-npm run test:backend           # Backend tests only
-```
 
 ## 🎯 Development Workflow
 
@@ -136,23 +130,33 @@ npm run test:backend           # Backend tests only
    - Follow migration naming: `YYYYMMDDHHMMSS_description.sql`
    - Test both up and down migrations
 
-### After Making Changes
-1. Run type sync: `npm run types:sync`
-2. Run appropriate linters and type checkers
-3. Add/update tests (unit, integration, or e2e as appropriate)
-4. Run `npm run quality:check` before committing
-5. Ensure all tests pass
-6. Update documentation if behavior changed
+## ✅ Tests Gates
 
-## ✅ Quality Gates
+Run these tests before submitting code:
 
-Run these checks before submitting code:
+# All backend tests (Rust)
+cd src-tauri && cargo test --lib
+
+# Database migration tests
+cd src-tauri && cargo test migration
+
+# Performance tests
+cd src-tauri && cargo test performance
+
+# Frontend tests (TypeScript/React)
+cd frontend && npm test
+
+# E2E tests with Playwright
+cd frontend && npm run test:e2e
+
+# Code coverage
+npm run test:coverage
+```
 
 ### Frontend
 ```bash
 npm run frontend:lint          # Must pass
 npm run frontend:type-check    # Must pass
-npm run test:frontend          # Must pass
 ```
 
 ### Backend
@@ -160,7 +164,6 @@ npm run test:frontend          # Must pass
 npm run backend:check          # Must pass
 npm run backend:clippy         # Must pass
 npm run backend:fmt            # Must pass
-npm run test:backend           # Must pass
 ```
 
 ### Types
@@ -177,10 +180,6 @@ node scripts/validate-rbac.js  # Must pass
 node scripts/validate-session-security.js  # Must pass
 ```
 
-### Full Check (Recommended)
-```bash
-npm run quality:check          # Runs all quality gates
-```
 
 ## 🧪 Testing Requirements
 
@@ -207,14 +206,3 @@ npm run quality:check          # Runs all quality gates
   - ✅ Success path
   - ❌ Validation failures
   - 🔒 Permission failures (for protected features)
-
-## 🚫 What NOT to Do
-
-- ❌ **Never** manually edit generated TypeScript types
-- ❌ **Never** commit TODOs, "quick hacks", or commented-out code
-- ❌ **Never** modify database schema without migrations
-- ❌ **Never** leave unhandled errors or panics in production code
-- ❌ **Never** skip RBAC checks for protected operations
-- ❌ **Never** commit secrets, API keys, or sensitive data
-- ❌ **Never** introduce breaking changes without migration path
-- ❌ **Never** bypass quality gates before committing

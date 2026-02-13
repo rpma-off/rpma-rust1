@@ -5,6 +5,7 @@
 
 pub mod alerting;
 pub mod analytics;
+pub mod audit_log_handler;
 pub mod audit_service;
 pub mod auth;
 pub mod cache;

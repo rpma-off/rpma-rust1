@@ -1,0 +1,2 @@
+-- Migration 032: Add FK for interventions.task_id -> tasks(id)
+-- Handled in Rust for idempotency (table rebuild required for FK constraints)

@@ -173,8 +173,8 @@ impl TaskCreationService {
         )?;
         if task_exists > 0 {
             error!("Task number {} already exists", task.task_number);
-            return Err(AppError::Validation(format!(
-                "Task number {} already exists",
+            return Err(AppError::TaskDuplicateNumber(format!(
+                "Task number '{}' already exists",
                 task.task_number
             )));
         }
@@ -271,8 +271,16 @@ impl TaskCreationService {
                 task.last_synced_at,
             ],
         ).map_err(|e| {
-            error!("Failed to insert task: {}", e);
-            AppError::Database(format!("Failed to create task: {}", e))
+            let err_msg = e.to_string();
+            error!("Failed to insert task: {}", err_msg);
+            if err_msg.contains("UNIQUE constraint failed") && err_msg.contains("task_number") {
+                AppError::TaskDuplicateNumber(format!(
+                    "Task number '{}' already exists",
+                    task.task_number
+                ))
+            } else {
+                AppError::Database(format!("Failed to create task: {}", err_msg))
+            }
         })?;
 
         // Add task to sync queue for offline/remote synchronization

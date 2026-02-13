@@ -181,4 +181,5 @@ export const IPC_COMMANDS = {
   DELETE_EVENT: 'delete_event',
   GET_EVENTS_FOR_TECHNICIAN: 'get_events_for_technician',
   GET_EVENTS_FOR_TASK: 'get_events_for_task',
+  CALENDAR_SCHEDULE_TASK: 'calendar_schedule_task',
 } as const;

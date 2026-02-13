@@ -54,13 +54,13 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
     tomorrow.setDate(today.getDate() + 1);
 
     if (date.toDateString() === today.toDateString()) {
-      return 'Today';
+      return "Aujourd'hui";
     }
     if (date.toDateString() === tomorrow.toDateString()) {
-      return 'Tomorrow';
+      return 'Demain';
     }
 
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat('fr-FR', {
       weekday: 'long',
       month: 'long',
       day: 'numeric',
@@ -68,7 +68,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
   };
 
   const formatTime = (startTime?: string | null, endTime?: string | null) => {
-    if (!startTime) return 'Time TBD';
+    if (!startTime) return 'Heure à définir';
     if (!endTime) return startTime;
     return `${startTime} - ${endTime}`;
   };
@@ -81,8 +81,8 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
         </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No tasks scheduled</h3>
-        <p className="text-gray-600">There are no tasks in the selected date range.</p>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune tâche planifiée</h3>
+        <p className="text-gray-600">Aucune tâche dans la période sélectionnée.</p>
       </div>
     );
   }
