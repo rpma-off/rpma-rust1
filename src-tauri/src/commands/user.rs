@@ -9,6 +9,7 @@ use tracing::{debug, error, info, instrument, warn};
 #[derive(Deserialize, Debug)]
 pub struct BootstrapFirstAdminRequest {
     pub user_id: String,
+    pub session_token: String,
 }
 
 // Import authentication macros
@@ -332,16 +333,42 @@ pub async fn user_crud(
 
 /// Bootstrap first admin user - only works if no admin exists
 #[tauri::command]
-#[instrument(skip(state))]
+#[instrument(skip(state, request), fields(user_id = %request.user_id))]
 pub async fn bootstrap_first_admin(
     request: BootstrapFirstAdminRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let user_id = request.user_id;
+    let user_id = request.user_id.trim().to_string();
+    let session_token = request.session_token;
+
+    if user_id.is_empty() {
+        return Err(AppError::Validation(
+            "user_id is required for bootstrap".to_string(),
+        ));
+    }
+
+    if session_token.trim().is_empty() {
+        return Err(AppError::Authentication(
+            "Session token is required".to_string(),
+        ));
+    }
+
     info!("Attempting to bootstrap first admin for user: {}", user_id);
+
+    let current_user = authenticate!(&session_token, &state);
+    if current_user.user_id != user_id {
+        warn!(
+            "Bootstrap attempt blocked: user {} tried to promote {}",
+            current_user.user_id, user_id
+        );
+        return Err(AppError::Authorization(
+            "You can only bootstrap your own account".to_string(),
+        ));
+    }
 
     let user_service = crate::services::UserService::new(state.repositories.user.clone());
     let message = user_service.bootstrap_first_admin(&user_id).await?;
+    info!("Bootstrap completed for user: {}", user_id);
 
     Ok(ApiResponse::success(message))
 }

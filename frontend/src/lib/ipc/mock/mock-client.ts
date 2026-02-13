@@ -271,8 +271,8 @@ export const ipcClient = {
       invoke('user_crud', { request: { action: { Unban: { id: userId } }, session_token: sessionToken } })
   },
   bootstrap: {
-    firstAdmin: (userId: string) =>
-      invoke('bootstrap_first_admin', { request: { user_id: userId } }),
+    firstAdmin: (userId: string, sessionToken: string) =>
+      invoke('bootstrap_first_admin', { request: { user_id: userId, session_token: sessionToken } }),
     hasAdmins: () =>
       invoke('has_admins')
   },

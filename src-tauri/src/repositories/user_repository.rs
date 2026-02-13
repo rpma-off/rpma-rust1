@@ -9,6 +9,7 @@ use crate::repositories::cache::{ttl, Cache, CacheKeyBuilder};
 use async_trait::async_trait;
 use rusqlite::params;
 use std::sync::Arc;
+use tracing::{debug, info, instrument, warn};
 
 /// Query for filtering users
 #[derive(Debug, Clone, Default)]
@@ -220,6 +221,92 @@ impl UserRepository {
         self.invalidate_user_cache(user_id);
 
         Ok(())
+    }
+
+    /// Bootstrap the first admin user in a single transaction
+    #[instrument(skip(self), fields(user_id = %user_id))]
+    pub async fn bootstrap_first_admin(&self, user_id: &str) -> RepoResult<String> {
+        info!("Starting admin bootstrap transaction");
+
+        let mut conn = self.db.get_connection().map_err(|e| {
+            RepoError::Database(format!(
+                "Failed to get connection for bootstrap admin: {}",
+                e
+            ))
+        })?;
+
+        let tx = conn.transaction().map_err(|e| {
+            RepoError::Database(format!(
+                "Failed to start bootstrap admin transaction: {}",
+                e
+            ))
+        })?;
+
+        let admin_count: i64 = tx
+            .query_row(
+                "SELECT COUNT(*) FROM users WHERE role = 'admin' AND deleted_at IS NULL",
+                [],
+                |row| row.get(0),
+            )
+            .map_err(|e| RepoError::Database(format!("Failed to count admins: {}", e)))?;
+
+        if admin_count > 0 {
+            warn!(admin_count, "Admin already exists, bootstrap blocked");
+            return Err(RepoError::Conflict(
+                "An admin user already exists".to_string(),
+            ));
+        }
+
+        let (user_email, is_active): (String, i32) = match tx.query_row(
+            "SELECT email, is_active FROM users WHERE id = ? AND deleted_at IS NULL",
+            params![user_id],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        ) {
+            Ok(result) => result,
+            Err(rusqlite::Error::QueryReturnedNoRows) => {
+                warn!("User not found for bootstrap");
+                return Err(RepoError::NotFound("User not found".to_string()));
+            }
+            Err(e) => {
+                return Err(RepoError::Database(format!(
+                    "Failed to load user for bootstrap: {}",
+                    e
+                )))
+            }
+        };
+
+        if is_active == 0 {
+            warn!("User is inactive, bootstrap blocked");
+            return Err(RepoError::Validation("User is inactive".to_string()));
+        }
+
+        let rows_affected = tx
+            .execute(
+                "UPDATE users SET role = 'admin', updated_at = (unixepoch() * 1000) WHERE id = ? AND deleted_at IS NULL",
+                params![user_id],
+            )
+            .map_err(|e| RepoError::Database(format!("Failed to update user role: {}", e)))?;
+
+        if rows_affected == 0 {
+            warn!("No rows updated during bootstrap");
+            return Err(RepoError::NotFound("User not found".to_string()));
+        }
+
+        tx.execute(
+            "INSERT INTO audit_logs (user_id, user_email, action, entity_type, entity_id, old_values, new_values, timestamp)
+             VALUES (?, ?, 'bootstrap_admin', 'user', ?, 'viewer', 'admin', (unixepoch() * 1000))",
+            params![user_id, user_email, user_id],
+        )
+        .map_err(|e| RepoError::Database(format!("Failed to create audit log: {}", e)))?;
+
+        tx.commit()
+            .map_err(|e| RepoError::Database(format!("Failed to commit bootstrap: {}", e)))?;
+
+        self.invalidate_user_cache(user_id);
+        self.invalidate_all_cache();
+
+        debug!("Admin bootstrap transaction committed");
+        Ok(user_email)
     }
 
     /// Search users
@@ -715,6 +802,126 @@ mod tests {
         let results = repo.search(query).await.unwrap();
         assert!(results.len() >= 3);
     }
+
+    #[tokio::test]
+    async fn test_bootstrap_first_admin_success() {
+        let db = Arc::new(setup_test_db().await);
+        let cache = Arc::new(Cache::new(100));
+        let repo = UserRepository::new(Arc::clone(&db), cache);
+
+        let user = User {
+            id: "bootstrap-user".to_string(),
+            email: "bootstrap@example.com".to_string(),
+            username: "bootstrap".to_string(),
+            password_hash: "hashed".to_string(),
+            full_name: "Bootstrap User".to_string(),
+            role: UserRole::Viewer,
+            phone: None,
+            is_active: true,
+            last_login_at: None,
+            login_count: 0,
+            preferences: None,
+            synced: false,
+            last_synced_at: None,
+            created_at: chrono::Utc::now().timestamp_millis(),
+            updated_at: chrono::Utc::now().timestamp_millis(),
+        };
+
+        repo.save(user.clone()).await.unwrap();
+
+        let email = repo.bootstrap_first_admin(&user.id).await.unwrap();
+        assert_eq!(email, user.email);
+
+        let updated = repo.find_by_id(user.id.clone()).await.unwrap().unwrap();
+        assert_eq!(updated.role, UserRole::Admin);
+
+        let conn = db.get_connection().unwrap();
+        let audit_count: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM audit_logs WHERE action = 'bootstrap_admin'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        assert_eq!(audit_count, 1);
+    }
+
+    #[tokio::test]
+    async fn test_bootstrap_first_admin_conflict() {
+        let db = Arc::new(setup_test_db().await);
+        let cache = Arc::new(Cache::new(100));
+        let repo = UserRepository::new(db, cache);
+
+        let admin = User {
+            id: "existing-admin".to_string(),
+            email: "admin@example.com".to_string(),
+            username: "admin".to_string(),
+            password_hash: "hashed".to_string(),
+            full_name: "Admin User".to_string(),
+            role: UserRole::Admin,
+            phone: None,
+            is_active: true,
+            last_login_at: None,
+            login_count: 0,
+            preferences: None,
+            synced: false,
+            last_synced_at: None,
+            created_at: chrono::Utc::now().timestamp_millis(),
+            updated_at: chrono::Utc::now().timestamp_millis(),
+        };
+        repo.save(admin).await.unwrap();
+
+        let user = User {
+            id: "other-user".to_string(),
+            email: "other@example.com".to_string(),
+            username: "other".to_string(),
+            password_hash: "hashed".to_string(),
+            full_name: "Other User".to_string(),
+            role: UserRole::Viewer,
+            phone: None,
+            is_active: true,
+            last_login_at: None,
+            login_count: 0,
+            preferences: None,
+            synced: false,
+            last_synced_at: None,
+            created_at: chrono::Utc::now().timestamp_millis(),
+            updated_at: chrono::Utc::now().timestamp_millis(),
+        };
+        repo.save(user.clone()).await.unwrap();
+
+        let err = repo.bootstrap_first_admin(&user.id).await.unwrap_err();
+        assert!(matches!(err, RepoError::Conflict(_)));
+    }
+
+    #[tokio::test]
+    async fn test_bootstrap_first_admin_inactive_user() {
+        let db = Arc::new(setup_test_db().await);
+        let cache = Arc::new(Cache::new(100));
+        let repo = UserRepository::new(db, cache);
+
+        let user = User {
+            id: "inactive-user".to_string(),
+            email: "inactive@example.com".to_string(),
+            username: "inactive".to_string(),
+            password_hash: "hashed".to_string(),
+            full_name: "Inactive User".to_string(),
+            role: UserRole::Viewer,
+            phone: None,
+            is_active: false,
+            last_login_at: None,
+            login_count: 0,
+            preferences: None,
+            synced: false,
+            last_synced_at: None,
+            created_at: chrono::Utc::now().timestamp_millis(),
+            updated_at: chrono::Utc::now().timestamp_millis(),
+        };
+        repo.save(user.clone()).await.unwrap();
+
+        let err = repo.bootstrap_first_admin(&user.id).await.unwrap_err();
+        assert!(matches!(err, RepoError::Validation(_)));
+    }
 }
 
 // Additional methods for UserRepository that are not part of Repository trait
@@ -769,7 +976,7 @@ impl UserRepository {
     ) -> RepoResult<()> {
         self.db
             .execute(
-                "INSERT INTO audit_logs (user_id, user_email, action, entity_type, entity_id, old_values, new_values, created_at)
+                "INSERT INTO audit_logs (user_id, user_email, action, entity_type, entity_id, old_values, new_values, timestamp)
                  VALUES (?, ?, 'bootstrap_admin', 'user', ?, 'viewer', 'admin', (unixepoch() * 1000))",
                 params![user_id, user_email, user_id],
             )

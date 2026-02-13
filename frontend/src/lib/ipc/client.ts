@@ -1359,8 +1359,8 @@ export const ipcClient = {
 
   // Bootstrap operations
   bootstrap: {
-    firstAdmin: (userId: string) =>
-      safeInvoke<string>('bootstrap_first_admin', { request: { user_id: userId } }),
+    firstAdmin: (userId: string, sessionToken: string) =>
+      safeInvoke<string>('bootstrap_first_admin', { request: { user_id: userId, session_token: sessionToken } }),
     hasAdmins: () =>
       safeInvoke<boolean>('has_admins'),
   },
