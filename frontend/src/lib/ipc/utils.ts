@@ -188,16 +188,16 @@ export async function safeInvoke<T>(
 
     // Properly serialize error for logging
     let errorMessage: string;
-    let errorDetails: JsonValue = null;
+    let errorDetails: JsonObject = {};
 
     if (error instanceof Error) {
       const enhancedError = error as EnhancedError;
       errorMessage = error.message;
       errorDetails = {
         message: error.message,
-        stack: error.stack,
-        code: enhancedError.code,
-        details: enhancedError.details
+        stack: error.stack ?? null,
+        code: enhancedError.code ?? null,
+        details: enhancedError.details ?? null
       };
     } else if (typeof error === 'object' && error !== null) {
       // Handle backend ApiError format
