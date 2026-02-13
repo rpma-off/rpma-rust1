@@ -1,5 +1,6 @@
 import { safeInvoke } from '../core';
 import { IPC_COMMANDS } from '../commands';
+import type { JsonValue } from '@/types/json';
 
 /**
  * Performance monitoring and cache management operations
@@ -10,8 +11,8 @@ export const performanceOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to performance statistics
    */
-  getStats: (sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.GET_PERFORMANCE_STATS, {
+  getStats: (sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_PERFORMANCE_STATS, {
       session_token: sessionToken
     }),
 
@@ -21,8 +22,8 @@ export const performanceOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to performance metrics
    */
-  getMetrics: (limit: number, sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.GET_PERFORMANCE_METRICS, {
+  getMetrics: (limit: number, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_PERFORMANCE_METRICS, {
       limit,
       session_token: sessionToken
     }),
@@ -32,8 +33,8 @@ export const performanceOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving when cleanup is complete
    */
-  cleanupMetrics: (sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.CLEANUP_PERFORMANCE_METRICS, {
+  cleanupMetrics: (sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.CLEANUP_PERFORMANCE_METRICS, {
       session_token: sessionToken
     }),
 
@@ -43,8 +44,8 @@ export const performanceOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to cache statistics
    */
-  getCacheStatistics: (sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.GET_CACHE_STATISTICS, {
+  getCacheStatistics: (sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_CACHE_STATISTICS, {
       session_token: sessionToken
     }),
 
@@ -57,8 +58,8 @@ export const performanceOperations = {
   clearApplicationCache: (
     request: { cache_types?: string[] },
     sessionToken: string
-  ): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.CLEAR_APPLICATION_CACHE, {
+  ): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.CLEAR_APPLICATION_CACHE, {
       request,
       session_token: sessionToken
     }),
@@ -72,8 +73,8 @@ export const performanceOperations = {
   configureCacheSettings: (
     request: { max_memory_mb?: number; default_ttl_seconds?: number; enable_disk_cache?: boolean },
     sessionToken: string
-  ): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.CONFIGURE_CACHE_SETTINGS, {
+  ): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.CONFIGURE_CACHE_SETTINGS, {
       request,
       session_token: sessionToken
     }),

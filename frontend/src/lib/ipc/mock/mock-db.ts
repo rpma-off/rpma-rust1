@@ -1,5 +1,6 @@
 import type { UserSession, Task, Client, ClientStatistics, TaskStatistics } from '@/lib/backend';
 import type { Material, Supplier, MaterialCategory, InventoryStats, MaterialStats, MaterialConsumption, InterventionMaterialSummary } from '@/lib/inventory';
+import type { JsonObject, JsonValue } from '@/types/json';
 import { defaultFixtures, type MockFixtures, type MockUser } from './fixtures';
 
 type DelayEntry = { ms: number };
@@ -655,7 +656,7 @@ function buildOverviewReport() {
   };
 }
 
-export async function handleInvoke(command: string, args?: Record<string, any>): Promise<any> {
+export async function handleInvoke(command: string, args?: JsonObject): Promise<JsonValue> {
   const delay = consumeDelay(command);
   if (delay) {
     await new Promise(resolve => setTimeout(resolve, delay.ms));

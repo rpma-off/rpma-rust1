@@ -1,6 +1,8 @@
 import { invoke as tauriInvoke } from '@tauri-apps/api/core';
+import type { ApiResponse } from '@/types/api';
+import type { JsonObject, JsonValue } from '@/types/json';
 
-interface CacheEntry<T> {
+interface CacheEntry<T extends JsonValue> {
   data: T;
   timestamp: number;
   ttl: number;
@@ -13,13 +15,7 @@ interface CacheStats {
   invalidations: number;
 }
 
-interface ApiResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
-
-const cache = new Map<string, CacheEntry<unknown>>();
+const cache = new Map<string, CacheEntry<JsonValue>>();
 let stats: CacheStats = {
   hits: 0,
   misses: 0,
@@ -44,14 +40,14 @@ export function resetCacheStats(): void {
 /**
  * Check if cache entry is expired
  */
-function isExpired(entry: CacheEntry<unknown>): boolean {
+function isExpired(entry: CacheEntry<JsonValue>): boolean {
   return Date.now() - entry.timestamp > entry.ttl;
 }
 
 /**
  * Get cached data if valid
  */
-export function getCached<T>(key: string): T | undefined {
+export function getCached<T extends JsonValue>(key: string): T | undefined {
   const entry = cache.get(key) as CacheEntry<T> | undefined;
   if (!entry) {
     stats.misses++;
@@ -69,7 +65,7 @@ export function getCached<T>(key: string): T | undefined {
 /**
  * Set cache entry
  */
-export function setCached<T>(key: string, data: T, ttl: number = 60000): void {
+export function setCached<T extends JsonValue>(key: string, data: T, ttl: number = 60000): void {
   cache.set(key, {
     data,
     timestamp: Date.now(),
@@ -114,11 +110,11 @@ export function invalidatePattern(pattern: string): void {
  * Cached invoke wrapper for read operations
  * Automatically caches results with TTL and handles cache invalidation
  */
-export async function cachedInvoke<T>(
+export async function cachedInvoke<T extends JsonValue>(
   cacheKey: string,
   command: string,
-  args?: Record<string, unknown>,
-  validator?: (data: unknown) => T,
+  args?: JsonObject,
+  validator?: (data: JsonValue) => T,
   ttl: number = 60000
 ): Promise<T> {
   // Check cache first

@@ -2,6 +2,8 @@ import { safeInvoke, extractAndValidate, ResponseHandlers } from '../core';
 import { createCrudOperations } from '../utils/crud-helpers';
 import { IPC_COMMANDS } from '../commands';
 import type { CreateUserRequest, UpdateUserRequest, UserListResponse } from '../types/index';
+import type { UserAccount } from '@/types/auth.types';
+import type { JsonValue } from '@/types/json';
 
 /**
  * User management operations
@@ -9,20 +11,20 @@ import type { CreateUserRequest, UpdateUserRequest, UserListResponse } from '../
 
 // Create the base CRUD operations using the generic helper
 const userCrud = createCrudOperations<
-  unknown, // User type (using unknown since we don't have a specific User type imported)
+  UserAccount,
   CreateUserRequest,
   UpdateUserRequest,
   { limit: number; offset: number }, // List filters
   UserListResponse
 >(
   IPC_COMMANDS.USER_CRUD,
-  (data: unknown) => data, // Identity validator for unknown type
+  (data: JsonValue) => data as UserAccount,
   'user'
 );
 
 // Override the list method to handle the custom response processing
 const customList = (limit: number, offset: number, sessionToken: string): Promise<UserListResponse> =>
-  safeInvoke<unknown>(IPC_COMMANDS.USER_CRUD, {
+  safeInvoke<JsonValue>(IPC_COMMANDS.USER_CRUD, {
     request: {
       action: { action: 'List', limit, offset },
       session_token: sessionToken
@@ -62,8 +64,8 @@ const specializedOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving when email is updated
    */
-  updateEmail: (userId: string, newEmail: string, sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.USER_CRUD, {
+  updateEmail: (userId: string, newEmail: string, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.USER_CRUD, {
       request: {
         action: { action: 'Update', id: userId, data: { email: newEmail } },
         session_token: sessionToken
@@ -91,8 +93,8 @@ const specializedOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving when user is banned
    */
-  banUser: (userId: string, sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.USER_CRUD, {
+  banUser: (userId: string, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.USER_CRUD, {
       request: {
         action: { Ban: { id: userId } },
         session_token: sessionToken
@@ -105,8 +107,8 @@ const specializedOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving when user is unbanned
    */
-  unbanUser: (userId: string, sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.USER_CRUD, {
+  unbanUser: (userId: string, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.USER_CRUD, {
       request: {
         action: { Unban: { id: userId } },
         session_token: sessionToken

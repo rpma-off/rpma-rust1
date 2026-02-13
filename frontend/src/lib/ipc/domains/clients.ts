@@ -2,6 +2,7 @@ import { safeInvoke, extractAndValidate, ResponseHandlers } from '../core';
 import { createCrudOperations } from '../utils/crud-helpers';
 import { IPC_COMMANDS } from '../commands';
 import { parseClientStatistics, validateClient, validateClientWithTasks, validateClientListResponse, validateClientWithTasksList } from '@/lib/validation/backend-type-guards';
+import type { JsonValue } from '@/types/json';
 import type {
   Client,
   CreateClientRequest,
@@ -38,7 +39,7 @@ const specializedOperations = {
    * @returns Promise resolving to the client with tasks or null if not found
    */
   getWithTasks: (id: string, sessionToken: string): Promise<ClientWithTasks | null> =>
-    safeInvoke<unknown>(IPC_COMMANDS.CLIENT_CRUD, {
+    safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
       request: {
         action: { action: 'GetWithTasks', id },
         session_token: sessionToken
@@ -58,7 +59,7 @@ const specializedOperations = {
    * @returns Promise resolving to array of matching clients
    */
   search: (query: string, limit: number, sessionToken: string): Promise<Client[]> =>
-    safeInvoke<unknown>(IPC_COMMANDS.CLIENT_CRUD, {
+    safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
       request: {
         action: { action: 'Search', query, limit },
         session_token: sessionToken
@@ -117,7 +118,7 @@ const specializedOperations = {
    * @returns Promise resolving to client statistics
    */
   stats: (sessionToken: string): Promise<ClientStatistics> =>
-    safeInvoke<unknown>(IPC_COMMANDS.CLIENT_CRUD, {
+    safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
       request: {
         action: { action: 'Stats' },
         session_token: sessionToken

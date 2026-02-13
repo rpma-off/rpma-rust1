@@ -2,6 +2,7 @@ import { safeInvoke, cachedInvoke } from '../core';
 import { IPC_COMMANDS } from '../commands';
 import { validateUserSession } from '@/lib/validation/backend-type-guards';
 import type { UserSession, SignupRequest } from '../types/index';
+import type { JsonValue } from '@/types/json';
 
 /**
  * Authentication operations for user login, session management, and 2FA
@@ -55,8 +56,8 @@ export const authOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to 2FA setup data
    */
-  enable2FA: (sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.ENABLE_2FA, { session_token: sessionToken }),
+  enable2FA: (sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.ENABLE_2FA, { session_token: sessionToken }),
 
   /**
    * Verifies 2FA setup with verification code
@@ -84,8 +85,8 @@ export const authOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to new backup codes
    */
-  regenerateBackupCodes: (sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.REGENERATE_BACKUP_CODES, { session_token: sessionToken }),
+  regenerateBackupCodes: (sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.REGENERATE_BACKUP_CODES, { session_token: sessionToken }),
 
   /**
    * Checks if 2FA is enabled for a user
