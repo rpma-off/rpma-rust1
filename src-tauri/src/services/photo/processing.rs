@@ -439,15 +439,28 @@ impl PhotoProcessingService {
         })?;
 
         let thumbnail = img.thumbnail(THUMBNAIL_MAX_WIDTH, THUMBNAIL_MAX_HEIGHT);
+        let output_format = Self::thumbnail_format_for_path(output_path);
 
         // Atomic write for thumbnail
-        let tmp_path = output_path.with_extension("thumb_tmp");
-        thumbnail.save(&tmp_path).map_err(|e| {
-            crate::services::photo::PhotoError::Processing(format!(
-                "Failed to save thumbnail: {}",
-                e
-            ))
-        })?;
+        let tmp_name = output_path
+            .file_name()
+            .map(|name| format!("{}.tmp", name.to_string_lossy()))
+            .unwrap_or_else(|| "thumbnail.tmp".to_string());
+        let tmp_path = output_path.with_file_name(tmp_name);
+
+        thumbnail
+            .save_with_format(&tmp_path, output_format)
+            .map_err(|e| {
+                crate::services::photo::PhotoError::Processing(format!(
+                    "Failed to save thumbnail: {}",
+                    e
+                ))
+            })?;
+
+        if output_path.exists() {
+            let _ = std::fs::remove_file(output_path);
+        }
+
         std::fs::rename(&tmp_path, output_path).map_err(|e| {
             let _ = std::fs::remove_file(&tmp_path);
             crate::services::photo::PhotoError::Processing(format!(
@@ -461,6 +474,23 @@ impl PhotoProcessingService {
             output_path.display()
         );
         Ok(())
+    }
+
+    fn thumbnail_format_for_path(path: &std::path::Path) -> ImageFormat {
+        match path
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .map(|ext| ext.to_ascii_lowercase())
+            .as_deref()
+        {
+            Some("jpg") | Some("jpeg") => ImageFormat::Jpeg,
+            Some("png") => ImageFormat::Png,
+            Some("webp") => ImageFormat::WebP,
+            Some("bmp") => ImageFormat::Bmp,
+            Some("gif") => ImageFormat::Gif,
+            Some("tif") | Some("tiff") => ImageFormat::Tiff,
+            _ => ImageFormat::Jpeg,
+        }
     }
 }
 
@@ -542,11 +572,15 @@ mod tests {
 
     #[test]
     fn test_thumbnail_path_generation() {
-        let original = std::path::PathBuf::from("/photos/intervention1/photos/image.jpg");
+        let original = std::path::Path::new("photos")
+            .join("intervention1")
+            .join("photos")
+            .join("image.jpg");
         let thumb = PhotoProcessingService::thumbnail_path(&original);
+        assert_eq!(thumb.parent(), original.parent());
         assert_eq!(
-            thumb.to_string_lossy(),
-            "/photos/intervention1/photos/image_thumb.jpg"
+            thumb.file_name().and_then(|name| name.to_str()),
+            Some("image_thumb.jpg")
         );
     }
 }

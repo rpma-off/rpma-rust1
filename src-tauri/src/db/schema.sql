@@ -744,6 +744,36 @@ CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_logs(entity_type, entity_id
 CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp);
 CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_logs(action);
 
+-- Table 8.1: audit_events
+-- Comprehensive security audit trail (kept in sync with migration 025)
+CREATE TABLE IF NOT EXISTS audit_events (
+  id TEXT PRIMARY KEY,
+  event_type TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  action TEXT NOT NULL,
+  resource_id TEXT,
+  resource_type TEXT,
+  description TEXT NOT NULL,
+  ip_address TEXT,
+  user_agent TEXT,
+  result TEXT NOT NULL,
+  previous_state TEXT,
+  new_state TEXT,
+  timestamp INTEGER NOT NULL,
+  metadata TEXT,
+  session_id TEXT,
+  request_id TEXT,
+  created_at INTEGER DEFAULT (unixepoch() * 1000)
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_events_user_id ON audit_events(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_events_timestamp ON audit_events(timestamp);
+CREATE INDEX IF NOT EXISTS idx_audit_events_resource ON audit_events(resource_type, resource_id);
+CREATE INDEX IF NOT EXISTS idx_audit_events_event_type ON audit_events(event_type);
+CREATE INDEX IF NOT EXISTS idx_audit_events_result ON audit_events(result);
+CREATE INDEX IF NOT EXISTS idx_audit_events_user_timestamp ON audit_events(user_id, timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_events_resource_timestamp ON audit_events(resource_type, resource_id, timestamp DESC);
+
 -- Table 9: user_settings
 -- User-specific settings and preferences
 CREATE TABLE IF NOT EXISTS user_settings (
@@ -1260,6 +1290,13 @@ CREATE TABLE IF NOT EXISTS schema_version (
     applied_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
 );
 
--- Initialize schema version to 25 (current version)
--- This ensures new databases don't run unnecessary migrations
-INSERT OR IGNORE INTO schema_version (version) VALUES (25);
+-- Initialize baseline schema versions 1..25 to keep version history contiguous.
+WITH RECURSIVE baseline_versions(version) AS (
+    SELECT 1
+    UNION ALL
+    SELECT version + 1
+    FROM baseline_versions
+    WHERE version < 25
+)
+INSERT OR IGNORE INTO schema_version (version)
+SELECT version FROM baseline_versions;

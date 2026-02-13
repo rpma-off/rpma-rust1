@@ -351,8 +351,23 @@ mod tests {
         end: Option<&str>,
         status: &str,
     ) {
-        let now = chrono::Utc::now().timestamp_millis();
-        let task_number = format!("TASK-{}", &id[..4]);
+        let now = 1_735_689_600_000_i64;
+        db.execute(
+            r#"INSERT OR IGNORE INTO users
+               (id, email, username, password_hash, full_name, role, is_active, created_at, updated_at)
+               VALUES (?1, ?2, ?3, ?4, ?5, 'technician', 1, ?6, ?6)"#,
+            params![
+                tech_id,
+                format!("{}@example.com", tech_id),
+                tech_id,
+                "test_password_hash",
+                format!("Technician {}", tech_id),
+                now
+            ],
+        )
+        .expect("Failed to insert test technician");
+
+        let task_number = format!("TASK-{}", id);
         db.execute(
             r#"INSERT INTO tasks (id, task_number, title, vehicle_plate, vehicle_model,
                 ppf_zones, scheduled_date, start_time, end_time, technician_id, status,

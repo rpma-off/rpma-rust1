@@ -24,7 +24,7 @@ use tempfile::TempDir;
 
 // Set JWT_SECRET for tests
 fn setup_test_env() {
-    std::env::set_var("JWT_SECRET", "test_jwt_secret_32_bytes_long!");
+    std::env::set_var("JWT_SECRET", "test_jwt_secret_32_bytes_long__ok");
 }
 
 #[cfg(test)]

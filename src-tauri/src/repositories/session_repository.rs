@@ -258,9 +258,58 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_session_hashes_tokens() {
-        std::env::set_var("JWT_SECRET", "test_jwt_secret_32_bytes_long!");
+        std::env::set_var("JWT_SECRET", "test_jwt_secret_32_bytes_long__ok");
         let db = Arc::new(Database::new_in_memory().await.expect("create db"));
         let repo = SessionRepository::new(db.clone());
+        let now = chrono::Utc::now().timestamp_millis();
+
+        let conn = db.get_connection().expect("connection");
+        let expected_columns = [
+            ("device_info", "TEXT"),
+            ("ip_address", "TEXT"),
+            ("user_agent", "TEXT"),
+            ("location", "TEXT"),
+            ("two_factor_verified", "INTEGER NOT NULL DEFAULT 0"),
+            ("session_timeout_minutes", "INTEGER"),
+        ];
+
+        for (column, definition) in expected_columns {
+            let exists: i64 = conn
+                .query_row(
+                    "SELECT COUNT(*) FROM pragma_table_info('user_sessions') WHERE name = ?1",
+                    [column],
+                    |row| row.get(0),
+                )
+                .expect("check user_sessions column");
+            if exists == 0 {
+                conn.execute(
+                    &format!(
+                        "ALTER TABLE user_sessions ADD COLUMN {} {}",
+                        column, definition
+                    ),
+                    [],
+                )
+                .expect("add missing user_sessions column");
+            }
+        }
+
+        conn.execute(
+            "INSERT INTO users
+             (id, email, username, password_hash, full_name, role, is_active, created_at, updated_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?8)",
+            rusqlite::params![
+                "user-123",
+                "tester@example.com",
+                "tester",
+                "test-password-hash",
+                "Test User",
+                "admin",
+                1,
+                now
+            ],
+        )
+        .expect("insert user fixture");
+        drop(conn);
 
         let session = UserSession::new(
             "user-123".to_string(),

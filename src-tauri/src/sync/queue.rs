@@ -35,27 +35,62 @@ impl From<rusqlite::Error> for SyncQueueError {
     }
 }
 
-fn parse_status(status: &str) -> Result<SyncStatus, rusqlite::Error> {
-    let trimmed = status.trim();
-    let normalized = if trimmed.starts_with('"') && trimmed.ends_with('"') {
-        trimmed.trim_matches('"')
+fn normalize_legacy_enum_value(value: &str) -> String {
+    let trimmed = value.trim();
+    if let Ok(decoded) = serde_json::from_str::<String>(trimmed) {
+        return decoded;
+    }
+
+    if trimmed.starts_with('"') && trimmed.ends_with('"') {
+        trimmed.trim_matches('"').to_string()
     } else {
-        trimmed
-    };
-    match normalized {
+        trimmed.to_string()
+    }
+}
+
+fn enum_conversion_error(field: &str, value: &str) -> rusqlite::Error {
+    rusqlite::Error::FromSqlConversionFailure(
+        0,
+        rusqlite::types::Type::Text,
+        Box::new(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!("Unknown {}: {}", field, value),
+        )),
+    )
+}
+
+fn parse_operation_type(operation_type: &str) -> Result<OperationType, rusqlite::Error> {
+    let normalized = normalize_legacy_enum_value(operation_type);
+    match normalized.as_str() {
+        "create" => Ok(OperationType::Create),
+        "update" => Ok(OperationType::Update),
+        "delete" => Ok(OperationType::Delete),
+        _ => Err(enum_conversion_error("operation type", operation_type)),
+    }
+}
+
+fn parse_entity_type(entity_type: &str) -> Result<EntityType, rusqlite::Error> {
+    let normalized = normalize_legacy_enum_value(entity_type);
+    match normalized.as_str() {
+        "task" => Ok(EntityType::Task),
+        "client" => Ok(EntityType::Client),
+        "intervention" => Ok(EntityType::Intervention),
+        "step" => Ok(EntityType::Step),
+        "photo" => Ok(EntityType::Photo),
+        "user" => Ok(EntityType::User),
+        _ => Err(enum_conversion_error("entity type", entity_type)),
+    }
+}
+
+fn parse_status(status: &str) -> Result<SyncStatus, rusqlite::Error> {
+    let normalized = normalize_legacy_enum_value(status);
+    match normalized.as_str() {
         "pending" => Ok(SyncStatus::Pending),
         "processing" => Ok(SyncStatus::Processing),
         "completed" => Ok(SyncStatus::Completed),
         "failed" => Ok(SyncStatus::Failed),
         "abandoned" => Ok(SyncStatus::Abandoned),
-        _ => Err(rusqlite::Error::FromSqlConversionFailure(
-            0,
-            rusqlite::types::Type::Text,
-            Box::new(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                format!("Unknown sync status: {}", status),
-            )),
-        )),
+        _ => Err(enum_conversion_error("sync status", status)),
     }
 }
 
@@ -84,8 +119,8 @@ impl SyncQueue {
               timestamp_utc, retry_count, max_retries, status, created_at, updated_at)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
             params![
-                serde_json::to_string(&operation.operation_type)?,
-                serde_json::to_string(&operation.entity_type)?,
+                operation.operation_type.to_string(),
+                operation.entity_type.to_string(),
                 operation.entity_id,
                 data_json,
                 dependencies_json,
@@ -110,11 +145,11 @@ impl SyncQueue {
             "SELECT id, operation_type, entity_type, entity_id, data, dependencies,
                     timestamp_utc, retry_count, max_retries, last_error, status,
                     created_at, updated_at
-             FROM sync_queue
-             WHERE status IN ('pending', '\"pending\"')
+             FROM sync_queue sq
+             WHERE sq.status IN ('pending', '\"pending\"')
                AND NOT EXISTS (
                  SELECT 1
-                 FROM json_each(dependencies) dep
+                 FROM json_each(sq.dependencies) dep
                  JOIN sync_queue q ON q.entity_id = dep.value
                  WHERE q.status NOT IN ('completed', '\"completed\"')
                )
@@ -135,20 +170,8 @@ impl SyncQueue {
 
                 Ok(SyncOperation {
                     id: Some(row.get(0)?),
-                    operation_type: serde_json::from_str(&operation_type_str).map_err(|e| {
-                        rusqlite::Error::FromSqlConversionFailure(
-                            0,
-                            rusqlite::types::Type::Text,
-                            Box::new(e),
-                        )
-                    })?,
-                    entity_type: serde_json::from_str(&entity_type_str).map_err(|e| {
-                        rusqlite::Error::FromSqlConversionFailure(
-                            0,
-                            rusqlite::types::Type::Text,
-                            Box::new(e),
-                        )
-                    })?,
+                    operation_type: parse_operation_type(&operation_type_str)?,
+                    entity_type: parse_entity_type(&entity_type_str)?,
                     entity_id: row.get(3)?,
                     data: serde_json::from_str(&data_str).map_err(|e| {
                         rusqlite::Error::FromSqlConversionFailure(
@@ -342,20 +365,8 @@ impl SyncQueue {
 
                 Ok(SyncOperation {
                     id: Some(row.get(0)?),
-                    operation_type: serde_json::from_str(&operation_type_str).map_err(|e| {
-                        rusqlite::Error::FromSqlConversionFailure(
-                            0,
-                            rusqlite::types::Type::Text,
-                            Box::new(e),
-                        )
-                    })?,
-                    entity_type: serde_json::from_str(&entity_type_str).map_err(|e| {
-                        rusqlite::Error::FromSqlConversionFailure(
-                            0,
-                            rusqlite::types::Type::Text,
-                            Box::new(e),
-                        )
-                    })?,
+                    operation_type: parse_operation_type(&operation_type_str)?,
+                    entity_type: parse_entity_type(&entity_type_str)?,
                     entity_id: row.get(3)?,
                     data: serde_json::from_str(&data_str).map_err(|e| {
                         rusqlite::Error::FromSqlConversionFailure(
@@ -422,18 +433,19 @@ impl SyncQueue {
         entity_type: &str,
     ) -> Result<Vec<SyncOperation>, SyncQueueError> {
         let conn = self.db.get_connection().map_err(SyncQueueError::Database)?;
+        let legacy_entity_type = serde_json::to_string(entity_type)?;
 
         let mut stmt = conn.prepare(
             "SELECT id, operation_type, entity_type, entity_id, data, dependencies,
                     timestamp_utc, retry_count, max_retries, last_error, status,
                     created_at, updated_at
              FROM sync_queue
-             WHERE entity_id = ? AND entity_type = ?
+             WHERE entity_id = ?1 AND entity_type IN (?2, ?3)
              ORDER BY timestamp_utc DESC",
         )?;
 
         let operations: Vec<SyncOperation> = stmt
-            .query_map([entity_id, entity_type], |row| {
+            .query_map(params![entity_id, entity_type, legacy_entity_type], |row| {
                 let operation_type_str: String = row.get(1)?;
                 let entity_type_str: String = row.get(2)?;
                 let data_str: String = row.get(4)?;
@@ -445,20 +457,8 @@ impl SyncQueue {
 
                 Ok(SyncOperation {
                     id: Some(row.get(0)?),
-                    operation_type: serde_json::from_str(&operation_type_str).map_err(|e| {
-                        rusqlite::Error::FromSqlConversionFailure(
-                            0,
-                            rusqlite::types::Type::Text,
-                            Box::new(e),
-                        )
-                    })?,
-                    entity_type: serde_json::from_str(&entity_type_str).map_err(|e| {
-                        rusqlite::Error::FromSqlConversionFailure(
-                            0,
-                            rusqlite::types::Type::Text,
-                            Box::new(e),
-                        )
-                    })?,
+                    operation_type: parse_operation_type(&operation_type_str)?,
+                    entity_type: parse_entity_type(&entity_type_str)?,
                     entity_id: row.get(3)?,
                     data: serde_json::from_str(&data_str).map_err(|e| {
                         rusqlite::Error::FromSqlConversionFailure(
