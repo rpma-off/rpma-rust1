@@ -100,7 +100,7 @@ impl AuthMiddleware {
     ///
     /// # Arguments
     /// * `user_role` - The user's role
-    /// * `operation` - The type of operation ('create', 'read', 'update', 'delete')
+    /// * `operation` - The type of operation ('create', 'read', 'update', 'delete', 'assign')
     ///
     /// # Returns
     /// * `bool` - True if user can perform the operation
@@ -111,11 +111,11 @@ impl AuthMiddleware {
             // Admin can do everything
             (Admin, _) => true,
 
-            // Supervisor can create, read, update but not delete
-            (Supervisor, op) if ["create", "read", "update"].contains(&op) => true,
+            // Supervisor can create, read, update, assign but not delete
+            (Supervisor, op) if ["create", "read", "update", "assign"].contains(&op) => true,
             (Supervisor, _) => false,
 
-            // Technician can create, read, update but not delete
+            // Technician can create, read, update but not delete or assign
             (Technician, op) if ["create", "read", "update"].contains(&op) => true,
             (Technician, _) => false,
 
@@ -415,6 +415,26 @@ mod tests {
             "update",
             Some(other_user_id),
             current_user_id
+        ));
+    }
+
+    #[test]
+    fn test_assign_operation_rbac() {
+        // Admin can assign
+        assert!(AuthMiddleware::can_perform_task_operation(&Admin, "assign"));
+        // Supervisor can assign
+        assert!(AuthMiddleware::can_perform_task_operation(
+            &Supervisor,
+            "assign"
+        ));
+        // Technician cannot assign
+        assert!(!AuthMiddleware::can_perform_task_operation(
+            &Technician,
+            "assign"
+        ));
+        // Viewer cannot assign
+        assert!(!AuthMiddleware::can_perform_task_operation(
+            &Viewer, "assign"
         ));
     }
 }

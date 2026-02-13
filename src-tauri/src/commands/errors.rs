@@ -51,6 +51,11 @@ pub enum AppError {
     InterventionTimeout(String),
     InterventionStepOutOfOrder(String),
 
+    /// Task-specific errors
+    TaskInvalidTransition(String),
+    TaskDuplicateNumber(String),
+    TaskAssignmentConflict(String),
+
     /// Feature not yet implemented
     NotImplemented(String),
 }
@@ -88,6 +93,15 @@ impl fmt::Display for AppError {
             AppError::InterventionStepOutOfOrder(msg) => {
                 write!(f, "Intervention step out of order: {}", msg)
             }
+            AppError::TaskInvalidTransition(msg) => {
+                write!(f, "Invalid task status transition: {}", msg)
+            }
+            AppError::TaskDuplicateNumber(msg) => {
+                write!(f, "Duplicate task number: {}", msg)
+            }
+            AppError::TaskAssignmentConflict(msg) => {
+                write!(f, "Task assignment conflict: {}", msg)
+            }
             AppError::NotImplemented(msg) => write!(f, "Not implemented: {}", msg),
         }
     }
@@ -119,6 +133,9 @@ impl AppError {
             }
             AppError::InterventionTimeout(_) => "INTERVENTION_TIMEOUT",
             AppError::InterventionStepOutOfOrder(_) => "INTERVENTION_STEP_OUT_OF_ORDER",
+            AppError::TaskInvalidTransition(_) => "TASK_INVALID_TRANSITION",
+            AppError::TaskDuplicateNumber(_) => "TASK_DUPLICATE_NUMBER",
+            AppError::TaskAssignmentConflict(_) => "TASK_ASSIGNMENT_CONFLICT",
             AppError::NotImplemented(_) => "NOT_IMPLEMENTED",
         }
     }
@@ -138,6 +155,9 @@ impl AppError {
             | AppError::InterventionConcurrentModification(_)
             | AppError::InterventionStepOutOfOrder(_) => 400,
             AppError::InterventionTimeout(_) => 408,
+            AppError::TaskInvalidTransition(_)
+            | AppError::TaskDuplicateNumber(_)
+            | AppError::TaskAssignmentConflict(_) => 409,
             AppError::NotImplemented(_) => 501,
             AppError::Database(_)
             | AppError::Internal(_)
@@ -164,6 +184,9 @@ impl AppError {
                 | AppError::InterventionConcurrentModification(_)
                 | AppError::InterventionStepOutOfOrder(_)
                 | AppError::InterventionTimeout(_)
+                | AppError::TaskInvalidTransition(_)
+                | AppError::TaskDuplicateNumber(_)
+                | AppError::TaskAssignmentConflict(_)
         )
     }
 
@@ -494,5 +517,44 @@ mod tests {
             }
             _ => panic!("Expected Internal variant"),
         }
+    }
+
+    #[test]
+    fn test_task_error_codes() {
+        assert_eq!(
+            AppError::TaskInvalidTransition("test".to_string()).code(),
+            "TASK_INVALID_TRANSITION"
+        );
+        assert_eq!(
+            AppError::TaskDuplicateNumber("test".to_string()).code(),
+            "TASK_DUPLICATE_NUMBER"
+        );
+        assert_eq!(
+            AppError::TaskAssignmentConflict("test".to_string()).code(),
+            "TASK_ASSIGNMENT_CONFLICT"
+        );
+    }
+
+    #[test]
+    fn test_task_error_http_status() {
+        assert_eq!(
+            AppError::TaskInvalidTransition("test".to_string()).http_status(),
+            409
+        );
+        assert_eq!(
+            AppError::TaskDuplicateNumber("test".to_string()).http_status(),
+            409
+        );
+        assert_eq!(
+            AppError::TaskAssignmentConflict("test".to_string()).http_status(),
+            409
+        );
+    }
+
+    #[test]
+    fn test_task_errors_are_client_errors() {
+        assert!(AppError::TaskInvalidTransition("test".to_string()).is_client_error());
+        assert!(AppError::TaskDuplicateNumber("test".to_string()).is_client_error());
+        assert!(AppError::TaskAssignmentConflict("test".to_string()).is_client_error());
     }
 }

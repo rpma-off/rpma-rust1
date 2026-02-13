@@ -130,7 +130,7 @@ impl TaskUpdateService {
 
             if let Err(e) = validate_status_transition(&old_status, new_status) {
                 return Err(AppError::Validation(format!(
-                    "Invalid status transition from {:?} to {:?}: {}",
+                    "Invalid status transition from '{}' to '{}': {}",
                     old_status, new_status, e
                 )));
             }
@@ -241,8 +241,19 @@ impl TaskUpdateService {
         service: &TaskUpdateService,
         task: &mut Task,
         req: &UpdateTaskRequest,
+        user_id: &str,
     ) -> Result<(), AppError> {
         if let Some(technician_id) = &req.technician_id {
+            // Check for assignment conflict: task already assigned to a different technician
+            if let Some(existing_tech) = &task.technician_id {
+                if existing_tech != technician_id && !existing_tech.is_empty() {
+                    return Err(AppError::TaskAssignmentConflict(format!(
+                        "Task is already assigned to technician '{}'. Unassign first or use reassignment.",
+                        existing_tech
+                    )));
+                }
+            }
+
             let validation_service = TaskValidationService::new(service.db.clone());
             validation_service
                 .validate_technician_assignment(technician_id, &task.ppf_zones)
@@ -251,6 +262,8 @@ impl TaskUpdateService {
                 })?;
 
             task.technician_id = Some(technician_id.clone());
+            task.assigned_at = Some(Utc::now().timestamp_millis());
+            task.assigned_by = Some(user_id.to_string());
         }
         Ok(())
     }
@@ -438,7 +451,7 @@ impl TaskUpdateService {
         Self::apply_status_updates(self, &mut task, &req)?;
         Self::apply_vehicle_updates(&mut task, &req)?;
         Self::apply_client_updates(self, &mut task, &req)?;
-        Self::apply_technician_updates(self, &mut task, &req)?;
+        Self::apply_technician_updates(self, &mut task, &req, user_id)?;
         Self::apply_simple_updates(&mut task, &req);
 
         task.updated_at = Utc::now().timestamp_millis();
