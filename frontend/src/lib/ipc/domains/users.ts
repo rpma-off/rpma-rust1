@@ -18,7 +18,7 @@ const userCrud = createCrudOperations<
   UserListResponse
 >(
   IPC_COMMANDS.USER_CRUD,
-  (data: JsonValue) => data as UserAccount,
+  (data: JsonValue) => data as unknown as UserAccount,
   'user'
 );
 

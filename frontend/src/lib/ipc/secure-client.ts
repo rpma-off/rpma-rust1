@@ -86,7 +86,7 @@ function extractAndValidate<T>(
 ): T | null {
   // Handle NotFound case
   if (handleNotFound && result && typeof result === 'object' && 'type' in result) {
-    const response = result as BackendResponse;
+    const response = result as unknown as BackendResponse;
     if (response.type === 'NotFound') {
       return null;
     }
@@ -94,8 +94,8 @@ function extractAndValidate<T>(
 
   // Extract data from response wrapper
   if (result && typeof result === 'object' && 'data' in result) {
-    const response = result as BackendResponse;
-    const data = response.data;
+    const response = result as unknown as BackendResponse;
+    const data = response.data as JsonValue;
     return validator ? validator(data) : data as T;
   }
 

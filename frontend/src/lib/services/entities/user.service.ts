@@ -66,7 +66,7 @@ export class UserService {
 
       return {
         success: true,
-        data: result as User,
+        data: result as unknown as User,
         status: 201
       };
     } catch (error) {
@@ -82,7 +82,7 @@ export class UserService {
   static async updateUser(id: string, updates: Partial<User>): Promise<User> {
     try {
       const result = await ipcClient.users.update(id, updates as any, 'mock-token');
-      return result as User;
+      return result as unknown as User;
     } catch (error) {
       throw new Error(error instanceof Error ? error.message : 'Failed to update user');
     }

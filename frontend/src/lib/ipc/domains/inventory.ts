@@ -172,7 +172,7 @@ export const materialOperations = {
       }
     }).then(result => {
       if (result && typeof result === 'object' && 'data' in result) {
-        return (result as { data: Material }).data;
+        return (result as unknown as { data: Material }).data;
       }
       throw new Error('Invalid response format for material create');
     }),
@@ -193,7 +193,7 @@ export const materialOperations = {
       }
     }).then(result => {
       if (result && typeof result === 'object' && 'data' in result) {
-        return (result as { data: Material }).data;
+        return (result as unknown as { data: Material }).data;
       }
       throw new Error('Invalid response format for material update');
     }),
@@ -210,7 +210,7 @@ export const materialOperations = {
       id
     }).then(result => {
       if (result && typeof result === 'object' && 'data' in result) {
-        return (result as { data: Material }).data;
+        return (result as unknown as { data: Material }).data;
       }
       throw new Error('Invalid response format for material get');
     }),
@@ -244,7 +244,7 @@ export const stockOperations = {
       }
     }).then(result => {
       if (result && typeof result === 'object' && 'data' in result) {
-        return (result as { data: Material }).data;
+        return (result as unknown as { data: Material }).data;
       }
       throw new Error('Invalid response format for update stock');
     }),
@@ -263,7 +263,7 @@ export const stockOperations = {
       }
     }).then(result => {
       if (result && typeof result === 'object' && 'data' in result) {
-        return (result as { data: Material }).data;
+        return (result as unknown as { data: Material }).data;
       }
       throw new Error('Invalid response format for adjust stock');
     }),
@@ -322,7 +322,7 @@ export const transactionOperations = {
     }).then(result => {
       // Validate the response
       if (result && typeof result === 'object' && 'data' in result) {
-        return result.data as InventoryTransaction;
+        return result.data as unknown as InventoryTransaction;
       }
       throw new Error('Invalid response format for create inventory transaction');
     }),
@@ -366,7 +366,7 @@ export const categoryOperations = {
       }
     }).then(result => {
       if (result && typeof result === 'object' && 'data' in result) {
-        return (result as { data: MaterialCategory }).data;
+        return (result as unknown as { data: MaterialCategory }).data;
       }
       throw new Error('Invalid response format for create category');
     }),
@@ -380,8 +380,8 @@ export const categoryOperations = {
     safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_LIST_CATEGORIES, {
       sessionToken
     }).then(result => {
-      if (result && typeof result === 'object' && 'data' in result && Array.isArray((result as { data: MaterialCategory[] }).data)) {
-        return (result as { data: MaterialCategory[] }).data;
+      if (result && typeof result === 'object' && 'data' in result && Array.isArray((result as unknown as { data: MaterialCategory[] }).data)) {
+        return (result as unknown as { data: MaterialCategory[] }).data;
       }
       throw new Error('Invalid response format for list categories');
     }),
@@ -403,7 +403,7 @@ export const supplierOperations = {
       }
     }).then(result => {
       if (result && typeof result === 'object' && 'data' in result) {
-        return (result as { data: Supplier }).data;
+        return (result as unknown as { data: Supplier }).data;
       }
       throw new Error('Invalid response format for create supplier');
     }),
@@ -417,8 +417,8 @@ export const supplierOperations = {
     safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_LIST_SUPPLIERS, {
       sessionToken
     }).then(result => {
-      if (result && typeof result === 'object' && 'data' in result && Array.isArray((result as { data: Supplier[] }).data)) {
-        return (result as { data: Supplier[] }).data;
+      if (result && typeof result === 'object' && 'data' in result && Array.isArray((result as unknown as { data: Supplier[] }).data)) {
+        return (result as unknown as { data: Supplier[] }).data;
       }
       throw new Error('Invalid response format for list suppliers');
     }),
@@ -436,7 +436,7 @@ export const reportingOperations = {
       sessionToken
     }).then(result => {
       if (result && typeof result === 'object' && 'data' in result) {
-        return result.data as MaterialStats;
+        return result.data as unknown as MaterialStats;
       }
       throw new Error('Invalid response format for get stats');
     }),
@@ -450,8 +450,8 @@ export const reportingOperations = {
     safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_GET_LOW_STOCK_MATERIALS, {
       sessionToken
     }).then(result => {
-      if (result && typeof result === 'object' && 'data' in result && Array.isArray((result as { data: Material[] }).data)) {
-        return (result as { data: Material[] }).data;
+      if (result && typeof result === 'object' && 'data' in result && Array.isArray((result as unknown as { data: Material[] }).data)) {
+        return (result as unknown as { data: Material[] }).data;
       }
       throw new Error('Invalid response format for get low stock materials');
     }),
@@ -465,8 +465,8 @@ export const reportingOperations = {
     safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_GET_EXPIRED_MATERIALS, {
       sessionToken
     }).then(result => {
-      if (result && typeof result === 'object' && 'data' in result && Array.isArray((result as { data: Material[] }).data)) {
-        return (result as { data: Material[] }).data;
+      if (result && typeof result === 'object' && 'data' in result && Array.isArray((result as unknown as { data: Material[] }).data)) {
+        return (result as unknown as { data: Material[] }).data;
       }
       throw new Error('Invalid response format for get expired materials');
     }),
@@ -484,7 +484,7 @@ export const reportingOperations = {
     }).then(result => {
       // Validate the response
       if (result && typeof result === 'object' && 'data' in result) {
-        return result.data as InventoryMovementSummary;
+        return result.data as unknown as InventoryMovementSummary;
       }
       throw new Error('Invalid response format for get inventory movement summary');
     }),

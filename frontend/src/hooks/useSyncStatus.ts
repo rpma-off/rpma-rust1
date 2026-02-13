@@ -44,7 +44,7 @@ export function useSyncStatus(pollInterval = 5000) {
     queryKey: ['sync-status', lastUpdate],
     queryFn: async (): Promise<ExtendedSyncStatus> => {
       try {
-        const result = await ipcClient.sync.getStatus() as BackendSyncStatus;
+        const result = await ipcClient.sync.getStatus() as unknown as BackendSyncStatus;
         return {
           is_online: result.network_available ?? false,
           isOnline: result.network_available ?? false,

@@ -35,7 +35,7 @@ export const interventionOperations = {
 
     // Extract Started response from InterventionWorkflowResponse
     if (result && typeof result === 'object' && 'type' in result) {
-      const workflowResponse = result as { type: string; intervention: Intervention; steps: InterventionStep[] };
+      const workflowResponse = result as unknown as { type: string; intervention: Intervention; steps: InterventionStep[] };
       if (workflowResponse.type === 'Started') {
         return validateStartInterventionResponse(workflowResponse);
       }
@@ -57,7 +57,7 @@ export const interventionOperations = {
 
     // Extract intervention from Retrieved response
     if (result && typeof result === 'object' && 'type' in result) {
-      const workflowResponse = result as { type: string; intervention: Intervention };
+      const workflowResponse = result as unknown as { type: string; intervention: Intervention };
       if (workflowResponse.type === 'Retrieved') {
         return validateIntervention(workflowResponse.intervention);
       }
@@ -80,7 +80,7 @@ export const interventionOperations = {
     // Handle InterventionWorkflowResponse directly
     // Expected: { type: "ActiveByTask", interventions: Intervention[] }
     if (result && typeof result === 'object' && 'type' in result) {
-      const workflowResponse = result as { type: string; interventions: Intervention[] };
+      const workflowResponse = result as unknown as { type: string; interventions: Intervention[] };
       if (workflowResponse.type === 'ActiveByTask') {
         return {
           intervention: workflowResponse.interventions?.[0] || null
@@ -107,7 +107,7 @@ export const interventionOperations = {
 
     // Handle the response - backend returns ApiResponse<Option<Intervention>>
     if (result && typeof result === 'object' && 'data' in result) {
-      const apiResponse = result as { data: Intervention | null };
+      const apiResponse = result as unknown as { data: Intervention | null };
       return {
         intervention: apiResponse.data || null
       };
@@ -141,7 +141,7 @@ export const interventionOperations = {
 
     // Return the full StepAdvanced response
     if (result && typeof result === 'object' && 'type' in result) {
-      const progressResponse = result as {
+      const progressResponse = result as unknown as {
         type: string;
         step: InterventionStep;
         next_step: InterventionStep | null;
@@ -168,7 +168,7 @@ export const interventionOperations = {
 
     // Extract step from StepRetrieved response
     if (result && typeof result === 'object' && 'type' in result) {
-      const progressResponse = result as { type: string; step: InterventionStep };
+      const progressResponse = result as unknown as { type: string; step: InterventionStep };
       if (progressResponse.type === 'StepRetrieved') {
         return validateInterventionStep(progressResponse.step);
       }
@@ -190,7 +190,7 @@ export const interventionOperations = {
 
     // Extract progress data from Retrieved response
     if (result && typeof result === 'object' && 'type' in result) {
-      const progressResponse = result as {
+      const progressResponse = result as unknown as {
         type: string;
         progress: InterventionProgress;
         steps: InterventionStep[]
@@ -220,7 +220,7 @@ export const interventionOperations = {
 
     // Extract step from StepProgressSaved response
     if (result && typeof result === 'object' && 'type' in result) {
-      const progressResponse = result as { type: string; step: InterventionStep };
+      const progressResponse = result as unknown as { type: string; step: InterventionStep };
       if (progressResponse.type === 'StepProgressSaved') {
         return validateInterventionStep(progressResponse.step);
       }
@@ -243,7 +243,7 @@ export const interventionOperations = {
 
     // Extract intervention from Updated response
     if (result && typeof result === 'object' && 'type' in result) {
-      const workflowResponse = result as { type: string; intervention: Intervention };
+      const workflowResponse = result as unknown as { type: string; intervention: Intervention };
       if (workflowResponse.type === 'Updated') {
         return validateIntervention(workflowResponse.intervention);
       }
@@ -265,7 +265,7 @@ export const interventionOperations = {
 
     // Return the full Finalized response
     if (result && typeof result === 'object' && 'type' in result) {
-      const workflowResponse = result as {
+      const workflowResponse = result as unknown as {
         type: string;
         intervention: Intervention;
         metrics: InterventionMetrics
@@ -304,7 +304,7 @@ export const interventionOperations = {
 
     // Extract interventions from List response
     if (result && typeof result === 'object' && 'type' in result) {
-      const managementResponse = result as { type: string; interventions: Intervention[]; total: number; page: number; limit: number };
+      const managementResponse = result as unknown as { type: string; interventions: Intervention[]; total: number; page: number; limit: number };
       if (managementResponse.type === 'List') {
         return {
           interventions: managementResponse.interventions,

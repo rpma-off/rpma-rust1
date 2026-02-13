@@ -71,7 +71,7 @@ const Button = React.forwardRef<
           buttonVariants({ variant, size, className }),
           fullWidth && "w-full"
         )}
-        disabled={disabled || loading}
+        data-disabled={disabled || loading ? true : undefined}
         {...props}
       >
         {children}
