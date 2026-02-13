@@ -1,6 +1,7 @@
 import { safeInvoke } from '../core';
 import { IPC_COMMANDS } from '../commands';
 import type { SendNotificationRequest, NotificationConfig } from '../types/index';
+import type { JsonValue } from '@/types/json';
 
 /**
  * Notification service operations
@@ -53,8 +54,8 @@ export const notificationOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to service status
    */
-  getStatus: (sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.GET_NOTIFICATION_STATUS, {
+  getStatus: (sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_NOTIFICATION_STATUS, {
       session_token: sessionToken
     }),
 
@@ -63,8 +64,8 @@ export const notificationOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to recent activities
    */
-  getRecentActivities: (sessionToken: string): Promise<unknown[]> =>
-    safeInvoke<unknown[]>(IPC_COMMANDS.GET_RECENT_ACTIVITIES, {
+  getRecentActivities: (sessionToken: string): Promise<JsonValue[]> =>
+    safeInvoke<JsonValue[]>(IPC_COMMANDS.GET_RECENT_ACTIVITIES, {
       session_token: sessionToken
     }),
 };

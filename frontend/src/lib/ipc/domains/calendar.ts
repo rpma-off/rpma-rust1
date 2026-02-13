@@ -1,6 +1,7 @@
 import { safeInvoke } from '../core';
 import { IPC_COMMANDS } from '../commands';
 import type { CreateEventInput, UpdateEventInput } from '../types/index';
+import type { JsonValue } from '@/types/json';
 
 /**
  * Calendar and event management operations
@@ -19,8 +20,8 @@ export const calendarOperations = {
     endDate: string,
     technicianId: string | undefined,
     sessionToken: string
-  ): Promise<unknown> =>
-    safeInvoke(IPC_COMMANDS.GET_EVENTS, {
+  ): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_EVENTS, {
       start_date: startDate,
       end_date: endDate,
       technician_id: technicianId,
@@ -33,8 +34,8 @@ export const calendarOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to event data
    */
-  getEventById: (id: string, sessionToken: string): Promise<unknown> =>
-    safeInvoke(IPC_COMMANDS.GET_EVENT_BY_ID, {
+  getEventById: (id: string, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_EVENT_BY_ID, {
       id,
       session_token: sessionToken
     }),
@@ -45,8 +46,8 @@ export const calendarOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to created event
    */
-  createEvent: (eventData: CreateEventInput, sessionToken: string): Promise<unknown> =>
-    safeInvoke(IPC_COMMANDS.CREATE_EVENT, {
+  createEvent: (eventData: CreateEventInput, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.CREATE_EVENT, {
       event_data: eventData,
       session_token: sessionToken
     }),
@@ -58,8 +59,8 @@ export const calendarOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to updated event
    */
-  updateEvent: (id: string, eventData: UpdateEventInput, sessionToken: string): Promise<unknown> =>
-    safeInvoke(IPC_COMMANDS.UPDATE_EVENT, {
+  updateEvent: (id: string, eventData: UpdateEventInput, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.UPDATE_EVENT, {
       id,
       event_data: eventData,
       session_token: sessionToken
@@ -71,8 +72,8 @@ export const calendarOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving when event is deleted
    */
-  deleteEvent: (id: string, sessionToken: string): Promise<unknown> =>
-    safeInvoke(IPC_COMMANDS.DELETE_EVENT, {
+  deleteEvent: (id: string, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.DELETE_EVENT, {
       id,
       session_token: sessionToken
     }),
@@ -83,8 +84,8 @@ export const calendarOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to technician's events
    */
-  getEventsForTechnician: (technicianId: string, sessionToken: string): Promise<unknown> =>
-    safeInvoke(IPC_COMMANDS.GET_EVENTS_FOR_TECHNICIAN, {
+  getEventsForTechnician: (technicianId: string, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_EVENTS_FOR_TECHNICIAN, {
       technician_id: technicianId,
       session_token: sessionToken
     }),
@@ -95,8 +96,8 @@ export const calendarOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to task's events
    */
-  getEventsForTask: (taskId: string, sessionToken: string): Promise<unknown> =>
-    safeInvoke(IPC_COMMANDS.GET_EVENTS_FOR_TASK, {
+  getEventsForTask: (taskId: string, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_EVENTS_FOR_TASK, {
       task_id: taskId,
       session_token: sessionToken
     }),

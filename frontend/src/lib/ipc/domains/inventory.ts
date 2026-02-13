@@ -11,6 +11,8 @@ import type {
   Supplier,
   UnitOfMeasure
 } from '@/lib/inventory';
+import type { Pagination } from '@/types/api';
+import type { JsonValue } from '@/types/json';
 
 type PaginationInfo = {
   page: number;
@@ -35,7 +37,7 @@ export type CreateMaterialRequest = {
   category_id?: string;
   brand?: string;
   model?: string;
-  specifications?: unknown;
+  specifications?: JsonValue;
   unit_of_measure: UnitOfMeasure;
   current_stock?: number;
   minimum_stock?: number;
@@ -163,7 +165,7 @@ export const materialOperations = {
    * @returns Promise resolving to created material
    */
   create: (data: CreateMaterialRequest, sessionToken: string): Promise<Material> =>
-    safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_CREATE, {
+    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_CREATE, {
       request: {
         ...data,
         session_token: sessionToken
@@ -183,7 +185,7 @@ export const materialOperations = {
    * @returns Promise resolving to updated material
    */
   update: (id: string, data: UpdateMaterialRequest, sessionToken: string): Promise<Material> =>
-    safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_UPDATE, {
+    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_UPDATE, {
       id,
       request: {
         ...data,
@@ -203,7 +205,7 @@ export const materialOperations = {
    * @returns Promise resolving to material details
    */
   get: (id: string, sessionToken: string): Promise<Material> =>
-    safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_GET, {
+    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_GET, {
       sessionToken,
       id
     }).then(result => {
@@ -235,7 +237,7 @@ export const stockOperations = {
    * @returns Promise resolving to updated material with current stock
    */
   updateStock: (data: UpdateStockRequest, sessionToken: string): Promise<Material> =>
-    safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_UPDATE_STOCK, {
+    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_UPDATE_STOCK, {
       request: {
         ...data,
         session_token: sessionToken
@@ -254,7 +256,7 @@ export const stockOperations = {
    * @returns Promise resolving to updated material with current stock
    */
   adjustStock: (data: AdjustStockRequest, sessionToken: string): Promise<Material> =>
-    safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_ADJUST_STOCK, {
+    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_ADJUST_STOCK, {
       request: {
         ...data,
         session_token: sessionToken
@@ -312,7 +314,7 @@ export const transactionOperations = {
    * @returns Promise resolving to created transaction
    */
   createInventoryTransaction: (data: CreateInventoryTransactionRequest, sessionToken: string): Promise<InventoryTransaction> =>
-    safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_CREATE_INVENTORY_TRANSACTION, {
+    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_CREATE_INVENTORY_TRANSACTION, {
       request: {
         ...data,
         session_token: sessionToken
@@ -336,8 +338,8 @@ export const transactionOperations = {
     materialId: string,
     sessionToken: string,
     query?: { page?: number; limit?: number }
-  ): Promise<{ transactions: InventoryTransaction[]; pagination: any }> =>
-    safeInvoke<{ transactions: InventoryTransaction[]; pagination: any }>(
+  ): Promise<{ transactions: InventoryTransaction[]; pagination: Pagination }> =>
+    safeInvoke<{ transactions: InventoryTransaction[]; pagination: Pagination }>(
       IPC_COMMANDS.MATERIAL_GET_TRANSACTION_HISTORY,
       {
         sessionToken,
@@ -357,7 +359,7 @@ export const categoryOperations = {
    * @returns Promise resolving to created category
    */
   createCategory: (data: CreateMaterialCategoryRequest, sessionToken: string): Promise<MaterialCategory> =>
-    safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_CREATE_CATEGORY, {
+    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_CREATE_CATEGORY, {
       request: {
         ...data,
         session_token: sessionToken
@@ -375,7 +377,7 @@ export const categoryOperations = {
    * @returns Promise resolving to category list
    */
   listCategories: (sessionToken: string): Promise<MaterialCategory[]> =>
-    safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_LIST_CATEGORIES, {
+    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_LIST_CATEGORIES, {
       sessionToken
     }).then(result => {
       if (result && typeof result === 'object' && 'data' in result && Array.isArray((result as { data: MaterialCategory[] }).data)) {
@@ -394,7 +396,7 @@ export const supplierOperations = {
    * @returns Promise resolving to created supplier
    */
   createSupplier: (data: CreateSupplierRequest, sessionToken: string): Promise<Supplier> =>
-    safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_CREATE_SUPPLIER, {
+    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_CREATE_SUPPLIER, {
       request: {
         ...data,
         session_token: sessionToken
@@ -412,7 +414,7 @@ export const supplierOperations = {
    * @returns Promise resolving to supplier list
    */
   listSuppliers: (sessionToken: string): Promise<Supplier[]> =>
-    safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_LIST_SUPPLIERS, {
+    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_LIST_SUPPLIERS, {
       sessionToken
     }).then(result => {
       if (result && typeof result === 'object' && 'data' in result && Array.isArray((result as { data: Supplier[] }).data)) {
@@ -430,7 +432,7 @@ export const reportingOperations = {
    * @returns Promise resolving to material statistics
    */
   getStats: (sessionToken: string): Promise<MaterialStats> =>
-    safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_GET_STATS, {
+    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_GET_STATS, {
       sessionToken
     }).then(result => {
       if (result && typeof result === 'object' && 'data' in result) {
@@ -445,7 +447,7 @@ export const reportingOperations = {
    * @returns Promise resolving to low stock materials
    */
   getLowStockMaterials: (sessionToken: string): Promise<Material[]> =>
-    safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_GET_LOW_STOCK_MATERIALS, {
+    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_GET_LOW_STOCK_MATERIALS, {
       sessionToken
     }).then(result => {
       if (result && typeof result === 'object' && 'data' in result && Array.isArray((result as { data: Material[] }).data)) {
@@ -460,7 +462,7 @@ export const reportingOperations = {
    * @returns Promise resolving to expired materials
    */
   getExpiredMaterials: (sessionToken: string): Promise<Material[]> =>
-    safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_GET_EXPIRED_MATERIALS, {
+    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_GET_EXPIRED_MATERIALS, {
       sessionToken
     }).then(result => {
       if (result && typeof result === 'object' && 'data' in result && Array.isArray((result as { data: Material[] }).data)) {
@@ -476,7 +478,7 @@ export const reportingOperations = {
    * @returns Promise resolving to inventory movement summary
    */
   getInventoryMovementSummary: (materialId: string, sessionToken: string): Promise<InventoryMovementSummary> =>
-    safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_GET_INVENTORY_MOVEMENT_SUMMARY, {
+    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_GET_INVENTORY_MOVEMENT_SUMMARY, {
       sessionToken,
       material_id: materialId,
     }).then(result => {

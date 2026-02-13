@@ -1,5 +1,6 @@
 import { safeInvoke } from '../core';
 import { IPC_COMMANDS } from '../commands';
+import type { JsonObject, JsonValue } from '@/types/json';
 
 /**
  * UI and window management operations
@@ -32,7 +33,7 @@ export const uiOperations = {
    * @param options - Additional navigation options
    * @returns Promise resolving when navigation is complete
    */
-  navigate: (path: string, options?: Record<string, unknown>): Promise<void> =>
+  navigate: (path: string, options?: JsonObject): Promise<void> =>
     safeInvoke<void>(IPC_COMMANDS.NAVIGATION_UPDATE, {
       path,
       options: options || {}
@@ -56,8 +57,8 @@ export const uiOperations = {
    * Gets the current navigation path
    * @returns Promise resolving to current path
    */
-  getCurrent: (): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.NAVIGATION_GET_CURRENT),
+  getCurrent: (): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.NAVIGATION_GET_CURRENT),
 
   /**
    * Adds a path to navigation history
@@ -72,7 +73,7 @@ export const uiOperations = {
    * @param shortcuts - Shortcut definitions
    * @returns Promise resolving when shortcuts are registered
    */
-  registerShortcuts: (shortcuts: Record<string, unknown>): Promise<void> =>
+  registerShortcuts: (shortcuts: JsonObject): Promise<void> =>
     safeInvoke<void>(IPC_COMMANDS.SHORTCUTS_REGISTER, { shortcuts }),
 
   /**

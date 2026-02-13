@@ -2,6 +2,7 @@ import { safeInvoke, extractAndValidate } from '../core';
 import { createCrudOperations } from '../utils/crud-helpers';
 import { IPC_COMMANDS } from '../commands';
 import { validateTask, validateTaskListResponse } from '@/lib/validation/backend-type-guards';
+import type { JsonObject, JsonValue } from '@/types/json';
 import type {
   Task,
   CreateTaskRequest,
@@ -50,8 +51,8 @@ const specializedOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to assignment validation result
    */
-  checkTaskAssignment: (taskId: string, userId: string, sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.CHECK_TASK_ASSIGNMENT, {
+  checkTaskAssignment: (taskId: string, userId: string, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.CHECK_TASK_ASSIGNMENT, {
       request: { task_id: taskId, user_id: userId, session_token: sessionToken }
     }),
 
@@ -61,8 +62,8 @@ const specializedOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to availability check result
    */
-  checkTaskAvailability: (taskId: string, sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.CHECK_TASK_AVAILABILITY, {
+  checkTaskAvailability: (taskId: string, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.CHECK_TASK_AVAILABILITY, {
       request: { task_id: taskId, session_token: sessionToken }
     }),
 
@@ -79,8 +80,8 @@ const specializedOperations = {
     oldUserId: string | null,
     newUserId: string,
     sessionToken: string
-  ): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.VALIDATE_TASK_ASSIGNMENT_CHANGE, {
+  ): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.VALIDATE_TASK_ASSIGNMENT_CHANGE, {
       request: { task_id: taskId, old_user_id: oldUserId, new_user_id: newUserId, session_token: sessionToken }
     }),
 
@@ -91,8 +92,8 @@ const specializedOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to the updated task
    */
-  editTask: async (taskId: string, updates: Record<string, unknown>, sessionToken: string): Promise<Task> => {
-    const result = await safeInvoke<unknown>(IPC_COMMANDS.EDIT_TASK, {
+  editTask: async (taskId: string, updates: JsonObject, sessionToken: string): Promise<Task> => {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.EDIT_TASK, {
       request: {
         task_id: taskId,
         data: updates,

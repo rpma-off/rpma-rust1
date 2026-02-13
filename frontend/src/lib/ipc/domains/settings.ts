@@ -1,6 +1,7 @@
 import { safeInvoke, cachedInvoke, invalidatePattern } from '../core';
 import { IPC_COMMANDS } from '../commands';
 import type { UserSettings } from '../types/index';
+import type { JsonObject, JsonValue } from '@/types/json';
 
 const getUserSettingsCacheKey = (sessionToken: string): string => `user-settings:${sessionToken}`;
 const invalidateUserSettingsCache = (sessionToken: string): void => {
@@ -12,13 +13,13 @@ const invalidateUserSettingsCache = (sessionToken: string): void => {
  */
 export const settingsOperations = {
   // App settings operations
-  getAppSettings: (sessionToken?: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.GET_APP_SETTINGS, {
+  getAppSettings: (sessionToken?: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_APP_SETTINGS, {
       sessionToken: sessionToken || ''
     }),
 
-  updateNotificationSettings: (request: Record<string, unknown>, sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.UPDATE_NOTIFICATION_SETTINGS, {
+  updateNotificationSettings: (request: JsonObject, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.UPDATE_NOTIFICATION_SETTINGS, {
       request: { ...request, session_token: sessionToken }
     }),
 
@@ -28,32 +29,32 @@ export const settingsOperations = {
       sessionToken
     }, undefined, 30000),
 
-  updateUserProfile: async (request: Record<string, unknown>, sessionToken: string): Promise<unknown> => {
-    const result = await safeInvoke<unknown>(IPC_COMMANDS.UPDATE_USER_PROFILE, {
+  updateUserProfile: async (request: JsonObject, sessionToken: string): Promise<JsonValue> => {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.UPDATE_USER_PROFILE, {
       request: { ...request, session_token: sessionToken }
     });
     invalidateUserSettingsCache(sessionToken);
     return result;
   },
 
-  updateUserPreferences: async (request: Record<string, unknown>, sessionToken: string): Promise<unknown> => {
-    const result = await safeInvoke<unknown>(IPC_COMMANDS.UPDATE_USER_PREFERENCES, {
+  updateUserPreferences: async (request: JsonObject, sessionToken: string): Promise<JsonValue> => {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.UPDATE_USER_PREFERENCES, {
       request: { ...request, session_token: sessionToken }
     });
     invalidateUserSettingsCache(sessionToken);
     return result;
   },
 
-  updateUserSecurity: async (request: Record<string, unknown>, sessionToken: string): Promise<unknown> => {
-    const result = await safeInvoke<unknown>(IPC_COMMANDS.UPDATE_USER_SECURITY, {
+  updateUserSecurity: async (request: JsonObject, sessionToken: string): Promise<JsonValue> => {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.UPDATE_USER_SECURITY, {
       request: { ...request, session_token: sessionToken }
     });
     invalidateUserSettingsCache(sessionToken);
     return result;
   },
 
-  updateUserPerformance: async (request: Record<string, unknown>, sessionToken: string): Promise<unknown> => {
-    const result = await safeInvoke<unknown>(IPC_COMMANDS.UPDATE_USER_PERFORMANCE, {
+  updateUserPerformance: async (request: JsonObject, sessionToken: string): Promise<JsonValue> => {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.UPDATE_USER_PERFORMANCE, {
       request,
       sessionToken
     });
@@ -61,23 +62,23 @@ export const settingsOperations = {
     return result;
   },
 
-  updateUserAccessibility: async (request: Record<string, unknown>, sessionToken: string): Promise<unknown> => {
-    const result = await safeInvoke<unknown>(IPC_COMMANDS.UPDATE_USER_ACCESSIBILITY, {
+  updateUserAccessibility: async (request: JsonObject, sessionToken: string): Promise<JsonValue> => {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.UPDATE_USER_ACCESSIBILITY, {
       request: { ...request, session_token: sessionToken }
     });
     invalidateUserSettingsCache(sessionToken);
     return result;
   },
 
-  updateUserNotifications: async (request: Record<string, unknown>, sessionToken: string): Promise<unknown> => {
-    const result = await safeInvoke<unknown>(IPC_COMMANDS.UPDATE_USER_NOTIFICATIONS, {
+  updateUserNotifications: async (request: JsonObject, sessionToken: string): Promise<JsonValue> => {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.UPDATE_USER_NOTIFICATIONS, {
       request: { ...request, session_token: sessionToken }
     });
     invalidateUserSettingsCache(sessionToken);
     return result;
   },
 
-  changeUserPassword: async (request: Record<string, unknown>, sessionToken: string): Promise<string> => {
+  changeUserPassword: async (request: JsonObject, sessionToken: string): Promise<string> => {
     const result = await safeInvoke<string>(IPC_COMMANDS.CHANGE_USER_PASSWORD, {
       request: { ...request, session_token: sessionToken }
     });
@@ -86,8 +87,8 @@ export const settingsOperations = {
   },
 
   // Security operations
-  getActiveSessions: (sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.GET_ACTIVE_SESSIONS, {
+  getActiveSessions: (sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_ACTIVE_SESSIONS, {
       sessionToken
     }),
 
@@ -108,8 +109,8 @@ export const settingsOperations = {
       sessionToken
     }),
 
-  getSessionTimeoutConfig: (sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.GET_SESSION_TIMEOUT_CONFIG, {
+  getSessionTimeoutConfig: (sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_SESSION_TIMEOUT_CONFIG, {
       sessionToken
     }),
 
@@ -126,8 +127,8 @@ export const settingsOperations = {
       return result;
     }),
 
-  exportUserData: (sessionToken: string): Promise<Record<string, unknown>> =>
-    safeInvoke<Record<string, unknown>>(IPC_COMMANDS.EXPORT_USER_DATA, {
+  exportUserData: (sessionToken: string): Promise<JsonObject> =>
+    safeInvoke<JsonObject>(IPC_COMMANDS.EXPORT_USER_DATA, {
       sessionToken
     }),
 
@@ -139,13 +140,13 @@ export const settingsOperations = {
     return result;
   },
 
-  getDataConsent: (sessionToken: string): Promise<Record<string, unknown>> =>
-    safeInvoke<Record<string, unknown>>(IPC_COMMANDS.GET_DATA_CONSENT, {
+  getDataConsent: (sessionToken: string): Promise<JsonObject> =>
+    safeInvoke<JsonObject>(IPC_COMMANDS.GET_DATA_CONSENT, {
       sessionToken
     }),
 
-  updateDataConsent: (request: Record<string, unknown>, sessionToken: string): Promise<Record<string, unknown>> =>
-    safeInvoke<Record<string, unknown>>(IPC_COMMANDS.UPDATE_DATA_CONSENT, {
+  updateDataConsent: (request: JsonObject, sessionToken: string): Promise<JsonObject> =>
+    safeInvoke<JsonObject>(IPC_COMMANDS.UPDATE_DATA_CONSENT, {
       request: { ...request, session_token: sessionToken }
     }),
 };

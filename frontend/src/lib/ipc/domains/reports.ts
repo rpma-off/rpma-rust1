@@ -18,6 +18,7 @@ import type {
   InterventionReportResult,
   ReportType
 } from '../types/index';
+import type { JsonValue } from '@/types/json';
 
 /**
  * Report generation and management operations
@@ -199,8 +200,8 @@ export const reportOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to search results
    */
-  searchRecords: (query: unknown, sessionToken: string): Promise<unknown> =>
-    safeInvoke<unknown>(IPC_COMMANDS.SEARCH_RECORDS, {
+  searchRecords: (query: JsonValue, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.SEARCH_RECORDS, {
       query,
       session_token: sessionToken
     }),

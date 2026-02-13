@@ -1,11 +1,21 @@
 import { delayNextCommand, failNextCommand, resetDb, seedDb, handleInvoke } from './mock-db';
 import { defaultFixtures, type MockFixtures } from './fixtures';
+import type { JsonObject, JsonValue } from '@/types/json';
 
 export interface E2eMockControls {
   reset: () => void;
   seed: (fixtures?: Partial<MockFixtures>) => void;
   failNext: (command: string, message: string) => void;
   delayNext: (command: string, ms: number) => void;
+}
+
+interface MockWindow extends Window {
+  __E2E_MOCKS__?: E2eMockControls;
+  __TAURI_INTERNALS__?: {
+    invoke: (command: string, args?: JsonObject) => Promise<JsonValue>;
+    listen: () => Promise<void>;
+    emit: () => Promise<void>;
+  };
 }
 
 export function installMockControls(): void {
@@ -21,11 +31,12 @@ export function installMockControls(): void {
     delayNext: (command: string, ms: number) => delayNextCommand(command, ms)
   };
 
-  (window as any).__E2E_MOCKS__ = controls;
+  const mockWindow = window as MockWindow;
+  mockWindow.__E2E_MOCKS__ = controls;
 
   // Provide a Tauri IPC shim for direct invoke() calls
-  (window as any).__TAURI_INTERNALS__ = {
-    invoke: (command: string, args?: Record<string, unknown>) => handleInvoke(command, args),
+  mockWindow.__TAURI_INTERNALS__ = {
+    invoke: (command: string, args?: JsonObject) => handleInvoke(command, args),
     listen: () => Promise.resolve(),
     emit: () => Promise.resolve()
   };
