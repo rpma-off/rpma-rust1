@@ -853,13 +853,7 @@ export default function TasksPage() {
         component: 'TasksPage'
       });
       enhancedToast.success('Tâche supprimée avec succès', {
-        action: {
-          label: 'Annuler',
-          onClick: () => {
-            // Could implement undo functionality here
-            console.log('Undo delete requested');
-          }
-        }
+        duration: 4000
       });
     } catch (err) {
       logger.error('Task deletion failed', {

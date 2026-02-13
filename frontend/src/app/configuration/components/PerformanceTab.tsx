@@ -94,73 +94,14 @@ export function PerformanceTab() {
   const loadPerformanceConfigs = async () => {
     try {
       const response = await fetch('/api/admin/performance');
-      if (response.ok) {
-        const data = await response.json();
-        setPerformanceConfigs(data);
-      } else {
-        // For now, use mock data
-        setPerformanceConfigs([
-          {
-            id: '1',
-            category: 'caching',
-            name: 'Cache Configuration',
-            value: null,
-            settings: {
-              enabled: true,
-              ttlSeconds: 3600,
-              maxSizeMb: 100,
-              strategy: 'lru' as const,
-              compressionEnabled: true
-            },
-             thresholds: {
-               queryTimeThreshold: { value: 200, unit: 'ms' },
-               connectionUsageThreshold: { value: 80, unit: 'percent' },
-               hitRateThreshold: { value: 85, unit: 'percent' },
-               missRateThreshold: { value: 15, unit: 'percent' }
-             },
-             monitoring: {
-               enabled: true,
-               interval: 60,
-               intervalSeconds: 60,
-               retention_days: 30,
-               metrics: ['response_time', 'cpu_usage', 'memory_usage']
-             },
-            alerts: [],
-            isActive: true,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          },
-          {
-            id: '2',
-            category: 'database',
-            name: 'Database Configuration',
-            value: null,
-            settings: {
-              connectionPoolSize: 10,
-              queryTimeoutSeconds: 30,
-              maxConnections: 100
-            },
-             thresholds: {
-               queryTimeThreshold: { value: 100, unit: 'ms' },
-               connectionUsageThreshold: { value: 70, unit: 'percent' },
-               hitRateThreshold: { value: 80, unit: 'percent' }
-             },
-             monitoring: {
-               enabled: true,
-               interval: 30,
-               intervalSeconds: 30,
-               retention_days: 30,
-               metrics: ['query_time', 'connection_usage']
-             },
-            alerts: [],
-            isActive: true,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }
-        ]);
+      if (!response.ok) {
+        throw new Error('Failed to load performance configs');
       }
+      const data = await response.json();
+      setPerformanceConfigs(data);
     } catch (error) {
       console.error('Error loading performance configs:', error);
+      setPerformanceConfigs([]);
       toast.error('Erreur lors du chargement des configurations de performance');
     } finally {
       setLoading(false);

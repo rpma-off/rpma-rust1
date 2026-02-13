@@ -77,70 +77,14 @@ export function IntegrationsTab() {
   const loadIntegrations = async () => {
     try {
       const response = await fetch('/api/admin/integrations');
-      if (response.ok) {
-        const data = await response.json();
-        setIntegrations(data);
-      } else {
-        // For now, use mock data
-        setIntegrations([
-          {
-            id: '1',
-            name: 'Email SMTP',
-            type: 'email',
-            provider: 'Gmail',
-            config: {},
-            settings: {
-              smtpHost: 'smtp.gmail.com',
-              smtpPort: 587,
-              fromEmail: 'noreply@company.com',
-              fromName: 'RPMA System',
-              timeout: 30
-            },
-            credentials: {
-              encrypted: true,
-              data: 'encrypted_credentials_data'
-            },
-            isActive: true,
-            lastSync: new Date().toISOString(),
-            status: 'active' as IntegrationStatus,
-            healthCheck: {
-              status: 'healthy',
-              lastChecked: new Date().toISOString(),
-              responseTime: 150
-            },
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          },
-          {
-            id: '2',
-            name: 'SMS Service',
-            type: 'sms',
-            provider: 'Twilio',
-            config: {},
-            settings: {
-              apiKey: 'encrypted_api_key',
-              timeout: 30
-            },
-            credentials: {
-              encrypted: true,
-              data: 'encrypted_sms_credentials'
-            },
-            isActive: false,
-            lastSync: undefined,
-            status: 'inactive' as IntegrationStatus,
-            healthCheck: {
-              status: 'unhealthy',
-              lastChecked: new Date().toISOString(),
-              responseTime: 0,
-              error: 'Connection failed'
-            },
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }
-        ]);
+      if (!response.ok) {
+        throw new Error('Failed to load integrations');
       }
+      const data = await response.json();
+      setIntegrations(data);
     } catch (error) {
       console.error('Error loading integrations:', error);
+      setIntegrations([]);
       toast.error('Erreur lors du chargement des intégrations');
     } finally {
       setLoading(false);

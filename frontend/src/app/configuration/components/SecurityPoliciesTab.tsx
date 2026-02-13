@@ -70,56 +70,14 @@ export function SecurityPoliciesTab() {
   const loadSecurityPolicies = async () => {
     try {
       const response = await fetch('/api/admin/security-policies');
-      if (response.ok) {
-        const data = await response.json();
-        setSecurityPolicies(data);
-      } else {
-        // For now, use mock data
-        setSecurityPolicies([
-          {
-            id: '1',
-            name: 'Politique de Mot de Passe Standard',
-            description: 'Politique standard pour les mots de passe',
-            policy_type: 'password',
-            is_active: true,
-            applies_to: ['all_users'],
-            type: 'password',
-            settings: {
-              minLength: 8,
-              requireUppercase: true,
-              requireLowercase: true,
-              requireNumbers: true,
-              requireSpecial: true,
-              maxAgeDays: 90
-            },
-            exceptions: [],
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          },
-          {
-            id: '2',
-            name: 'Politique de Session',
-            description: 'Politique de gestion des sessions',
-            policy_type: 'session',
-            is_active: true,
-            applies_to: ['all_users'],
-            type: 'session',
-            settings: {
-              timeoutMinutes: 30,
-              maxConcurrentSessions: 5
-            },
-            exceptions: [],
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }
-        ]);
+      if (!response.ok) {
+        throw new Error('Failed to load security policies');
       }
+      const data = await response.json();
+      setSecurityPolicies(data);
     } catch (error) {
       console.error('Error loading security policies:', error);
+      setSecurityPolicies([]);
       toast.error('Erreur lors du chargement des politiques de sécurité');
     } finally {
       setLoading(false);
