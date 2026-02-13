@@ -81,7 +81,7 @@ export function MessageComposer({
     }
 
     if (messageType === 'email' && !recipientEmail.trim()) {
-      toast.error('L'adresse e-mail est obligatoire');
+      toast.error('L\'adresse e-mail est obligatoire');
       return;
     }
 
