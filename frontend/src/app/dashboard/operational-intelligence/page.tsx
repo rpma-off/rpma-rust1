@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import {
   TrendingUp,
   AlertTriangle,
@@ -9,7 +8,6 @@ import {
   Clock,
   BarChart3,
   RefreshCw,
-  Filter,
   Download
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -315,9 +313,6 @@ export default function OperationalIntelligencePage() {
     </PageShell>
   );
 }
-
-// Component for metric cards - now using StatCard from page-header instead
-// MetricCard is no longer used, replaced by StatCard
 
 // Component for step bottleneck cards
 function StepBottleneckCard({ bottleneck }: { bottleneck: StepBottleneck }) {
