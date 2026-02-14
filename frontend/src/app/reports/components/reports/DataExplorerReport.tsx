@@ -44,7 +44,7 @@ export default function DataExplorerReport() {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row gap-4 items-end">
                 <div className="w-full md:w-1/3">
-                    <label className="text-sm font-medium mb-2 block">Type d'entité</label>
+                    <label className="text-sm font-medium mb-2 block">Type d&apos;entité</label>
                     <Select value={entityType} onValueChange={setEntityType}>
                         <SelectTrigger>
                             <SelectValue placeholder="Sélectionner une entité" />

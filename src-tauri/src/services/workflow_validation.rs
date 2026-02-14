@@ -275,7 +275,10 @@ impl WorkflowValidationService {
         logger.debug(
             "Finalization step summary",
             Some(std::collections::HashMap::from([
-                ("total_steps".to_string(), serde_json::json!(summary.total_steps)),
+                (
+                    "total_steps".to_string(),
+                    serde_json::json!(summary.total_steps),
+                ),
                 (
                     "completed_steps".to_string(),
                     serde_json::json!(summary.completed_steps),
@@ -296,8 +299,11 @@ impl WorkflowValidationService {
         );
 
         if summary.mandatory_total != summary.mandatory_completed {
-            let incomplete_steps: Vec<i32> =
-                summary.incomplete_mandatory.iter().map(|(n, _)| *n).collect();
+            let incomplete_steps: Vec<i32> = summary
+                .incomplete_mandatory
+                .iter()
+                .map(|(n, _)| *n)
+                .collect();
             let incomplete_names: Vec<&str> = summary
                 .incomplete_mandatory
                 .iter()

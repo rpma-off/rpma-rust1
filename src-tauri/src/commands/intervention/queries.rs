@@ -200,7 +200,10 @@ pub async fn intervention_advance_step(
 
 /// Save step progress for an intervention
 #[tauri::command]
-#[instrument(skip(state, session_token, progress_data), fields(user_id, correlation_id))]
+#[instrument(
+    skip(state, session_token, progress_data),
+    fields(user_id, correlation_id)
+)]
 pub async fn intervention_save_step_progress(
     intervention_id: String,
     step_id: String,
@@ -424,7 +427,8 @@ pub async fn intervention_progress(
                 })?
                 .ok_or_else(|| AppError::NotFound(format!("Step {} not found", step_id)))?;
 
-            let resolved_intervention_id = intervention_id.unwrap_or_else(|| step.intervention_id.clone());
+            let resolved_intervention_id =
+                intervention_id.unwrap_or_else(|| step.intervention_id.clone());
 
             if step.intervention_id != resolved_intervention_id {
                 return Err(AppError::Validation(format!(
@@ -469,11 +473,7 @@ pub async fn intervention_progress(
 
             let step = state
                 .intervention_service
-                .save_step_progress(
-                    progress_request,
-                    &correlation_id,
-                    Some(&session.user_id),
-                )
+                .save_step_progress(progress_request, &correlation_id, Some(&session.user_id))
                 .await
                 .map_err(|e| {
                     error!(error = %e, "Failed to save progress");

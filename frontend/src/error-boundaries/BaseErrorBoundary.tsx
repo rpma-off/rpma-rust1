@@ -173,7 +173,7 @@ export class BaseErrorBoundary extends Component<BaseErrorBoundaryProps, ErrorBo
             <CardContent className="space-y-4">
                {/* Error Message */}
                <div className="bg-red-50 border border-red-200 rounded-md p-4">
-                 <h4 className="text-sm font-medium text-red-800 mb-2">Détails de l'erreur</h4>
+                 <h4 className="text-sm font-medium text-red-800 mb-2">Détails de l&apos;erreur</h4>
                  <p className="text-sm text-red-700">{errorMessage}</p>
                </div>
 
@@ -220,7 +220,7 @@ export class BaseErrorBoundary extends Component<BaseErrorBoundaryProps, ErrorBo
                      <div className="mt-3 space-y-3">
                        {error && (
                          <div className="bg-gray-50 border border-gray-200 rounded-md p-3">
-                           <h5 className="text-xs font-medium text-gray-700 mb-1">Pile d'erreur</h5>
+                           <h5 className="text-xs font-medium text-gray-700 mb-1">Pile d&apos;erreur</h5>
                            <pre className="text-xs text-gray-600 whitespace-pre-wrap overflow-auto max-h-32">
                              {error.stack}
                            </pre>
