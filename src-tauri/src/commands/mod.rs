@@ -78,10 +78,14 @@ pub use calendar::{calendar_check_conflicts, calendar_get_tasks, calendar_schedu
 
 // Re-export material commands
 pub use material::{
-    material_create, material_get, material_get_by_sku, material_get_expired,
-    material_get_intervention_consumption, material_get_intervention_summary,
-    material_get_low_stock, material_get_stats, material_list, material_record_consumption,
-    material_update, material_update_stock,
+    inventory_get_stats, material_adjust_stock, material_create, material_create_category,
+    material_create_inventory_transaction, material_create_supplier, material_delete, material_get,
+    material_get_by_sku, material_get_consumption_history, material_get_expired,
+    material_get_expired_materials, material_get_intervention_consumption,
+    material_get_intervention_summary, material_get_inventory_movement_summary,
+    material_get_low_stock, material_get_low_stock_materials, material_get_stats,
+    material_get_transaction_history, material_list, material_list_categories,
+    material_list_suppliers, material_record_consumption, material_update, material_update_stock,
 };
 
 // Re-export system commands
