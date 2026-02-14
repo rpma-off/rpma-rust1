@@ -6,6 +6,226 @@ use rusqlite::{params, OptionalExtension, Transaction};
 use std::sync::Arc;
 use tracing::debug;
 
+/// Serialized intervention fields ready for database storage.
+struct InterventionDbFields {
+    status: String,
+    intervention_type: String,
+    weather_condition: Option<String>,
+    lighting_condition: Option<String>,
+    work_location: Option<String>,
+    film_type: Option<String>,
+    ppf_zones_config_json: Option<String>,
+    ppf_zones_extended_json: Option<String>,
+    final_observations_json: Option<String>,
+    metadata_json: Option<String>,
+    device_info_json: Option<String>,
+}
+
+impl InterventionDbFields {
+    fn from_intervention(intervention: &Intervention) -> Self {
+        Self {
+            status: intervention.status.to_string(),
+            intervention_type: intervention.intervention_type.to_string(),
+            weather_condition: intervention.weather_condition.as_ref().map(|wc| wc.to_string()),
+            lighting_condition: intervention.lighting_condition.as_ref().map(|lc| lc.to_string()),
+            work_location: intervention.work_location.as_ref().map(|wl| wl.to_string()),
+            film_type: intervention.film_type.as_ref().map(|ft| ft.to_string()),
+            ppf_zones_config_json: intervention.ppf_zones_config.as_ref().map(|zones| serde_json::to_string(zones).unwrap_or_default()),
+            ppf_zones_extended_json: intervention.ppf_zones_extended.as_ref().map(|zones| serde_json::to_string(zones).unwrap_or_default()),
+            final_observations_json: intervention.final_observations.as_ref().map(|obs| serde_json::to_string(obs).unwrap_or_default()),
+            metadata_json: intervention.metadata.as_ref().map(|meta| serde_json::to_string(meta).unwrap_or_default()),
+            device_info_json: intervention.device_info.as_ref().map(|info| serde_json::to_string(info).unwrap_or_default()),
+        }
+    }
+}
+
+/// Serialized step fields ready for database storage.
+struct StepDbFields {
+    step_type: String,
+    step_status: String,
+    instructions_json: Option<String>,
+    quality_checkpoints_json: Option<String>,
+    step_data_json: Option<String>,
+    collected_data_json: Option<String>,
+    measurements_json: Option<String>,
+    observations_json: Option<String>,
+    photo_urls_json: Option<String>,
+    validation_data_json: Option<String>,
+    validation_errors_json: Option<String>,
+}
+
+impl StepDbFields {
+    fn from_step(step: &InterventionStep) -> Self {
+        Self {
+            step_type: step.step_type.to_string(),
+            step_status: step.step_status.to_string(),
+            instructions_json: step.instructions.as_ref().and_then(|i| serde_json::to_string(i).ok()),
+            quality_checkpoints_json: step.quality_checkpoints.as_ref().and_then(|qc| serde_json::to_string(qc).ok()),
+            step_data_json: step.step_data.as_ref().and_then(|sd| serde_json::to_string(sd).ok()),
+            collected_data_json: step.collected_data.as_ref().and_then(|cd| serde_json::to_string(cd).ok()),
+            measurements_json: step.measurements.as_ref().and_then(|m| serde_json::to_string(m).ok()),
+            observations_json: step.observations.as_ref().and_then(|obs| serde_json::to_string(obs).ok()),
+            photo_urls_json: step.photo_urls.as_ref().and_then(|urls| serde_json::to_string(urls).ok()),
+            validation_data_json: step.validation_data.as_ref().and_then(|vd| serde_json::to_string(vd).ok()),
+            validation_errors_json: step.validation_errors.as_ref().and_then(|ve| serde_json::to_string(ve).ok()),
+        }
+    }
+}
+
+const INSERT_INTERVENTION_SQL: &str =
+    "INSERT INTO interventions (
+        id, task_id, status, vehicle_plate, vehicle_model, vehicle_make, vehicle_year,
+        vehicle_color, vehicle_vin, client_id, client_name, client_email, client_phone,
+        technician_id, technician_name, intervention_type, current_step, completion_percentage,
+        ppf_zones_config, ppf_zones_extended, film_type, film_brand, film_model,
+        scheduled_at, started_at, completed_at, paused_at, estimated_duration, actual_duration,
+        weather_condition, lighting_condition, work_location, temperature_celsius, humidity_percentage,
+        start_location_lat, start_location_lon, start_location_accuracy,
+        end_location_lat, end_location_lon, end_location_accuracy,
+        customer_satisfaction, quality_score, final_observations, customer_signature, customer_comments,
+        metadata, notes, special_instructions, device_info, app_version,
+        synced, last_synced_at, sync_error, created_at, updated_at, created_by, updated_by, task_number
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+const UPDATE_INTERVENTION_SQL: &str =
+    "UPDATE interventions SET
+        status = ?, vehicle_plate = ?, vehicle_model = ?, vehicle_make = ?, vehicle_year = ?,
+        vehicle_color = ?, vehicle_vin = ?, client_id = ?, client_name = ?, client_email = ?, client_phone = ?,
+        technician_id = ?, technician_name = ?, intervention_type = ?, current_step = ?, completion_percentage = ?,
+        ppf_zones_config = ?, ppf_zones_extended = ?, film_type = ?, film_brand = ?, film_model = ?,
+        scheduled_at = ?, started_at = ?, completed_at = ?, paused_at = ?, estimated_duration = ?, actual_duration = ?,
+        weather_condition = ?, lighting_condition = ?, work_location = ?, temperature_celsius = ?, humidity_percentage = ?,
+        start_location_lat = ?, start_location_lon = ?, start_location_accuracy = ?,
+        end_location_lat = ?, end_location_lon = ?, end_location_accuracy = ?,
+        customer_satisfaction = ?, quality_score = ?, final_observations = ?, customer_signature = ?, customer_comments = ?,
+        metadata = ?, notes = ?, special_instructions = ?, device_info = ?, app_version = ?,
+        synced = ?, last_synced_at = ?, sync_error = ?, updated_at = ?, updated_by = ?
+    WHERE id = ?";
+
+/// Build the params array for an INSERT intervention statement.
+fn insert_intervention_params(intervention: &Intervention, fields: &InterventionDbFields) -> Vec<rusqlite::types::Value> {
+    vec![
+        intervention.id.clone().into(),
+        intervention.task_id.clone().into(),
+        fields.status.clone().into(),
+        intervention.vehicle_plate.clone().into(),
+        intervention.vehicle_model.clone().into(),
+        intervention.vehicle_make.clone().into(),
+        intervention.vehicle_year.clone().into(),
+        intervention.vehicle_color.clone().into(),
+        intervention.vehicle_vin.clone().into(),
+        intervention.client_id.clone().into(),
+        intervention.client_name.clone().into(),
+        intervention.client_email.clone().into(),
+        intervention.client_phone.clone().into(),
+        intervention.technician_id.clone().into(),
+        intervention.technician_name.clone().into(),
+        fields.intervention_type.clone().into(),
+        intervention.current_step.into(),
+        intervention.completion_percentage.into(),
+        fields.ppf_zones_config_json.clone().into(),
+        fields.ppf_zones_extended_json.clone().into(),
+        fields.film_type.clone().into(),
+        intervention.film_brand.clone().into(),
+        intervention.film_model.clone().into(),
+        intervention.scheduled_at.inner().into(),
+        intervention.started_at.inner().into(),
+        intervention.completed_at.inner().into(),
+        intervention.paused_at.inner().into(),
+        intervention.estimated_duration.into(),
+        intervention.actual_duration.into(),
+        fields.weather_condition.clone().into(),
+        fields.lighting_condition.clone().into(),
+        fields.work_location.clone().into(),
+        intervention.temperature_celsius.into(),
+        intervention.humidity_percentage.into(),
+        intervention.start_location_lat.into(),
+        intervention.start_location_lon.into(),
+        intervention.start_location_accuracy.into(),
+        intervention.end_location_lat.into(),
+        intervention.end_location_lon.into(),
+        intervention.end_location_accuracy.into(),
+        intervention.customer_satisfaction.into(),
+        intervention.quality_score.into(),
+        fields.final_observations_json.clone().into(),
+        intervention.customer_signature.clone().into(),
+        intervention.customer_comments.clone().into(),
+        fields.metadata_json.clone().into(),
+        intervention.notes.clone().into(),
+        intervention.special_instructions.clone().into(),
+        fields.device_info_json.clone().into(),
+        intervention.app_version.clone().into(),
+        intervention.synced.into(),
+        intervention.last_synced_at.into(),
+        intervention.sync_error.clone().into(),
+        intervention.created_at.into(),
+        intervention.updated_at.into(),
+        intervention.created_by.clone().into(),
+        intervention.updated_by.clone().into(),
+        intervention.task_number.clone().into(),
+    ]
+}
+
+/// Build the params array for an UPDATE intervention statement.
+fn update_intervention_params(intervention: &Intervention, fields: &InterventionDbFields) -> Vec<rusqlite::types::Value> {
+    vec![
+        fields.status.clone().into(),
+        intervention.vehicle_plate.clone().into(),
+        intervention.vehicle_model.clone().into(),
+        intervention.vehicle_make.clone().into(),
+        intervention.vehicle_year.clone().into(),
+        intervention.vehicle_color.clone().into(),
+        intervention.vehicle_vin.clone().into(),
+        intervention.client_id.clone().into(),
+        intervention.client_name.clone().into(),
+        intervention.client_email.clone().into(),
+        intervention.client_phone.clone().into(),
+        intervention.technician_id.clone().into(),
+        intervention.technician_name.clone().into(),
+        fields.intervention_type.clone().into(),
+        intervention.current_step.into(),
+        intervention.completion_percentage.into(),
+        fields.ppf_zones_config_json.clone().into(),
+        fields.ppf_zones_extended_json.clone().into(),
+        fields.film_type.clone().into(),
+        intervention.film_brand.clone().into(),
+        intervention.film_model.clone().into(),
+        intervention.scheduled_at.inner().into(),
+        intervention.started_at.inner().into(),
+        intervention.completed_at.inner().into(),
+        intervention.paused_at.inner().into(),
+        intervention.estimated_duration.into(),
+        intervention.actual_duration.into(),
+        fields.weather_condition.clone().into(),
+        fields.lighting_condition.clone().into(),
+        fields.work_location.clone().into(),
+        intervention.temperature_celsius.into(),
+        intervention.humidity_percentage.into(),
+        intervention.start_location_lat.into(),
+        intervention.start_location_lon.into(),
+        intervention.start_location_accuracy.into(),
+        intervention.end_location_lat.into(),
+        intervention.end_location_lon.into(),
+        intervention.end_location_accuracy.into(),
+        intervention.customer_satisfaction.into(),
+        intervention.quality_score.into(),
+        fields.final_observations_json.clone().into(),
+        intervention.customer_signature.clone().into(),
+        intervention.customer_comments.clone().into(),
+        fields.metadata_json.clone().into(),
+        intervention.notes.clone().into(),
+        intervention.special_instructions.clone().into(),
+        fields.device_info_json.clone().into(),
+        intervention.app_version.clone().into(),
+        intervention.synced.into(),
+        intervention.last_synced_at.into(),
+        intervention.sync_error.clone().into(),
+        intervention.updated_at.into(),
+        intervention.updated_by.clone().into(),
+        intervention.id.clone().into(),
+    ]
+}
+
 #[derive(Debug)]
 pub struct InterventionRepository {
     db: Arc<Database>,
@@ -21,156 +241,18 @@ impl InterventionRepository {
         tx: &Transaction,
         intervention: &Intervention,
     ) -> InterventionResult<()> {
-        // Convert enums to strings for storage
-        let status_str = intervention.status.to_string();
-        let intervention_type_str = intervention.intervention_type.to_string();
-        let weather_condition_str = intervention
-            .weather_condition
-            .as_ref()
-            .map(|wc| wc.to_string());
-        let lighting_condition_str = intervention
-            .lighting_condition
-            .as_ref()
-            .map(|lc| lc.to_string());
-        let work_location_str = intervention.work_location.as_ref().map(|wl| wl.to_string());
-        let film_type_str = intervention.film_type.as_ref().map(|ft| ft.to_string());
-
-        // Convert Vec<String> to JSON string
-        let ppf_zones_config_json = intervention
-            .ppf_zones_config
-            .as_ref()
-            .map(|zones| serde_json::to_string(zones).unwrap_or_default());
-        let ppf_zones_extended_json = intervention
-            .ppf_zones_extended
-            .as_ref()
-            .map(|zones| serde_json::to_string(zones).unwrap_or_default());
-        let final_observations_json = intervention
-            .final_observations
-            .as_ref()
-            .map(|obs| serde_json::to_string(obs).unwrap_or_default());
-        let metadata_json = intervention
-            .metadata
-            .as_ref()
-            .map(|meta| serde_json::to_string(meta).unwrap_or_default());
-        let device_info_json = intervention
-            .device_info
-            .as_ref()
-            .map(|info| serde_json::to_string(info).unwrap_or_default());
-
-        tx.execute(
-            "INSERT INTO interventions (
-                id, task_id, status, vehicle_plate, vehicle_model, vehicle_make, vehicle_year,
-                vehicle_color, vehicle_vin, client_id, client_name, client_email, client_phone,
-                technician_id, technician_name, intervention_type, current_step, completion_percentage,
-                ppf_zones_config, ppf_zones_extended, film_type, film_brand, film_model,
-                scheduled_at, started_at, completed_at, paused_at, estimated_duration, actual_duration,
-                weather_condition, lighting_condition, work_location, temperature_celsius, humidity_percentage,
-                start_location_lat, start_location_lon, start_location_accuracy,
-                end_location_lat, end_location_lon, end_location_accuracy,
-                customer_satisfaction, quality_score, final_observations, customer_signature, customer_comments,
-                metadata, notes, special_instructions, device_info, app_version,
-                synced, last_synced_at, sync_error, created_at, updated_at, created_by, updated_by, task_number
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            params![
-                intervention.id, intervention.task_id, status_str, intervention.vehicle_plate,
-                intervention.vehicle_model, intervention.vehicle_make, intervention.vehicle_year,
-                intervention.vehicle_color, intervention.vehicle_vin, intervention.client_id,
-                intervention.client_name, intervention.client_email, intervention.client_phone,
-                intervention.technician_id, intervention.technician_name, intervention_type_str,
-                intervention.current_step, intervention.completion_percentage,
-                ppf_zones_config_json, ppf_zones_extended_json, film_type_str,
-                intervention.film_brand, intervention.film_model, intervention.scheduled_at.inner(),
-                intervention.started_at.inner(), intervention.completed_at.inner(), intervention.paused_at.inner(),
-                intervention.estimated_duration, intervention.actual_duration,
-                weather_condition_str, lighting_condition_str, work_location_str, intervention.temperature_celsius, intervention.humidity_percentage,
-                intervention.start_location_lat, intervention.start_location_lon, intervention.start_location_accuracy,
-                intervention.end_location_lat, intervention.end_location_lon, intervention.end_location_accuracy,
-                intervention.customer_satisfaction, intervention.quality_score,
-                final_observations_json, intervention.customer_signature, intervention.customer_comments,
-                metadata_json, intervention.notes, intervention.special_instructions, device_info_json, intervention.app_version,
-                intervention.synced, intervention.last_synced_at, intervention.sync_error,
-                intervention.created_at, intervention.updated_at, intervention.created_by, intervention.updated_by, intervention.task_number
-            ],
-        )?;
-
+        let fields = InterventionDbFields::from_intervention(intervention);
+        let params = insert_intervention_params(intervention, &fields);
+        tx.execute(INSERT_INTERVENTION_SQL, rusqlite::params_from_iter(params))?;
         Ok(())
     }
 
     pub fn create_intervention(&self, intervention: &Intervention) -> InterventionResult<()> {
         let conn = self.db.get_connection()?;
+        let fields = InterventionDbFields::from_intervention(intervention);
+        let params = insert_intervention_params(intervention, &fields);
 
-        // Convert enums to strings for storage
-        let status_str = intervention.status.to_string();
-        let intervention_type_str = intervention.intervention_type.to_string();
-        let weather_condition_str = intervention
-            .weather_condition
-            .as_ref()
-            .map(|wc| wc.to_string());
-        let lighting_condition_str = intervention
-            .lighting_condition
-            .as_ref()
-            .map(|lc| lc.to_string());
-        let work_location_str = intervention.work_location.as_ref().map(|wl| wl.to_string());
-        let film_type_str = intervention.film_type.as_ref().map(|ft| ft.to_string());
-
-        // Convert Vec<String> to JSON string
-        let ppf_zones_config_json = intervention
-            .ppf_zones_config
-            .as_ref()
-            .map(|zones| serde_json::to_string(zones).unwrap_or_default());
-        let ppf_zones_extended_json = intervention
-            .ppf_zones_extended
-            .as_ref()
-            .map(|zones| serde_json::to_string(zones).unwrap_or_default());
-        let final_observations_json = intervention
-            .final_observations
-            .as_ref()
-            .map(|obs| serde_json::to_string(obs).unwrap_or_default());
-        let metadata_json = intervention
-            .metadata
-            .as_ref()
-            .map(|meta| serde_json::to_string(meta).unwrap_or_default());
-        let device_info_json = intervention
-            .device_info
-            .as_ref()
-            .map(|info| serde_json::to_string(info).unwrap_or_default());
-
-        let result = conn.execute(
-            "INSERT INTO interventions (
-                id, task_id, status, vehicle_plate, vehicle_model, vehicle_make, vehicle_year,
-                vehicle_color, vehicle_vin, client_id, client_name, client_email, client_phone,
-                technician_id, technician_name, intervention_type, current_step, completion_percentage,
-                ppf_zones_config, ppf_zones_extended, film_type, film_brand, film_model,
-                scheduled_at, started_at, completed_at, paused_at, estimated_duration, actual_duration,
-                weather_condition, lighting_condition, work_location, temperature_celsius, humidity_percentage,
-                start_location_lat, start_location_lon, start_location_accuracy,
-                end_location_lat, end_location_lon, end_location_accuracy,
-                customer_satisfaction, quality_score, final_observations, customer_signature, customer_comments,
-                metadata, notes, special_instructions, device_info, app_version,
-                synced, last_synced_at, sync_error, created_at, updated_at, created_by, updated_by, task_number
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            params![
-                intervention.id, intervention.task_id, status_str, intervention.vehicle_plate,
-                intervention.vehicle_model, intervention.vehicle_make, intervention.vehicle_year,
-                intervention.vehicle_color, intervention.vehicle_vin, intervention.client_id,
-                intervention.client_name, intervention.client_email, intervention.client_phone,
-                intervention.technician_id, intervention.technician_name, intervention_type_str,
-                intervention.current_step, intervention.completion_percentage,
-                ppf_zones_config_json, ppf_zones_extended_json, film_type_str,
-                intervention.film_brand, intervention.film_model, intervention.scheduled_at.inner(),
-                intervention.started_at.inner(), intervention.completed_at.inner(), intervention.paused_at.inner(),
-                intervention.estimated_duration, intervention.actual_duration,
-                weather_condition_str, lighting_condition_str, work_location_str, intervention.temperature_celsius, intervention.humidity_percentage,
-                intervention.start_location_lat, intervention.start_location_lon, intervention.start_location_accuracy,
-                intervention.end_location_lat, intervention.end_location_lon, intervention.end_location_accuracy,
-                intervention.customer_satisfaction, intervention.quality_score,
-                final_observations_json, intervention.customer_signature, intervention.customer_comments,
-                metadata_json, intervention.notes, intervention.special_instructions,
-                device_info_json, intervention.app_version, intervention.synced,
-                intervention.last_synced_at, intervention.sync_error, intervention.created_at,
-                intervention.updated_at, intervention.created_by, intervention.updated_by, intervention.task_number
-            ],
-        );
+        let result = conn.execute(INSERT_INTERVENTION_SQL, rusqlite::params_from_iter(params));
 
         // Handle unique constraint violation
         match result {
@@ -325,80 +407,9 @@ impl InterventionRepository {
 
     pub fn update_intervention(&self, intervention: &Intervention) -> InterventionResult<()> {
         let conn = self.db.get_connection()?;
-
-        // Convert enums to strings for storage
-        let status_str = intervention.status.to_string();
-        let intervention_type_str = intervention.intervention_type.to_string();
-        let weather_condition_str = intervention
-            .weather_condition
-            .as_ref()
-            .map(|wc| wc.to_string());
-        let lighting_condition_str = intervention
-            .lighting_condition
-            .as_ref()
-            .map(|lc| lc.to_string());
-        let work_location_str = intervention.work_location.as_ref().map(|wl| wl.to_string());
-        let film_type_str = intervention.film_type.as_ref().map(|ft| ft.to_string());
-
-        // Convert Vec<String> to JSON string
-        let ppf_zones_config_json = intervention
-            .ppf_zones_config
-            .as_ref()
-            .map(|zones| serde_json::to_string(zones).unwrap_or_default());
-        let ppf_zones_extended_json = intervention
-            .ppf_zones_extended
-            .as_ref()
-            .map(|zones| serde_json::to_string(zones).unwrap_or_default());
-        let final_observations_json = intervention
-            .final_observations
-            .as_ref()
-            .map(|obs| serde_json::to_string(obs).unwrap_or_default());
-        let metadata_json = intervention
-            .metadata
-            .as_ref()
-            .map(|meta| serde_json::to_string(meta).unwrap_or_default());
-        let device_info_json = intervention
-            .device_info
-            .as_ref()
-            .map(|info| serde_json::to_string(info).unwrap_or_default());
-
-        conn.execute(
-            "UPDATE interventions SET
-                status = ?, vehicle_plate = ?, vehicle_model = ?, vehicle_make = ?, vehicle_year = ?,
-                vehicle_color = ?, vehicle_vin = ?, client_id = ?, client_name = ?, client_email = ?, client_phone = ?,
-                technician_id = ?, technician_name = ?, intervention_type = ?, current_step = ?, completion_percentage = ?,
-                ppf_zones_config = ?, ppf_zones_extended = ?, film_type = ?, film_brand = ?, film_model = ?,
-                scheduled_at = ?, started_at = ?, completed_at = ?, paused_at = ?, estimated_duration = ?, actual_duration = ?,
-                weather_condition = ?, lighting_condition = ?, work_location = ?, temperature_celsius = ?, humidity_percentage = ?,
-                start_location_lat = ?, start_location_lon = ?, start_location_accuracy = ?,
-                end_location_lat = ?, end_location_lon = ?, end_location_accuracy = ?,
-                customer_satisfaction = ?, quality_score = ?, final_observations = ?, customer_signature = ?, customer_comments = ?,
-                metadata = ?, notes = ?, special_instructions = ?, device_info = ?, app_version = ?,
-                synced = ?, last_synced_at = ?, sync_error = ?, updated_at = ?, updated_by = ?
-            WHERE id = ?",
-            params![
-                status_str, intervention.vehicle_plate, intervention.vehicle_model, intervention.vehicle_make, intervention.vehicle_year,
-                intervention.vehicle_color, intervention.vehicle_vin, intervention.client_id,
-                intervention.client_name, intervention.client_email, intervention.client_phone,
-                intervention.technician_id, intervention.technician_name, intervention_type_str,
-                intervention.current_step, intervention.completion_percentage,
-                ppf_zones_config_json, ppf_zones_extended_json, film_type_str,
-                intervention.film_brand, intervention.film_model, intervention.scheduled_at.inner(),
-                intervention.started_at.inner(), intervention.completed_at.inner(), intervention.paused_at.inner(),
-                intervention.estimated_duration, intervention.actual_duration,
-                weather_condition_str, lighting_condition_str, work_location_str,
-                intervention.temperature_celsius, intervention.humidity_percentage,
-                intervention.start_location_lat, intervention.start_location_lon, intervention.start_location_accuracy,
-                intervention.end_location_lat, intervention.end_location_lon, intervention.end_location_accuracy,
-                intervention.customer_satisfaction, intervention.quality_score,
-                final_observations_json, intervention.customer_signature, intervention.customer_comments,
-                metadata_json, intervention.notes, intervention.special_instructions,
-                device_info_json, intervention.app_version, intervention.synced,
-                intervention.last_synced_at, intervention.sync_error, intervention.updated_at, intervention.updated_by,
-                intervention.id
-            ],
-        )?;
-
+        let fields = InterventionDbFields::from_intervention(intervention);
+        let params = update_intervention_params(intervention, &fields);
+        conn.execute(UPDATE_INTERVENTION_SQL, rusqlite::params_from_iter(params))?;
         Ok(())
     }
 
@@ -407,79 +418,9 @@ impl InterventionRepository {
         tx: &Transaction,
         intervention: &Intervention,
     ) -> InterventionResult<()> {
-        // Convert enums to strings for storage
-        let status_str = intervention.status.to_string();
-        let intervention_type_str = intervention.intervention_type.to_string();
-        let weather_condition_str = intervention
-            .weather_condition
-            .as_ref()
-            .map(|wc| wc.to_string());
-        let lighting_condition_str = intervention
-            .lighting_condition
-            .as_ref()
-            .map(|lc| lc.to_string());
-        let work_location_str = intervention.work_location.as_ref().map(|wl| wl.to_string());
-        let film_type_str = intervention.film_type.as_ref().map(|ft| ft.to_string());
-
-        // Convert Vec<String> to JSON string
-        let ppf_zones_config_json = intervention
-            .ppf_zones_config
-            .as_ref()
-            .map(|zones| serde_json::to_string(zones).unwrap_or_default());
-        let ppf_zones_extended_json = intervention
-            .ppf_zones_extended
-            .as_ref()
-            .map(|zones| serde_json::to_string(zones).unwrap_or_default());
-        let final_observations_json = intervention
-            .final_observations
-            .as_ref()
-            .map(|obs| serde_json::to_string(obs).unwrap_or_default());
-        let metadata_json = intervention
-            .metadata
-            .as_ref()
-            .map(|meta| serde_json::to_string(meta).unwrap_or_default());
-        let device_info_json = intervention
-            .device_info
-            .as_ref()
-            .map(|info| serde_json::to_string(info).unwrap_or_default());
-
-        tx.execute(
-            "UPDATE interventions SET
-                status = ?, vehicle_plate = ?, vehicle_model = ?, vehicle_make = ?, vehicle_year = ?,
-                vehicle_color = ?, vehicle_vin = ?, client_id = ?, client_name = ?, client_email = ?, client_phone = ?,
-                technician_id = ?, technician_name = ?, intervention_type = ?, current_step = ?, completion_percentage = ?,
-                ppf_zones_config = ?, ppf_zones_extended = ?, film_type = ?, film_brand = ?, film_model = ?,
-                scheduled_at = ?, started_at = ?, completed_at = ?, paused_at = ?, estimated_duration = ?, actual_duration = ?,
-                weather_condition = ?, lighting_condition = ?, work_location = ?, temperature_celsius = ?, humidity_percentage = ?,
-                start_location_lat = ?, start_location_lon = ?, start_location_accuracy = ?,
-                end_location_lat = ?, end_location_lon = ?, end_location_accuracy = ?,
-                customer_satisfaction = ?, quality_score = ?, final_observations = ?, customer_signature = ?, customer_comments = ?,
-                metadata = ?, notes = ?, special_instructions = ?, device_info = ?, app_version = ?,
-                synced = ?, last_synced_at = ?, sync_error = ?, updated_at = ?, updated_by = ?
-            WHERE id = ?",
-            params![
-                status_str, intervention.vehicle_plate, intervention.vehicle_model, intervention.vehicle_make, intervention.vehicle_year,
-                intervention.vehicle_color, intervention.vehicle_vin, intervention.client_id,
-                intervention.client_name, intervention.client_email, intervention.client_phone,
-                intervention.technician_id, intervention.technician_name, intervention_type_str,
-                intervention.current_step, intervention.completion_percentage,
-                ppf_zones_config_json, ppf_zones_extended_json, film_type_str,
-                intervention.film_brand, intervention.film_model, intervention.scheduled_at.inner(),
-                intervention.started_at.inner(), intervention.completed_at.inner(), intervention.paused_at.inner(),
-                intervention.estimated_duration, intervention.actual_duration,
-                weather_condition_str, lighting_condition_str, work_location_str,
-                intervention.temperature_celsius, intervention.humidity_percentage,
-                intervention.start_location_lat, intervention.start_location_lon, intervention.start_location_accuracy,
-                intervention.end_location_lat, intervention.end_location_lon, intervention.end_location_accuracy,
-                intervention.customer_satisfaction, intervention.quality_score,
-                final_observations_json, intervention.customer_signature, intervention.customer_comments,
-                metadata_json, intervention.notes, intervention.special_instructions,
-                device_info_json, intervention.app_version, intervention.synced,
-                intervention.last_synced_at, intervention.sync_error, intervention.updated_at, intervention.updated_by,
-                intervention.id
-            ],
-        )?;
-
+        let fields = InterventionDbFields::from_intervention(intervention);
+        let params = update_intervention_params(intervention, &fields);
+        tx.execute(UPDATE_INTERVENTION_SQL, rusqlite::params_from_iter(params))?;
         Ok(())
     }
 
@@ -488,48 +429,7 @@ impl InterventionRepository {
         tx: &Transaction,
         step: &InterventionStep,
     ) -> InterventionResult<()> {
-        // Convert enums to strings
-        let step_type_str = step.step_type.to_string();
-        let step_status_str = step.step_status.to_string();
-
-        // Convert JSON fields with error handling
-        let instructions_json = step
-            .instructions
-            .as_ref()
-            .and_then(|i| serde_json::to_string(i).ok());
-        let quality_checkpoints_json = step
-            .quality_checkpoints
-            .as_ref()
-            .and_then(|qc| serde_json::to_string(qc).ok());
-        let step_data_json = step
-            .step_data
-            .as_ref()
-            .and_then(|sd| serde_json::to_string(sd).ok());
-        let collected_data_json = step
-            .collected_data
-            .as_ref()
-            .and_then(|cd| serde_json::to_string(cd).ok());
-        let measurements_json = step
-            .measurements
-            .as_ref()
-            .and_then(|m| serde_json::to_string(m).ok());
-        let observations_json = step
-            .observations
-            .as_ref()
-            .and_then(|obs| serde_json::to_string(obs).ok());
-        let photo_urls_json = step
-            .photo_urls
-            .as_ref()
-            .and_then(|urls| serde_json::to_string(urls).ok());
-        let validation_data_json = step
-            .validation_data
-            .as_ref()
-            .and_then(|vd| serde_json::to_string(vd).ok());
-        let validation_errors_json = step
-            .validation_errors
-            .as_ref()
-            .and_then(|ve| serde_json::to_string(ve).ok());
-
+        let f = StepDbFields::from_step(step);
         let rows_affected = tx.execute(
             "INSERT OR REPLACE INTO intervention_steps (
                 id, intervention_id, step_number, step_name, step_type, step_status,
@@ -541,13 +441,13 @@ impl InterventionRepository {
                 approved_at, rejection_reason, location_lat, location_lon, location_accuracy,
                 created_at, updated_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-params![
-                step.id, step.intervention_id, step.step_number, step.step_name, step_type_str, step_status_str,
-                step.description, instructions_json, quality_checkpoints_json, step.is_mandatory, step.requires_photos,
+            params![
+                step.id, step.intervention_id, step.step_number, step.step_name, f.step_type, f.step_status,
+                step.description, f.instructions_json, f.quality_checkpoints_json, step.is_mandatory, step.requires_photos,
                 step.min_photos_required, step.max_photos_allowed, step.started_at.inner(), step.completed_at.inner(), step.paused_at.inner(),
-                step.duration_seconds, step.estimated_duration_seconds, step_data_json, collected_data_json, measurements_json,
-                observations_json, step.photo_count, step.required_photos_completed, photo_urls_json, validation_data_json,
-                validation_errors_json, step.validation_score, step.requires_supervisor_approval, step.approved_by,
+                step.duration_seconds, step.estimated_duration_seconds, f.step_data_json, f.collected_data_json, f.measurements_json,
+                f.observations_json, step.photo_count, step.required_photos_completed, f.photo_urls_json, f.validation_data_json,
+                f.validation_errors_json, step.validation_score, step.requires_supervisor_approval, step.approved_by,
                 step.approved_at.inner(), step.rejection_reason, step.location_lat, step.location_lon, step.location_accuracy,
                 step.created_at, step.updated_at
             ],
@@ -566,48 +466,7 @@ params![
 
     pub fn save_step(&self, step: &InterventionStep) -> InterventionResult<()> {
         let conn = self.db.get_connection()?;
-
-        // Convert enums to strings
-        let step_type_str = step.step_type.to_string();
-        let step_status_str = step.step_status.to_string();
-
-        // Convert JSON fields with error handling
-        let instructions_json = step
-            .instructions
-            .as_ref()
-            .and_then(|i| serde_json::to_string(i).ok());
-        let quality_checkpoints_json = step
-            .quality_checkpoints
-            .as_ref()
-            .and_then(|qc| serde_json::to_string(qc).ok());
-        let step_data_json = step
-            .step_data
-            .as_ref()
-            .and_then(|sd| serde_json::to_string(sd).ok());
-        let collected_data_json = step
-            .collected_data
-            .as_ref()
-            .and_then(|cd| serde_json::to_string(cd).ok());
-        let measurements_json = step
-            .measurements
-            .as_ref()
-            .and_then(|m| serde_json::to_string(m).ok());
-        let observations_json = step
-            .observations
-            .as_ref()
-            .and_then(|obs| serde_json::to_string(obs).ok());
-        let photo_urls_json = step
-            .photo_urls
-            .as_ref()
-            .and_then(|urls| serde_json::to_string(urls).ok());
-        let validation_data_json = step
-            .validation_data
-            .as_ref()
-            .and_then(|vd| serde_json::to_string(vd).ok());
-        let validation_errors_json = step
-            .validation_errors
-            .as_ref()
-            .and_then(|ve| serde_json::to_string(ve).ok());
+        let f = StepDbFields::from_step(step);
 
         let rows_affected = conn.execute(
             "INSERT OR REPLACE INTO intervention_steps (
@@ -621,13 +480,13 @@ params![
                 device_timestamp, server_timestamp, title, notes, synced, last_synced_at,
                 created_at, updated_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-params![
-                step.id, step.intervention_id, step.step_number, step.step_name, step_type_str, step_status_str,
-                step.description, instructions_json, quality_checkpoints_json, step.is_mandatory, step.requires_photos,
+            params![
+                step.id, step.intervention_id, step.step_number, step.step_name, f.step_type, f.step_status,
+                step.description, f.instructions_json, f.quality_checkpoints_json, step.is_mandatory, step.requires_photos,
                 step.min_photos_required, step.max_photos_allowed, step.started_at.inner(), step.completed_at.inner(), step.paused_at.inner(),
-                step.duration_seconds, step.estimated_duration_seconds, step_data_json, collected_data_json, measurements_json,
-                observations_json, step.photo_count, step.required_photos_completed, photo_urls_json, validation_data_json,
-                validation_errors_json, step.validation_score, step.requires_supervisor_approval, step.approved_by,
+                step.duration_seconds, step.estimated_duration_seconds, f.step_data_json, f.collected_data_json, f.measurements_json,
+                f.observations_json, step.photo_count, step.required_photos_completed, f.photo_urls_json, f.validation_data_json,
+                f.validation_errors_json, step.validation_score, step.requires_supervisor_approval, step.approved_by,
                 step.approved_at.inner(), step.rejection_reason, step.location_lat, step.location_lon, step.location_accuracy,
                 step.device_timestamp.inner(), step.server_timestamp.inner(), step.title, step.notes, step.synced, step.last_synced_at.inner(),
                 step.created_at, step.updated_at
