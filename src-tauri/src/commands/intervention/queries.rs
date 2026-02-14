@@ -18,17 +18,25 @@ fn default_quality_check_passed() -> bool {
     true
 }
 
+/// Authorization rule for intervention ownership checks.
+///
+/// Admins and supervisors can access any intervention (including unassigned ones),
+/// while technicians can only access interventions assigned to their user ID.
 fn can_access_intervention(
     technician_id: Option<&str>,
     session: &crate::models::auth::UserSession,
 ) -> bool {
-    technician_id == Some(session.user_id.as_str())
-        || matches!(
-            session.role,
-            crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
-        )
+    let is_privileged = matches!(
+        session.role,
+        crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+    );
+    is_privileged || technician_id.is_some_and(|id| id == session.user_id.as_str())
 }
 
+/// Validates intervention existence and enforces access control for the current session.
+///
+/// Returns `Ok(())` when the intervention exists and the current session is authorized,
+/// otherwise returns the corresponding `AppError` preserving the command contract.
 fn ensure_intervention_access(
     state: &AppState<'_>,
     intervention_id: &str,
@@ -459,5 +467,29 @@ mod tests {
     fn allows_supervisor_access() {
         let session = session_with_role(UserRole::Supervisor, "sup-1");
         assert!(can_access_intervention(Some("tech-2"), &session));
+    }
+
+    #[test]
+    fn allows_admin_access() {
+        let session = session_with_role(UserRole::Admin, "admin-1");
+        assert!(can_access_intervention(Some("tech-2"), &session));
+    }
+
+    #[test]
+    fn denies_unassigned_intervention_for_technician() {
+        let session = session_with_role(UserRole::Technician, "tech-1");
+        assert!(!can_access_intervention(None, &session));
+    }
+
+    #[test]
+    fn allows_admin_access_to_unassigned_intervention() {
+        let session = session_with_role(UserRole::Admin, "admin-1");
+        assert!(can_access_intervention(None, &session));
+    }
+
+    #[test]
+    fn allows_supervisor_access_to_unassigned_intervention() {
+        let session = session_with_role(UserRole::Supervisor, "sup-1");
+        assert!(can_access_intervention(None, &session));
     }
 }
