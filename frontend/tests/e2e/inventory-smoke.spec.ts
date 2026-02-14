@@ -114,10 +114,6 @@ test.describe('Inventory Smoke Tests — Persistence Verification', () => {
     // Look for a stock adjust button (ArrowUpDown icon button)
     const adjustBtn = page.locator('button[title="Ajuster le stock"]').first();
     if (await adjustBtn.isVisible({ timeout: 5000 })) {
-      // Record the current stock value before adjustment
-      const stockCell = page.locator('table tbody tr').first().locator('td').nth(3);
-      await stockCell.textContent();
-
       await adjustBtn.click();
 
       // Fill in the stock adjustment dialog
@@ -178,8 +174,8 @@ test.describe('Inventory Smoke Tests — Persistence Verification', () => {
     // Clear search
     await searchInput.fill('');
 
-    // Verify materials appear again (if any exist)
-    await page.waitForTimeout(500);
+    // Wait for the list to reload after clearing search
+    await page.waitForLoadState('networkidle');
   });
 
   test('no "coming soon" or placeholder text visible', async ({ page }) => {
@@ -195,7 +191,7 @@ test.describe('Inventory Smoke Tests — Persistence Verification', () => {
       const tabBtn = page.locator(`[role="tab"]:has-text("${tab}")`);
       if (await tabBtn.isVisible()) {
         await tabBtn.click();
-        await page.waitForTimeout(1000);
+        await page.waitForLoadState('networkidle');
 
         // Verify no "coming soon" text
         await expect(page.locator('text=coming soon')).not.toBeVisible({ timeout: 3000 });
