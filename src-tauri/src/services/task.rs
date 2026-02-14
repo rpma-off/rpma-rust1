@@ -454,20 +454,15 @@ impl TaskService {
         reason: Option<&str>,
     ) -> AppResult<Task> {
         use crate::commands::AppError;
-        use crate::db::FromSqlRow;
+        use crate::repositories::task_repository::TaskRepository;
 
-        let conn = self
-            .crud
-            .db
-            .get_connection()
-            .map_err(|e| AppError::Database(format!("Database connection failed: {}", e)))?;
+        let repo = TaskRepository::new(self.crud.db.clone());
 
-        // Get current task status
-        let current_status: String = conn
-            .query_row("SELECT status FROM tasks WHERE id = ?1", [task_id], |row| {
-                row.get(0)
-            })
-            .map_err(|e| AppError::NotFound(format!("Task not found: {}", e)))?;
+        // Get current task status from repository
+        let current_status = repo.get_task_status(task_id).map_err(|e| match e {
+            crate::repositories::base::RepoError::NotFound(msg) => AppError::NotFound(msg),
+            other => AppError::Database(other.to_string()),
+        })?;
 
         let current = TaskStatus::from_str(&current_status).ok_or_else(|| {
             AppError::Validation(format!("Unknown current status: {}", current_status))
@@ -480,40 +475,9 @@ impl TaskService {
         validate_status_transition(&current, &new)
             .map_err(|msg| AppError::TaskInvalidTransition(msg))?;
 
-        let now = chrono::Utc::now().timestamp();
-
-        // Update status and updated_at in a single transaction
-        let tx = conn
-            .unchecked_transaction()
-            .map_err(|e| AppError::Database(format!("Failed to start transaction: {}", e)))?;
-
-        tx.execute(
-            "UPDATE tasks SET status = ?1, updated_at = ?2 WHERE id = ?3",
-            rusqlite::params![new_status, now, task_id],
-        )
-        .map_err(|e| AppError::Database(format!("Failed to update status: {}", e)))?;
-
-        // Log transition in history
-        tx.execute(
-            "INSERT OR IGNORE INTO task_history (task_id, old_status, new_status, reason, changed_at)
-             VALUES (?1, ?2, ?3, ?4, ?5)",
-            rusqlite::params![task_id, current_status, new_status, reason, now],
-        )
-        .ok();
-
-        tx.commit()
-            .map_err(|e| AppError::Database(format!("Failed to commit transaction: {}", e)))?;
-
-        // Fetch updated task
-        let updated_task: Task = conn
-            .query_row(
-                "SELECT * FROM tasks WHERE id = ?1",
-                [task_id],
-                Task::from_row,
-            )
-            .map_err(|e| AppError::Database(format!("Failed to fetch updated task: {}", e)))?;
-
-        Ok(updated_task)
+        // Delegate the database update to the repository
+        repo.update_status_with_history(task_id, &current_status, new_status, reason)
+            .map_err(|e| AppError::Database(e.to_string()))
     }
 
     /// Get simplified status distribution for all tasks
@@ -523,21 +487,13 @@ impl TaskService {
     pub fn get_status_distribution(&self) -> AppResult<crate::models::status::StatusDistribution> {
         use crate::commands::AppError;
         use crate::models::status::StatusDistribution;
+        use crate::repositories::task_repository::TaskRepository;
 
-        let conn = self
-            .crud
-            .db
-            .get_connection()
-            .map_err(|e| AppError::Database(format!("Database connection failed: {}", e)))?;
+        let repo = TaskRepository::new(self.crud.db.clone());
 
-        let mut stmt = conn
-            .prepare(
-                "SELECT status, COUNT(*) as count
-                 FROM tasks
-                 WHERE deleted_at IS NULL
-                 GROUP BY status",
-            )
-            .map_err(|e| AppError::Database(format!("Query preparation failed: {}", e)))?;
+        let status_counts = repo
+            .get_status_counts()
+            .map_err(|e| AppError::Database(e.to_string()))?;
 
         let mut distribution = StatusDistribution {
             quote: 0,
@@ -548,15 +504,7 @@ impl TaskService {
             cancelled: 0,
         };
 
-        let rows = stmt
-            .query_map([], |row| {
-                Ok((row.get::<_, String>(0)?, row.get::<_, i32>(1)?))
-            })
-            .map_err(|e| AppError::Database(format!("Query execution failed: {}", e)))?;
-
-        for row in rows {
-            let (status, count) =
-                row.map_err(|e| AppError::Database(format!("Row mapping failed: {}", e)))?;
+        for (status, count) in status_counts {
             match status.as_str() {
                 "draft" | "pending" => distribution.quote += count,
                 "scheduled" | "assigned" | "overdue" => distribution.scheduled += count,

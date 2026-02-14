@@ -722,4 +722,148 @@ params![
 
         Ok((interventions, total))
     }
+
+    /// Reset task workflow state for a failed intervention start
+    pub fn reset_task_workflow_state(&self, task_id: &str) -> Result<(), String> {
+        let conn = self.db.get_connection()?;
+        conn.execute(
+            "UPDATE tasks SET workflow_id = NULL, current_workflow_step_id = NULL, status = 'draft', started_at = NULL WHERE id = ? AND workflow_id IS NOT NULL",
+            rusqlite::params![task_id]
+        ).map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
+    /// Delete orphaned intervention and steps for a specific task
+    pub fn delete_orphaned_for_task(&self, task_id: &str) -> Result<(), String> {
+        let conn = self.db.get_connection()?;
+        conn.execute(
+            "DELETE FROM intervention_steps WHERE intervention_id IN (SELECT id FROM interventions WHERE task_id = ?)",
+            rusqlite::params![task_id]
+        ).map_err(|e| e.to_string())?;
+        conn.execute(
+            "DELETE FROM interventions WHERE task_id = ?",
+            rusqlite::params![task_id],
+        )
+        .map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
+    /// Count orphaned interventions (those without valid task references)
+    pub fn count_orphaned(&self) -> InterventionResult<i64> {
+        let conn = self
+            .db
+            .get_connection()
+            .map_err(|e| InterventionError::Database(format!("Failed to get connection: {}", e)))?;
+
+        conn.query_row(
+            "SELECT COUNT(*) FROM interventions i 
+             LEFT JOIN tasks t ON i.task_id = t.id 
+             WHERE t.id IS NULL OR t.deleted_at IS NOT NULL",
+            [],
+            |row| row.get(0),
+        )
+        .map_err(|e| {
+            InterventionError::Database(format!("Failed to count orphaned interventions: {}", e))
+        })
+    }
+
+    /// Delete all orphaned interventions and their steps
+    pub fn delete_orphaned(&self) -> InterventionResult<u32> {
+        let conn = self
+            .db
+            .get_connection()
+            .map_err(|e| InterventionError::Database(format!("Failed to get connection: {}", e)))?;
+
+        let orphaned_count = self.count_orphaned()?;
+        if orphaned_count > 0 {
+            conn.execute(
+                "DELETE FROM intervention_steps WHERE intervention_id IN (
+                    SELECT i.id FROM interventions i 
+                    LEFT JOIN tasks t ON i.task_id = t.id 
+                    WHERE t.id IS NULL OR t.deleted_at IS NOT NULL
+                )",
+                [],
+            )
+            .map_err(|e| {
+                InterventionError::Database(format!("Failed to delete orphaned steps: {}", e))
+            })?;
+
+            conn.execute(
+                "DELETE FROM interventions WHERE id IN (
+                    SELECT i.id FROM interventions i 
+                    LEFT JOIN tasks t ON i.task_id = t.id 
+                    WHERE t.id IS NULL OR t.deleted_at IS NOT NULL
+                )",
+                [],
+            )
+            .map_err(|e| {
+                InterventionError::Database(format!(
+                    "Failed to delete orphaned interventions: {}",
+                    e
+                ))
+            })?;
+        }
+
+        Ok(orphaned_count as u32)
+    }
+
+    /// Archive old completed interventions
+    pub fn archive_old(&self, days_old: i32) -> InterventionResult<u32> {
+        let conn = self
+            .db
+            .get_connection()
+            .map_err(|e| InterventionError::Database(format!("Failed to get connection: {}", e)))?;
+
+        let cutoff_timestamp =
+            chrono::Utc::now().timestamp_millis() - (days_old as i64 * 24 * 60 * 60 * 1000);
+
+        let archived_count = conn
+            .execute(
+                "UPDATE interventions 
+             SET status = 'archived', updated_at = ?
+             WHERE status = 'completed' 
+             AND completed_at < ?
+             AND status != 'archived'",
+                rusqlite::params![chrono::Utc::now().timestamp_millis(), cutoff_timestamp],
+            )
+            .map_err(|e| {
+                InterventionError::Database(format!("Failed to archive old interventions: {}", e))
+            })?;
+
+        Ok(archived_count as u32)
+    }
+
+    /// Count orphaned steps (steps without valid intervention references)
+    pub fn count_orphaned_steps(&self) -> InterventionResult<i64> {
+        let conn = self
+            .db
+            .get_connection()
+            .map_err(|e| InterventionError::Database(format!("Failed to get connection: {}", e)))?;
+
+        conn.query_row(
+            "SELECT COUNT(*) FROM intervention_steps s 
+             LEFT JOIN interventions i ON s.intervention_id = i.id 
+             WHERE i.id IS NULL",
+            [],
+            |row| row.get(0),
+        )
+        .map_err(|e| InterventionError::Database(format!("Failed to count orphaned steps: {}", e)))
+    }
+
+    /// Count archived interventions
+    pub fn count_archived(&self) -> InterventionResult<i64> {
+        let conn = self
+            .db
+            .get_connection()
+            .map_err(|e| InterventionError::Database(format!("Failed to get connection: {}", e)))?;
+
+        conn.query_row(
+            "SELECT COUNT(*) FROM interventions WHERE status = 'archived'",
+            [],
+            |row| row.get(0),
+        )
+        .map_err(|e| {
+            InterventionError::Database(format!("Failed to count archived interventions: {}", e))
+        })
+    }
 }

@@ -2,7 +2,7 @@
 //!
 //! Provides consistent database access patterns for Task entities.
 
-use crate::db::{Database, QueryBuilder};
+use crate::db::{Database, FromSqlRow, QueryBuilder};
 use crate::models::task::{
     PaginationInfo, SortOrder, Task, TaskListResponse, TaskQuery, TaskWithDetails,
 };
@@ -56,6 +56,96 @@ impl TaskRepository {
             pagination,
             statistics: None,
         })
+    }
+
+    /// Get the current status of a task by ID
+    pub fn get_task_status(&self, task_id: &str) -> RepoResult<String> {
+        let conn = self
+            .db
+            .get_connection()
+            .map_err(|e| RepoError::Database(format!("Database connection failed: {}", e)))?;
+
+        conn.query_row("SELECT status FROM tasks WHERE id = ?1", [task_id], |row| {
+            row.get(0)
+        })
+        .map_err(|e| RepoError::NotFound(format!("Task not found: {}", e)))
+    }
+
+    /// Update task status and log transition in a single transaction
+    pub fn update_status_with_history(
+        &self,
+        task_id: &str,
+        old_status: &str,
+        new_status: &str,
+        reason: Option<&str>,
+    ) -> RepoResult<Task> {
+        let conn = self
+            .db
+            .get_connection()
+            .map_err(|e| RepoError::Database(format!("Database connection failed: {}", e)))?;
+
+        let now = chrono::Utc::now().timestamp();
+
+        let tx = conn
+            .unchecked_transaction()
+            .map_err(|e| RepoError::Database(format!("Failed to start transaction: {}", e)))?;
+
+        tx.execute(
+            "UPDATE tasks SET status = ?1, updated_at = ?2 WHERE id = ?3",
+            rusqlite::params![new_status, now, task_id],
+        )
+        .map_err(|e| RepoError::Database(format!("Failed to update status: {}", e)))?;
+
+        tx.execute(
+            "INSERT OR IGNORE INTO task_history (task_id, old_status, new_status, reason, changed_at)
+             VALUES (?1, ?2, ?3, ?4, ?5)",
+            rusqlite::params![task_id, old_status, new_status, reason, now],
+        )
+        .ok();
+
+        tx.commit()
+            .map_err(|e| RepoError::Database(format!("Failed to commit transaction: {}", e)))?;
+
+        let updated_task: Task = conn
+            .query_row(
+                "SELECT * FROM tasks WHERE id = ?1",
+                [task_id],
+                Task::from_row,
+            )
+            .map_err(|e| RepoError::Database(format!("Failed to fetch updated task: {}", e)))?;
+
+        Ok(updated_task)
+    }
+
+    /// Get status distribution counts for all non-deleted tasks
+    pub fn get_status_counts(&self) -> RepoResult<Vec<(String, i32)>> {
+        let conn = self
+            .db
+            .get_connection()
+            .map_err(|e| RepoError::Database(format!("Database connection failed: {}", e)))?;
+
+        let mut stmt = conn
+            .prepare(
+                "SELECT status, COUNT(*) as count
+                 FROM tasks
+                 WHERE deleted_at IS NULL
+                 GROUP BY status",
+            )
+            .map_err(|e| RepoError::Database(format!("Query preparation failed: {}", e)))?;
+
+        let rows = stmt
+            .query_map([], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, i32>(1)?))
+            })
+            .map_err(|e| RepoError::Database(format!("Query execution failed: {}", e)))?;
+
+        let mut result = Vec::new();
+        for row in rows {
+            result
+                .push(row.map_err(|e| RepoError::Database(format!("Row mapping failed: {}", e)))?);
+        }
+
+        Ok(result)
     }
 
     /// Build SQL query for task retrieval

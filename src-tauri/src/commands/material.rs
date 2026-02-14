@@ -472,8 +472,10 @@ pub async fn material_get_transaction_history(
     material_id: String,
     limit: Option<i32>,
     offset: Option<i32>,
-) -> Result<ApiResponse<Vec<crate::models::material::InventoryTransaction>>, crate::commands::AppError>
-{
+) -> Result<
+    ApiResponse<Vec<crate::models::material::InventoryTransaction>>,
+    crate::commands::AppError,
+> {
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     let service = state.material_service.clone();
