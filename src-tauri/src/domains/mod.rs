@@ -29,4 +29,8 @@
 //! re-exports that make the dependency graph explicit and discoverable.
 
 pub mod auth;
+pub mod clients;
+pub mod interventions;
+pub mod inventory;
+pub mod reports;
 pub mod tasks;
