@@ -28,9 +28,14 @@
 //! Domain modules do not introduce new code; they provide organizational
 //! re-exports that make the dependency graph explicit and discoverable.
 
+pub mod audit;
 pub mod auth;
+pub mod calendar;
 pub mod clients;
 pub mod interventions;
 pub mod inventory;
 pub mod reports;
+pub mod settings;
+pub mod sync;
 pub mod tasks;
+pub mod users;
