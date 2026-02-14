@@ -1,9 +1,8 @@
 //! System information commands
 
-use crate::db::Database;
+use crate::commands::AppState;
 use serde::Serialize;
 use std::process::Command;
-use tauri::State;
 
 #[derive(Serialize)]
 pub struct DeviceInfo {
@@ -169,8 +168,8 @@ fn get_device_id() -> Result<String, String> {
 }
 
 #[tauri::command]
-pub async fn diagnose_database(pool: State<'_, Database>) -> Result<serde_json::Value, String> {
-    let pool = pool.pool().clone();
+pub async fn diagnose_database(state: AppState<'_>) -> Result<serde_json::Value, String> {
+    let pool = state.db.pool().clone();
 
     tokio::task::spawn_blocking(move || {
         crate::services::system::SystemService::diagnose_database(&pool)
@@ -180,8 +179,8 @@ pub async fn diagnose_database(pool: State<'_, Database>) -> Result<serde_json::
 }
 
 #[tauri::command]
-pub async fn force_wal_checkpoint(pool: State<'_, Database>) -> Result<String, String> {
-    let pool = pool.pool().clone();
+pub async fn force_wal_checkpoint(state: AppState<'_>) -> Result<String, String> {
+    let pool = state.db.pool().clone();
 
     tokio::task::spawn_blocking(move || {
         crate::services::system::SystemService::force_wal_checkpoint(&pool)
@@ -192,8 +191,8 @@ pub async fn force_wal_checkpoint(pool: State<'_, Database>) -> Result<String, S
 
 /// Health check command
 #[tauri::command]
-pub async fn health_check(pool: State<'_, Database>) -> Result<String, String> {
-    let pool = pool.pool().clone();
+pub async fn health_check(state: AppState<'_>) -> Result<String, String> {
+    let pool = state.db.pool().clone();
 
     tokio::task::spawn_blocking(move || crate::services::system::SystemService::health_check(&pool))
         .await
@@ -202,8 +201,8 @@ pub async fn health_check(pool: State<'_, Database>) -> Result<String, String> {
 
 /// Get database statistics
 #[tauri::command]
-pub async fn get_database_stats(pool: State<'_, Database>) -> Result<serde_json::Value, String> {
-    let pool = pool.pool().clone();
+pub async fn get_database_stats(state: AppState<'_>) -> Result<serde_json::Value, String> {
+    let pool = state.db.pool().clone();
 
     tokio::task::spawn_blocking(move || {
         crate::services::system::SystemService::get_database_stats(&pool)

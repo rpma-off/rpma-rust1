@@ -506,7 +506,7 @@ export function SystemSettingsTab() {
               <CardContent>
                 {businessHours ? (
                 <div className="space-y-4">
-                    {Object.entries(businessHours).map(([day, hours]) => (
+                    {Object.entries(businessHours.schedule).map(([day, hours]) => (
                       <motion.div
                         key={day}
                         initial={{ opacity: 0, x: -10 }}
@@ -522,16 +522,22 @@ export function SystemSettingsTab() {
                           <div className="flex items-center gap-2">
                             <Timer className="h-4 w-4 text-gray-500" />
                         <span className="text-sm text-gray-600">
-                              {hours[1].enabled ? `${hours[1].start} - ${hours[1].end}` : 'Fermé'}
+                              {hours.enabled ? `${hours.start} - ${hours.end}` : 'Fermé'}
                         </span>
                           </div>
                           <Switch
-                            checked={hours[1].enabled}
+                            checked={hours.enabled}
                               onCheckedChange={(enabled) => {
-                                setBusinessHours(prev => ({
-                                  ...prev!,
-                                  [hours[0]]: { ...hours[1], enabled }
-                                }));
+                                setBusinessHours(prev => {
+                                  if (!prev) return prev;
+                                  return {
+                                    ...prev,
+                                    schedule: {
+                                      ...prev.schedule,
+                                      [day]: { ...hours, enabled }
+                                    }
+                                  };
+                                });
                                 setHasChanges(true);
                               }}
                             />

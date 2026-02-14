@@ -1,23 +1,15 @@
-app-index.tsx:25  13/02/2026, 22:36:57 [CORR:req-mllenos7-0002-8r8ie8] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: ae3557a6-8a56-4f66-8063-455eaa140120 | data: {"message":"Uncaught Error: React.Children.only expected to receive a single React element child.","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react/cjs/react.development.js","lineno":2070,"colno":5,"error":{}} Object
+app-index.tsx:25  14/02/2026, 00:53:10 [CORR:req-mlljmgq1-0002-dvhpuh] [FRONTEND] [API] [ERROR] IPC call error: health_check | user_id: ae3557a6-8a56-4f66-8063-455eaa140120 | error: Error: state not managed for field `pool` on command `health_check`. You must call `.manage()` before using this command Object
 window.console.error @ app-index.tsx:25
-app-index.tsx:25  [13/02/2026, 22:36:57] ERROR [system] system | Data: "Uncaught error" Object
+app-index.tsx:25  14/02/2026, 00:53:10 [CORR:req-mlljmgq1-0002-dvhpuh] [FRONTEND] [API] [ERROR] IPC call error: health_check | user_id: ae3557a6-8a56-4f66-8063-455eaa140120 | error: Error: state not managed for field `pool` on command `health_check`. You must call `.manage()` before using this command Object
 window.console.error @ app-index.tsx:25
-app-index.tsx:25  Warning: Cannot update a component (`HotReload`) while rendering a different component (`Slot.SlotClone`). To locate the bad setState() call inside `Slot.SlotClone`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render
-    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@radix-ui/react-slot/dist/index.mjs:56:11)
-    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@radix-ui/react-slot/dist/index.mjs:29:11)
-    at _c (webpack-internal:///(app-pages-browser)/./src/components/ui/button.tsx:45:11)
-    at label
-    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@radix-ui/react-label/node_modules/@radix-ui/react-primitive/dist/index.mjs:38:13)
-    at _c
-    at Label (webpack-internal:///(app-pages-browser)/./src/components/ui/label.tsx:15:11)
-    at div
-    at div
-    at div
-    at _c8 (webpack-internal:///(app-pages-browser)/./src/components/ui/card.tsx:74:11)
-    at div
-    at _c (webpack-internal:///(app-pages-browser)/./src/components/ui/card.tsx:18:11)
-    at div
-    at ProfileSettingsTab (webpack-internal:///(app-pages-browser)/./src/components/settings/ProfileSettingsTab.tsx:53:11)
+app-index.tsx:25  14/02/2026, 00:53:10 [CORR:req-mlljmgq1-0002-dvhpuh] [FRONTEND] [SYSTEM] [ERROR] System status check failed | user_id: ae3557a6-8a56-4f66-8063-455eaa140120 | data: {"data":{"error":"state not managed for field `pool` on command `health_check`. You must call `.manage()` before using this command"}} Object
+window.console.error @ app-index.tsx:25
+app-index.tsx:25  14/02/2026, 00:53:10 [CORR:req-mlljmgq1-0002-dvhpuh] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: ae3557a6-8a56-4f66-8063-455eaa140120 | data: {"message":"Uncaught TypeError: Cannot read properties of undefined (reading 'enabled')","filename":"webpack-internal:///(app-pages-browser)/./src/app/configuration/components/SystemSettingsTab.tsx","lineno":1044,"colno":100,"error":{}} Object
+window.console.error @ app-index.tsx:25
+app-index.tsx:25  [14/02/2026, 00:53:10] ERROR [system] system | Data: "Uncaught error" Object
+window.console.error @ app-index.tsx:25
+app-index.tsx:25  Warning: Cannot update a component (`HotReload`) while rendering a different component (`SystemSettingsTab`). To locate the bad setState() call inside `SystemSettingsTab`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render
+    at SystemSettingsTab (webpack-internal:///(app-pages-browser)/./src/app/configuration/components/SystemSettingsTab.tsx:152:96)
     at Suspense
     at LoadableComponent
     at Suspense
@@ -37,7 +29,7 @@ app-index.tsx:25  Warning: Cannot update a component (`HotReload`) while renderi
     at _c (webpack-internal:///(app-pages-browser)/./src/components/ui/card.tsx:18:11)
     at div
     at PageShell (webpack-internal:///(app-pages-browser)/./src/components/layout/PageShell.tsx:13:11)
-    at SettingsPage (webpack-internal:///(app-pages-browser)/./src/app/settings/page.tsx:226:89)
+    at ConfigurationPage (webpack-internal:///(app-pages-browser)/./src/app/configuration/page.tsx:184:86)
     at ClientPageRoot (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/client-page.js:14:11)
     at InnerLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:243:11)
     at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
@@ -76,9 +68,9 @@ app-index.tsx:25  Warning: Cannot update a component (`HotReload`) while renderi
     at AuthProvider (webpack-internal:///(app-pages-browser)/./src/contexts/AuthContext.tsx:29:11)
     at QueryClientProvider (webpack-internal:///(app-pages-browser)/./node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js:27:11)
     at Providers (webpack-internal:///(app-pages-browser)/./src/components/providers.tsx:23:11)
-    at GlobalErrorWrapper (webpack-internal:///(app-pages-browser)/./src/error-boundaries/GlobalErrorBoundary.tsx:625:9)
+    at GlobalErrorWrapper (webpack-internal:///(app-pages-browser)/./src/error-boundaries/GlobalErrorBoundary.tsx:623:9)
     at BaseErrorBoundary (webpack-internal:///(app-pages-browser)/./src/error-boundaries/BaseErrorBoundary.tsx:402:9)
-    at GlobalErrorBoundary (webpack-internal:///(app-pages-browser)/./src/error-boundaries/GlobalErrorBoundary.tsx:499:11)
+    at GlobalErrorBoundary (webpack-internal:///(app-pages-browser)/./src/error-boundaries/GlobalErrorBoundary.tsx:497:11)
     at div
     at RootClientLayout (webpack-internal:///(app-pages-browser)/./src/app/RootClientLayout.tsx:217:11)
     at body
@@ -98,87 +90,13 @@ app-index.tsx:25  Warning: Cannot update a component (`HotReload`) while renderi
     at ServerRoot (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:112:27)
     at Root (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:117:11)
 window.console.error @ app-index.tsx:25
-react.development.js:2069  Uncaught Error: React.Children.only expected to receive a single React element child.
-    at Object.onlyChild [as only] (react.development.js:2069:1)
-    at eval (index.mjs:56:63)
+SystemSettingsTab.tsx:525  Uncaught TypeError: Cannot read properties of undefined (reading 'enabled')
+    at eval (SystemSettingsTab.tsx:525:41)
+    at Array.map (<anonymous>)
+    at SystemSettingsTab (SystemSettingsTab.tsx:509:52)
     at renderWithHooks (react-dom.development.js:11121:1)
-    at updateForwardRef (react-dom.development.js:15854:1)
-    at beginWork$1 (react-dom.development.js:18521:1)
-    at HTMLUnknownElement.callCallback (react-dom.development.js:20565:1)
-    at Object.invokeGuardedCallbackImpl (react-dom.development.js:20614:1)
-    at invokeGuardedCallback (react-dom.development.js:20689:1)
-    at beginWork (react-dom.development.js:26949:1)
-    at performUnitOfWork (react-dom.development.js:25748:1)
-    at workLoopConcurrent (react-dom.development.js:25734:1)
-    at renderRootConcurrent (react-dom.development.js:25690:1)
-    at performConcurrentWorkOnRoot (react-dom.development.js:24504:1)
-    at workLoop (scheduler.development.js:256:1)
-    at flushWork (scheduler.development.js:225:1)
-    at MessagePort.performWorkUntilDeadline (scheduler.development.js:534:1)
-app-index.tsx:25  13/02/2026, 22:36:57 [CORR:req-mllenos7-0002-8r8ie8] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: ae3557a6-8a56-4f66-8063-455eaa140120 | data: {"message":"Uncaught Error: React.Children.only expected to receive a single React element child.","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js","lineno":57,"colno":9,"error":{}} Object
-window.console.error @ app-index.tsx:25
-app-index.tsx:25  [13/02/2026, 22:36:57] ERROR [system] system | Data: "Uncaught error" Object
-window.console.error @ app-index.tsx:25
-redirect-boundary.tsx:59  Uncaught Error: React.Children.only expected to receive a single React element child.
-    at Object.onlyChild [as only] (react.development.js:2069:1)
-    at eval (index.mjs:56:63)
-    at renderWithHooks (react-dom.development.js:11121:1)
-    at updateForwardRef (react-dom.development.js:15854:1)
-    at beginWork$1 (react-dom.development.js:18521:1)
-    at beginWork (react-dom.development.js:26927:1)
-    at performUnitOfWork (react-dom.development.js:25748:1)
-    at workLoopConcurrent (react-dom.development.js:25734:1)
-    at renderRootConcurrent (react-dom.development.js:25690:1)
-    at performConcurrentWorkOnRoot (react-dom.development.js:24504:1)
-    at workLoop (scheduler.development.js:256:1)
-    at flushWork (scheduler.development.js:225:1)
-    at MessagePort.performWorkUntilDeadline (scheduler.development.js:534:1)
-app-index.tsx:25  13/02/2026, 22:36:57 [CORR:req-mllenos7-0002-8r8ie8] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: ae3557a6-8a56-4f66-8063-455eaa140120 | data: {"message":"Uncaught Error: React.Children.only expected to receive a single React element child.","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js","lineno":57,"colno":9,"error":{}} Object
-window.console.error @ app-index.tsx:25
-app-index.tsx:25  [13/02/2026, 22:36:57] ERROR [system] system | Data: "Uncaught error" Object
-window.console.error @ app-index.tsx:25
-redirect-boundary.tsx:59  Uncaught Error: React.Children.only expected to receive a single React element child.
-    at Object.onlyChild [as only] (react.development.js:2069:1)
-    at eval (index.mjs:56:63)
-    at renderWithHooks (react-dom.development.js:11121:1)
-    at updateForwardRef (react-dom.development.js:15854:1)
-    at beginWork$1 (react-dom.development.js:18521:1)
-    at beginWork (react-dom.development.js:26927:1)
-    at performUnitOfWork (react-dom.development.js:25748:1)
-    at workLoopConcurrent (react-dom.development.js:25734:1)
-    at renderRootConcurrent (react-dom.development.js:25690:1)
-    at performConcurrentWorkOnRoot (react-dom.development.js:24504:1)
-    at workLoop (scheduler.development.js:256:1)
-    at flushWork (scheduler.development.js:225:1)
-    at MessagePort.performWorkUntilDeadline (scheduler.development.js:534:1)
-app-index.tsx:25  13/02/2026, 22:36:57 [CORR:req-mllenos7-0002-8r8ie8] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: ae3557a6-8a56-4f66-8063-455eaa140120 | data: {"message":"Uncaught Error: React.Children.only expected to receive a single React element child.","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js","lineno":37,"colno":9,"error":{}} Object
-window.console.error @ app-index.tsx:25
-app-index.tsx:25  [13/02/2026, 22:36:57] ERROR [system] system | Data: "Uncaught error" Object
-window.console.error @ app-index.tsx:25
-not-found-boundary.tsx:69  Uncaught Error: React.Children.only expected to receive a single React element child.
-    at Object.onlyChild [as only] (react.development.js:2069:1)
-    at eval (index.mjs:56:63)
-    at renderWithHooks (react-dom.development.js:11121:1)
-    at updateForwardRef (react-dom.development.js:15854:1)
-    at beginWork$1 (react-dom.development.js:18521:1)
-    at beginWork (react-dom.development.js:26927:1)
-    at performUnitOfWork (react-dom.development.js:25748:1)
-    at workLoopConcurrent (react-dom.development.js:25734:1)
-    at renderRootConcurrent (react-dom.development.js:25690:1)
-    at performConcurrentWorkOnRoot (react-dom.development.js:24504:1)
-    at workLoop (scheduler.development.js:256:1)
-    at flushWork (scheduler.development.js:225:1)
-    at MessagePort.performWorkUntilDeadline (scheduler.development.js:534:1)
-app-index.tsx:25  13/02/2026, 22:36:57 [CORR:req-mllenos7-0002-8r8ie8] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: ae3557a6-8a56-4f66-8063-455eaa140120 | data: {"message":"Uncaught Error: React.Children.only expected to receive a single React element child.","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react/cjs/react.development.js","lineno":2070,"colno":5,"error":{}} Object
-window.console.error @ app-index.tsx:25
-app-index.tsx:25  [13/02/2026, 22:36:57] ERROR [system] system | Data: "Uncaught error" Object
-window.console.error @ app-index.tsx:25
-react.development.js:2069  Uncaught Error: React.Children.only expected to receive a single React element child.
-    at Object.onlyChild [as only] (react.development.js:2069:1)
-    at eval (index.mjs:56:63)
-    at renderWithHooks (react-dom.development.js:11121:1)
-    at updateForwardRef (react-dom.development.js:15854:1)
-    at beginWork$1 (react-dom.development.js:18521:1)
+    at updateFunctionComponent (react-dom.development.js:16290:1)
+    at beginWork$1 (react-dom.development.js:18472:1)
     at HTMLUnknownElement.callCallback (react-dom.development.js:20565:1)
     at Object.invokeGuardedCallbackImpl (react-dom.development.js:20614:1)
     at invokeGuardedCallback (react-dom.development.js:20689:1)
@@ -186,21 +104,101 @@ react.development.js:2069  Uncaught Error: React.Children.only expected to recei
     at performUnitOfWork (react-dom.development.js:25748:1)
     at workLoopSync (react-dom.development.js:25464:1)
     at renderRootSync (react-dom.development.js:25419:1)
+    at performConcurrentWorkOnRoot (react-dom.development.js:24504:1)
+    at workLoop (scheduler.development.js:256:1)
+    at flushWork (scheduler.development.js:225:1)
+    at MessagePort.performWorkUntilDeadline (scheduler.development.js:534:1)
+app-index.tsx:25  14/02/2026, 00:53:10 [CORR:req-mlljmgq1-0002-dvhpuh] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: ae3557a6-8a56-4f66-8063-455eaa140120 | data: {"message":"Uncaught TypeError: Cannot read properties of undefined (reading 'enabled')","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js","lineno":57,"colno":9,"error":{}} Object
+window.console.error @ app-index.tsx:25
+app-index.tsx:25  [14/02/2026, 00:53:10] ERROR [system] system | Data: "Uncaught error" Object
+window.console.error @ app-index.tsx:25
+redirect-boundary.tsx:59  Uncaught TypeError: Cannot read properties of undefined (reading 'enabled')
+    at eval (SystemSettingsTab.tsx:525:41)
+    at Array.map (<anonymous>)
+    at SystemSettingsTab (SystemSettingsTab.tsx:509:52)
+    at renderWithHooks (react-dom.development.js:11121:1)
+    at updateFunctionComponent (react-dom.development.js:16290:1)
+    at beginWork$1 (react-dom.development.js:18472:1)
+    at beginWork (react-dom.development.js:26927:1)
+    at performUnitOfWork (react-dom.development.js:25748:1)
+    at workLoopSync (react-dom.development.js:25464:1)
+    at renderRootSync (react-dom.development.js:25419:1)
+    at performConcurrentWorkOnRoot (react-dom.development.js:24504:1)
+    at workLoop (scheduler.development.js:256:1)
+    at flushWork (scheduler.development.js:225:1)
+    at MessagePort.performWorkUntilDeadline (scheduler.development.js:534:1)
+app-index.tsx:25  14/02/2026, 00:53:10 [CORR:req-mlljmgq1-0002-dvhpuh] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: ae3557a6-8a56-4f66-8063-455eaa140120 | data: {"message":"Uncaught TypeError: Cannot read properties of undefined (reading 'enabled')","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js","lineno":57,"colno":9,"error":{}} Object
+window.console.error @ app-index.tsx:25
+app-index.tsx:25  [14/02/2026, 00:53:10] ERROR [system] system | Data: "Uncaught error" Object
+window.console.error @ app-index.tsx:25
+redirect-boundary.tsx:59  Uncaught TypeError: Cannot read properties of undefined (reading 'enabled')
+    at eval (SystemSettingsTab.tsx:525:41)
+    at Array.map (<anonymous>)
+    at SystemSettingsTab (SystemSettingsTab.tsx:509:52)
+    at renderWithHooks (react-dom.development.js:11121:1)
+    at updateFunctionComponent (react-dom.development.js:16290:1)
+    at beginWork$1 (react-dom.development.js:18472:1)
+    at beginWork (react-dom.development.js:26927:1)
+    at performUnitOfWork (react-dom.development.js:25748:1)
+    at workLoopSync (react-dom.development.js:25464:1)
+    at renderRootSync (react-dom.development.js:25419:1)
+    at performConcurrentWorkOnRoot (react-dom.development.js:24504:1)
+    at workLoop (scheduler.development.js:256:1)
+    at flushWork (scheduler.development.js:225:1)
+    at MessagePort.performWorkUntilDeadline (scheduler.development.js:534:1)
+app-index.tsx:25  14/02/2026, 00:53:10 [CORR:req-mlljmgq1-0002-dvhpuh] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: ae3557a6-8a56-4f66-8063-455eaa140120 | data: {"message":"Uncaught TypeError: Cannot read properties of undefined (reading 'enabled')","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js","lineno":37,"colno":9,"error":{}} Object
+window.console.error @ app-index.tsx:25
+app-index.tsx:25  [14/02/2026, 00:53:10] ERROR [system] system | Data: "Uncaught error" Object
+window.console.error @ app-index.tsx:25
+not-found-boundary.tsx:69  Uncaught TypeError: Cannot read properties of undefined (reading 'enabled')
+    at eval (SystemSettingsTab.tsx:525:41)
+    at Array.map (<anonymous>)
+    at SystemSettingsTab (SystemSettingsTab.tsx:509:52)
+    at renderWithHooks (react-dom.development.js:11121:1)
+    at updateFunctionComponent (react-dom.development.js:16290:1)
+    at beginWork$1 (react-dom.development.js:18472:1)
+    at beginWork (react-dom.development.js:26927:1)
+    at performUnitOfWork (react-dom.development.js:25748:1)
+    at workLoopSync (react-dom.development.js:25464:1)
+    at renderRootSync (react-dom.development.js:25419:1)
+    at performConcurrentWorkOnRoot (react-dom.development.js:24504:1)
+    at workLoop (scheduler.development.js:256:1)
+    at flushWork (scheduler.development.js:225:1)
+    at MessagePort.performWorkUntilDeadline (scheduler.development.js:534:1)
+app-index.tsx:25  14/02/2026, 00:53:10 [CORR:req-mlljmgq1-0002-dvhpuh] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: ae3557a6-8a56-4f66-8063-455eaa140120 | data: {"message":"Uncaught TypeError: Cannot read properties of undefined (reading 'enabled')","filename":"webpack-internal:///(app-pages-browser)/./src/app/configuration/components/SystemSettingsTab.tsx","lineno":1044,"colno":100,"error":{}} Object
+window.console.error @ app-index.tsx:25
+app-index.tsx:25  [14/02/2026, 00:53:10] ERROR [system] system | Data: "Uncaught error" Object
+window.console.error @ app-index.tsx:25
+SystemSettingsTab.tsx:525  Uncaught TypeError: Cannot read properties of undefined (reading 'enabled')
+    at eval (SystemSettingsTab.tsx:525:41)
+    at Array.map (<anonymous>)
+    at SystemSettingsTab (SystemSettingsTab.tsx:509:52)
+    at renderWithHooks (react-dom.development.js:11121:1)
+    at updateFunctionComponent (react-dom.development.js:16290:1)
+    at beginWork$1 (react-dom.development.js:18472:1)
+    at HTMLUnknownElement.callCallback (react-dom.development.js:20565:1)
+    at Object.invokeGuardedCallbackImpl (react-dom.development.js:20614:1)
+    at invokeGuardedCallback (react-dom.development.js:20689:1)
+    at beginWork (react-dom.development.js:26949:1)
+    at performUnitOfWork (react-dom.development.js:25748:1)
+    at workLoopSync (react-dom.development.js:25464:1)
+    at renderRootSync (react-dom.development.js:25419:1)
     at recoverFromConcurrentError (react-dom.development.js:24597:1)
     at performConcurrentWorkOnRoot (react-dom.development.js:24542:1)
     at workLoop (scheduler.development.js:256:1)
     at flushWork (scheduler.development.js:225:1)
     at MessagePort.performWorkUntilDeadline (scheduler.development.js:534:1)
-app-index.tsx:25  13/02/2026, 22:36:57 [CORR:req-mllenos7-0002-8r8ie8] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: ae3557a6-8a56-4f66-8063-455eaa140120 | data: {"message":"Uncaught Error: React.Children.only expected to receive a single React element child.","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js","lineno":57,"colno":9,"error":{}} Object
+app-index.tsx:25  14/02/2026, 00:53:10 [CORR:req-mlljmgq1-0002-dvhpuh] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: ae3557a6-8a56-4f66-8063-455eaa140120 | data: {"message":"Uncaught TypeError: Cannot read properties of undefined (reading 'enabled')","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js","lineno":57,"colno":9,"error":{}} Object
 window.console.error @ app-index.tsx:25
-app-index.tsx:25  [13/02/2026, 22:36:57] ERROR [system] system | Data: "Uncaught error" Object
+app-index.tsx:25  [14/02/2026, 00:53:10] ERROR [system] system | Data: "Uncaught error" Object
 window.console.error @ app-index.tsx:25
-redirect-boundary.tsx:59  Uncaught Error: React.Children.only expected to receive a single React element child.
-    at Object.onlyChild [as only] (react.development.js:2069:1)
-    at eval (index.mjs:56:63)
+redirect-boundary.tsx:59  Uncaught TypeError: Cannot read properties of undefined (reading 'enabled')
+    at eval (SystemSettingsTab.tsx:525:41)
+    at Array.map (<anonymous>)
+    at SystemSettingsTab (SystemSettingsTab.tsx:509:52)
     at renderWithHooks (react-dom.development.js:11121:1)
-    at updateForwardRef (react-dom.development.js:15854:1)
-    at beginWork$1 (react-dom.development.js:18521:1)
+    at updateFunctionComponent (react-dom.development.js:16290:1)
+    at beginWork$1 (react-dom.development.js:18472:1)
     at beginWork (react-dom.development.js:26927:1)
     at performUnitOfWork (react-dom.development.js:25748:1)
     at workLoopSync (react-dom.development.js:25464:1)
@@ -210,16 +208,17 @@ redirect-boundary.tsx:59  Uncaught Error: React.Children.only expected to receiv
     at workLoop (scheduler.development.js:256:1)
     at flushWork (scheduler.development.js:225:1)
     at MessagePort.performWorkUntilDeadline (scheduler.development.js:534:1)
-app-index.tsx:25  13/02/2026, 22:36:57 [CORR:req-mllenos7-0002-8r8ie8] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: ae3557a6-8a56-4f66-8063-455eaa140120 | data: {"message":"Uncaught Error: React.Children.only expected to receive a single React element child.","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js","lineno":57,"colno":9,"error":{}} Object
+app-index.tsx:25  14/02/2026, 00:53:10 [CORR:req-mlljmgq1-0002-dvhpuh] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: ae3557a6-8a56-4f66-8063-455eaa140120 | data: {"message":"Uncaught TypeError: Cannot read properties of undefined (reading 'enabled')","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js","lineno":57,"colno":9,"error":{}} Object
 window.console.error @ app-index.tsx:25
-app-index.tsx:25  [13/02/2026, 22:36:57] ERROR [system] system | Data: "Uncaught error" Object
+app-index.tsx:25  [14/02/2026, 00:53:10] ERROR [system] system | Data: "Uncaught error" Object
 window.console.error @ app-index.tsx:25
-redirect-boundary.tsx:59  Uncaught Error: React.Children.only expected to receive a single React element child.
-    at Object.onlyChild [as only] (react.development.js:2069:1)
-    at eval (index.mjs:56:63)
+redirect-boundary.tsx:59  Uncaught TypeError: Cannot read properties of undefined (reading 'enabled')
+    at eval (SystemSettingsTab.tsx:525:41)
+    at Array.map (<anonymous>)
+    at SystemSettingsTab (SystemSettingsTab.tsx:509:52)
     at renderWithHooks (react-dom.development.js:11121:1)
-    at updateForwardRef (react-dom.development.js:15854:1)
-    at beginWork$1 (react-dom.development.js:18521:1)
+    at updateFunctionComponent (react-dom.development.js:16290:1)
+    at beginWork$1 (react-dom.development.js:18472:1)
     at beginWork (react-dom.development.js:26927:1)
     at performUnitOfWork (react-dom.development.js:25748:1)
     at workLoopSync (react-dom.development.js:25464:1)
@@ -229,16 +228,17 @@ redirect-boundary.tsx:59  Uncaught Error: React.Children.only expected to receiv
     at workLoop (scheduler.development.js:256:1)
     at flushWork (scheduler.development.js:225:1)
     at MessagePort.performWorkUntilDeadline (scheduler.development.js:534:1)
-app-index.tsx:25  13/02/2026, 22:36:57 [CORR:req-mllenos7-0002-8r8ie8] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: ae3557a6-8a56-4f66-8063-455eaa140120 | data: {"message":"Uncaught Error: React.Children.only expected to receive a single React element child.","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js","lineno":37,"colno":9,"error":{}} Object
+app-index.tsx:25  14/02/2026, 00:53:10 [CORR:req-mlljmgq1-0002-dvhpuh] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: ae3557a6-8a56-4f66-8063-455eaa140120 | data: {"message":"Uncaught TypeError: Cannot read properties of undefined (reading 'enabled')","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js","lineno":37,"colno":9,"error":{}} Object
 window.console.error @ app-index.tsx:25
-app-index.tsx:25  [13/02/2026, 22:36:57] ERROR [system] system | Data: "Uncaught error" Object
+app-index.tsx:25  [14/02/2026, 00:53:11] ERROR [system] system | Data: "Uncaught error" Object
 window.console.error @ app-index.tsx:25
-not-found-boundary.tsx:69  Uncaught Error: React.Children.only expected to receive a single React element child.
-    at Object.onlyChild [as only] (react.development.js:2069:1)
-    at eval (index.mjs:56:63)
+not-found-boundary.tsx:69  Uncaught TypeError: Cannot read properties of undefined (reading 'enabled')
+    at eval (SystemSettingsTab.tsx:525:41)
+    at Array.map (<anonymous>)
+    at SystemSettingsTab (SystemSettingsTab.tsx:509:52)
     at renderWithHooks (react-dom.development.js:11121:1)
-    at updateForwardRef (react-dom.development.js:15854:1)
-    at beginWork$1 (react-dom.development.js:18521:1)
+    at updateFunctionComponent (react-dom.development.js:16290:1)
+    at beginWork$1 (react-dom.development.js:18472:1)
     at beginWork (react-dom.development.js:26927:1)
     at performUnitOfWork (react-dom.development.js:25748:1)
     at workLoopSync (react-dom.development.js:25464:1)
@@ -250,21 +250,7 @@ not-found-boundary.tsx:69  Uncaught Error: React.Children.only expected to recei
     at MessagePort.performWorkUntilDeadline (scheduler.development.js:534:1)
 app-index.tsx:25  The above error occurred in the <NotFoundErrorBoundary> component:
 
-    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@radix-ui/react-slot/dist/index.mjs:56:11)
-    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@radix-ui/react-slot/dist/index.mjs:29:11)
-    at _c (webpack-internal:///(app-pages-browser)/./src/components/ui/button.tsx:45:11)
-    at label
-    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@radix-ui/react-label/node_modules/@radix-ui/react-primitive/dist/index.mjs:38:13)
-    at _c
-    at Label (webpack-internal:///(app-pages-browser)/./src/components/ui/label.tsx:15:11)
-    at div
-    at div
-    at div
-    at _c8 (webpack-internal:///(app-pages-browser)/./src/components/ui/card.tsx:74:11)
-    at div
-    at _c (webpack-internal:///(app-pages-browser)/./src/components/ui/card.tsx:18:11)
-    at div
-    at ProfileSettingsTab (webpack-internal:///(app-pages-browser)/./src/components/settings/ProfileSettingsTab.tsx:53:11)
+    at SystemSettingsTab (webpack-internal:///(app-pages-browser)/./src/app/configuration/components/SystemSettingsTab.tsx:152:96)
     at Suspense
     at LoadableComponent
     at Suspense
@@ -284,7 +270,7 @@ app-index.tsx:25  The above error occurred in the <NotFoundErrorBoundary> compon
     at _c (webpack-internal:///(app-pages-browser)/./src/components/ui/card.tsx:18:11)
     at div
     at PageShell (webpack-internal:///(app-pages-browser)/./src/components/layout/PageShell.tsx:13:11)
-    at SettingsPage (webpack-internal:///(app-pages-browser)/./src/app/settings/page.tsx:226:89)
+    at ConfigurationPage (webpack-internal:///(app-pages-browser)/./src/app/configuration/page.tsx:184:86)
     at ClientPageRoot (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/client-page.js:14:11)
     at InnerLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:243:11)
     at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
@@ -323,9 +309,9 @@ app-index.tsx:25  The above error occurred in the <NotFoundErrorBoundary> compon
     at AuthProvider (webpack-internal:///(app-pages-browser)/./src/contexts/AuthContext.tsx:29:11)
     at QueryClientProvider (webpack-internal:///(app-pages-browser)/./node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js:27:11)
     at Providers (webpack-internal:///(app-pages-browser)/./src/components/providers.tsx:23:11)
-    at GlobalErrorWrapper (webpack-internal:///(app-pages-browser)/./src/error-boundaries/GlobalErrorBoundary.tsx:625:9)
+    at GlobalErrorWrapper (webpack-internal:///(app-pages-browser)/./src/error-boundaries/GlobalErrorBoundary.tsx:623:9)
     at BaseErrorBoundary (webpack-internal:///(app-pages-browser)/./src/error-boundaries/BaseErrorBoundary.tsx:402:9)
-    at GlobalErrorBoundary (webpack-internal:///(app-pages-browser)/./src/error-boundaries/GlobalErrorBoundary.tsx:499:11)
+    at GlobalErrorBoundary (webpack-internal:///(app-pages-browser)/./src/error-boundaries/GlobalErrorBoundary.tsx:497:11)
     at div
     at RootClientLayout (webpack-internal:///(app-pages-browser)/./src/app/RootClientLayout.tsx:217:11)
     at body
