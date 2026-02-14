@@ -20,6 +20,11 @@ import { AlertCircle } from 'lucide-react';
 import { InterventionWorkflowService } from '@/lib/services/ppf/intervention-workflow.service';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getStatusLabel } from '@/lib/i18n/status-labels';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHeader, StatCard } from '@/components/ui/page-header';
+import { LoadingState } from '@/components/layout/LoadingState';
+import { ErrorState } from '@/components/layout/ErrorState';
+import { EmptyState } from '@/components/layout/EmptyState';
 
 export default function InterventionsDashboard() {
   const { user, loading: authLoading } = useAuth();
@@ -98,25 +103,20 @@ export default function InterventionsDashboard() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="container mx-auto p-4">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p className="text-gray-600">{t('common.loading')}</p>
-          </div>
-        </div>
-      </div>
+      <PageShell>
+        <LoadingState message={t('common.loading')} />
+      </PageShell>
     );
   }
 
   if (!user) {
     return (
-      <div className="container mx-auto p-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">{t('common.accessDenied')}</h1>
-          <p className="text-gray-600">{t('common.mustBeLoggedIn')}</p>
-        </div>
-      </div>
+      <PageShell>
+        <ErrorState
+          title={t('common.accessDenied')}
+          message={t('common.mustBeLoggedIn')}
+        />
+      </PageShell>
     );
   }
 
@@ -144,30 +144,22 @@ export default function InterventionsDashboard() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-4">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p className="text-gray-600">{t('interventions.loadingInterventions')}</p>
-          </div>
-        </div>
-      </div>
+      <PageShell>
+        <LoadingState message={t('interventions.loadingInterventions')} />
+      </PageShell>
     );
   }
 
   if (error) {
     return (
-      <div className="container mx-auto p-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600">{t('common.error')}</h1>
-          <p className="text-gray-600">{error}</p>
-        </div>
-      </div>
+      <PageShell>
+        <ErrorState message={error} />
+      </PageShell>
     );
   }
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
+    <PageShell>
       <Tabs defaultValue="active" className="space-y-4">
         <div className="bg-[hsl(var(--rpma-teal))] text-white rounded-[10px] shadow-[var(--rpma-shadow-soft)]">
           <div className="px-5 pt-4 pb-0">
@@ -184,69 +176,40 @@ export default function InterventionsDashboard() {
 
       {/* Métriques principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('interventions.metrics.activeInterventions')}</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalActive}</div>
-            <p className="text-xs text-muted-foreground">
-              {t('interventions.metrics.inProgress')}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('interventions.metrics.completed7d')}</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalCompleted}</div>
-            <p className="text-xs text-muted-foreground">
-              {t('interventions.metrics.thisWeek')}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('interventions.metrics.averageDuration')}</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{Math.round(averageDuration)}{t('common.time.minutes')}</div>
-            <p className="text-xs text-muted-foreground">
-              {t('interventions.metrics.perIntervention')}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('interventions.metrics.efficiency')}</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">92%</div>
-            <p className="text-xs text-muted-foreground">
-              {t('interventions.metrics.successRate')}
-            </p>
-          </CardContent>
-        </Card>
+        <StatCard
+          value={totalActive}
+          label={t('interventions.metrics.activeInterventions')}
+          icon={Activity}
+          color="accent"
+        />
+        <StatCard
+          value={totalCompleted}
+          label={t('interventions.metrics.completed7d')}
+          icon={CheckCircle}
+          color="green"
+        />
+        <StatCard
+          value={`${Math.round(averageDuration)}${t('common.time.minutes')}`}
+          label={t('interventions.metrics.averageDuration')}
+          icon={Clock}
+          color="blue"
+        />
+        <StatCard
+          value="92%"
+          label={t('interventions.metrics.efficiency')}
+          icon={TrendingUp}
+          color="purple"
+        />
       </div>
 
       {/* Tabs pour différentes vues */}
         {/* Interventions Actives */}
         <TabsContent value="active" className="space-y-4">
           {activeInterventions.length === 0 ? (
-            <Card className="rpma-shell">
-              <CardContent className="rpma-empty">
-                <SearchX />
-                <h3 className="text-lg font-semibold">{t('common.noResults')}</h3>
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={<SearchX className="h-8 w-8 text-muted-foreground" />}
+              title={t('common.noResults')}
+            />
           ) : (
             <div className="grid gap-4">
               {activeInterventions.map((intervention) => (
@@ -266,7 +229,7 @@ export default function InterventionsDashboard() {
                            </Badge>
                         </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600 mb-3">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground mb-3">
                            <div className="flex items-center">
                              <User className="h-4 w-4 mr-1" />
                              {t('interventions.technician')} #{intervention.technician_id?.slice(0, 8)}
@@ -317,12 +280,10 @@ export default function InterventionsDashboard() {
         {/* Historique Récent */}
         <TabsContent value="recent" className="space-y-4">
           {recentInterventions.length === 0 ? (
-            <Card className="rpma-shell">
-              <CardContent className="rpma-empty">
-                <SearchX />
-                <h3 className="text-lg font-semibold">{t('common.noResults')}</h3>
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={<SearchX className="h-8 w-8 text-muted-foreground" />}
+              title={t('common.noResults')}
+            />
           ) : (
             <div className="grid gap-4">
               {recentInterventions.map((intervention) => (
@@ -339,7 +300,7 @@ export default function InterventionsDashboard() {
                            </Badge>
                          </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground">
                           <div>
                             <span className="font-medium">{t('interventions.duration')}:</span>
                             <br />
@@ -366,7 +327,7 @@ export default function InterventionsDashboard() {
                         </div>
                       </div>
 
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-muted-foreground">
                         {intervention.interventionCompletedAt &&
                           format(new Date(intervention.interventionCompletedAt), 'dd/MM/yyyy HH:mm', { locale: fr })
                         }
@@ -416,7 +377,7 @@ export default function InterventionsDashboard() {
                 <div className="text-center py-8">
                   <TrendingUp className="h-8 w-8 text-green-500 mx-auto mb-2" />
                   <p className="text-2xl font-bold text-green-600">+5%</p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     {t('interventions.analytics.qualityImprovementThisMonth')}
                   </p>
                 </div>
@@ -425,6 +386,6 @@ export default function InterventionsDashboard() {
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+    </PageShell>
   );
 }
