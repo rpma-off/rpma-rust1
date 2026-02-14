@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,18 +9,41 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Search, Edit, AlertTriangle, Package } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Plus, Search, Edit, AlertTriangle, Package, Trash2, ArrowUpDown } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { useMaterials } from '@/hooks/useMaterials';
 import { useInventoryStats } from '@/hooks/useInventoryStats';
+import { useInventory } from '@/hooks/useInventory';
 import { MaterialForm } from './MaterialForm';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { toast } from 'sonner';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export function MaterialCatalog() {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [materialTypeFilter, setMaterialTypeFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [showForm, setShowForm] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<any>(null);
+  const [showStockDialog, setShowStockDialog] = useState(false);
+  const [stockMaterial, setStockMaterial] = useState<any>(null);
+  const [stockQuantity, setStockQuantity] = useState<number>(0);
+  const [stockReason, setStockReason] = useState('');
+  const [stockSaving, setStockSaving] = useState(false);
+  const [archiving, setArchiving] = useState<string | null>(null);
 
   const { materials, loading, error, refetch } = useMaterials({
     materialType: materialTypeFilter !== 'all' ? materialTypeFilter : undefined,
@@ -28,6 +52,7 @@ export function MaterialCatalog() {
   });
 
   const { stats } = useInventoryStats();
+  const { updateStock } = useInventory();
 
   const handleEdit = (material: any) => {
     setEditingMaterial(material);
@@ -38,6 +63,49 @@ export function MaterialCatalog() {
     setShowForm(false);
     setEditingMaterial(null);
     refetch();
+  };
+
+  const handleArchive = async (materialId: string) => {
+    try {
+      setArchiving(materialId);
+      await invoke('material_delete', {
+        sessionToken: '',
+        id: materialId,
+      });
+      toast.success(t('inventory.materialArchived'));
+      refetch();
+    } catch (err) {
+      toast.error(`${t('errors.generic')}: ${err}`);
+    } finally {
+      setArchiving(null);
+    }
+  };
+
+  const handleStockAdjust = (material: any) => {
+    setStockMaterial(material);
+    setStockQuantity(0);
+    setStockReason('');
+    setShowStockDialog(true);
+  };
+
+  const submitStockAdjustment = async () => {
+    if (!stockMaterial || stockQuantity === 0) return;
+    try {
+      setStockSaving(true);
+      await updateStock({
+        material_id: stockMaterial.id,
+        quantity: stockQuantity,
+        transaction_type: stockQuantity > 0 ? 'stock_in' : 'stock_out',
+        notes: stockReason,
+      });
+      toast.success(t('inventory.stockUpdated'));
+      setShowStockDialog(false);
+      refetch();
+    } catch (err) {
+      toast.error(`${t('errors.generic')}: ${err}`);
+    } finally {
+      setStockSaving(false);
+    }
   };
 
   const filteredMaterials = materials?.filter(material => {
@@ -200,14 +268,56 @@ export function MaterialCatalog() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(material)}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEdit(material)}
+                        className="text-muted-foreground hover:text-foreground"
+                        title={t('common.edit')}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleStockAdjust(material)}
+                        className="text-muted-foreground hover:text-foreground"
+                        title={t('inventory.adjustStock')}
+                      >
+                        <ArrowUpDown className="w-4 h-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-muted-foreground hover:text-destructive"
+                            disabled={archiving === material.id}
+                            title={t('inventory.archiveMaterial')}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>{t('inventory.archiveConfirmTitle')}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {t('inventory.archiveConfirmDescription', { name: material.name })}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleArchive(material.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              {t('inventory.archiveMaterial')}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -222,6 +332,60 @@ export function MaterialCatalog() {
           )}
         </CardContent>
       </Card>
+
+      {/* Stock Adjustment Dialog */}
+      <Dialog open={showStockDialog} onOpenChange={setShowStockDialog}>
+        <DialogContent className="max-w-md bg-white border-[hsl(var(--rpma-border))]">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">
+              {t('inventory.adjustStock')} — {stockMaterial?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-foreground">{t('inventory.currentStock')}</Label>
+              <p className="text-sm text-muted-foreground">
+                {stockMaterial?.current_stock} {stockMaterial?.unit_of_measure}
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="stock-qty" className="text-foreground">{t('inventory.quantityChange')}</Label>
+              <Input
+                id="stock-qty"
+                type="number"
+                step="0.01"
+                value={stockQuantity}
+                onChange={(e) => setStockQuantity(parseFloat(e.target.value) || 0)}
+                placeholder="+10 ou -5"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {t('inventory.quantityChangeHint')}
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="stock-reason" className="text-foreground">{t('inventory.reason')}</Label>
+              <Textarea
+                id="stock-reason"
+                value={stockReason}
+                onChange={(e) => setStockReason(e.target.value)}
+                placeholder={t('inventory.reasonPlaceholder')}
+                rows={2}
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setShowStockDialog(false)}>
+                {t('common.cancel')}
+              </Button>
+              <Button
+                onClick={submitStockAdjustment}
+                disabled={stockSaving || stockQuantity === 0 || !stockReason.trim()}
+              >
+                {stockSaving ? t('inventory.saving') : t('inventory.confirmAdjustment')}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

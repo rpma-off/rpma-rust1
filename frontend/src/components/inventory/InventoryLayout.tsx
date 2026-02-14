@@ -1,6 +1,5 @@
 import { ReactNode } from 'react';
 import { InventoryTabs } from '@/components/inventory/InventoryTabs';
-import { Search } from 'lucide-react';
 
 interface InventoryLayoutProps {
   children: ReactNode;
@@ -12,9 +11,6 @@ export function InventoryLayout({ children }: InventoryLayoutProps) {
       <div className="bg-[hsl(var(--rpma-teal))] text-white rounded-[10px] shadow-[var(--rpma-shadow-soft)]">
         <div className="px-5 pt-4 pb-0 flex items-center justify-between">
           <h1 className="text-xl font-semibold">Inventory</h1>
-          <button className="p-2 rounded-full hover:bg-white/15 transition-colors" aria-label="Search inventory">
-            <Search className="h-5 w-5" />
-          </button>
         </div>
         <div className="px-2">
           <InventoryTabs />
