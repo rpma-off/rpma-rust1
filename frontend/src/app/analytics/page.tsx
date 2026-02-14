@@ -1,12 +1,12 @@
 import { Suspense } from 'react';
 import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
 import { AnalyticsLayout } from '@/components/analytics/AnalyticsLayout';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { LoadingState } from '@/components/layout/LoadingState';
 
 export default function AnalyticsPage() {
   return (
     <AnalyticsLayout>
-      <Suspense fallback={<LoadingSpinner />}>
+      <Suspense fallback={<LoadingState />}>
         <AnalyticsDashboard />
       </Suspense>
     </AnalyticsLayout>

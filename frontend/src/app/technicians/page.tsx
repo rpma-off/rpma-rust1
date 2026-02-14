@@ -3,8 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Users, UserCheck, Clock, TrendingUp } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/lib/auth/compatibility';
 import { ipcClient } from '@/lib/ipc';
@@ -12,10 +10,11 @@ import type { UserAccount as BackendUserAccount } from '@/lib/backend';
 import type { UserAccount as UiUserAccount } from '@/lib/types';
 import { convertTimestamps } from '@/lib/types';
 import { PageShell } from '@/components/layout/PageShell';
-import { PageHeader } from '@/components/ui/page-header';
+import { PageHeader, StatCard } from '@/components/ui/page-header';
 import { LoadingState } from '@/components/layout/LoadingState';
 import { ErrorState } from '@/components/layout/ErrorState';
 import { EmptyState } from '@/components/layout/EmptyState';
+import { SectionCard } from '@/components/layout/SectionCard';
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface TechnicianStats {
@@ -97,68 +96,41 @@ export default function TechniciansPage() {
         title={t('team.technicians')}
         subtitle={t('team.title')}
         icon={<Users className="w-6 h-6 text-[hsl(var(--rpma-teal))]" />}
+        stats={
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <StatCard
+              value={stats.totalTechnicians}
+              label={t('team.technicians')}
+              icon={Users}
+              color="accent"
+            />
+            <StatCard
+              value={stats.activeTechnicians}
+              label={t('users.active')}
+              icon={UserCheck}
+              color="green"
+            />
+            <StatCard
+              value={stats.tasksCompletedToday}
+              label={t('tasks.title')}
+              icon={Clock}
+              color="blue"
+            />
+            <StatCard
+              value={stats.averageTasksPerTechnician}
+              label={t('analytics.metrics')}
+              icon={TrendingUp}
+              color="purple"
+            />
+          </div>
+        }
       />
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {t('team.technicians')}
-              </CardTitle>
-              <Users className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{stats.totalTechnicians}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {t('users.active')}
-              </CardTitle>
-              <UserCheck className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{stats.activeTechnicians}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {t('tasks.title')}
-              </CardTitle>
-              <Clock className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{stats.tasksCompletedToday}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {t('analytics.metrics')}
-              </CardTitle>
-              <TrendingUp className="h-4 w-4 text-[hsl(var(--rpma-teal))]" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{stats.averageTasksPerTechnician}</div>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Technicians List */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-foreground">{t('team.technicians')}</CardTitle>
-            <CardDescription className="text-muted-foreground">
-              {technicians.length} {t('team.technicians').toLowerCase()}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        <SectionCard
+          title={t('team.technicians')}
+          description={`${technicians.length} ${t('team.technicians').toLowerCase()}`}
+        >
             {technicians.length === 0 ? (
               <EmptyState
                 icon={<Users className="h-8 w-8 text-muted-foreground" />}
@@ -200,8 +172,7 @@ export default function TechniciansPage() {
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+        </SectionCard>
       </PageShell>
   );
 }

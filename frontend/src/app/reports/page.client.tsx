@@ -9,6 +9,7 @@ import { reportsService } from '@/lib/services/entities/reports.service';
 import { PageShell } from '@/components/layout/PageShell';
 import { enhancedToast } from '@/lib/enhanced-toast';
 import type { ReportType, ReportFilters as BackendReportFilters, DateRange as BackendDateRange } from '@/lib/backend';
+import { LoadingState } from '@/components/layout/LoadingState';
 
 interface DateRange {
   start: Date;
@@ -105,10 +106,7 @@ export default function ReportsPage() {
       <ReportTabs selectedType={reportType} onTypeChange={setReportType} />
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          <span className="ml-3 text-gray-400">Chargement des rapports...</span>
-        </div>
+        <LoadingState message="Chargement des rapports..." />
       ) : (
         <ReportContent
           reportType={reportType}

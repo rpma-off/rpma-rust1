@@ -120,7 +120,7 @@ export function SecurityDashboard({ onRefresh }: SecurityDashboardProps) {
       case 'low':
         return 'text-green-600 bg-green-100 border-green-200';
       default:
-        return 'text-gray-600 bg-gray-100 border-gray-200';
+        return 'text-muted-foreground bg-[hsl(var(--rpma-surface))] border-[hsl(var(--rpma-border))]';
     }
   };
 

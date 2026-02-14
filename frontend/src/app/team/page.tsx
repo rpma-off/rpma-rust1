@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from '@/hooks/useTranslation';
+import { LoadingState } from '@/components/layout/LoadingState';
 
 export default function TeamPage() {
   const { t } = useTranslation();
@@ -14,11 +15,8 @@ export default function TeamPage() {
   }, [router]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-[hsl(var(--rpma-surface))]">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--rpma-teal))] mx-auto mb-4"></div>
-        <p className="text-muted-foreground">{t('common.loading')}</p>
-      </div>
+    <div className="flex items-center justify-center min-h-screen">
+      <LoadingState message={t('common.loading')} />
     </div>
   );
 }

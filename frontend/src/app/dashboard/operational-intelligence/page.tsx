@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import {
   TrendingUp,
   AlertTriangle,
@@ -9,7 +8,6 @@ import {
   Clock,
   BarChart3,
   RefreshCw,
-  Filter,
   Download
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,6 +16,10 @@ import { Badge } from '@/components/ui/badge';
 import { DateRangePicker } from '@/app/reports/components/DateRangePicker';
 import { reportsService } from '@/lib/services/entities/reports.service';
 import { useTranslation } from '@/hooks/useTranslation';
+import { PageShell } from '@/components/layout/PageShell';
+import { PageHeader, StatCard } from '@/components/ui/page-header';
+import { LoadingState } from '@/components/layout/LoadingState';
+import { ErrorState } from '@/components/layout/ErrorState';
 import type {
   OperationalIntelligenceReport,
   StepBottleneck,
@@ -122,70 +124,52 @@ export default function OperationalIntelligencePage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-center py-12">
-          <div className="flex items-center space-x-3">
-            <RefreshCw className="w-8 h-8 animate-spin text-green-500" />
-            <span className="text-white text-lg font-medium">{t('common.loading')}</span>
-          </div>
-        </div>
-      </div>
+      <PageShell>
+        <LoadingState message={t('common.loading')} />
+      </PageShell>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Card className="bg-red-900/20 border-red-500/30 max-w-lg">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-white mb-2">{t('errors.loadFailed')}</h3>
-              <p className="text-red-300 mb-4">{error}</p>
-              <Button onClick={handleRefresh} variant="outline" className="border-red-500 text-red-300 hover:bg-red-900/30">
-                <RefreshCw className="w-4 h-4 mr-2" />
-                {t('common.retry')}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <PageShell>
+        <ErrorState message={error} onRetry={handleRefresh} />
+      </PageShell>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <PageShell>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">{t('nav.operationalIntelligence')}</h1>
-          <p className="text-gray-400 mt-1">Analyse des goulots d&apos;étranglement et optimisation des processus</p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-gray-600 hover:bg-gray-800"
-            onClick={handleRefresh}
-            disabled={refreshing}
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-            {t('common.refresh')}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-gray-600 hover:bg-gray-800"
-            onClick={handleExport}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            {t('common.export')}
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title={t('nav.operationalIntelligence')}
+        subtitle="Analyse des goulots d'étranglement et optimisation des processus"
+        icon={<BarChart3 className="w-6 h-6 text-[hsl(var(--rpma-teal))]" />}
+        actions={
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={refreshing}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              {t('common.refresh')}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExport}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              {t('common.export')}
+            </Button>
+          </>
+        }
+      />
 
       {/* Date Range Picker */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="border-[hsl(var(--rpma-border))]">
         <CardContent className="pt-6">
           <DateRangePicker
             dateRange={dateRange}
@@ -198,52 +182,48 @@ export default function OperationalIntelligencePage() {
         <>
           {/* Key Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <MetricCard
-              title="Goulots d'Étranglement Étapes"
+            <StatCard
               value={reportData.step_bottlenecks.length}
-              icon={<AlertTriangle className="h-5 w-5" />}
+              label="Goulots d'Étranglement Étapes"
+              icon={AlertTriangle}
               color="red"
-              description="Étapes identifiées comme problématiques"
             />
-            <MetricCard
-              title="Interventions Bloquées"
+            <StatCard
               value={reportData.intervention_bottlenecks.length}
-              icon={<Clock className="h-5 w-5" />}
-              color="orange"
-              description="Interventions en attente prolongée"
+              label="Interventions Bloquées"
+              icon={Clock}
+              color="yellow"
             />
-            <MetricCard
-              title="Recommandations"
+            <StatCard
               value={reportData.recommendations.length}
-              icon={<TrendingUp className="h-5 w-5" />}
+              label="Recommandations"
+              icon={TrendingUp}
               color="green"
-              description="Suggestions d'amélioration"
             />
-            <MetricCard
-              title="Score d'Efficacité"
+            <StatCard
               value={`${Math.round(reportData.process_efficiency.overall_efficiency_score)}%`}
-              icon={<BarChart3 className="h-5 w-5" />}
+              label="Score d'Efficacité"
+              icon={BarChart3}
               color="blue"
-              description="Performance globale des processus"
             />
           </div>
 
           {/* Step Bottlenecks */}
-          <Card className="bg-gray-800 border-gray-700">
+          <Card className="border-[hsl(var(--rpma-border))]">
             <CardHeader>
-              <CardTitle className="text-lg text-white flex items-center">
-                <AlertTriangle className="h-5 w-5 mr-2 text-red-400" />
+              <CardTitle className="text-lg text-foreground flex items-center">
+                <AlertTriangle className="h-5 w-5 mr-2 text-red-500" />
                 Goulots d&apos;Étranglement par Étape
               </CardTitle>
-              <CardDescription className="text-gray-400">
+              <CardDescription className="text-muted-foreground">
                 Étapes qui causent des retards ou des problèmes de qualité
               </CardDescription>
             </CardHeader>
             <CardContent>
               {reportData.step_bottlenecks.length === 0 ? (
                 <div className="text-center py-8">
-                  <div className="text-green-400 mb-2">✓</div>
-                  <p className="text-gray-400">Aucun goulot d&apos;étranglement détecté</p>
+                  <div className="text-green-500 mb-2">✓</div>
+                  <p className="text-muted-foreground">Aucun goulot d&apos;étranglement détecté</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -256,21 +236,21 @@ export default function OperationalIntelligencePage() {
           </Card>
 
           {/* Intervention Bottlenecks */}
-          <Card className="bg-gray-800 border-gray-700">
+          <Card className="border-[hsl(var(--rpma-border))]">
             <CardHeader>
-              <CardTitle className="text-lg text-white flex items-center">
-                <Clock className="h-5 w-5 mr-2 text-orange-400" />
+              <CardTitle className="text-lg text-foreground flex items-center">
+                <Clock className="h-5 w-5 mr-2 text-orange-500" />
                 Interventions Bloquées
               </CardTitle>
-              <CardDescription className="text-gray-400">
+              <CardDescription className="text-muted-foreground">
                 Interventions qui restent trop longtemps dans le même état
               </CardDescription>
             </CardHeader>
             <CardContent>
               {reportData.intervention_bottlenecks.length === 0 ? (
                 <div className="text-center py-8">
-                  <div className="text-green-400 mb-2">✓</div>
-                  <p className="text-gray-400">Aucune intervention bloquée</p>
+                  <div className="text-green-500 mb-2">✓</div>
+                  <p className="text-muted-foreground">Aucune intervention bloquée</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -283,13 +263,13 @@ export default function OperationalIntelligencePage() {
           </Card>
 
           {/* Resource Utilization */}
-          <Card className="bg-gray-800 border-gray-700">
+          <Card className="border-[hsl(var(--rpma-border))]">
             <CardHeader>
-              <CardTitle className="text-lg text-white flex items-center">
-                <Users className="h-5 w-5 mr-2 text-blue-400" />
+              <CardTitle className="text-lg text-foreground flex items-center">
+                <Users className="h-5 w-5 mr-2 text-blue-500" />
                 Utilisation des Ressources
               </CardTitle>
-              <CardDescription className="text-gray-400">
+              <CardDescription className="text-muted-foreground">
                 Répartition de la charge de travail par technicien
               </CardDescription>
             </CardHeader>
@@ -303,21 +283,21 @@ export default function OperationalIntelligencePage() {
           </Card>
 
           {/* Recommendations */}
-          <Card className="bg-gray-800 border-gray-700">
+          <Card className="border-[hsl(var(--rpma-border))]">
             <CardHeader>
-              <CardTitle className="text-lg text-white flex items-center">
-                <TrendingUp className="h-5 w-5 mr-2 text-green-400" />
+              <CardTitle className="text-lg text-foreground flex items-center">
+                <TrendingUp className="h-5 w-5 mr-2 text-green-500" />
                 Recommandations d&apos;Amélioration
               </CardTitle>
-              <CardDescription className="text-gray-400">
+              <CardDescription className="text-muted-foreground">
                 Suggestions automatisées pour optimiser les processus
               </CardDescription>
             </CardHeader>
             <CardContent>
               {reportData.recommendations.length === 0 ? (
                 <div className="text-center py-8">
-                  <div className="text-green-400 mb-2">✓</div>
-                  <p className="text-gray-400">Aucune recommandation disponible</p>
+                  <div className="text-green-500 mb-2">✓</div>
+                  <p className="text-muted-foreground">Aucune recommandation disponible</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -330,52 +310,7 @@ export default function OperationalIntelligencePage() {
           </Card>
         </>
       )}
-    </div>
-  );
-}
-
-// Component for metric cards
-function MetricCard({
-  title,
-  value,
-  icon,
-  color,
-  description
-}: {
-  title: string;
-  value: string | number;
-  icon: React.ReactNode;
-  color: 'red' | 'orange' | 'green' | 'blue';
-  description: string;
-}) {
-  const colorClasses = {
-    red: 'bg-red-500/10 border-red-500/30 text-red-400',
-    orange: 'bg-orange-500/10 border-orange-500/30 text-orange-400',
-    green: 'bg-green-500/10 border-green-500/30 text-green-400',
-    blue: 'bg-blue-500/10 border-blue-500/30 text-blue-400'
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <Card className="bg-gray-800 border-gray-700 hover:border-gray-600 transition-colors">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-gray-400">
-            {title}
-          </CardTitle>
-          <div className={`p-2 rounded-lg ${colorClasses[color]} border`}>
-            {icon}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-white">{value}</div>
-          <p className="text-xs text-gray-500 mt-1">{description}</p>
-        </CardContent>
-      </Card>
-    </motion.div>
+    </PageShell>
   );
 }
 
@@ -389,24 +324,24 @@ function StepBottleneckCard({ bottleneck }: { bottleneck: StepBottleneck }) {
             <Badge variant="destructive" className="text-xs">
               Étape {bottleneck.step_number}
             </Badge>
-            <span className="text-white font-medium">{bottleneck.step_name}</span>
+            <span className="text-foreground font-medium">{bottleneck.step_name}</span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div>
-              <span className="text-gray-400">Durée moyenne:</span>
-              <div className="text-white font-semibold">{Math.round(bottleneck.average_duration_minutes)} min</div>
+              <span className="text-muted-foreground">Durée moyenne:</span>
+              <div className="text-foreground font-semibold">{Math.round(bottleneck.average_duration_minutes)} min</div>
             </div>
             <div>
-              <span className="text-gray-400">Taux d&apos;échec:</span>
-              <div className="text-red-400 font-semibold">{Math.round(bottleneck.failure_rate * 100)}%</div>
+              <span className="text-muted-foreground">Taux d&apos;échec:</span>
+              <div className="text-red-500 font-semibold">{Math.round(bottleneck.failure_rate * 100)}%</div>
             </div>
             <div>
-              <span className="text-gray-400">Taux de rework:</span>
-              <div className="text-orange-400 font-semibold">{Math.round(bottleneck.rework_rate * 100)}%</div>
+              <span className="text-muted-foreground">Taux de rework:</span>
+              <div className="text-orange-500 font-semibold">{Math.round(bottleneck.rework_rate * 100)}%</div>
             </div>
             <div>
-              <span className="text-gray-400">Sévérité:</span>
-              <div className="text-red-400 font-semibold capitalize">{bottleneck.bottleneck_severity}</div>
+              <span className="text-muted-foreground">Sévérité:</span>
+              <div className="text-red-500 font-semibold capitalize">{bottleneck.bottleneck_severity}</div>
             </div>
           </div>
         </div>
@@ -422,22 +357,22 @@ function InterventionBottleneckCard({ bottleneck }: { bottleneck: InterventionBo
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center space-x-2 mb-2">
-            <Badge variant="secondary" className="text-xs bg-orange-500/20 text-orange-400">
+            <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-600 border-orange-200">
               Intervention #{bottleneck.intervention_id}
             </Badge>
-            <span className="text-white font-medium">Étape {bottleneck.stuck_at_step}</span>
+            <span className="text-foreground font-medium">Étape {bottleneck.stuck_at_step}</span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
             <div>
-              <span className="text-gray-400">Temps bloqué:</span>
-              <div className="text-orange-400 font-semibold">{Math.round(bottleneck.time_at_current_step_hours)}h</div>
+              <span className="text-muted-foreground">Temps bloqué:</span>
+              <div className="text-orange-500 font-semibold">{Math.round(bottleneck.time_at_current_step_hours)}h</div>
             </div>
             <div>
-              <span className="text-gray-400">Technicien:</span>
-              <div className="text-white font-semibold">{bottleneck.technician_name || 'Non assigné'}</div>
+              <span className="text-muted-foreground">Technicien:</span>
+              <div className="text-foreground font-semibold">{bottleneck.technician_name || 'Non assigné'}</div>
             </div>
             <div>
-              <span className="text-gray-400">Priorité:</span>
+              <span className="text-muted-foreground">Priorité:</span>
               <Badge variant="outline" className="text-xs">
                 {bottleneck.priority}
               </Badge>
@@ -456,21 +391,21 @@ function ResourceUtilizationCard({ resource }: { resource: ResourceUtilization }
   return (
     <div className="bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))] p-4">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-white font-medium">{resource.technician_name}</span>
+        <span className="text-foreground font-medium">{resource.technician_name}</span>
         <Badge variant="outline" className="text-xs">
           {utilizationPercentage}%
         </Badge>
       </div>
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
-          <span className="text-gray-400">Interventions actives:</span>
-          <span className="text-white">{resource.active_interventions}</span>
+          <span className="text-muted-foreground">Interventions actives:</span>
+          <span className="text-foreground">{resource.active_interventions}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-gray-400">Complétées aujourd&apos;hui:</span>
-          <span className="text-white">{resource.completed_today}</span>
+          <span className="text-muted-foreground">Complétées aujourd&apos;hui:</span>
+          <span className="text-foreground">{resource.completed_today}</span>
         </div>
-        <div className="w-full bg-gray-700 rounded-full h-2">
+        <div className="w-full bg-[hsl(var(--rpma-border))] rounded-full h-2">
           <div
             className={`h-2 rounded-full transition-all duration-300 ${
               utilizationPercentage > 90 ? 'bg-red-500' :
@@ -487,9 +422,9 @@ function ResourceUtilizationCard({ resource }: { resource: ResourceUtilization }
 // Component for recommendation cards
 function RecommendationCard({ recommendation }: { recommendation: WorkflowRecommendation }) {
   const priorityColors = {
-    high: 'bg-red-500/20 text-red-400 border-red-500/30',
-    medium: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-    low: 'bg-green-500/20 text-green-400 border-green-500/30'
+    high: 'bg-red-50 text-red-600 border-red-200',
+    medium: 'bg-orange-50 text-orange-600 border-orange-200',
+    low: 'bg-green-50 text-green-600 border-green-200'
   };
 
   return (
@@ -500,21 +435,21 @@ function RecommendationCard({ recommendation }: { recommendation: WorkflowRecomm
             <Badge variant="outline" className={`text-xs ${priorityColors[recommendation.priority as keyof typeof priorityColors] || priorityColors.medium}`}>
               {recommendation.priority.toUpperCase()}
             </Badge>
-            <span className="text-white font-medium">{recommendation.recommendation_type}</span>
+            <span className="text-foreground font-medium">{recommendation.recommendation_type}</span>
           </div>
-          <p className="text-gray-300 text-sm mb-3">{recommendation.description}</p>
+          <p className="text-muted-foreground text-sm mb-3">{recommendation.description}</p>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
             <div>
-              <span className="text-gray-400">Score d&apos;impact:</span>
-              <div className="text-green-400 font-semibold">{Math.round(recommendation.impact_score * 100)}%</div>
+              <span className="text-muted-foreground">Score d&apos;impact:</span>
+              <div className="text-green-600 font-semibold">{Math.round(recommendation.impact_score * 100)}%</div>
             </div>
             <div>
-              <span className="text-gray-400">Effort d&apos;implémentation:</span>
-              <div className="text-white font-semibold capitalize">{recommendation.implementation_effort}</div>
+              <span className="text-muted-foreground">Effort d&apos;implémentation:</span>
+              <div className="text-foreground font-semibold capitalize">{recommendation.implementation_effort}</div>
             </div>
             <div>
-              <span className="text-gray-400">Étapes affectées:</span>
-              <div className="text-white font-semibold">{recommendation.affected_steps.length}</div>
+              <span className="text-muted-foreground">Étapes affectées:</span>
+              <div className="text-foreground font-semibold">{recommendation.affected_steps.length}</div>
             </div>
           </div>
         </div>

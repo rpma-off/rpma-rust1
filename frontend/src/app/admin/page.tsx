@@ -34,8 +34,10 @@ import { QualityAssuranceDashboard } from '@/components/dashboard/QualityAssuran
 import { PhotoDocumentationDashboard } from '@/components/dashboard/PhotoDocumentationDashboard';
 import { SecurityDashboard } from '@/components/dashboard/SecurityDashboard';
 import { PageShell } from '@/components/layout/PageShell';
-import { PageHeader } from '@/components/ui/page-header';
+import { PageHeader, StatCard } from '@/components/ui/page-header';
 import { ErrorState } from '@/components/layout/ErrorState';
+import { EmptyState } from '@/components/layout/EmptyState';
+import { LoadingState } from '@/components/layout/LoadingState';
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface SystemStats {
@@ -275,29 +277,35 @@ export default function AdminPage() {
         title={t('admin.title')}
         subtitle={t('admin.systemSettings')}
         icon={<Shield className="w-6 h-6 text-[hsl(var(--rpma-teal))]" />}
-      >
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-          <div className="text-center p-4 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
-            <div className="text-2xl font-bold text-foreground">{stats.totalUsers}</div>
-            <div className="text-xs text-muted-foreground">{t('users.title')}</div>
+        stats={
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <StatCard
+              value={stats.totalUsers}
+              label={t('users.title')}
+              icon={Users}
+              color="accent"
+            />
+            <StatCard
+              value={stats.activeUsers}
+              label={t('users.active')}
+              icon={UserCheck}
+              color="green"
+            />
+            <StatCard
+              value={stats.totalTasks}
+              label={t('tasks.title')}
+              icon={BarChart3}
+              color="blue"
+            />
+            <StatCard
+              value={stats.systemHealth === 'healthy' ? '✓' : '⚠'}
+              label={t('admin.systemHealth')}
+              icon={Activity}
+              color={stats.systemHealth === 'healthy' ? 'green' : 'yellow'}
+            />
           </div>
-          <div className="text-center p-4 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
-            <div className="text-2xl font-bold text-foreground">{stats.activeUsers}</div>
-            <div className="text-xs text-muted-foreground">{t('users.active')}</div>
-          </div>
-          <div className="text-center p-4 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
-            <div className="text-2xl font-bold text-foreground">{stats.totalTasks}</div>
-            <div className="text-xs text-muted-foreground">{t('tasks.title')}</div>
-          </div>
-          <div className="text-center p-4 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
-            <Badge className={`px-3 py-1 ${getHealthColor(stats.systemHealth)}`}>
-              {stats.systemHealth === 'healthy' ? `✓ ${t('admin.systemHealth')}` :
-               stats.systemHealth === 'warning' ? `⚠ ${t('common.warning')}` : `✗ ${t('common.critical')}`}
-            </Badge>
-          </div>
-        </div>
-      </PageHeader>
+        }
+      />
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -444,15 +452,13 @@ export default function AdminPage() {
 
                  <div className="space-y-3">
                    {isLoadingUsers ? (
-                     <div className="text-center py-8">
-                       <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-[hsl(var(--rpma-teal))]" />
-                       <p className="text-muted-foreground">Chargement des utilisateurs...</p>
-                     </div>
+                     <LoadingState message={t('common.loading')} />
                    ) : users.length === 0 ? (
-                     <div className="text-center py-8 text-muted-foreground">
-                       <User className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                       <p className="text-sm">Aucun utilisateur trouvé</p>
-                     </div>
+                     <EmptyState
+                       icon={<User className="h-8 w-8 text-muted-foreground" />}
+                       title={t('users.noUsers')}
+                       description={t('empty.noData')}
+                     />
                    ) : (
                      <div className="space-y-2">
                        {users

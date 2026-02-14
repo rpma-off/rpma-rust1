@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ClientWithTasks, Task } from '@/types';
 import { convertTimestamps } from '@/lib/types';
 import { useTranslation } from '@/hooks/useTranslation';
+import { LoadingState } from '@/components/layout/LoadingState';
 import { formatClientDate } from './date-format';
 
 interface ClientDetailPageProps {
@@ -104,11 +105,7 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
-      </div>
-    );
+    return <LoadingState />;
   }
 
   if (error || !client) {

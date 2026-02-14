@@ -30,19 +30,19 @@ import type { JsonValue } from '@/types/json';
 
 // Lazy load tab components to reduce initial bundle size
 const SystemSettingsTab = dynamic(() => import('./components/SystemSettingsTab').then(mod => ({ default: mod.SystemSettingsTab })), {
-  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
+  loading: () => <LoadingState />
 });
 
 const BusinessRulesTab = dynamic(() => import('./components/BusinessRulesTab').then(mod => ({ default: mod.BusinessRulesTab })), {
-  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
+  loading: () => <LoadingState />
 });
 
 const SecurityPoliciesTab = dynamic(() => import('./components/SecurityPoliciesTab').then(mod => ({ default: mod.SecurityPoliciesTab })), {
-  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
+  loading: () => <LoadingState />
 });
 
 const IntegrationsTab = dynamic(() => import('./components/IntegrationsTab').then(mod => ({ default: mod.IntegrationsTab })), {
-  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
+  loading: () => <LoadingState />
 });
 import { PerformanceTab } from './components/PerformanceTab';
 import { MonitoringTab } from './components/MonitoringTab';
