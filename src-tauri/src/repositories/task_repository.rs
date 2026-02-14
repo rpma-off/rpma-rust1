@@ -101,7 +101,10 @@ impl TaskRepository {
              VALUES (?1, ?2, ?3, ?4, ?5)",
             rusqlite::params![task_id, old_status, new_status, reason, now],
         )
-        .ok();
+        .unwrap_or_else(|e| {
+            tracing::warn!(task_id = task_id, error = %e, "Failed to insert task history record");
+            0
+        });
 
         tx.commit()
             .map_err(|e| RepoError::Database(format!("Failed to commit transaction: {}", e)))?;
