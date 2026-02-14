@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 import { Database } from '@/types/database.types';
 
-type Task = Database['public']['Tables']['tasks']['Row'];
+type _Task = Database['public']['Tables']['tasks']['Row'];
 
 
 

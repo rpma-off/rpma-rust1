@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = await createClient();
+    const _supabase = await createClient();
 
     // Parse request body
     const body = await request.json();

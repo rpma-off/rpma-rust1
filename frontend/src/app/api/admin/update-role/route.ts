@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { withAuth, NextRequestWithUser } from '@/lib/middleware/auth.middleware';
 import { z } from 'zod';
 import { userService } from '@/lib/services/entities/user.service';

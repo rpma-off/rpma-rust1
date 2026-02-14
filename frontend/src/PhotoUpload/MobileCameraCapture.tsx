@@ -43,11 +43,11 @@ export const MobileCameraCapture: React.FC<MobileCameraCaptureProps> = ({
   const [isInitialized, setIsInitialized] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const [cameraConfig, setCameraConfig] = useState<MobileCameraConfig | null>(null);
-  const [validationResult, setValidationResult] = useState<RealTimeValidationResult | null>(null);
+  const [validationResult, _setValidationResult] = useState<RealTimeValidationResult | null>(null);
   const [flashMode, setFlashMode] = useState<'auto' | 'on' | 'off'>('auto');
   const [error, setError] = useState<string | null>(null);
 
-  const photoService = PPFPhotoService.getInstance();
+  const _photoService = PPFPhotoService.getInstance();
 
   const configureCamera = useCallback(async () => {
     try {
@@ -65,7 +65,7 @@ export const MobileCameraCapture: React.FC<MobileCameraCaptureProps> = ({
     } catch (err) {
       console.error('Camera configuration failed:', err);
     }
-  }, [photoService, stepNumber, angle]);
+  }, []);
 
   // Initialize camera
   useEffect(() => {
@@ -251,7 +251,7 @@ export const MobileCameraCapture: React.FC<MobileCameraCaptureProps> = ({
     } catch (err) {
       console.error('Real-time validation failed:', err);
     }
-  }, [stepNumber, angle, photoService]);
+  }, []);
 
   // Set up real-time validation
   useEffect(() => {

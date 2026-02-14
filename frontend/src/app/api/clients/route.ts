@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(ApiResponseFactory.success(result), { status: 200 });
 
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(ApiResponseFactory.success(client), { status: 201 });
 
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

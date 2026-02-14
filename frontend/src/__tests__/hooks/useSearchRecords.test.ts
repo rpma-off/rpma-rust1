@@ -21,7 +21,7 @@ const mockGetSession = AuthSecureStorage.getSession as jest.MockedFunction<typeo
 describe('useSearchRecords', () => {
   beforeEach(() => {
     mockInvoke.mockClear();
-    mockGetSession.mockResolvedValue({ token: 'test-token' } as any);
+    mockGetSession.mockResolvedValue({ token: 'test-token', user: null, refreshToken: null });
   });
 
   it('returns initial state correctly', () => {
@@ -115,12 +115,12 @@ describe('useSearchRecords', () => {
   });
 
   it('sets loading state during search', async () => {
-    let resolvePromise: (value: any) => void;
+    let resolvePromise: (value: unknown) => void;
     const promise = new Promise((resolve) => {
       resolvePromise = resolve;
     });
 
-    mockInvoke.mockReturnValue(promise as any);
+    mockInvoke.mockReturnValue(promise as Promise<unknown>);
 
     const { result } = renderHook(() => useSearchRecords());
 

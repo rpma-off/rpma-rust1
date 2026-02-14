@@ -110,7 +110,7 @@ export const GPSMonitor: React.FC<GPSMonitorProps> = ({
     } catch (err) {
       console.error('GPS tracking stop error:', err);
     }
-  }, [isTracking, geolocationService, interventionId]);
+  }, [isTracking, geolocationService]);
 
   const updateGPSData = useCallback(async () => {
     try {
@@ -159,7 +159,7 @@ export const GPSMonitor: React.FC<GPSMonitorProps> = ({
       console.error('GPS data update error:', err);
       setError('Failed to update GPS data');
     }
-  }, [geolocationService, interventionId, isTracking, onLocationUpdate]);
+  }, [geolocationService, isTracking, onLocationUpdate]);
 
   const initializeGPS = useCallback(async () => {
     try {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useTasks } from '../../hooks/useTasks';
 import { taskService } from '../../lib/services/entities/task.service';
@@ -127,7 +127,7 @@ describe('useTasks (Integration)', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockTaskService.getTasks.mockResolvedValue(mockApiResponse as any);
+    mockTaskService.getTasks.mockResolvedValue(mockApiResponse as Awaited<ReturnType<typeof mockTaskService.getTasks>>);
   });
 
   it('loads tasks on mount with default options', async () => {
@@ -178,7 +178,7 @@ describe('useTasks (Integration)', () => {
       status: 200,
     };
 
-    mockTaskService.getTasks.mockResolvedValue(responseWithUndefinedData as any);
+    mockTaskService.getTasks.mockResolvedValue(responseWithUndefinedData as Awaited<ReturnType<typeof mockTaskService.getTasks>>);
 
     const wrapper = createWrapper();
     const { result } = renderHook(() => useTasks(), { wrapper });
@@ -207,7 +207,7 @@ describe('useTasks (Integration)', () => {
       status: 200,
     };
 
-    mockTaskService.getTasks.mockResolvedValue(responseWithNullData as any);
+    mockTaskService.getTasks.mockResolvedValue(responseWithNullData as Awaited<ReturnType<typeof mockTaskService.getTasks>>);
 
     const wrapper = createWrapper();
     const { result } = renderHook(() => useTasks(), { wrapper });

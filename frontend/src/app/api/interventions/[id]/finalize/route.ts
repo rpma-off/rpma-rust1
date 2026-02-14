@@ -11,7 +11,6 @@
 import { z } from 'zod';
 import { interventionWorkflowService } from '@/lib/services/ppf';
 import type { PPFStep } from '@/lib/services/ppf';
-import type { PPFInterventionStep } from '@/types/ppf-intervention';
 
 // Schéma de validation pour finaliser une intervention
 const FinalizeInterventionSchema = z.object({
@@ -235,7 +234,7 @@ async function validateFinalizationRequirements(
 
          // Vérifier que chaque étape a le minimum de photos requises
          // TODO: Rewrite to fetch photos separately from PPFPhotoService
-         for (const step of steps) {
+         for (const _step of steps) {
            // Temporarily skip photo validation until photos are fetched separately
            // if (step.requiresPhotos && step.minPhotosRequired) {
            //   const photoCount = await fetchPhotoCountForStep(step.id);

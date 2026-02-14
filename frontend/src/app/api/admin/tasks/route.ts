@@ -5,7 +5,7 @@
  export const dynamic = 'force-dynamic';
 
 type Task = Database['public']['Tables']['tasks']['Row'];
-type Technician = Database['public']['Tables']['technicians']['Row'];
+type _Technician = Database['public']['Tables']['technicians']['Row'];
 type TaskPhoto = Database['public']['Tables']['task_photos']['Row'];
 
 

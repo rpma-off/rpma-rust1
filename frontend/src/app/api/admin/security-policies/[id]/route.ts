@@ -3,8 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 import { Database } from '@/types/database.types';
 
-type SecurityPolicy = Database['public']['Tables']['security_policies']['Row'];
-type User = Database['public']['Tables']['users']['Row'];
+type _SecurityPolicy = Database['public']['Tables']['security_policies']['Row'];
+type _User = Database['public']['Tables']['users']['Row'];
 
 export async function GET(
   request: NextRequest,
