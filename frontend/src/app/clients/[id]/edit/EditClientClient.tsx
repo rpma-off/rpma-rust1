@@ -10,6 +10,7 @@ import type { Client } from '@/types';
 import { convertTimestamps } from '@/lib/types';
 import { ipcClient } from '@/lib/ipc/client';
 import { useTranslation } from '@/hooks/useTranslation';
+import { LoadingState } from '@/components/layout/LoadingState';
 
 interface EditClientClientProps {
   params: {
@@ -125,11 +126,7 @@ export default function EditClientClient({ params }: EditClientClientProps) {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
-      </div>
-    );
+    return <LoadingState />;
   }
 
   if (error || !client) {

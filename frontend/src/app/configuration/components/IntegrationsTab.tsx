@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { LoadingState } from '@/components/layout/LoadingState';
 import { 
   Globe, 
   Plus, 
@@ -320,11 +321,7 @@ export function IntegrationsTab() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <LoadingState />;
   }
 
   return (

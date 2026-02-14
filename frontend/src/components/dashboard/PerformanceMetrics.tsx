@@ -37,7 +37,7 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ metrics,
 
   return (
     <Card className={cn('p-6', className)}>
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Metrics</h3>
+      <h3 className="text-lg font-semibold text-foreground mb-4">Performance Metrics</h3>
       <div className="space-y-4">
         {performanceItems.map((item) => (
           <div key={item.label} className="space-y-2">
@@ -46,9 +46,9 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ metrics,
                 <div className={cn('p-1 rounded', item.bgColor)}>
                   <item.icon className={cn('h-4 w-4', item.color)} />
                 </div>
-                <span className="text-sm font-medium text-gray-700">{item.label}</span>
+                <span className="text-sm font-medium text-muted-foreground">{item.label}</span>
               </div>
-              <span className="text-sm font-semibold text-gray-900">{item.value}</span>
+              <span className="text-sm font-semibold text-foreground">{item.value}</span>
             </div>
             <Progress value={item.progress} className="h-2" />
           </div>

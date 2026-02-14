@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import type { Client } from '@/lib/backend';
+import { LoadingState } from '@/components/layout/LoadingState';
 import type { UpdateClientDTO, ClientType } from '@/types/client.types';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -138,11 +139,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
-      </div>
-    );
+    return <LoadingState />;
   }
 
   if (error || !client) {
