@@ -147,7 +147,7 @@ Stack: ${error.stack}
         <CardContent className="space-y-6">
            {/* Error Context */}
            <div className="bg-red-50 border border-red-200 rounded-md p-4">
-             <h4 className="text-sm font-medium text-red-800 mb-2">Informations sur l'erreur</h4>
+             <h4 className="text-sm font-medium text-red-800 mb-2">Informations sur l&apos;erreur</h4>
              <div className="text-sm text-red-700 space-y-1">
                <p><strong>Message :</strong> {error.message}</p>
                <p><strong>Heure :</strong> {new Date().toLocaleString()}</p>
@@ -166,7 +166,7 @@ Stack: ${error.stack}
                      size="lg"
                    >
                      <RefreshCw className="h-5 w-5" />
-                     <span>Recharger l'application</span>
+                     <span>Recharger l&apos;application</span>
                    </Button>
 
                    <Button
@@ -195,7 +195,7 @@ Stack: ${error.stack}
                      className="w-full flex items-center justify-center space-x-2"
                    >
                      <RefreshCw className="h-4 w-4" />
-                     <span>Recharger l'application</span>
+                     <span>Recharger l&apos;application</span>
                    </Button>
                  </>
                )}
@@ -218,7 +218,7 @@ Stack: ${error.stack}
                <li>Essayez de recharger la page - cela résout la plupart des problèmes</li>
                <li>Vérifiez votre connexion internet</li>
                <li>Videz le cache et les cookies de votre navigateur</li>
-               <li>Essayez d'utiliser un autre navigateur ou le mode incognito</li>
+               <li>Essayez d&apos;utiliser un autre navigateur ou le mode incognito</li>
                <li>Contactez le support si le problème persiste</li>
              </ul>
            </div>

@@ -25,9 +25,7 @@ mod tests {
         if count <= 0 {
             return Vec::new();
         }
-        (0..count)
-            .map(|idx| format!("photo-{}", idx + 1))
-            .collect()
+        (0..count).map(|idx| format!("photo-{}", idx + 1)).collect()
     }
 
     #[tokio::test]
@@ -561,7 +559,11 @@ mod tests {
         };
 
         intervention_service
-            .advance_step(advance_request_one, "test-correlation-id", Some("test_user"))
+            .advance_step(
+                advance_request_one,
+                "test-correlation-id",
+                Some("test_user"),
+            )
             .await?;
 
         let advance_request_two = AdvanceStepRequest {
@@ -575,7 +577,11 @@ mod tests {
         };
 
         intervention_service
-            .advance_step(advance_request_two, "test-correlation-id", Some("test_user"))
+            .advance_step(
+                advance_request_two,
+                "test-correlation-id",
+                Some("test_user"),
+            )
             .await?;
 
         let saved_step_one = intervention_service
@@ -649,7 +655,11 @@ mod tests {
         };
 
         intervention_service
-            .advance_step(advance_request_one, "test-correlation-id", Some("test_user"))
+            .advance_step(
+                advance_request_one,
+                "test-correlation-id",
+                Some("test_user"),
+            )
             .await?;
 
         let finalize_request = FinalizeInterventionRequest {
@@ -671,9 +681,7 @@ mod tests {
 
         assert!(result.is_err());
         let err = result.unwrap_err();
-        assert!(err
-            .to_string()
-            .contains("mandatory steps incomplete"));
+        assert!(err.to_string().contains("mandatory steps incomplete"));
 
         Ok(())
     }
