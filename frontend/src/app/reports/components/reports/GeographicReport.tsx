@@ -8,7 +8,7 @@ interface GeographicReportProps {
   filters: ReportFilters;
 }
 
-function GeographicReport({ dateRange, filters }: GeographicReportProps) {
+function GeographicReport({ dateRange: _dateRange, filters: _filters }: GeographicReportProps) {
   return (
     <div className="space-y-8">
       <div className="text-center py-12">

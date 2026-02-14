@@ -252,15 +252,17 @@ async function handleGet(request: NextRequest, context?: unknown) {
     }, sessionToken);
 
     // Validate response before sending
-    const taskList = (result as { data?: unknown })?.data;
+    const taskList = (result as { data?: unknown })?.data as Record<string, unknown> | undefined;
+    const taskListData = (taskList?.data ?? []) as unknown[];
+    const taskListPagination = taskList?.pagination as Record<string, unknown> | undefined;
     const validatedResponse = validateApiResponse(TasksListResponseSchema, {
       data: {
-        data: (taskList as any)?.data || [],
-        pagination: (taskList as any)?.pagination ? {
-          page: (taskList as any).pagination.page,
-          limit: (taskList as any).pagination.limit,
-          total: (taskList as any).pagination.total,
-          total_pages: (taskList as any).pagination.total_pages,
+        data: taskListData,
+        pagination: taskListPagination ? {
+          page: taskListPagination.page,
+          limit: taskListPagination.limit,
+          total: taskListPagination.total,
+          total_pages: taskListPagination.total_pages,
         } : {
           page: 1,
           limit: 10,
@@ -273,8 +275,8 @@ async function handleGet(request: NextRequest, context?: unknown) {
     const duration = Date.now() - startTime;
     secureLog('info', `Tasks query completed [${requestId}]:`, {
       duration,
-      resultCount: (taskList as any)?.data?.length || 0,
-      totalItems: (taskList as any)?.pagination?.total || 0,
+      resultCount: (taskListData as unknown[])?.length || 0,
+      totalItems: (taskListPagination?.total as number) || 0,
       });
 
      return NextResponse.json((validatedResponse as { data: unknown }).data, {

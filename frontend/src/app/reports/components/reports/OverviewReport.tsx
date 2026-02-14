@@ -44,7 +44,7 @@ interface OverviewReportProps {
   };
 }
 
-function OverviewReport({ dateRange, filters, overviewData }: OverviewReportProps) {
+function OverviewReport({ dateRange: _dateRange, filters: _filters, overviewData }: OverviewReportProps) {
   const { taskCompletion, technicianPerformance, clientAnalytics, qualityCompliance, materialUsage, geographic, operationalIntelligence } = overviewData;
 
   return (

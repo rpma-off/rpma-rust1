@@ -29,7 +29,7 @@ interface StatusDistributionData {
   count: number;
   percentage: number;
   color: string;
-  [key: string]: any; // Add index signature for Recharts compatibility
+  [key: string]: string | number; // Index signature for Recharts compatibility
 }
 
 interface TaskCompletionChartProps {
@@ -52,12 +52,12 @@ export function TaskCompletionChart({ data, statusDistribution }: TaskCompletion
     return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
   };
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ color: string; name: string; value: number }>; label?: string }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-gray-800 border border-gray-700 rounded-lg p-3 shadow-lg">
-          <p className="text-white font-medium mb-2">{formatDate(label)}</p>
-          {payload.map((entry: any, index: number) => (
+          <p className="text-white font-medium mb-2">{formatDate(label || '')}</p>
+          {payload.map((entry: { color: string; name: string; value: number }, index: number) => (
             <p key={index} className="text-sm" style={{ color: entry.color }}>
               {entry.name}: {entry.value}
             </p>
@@ -68,7 +68,7 @@ export function TaskCompletionChart({ data, statusDistribution }: TaskCompletion
     return null;
   };
 
-  const CustomPieTooltip = ({ active, payload }: any) => {
+  const CustomPieTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ name: string; value: number; payload: { percentage: number } }> }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-gray-800 border border-gray-700 rounded-lg p-3 shadow-lg">

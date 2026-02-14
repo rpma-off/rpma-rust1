@@ -11,10 +11,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import type { Client } from '@/lib/backend';
 import { LoadingState } from '@/components/layout/LoadingState';
-import type { UpdateClientDTO, ClientType } from '@/types/client.types';
+import type { UpdateClientDTO } from '@/types/client.types';
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface EditClientPageProps {

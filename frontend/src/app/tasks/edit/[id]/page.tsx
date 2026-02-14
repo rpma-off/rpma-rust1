@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth/compatibility';
 import { ipcClient } from '@/lib/ipc';
 import { useTranslation } from '@/hooks/useTranslation';
+import type { Task } from '@/lib/backend';
+import type { TaskFormData } from '@/components/TaskForm/types';
 
 // Dynamically import TaskForm for better performance
 const TaskForm = dynamic(() => import('@/components/TaskForm').then(mod => ({ default: mod.TaskForm })), {
@@ -27,8 +29,8 @@ export default function EditTaskPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const params = useParams();
-  const { user, session } = useAuth();
-  const [taskData, setTaskData] = useState<any>(null);
+  const { user, session: _session } = useAuth();
+  const [taskData, setTaskData] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -192,7 +194,7 @@ export default function EditTaskPage() {
         {/* Enhanced Form Container */}
         <div className="bg-[hsl(var(--rpma-surface))] rounded-xl border border-[hsl(var(--rpma-border))] p-4 md:p-6 shadow-xl">
           <TaskForm
-            initialData={taskData}
+            initialData={taskData as unknown as Partial<TaskFormData>}
             onSuccess={handleSuccess}
             onCancel={handleCancel}
             isEditing={true}

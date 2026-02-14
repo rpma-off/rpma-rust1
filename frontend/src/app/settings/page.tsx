@@ -51,7 +51,7 @@ const NotificationsTab = dynamic(() => import('@/components/settings/Notificatio
 
 // Tab configuration
 // Tab configuration will use translations
-const getTabConfig = (t: any) => [
+const getTabConfig = (t: (key: string, params?: Record<string, string | number>) => string) => [
   {
     id: 'profile',
     label: t('nav.profile'),
@@ -88,10 +88,10 @@ export default function SettingsPage() {
   const { t } = useTranslation();
   const tabConfig = getTabConfig(t);
   const [activeTab, setActiveTab] = useState('profile');
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: _authLoading } = useAuth();
 
   // Initialize logging
-  const { logInfo, logError, logUserAction, logPerformance } = useLogger({
+  const { logInfo, logError: _logError, logUserAction, logPerformance } = useLogger({
     context: LogDomain.USER,
     component: 'SettingsPage',
     enablePerformanceLogging: true
@@ -112,7 +112,7 @@ export default function SettingsPage() {
     });
 
     timer();
-  }, []);
+  }, [activeTab, logInfo, logPerformance, profile, user?.user_id]);
 
   // Keyboard navigation (listener doesn't depend on activeTab)
   useEffect(() => {
@@ -168,7 +168,7 @@ export default function SettingsPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [logUserAction]);
+  }, [logUserAction, activeTab, tabConfig]);
 
   const handleTabChange = (newTab: string) => {
     logUserAction('Tab changed', {

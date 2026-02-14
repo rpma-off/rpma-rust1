@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import {
   LazyReportWrapper,
   OverviewReport,
@@ -16,6 +16,14 @@ import type {
   DateRange as BackendDateRange,
   ReportFilters as BackendReportFilters,
   ReportType as BackendReportType,
+  TaskCompletionReport,
+  TechnicianPerformanceReport as BackendTechnicianPerformanceReport,
+  ClientAnalyticsReport as BackendClientAnalyticsReport,
+  QualityComplianceReport as BackendQualityComplianceReport,
+  MaterialUsageReport as BackendMaterialUsageReport,
+  GeographicReport as BackendGeographicReport,
+  SeasonalReport,
+  OperationalIntelligenceReport as BackendOperationalIntelligenceReport,
 } from '@/lib/backend';
 
 interface DateRange {
@@ -47,11 +55,22 @@ const toReportFilters = (filters: ReportFilters): BackendReportFilters => ({
   vehicle_models: null // Add if needed in frontend
 });
 
+interface OverviewData {
+  taskCompletion: TaskCompletionReport;
+  technicianPerformance: BackendTechnicianPerformanceReport;
+  clientAnalytics: BackendClientAnalyticsReport;
+  qualityCompliance: BackendQualityComplianceReport;
+  materialUsage: BackendMaterialUsageReport;
+  geographic: BackendGeographicReport;
+  seasonal: SeasonalReport;
+  operationalIntelligence: BackendOperationalIntelligenceReport;
+}
+
 interface ReportContentProps {
   reportType: BackendReportType;
   dateRange: DateRange;
   filters: ReportFilters;
-  overviewData?: any;
+  overviewData?: OverviewData;
   reportsGenerated?: boolean;
 }
 

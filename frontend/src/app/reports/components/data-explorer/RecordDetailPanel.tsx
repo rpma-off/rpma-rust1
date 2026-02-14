@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { X, Car, Users, FileText, Calendar, MapPin, Phone, Mail, Star, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { X, Car, Users, FileText, Calendar, Mail, Star, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

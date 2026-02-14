@@ -8,7 +8,7 @@ interface QualityComplianceReportProps {
   filters: ReportFilters;
 }
 
-function QualityComplianceReport({ dateRange, filters }: QualityComplianceReportProps) {
+function QualityComplianceReport({ dateRange: _dateRange, filters: _filters }: QualityComplianceReportProps) {
   return (
     <div className="space-y-8">
       <div className="text-center py-12">

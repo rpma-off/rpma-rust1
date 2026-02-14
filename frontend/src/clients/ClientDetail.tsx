@@ -8,7 +8,6 @@ import { Separator } from '@/components/ui/separator';
 import {
   Mail,
   Phone,
-  MapPin,
   Calendar,
   FileText,
   Edit,
