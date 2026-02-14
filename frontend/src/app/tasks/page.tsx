@@ -854,10 +854,9 @@ export default function TasksPage() {
       });
       enhancedToast.success('Tâche supprimée avec succès', {
         action: {
-          label: 'Annuler',
+          label: 'Actualiser',
           onClick: () => {
-            // Could implement undo functionality here
-            console.log('Undo delete requested');
+            void refetch();
           }
         }
       });
@@ -891,7 +890,7 @@ export default function TasksPage() {
         }
       });
     }
-  }, [deleteTask]);
+  }, [deleteTask, refetch]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);

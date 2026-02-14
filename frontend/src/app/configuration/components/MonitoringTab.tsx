@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { LoadingState } from '@/components/layout/LoadingState';
 import { 
   Activity, 
   RefreshCw,
@@ -16,6 +17,9 @@ import {
   Minus
 } from 'lucide-react';
 import { SystemStatus } from '@/types/configuration.types';
+import { safeInvoke } from '@/lib/ipc/core';
+import { IPC_COMMANDS } from '@/lib/ipc/commands';
+import type { JsonValue } from '@/types/json';
 
 export function MonitoringTab() {
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
@@ -28,14 +32,54 @@ export function MonitoringTab() {
 
   const loadSystemStatus = async () => {
     try {
-      const response = await fetch('/api/admin/configuration/status');
-      if (response.ok) {
-        const status = await response.json();
+      const result = await safeInvoke<JsonValue>(IPC_COMMANDS.HEALTH_CHECK, {});
+      if (result && typeof result === 'object') {
+        const healthData = result as Record<string, JsonValue>;
+        const overallStatus = (healthData.status as string) === 'healthy' ? 'healthy' as const : 'warning' as const;
+        const now = new Date().toISOString();
+
+        // Derive component statuses from the overall health check result
+        const components: Record<string, { status: 'healthy' | 'warning' | 'error'; message?: string; lastChecked: string }> = {};
+        if (healthData.components && typeof healthData.components === 'object') {
+          for (const [key, val] of Object.entries(healthData.components as Record<string, JsonValue>)) {
+            const comp = val as Record<string, JsonValue>;
+            components[key] = {
+              status: (comp.status as string) === 'healthy' ? 'healthy' : (comp.status as string) === 'warning' ? 'warning' : 'error',
+              message: (comp.message as string) || '',
+              lastChecked: (comp.lastChecked as string) || now
+            };
+          }
+        }
+
+        // Fallback: if no components in response, derive from overall status
+        if (Object.keys(components).length === 0) {
+          components.database = { status: overallStatus, message: overallStatus === 'healthy' ? 'Base de données opérationnelle' : 'Vérification requise', lastChecked: now };
+          components.api = { status: overallStatus, message: overallStatus === 'healthy' ? 'API backend accessible' : 'Vérification requise', lastChecked: now };
+          components.storage = { status: overallStatus, message: overallStatus === 'healthy' ? 'Stockage disponible' : 'Vérification requise', lastChecked: now };
+          components.auth = { status: overallStatus, message: overallStatus === 'healthy' ? 'Authentification opérationnelle' : 'Vérification requise', lastChecked: now };
+        }
+
+        const status: SystemStatus = {
+          status: overallStatus,
+          components,
+          timestamp: now
+        };
         setSystemStatus(status);
       }
     } catch (error) {
       console.error('Error loading system status:', error);
       toast.error('Erreur lors du chargement du statut système');
+      setSystemStatus({
+        status: 'error',
+        components: {
+          system: {
+            status: 'error',
+            message: 'Impossible de contacter le backend',
+            lastChecked: new Date().toISOString()
+          }
+        },
+        timestamp: new Date().toISOString()
+      });
     } finally {
       setLoading(false);
     }
@@ -73,20 +117,15 @@ export function MonitoringTab() {
     }
   };
 
-  const getTrendIcon = () => {
-    // Simulate trend data
-    const trend = Math.random();
-    if (trend > 0.6) return <TrendingUp className="h-4 w-4 text-green-600" />;
-    if (trend < 0.4) return <TrendingDown className="h-4 w-4 text-red-600" />;
+  const getTrendIcon = (status: string) => {
+    if (status === 'healthy') return <TrendingUp className="h-4 w-4 text-green-600" />;
+    if (status === 'warning') return <TrendingDown className="h-4 w-4 text-yellow-600" />;
+    if (status === 'error') return <TrendingDown className="h-4 w-4 text-red-600" />;
     return <Minus className="h-4 w-4 text-gray-600" />;
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <LoadingState />;
   }
 
   return (
@@ -130,7 +169,7 @@ export function MonitoringTab() {
                       {getStatusIcon(component.status)}
                       <span className="font-medium capitalize">{key}</span>
                     </div>
-                    {getTrendIcon()}
+                    {getTrendIcon(component.status)}
                   </div>
                   <p className="text-sm opacity-80">{component.message}</p>
                   <p className="text-xs opacity-60 mt-1">

@@ -25,9 +25,11 @@ import {
   Clock,
   Globe,
   Key,
-  Eye
 } from 'lucide-react';
 import { SecurityPolicy, SecurityPolicyType } from '@/types/configuration.types';
+import { useAuth } from '@/contexts/AuthContext';
+import { settingsOperations } from '@/lib/ipc/domains/settings';
+import type { JsonValue } from '@/types/json';
 
 export function SecurityPoliciesTab() {
   const [securityPolicies, setSecurityPolicies] = useState<SecurityPolicy[]>([]);
@@ -40,6 +42,7 @@ export function SecurityPoliciesTab() {
   // Form state for creating/editing policies
   const [formData, setFormData] = useState({
     name: '',
+    description: '',
     type: 'password' as SecurityPolicyType,
     isActive: true,
     settings: {
@@ -63,64 +66,25 @@ export function SecurityPoliciesTab() {
     exceptions: [] as string[]
   });
 
+  const { session } = useAuth();
+
   useEffect(() => {
     loadSecurityPolicies();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadSecurityPolicies = async () => {
     try {
-      const response = await fetch('/api/admin/security-policies');
-      if (response.ok) {
-        const data = await response.json();
-        setSecurityPolicies(data);
-      } else {
-        // For now, use mock data
-        setSecurityPolicies([
-          {
-            id: '1',
-            name: 'Politique de Mot de Passe Standard',
-            description: 'Politique standard pour les mots de passe',
-            policy_type: 'password',
-            is_active: true,
-            applies_to: ['all_users'],
-            type: 'password',
-            settings: {
-              minLength: 8,
-              requireUppercase: true,
-              requireLowercase: true,
-              requireNumbers: true,
-              requireSpecial: true,
-              maxAgeDays: 90
-            },
-            exceptions: [],
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          },
-          {
-            id: '2',
-            name: 'Politique de Session',
-            description: 'Politique de gestion des sessions',
-            policy_type: 'session',
-            is_active: true,
-            applies_to: ['all_users'],
-            type: 'session',
-            settings: {
-              timeoutMinutes: 30,
-              maxConcurrentSessions: 5
-            },
-            exceptions: [],
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }
-        ]);
-      }
+      setLoading(true);
+      const sessionToken = session?.token || '';
+      const data = await settingsOperations.getAppSettings(sessionToken);
+      const appSettings = data as Record<string, JsonValue>;
+      const policies = (appSettings?.security_policies || []) as unknown as SecurityPolicy[];
+      setSecurityPolicies(Array.isArray(policies) ? policies : []);
     } catch (error) {
       console.error('Error loading security policies:', error);
       toast.error('Erreur lors du chargement des politiques de sécurité');
+      setSecurityPolicies([]);
     } finally {
       setLoading(false);
     }
@@ -129,29 +93,42 @@ export function SecurityPoliciesTab() {
   const saveSecurityPolicy = async () => {
     setSaving(true);
     try {
-      const url = editingPolicy 
-        ? `/api/admin/security-policies/${editingPolicy.id}`
-        : '/api/admin/security-policies';
-      
-      const method = editingPolicy ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      const sessionToken = session?.token || '';
+      const newPolicy: SecurityPolicy = {
+        id: editingPolicy?.id || crypto.randomUUID(),
+        name: formData.name,
+        description: formData.description || formData.name,
+        policy_type: formData.type,
+        type: formData.type,
+        is_active: formData.isActive,
+        isActive: formData.isActive,
+        applies_to: formData.appliesTo,
+        appliesTo: formData.appliesTo,
+        settings: formData.settings as unknown as Record<string, unknown>,
+        exceptions: [],
+        created_at: editingPolicy?.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        createdAt: editingPolicy?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
 
-      if (response.ok) {
-        toast.success(editingPolicy ? 'Politique mise à jour avec succès' : 'Politique créée avec succès');
-        setShowCreateDialog(false);
-        setEditingPolicy(null);
-        resetForm();
-        loadSecurityPolicies();
+      let updatedPolicies: SecurityPolicy[];
+      if (editingPolicy) {
+        updatedPolicies = securityPolicies.map(p => p.id === editingPolicy.id ? newPolicy : p);
       } else {
-        throw new Error('Failed to save security policy');
+        updatedPolicies = [...securityPolicies, newPolicy];
       }
+
+      await settingsOperations.updateGeneralSettings(
+        { security_policies: updatedPolicies as unknown as JsonValue } as Record<string, JsonValue>,
+        sessionToken
+      );
+
+      toast.success(editingPolicy ? 'Politique mise à jour avec succès' : 'Politique créée avec succès');
+      setShowCreateDialog(false);
+      setEditingPolicy(null);
+      resetForm();
+      await loadSecurityPolicies();
     } catch (error) {
       console.error('Error saving security policy:', error);
       toast.error('Erreur lors de la sauvegarde');
@@ -166,16 +143,14 @@ export function SecurityPoliciesTab() {
     }
 
     try {
-      const response = await fetch(`/api/admin/security-policies/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        toast.success('Politique supprimée avec succès');
-        loadSecurityPolicies();
-      } else {
-        throw new Error('Failed to delete security policy');
-      }
+      const sessionToken = session?.token || '';
+      const updatedPolicies = securityPolicies.filter(p => p.id !== id);
+      await settingsOperations.updateGeneralSettings(
+        { security_policies: updatedPolicies as unknown as JsonValue } as Record<string, JsonValue>,
+        sessionToken
+      );
+      toast.success('Politique supprimée avec succès');
+      await loadSecurityPolicies();
     } catch (error) {
       console.error('Error deleting security policy:', error);
       toast.error('Erreur lors de la suppression');
@@ -184,20 +159,16 @@ export function SecurityPoliciesTab() {
 
   const togglePolicyStatus = async (policy: SecurityPolicy) => {
     try {
-      const response = await fetch(`/api/admin/security-policies/${policy.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ isActive: !policy.isActive }),
-      });
-
-      if (response.ok) {
-        toast.success(`Politique ${policy.isActive ? 'désactivée' : 'activée'} avec succès`);
-        loadSecurityPolicies();
-      } else {
-        throw new Error('Failed to update policy status');
-      }
+      const sessionToken = session?.token || '';
+      const updatedPolicies = securityPolicies.map(p =>
+        p.id === policy.id ? { ...p, is_active: !p.is_active, isActive: !p.is_active } : p
+      );
+      await settingsOperations.updateGeneralSettings(
+        { security_policies: updatedPolicies as unknown as JsonValue } as Record<string, JsonValue>,
+        sessionToken
+      );
+      toast.success(`Politique ${policy.is_active ? 'désactivée' : 'activée'} avec succès`);
+      await loadSecurityPolicies();
     } catch (error) {
       console.error('Error updating policy status:', error);
       toast.error('Erreur lors de la mise à jour');
@@ -207,6 +178,7 @@ export function SecurityPoliciesTab() {
   const resetForm = () => {
     setFormData({
       name: '',
+      description: '',
       type: 'password',
       isActive: true,
       settings: {
@@ -235,6 +207,7 @@ export function SecurityPoliciesTab() {
     setEditingPolicy(policy);
     setFormData({
       name: policy.name,
+      description: policy.description || '',
       type: policy.type as SecurityPolicyType,
       isActive: policy.isActive || policy.is_active || false,
       settings: { ...formData.settings, ...policy.settings },

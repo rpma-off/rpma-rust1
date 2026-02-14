@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { PageShell } from '@/components/layout/PageShell';
 import { PageHeader } from '@/components/ui/page-header';

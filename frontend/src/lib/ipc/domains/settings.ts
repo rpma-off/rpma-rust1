@@ -18,6 +18,13 @@ export const settingsOperations = {
       sessionToken: sessionToken || ''
     }),
 
+  updateGeneralSettings: async (request: JsonObject, sessionToken: string): Promise<JsonValue> => {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.UPDATE_GENERAL_SETTINGS, {
+      request: { ...request, session_token: sessionToken }
+    });
+    return result;
+  },
+
   updateNotificationSettings: (request: JsonObject, sessionToken: string): Promise<JsonValue> =>
     safeInvoke<JsonValue>(IPC_COMMANDS.UPDATE_NOTIFICATION_SETTINGS, {
       request: { ...request, session_token: sessionToken }

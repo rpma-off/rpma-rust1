@@ -16,6 +16,9 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLogger } from '@/hooks/useLogger';
 import { LogDomain } from '@/lib/logging/types';
+import { useAuth } from '@/contexts/AuthContext';
+import { settingsOperations } from '@/lib/ipc/domains/settings';
+import type { JsonValue } from '@/types/json';
 import {
   Plus,
   Edit,
@@ -98,34 +101,31 @@ export function BusinessRulesTab() {
     actions: [] as RuleAction[]
   });
 
+  const { session } = useAuth();
+
   const loadBusinessRules = useCallback(async () => {
     const timer = logPerformance('Load business rules');
     try {
       setLoading(true);
       logInfo('Loading business rules');
 
-      const response = await fetch('/api/admin/business-rules');
-      if (response.ok) {
-        const data = await response.json();
-        setBusinessRules(data);
-        logInfo('Business rules loaded successfully', {
-          count: data.length,
-          activeRules: data.filter((r: { isActive: boolean }) => r.isActive).length,
-          categories: [...new Set(data.map((r: { category: string }) => r.category))]
-        });
-      } else {
-        logError('Failed to load business rules', { status: response.status });
-        toast.error('Erreur lors du chargement des règles métier');
-      }
+      const sessionToken = session?.token || '';
+      const data = await settingsOperations.getAppSettings(sessionToken);
+      const appSettings = data as Record<string, JsonValue>;
+      const rules = (appSettings?.business_rules || []) as unknown as BusinessRule[];
+      setBusinessRules(Array.isArray(rules) ? rules : []);
+      logInfo('Business rules loaded successfully', {
+        count: Array.isArray(rules) ? rules.length : 0,
+      });
     } catch (error) {
       logError('Error loading business rules', { error: error instanceof Error ? error.message : error });
-      console.error('Error loading business rules:', error);
       toast.error('Erreur lors du chargement des règles métier');
+      setBusinessRules([]);
     } finally {
       setLoading(false);
       timer();
     }
-  }, [logPerformance, logInfo, logError]);
+  }, [logPerformance, logInfo, logError, session?.token]);
 
   useEffect(() => {
     loadBusinessRules();
@@ -134,29 +134,39 @@ export function BusinessRulesTab() {
   const saveRule = async () => {
     setSaving(true);
     try {
-      const url = editingRule 
-        ? `/api/admin/business-rules/${editingRule.id}`
-        : '/api/admin/business-rules';
-      
-      const method = editingRule ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      const sessionToken = session?.token || '';
+      const newRule: BusinessRule = {
+        id: editingRule?.id || crypto.randomUUID(),
+        name: formData.name,
+        description: formData.description,
+        category: formData.category,
+        priority: formData.priority,
+        is_active: formData.isActive,
+        isActive: formData.isActive,
+        conditions: formData.conditions,
+        actions: formData.actions,
+        created_at: editingRule?.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        createdAt: editingRule?.createdAt || new Date().toISOString(),
+      };
 
-      if (response.ok) {
-        toast.success(editingRule ? 'Règle mise à jour avec succès' : 'Règle créée avec succès');
-        setShowCreateDialog(false);
-        setEditingRule(null);
-        resetForm();
-        loadBusinessRules();
+      let updatedRules: BusinessRule[];
+      if (editingRule) {
+        updatedRules = businessRules.map(r => r.id === editingRule.id ? newRule : r);
       } else {
-        throw new Error('Failed to save rule');
+        updatedRules = [...businessRules, newRule];
       }
+
+      await settingsOperations.updateGeneralSettings(
+        { business_rules: updatedRules as unknown as JsonValue } as Record<string, JsonValue>,
+        sessionToken
+      );
+
+      toast.success(editingRule ? 'Règle mise à jour avec succès' : 'Règle créée avec succès');
+      setShowCreateDialog(false);
+      setEditingRule(null);
+      resetForm();
+      await loadBusinessRules();
     } catch (error) {
       console.error('Error saving rule:', error);
       toast.error('Erreur lors de la sauvegarde');
@@ -169,16 +179,14 @@ export function BusinessRulesTab() {
     if (!confirm('Êtes-vous sûr de vouloir supprimer cette règle ?')) return;
 
     try {
-      const response = await fetch(`/api/admin/business-rules/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        toast.success('Règle supprimée avec succès');
-        loadBusinessRules();
-      } else {
-        throw new Error('Failed to delete rule');
-      }
+      const sessionToken = session?.token || '';
+      const updatedRules = businessRules.filter(r => r.id !== id);
+      await settingsOperations.updateGeneralSettings(
+        { business_rules: updatedRules as unknown as JsonValue } as Record<string, JsonValue>,
+        sessionToken
+      );
+      toast.success('Règle supprimée avec succès');
+      await loadBusinessRules();
     } catch (error) {
       console.error('Error deleting rule:', error);
       toast.error('Erreur lors de la suppression');
@@ -187,20 +195,16 @@ export function BusinessRulesTab() {
 
   const toggleRuleStatus = async (id: string, isActive: boolean) => {
     try {
-      const response = await fetch(`/api/admin/business-rules/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ isActive: !isActive }),
-      });
-
-      if (response.ok) {
-        toast.success(`Règle ${!isActive ? 'activée' : 'désactivée'} avec succès`);
-        loadBusinessRules();
-      } else {
-        throw new Error('Failed to update rule status');
-      }
+      const sessionToken = session?.token || '';
+      const updatedRules = businessRules.map(r =>
+        r.id === id ? { ...r, is_active: !isActive, isActive: !isActive } : r
+      );
+      await settingsOperations.updateGeneralSettings(
+        { business_rules: updatedRules as unknown as JsonValue } as Record<string, JsonValue>,
+        sessionToken
+      );
+      toast.success(`Règle ${!isActive ? 'activée' : 'désactivée'} avec succès`);
+      await loadBusinessRules();
     } catch (error) {
       console.error('Error updating rule status:', error);
       toast.error('Erreur lors de la mise à jour');
@@ -210,19 +214,18 @@ export function BusinessRulesTab() {
   const testRule = async (id: string) => {
     setTestingRule(id);
     try {
-      const response = await fetch(`/api/admin/business-rules/${id}/test`, {
-        method: 'POST',
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          toast.success('Test de règle réussi');
-        } else {
-          toast.error('Test de règle échoué');
-        }
+      const rule = businessRules.find(r => r.id === id);
+      if (!rule) {
+        toast.error('Règle introuvable');
+        return;
+      }
+      // Validate rule structure locally
+      if (rule.conditions.length === 0) {
+        toast.warning('Validation: La règle n\'a aucune condition définie');
+      } else if (rule.actions.length === 0) {
+        toast.warning('Validation: La règle n\'a aucune action définie');
       } else {
-        throw new Error('Failed to test rule');
+        toast.success('Validation réussie: Structure de règle valide');
       }
     } catch (error) {
       console.error('Error testing rule:', error);

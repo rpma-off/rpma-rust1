@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { LoadingState } from '@/components/layout/LoadingState';
 import { 
   Zap, 
   Plus, 
@@ -29,6 +30,9 @@ import {
   Settings
 } from 'lucide-react';
 import { PerformanceConfig, PerformanceCategory, CreatePerformanceConfigDTO, PerformanceThreshold } from '@/types/configuration.types';
+import { useAuth } from '@/contexts/AuthContext';
+import { settingsOperations } from '@/lib/ipc/domains/settings';
+import type { JsonValue } from '@/types/json';
 
 export function PerformanceTab() {
   const [performanceConfigs, setPerformanceConfigs] = useState<PerformanceConfig[]>([]);
@@ -37,6 +41,7 @@ export function PerformanceTab() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingConfig, setEditingConfig] = useState<PerformanceConfig | null>(null);
   const [activeSubTab, setActiveSubTab] = useState('caching');
+  const { session } = useAuth();
 
   // Form state for creating/editing performance configs
   const [formData, setFormData] = useState<CreatePerformanceConfigDTO>({
@@ -93,75 +98,16 @@ export function PerformanceTab() {
 
   const loadPerformanceConfigs = async () => {
     try {
-      const response = await fetch('/api/admin/performance');
-      if (response.ok) {
-        const data = await response.json();
-        setPerformanceConfigs(data);
-      } else {
-        // For now, use mock data
-        setPerformanceConfigs([
-          {
-            id: '1',
-            category: 'caching',
-            name: 'Cache Configuration',
-            value: null,
-            settings: {
-              enabled: true,
-              ttlSeconds: 3600,
-              maxSizeMb: 100,
-              strategy: 'lru' as const,
-              compressionEnabled: true
-            },
-             thresholds: {
-               queryTimeThreshold: { value: 200, unit: 'ms' },
-               connectionUsageThreshold: { value: 80, unit: 'percent' },
-               hitRateThreshold: { value: 85, unit: 'percent' },
-               missRateThreshold: { value: 15, unit: 'percent' }
-             },
-             monitoring: {
-               enabled: true,
-               interval: 60,
-               intervalSeconds: 60,
-               retention_days: 30,
-               metrics: ['response_time', 'cpu_usage', 'memory_usage']
-             },
-            alerts: [],
-            isActive: true,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          },
-          {
-            id: '2',
-            category: 'database',
-            name: 'Database Configuration',
-            value: null,
-            settings: {
-              connectionPoolSize: 10,
-              queryTimeoutSeconds: 30,
-              maxConnections: 100
-            },
-             thresholds: {
-               queryTimeThreshold: { value: 100, unit: 'ms' },
-               connectionUsageThreshold: { value: 70, unit: 'percent' },
-               hitRateThreshold: { value: 80, unit: 'percent' }
-             },
-             monitoring: {
-               enabled: true,
-               interval: 30,
-               intervalSeconds: 30,
-               retention_days: 30,
-               metrics: ['query_time', 'connection_usage']
-             },
-            alerts: [],
-            isActive: true,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }
-        ]);
-      }
+      setLoading(true);
+      const sessionToken = session?.token || '';
+      const data = await settingsOperations.getAppSettings(sessionToken);
+      const appSettings = data as Record<string, JsonValue>;
+      const configs = (appSettings?.performance_configs || []) as unknown as PerformanceConfig[];
+      setPerformanceConfigs(Array.isArray(configs) ? configs : []);
     } catch (error) {
       console.error('Error loading performance configs:', error);
       toast.error('Erreur lors du chargement des configurations de performance');
+      setPerformanceConfigs([]);
     } finally {
       setLoading(false);
     }
@@ -170,29 +116,38 @@ export function PerformanceTab() {
   const savePerformanceConfig = async () => {
     setSaving(true);
     try {
-      const url = editingConfig 
-        ? `/api/admin/performance/${editingConfig.id}`
-        : '/api/admin/performance';
-      
-      const method = editingConfig ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      const sessionToken = session?.token || '';
+      const newConfig: PerformanceConfig = {
+        id: editingConfig?.id || crypto.randomUUID(),
+        category: formData.category,
+        name: formData.name,
+        value: formData.value,
+        isActive: formData.isActive,
+        settings: formData.settings,
+        thresholds: formData.thresholds,
+        monitoring: formData.monitoring,
+        alerts: formData.alerts,
+        createdAt: editingConfig?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
 
-      if (response.ok) {
-        toast.success(editingConfig ? 'Configuration mise à jour avec succès' : 'Configuration créée avec succès');
-        setShowCreateDialog(false);
-        setEditingConfig(null);
-        resetForm();
-        loadPerformanceConfigs();
+      let updatedConfigs: PerformanceConfig[];
+      if (editingConfig) {
+        updatedConfigs = performanceConfigs.map(c => c.id === editingConfig.id ? newConfig : c);
       } else {
-        throw new Error('Failed to save performance config');
+        updatedConfigs = [...performanceConfigs, newConfig];
       }
+
+      await settingsOperations.updateGeneralSettings(
+        { performance_configs: updatedConfigs as unknown as JsonValue } as Record<string, JsonValue>,
+        sessionToken
+      );
+
+      toast.success(editingConfig ? 'Configuration mise à jour avec succès' : 'Configuration créée avec succès');
+      setShowCreateDialog(false);
+      setEditingConfig(null);
+      resetForm();
+      await loadPerformanceConfigs();
     } catch (error) {
       console.error('Error saving performance config:', error);
       toast.error('Erreur lors de la sauvegarde');
@@ -207,16 +162,14 @@ export function PerformanceTab() {
     }
 
     try {
-      const response = await fetch(`/api/admin/performance/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        toast.success('Configuration supprimée avec succès');
-        loadPerformanceConfigs();
-      } else {
-        throw new Error('Failed to delete performance config');
-      }
+      const sessionToken = session?.token || '';
+      const updatedConfigs = performanceConfigs.filter(c => c.id !== id);
+      await settingsOperations.updateGeneralSettings(
+        { performance_configs: updatedConfigs as unknown as JsonValue } as Record<string, JsonValue>,
+        sessionToken
+      );
+      toast.success('Configuration supprimée avec succès');
+      await loadPerformanceConfigs();
     } catch (error) {
       console.error('Error deleting performance config:', error);
       toast.error('Erreur lors de la suppression');
@@ -225,20 +178,16 @@ export function PerformanceTab() {
 
   const toggleConfigStatus = async (config: PerformanceConfig) => {
     try {
-      const response = await fetch(`/api/admin/performance/${config.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ isActive: !config.isActive }),
-      });
-
-      if (response.ok) {
-        toast.success(`Configuration ${config.isActive ? 'désactivée' : 'activée'} avec succès`);
-        loadPerformanceConfigs();
-      } else {
-        throw new Error('Failed to update config status');
-      }
+      const sessionToken = session?.token || '';
+      const updatedConfigs = performanceConfigs.map(c =>
+        c.id === config.id ? { ...c, isActive: !c.isActive } : c
+      );
+      await settingsOperations.updateGeneralSettings(
+        { performance_configs: updatedConfigs as unknown as JsonValue } as Record<string, JsonValue>,
+        sessionToken
+      );
+      toast.success(`Configuration ${config.isActive ? 'désactivée' : 'activée'} avec succès`);
+      await loadPerformanceConfigs();
     } catch (error) {
       console.error('Error updating config status:', error);
       toast.error('Erreur lors de la mise à jour');
@@ -348,11 +297,7 @@ export function PerformanceTab() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <LoadingState />;
   }
 
   return (

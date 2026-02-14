@@ -212,11 +212,20 @@ export function SystemSettingsTab() {
     logFormEvent('Save configurations initiated', { configurationsCount: configurations.length });
     
     try {
-      // Save via IPC - configurations are managed through settings operations
+      const sessionToken = session?.token || '';
       logInfoRef.current('Saving configurations via IPC', { count: configurations.length });
       
-      // For now, configurations are saved through the app settings IPC
-      // In a full implementation, this would call a dedicated save command
+      // Build update request from current configuration values
+      const updateRequest: Record<string, string | number | boolean | undefined> = {};
+      for (const config of configurations) {
+        updateRequest[config.key] = config.value;
+      }
+
+      await settingsOperations.updateGeneralSettings(
+        updateRequest as unknown as import('@/types/json').JsonObject,
+        sessionToken
+      );
+
       logFormSubmit(configurations, true);
       toast.success('Configurations sauvegardées avec succès');
       setHasChanges(false);
@@ -224,8 +233,7 @@ export function SystemSettingsTab() {
     } catch (error) {
       logFormSubmit(configurations, false, error);
       logErrorRef.current('Error saving configurations', { error: error instanceof Error ? error.message : error });
-      console.error('Error saving configurations:', error);
-      toast.error('Erreur lors de la sauvegarde');
+      toast.error(`Erreur lors de la sauvegarde: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     } finally {
       setSaving(false);
       timer();
@@ -498,7 +506,7 @@ export function SystemSettingsTab() {
               <CardContent>
                 {businessHours ? (
                 <div className="space-y-4">
-                    {Object.entries(businessHours).map(([day, hours]) => (
+                    {Object.entries(businessHours.schedule).map(([day, hours]) => (
                       <motion.div
                         key={day}
                         initial={{ opacity: 0, x: -10 }}
@@ -514,16 +522,22 @@ export function SystemSettingsTab() {
                           <div className="flex items-center gap-2">
                             <Timer className="h-4 w-4 text-gray-500" />
                         <span className="text-sm text-gray-600">
-                              {hours[1].enabled ? `${hours[1].start} - ${hours[1].end}` : 'Fermé'}
+                              {hours.enabled ? `${hours.start} - ${hours.end}` : 'Fermé'}
                         </span>
                           </div>
                           <Switch
-                            checked={hours[1].enabled}
+                            checked={hours.enabled}
                               onCheckedChange={(enabled) => {
-                                setBusinessHours(prev => ({
-                                  ...prev!,
-                                  [hours[0]]: { ...hours[1], enabled }
-                                }));
+                                setBusinessHours(prev => {
+                                  if (!prev) return prev;
+                                  return {
+                                    ...prev,
+                                    schedule: {
+                                      ...prev.schedule,
+                                      [day]: { ...hours, enabled }
+                                    }
+                                  };
+                                });
                                 setHasChanges(true);
                               }}
                             />

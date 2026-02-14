@@ -52,7 +52,7 @@ export function SystemHealthWidget({ className }: SystemHealthWidgetProps) {
       case 'error':
         return <XCircle className="h-4 w-4 text-red-600" />;
       default:
-        return <Activity className="h-4 w-4 text-gray-600" />;
+        return <Activity className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -65,7 +65,7 @@ export function SystemHealthWidget({ className }: SystemHealthWidgetProps) {
       case 'error':
         return 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-[hsl(var(--rpma-surface))] text-foreground';
     }
   };
 
