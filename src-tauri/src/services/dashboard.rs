@@ -1,18 +1,18 @@
 //! Dashboard service for aggregating statistics and metrics
 
-use crate::db::Database;
+use crate::repositories::DashboardRepository;
 use serde_json::{Map, Value};
 use std::sync::Arc;
 use tracing::debug;
 
 #[derive(Clone, Debug)]
 pub struct DashboardService {
-    db: Arc<Database>,
+    repo: Arc<DashboardRepository>,
 }
 
 impl DashboardService {
-    pub fn new(db: Arc<Database>) -> Self {
-        Self { db }
+    pub fn new(repo: Arc<DashboardRepository>) -> Self {
+        Self { repo }
     }
 
     /// Build date condition for SQL WHERE clause
@@ -33,26 +33,6 @@ impl DashboardService {
                 ))
             })
             .flatten()
-    }
-
-    /// Count tasks with optional date condition
-    fn count_tasks_with_condition(&self, date_condition: Option<String>) -> Result<i64, String> {
-        let conn = self
-            .db
-            .get_connection()
-            .map_err(|e| format!("Failed to get connection: {}", e))?;
-
-        let query = if let Some(condition) = date_condition {
-            format!("SELECT COUNT(*) FROM tasks WHERE {}", condition)
-        } else {
-            "SELECT COUNT(*) FROM tasks".to_string()
-        };
-
-        let count: i64 = conn
-            .query_row(&query, [], |row| row.get(0))
-            .map_err(|e| format!("Failed to count tasks: {}", e))?;
-
-        Ok(count)
     }
 
     /// Get comprehensive dashboard statistics
@@ -92,7 +72,7 @@ impl DashboardService {
         let date_condition = self.build_date_condition(time_range.clone());
 
         // Total tasks (with date filter if provided)
-        let total_tasks = self.count_tasks_with_condition(date_condition.clone())?;
+        let total_tasks = self.repo.count_tasks(date_condition.as_deref())?;
         stats.insert("total".to_string(), Value::Number(total_tasks.into()));
 
         // For now, use mock data for task status breakdown since we need to ensure table structure
@@ -125,10 +105,7 @@ impl DashboardService {
         let mut stats = Map::new();
 
         // Total clients (clients don't have creation dates in current schema, so no filtering)
-        let total_clients = self
-            .db
-            .count_rows("clients")
-            .map_err(|e| format!("Failed to count clients: {}", e))?;
+        let total_clients = self.repo.count_rows("clients")?;
         stats.insert("total".to_string(), Value::Number(total_clients.into()));
 
         // For now, use mock data for active clients
@@ -153,10 +130,7 @@ impl DashboardService {
         let mut stats = Map::new();
 
         // Total users (users don't have creation dates in current schema, so no filtering)
-        let total_users = self
-            .db
-            .count_rows("users")
-            .map_err(|e| format!("Failed to count users: {}", e))?;
+        let total_users = self.repo.count_rows("users")?;
         stats.insert("total".to_string(), Value::Number(total_users.into()));
 
         // For now, use mock data for user breakdown
@@ -193,69 +167,10 @@ impl DashboardService {
 
     /// Get recent activities for admin dashboard
     pub fn get_recent_activities(&self) -> Result<Vec<Value>, String> {
-        let conn = self
-            .db
-            .get_connection()
-            .map_err(|e| format!("Failed to get connection: {}", e))?;
-
-        let mut activities = Vec::new();
-
-        // Get recent user sessions (logins)
-        if let Ok(mut stmt) = conn.prepare(
-            "SELECT s.user_id, u.username, s.last_activity
-             FROM user_sessions s
-             JOIN users u ON s.user_id = u.id
-             ORDER BY s.last_activity DESC
-             LIMIT 10",
-        ) {
-            if let Ok(session_iter) = stmt.query_map([], |row| {
-                Ok(serde_json::json!({
-                    "id": format!("session_{}", row.get::<_, String>(0)?),
-                    "type": "user_login",
-                    "description": format!("{} s'est connecté", row.get::<_, String>(1)?),
-                    "timestamp": row.get::<_, String>(2)?,
-                    "user": row.get::<_, String>(1)?,
-                    "severity": "low"
-                }))
-            }) {
-                for activity in session_iter {
-                    if let Ok(act) = activity {
-                        activities.push(act);
-                    }
-                }
-            }
-        }
-
-        // Get recent tasks
-        if let Ok(mut stmt) = conn.prepare(
-            "SELECT t.id, t.title, t.created_at, u.username
-             FROM tasks t
-             LEFT JOIN users u ON t.assigned_to = u.id
-             ORDER BY t.created_at DESC
-             LIMIT 5",
-        ) {
-            if let Ok(task_iter) = stmt.query_map([], |row| {
-                let task_id: String = row.get(0)?;
-                let title: String = row.get(1)?;
-                let created_at: String = row.get(2)?;
-                let username: Option<String> = row.get(3).ok();
-
-                Ok(serde_json::json!({
-                    "id": format!("task_{}", task_id),
-                    "type": "task_created",
-                    "description": format!("Tâche créée: {}", title),
-                    "timestamp": created_at,
-                    "user": username.unwrap_or_else(|| "Système".to_string()),
-                    "severity": "low"
-                }))
-            }) {
-                for activity in task_iter {
-                    if let Ok(act) = activity {
-                        activities.push(act);
-                    }
-                }
-            }
-        }
+        // Delegate SQL queries to repository
+        let mut activities = self.repo.get_recent_session_activities(10)?;
+        let task_activities = self.repo.get_recent_task_activities(5)?;
+        activities.extend(task_activities);
 
         // Sort by timestamp (most recent first) and limit
         activities.sort_by(|a, b| {

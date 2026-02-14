@@ -18,6 +18,7 @@ pub mod task_repository_streaming;
 // New repositories
 pub mod audit_repository;
 pub mod client_repository;
+pub mod dashboard_repository;
 pub mod material_repository;
 pub mod message_repository;
 pub mod notification_preferences_repository;
@@ -32,6 +33,7 @@ pub use base::Repository;
 pub use cache::Cache;
 pub use calendar_event_repository::CalendarEventRepository;
 pub use client_repository::ClientRepository;
+pub use dashboard_repository::DashboardRepository;
 pub use factory::Repositories;
 pub use intervention_repository::InterventionRepository;
 pub use user_repository::UserRepository;
