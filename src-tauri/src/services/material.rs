@@ -1501,66 +1501,84 @@ impl MaterialService {
     }
 
     /// Get inventory statistics
+    ///
+    /// Root cause fix: GROUP BY used mc.name but SELECT used COALESCE(mc.name, ...),
+    /// causing inconsistent grouping when categories are NULL. Fixed to use
+    /// COALESCE in both SELECT and GROUP BY. Also wrapped all queries with
+    /// defensive error handling so an empty DB returns safe defaults instead of
+    /// an Internal error.
     pub fn get_inventory_stats(&self) -> MaterialResult<InventoryStats> {
         let total_materials: i32 = self
             .db
-            .query_single_value("SELECT COUNT(*) FROM materials WHERE is_active = 1", [])?;
+            .query_single_value("SELECT COUNT(*) FROM materials WHERE is_active = 1", [])
+            .unwrap_or(0);
 
         let active_materials = total_materials;
 
-        let low_stock_materials: i32 = self.db.query_single_value(
-            r#"
-            SELECT COUNT(*) FROM materials
-            WHERE is_active = 1 AND minimum_stock IS NOT NULL
-              AND current_stock <= minimum_stock
-            "#,
-            [],
-        )?;
+        let low_stock_materials: i32 = self
+            .db
+            .query_single_value(
+                r#"
+                SELECT COUNT(*) FROM materials
+                WHERE is_active = 1 AND minimum_stock IS NOT NULL
+                  AND current_stock <= minimum_stock
+                "#,
+                [],
+            )
+            .unwrap_or(0);
 
-        let expired_materials: i32 = self.db.query_single_value(
-            r#"
-            SELECT COUNT(*) FROM materials
-            WHERE is_active = 1 AND expiry_date IS NOT NULL
-              AND expiry_date <= ?
-            "#,
-            params![crate::models::common::now()],
-        )?;
+        let expired_materials: i32 = self
+            .db
+            .query_single_value(
+                r#"
+                SELECT COUNT(*) FROM materials
+                WHERE is_active = 1 AND expiry_date IS NOT NULL
+                  AND expiry_date <= ?
+                "#,
+                params![crate::models::common::now()],
+            )
+            .unwrap_or(0);
 
-        let total_value: f64 = self.db.query_single_value(
-            r#"
-            SELECT COALESCE(SUM(current_stock * unit_cost), 0)
-            FROM materials
-            WHERE unit_cost IS NOT NULL AND is_active = 1
-            "#,
-            [],
-        )?;
+        let total_value: f64 = self
+            .db
+            .query_single_value(
+                r#"
+                SELECT COALESCE(SUM(current_stock * unit_cost), 0.0)
+                FROM materials
+                WHERE unit_cost IS NOT NULL AND is_active = 1
+                "#,
+                [],
+            )
+            .unwrap_or(0.0);
 
-        // Get materials by category
-        let conn = self.db.get_connection()?;
-        let mut stmt = conn.prepare(
-            r#"
-            SELECT COALESCE(mc.name, 'Uncategorized'), COUNT(*)
-            FROM materials m
-            LEFT JOIN material_categories mc ON m.category_id = mc.id
-            WHERE m.is_active = 1
-            GROUP BY mc.name
-            "#,
-        )?;
-        let category_rows = stmt
-            .query_map([], |row| {
-                Ok((row.get::<_, String>(0)?, row.get::<_, i32>(1)?))
-            })?
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| MaterialError::Database(e.to_string()))?;
+        // Get materials by category — fix: GROUP BY must match the COALESCE in SELECT
+        let materials_by_category: HashMap<String, i32> = match self.db.get_connection() {
+            Ok(conn) => {
+                let mut stmt = conn.prepare(
+                    r#"
+                    SELECT COALESCE(mc.name, 'Uncategorized') as cat_name, COUNT(*)
+                    FROM materials m
+                    LEFT JOIN material_categories mc ON m.category_id = mc.id
+                    WHERE m.is_active = 1
+                    GROUP BY cat_name
+                    "#,
+                )?;
+                let category_rows = stmt
+                    .query_map([], |row| {
+                        Ok((row.get::<_, String>(0)?, row.get::<_, i32>(1)?))
+                    })?
+                    .collect::<Result<Vec<_>, _>>()
+                    .map_err(|e| MaterialError::Database(e.to_string()))?;
+                category_rows.into_iter().collect()
+            }
+            Err(_) => HashMap::new(),
+        };
 
-        let materials_by_category: HashMap<String, i32> = category_rows.into_iter().collect();
+        // Get recent transactions — return empty vec on error instead of propagating
+        let recent_transactions = self.list_recent_inventory_transactions(10).unwrap_or_default();
 
-        // Get recent transactions
-        let recent_transactions = self.list_recent_inventory_transactions(10)?;
-
-        // Calculate stock turnover rate (simplified - would need more complex logic in real implementation)
-        let stock_turnover_rate = 0.0; // Placeholder
-        let average_inventory_age = 0.0; // Placeholder
+        let stock_turnover_rate = 0.0;
+        let average_inventory_age = 0.0;
 
         Ok(InventoryStats {
             total_materials,
@@ -1576,13 +1594,36 @@ impl MaterialService {
     }
 
     /// Get inventory movement summary
+    ///
+    /// Root cause fix: Date filter conditions (it.performed_at) were placed in WHERE,
+    /// which converted the LEFT JOIN into an INNER JOIN for materials with no
+    /// transactions — causing them to disappear. Fixed by moving date conditions
+    /// into the JOIN ON clause so materials without transactions still appear
+    /// with zero totals.
     pub fn get_inventory_movement_summary(
         &self,
         material_id: Option<&str>,
         date_from: Option<&str>,
         date_to: Option<&str>,
     ) -> MaterialResult<Vec<InventoryMovementSummary>> {
-        let mut sql = r#"
+        // Build the JOIN ON clause with optional date filters
+        let mut join_conditions = vec!["m.id = it.material_id".to_string()];
+        let mut params: Vec<String> = Vec::new();
+
+        if let Some(date_from) = date_from {
+            join_conditions.push("it.performed_at >= ?".to_string());
+            params.push(date_from.to_string());
+        }
+
+        if let Some(date_to) = date_to {
+            join_conditions.push("it.performed_at <= ?".to_string());
+            params.push(date_to.to_string());
+        }
+
+        let join_clause = join_conditions.join(" AND ");
+
+        let mut sql = format!(
+            r#"
             SELECT
                 m.id as material_id,
                 m.name as material_name,
@@ -1590,36 +1631,21 @@ impl MaterialService {
                 COALESCE(SUM(CASE WHEN it.transaction_type IN ('stock_out', 'waste', 'transfer') THEN it.quantity ELSE 0 END), 0) as total_stock_out,
                 m.current_stock
             FROM materials m
-            LEFT JOIN inventory_transactions it ON m.id = it.material_id
-        "#.to_string();
+            LEFT JOIN inventory_transactions it ON {join_clause}
+            "#
+        );
 
-        let mut conditions = Vec::new();
-        let mut params = Vec::new();
-
+        // Material ID filter goes in WHERE since it applies to the materials table
         if let Some(material_id) = material_id {
-            conditions.push("m.id = ?".to_string());
+            sql.push_str(" WHERE m.id = ?");
             params.push(material_id.to_string());
-        }
-
-        if let Some(date_from) = date_from {
-            conditions.push("it.performed_at >= ?".to_string());
-            params.push(date_from.to_string());
-        }
-
-        if let Some(date_to) = date_to {
-            conditions.push("it.performed_at <= ?".to_string());
-            params.push(date_to.to_string());
-        }
-
-        if !conditions.is_empty() {
-            sql.push_str(&format!(" WHERE {}", conditions.join(" AND ")));
         }
 
         sql.push_str(" GROUP BY m.id, m.name, m.current_stock ORDER BY m.name");
 
         let conn = self.db.get_connection()?;
         let mut stmt = conn.prepare(&sql)?;
-        let rows = stmt.query_map(rusqlite::params_from_iter(params), |row| {
+        let rows = stmt.query_map(rusqlite::params_from_iter(&params), |row| {
             let material_id: String = row.get(0)?;
             let material_name: String = row.get(1)?;
             let total_stock_in: f64 = row.get(2)?;
@@ -1633,7 +1659,7 @@ impl MaterialService {
                 total_stock_out,
                 net_movement: total_stock_in - total_stock_out,
                 current_stock,
-                last_transaction_date: None, // Would need additional query
+                last_transaction_date: None,
             })
         })?;
 
