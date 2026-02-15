@@ -1,15 +1,12 @@
 import { useCallback } from 'react';
-import { fr, TranslationKeys } from '@/lib/i18n/fr';
-
-type TranslationKey = string;
-type TranslationValue = string | Record<string, any>;
+import { fr } from '@/lib/i18n/fr';
 
 // Simple nested key access
-function getNestedValue(obj: any, path: string): string {
-  return path.split('.').reduce((acc: any, key: string) => {
+function getNestedValue(obj: Record<string, unknown>, path: string): string {
+  return path.split('.').reduce((acc: unknown, key: string) => {
     if (typeof acc === 'string') return acc;
-    if (acc && typeof acc === 'object' && key in acc) {
-      return acc[key];
+    if (acc && typeof acc === 'object' && key in (acc as Record<string, unknown>)) {
+      return (acc as Record<string, unknown>)[key];
     }
     return path;
   }, obj) as string;

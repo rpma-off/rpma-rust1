@@ -146,7 +146,7 @@ export function useTaskActions({
       onError?.(null);
 
       // Convert TaskWithDetails updates to UpdateTaskRequest format
-      const updateData: any = {};
+      const updateData: UpdateTaskRequest & Record<string, unknown> = {};
 
       if (updates.title !== undefined) updateData.title = updates.title;
       if (updates.description !== undefined) updateData.description = updates.description;
@@ -277,7 +277,7 @@ export function useTaskActions({
         requestId,
       });
 
-      const result = await taskService.createTask(sanitizedTaskData as any);
+      const result = await taskService.createTask(sanitizedTaskData as Record<string, unknown>);
 
       if (!result.success) {
         logger.error('useTaskActions: TaskService returned error for create', {
@@ -295,7 +295,7 @@ export function useTaskActions({
 
       logger.info('useTaskActions: task created successfully', {
         taskId: newTask!.id,
-        taskTitle: (newTask as any).title,
+        taskTitle: (newTask as Record<string, unknown>).title,
         requestId,
       });
 

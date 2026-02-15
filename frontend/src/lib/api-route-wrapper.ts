@@ -1,7 +1,6 @@
 // API route wrapper for error handling
 
 import { NextRequest, NextResponse } from 'next/server';
-import { handleApiError } from './api-error';
 import type { JsonValue } from '@/types/json';
 
 export interface ApiResponse<T = JsonValue> {

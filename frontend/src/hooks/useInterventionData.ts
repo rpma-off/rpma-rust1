@@ -6,7 +6,7 @@ interface InterventionStep {
   id: string;
   step_type: string;
   step_status: string;
-  collected_data: any;
+  collected_data: Record<string, unknown>;
   photo_urls: string[] | null;
   notes: string | null;
   completed_at: string | null;
@@ -47,7 +47,7 @@ export function useInterventionData(taskId: string) {
 
         // Check if we got an active intervention
         if (result && typeof result === 'object' && 'type' in result) {
-          const typedResult = result as { type: string; intervention?: any };
+          const typedResult = result as { type: string; intervention?: Record<string, unknown> };
 
           if ((typedResult.type === 'ActiveRetrieved' || typedResult.type === 'ActiveByTask') && typedResult.intervention) {
             intervention = typedResult.intervention;
@@ -59,7 +59,7 @@ export function useInterventionData(taskId: string) {
           result = await ipcClient.interventions.getLatestByTask(taskId, session.token);
 
           if (result && typeof result === 'object' && 'intervention' in result) {
-            const typedResult = result as { intervention?: any };
+            const typedResult = result as { intervention?: Record<string, unknown> };
             if (typedResult.intervention) {
               intervention = typedResult.intervention;
             }

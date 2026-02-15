@@ -9,8 +9,7 @@ import { useLogger } from '@/hooks/useLogger';
 import { LogDomain } from '@/lib/logging/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { taskService } from '@/lib/services/entities/task.service';
-import { TaskStatus } from '@/lib/backend';
-import type { TaskQuery } from '@/lib/validation/ipc-schemas';
+
 
 // ==================== DASHBOARD QUERY KEYS ====================
 
@@ -58,7 +57,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}) {
   });
 
   // Get user data from auth context
-  const { user: authUser, profile, loading: authLoading, isAuthenticating } = useAuth();
+  const { user: authUser, loading: authLoading, isAuthenticating } = useAuth();
 
   // Derive user state from auth context
   const user = authUser ? {

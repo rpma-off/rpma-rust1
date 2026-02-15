@@ -11,11 +11,11 @@ export function useInterventionValidation({
   currentStep,
 }: UseInterventionValidationProps) {
   // Simple validation - all fields are optional
-  const validateStep = useCallback((step: PPFInterventionStep) => {
+  const validateStep = useCallback((_step: PPFInterventionStep) => {
     return { isValid: true, errors: {} };
   }, []);
 
-  const canProceedToNextStep = useCallback((step: PPFInterventionStep) => {
+  const canProceedToNextStep = useCallback((_step: PPFInterventionStep) => {
     return true; // No mandatory validation
   }, []);
 

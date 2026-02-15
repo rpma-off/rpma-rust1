@@ -52,7 +52,7 @@ export function useInterventionSync({
         console.log('IPC result for active intervention:', result);
 
         // getActiveByTask now returns the tagged union directly
-        const responseData = result as { type: string; intervention: any };
+        const responseData = result as { type: string; intervention: Record<string, unknown> };
 
         if (responseData?.type === 'ActiveRetrieved' && responseData.intervention) {
           console.log('Successfully retrieved active intervention:', responseData.intervention.id);
@@ -64,7 +64,7 @@ export function useInterventionSync({
             task_id: backendIntervention.task_number,
             intervention_number: backendIntervention.task_number,
             steps: [],
-            status: backendIntervention.status as any,
+            status: backendIntervention.status as PPFInterventionData['status'],
             progress: backendIntervention.completion_percentage,
             progress_percentage: backendIntervention.completion_percentage,
             currentStep: backendIntervention.current_step,
@@ -86,7 +86,7 @@ export function useInterventionSync({
               year: backendIntervention.vehicle_year,
               vin: backendIntervention.vehicle_vin,
             } : undefined,
-            weather_condition: backendIntervention.weather_condition as any,
+            weather_condition: backendIntervention.weather_condition as PPFInterventionData['weather_condition'],
             temperature_celsius: backendIntervention.temperature_celsius,
             started_at: backendIntervention.started_at,
             actual_start: backendIntervention.started_at,
@@ -139,7 +139,7 @@ export function useInterventionSync({
 
         if (result?.steps) {
           console.log('Raw steps data from backend:', result.steps);
-          const mappedSteps = result.steps.map((step: any) => {
+          const mappedSteps = result.steps.map((step: Record<string, unknown>) => {
             console.log('Processing step:', step.id, 'collected_data:', step.collected_data, 'observations:', step.observations);
             return {
               id: step.id,

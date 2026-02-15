@@ -20,7 +20,7 @@ export interface CreateMaterialRequest {
   category_id?: string;
   brand?: string;
   model?: string;
-  specifications?: any;
+  specifications?: Record<string, unknown>;
   unit_of_measure: UnitOfMeasure;
   current_stock?: number;
   minimum_stock?: number;

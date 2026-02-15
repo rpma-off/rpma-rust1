@@ -11,7 +11,7 @@ interface MaterialFormData {
   category_id?: string;
   brand: string;
   model: string;
-  specifications?: any;
+  specifications?: Record<string, unknown>;
   unit_of_measure: string;
   current_stock: number;
   minimum_stock?: number;
@@ -31,7 +31,7 @@ interface MaterialFormData {
   is_active: boolean;
 }
 
-export function useMaterialForm(initialMaterial?: any) {
+export function useMaterialForm(initialMaterial?: Record<string, unknown>) {
   const [formData, setFormData] = useState<MaterialFormData>({
     sku: '',
     name: '',
@@ -99,7 +99,7 @@ export function useMaterialForm(initialMaterial?: any) {
     }
   }, [initialMaterial]);
 
-  const updateFormData = (field: keyof MaterialFormData, value: any) => {
+  const updateFormData = (field: keyof MaterialFormData, value: MaterialFormData[keyof MaterialFormData]) => {
     setFormData(prev => ({
       ...prev,
       [field]: value,

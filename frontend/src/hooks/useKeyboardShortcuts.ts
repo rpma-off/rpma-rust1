@@ -45,7 +45,7 @@ export function useKeyboardShortcuts(shortcuts: ShortcutAction[]) {
 
   // Register shortcuts with Tauri for menu integration
   useEffect(() => {
-    ipcClient.ui.registerShortcuts(shortcuts as any).catch(console.error);
+    ipcClient.ui.registerShortcuts(shortcuts as unknown as Record<string, unknown>).catch(console.error);
   }, [shortcuts]);
 }
 

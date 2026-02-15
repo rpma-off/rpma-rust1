@@ -156,7 +156,7 @@ export const validateApiAuth = async (
           // For other content types, just clone the request to avoid consuming it
           sanitizedBody = null;
         }
-      } catch (error) {
+      } catch (_error) {
         return {
           isValid: false,
           error: 'Invalid request body',

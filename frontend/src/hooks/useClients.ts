@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ipcClient } from '@/lib/ipc';
-import type { ClientWithTasks, ClientQuery, ClientStatistics, CustomerType } from '@/lib/backend';
+import type { ClientWithTasks, ClientStatistics, CustomerType } from '@/lib/backend';
 import { useLogger } from '@/hooks/useLogger';
 import { LogDomain } from '@/lib/logging/types';
 import { normalizeError } from '@/types/utility.types';

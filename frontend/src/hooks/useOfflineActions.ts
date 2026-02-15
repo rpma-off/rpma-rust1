@@ -4,7 +4,6 @@ import { taskApiService } from '@/lib/services/api/task.api.service';
 import { taskPhotoService } from '@/lib/services';
 
 import { UpdateTaskData } from '@/lib/services/core/schemas';
-import { TaskStatus, TaskPriority } from '@/lib/backend';
 import { TaskWithDetails } from '@/types/task.types';
 
 type UpdateTaskPayload = {

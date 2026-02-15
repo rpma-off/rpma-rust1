@@ -25,7 +25,7 @@ export const authenticateRequest = async (request: NextRequest): Promise<Authent
     const token = authHeader.substring(7);
 
     // Validate the token with Tauri backend
-    const response = await ipcClient.auth.validateSession(token) as any;
+    const response = await ipcClient.auth.validateSession(token) as Record<string, unknown>;
 
     // Check if validation was successful
     if (response && typeof response === 'object' && 'success' in response && response.success) {

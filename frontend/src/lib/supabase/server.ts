@@ -1,6 +1,5 @@
 // Mock Supabase server client for compatibility
 // Since this is a Tauri app, Supabase is not used
-import type { SupabaseClient } from '@supabase/supabase-js';
 
 interface MockUser {
   id: string;
