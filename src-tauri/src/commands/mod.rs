@@ -21,6 +21,7 @@ pub mod performance;
 // pub mod photo; // Temporarily disabled - no photo.rs or photo/ directory
 pub mod message;
 pub mod queue;
+pub mod quote;
 pub mod reports;
 pub mod security;
 pub mod settings;
@@ -288,6 +289,7 @@ pub struct AppStateType {
     pub material_service: Arc<crate::services::MaterialService>,
     pub message_service: Arc<crate::services::MessageService>,
     pub photo_service: Arc<crate::services::PhotoService>,
+    pub quote_service: Arc<crate::services::QuoteService>,
     pub analytics_service: Arc<crate::services::AnalyticsService>,
     pub auth_service: Arc<crate::services::auth::AuthService>,
     pub session_service: Arc<crate::services::session::SessionService>,

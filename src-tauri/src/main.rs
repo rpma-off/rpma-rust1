@@ -289,7 +289,20 @@ fn main() {
             commands::websocket_commands::broadcast_task_update,
             commands::websocket_commands::broadcast_intervention_update,
             commands::websocket_commands::broadcast_client_update,
-            commands::websocket_commands::broadcast_system_notification
+            commands::websocket_commands::broadcast_system_notification,
+            // Quote commands
+            commands::quote::quote_create,
+            commands::quote::quote_get,
+            commands::quote::quote_list,
+            commands::quote::quote_update,
+            commands::quote::quote_delete,
+            commands::quote::quote_item_add,
+            commands::quote::quote_item_update,
+            commands::quote::quote_item_delete,
+            commands::quote::quote_mark_sent,
+            commands::quote::quote_mark_accepted,
+            commands::quote::quote_mark_rejected,
+            commands::quote::quote_export_pdf
         ])
         .setup(|app| {
             info!("Initializing application setup");
