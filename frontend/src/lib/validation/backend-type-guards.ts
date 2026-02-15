@@ -1131,12 +1131,12 @@ export function validateMultiple<T>(
  * IPC-specific validation helpers
  */
 // Validation functions for new schemas
-export function validateIntervention<T = Intervention>(data: unknown): T {
-  return InterventionSchema.parse(data) as T;
+export function validateIntervention(data: unknown): Intervention {
+  return InterventionSchema.parse(data) as unknown as Intervention;
 }
 
-export function validateInterventionStep<T = InterventionStep>(data: unknown): T {
-  return InterventionStepSchema.parse(data) as T;
+export function validateInterventionStep(data: unknown): InterventionStep {
+  return InterventionStepSchema.parse(data) as unknown as InterventionStep;
 }
 
 export function validateNotificationTemplate(data: unknown): unknown {
