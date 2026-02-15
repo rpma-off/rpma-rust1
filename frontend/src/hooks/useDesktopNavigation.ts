@@ -1,6 +1,7 @@
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect } from 'react';
 import { ipcClient } from '@/lib/ipc';
+import type { JsonObject } from '@/types/json';
 
 interface NavigationOptions {
   replace?: boolean;
@@ -20,7 +21,7 @@ export function useDesktopNavigation() {
 
     // Notify Tauri of navigation for window management and history
     try {
-      await ipcClient.ui.navigate(path, options as Record<string, unknown>);
+      await ipcClient.ui.navigate(path, options as JsonObject);
     } catch (error) {
       console.warn('Failed to update Tauri navigation:', error);
     }
