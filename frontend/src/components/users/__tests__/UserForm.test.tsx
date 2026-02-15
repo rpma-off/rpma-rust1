@@ -86,8 +86,8 @@ describe('UserForm', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUsersCreate.mockResolvedValue({} as any);
-    mockUsersUpdate.mockResolvedValue({} as any);
+    mockUsersCreate.mockResolvedValue({} as Record<string, unknown>);
+    mockUsersUpdate.mockResolvedValue({} as Record<string, unknown>);
   });
 
   describe('Create User Mode', () => {

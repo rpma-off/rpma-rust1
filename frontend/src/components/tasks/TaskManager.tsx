@@ -6,9 +6,9 @@ import { EntitySyncIndicator } from '../sync/EntitySyncIndicator';
 import { DesktopForm } from '../forms/DesktopForm';
 import { z } from 'zod';
 import { Plus, Calendar, User } from 'lucide-react';
-import { Task, Client, TableColumn } from '@/types';
+import { Task, Client } from '@/types';
 import { convertTimestamps } from '@/lib/types';
-import { EntityType, UpdateTaskRequest } from '@/lib/backend';
+import { UpdateTaskRequest } from '@/lib/backend';
 import { useAuth } from '@/contexts/AuthContext';
 import { ipcClient } from '@/lib/ipc';
 import { handleError } from '@/lib/utils/error-handler';
@@ -72,7 +72,7 @@ export default function TaskManager() {
      } finally {
       setIsLoading(false);
     }
-  }, [user?.token]);
+  }, [user?.token, user?.user_id]);
 
   // Load tasks and clients on component mount
   useEffect(() => {
@@ -131,7 +131,7 @@ export default function TaskManager() {
       });
       throw error;
     }
-  }, [loadData, user?.token]);
+  }, [loadData, user?.token, user?.user_id]);
 
   const handleUpdateTask = useCallback(async (data: z.infer<typeof taskSchema>) => {
     if (!editingTask || !user?.token) return;
@@ -183,7 +183,7 @@ export default function TaskManager() {
       });
       throw error;
     }
-  }, [editingTask, loadData, user?.token]);
+  }, [editingTask, loadData, user?.token, user?.user_id]);
 
   const handleDeleteTask = useCallback(async (taskId: string) => {
     if (!user?.token) return;
@@ -201,7 +201,7 @@ export default function TaskManager() {
         toastMessage: 'Erreur lors de la suppression de la tâche'
       });
     }
-  }, [loadData, user?.token]);
+  }, [loadData, user?.token, user?.user_id]);
 
   const handleEditTask = useCallback((task: Task) => {
     setEditingTask(task);

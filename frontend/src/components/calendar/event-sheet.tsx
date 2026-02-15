@@ -59,7 +59,7 @@ function getMeetingCode(link?: string): string {
   return "dra-jhgg-mvn";
 }
 
-function getParticipantName(participantId: string): string {
+function _getParticipantName(participantId: string): string {
   const names: Record<string, string> = {
     user1: "James Brown",
     user2: "Sophia Williams",

@@ -11,7 +11,7 @@ interface AgendaViewProps {
 
 export const AgendaView: React.FC<AgendaViewProps> = ({
   tasks,
-  currentDate,
+  currentDate: _currentDate,
   onTaskClick,
   className = '',
 }) => {

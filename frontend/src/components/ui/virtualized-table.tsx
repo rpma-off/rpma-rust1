@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { VirtualizedList, usePerformanceMonitor } from './virtualization';
 import { cn } from '@/lib/utils';
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
@@ -9,6 +9,7 @@ interface Column<T> {
   header: string;
   width?: number;
   sortable?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   render?: (value: any, item: T, index: number) => React.ReactNode;
   className?: string;
 }
@@ -26,11 +27,12 @@ interface VirtualizedTableProps<T> {
   onSelectionChange?: (selectedRows: Set<number>) => void;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function VirtualizedTable<T extends Record<string, any>>({
   data,
   columns,
   height = 400,
-  maxHeight,
+  maxHeight: _maxHeight,
   rowHeight = 48,
   className = '',
   onRowClick,
@@ -112,7 +114,7 @@ export function VirtualizedTable<T extends Record<string, any>>({
         </div>
       )}
 
-      {columns.map((column, colIndex) => {
+      {columns.map((column, _colIndex) => {
         const value = column.key === 'index' ? index + 1 : item[column.key as keyof T];
         const content = column.render
           ? column.render(value, item, index)
@@ -134,7 +136,7 @@ export function VirtualizedTable<T extends Record<string, any>>({
     </motion.div>
   );
 
-  const totalWidth = columns.reduce((sum, col) => sum + (col.width || 150), selectable ? 60 : 0);
+  const _totalWidth = columns.reduce((sum, col) => sum + (col.width || 150), selectable ? 60 : 0);
 
   return (
     <div className={cn('border border-[hsl(var(--rpma-border))] rounded-lg overflow-hidden', className)}>

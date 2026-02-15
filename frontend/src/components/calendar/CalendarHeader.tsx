@@ -20,8 +20,8 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   className = '',
 }) => {
   const formatDateRange = () => {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
+    const _year = currentDate.getFullYear();
+    const _month = currentDate.getMonth();
     const day = currentDate.getDate();
 
     switch (viewMode) {

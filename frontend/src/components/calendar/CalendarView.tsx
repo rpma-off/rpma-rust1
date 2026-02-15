@@ -12,7 +12,7 @@ import type { CalendarTask } from '../../lib/backend';
 interface CalendarViewProps {
   initialDate?: Date;
   initialViewMode?: 'month' | 'week' | 'day' | 'agenda';
-  onTaskClick?: (task: any) => void;
+  onTaskClick?: (task: CalendarTask) => void;
   onTaskReschedule?: (taskId: string, newDate: string, newStartTime?: string, newEndTime?: string) => void;
   className?: string;
 }
@@ -39,6 +39,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     setCurrentDate(new Date());
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleTaskDrop = async (result: any) => {
     if (!result.destination || !onTaskReschedule) return;
 
@@ -70,7 +71,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       } else {
         toast.error(`Impossible de replanifier la tâche : ${result.error}`);
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('Une erreur s\'est produite lors de la replanification de la tâche.');
     }
   };

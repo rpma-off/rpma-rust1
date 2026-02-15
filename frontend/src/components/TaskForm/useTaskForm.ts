@@ -153,7 +153,7 @@ export const useTaskForm = (userId?: string, initialData?: Partial<TaskFormData>
     }));
     setIsDirty(false);
     setLastSaved(draft.lastSaved ? new Date(draft.lastSaved) : null);
-  }, [initialData?.id, loadDraftFromStorage]);
+  }, [initialData, loadDraftFromStorage]);
 
   const updateFormData = useCallback((updates: Partial<TaskFormData>) => {
     setFormData(prev => {

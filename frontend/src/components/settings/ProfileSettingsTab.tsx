@@ -165,7 +165,7 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
     };
 
     loadUserSettings();
-  }, [user?.token, user?.user_id, logInfo, logError, profile]);
+  }, [user?.token, user?.user_id, user?.email, user?.username, logInfo, logError, profile]);
 
   // Update form when profile data changes
   useEffect(() => {

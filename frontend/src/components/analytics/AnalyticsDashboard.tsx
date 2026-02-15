@@ -1,10 +1,9 @@
 ﻿'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, TrendingDown, Minus, RefreshCw, Activity, Users, Clock, Star } from 'lucide-react';
+import { TrendingUp, RefreshCw, Activity, Users, Clock, Star } from 'lucide-react';
 import { useAnalyticsSummary } from '@/hooks/useAnalyticsSummary';
 import { KpiCard } from './KpiCard';
 import { AnalyticsChart } from './AnalyticsChart';

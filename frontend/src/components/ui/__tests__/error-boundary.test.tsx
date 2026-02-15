@@ -5,9 +5,9 @@ import { ErrorBoundary, ErrorAlert, ErrorBoundaryFallbackProps } from '../error-
 // Mock framer-motion to avoid animation-related issues
 jest.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    h1: ({ children, ...props }: any) => <h1 {...props}>{children}</h1>,
-    p: ({ children, ...props }: any) => <p {...props}>{children}</p>,
+    div: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => <div {...props}>{children}</div>,
+    h1: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => <h1 {...props}>{children}</h1>,
+    p: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => <p {...props}>{children}</p>,
   },
 }));
 
@@ -419,13 +419,13 @@ describe('ErrorAlert', () => {
   });
 
   it('handles null error gracefully', () => {
-    render(<ErrorAlert error={null as any} />);
+    render(<ErrorAlert error={null as unknown as Error} />);
     
     expect(screen.getByText('Erreur')).toBeInTheDocument();
   });
 
   it('handles undefined error gracefully', () => {
-    render(<ErrorAlert error={undefined as any} />);
+    render(<ErrorAlert error={undefined as unknown as Error} />);
     
     expect(screen.getByText('Erreur')).toBeInTheDocument();
   });

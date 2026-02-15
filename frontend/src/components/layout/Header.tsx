@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLayoutStore } from '@/lib/stores/layoutStore';
 import { useAuth } from '@/lib/auth/compatibility';
-import { Menu, Search, Star, Bell, X, RefreshCw, ChevronDown, UserCircle, Settings, LogOut } from 'lucide-react';
+import { Menu, Search, Star, Bell, X, RefreshCw, UserCircle, Settings, LogOut } from 'lucide-react';
 import { Breadcrumbs } from './Breadcrumbs';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -33,7 +33,7 @@ export function Header({
   isRefreshing = false
 }: HeaderProps) {
   const { toggleSidebar } = useLayoutStore();
-  const { user, profile } = useAuth();
+  const { user: _user, profile } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);

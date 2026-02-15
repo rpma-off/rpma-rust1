@@ -6,15 +6,12 @@ import {
   Bell,
   Calendar as CalendarIcon,
   Plus,
-  Github,
   CheckCircle2,
   Clock,
-  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCalendarStore } from "@/lib/stores/calendarStore";
 
-import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   DropdownMenu,

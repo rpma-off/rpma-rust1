@@ -11,7 +11,7 @@ import { useMessage } from '@/hooks/useMessage';
 import type { Message, MessageQuery } from '@/lib/backend';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Mail, MessageSquare, Users, Search, Filter, Eye, EyeOff } from 'lucide-react';
+import { Mail, MessageSquare, Users, Search } from 'lucide-react';
 
 interface MessageInboxProps {
   userId?: string;
@@ -33,13 +33,14 @@ export function MessageInbox({ userId }: MessageInboxProps) {
   });
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
 
-  const { messages, loading, error, total, hasMore, fetchMessages, markAsRead } = useMessage();
+  const { messages, loading, error, total, hasMore: _hasMore, fetchMessages, markAsRead } = useMessage();
 
   useEffect(() => {
     if (userId) {
-      setQuery((prev: any) => ({ ...prev, recipient_id: userId }));
+      setQuery((prev: MessageQuery) => ({ ...prev, recipient_id: userId }));
       fetchMessages({ ...query, recipient_id: userId });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, fetchMessages]);
 
   const handleMessageClick = async (message: Message) => {
@@ -115,14 +116,14 @@ export function MessageInbox({ userId }: MessageInboxProps) {
               <Input
                 placeholder="Rechercher dans les messages..."
                 className="pl-9"
-                onChange={(e) => {
+                onChange={(_e) => {
                   // Implement search
                 }}
               />
             </div>
             <Select
               onValueChange={(value) => {
-                setQuery((prev: any) => ({ ...prev, message_type: value === 'all' ? null : value }));
+                setQuery((prev: MessageQuery) => ({ ...prev, message_type: value === 'all' ? null : value }));
                 fetchMessages({ ...query, message_type: value === 'all' ? null : value });
               }}
             >
@@ -138,7 +139,7 @@ export function MessageInbox({ userId }: MessageInboxProps) {
             </Select>
             <Select
               onValueChange={(value) => {
-                setQuery((prev: any) => ({ ...prev, status: value === 'all' ? null : value }));
+                setQuery((prev: MessageQuery) => ({ ...prev, status: value === 'all' ? null : value }));
                 fetchMessages({ ...query, status: value === 'all' ? null : value });
               }}
             >

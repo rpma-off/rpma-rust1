@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { InventoryManager } from '../InventoryManager';
 import { useInventory } from '@/hooks/useInventory';
@@ -89,10 +89,10 @@ jest.mock('@/components/ui/virtualized-table', () => ({
     data,
     columns,
   }: {
-    data: Array<Record<string, any>>;
+    data: Array<Record<string, unknown>>;
     columns: Array<{
       key: string;
-      render?: (value: any, item: Record<string, any>, index: number) => React.ReactNode;
+      render?: (value: unknown, item: Record<string, unknown>, index: number) => React.ReactNode;
     }>;
   }) => (
     <div>
@@ -138,7 +138,7 @@ jest.mock('@/components/ui/select', () => {
   const SelectItem = ({ value, children }: { value: string; children: React.ReactNode }) => {
     const { onValueChange } = React.useContext(SelectContext);
     return (
-      <div role="option" onClick={() => onValueChange(value)}>
+      <div role="option" aria-selected={false} onClick={() => onValueChange(value)}>
         {children}
       </div>
     );

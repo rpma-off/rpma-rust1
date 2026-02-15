@@ -13,7 +13,6 @@ import {
   SignatureDTO,
   WorkflowExecutionStatus
 } from '@/types/workflow.types';
-import type { WorkflowExecution as ServiceWorkflowExecution } from '@/lib/services/workflow.service';
 import { PPFInterventionData, VehicleInfo as _VehicleInfo } from '@/types/ppf-intervention';
 import { WorkflowService } from '@/lib/services/workflow.service';
 import type {

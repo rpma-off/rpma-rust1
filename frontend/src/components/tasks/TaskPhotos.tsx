@@ -9,8 +9,8 @@ import Image from 'next/image';
 import { ipcClient } from '@/lib/ipc';
 import { useAuth } from '@/contexts/AuthContext';
 
-import { Camera, Trash2, Upload, AlertCircle, ImageIcon } from 'lucide-react';
-import { PhotoType, Photo } from '@/lib/backend';
+import { Camera, Trash2, Upload, ImageIcon } from 'lucide-react';
+import { Photo } from '@/lib/backend';
 
 interface TaskPhotosProps {
   taskId: string;
@@ -28,7 +28,7 @@ export function TaskPhotos({ taskId, interventionId }: TaskPhotosProps) {
   const tabLabel = (tab: 'Before' | 'After') => tab === 'Before' ? 'Avant' : 'Après';
 
   // Fetch photos for the intervention
-  const { data: photos, isLoading, error } = useQuery<Photo[]>({
+  const { data: photos, isLoading: _isLoading, error: _error } = useQuery<Photo[]>({
     queryKey: ['interventions', interventionId || taskId, 'photos'],
     queryFn: async () => {
       if (!user?.token) {
