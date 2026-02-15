@@ -58,14 +58,15 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
     setIsStarting(true);
     try {
       // Start the intervention first
+      const taskRecord = task as unknown as Record<string, unknown>;
       const startData = {
         task_id: task.id,
         intervention_number: `INT-${Date.now()}`,
         ppf_zones: task.ppf_zones || [],
         custom_zones: [],
-        film_type: (task as unknown as Record<string, unknown>).film_type as string || 'Standard',
-        film_brand: (task as unknown as Record<string, unknown>).film_brand as string || 'Default',
-        film_model: (task as unknown as Record<string, unknown>).film_model as string || 'Standard',
+        film_type: (taskRecord.film_type as string) || 'Standard',
+        film_brand: (taskRecord.film_brand as string) || 'Default',
+        film_model: (taskRecord.film_model as string) || 'Standard',
         weather_condition: 'Indoor',
         lighting_condition: 'Good',
         work_location: 'Workshop',
