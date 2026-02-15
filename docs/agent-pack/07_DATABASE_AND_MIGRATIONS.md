@@ -6,16 +6,16 @@ RPMA v2 uses **SQLite** as its local database with specific optimizations for de
 
 ### Database Configuration
 
-**File Location**: `<app_data_dir>/rpma.db`
+**File Location**: `$TAURI_APP_DATA/rpma.db` (platform-specific app data directory)
 
 **Connection Pool** (`src-tauri/src/db/connection.rs:42-52`):
-| Setting | Value |
-|---------|-------|
-| max_connections | 10 |
-| min_idle | 2 |
-| connection_timeout | 30s |
-| idle_timeout | 600s |
-| max_lifetime | 3600s |
+| Setting | Value | Purpose |
+|---------|-------|---------|
+| max_connections | 10 | SQLite single-writer limitation |
+| min_idle | 2 | Keep connections ready |
+| connection_timeout | 30s | Max wait for connection |
+| idle_timeout | 600s (10 min) | Close idle connections |
+| max_lifetime | 3600s (60 min) | Force connection refresh |
 
 ### SQLite PRAGMA Settings (`connection.rs:96-103`)
 
@@ -30,10 +30,11 @@ PRAGMA locking_mode = NORMAL;    -- Standard locking
 ```
 
 **Benefits of WAL Mode**:
-- Concurrent reads while writing
-- Better write performance
-- Crash recovery via checkpoint
-- Reduced lock contention
+- Concurrent reads while writing (critical for desktop app responsiveness)
+- Better write performance (up to 2x faster)
+- Crash recovery via checkpoint mechanism
+- Reduced lock contention between readers and writers
+- Atomic commits with rollback support
 
 ---
 
@@ -42,29 +43,35 @@ PRAGMA locking_mode = NORMAL;    -- Standard locking
 ### Overview
 
 RPMA uses a **hybrid migration system**:
-- **SQL files** in `migrations/` directory (embedded via `include_dir!`)
-- **Rust-implemented migrations** in `src-tauri/src/db/migrations.rs`
+- **SQL files** in `migrations/` directory (embedded at compile time via `include_dir!` macro)
+- **Rust-implemented migrations** in `src-tauri/src/db/migrations.rs` for complex logic
 
 **Features**:
 - Tracks applied migrations in `schema_version` table
-- Sequential version-based ordering
-- **Idempotent**: Safe to run multiple times
-- Validation before applying
+- Sequential version-based ordering (001, 002, ..., 036+)
+- **Idempotent**: Uses `CREATE TABLE IF NOT EXISTS`, safe to run multiple times
+- Validation before applying (syntax check, dependency check)
+- Transactional: Each migration runs in its own transaction
 
-**Current Version**: 33+
+**Current Version**: 36+ (as of latest code scan)
+
+**Discovery**: Migrations auto-discovered from embedded directory at runtime (`migrations.rs:159-181`)
 
 ---
 
 ### Migration Types
 
 #### SQL-Only Migrations
-Located in `migrations/`:
-- `020_calendar_enhancements.sql` - Calendar indexes, task_conflicts
-- `025_audit_logging.sql` - audit_events table
-- `026_performance_indexes.sql` - Performance indexes
-- `029_add_users_first_last_name.sql`
-- `030_add_user_sessions_updated_at.sql`
-- `031_report_indexes.sql`
+Located in `migrations/` directory:
+- `020_calendar_enhancements.sql` - Calendar indexes, task_conflicts table
+- `025_audit_logging.sql` - audit_events table for security
+- `026_performance_indexes.sql` - Performance optimization indexes
+- `029_add_users_first_last_name.sql` - User name fields
+- `030_add_user_sessions_updated_at.sql` - Session tracking
+- `031_report_indexes.sql` - Reporting performance
+- `034_add_indexes_for_queries.sql` - Query optimization
+- `035_add_message_templates.sql` - Message system
+- `036_core_screen_indexes.sql` - Core screen performance
 
 #### Rust-Implemented Migrations
 Complex migrations in `migrations.rs`:
@@ -84,10 +91,10 @@ Complex migrations in `migrations.rs`:
 | 25 | Add audit_events table |
 | 26 | Add performance indexes |
 | 27 | Add CHECK constraints to tasks |
-| 28 | Add 2FA columns (backup_codes, verified_at) |
-| 29 | Add first_name/last_name to users |
-| 30 | Add updated_at to user_sessions |
-| 31 | Add non-negative CHECK constraints to inventory |
+| 28 | Add 2FA columns (backup_codes, verified_at) to users |
+| 29 | Add first_name/last_name to users table |
+| 30 | Add updated_at to user_sessions for tracking |
+| 31 | Add non-negative CHECK constraints to inventory columns |
 | 32 | Add FK for interventions.task_id → tasks.id |
 | 33 | Add FKs for tasks.workflow_id and current_workflow_step_id |
 
@@ -98,13 +105,17 @@ Complex migrations in `migrations.rs`:
 **Code**: `src-tauri/src/db/migrations.rs:159-181`
 
 ```rust
+// Migrations embedded at compile time
 static MIGRATIONS_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/migrations");
 
 pub fn get_latest_migration_version() -> i32 {
     // Scans migrations/ for "NNN_description.sql" files
-    // Returns max version found (minimum 18 for Rust migrations)
+    // Parses filename prefix to extract version number
+    // Returns max version found (minimum 18 for hardcoded Rust migrations)
 }
 ```
+
+**Naming Pattern**: Files must be named `NNN_description.sql` where NNN is a zero-padded number (e.g., `002_`, `024_`, `036_`)
 
 ---
 

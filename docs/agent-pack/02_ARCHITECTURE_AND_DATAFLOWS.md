@@ -255,11 +255,11 @@ RPMA v2 is **fully offline** with sync queue for future server synchronization.
 ```
 
 **Frontend Offline Hooks**:
-- `useOfflineSync` - Main offline/online detection and queue management
-- `useOfflineQueue` - Full-featured offline queue with localStorage persistence
-- `useSyncStatus` - Backend sync status polling (5s interval)
-- `useEntitySyncStatus` - Check sync status for specific entity
-- `useConnectionStatus` - Simple online/offline detection
+- `useOfflineSync` - Main offline/online detection and queue management (`frontend/src/hooks/useOfflineSync.ts`)
+- `useOfflineQueue` - Full-featured offline queue with localStorage persistence (`frontend/src/hooks/useOfflineQueue.ts`)
+- `useSyncStatus` - Backend sync status polling (5s interval) (`frontend/src/hooks/useSyncStatus.ts`)
+- `useEntitySyncStatus` - Check sync status for specific entity (`frontend/src/hooks/useEntitySyncStatus.ts`)
+- `useConnectionStatus` - Simple online/offline detection (`frontend/src/hooks/useConnectionStatus.ts`)
 
 **Sync Queue Table** (`sync_queue`):
 - `operation_type`: Create, Update, Delete
@@ -333,24 +333,29 @@ async_db.with_transaction_async(move |tx| {
 
 ## Performance Optimizations
 
-### 1. Connection Pooling
-- **Pool**: r2d2 with max 10 connections, min 2 idle
-- **WAL mode**: Allows concurrent reads while writing
-- **DynamicPoolManager**: Adjusts pool size based on load
+### Connection Pooling
+- **Pool**: r2d2 with max 10 connections, min 2 idle (`src-tauri/src/db/connection.rs:42-52`)
+- **WAL mode**: Allows concurrent reads while writing (`connection.rs:96-103`)
+- **DynamicPoolManager**: Adjusts pool size based on load (`src-tauri/src/db/mod.rs`)
+- **Busy timeout**: 5 seconds for lock contention
+- **Cache size**: 10,000 pages (~10MB)
+- **Connection lifecycle**: 3600s max lifetime, 600s idle timeout
 
 ### 2. Query Performance Monitoring
-- `QueryPerformanceMonitor` tracks slow queries (>100ms)
-- `PreparedStatementCache` tracks statement usage
+- `QueryPerformanceMonitor` tracks slow queries (>100ms) (`src-tauri/src/db/connection.rs`)
+- `PreparedStatementCache` tracks statement usage and cache hits (`src-tauri/src/db/mod.rs`)
+- Metrics collection for connection pool statistics
 
 ### 3. Streaming Large Result Sets
-- `ChunkedQuery` in `src-tauri/src/db/connection.rs`
-- `StreamingTaskRepository` for large task lists
-- Configurable chunk_size (default 1000)
+- `ChunkedQuery` in `src-tauri/src/db/connection.rs` for paginated queries
+- `StreamingTaskRepository` for large task lists (`src-tauri/src/repositories/task_repository_streaming.rs`)
+- Configurable chunk_size (default 1000 rows)
 
 ### 4. Caching
-- `CacheService` with TTL support
+- `CacheService` with TTL support (`src-tauri/src/services/cache.rs`)
 - IPC response caching via `cachedInvoke` in `frontend/src/lib/ipc/cache.ts`
-- `cache_metadata` table for persistent cache
+- `cache_metadata` table for persistent cache (key-value with expiration)
+- `invalidatePattern` for cache invalidation patterns
 
 ---
 

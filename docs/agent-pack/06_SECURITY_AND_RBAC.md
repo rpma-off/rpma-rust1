@@ -31,10 +31,11 @@
 ```
 
 **Security Features**:
-- Password hashing: **Argon2** (`services/auth.rs:779-801`)
-- JWT access tokens: **2 hours** (`services/token.rs:60`)
-- Refresh tokens: **7 days** (`services/token.rs:61`)
-- Token storage: **HMAC-SHA256 hash** (`services/token.rs:66-72`)
+- Password hashing: **Argon2** with random salt per password (`services/auth.rs:779-801`)
+- JWT access tokens: **2 hours** expiration (`services/token.rs:60`)
+- Refresh tokens: **7 days** expiration (`services/token.rs:61`)
+- Token storage: **SHA256 hash** in database, not plain text (`services/token.rs:66-72`, `user_sessions` table)
+- Rate limiting: Applied before authentication attempt (`services/rate_limiter.rs`)
 
 ---
 
@@ -77,30 +78,32 @@ pub async fn protected_command(
 
 ### 4. Two-Factor Authentication (2FA)
 
-**Status**: **Implemented**
+**Status**: **Fully Implemented**
 
 **Service**: `src-tauri/src/services/two_factor.rs`
 
-| Command | Purpose | Backend |
-|---------|---------|---------|
-| `enable_2fa` | Generate TOTP setup | `auth.rs:216` |
-| `verify_2fa_setup` | Verify and enable | `auth.rs:245` |
-| `disable_2fa` | Disable 2FA | `auth.rs:278` |
-| `verify_2fa_code` | Verify TOTP code | `auth.rs:352` |
-| `regenerate_backup_codes` | New backup codes | `auth.rs:323` |
+| Command | Purpose | Backend | Frontend |
+|---------|---------|---------|----------|
+| `enable_2fa` | Generate TOTP setup (QR code + backup codes) | `auth.rs:216-243` | `lib/ipc/domains/auth.ts` |
+| `verify_2fa_setup` | Verify and enable 2FA | `auth.rs:245-276` | `lib/ipc/domains/auth.ts` |
+| `disable_2fa` | Disable 2FA (requires password) | `auth.rs:278-306` | `lib/ipc/domains/auth.ts` |
+| `verify_2fa_code` | Verify TOTP code during login | `auth.rs:352-387` | `lib/ipc/domains/auth.ts` |
+| `regenerate_backup_codes` | Generate new backup codes | `auth.rs:323-350` | `lib/ipc/domains/auth.ts` |
 
 **Configuration**:
-- Algorithm: TOTP (SHA-1)
+- Algorithm: TOTP (RFC 6238) with SHA-1
 - Code length: 6 digits
 - Time window: 30 seconds
-- Clock skew tolerance: ±1 window
-- Backup codes: 10 codes × 6 digits
+- Clock skew tolerance: ±1 window (90 seconds total)
+- Backup codes: 10 codes × 6 digits (stored hashed in DB)
+- Issuer: "RPMA"
+- Secret encryption: Base64 encoded (TODO: production hardening with proper key management)
 
 **Database Fields** (`users` table):
-- `two_factor_enabled`: Boolean
-- `two_factor_secret`: Encrypted TOTP secret
-- `backup_codes`: JSON array
-- `verified_at`: Timestamp
+- `two_factor_enabled`: BOOLEAN
+- `two_factor_secret`: TEXT (encrypted TOTP secret)
+- `backup_codes`: TEXT (JSON array of hashed codes)
+- `verified_at`: INTEGER (timestamp)
 
 ---
 
@@ -187,15 +190,16 @@ check_task_permission!(&user.role, "delete")             // Task operation
 
 | Setting | Value | Location |
 |---------|-------|----------|
-| Max failed attempts | 5 | Line 32 |
-| Lockout duration | 15 minutes | Line 33 |
-| Window duration | 15 minutes | Line 34 |
+| Max failed attempts | 5 | `rate_limiter.rs:32` |
+| Lockout duration | 15 minutes | `rate_limiter.rs:33` |
+| Window duration | 15 minutes | `rate_limiter.rs:34` |
+| Tracking | Email + IP address | `rate_limiter.rs:40-50` |
 
 **Features**:
-- Email-based rate limiting
-- IP-based rate limiting
-- In-memory cache for frequent access
-- Database persistence for lockout state
+- Dual tracking: Email-based AND IP-based rate limiting
+- In-memory cache (HashMap with RwLock) for frequent access
+- Database persistence (`login_attempts` table) for lockout state
+- Auto-cleanup of expired lockouts
 
 ---
 
@@ -204,16 +208,19 @@ check_task_permission!(&user.role, "delete")             // Task operation
 **Service**: `src-tauri/src/services/security_monitor.rs`
 
 **Event Types Tracked**:
-- Authentication failures
-- Authorization failures
-- Rate limit exceeded
-- Brute force attempts
-- SQL injection attempts
-- XSS attempts
+- Authentication failures (wrong password, invalid token)
+- Authorization failures (insufficient permissions)
+- Rate limit exceeded events
+- Brute force attempts detection
+- SQL injection attempts (input validation)
+- XSS attempts (input sanitization)
+- Session anomalies (concurrent sessions, IP changes)
 
 **Alert Severities**: Low, Medium, High, Critical
 
-**Auto-IP Blocking**: Triggers after 10 failed attempts per hour
+**Auto-IP Blocking**: Triggers after 10 failed attempts per hour from same IP
+
+**Integration**: Works with `AuditService` to log events to `audit_events` table
 
 ---
 
@@ -235,13 +242,20 @@ PRAGMA synchronous = NORMAL;
 ### Secrets & Environment Variables
 
 **Required Environment Variables**:
-- `JWT_SECRET`: Token signing key
+- `JWT_SECRET`: Token signing key (HMAC-SHA256)
 
-**Development**:
+**Development** (see `package.json:7`):
 ```bash
-set JWT_SECRET=your-secret-key
+# Windows
+set JWT_SECRET=dfc3d7f5c295d19b42e9b3d7eaa9602e45f91a9e5e95cbaa3230fc17e631c74b
+npm run dev
+
+# Linux/Mac
+export JWT_SECRET=dfc3d7f5c295d19b42e9b3d7eaa9602e45f91a9e5e95cbaa3230fc17e631c74b
 npm run dev
 ```
+
+**Production**: Use environment-specific secure key management (not hardcoded)
 
 ---
 
