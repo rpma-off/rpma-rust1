@@ -14,6 +14,7 @@ export async function clearAuthState(page: Page): Promise<void> {
     window.sessionStorage.clear();
   });
   await resetMockDb(page);
+  await page.goto('/login');
 }
 
 export async function loginAsTestUser(page: Page): Promise<void> {
