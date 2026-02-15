@@ -113,7 +113,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     if (includeSteps) {
       const stepsResult = await workflowService.getInterventionSteps(interventionId, sessionToken);
       if (stepsResult.success) {
-        responseData.steps = stepsResult.data?.data || [];
+        responseData.steps = (stepsResult.data?.data || []) as unknown as Record<string, unknown>[];
       }
     }
 

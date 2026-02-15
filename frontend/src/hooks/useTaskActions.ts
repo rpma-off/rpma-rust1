@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { TaskStatus, UpdateTaskRequest } from '@/lib/backend';
+import { TaskStatus, UpdateTaskRequest, CreateTaskRequest } from '@/lib/backend';
 import { taskService } from '@/lib/services/entities/task.service';
 import { ApiError } from '@/lib/api-error';
 import { toast } from 'sonner';
@@ -146,7 +146,7 @@ export function useTaskActions({
       onError?.(null);
 
       // Convert TaskWithDetails updates to UpdateTaskRequest format
-      const updateData: UpdateTaskRequest & Record<string, unknown> = {};
+      const updateData = {} as UpdateTaskRequest & Record<string, unknown>;
 
       if (updates.title !== undefined) updateData.title = updates.title;
       if (updates.description !== undefined) updateData.description = updates.description;
@@ -277,7 +277,7 @@ export function useTaskActions({
         requestId,
       });
 
-      const result = await taskService.createTask(sanitizedTaskData as Record<string, unknown>);
+      const result = await taskService.createTask(sanitizedTaskData as CreateTaskRequest);
 
       if (!result.success) {
         logger.error('useTaskActions: TaskService returned error for create', {

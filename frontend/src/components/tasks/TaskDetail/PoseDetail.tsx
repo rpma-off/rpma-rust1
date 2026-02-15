@@ -2,7 +2,7 @@
 // Removed pose dependency - now works independently
 import { TaskWithDetails, TaskDisplay, ChecklistItem } from '@/types/task.types';
 import { useInterventionData } from '@/hooks/useInterventionData';
-import { TaskStatus, UpdateTaskRequest } from '@/lib/backend';
+import { TaskStatus, UpdateTaskRequest, JsonValue } from '@/lib/backend';
 import { convertTimestamps } from '@/lib/types';
 import { Suspense } from 'react';
 
@@ -298,7 +298,7 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
 
         if (currentStep) {
           // Update the checklist in the workflow step
-          const updatedCollectedData = { ...currentStep.collected_data };
+          const updatedCollectedData = { ...currentStep.collected_data } as Record<string, Record<string, unknown>>;
 
           if (updatedCollectedData.checklist && updatedCollectedData.checklist[itemId] !== undefined) {
             updatedCollectedData.checklist[itemId] = completed;
@@ -309,7 +309,7 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
           // Save the step progress
           await ipcClient.interventions.saveStepProgress({
             step_id: currentStep.id,
-            collected_data: updatedCollectedData,
+            collected_data: updatedCollectedData as unknown as JsonValue,
             notes: currentStep.notes,
             photos: currentStep.photo_urls
           }, user.token);

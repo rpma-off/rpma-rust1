@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { createPermissionChecker, Permission } from '@/lib/rbac';
+import type { UserAccount } from '@/lib/backend';
 import { displayError, displaySuccess, displayInfo, createError } from '@/lib/utils/errorHandling';
 import { ErrorCategory, ErrorSeverity } from '@/lib/utils/errorHandling';
 
@@ -78,7 +79,7 @@ export const useOfflineQueue = (
     failed: 0,
   });
 
-  const permissionChecker = createPermissionChecker(user);
+  const permissionChecker = createPermissionChecker(user as UserAccount | null);
   const processingTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Load persisted queue on mount

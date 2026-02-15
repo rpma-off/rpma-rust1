@@ -127,7 +127,7 @@ export async function POST(
      if (validationOptions.validateSteps) {
        const stepsResult = await workflowService.getInterventionSteps(interventionId, sessionToken);
        if (stepsResult.success) {
-          const steps = stepsResult.data?.data || [];
+          const steps = (stepsResult.data?.data || []) as unknown as Record<string, unknown>[];
          const stepValidation = await validateInterventionSteps(steps);
        validationResult.details.stepValidation = stepValidation.isValid;
        validationResult.errors.push(...stepValidation.errors);

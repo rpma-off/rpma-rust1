@@ -94,7 +94,7 @@ export const hasPermission = (role: UserRole, permission: Permission): boolean =
     return true;
   }
 
-  return rolePermissions[role]?.includes(permission as typeof rolePermissions[typeof role][number]) || false;
+  return (rolePermissions[role] as readonly string[])?.includes(permission) || false;
 };
 
 /**

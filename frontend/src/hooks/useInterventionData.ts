@@ -73,19 +73,16 @@ export function useInterventionData(taskId: string) {
           : null;
 
         if (existingSteps) {
-          return {
-            ...intervention,
-            steps: existingSteps
-          };
+          return { ...intervention, steps: existingSteps } as InterventionData;
         }
 
         // Get steps data for this intervention
-        const stepsResult = await ipcClient.interventions.getProgress(intervention.id, session.token);
+        const stepsResult = await ipcClient.interventions.getProgress(intervention.id as string, session.token);
 
         return {
           ...intervention,
-          steps: stepsResult?.steps || []
-        };
+          steps: (stepsResult?.steps || []) as unknown as InterventionStep[]
+        } as InterventionData;
       } catch (error) {
         console.error('Failed to fetch intervention data:', error);
         return null;

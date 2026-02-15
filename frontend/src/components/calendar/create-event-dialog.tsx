@@ -80,7 +80,7 @@ export function CreateEventDialog({
       tags: [],
     };
 
-    await addEvent(newEvent);
+    await addEvent({ ...newEvent });
     goToDate(date);
 
     setTitle("");
