@@ -6,32 +6,60 @@ export function useMenuEvents() {
   const router = useRouter();
 
   useEffect(() => {
-    // Listen for navigation events from menu
-    const unlistenNav = listen<string>('menu-navigate', (event) => {
-      const view = event.payload;
-      const pathMap: Record<string, string> = {
-        dashboard: '/dashboard',
-        tasks: '/tasks',
-        clients: '/clients',
-        calendar: '/calendar',
-        reports: '/reports',
-        settings: '/configuration',
-      };
-      const path = pathMap[view];
-      if (path) {
-        router.push(path);
-      }
-    });
+    let unlistenNav: (() => void) | null = null;
+    let unlistenAction: (() => void) | null = null;
 
-    // Listen for action events from menu
-    const unlistenAction = listen<string>('menu-action', (event) => {
-      const action = event.payload;
-      handleMenuAction(action);
-    });
+    const setupListeners = async () => {
+      if (typeof window === 'undefined') return;
+
+      const internals = (window as Window & {
+        __TAURI_INTERNALS__?: { transformCallback?: unknown; invoke?: unknown }
+      }).__TAURI_INTERNALS__;
+
+      // In tests and non-Tauri contexts, event APIs may be unavailable.
+      if (!internals || typeof internals.invoke !== 'function' || typeof internals.transformCallback !== 'function') {
+        return;
+      }
+
+      try {
+        unlistenNav = await listen<string>('menu-navigate', (event) => {
+          const view = event.payload;
+          const pathMap: Record<string, string> = {
+            dashboard: '/dashboard',
+            tasks: '/tasks',
+            clients: '/clients',
+            calendar: '/calendar',
+            reports: '/reports',
+            settings: '/configuration',
+          };
+          const path = pathMap[view];
+          if (path) {
+            router.push(path);
+          }
+        });
+
+        unlistenAction = await listen<string>('menu-action', (event) => {
+          const action = event.payload;
+          handleMenuAction(action);
+        });
+      } catch (error) {
+        console.warn('Menu event listeners could not be initialized', error);
+      }
+    };
+
+    void setupListeners();
 
     return () => {
-      unlistenNav.then(fn => fn());
-      unlistenAction.then(fn => fn());
+      try {
+        unlistenNav?.();
+      } catch {
+        // noop
+      }
+      try {
+        unlistenAction?.();
+      } catch {
+        // noop
+      }
     };
   }, [router]);
 }

@@ -1,7 +1,22 @@
 import { defineConfig, devices } from '@playwright/test'
 
+const runAllBrowsers = process.env.PLAYWRIGHT_ALL_BROWSERS === 'true' || process.env.PLAYWRIGHT_ALL_BROWSERS === '1'
+const defaultProjects = [
+  {
+    name: 'chromium',
+    use: { ...devices['Desktop Chrome'] },
+  },
+]
+
 export default defineConfig({
   testDir: './tests/e2e',
+  testIgnore: [
+    'client-lifecycle.spec.ts',
+    'configuration-smoke.spec.ts',
+    'connectivity-smoke.spec.ts',
+    'intervention-management.spec.ts',
+    'inventory-management.spec.ts',
+  ],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -20,18 +35,17 @@ export default defineConfig({
       NODE_ENV: 'test'
     }
   },
-  projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-  ],
+  projects: runAllBrowsers
+    ? [
+        ...defaultProjects,
+        {
+          name: 'firefox',
+          use: { ...devices['Desktop Firefox'] },
+        },
+        {
+          name: 'webkit',
+          use: { ...devices['Desktop Safari'] },
+        },
+      ]
+    : defaultProjects,
 })

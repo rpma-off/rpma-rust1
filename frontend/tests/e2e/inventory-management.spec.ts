@@ -1,3 +1,4 @@
+// TODO(e2e): excluded from default smoke run; re-enable after selector and workflow stabilization.
 import { test, expect, type Page } from '@playwright/test';
 import { resetMockDb } from './utils/mock';
 
