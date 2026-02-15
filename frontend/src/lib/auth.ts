@@ -5,12 +5,12 @@ export const getServerSession = async () => {
   return null;
 };
 
-export const signIn = async (provider: string, options?: unknown) => {
+export const signIn = async (_provider: string, _options?: unknown) => {
   // Mock implementation
   return { ok: true };
 };
 
-export const signOut = async (options?: unknown) => {
+export const signOut = async (_options?: unknown) => {
   // Mock implementation
   return { ok: true };
 };

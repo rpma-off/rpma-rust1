@@ -80,7 +80,7 @@ export function useA11y() {
     keyboardNavigation: {
       handleArrowKeys: (
         event: React.KeyboardEvent,
-        items: any[],
+        items: unknown[],
         currentIndex: number,
         onSelect: (index: number) => void
       ) => {

@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     // Parse query parameters
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q') || '';
-    const limit = parseInt(searchParams.get('limit') || '10');
+    const _limit = parseInt(searchParams.get('limit') || '10');
 
     if (!query.trim()) {
       return NextResponse.json(

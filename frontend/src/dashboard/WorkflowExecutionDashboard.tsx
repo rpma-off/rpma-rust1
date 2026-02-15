@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Workflow, Clock, AlertTriangle, CheckCircle, RefreshCw, Download, TrendingUp, TrendingDown } from 'lucide-react';
+import { Workflow, Clock, AlertTriangle, CheckCircle, RefreshCw, Download, TrendingUp } from 'lucide-react';
 import type { WorkflowExecution } from '@/types/workflow.types';
 
 export interface WorkflowExecutionDashboardProps {

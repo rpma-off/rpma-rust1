@@ -1,6 +1,5 @@
 import React, { memo } from 'react';
 import type { CalendarTask } from '../../lib/backend';
-import { designTokens } from '../../lib/design-tokens';
 
 interface TaskCardProps {
   task: CalendarTask;

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
 import { configurationService } from '@/lib/services/entities/configuration.service';
 import { SystemConfiguration } from '@/types/configuration.types';
 import { getAuthenticatedUser } from '@/lib/api-auth';

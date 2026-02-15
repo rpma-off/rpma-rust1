@@ -62,7 +62,7 @@ export async function POST(
     const categoriesRaw = form.getAll('category') as string[];
     const notesRaw = form.getAll('notes') as string[];
 
-    const parsed = files.map((file, idx) => {
+    const _parsed = files.map((file, idx) => {
       const angleStr = (anglesRaw[idx] ?? anglesRaw[0] ?? 'front_left').toString();
       const categoryStr = (categoriesRaw[idx] ?? categoriesRaw[0] ?? 'inspection').toString();
       const notes = (notesRaw[idx] ?? notesRaw[0] ?? '').toString();

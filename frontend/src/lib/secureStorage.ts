@@ -5,8 +5,6 @@
  * using AES-GCM encryption with a device-specific key
  */
 
-import { ipcClient } from '@/lib/ipc';
-
 interface EncryptedData {
   data: string;
   iv: string;

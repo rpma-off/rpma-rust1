@@ -283,7 +283,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
 
        // Advance current step (this will complete it and move to next)
       // Use provided collectedData and photos, or fall back to existing data
-      const advanceResponse = await ipcClient.interventions.advanceStep({
+      const _advanceResponse = await ipcClient.interventions.advanceStep({
         intervention_id: interventionData.intervention.id,
         step_id: currentStep.id,
         collected_data: collectedData || currentStep.collected_data || {},
@@ -371,7 +371,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
         };
 
         // Finalize the intervention
-       const finalizeResponse = await ipcClient.interventions.finalize(finalizationData, session.token);
+       const _finalizeResponse = await ipcClient.interventions.finalize(finalizationData, session.token);
 
       return { success: true };
     },

@@ -8,7 +8,6 @@ import {
   Mail,
   Phone,
   Building,
-  MapPin,
   Calendar,
   MoreVertical,
   Edit,

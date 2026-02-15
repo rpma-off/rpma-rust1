@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
+import { Badge, type BadgeProps } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Material } from '@/lib/inventory';
@@ -11,7 +11,6 @@ import {
   CheckCircle, 
   XCircle, 
   TrendingUp,
-  TrendingDown,
   Minus
 } from 'lucide-react';
 
@@ -112,7 +111,7 @@ export function StockLevelIndicator({
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center justify-between">
             <span>Stock Status: {material.name}</span>
-            <Badge variant={stockStatus.color as any} className="flex items-center gap-1">
+            <Badge variant={stockStatus.color as BadgeProps["variant"]} className="flex items-center gap-1">
               <StatusIcon className="h-3 w-3" />
               {stockStatus.label}
             </Badge>
@@ -280,7 +279,7 @@ export function StockLevelIndicator({
             <span className="text-sm font-medium">
               {formatStockValue(material.current_stock)}
             </span>
-            <Badge variant={stockStatus.color as any} className="text-xs px-2 py-0.5">
+            <Badge variant={stockStatus.color as BadgeProps["variant"]} className="text-xs px-2 py-0.5">
               <StatusIcon className="h-3 w-3" />
             </Badge>
           </div>

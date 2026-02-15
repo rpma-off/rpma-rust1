@@ -12,11 +12,10 @@ import {
   X, 
   ChevronLeft, 
   ChevronRight,
-  Calendar,
-  User
+  Calendar
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Photo, PhotoType } from '@/lib/backend';
+import { Photo } from '@/lib/backend';
 import { PhotoGalleryProps } from '@/types/photo.types';
 import { useFocusableList } from '@/hooks/useKeyboardNavigation';
 import { OptimizedImage } from '@/components/ui/optimized-image';
@@ -96,8 +95,8 @@ export function PhotoGallery({
   
   // Keyboard navigation for photo grid
   const {
-    selectedIndex,
-    setSelectedIndex,
+    selectedIndex: _selectedIndex,
+    setSelectedIndex: _setSelectedIndex,
     getItemProps,
     keyHandlers,
   } = useFocusableList(filteredAndSortedPhotos, {
@@ -213,7 +212,7 @@ export function PhotoGallery({
               onClick={() => handlePhotoClick(photo)}
               {...(() => {
                 const props = getItemProps(index);
-                const { onClick, ...rest } = props;
+                const { onClick: _onClick, ...rest } = props;
                 return rest;
               })()}
             >

@@ -4,7 +4,6 @@ import { useTaskActions } from './useTaskActions';
 import { useTaskSync } from './useTaskSync';
 import { useTaskFilters } from './useTaskFilters';
 import type { TaskStatus, TaskPriority } from '@/lib/backend';
-import type { TaskWithDetails } from '@/lib/services/entities/task.service';
 
 interface UseTasksOptions {
   status?: TaskStatus | 'all';

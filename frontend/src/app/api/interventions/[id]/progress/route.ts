@@ -320,7 +320,7 @@ export async function PUT(
 /**
  * Calcule les données de progrès détaillées
  */
-async function calculateProgressData(intervention: PPFInterventionData, steps: any[]): Promise<ProgressData> {
+async function calculateProgressData(intervention: PPFInterventionData, steps: PPFInterventionStep[]): Promise<ProgressData> {
   const totalSteps = steps.length;
   const completedSteps = steps.filter(step => step.status === 'completed').length;
   const currentStepIndex = steps.findIndex(step => step.status === 'in_progress');

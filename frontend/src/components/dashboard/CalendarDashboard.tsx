@@ -12,7 +12,6 @@ import { useCalendarStore } from '@/lib/stores/calendarStore';
 import { useCalendar } from '@/hooks/useCalendar';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { EventDetailPopover } from './EventDetailPopover';
 import { QuickAddDialog } from './QuickAddDialog';
 import { FilterDrawer } from './FilterDrawer';
 

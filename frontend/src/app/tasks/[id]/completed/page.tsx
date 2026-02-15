@@ -33,7 +33,6 @@ import {
   Mail,
   Wrench,
   Shield,
-  Calendar,
   CheckSquare,
   Thermometer,
   Droplets,
@@ -49,7 +48,6 @@ import type { Intervention, Client as BackendClient } from '@/lib/backend';
 import { reportsService } from '@/lib/services/entities/reports.service';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from '@/hooks/useTranslation';
-import { taskStatusLabels } from '@/lib/i18n/status-labels';
 
 export default function TaskCompletedPage() {
   const router = useRouter();
@@ -70,7 +68,7 @@ export default function TaskCompletedPage() {
   const fullClientData = task?.client as BackendClient | undefined;
 
   // Fetch intervention workflow data
-  const { data: interventionData, isLoading: interventionLoading } = useInterventionData(taskId);
+  const { data: interventionData, isLoading: _interventionLoading } = useInterventionData(taskId);
   const workflowSteps = useWorkflowStepData(interventionData || null);
   const queryClient = useQueryClient();
 
@@ -1303,7 +1301,7 @@ export default function TaskCompletedPage() {
                                 <div className="space-y-2">
                                   <div className="text-sm font-medium text-gray-700">Étapes de préparation:</div>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                    {Object.entries(workflowSteps.preparation.collected_data.checklist).map(([key, completed]: [string, any]) => (
+                                    {Object.entries(workflowSteps.preparation.collected_data.checklist).map(([key, completed]: [string, unknown]) => (
                                       <div key={key} className="flex items-center space-x-2 text-sm">
                                         <CheckCircle className={`h-3 w-3 ${completed ? 'text-green-600' : 'text-gray-400'}`} />
                                         <span className={completed ? 'text-gray-900' : 'text-gray-500'}>
@@ -1381,7 +1379,7 @@ export default function TaskCompletedPage() {
                                 <div className="space-y-2">
                                   <div className="text-sm font-medium text-gray-700">Contrôle qualité:</div>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                    {Object.entries(workflowSteps.finalization.collected_data.qc_checklist).map(([key, completed]: [string, any]) => (
+                                    {Object.entries(workflowSteps.finalization.collected_data.qc_checklist).map(([key, completed]: [string, unknown]) => (
                                       <div key={key} className="flex items-center space-x-2 text-sm">
                                         <CheckCircle className={`h-3 w-3 ${completed ? 'text-green-600' : 'text-gray-400'}`} />
                                         <span className={completed ? 'text-gray-900' : 'text-gray-500'}>
@@ -1514,7 +1512,7 @@ export default function TaskCompletedPage() {
                 </AccordionTrigger>
                 <AccordionContent className="px-6 pb-4">
                   <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {task.checklist_items.map((item: any, index: number) => (
+                    {task.checklist_items.map((item: { is_completed?: boolean; description?: string; title?: string }, index: number) => (
                       <div key={index} className="flex items-center space-x-3 p-3 rounded-lg bg-gray-50">
                         <CheckCircle className={`h-4 w-4 ${item.is_completed ? 'text-green-600' : 'text-gray-400'}`} />
                         <span className={`text-sm ${item.is_completed ? 'text-gray-900' : 'text-gray-500 line-through'}`}>

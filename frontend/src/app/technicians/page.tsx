@@ -72,7 +72,7 @@ export default function TechniciansPage() {
     };
 
     fetchTechnicians();
-  }, [user?.token]);
+  }, [user?.token, t]);
 
   if (loading) {
     return (

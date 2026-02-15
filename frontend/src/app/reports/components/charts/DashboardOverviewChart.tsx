@@ -1,8 +1,6 @@
 'use client';
 
 import {
-  AreaChart,
-  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -12,16 +10,23 @@ import {
   Bar,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  type PieLabelRenderProps
 } from 'recharts';
 import { motion } from 'framer-motion';
 
+import type { 
+  TaskCompletionReport, 
+  TechnicianPerformanceReport, 
+  QualityComplianceReport 
+} from '@/lib/backend';
+
 interface DashboardOverviewChartProps {
   data: {
-    taskCompletion: any;
-    technicianPerformance: any;
-    clientAnalytics: any;
-    qualityCompliance: any;
+    taskCompletion: TaskCompletionReport;
+    technicianPerformance: TechnicianPerformanceReport;
+    clientAnalytics: Record<string, unknown>;
+    qualityCompliance: QualityComplianceReport;
   };
 }
 
@@ -84,7 +89,7 @@ export function DashboardOverviewChart({ data }: DashboardOverviewChartProps) {
     }
   ];
 
-  const technicianData = data.technicianPerformance.technicians.slice(0, 5).map((tech: any) => ({
+  const technicianData = data.technicianPerformance.technicians.slice(0, 5).map((tech) => ({
     name: tech.name.split(' ')[0], // First name only
     tasks: Number(tech.metrics.tasks_completed),
     quality: Math.round(tech.metrics.quality_score),
@@ -94,18 +99,18 @@ export function DashboardOverviewChart({ data }: DashboardOverviewChartProps) {
   const qualityData = [
     {
       name: 'Score Qualité',
-      value: Math.round(data.qualityCompliance.compliance_rate || 0),
+      value: Math.round(data.qualityCompliance.summary?.overall_quality_score || 0),
       color: COLORS.quality
     },
     {
       name: 'Satisfaction Client',
-      value: Math.round(data.technicianPerformance.technicians.reduce((sum: number, tech: any) =>
+      value: Math.round(data.technicianPerformance.technicians.reduce((sum: number, tech) =>
         sum + (tech.metrics?.customer_satisfaction || 0), 0) / Math.max(data.technicianPerformance.technicians.length, 1) * 100),
       color: COLORS.satisfaction
     }
   ];
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ color: string; name: string; value: number }>; label?: string }) => {
     if (active && payload && payload.length) {
       return (
         <motion.div
@@ -116,7 +121,7 @@ export function DashboardOverviewChart({ data }: DashboardOverviewChartProps) {
         >
           <p className="text-foreground font-semibold mb-3 text-sm">{label}</p>
           <div className="space-y-2">
-            {payload.map((entry: any, index: number) => (
+            {payload.map((entry: { color: string; name: string; value: number }, index: number) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, x: -10 }}
@@ -185,7 +190,7 @@ export function DashboardOverviewChart({ data }: DashboardOverviewChartProps) {
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={({ name, percent }: any) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                label={(props: PieLabelRenderProps) => `${props.name || ''}: ${((typeof props.percent === 'number' ? props.percent : 0) * 100).toFixed(0)}%`}
                 outerRadius={100}
                 innerRadius={40}
                 fill="#8884d8"

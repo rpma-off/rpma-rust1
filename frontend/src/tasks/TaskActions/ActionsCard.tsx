@@ -2,7 +2,7 @@ import React, { memo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Play, CheckCircle, Image as ImageIcon, ListChecks, 
-  MoreVertical, Edit, FileText, Phone, MessageSquare, Clock, AlertCircle, ArrowRight
+  MoreVertical, Edit, FileText, MessageSquare, Clock, AlertCircle, ArrowRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -11,7 +11,6 @@ import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { InterventionWorkflowService } from '@/lib/services/ppf/intervention-workflow.service';
 import { ipcClient } from '@/lib/ipc/client';
-import { AuthSecureStorage } from '@/lib/secureStorage';
 import EditTaskModal from '@/components/tasks/TaskActions/EditTaskModal';
 
 interface ActionsCardProps {
@@ -59,14 +58,15 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
     setIsStarting(true);
     try {
       // Start the intervention first
+      const taskRecord = task as unknown as Record<string, unknown>;
       const startData = {
         task_id: task.id,
         intervention_number: `INT-${Date.now()}`,
         ppf_zones: task.ppf_zones || [],
         custom_zones: [],
-        film_type: (task as any).film_type || 'Standard',
-        film_brand: (task as any).film_brand || 'Default',
-        film_model: (task as any).film_model || 'Standard',
+        film_type: (taskRecord.film_type as string) || 'Standard',
+        film_brand: (taskRecord.film_brand as string) || 'Default',
+        film_model: (taskRecord.film_model as string) || 'Standard',
         weather_condition: 'Indoor',
         lighting_condition: 'Good',
         work_location: 'Workshop',

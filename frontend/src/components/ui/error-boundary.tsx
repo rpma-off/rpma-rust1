@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import React, { Component, ErrorInfo } from 'react';
-import { AlertCircle, RefreshCw, Home, Bug, Wifi, WifiOff, Shield, Zap, ChevronDown } from 'lucide-react';
+import { AlertCircle, RefreshCw, Home, Bug, WifiOff, Shield, Zap, ChevronDown } from 'lucide-react';
 import { Button } from './button';
 import { motion } from 'framer-motion';
 

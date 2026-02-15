@@ -5,9 +5,10 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/lib/auth/compatibility';
+import type { UserAccount } from '@/types/auth.types';
+import type { UserSession } from '@/lib/backend';
 import { useRouter } from 'next/navigation';
 import {
-  LayoutDashboard,
   Car,
   Calendar,
   Users,
@@ -25,7 +26,6 @@ import {
 } from 'lucide-react';
 import { useLayoutStore } from '@/lib/stores/layoutStore';
 import { AnimatePresence, motion } from 'framer-motion';
-import { designTokens } from '@/lib/design-tokens';
 
 interface SidebarProps {
   isMobile?: boolean;
@@ -76,7 +76,7 @@ export function Sidebar({ isMobile = false, onClose }: SidebarProps) {
     return pathname.startsWith(href);
   };
 
-  const handleNavClick = (href: string) => {
+  const handleNavClick = (_href: string) => {
     if (isMobile && onClose) {
       onClose();
     }
@@ -222,14 +222,14 @@ function AdminSeparator({ collapsed = false }: AdminSeparatorProps) {
 
 interface FooterSectionProps {
   isCollapsed: boolean;
-  user: any;
-  profile: any;
+  user: UserSession | null;
+  profile: UserAccount | null;
   onSignOut: () => void;
   showUserMenu: boolean;
   setShowUserMenu: (open: boolean) => void;
 }
 
-function FooterSection({ isCollapsed, user, profile, onSignOut, showUserMenu, setShowUserMenu }: FooterSectionProps) {
+function FooterSection({ isCollapsed, user: _user, profile, onSignOut, showUserMenu, setShowUserMenu }: FooterSectionProps) {
   return (
     <div className="p-4 space-y-4">
       {!isCollapsed && (
@@ -320,6 +320,6 @@ interface SidebarOverlayProps {
   isCollapsed: boolean;
 }
 
-function SidebarOverlay({ isCollapsed }: SidebarOverlayProps) {
+function SidebarOverlay({ isCollapsed: _isCollapsed }: SidebarOverlayProps) {
   return null;
 }

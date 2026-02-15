@@ -102,9 +102,11 @@ export const LazyImage: React.FC<LazyImageProps> = ({
   }, [src, errorPlaceholder]);
 
   return (
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       ref={imgRef}
       src={imageSrc}
+      alt={props.alt || ''}
       className={cn(
         'transition-opacity duration-300',
         isLoaded ? 'opacity-100' : 'opacity-50',
@@ -132,7 +134,7 @@ export const LazyComponent: React.FC<LazyComponentProps> = ({
   threshold = 0.1,
   className = ''
 }) => {
-  const [isVisible, setIsVisible] = useState(false);
+  const [_isVisible, setIsVisible] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -235,5 +237,5 @@ export function usePerformanceMonitor(componentName: string) {
     if (process.env.NODE_ENV === 'development') {
       console.log(`${componentName} rendered ${renderCount.current} times`);
     }
-  }, []);
+  }, [componentName]);
 }

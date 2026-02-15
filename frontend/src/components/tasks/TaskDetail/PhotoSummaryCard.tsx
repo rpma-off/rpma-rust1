@@ -3,24 +3,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Camera, Eye, ImageIcon } from 'lucide-react';
-import { TaskPhoto } from '@/lib/backend';
+import { TaskPhoto, Photo } from '@/lib/backend';
+
+type PhotoLike = TaskPhoto | Photo | { photo_type?: string };
 
 interface PhotoSummaryCardProps {
   taskId: string;
-  photos?: TaskPhoto[] | null | { before: any[], after: any[], during: any[] };
+  photos?: TaskPhoto[] | Photo[] | null | { before: PhotoLike[], after: PhotoLike[], during: PhotoLike[] };
   onViewPhotos?: () => void;
 }
 
 export const PhotoSummaryCard: React.FC<PhotoSummaryCardProps> = ({
-  taskId,
+  taskId: _taskId,
   photos,
   onViewPhotos,
 }) => {
   // Handle different photo data structures
   let totalPhotos = 0;
-  let beforePhotos: any[] = [];
-  let afterPhotos: any[] = [];
-  let progressPhotos: any[] = [];
+  let beforePhotos: PhotoLike[] = [];
+  let afterPhotos: PhotoLike[] = [];
+  let progressPhotos: PhotoLike[] = [];
 
   if (Array.isArray(photos)) {
     // TaskPhoto[] format

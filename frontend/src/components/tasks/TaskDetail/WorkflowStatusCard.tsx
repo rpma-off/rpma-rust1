@@ -13,7 +13,7 @@ interface WorkflowStatusCardProps {
 }
 
 export const WorkflowStatusCard: React.FC<WorkflowStatusCardProps> = ({
-  taskId,
+  taskId: _taskId,
   workflowId,
   currentStepId,
   status,

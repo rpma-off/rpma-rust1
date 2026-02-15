@@ -1,7 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ReportTabs } from '../../../app/reports/components/ReportTabs';
-import { ReportType } from '@/lib/backend';
 
 describe('ReportTabs', () => {
   const mockOnTypeChange = jest.fn();

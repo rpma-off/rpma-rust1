@@ -23,7 +23,7 @@ import {
 import { Plus, Search, Edit, AlertTriangle, Package, Trash2, ArrowUpDown } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useMaterials } from '@/hooks/useMaterials';
+import { useMaterials, type Material } from '@/hooks/useMaterials';
 import { useInventoryStats } from '@/hooks/useInventoryStats';
 import { useInventory } from '@/hooks/useInventory';
 import { MaterialForm } from './MaterialForm';
@@ -37,9 +37,9 @@ export function MaterialCatalog() {
   const [materialTypeFilter, setMaterialTypeFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [showForm, setShowForm] = useState(false);
-  const [editingMaterial, setEditingMaterial] = useState<any>(null);
+  const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [showStockDialog, setShowStockDialog] = useState(false);
-  const [stockMaterial, setStockMaterial] = useState<any>(null);
+  const [stockMaterial, setStockMaterial] = useState<Material | null>(null);
   const [stockQuantity, setStockQuantity] = useState<number>(0);
   const [stockReason, setStockReason] = useState('');
   const [stockSaving, setStockSaving] = useState(false);
@@ -54,7 +54,7 @@ export function MaterialCatalog() {
   const { stats } = useInventoryStats();
   const { updateStock } = useInventory();
 
-  const handleEdit = (material: any) => {
+  const handleEdit = (material: Material) => {
     setEditingMaterial(material);
     setShowForm(true);
   };
@@ -81,7 +81,7 @@ export function MaterialCatalog() {
     }
   };
 
-  const handleStockAdjust = (material: any) => {
+  const handleStockAdjust = (material: Material) => {
     setStockMaterial(material);
     setStockQuantity(0);
     setStockReason('');

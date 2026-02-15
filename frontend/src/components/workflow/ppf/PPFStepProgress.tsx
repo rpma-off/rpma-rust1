@@ -18,7 +18,7 @@ export function PPFStepProgress() {
     return <Circle className="h-5 w-5 text-gray-500" />;
   };
 
-  const getStepColor = (step: typeof steps[0]) => {
+  const _getStepColor = (step: typeof steps[0]) => {
     if (step.status === 'completed') return 'text-green-500';
     if (step.id === currentStep?.id) return 'text-blue-500';
     return 'text-gray-500';
@@ -42,7 +42,7 @@ export function PPFStepProgress() {
           {steps.map((step, index) => {
             const isCompleted = step.status === 'completed';
             const isCurrent = step.id === currentStep?.id;
-            const isNextCompleted = steps[index + 1]?.status === 'completed';
+            const _isNextCompleted = steps[index + 1]?.status === 'completed';
 
             return (
               <React.Fragment key={step.id}>

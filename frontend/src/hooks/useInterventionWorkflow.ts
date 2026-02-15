@@ -44,7 +44,7 @@ export function useInterventionWorkflow({
       },
       onError
     );
-  }, [onError, taskId]);
+  }, [onError, taskId, intervention?.id]);
 
   // State management
   const state = useInterventionState({

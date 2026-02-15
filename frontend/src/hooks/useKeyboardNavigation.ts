@@ -181,7 +181,7 @@ export function useFocusableList<T>(
     } else if (options.loop) {
       setSelectedIndex(items.length - 1);
     }
-  }, [selectedIndex, options.loop]);
+  }, [selectedIndex, options.loop, items.length]);
 
   const clearSelection = useCallback(() => {
     setSelectedIndex(-1);
@@ -255,7 +255,7 @@ export function useRovingTabIndex(
     }
 
     setActiveIndex(newIndex);
-  }, [activeIndex, itemCount, options, options.disabled, options.onEscape]);
+  }, [activeIndex, itemCount, options]);
 
   // Focus the active item
   useEffect(() => {

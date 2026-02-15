@@ -11,7 +11,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { dashboardApiService, DashboardFilters, DashboardData, UserProfile, TechnicianSummary } from '@/lib/services/dashboard/dashboard-api.service';
+import { dashboardApiService, DashboardFilters, DashboardData, TechnicianSummary } from '@/lib/services/dashboard/dashboard-api.service';
 import { TaskWithDetails } from '@/types/task.types';
 import { DashboardTask, transformTask, RawTaskData } from '@/components/dashboard/types';
 import { handleFetchError, FetchError } from '@/lib/utils/fetch-error-handler';
@@ -91,7 +91,7 @@ const DEFAULT_OPTIONS: UseDashboardDataOptions = {
 
 export function useDashboardData(options: UseDashboardDataOptions = {}): [DashboardState, DashboardActions] {
   const opts = { ...DEFAULT_OPTIONS, ...options };
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const { logInfo, logError, logUserAction } = useLogger({
     context: LogDomain.SYSTEM,
     component: 'useDashboardData'

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateTaskNumber, generateUniqueTaskNumber, generateFallbackTaskNumber } from '@/lib/utils/task-number-generator';
+import { generateUniqueTaskNumber, generateFallbackTaskNumber } from '@/lib/utils/task-number-generator';
 import { createLogger } from '@/lib/logger';
 import { createClient } from '@/lib/supabase/server';
 

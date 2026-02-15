@@ -151,7 +151,7 @@ export const enhancedToast = {
     messages: {
       loading: string;
       success: string | ((data: T) => string);
-      error: string | ((error: any) => string);
+      error: string | ((error: Error) => string);
     },
     options?: {
       success?: { duration?: number };

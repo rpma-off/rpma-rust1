@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { useNotificationPreferences } from '@/hooks/useMessage';
 import type { UpdateNotificationPreferencesRequest } from '@/lib/backend';
-import { Bell, Mail, MessageSquare, Clock, Save } from 'lucide-react';
+import { Bell, Mail, MessageSquare, Save } from 'lucide-react';
 
 interface NotificationPreferencesProps {
   userId: string;
@@ -67,8 +67,8 @@ export function NotificationPreferences({ userId }: NotificationPreferencesProps
     }
   };
 
-  const updatePreference = (key: keyof UpdateNotificationPreferencesRequest, value: any) => {
-    setLocalPrefs((prev: any) => ({ ...prev, [key]: value }));
+  const updatePreference = (key: keyof UpdateNotificationPreferencesRequest, value: boolean | string | null) => {
+    setLocalPrefs((prev: UpdateNotificationPreferencesRequest) => ({ ...prev, [key]: value }));
   };
 
   if (loading) {
@@ -168,7 +168,7 @@ export function NotificationPreferences({ userId }: NotificationPreferencesProps
                 </div>
                 <Switch
                   id={key}
-                  checked={(localPrefs as any)[key] ?? true}
+                  checked={((localPrefs as Record<string, unknown>)[key] as boolean) ?? true}
                   onCheckedChange={(checked) => updatePreference(key as keyof UpdateNotificationPreferencesRequest, checked)}
                 />
               </div>
@@ -193,7 +193,7 @@ export function NotificationPreferences({ userId }: NotificationPreferencesProps
                 </div>
                 <Switch
                   id={key}
-                  checked={(localPrefs as any)[key] ?? true}
+                  checked={((localPrefs as Record<string, unknown>)[key] as boolean) ?? true}
                   onCheckedChange={(checked) => updatePreference(key as keyof UpdateNotificationPreferencesRequest, checked)}
                 />
               </div>
@@ -218,7 +218,7 @@ export function NotificationPreferences({ userId }: NotificationPreferencesProps
                 </div>
                 <Switch
                   id={key}
-                  checked={(localPrefs as any)[key] ?? true}
+                  checked={((localPrefs as Record<string, unknown>)[key] as boolean) ?? true}
                   onCheckedChange={(checked) => updatePreference(key as keyof UpdateNotificationPreferencesRequest, checked)}
                 />
               </div>

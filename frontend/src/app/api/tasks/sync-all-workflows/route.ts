@@ -6,7 +6,7 @@ import { taskWorkflowSyncService } from '@/lib/services/sync/task-workflow-sync.
 import { getAuthenticatedUser } from '@/lib/api-auth';
 import { Database } from '@/types/database.types';
 
-type User = Database['public']['Tables']['users']['Row'];
+type _User = Database['public']['Tables']['users']['Row'];
 
 
 /**

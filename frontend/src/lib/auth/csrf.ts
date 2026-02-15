@@ -16,7 +16,7 @@ export const generateCSRFToken = (): string => {
 
 export const createCSRFToken = generateCSRFToken;
 
-export const validateCSRFToken = (token: string, secret: string): boolean => {
+export const validateCSRFToken = (token: string, _secret: string): boolean => {
   // Simple validation - in production, use proper CSRF validation
   return token.length === 64; // 32 bytes in hex
 };

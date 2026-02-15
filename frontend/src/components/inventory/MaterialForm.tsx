@@ -12,6 +12,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { toast } from 'sonner';
 
 interface MaterialFormProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   material?: any;
   onClose: () => void;
 }

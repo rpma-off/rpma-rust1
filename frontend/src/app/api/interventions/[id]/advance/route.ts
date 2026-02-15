@@ -6,14 +6,14 @@
  */
 
 
- import { NextRequest, NextResponse } from 'next/server';
+ import { NextResponse } from 'next/server';
 
  export const dynamic = 'force-dynamic';
 import { z } from 'zod';
 import { interventionWorkflowService } from '@/lib/services/ppf';
 import type { AdvanceStepDTO } from '@/types/ppf-intervention';
 import { handleApiError } from '@/lib/api-error';
-import { ApiResponseFactory, HttpStatus, createApiResponse } from '@/lib/http-status';
+import { ApiResponseFactory, HttpStatus } from '@/lib/http-status';
 
 // Schéma de validation pour avancer une étape - redéfini pour éviter le bug
 const AdvanceStepSchema = z.object({

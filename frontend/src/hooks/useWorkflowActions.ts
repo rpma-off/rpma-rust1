@@ -90,7 +90,7 @@ export function useWorkflowActions() {
     }
   }, [canGoToPreviousStep, goToPreviousStep]);
 
-  const goToSpecificStep = useCallback((step: any) => {
+  const goToSpecificStep = useCallback((step: { id: string }) => {
     const executionStep = steps.find(s => s.id === step.id);
     if (executionStep) {
       goToStep(executionStep.id);

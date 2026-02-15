@@ -22,7 +22,7 @@ export interface Material {
   // Specifications
   brand?: string;
   model?: string;
-  specifications?: any;
+  specifications?: Record<string, unknown>;
 
   // Inventory
   unit_of_measure: UnitOfMeasure;

@@ -24,7 +24,7 @@ export const TaskProvider: React.FC<TaskProviderProps> = ({
   children,
 }) => {
   const tasksData = useTasks();
-  const { tasks, updateTask, refetch } = tasksData;
+  const { tasks, updateTask: _updateTask, refetch } = tasksData;
 
   const getTaskById = useCallback((id: string): TaskWithDetails | undefined => {
     return tasks.find(task => task.id === id);

@@ -12,7 +12,7 @@ import { z } from 'zod';
 import { interventionWorkflowService } from '@/lib/services/ppf';
 import { PPFInterventionStatus } from '@/types/enums';
 import { handleApiError } from '@/lib/api-error';
-import { ApiResponseFactory, HttpStatus, createApiResponse } from '@/lib/http-status';
+import { ApiResponseFactory, HttpStatus } from '@/lib/http-status';
 
 // Schéma de validation pour les paramètres de requête
 const QueryParamsSchema = z.object({

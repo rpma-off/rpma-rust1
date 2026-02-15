@@ -177,7 +177,7 @@ export function useTaskSync({
         requestId,
       });
     }
-    }, [userToken, pageSize, onTasksLoaded, onLoadingChange, onError]);
+    }, [userToken, pageSize, onTasksLoaded, onLoadingChange, onError, filters]);
 
   const refetch = useCallback(async () => {
     return await fetchTasks(1);
@@ -192,6 +192,7 @@ export function useTaskSync({
     if (autoFetch && userToken) {
       fetchTasks(1, filters);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoFetch, userToken, filters]); // Only depends on actual trigger values
 
   return {

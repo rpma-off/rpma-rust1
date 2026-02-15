@@ -1,15 +1,13 @@
 import React from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { format, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
 import { useAuth } from '@/lib/auth/compatibility';
 import { getCalendarTasks } from '@/lib/ipc/calendar';
-import type { CalendarTask, CalendarFilter } from '@/lib/backend';
 import { useCalendarStore } from '@/lib/stores/calendarStore';
 
 export function useCalendarEvents() {
   const { user } = useAuth();
   const { currentDate, filters } = useCalendarStore();
-  const queryClient = useQueryClient();
 
   const dateRange = React.useMemo(() => {
     const start = startOfMonth(subMonths(currentDate, 1));

@@ -74,7 +74,7 @@ export function DataExplorer({ dateRange, filters }: DataExplorerProps) {
   });
 
   // Convert backend SearchResult to local SearchResult
-  const convertToLocalResult = (result: any): SearchResult => ({
+  const convertToLocalResult = (result: SearchResult): SearchResult => ({
     id: result.id,
     entity_type: result.entity_type as EntityType,
     title: result.title,

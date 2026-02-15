@@ -153,7 +153,7 @@ describe('TaskDetails', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUpdateTask.mockResolvedValue({} as any);
+    mockUpdateTask.mockResolvedValue({} as Record<string, unknown>);
   });
 
   describe('Rendering', () => {

@@ -58,7 +58,7 @@ async function handlePut(request: NextRequest, context?: unknown) {
 
     const params = context as { params: Promise<{ id: string }> };
     const { id } = await params.params;
-    const body = await request.json();
+    const _body = await request.json();
 
     if (!id) {
       return NextResponse.json(
@@ -118,8 +118,8 @@ async function handlePut(request: NextRequest, context?: unknown) {
 async function handlePatch(request: NextRequest, context?: unknown) {
   try {
     const params = context as { params: Promise<{ id: string }> };
-    const { id } = await params.params;
-    const body = await request.json();
+    const { id: _id } = await params.params;
+    const _body = await request.json();
 
     // TaskService needs refactoring - return 501 for now
     return NextResponse.json({
@@ -140,7 +140,7 @@ async function handlePatch(request: NextRequest, context?: unknown) {
 async function handleDelete(request: NextRequest, context?: unknown) {
   try {
     const params = context as { params: Promise<{ id: string }> };
-    const { id } = await params.params;
+    const { id: _id } = await params.params;
 
     // TaskService needs refactoring - return 501 for now
     return NextResponse.json({

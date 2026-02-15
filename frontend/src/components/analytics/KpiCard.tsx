@@ -19,7 +19,7 @@ export function KpiCard({ title, value, icon, trend, description, className }: K
     neutral: <Minus className="w-4 h-4 text-muted-foreground" />,
   };
 
-  const trendColor = {
+  const _trendColor = {
     up: 'text-[hsl(var(--rpma-teal))]',
     down: 'text-red-500',
     neutral: 'text-muted-foreground',

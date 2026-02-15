@@ -15,7 +15,7 @@ const logger = createLogger('LoginPage');
 
 export default function LoginPage() {
   const { signIn, loading } = useAuth();
-  const router = useRouter();
+  const _router = useRouter();
   const [formData, setFormData] = useState({
     email: '',
     password: '',

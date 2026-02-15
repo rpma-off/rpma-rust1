@@ -28,7 +28,7 @@ interface LayoutState {
 
 export const useLayoutStore = create<LayoutState>()(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       // Legacy state
       isSidebarCollapsed: false,
       isMobileSidebarOpen: false,

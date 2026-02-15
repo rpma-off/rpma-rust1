@@ -71,9 +71,9 @@ function generateBreadcrumbs(pathname: string): BreadcrumbItem[] {
 
 function getBreadcrumbLabel(
   segment: string,
-  currentPath: string,
-  allSegments: string[],
-  index: number
+  _currentPath: string,
+  _allSegments: string[],
+  _index: number
 ): string | null {
   const segmentLower = segment.toLowerCase();
 

@@ -13,13 +13,11 @@ import {
   ChevronDown, 
   Search,
   Users,
-  Building,
   Filter,
   X,
   Star,
   Activity
 } from 'lucide-react';
-import { designTokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 
 interface ClientFiltersProps {
@@ -65,7 +63,7 @@ export function ClientFilters({ className, onFiltersChange }: ClientFiltersProps
     }));
   };
 
-  const updateFilter = (key: keyof ClientFilters, value: any) => {
+  const updateFilter = (key: keyof ClientFilters, value: string | boolean) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
     onFiltersChange?.(newFilters);
@@ -241,7 +239,7 @@ export function ClientFilters({ className, onFiltersChange }: ClientFiltersProps
           </div>
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-2 pb-2">
-          <Select value={filters.customerType} onValueChange={(value: any) => updateFilter('customerType', value)}>
+          <Select value={filters.customerType} onValueChange={(value: string) => updateFilter('customerType', value)}>
             <SelectTrigger className="text-sm">
               <SelectValue placeholder="Sélectionner un type" />
             </SelectTrigger>
@@ -276,7 +274,7 @@ export function ClientFilters({ className, onFiltersChange }: ClientFiltersProps
           </div>
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-2 pb-2">
-          <Select value={filters.status} onValueChange={(value: any) => updateFilter('status', value)}>
+          <Select value={filters.status} onValueChange={(value: string) => updateFilter('status', value)}>
             <SelectTrigger className="text-sm">
               <SelectValue placeholder="Sélectionner un statut" />
             </SelectTrigger>
@@ -313,7 +311,7 @@ export function ClientFilters({ className, onFiltersChange }: ClientFiltersProps
         <CollapsibleContent className="space-y-3 pb-2">
           <div>
             <Label htmlFor="sort-by" className="text-xs text-gray-500">Trier par</Label>
-            <Select value={filters.sortBy} onValueChange={(value: any) => updateFilter('sortBy', value)}>
+            <Select value={filters.sortBy} onValueChange={(value: string) => updateFilter('sortBy', value)}>
               <SelectTrigger className="text-sm">
                 <SelectValue />
               </SelectTrigger>
@@ -328,7 +326,7 @@ export function ClientFilters({ className, onFiltersChange }: ClientFiltersProps
           </div>
           <div>
             <Label htmlFor="sort-order" className="text-xs text-gray-500">Ordre</Label>
-            <Select value={filters.sortOrder} onValueChange={(value: any) => updateFilter('sortOrder', value)}>
+            <Select value={filters.sortOrder} onValueChange={(value: string) => updateFilter('sortOrder', value)}>
               <SelectTrigger className="text-sm">
                 <SelectValue />
               </SelectTrigger>

@@ -1,7 +1,7 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { ExportControls } from '../../../app/reports/components/ExportControls';
-import { ReportType, ExportFormat } from '@/lib/backend';
+import { ReportType } from '@/lib/backend';
 
 // Mock console.log to avoid console output during tests
 const mockConsoleLog = jest.spyOn(console, 'log').mockImplementation(() => {});
@@ -13,12 +13,12 @@ describe('ExportControls', () => {
     end: new Date('2024-01-31'),
   };
   const mockFilters = {
-    technicians: [],
-    clients: [],
-    statuses: [],
-    priorities: [],
-    ppfZones: []
-  } as any; // Type assertion for test
+    technicians: [] as string[],
+    clients: [] as string[],
+    statuses: [] as string[],
+    priorities: [] as string[],
+    ppfZones: [] as string[]
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();

@@ -17,7 +17,7 @@ export const DragDropCalendar: React.FC<DragDropCalendarProps> = ({
   initialViewMode = 'week',
   onTaskClick,
   onTaskReschedule,
-  onConflictDetected,
+  onConflictDetected: _onConflictDetected,
   className = '',
 }) => {
   const handleDragEnd = (result: DropResult) => {

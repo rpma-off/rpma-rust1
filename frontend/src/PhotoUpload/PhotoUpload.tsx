@@ -1,7 +1,5 @@
 'use client';
 
-import styles from './PhotoUpload.module.css';
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Upload, CheckCircle2, AlertCircle, Clock, WifiOff, Camera, X, Eye, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,7 +15,6 @@ import { PhotoUploadProps } from '@/types/photo.types';
 export function PhotoUpload({
   // Core props
   taskId,
-  stepId: _stepId,
   type = 'before',
   
   // Upload configuration

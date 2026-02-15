@@ -33,7 +33,7 @@ jest.mock('@/components/sync/EntitySyncIndicator', () => ({
 }));
 
 jest.mock('@/components/ui/DesktopTable', () => ({
-  DesktopTable: ({ data, columns }: { data: any[], columns: any[] }) => (
+  DesktopTable: ({ data, columns }: { data: Record<string, unknown>[], columns: { key: string; render?: (value: unknown, item: Record<string, unknown>) => React.ReactNode }[] }) => (
     <div data-testid="desktop-table">
       {data.map((item, index) => (
         <div key={index} data-testid="table-row">
@@ -393,7 +393,7 @@ describe('TaskManager', () => {
     });
 
     it('creates new task with valid data', async () => {
-      mockTasksCreate.mockResolvedValue({ id: 'new-task' } as any);
+      mockTasksCreate.mockResolvedValue({ id: 'new-task' } as Record<string, unknown>);
       
       renderWithAuth(<TaskManager />);
       
@@ -458,7 +458,7 @@ describe('TaskManager', () => {
           expect(screen.getByText('Le titre est requis')).toBeInTheDocument();
           expect(screen.getByText('Le client est requis')).toBeInTheDocument();
         });
-      } catch (error) {
+      } catch (_error) {
         // If validation errors are not displayed, that's also valid behavior
         // The form might prevent submission entirely
         expect(mockTasksCreate).not.toHaveBeenCalled();
@@ -502,7 +502,7 @@ describe('TaskManager', () => {
     });
 
     it('updates task with valid data', async () => {
-      mockTasksUpdate.mockResolvedValue({} as any);
+      mockTasksUpdate.mockResolvedValue({} as Record<string, unknown>);
       
       renderWithAuth(<TaskManager />);
       
@@ -544,7 +544,7 @@ describe('TaskManager', () => {
 
   describe('Task Deletion', () => {
     it('deletes task when confirming deletion', async () => {
-      mockTasksDelete.mockResolvedValue({} as any);
+      mockTasksDelete.mockResolvedValue({} as Record<string, unknown>);
       
       renderWithAuth(<TaskManager />);
       

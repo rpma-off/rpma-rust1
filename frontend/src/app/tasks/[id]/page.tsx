@@ -128,7 +128,7 @@ export default function TaskDetailPage() {
     };
 
     fetchTask();
-  }, [taskId, user?.token, user?.user_id]);
+  }, [taskId, user?.token, user?.user_id, t]);
 
   useEffect(() => {
     if (!task || loading) return;

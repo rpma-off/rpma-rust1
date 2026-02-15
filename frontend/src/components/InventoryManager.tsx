@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -16,7 +15,7 @@ import { MaterialForm } from './inventory/MaterialForm';
 import { useInventory } from '@/hooks/useInventory';
 import { useInventoryStats } from '@/hooks/useInventoryStats';
 import { useTranslation } from '@/hooks/useTranslation';
-import { Material, MaterialType, UnitOfMeasure } from '@/lib/inventory';
+import { Material, MaterialType } from '@/lib/inventory';
 import { 
   Plus, 
   Search, 
@@ -56,8 +55,8 @@ export function InventoryManager({ className }: InventoryManagerProps) {
     lowStockMaterials, 
     expiredMaterials,
     refetch,
-    getMaterial,
-    getMaterialBySku
+    getMaterial: _getMaterial,
+    getMaterialBySku: _getMaterialBySku
   } = useInventory({
     material_type: selectedType,
     category: selectedCategory,
@@ -65,7 +64,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
     limit: 100,
   });
 
-  const { stats: inventoryStats } = useInventoryStats();
+  const { stats: _inventoryStats } = useInventoryStats();
 
   // Filter materials based on search term
   const filteredMaterials = materials.filter(material => 
@@ -103,7 +102,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
     setIsDetailsDialogOpen(true);
   };
 
-  const handleDelete = (material: Material) => {
+  const _handleDelete = (material: Material) => {
     setDeletingMaterial(material);
   };
 

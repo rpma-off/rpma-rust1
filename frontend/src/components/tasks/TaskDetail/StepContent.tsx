@@ -16,11 +16,11 @@ import {
 } from 'lucide-react';
 import { TaskWithDetails, ChecklistItem } from '@/types/task.types';
 import PhotoUploadZone from '@/PhotoUpload/PhotoUploadZone';
-import { Photo, PhotoType, PhotoCategory, TaskPhoto } from '@/lib/backend';
+import { Photo, PhotoType, TaskPhoto } from '@/lib/backend';
 import { ChecklistView } from '../TaskInfo/ChecklistView';
 
 // Helper function to convert TaskPhoto to Photo
-function convertTaskPhotoToPhoto(taskPhoto: TaskPhoto): Photo {
+function _convertTaskPhotoToPhoto(taskPhoto: TaskPhoto): Photo {
   return {
     id: taskPhoto.id,
     intervention_id: '', // Not available in TaskPhoto

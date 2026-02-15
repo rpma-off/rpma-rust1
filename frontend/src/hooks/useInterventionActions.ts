@@ -190,7 +190,7 @@ export function useInterventionActions({
 
       return result.data as StepProgressResponse;
     },
-    onSuccess: (result, variables) => {
+    onSuccess: (result) => {
       const responseData = (result as { data?: unknown }).data || result;
       const typedResponseData = responseData as StepProgressResponse;
 

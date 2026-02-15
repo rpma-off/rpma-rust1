@@ -9,7 +9,7 @@
 
  export const dynamic = 'force-dynamic';
 import { interventionWorkflowService } from '@/lib/services/ppf';
-import { PPFInterventionData, PPFInterventionStep } from '@/types/ppf-intervention';
+import { PPFInterventionData } from '@/types/ppf-intervention';
 
 interface PPFPhoto {
   id: string;
@@ -101,7 +101,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     };
     const responseData: {
       intervention: PPFInterventionData;
-      steps?: any[];
+      steps?: Record<string, unknown>[];
       photos?: PPFPhoto[];
       metrics?: PPFMetrics | null;
       permissions?: InterventionPermissions;

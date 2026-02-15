@@ -8,7 +8,7 @@ interface MaterialUsageReportProps {
   filters: ReportFilters;
 }
 
-function MaterialUsageReport({ dateRange, filters }: MaterialUsageReportProps) {
+function MaterialUsageReport({ dateRange: _dateRange, filters: _filters }: MaterialUsageReportProps) {
   return (
     <div className="space-y-8">
       <div className="text-center py-12">

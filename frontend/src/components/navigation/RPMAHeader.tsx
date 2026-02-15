@@ -4,7 +4,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { Search, Bell, ChevronDown, UserCircle, Settings, LogOut, X, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { SyncIndicator } from '@/components/ui/SyncIndicator';
 import { useAuth } from '@/lib/auth/compatibility';
@@ -32,18 +31,18 @@ const navTabs = [
 ];
 
 export function RPMAHeader({
-  onMobileMenuToggle,
+  onMobileMenuToggle: _onMobileMenuToggle,
   onSidebarToggle,
   tasks = [],
-  onRefresh,
-  isRefreshing = false,
+  onRefresh: _onRefresh,
+  isRefreshing: _isRefreshing = false,
   isSidebarOpen = true
 }: RPMAHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, profile, signOut } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchFocused, setSearchFocused] = useState(false);
+  const [_searchFocused, setSearchFocused] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
