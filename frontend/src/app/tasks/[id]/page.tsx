@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, AlertCircle, Home, Calendar, Car, User, Gauge } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Home, Calendar, Car, User, Gauge, CheckCircle, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TaskWithDetails, TaskService } from '@/lib/services/entities/task.service';
@@ -208,8 +208,11 @@ export default function TaskDetailPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-          <p className="text-foreground">{t('tasks.loadingDetails')}</p>
+          <div className="relative">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+            <div className="absolute inset-0 rounded-full border-2 border-primary/10" />
+          </div>
+          <p className="text-foreground font-medium">{t('tasks.loadingDetails')}</p>
         </div>
       </div>
     );
@@ -217,9 +220,9 @@ export default function TaskDetailPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="text-center space-y-4 max-w-md">
+          <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto ring-4 ring-red-500/20">
             <AlertCircle className="h-8 w-8 text-red-400" />
           </div>
           <h2 className="text-xl font-semibold text-foreground">{t('tasks.error')}</h2>
@@ -227,7 +230,7 @@ export default function TaskDetailPage() {
           <Button
             onClick={() => router.back()}
             variant="outline"
-            className="border-border text-border-light hover:text-foreground hover:border-primary"
+            className="border-border text-border-light hover:text-foreground hover:border-primary transition-all duration-200"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             {t('common.back')}
@@ -239,13 +242,13 @@ export default function TaskDetailPage() {
 
   if (!task) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <p className="text-foreground">{t('tasks.notFound')}</p>
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="text-center space-y-4 max-w-md">
+          <p className="text-foreground font-medium">{t('tasks.notFound')}</p>
           <Button
             onClick={() => router.back()}
             variant="outline"
-            className="border-border text-border-light hover:text-foreground hover:border-primary"
+            className="border-border text-border-light hover:text-foreground hover:border-primary transition-all duration-200"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             {t('common.back')}
@@ -258,7 +261,7 @@ export default function TaskDetailPage() {
   return (
     <TaskErrorBoundary>
       <div className="min-h-screen bg-[hsl(var(--rpma-surface))]">
-        <div className="border-b border-[hsl(var(--rpma-border))] bg-gradient-to-br from-[hsl(var(--rpma-surface))] via-[hsl(var(--rpma-surface))] to-background/80">
+        <div className="border-b border-[hsl(var(--rpma-border))] bg-gradient-to-br from-[hsl(var(--rpma-surface))] via-[hsl(var(--rpma-surface))] to-background/80 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6 space-y-5">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -291,37 +294,43 @@ export default function TaskDetailPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-4 items-start">
               <div className="space-y-3 min-w-0">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground leading-tight">{getTaskDisplayTitle(task)}</h1>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground leading-tight tracking-tight">{getTaskDisplayTitle(task)}</h1>
                 <div className="flex flex-wrap items-center gap-2 text-sm text-border-light">
-                  <span className="inline-flex items-center gap-1"><Car className="w-3.5 h-3.5" />
+                  <span className="inline-flex items-center gap-1.5"><Car className="w-3.5 h-3.5 text-accent" />
                     {task.vehicle_make && task.vehicle_model ? `${task.vehicle_make} ${task.vehicle_model}` : t('tasks.vehicleNotSpecified')}
                   </span>
                   {task.vehicle_plate && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-border/20 text-foreground font-medium">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-md bg-gradient-to-br from-border/20 to-border/30 text-foreground font-semibold border border-border/40 shadow-sm">
                       {task.vehicle_plate}
                     </span>
                   )}
-                  <span className="inline-flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{t('tasks.planned')}: {formatDate(task.scheduled_date)}</span>
+                  <span className="inline-flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-accent" />{t('tasks.planned')}: {formatDate(task.scheduled_date)}</span>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 text-sm">
-                  <span className="inline-flex items-center gap-1 text-border-light"><User className="w-3.5 h-3.5" />
+                  <span className="inline-flex items-center gap-1.5 text-border-light"><User className="w-3.5 h-3.5 text-accent" />
                     {t('tasks.client')}: <span className="text-foreground font-medium">{task.customer_name || t('tasks.customerNotSpecified')}</span>
                   </span>
                 </div>
               </div>
 
-              <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))] p-4 space-y-3">
+              <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))] p-4 space-y-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-shadow duration-200">
                 <div className="flex items-center justify-between text-xs uppercase tracking-wide text-border-light">
-                  <span className="inline-flex items-center gap-1"><Gauge className="w-3.5 h-3.5" /> {t('tasks.progress')}</span>
-                  <span className="text-foreground font-semibold text-sm">{progressValue}%</span>
+                  <span className="inline-flex items-center gap-1.5"><Gauge className="w-3.5 h-3.5 text-accent" /> {t('tasks.progress')}</span>
+                  <span className="text-foreground font-semibold text-sm tabular-nums">{progressValue}%</span>
                 </div>
-                <div className="h-2 rounded-full bg-border/60 overflow-hidden">
-                  <div className="h-full bg-[hsl(var(--rpma-teal))] transition-all duration-300" style={{ width: `${progressValue}%` }} />
+                <div className="h-2.5 rounded-full bg-border/60 overflow-hidden shadow-inner">
+                  <div className="h-full bg-gradient-to-r from-[hsl(var(--rpma-teal))] to-accent transition-all duration-500 ease-out" style={{ width: `${progressValue}%` }} />
                 </div>
+                {progressValue === 100 && (
+                  <p className="text-xs text-accent font-medium flex items-center gap-1">
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    {t('tasks.completed')}
+                  </p>
+                )}
               </div>
             </div>
 
-            <div className="sticky top-16 z-20 -mx-1 px-1 py-1 rounded-xl bg-[hsl(var(--rpma-surface))]/95 backdrop-blur supports-[backdrop-filter]:bg-[hsl(var(--rpma-surface))]/80 border border-[hsl(var(--rpma-border))]">
+            <div className="sticky top-16 z-20 -mx-1 px-1 py-1 rounded-xl bg-[hsl(var(--rpma-surface))]/95 backdrop-blur supports-[backdrop-filter]:bg-[hsl(var(--rpma-surface))]/80 border border-[hsl(var(--rpma-border))] shadow-sm">
               <div className="flex flex-wrap gap-2">
                 {QUICK_NAV_SECTIONS.map(section => (
                   <button
@@ -334,10 +343,10 @@ export default function TaskDetailPage() {
                       target.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
                     }}
                     aria-current={activeSection === section.id ? 'page' : undefined}
-                    className={`px-3 py-1.5 text-xs sm:text-sm rounded-full border transition-colors ${
+                    className={`px-3 py-1.5 text-xs sm:text-sm rounded-full border transition-all duration-200 ${
                       activeSection === section.id
-                        ? 'border-primary/40 bg-primary/15 text-primary'
-                        : 'border-border/70 bg-background/70 text-border-light hover:text-foreground hover:border-primary/30'
+                        ? 'border-primary/40 bg-primary/15 text-primary shadow-sm'
+                        : 'border-border/70 bg-background/70 text-border-light hover:text-foreground hover:border-primary/30 hover:bg-background'
                     }`}
                   >
                     {t(section.label)}
@@ -349,7 +358,7 @@ export default function TaskDetailPage() {
         </div>
 
         <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 md:py-7 lg:py-9 space-y-6 ${showMobileActionBar ? 'pb-28 md:pb-9' : ''}`}>
-          <section id="task-actions" className="hidden md:block rounded-xl border border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))] p-4 md:p-5">
+          <section id="task-actions" className="hidden md:block rounded-xl border border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))] p-4 md:p-5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-shadow duration-200">
             <ActionsCard
               task={task}
               isAssignedToCurrentUser={isAssignedToCurrentUser}
@@ -360,44 +369,47 @@ export default function TaskDetailPage() {
 
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
             <main className="xl:col-span-2 space-y-4 md:space-y-6 lg:space-y-8">
-              <section id="task-overview" className="scroll-mt-28 rounded-xl border border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))] p-4 md:p-6">
+              <section id="task-overview" className="scroll-mt-28 rounded-xl border border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))] p-4 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-shadow duration-200">
                 <TaskOverview task={task} defaultExpandedSections={['notes-operationnelles']} />
               </section>
 
-              <section id="task-attachments" className="scroll-mt-28 rounded-xl border border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))] p-4 md:p-6">
+              <section id="task-attachments" className="scroll-mt-28 rounded-xl border border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))] p-4 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-shadow duration-200">
                 <TaskAttachments taskId={taskId} />
               </section>
 
-              <section id="task-timeline" className="scroll-mt-28 rounded-xl border border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))] p-4 md:p-6">
+              <section id="task-timeline" className="scroll-mt-28 rounded-xl border border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))] p-4 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-shadow duration-200">
                 <TaskTimeline taskId={taskId} />
               </section>
             </main>
 
             <aside id="task-admin" className="space-y-4 md:space-y-6">
-              <div className="xl:sticky xl:top-24 rounded-xl border border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))] p-4">
-                <h3 className="text-sm font-semibold text-foreground mb-3">{t('tasks.administration')}</h3>
+              <div className="xl:sticky xl:top-24 rounded-xl border border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))] p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+                <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <Settings className="w-4 h-4 text-accent" />
+                  {t('tasks.administration')}
+                </h3>
 
                 <details className="group md:hidden">
-                  <summary className="list-none cursor-pointer rounded-lg border border-border/60 px-3 py-2 text-sm text-border-light hover:text-foreground hover:border-primary/40">
+                  <summary className="list-none cursor-pointer rounded-lg border border-border/60 px-3 py-2 text-sm text-border-light hover:text-foreground hover:border-primary/40 transition-all duration-200 hover:bg-background/50">
                     {t('tasks.showAdminInfo')}
                   </summary>
-                  <dl className="mt-3 space-y-2 text-sm">
-                    <div className="flex justify-between gap-3"><dt className="text-border-light">{t('tasks.taskId')}</dt><dd className="font-mono text-foreground">{task.id?.slice(-8) || t('common.noData')}</dd></div>
-                    <div className="flex justify-between gap-3"><dt className="text-border-light">{t('tasks.createdOn')}</dt><dd className="text-foreground">{formatDate(task.created_at as unknown as string)}</dd></div>
-                    <div className="flex justify-between gap-3"><dt className="text-border-light">{t('tasks.updated')}</dt><dd className="text-foreground">{formatDate(task.updated_at as unknown as string)}</dd></div>
-                    {task.external_id && <div className="flex justify-between gap-3"><dt className="text-border-light">{t('tasks.externalRef')}</dt><dd className="text-foreground">{task.external_id}</dd></div>}
-                    {task.task_number && <div className="flex justify-between gap-3"><dt className="text-border-light">{t('tasks.taskNum')}</dt><dd className="text-foreground">{task.task_number}</dd></div>}
+                  <dl className="mt-3 space-y-2.5 text-sm">
+                    <div className="flex justify-between gap-3 py-1"><dt className="text-border-light">{t('tasks.taskId')}</dt><dd className="font-mono text-foreground text-xs">{task.id?.slice(-8) || t('common.noData')}</dd></div>
+                    <div className="flex justify-between gap-3 py-1"><dt className="text-border-light">{t('tasks.createdOn')}</dt><dd className="text-foreground">{formatDate(task.created_at as unknown as string)}</dd></div>
+                    <div className="flex justify-between gap-3 py-1"><dt className="text-border-light">{t('tasks.updated')}</dt><dd className="text-foreground">{formatDate(task.updated_at as unknown as string)}</dd></div>
+                    {task.external_id && <div className="flex justify-between gap-3 py-1"><dt className="text-border-light">{t('tasks.externalRef')}</dt><dd className="text-foreground">{task.external_id}</dd></div>}
+                    {task.task_number && <div className="flex justify-between gap-3 py-1"><dt className="text-border-light">{t('tasks.taskNum')}</dt><dd className="text-foreground">{task.task_number}</dd></div>}
                   </dl>
                 </details>
 
-                <dl className="hidden md:block space-y-2 text-sm">
-                  <div className="flex justify-between gap-3"><dt className="text-border-light">{t('tasks.taskId')}</dt><dd className="font-mono text-foreground">{task.id?.slice(-8) || t('common.noData')}</dd></div>
-                  <div className="flex justify-between gap-3"><dt className="text-border-light">{t('tasks.createdOn')}</dt><dd className="text-foreground">{formatDate(task.created_at as unknown as string)}</dd></div>
-                  <div className="flex justify-between gap-3"><dt className="text-border-light">{t('tasks.updated')}</dt><dd className="text-foreground">{formatDate(task.updated_at as unknown as string)}</dd></div>
-                  {task.external_id && <div className="flex justify-between gap-3"><dt className="text-border-light">{t('tasks.externalRef')}</dt><dd className="text-foreground">{task.external_id}</dd></div>}
-                  {task.task_number && <div className="flex justify-between gap-3"><dt className="text-border-light">{t('tasks.taskNum')}</dt><dd className="text-foreground">{task.task_number}</dd></div>}
+                <dl className="hidden md:block space-y-2.5 text-sm">
+                  <div className="flex justify-between gap-3 py-1 hover:bg-background/50 -mx-1 px-1 rounded transition-colors"><dt className="text-border-light">{t('tasks.taskId')}</dt><dd className="font-mono text-foreground text-xs">{task.id?.slice(-8) || t('common.noData')}</dd></div>
+                  <div className="flex justify-between gap-3 py-1 hover:bg-background/50 -mx-1 px-1 rounded transition-colors"><dt className="text-border-light">{t('tasks.createdOn')}</dt><dd className="text-foreground">{formatDate(task.created_at as unknown as string)}</dd></div>
+                  <div className="flex justify-between gap-3 py-1 hover:bg-background/50 -mx-1 px-1 rounded transition-colors"><dt className="text-border-light">{t('tasks.updated')}</dt><dd className="text-foreground">{formatDate(task.updated_at as unknown as string)}</dd></div>
+                  {task.external_id && <div className="flex justify-between gap-3 py-1 hover:bg-background/50 -mx-1 px-1 rounded transition-colors"><dt className="text-border-light">{t('tasks.externalRef')}</dt><dd className="text-foreground">{task.external_id}</dd></div>}
+                  {task.task_number && <div className="flex justify-between gap-3 py-1 hover:bg-background/50 -mx-1 px-1 rounded transition-colors"><dt className="text-border-light">{t('tasks.taskNum')}</dt><dd className="text-foreground">{task.task_number}</dd></div>}
                   {task.template_id && (
-                    <div className="flex justify-between gap-3"><dt className="text-border-light">{t('tasks.template')}</dt><dd className="font-mono text-foreground">{task.template_id.slice(-8)}</dd></div>
+                    <div className="flex justify-between gap-3 py-1 hover:bg-background/50 -mx-1 px-1 rounded transition-colors"><dt className="text-border-light">{t('tasks.template')}</dt><dd className="font-mono text-foreground text-xs">{task.template_id.slice(-8)}</dd></div>
                   )}
                 </dl>
               </div>
@@ -406,7 +418,7 @@ export default function TaskDetailPage() {
         </div>
 
         {showMobileActionBar && (
-          <div className="md:hidden fixed inset-x-0 bottom-0 z-40 border-t border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))]/95 backdrop-blur supports-[backdrop-filter]:bg-[hsl(var(--rpma-surface))]/85 pb-[calc(env(safe-area-inset-bottom)+8px)] px-3 pt-2">
+          <div className="md:hidden fixed inset-x-0 bottom-0 z-40 border-t border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))]/95 backdrop-blur supports-[backdrop-filter]:bg-[hsl(var(--rpma-surface))]/85 pb-[calc(env(safe-area-inset-bottom)+8px)] px-3 pt-2 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
             <ActionsCard
               task={task}
               isAssignedToCurrentUser={isAssignedToCurrentUser}
