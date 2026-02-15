@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { safeInvoke } from '@/lib/ipc/core';
+import { IPC_COMMANDS } from '@/lib/ipc/commands';
+import { useAuth } from '@/lib/auth/compatibility';
+import type { JsonObject, JsonValue } from '@/types/json';
 
 interface MaterialFormData {
   sku: string;
@@ -32,6 +35,7 @@ interface MaterialFormData {
 }
 
 export function useMaterialForm(initialMaterial?: Record<string, unknown>) {
+  const { user } = useAuth();
   const [formData, setFormData] = useState<MaterialFormData>({
     sku: '',
     name: '',
@@ -107,13 +111,17 @@ export function useMaterialForm(initialMaterial?: Record<string, unknown>) {
   };
 
   const saveMaterial = async (): Promise<boolean> => {
+    if (!user?.token) {
+      setError('Authentication required');
+      return false;
+    }
+
     try {
       setLoading(true);
       setError(null);
 
       const requestData = {
         ...formData,
-        // Remove undefined values
         minimum_stock: formData.minimum_stock || null,
         maximum_stock: formData.maximum_stock || null,
         reorder_point: formData.reorder_point || null,
@@ -128,26 +136,31 @@ export function useMaterialForm(initialMaterial?: Record<string, unknown>) {
         storage_location: formData.storage_location || null,
         warehouse_id: formData.warehouse_id || null,
         category_id: formData.category_id || null,
-      };
+        specifications: (formData.specifications as JsonValue | undefined) ?? null,
+      } as JsonObject;
 
       if (initialMaterial) {
-        // Update existing material
-        await invoke('material_update', {
-          id: initialMaterial.id,
+        const materialId = typeof initialMaterial.id === 'string' ? initialMaterial.id : '';
+        if (!materialId) {
+          setError('Invalid material id');
+          return false;
+        }
+
+        await safeInvoke(IPC_COMMANDS.MATERIAL_UPDATE, {
+          sessionToken: user.token,
+          id: materialId,
           request: requestData,
-          userId: 'current_user', // This should come from auth context
-        });
+        } as JsonObject);
       } else {
-        // Create new material
-        await invoke('material_create', {
+        await safeInvoke(IPC_COMMANDS.MATERIAL_CREATE, {
+          sessionToken: user.token,
           request: requestData,
-          userId: 'current_user', // This should come from auth context
-        });
+        } as JsonObject);
       }
 
       return true;
     } catch (err) {
-      setError(err as string);
+      setError(err instanceof Error ? err.message : String(err));
       return false;
     } finally {
       setLoading(false);

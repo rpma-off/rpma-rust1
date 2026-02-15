@@ -302,7 +302,12 @@ pub enum StepStatus { Pending, InProgress, Completed, Skipped }
 
 **Role Enum** (`src-tauri/src/models/auth.rs:31-41`):
 ```rust
-pub enum UserRole { Admin, Technician, Supervisor, Viewer }
+pub enum UserRole {
+    Admin,       // Full system access
+    Supervisor,  // Manage operations, limited config
+    Technician,  // Execute tasks, view assigned data
+    Viewer,      // Read-only access
+}
 ```
 
 **Storage**:
@@ -310,10 +315,10 @@ pub enum UserRole { Admin, Technician, Supervisor, Viewer }
 - Indexes: `email`, `role`
 
 **Code Paths**:
-- Model: `src-tauri/src/models/auth.rs`
-- Service: `src-tauri/src/services/auth.rs`, `user.rs`
+- Model: `src-tauri/src/models/auth.rs`, `src-tauri/src/models/user.rs`
+- Service: `src-tauri/src/services/auth.rs`, `src-tauri/src/services/user.rs`, `src-tauri/src/services/session.rs`, `src-tauri/src/services/token.rs`, `src-tauri/src/services/two_factor.rs`
 - Repository: `src-tauri/src/repositories/user_repository.rs`
-- Commands: `src-tauri/src/commands/auth.rs`, `user.rs`
+- Commands: `src-tauri/src/commands/auth.rs`, `src-tauri/src/commands/user.rs`
 
 ---
 
@@ -339,8 +344,9 @@ pub enum UserRole { Admin, Technician, Supervisor, Viewer }
 
 **Code Paths**:
 - Model: `src-tauri/src/models/auth.rs`
-- Service: `src-tauri/src/services/session.rs`, `token.rs`
+- Service: `src-tauri/src/services/session.rs`, `src-tauri/src/services/token.rs`
 - Repository: `src-tauri/src/repositories/session_repository.rs`
+- Middleware: `src-tauri/src/commands/auth_middleware.rs`
 
 ---
 
@@ -363,8 +369,8 @@ pub enum UserRole { Admin, Technician, Supervisor, Viewer }
 - View: `calendar_tasks`
 
 **Code Paths**:
-- Model: `src-tauri/src/models/calendar_event.rs`
-- Service: `src-tauri/src/services/calendar.rs`
+- Model: `src-tauri/src/models/calendar.rs`, `src-tauri/src/models/calendar_event.rs`
+- Service: `src-tauri/src/services/calendar.rs`, `src-tauri/src/services/calendar_event_service.rs`
 - Repository: `src-tauri/src/repositories/calendar_event_repository.rs`
 - Commands: `src-tauri/src/commands/calendar.rs`
 

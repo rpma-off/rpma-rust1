@@ -23,7 +23,7 @@ import { useLogger } from '@/hooks/useLogger';
 import { LogDomain } from '@/lib/logging/types';
 import { PageShell } from '@/components/layout/PageShell';
 import { LoadingState } from '@/components/layout/LoadingState';
-import { PageHeader, StatCard } from '@/components/ui/page-header';
+import { PageHeader } from '@/components/ui/page-header';
 import { safeInvoke } from '@/lib/ipc/core';
 import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import type { JsonValue } from '@/types/json';
@@ -83,6 +83,7 @@ const tabConfig = [
 
 export default function ConfigurationPage() {
   const [activeTab, setActiveTab] = useState('system');
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [systemStatus, setSystemStatus] = useState<'healthy' | 'warning' | 'error'>('healthy');
   
@@ -235,6 +236,7 @@ export default function ConfigurationPage() {
       method: 'click'
     });
     setActiveTab(newTab);
+    setMobileNavOpen(false);
   };
 
   const getStatusIcon = () => {
@@ -261,7 +263,6 @@ export default function ConfigurationPage() {
 
   return (
     <PageShell>
-      {/* Header */}
       <PageHeader
         title="Configuration Avancée"
         subtitle="Gérez les paramètres système, les règles métier et les intégrations"
@@ -293,37 +294,8 @@ export default function ConfigurationPage() {
             </Button>
           </>
         }
-        stats={
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-            <StatCard
-              value="24"
-              label="Configurations"
-              icon={Settings}
-              color="accent"
-            />
-            <StatCard
-              value="8"
-              label="Règles Actives"
-              icon={Workflow}
-              color="green"
-            />
-            <StatCard
-              value="5"
-              label="Intégrations"
-              icon={Globe}
-              color="purple"
-            />
-            <StatCard
-              value="2"
-              label="Alertes"
-              icon={AlertTriangle}
-              color="yellow"
-            />
-          </div>
-        }
       />
 
-      {/* Main Configuration Card */}
       <Card className="rpma-shell">
         <CardHeader className="pb-4 border-b border-[hsl(var(--rpma-border))]">
           <div className="flex items-center gap-3">
@@ -340,10 +312,9 @@ export default function ConfigurationPage() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            {/* Enhanced Mobile Navigation */}
             <div className="lg:hidden mb-4">
               <div className="bg-background/50 rounded-lg p-3 border border-border/30">
-                <Sheet>
+                <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
                   <SheetTrigger asChild>
                     <Button
                       variant="outline"
@@ -358,7 +329,7 @@ export default function ConfigurationPage() {
                       </span>
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="bottom" className="h-[70vh] bg-background border-[hsl(var(--rpma-border))]">
+                    <SheetContent side="bottom" className="h-[70vh] bg-background border-[hsl(var(--rpma-border))]">
                     <SheetHeader className="text-left">
                       <SheetTitle className="text-foreground flex items-center gap-2">
                         <Settings className="h-5 w-5" />
@@ -403,7 +374,6 @@ export default function ConfigurationPage() {
               </div>
             </div>
 
-            {/* Enhanced Desktop Tabs List */}
             <div className="hidden lg:block bg-[hsl(var(--rpma-teal))] rounded-[10px] px-2">
               <TabsList data-variant="underline" className="w-full justify-start">
                 {tabConfig.map((tab, index) => {
@@ -426,7 +396,6 @@ export default function ConfigurationPage() {
               </TabsList>
             </div>
 
-            {/* Tab Content */}
             <div className="mt-4 md:mt-6">
               <TabsContent value="system" className="mt-0">
                 <Suspense fallback={<LoadingState message="Chargement des paramètres système..." />}>

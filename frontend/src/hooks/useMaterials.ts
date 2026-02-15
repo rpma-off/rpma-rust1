@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { useState, useEffect, useCallback } from 'react';
+import { safeInvoke } from '@/lib/ipc/core';
+import { IPC_COMMANDS } from '@/lib/ipc/commands';
+import { useAuth } from '@/lib/auth/compatibility';
 
 export interface Material {
   id: string;
@@ -49,16 +51,28 @@ interface UseMaterialsOptions {
   offset?: number;
 }
 
+const AUTH_ERROR_MESSAGE = 'Authentication required';
+
 export function useMaterials(options: UseMaterialsOptions = {}) {
+  const { user } = useAuth();
+  const sessionToken = user?.token;
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchMaterials = async () => {
+  const fetchMaterials = useCallback(async () => {
+    if (!sessionToken) {
+      setMaterials([]);
+      setError(AUTH_ERROR_MESSAGE);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
-      const result = await invoke<Material[]>('material_list', {
+      const result = await safeInvoke<Material[]>(IPC_COMMANDS.MATERIAL_LIST, {
+        sessionToken,
         materialType: options.materialType,
         category: options.category,
         activeOnly: options.activeOnly ?? true,
@@ -66,7 +80,6 @@ export function useMaterials(options: UseMaterialsOptions = {}) {
         offset: options.offset,
       });
 
-      // Apply client-side search if needed
       let filteredMaterials = result;
       if (options.search) {
         const searchLower = options.search.toLowerCase();
@@ -79,23 +92,15 @@ export function useMaterials(options: UseMaterialsOptions = {}) {
 
       setMaterials(filteredMaterials);
     } catch (err) {
-      setError(err as string);
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
-  };
+  }, [options.activeOnly, options.category, options.limit, options.materialType, options.offset, options.search, sessionToken]);
 
   useEffect(() => {
-    fetchMaterials();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    options.materialType,
-    options.category,
-    options.activeOnly,
-    options.search,
-    options.limit,
-    options.offset,
-  ]);
+    void fetchMaterials();
+  }, [fetchMaterials]);
 
   return {
     materials,

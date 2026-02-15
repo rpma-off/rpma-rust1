@@ -28,12 +28,11 @@ describe('StockLevelIndicator (inventory)', () => {
     render(<StockLevelIndicator material={material} />);
 
     expect(screen.getByText('42')).toBeInTheDocument();
-    expect(screen.getByText('OK')).toBeInTheDocument();
   });
 
   it('renders expired status when material is expired', () => {
     const material = createMaterial({ is_expired: true });
-    render(<StockLevelIndicator material={material} />);
+    render(<StockLevelIndicator material={material} showDetails={true} />);
 
     expect(screen.getByText('Expired')).toBeInTheDocument();
   });

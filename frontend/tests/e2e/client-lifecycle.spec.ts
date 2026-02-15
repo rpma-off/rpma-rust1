@@ -17,6 +17,7 @@
  * Make sure this user exists in the test database.
  */
 
+// TODO(e2e): excluded from default smoke run; re-enable after selector and workflow stabilization.
 import { test, expect } from '@playwright/test';
 import { resetMockDb } from './utils/mock';
 

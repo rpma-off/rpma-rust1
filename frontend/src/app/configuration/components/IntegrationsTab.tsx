@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
@@ -44,6 +45,8 @@ export function IntegrationsTab() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingIntegration, setEditingIntegration] = useState<IntegrationConfig | null>(null);
   const [testingIntegration, setTestingIntegration] = useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [integrationToDelete, setIntegrationToDelete] = useState<IntegrationConfig | null>(null);
 
   // Form state for creating/editing integrations
   const [formData, setFormData] = useState({
@@ -144,14 +147,11 @@ export function IntegrationsTab() {
     }
   };
 
-  const deleteIntegration = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette intégration ?')) {
-      return;
-    }
-
+  const deleteIntegration = async () => {
+    if (!integrationToDelete) return;
     try {
       const sessionToken = session?.token || '';
-      const updatedIntegrations = integrations.filter(i => i.id !== id);
+      const updatedIntegrations = integrations.filter((integration) => integration.id !== integrationToDelete.id);
       await settingsOperations.updateGeneralSettings(
         { integrations: updatedIntegrations as unknown as JsonValue } as Record<string, JsonValue>,
         sessionToken
@@ -161,7 +161,15 @@ export function IntegrationsTab() {
     } catch (error) {
       console.error('Error deleting integration:', error);
       toast.error('Erreur lors de la suppression');
+    } finally {
+      setDeleteConfirmOpen(false);
+      setIntegrationToDelete(null);
     }
+  };
+
+  const confirmDeleteIntegration = (integration: IntegrationConfig) => {
+    setIntegrationToDelete(integration);
+    setDeleteConfirmOpen(true);
   };
 
   const testIntegration = async (id: string) => {
@@ -618,7 +626,7 @@ export function IntegrationsTab() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => deleteIntegration(integration.id)}
+                    onClick={() => confirmDeleteIntegration(integration)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -646,6 +654,17 @@ export function IntegrationsTab() {
           </Card>
         )}
       </div>
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="Supprimer l'intégration"
+        description={`Voulez-vous vraiment supprimer l'intégration "${integrationToDelete?.name || ''}" ?`}
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        variant="destructive"
+        onConfirm={deleteIntegration}
+      />
     </div>
   );
 }

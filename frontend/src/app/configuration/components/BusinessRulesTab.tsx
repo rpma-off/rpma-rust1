@@ -10,10 +10,10 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
-
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { toast } from 'sonner';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useLogger } from '@/hooks/useLogger';
 import { LogDomain } from '@/lib/logging/types';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,40 +31,40 @@ import {
   CheckCircle,
   Settings,
   Workflow,
-  Filter,
   Search,
   Zap,
   Clock,
   Target,
   PlusCircle,
   MinusCircle,
-  Bell
+  Bell,
 } from 'lucide-react';
 import { BusinessRule, RuleCondition, RuleAction, BusinessRuleCategory } from '@/types/configuration.types';
 
-// Loading skeleton for business rules
+const STYLE_BY_CATEGORY: Record<string, { badge: string; iconWrap: string; icon: string }> = {
+  task_assignment: { badge: 'bg-blue-100 text-blue-700', iconWrap: 'bg-blue-100', icon: 'text-blue-600' },
+  notification: { badge: 'bg-green-100 text-green-700', iconWrap: 'bg-green-100', icon: 'text-green-600' },
+  validation: { badge: 'bg-yellow-100 text-yellow-700', iconWrap: 'bg-yellow-100', icon: 'text-yellow-600' },
+  automation: { badge: 'bg-purple-100 text-purple-700', iconWrap: 'bg-purple-100', icon: 'text-purple-600' },
+  escalation: { badge: 'bg-red-100 text-red-700', iconWrap: 'bg-red-100', icon: 'text-red-600' },
+};
+
+const STAT_STYLES: Record<string, { wrap: string; icon: string }> = {
+  blue: { wrap: 'bg-blue-100', icon: 'text-blue-600' },
+  green: { wrap: 'bg-green-100', icon: 'text-green-600' },
+  slate: { wrap: 'bg-slate-100', icon: 'text-slate-600' },
+  purple: { wrap: 'bg-purple-100', icon: 'text-purple-600' },
+};
+
 const BusinessRulesSkeleton = () => (
   <div className="space-y-4">
     {[...Array(3)].map((_, i) => (
-      <Card key={i} className="border">
+      <Card key={i} className="border border-[hsl(var(--rpma-border))]">
         <CardContent className="p-6">
-          <div className="flex items-start justify-between">
-            <div className="space-y-3 flex-1">
-              <div className="flex items-center gap-3">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-6 w-16" />
-              </div>
-              <Skeleton className="h-4 w-64" />
-              <div className="flex items-center gap-4">
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-4 w-24" />
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-8 w-8" />
-              <Skeleton className="h-8 w-8" />
-              <Skeleton className="h-8 w-8" />
-            </div>
+          <div className="space-y-3">
+            <Skeleton className="h-5 w-64" />
+            <Skeleton className="h-4 w-80" />
+            <Skeleton className="h-4 w-48" />
           </div>
         </CardContent>
       </Card>
@@ -81,16 +81,9 @@ export function BusinessRulesTab() {
   const [testingRule, setTestingRule] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [ruleToDelete, setRuleToDelete] = useState<BusinessRule | null>(null);
 
-    // Initialize logging
-    const { logInfo, logError, logPerformance } = useLogger({
-      context: LogDomain.SYSTEM,
-      component: 'BusinessRulesTab',
-      enablePerformanceLogging: true
-    });
-
-  // Form state for creating/editing rules
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -98,25 +91,26 @@ export function BusinessRulesTab() {
     priority: 0,
     isActive: true,
     conditions: [] as RuleCondition[],
-    actions: [] as RuleAction[]
+    actions: [] as RuleAction[],
   });
 
   const { session } = useAuth();
+  const { logInfo, logError, logPerformance } = useLogger({
+    context: LogDomain.SYSTEM,
+    component: 'BusinessRulesTab',
+    enablePerformanceLogging: true,
+  });
 
   const loadBusinessRules = useCallback(async () => {
     const timer = logPerformance('Load business rules');
     try {
       setLoading(true);
-      logInfo('Loading business rules');
-
       const sessionToken = session?.token || '';
       const data = await settingsOperations.getAppSettings(sessionToken);
       const appSettings = data as Record<string, JsonValue>;
       const rules = (appSettings?.business_rules || []) as unknown as BusinessRule[];
       setBusinessRules(Array.isArray(rules) ? rules : []);
-      logInfo('Business rules loaded successfully', {
-        count: Array.isArray(rules) ? rules.length : 0,
-      });
+      logInfo('Business rules loaded', { count: Array.isArray(rules) ? rules.length : 0 });
     } catch (error) {
       logError('Error loading business rules', { error: error instanceof Error ? error.message : error });
       toast.error('Erreur lors du chargement des règles métier');
@@ -125,11 +119,37 @@ export function BusinessRulesTab() {
       setLoading(false);
       timer();
     }
-  }, [logPerformance, logInfo, logError, session?.token]);
+  }, [logError, logInfo, logPerformance, session?.token]);
 
   useEffect(() => {
     loadBusinessRules();
   }, [loadBusinessRules]);
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      description: '',
+      category: 'task_assignment',
+      priority: 0,
+      isActive: true,
+      conditions: [],
+      actions: [],
+    });
+  };
+
+  const openEditDialog = (rule: BusinessRule) => {
+    setEditingRule(rule);
+    setFormData({
+      name: rule.name,
+      description: rule.description || '',
+      category: rule.category as BusinessRuleCategory,
+      priority: rule.priority,
+      isActive: rule.isActive ?? false,
+      conditions: rule.conditions,
+      actions: rule.actions,
+    });
+    setShowCreateDialog(true);
+  };
 
   const saveRule = async () => {
     setSaving(true);
@@ -150,37 +170,37 @@ export function BusinessRulesTab() {
         createdAt: editingRule?.createdAt || new Date().toISOString(),
       };
 
-      let updatedRules: BusinessRule[];
-      if (editingRule) {
-        updatedRules = businessRules.map(r => r.id === editingRule.id ? newRule : r);
-      } else {
-        updatedRules = [...businessRules, newRule];
-      }
+      const updatedRules = editingRule
+        ? businessRules.map((rule) => (rule.id === editingRule.id ? newRule : rule))
+        : [...businessRules, newRule];
 
       await settingsOperations.updateGeneralSettings(
         { business_rules: updatedRules as unknown as JsonValue } as Record<string, JsonValue>,
         sessionToken
       );
-
       toast.success(editingRule ? 'Règle mise à jour avec succès' : 'Règle créée avec succès');
       setShowCreateDialog(false);
       setEditingRule(null);
       resetForm();
       await loadBusinessRules();
     } catch (error) {
-      console.error('Error saving rule:', error);
+      logError('Error saving business rule', { error: error instanceof Error ? error.message : error });
       toast.error('Erreur lors de la sauvegarde');
     } finally {
       setSaving(false);
     }
   };
 
-  const deleteRule = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette règle ?')) return;
+  const confirmDeleteRule = (rule: BusinessRule) => {
+    setRuleToDelete(rule);
+    setDeleteConfirmOpen(true);
+  };
 
+  const deleteRule = async () => {
+    if (!ruleToDelete) return;
     try {
       const sessionToken = session?.token || '';
-      const updatedRules = businessRules.filter(r => r.id !== id);
+      const updatedRules = businessRules.filter((rule) => rule.id !== ruleToDelete.id);
       await settingsOperations.updateGeneralSettings(
         { business_rules: updatedRules as unknown as JsonValue } as Record<string, JsonValue>,
         sessionToken
@@ -188,16 +208,19 @@ export function BusinessRulesTab() {
       toast.success('Règle supprimée avec succès');
       await loadBusinessRules();
     } catch (error) {
-      console.error('Error deleting rule:', error);
+      logError('Error deleting business rule', { error: error instanceof Error ? error.message : error });
       toast.error('Erreur lors de la suppression');
+    } finally {
+      setRuleToDelete(null);
+      setDeleteConfirmOpen(false);
     }
   };
 
   const toggleRuleStatus = async (id: string, isActive: boolean) => {
     try {
       const sessionToken = session?.token || '';
-      const updatedRules = businessRules.map(r =>
-        r.id === id ? { ...r, is_active: !isActive, isActive: !isActive } : r
+      const updatedRules = businessRules.map((rule) =>
+        rule.id === id ? { ...rule, is_active: !isActive, isActive: !isActive } : rule
       );
       await settingsOperations.updateGeneralSettings(
         { business_rules: updatedRules as unknown as JsonValue } as Record<string, JsonValue>,
@@ -206,7 +229,7 @@ export function BusinessRulesTab() {
       toast.success(`Règle ${!isActive ? 'activée' : 'désactivée'} avec succès`);
       await loadBusinessRules();
     } catch (error) {
-      console.error('Error updating rule status:', error);
+      logError('Error toggling business rule', { error: error instanceof Error ? error.message : error });
       toast.error('Erreur lors de la mise à jour');
     }
   };
@@ -214,114 +237,63 @@ export function BusinessRulesTab() {
   const testRule = async (id: string) => {
     setTestingRule(id);
     try {
-      const rule = businessRules.find(r => r.id === id);
+      const rule = businessRules.find((candidate) => candidate.id === id);
       if (!rule) {
         toast.error('Règle introuvable');
         return;
       }
-      // Validate rule structure locally
       if (rule.conditions.length === 0) {
-        toast.warning('Validation: La règle n\'a aucune condition définie');
+        toast.warning("Validation: la règle n'a aucune condition définie");
       } else if (rule.actions.length === 0) {
-        toast.warning('Validation: La règle n\'a aucune action définie');
+        toast.warning("Validation: la règle n'a aucune action définie");
       } else {
-        toast.success('Validation réussie: Structure de règle valide');
+        toast.success('Validation réussie: structure de règle valide');
       }
     } catch (error) {
-      console.error('Error testing rule:', error);
+      logError('Error testing business rule', { error: error instanceof Error ? error.message : error });
       toast.error('Erreur lors du test');
     } finally {
       setTestingRule(null);
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      description: '',
-      category: 'task_assignment',
-      priority: 0,
-      isActive: true,
-      conditions: [],
-      actions: []
-    });
-  };
-
-  const openEditDialog = (rule: BusinessRule) => {
-    setEditingRule(rule);
-    setFormData({
-      name: rule.name,
-      description: rule.description || '',
-      category: rule.category as BusinessRuleCategory,
-      priority: rule.priority,
-      isActive: rule.isActive ?? false,
-      conditions: rule.conditions,
-      actions: rule.actions
-    });
-    setShowCreateDialog(true);
-  };
-
   const addCondition = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      conditions: [...prev.conditions, {
-        field: '',
-        operator: 'equals',
-        value: ''
-      }]
+      conditions: [...prev.conditions, { field: '', operator: 'equals', value: '' }],
     }));
   };
 
   const removeCondition = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      conditions: prev.conditions.filter((_, i) => i !== index)
-    }));
+    setFormData((prev) => ({ ...prev, conditions: prev.conditions.filter((_, i) => i !== index) }));
   };
 
   const addAction = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      actions: [...prev.actions, {
-        type: 'send_notification',
-        target: '',
-        value: ''
-      }]
+      actions: [...prev.actions, { type: 'send_notification', target: '', value: '' }],
     }));
   };
 
   const removeAction = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      actions: prev.actions.filter((_, i) => i !== index)
-    }));
+    setFormData((prev) => ({ ...prev, actions: prev.actions.filter((_, i) => i !== index) }));
   };
 
-  const filteredRules = businessRules.filter(rule => {
-    const matchesSearch = rule.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (rule.description?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
+  const filteredRules = businessRules.filter((rule) => {
+    const matchesSearch =
+      rule.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (rule.description?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
     const matchesCategory = filterCategory === 'all' || rule.category === filterCategory;
     return matchesSearch && matchesCategory;
   });
 
-  const getCategoryColor = (category: string) => {
-    const colors = {
-      'task_assignment': 'blue',
-      'notification': 'green',
-      'validation': 'yellow',
-      'automation': 'purple',
-      'escalation': 'red'
-    };
-    return colors[category as keyof typeof colors] || 'gray';
-  };
-
   const getCategoryIcon = (category: string) => {
     const icons = {
-      'task_assignment': Target,
-      'notification': Bell,
-      'validation': CheckCircle,
-      'automation': Zap,
-      'escalation': AlertTriangle
+      task_assignment: Target,
+      notification: Bell,
+      validation: CheckCircle,
+      automation: Zap,
+      escalation: AlertTriangle,
     };
     return icons[category as keyof typeof icons] || Settings;
   };
@@ -343,33 +315,25 @@ export function BusinessRulesTab() {
 
   return (
     <div className="space-y-6">
-      {/* Enhanced Header */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
       >
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Workflow className="h-6 w-6 text-green-600" />
+          <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <Workflow className="h-6 w-6 text-[hsl(var(--rpma-teal))]" />
             Règles Métier
           </h2>
-          <p className="text-gray-600 mt-1">
+          <p className="text-muted-foreground mt-1">
             Gérez les règles d&apos;automatisation et de validation de votre système
           </p>
         </div>
-        
         <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            onClick={loadBusinessRules}
-            disabled={loading}
-            className="flex items-center gap-2"
-          >
+          <Button variant="outline" onClick={loadBusinessRules} disabled={loading} className="flex items-center gap-2">
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Actualiser
           </Button>
-          
           <Button
             onClick={() => {
               resetForm();
@@ -384,44 +348,35 @@ export function BusinessRulesTab() {
         </div>
       </motion.div>
 
-      {/* Stats Cards */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="grid grid-cols-1 md:grid-cols-4 gap-4"
-      >
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total', value: businessRules.length, icon: Workflow, color: 'blue' },
-          { label: 'Actives', value: businessRules.filter(r => r.isActive).length, icon: CheckCircle, color: 'green' },
-          { label: 'Inactives', value: businessRules.filter(r => !r.isActive).length, icon: Pause, color: 'gray' },
-          { label: 'Catégories', value: new Set(businessRules.map(r => r.category)).size, icon: Settings, color: 'purple' }
-        ].map((stat, index) => (
-          <Card key={index} className="border-0 shadow-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">{stat.label}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+          { label: 'Total', value: businessRules.length, icon: Workflow, style: 'blue' },
+          { label: 'Actives', value: businessRules.filter((rule) => rule.isActive).length, icon: CheckCircle, style: 'green' },
+          { label: 'Inactives', value: businessRules.filter((rule) => !rule.isActive).length, icon: Pause, style: 'slate' },
+          { label: 'Catégories', value: new Set(businessRules.map((rule) => rule.category)).size, icon: Settings, style: 'purple' },
+        ].map((stat, index) => {
+          const styles = STAT_STYLES[stat.style];
+          return (
+            <Card key={index} className="border border-[hsl(var(--rpma-border))] shadow-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
+                    <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                  </div>
+                  <div className={`p-2 rounded-lg ${styles.wrap}`}>
+                    <stat.icon className={`h-5 w-5 ${styles.icon}`} />
+                  </div>
                 </div>
-                <div className={`p-2 rounded-lg bg-${stat.color}-100`}>
-                  <stat.icon className={`h-5 w-5 text-${stat.color}-600`} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </motion.div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
-      {/* Filters and Search */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.1 }}
-        className="flex flex-col sm:flex-row gap-4"
-      >
+      <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Rechercher des règles..."
             value={searchTerm}
@@ -429,9 +384,8 @@ export function BusinessRulesTab() {
             className="pl-10"
           />
         </div>
-        
         <Select value={filterCategory} onValueChange={setFilterCategory}>
-          <SelectTrigger className="w-full sm:w-48">
+          <SelectTrigger className="w-full sm:w-52">
             <SelectValue placeholder="Filtrer par catégorie" />
           </SelectTrigger>
           <SelectContent>
@@ -443,380 +397,286 @@ export function BusinessRulesTab() {
             <SelectItem value="escalation">Escalade</SelectItem>
           </SelectContent>
         </Select>
-        
-        <div className="flex items-center gap-2">
-          <Button
-            variant={viewMode === 'grid' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setViewMode('grid')}
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={viewMode === 'list' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setViewMode('list')}
-          >
-            <Filter className="h-4 w-4" />
-          </Button>
-        </div>
-      </motion.div>
+      </div>
 
-      {/* Rules List */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.2 }}
-        className="space-y-4"
-      >
-        <AnimatePresence>
-          {filteredRules.map((rule, index) => {
-            const CategoryIcon = getCategoryIcon(rule.category);
-            const categoryColor = getCategoryColor(rule.category);
-            
-            return (
-              <motion.div
-                key={rule.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.2, delay: index * 0.05 }}
-              >
-                <Card className="border hover:shadow-md transition-all duration-200">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 space-y-3">
-                        <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg bg-${categoryColor}-100`}>
-                            <CategoryIcon className={`h-4 w-4 text-${categoryColor}-600`} />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-gray-900">{rule.name}</h3>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge variant="secondary" className={`bg-${categoryColor}-100 text-${categoryColor}-700`}>
-                                {rule.category.replace('_', ' ')}
-                              </Badge>
-                              <Badge variant={rule.isActive ? 'default' : 'secondary'}>
-                                {rule.isActive ? 'Actif' : 'Inactif'}
-                              </Badge>
-                              <Badge variant="outline">
-                                Priorité {rule.priority}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <p className="text-gray-600 text-sm">{rule.description}</p>
-                        
-                        <div className="flex items-center gap-6 text-sm text-gray-500">
-                          <div className="flex items-center gap-1">
-                            <Target className="h-4 w-4" />
-                            {rule.conditions.length} condition{rule.conditions.length > 1 ? 's' : ''}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Zap className="h-4 w-4" />
-                            {rule.actions.length} action{rule.actions.length > 1 ? 's' : ''}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                             Créée le {rule.createdAt ? new Date(rule.createdAt).toLocaleDateString() : 'N/A'}
-                          </div>
-                        </div>
+      <div className="space-y-4">
+        {filteredRules.map((rule) => {
+          const CategoryIcon = getCategoryIcon(rule.category);
+          const style = STYLE_BY_CATEGORY[rule.category] || {
+            badge: 'bg-slate-100 text-slate-700',
+            iconWrap: 'bg-slate-100',
+            icon: 'text-slate-600',
+          };
+          return (
+            <Card key={rule.id} className="border border-[hsl(var(--rpma-border))]">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${style.iconWrap}`}>
+                        <CategoryIcon className={`h-4 w-4 ${style.icon}`} />
                       </div>
-                      
-                      <div className="flex items-center gap-2 ml-4">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => testRule(rule.id)}
-                          disabled={testingRule === rule.id}
-                        >
-                          {testingRule === rule.id ? (
-                            <RefreshCw className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Play className="h-4 w-4" />
-                          )}
-                        </Button>
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => toggleRuleStatus(rule.id, rule.isActive ?? false)}
-                        >
-                          {rule.isActive ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                        </Button>
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openEditDialog(rule)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => deleteRule(rule.id)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                      <div>
+                        <h3 className="font-semibold text-foreground">{rule.name}</h3>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="secondary" className={style.badge}>
+                            {rule.category.replace('_', ' ')}
+                          </Badge>
+                          <Badge variant={rule.isActive ? 'default' : 'secondary'}>
+                            {rule.isActive ? 'Actif' : 'Inactif'}
+                          </Badge>
+                          <Badge variant="outline">Priorité {rule.priority}</Badge>
+                        </div>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
-        
+                    <p className="text-sm text-muted-foreground">{rule.description}</p>
+                    <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Target className="h-4 w-4" />
+                        {rule.conditions.length} condition{rule.conditions.length > 1 ? 's' : ''}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Zap className="h-4 w-4" />
+                        {rule.actions.length} action{rule.actions.length > 1 ? 's' : ''}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4" />
+                        Créée le {rule.createdAt ? new Date(rule.createdAt).toLocaleDateString() : 'N/A'}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 ml-4">
+                    <Button variant="outline" size="sm" onClick={() => testRule(rule.id)} disabled={testingRule === rule.id}>
+                      {testingRule === rule.id ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => toggleRuleStatus(rule.id, rule.isActive ?? false)}>
+                      {rule.isActive ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                    </Button>
+                    <Button variant="outline" size="sm" aria-label={`Modifier la règle ${rule.name}`} onClick={() => openEditDialog(rule)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      aria-label={`Supprimer la règle ${rule.name}`}
+                      onClick={() => confirmDeleteRule(rule)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+
         {filteredRules.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-12"
-          >
-            <Workflow className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune règle trouvée</h3>
-            <p className="text-gray-600 mb-4">
-              {searchTerm || filterCategory !== 'all' 
+          <div className="text-center py-12">
+            <Workflow className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Aucune règle trouvée</h3>
+            <p className="text-muted-foreground mb-4">
+              {searchTerm || filterCategory !== 'all'
                 ? 'Aucune règle ne correspond à vos critères de recherche.'
-                : 'Commencez par créer votre première règle métier.'
-              }
+                : 'Commencez par créer votre première règle métier.'}
             </p>
             <Button onClick={() => setShowCreateDialog(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Créer une règle
             </Button>
-          </motion.div>
+          </div>
         )}
-      </motion.div>
+      </div>
 
-      {/* Create/Edit Rule Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Workflow className="h-5 w-5" />
               {editingRule ? 'Modifier la règle' : 'Nouvelle règle métier'}
-              </DialogTitle>
-              <DialogDescription>
-              {editingRule 
-                ? 'Modifiez les paramètres de cette règle métier'
-                : 'Créez une nouvelle règle pour automatiser votre système'
-              }
-              </DialogDescription>
-            </DialogHeader>
+            </DialogTitle>
+            <DialogDescription>
+              {editingRule ? 'Modifiez les paramètres de cette règle métier' : 'Créez une nouvelle règle pour automatiser votre système'}
+            </DialogDescription>
+          </DialogHeader>
 
-            <div className="space-y-6">
-              {/* Basic Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                <Label htmlFor="name">Nom de la règle</Label>
-                  <Input
-                  id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Ex: Assignation automatique des tâches"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                <Label htmlFor="category">Catégorie</Label>
-                <Select value={formData.category} onValueChange={(value: BusinessRuleCategory) => 
-                  setFormData(prev => ({ ...prev, category: value }))
-                }>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="task_assignment">Assignation de tâches</SelectItem>
-                      <SelectItem value="notification">Notifications</SelectItem>
-                      <SelectItem value="validation">Validation</SelectItem>
-                      <SelectItem value="automation">Automatisation</SelectItem>
-                    <SelectItem value="escalation">Escalade</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-                <Textarea
-                id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Décrivez le comportement de cette règle..."
-                  rows={3}
+                <Label htmlFor="rule-name">Nom de la règle</Label>
+                <Input
+                  id="rule-name"
+                  value={formData.name}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                 />
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                <Label htmlFor="priority">Priorité</Label>
-                  <Input
-                  id="priority"
-                    type="number"
-                    value={formData.priority}
-                    onChange={(e) => setFormData(prev => ({ ...prev, priority: parseInt(e.target.value) || 0 }))}
-                  min="0"
-                  max="100"
-                  />
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                  id="isActive"
-                    checked={formData.isActive}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
-                  />
-                <Label htmlFor="isActive">Règle active</Label>
+              <div className="space-y-2">
+                <Label htmlFor="rule-category">Catégorie</Label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value: BusinessRuleCategory) => setFormData((prev) => ({ ...prev, category: value }))}
+                >
+                  <SelectTrigger id="rule-category">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="task_assignment">Assignation de tâches</SelectItem>
+                    <SelectItem value="notification">Notifications</SelectItem>
+                    <SelectItem value="validation">Validation</SelectItem>
+                    <SelectItem value="automation">Automatisation</SelectItem>
+                    <SelectItem value="escalation">Escalade</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              </div>
+            </div>
 
-              {/* Conditions */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <Label htmlFor="rule-description">Description</Label>
+              <Textarea
+                id="rule-description"
+                value={formData.description}
+                onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                rows={3}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="rule-priority">Priorité</Label>
+                <Input
+                  id="rule-priority"
+                  type="number"
+                  value={formData.priority}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, priority: parseInt(e.target.value, 10) || 0 }))}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="rule-active"
+                  checked={formData.isActive}
+                  onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, isActive: checked }))}
+                />
+                <Label htmlFor="rule-active">Règle active</Label>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
                 <Label className="text-base font-semibold">Conditions</Label>
                 <Button variant="outline" size="sm" onClick={addCondition}>
                   <PlusCircle className="h-4 w-4 mr-2" />
-                  Ajouter une condition
+                  Ajouter
+                </Button>
+              </div>
+              {formData.conditions.map((condition, index) => (
+                <div key={index} className="grid grid-cols-12 gap-2 items-center p-3 rounded-lg border border-[hsl(var(--rpma-border))]">
+                  <Input
+                    className="col-span-4"
+                    placeholder="Champ"
+                    value={condition.field}
+                    onChange={(e) => {
+                      const next = [...formData.conditions];
+                      if (next[index]) next[index].field = e.target.value;
+                      setFormData((prev) => ({ ...prev, conditions: next }));
+                    }}
+                  />
+                  <Select
+                    value={condition.operator}
+                    onValueChange={(value: RuleCondition['operator']) => {
+                      const next = [...formData.conditions];
+                      if (next[index]) next[index].operator = value;
+                      setFormData((prev) => ({ ...prev, conditions: next }));
+                    }}
+                  >
+                    <SelectTrigger className="col-span-4">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="equals">Égal à</SelectItem>
+                      <SelectItem value="not_equals">Différent de</SelectItem>
+                      <SelectItem value="greater_than">Supérieur à</SelectItem>
+                      <SelectItem value="less_than">Inférieur à</SelectItem>
+                      <SelectItem value="contains">Contient</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    className="col-span-3"
+                    placeholder="Valeur"
+                    value={String(condition.value || '')}
+                    onChange={(e) => {
+                      const next = [...formData.conditions];
+                      if (next[index]) next[index].value = e.target.value;
+                      setFormData((prev) => ({ ...prev, conditions: next }));
+                    }}
+                  />
+                  <Button variant="outline" size="sm" className="col-span-1" onClick={() => removeCondition(index)}>
+                    <MinusCircle className="h-4 w-4" />
                   </Button>
                 </div>
+              ))}
+            </div>
 
-              <div className="space-y-3">
-                {formData.conditions.map((condition, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-3 p-3 border rounded-lg bg-gray-50"
-                  >
-                    <div className="flex-1 grid grid-cols-3 gap-3">
-                      <Input
-                        placeholder="Champ"
-                      value={condition.field}
-                        onChange={(e) => {
-                        const newConditions = [...formData.conditions];
-                        if (newConditions[index]) {
-                          newConditions[index].field = e.target.value;
-                        }
-                        setFormData(prev => ({ ...prev, conditions: newConditions }));
-                      }}
-                      />
-                      <Select value={condition.operator} onValueChange={(value: RuleCondition['operator']) => {
-                        const newConditions = [...formData.conditions];
-                        if (newConditions[index]) {
-                          newConditions[index].operator = value;
-                        }
-                        setFormData(prev => ({ ...prev, conditions: newConditions }));
-                      }}>
-                        <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="equals">Égal à</SelectItem>
-                        <SelectItem value="not_equals">Différent de</SelectItem>
-                        <SelectItem value="greater_than">Supérieur à</SelectItem>
-                        <SelectItem value="less_than">Inférieur à</SelectItem>
-                        <SelectItem value="contains">Contient</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Input
-                        placeholder="Valeur"
-                      value={String(condition.value || '')}
-                      onChange={(e) => {
-                        const newConditions = [...formData.conditions];
-                        if (newConditions[index]) {
-                          newConditions[index].value = e.target.value;
-                        }
-                        setFormData(prev => ({ ...prev, conditions: newConditions }));
-                      }}
-                    />
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeCondition(index)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <MinusCircle className="h-4 w-4" />
-                    </Button>
-                  </motion.div>
-                ))}
-              </div>
-              </div>
-
-              {/* Actions */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
                 <Label className="text-base font-semibold">Actions</Label>
                 <Button variant="outline" size="sm" onClick={addAction}>
                   <PlusCircle className="h-4 w-4 mr-2" />
-                  Ajouter une action
+                  Ajouter
+                </Button>
+              </div>
+              {formData.actions.map((action, index) => (
+                <div key={index} className="grid grid-cols-12 gap-2 items-center p-3 rounded-lg border border-[hsl(var(--rpma-border))]">
+                  <Select
+                    value={action.type}
+                    onValueChange={(value: RuleAction['type']) => {
+                      const next = [...formData.actions];
+                      if (next[index]) next[index].type = value;
+                      setFormData((prev) => ({ ...prev, actions: next }));
+                    }}
+                  >
+                    <SelectTrigger className="col-span-10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="send_notification">Envoyer une notification</SelectItem>
+                      <SelectItem value="assign_task">Assigner une tâche</SelectItem>
+                      <SelectItem value="update_priority">Mettre à jour la priorité</SelectItem>
+                      <SelectItem value="block_completion">Bloquer la complétion</SelectItem>
+                      <SelectItem value="notify_manager">Notifier le manager</SelectItem>
+                      <SelectItem value="notify_technician">Notifier le technicien</SelectItem>
+                      <SelectItem value="escalate">Escalader</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button variant="outline" size="sm" className="col-span-2" onClick={() => removeAction(index)}>
+                    <MinusCircle className="h-4 w-4" />
                   </Button>
                 </div>
-
-              <div className="space-y-3">
-                {formData.actions.map((action, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-3 p-3 border rounded-lg bg-gray-50"
-                  >
-                    <div className="flex-1">
-                      <Select value={action.type} onValueChange={(value: RuleAction['type']) => {
-                        const newActions = [...formData.actions];
-                        if (newActions[index]) {
-                          newActions[index].type = value;
-                        }
-                        setFormData(prev => ({ ...prev, actions: newActions }));
-                      }}>
-                        <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                          <SelectItem value="send_notification">Envoyer une notification</SelectItem>
-                          <SelectItem value="assign_task">Assigner une tâche</SelectItem>
-                          <SelectItem value="update_priority">Mettre à jour la priorité</SelectItem>
-                          <SelectItem value="block_completion">Bloquer la complétion</SelectItem>
-                          <SelectItem value="notify_manager">Notifier le manager</SelectItem>
-                          <SelectItem value="notify_technician">Notifier le technicien</SelectItem>
-                          <SelectItem value="escalate">Escalader</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeAction(index)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <MinusCircle className="h-4 w-4" />
-                    </Button>
-                  </motion.div>
-                ))}
-              </div>
+              ))}
             </div>
-              </div>
 
-          <div className="flex justify-end gap-3 pt-6 border-t">
-                <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-                  Annuler
-                </Button>
-            <Button onClick={saveRule} disabled={saving}>
-                  {saving ? (
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Save className="h-4 w-4 mr-2" />
-                  )}
-              {saving ? 'Sauvegarde...' : 'Sauvegarder'}
-                </Button>
+            <div className="flex justify-end gap-3 pt-6 border-t border-[hsl(var(--rpma-border))]">
+              <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                Annuler
+              </Button>
+              <Button onClick={saveRule} disabled={saving}>
+                {saving ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                {saving ? 'Sauvegarde...' : 'Sauvegarder'}
+              </Button>
             </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="Supprimer la règle"
+        description={`Voulez-vous vraiment supprimer la règle "${ruleToDelete?.name || ''}" ?`}
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        variant="destructive"
+        onConfirm={deleteRule}
+      />
     </div>
   );
 }

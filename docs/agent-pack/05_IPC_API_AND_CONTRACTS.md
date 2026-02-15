@@ -15,16 +15,24 @@ RPMA v2 uses **Tauri's IPC** mechanism for communication between the Next.js fro
 
 ## IPC Response Envelope
 
+All IPC commands return a consistent response structure defined in `src-tauri/src/commands/mod.rs`:
+
 ```typescript
 interface ApiResponse<T> {
   success: boolean;
   data?: T;                 // Present if success = true
   error?: {                 // Present if success = false
     message: string;
-    code: string;
+    code: string;           // AppError variant name
+  };
+  metadata?: {              // Optional performance/debug info
+    duration_ms?: number;
+    correlation_id?: string;
   };
 }
 ```
+
+**Compressed Response**: For payloads >1KB, backend can return `CompressedApiResponse` using MessagePack serialization (`commands/mod.rs:377-522`).
 
 ---
 
@@ -33,12 +41,19 @@ interface ApiResponse<T> {
 **Command**: `npm run types:sync`
 
 **Flow**:
-1. Rust models annotated with `#[derive(Serialize, TS)]` and `#[ts(export)]`
-2. `cargo run --bin export-types` exports types to stdout
-3. `scripts/write-types.js` converts to TypeScript
-4. Output: `frontend/src/lib/backend.ts`
+1. Rust models annotated with `#[derive(Serialize, Deserialize, TS)]` and `#[ts(export)]`
+2. `cargo run --bin export-types` (located at `src-tauri/src/bin/export-types.rs`) exports types to stdout as JSON
+3. `scripts/write-types.js` converts JSON to TypeScript and writes to `frontend/src/lib/backend.ts`
+4. Frontend imports types from `@/lib/backend`
 
-**⚠️ WARNING**: **NEVER manually edit** `frontend/src/lib/backend.ts`!
+**⚠️ CRITICAL**: **NEVER manually edit** `frontend/src/lib/backend.ts`! Always regenerate with `npm run types:sync`
+
+**Validation Commands**:
+```bash
+npm run types:validate       # Validates generated types
+npm run types:drift-check    # Detects Rust/TS mismatches
+npm run types:generate-docs  # Generates type documentation
+```
 
 ---
 
@@ -46,10 +61,14 @@ interface ApiResponse<T> {
 
 | Command | Purpose | Params | Permissions | Rust Impl | Frontend |
 |---------|---------|--------|-------------|-----------|----------|
-| `auth_login` | Authenticate user | email, password | Public | `commands/auth.rs:31` | `lib/ipc/domains/auth.ts` |
-| `auth_logout` | Invalidate session | session_token | Authenticated | `commands/auth.rs:153` | `lib/ipc/domains/auth.ts` |
-| `auth_validate_session` | Check session validity | session_token | Any | `commands/auth.rs:174` | `lib/ipc/domains/auth.ts` |
-| `auth_refresh_token` | Extend session | refresh_token | Public | `commands/auth.rs:195` | `lib/ipc/domains/auth.ts` |
+| `auth_login` | Authenticate user | email, password, correlation_id? | Public | `commands/auth.rs:31-77` | `lib/ipc/domains/auth.ts` |
+| `auth_logout` | Invalidate session | session_token | Authenticated | `commands/auth.rs:153-172` | `lib/ipc/domains/auth.ts` |
+| `auth_validate_session` | Check session validity | session_token | Any | `commands/auth.rs:174-193` | `lib/ipc/domains/auth.ts` |
+| `auth_refresh_token` | Extend session | refresh_token | Public | `commands/auth.rs:195-214` | `lib/ipc/domains/auth.ts` |
+| `enable_2fa` | Generate 2FA setup | session_token | Authenticated | `commands/auth.rs:216-243` | `lib/ipc/domains/auth.ts` |
+| `verify_2fa_setup` | Verify and enable 2FA | session_token, code | Authenticated | `commands/auth.rs:245-276` | `lib/ipc/domains/auth.ts` |
+| `disable_2fa` | Disable 2FA | session_token, password | Authenticated | `commands/auth.rs:278-306` | `lib/ipc/domains/auth.ts` |
+| `verify_2fa_code` | Verify TOTP code | session_token, code | Authenticated | `commands/auth.rs:352-387` | `lib/ipc/domains/auth.ts` |
 | `task_crud` | Unified task CRUD | action: TaskAction | Role-based | `commands/task/facade.rs` | `lib/ipc/domains/tasks.ts` |
 | `edit_task` | Edit existing task | task_id, data | Admin/Supervisor/Assigned | `commands/task/facade.rs` | `lib/ipc/domains/tasks.ts` |
 | `delay_task` | Reschedule task | task_id, reason | Admin/Supervisor/Assigned | `commands/task/facade.rs` | `lib/ipc/domains/tasks.ts` |

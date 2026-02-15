@@ -1,4 +1,4 @@
-import type { UserSession, Task, Client, ClientStatistics, TaskStatistics } from '@/lib/backend';
+import type { UserSession, Task, Client, ClientStatistics, TaskStatistics, UserAccount } from '@/lib/backend';
 import type { Material, Supplier, MaterialCategory, InventoryStats, MaterialStats, MaterialConsumption, InterventionMaterialSummary } from '@/lib/inventory';
 import type { JsonObject } from '@/types/json';
 import { defaultFixtures, type MockFixtures, type MockUser } from './fixtures';
@@ -8,6 +8,7 @@ type AnyRecord = Record<string, any>;
 
 type DelayEntry = { ms: number };
 type FailureEntry = { message: string };
+const MOCK_SESSIONS_STORAGE_KEY = '__E2E_MOCK_SESSIONS__';
 
 export interface MockState {
   users: MockUser[];
@@ -27,10 +28,32 @@ const failNext = new Map<string, FailureEntry>();
 
 const nowIso = () => new Date().toISOString();
 
+function readPersistedSessions(): UserSession[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(MOCK_SESSIONS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as UserSession[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistSessions(sessions: UserSession[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(MOCK_SESSIONS_STORAGE_KEY, JSON.stringify(sessions));
+  } catch {
+    // ignore localStorage write failures in mock mode
+  }
+}
+
 function createState(fixtures: MockFixtures): MockState {
+  const persistedSessions = readPersistedSessions();
   return {
     users: [...fixtures.users],
-    sessions: [...fixtures.sessions],
+    sessions: fixtures.sessions.length > 0 ? [...fixtures.sessions] : persistedSessions,
     clients: [...fixtures.clients],
     tasks: [...fixtures.tasks],
     materials: [...fixtures.materials],
@@ -42,6 +65,7 @@ function createState(fixtures: MockFixtures): MockState {
 
 export function resetDb(fixtures: MockFixtures = defaultFixtures): void {
   state = createState(fixtures);
+  persistSessions(state.sessions);
 }
 
 export function seedDb(partial: Partial<MockFixtures>): void {
@@ -100,6 +124,29 @@ function buildSession(user: MockUser): UserSession {
     session_timeout_minutes: 240
   };
   return session;
+}
+
+function toUserAccount(user: MockUser): UserAccount {
+  const now = nowIso();
+  return {
+    id: user.id,
+    email: user.email,
+    username: user.email.split('@')[0] || user.id,
+    first_name: user.first_name,
+    last_name: user.last_name,
+    role: user.role,
+    password_hash: 'mock-hash',
+    salt: null,
+    phone: null,
+    is_active: true,
+    last_login: null,
+    login_count: 1,
+    preferences: null,
+    synced: true,
+    last_synced_at: now,
+    created_at: now,
+    updated_at: now
+  };
 }
 
 function _getUserByToken(token?: string | null): MockUser | null {
@@ -681,10 +728,14 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
       const session = buildSession(user);
       state.sessions = state.sessions.filter(s => s.user_id !== user.id);
       state.sessions.push(session);
+      persistSessions(state.sessions);
       return session;
     }
     case 'auth_validate_session': {
       const token = args?.token ?? args?.session_token ?? args?.sessionToken;
+      if (state.sessions.length === 0) {
+        state.sessions = readPersistedSessions();
+      }
       const session = state.sessions.find(s => s.token === token);
       if (!session) {
         throw new Error('Session validation failed');
@@ -694,7 +745,94 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
     case 'auth_logout': {
       const token = args?.token ?? args?.session_token ?? args?.sessionToken;
       state.sessions = state.sessions.filter(s => s.token !== token);
+      persistSessions(state.sessions);
       return null;
+    }
+    case 'has_admins': {
+      return state.users.some(user => user.role === 'admin');
+    }
+    case 'bootstrap_first_admin': {
+      const request = (args?.request ?? args ?? {}) as AnyRecord;
+      const userId = request.user_id ?? request.userId;
+      const user = state.users.find(u => u.id === userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+      user.role = 'admin';
+      return `User ${userId} promoted to admin`;
+    }
+    case 'user_crud': {
+      const request = (args?.request ?? args ?? {}) as AnyRecord;
+      const action = (request.action || {}) as AnyRecord;
+
+      if (action.ChangeRole) {
+        const payload = action.ChangeRole as AnyRecord;
+        const user = state.users.find(u => u.id === payload.id);
+        if (!user) return { type: 'NotFound' };
+        user.role = payload.new_role || user.role;
+        return toUserAccount(user);
+      }
+
+      if (action.ChangePassword) {
+        const payload = action.ChangePassword as AnyRecord;
+        const user = state.users.find(u => u.id === payload.id);
+        if (!user) return { type: 'NotFound' };
+        user.password = payload.new_password || user.password;
+        return null;
+      }
+
+      if (action.Ban || action.Unban) {
+        return null;
+      }
+
+      switch (action.action) {
+        case 'Create': {
+          const data = (action.data || {}) as AnyRecord;
+          const created: MockUser = {
+            id: generateId('user'),
+            email: data.email || `${generateId('user')}@example.com`,
+            password: data.password || 'password',
+            first_name: data.first_name || 'New',
+            last_name: data.last_name || 'User',
+            role: data.role || 'viewer'
+          };
+          state.users.push(created);
+          return toUserAccount(created);
+        }
+        case 'Get': {
+          const user = state.users.find(u => u.id === action.id);
+          return user ? toUserAccount(user) : { type: 'NotFound' };
+        }
+        case 'List': {
+          const limit = Number(action.limit ?? 20);
+          const offset = Number(action.offset ?? 0);
+          return {
+            data: state.users.slice(offset, offset + limit).map(toUserAccount)
+          };
+        }
+        case 'Update': {
+          const index = state.users.findIndex(u => u.id === action.id);
+          if (index === -1) return { type: 'NotFound' };
+
+          const data = (action.data || {}) as AnyRecord;
+          state.users[index] = {
+            ...state.users[index],
+            email: data.email ?? state.users[index].email,
+            first_name: data.first_name ?? state.users[index].first_name,
+            last_name: data.last_name ?? state.users[index].last_name,
+            role: data.role ?? state.users[index].role
+          };
+          return toUserAccount(state.users[index]);
+        }
+        case 'Delete': {
+          state.users = state.users.filter(u => u.id !== action.id);
+          state.sessions = state.sessions.filter(s => s.user_id !== action.id);
+          persistSessions(state.sessions);
+          return null;
+        }
+        default:
+          return { type: 'NotFound' };
+      }
     }
     case 'client_crud': {
       const request = (args?.request ?? args ?? {}) as AnyRecord;

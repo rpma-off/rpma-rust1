@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -38,6 +39,8 @@ export function SecurityPoliciesTab() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingPolicy, setEditingPolicy] = useState<SecurityPolicy | null>(null);
   const [activeSubTab, setActiveSubTab] = useState('password');
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [policyToDelete, setPolicyToDelete] = useState<SecurityPolicy | null>(null);
 
   // Form state for creating/editing policies
   const [formData, setFormData] = useState({
@@ -137,14 +140,11 @@ export function SecurityPoliciesTab() {
     }
   };
 
-  const deleteSecurityPolicy = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette politique ?')) {
-      return;
-    }
-
+  const deleteSecurityPolicy = async () => {
+    if (!policyToDelete) return;
     try {
       const sessionToken = session?.token || '';
-      const updatedPolicies = securityPolicies.filter(p => p.id !== id);
+      const updatedPolicies = securityPolicies.filter((policy) => policy.id !== policyToDelete.id);
       await settingsOperations.updateGeneralSettings(
         { security_policies: updatedPolicies as unknown as JsonValue } as Record<string, JsonValue>,
         sessionToken
@@ -154,7 +154,15 @@ export function SecurityPoliciesTab() {
     } catch (error) {
       console.error('Error deleting security policy:', error);
       toast.error('Erreur lors de la suppression');
+    } finally {
+      setDeleteConfirmOpen(false);
+      setPolicyToDelete(null);
     }
+  };
+
+  const confirmDeleteSecurityPolicy = (policy: SecurityPolicy) => {
+    setPolicyToDelete(policy);
+    setDeleteConfirmOpen(true);
   };
 
   const togglePolicyStatus = async (policy: SecurityPolicy) => {
@@ -572,7 +580,7 @@ export function SecurityPoliciesTab() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => deleteSecurityPolicy(policy.id)}
+                    onClick={() => confirmDeleteSecurityPolicy(policy)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -600,6 +608,17 @@ export function SecurityPoliciesTab() {
           </Card>
         )}
       </div>
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="Supprimer la politique"
+        description={`Voulez-vous vraiment supprimer la politique "${policyToDelete?.name || ''}" ?`}
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        variant="destructive"
+        onConfirm={deleteSecurityPolicy}
+      />
     </div>
   );
 }

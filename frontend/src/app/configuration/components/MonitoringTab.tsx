@@ -3,19 +3,9 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { LoadingState } from '@/components/layout/LoadingState';
-import { 
-  Activity, 
-  RefreshCw,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  TrendingUp,
-  TrendingDown,
-  Minus
-} from 'lucide-react';
+import { Activity, RefreshCw, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { SystemStatus } from '@/types/configuration.types';
 import { safeInvoke } from '@/lib/ipc/core';
 import { IPC_COMMANDS } from '@/lib/ipc/commands';
@@ -38,31 +28,31 @@ export function MonitoringTab() {
         const overallStatus = (healthData.status as string) === 'healthy' ? 'healthy' as const : 'warning' as const;
         const now = new Date().toISOString();
 
-        // Derive component statuses from the overall health check result
-        const components: Record<string, { status: 'healthy' | 'warning' | 'error'; message?: string; lastChecked: string }> = {};
+        const components: Record<
+          string,
+          { status: 'healthy' | 'warning' | 'error'; message?: string; lastChecked: string }
+        > = {};
+
         if (healthData.components && typeof healthData.components === 'object') {
           for (const [key, val] of Object.entries(healthData.components as Record<string, JsonValue>)) {
             const comp = val as Record<string, JsonValue>;
             components[key] = {
-              status: (comp.status as string) === 'healthy' ? 'healthy' : (comp.status as string) === 'warning' ? 'warning' : 'error',
+              status:
+                (comp.status as string) === 'healthy'
+                  ? 'healthy'
+                  : (comp.status as string) === 'warning'
+                    ? 'warning'
+                    : 'error',
               message: (comp.message as string) || '',
-              lastChecked: (comp.lastChecked as string) || now
+              lastChecked: (comp.lastChecked as string) || now,
             };
           }
-        }
-
-        // Fallback: if no components in response, derive from overall status
-        if (Object.keys(components).length === 0) {
-          components.database = { status: overallStatus, message: overallStatus === 'healthy' ? 'Base de données opérationnelle' : 'Vérification requise', lastChecked: now };
-          components.api = { status: overallStatus, message: overallStatus === 'healthy' ? 'API backend accessible' : 'Vérification requise', lastChecked: now };
-          components.storage = { status: overallStatus, message: overallStatus === 'healthy' ? 'Stockage disponible' : 'Vérification requise', lastChecked: now };
-          components.auth = { status: overallStatus, message: overallStatus === 'healthy' ? 'Authentification opérationnelle' : 'Vérification requise', lastChecked: now };
         }
 
         const status: SystemStatus = {
           status: overallStatus,
           components,
-          timestamp: now
+          timestamp: now,
         };
         setSystemStatus(status);
       }
@@ -75,10 +65,10 @@ export function MonitoringTab() {
           system: {
             status: 'error',
             message: 'Impossible de contacter le backend',
-            lastChecked: new Date().toISOString()
-          }
+            lastChecked: new Date().toISOString(),
+          },
         },
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     } finally {
       setLoading(false);
@@ -100,7 +90,7 @@ export function MonitoringTab() {
       case 'error':
         return <XCircle className="h-5 w-5 text-red-600" />;
       default:
-        return <Activity className="h-5 w-5 text-gray-600" />;
+        return <Activity className="h-5 w-5 text-slate-600" />;
     }
   };
 
@@ -113,171 +103,64 @@ export function MonitoringTab() {
       case 'error':
         return 'bg-red-100 text-red-800 border-red-200';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-slate-100 text-slate-800 border-slate-200';
     }
-  };
-
-  const getTrendIcon = (status: string) => {
-    if (status === 'healthy') return <TrendingUp className="h-4 w-4 text-green-600" />;
-    if (status === 'warning') return <TrendingDown className="h-4 w-4 text-yellow-600" />;
-    if (status === 'error') return <TrendingDown className="h-4 w-4 text-red-600" />;
-    return <Minus className="h-4 w-4 text-gray-600" />;
   };
 
   if (loading) {
     return <LoadingState />;
   }
 
+  const componentEntries = systemStatus ? Object.entries(systemStatus.components) : [];
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Monitoring & Alertes</h2>
-          <p className="text-gray-600">
-            Surveillez les performances et la santé du système
-          </p>
+          <h2 className="text-2xl font-bold text-foreground">Monitoring</h2>
+          <p className="text-muted-foreground">Surveillez la santé du système en temps réel</p>
         </div>
         <Button onClick={refreshStatus} disabled={refreshing} variant="outline">
-          {refreshing ? (
-            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <RefreshCw className="h-4 w-4 mr-2" />
-          )}
+          {refreshing ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
           Actualiser
         </Button>
       </div>
 
-      {/* System Status Overview */}
-      {systemStatus && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Activity className="h-5 w-5" />
-              <span>État du Système</span>
-            </CardTitle>
-            <CardDescription>
-              Dernière vérification: {new Date(systemStatus.timestamp).toLocaleString('fr-FR')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />
+            État du Système
+          </CardTitle>
+          <CardDescription>
+            Dernière vérification: {systemStatus ? new Date(systemStatus.timestamp).toLocaleString('fr-FR') : 'N/A'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {componentEntries.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-[hsl(var(--rpma-border))] p-6 text-center">
+              <p className="text-sm text-muted-foreground">
+                Aucune donnée de composant disponible pour le moment. Utilisez &quot;Actualiser&quot; pour relancer la vérification.
+              </p>
+            </div>
+          ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {Object.entries(systemStatus.components).map(([key, component]) => (
+              {componentEntries.map(([key, component]) => (
                 <div key={key} className={`p-4 rounded-lg border ${getStatusColor(component.status)}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-2">
-                      {getStatusIcon(component.status)}
-                      <span className="font-medium capitalize">{key}</span>
-                    </div>
-                    {getTrendIcon(component.status)}
+                  <div className="flex items-center space-x-2 mb-2">
+                    {getStatusIcon(component.status)}
+                    <span className="font-medium capitalize">{key}</span>
                   </div>
-                  <p className="text-sm opacity-80">{component.message}</p>
+                  <p className="text-sm opacity-80">{component.message || 'Aucun détail fourni'}</p>
                   <p className="text-xs opacity-60 mt-1">
                     Vérifié: {new Date(component.lastChecked).toLocaleTimeString('fr-FR')}
                   </p>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Performance Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Temps de réponse API</p>
-                <p className="text-2xl font-bold">145ms</p>
-              </div>
-              <TrendingDown className="h-8 w-8 text-green-600" />
-            </div>
-            <Badge className="mt-2 bg-green-100 text-green-800">Excellent</Badge>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Utilisation CPU</p>
-                <p className="text-2xl font-bold">23%</p>
-              </div>
-              <Minus className="h-8 w-8 text-gray-600" />
-            </div>
-            <Badge className="mt-2 bg-green-100 text-green-800">Normal</Badge>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Utilisation Mémoire</p>
-                <p className="text-2xl font-bold">67%</p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-yellow-600" />
-            </div>
-            <Badge className="mt-2 bg-yellow-100 text-yellow-800">Attention</Badge>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Erreurs (24h)</p>
-                <p className="text-2xl font-bold">3</p>
-              </div>
-              <TrendingDown className="h-8 w-8 text-green-600" />
-            </div>
-            <Badge className="mt-2 bg-green-100 text-green-800">Faible</Badge>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Alerts */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Alertes Récentes</CardTitle>
-          <CardDescription>
-            Dernières alertes et notifications système
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center space-x-3 p-3 border rounded-lg">
-              <AlertTriangle className="h-5 w-5 text-yellow-600" />
-              <div className="flex-1">
-                <p className="font-medium">Utilisation mémoire élevée</p>
-                <p className="text-sm text-gray-600">La mémoire système atteint 85% de capacité</p>
-              </div>
-              <Badge variant="outline">Il y a 2h</Badge>
-            </div>
-
-            <div className="flex items-center space-x-3 p-3 border rounded-lg">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-              <div className="flex-1">
-                <p className="font-medium">Sauvegarde terminée</p>
-                <p className="text-sm text-gray-600">Sauvegarde quotidienne complétée avec succès</p>
-              </div>
-              <Badge variant="outline">Il y a 4h</Badge>
-            </div>
-
-            <div className="flex items-center space-x-3 p-3 border rounded-lg">
-              <XCircle className="h-5 w-5 text-red-600" />
-              <div className="flex-1">
-                <p className="font-medium">Erreur de connexion</p>
-                <p className="text-sm text-gray-600">Échec de connexion à l&apos;API externe</p>
-              </div>
-              <Badge variant="outline">Il y a 6h</Badge>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
-
-
     </div>
   );
 }

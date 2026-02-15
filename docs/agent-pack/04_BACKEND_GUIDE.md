@@ -219,9 +219,10 @@ pub async fn task_archive(
 **Location**: `src-tauri/src/main.rs`
 
 ```rust
+// In the invoke_handler! macro (lines 69-250)
 .invoke_handler(tauri::generate_handler![
-    // ... existing
-    task_archive,
+    // ... existing commands (~260+ commands)
+    commands::task::facade::task_archive,  // Add your command here
 ])
 ```
 
@@ -292,19 +293,28 @@ return Err(AppError::Database("Failed to fetch task".into())); // GOOD
 
 ## Authentication Middleware
 
-### authenticate! Macro (`src-tauri/src/commands/auth_middleware.rs`)
+### authenticate! Macro (`src-tauri/src/commands/auth_middleware.rs:27-66`)
 
 ```rust
-// Basic authentication
+// Basic authentication - validates session token
 let session = authenticate!(&session_token, &state);
 
-// With required role
+// With required role - also checks user has specified role
 let session = authenticate!(&session_token, &state, UserRole::Admin);
 
-// Permission checks
-check_task_permission!(&user.role, "delete");
-check_client_permission!(&user.role, "update");
+// Permission checks for specific operations
+check_task_permission!(&user.role, "delete");      // Task operations
+check_client_permission!(&user.role, "update");    // Client operations
+check_user_permission!(&user.role, op, target_id, current_id); // User management
 ```
+
+**Session Fields** (returned by authenticate!):
+- `user_id`, `email`, `username`: User identification
+- `role`: UserRole enum (Admin, Supervisor, Technician, Viewer)
+- `is_active`: Account status
+- `two_factor_verified`: 2FA status
+- `token`, `refresh_token`: JWT tokens
+- `expires_at`, `last_activity`: Session lifecycle
 
 ### AuthMiddleware Methods
 
@@ -313,8 +323,8 @@ check_client_permission!(&user.role, "update");
 | `authenticate()` | Validates session token | Line 27-66 |
 | `has_permission()` | Checks role hierarchy | Line 76-95 |
 | `can_perform_task_operation()` | Task-specific permissions | Line 107-126 |
-| `can_perform_client_operation()` | Client permissions | Line 136-139 |
-| `can_perform_user_operation()` | User management | Line 150-177 |
+| `can_perform_client_operation()` | Client permissions | Line 136-155 |
+| `can_perform_user_operation()` | User management permissions | Line 150-177 |
 
 ---
 

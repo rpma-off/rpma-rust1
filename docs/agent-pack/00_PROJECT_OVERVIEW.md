@@ -23,13 +23,13 @@ The application is designed to work **completely offline** with a local SQLite d
 
 | Layer | Technology | Purpose |
 |-------|------------|---------|
-| **Desktop Runtime** | Tauri 2.x | Cross-platform app container |
+| **Desktop Runtime** | Tauri 2.1.0 | Cross-platform app container |
 | **Backend** | Rust | Business logic, database access, IPC commands |
-| **Database** | SQLite (WAL mode) | Local persistent storage |
+| **Database** | SQLite (WAL mode) | Local persistent storage with r2d2 connection pooling |
 | **Frontend** | Next.js 14 (App Router) | UI and user interactions |
 | **UI Framework** | React 18 + TypeScript | Component-based UI |
-| **Styling** | Tailwind CSS + shadcn/ui | Design system |
-| **State Management** | React Query + Zustand | Server state + client state |
+| **Styling** | Tailwind CSS + shadcn/ui | Design system (61 UI primitives) |
+| **State Management** | React Query (TanStack) + Zustand | Server state + client state |
 | **Type Sharing** | ts-rs | Rust → TypeScript type generation |
 
 ---
@@ -88,19 +88,24 @@ The application is designed to work **completely offline** with a local SQLite d
 rpma-rust/
 ├── src-tauri/                # Rust/Tauri backend
 │   ├── src/
-│   │   ├── commands/         # IPC command handlers
-│   │   │   ├── mod.rs        # Module exports, ApiResponse, AppState
-│   │   │   ├── auth.rs       # Authentication commands
-│   │   │   ├── client.rs     # Client CRUD
+│   │   ├── commands/         # IPC command handlers (~37 files)
+│   │   │   ├── mod.rs        # Module exports, ApiResponse, AppState, errors
+│   │   │   ├── auth_middleware.rs # authenticate! macro, RBAC checks
+│   │   │   ├── auth.rs       # Authentication commands (login, 2FA, logout)
+│   │   │   ├── client.rs     # Client CRUD (client_crud command)
 │   │   │   ├── material.rs   # Inventory commands
 │   │   │   ├── calendar.rs   # Scheduling commands
 │   │   │   ├── user.rs       # User management
-│   │   │   ├── task/         # Task commands submodule
-│   │   │   ├── intervention/ # Intervention workflow submodule
-│   │   │   ├── reports/      # Reports submodule
-│   │   │   └── settings/     # Settings submodule
-│   │   ├── services/         # Business logic layer (~60 files)
-│   │   ├── repositories/     # Data access layer (~15 files)
+│   │   │   ├── analytics.rs  # Analytics commands
+│   │   │   ├── notification.rs # Notification commands
+│   │   │   ├── performance.rs # Performance metrics
+│   │   │   ├── system.rs     # System info, health checks
+│   │   │   ├── task/         # Task commands submodule (facade, queries, validation, statistics)
+│   │   │   ├── intervention/ # Intervention workflow submodule (workflow, queries, data_access)
+│   │   │   ├── reports/      # Reports submodule (core, search, generation, export)
+│   │   │   └── settings/     # Settings submodule (core, profile, preferences, security)
+│   │   ├── services/         # Business logic layer (~80 files)
+│   │   ├── repositories/     # Data access layer (~18 files)
 │   │   ├── models/           # Data models with ts-rs exports
 │   │   ├── db/               # Database management & migrations
 │   │   ├── sync/             # Offline sync queue
@@ -112,14 +117,38 @@ rpma-rust/
 │   │   ├── app/              # Next.js App Router pages (40+ routes)
 │   │   ├── components/       # React components (~180 files)
 │   │   ├── lib/
-│   │   │   ├── ipc/          # IPC client (client.ts, domains/, utils.ts, cache.ts)
-│   │   │   ├── stores/       # Zustand stores
-│   │   │   ├── services/     # Frontend services
-│   │   │   └── backend.ts    # Auto-generated types from Rust
+│   │   │   ├── ipc/          # IPC client
+│   │   │   │   ├── client.ts      # Main ipcClient object
+│   │   │   │   ├── secure-client.ts # Secure IPC operations
+│   │   │   │   ├── core/          # Core IPC logic (index, response-handlers, types)
+│   │   │   │   ├── domains/       # 19 domain-specific modules (auth, tasks, clients, etc.)
+│   │   │   │   ├── mock/          # Mock implementations
+│   │   │   │   ├── utils.ts       # safeInvoke wrapper
+│   │   │   │   ├── cache.ts       # cachedInvoke, invalidatePattern
+│   │   │   │   └── retry.ts       # Retry logic
+│   │   │   ├── stores/       # Zustand stores (layoutStore, calendarStore)
+│   │   │   ├── services/     # Frontend business logic
+│   │   │   ├── validation/   # Zod schemas
+│   │   │   └── backend.ts    # ⚠️ AUTO-GENERATED (do not edit manually)
 │   │   ├── hooks/            # Custom React hooks (~65 hooks)
 │   │   └── contexts/         # React contexts (4 contexts)
 │   └── package.json
 ├── scripts/                  # Build and validation scripts
+│   ├── write-types.js             # Convert Rust types to TypeScript
+│   ├── validate-types.js          # Validate generated types
+│   ├── check-type-drift.js        # Detect Rust/TS mismatches
+│   ├── security-audit.js          # Comprehensive security scan
+│   ├── ipc-authorization-audit.js # Check IPC auth
+│   ├── validate-migration-system.js # Validate migrations
+│   ├── test-migrations.js         # Test migration execution
+│   ├── migration-health-check.js  # Migration status
+│   ├── detect-schema-drift.js     # Detect schema changes
+│   ├── check_db.js                # Database connectivity
+│   ├── check_db_schema.js         # Schema validation
+│   ├── check-bundle-size.js       # Bundle analysis
+│   ├── detect-duplication.js      # Code duplication
+│   ├── check-mojibake.js          # Encoding issues
+│   └── git-workflow.js            # Git automation
 ├── migrations/               # SQLite migration files
 ├── package.json              # Root package.json (45 npm scripts)
 └── docs/                     # Documentation
@@ -149,14 +178,18 @@ Database (SQLite)
 - **Never manually edit** `frontend/src/lib/backend.ts`
 
 ### 3. **Offline-First + Event Bus**
-- All operations work offline
-- Domain events track state changes via `InMemoryEventBus`
-- Sync queue handles server synchronization
+- All operations work offline with local SQLite database
+- Domain events track state changes via `InMemoryEventBus` (`src-tauri/src/services/event_bus.rs`)
+- Sync queue handles server synchronization (`src-tauri/src/sync/queue.rs`, `background.rs`)
+- Background sync runs at 30-second intervals
 
 ### 4. **Security by Default**
-- All protected IPC commands require `session_token`
-- RBAC enforcement at the command handler level via `AuthMiddleware`
-- Audit logging for sensitive operations
+- All protected IPC commands require `session_token` parameter
+- RBAC enforcement at the command handler level via `authenticate!` macro (`auth_middleware.rs`)
+- Password hashing with Argon2 (`services/auth.rs:779-801`)
+- JWT tokens: 2-hour access, 7-day refresh (`services/token.rs:60-61`)
+- Rate limiting: 5 failed attempts, 15-minute lockout (`services/rate_limiter.rs`)
+- Audit logging for sensitive operations (`services/audit_service.rs`)
 
 ---
 
@@ -221,11 +254,15 @@ npm run build
 | Component | Entry Point | Location |
 |-----------|-------------|----------|
 | Frontend App | Root Layout | `frontend/src/app/layout.tsx` |
-| IPC Client | `ipcClient` | `frontend/src/lib/ipc/client.ts` |
+| Frontend Providers | QueryClientProvider, AuthProvider, Toaster, ThemeProvider | `frontend/src/components/providers.tsx` |
+| IPC Client | `ipcClient` object | `frontend/src/lib/ipc/client.ts` |
+| IPC Hook | `useIpcClient()` | `frontend/src/lib/ipc/client.ts` |
 | Auth Middleware | `authenticate!` macro | `src-tauri/src/commands/auth_middleware.rs` |
 | Database Init | `Database::new()` | `src-tauri/src/db/mod.rs` |
 | Migrations | `Database::migrate()` | `src-tauri/src/db/migrations.rs` |
 | Type Export | `export-types` binary | `src-tauri/src/bin/export-types.rs` |
+| AppState | Centralized service container | `src-tauri/src/lib.rs:279-320` |
+| Command Registration | `tauri::generate_handler![]` | `src-tauri/src/main.rs:69-250` |
 
 ---
 
