@@ -10,12 +10,10 @@ import { z } from 'zod';
 // Import backend types for reference
 import type {
   Task,
-  TaskStatus,
-  TaskPriority,
   Client,
-  CustomerType,
-  UserRole,
-  UserSession
+  UserSession,
+  Intervention,
+  InterventionStep
 } from '@/lib/backend';
 import type { UserAccount } from '@/lib/types';
 
@@ -46,7 +44,6 @@ const TaskPrioritySchema = z.enum(['low', 'medium', 'high', 'urgent']);
 // Client-related schemas (defined early to avoid circular dependencies)
 export const CustomerTypeSchema = z.enum(['individual', 'business']);
 
-const SortOrderSchema = z.enum(['asc', 'desc']);
 const BigIntLikeSchema = z.union([
   z.bigint(),
   z.number().int().nonnegative().transform((value) => BigInt(value)),
@@ -1134,48 +1131,48 @@ export function validateMultiple<T>(
  * IPC-specific validation helpers
  */
 // Validation functions for new schemas
-export function validateIntervention(data: unknown): any {
-  return InterventionSchema.parse(data);
+export function validateIntervention<T = Intervention>(data: unknown): T {
+  return InterventionSchema.parse(data) as T;
 }
 
-export function validateInterventionStep(data: unknown): any {
-  return InterventionStepSchema.parse(data);
+export function validateInterventionStep<T = InterventionStep>(data: unknown): T {
+  return InterventionStepSchema.parse(data) as T;
 }
 
-export function validateNotificationTemplate(data: unknown): any {
+export function validateNotificationTemplate(data: unknown): unknown {
   return NotificationTemplateSchema.parse(data);
 }
 
-export function validateNotificationMessage(data: unknown): any {
+export function validateNotificationMessage(data: unknown): unknown {
   return NotificationMessageSchema.parse(data);
 }
 
-export function validateNotificationConfig(data: unknown): any {
+export function validateNotificationConfig(data: unknown): unknown {
   return NotificationConfigSchema.parse(data);
 }
 
-export function validateAppSettings(data: unknown): any {
+export function validateAppSettings(data: unknown): unknown {
   return AppSettingsSchema.parse(data);
 }
 
-export function validateSystemConfiguration(data: unknown): any {
+export function validateSystemConfiguration(data: unknown): unknown {
   return SystemConfigurationSchema.parse(data);
 }
 
-export function validateGpsLocation(data: unknown): any {
+export function validateGpsLocation(data: unknown): unknown {
   return GpsLocationSchema.parse(data);
 }
 
-export function validateSyncOperation(data: unknown): any {
+export function validateSyncOperation(data: unknown): unknown {
   return SyncOperationSchema.parse(data);
 }
 
-export function validateSyncQueueMetrics(data: unknown): any {
+export function validateSyncQueueMetrics(data: unknown): unknown {
   return SyncQueueMetricsSchema.parse(data);
 }
 
 // Safe validation functions
-export function safeValidateIntervention(data: unknown): any {
+export function safeValidateIntervention(data: unknown): unknown | null {
   try {
     return InterventionSchema.parse(data);
   } catch {
@@ -1183,7 +1180,7 @@ export function safeValidateIntervention(data: unknown): any {
   }
 }
 
-export function safeValidateInterventionStep(data: unknown): any {
+export function safeValidateInterventionStep(data: unknown): unknown | null {
   try {
     return InterventionStepSchema.parse(data);
   } catch {
@@ -1191,7 +1188,7 @@ export function safeValidateInterventionStep(data: unknown): any {
   }
 }
 
-export function safeValidateNotificationTemplate(data: unknown): any {
+export function safeValidateNotificationTemplate(data: unknown): unknown | null {
   try {
     return NotificationTemplateSchema.parse(data);
   } catch {
@@ -1199,7 +1196,7 @@ export function safeValidateNotificationTemplate(data: unknown): any {
   }
 }
 
-export function safeValidateNotificationMessage(data: unknown): any {
+export function safeValidateNotificationMessage(data: unknown): unknown | null {
   try {
     return NotificationMessageSchema.parse(data);
   } catch {
@@ -1207,7 +1204,7 @@ export function safeValidateNotificationMessage(data: unknown): any {
   }
 }
 
-export function safeValidateNotificationConfig(data: unknown): any {
+export function safeValidateNotificationConfig(data: unknown): unknown | null {
   try {
     return NotificationConfigSchema.parse(data);
   } catch {
@@ -1215,7 +1212,7 @@ export function safeValidateNotificationConfig(data: unknown): any {
   }
 }
 
-export function safeValidateAppSettings(data: unknown): any {
+export function safeValidateAppSettings(data: unknown): unknown | null {
   try {
     return AppSettingsSchema.parse(data);
   } catch {
@@ -1223,7 +1220,7 @@ export function safeValidateAppSettings(data: unknown): any {
   }
 }
 
-export function safeValidateSystemConfiguration(data: unknown): any {
+export function safeValidateSystemConfiguration(data: unknown): unknown | null {
   try {
     return SystemConfigurationSchema.parse(data);
   } catch {
@@ -1231,7 +1228,7 @@ export function safeValidateSystemConfiguration(data: unknown): any {
   }
 }
 
-export function safeValidateGpsLocation(data: unknown): any {
+export function safeValidateGpsLocation(data: unknown): unknown | null {
   try {
     return GpsLocationSchema.parse(data);
   } catch {
@@ -1300,15 +1297,16 @@ export function validateIpcResponse<T>(
     };
   }
 
-  const resp = response as any;
+  const resp = response as Record<string, unknown>;
 
   // Check for ApiResponse structure
   if (typeof resp.success === 'boolean') {
     if (!resp.success) {
+      const errorMessage = typeof resp.error === 'string' ? resp.error : 'IPC call failed';
       return {
         success: false,
-        error: resp.error || 'IPC call failed',
-        details: resp.error ? [{ field: 'error', message: resp.error }] : undefined
+        error: errorMessage,
+        details: typeof resp.error === 'string' ? [{ field: 'error', message: resp.error }] : undefined
       };
     }
 

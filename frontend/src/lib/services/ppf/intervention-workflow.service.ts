@@ -114,9 +114,10 @@ export class InterventionWorkflowService {
 
       // Map backend Intervention to frontend PPFIntervention format
       const intervention = result;
+      const interventionRecord = intervention as Record<string, unknown>;
       const data: PPFIntervention = {
         id: intervention.id,
-        taskId: intervention.task_id, // Map task_id to taskId
+        taskId: (interventionRecord.task_id as string) || (interventionRecord.taskId as string) || '',
         steps: [], // Will be populated separately
         status: (() => {
           switch (intervention.status) {
@@ -130,8 +131,8 @@ export class InterventionWorkflowService {
         })(),
         progress: intervention.completion_percentage,
         currentStep: intervention.current_step,
-        createdAt: new Date(intervention.created_at).toISOString(),
-        updatedAt: new Date(intervention.updated_at).toISOString(),
+        createdAt: new Date(String(intervention.created_at)).toISOString(),
+        updatedAt: new Date(String(intervention.updated_at)).toISOString(),
         technicianId: intervention.technician_id || undefined,
         clientId: intervention.client_id || undefined,
         vehicleMake: intervention.vehicle_make || undefined,
