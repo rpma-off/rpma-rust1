@@ -2,7 +2,7 @@ import { safeInvoke } from './utils';
 import { cachedInvoke, invalidatePattern } from './cache';
 import type { ApiError } from '@/lib/backend';
 import type { UserAccount } from '@/lib/backend';
-import { createPermissionChecker, withPermissionCheck } from '@/lib/rbac';
+import { withPermissionCheck } from '@/lib/rbac';
 import type { JsonObject, JsonValue } from '@/types/json';
 import type {
   UserSession,
@@ -14,18 +14,9 @@ import type {
   TaskQuery,
   ClientQuery,
   Photo,
-  Intervention,
-  InterventionStep,
   TaskListResponse,
   ClientListResponse,
-  ClientWithTasks,
   TaskStatistics,
-  ClientStatistics,
-  StartInterventionRequest,
-  AdvanceStepRequest,
-  SaveStepProgressRequest,
-  FinalizeInterventionRequest,
-  SendNotificationRequest,
   CreateUserRequest,
   UpdateUserRequest,
   UserListResponse,
@@ -36,38 +27,16 @@ import type {
   TaskCompletionReport,
   TechnicianPerformanceReport,
   ClientAnalyticsReport,
-  QualityComplianceReport,
-  MaterialUsageReport,
-  GeographicReport,
-  SeasonalReport,
-  OperationalIntelligenceReport,
   ExportFormat,
-  ReportRequest,
-  ReportResponse,
   ExportResult,
 } from '@/lib/backend';
 import type { SignupRequest, CreateClientRequest, UpdateClientRequest } from '@/lib/validation/ipc-schemas';
 import { sanitizeInput } from '@/lib/utils/sanitize';
 
-// Temporary local definition until backend.ts includes this type
-interface InterventionReportResult {
-  success: boolean;
-  download_url?: string;
-  file_path?: string;
-  file_name?: string;
-  format: string;
-  file_size?: number;
-  generated_at: string;
-}
-import type { CreateEventInput, UpdateEventInput } from '@/types/calendar';
 import {
   validateUserSession,
   validateTask,
   validateClient,
-  // Add more validators as needed
-  validateIntervention,
-  validateInterventionStep,
-  validateStartInterventionResponse,
 } from '@/lib/validation/backend-type-guards';
 
 interface BackendResponse<T = JsonValue> {
@@ -112,8 +81,6 @@ const invalidateUserSettingsCache = (sessionToken: string): void => {
  * Creates a permission-aware IPC client
  */
 export const createSecureIpcClient = (currentUser: UserAccount | null) => {
-  const permissionChecker = createPermissionChecker(currentUser);
-  
   return {
     // Auth operations
     auth: {

@@ -67,107 +67,107 @@ export class WorkflowService {
     return WorkflowService.instance;
   }
 
-  async createWorkflowExecution(dto: CreateWorkflowExecutionDTO): Promise<WorkflowExecution> {
+  async createWorkflowExecution(_dto: CreateWorkflowExecutionDTO): Promise<WorkflowExecution> {
     // Implementation would call backend
     throw new Error('Not implemented');
   }
 
-  async getWorkflowExecution(id: string): Promise<WorkflowExecution | null> {
+  async getWorkflowExecution(_id: string): Promise<WorkflowExecution | null> {
     // Implementation would call backend
     throw new Error('Not implemented');
   }
 
-  async startStepTiming(dto: StartTimingDTO): Promise<void> {
+  async startStepTiming(_dto: StartTimingDTO): Promise<void> {
     // Implementation would call backend
     throw new Error('Not implemented');
   }
 
-  async completeStep(stepId: string, data?: any): Promise<void> {
+  async completeStep(_stepId: string, _data?: unknown): Promise<void> {
     // Implementation would call backend
     throw new Error('Not implemented');
   }
 
-  async addSignature(dto: SignatureDTO): Promise<void> {
+  async addSignature(_dto: SignatureDTO): Promise<void> {
     // Implementation would call backend
     throw new Error('Not implemented');
   }
 
-  async getWorkflowByTaskId(taskId: string): Promise<WorkflowExecution | null> {
+  async getWorkflowByTaskId(_taskId: string): Promise<WorkflowExecution | null> {
     // Implementation would call backend
     throw new Error('Not implemented');
   }
 
-  async getWorkflowSteps(workflowId: string): Promise<WorkflowExecutionStep[]> {
+  async getWorkflowSteps(_workflowId: string): Promise<WorkflowExecutionStep[]> {
     // Implementation would call backend
     throw new Error('Not implemented');
   }
 
-  async startWorkflowExecution(dto: CreateWorkflowExecutionDTO): Promise<WorkflowExecution> {
+  async startWorkflowExecution(_dto: CreateWorkflowExecutionDTO): Promise<WorkflowExecution> {
     // Implementation would call backend
     throw new Error('Not implemented');
   }
 
-  async startStep(stepId: string, workflowId: string, userId: string): Promise<void> {
+  async startStep(_stepId: string, _workflowId: string, _userId: string): Promise<void> {
     // Implementation would call backend
     throw new Error('Not implemented');
   }
 
-  async skipStep(stepId: string, workflowId: string, userId: string, reason?: string): Promise<void> {
+  async skipStep(_stepId: string, _workflowId: string, _userId: string, _reason?: string): Promise<void> {
     // Implementation would call backend
     throw new Error('Not implemented');
   }
 
-  async updateWorkflowExecution(id: string, updates: Partial<WorkflowExecution>): Promise<WorkflowExecution> {
+  async updateWorkflowExecution(_id: string, _updates: Partial<WorkflowExecution>): Promise<WorkflowExecution> {
     // Implementation would call backend
     throw new Error('Not implemented');
   }
 
-  async updateStepData(stepId: string, workflowId: string, data: any, userId: string): Promise<void> {
+  async updateStepData(_stepId: string, _workflowId: string, _data: unknown, _userId: string): Promise<void> {
     // Implementation would call backend
     throw new Error('Not implemented');
   }
 
-  async pauseStepTiming(stepId: string, workflowId: string, userId: string): Promise<void> {
+  async pauseStepTiming(_stepId: string, _workflowId: string, _userId: string): Promise<void> {
     // Implementation would call backend
     throw new Error('Not implemented');
   }
 
-  async resumeStepTiming(stepId: string, workflowId: string, userId: string): Promise<void> {
+  async resumeStepTiming(_stepId: string, _workflowId: string, _userId: string): Promise<void> {
     // Implementation would call backend
     throw new Error('Not implemented');
   }
 
-  async getWorkflowStep(id: string, sessionToken: string): Promise<ApiResponse<any>> {
+  async getWorkflowStep(id: string, sessionToken: string): Promise<ApiResponse<WorkflowExecutionStep>> {
     try {
       const response = await ipcClient.interventions.getStep(id, sessionToken);
-      return { success: true, data: response };
+      return { success: true, data: response as unknown as WorkflowExecutionStep };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       return { success: false, error: err.message };
     }
   }
 
-  async pauseWorkflow(id: string, sessionToken: string): Promise<ApiResponse<any>> {
+  async pauseWorkflow(id: string, sessionToken: string): Promise<ApiResponse<WorkflowExecution>> {
     try {
       const response = await ipcClient.interventions.updateWorkflow(id, { status: 'paused' }, sessionToken);
-      return { success: true, data: response };
+      return { success: true, data: response as unknown as WorkflowExecution };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       return { success: false, error: err.message };
     }
   }
 
-  async resumeWorkflow(id: string, sessionToken: string): Promise<ApiResponse<any>> {
+  async resumeWorkflow(id: string, sessionToken: string): Promise<ApiResponse<WorkflowExecution>> {
     try {
       const response = await ipcClient.interventions.updateWorkflow(id, { status: 'in_progress' }, sessionToken);
-      return { success: true, data: response };
+      return { success: true, data: response as unknown as WorkflowExecution };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       return { success: false, error: err.message };
     }
   }
 
-  async uploadStepPhotos(stepId: string, workflowId: string, photos: File[], userId: string): Promise<{ urls: string[] }> {
+  async uploadStepPhotos(_stepId: string, _workflowId: string, _photos: File[], _userId: string): Promise<{ urls: string[] }> {
     // Implementation would call backend
     throw new Error('Not implemented');
   }

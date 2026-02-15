@@ -5,24 +5,25 @@
 
 import { logger } from './logging';
 import { LogDomain } from './logging/types';
+import React from 'react';
 
 export interface WSMessage {
   type: string;
-  data?: any;
+  data?: Record<string, unknown>;
   timestamp: string;
 }
 
 export interface WSEventHandlers {
-  onTaskCreated?: (task: any) => void;
-  onTaskUpdated?: (taskId: string, updates: any) => void;
+  onTaskCreated?: (task: Record<string, unknown>) => void;
+  onTaskUpdated?: (taskId: string, updates: Record<string, unknown>) => void;
   onTaskDeleted?: (taskId: string) => void;
   onTaskStatusChanged?: (taskId: string, oldStatus: string, newStatus: string) => void;
   onInterventionStarted?: (interventionId: string, taskId: string) => void;
-  onInterventionUpdated?: (interventionId: string, updates: any) => void;
+  onInterventionUpdated?: (interventionId: string, updates: Record<string, unknown>) => void;
   onInterventionCompleted?: (interventionId: string) => void;
   onInterventionStepAdvanced?: (interventionId: string, stepNumber: number) => void;
-  onClientCreated?: (client: any) => void;
-  onClientUpdated?: (clientId: string, updates: any) => void;
+  onClientCreated?: (client: Record<string, unknown>) => void;
+  onClientUpdated?: (clientId: string, updates: Record<string, unknown>) => void;
   onClientDeleted?: (clientId: string) => void;
   onNotification?: (title: string, message: string, level: string) => void;
   onConnected?: () => void;
@@ -122,43 +123,44 @@ class WebSocketClient {
 
   private handleMessage(message: WSMessage): void {
     logger.debug(LogDomain.SYSTEM, 'WebSocketClient: Received message', { type: message.type, hasData: !!message.data });
+    const data = message.data ?? {};
 
     switch (message.type) {
       case 'TaskCreated':
-        this.handlers.onTaskCreated?.(message.data.task);
+        this.handlers.onTaskCreated?.((data.task ?? {}) as Record<string, unknown>);
         break;
       case 'TaskUpdated':
-        this.handlers.onTaskUpdated?.(message.data.task_id, message.data.updates);
+        this.handlers.onTaskUpdated?.(data.task_id as string, (data.updates ?? {}) as Record<string, unknown>);
         break;
       case 'TaskDeleted':
-        this.handlers.onTaskDeleted?.(message.data.task_id);
+        this.handlers.onTaskDeleted?.(data.task_id as string);
         break;
       case 'TaskStatusChanged':
-        this.handlers.onTaskStatusChanged?.(message.data.task_id, message.data.old_status, message.data.new_status);
+        this.handlers.onTaskStatusChanged?.(data.task_id as string, data.old_status as string, data.new_status as string);
         break;
       case 'InterventionStarted':
-        this.handlers.onInterventionStarted?.(message.data.intervention_id, message.data.task_id);
+        this.handlers.onInterventionStarted?.(data.intervention_id as string, data.task_id as string);
         break;
       case 'InterventionUpdated':
-        this.handlers.onInterventionUpdated?.(message.data.intervention_id, message.data.updates);
+        this.handlers.onInterventionUpdated?.(data.intervention_id as string, (data.updates ?? {}) as Record<string, unknown>);
         break;
       case 'InterventionCompleted':
-        this.handlers.onInterventionCompleted?.(message.data.intervention_id);
+        this.handlers.onInterventionCompleted?.(data.intervention_id as string);
         break;
       case 'InterventionStepAdvanced':
-        this.handlers.onInterventionStepAdvanced?.(message.data.intervention_id, message.data.step_number);
+        this.handlers.onInterventionStepAdvanced?.(data.intervention_id as string, data.step_number as number);
         break;
       case 'ClientCreated':
-        this.handlers.onClientCreated?.(message.data.client);
+        this.handlers.onClientCreated?.((data.client ?? {}) as Record<string, unknown>);
         break;
       case 'ClientUpdated':
-        this.handlers.onClientUpdated?.(message.data.client_id, message.data.updates);
+        this.handlers.onClientUpdated?.(data.client_id as string, (data.updates ?? {}) as Record<string, unknown>);
         break;
       case 'ClientDeleted':
-        this.handlers.onClientDeleted?.(message.data.client_id);
+        this.handlers.onClientDeleted?.(data.client_id as string);
         break;
       case 'Notification':
-        this.handlers.onNotification?.(message.data.title, message.data.message, message.data.level);
+        this.handlers.onNotification?.(data.title as string, data.message as string, data.level as string);
         break;
       default:
         logger.warn(LogDomain.SYSTEM, 'WebSocketClient: Unknown message type', { type: message.type });
@@ -220,19 +222,16 @@ export function disconnectWebSocketClient(): void {
 // React hook for using WebSocket client
 export function useWebSocket(handlers: WSEventHandlers = {}) {
   React.useEffect(() => {
-    const client = initWebSocketClient(handlers);
+    initWebSocketClient(handlers);
 
     return () => {
       // Don't disconnect on unmount, let it persist for the app
       // disconnectWebSocketClient();
     };
-  }, []);
+  }, [handlers]);
 
   return {
     client: wsClient,
     isConnected: wsClient?.isConnected() ?? false,
   };
 }
-
-// Import React for the hook
-import React from 'react';
