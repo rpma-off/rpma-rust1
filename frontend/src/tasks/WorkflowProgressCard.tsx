@@ -20,6 +20,8 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { ipcClient } from '@/lib/ipc/client';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/hooks/useTranslation';
+import { workflowExecutionStatusLabels } from '@/lib/i18n/status-labels';
 
 interface WorkflowProgressCardProps {
   taskId: string;
@@ -43,6 +45,7 @@ export function WorkflowProgressCard({
 }: WorkflowProgressCardProps) {
   const { session } = useAuth();
   const router = useRouter();
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,37 +56,37 @@ export function WorkflowProgressCard({
         return {
           color: 'bg-gray-100 text-gray-800',
           icon: Clock,
-          label: 'Not Started'
+          label: workflowExecutionStatusLabels.not_started
         };
       case 'in_progress':
         return {
           color: 'bg-blue-100 text-blue-800',
           icon: Play,
-          label: 'In Progress'
+          label: workflowExecutionStatusLabels.in_progress
         };
       case 'paused':
         return {
           color: 'bg-yellow-100 text-yellow-800',
           icon: Pause,
-          label: 'Paused'
+          label: workflowExecutionStatusLabels.paused
         };
       case 'completed':
         return {
           color: 'bg-green-100 text-green-800',
           icon: CheckCircle,
-          label: 'Completed'
+          label: workflowExecutionStatusLabels.completed
         };
       case 'cancelled':
         return {
           color: 'bg-red-100 text-red-800',
           icon: AlertCircle,
-          label: 'Cancelled'
+          label: workflowExecutionStatusLabels.cancelled
         };
       default:
         return {
           color: 'bg-gray-100 text-gray-800',
           icon: Clock,
-          label: 'Unknown'
+          label: t('status.unknown')
         };
     }
   };
@@ -215,7 +218,7 @@ export function WorkflowProgressCard({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Workflow className="h-5 w-5 text-blue-600" />
-            <CardTitle className="text-lg">Workflow Progress</CardTitle>
+            <CardTitle className="text-lg">{t('workflow.progress')}</CardTitle>
           </div>
           <Badge className={statusInfo.color}>
             <StatusIcon className="h-3 w-3 mr-1" />
@@ -224,22 +227,22 @@ export function WorkflowProgressCard({
         </div>
         {templateName && (
           <CardDescription>
-            Template: {templateName}
+            {t('workflow.template', { name: templateName })}
           </CardDescription>
         )}
       </CardHeader>
-      
+
       <CardContent className="space-y-4">
         {workflowProgress && (
           <>
             {/* Progress Bar */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Progress</span>
+                <span className="text-muted-foreground">{t('workflow.progressLabel')}</span>
                 <span className="font-medium">{workflowProgress.percentage}%</span>
               </div>
-              <Progress 
-                value={workflowProgress.percentage} 
+              <Progress
+                value={workflowProgress.percentage}
                 className="h-2"
               />
             </div>
@@ -247,13 +250,13 @@ export function WorkflowProgressCard({
             {/* Step Information */}
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="space-y-1">
-                <div className="text-muted-foreground">Current Step</div>
+                <div className="text-muted-foreground">{t('workflow.currentStep')}</div>
                 <div className="font-medium">
                   {workflowProgress.currentStep} of {workflowProgress.totalSteps}
                 </div>
               </div>
               <div className="space-y-1">
-                <div className="text-muted-foreground">Completed</div>
+                <div className="text-muted-foreground">{t('workflow.completed')}</div>
                 <div className="font-medium">
                   {workflowProgress.completedSteps} steps
                 </div>
@@ -276,7 +279,7 @@ export function WorkflowProgressCard({
             ) : (
               <ButtonIcon className="h-4 w-4 mr-2" />
             )}
-            {isLoading ? 'Chargement...' : buttonConfig.text}
+            {isLoading ? t('common.loading') : buttonConfig.text}
           </Button>
 
           {/* Error Display */}

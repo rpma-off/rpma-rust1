@@ -130,21 +130,21 @@ export function MessageComposer({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs value={messageType} onValueChange={(value) => setMessageType(value as 'email' | 'sms' | 'in_app')}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="email" className="flex items-center gap-2">
-              <Mail className="h-4 w-4" />
-              Email
-            </TabsTrigger>
-            <TabsTrigger value="sms" className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4" />
-              SMS
-            </TabsTrigger>
-            <TabsTrigger value="in_app" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              In-App
-            </TabsTrigger>
-          </TabsList>
+          <Tabs value={messageType} onValueChange={(value) => setMessageType(value as 'email' | 'sms' | 'in_app')}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="email" className="flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                {t('messages.emailAddress').split(':')[0]}
+              </TabsTrigger>
+              <TabsTrigger value="sms" className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                SMS
+              </TabsTrigger>
+              <TabsTrigger value="in_app" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                {t('misc.application')}
+              </TabsTrigger>
+            </TabsList>
 
           <TabsContent value="email" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -155,7 +155,7 @@ export function MessageComposer({
                   type="email"
                   value={recipientEmail}
                   onChange={(e) => setRecipientEmail(e.target.value)}
-                  placeholder="recipient@example.com"
+                  placeholder="destinataire@exemple.com"
                 />
               </div>
               <div>
@@ -192,7 +192,7 @@ export function MessageComposer({
                   id="phone"
                   value={recipientPhone}
                   onChange={(e) => setRecipientPhone(e.target.value)}
-                  placeholder="+1234567890"
+                  placeholder="+33612345678"
                 />
               </div>
               <div>

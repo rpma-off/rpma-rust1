@@ -60,6 +60,7 @@ export const fr = {
     clients: "Clients",
     interventions: "Interventions",
     schedule: "Planning",
+    proposals: "Devis",
     inventory: "Inventaire",
     reports: "Rapports",
     settings: "Paramètres",
@@ -637,6 +638,17 @@ export const fr = {
     account: "Compte",
     accessibility: "Accessibilité",
     
+    // Configuration settings
+    monitoring: "Surveillance",
+    performance: "Performance",
+    cache: "Cache",
+    thresholds: "Seuils",
+    storage: "Stockage",
+    port: "Port",
+    description: "Description",
+    conditions: "Conditions",
+    contains: "contient",
+    
     // Messages
     settingsSaved: "Paramètres enregistrés",
     settingsReset: "Paramètres réinitialisés",
@@ -1113,6 +1125,47 @@ export const fr = {
     notAuthenticated: "Utilisateur non authentifié",
     noActiveIntervention: "Aucune intervention active trouvée",
     unknown: "Inconnu",
+  },
+
+  // Sync
+  sync: {
+    loading: "Chargement...",
+    offline: "Hors ligne",
+    error: "Erreur de synchronisation",
+    syncing: "Synchronisation de {count} élément(s)",
+    synced: "Synchronisé",
+    retry: "Réessayer",
+  },
+
+  // Camera
+  camera: {
+    error: "Erreur de caméra",
+    unableToAccess: "Impossible d'accéder à la caméra. Veuillez vérifier les permissions.",
+    failedToCapture: "Échec de la capture de photo",
+    capturePhoto: "Capturer photo PPF",
+    capturing: "Capture en cours...",
+    capture: "Capturer",
+    resolution: "Résolution",
+    offlineMode: "Mode hors ligne - La photo sera mise en file pour téléchargement",
+  },
+
+  // Workflow
+  workflow: {
+    progress: "Progression du workflow",
+    template: "Modèle: {name}",
+    progressLabel: "Progression",
+    currentStep: "Étape actuelle",
+    completed: "Terminé",
+  },
+
+  // Dashboard
+  dashboard: {
+    statistics: "Graphiques statistiques",
+    toBeImplemented: "Composant de graphiques à implémenter",
+    totalTasks: "Total des tâches: {total}",
+    completed: "Terminées: {count}",
+    inProgress: "En cours: {count}",
+    pending: "En attente: {count}",
   },
 
   // Misc

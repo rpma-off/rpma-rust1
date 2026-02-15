@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { SyncIndicator } from '@/components/ui/SyncIndicator';
 import { useAuth } from '@/lib/auth/compatibility';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface Task {
   id: string;
@@ -24,12 +25,6 @@ interface RPMAHeaderProps {
   isSidebarOpen?: boolean;
 }
 
-const navTabs = [
-  { key: 'calendar', label: 'Calendar', href: '/dashboard', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" /></svg> },
-  { key: 'jobs', label: 'Jobs', href: '/tasks', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.532 1.532 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.532 1.532 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg> },
-  { key: 'customers', label: 'Customers', href: '/clients', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" /></svg> },
-];
-
 export function RPMAHeader({
   onMobileMenuToggle: _onMobileMenuToggle,
   onSidebarToggle,
@@ -41,10 +36,17 @@ export function RPMAHeader({
   const pathname = usePathname();
   const router = useRouter();
   const { user, profile, signOut } = useAuth();
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [_searchFocused, setSearchFocused] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+
+  const navTabs = [
+    { key: 'calendar', label: t('nav.schedule'), href: '/dashboard', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" /></svg> },
+    { key: 'jobs', label: t('nav.tasks'), href: '/tasks', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.532 1.532 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.532 1.532 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg> },
+    { key: 'customers', label: t('nav.clients'), href: '/clients', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" /></svg> },
+  ];
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
@@ -152,7 +154,7 @@ export function RPMAHeader({
           <input
             ref={searchInputRef}
             type="text"
-            placeholder="Search..."
+            placeholder={t('common.search')}
             className={cn(
               'bg-white/20 text-white placeholder-white/70 rounded-full py-1.5 px-4 text-sm w-48 focus:w-64 transition-all duration-200',
               'focus:outline-none focus:ring-2 focus:ring-white focus:bg-white/30'
@@ -183,7 +185,7 @@ export function RPMAHeader({
             <div className="absolute top-full right-0 mt-2 bg-white rounded-[6px] shadow-lg border border-gray-200 z-50 max-h-96 overflow-hidden min-w-64">
               <div className="p-2">
                 <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Results ({searchResults.length})
+                  {t('misc.results', { count: searchResults.length })}
                 </div>
                 {searchResults.map((task) => (
                   <button
@@ -244,15 +246,15 @@ export function RPMAHeader({
             {showUserMenu && (
               <div className="absolute top-full right-0 mt-2 bg-white rounded-[6px] shadow-lg border border-gray-200 py-2 z-50 min-w-48">
                 <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-100">
-                  Account
+                  {t('settings.account')}
                 </div>
                 <a href="/settings" className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
                   <UserCircle className="w-4 h-4 mr-2" />
-                  Profile
+                  {t('nav.profile')}
                 </a>
                 <a href="/settings" className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
                   <Settings className="w-4 h-4 mr-2" />
-                  Settings
+                  {t('nav.settings')}
                 </a>
                 <div className="px-3 py-2 border-t border-gray-100">
                   <button
@@ -264,7 +266,7 @@ export function RPMAHeader({
                     className="flex items-center text-sm text-red-600 hover:text-red-700 transition-colors"
                   >
                     <LogOut className="w-4 h-4 mr-2" />
-                    Sign out
+                    {t('nav.logout')}
                   </button>
                 </div>
               </div>

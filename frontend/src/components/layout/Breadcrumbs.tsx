@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface BreadcrumbItem {
   label: string;
@@ -13,7 +14,8 @@ interface BreadcrumbItem {
 
 export function Breadcrumbs({ className }: { className?: string }) {
   const pathname = usePathname();
-  const breadcrumbs = generateBreadcrumbs(pathname);
+  const { t } = useTranslation();
+  const breadcrumbs = generateBreadcrumbs(pathname, t);
 
   if (breadcrumbs.length === 0) return null;
 
@@ -40,22 +42,22 @@ export function Breadcrumbs({ className }: { className?: string }) {
   );
 }
 
-function generateBreadcrumbs(pathname: string): BreadcrumbItem[] {
+function generateBreadcrumbs(pathname: string, t: (key: string) => string): BreadcrumbItem[] {
   const segments = pathname.split('/').filter(Boolean);
-  
+
   if (segments.length === 0) {
-    return [{ label: 'Accueil', href: '/dashboard', current: pathname === '/dashboard' }];
+    return [{ label: t('nav.home'), href: '/dashboard', current: pathname === '/dashboard' }];
   }
 
   const items: BreadcrumbItem[] = [];
   let currentPath = '';
 
-  items.push({ label: 'Accueil', href: '/dashboard' });
+  items.push({ label: t('nav.home'), href: '/dashboard' });
 
   segments.forEach((segment, index) => {
     currentPath += `/${segment}`;
     const isLast = index === segments.length - 1;
-    const label = getBreadcrumbLabel(segment, currentPath, segments, index);
+    const label = getBreadcrumbLabel(segment, currentPath, segments, index, t);
 
     if (label) {
       items.push({
@@ -73,29 +75,30 @@ function getBreadcrumbLabel(
   segment: string,
   _currentPath: string,
   _allSegments: string[],
-  _index: number
+  _index: number,
+  t: (key: string) => string
 ): string | null {
   const segmentLower = segment.toLowerCase();
 
   const pathMap: Record<string, string> = {
-    'dashboard': 'Tableau de bord',
-    'tasks': 'Tâches',
+    'dashboard': t('nav.dashboard'),
+    'tasks': t('nav.tasks'),
     'new': 'Nouveau',
-    'calendar': 'Calendrier',
-    'clients': 'Clients',
+    'calendar': t('nav.schedule'),
+    'clients': t('nav.clients'),
     'analytics': 'Analyses',
-    'inventory': 'Inventaire',
-    'data-explorer': 'Explorateur de données',
-    'reports': 'Rapports',
-    'admin': 'Administration',
-    'settings': 'Paramètres',
-    'configuration': 'Configuration',
-    'audit': 'Audit',
-    'users': 'Utilisateurs',
-    'team': 'Équipe',
-    'technicians': 'Techniciens',
-    'schedule': 'Planning',
-    'messages': 'Messages',
+    'inventory': t('nav.inventory'),
+    'data-explorer': t('nav.dataExplorer'),
+    'reports': t('nav.reports'),
+    'admin': t('nav.admin'),
+    'settings': t('nav.settings'),
+    'configuration': t('nav.configuration'),
+    'audit': t('nav.audit'),
+    'users': t('nav.users'),
+    'team': t('nav.team'),
+    'technicians': t('nav.technicians'),
+    'schedule': t('nav.schedule'),
+    'messages': t('nav.messages'),
     'bootstrap-admin': 'Configuration initiale',
     'unauthorized': 'Non autorisé',
     'login': 'Connexion',

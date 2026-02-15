@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Bell, Menu, Search, X, CalendarDays, Wrench, FileText, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface TopbarProps {
   onMenuToggle: () => void;
@@ -11,14 +12,15 @@ interface TopbarProps {
   isSidebarOpen: boolean;
 }
 
-const navTabs = [
-  { key: 'calendar', label: 'Calendar', href: '/dashboard', enabled: true, icon: <CalendarDays className="h-4 w-4" /> },
-  { key: 'jobs', label: 'Jobs', href: '/tasks', enabled: true, icon: <Wrench className="h-4 w-4" /> },
-  { key: 'proposals', label: 'Proposals', href: '#', enabled: false, icon: <FileText className="h-4 w-4" /> },
-  { key: 'customers', label: 'Customers', href: '/clients', enabled: true, icon: <Users className="h-4 w-4" /> },
-];
-
 export function Topbar({ onMenuToggle, onSidebarToggle, isSidebarOpen }: TopbarProps) {
+  const { t } = useTranslation();
+
+  const navTabs = [
+    { key: 'calendar', label: t('nav.schedule'), href: '/dashboard', enabled: true, icon: <CalendarDays className="h-4 w-4" /> },
+    { key: 'jobs', label: t('nav.tasks'), href: '/tasks', enabled: true, icon: <Wrench className="h-4 w-4" /> },
+    { key: 'proposals', label: t('nav.proposals'), href: '#', enabled: false, icon: <FileText className="h-4 w-4" /> },
+    { key: 'customers', label: t('nav.clients'), href: '/clients', enabled: true, icon: <Users className="h-4 w-4" /> },
+  ];
   const pathname = usePathname();
 
   const activeTab = (() => {
