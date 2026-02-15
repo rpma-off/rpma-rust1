@@ -1249,9 +1249,9 @@ export default function TaskCompletedPage() {
                           </div>
                           {workflowSteps.inspection.collected_data && (
                             <div className="pl-6 space-y-2">
-                              {workflowSteps.inspection.collected_data.notes && (
+                              {!!workflowSteps.inspection.collected_data.notes && (
                                 <div className="text-sm text-gray-600">
-                                  <strong>Notes:</strong> {workflowSteps.inspection.collected_data.notes}
+                                  <strong>Notes:</strong> {String(workflowSteps.inspection.collected_data.notes)}
                                 </div>
                               )}
                               {workflowSteps.inspection.completed_at && (
@@ -1279,29 +1279,29 @@ export default function TaskCompletedPage() {
                           {workflowSteps.preparation.collected_data && (
                             <div className="pl-6 space-y-3">
                               {/* Environment Data */}
-                              {workflowSteps.preparation.collected_data.environment && (
+                              {!!workflowSteps.preparation.collected_data.environment ? (
                                 <div className="grid grid-cols-2 gap-4">
-                                  {workflowSteps.preparation.collected_data.environment.temp_celsius && (
+                                  {!!(workflowSteps.preparation.collected_data.environment as Record<string, unknown>).temp_celsius && (
                                     <div className="flex items-center space-x-2 text-sm">
                                       <Thermometer className="h-4 w-4 text-red-500" />
-                                      <span>{workflowSteps.preparation.collected_data.environment.temp_celsius}°C</span>
+                                      <span>{String((workflowSteps.preparation.collected_data.environment as Record<string, unknown>).temp_celsius)}°C</span>
                                     </div>
                                   )}
-                                  {workflowSteps.preparation.collected_data.environment.humidity_percent && (
+                                  {!!(workflowSteps.preparation.collected_data.environment as Record<string, unknown>).humidity_percent && (
                                     <div className="flex items-center space-x-2 text-sm">
                                       <Droplets className="h-4 w-4 text-blue-500" />
-                                      <span>{workflowSteps.preparation.collected_data.environment.humidity_percent}% humidité</span>
+                                      <span>{String((workflowSteps.preparation.collected_data.environment as Record<string, unknown>).humidity_percent)}% humidité</span>
                                     </div>
                                   )}
                                 </div>
-                              )}
+                              ) : null}
 
                               {/* Preparation Checklist */}
-                              {workflowSteps.preparation.collected_data.checklist && (
+                              {!!workflowSteps.preparation.collected_data.checklist && (
                                 <div className="space-y-2">
                                   <div className="text-sm font-medium text-gray-700">Étapes de préparation:</div>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                    {Object.entries(workflowSteps.preparation.collected_data.checklist).map(([key, completed]: [string, unknown]) => (
+                                    {Object.entries(workflowSteps.preparation.collected_data.checklist as Record<string, unknown>).map(([key, completed]: [string, unknown]) => (
                                       <div key={key} className="flex items-center space-x-2 text-sm">
                                         <CheckCircle className={`h-3 w-3 ${completed ? 'text-green-600' : 'text-gray-400'}`} />
                                         <span className={completed ? 'text-gray-900' : 'text-gray-500'}>
@@ -1340,9 +1340,9 @@ export default function TaskCompletedPage() {
                           </div>
                           {workflowSteps.installation.collected_data && (
                             <div className="pl-6 space-y-2">
-                              {workflowSteps.installation.collected_data.notes && (
+                              {!!workflowSteps.installation.collected_data.notes && (
                                 <div className="text-sm text-gray-600">
-                                  <strong>Notes:</strong> {workflowSteps.installation.collected_data.notes}
+                                  <strong>Notes:</strong> {String(workflowSteps.installation.collected_data.notes)}
                                 </div>
                               )}
                               {workflowSteps.installation.photo_urls && workflowSteps.installation.photo_urls.length > 0 && (
@@ -1375,11 +1375,11 @@ export default function TaskCompletedPage() {
                           {workflowSteps.finalization.collected_data && (
                             <div className="pl-6 space-y-3">
                               {/* QC Checklist */}
-                              {workflowSteps.finalization.collected_data.qc_checklist && (
+                              {!!workflowSteps.finalization.collected_data.qc_checklist && (
                                 <div className="space-y-2">
                                   <div className="text-sm font-medium text-gray-700">Contrôle qualité:</div>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                    {Object.entries(workflowSteps.finalization.collected_data.qc_checklist).map(([key, completed]: [string, unknown]) => (
+                                    {Object.entries(workflowSteps.finalization.collected_data.qc_checklist as Record<string, unknown>).map(([key, completed]: [string, unknown]) => (
                                       <div key={key} className="flex items-center space-x-2 text-sm">
                                         <CheckCircle className={`h-3 w-3 ${completed ? 'text-green-600' : 'text-gray-400'}`} />
                                         <span className={completed ? 'text-gray-900' : 'text-gray-500'}>
@@ -1397,16 +1397,16 @@ export default function TaskCompletedPage() {
                               )}
 
                               {/* Customer Signature */}
-                              {workflowSteps.finalization.collected_data.customer_signature && (
+                              {!!workflowSteps.finalization.collected_data.customer_signature && (
                                 <div className="space-y-2">
                                   <div className="text-sm font-medium text-gray-700">Signature client:</div>
                                   <div className="p-3 bg-gray-50 rounded-lg">
                                     <div className="text-sm">
-                                      <strong>Signataire:</strong> {workflowSteps.finalization.collected_data.customer_signature.signatory || 'N/A'}
+                                      <strong>Signataire:</strong> {String((workflowSteps.finalization.collected_data.customer_signature as Record<string, unknown>)?.signatory || 'N/A')}
                                     </div>
-                                    {workflowSteps.finalization.collected_data.customer_signature.customer_comments && (
+                                    {!!(workflowSteps.finalization.collected_data.customer_signature as Record<string, unknown>)?.customer_comments && (
                                       <div className="text-sm mt-1">
-                                        <strong>Commentaires:</strong> {workflowSteps.finalization.collected_data.customer_signature.customer_comments}
+                                        <strong>Commentaires:</strong> {String((workflowSteps.finalization.collected_data.customer_signature as Record<string, unknown>)?.customer_comments)}
                                       </div>
             )}
 
