@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { toast } from 'sonner';
-import type { Task, Client, Intervention } from '@/lib/backend';
 import { createPermissionChecker, Permission } from '@/lib/rbac';
+import type { UserAccount } from '@/lib/backend';
 import { displayError, displaySuccess, displayInfo, createError } from '@/lib/utils/errorHandling';
 import { ErrorCategory, ErrorSeverity } from '@/lib/utils/errorHandling';
 
@@ -59,7 +58,7 @@ export interface OfflineQueueOptions {
 }
 
 export const useOfflineQueue = (
-  user: any,
+  user: Record<string, unknown> | null,
   options: OfflineQueueOptions = {}
 ) => {
   const {
@@ -80,7 +79,7 @@ export const useOfflineQueue = (
     failed: 0,
   });
 
-  const permissionChecker = createPermissionChecker(user);
+  const permissionChecker = createPermissionChecker(user as UserAccount | null);
   const processingTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Load persisted queue on mount
@@ -91,10 +90,11 @@ export const useOfflineQueue = (
         const parsedQueue = JSON.parse(savedQueue);
         setQueue(parsedQueue);
         updateStats(parsedQueue);
-      } catch (error) {
+      } catch (_error) {
         displayError('Failed to load offline queue');
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Save queue to localStorage
@@ -147,6 +147,7 @@ export const useOfflineQueue = (
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queue, autoProcess]);
 
   // Add operation to queue
@@ -242,12 +243,12 @@ export const useOfflineQueue = (
       setIsProcessing(false);
       setStats(prev => ({ ...prev, lastSyncAt: new Date() }));
     }
-  }, [isOnline, queue, batchSize, updateStats]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnline, queue, batchSize]);
 
   // Process individual operation
   const processOperation = useCallback(async (operation: QueueOperation) => {
     const { can: hasPermission } = permissionChecker;
-    
     // Check permissions
     const permissionMap: Record<OperationType, Permission> = {
       [OperationType.CREATE]: 'task:write',
@@ -269,10 +270,11 @@ export const useOfflineQueue = (
 
     // Simulate API call (replace with actual IPC call)
     await simulateApiCall(operation);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [permissionChecker]);
 
   // Simulate API call (replace with actual implementation)
-  const simulateApiCall = useCallback(async (operation: QueueOperation): Promise<void> => {
+  const simulateApiCall = useCallback(async (_operation: QueueOperation): Promise<void> => {
     // Add delay to simulate network latency
     await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 500));
     

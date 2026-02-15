@@ -2,8 +2,7 @@
 // Removed pose dependency - now works independently
 import { TaskWithDetails, TaskDisplay, ChecklistItem } from '@/types/task.types';
 import { useInterventionData } from '@/hooks/useInterventionData';
-import { TaskStatus, TaskPriority, UpdateTaskRequest } from '@/lib/backend';
-import { isoToBigint } from '@/lib/utils/timestamp-conversion';
+import { TaskStatus, UpdateTaskRequest, JsonValue } from '@/lib/backend';
 import { convertTimestamps } from '@/lib/types';
 import { Suspense } from 'react';
 
@@ -100,8 +99,8 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
       checklist_completed: task.checklist_completed || false,
       progress: task.progress || 0,
       is_overdue: task.is_overdue || false,
-         created_at: ((task.created_at as unknown as string) || new Date().toISOString()) as unknown as any,
-         updated_at: new Date().toISOString() as unknown as any,
+         created_at: ((task.created_at as unknown as string) || new Date().toISOString()),
+         updated_at: new Date().toISOString(),
         synced: task.synced ?? false,
       description: task.description,
       current_workflow_step_id: task.current_workflow_step_id,
@@ -292,14 +291,14 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
       if (interventionData && interventionData.steps) {
         // If we have workflow data, try to update the workflow step
         // Find the current step that might contain checklist data
-        const currentStep = interventionData.steps.find((step: any) =>
+        const currentStep = interventionData.steps.find((step: { collected_data?: Record<string, unknown> }) =>
           step.collected_data &&
           (step.collected_data.checklist || step.collected_data.qc_checklist)
         );
 
         if (currentStep) {
           // Update the checklist in the workflow step
-          const updatedCollectedData = { ...currentStep.collected_data };
+          const updatedCollectedData = { ...currentStep.collected_data } as Record<string, Record<string, unknown>>;
 
           if (updatedCollectedData.checklist && updatedCollectedData.checklist[itemId] !== undefined) {
             updatedCollectedData.checklist[itemId] = completed;
@@ -310,7 +309,7 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
           // Save the step progress
           await ipcClient.interventions.saveStepProgress({
             step_id: currentStep.id,
-            collected_data: updatedCollectedData,
+            collected_data: updatedCollectedData as unknown as JsonValue,
             notes: currentStep.notes,
             photos: currentStep.photo_urls
           }, user.token);

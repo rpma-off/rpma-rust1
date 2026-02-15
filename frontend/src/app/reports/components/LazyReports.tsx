@@ -1,5 +1,4 @@
 import React, { Suspense, lazy } from 'react';
-import { Loader2 } from 'lucide-react';
 
 // Lazy load report components for better performance
 const OverviewReport = lazy(() => import('./reports/OverviewReport').catch(() => {

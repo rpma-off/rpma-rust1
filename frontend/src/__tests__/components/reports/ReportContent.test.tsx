@@ -1,7 +1,6 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { ReportContent } from '../../../app/reports/components/ReportContent';
-import { ReportType } from '@/lib/backend';
 
 // Mock the reports service
 jest.mock('@/lib/services/entities/reports.service', () => ({
@@ -111,7 +110,7 @@ describe('ReportContent', () => {
     ];
 
     reportTypes.forEach((reportType) => {
-      const { rerender } = render(
+      render(
         <ReportContent
           reportType={reportType}
           dateRange={mockDateRange}

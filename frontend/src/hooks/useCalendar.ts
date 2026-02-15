@@ -96,7 +96,7 @@ export function useCalendar(initialDate?: Date, initialViewMode?: CalendarViewMo
   // Memoize date range to prevent unnecessary re-fetches
   const dateRange = useMemo(() => {
     return getDateRangeForView(state.currentDate, state.viewMode);
-  }, [state.currentDate, state.viewMode]);
+  }, [state.currentDate, state.viewMode, getDateRangeForView]);
 
   // Memoize filter to prevent unnecessary re-fetches
   const calendarFilter = useMemo(() => {
@@ -132,7 +132,7 @@ export function useCalendar(initialDate?: Date, initialViewMode?: CalendarViewMo
         error: error instanceof Error ? error.message : 'Failed to load calendar tasks',
       }));
     }
-  }, [calendarFilter]);
+  }, [calendarFilter, user?.token]);
 
   const setCurrentDate = useCallback((date: Date) => {
     setState(prev => ({ ...prev, currentDate: date }));
@@ -172,7 +172,7 @@ export function useCalendar(initialDate?: Date, initialViewMode?: CalendarViewMo
     newDate: string,
     newStart?: string,
     newEnd?: string,
-    reason?: string
+    _reason?: string
   ): Promise<{ success: boolean; error?: string; conflicting_tasks?: CalendarTask[] }> => {
     try {
       if (!user?.token) {

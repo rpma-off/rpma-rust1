@@ -8,7 +8,7 @@ interface TechnicianPerformanceReportProps {
   filters: ReportFilters;
 }
 
-function TechnicianPerformanceReport({ dateRange, filters }: TechnicianPerformanceReportProps) {
+function TechnicianPerformanceReport({ dateRange: _dateRange, filters: _filters }: TechnicianPerformanceReportProps) {
   return (
     <div className="space-y-8">
       <div className="text-center py-12">

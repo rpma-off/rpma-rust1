@@ -1,11 +1,11 @@
 ﻿'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Shield, AlertTriangle, Clock, Users, Ban, Eye, CheckCircle, XCircle } from 'lucide-react';
+import { Shield, AlertTriangle, Users, CheckCircle, XCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ipcClient } from '@/lib/ipc';
 import { toast } from 'react-hot-toast';
@@ -46,7 +46,7 @@ export interface SecurityDashboardProps {
   onRefresh?: () => void;
 }
 
-export function SecurityDashboard({ onRefresh }: SecurityDashboardProps) {
+export function SecurityDashboard({ onRefresh: _onRefresh }: SecurityDashboardProps) {
   const { user } = useAuth();
   const [metrics, setMetrics] = useState<SecurityMetrics | null>(null);
   const [alerts, setAlerts] = useState<SecurityAlert[]>([]);
@@ -54,7 +54,7 @@ export function SecurityDashboard({ onRefresh }: SecurityDashboardProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadSecurityData = async () => {
+  const loadSecurityData = useCallback(async () => {
     if (!user?.token) return;
 
     try {
@@ -77,11 +77,11 @@ export function SecurityDashboard({ onRefresh }: SecurityDashboardProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.token]);
 
   useEffect(() => {
     loadSecurityData();
-  }, [user?.token]);
+  }, [loadSecurityData]);
 
   const handleAcknowledgeAlert = async (alertId: string) => {
     if (!user?.token) return;

@@ -46,7 +46,7 @@ export default function UsersPage() {
      } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, t]);
 
   useEffect(() => {
     if (user && user.token) {

@@ -47,7 +47,7 @@ const ZONE_LABELS: Record<string, string> = {
   rear_window: 'Lunette Arrière'
 };
 
-export function VehicleDiagram({ defects, onDefectAdd, onDefectRemove, readOnly = false }: VehicleDiagramProps) {
+export function VehicleDiagram({ defects, onDefectAdd, onDefectRemove: _onDefectRemove, readOnly = false }: VehicleDiagramProps) {
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
   const [hoveredZone, setHoveredZone] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);

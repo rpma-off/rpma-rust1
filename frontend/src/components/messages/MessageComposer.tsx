@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -69,7 +69,7 @@ export function MessageComposer({
           });
           setBody(templateBody);
         }
-      } catch (e) {
+      } catch (_e) {
         // Variables not valid JSON, use as-is
       }
     }
@@ -130,7 +130,7 @@ export function MessageComposer({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs value={messageType} onValueChange={(value) => setMessageType(value as any)}>
+        <Tabs value={messageType} onValueChange={(value) => setMessageType(value as 'email' | 'sms' | 'in_app')}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="email" className="flex items-center gap-2">
               <Mail className="h-4 w-4" />
@@ -160,7 +160,7 @@ export function MessageComposer({
               </div>
               <div>
                 <Label htmlFor="priority">{t('messages.priority')}</Label>
-                <Select value={priority} onValueChange={(value: any) => setPriority(value)}>
+                <Select value={priority} onValueChange={(value: string) => setPriority(value as "low" | "normal" | "high" | "urgent")}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -197,7 +197,7 @@ export function MessageComposer({
               </div>
               <div>
                 <Label htmlFor="priority">{t('messages.priority')}</Label>
-                <Select value={priority} onValueChange={(value: any) => setPriority(value)}>
+                <Select value={priority} onValueChange={(value: string) => setPriority(value as "low" | "normal" | "high" | "urgent")}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -230,7 +230,7 @@ export function MessageComposer({
               </div>
               <div>
                 <Label htmlFor="priority">{t('messages.priority')}</Label>
-                <Select value={priority} onValueChange={(value: any) => setPriority(value)}>
+                <Select value={priority} onValueChange={(value: string) => setPriority(value as "low" | "normal" | "high" | "urgent")}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { ClientCard } from '@/clients/ClientCard';
 import { ClientCardErrorBoundary } from '@/error-boundaries/ClientCardErrorBoundary';
 import type { Client, ClientWithTasks } from '@/lib/backend';

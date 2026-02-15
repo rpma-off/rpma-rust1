@@ -1,9 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/middleware/auth.middleware';
 import { userService } from '@/lib/services/entities/user.service';
 import { createLogger, LogContext } from '@/lib/logger';
 import { getErrorMessage } from '@/types/utility.types';
-import { User } from '@supabase/supabase-js';
 import type { NextRequestWithUser } from '@/lib/middleware/auth.middleware';
 
 const logger = createLogger('AuthProfileAPI');

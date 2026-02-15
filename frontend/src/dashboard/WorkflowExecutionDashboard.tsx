@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Workflow, Clock, AlertTriangle, CheckCircle, RefreshCw, Download, TrendingUp, TrendingDown } from 'lucide-react';
+import { Workflow, Clock, AlertTriangle, CheckCircle, RefreshCw, Download, TrendingUp } from 'lucide-react';
 import type { WorkflowExecution } from '@/types/workflow.types';
 
 export interface WorkflowExecutionDashboardProps {
@@ -105,9 +105,9 @@ export function WorkflowExecutionDashboard({
         totalWorkflows: data.length,
         activeWorkflows: data.filter((w: WorkflowExecution) => w.status === 'in_progress').length,
         completedToday: data.filter((w: WorkflowExecution) => {
-          if (!w.completed_at) return false;
+          if (!w.completedAt) return false;
           const today = new Date();
-          const completedDate = new Date(w.completed_at);
+          const completedDate = new Date(w.completedAt);
           return completedDate.toDateString() === today.toDateString();
         }).length,
       }));

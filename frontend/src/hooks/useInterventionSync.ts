@@ -6,6 +6,7 @@ import { interventionKeys } from '@/lib/query-keys';
 import type {
   PPFInterventionData,
   PPFInterventionStep,
+  QualityCheckpointData,
 } from '@/types/ppf-intervention';
 
 interface UseInterventionSyncProps {
@@ -52,56 +53,56 @@ export function useInterventionSync({
         console.log('IPC result for active intervention:', result);
 
         // getActiveByTask now returns the tagged union directly
-        const responseData = result as { type: string; intervention: any };
+        const responseData = result as { type: string; intervention: Record<string, unknown> };
 
         if (responseData?.type === 'ActiveRetrieved' && responseData.intervention) {
           console.log('Successfully retrieved active intervention:', responseData.intervention.id);
           // Map backend Intervention to frontend PPFInterventionData
           const backendIntervention = responseData.intervention;
           const mappedIntervention: PPFInterventionData = {
-            id: backendIntervention.id,
-            taskId: backendIntervention.task_number,
-            task_id: backendIntervention.task_number,
-            intervention_number: backendIntervention.task_number,
+            id: backendIntervention.id as string,
+            taskId: backendIntervention.task_number as string,
+            task_id: backendIntervention.task_number as string,
+            intervention_number: backendIntervention.task_number as string,
             steps: [],
-            status: backendIntervention.status as any,
-            progress: backendIntervention.completion_percentage,
-            progress_percentage: backendIntervention.completion_percentage,
-            currentStep: backendIntervention.current_step,
-            completion_percentage: backendIntervention.completion_percentage,
-            createdAt: backendIntervention.created_at,
-            created_at: backendIntervention.created_at,
-            updatedAt: backendIntervention.updated_at,
-            updated_at: backendIntervention.updated_at,
-            technician_id: backendIntervention.technician_id,
-            created_by: backendIntervention.created_by,
-            client_id: backendIntervention.client_id,
-            vehicle_make: backendIntervention.vehicle_make,
-            vehicle_model: backendIntervention.vehicle_model,
-            vehicle_year: backendIntervention.vehicle_year,
-            vehicle_vin: backendIntervention.vehicle_vin,
+            status: backendIntervention.status as PPFInterventionData['status'],
+            progress: backendIntervention.completion_percentage as number,
+            progress_percentage: backendIntervention.completion_percentage as number,
+            currentStep: backendIntervention.current_step as number,
+            completion_percentage: backendIntervention.completion_percentage as number,
+            createdAt: backendIntervention.created_at as string,
+            created_at: backendIntervention.created_at as string | undefined,
+            updatedAt: backendIntervention.updated_at as string,
+            updated_at: backendIntervention.updated_at as string | undefined,
+            technician_id: backendIntervention.technician_id as string | undefined,
+            created_by: backendIntervention.created_by as string | undefined,
+            client_id: backendIntervention.client_id as string | undefined,
+            vehicle_make: backendIntervention.vehicle_make as string | undefined,
+            vehicle_model: backendIntervention.vehicle_model as string | undefined,
+            vehicle_year: backendIntervention.vehicle_year as number | undefined,
+            vehicle_vin: backendIntervention.vehicle_vin as string | undefined,
             vehicle_info: backendIntervention.vehicle_make ? {
-              make: backendIntervention.vehicle_make,
-              model: backendIntervention.vehicle_model,
-              year: backendIntervention.vehicle_year,
-              vin: backendIntervention.vehicle_vin,
+              make: backendIntervention.vehicle_make as string,
+              model: backendIntervention.vehicle_model as string,
+              year: backendIntervention.vehicle_year as number,
+              vin: backendIntervention.vehicle_vin as string,
             } : undefined,
-            weather_condition: backendIntervention.weather_condition as any,
-            temperature_celsius: backendIntervention.temperature_celsius,
-            started_at: backendIntervention.started_at,
-            actual_start: backendIntervention.started_at,
-            scheduled_start: backendIntervention.scheduled_at,
-            completed_at: backendIntervention.completed_at,
-            intervention_completed_at: backendIntervention.completed_at,
-            estimated_duration: backendIntervention.estimated_duration,
-            actual_duration: backendIntervention.actual_duration,
+            weather_condition: backendIntervention.weather_condition as PPFInterventionData['weather_condition'],
+            temperature_celsius: backendIntervention.temperature_celsius as number | undefined,
+            started_at: backendIntervention.started_at as string | undefined,
+            actual_start: backendIntervention.started_at as string | undefined,
+            scheduled_start: backendIntervention.scheduled_at as string | undefined,
+            completed_at: backendIntervention.completed_at as string | undefined,
+            intervention_completed_at: backendIntervention.completed_at as string | undefined,
+            estimated_duration: backendIntervention.estimated_duration as number | undefined,
+            actual_duration: backendIntervention.actual_duration as number | undefined,
             gps_coordinates: backendIntervention.start_location_lat ? {
-              latitude: backendIntervention.start_location_lat,
-              longitude: backendIntervention.start_location_lon,
-              accuracy: backendIntervention.start_location_accuracy,
+              latitude: backendIntervention.start_location_lat as number,
+              longitude: backendIntervention.start_location_lon as number,
+              accuracy: backendIntervention.start_location_accuracy as number,
             } : undefined,
-            ppf_zones: backendIntervention.ppf_zones_config,
-            notes: backendIntervention.notes,
+            ppf_zones: backendIntervention.ppf_zones_config as string[] | undefined,
+            notes: backendIntervention.notes as string | undefined,
           };
           return mappedIntervention;
         }
@@ -139,39 +140,39 @@ export function useInterventionSync({
 
         if (result?.steps) {
           console.log('Raw steps data from backend:', result.steps);
-          const mappedSteps = result.steps.map((step: any) => {
+          const mappedSteps = result.steps.map((step: Record<string, unknown>) => {
             console.log('Processing step:', step.id, 'collected_data:', step.collected_data, 'observations:', step.observations);
             return {
-              id: step.id,
-              interventionId: step.intervention_id,
-              intervention_id: step.intervention_id,
-              stepNumber: step.step_number,
-              step_number: step.step_number,
-              step_name: step.step_name,
-              step_type: step.step_type,
-              status: step.step_status,
-              step_status: step.step_status,
-              description: step.description,
+              id: step.id as string,
+              interventionId: step.intervention_id as string,
+              intervention_id: step.intervention_id as string,
+              stepNumber: step.step_number as number,
+              step_number: step.step_number as number,
+              step_name: step.step_name as string,
+              step_type: step.step_type as string,
+              status: step.step_status as PPFInterventionStep['status'],
+              step_status: step.step_status as string,
+              description: step.description as string | undefined,
               photos: [],
-              startedAt: step.started_at,
-              started_at: step.started_at,
-              completedAt: step.completed_at,
-              completed_at: step.completed_at,
-              duration_seconds: step.duration_seconds,
-              requires_photos: step.requires_photos,
-              min_photos_required: step.min_photos_required,
-              photo_count: step.photo_count,
-              quality_checkpoints: step.quality_checkpoints,
-              qualityChecks: step.quality_checkpoints,
-              approved_by: step.approved_by,
-              observations: step.observations,
-              collected_data: step.collected_data || (step.observations ? { observations: step.observations } : {}),
-              paused_at: step.paused_at,
-              created_at: step.created_at,
-              updated_at: step.updated_at,
+              startedAt: step.started_at as string | undefined,
+              started_at: step.started_at as string | undefined,
+              completedAt: step.completed_at as string | undefined,
+              completed_at: step.completed_at as string | undefined,
+              duration_seconds: step.duration_seconds as number | undefined,
+              requires_photos: step.requires_photos as boolean | undefined,
+              min_photos_required: step.min_photos_required as number | undefined,
+              photo_count: step.photo_count as number | undefined,
+              quality_checkpoints: step.quality_checkpoints as QualityCheckpointData[] | undefined,
+              qualityChecks: step.quality_checkpoints as QualityCheckpointData[] | undefined,
+              approved_by: step.approved_by as string | undefined,
+              observations: step.observations as string[] | undefined,
+              collected_data: (step.collected_data || (step.observations ? { observations: step.observations } : {})) as Record<string, unknown>,
+              paused_at: step.paused_at as number | null | undefined,
+              created_at: step.created_at as string | undefined,
+              updated_at: step.updated_at as string | undefined,
               required: !step.is_mandatory ? false : true,
-            };
-          }) as PPFInterventionStep[];
+            } satisfies PPFInterventionStep;
+          });
           console.log('Successfully mapped intervention steps:', mappedSteps.length, 'steps');
           return mappedSteps;
         }

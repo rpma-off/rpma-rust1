@@ -88,7 +88,7 @@ export function resetIpcMocks(): void {
     if (typeof domain === 'object' && domain !== null) {
       Object.values(domain).forEach(method => {
         if (typeof method === 'function' && 'mockReset' in method) {
-          (method as jest.MockedFunction<any>).mockReset();
+          (method as jest.MockedFunction<(...args: unknown[]) => unknown>).mockReset();
         }
       });
     }

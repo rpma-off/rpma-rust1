@@ -10,8 +10,7 @@
  export const dynamic = 'force-dynamic';
 import { interventionWorkflowService } from '@/lib/services/ppf';
 import { PPFPhotoService, PPFPhoto } from '@/lib/services/ppf/photo.service';
-import { PPFInterventionData, PPFInterventionStep } from '@/types/ppf-intervention';
-import { PPFPhotoAngle } from '@/types/enums';
+import { PPFInterventionData } from '@/types/ppf-intervention';
 
 interface ValidationResult {
   isValid: boolean;
@@ -128,7 +127,7 @@ export async function POST(
      if (validationOptions.validateSteps) {
        const stepsResult = await workflowService.getInterventionSteps(interventionId, sessionToken);
        if (stepsResult.success) {
-          const steps = stepsResult.data?.data || [];
+          const steps = (stepsResult.data?.data || []) as unknown as Record<string, unknown>[];
          const stepValidation = await validateInterventionSteps(steps);
        validationResult.details.stepValidation = stepValidation.isValid;
        validationResult.errors.push(...stepValidation.errors);
@@ -237,7 +236,7 @@ async function validateInterventionData(intervention: PPFInterventionData) {
 /**
  * Valide les étapes de l'intervention (toutes optionnelles)
  */
-async function validateInterventionSteps(steps: any[]) {
+async function validateInterventionSteps(steps: Record<string, unknown>[]) {
   const result = { isValid: true, errors: [] as string[], warnings: [] as string[] };
 
   if (steps.length === 0) {
@@ -254,12 +253,12 @@ async function validateInterventionSteps(steps: any[]) {
 
   // Validation des données spécifiques aux étapes (warnings uniquement)
   for (const step of steps) {
-    if (!(step as any).stepType) {
+    if (!step.stepType) {
       result.warnings.push(`Step ${step.id} is missing stepType`);
     }
 
     if (step.status === 'completed' && !step.completedAt) {
-      result.warnings.push(`Completed step ${(step as any).stepType} is missing completion timestamp`);
+      result.warnings.push(`Completed step ${step.stepType} is missing completion timestamp`);
     }
   }
 

@@ -32,6 +32,13 @@ export function useInterventionWorkflow({
 }: UseInterventionWorkflowProps = {}) {
   const queryClient = useQueryClient();
 
+  // State management
+  const state = useInterventionState({
+    initialIntervention,
+    onInterventionChange,
+    onStepChange,
+  });
+
   // Error handling
   const handleError = useCallback((errorMessage: string, originalError?: unknown) => {
     handleErrorWithLogging(
@@ -39,19 +46,12 @@ export function useInterventionWorkflow({
       originalError,
       {
         taskId,
-        interventionId: intervention?.id,
+        interventionId: state.intervention?.id,
         component: 'PPF Workflow'
       },
       onError
     );
-  }, [onError, taskId]);
-
-  // State management
-  const state = useInterventionState({
-    initialIntervention,
-    onInterventionChange,
-    onStepChange,
-  });
+  }, [onError, taskId, state.intervention?.id]);
 
   // Actions (mutations)
   const actions = useInterventionActions({

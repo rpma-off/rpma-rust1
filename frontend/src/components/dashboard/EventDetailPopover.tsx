@@ -3,7 +3,6 @@
 import React from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { useCalendarStore } from '@/lib/stores/calendarStore';
 import { designTokens } from '@/lib/design-tokens';
 import type { CalendarTask } from '@/lib/backend';
 import { Trash2 } from 'lucide-react';

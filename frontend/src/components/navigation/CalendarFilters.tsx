@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useCalendarStore } from '@/lib/stores/calendarStore';
 import { useAuth } from '@/lib/auth/compatibility';
 import { Button } from '@/components/ui/button';
@@ -16,10 +16,8 @@ import {
   Users, 
   Filter, 
   X,
-  Search,
-  User
+  Search
 } from 'lucide-react';
-import { designTokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import type { TaskStatus, TaskPriority } from '@/lib/backend';
 
@@ -30,8 +28,8 @@ interface CalendarFiltersProps {
 export function CalendarFilters({ className }: CalendarFiltersProps) {
   const { user } = useAuth();
   const {
-    currentView,
-    currentDate,
+    currentView: _currentView,
+    currentDate: _currentDate,
     filters,
     setFilters,
     resetFilters

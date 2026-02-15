@@ -136,7 +136,7 @@ describe('useTaskState', () => {
 
       // Then pass undefined - should not crash and reset to empty array
       act(() => {
-        result.current.updateTasks(undefined as any);
+        result.current.updateTasks(undefined);
       });
 
       expect(result.current.tasks).toEqual([]);
@@ -147,7 +147,7 @@ describe('useTaskState', () => {
       const { result } = renderHook(() => useTaskState());
 
       act(() => {
-        result.current.updateTasks(null as any);
+        result.current.updateTasks(null);
       });
 
       expect(result.current.tasks).toEqual([]);
@@ -158,7 +158,7 @@ describe('useTaskState', () => {
       const { result } = renderHook(() => useTaskState());
 
       act(() => {
-        result.current.updateTasks('not an array' as any);
+        result.current.updateTasks('not an array' as unknown as TaskWithDetails[]);
       });
 
       expect(result.current.tasks).toEqual([]);
@@ -216,7 +216,7 @@ describe('useTaskState', () => {
       const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
 
       act(() => {
-        result.current.addTask(undefined as any);
+        result.current.addTask(undefined);
       });
 
       expect(result.current.tasks).toEqual([]);
@@ -233,7 +233,7 @@ describe('useTaskState', () => {
       const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
 
       act(() => {
-        result.current.addTask(null as any);
+        result.current.addTask(null);
       });
 
       expect(result.current.tasks).toEqual([]);
@@ -515,7 +515,7 @@ describe('useTaskState', () => {
       // but test that computed properties handle it
       act(() => {
         // Force tasks to undefined (normally prevented by updateTasks)
-        (result.current as any).tasks = undefined;
+        (result.current as unknown as Record<string, unknown>).tasks = undefined;
       });
 
       // Re-render to trigger computed property recalculation

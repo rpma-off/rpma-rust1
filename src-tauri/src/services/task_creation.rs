@@ -82,10 +82,36 @@ impl TaskCreationService {
             })
         });
 
-        // Create task instance
+        let task = self.build_task(
+            &req,
+            user_id,
+            task_number,
+            vehicle_plate,
+            vehicle_model,
+            ppf_zones,
+            scheduled_date,
+        );
+
+        self.validate_task_constraints(&task)?;
+        self.persist_task(&task, user_id)?;
+
+        Ok(task)
+    }
+
+    /// Build a `Task` instance from the validated request fields.
+    fn build_task(
+        &self,
+        req: &CreateTaskRequest,
+        user_id: &str,
+        task_number: String,
+        vehicle_plate: String,
+        vehicle_model: String,
+        ppf_zones: Vec<String>,
+        scheduled_date: String,
+    ) -> Task {
         let now = Utc::now();
         let now_millis = now.timestamp_millis();
-        let task = Task {
+        Task {
             id: Uuid::new_v4().to_string(),
             task_number: task_number.clone(),
             title: req
@@ -108,8 +134,8 @@ impl TaskCreationService {
             vin: req.vin.clone(),
             ppf_zones: Some(ppf_zones.clone()),
             custom_ppf_zones: req.custom_ppf_zones.clone(),
-            status: req.status.unwrap_or(TaskStatus::Pending),
-            priority: req.priority.unwrap_or(TaskPriority::Medium),
+            status: req.status.clone().unwrap_or(TaskStatus::Pending),
+            priority: req.priority.clone().unwrap_or(TaskPriority::Medium),
             technician_id: req.technician_id.clone(),
             assigned_at: None,
             assigned_by: None,
@@ -146,9 +172,11 @@ impl TaskCreationService {
             deleted_by: None,
             synced: false,
             last_synced_at: None,
-        };
+        }
+    }
 
-        // Check if client exists if client_id is provided
+    /// Check that the task's client exists and that the task number is unique.
+    fn validate_task_constraints(&self, task: &Task) -> Result<(), AppError> {
         if let Some(client_id) = &task.client_id {
             let client_exists: i64 = self.db.query_single_value(
                 "SELECT COUNT(*) FROM clients WHERE id = ?",
@@ -166,7 +194,6 @@ impl TaskCreationService {
             }
         }
 
-        // Check if task_number is unique
         let task_exists: i64 = self.db.query_single_value(
             "SELECT COUNT(*) FROM tasks WHERE task_number = ?",
             params![&task.task_number],
@@ -179,7 +206,11 @@ impl TaskCreationService {
             )));
         }
 
-        // Convert enums to strings
+        Ok(())
+    }
+
+    /// Insert the task into the database and enqueue it for sync.
+    fn persist_task(&self, task: &Task, user_id: &str) -> Result<(), AppError> {
         let status_str = task.status.to_string();
         let priority_str = task.priority.to_string();
 
@@ -284,7 +315,7 @@ impl TaskCreationService {
         })?;
 
         // Add task to sync queue for offline/remote synchronization
-        let task_json = serde_json::to_string(&task).map_err(|e| {
+        let task_json = serde_json::to_string(task).map_err(|e| {
             error!("Failed to serialize task for sync queue: {}", e);
             AppError::Database(format!("Failed to serialize task for sync: {}", e))
         })?;
@@ -296,16 +327,15 @@ impl TaskCreationService {
                 priority, user_id, created_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             "#,
-            params!["create", "task", task.id, task_json, "pending", 5, user_id, now_millis,],
+            params!["create", "task", task.id, task_json, "pending", 5, user_id, task.created_at],
         ) {
             error!("Failed to add task {} to sync queue: {}", task.id, e);
-            // Non-fatal error - task was created successfully, just log the error
             warn!("Task created but not added to sync queue: {}", e);
         } else {
             debug!("Task {} added to sync queue", task.id);
         }
 
-        Ok(task)
+        Ok(())
     }
 
     /// Generate a unique task number

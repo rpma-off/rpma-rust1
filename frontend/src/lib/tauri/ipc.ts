@@ -12,20 +12,8 @@ import {
     ClientCrudRequestSchema,
     LoginRequestSchema,
     SignupRequestSchema,
-    ApiResponseSchema,
-    ServiceResponseSchema
 } from '@/lib/validation/ipc-schemas';
-import type { AuthResponse } from '@/types/auth.types';
 import type { ApiError } from '@/lib/backend';
-import {
-    isUserAccount,
-    validateTask,
-    validateClient,
-    validateUserAccount,
-    safeValidateTask,
-    safeValidateClient,
-    safeValidateUserAccount
-} from '@/lib/validation/backend-type-guards';
 
 const logger = createLogger();
 
@@ -205,12 +193,12 @@ export class IpcService {
         }
       } else if (response.data && typeof response.data === 'object' && response.data.hasOwnProperty('type')) {
         // Handle wrapped ApiResponse<ClientResponse>
-        const clientResponse = response.data as any;
+        const clientResponse = response.data as Record<string, unknown>;
         const responseType = clientResponse.type;
 
         if (responseType === 'Created' || responseType === 'Found' || responseType === 'Updated' || responseType === 'List' || responseType === 'SearchResults' || responseType === 'Stats') {
           // Remove the type field and validate the data
-          const { type, ...data } = clientResponse;
+          const { type: _type, ...data } = clientResponse;
 
           // Validate response data type if validator provided
           if (typeValidator && !typeValidator(data)) {
@@ -230,7 +218,7 @@ export class IpcService {
           logger.info(LogContext.SYSTEM, `IPC call successful: ${command} (${responseType})`);
           return {
             success: true,
-            data,
+            data: data as T,
             error: null
           };
         } else if (responseType === 'Deleted') {
@@ -260,10 +248,10 @@ export class IpcService {
         }
       } else {
         // Handle tagged enum responses (like ClientResponse)
-        const responseType = (response as any).type;
+        const responseType = (response as unknown as Record<string, unknown>).type;
         if (responseType === 'Created' || responseType === 'Found' || responseType === 'Updated' || responseType === 'List' || responseType === 'SearchResults' || responseType === 'Stats') {
           // Remove the type field and validate the data
-          const { type, ...data } = response as any;
+          const { type: _type, ...data } = response as unknown as Record<string, unknown>;
 
           // Validate response data type if validator provided
           if (typeValidator && !typeValidator(data)) {
@@ -283,7 +271,7 @@ export class IpcService {
           logger.info(LogContext.SYSTEM, `IPC call successful: ${command} (${responseType})`);
           return {
             success: true,
-            data,
+            data: data as T,
             error: null
           };
         } else if (responseType === 'Deleted') {
@@ -432,7 +420,7 @@ export class LogIpcService extends IpcService {
     });
   }
 
-  static async logTaskCreationDebug(taskData: any, step: string) {
+  static async logTaskCreationDebug(taskData: Record<string, unknown>, step: string) {
     return this.invoke('log_task_creation_debug', {
       request: {
         task_data: taskData,
@@ -441,7 +429,7 @@ export class LogIpcService extends IpcService {
     });
   }
 
-  static async logClientCreationDebug(clientData: any, step: string) {
+  static async logClientCreationDebug(clientData: Record<string, unknown>, step: string) {
     return this.invoke('log_client_creation_debug', {
       request: {
         client_data: clientData,

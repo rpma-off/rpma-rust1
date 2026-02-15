@@ -68,14 +68,6 @@ impl InterventionWorkflowService {
             ));
         }
 
-        // Validate task_id format (allow both UUID and string formats for compatibility)
-        if request.task_id.is_empty() {
-            logger.error("Task ID cannot be empty", None, None);
-            return Err(InterventionError::Validation(
-                "Task ID cannot be empty".to_string(),
-            ));
-        }
-
         if request.technician_id.is_empty() {
             logger.error(
                 "Technician ID is required for intervention start",
@@ -460,58 +452,71 @@ impl InterventionWorkflowService {
         })
     }
 
+    /// Execute an operation with retry logic and structured logging.
+    async fn with_retry<T, F>(
+        &self,
+        entity_label: &str,
+        entity_id: &str,
+        logger: &RPMARequestLogger,
+        operation: F,
+    ) -> InterventionResult<T>
+    where
+        F: Fn() -> InterventionResult<T>,
+    {
+        const MAX_RETRIES: u32 = 3;
+        let mut attempt = 0;
+
+        loop {
+            match operation() {
+                Ok(value) => return Ok(value),
+                Err(e) => {
+                    attempt += 1;
+                    if attempt >= MAX_RETRIES {
+                        let mut ctx = std::collections::HashMap::new();
+                        ctx.insert(
+                            format!("{}_id", entity_label),
+                            serde_json::json!(entity_id),
+                        );
+                        ctx.insert("attempts".to_string(), serde_json::json!(attempt));
+                        logger.error(
+                            &format!("Failed to {} after retries", entity_label),
+                            Some(&e),
+                            Some(ctx),
+                        );
+                        return Err(InterventionError::Database(format!(
+                            "Failed to {} after {} attempts: {}",
+                            entity_label, MAX_RETRIES, e
+                        )));
+                    }
+                    let mut ctx = std::collections::HashMap::new();
+                    ctx.insert(
+                        format!("{}_id", entity_label),
+                        serde_json::json!(entity_id),
+                    );
+                    ctx.insert("attempt".to_string(), serde_json::json!(attempt));
+                    logger.warn(
+                        &format!("Failed to {}, retrying", entity_label),
+                        Some(ctx),
+                    );
+                    std::thread::sleep(std::time::Duration::from_millis(100 * attempt as u64));
+                }
+            }
+        }
+    }
+
     /// Get intervention with retry logic
     async fn get_intervention_with_retry(
         &self,
         intervention_id: &str,
         logger: &RPMARequestLogger,
     ) -> InterventionResult<Intervention> {
-        const MAX_RETRIES: u32 = 3;
-        let mut attempt = 0;
-
-        loop {
-            match self.data.get_intervention(intervention_id) {
-                Ok(Some(intervention)) => return Ok(intervention),
-                Ok(None) => {
-                    return Err(InterventionError::NotFound(format!(
-                        "Intervention {} not found",
-                        intervention_id
-                    )));
-                }
-                Err(e) => {
-                    attempt += 1;
-                    if attempt >= MAX_RETRIES {
-                        let mut retry_context = std::collections::HashMap::new();
-                        retry_context.insert(
-                            "intervention_id".to_string(),
-                            serde_json::json!(intervention_id),
-                        );
-                        retry_context.insert("attempts".to_string(), serde_json::json!(attempt));
-                        logger.error(
-                            "Failed to get intervention after retries",
-                            Some(&e),
-                            Some(retry_context),
-                        );
-                        return Err(InterventionError::Database(format!(
-                            "Failed to retrieve intervention after {} attempts: {}",
-                            MAX_RETRIES, e
-                        )));
-                    }
-                    let mut retry_warn_context = std::collections::HashMap::new();
-                    retry_warn_context.insert(
-                        "intervention_id".to_string(),
-                        serde_json::json!(intervention_id),
-                    );
-                    retry_warn_context.insert("attempt".to_string(), serde_json::json!(attempt));
-                    logger.warn(
-                        "Failed to get intervention, retrying",
-                        Some(retry_warn_context),
-                    );
-                    // Simple backoff - in production, use exponential backoff
-                    std::thread::sleep(std::time::Duration::from_millis(100 * attempt as u64));
-                }
-            }
-        }
+        let data = &self.data;
+        let id = intervention_id.to_string();
+        self.with_retry("get intervention", intervention_id, logger, move || {
+            data.get_intervention(&id)?
+                .ok_or_else(|| InterventionError::NotFound(format!("Intervention {} not found", id)))
+        })
+        .await
     }
 
     /// Get step with retry logic
@@ -520,49 +525,13 @@ impl InterventionWorkflowService {
         step_id: &str,
         logger: &RPMARequestLogger,
     ) -> InterventionResult<InterventionStep> {
-        const MAX_RETRIES: u32 = 3;
-        let mut attempt = 0;
-
-        loop {
-            match self.data.get_step(step_id) {
-                Ok(Some(step)) => return Ok(step),
-                Ok(None) => {
-                    return Err(InterventionError::NotFound(format!(
-                        "Step {} not found",
-                        step_id
-                    )));
-                }
-                Err(e) => {
-                    attempt += 1;
-                    if attempt >= MAX_RETRIES {
-                        let mut step_retry_context = std::collections::HashMap::new();
-                        step_retry_context
-                            .insert("step_id".to_string(), serde_json::json!(step_id));
-                        step_retry_context
-                            .insert("attempts".to_string(), serde_json::json!(attempt));
-                        logger.error(
-                            "Failed to get step after retries",
-                            Some(&e),
-                            Some(step_retry_context),
-                        );
-                        return Err(InterventionError::Database(format!(
-                            "Failed to retrieve step after {} attempts: {}",
-                            MAX_RETRIES, e
-                        )));
-                    }
-                    let mut step_retry_warn_context = std::collections::HashMap::new();
-                    step_retry_warn_context
-                        .insert("step_id".to_string(), serde_json::json!(step_id));
-                    step_retry_warn_context
-                        .insert("attempt".to_string(), serde_json::json!(attempt));
-                    logger.warn(
-                        "Failed to get step, retrying",
-                        Some(step_retry_warn_context),
-                    );
-                    std::thread::sleep(std::time::Duration::from_millis(100 * attempt as u64));
-                }
-            }
-        }
+        let data = &self.data;
+        let id = step_id.to_string();
+        self.with_retry("get step", step_id, logger, move || {
+            data.get_step(&id)?
+                .ok_or_else(|| InterventionError::NotFound(format!("Step {} not found", id)))
+        })
+        .await
     }
 
     /// Save step with retry logic
@@ -571,43 +540,9 @@ impl InterventionWorkflowService {
         step: &InterventionStep,
         logger: &RPMARequestLogger,
     ) -> InterventionResult<()> {
-        const MAX_RETRIES: u32 = 3;
-        let mut attempt = 0;
-
-        loop {
-            match self.data.save_step(step) {
-                Ok(()) => return Ok(()),
-                Err(e) => {
-                    attempt += 1;
-                    if attempt >= MAX_RETRIES {
-                        let mut save_retry_context = std::collections::HashMap::new();
-                        save_retry_context
-                            .insert("step_id".to_string(), serde_json::json!(step.id));
-                        save_retry_context
-                            .insert("attempts".to_string(), serde_json::json!(attempt));
-                        logger.error(
-                            "Failed to save step after retries",
-                            Some(&e),
-                            Some(save_retry_context),
-                        );
-                        return Err(InterventionError::Database(format!(
-                            "Failed to save step after {} attempts: {}",
-                            MAX_RETRIES, e
-                        )));
-                    }
-                    let mut save_retry_warn_context = std::collections::HashMap::new();
-                    save_retry_warn_context
-                        .insert("step_id".to_string(), serde_json::json!(step.id));
-                    save_retry_warn_context
-                        .insert("attempt".to_string(), serde_json::json!(attempt));
-                    logger.warn(
-                        "Failed to save step, retrying",
-                        Some(save_retry_warn_context),
-                    );
-                    std::thread::sleep(std::time::Duration::from_millis(100 * attempt as u64));
-                }
-            }
-        }
+        let data = &self.data;
+        self.with_retry("save step", &step.id, logger, || data.save_step(step))
+            .await
     }
 
     /// Determine whether the request includes completion data for a step.

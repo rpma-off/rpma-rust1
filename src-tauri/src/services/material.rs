@@ -10,7 +10,6 @@ use crate::models::material::{
     InventoryTransactionType, Material, MaterialCategory, MaterialConsumption,
     MaterialConsumptionSummary, MaterialStats, MaterialType, Supplier, UnitOfMeasure,
 };
-use chrono::{DateTime, Utc};
 use rusqlite::params;
 use std::collections::HashMap;
 use uuid::Uuid;
@@ -601,6 +600,33 @@ impl MaterialService {
         Ok(self
             .db
             .query_as::<MaterialConsumption>(sql, params![intervention_id])?)
+    }
+
+    /// Get consumption history for a specific material
+    pub fn get_consumption_history(
+        &self,
+        material_id: &str,
+        limit: Option<i32>,
+        offset: Option<i32>,
+    ) -> MaterialResult<Vec<MaterialConsumption>> {
+        let mut sql =
+            "SELECT * FROM material_consumption WHERE material_id = ? ORDER BY recorded_at DESC"
+                .to_string();
+        let mut params_vec: Vec<String> = vec![material_id.to_string()];
+
+        if let Some(limit) = limit {
+            sql.push_str(" LIMIT ?");
+            params_vec.push(limit.to_string());
+        }
+
+        if let Some(offset) = offset {
+            sql.push_str(" OFFSET ?");
+            params_vec.push(offset.to_string());
+        }
+
+        Ok(self
+            .db
+            .query_as::<MaterialConsumption>(&sql, rusqlite::params_from_iter(params_vec))?)
     }
 
     /// Get material consumption summary for an intervention

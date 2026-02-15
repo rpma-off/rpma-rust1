@@ -25,7 +25,6 @@ import type {
   StepBottleneck,
   InterventionBottleneck,
   ResourceUtilization,
-  ProcessEfficiencyMetrics,
   WorkflowRecommendation
 } from '@/lib/backend';
 

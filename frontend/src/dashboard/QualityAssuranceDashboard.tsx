@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Badge, type BadgeProps } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { AlertTriangle, CheckCircle, Clock, RefreshCw, Download } from 'lucide-react';
@@ -209,7 +209,7 @@ export function QualityAssuranceDashboard({
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{issue.type}</span>
-                      <Badge variant={getSeverityColor(issue.severity) as any}>
+                      <Badge variant={getSeverityColor(issue.severity) as BadgeProps["variant"]}>
                         {issue.severity}
                       </Badge>
                       <Badge variant="outline">

@@ -18,6 +18,47 @@ fn default_quality_check_passed() -> bool {
     true
 }
 
+/// Authorization rule for intervention ownership checks.
+///
+/// Admins and supervisors can access any intervention (including unassigned ones),
+/// while technicians can only access interventions assigned to their user ID.
+fn can_access_intervention(
+    technician_id: Option<&str>,
+    session: &crate::models::auth::UserSession,
+) -> bool {
+    let is_privileged = matches!(
+        session.role,
+        crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+    );
+    is_privileged || technician_id.is_some_and(|id| id == session.user_id.as_str())
+}
+
+/// Validates intervention existence and enforces access control for the current session.
+///
+/// Returns `Ok(())` when the intervention exists and the current session is authorized,
+/// otherwise returns the corresponding `AppError` preserving the command contract.
+fn ensure_intervention_access(
+    state: &AppState<'_>,
+    intervention_id: &str,
+    session: &crate::models::auth::UserSession,
+    unauthorized_message: &str,
+) -> Result<(), AppError> {
+    let intervention = state
+        .intervention_service
+        .get_intervention(intervention_id)
+        .map_err(|e| {
+            error!(error = %e, intervention_id = %intervention_id, "Failed to get intervention");
+            AppError::Database("Failed to get intervention".to_string())
+        })?
+        .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", intervention_id)))?;
+
+    if !can_access_intervention(intervention.technician_id.as_deref(), session) {
+        return Err(AppError::Authorization(unauthorized_message.to_string()));
+    }
+
+    Ok(())
+}
+
 #[derive(Deserialize)]
 pub struct InterventionProgressQueryRequest {
     pub page: Option<u32>,
@@ -100,26 +141,12 @@ pub async fn intervention_get_progress(
         "Getting intervention progress"
     );
 
-    // Check intervention access
-    let intervention = state
-        .intervention_service
-        .get_intervention(&intervention_id)
-        .map_err(|e| {
-            error!(error = %e, intervention_id = %intervention_id, "Failed to get intervention for progress check");
-            AppError::Database("Failed to get intervention".to_string())
-        })?
-        .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", intervention_id)))?;
-
-    if intervention.technician_id.as_ref() != Some(&session.user_id)
-        && !matches!(
-            session.role,
-            crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
-        )
-    {
-        return Err(AppError::Authorization(
-            "Not authorized to view this intervention progress".to_string(),
-        ));
-    }
+    ensure_intervention_access(
+        &state,
+        &intervention_id,
+        &session,
+        "Not authorized to view this intervention progress",
+    )?;
 
     // Delegate progress calculation to the service layer
     let progress = state
@@ -156,26 +183,12 @@ pub async fn intervention_advance_step(
         "Advancing intervention step"
     );
 
-    // Check intervention access
-    let intervention = state
-        .intervention_service
-        .get_intervention(&intervention_id)
-        .map_err(|e| {
-            error!(error = %e, intervention_id = %intervention_id, "Failed to get intervention for step advance");
-            AppError::Database("Failed to get intervention".to_string())
-        })?
-        .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", intervention_id)))?;
-
-    if intervention.technician_id.as_ref() != Some(&session.user_id)
-        && !matches!(
-            session.role,
-            crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
-        )
-    {
-        return Err(AppError::Authorization(
-            "Not authorized to advance this intervention".to_string(),
-        ));
-    }
+    ensure_intervention_access(
+        &state,
+        &intervention_id,
+        &session,
+        "Not authorized to advance this intervention",
+    )?;
 
     let advance_request = crate::services::intervention_types::AdvanceStepRequest {
         intervention_id: intervention_id.clone(),
@@ -200,7 +213,10 @@ pub async fn intervention_advance_step(
 
 /// Save step progress for an intervention
 #[tauri::command]
-#[instrument(skip(state, session_token, progress_data), fields(user_id, correlation_id))]
+#[instrument(
+    skip(state, session_token, progress_data),
+    fields(user_id, correlation_id)
+)]
 pub async fn intervention_save_step_progress(
     intervention_id: String,
     step_id: String,
@@ -221,26 +237,12 @@ pub async fn intervention_save_step_progress(
         "Saving step progress"
     );
 
-    // Check intervention access
-    let intervention = state
-        .intervention_service
-        .get_intervention(&intervention_id)
-        .map_err(|e| {
-            error!(error = %e, intervention_id = %intervention_id, "Failed to get intervention for progress save");
-            AppError::Database("Failed to get intervention".to_string())
-        })?
-        .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", intervention_id)))?;
-
-    if intervention.technician_id.as_ref() != Some(&session.user_id)
-        && !matches!(
-            session.role,
-            crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
-        )
-    {
-        return Err(AppError::Authorization(
-            "Not authorized to save progress for this intervention".to_string(),
-        ));
-    }
+    ensure_intervention_access(
+        &state,
+        &intervention_id,
+        &session,
+        "Not authorized to save progress for this intervention",
+    )?;
 
     let progress_request = crate::services::intervention_types::SaveStepProgressRequest {
         step_id: step_id.clone(),
@@ -282,29 +284,12 @@ pub async fn intervention_progress(
 
     match action {
         InterventionProgressAction::Get { intervention_id } => {
-            // Check intervention access
-            let intervention = state
-                .intervention_service
-                .get_intervention(&intervention_id)
-                .map_err(|e| {
-                    error!(error = %e, "Failed to get intervention");
-                    AppError::Database("Failed to get intervention".to_string())
-                })?
-                .ok_or_else(|| {
-                    AppError::NotFound(format!("Intervention {} not found", intervention_id))
-                })?;
-
-            if intervention.technician_id.as_ref() != Some(&session.user_id)
-                && !matches!(
-                    session.role,
-                    crate::models::auth::UserRole::Admin
-                        | crate::models::auth::UserRole::Supervisor
-                )
-            {
-                return Err(AppError::Authorization(
-                    "Not authorized to view this intervention progress".to_string(),
-                ));
-            }
+            ensure_intervention_access(
+                &state,
+                &intervention_id,
+                &session,
+                "Not authorized to view this intervention progress",
+            )?;
 
             // Delegate progress calculation to the service layer
             let progress = state
@@ -338,29 +323,12 @@ pub async fn intervention_progress(
             quality_check_passed,
             issues,
         } => {
-            // Check intervention access
-            let intervention = state
-                .intervention_service
-                .get_intervention(&intervention_id)
-                .map_err(|e| {
-                    error!(error = %e, "Failed to get intervention");
-                    AppError::Database("Failed to get intervention".to_string())
-                })?
-                .ok_or_else(|| {
-                    AppError::NotFound(format!("Intervention {} not found", intervention_id))
-                })?;
-
-            if intervention.technician_id.as_ref() != Some(&session.user_id)
-                && !matches!(
-                    session.role,
-                    crate::models::auth::UserRole::Admin
-                        | crate::models::auth::UserRole::Supervisor
-                )
-            {
-                return Err(AppError::Authorization(
-                    "Not authorized to advance this intervention".to_string(),
-                ));
-            }
+            ensure_intervention_access(
+                &state,
+                &intervention_id,
+                &session,
+                "Not authorized to advance this intervention",
+            )?;
 
             let has_collected_data = match &collected_data {
                 serde_json::Value::Null => false,
@@ -424,7 +392,8 @@ pub async fn intervention_progress(
                 })?
                 .ok_or_else(|| AppError::NotFound(format!("Step {} not found", step_id)))?;
 
-            let resolved_intervention_id = intervention_id.unwrap_or_else(|| step.intervention_id.clone());
+            let resolved_intervention_id =
+                intervention_id.unwrap_or_else(|| step.intervention_id.clone());
 
             if step.intervention_id != resolved_intervention_id {
                 return Err(AppError::Validation(format!(
@@ -433,32 +402,12 @@ pub async fn intervention_progress(
                 )));
             }
 
-            // Check intervention access
-            let intervention = state
-                .intervention_service
-                .get_intervention(&resolved_intervention_id)
-                .map_err(|e| {
-                    error!(error = %e, "Failed to get intervention");
-                    AppError::Database("Failed to get intervention".to_string())
-                })?
-                .ok_or_else(|| {
-                    AppError::NotFound(format!(
-                        "Intervention {} not found",
-                        resolved_intervention_id
-                    ))
-                })?;
-
-            if intervention.technician_id.as_ref() != Some(&session.user_id)
-                && !matches!(
-                    session.role,
-                    crate::models::auth::UserRole::Admin
-                        | crate::models::auth::UserRole::Supervisor
-                )
-            {
-                return Err(AppError::Authorization(
-                    "Not authorized to save progress for this intervention".to_string(),
-                ));
-            }
+            ensure_intervention_access(
+                &state,
+                &resolved_intervention_id,
+                &session,
+                "Not authorized to save progress for this intervention",
+            )?;
 
             let progress_request = crate::services::intervention_types::SaveStepProgressRequest {
                 step_id,
@@ -469,11 +418,7 @@ pub async fn intervention_progress(
 
             let step = state
                 .intervention_service
-                .save_step_progress(
-                    progress_request,
-                    &correlation_id,
-                    Some(&session.user_id),
-                )
+                .save_step_progress(progress_request, &correlation_id, Some(&session.user_id))
                 .await
                 .map_err(|e| {
                     error!(error = %e, "Failed to save progress");
@@ -486,5 +431,65 @@ pub async fn intervention_progress(
                 },
             ))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::can_access_intervention;
+    use crate::models::auth::{UserRole, UserSession};
+
+    fn session_with_role(role: UserRole, user_id: &str) -> UserSession {
+        UserSession::new(
+            user_id.to_string(),
+            "user".to_string(),
+            "user@example.com".to_string(),
+            role,
+            "token".to_string(),
+            None,
+            3600,
+        )
+    }
+
+    #[test]
+    fn allows_owner_technician_access() {
+        let session = session_with_role(UserRole::Technician, "tech-1");
+        assert!(can_access_intervention(Some("tech-1"), &session));
+    }
+
+    #[test]
+    fn denies_non_owner_technician_access() {
+        let session = session_with_role(UserRole::Technician, "tech-1");
+        assert!(!can_access_intervention(Some("tech-2"), &session));
+    }
+
+    #[test]
+    fn allows_supervisor_access() {
+        let session = session_with_role(UserRole::Supervisor, "sup-1");
+        assert!(can_access_intervention(Some("tech-2"), &session));
+    }
+
+    #[test]
+    fn allows_admin_access() {
+        let session = session_with_role(UserRole::Admin, "admin-1");
+        assert!(can_access_intervention(Some("tech-2"), &session));
+    }
+
+    #[test]
+    fn denies_unassigned_intervention_for_technician() {
+        let session = session_with_role(UserRole::Technician, "tech-1");
+        assert!(!can_access_intervention(None, &session));
+    }
+
+    #[test]
+    fn allows_admin_access_to_unassigned_intervention() {
+        let session = session_with_role(UserRole::Admin, "admin-1");
+        assert!(can_access_intervention(None, &session));
+    }
+
+    #[test]
+    fn allows_supervisor_access_to_unassigned_intervention() {
+        let session = session_with_role(UserRole::Supervisor, "sup-1");
+        assert!(can_access_intervention(None, &session));
     }
 }

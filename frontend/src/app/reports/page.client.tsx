@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DateRangePicker } from './components/DateRangePicker';
 import { ReportTabs } from './components/ReportTabs';
 import { ReportContent } from './components/ReportContent';
@@ -8,7 +8,7 @@ import { ExportControls } from './components/ExportControls';
 import { reportsService } from '@/lib/services/entities/reports.service';
 import { PageShell } from '@/components/layout/PageShell';
 import { enhancedToast } from '@/lib/enhanced-toast';
-import type { ReportType, ReportFilters as BackendReportFilters, DateRange as BackendDateRange } from '@/lib/backend';
+import type { ReportType, ReportFilters as BackendReportFilters, DateRange as BackendDateRange, TaskCompletionReport, TechnicianPerformanceReport, ClientAnalyticsReport, QualityComplianceReport as BackendQualityComplianceReport, MaterialUsageReport as BackendMaterialUsageReport, GeographicReport as BackendGeographicReport, SeasonalReport, OperationalIntelligenceReport as BackendOperationalIntelligenceReport } from '@/lib/backend';
 import { LoadingState } from '@/components/layout/LoadingState';
 
 interface DateRange {
@@ -22,6 +22,17 @@ interface ReportFilters {
   statuses?: string[];
   priorities?: string[];
   ppfZones?: string[];
+}
+
+interface OverviewData {
+  taskCompletion: TaskCompletionReport;
+  technicianPerformance: TechnicianPerformanceReport;
+  clientAnalytics: ClientAnalyticsReport;
+  qualityCompliance: BackendQualityComplianceReport;
+  materialUsage: BackendMaterialUsageReport;
+  geographic: BackendGeographicReport;
+  seasonal: SeasonalReport;
+  operationalIntelligence: BackendOperationalIntelligenceReport;
 }
 
 const toBackendDateRange = (range: DateRange): BackendDateRange => ({
@@ -45,8 +56,8 @@ export default function ReportsPage() {
     const start = new Date(end.getTime() - 30 * 24 * 60 * 60 * 1000);
     return { start, end };
   });
-  const [filters, setFilters] = useState<ReportFilters>({});
-  const [overviewData, setOverviewData] = useState<any>(null);
+  const [filters, _setFilters] = useState<ReportFilters>({});
+  const [overviewData, setOverviewData] = useState<OverviewData | null>(null);
   const [reportsGenerated, setReportsGenerated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -64,7 +75,7 @@ export default function ReportsPage() {
         if (cancelled) return;
 
         if (result.success) {
-          setOverviewData(result.data);
+          setOverviewData(result.data ?? null);
           setReportsGenerated(true);
         } else {
           setOverviewData(null);
@@ -112,7 +123,7 @@ export default function ReportsPage() {
           reportType={reportType}
           dateRange={dateRange}
           filters={filters}
-          overviewData={overviewData}
+          overviewData={overviewData ?? undefined}
           reportsGenerated={reportsGenerated}
         />
       )}

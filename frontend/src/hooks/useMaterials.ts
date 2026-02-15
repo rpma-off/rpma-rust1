@@ -12,7 +12,7 @@ export interface Material {
   category_id?: string;
   brand?: string;
   model?: string;
-  specifications?: any;
+  specifications?: Record<string, unknown>;
   unit_of_measure: string;
   current_stock: number;
   minimum_stock?: number;
@@ -70,7 +70,7 @@ export function useMaterials(options: UseMaterialsOptions = {}) {
       let filteredMaterials = result;
       if (options.search) {
         const searchLower = options.search.toLowerCase();
-        filteredMaterials = result.filter((material: any) =>
+        filteredMaterials = result.filter((material: Material) =>
           material.name.toLowerCase().includes(searchLower) ||
           material.sku.toLowerCase().includes(searchLower) ||
           material.description?.toLowerCase().includes(searchLower)
@@ -87,6 +87,7 @@ export function useMaterials(options: UseMaterialsOptions = {}) {
 
   useEffect(() => {
     fetchMaterials();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     options.materialType,
     options.category,

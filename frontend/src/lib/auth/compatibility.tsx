@@ -2,8 +2,6 @@
 
 import { useAuth as useNewAuth } from '@/contexts/AuthContext';
 import type { AuthContextType } from '@/types/auth.types';
-import type { UserAccount } from '@/lib/types';
-import type { UserSession } from '@/lib/backend';
 
 /**
  * Wrapper de compatibilité pour faciliter la migration progressive

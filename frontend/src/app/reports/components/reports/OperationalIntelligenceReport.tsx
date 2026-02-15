@@ -8,7 +8,7 @@ interface OperationalIntelligenceReportProps {
   filters: ReportFilters;
 }
 
-function OperationalIntelligenceReport({ dateRange, filters }: OperationalIntelligenceReportProps) {
+function OperationalIntelligenceReport({ dateRange: _dateRange, filters: _filters }: OperationalIntelligenceReportProps) {
   return (
     <div className="space-y-8">
       <div className="text-center py-12">

@@ -70,7 +70,7 @@ const rolePermissions = {
 /**
  * Wildcard permission for admin role
  */
-const WILDCARD_PERMISSION = '*';
+const _WILDCARD_PERMISSION = '*';
 
 /**
  * Type for user roles
@@ -94,7 +94,7 @@ export const hasPermission = (role: UserRole, permission: Permission): boolean =
     return true;
   }
 
-  return rolePermissions[role]?.includes(permission as any) || false;
+  return (rolePermissions[role] as readonly string[])?.includes(permission) || false;
 };
 
 /**

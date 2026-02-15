@@ -84,9 +84,10 @@ impl ServiceBuilder {
         let client_service = Arc::new(crate::services::ClientService::new(
             self.repositories.client.clone(),
         ));
-        let dashboard_service = Arc::new(crate::services::DashboardService::new(Arc::new(
+        let dashboard_repo = Arc::new(crate::repositories::DashboardRepository::new(Arc::new(
             db_instance.clone(),
         )));
+        let dashboard_service = Arc::new(crate::services::DashboardService::new(dashboard_repo));
         let intervention_service =
             Arc::new(crate::services::InterventionService::new(self.db.clone()));
         let settings_service = Arc::new(crate::services::SettingsService::new(self.db.clone()));

@@ -83,7 +83,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
             } else {
               setCurrentStep(null);
             }
-          } catch (err) {
+          } catch (_err) {
             setCurrentStep(null);
           }
         } else {
@@ -112,7 +112,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
     } finally {
       setLoading(false);
     }
-  }, [taskId, workflowService]);
+  }, [taskId, workflowService, user?.token]);
 
   // Start a new workflow
   const startWorkflow = useCallback(async (data: CreateWorkflowExecutionDTO) => {
@@ -132,7 +132,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
             } else {
               setCurrentStep(null);
             }
-          } catch (err) {
+          } catch (_err) {
             setCurrentStep(null);
           }
         }
@@ -156,7 +156,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
     } finally {
       setLoading(false);
     }
-  }, [workflowService]);
+  }, [workflowService, user?.token]);
 
   // Complete current step
   const completeStep = useCallback(async (data: CompleteStepDTO) => {
@@ -207,7 +207,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
         isRunning: true
       };
 
-      setStepTiming(timing as any);
+      setStepTiming(timing as unknown as WorkflowTiming);
 
       toast.success('Minuterie démarrée');
       return timing;
@@ -322,7 +322,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
           } else {
             setCurrentStep(null);
           }
-        } catch (err) {
+        } catch (_err) {
           setCurrentStep(null);
         }
 
@@ -342,7 +342,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
     } finally {
       setUploading(false);
     }
-  }, [workflow, currentStep, taskId, workflowService]);
+  }, [workflow, currentStep, taskId, workflowService, user?.token]);
 
   // Auto-save step data
   const saveStepData = useCallback(async (stepData: WorkflowStepData) => {
@@ -383,7 +383,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
   }, [workflow, currentStep, workflowService, user?.id]);
 
   // Pause workflow
-  const pauseWorkflow = useCallback(async (reason?: string, notes?: string) => {
+  const pauseWorkflow = useCallback(async (_reason?: string, _notes?: string) => {
     if (!workflow) return;
 
     try {
@@ -411,10 +411,10 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
     } finally {
       setLoading(false);
     }
-  }, [user?.id, workflow, workflowService]);
+  }, [user?.token, workflow, workflowService]);
 
   // Resume workflow
-  const resumeWorkflow = useCallback(async (notes?: string) => {
+  const resumeWorkflow = useCallback(async (_notes?: string) => {
     if (!workflow) return;
 
     try {
@@ -436,7 +436,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
             } else {
               setCurrentStep(null);
             }
-          } catch (err) {
+          } catch (_err) {
             setCurrentStep(null);
           }
         }
@@ -457,7 +457,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
     } finally {
       setLoading(false);
     }
-  }, [user?.id, workflow, workflowService]);
+  }, [user?.token, workflow, workflowService]);
 
   // Initial fetch
   useEffect(() => {

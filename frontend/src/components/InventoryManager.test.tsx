@@ -1,11 +1,9 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { jest } from '@jest/globals';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { InventoryManager } from '@/components/InventoryManager';
-import * as inventoryOperations from '@/lib/ipc/domains/inventory';
-import type { Material } from '@/lib/inventory';
 
 // Mock the inventory operations
 jest.mock('@/lib/ipc/domains/inventory', () => ({
@@ -47,7 +45,7 @@ import { useInventoryStats } from '@/hooks/useInventoryStats';
 
 // Mock child components
 jest.mock('@/components/StockLevelIndicator', () => ({
-  StockLevelIndicator: ({ material }: { material: any }) => (
+  StockLevelIndicator: ({ material }: { material: { current_stock: number; minimum_stock?: number } }) => (
     <div data-testid="stock-level-indicator">
       {material.current_stock} / {material.minimum_stock || 0}
     </div>
@@ -55,7 +53,7 @@ jest.mock('@/components/StockLevelIndicator', () => ({
 }));
 
 jest.mock('@/components/inventory/MaterialForm', () => ({
-  MaterialForm: ({ material, onClose }: any) => (
+  MaterialForm: ({ material, onClose }: { material?: { name?: string }; onClose: () => void }) => (
     <div data-testid="material-form">
       <input
         data-testid="material-name-input"
@@ -86,7 +84,7 @@ jest.mock('@/components/ui/dialog', () => ({
 
 jest.mock('@/components/ui/confirm-dialog', () => ({
   ConfirmDialog: ({ 
-    open, 
+    open: _open, 
     title, 
     description, 
     onConfirm, 

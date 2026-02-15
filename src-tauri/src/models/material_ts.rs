@@ -3,7 +3,6 @@
 //! This module defines TypeScript-compatible data models for PPF materials
 //! inventory management and consumption tracking for interventions.
 
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 // Re-export the main types

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { reportsService } from '@/lib/services/entities/reports.service';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,12 +12,12 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 export default function DataExplorerReport() {
     const [query, setQuery] = useState('');
     const [entityType, setEntityType] = useState('tasks');
-    const [data, setData] = useState<any[]>([]);
+    const [data, setData] = useState<Record<string, unknown>[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [totalCount, setTotalCount] = useState(0);
 
-    const handleSearch = async () => {
+    const handleSearch = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
@@ -33,18 +33,18 @@ export default function DataExplorerReport() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [query, entityType]);
 
     useEffect(() => {
         // Initial fetch
         handleSearch();
-    }, [entityType]); // Refetch when entity type changes
+    }, [entityType, handleSearch]); // Refetch when entity type changes
 
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row gap-4 items-end">
                 <div className="w-full md:w-1/3">
-                    <label className="text-sm font-medium mb-2 block">Type d'entité</label>
+                    <label className="text-sm font-medium mb-2 block">Type d&apos;entité</label>
                     <Select value={entityType} onValueChange={setEntityType}>
                         <SelectTrigger>
                             <SelectValue placeholder="Sélectionner une entité" />

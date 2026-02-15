@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useSyncStatus } from './useSyncStatus';
-import { SyncOperation, EntityType, SyncStatus } from '@/lib/backend';
+import { SyncOperation, EntityType } from '@/lib/backend';
 import { ipcClient } from '@/lib/ipc';
 
 export interface EntitySyncStatus {

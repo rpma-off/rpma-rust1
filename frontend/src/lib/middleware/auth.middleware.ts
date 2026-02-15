@@ -25,18 +25,19 @@ export const authenticateRequest = async (request: NextRequest): Promise<Authent
     const token = authHeader.substring(7);
 
     // Validate the token with Tauri backend
-    const response = await ipcClient.auth.validateSession(token) as any;
+    const response = await ipcClient.auth.validateSession(token) as Record<string, unknown>;
 
     // Check if validation was successful
     if (response && typeof response === 'object' && 'success' in response && response.success) {
       const session = response.data;
       if (session && typeof session === 'object' && 'user_id' in session) {
+        const sessionData = session as Record<string, unknown>;
         return {
-          id: session.user_id as string,
-          email: session.email as string || '',
-          role: session.role as string || 'viewer',
-          first_name: session.first_name as string || '',
-          last_name: session.last_name as string || '',
+          id: sessionData.user_id as string,
+          email: (sessionData.email as string) || '',
+          role: (sessionData.role as string) || 'viewer',
+          first_name: (sessionData.first_name as string) || '',
+          last_name: (sessionData.last_name as string) || '',
         };
       }
     }

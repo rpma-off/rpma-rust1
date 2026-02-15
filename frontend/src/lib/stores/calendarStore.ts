@@ -44,8 +44,8 @@ interface CalendarState {
   goToToday: () => void;
   goToDate: (date: Date | undefined) => void;
   getWeekDays: () => Date[];
-  getCurrentWeekEvents: () => any[];
-  addEvent: (event: any) => void;
+  getCurrentWeekEvents: () => Record<string, unknown>[];
+  addEvent: (event: Record<string, unknown>) => void;
   setEventTypeFilter: (type: string) => void;
   setParticipantsFilter: (participants: string) => void;
   setSearchQuery: (query: string) => void;
@@ -173,12 +173,12 @@ export const useCalendarStore = create<CalendarState>()(
         return days;
       },
       
-      getCurrentWeekEvents: () => {
+      getCurrentWeekEvents: (): Record<string, unknown>[] => {
         // Implementation would return events for current week
         return [];
       },
       
-      addEvent: (event: any) => {
+      addEvent: (event: Record<string, unknown>) => {
         // Implementation to add event to state
         console.log('Adding event:', event);
       },

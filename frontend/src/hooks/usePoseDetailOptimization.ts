@@ -1,6 +1,5 @@
 import { useMemo, useCallback, useRef, useState } from 'react';
 import { TaskWithDetails, ChecklistItem } from '@/types/task.types';
-import { Task } from '@/types';
 import { convertTimestamps } from '@/lib/types';
 
 interface TaskDisplay {

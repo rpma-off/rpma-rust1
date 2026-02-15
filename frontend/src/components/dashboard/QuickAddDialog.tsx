@@ -10,6 +10,7 @@ import { designTokens } from '@/lib/design-tokens';
 import { useCalendarStore } from '@/lib/stores/calendarStore';
 import { useAuth } from '@/lib/auth/compatibility';
 import { taskService } from '@/lib/services/entities/task.service';
+import type { CreateTaskRequest } from '@/lib/backend';
 import { format } from 'date-fns';
 
 interface QuickAddDialogProps {
@@ -18,7 +19,7 @@ interface QuickAddDialogProps {
 }
 
 export function QuickAddDialog({ isOpen, onClose }: QuickAddDialogProps) {
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const { selectedDate } = useCalendarStore();
 
   const [title, setTitle] = useState('');
@@ -71,7 +72,7 @@ export function QuickAddDialog({ isOpen, onClose }: QuickAddDialogProps) {
         last_synced_at: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      } as any);
+      } as unknown as CreateTaskRequest);
 
       onClose();
       setTitle('');

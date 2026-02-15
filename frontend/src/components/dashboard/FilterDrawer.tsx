@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react';
+import { RotateCcw, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';

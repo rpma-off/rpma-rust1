@@ -20,7 +20,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   height = 'auto',
   className = ''
 }) => {
-  const [isDragging, setIsDragging] = useState(false);
+  const [_isDragging, setIsDragging] = useState(false);
 
   const heightClasses = {
     auto: 'max-h-[80vh]',
@@ -207,14 +207,14 @@ export const SwipeableItem: React.FC<SwipeableItemProps> = ({
   children,
   leftActions = [],
   rightActions = [],
-  onSwipeLeft,
-  onSwipeRight,
+  onSwipeLeft: _onSwipeLeft,
+  onSwipeRight: _onSwipeRight,
   className = ''
 }) => {
   const [offset, setOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
 
-  const handleDrag = (event: any, info: any) => {
+  const handleDrag = (_event: MouseEvent | TouchEvent | PointerEvent, info: { offset: { x: number; y: number } }) => {
     setOffset(info.offset.x);
   };
 
@@ -301,7 +301,7 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [canRefresh, setCanRefresh] = useState(false);
 
-  const handleDrag = (event: any, info: any) => {
+  const handleDrag = (_event: MouseEvent | TouchEvent | PointerEvent, info: { offset: { x: number; y: number } }) => {
     if (isRefreshing) return;
 
     const distance = Math.max(0, info.offset.y);

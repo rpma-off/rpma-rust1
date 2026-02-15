@@ -1,6 +1,7 @@
 pub mod batching;
 pub mod commands;
 pub mod db;
+pub mod domains;
 pub mod ipc_serialization;
 pub mod logging;
 pub mod memory_management;

@@ -4,8 +4,7 @@
 
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Upload } from 'lucide-react';
 
 interface PhotoUploadZoneProps {
   onFilesSelected: (files: File[]) => void;
@@ -18,7 +17,7 @@ interface PhotoUploadZoneProps {
 
 export const PhotoUploadZone: React.FC<PhotoUploadZoneProps> = ({
   onFilesSelected,
-  accept = 'image/*',
+  accept: _accept = 'image/*',
   maxFiles = 10,
   maxSize = 10 * 1024 * 1024, // 10MB
   disabled = false,

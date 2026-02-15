@@ -20,8 +20,8 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   className = '',
 }) => {
   const formatDateRange = () => {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
+    const _year = currentDate.getFullYear();
+    const _month = currentDate.getMonth();
     const day = currentDate.getDate();
 
     switch (viewMode) {
@@ -95,7 +95,7 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
           onClick={onTodayClick}
           className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
         >
-          Aujourd'hui
+          Aujourd&apos;hui
         </button>
 
         <button

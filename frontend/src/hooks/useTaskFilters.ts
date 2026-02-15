@@ -17,7 +17,7 @@ interface UseTaskFiltersProps {
 }
 
 export function useTaskFilters({
-  initialFilters = {},
+  initialFilters: _initialFilters = {},
   onFiltersChange,
 }: UseTaskFiltersProps = {}) {
   const updateFilters = useCallback((newFilters: Partial<TaskFilters>) => {

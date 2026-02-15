@@ -8,7 +8,7 @@
  * Accessible by all authenticated users (technician, manager, admin)
  * Note: Authentication is handled by Tauri backend, not API middleware
  */
-export const GET = async (request: NextRequest) => {
+export const GET = async (_request: NextRequest) => {
   try {
     const technicians = await TechnicianService.getTechnicians();
 

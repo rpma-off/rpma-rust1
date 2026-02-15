@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, Calendar, Car, User, Shield, Eye, Edit, Trash2, RefreshCw, Download, Upload, Grid, List, AlertCircle, Filter, X, ChevronRight, SearchX } from 'lucide-react';
+import { Plus, Search, Calendar, Car, User, Shield, Eye, Edit, Trash2, RefreshCw, Download, Upload, Grid, List, AlertCircle, Filter, ChevronRight, SearchX } from 'lucide-react';
 import { CalendarView } from '@/components/calendar/CalendarView';
 import { KanbanBoard } from '@/components/tasks/KanbanBoard';
 import { Card, CardContent } from '@/components/ui/card';
@@ -22,7 +22,6 @@ import { useTasks } from '@/hooks/useTasks';
 import { useDebounce } from '@/hooks/useDebounce';
 import { ipcClient } from '@/lib/ipc/client';
 import { useTranslation } from '@/hooks/useTranslation';
-import { taskStatusLabels } from '@/lib/i18n/status-labels';
 
 import { TaskWithDetails } from '@/lib/services/entities/task.service';
 import { TaskStatus } from '@/lib/backend';
@@ -660,7 +659,7 @@ export default function TasksPage() {
   const [technicianFilter, setTechnicianFilter] = useState<string>('all');
   const [ppfZoneFilter, setPpfZoneFilter] = useState<string>('all');
   const [technicians, setTechnicians] = useState<Array<{ id: string; name: string }>>([]);
-  const [refreshing, setRefreshing] = useState(false);
+  const [_refreshing, setRefreshing] = useState(false);
    const [viewMode, setViewMode] = useState<'cards' | 'table' | 'calendar' | 'kanban'>('table');
    const [selectedDateRange] = useState<{ from?: Date; to?: Date } | undefined>();
   const [showFilters, setShowFilters] = useState(false);
@@ -804,7 +803,7 @@ export default function TasksPage() {
   }, [user?.token]);
 
   // Update task status via backend
-  const handleStatusChange = useCallback(async (taskId: string, newStatus: TaskStatus) => {
+  const _handleStatusChange = useCallback(async (taskId: string, newStatus: TaskStatus) => {
     try {
       if (!user?.token) {
         enhancedToast.error('Authentification requise');
@@ -934,7 +933,7 @@ export default function TasksPage() {
       console.error('Export failed:', error);
       enhancedToast.error('Erreur lors de l\'export');
     }
-  }, []);
+  }, [selectedDateRange, user?.token]);
 
   const handleImport = useCallback(async () => {
     try {
@@ -1172,7 +1171,7 @@ export default function TasksPage() {
             </div>
           ) : viewMode === 'calendar' ? (
             <div className="h-[800px]">
-              <CalendarView onTaskClick={handleViewTask} className="h-full" />
+              <CalendarView />
             </div>
           ) : viewMode === 'kanban' ? (
             <div className="h-[800px]">

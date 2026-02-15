@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Client, ClientWithTasks } from '@/lib/backend';
+import { Client } from '@/lib/backend';
 import { ClientCard } from './ClientCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,7 +18,6 @@ import {
   List,
   RefreshCw
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
 interface ClientListProps {

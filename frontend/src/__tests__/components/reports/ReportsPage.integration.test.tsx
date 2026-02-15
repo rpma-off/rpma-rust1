@@ -18,18 +18,18 @@ jest.mock('@/lib/secureStorage', () => ({
 }));
 
 jest.mock('@/components/ui/button', () => ({
-  Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+  Button: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => <button {...props}>{children}</button>,
 }));
 
 jest.mock('@/components/ui/card', () => ({
-  Card: ({ children }: any) => <div>{children}</div>,
-  CardContent: ({ children }: any) => <div>{children}</div>,
-  CardHeader: ({ children }: any) => <div>{children}</div>,
-  CardTitle: ({ children }: any) => <div>{children}</div>,
+  Card: ({ children }: React.PropsWithChildren) => <div>{children}</div>,
+  CardContent: ({ children }: React.PropsWithChildren) => <div>{children}</div>,
+  CardHeader: ({ children }: React.PropsWithChildren) => <div>{children}</div>,
+  CardTitle: ({ children }: React.PropsWithChildren) => <div>{children}</div>,
 }));
 
 jest.mock('@/components/ui/badge', () => ({
-  Badge: ({ children }: any) => <span>{children}</span>,
+  Badge: ({ children }: React.PropsWithChildren) => <span>{children}</span>,
 }));
 
 jest.mock('@/components/ui/switch', () => ({

@@ -49,7 +49,7 @@ const TOTPSetup: React.FC<TOTPSetupProps> = ({ sessionToken, onSetupComplete }) 
     };
 
     setupTOTP();
-  }, []);
+  }, [sessionToken]);
 
   // Verify the TOTP code
   const handleVerify = async (e: React.FormEvent) => {

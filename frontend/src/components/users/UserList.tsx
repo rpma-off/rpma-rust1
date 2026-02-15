@@ -186,7 +186,7 @@ export function UserList({ users, onEdit, onRefresh }: UserListProps) {
       {roleChangeUser && (
         <ChangeRoleDialog
           userId={roleChangeUser.id}
-          currentRole={roleChangeUser.role as any}
+          currentRole={roleChangeUser.role}
           userName={roleChangeUser.name}
           userEmail={roleChangeUser.email}
           open={!!roleChangeUser}

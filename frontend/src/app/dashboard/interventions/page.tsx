@@ -8,7 +8,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth/compatibility';
 import { useRouter } from 'next/navigation';
-import { Loader2, Activity, CheckCircle, Clock, TrendingUp, User, MapPin, Target, Link, Calendar, SearchX } from 'lucide-react';
+import { Activity, CheckCircle, Clock, TrendingUp, User, MapPin, Target, Link, SearchX } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,12 +16,11 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle } from 'lucide-react';
 import { InterventionWorkflowService } from '@/lib/services/ppf/intervention-workflow.service';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getStatusLabel } from '@/lib/i18n/status-labels';
 import { PageShell } from '@/components/layout/PageShell';
-import { PageHeader, StatCard } from '@/components/ui/page-header';
+import { StatCard } from '@/components/ui/page-header';
 import { LoadingState } from '@/components/layout/LoadingState';
 import { ErrorState } from '@/components/layout/ErrorState';
 import { EmptyState } from '@/components/layout/EmptyState';
@@ -82,11 +81,11 @@ export default function InterventionsDashboard() {
 
         // Fetch active interventions
         const activeInterventions = await InterventionWorkflowService.getActive(user.token);
-        setActiveInterventions(activeInterventions || []);
+        setActiveInterventions((activeInterventions || []) as InterventionData[]);
 
         // Fetch recent interventions
         const recentInterventions = await InterventionWorkflowService.getRecent(user.token);
-        setRecentInterventions(recentInterventions || []);
+        setRecentInterventions((recentInterventions || []) as InterventionData[]);
 
       } catch (err) {
         console.error('Error fetching interventions:', err);
@@ -99,7 +98,7 @@ export default function InterventionsDashboard() {
     if (user?.token) {
       fetchInterventions();
     }
-  }, [user?.token]);
+  }, [user?.token, t]);
 
   if (authLoading || isLoading) {
     return (

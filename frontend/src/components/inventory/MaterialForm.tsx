@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,8 +9,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useMaterialForm } from '@/hooks/useMaterialForm';
 import { useTranslation } from '@/hooks/useTranslation';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { toast } from 'sonner';
 
 interface MaterialFormProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   material?: any;
   onClose: () => void;
 }
@@ -24,6 +25,7 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
     e.preventDefault();
     const success = await saveMaterial();
     if (success) {
+      toast.success(material ? t('inventory.materialUpdated') : t('inventory.materialCreated'));
       onClose();
     }
   };
