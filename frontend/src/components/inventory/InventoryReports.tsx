@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -47,8 +47,15 @@ export function InventoryReports() {
     }
   }, [t, user?.token]);
 
+  // Root cause fix: prevent StrictMode double-invoke request storms
+  const fetchingRef = useRef(false);
+
   useEffect(() => {
-    void fetchReports();
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
+    fetchReports().finally(() => {
+      fetchingRef.current = false;
+    });
   }, [fetchReports]);
 
   if (!user?.token) {
