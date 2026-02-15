@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { useState, useEffect, useCallback } from 'react';
+import { safeInvoke } from '@/lib/ipc/core';
+import { IPC_COMMANDS } from '@/lib/ipc/commands';
+import { useAuth } from '@/lib/auth/compatibility';
 
 export interface InventoryStats {
   total_materials: number;
@@ -41,27 +43,38 @@ export interface InventoryTransaction {
   last_synced_at?: string;
 }
 
+const AUTH_ERROR_MESSAGE = 'Authentication required';
+
 export function useInventoryStats() {
+  const { user } = useAuth();
+  const sessionToken = user?.token;
   const [stats, setStats] = useState<InventoryStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
+    if (!sessionToken) {
+      setStats(null);
+      setError(AUTH_ERROR_MESSAGE);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
-      const result = await invoke<InventoryStats>('inventory_get_stats');
+      const result = await safeInvoke<InventoryStats>(IPC_COMMANDS.INVENTORY_GET_STATS, { sessionToken });
       setStats(result);
     } catch (err) {
-      setError(err as string);
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
-  };
+  }, [sessionToken]);
 
   useEffect(() => {
-    fetchStats();
-  }, []);
+    void fetchStats();
+  }, [fetchStats]);
 
   return {
     stats,

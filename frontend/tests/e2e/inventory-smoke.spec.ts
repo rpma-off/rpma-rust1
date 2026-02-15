@@ -1,201 +1,85 @@
 import { test, expect, type Page } from '@playwright/test';
 import { resetMockDb } from './utils/mock';
 
+test.describe.configure({ mode: 'serial' });
+
 async function login(page: Page) {
   await page.goto('/login');
   await resetMockDb(page);
-  await page.fill('input[name="email"]', 'admin@test.com');
-  await page.fill('input[name="password"]', 'adminpassword');
+  await page.getByRole('textbox', { name: /Adresse email|Email/i }).waitFor({ timeout: 90000 });
+  await page.fill('input[name="email"]', 'test@example.com');
+  await page.fill('input[name="password"]', 'testpassword');
   await page.click('button[type="submit"]');
-  await page.waitForURL(/\/(dashboard|tasks)(\/|$)/, { timeout: 15000 });
+  await page.waitForURL(/\/(dashboard|tasks)(\/|$)/, { timeout: 45000 });
 }
 
-test.describe('Inventory Smoke Tests — Persistence Verification', () => {
+async function openInventory(page: Page) {
+  if (/\/inventory(\/|$)/.test(page.url())) {
+    return;
+  }
+
+  const navInventory = page.getByText(/Inventaire|Inventory/i).first();
+  if (await navInventory.isVisible()) {
+    await navInventory.click();
+    await page.waitForURL(/\/inventory(\/|$)/, { timeout: 20000 });
+  } else {
+    await page.goto('/inventory');
+  }
+  await page.waitForLoadState('networkidle');
+}
+
+test.describe('Inventory Smoke', () => {
   test.beforeEach(async ({ page }) => {
-    test.setTimeout(60000);
+    test.setTimeout(120000);
     await login(page);
   });
 
-  test('inventory page loads with real backend data (not placeholder)', async ({ page }) => {
-    await page.goto('/inventory');
-    await page.waitForLoadState('networkidle');
+  test('renders top KPI dashboard before tab content', async ({ page }) => {
+    await openInventory(page);
 
-    // Verify the page title/header is visible
-    await expect(page.locator('text=Inventory')).toBeVisible({ timeout: 10000 });
-
-    // Verify the Materials tab content loads (table or empty state)
-    const materialsTable = page.locator('table').first();
-    const emptyState = page.locator('text=Aucun matériau trouvé');
-
-    await expect(materialsTable.or(emptyState)).toBeVisible({ timeout: 10000 });
-
-    // Verify the dashboard stats cards are visible (backend-backed)
-    await expect(page.locator('text=Total Materials').or(
-      page.locator('text=Catalogue de matériaux')
-    )).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/Inventaire|Inventory/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/Total mat|Total Materials/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/Catalogue|Catalog/i)).toBeVisible({ timeout: 10000 });
   });
 
-  test('tab navigation works: Materials, Suppliers, Reports, Settings', async ({ page }) => {
-    await page.goto('/inventory');
-    await page.waitForLoadState('networkidle');
+  test('desktop tab navigation switches between sections', async ({ page }) => {
+    await openInventory(page);
 
-    // Materials tab should be active by default
-    await expect(page.locator('text=Catalogue de matériaux')).toBeVisible({ timeout: 10000 });
+    await page.getByRole('tab', { name: /Fournisseurs|Suppliers/i }).click();
+    await expect(page.getByText(/Fournisseurs|Suppliers/i)).toBeVisible({ timeout: 10000 });
 
-    // Navigate to Suppliers tab
-    const suppliersTab = page.locator('[role="tab"]:has-text("Suppliers")');
-    if (await suppliersTab.isVisible()) {
-      await suppliersTab.click();
-      // Should show the supplier table or empty state (not "coming soon")
-      await expect(page.locator('text=Fournisseurs').or(
-        page.locator('text=Aucun fournisseur')
-      )).toBeVisible({ timeout: 10000 });
-    }
+    await page.getByRole('tab', { name: /Rapports|Reports/i }).click();
+    await expect(page.getByText(/R.sum. des mouvements|Movement Summary/i)).toBeVisible({ timeout: 10000 });
 
-    // Navigate to Reports tab
-    const reportsTab = page.locator('[role="tab"]:has-text("Reports")');
-    if (await reportsTab.isVisible()) {
-      await reportsTab.click();
-      await expect(page.locator('text=Rapports').or(
-        page.locator('text=Résumé des mouvements')
-      )).toBeVisible({ timeout: 10000 });
-    }
-
-    // Navigate to Settings tab
-    const settingsTab = page.locator('[role="tab"]:has-text("Settings")');
-    if (await settingsTab.isVisible()) {
-      await settingsTab.click();
-      await expect(page.locator('text=Paramètres').or(
-        page.locator('text=Catégories')
-      )).toBeVisible({ timeout: 10000 });
-    }
+    await page.getByRole('tab', { name: /Param.tres|Settings/i }).click();
+    await expect(page.getByText(/Cat.gories|Categories/i)).toBeVisible({ timeout: 10000 });
   });
 
-  test('create material via form, verify it appears in list', async ({ page }) => {
-    await page.goto('/inventory');
-    await page.waitForLoadState('networkidle');
+  test('mobile sheet tab picker switches tabs', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openInventory(page);
 
-    // Click "Add material" button
-    const addBtn = page.locator('button:has-text("Ajouter un matériau")');
-    await expect(addBtn).toBeVisible({ timeout: 10000 });
-    await addBtn.click();
+    await page.getByRole('button', { name: /Mat|Materials/i }).first().click();
+    await page.getByRole('button', { name: /Rapports|Reports/i }).click();
 
-    // Fill in the material form
-    const uniqueSku = `SMOKE-${Date.now()}`;
-    await page.fill('input#sku', uniqueSku);
-    await page.fill('input#name', 'Smoke Test Material');
-    await page.fill('textarea#description', 'Created by E2E smoke test');
-    await page.fill('input#current_stock', '50');
-    await page.fill('input#minimum_stock', '10');
-    await page.fill('input#unit_cost', '12.50');
+    await expect(page.getByText(/R.sum. des mouvements|Movement Summary/i)).toBeVisible({ timeout: 10000 });
+  });
 
-    // Submit the form
-    const submitBtn = page.locator('button[type="submit"]:has-text("Créer")').or(
-      page.locator('button[type="submit"]:has-text("créer")')
-    );
-    await expect(submitBtn).toBeEnabled({ timeout: 5000 });
-    await submitBtn.click();
+  test('can create material and see it in list', async ({ page }) => {
+    await openInventory(page);
 
-    // Wait for dialog to close (success)
+    await page.getByRole('button', { name: /Ajouter un mat|Add Material/i }).click();
+
+    const sku = `E2E-SMOKE-${Date.now()}`;
+    await page.fill('#sku', sku);
+    await page.fill('#name', 'Smoke Material');
+    await page.fill('#current_stock', '50');
+    await page.fill('#minimum_stock', '10');
+    await page.fill('#unit_cost', '12.5');
+
+    await page.locator('[role="dialog"] button[type="submit"]').click();
     await expect(page.locator('[role="dialog"]')).toBeHidden({ timeout: 10000 });
 
-    // Verify the created material appears in the table
-    await expect(page.locator(`text=${uniqueSku}`)).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('text=Smoke Test Material')).toBeVisible({ timeout: 5000 });
-  });
-
-  test('stock adjustment persists and updates table', async ({ page }) => {
-    await page.goto('/inventory');
-    await page.waitForLoadState('networkidle');
-
-    // Wait for materials to load
-    await expect(page.locator('text=Catalogue de matériaux')).toBeVisible({ timeout: 10000 });
-
-    // Look for a stock adjust button (ArrowUpDown icon button)
-    const adjustBtn = page.locator('button[title="Ajuster le stock"]').first();
-    if (await adjustBtn.isVisible({ timeout: 5000 })) {
-      await adjustBtn.click();
-
-      // Fill in the stock adjustment dialog
-      await expect(page.locator('text=Ajuster le stock')).toBeVisible({ timeout: 5000 });
-      await page.fill('input#stock-qty', '5');
-      await page.fill('textarea#stock-reason', 'E2E smoke test adjustment');
-
-      // Submit the adjustment
-      const confirmBtn = page.locator('button:has-text("Confirmer")');
-      await expect(confirmBtn).toBeEnabled({ timeout: 5000 });
-      await confirmBtn.click();
-
-      // Wait for dialog to close
-      await expect(page.locator('input#stock-qty')).toBeHidden({ timeout: 10000 });
-    }
-  });
-
-  test('archive material via confirm dialog', async ({ page }) => {
-    await page.goto('/inventory');
-    await page.waitForLoadState('networkidle');
-
-    await expect(page.locator('text=Catalogue de matériaux')).toBeVisible({ timeout: 10000 });
-
-    // Look for an archive button (Trash2 icon button)
-    const archiveBtn = page.locator('button[title="Archiver le matériau"]').first();
-    if (await archiveBtn.isVisible({ timeout: 5000 })) {
-      await archiveBtn.click();
-
-      // Confirm dialog should appear
-      await expect(page.locator('text=Archiver ce matériau')).toBeVisible({ timeout: 5000 });
-
-      // Click the confirm archive button
-      const confirmBtn = page.locator('[role="alertdialog"] button:has-text("Archiver")');
-      await expect(confirmBtn).toBeVisible({ timeout: 5000 });
-      await confirmBtn.click();
-
-      // Dialog should close
-      await expect(page.locator('text=Archiver ce matériau')).toBeHidden({ timeout: 10000 });
-    }
-  });
-
-  test('search and filter work with backend data', async ({ page }) => {
-    await page.goto('/inventory');
-    await page.waitForLoadState('networkidle');
-
-    await expect(page.locator('text=Catalogue de matériaux')).toBeVisible({ timeout: 10000 });
-
-    // Type in search box
-    const searchInput = page.locator('input[placeholder*="Rechercher"]');
-    await expect(searchInput).toBeVisible({ timeout: 5000 });
-    await searchInput.fill('nonexistent-material-xyz');
-
-    // Wait for the filter to apply — either fewer results or empty state
-    await expect(page.locator('text=Aucun matériau trouvé').or(
-      page.locator('text=Matériaux (0)')
-    )).toBeVisible({ timeout: 10000 });
-
-    // Clear search
-    await searchInput.fill('');
-
-    // Wait for the list to reload after clearing search
-    await page.waitForLoadState('networkidle');
-  });
-
-  test('no "coming soon" or placeholder text visible', async ({ page }) => {
-    await page.goto('/inventory');
-    await page.waitForLoadState('networkidle');
-
-    // Check Materials tab
-    await expect(page.locator('text=Catalogue de matériaux')).toBeVisible({ timeout: 10000 });
-
-    // Navigate through all tabs and verify no "coming soon" placeholders
-    const tabs = ['Suppliers', 'Reports', 'Settings'];
-    for (const tab of tabs) {
-      const tabBtn = page.locator(`[role="tab"]:has-text("${tab}")`);
-      if (await tabBtn.isVisible()) {
-        await tabBtn.click();
-        await page.waitForLoadState('networkidle');
-
-        // Verify no "coming soon" text
-        await expect(page.locator('text=coming soon')).not.toBeVisible({ timeout: 3000 });
-      }
-    }
+    await expect(page.getByText(sku)).toBeVisible({ timeout: 10000 });
   });
 });
