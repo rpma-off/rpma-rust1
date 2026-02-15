@@ -60,16 +60,12 @@ const {
   validateClient, 
   validateClientWithTasks, 
   validateClientListResponse, 
-  validateClientWithTasksList, 
   parseClientStatistics,
-  validateClientStatistics
 } = jest.requireMock('@/lib/validation/backend-type-guards') as {
   validateClient: jest.Mock;
   validateClientWithTasks: jest.Mock;
   validateClientListResponse: jest.Mock;
-  validateClientWithTasksList: jest.Mock;
   parseClientStatistics: jest.Mock;
-  validateClientStatistics: jest.Mock;
 };
 
 describe('clientOperations IPC contract tests', () => {
@@ -90,12 +86,12 @@ describe('clientOperations IPC contract tests', () => {
     });
     
     // Setup ResponseHandlers mocks
-    ResponseHandlers.discriminatedUnion.mockImplementation((type, validator) => (result) => result);
-    ResponseHandlers.discriminatedUnionNullable.mockImplementation((type, validator) => (result) => result);
-    ResponseHandlers.list.mockImplementation((processor) => (result) => result);
+    ResponseHandlers.discriminatedUnion.mockImplementation((_type, _validator) => (result) => result);
+    ResponseHandlers.discriminatedUnionNullable.mockImplementation((_type, _validator) => (result) => result);
+    ResponseHandlers.list.mockImplementation((_processor) => (result) => result);
     ResponseHandlers.statistics.mockImplementation(() => (result) => result);
     
-    extractAndValidate.mockImplementation((result, validator, options) => result);
+    extractAndValidate.mockImplementation((result, _validator, _options) => result);
   });
 
   describe('CRUD Operations', () => {
@@ -196,7 +192,7 @@ describe('clientOperations IPC contract tests', () => {
       safeInvoke.mockResolvedValue(mockResponse);
       extractAndValidate.mockReturnValue(validateClientWithTasks(mockResponse));
 
-      const result = await clientOperations.getWithTasks('client-123', 'session-token');
+      await clientOperations.getWithTasks('client-123', 'session-token');
 
       expect(safeInvoke).toHaveBeenCalledWith('client_crud', {
         request: {
@@ -297,7 +293,7 @@ describe('clientOperations IPC contract tests', () => {
       safeInvoke.mockResolvedValue(mockResponse);
       extractAndValidate.mockReturnValue(parseClientStatistics(mockResponse));
 
-      const result = await clientOperations.stats('session-token');
+      await clientOperations.stats('session-token');
 
       expect(safeInvoke).toHaveBeenCalledWith('client_crud', {
         request: {
@@ -566,7 +562,7 @@ describe('clientOperations IPC contract tests', () => {
       for (const operation of operations) {
         try {
           await operation();
-        } catch (error) {
+        } catch (_error) {
           // Expected to fail due to empty session token
         }
       }
@@ -658,7 +654,7 @@ describe('clientOperations IPC contract tests', () => {
       };
 
       cachedInvoke.mockResolvedValue(notFoundResponse);
-      ResponseHandlers.discriminatedUnionNullable.mockReturnValue((result) => null);
+      ResponseHandlers.discriminatedUnionNullable.mockReturnValue((_result) => null);
 
       const result = await clientOperations.get('nonexistent-client', 'session-token');
 

@@ -48,7 +48,7 @@ export class ConfigurationService {
     }
   }
 
-  static async getConfigurationsByCategory(category: string): Promise<Configuration[]> {
+  static async getConfigurationsByCategory(_category: string): Promise<Configuration[]> {
     try {
       // Mock implementation
       return [];
@@ -87,7 +87,7 @@ export class ConfigurationService {
     }
   }
 
-  static async deleteBusinessRule(id: string): Promise<ServiceResponse<void>> {
+  static async deleteBusinessRule(_id: string): Promise<ServiceResponse<void>> {
     try {
       // Mock implementation
       return {
@@ -128,7 +128,7 @@ export class ConfigurationService {
     }
   }
 
-  static async deleteConfiguration(id: string): Promise<ServiceResponse<void>> {
+  static async deleteConfiguration(_id: string): Promise<ServiceResponse<void>> {
     try {
       // Mock implementation
       return {
@@ -146,7 +146,7 @@ export class ConfigurationService {
   }
 
   // Additional methods needed by API routes
-  static async getBusinessRules(filters?: unknown): Promise<ServiceResponse<BusinessRule[]>> {
+  static async getBusinessRules(_filters?: unknown): Promise<ServiceResponse<BusinessRule[]>> {
     try {
       // Mock implementation
       return {
@@ -186,7 +186,7 @@ export class ConfigurationService {
     }
   }
 
-  static async getSystemConfigurations(filters?: unknown): Promise<ServiceResponse<Configuration[]>> {
+  static async getSystemConfigurations(_filters?: unknown): Promise<ServiceResponse<Configuration[]>> {
     try {
       // Mock implementation
       return {
@@ -224,7 +224,7 @@ export class ConfigurationService {
     }
   }
 
-  static async getSystemConfigurationById(id: string): Promise<ServiceResponse<Configuration | null>> {
+  static async getSystemConfigurationById(_id: string): Promise<ServiceResponse<Configuration | null>> {
     try {
       // Mock implementation
       return {
@@ -307,7 +307,7 @@ export class ConfigurationService {
     }
   }
 
-  static async getConfigurationHistory(configurationType?: string, configurationId?: string, limit?: number): Promise<ServiceResponse<Configuration[]>> {
+  static async getConfigurationHistory(_configurationType?: string, _configurationId?: string, _limit?: number): Promise<ServiceResponse<Configuration[]>> {
     try {
       // Mock implementation
       return {
@@ -344,7 +344,7 @@ export class ConfigurationService {
     }
   }
 
-  static async validateConfiguration(config: Partial<Configuration>): Promise<{ valid: boolean; errors?: string[] }> {
+  static async validateConfiguration(_config: Partial<Configuration>): Promise<{ valid: boolean; errors?: string[] }> {
     try {
       // Mock implementation
       return { valid: true };

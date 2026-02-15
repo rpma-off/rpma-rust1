@@ -9,7 +9,6 @@ import {
   ValidationResult,
   validateTaskDetailed,
   validateClientDetailed,
-  validateUserAccountDetailed,
   validateIpcResponse,
   validateMultiple,
   assertIsTask,
@@ -67,7 +66,7 @@ export class IpcResponseHandler {
  * Error handling utilities
  */
 export class ValidationErrorHandler {
-  static formatValidationError(result: ValidationResult<any>): string {
+  static formatValidationError(result: ValidationResult<unknown>): string {
     if (result.success) return '';
 
     let message = result.error || 'Validation failed';
@@ -82,7 +81,7 @@ export class ValidationErrorHandler {
     return message;
   }
 
-  static logValidationError(result: ValidationResult<any>, context: string) {
+  static logValidationError(result: ValidationResult<unknown>, context: string) {
     if (!result.success) {
       console.error(`Validation error in ${context}:`, {
         error: result.error,

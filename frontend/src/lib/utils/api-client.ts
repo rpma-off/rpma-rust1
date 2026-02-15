@@ -1,7 +1,5 @@
 // API client utilities for HTTP requests with automatic authentication
 
-import { useAuthHeaders } from './auth-token';
-
 /**
  * Get authenticated headers for API requests
  * Note: This must be called within a React component that has access to AuthContext
@@ -21,7 +19,7 @@ export function getAuthHeaders(): Record<string, string> {
  */
 export async function authenticatedFetch(url: string, options: RequestInit = {}): Promise<Response> {
   // Get auth headers from the calling component
-  const authHeaders = (window as any).__authHeaders || {};
+  const authHeaders = (window as Window & { __authHeaders?: Record<string, string> }).__authHeaders || {};
 
   const headers = {
     'Content-Type': 'application/json',

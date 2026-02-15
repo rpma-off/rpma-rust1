@@ -1,4 +1,4 @@
-import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { 
   materialOperations, 
   materialCategoryOperations,
@@ -713,7 +713,7 @@ describe('Inventory IPC Contract Tests', () => {
 
       // TypeScript should prevent invalid types at compile time
       // @ts-expect-error - This should fail type checking
-      const invalidType: MaterialType = 'invalid_type';
+      const _invalidType: MaterialType = 'invalid_type';
     });
 
     it('should enforce UnitOfMeasure enum values', () => {
@@ -726,7 +726,7 @@ describe('Inventory IPC Contract Tests', () => {
 
       // TypeScript should prevent invalid types at compile time
       // @ts-expect-error - This should fail type checking
-      const invalidUnit: UnitOfMeasure = 'invalid_unit';
+      const _invalidUnit: UnitOfMeasure = 'invalid_unit';
     });
 
     it('should enforce transaction type values', () => {

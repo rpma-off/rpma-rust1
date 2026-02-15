@@ -14,6 +14,15 @@ export interface WorkflowValidationResult {
   suggestions?: string[];
 }
 
+interface WorkflowValidationInput {
+  id?: string;
+  steps?: unknown[];
+}
+
+function isWorkflowValidationInput(workflow: unknown): workflow is WorkflowValidationInput {
+  return typeof workflow === 'object' && workflow !== null;
+}
+
 export const validateWorkflowStep = (step: WorkflowStep): WorkflowValidationResult => {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -54,9 +63,17 @@ export const validateWorkflow = (steps: WorkflowStep[]): WorkflowValidationResul
   };
 };
 
-export function runCompleteWorkflowValidation(workflow: any): WorkflowValidationResult {
+export function runCompleteWorkflowValidation(workflow: unknown): WorkflowValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
+
+  if (!isWorkflowValidationInput(workflow)) {
+    return {
+      isValid: false,
+      errors: ['Workflow payload must be an object'],
+      warnings,
+    };
+  }
 
   // Basic validation
   if (!workflow.id) {

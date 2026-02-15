@@ -94,7 +94,7 @@ export const renderWithProviders = (
 
 // Helper for testing loading states
 export const createLoadingMock = (command: string, delay = 100) => {
-  let resolve: (value: any) => void;
+  let resolve: (value: unknown) => void = () => undefined;
   const promise = new Promise((r) => {
     resolve = r;
   });
@@ -219,7 +219,7 @@ export const testFormValidation = async (
 export const testTableSorting = async (
   renderResult: ReturnType<typeof renderWithProviders>,
   columnName: string,
-  initialData: any[]
+  initialData: unknown[]
 ) => {
   const { getByText, rerender } = renderResult;
   void initialData;

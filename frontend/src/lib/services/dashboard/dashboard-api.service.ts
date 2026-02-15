@@ -1,6 +1,6 @@
 // Dashboard API service
 
-import { TaskStatus, TaskPriority, TaskQuery } from '@/lib/backend';
+import { TaskQuery } from '@/lib/backend';
 import { UserAccount } from '@/lib/types';
 import { ipcClient } from '@/lib/ipc';
 import { AuthSecureStorage } from '@/lib/secureStorage';
@@ -149,7 +149,12 @@ export class DashboardApiService {
       const backendTasks = taskListResponse.data || [];
       const tasks: import('@/types/task.types').TaskWithDetails[] = backendTasks.map(task => ({
         ...task,
-        progress: calculateTaskProgress(task as any),
+        progress: calculateTaskProgress({
+          ...(task as import('@/types/task.types').TaskWithDetails),
+          progress: 0,
+          is_overdue: false,
+          checklist_completed: Boolean(task.checklist_completed),
+        }),
         is_overdue: isTaskOverdue(task)
       }));
       const statsData = statsResponse || {};

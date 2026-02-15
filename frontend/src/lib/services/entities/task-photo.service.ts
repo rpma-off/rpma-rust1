@@ -42,7 +42,7 @@ export interface TaskPhotoUploadResult {
 }
 
 export class TaskPhotoService extends BaseService {
-  static async getPhotos(params: TaskPhotoQueryParams): Promise<{ data: TaskPhoto[]; error: null } | { data: null; error: Error }> {
+  static async getPhotos(_params: TaskPhotoQueryParams): Promise<{ data: TaskPhoto[]; error: null } | { data: null; error: Error }> {
     try {
       // Mock implementation - in real app this would query the database
       return {

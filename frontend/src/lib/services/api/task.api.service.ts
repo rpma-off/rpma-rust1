@@ -20,7 +20,7 @@ interface PaginatedResponse<T> {
   pageSize: number;
 }
 
-import { TaskStatus, TaskPriority, TaskWithDetails, TaskListResponse, UpdateTaskRequest } from '@/lib/backend';
+import { TaskWithDetails, UpdateTaskRequest } from '@/lib/backend';
 import { AuthSecureStorage } from '@/lib/secureStorage';
 import { ipcClient } from '@/lib/ipc';
 
@@ -34,7 +34,7 @@ export class TaskApiService {
     return TaskApiService.instance;
   }
 
-  async getTasks(params: GetTasksParams): Promise<ApiResponse<PaginatedResponse<any>>> {
+  async getTasks(params: GetTasksParams): Promise<ApiResponse<PaginatedResponse<TaskWithDetails>>> {
     try {
       const session = await AuthSecureStorage.getSession();
       if (!session.token) {
@@ -57,7 +57,7 @@ export class TaskApiService {
         technician_id: filters.technician_id
       }, session.token);
 
-      const response: PaginatedResponse<any> = {
+      const response: PaginatedResponse<TaskWithDetails> = {
         data: result.data || [],
         total: Number(result.pagination?.total) || 0,
         page: Number(result.pagination?.page) || params.page,

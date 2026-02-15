@@ -101,12 +101,12 @@ describe('taskOperations IPC contract tests', () => {
     });
     
     // Setup ResponseHandlers mocks
-    ResponseHandlers.discriminatedUnion.mockImplementation((type, validator) => (result) => result);
-    ResponseHandlers.discriminatedUnionNullable.mockImplementation((type, validator) => (result) => result);
-    ResponseHandlers.list.mockImplementation((processor) => (result) => result);
+    ResponseHandlers.discriminatedUnion.mockImplementation((_type, _validator) => (result) => result);
+    ResponseHandlers.discriminatedUnionNullable.mockImplementation((_type, _validator) => (result) => result);
+    ResponseHandlers.list.mockImplementation((_processor) => (result) => result);
     ResponseHandlers.statistics.mockImplementation(() => (result) => result);
     
-    extractAndValidate.mockImplementation((result, validator) => result);
+    extractAndValidate.mockImplementation((result, _validator) => result);
     
     // Setup crud operations mock returns
     mockTaskCrud.create.mockResolvedValue({ id: 'task-123' });
@@ -471,7 +471,7 @@ describe('taskOperations IPC contract tests', () => {
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
-      ResponseHandlers.discriminatedUnionNullable.mockReturnValue((result) => null);
+      ResponseHandlers.discriminatedUnionNullable.mockReturnValue((_result) => null);
 
       const result = await taskOperations.get('nonexistent-task', 'session-token');
 
@@ -494,7 +494,7 @@ describe('taskOperations IPC contract tests', () => {
       for (const operation of operations) {
         try {
           await operation();
-        } catch (error) {
+        } catch (_error) {
           // Expected to fail due to empty session token
         }
       }
@@ -547,7 +547,7 @@ describe('taskOperations IPC contract tests', () => {
       };
 
       safeInvoke.mockResolvedValue(notFoundResponse);
-      ResponseHandlers.discriminatedUnionNullable.mockReturnValue((result) => null);
+      ResponseHandlers.discriminatedUnionNullable.mockReturnValue((_result) => null);
 
       const result = await taskOperations.get('nonexistent-task', 'session-token');
 

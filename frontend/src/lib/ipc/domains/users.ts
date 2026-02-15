@@ -1,4 +1,4 @@
-import { safeInvoke, extractAndValidate, ResponseHandlers } from '../core';
+import { safeInvoke, extractAndValidate } from '../core';
 import { createCrudOperations } from '../utils/crud-helpers';
 import { IPC_COMMANDS } from '../commands';
 import type { CreateUserRequest, UpdateUserRequest, UserListResponse } from '../types/index';

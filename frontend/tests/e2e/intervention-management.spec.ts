@@ -84,7 +84,7 @@ test.describe('Intervention Management', () => {
     const currentStep = page.locator('.current-step, .step.active');
     if (await currentStep.isVisible()) {
       // Get current step name
-      const stepName = await currentStep.textContent();
+      await currentStep.textContent();
       
       // Look for step completion button
       const completeStepButton = page.locator('button:has-text("Terminer"), button:has-text("Complete Step")');

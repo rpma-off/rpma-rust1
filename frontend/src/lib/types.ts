@@ -1,7 +1,7 @@
 // Frontend-specific type extensions and utilities
 // This file provides type fixes and utilities for the auto-generated backend types
 
-import type { Task as BaseTask, Client as BaseClient, ClientWithTasks as BaseClientWithTasks, UserSession, UserRole } from './backend';
+import type { Task as BaseTask, Client as BaseClient, UserRole } from './backend';
 
 // Base UserAccount type (matches Rust model)
 export type BaseUserAccount = {
@@ -80,8 +80,8 @@ export function getUserFullName(user: BaseUserAccount | UserAccount): string {
 }
 
 // Utility function to convert BigInt timestamps to strings
-export function convertTimestamps<T extends Record<string, any>>(obj: T): T {
-  const result = { ...obj } as any;
+export function convertTimestamps<T extends object>(obj: T): T {
+  const result = { ...(obj as Record<string, unknown>) };
   const timestampFields = ['created_at', 'updated_at', 'assigned_at', 'started_at', 'completed_at', 'last_synced_at', 'deleted_at', 'last_login'];
 
   for (const field of timestampFields) {
@@ -90,20 +90,20 @@ export function convertTimestamps<T extends Record<string, any>>(obj: T): T {
     }
   }
 
-  return result;
+  return result as T;
 }
 
 // Type guards
-export function isUserAccount(obj: any): obj is UserAccount {
-  return obj && typeof obj === 'object' && 'id' in obj && 'email' in obj && 'username' in obj;
+export function isUserAccount(obj: unknown): obj is UserAccount {
+  return !!obj && typeof obj === 'object' && 'id' in obj && 'email' in obj && 'username' in obj;
 }
 
-export function isTask(obj: any): obj is Task {
-  return obj && typeof obj === 'object' && 'id' in obj && 'title' in obj && 'status' in obj;
+export function isTask(obj: unknown): obj is Task {
+  return !!obj && typeof obj === 'object' && 'id' in obj && 'title' in obj && 'status' in obj;
 }
 
-export function isClient(obj: any): obj is Client {
-  return obj && typeof obj === 'object' && 'id' in obj && 'name' in obj;
+export function isClient(obj: unknown): obj is Client {
+  return !!obj && typeof obj === 'object' && 'id' in obj && 'name' in obj;
 }
 
 // Runtime enum object for UserRole (type is imported from backend)

@@ -1,9 +1,25 @@
 import type { Client, ClientWithTasks } from '@/lib/backend';
-import type { CreateClientDTO, UpdateClientDTO, ClientListResponse, ClientStats } from '@/types/client.types';
+import type { CreateClientDTO, ClientListResponse, ClientStats } from '@/types/client.types';
 import type { ServiceResponse, ApiResponse } from '@/types/unified.types';
 import { ApiError } from '@/types/unified.types';
 import { ipcClient } from '@/lib/ipc';
 import type { ClientQuery, PaginationInfo } from '@/lib/backend';
+import type { UpdateClientRequest as IpcUpdateClientRequest } from '@/lib/validation/ipc-schemas';
+
+interface LegacyStatisticsResponse<T> {
+  type: 'Statistics';
+  data: T;
+}
+
+function isLegacyStatisticsResponse<T>(value: unknown): value is LegacyStatisticsResponse<T> {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'type' in value &&
+    (value as { type?: unknown }).type === 'Statistics' &&
+    'data' in value
+  );
+}
 
 // Export types
 export type { ClientWithTasks, ClientStats };
@@ -46,9 +62,12 @@ export class ClientService {
     if (!sessionToken) {
       return { success: false, error: 'Session token required', status: 401 };
     }
+    if (!body || typeof body !== 'object') {
+      return { success: false, error: 'Invalid client update payload', status: 400 };
+    }
 
     try {
-      const client = await ipcClient.clients.update(id, body as any, sessionToken);
+      const client = await ipcClient.clients.update(id, body as IpcUpdateClientRequest, sessionToken);
       return { success: true, data: client, status: 200 };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -131,7 +150,7 @@ export class ClientService {
               }
             };
             return { success: true, data: listResponse };
-          } catch (error) {
+          } catch (_error) {
             // Fallback: use basic client list without tasks if ListWithTasks fails
             const listResponse = await ipcClient.clients.list(clientQuery, sessionToken);
             const clientsWithTasks: ClientWithTasks[] = listResponse.data.map((client: Client) => ({
@@ -174,13 +193,34 @@ export class ClientService {
      }
 
       try {
-        const response = await ipcClient.clients.stats(sessionToken);
+        const response = await ipcClient.clients.stats(sessionToken) as unknown;
 
-        if (response && (response as any).type === 'Statistics') {
-          return { success: true, data: (response as any).data as ClientStats };
+        if (isLegacyStatisticsResponse<ClientStats>(response)) {
+          return { success: true, data: response.data };
+        }
+        if (response && typeof response === 'object') {
+          const stats = response as {
+            total_clients?: bigint;
+            individual_clients?: bigint;
+            business_clients?: bigint;
+            clients_with_tasks?: bigint;
+            new_clients_this_month?: bigint;
+          };
+
+          return {
+            success: true,
+            data: {
+              total_clients: Number(stats.total_clients ?? 0n),
+              individual_clients: Number(stats.individual_clients ?? 0n),
+              business_clients: Number(stats.business_clients ?? 0n),
+              clients_with_tasks: Number(stats.clients_with_tasks ?? 0n),
+              new_clients_this_month: Number(stats.new_clients_this_month ?? 0n),
+              top_clients: []
+            }
+          };
         }
 
-         return { success: false, error: new ApiError('Failed to fetch client stats', 500, 'CLIENT_STATS_FETCH_FAILED'), data: undefined };
+        return { success: false, error: new ApiError('Failed to fetch client stats', 500, 'CLIENT_STATS_FETCH_FAILED'), data: undefined };
      } catch (error) {
        return { success: false, error: new ApiError(error instanceof Error ? error.message : 'Failed to fetch client stats', 500, 'CLIENT_STATS_FETCH_FAILED'), data: undefined };
      }

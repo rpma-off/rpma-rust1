@@ -59,7 +59,7 @@ export function createError(
  */
 export function handleApiError(
   error: unknown,
-  context?: Record<string, any>
+  context?: Record<string, unknown>
 ): AppError {
   if (error && typeof error === 'object' && 'code' in error) {
     const apiError = error as ApiError;

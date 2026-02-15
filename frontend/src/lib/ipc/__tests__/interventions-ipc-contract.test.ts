@@ -27,9 +27,8 @@ const { safeInvoke } = jest.requireMock('../core') as {
   safeInvoke: jest.Mock;
 };
 
-const { cachedInvoke, invalidatePattern } = jest.requireMock('../cache') as {
+const { cachedInvoke } = jest.requireMock('../cache') as {
   cachedInvoke: jest.Mock;
-  invalidatePattern: jest.Mock;
 };
 
 const { extractAndValidate } = jest.requireMock('../core') as {
@@ -51,7 +50,7 @@ describe('interventionOperations IPC contract tests', () => {
     safeInvoke.mockResolvedValue('ok');
     cachedInvoke.mockResolvedValue(null);
     
-    extractAndValidate.mockImplementation((result, validator) => result);
+    extractAndValidate.mockImplementation((result, _validator) => result);
   });
 
   describe('Workflow Operations', () => {
@@ -72,7 +71,7 @@ describe('interventionOperations IPC contract tests', () => {
       safeInvoke.mockResolvedValue(mockResponse);
       extractAndValidate.mockReturnValue(validateStartInterventionResponse(mockResponse));
 
-      const result = await interventionOperations.start(startData, 'session-token');
+      await interventionOperations.start(startData, 'session-token');
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_workflow', {
         action: { action: 'Start', data: startData },
@@ -101,7 +100,7 @@ describe('interventionOperations IPC contract tests', () => {
       safeInvoke.mockResolvedValue(mockResponse);
       extractAndValidate.mockReturnValue(validateIntervention(mockResponse.intervention));
 
-      const result = await interventionOperations.get('intervention-123', 'session-token');
+      await interventionOperations.get('intervention-123', 'session-token');
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_workflow', {
         action: { action: 'Get', id: 'intervention-123' },
@@ -164,7 +163,7 @@ describe('interventionOperations IPC contract tests', () => {
       safeInvoke.mockResolvedValue(mockResponse);
       extractAndValidate.mockReturnValue(validateIntervention(mockResponse.intervention));
 
-      const result = await interventionOperations.updateWorkflow('intervention-123', updateData, 'session-token');
+      await interventionOperations.updateWorkflow('intervention-123', updateData, 'session-token');
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_workflow', {
         action: { action: 'Update', id: 'intervention-123', data: updateData },
@@ -257,7 +256,7 @@ describe('interventionOperations IPC contract tests', () => {
       safeInvoke.mockResolvedValue(mockResponse);
       extractAndValidate.mockReturnValue(validateInterventionStep(mockResponse.step));
 
-      const result = await interventionOperations.getStep('step-1', 'session-token');
+      await interventionOperations.getStep('step-1', 'session-token');
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_progress', {
         action: { action: 'GetStep', step_id: 'step-1' },
@@ -330,7 +329,7 @@ describe('interventionOperations IPC contract tests', () => {
       safeInvoke.mockResolvedValue(mockResponse);
       extractAndValidate.mockReturnValue(validateInterventionStep(mockResponse.step));
 
-      const result = await interventionOperations.saveStepProgress(stepProgressData, 'session-token');
+      await interventionOperations.saveStepProgress(stepProgressData, 'session-token');
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_progress', {
         action: {
@@ -600,7 +599,7 @@ describe('interventionOperations IPC contract tests', () => {
       for (const operation of operations) {
         try {
           await operation();
-        } catch (error) {
+        } catch (_error) {
           // Expected to fail due to empty session token
         }
       }

@@ -50,7 +50,7 @@ export class ChangeLogService {
     return ChangeLogService.instance;
   }
 
-  async getChangeLogs(filters?: ChangeLogFilters): Promise<ChangeLogWithUser[]> {
+  async getChangeLogs(_filters?: ChangeLogFilters): Promise<ChangeLogWithUser[]> {
     // Mock implementation
     try {
       const mockLogs: ChangeLogWithUser[] = [];
@@ -61,7 +61,7 @@ export class ChangeLogService {
     }
   }
 
-  async getChangeLogById(id: string): Promise<ChangeLogWithUser | null> {
+  async getChangeLogById(_id: string): Promise<ChangeLogWithUser | null> {
     // Mock implementation
     try {
       return null;
@@ -86,12 +86,12 @@ export class ChangeLogService {
     }
   }
 
-  async getRecordChanges(tableName: string, recordId: string): Promise<ChangeLogWithUser[]> {
+  async getRecordChanges(_tableName: string, _recordId: string): Promise<ChangeLogWithUser[]> {
     // Mock implementation
     return [];
   }
 
-  async getTableChanges(tableName: string): Promise<ChangeLogWithUser[]> {
+  async getTableChanges(_tableName: string): Promise<ChangeLogWithUser[]> {
     // Mock implementation
     return [];
   }

@@ -153,8 +153,6 @@ export function useWorkflowStepAutoSave(
     if (!result.success) {
       throw new Error(`Erreur sauvegarde étape: ${result.error ?? 'Erreur inconnue'}`);
     }
-
-    return result.data;
   };
 
   return useAutoSave(stepData, saveStepData, {

@@ -11,7 +11,7 @@ export const validateTaskNumber = (taskNumber: string): boolean => {
   return pattern.test(taskNumber);
 };
 
-export const generateUniqueTaskNumber = (options: { maxRetries: number }, supabase: any): { success: boolean; taskNumber?: string; attemptsUsed?: number; error?: string } => {
+export const generateUniqueTaskNumber = (_options: { maxRetries: number }, _supabase: unknown): { success: boolean; taskNumber?: string; attemptsUsed?: number; error?: string } => {
   // Mock implementation - in real app would check database for uniqueness
   const taskNumber = generateTaskNumber();
   return { success: true, taskNumber, attemptsUsed: 1 };

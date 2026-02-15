@@ -10,16 +10,13 @@ export function nullToUndefined<T>(value: T | null): T | undefined {
 /**
  * Convert null values to undefined for all properties in an object
  */
-export function convertNullsToUndefined<T extends Record<string, any>>(obj: T): { [K in keyof T]: T[K] extends null ? undefined : T[K] } {
-  const result = {} as any;
-  for (const key in obj) {
-    if (obj[key] === null) {
-      result[key] = undefined;
-    } else {
-      result[key] = obj[key];
-    }
+export function convertNullsToUndefined<T extends object>(obj: T): T {
+  const source = obj as Record<string, unknown>;
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(source)) {
+    result[key] = value === null ? undefined : value;
   }
-  return result;
+  return result as T;
 }
 
 /**
@@ -158,7 +155,7 @@ function calculateDuration(startTime?: string, endTime?: string): number | undef
 /**
  * Normalizes PPF zones from various formats into a consistent array
  */
-function normalizePPFZones(zones: unknown): string[] | undefined {
+function _normalizePPFZones(zones: unknown): string[] | undefined {
   if (!zones) return undefined;
 
   if (Array.isArray(zones)) {

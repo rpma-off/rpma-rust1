@@ -33,7 +33,7 @@ export class ClientCreationService {
         return { clientId: createResponse.data.id };
       }
 
-      return { clientId: null, error: typeof createResponse.error === 'string' ? createResponse.error : (createResponse.error as any)?.message || 'Client creation failed' };
+      return { clientId: null, error: createResponse.error || 'Client creation failed' };
     } catch (error) {
       return { clientId: null, error: `Client operation failed: ${error}` };
     }

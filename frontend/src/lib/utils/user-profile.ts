@@ -30,9 +30,10 @@ export const isActive = (user: UserProfile): boolean => {
 export const getUserProfileWithRole = async (supabaseClient: unknown, userId: string): Promise<{ profile: UserProfile | null; hasRequiredRole: (role: string) => boolean; error: string | null }> => {
   // TODO: Implement user profile fetching with role
   console.log('Getting user profile with role for:', userId);
+  void supabaseClient;
   return {
     profile: null,
-    hasRequiredRole: (role: string) => false,
+    hasRequiredRole: (_role: string) => false,
     error: null
   };
 };

@@ -12,7 +12,6 @@ import type {
   SeasonalReport,
   OperationalIntelligenceReport,
   ExportFormat,
-  ReportRequest,
   ReportResponse,
   ExportResult,
   InterventionReportResult,

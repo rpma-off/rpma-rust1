@@ -12,14 +12,14 @@ export class SettingsErrorHandler {
    * Maps validation errors to user-friendly messages
    */
   static handleValidationError(error: z.ZodError): SettingsError[] {
-    return error.issues.map((err: any) => ({
+    return error.issues.map((err) => ({
       code: 'VALIDATION_ERROR',
       message: this.getValidationMessage(err),
       field: err.path.join('.'),
       details: {
         code: err.code,
-        received: err.received,
-        expected: err.expected
+        received: 'received' in err ? err.received : undefined,
+        expected: 'expected' in err ? err.expected : undefined
       }
     }));
   }
@@ -102,30 +102,30 @@ export class SettingsErrorHandler {
   /**
    * Gets user-friendly validation error messages
    */
-  private static getValidationMessage(error: any): string {
+  private static getValidationMessage(error: z.ZodIssue): string {
     const { code, path } = error;
     const fieldName = path[path.length - 1] as string;
 
     switch (code) {
       case 'invalid_type':
-        if (error.received === 'undefined') {
+        if ('received' in error && error.received === 'undefined') {
           return `${this.getFieldLabel(fieldName)} est requis.`;
         }
         return `${this.getFieldLabel(fieldName)} n'est pas du bon type.`;
 
       case 'too_small':
-        if (typeof error.minimum === 'number') {
+        if ('minimum' in error && typeof error.minimum === 'number') {
           return `${this.getFieldLabel(fieldName)} doit contenir au moins ${error.minimum} caractères.`;
         }
         return `${this.getFieldLabel(fieldName)} est trop petit.`;
 
       case 'too_big':
-        if (typeof error.maximum === 'number') {
+        if ('maximum' in error && typeof error.maximum === 'number') {
           return `${this.getFieldLabel(fieldName)} ne peut pas dépasser ${error.maximum} caractères.`;
         }
         return `${this.getFieldLabel(fieldName)} est trop grand.`;
 
-      case 'invalid_string':
+      case 'invalid_format':
         return `${this.getFieldLabel(fieldName)} ne respecte pas le format requis.`;
 
       default:

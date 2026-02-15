@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test';
-import path from 'path';
 import { resetMockDb, setMockDelay, setMockFailure } from './utils/mock';
 
 test.describe('Report Generation Workflow', () => {
@@ -7,14 +6,6 @@ test.describe('Report Generation Workflow', () => {
   const testDateRange = {
     start: '2024-01-01',
     end: '2024-01-31'
-  };
-
-  const testFilters = {
-    technicians: ['tech1', 'tech2'],
-    clients: ['client1', 'client2'],
-    statuses: ['completed', 'in_progress'],
-    priorities: ['high', 'medium'],
-    ppfZones: ['hood', 'fenders']
   };
 
   test.beforeEach(async ({ page }) => {
@@ -481,7 +472,7 @@ test.describe('Report Generation Workflow', () => {
     }
   });
 
-  test('should cleanup generated test files', async ({ page, context }) => {
+  test('should cleanup generated test files', async ({ page, _context }) => {
     // Create a list of download paths to clean up
     const downloadPaths: string[] = [];
     
@@ -534,6 +525,5 @@ test.describe('Report Generation Workflow', () => {
     }
   });
 });
-
 
 
