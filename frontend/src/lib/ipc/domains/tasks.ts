@@ -1,7 +1,7 @@
 import { safeInvoke, extractAndValidate } from '../core';
 import { createCrudOperations } from '../utils/crud-helpers';
 import { IPC_COMMANDS } from '../commands';
-import { validateTask, validateTaskListResponse } from '@/lib/validation/backend-type-guards';
+import { validateTask } from '@/lib/validation/backend-type-guards';
 import type { JsonObject, JsonValue } from '@/types/json';
 import type {
   Task,

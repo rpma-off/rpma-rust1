@@ -41,7 +41,6 @@ import type {
   SeasonalReport,
   OperationalIntelligenceReport,
   ExportFormat,
-   ReportRequest,
    ReportResponse,
     ExportResult,
 } from '@/lib/backend';
@@ -91,17 +90,6 @@ interface InterventionProgressRetrievedResponse {
   type: string;
   steps: InterventionStep[];
   progress: { completion_percentage?: number };
-}
-
-interface InterventionStepProgressSavedResponse {
-  type: string;
-  step?: JsonValue;
-}
-
-interface InterventionWorkflowUpdatedResponse {
-  type: string;
-  id: string;
-  message: string;
 }
 
 interface InterventionWorkflowFinalizedResponse {

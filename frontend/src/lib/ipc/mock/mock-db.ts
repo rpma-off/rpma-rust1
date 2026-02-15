@@ -102,7 +102,7 @@ function buildSession(user: MockUser): UserSession {
   return session;
 }
 
-function getUserByToken(token?: string | null): MockUser | null {
+function _getUserByToken(token?: string | null): MockUser | null {
   if (!token) return null;
   const session = state.sessions.find(s => s.token === token);
   if (!session) return null;

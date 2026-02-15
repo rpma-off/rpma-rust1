@@ -2,7 +2,7 @@
 
 import { ipcClient } from '@/lib/ipc';
 import type { AuthResponse } from '@/types';
-import type { UserSession, UserRole } from '@/lib/backend';
+import type { UserSession } from '@/lib/backend';
 
 export interface LoginCredentials {
   email: string;
@@ -14,7 +14,7 @@ export interface SignupCredentials {
   password: string;
   firstName: string;
   lastName: string;
-  role?: string;
+  role?: 'admin' | 'technician' | 'supervisor' | 'viewer';
 }
 
 /**
@@ -51,7 +51,7 @@ export class AuthService {
         first_name: credentials.firstName,
         last_name: credentials.lastName,
         password: credentials.password,
-        role: credentials.role as any
+        role: credentials.role
       });
       return { success: true, data };
     } catch (error) {
@@ -111,7 +111,7 @@ export class AuthService {
         return { success: true, data };
       } else {
         // Fallback for API routes - should be migrated to IPC
-        return { success: true, data: null as any };
+        return { success: true };
       }
     } catch (error) {
       return {

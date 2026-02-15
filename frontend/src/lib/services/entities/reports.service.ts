@@ -9,11 +9,11 @@ import type {
   MaterialUsageReport,
   GeographicReport,
   SeasonalReport,
-  OperationalIntelligenceReport,
+   OperationalIntelligenceReport,
   ExportFormat,
-   ReportRequest,
    ReportResponse,
-    ExportResult
+    ExportResult,
+    JsonValue
 } from '@/lib/backend';
 import { safeInvoke } from '@/lib/ipc/utils';
 
@@ -27,6 +27,8 @@ interface InterventionReportResult {
   file_size?: number;
   generated_at: string;
 }
+
+type SearchRecord = Record<string, JsonValue>;
 import { AuthSecureStorage } from '@/lib/secureStorage';
 import type { ServiceResponse } from '@/types/unified.types';
 
@@ -479,9 +481,9 @@ export class ReportsService {
 
       console.log('ReportsService: export_report_data result:', {
         result_present: !!result,
-        download_url_present: !!(result as any)?.download_url,
-        file_name: (result as any)?.file_name,
-        format: (result as any)?.format
+        download_url_present: !!result?.download_url,
+        file_name: result?.file_name,
+        format: result?.format
       });
 
       return {
@@ -750,10 +752,10 @@ export class ReportsService {
   async searchRecords(
     query: string,
     entityType: string,
-    filters?: any,
+    filters?: Record<string, JsonValue>,
     limit: number = 50,
     offset: number = 0
-  ): Promise<ServiceResponse<{ results: any[]; total_count: number; has_more: boolean }>> {
+  ): Promise<ServiceResponse<{ results: SearchRecord[]; total_count: number; has_more: boolean }>> {
     try {
       const session = await AuthSecureStorage.getSession();
       if (!session.token) {
@@ -761,7 +763,7 @@ export class ReportsService {
       }
 
       const result = await safeInvoke<{
-        results: any[];
+        results: SearchRecord[];
         total_count: number;
         has_more: boolean;
       }>(

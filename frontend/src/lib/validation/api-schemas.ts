@@ -99,13 +99,13 @@ export const TaskApiResponseSchema = z.object({
   error: z.any().optional(),
 });
 
-export const validateApiResponse = (schema: z.ZodSchema, data: any) => schema.parse(data);
+export const validateApiResponse = <T>(schema: z.ZodSchema<T>, data: unknown): T => schema.parse(data);
 
 export const ApiError = z.object({
   message: z.string(),
   code: z.string().optional(),
 });
 
-export const validateAndSanitizeInput = (schema: z.ZodSchema, data: any) => schema.parse(data);
+export const validateAndSanitizeInput = <T>(schema: z.ZodSchema<T>, data: unknown): T => schema.parse(data);
 
 export const sanitizeString = (str: string) => str.trim();

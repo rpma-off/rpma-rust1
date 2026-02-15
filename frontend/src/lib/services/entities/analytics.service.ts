@@ -71,7 +71,7 @@ export class AnalyticsService {
     }
   }
 
-  static async getTaskStatistics(timeRange: string): Promise<ServiceResponse<unknown>> {
+  static async getTaskStatistics(_timeRange: string): Promise<ServiceResponse<unknown>> {
     return this.getTaskMetrics();
   }
 

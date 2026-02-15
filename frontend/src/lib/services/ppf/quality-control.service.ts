@@ -32,7 +32,7 @@ export class QualityControlService {
     }
   }
 
-  async escalateForReview(checkpointId: string, reason: string, escalatedBy: string): Promise<{ success: boolean; error?: Error }> {
+  async escalateForReview(checkpointId: string, reason: string, _escalatedBy: string): Promise<{ success: boolean; error?: Error }> {
     // Mock implementation
     try {
       console.log(`Escalating checkpoint ${checkpointId} for review: ${reason}`);

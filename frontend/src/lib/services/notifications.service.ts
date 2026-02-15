@@ -1,4 +1,6 @@
 import { ipcClient } from '@/lib/ipc';
+import type { JsonValue } from '@/types/json';
+import type { NotificationConfig as IpcNotificationConfig } from '@/lib/ipc/types/index';
 
 export interface NotificationConfig {
   email_provider?: string;
@@ -33,7 +35,7 @@ export interface SendNotificationRequest {
 
 export class NotificationService {
   static async initializeNotificationService(config: NotificationConfig, sessionToken: string): Promise<void> {
-    return ipcClient.notifications.initialize(config as any, sessionToken);
+    return ipcClient.notifications.initialize(config as unknown as IpcNotificationConfig, sessionToken);
   }
 
   static async sendNotification(request: SendNotificationRequest, sessionToken: string): Promise<void> {
@@ -44,7 +46,7 @@ export class NotificationService {
     return ipcClient.notifications.testConfig(recipient, channel, sessionToken);
   }
 
-  static async getNotificationStatus(sessionToken: string): Promise<any> {
+  static async getNotificationStatus(sessionToken: string): Promise<JsonValue> {
     return ipcClient.notifications.getStatus(sessionToken);
   }
 }

@@ -1,6 +1,7 @@
 import { toast } from 'sonner';
 import { logger } from './logger';
 import { CorrelationIdGenerator } from '../logging/types';
+import { LogContext } from './logger';
 
 export interface ErrorHandlerOptions {
   domain: string;
@@ -8,6 +9,12 @@ export interface ErrorHandlerOptions {
   component?: string;
   showToast?: boolean;
   toastMessage?: string;
+}
+
+const LOG_CONTEXT_VALUES = Object.values(LogContext) as string[];
+
+function toLogContext(domain: string): LogContext {
+  return LOG_CONTEXT_VALUES.includes(domain) ? (domain as LogContext) : LogContext.SYSTEM;
 }
 
 export const handleError = (
@@ -18,7 +25,7 @@ export const handleError = (
   const correlationId = CorrelationIdGenerator.getInstance().generate();
 
   // Log the error with correlation ID
-  logger.error(options.domain as any, message, {
+  logger.error(toLogContext(options.domain), message, {
     error: error instanceof Error ? error.message : String(error),
     correlation_id: correlationId,
     user_id: options.userId,

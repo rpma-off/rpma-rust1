@@ -197,7 +197,7 @@ export const SafeAccess = {
   nested: (obj: unknown, path: string[]): unknown => {
     return path.reduce((current, key) => {
       if (TypeGuards.isObject(current) && key in current) {
-        return (current as any)[key];
+        return (current as Record<string, unknown>)[key];
       }
       return undefined;
     }, obj);
@@ -206,7 +206,7 @@ export const SafeAccess = {
   // Safely get object property with fallback
   withFallback: <T>(obj: unknown, key: string, fallback: T): T => {
     if (TypeGuards.isObject(obj) && key in obj) {
-      return (obj as any)[key] as T;
+      return (obj as Record<string, unknown>)[key] as T;
     }
     return fallback;
   },
@@ -228,7 +228,7 @@ export const ApiResponseValidator = {
       };
     }
 
-    const apiResponse = response as any;
+    const apiResponse = response as Record<string, unknown>;
     
     if (!('success' in apiResponse)) {
       return {
@@ -251,13 +251,13 @@ export const ApiResponseValidator = {
     if (!apiResponse.success && apiResponse.error) {
       return {
         success: false,
-        error: apiResponse.error
+        error: apiResponse.error as ApiError
       };
     }
 
     return {
       success: true,
-      data: apiResponse.data
+      data: apiResponse.data as T | undefined
     };
   },
 };

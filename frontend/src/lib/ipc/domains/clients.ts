@@ -1,7 +1,7 @@
-import { safeInvoke, extractAndValidate, ResponseHandlers } from '../core';
+import { safeInvoke, extractAndValidate } from '../core';
 import { createCrudOperations } from '../utils/crud-helpers';
 import { IPC_COMMANDS } from '../commands';
-import { parseClientStatistics, validateClient, validateClientWithTasks, validateClientListResponse, validateClientWithTasksList } from '@/lib/validation/backend-type-guards';
+import { parseClientStatistics, validateClient, validateClientWithTasks, validateClientListResponse } from '@/lib/validation/backend-type-guards';
 import type { JsonValue } from '@/types/json';
 import type {
   Client,

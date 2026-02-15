@@ -125,19 +125,21 @@ export const getTaskDisplayPriority = (priority: Task['priority']): string => {
 /**
  * Get technician display name with fallback
  */
-export const getTechnicianDisplayName = (technician: any): string => {
+type DisplayEntity = string | null | undefined | Record<string, unknown>;
+
+export const getTechnicianDisplayName = (technician: DisplayEntity): string => {
   if (!technician) return 'Non assigné';
 
   if (typeof technician === 'string') return technician;
 
   // Handle technician object
-  if (technician.name) return technician.name;
-  if (technician.first_name && technician.last_name) {
+  if (typeof technician.name === 'string') return technician.name;
+  if (typeof technician.first_name === 'string' && typeof technician.last_name === 'string') {
     return `${technician.first_name} ${technician.last_name}`;
   }
-  if (technician.first_name) return technician.first_name;
-  if (technician.last_name) return technician.last_name;
-  if (technician.email) return technician.email;
+  if (typeof technician.first_name === 'string') return technician.first_name;
+  if (typeof technician.last_name === 'string') return technician.last_name;
+  if (typeof technician.email === 'string') return technician.email;
 
   return 'Non assigné';
 };
@@ -145,15 +147,15 @@ export const getTechnicianDisplayName = (technician: any): string => {
 /**
  * Get client display name with fallback
  */
-export const getClientDisplayName = (client: any): string => {
+export const getClientDisplayName = (client: DisplayEntity): string => {
   if (!client) return 'Client non spécifié';
 
   if (typeof client === 'string') return client;
 
   // Handle client object
-  if (client.name) return client.name;
-  if (client.company_name) return client.company_name;
-  if (client.email) return client.email;
+  if (typeof client.name === 'string') return client.name;
+  if (typeof client.company_name === 'string') return client.company_name;
+  if (typeof client.email === 'string') return client.email;
 
   return 'Client non spécifié';
 };

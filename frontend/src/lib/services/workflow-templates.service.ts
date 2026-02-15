@@ -69,7 +69,7 @@ export interface WorkflowStepTemplate {
   requiresPhotos?: boolean;
   requiresSignature?: boolean;
   sopInstructions?: SOPInstruction[];
-  checklistItems?: any[];
+  checklistItems?: Array<{ type?: string; [key: string]: unknown }>;
 }
 
 export class WorkflowTemplatesService {
@@ -82,42 +82,42 @@ export class WorkflowTemplatesService {
     return WorkflowTemplatesService.instance;
   }
 
-  async getTemplates(category?: string): Promise<SOPTemplate[]> {
+  async getTemplates(_category?: string): Promise<SOPTemplate[]> {
     // Implementation would fetch from backend
     throw new Error('Not implemented');
   }
 
-  async getTemplateById(id: string): Promise<SOPTemplate | null> {
+  async getTemplateById(_id: string): Promise<SOPTemplate | null> {
     // Implementation would fetch from backend
     throw new Error('Not implemented');
   }
 
-  async createTemplate(template: Omit<SOPTemplate, 'id' | 'createdAt' | 'updatedAt'>): Promise<SOPTemplate> {
+  async createTemplate(_template: Omit<SOPTemplate, 'id' | 'createdAt' | 'updatedAt'>): Promise<SOPTemplate> {
     // Implementation would create via backend
     throw new Error('Not implemented');
   }
 
-  async updateTemplate(id: string, updates: Partial<SOPTemplate>): Promise<SOPTemplate> {
+  async updateTemplate(_id: string, _updates: Partial<SOPTemplate>): Promise<SOPTemplate> {
     // Implementation would update via backend
     throw new Error('Not implemented');
   }
 
-  async deleteTemplate(id: string): Promise<void> {
+  async deleteTemplate(_id: string): Promise<void> {
     // Implementation would delete via backend
     throw new Error('Not implemented');
   }
 
-  async getStepTemplate(templateId: string, stepId: string): Promise<SOPInstruction[]> {
+  async getStepTemplate(_templateId: string, _stepId: string): Promise<SOPInstruction[]> {
     // Implementation would fetch from backend
     throw new Error('Not implemented');
   }
 
-  async getWorkflowTemplate(taskType: string): Promise<WorkflowTemplate> {
+  async getWorkflowTemplate(_taskType: string): Promise<WorkflowTemplate> {
     // Implementation would fetch from backend
     throw new Error('Not implemented');
   }
 
-  async validateStep(taskType: string, stepId: string, stepData: Record<string, unknown>): Promise<{ isValid: boolean; errors: string[] }> {
+  async validateStep(_taskType: string, _stepId: string, _stepData: Record<string, unknown>): Promise<{ isValid: boolean; errors: string[] }> {
     // Implementation would validate step data
     throw new Error('Not implemented');
   }

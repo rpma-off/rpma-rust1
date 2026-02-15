@@ -1,8 +1,6 @@
 // PPF (Paint Protection Film) service
-import type { ApiResponse } from '@/types/api';
 import type { PPFInterventionStep } from '@/types/ppf-intervention';
 import { ApiError } from '@/types/api';
-import { ipcClient } from '@/lib/ipc';
 
 export interface PPFStep {
   id: string;
@@ -13,7 +11,7 @@ export interface PPFStep {
   status?: 'pending' | 'in_progress' | 'completed' | 'skipped';
   requires_photos?: boolean;
   min_photos_required?: number;
-  photos?: any[];
+  photos?: unknown[];
   step_number?: number;
   description?: string;
   estimatedDuration?: number;

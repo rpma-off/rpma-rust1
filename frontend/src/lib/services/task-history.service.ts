@@ -9,6 +9,12 @@ export interface TaskHistoryEntry {
   details?: unknown;
 }
 
+export interface TaskHistorySummary {
+  totalEntries: number;
+  lastUpdated?: Date;
+  actions: string[];
+}
+
 export class TaskHistoryService {
   private static instance: TaskHistoryService;
 
@@ -74,7 +80,7 @@ export class TaskHistoryService {
     }
   }
 
-  static async getTaskHistorySummary(taskId: string): Promise<any> {
+  static async getTaskHistorySummary(taskId: string): Promise<TaskHistorySummary> {
     try {
       const history = await this.getTaskHistory(taskId);
       return {

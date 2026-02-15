@@ -15,6 +15,18 @@ export interface GeolocationOptions {
   maximumAge?: number;
 }
 
+type GeolocationTrackingResult = { success: boolean; error?: Error };
+type GeolocationCallback = (data: GeolocationData) => void;
+type GeolocationErrorCallback = (error: GeolocationPositionError) => void;
+type RouteEfficiencyAnalysis = {
+  totalDistance: number;
+  totalTime: number;
+  averageSpeed: number;
+  efficiency: number;
+  optimizationSuggestions: string[];
+  routeQuality: 'excellent' | 'good' | 'fair' | 'poor';
+};
+
 export class GeolocationService {
   private static instance: GeolocationService;
   private watchId: number | null = null;
@@ -109,15 +121,24 @@ export class GeolocationService {
     }
   }
 
-  startTracking(callback?: (data: GeolocationData) => void, errorCallback?: (error: GeolocationPositionError) => void, options?: GeolocationOptions): void;
-  startTracking(interventionId: string, expectedLocation?: any): Promise<{ success: boolean; error?: Error }>;
-  startTracking(arg1: any, arg2?: any, arg3?: any): void | Promise<{ success: boolean; error?: Error }> {
+  startTracking(callback?: GeolocationCallback, errorCallback?: GeolocationErrorCallback, options?: GeolocationOptions): void;
+  startTracking(interventionId: string, expectedLocation?: Record<string, unknown>): Promise<GeolocationTrackingResult>;
+  startTracking(
+    arg1?: string | GeolocationCallback,
+    arg2?: Record<string, unknown> | GeolocationErrorCallback,
+    arg3?: GeolocationOptions
+  ): void | Promise<GeolocationTrackingResult> {
+    if (!arg1) {
+      return;
+    }
     if (typeof arg1 === 'string') {
       // Overload for intervention tracking
       return Promise.resolve({ success: true });
     } else {
       // Original callback version
-      this.watchPosition(arg1, arg2, arg3);
+      const callback = arg1;
+      const errorCallback = typeof arg2 === 'function' ? arg2 : undefined;
+      this.watchPosition(callback, errorCallback, arg3);
     }
   }
 
@@ -265,9 +286,19 @@ export class GeolocationService {
     });
   }
 
-  analyzeRouteEfficiency(route: GeolocationData[]): Promise<{ success: boolean; data: any }> {
+  analyzeRouteEfficiency(_route: GeolocationData[]): Promise<{ success: boolean; data: RouteEfficiencyAnalysis }> {
     // Mock implementation
-    return Promise.resolve({ success: true, data: { efficiency: 0.8, distance: 0 } });
+    return Promise.resolve({
+      success: true,
+      data: {
+        totalDistance: 0,
+        totalTime: 0,
+        averageSpeed: 0,
+        efficiency: 0.8,
+        optimizationSuggestions: [],
+        routeQuality: 'good'
+      }
+    });
   }
 
   initialize(): Promise<{ success: boolean; error?: string }> {

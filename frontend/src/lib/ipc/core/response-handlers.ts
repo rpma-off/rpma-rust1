@@ -42,7 +42,7 @@ export function extractAndValidate<T>(
     }
 
     // For discriminated unions, the entire response object (minus type) is the data
-    const { type, ...data } = response;
+    const { type: _type, ...data } = response;
     return validator ? validator(data as JsonValue) : data as T;
   }
 

@@ -1,7 +1,6 @@
-import type { Task, UpdateTaskRequest, TaskQuery, CreateTaskRequest } from '@/lib/backend';
+import type { UpdateTaskRequest, TaskQuery, CreateTaskRequest, PaginationInfo, JsonValue } from '@/lib/backend';
 import type { TaskWithDetails } from '@/types/task.types';
 import type { ServiceResponse } from '@/types/unified.types';
-import { TaskStatus, TaskPriority } from '@/lib/backend';
 import { ipcClient } from '@/lib/ipc';
 import { AuthSecureStorage } from '@/lib/secureStorage';
 import type { CreateTaskInput, UpdateTaskInput, TaskQueryInput } from '@/lib/validation/api-schemas';
@@ -33,6 +32,14 @@ export class TaskService {
     return TaskService.instance;
   }
 
+  private normalizeStepData(data: unknown): Record<string, unknown> {
+    return typeof data === 'object' && data !== null ? { ...(data as Record<string, unknown>) } : {};
+  }
+
+  private toJsonValue(value: unknown): JsonValue {
+    return value as JsonValue;
+  }
+
 
 
   /**
@@ -40,7 +47,7 @@ export class TaskService {
    * @param userId - The user ID
    * @param user - Optional user data
    */
-  setUserContext(userId: string, user?: Record<string, unknown>): void {
+  setUserContext(_userId: string, _user?: Record<string, unknown>): void {
     // Implementation
   }
 
@@ -79,7 +86,7 @@ export class TaskService {
    * }
    * ```
    */
-  async getTasks(query?: Partial<TaskQuery>): Promise<ServiceResponse<{ data: TaskWithDetails[], pagination: any }>> {
+  async getTasks(query?: Partial<TaskQuery>): Promise<ServiceResponse<{ data: TaskWithDetails[], pagination: PaginationInfo }>> {
     try {
       const session = await AuthSecureStorage.getSession();
       if (!session.token) {
@@ -140,7 +147,7 @@ export class TaskService {
    * Sets the current user for the service
    * @param userId - The user ID to set
    */
-  setUser(userId: string): void {
+  setUser(_userId: string): void {
     // Implementation
   }
 
@@ -278,7 +285,7 @@ export class TaskService {
    * @param updatedAt - Optional update timestamp
    * @returns Promise resolving to service response
    */
-  async updateTaskStepData(taskId: string, stepId: string, data: any, userId?: string, updatedAt?: string): Promise<ServiceResponse<any>> {
+  async updateTaskStepData(taskId: string, stepId: string, data: unknown, _userId?: string, _updatedAt?: string): Promise<ServiceResponse<unknown>> {
     try {
       const session = await AuthSecureStorage.getSession();
       if (!session.token) {
@@ -314,30 +321,32 @@ export class TaskService {
         };
       }
 
+      const normalizedData = this.normalizeStepData(data);
+
       // Prepare step progress data
-      const stepProgressData = {
+      const stepProgressData: Record<string, unknown> = {
         intervention_id: interventionId,
         step_id: stepId,
-        progress_data: data,
-        notes: data.notes || '',
-        quality_score: data.quality_score || null,
-        completion_percentage: data.completion_percentage || 0,
-        estimated_time_remaining: data.estimated_time_remaining || null,
-        issues_encountered: data.issues_encountered || [],
-        materials_used: data.materials_used || [],
-        photos_taken: data.photos_taken || [],
-        location_data: data.location_data || null,
-        weather_conditions: data.weather_conditions || null,
-        equipment_used: data.equipment_used || [],
-        safety_checks_completed: data.safety_checks_completed || [],
-        customer_feedback: data.customer_feedback || null,
+        progress_data: normalizedData,
+        notes: typeof normalizedData.notes === 'string' ? normalizedData.notes : '',
+        quality_score: normalizedData.quality_score ?? null,
+        completion_percentage: typeof normalizedData.completion_percentage === 'number' ? normalizedData.completion_percentage : 0,
+        estimated_time_remaining: normalizedData.estimated_time_remaining ?? null,
+        issues_encountered: Array.isArray(normalizedData.issues_encountered) ? normalizedData.issues_encountered : [],
+        materials_used: Array.isArray(normalizedData.materials_used) ? normalizedData.materials_used : [],
+        photos_taken: Array.isArray(normalizedData.photos_taken) ? normalizedData.photos_taken : [],
+        location_data: normalizedData.location_data ?? null,
+        weather_conditions: normalizedData.weather_conditions ?? null,
+        equipment_used: Array.isArray(normalizedData.equipment_used) ? normalizedData.equipment_used : [],
+        safety_checks_completed: Array.isArray(normalizedData.safety_checks_completed) ? normalizedData.safety_checks_completed : [],
+        customer_feedback: normalizedData.customer_feedback ?? null,
       };
 
       // Save step progress using intervention service
       const savedStep = await ipcClient.interventions.saveStepProgress({
         step_id: stepId,
-        collected_data: stepProgressData,
-        notes: stepProgressData.notes || null,
+        collected_data: this.toJsonValue(stepProgressData),
+        notes: typeof stepProgressData.notes === 'string' ? stepProgressData.notes : null,
         photos: null,
       }, session.token);
 
@@ -360,7 +369,11 @@ export class TaskService {
    * @param userId - Optional user ID
    * @returns Promise resolving to service response
    */
-  async getTaskStepData(taskId: string, stepId: string, userId?: string): Promise<ServiceResponse<any>> {
+  async getTaskStepData(
+    taskId: string,
+    stepId: string,
+    _userId?: string
+  ): Promise<ServiceResponse<{ stepData: unknown; lastUpdated: string | null; taskStatus: string | null }>> {
     try {
       const session = await AuthSecureStorage.getSession();
       if (!session.token) {
@@ -374,18 +387,9 @@ export class TaskService {
       return {
         success: true,
         data: {
-          step_id: stepData.id,
-          step_name: stepData.step_name || stepData.title || `Step ${stepData.step_number}`,
-          step_type: stepData.step_type,
-          status: stepData.step_status,
-          progress_data: stepData.collected_data || stepData.step_data || {},
-          started_at: stepData.started_at,
-          completed_at: stepData.completed_at,
-          actual_duration: stepData.duration_seconds,
-          quality_score: stepData.validation_score,
-          notes: stepData.notes,
-          intervention_id: stepData.intervention_id,
-          task_id: taskId,
+          stepData: stepData.collected_data || stepData.step_data || {},
+          lastUpdated: stepData.updated_at ? String(stepData.updated_at) : null,
+          taskStatus: stepData.step_status ?? null,
         },
         status: 200
       };

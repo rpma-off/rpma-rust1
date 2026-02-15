@@ -1,10 +1,17 @@
 // Task Workflow Sync Service
 import { ipcClient } from '@/lib/ipc/client';
 import { taskService } from '@/lib/services/entities/task.service';
+import type { Intervention } from '@/lib/backend';
+import type { TaskWithDetails } from '@/types/task.types';
+
+interface ActiveInterventionResponse {
+  type: string;
+  intervention?: Intervention | null;
+}
 
 export interface TaskWithWorkflowProgress {
-  task: any;
-  intervention?: any;
+  task: TaskWithDetails;
+  intervention?: Intervention;
   workflowProgress?: {
     currentStep: number;
     totalSteps: number;
@@ -30,7 +37,7 @@ export class TaskWorkflowSyncService {
       const task = taskResponse.data;
 
       // Get the active intervention for this task
-      const interventionResponse = await ipcClient.interventions.getActiveByTask(taskId, '') as { type: string; intervention: any };
+      const interventionResponse = await ipcClient.interventions.getActiveByTask(taskId, '') as ActiveInterventionResponse;
       if (!interventionResponse || interventionResponse.type !== 'ActiveRetrieved' || !interventionResponse.intervention) {
         // No active intervention, return task with sync status
         return {

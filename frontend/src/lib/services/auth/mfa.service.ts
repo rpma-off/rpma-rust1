@@ -28,6 +28,20 @@ export interface MFAVerificationRequest {
   rememberDevice?: boolean;
 }
 
+interface MFASetupPayload {
+  secret?: string;
+  qr_code_url?: string;
+  backup_codes?: string[];
+}
+
+function isMFASetupPayload(value: unknown): value is MFASetupPayload {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function extractMFASetupPayload(value: unknown): MFASetupPayload {
+  return isMFASetupPayload(value) ? value : {};
+}
+
 export class MFAService {
   private static instance: MFAService;
 
@@ -41,10 +55,11 @@ export class MFAService {
   async setupMFA(sessionToken: string): Promise<MFASetupResponse> {
     try {
       const result = await ipcClient.auth.enable2FA(sessionToken);
+      const payload = extractMFASetupPayload(result);
       return {
-        secret: (result as any).secret,
-        qrCodeUrl: (result as any).qr_code_url,
-        backupCodes: (result as any).backup_codes,
+        secret: payload.secret ?? '',
+        qrCodeUrl: payload.qr_code_url ?? '',
+        backupCodes: payload.backup_codes ?? [],
       };
     } catch (error) {
       throw new Error(error instanceof Error ? error.message : 'Failed to setup MFA');
@@ -55,7 +70,7 @@ export class MFAService {
     try {
       await ipcClient.auth.verify2FASetup(request.code, [], sessionToken);
       return true;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }
@@ -71,7 +86,8 @@ export class MFAService {
   async regenerateBackupCodes(sessionToken: string): Promise<string[]> {
     try {
       const result = await ipcClient.auth.regenerateBackupCodes(sessionToken);
-      return (result as any).backup_codes;
+      const payload = extractMFASetupPayload(result);
+      return payload.backup_codes ?? [];
     } catch (error) {
       throw new Error(error instanceof Error ? error.message : 'Failed to regenerate backup codes');
     }
@@ -80,10 +96,11 @@ export class MFAService {
   async setupTOTP(sessionToken: string): Promise<TOTPSetupResponse> {
     try {
       const result = await ipcClient.auth.enable2FA(sessionToken);
+      const payload = extractMFASetupPayload(result);
       return {
         success: true,
-        qrCode: (result as any).qr_code_url,
-        secret: (result as any).secret,
+        qrCode: payload.qr_code_url,
+        secret: payload.secret,
         factorId: 'totp', // Default factor ID for TOTP
       };
     } catch (error) {

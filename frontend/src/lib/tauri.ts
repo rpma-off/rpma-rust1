@@ -29,6 +29,27 @@ function unixToIso(unix: number | string | null | undefined): string | undefined
   return new Date(unix * 1000).toISOString();
 }
 
+interface InterventionWithCompletion {
+  completion_percentage?: number;
+}
+
+const TASK_STATUS_VALUES: ReadonlyArray<Task['status']> = [
+  'draft', 'scheduled', 'in_progress', 'completed', 'cancelled', 'on_hold',
+  'pending', 'invalid', 'archived', 'failed', 'overdue', 'assigned', 'paused'
+];
+
+const TASK_PRIORITY_VALUES: ReadonlyArray<Task['priority']> = ['low', 'medium', 'high', 'urgent'];
+
+function toTaskStatus(value?: string): Task['status'] | null {
+  if (!value || value === 'all') return null;
+  return TASK_STATUS_VALUES.includes(value as Task['status']) ? (value as Task['status']) : null;
+}
+
+function toTaskPriority(value?: string): Task['priority'] | null {
+  if (!value || value === 'all') return null;
+  return TASK_PRIORITY_VALUES.includes(value as Task['priority']) ? (value as Task['priority']) : null;
+}
+
 /**
  * Test service for debugging
  */
@@ -169,14 +190,14 @@ export class TaskService {
          console.log('Token length:', token.length);
 
          // Convert TaskFilters to TaskQuery
-         const taskQuery = {
-           page: filters.page || 1,
-           limit: filters.pageSize || 20,
-           status: filters.status === 'all' ? null : (filters.status as any) || null,
-           technician_id: filters.assignedTo || null,
-           client_id: null, // Not in TaskFilters
-           priority: filters.priority === 'all' ? null : (filters.priority as any) || null,
-           search: filters.search || null,
+           const taskQuery = {
+             page: filters.page || 1,
+             limit: filters.pageSize || 20,
+            status: toTaskStatus(filters.status),
+            technician_id: filters.assignedTo || null,
+            client_id: null, // Not in TaskFilters
+            priority: toTaskPriority(filters.priority),
+            search: filters.search || null,
            from_date: filters.startDate || null,
            to_date: filters.endDate || null,
            sort_by: 'created_at',
@@ -195,7 +216,7 @@ export class TaskService {
 
               // Check if we got a valid response
               if (interventionResponse && typeof interventionResponse === 'object' && 'type' in interventionResponse) {
-                const typedResult = interventionResponse as { type: string; intervention?: any };
+                const typedResult = interventionResponse as { type: string; intervention?: InterventionWithCompletion };
 
                 if (typedResult.type === 'ActiveRetrieved' && typedResult.intervention?.completion_percentage !== undefined) {
                   progress = typedResult.intervention.completion_percentage;
