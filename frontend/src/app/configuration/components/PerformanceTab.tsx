@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 // import { Slider } from '@/components/ui/slider'; // Component not available
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -41,6 +42,8 @@ export function PerformanceTab() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingConfig, setEditingConfig] = useState<PerformanceConfig | null>(null);
   const [activeSubTab, setActiveSubTab] = useState('caching');
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [configToDelete, setConfigToDelete] = useState<PerformanceConfig | null>(null);
   const { session } = useAuth();
 
   // Form state for creating/editing performance configs
@@ -156,14 +159,11 @@ export function PerformanceTab() {
     }
   };
 
-  const deletePerformanceConfig = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette configuration ?')) {
-      return;
-    }
-
+  const deletePerformanceConfig = async () => {
+    if (!configToDelete) return;
     try {
       const sessionToken = session?.token || '';
-      const updatedConfigs = performanceConfigs.filter(c => c.id !== id);
+      const updatedConfigs = performanceConfigs.filter((config) => config.id !== configToDelete.id);
       await settingsOperations.updateGeneralSettings(
         { performance_configs: updatedConfigs as unknown as JsonValue } as Record<string, JsonValue>,
         sessionToken
@@ -173,7 +173,15 @@ export function PerformanceTab() {
     } catch (error) {
       console.error('Error deleting performance config:', error);
       toast.error('Erreur lors de la suppression');
+    } finally {
+      setDeleteConfirmOpen(false);
+      setConfigToDelete(null);
     }
+  };
+
+  const confirmDeletePerformanceConfig = (config: PerformanceConfig) => {
+    setConfigToDelete(config);
+    setDeleteConfirmOpen(true);
   };
 
   const toggleConfigStatus = async (config: PerformanceConfig) => {
@@ -723,7 +731,7 @@ export function PerformanceTab() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => deletePerformanceConfig(config.id)}
+                    onClick={() => confirmDeletePerformanceConfig(config)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -751,6 +759,17 @@ export function PerformanceTab() {
           </Card>
         )}
       </div>
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="Supprimer la configuration"
+        description={`Voulez-vous vraiment supprimer "${configToDelete?.name || 'cette configuration'}" ?`}
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        variant="destructive"
+        onConfirm={deletePerformanceConfig}
+      />
     </div>
   );
 }
