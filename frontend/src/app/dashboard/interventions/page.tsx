@@ -81,11 +81,11 @@ export default function InterventionsDashboard() {
 
         // Fetch active interventions
         const activeInterventions = await InterventionWorkflowService.getActive(user.token);
-        setActiveInterventions(activeInterventions || []);
+        setActiveInterventions((activeInterventions || []) as InterventionData[]);
 
         // Fetch recent interventions
         const recentInterventions = await InterventionWorkflowService.getRecent(user.token);
-        setRecentInterventions(recentInterventions || []);
+        setRecentInterventions((recentInterventions || []) as InterventionData[]);
 
       } catch (err) {
         console.error('Error fetching interventions:', err);

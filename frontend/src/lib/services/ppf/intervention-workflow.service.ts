@@ -2,15 +2,9 @@
 import type { ApiResponse } from '@/types/api';
 import { ApiError } from '@/types/api';
 import { ipcClient } from '@/lib/ipc';
+import type { AdvanceStepRequest, FinalizeInterventionRequest, JsonValue, StartInterventionRequest } from '@/lib/backend';
 import type { PPFIntervention } from '../ppf';
 import type { ListResponse } from '@/types/api';
-import {
-  safeValidateStartInterventionResponse,
-  safeValidateAdvanceStepResponse,
-  safeValidateFinalizeInterventionResponse,
-  safeValidateGetProgressResponse,
-} from '@/lib/validation/backend-type-guards';
-
 export interface PPFInterventionData {
   id: string;
   client_id: string;
@@ -35,17 +29,17 @@ export interface PPFInterventionStep {
   photo_count: number;
   started_at?: Date;
   completed_at?: Date;
-  collected_data?: Record<string, any>;
+  collected_data?: Record<string, unknown>;
 }
 
 export interface AdvanceStepDTO {
   interventionId: string;
   stepNumber: number;
-  collected_data?: Record<string, any>;
+  collected_data?: Record<string, unknown>;
 }
 
 export class InterventionWorkflowService {
-  private static log(operation: string, data: any, level: 'info' | 'warn' | 'error' = 'info') {
+  private static log(operation: string, data: Record<string, unknown>, level: 'info' | 'warn' | 'error' = 'info') {
     const timestamp = new Date().toISOString();
     const logData = {
       timestamp,
@@ -65,19 +59,24 @@ export class InterventionWorkflowService {
     }
   }
 
-  static async startIntervention(taskId: string, data: any, sessionToken: string): Promise<ApiResponse<any>> {
-    this.log('startIntervention', { taskId, dataKeys: Object.keys(data) });
+  static async startIntervention(
+    taskId: string,
+    data: object,
+    sessionToken: string
+  ): Promise<ApiResponse<unknown>> {
+    const payload = data as Record<string, unknown>;
+    this.log('startIntervention', { taskId, dataKeys: Object.keys(payload) });
 
     try {
       // CRITICAL FIX: Include taskId in the data payload as task_id
     const requestData = {
-        ...data,
+        ...payload,
         task_id: taskId,
-        intervention_type: data.intervention_type ?? 'ppf',
-        priority: data.priority ?? 'medium',
+        intervention_type: (payload.intervention_type as string | undefined) ?? 'ppf',
+        priority: (payload.priority as string | undefined) ?? 'medium',
       };
       
-      const validatedResponse = await ipcClient.interventions.start(requestData, sessionToken);
+      const validatedResponse = await ipcClient.interventions.start(requestData as unknown as StartInterventionRequest, sessionToken);
 
       this.log('startIntervention.success', {
         interventionId: validatedResponse.intervention.id,
@@ -156,18 +155,18 @@ export class InterventionWorkflowService {
       const result = await ipcClient.interventions.getProgress(interventionId, sessionToken);
 
       // Map backend InterventionStep to frontend PPFInterventionStep format
-      const data: PPFInterventionStep[] = result.steps.map((step: any) => ({
-        id: step.id,
-        intervention_id: step.intervention_id,
-        step_number: step.step_number,
-        step_name: step.step_name,
-        step_type: step.step_type,
-        required: step.is_mandatory || false,
-        duration_seconds: step.duration_seconds || 0,
-        photo_count: step.photo_count || 0,
-        started_at: step.started_at ? new Date(step.started_at) : undefined,
-        completed_at: step.completed_at ? new Date(step.completed_at) : undefined,
-        collected_data: step.collected_data || {},
+      const data: PPFInterventionStep[] = result.steps.map((step: Record<string, unknown>) => ({
+        id: String(step.id ?? ''),
+        intervention_id: String(step.intervention_id ?? ''),
+        step_number: Number(step.step_number ?? 0),
+        step_name: String(step.step_name ?? ''),
+        step_type: String(step.step_type ?? ''),
+        required: Boolean(step.is_mandatory ?? false),
+        duration_seconds: Number(step.duration_seconds ?? 0),
+        photo_count: Number(step.photo_count ?? 0),
+        started_at: step.started_at ? new Date(String(step.started_at)) : undefined,
+        completed_at: step.completed_at ? new Date(String(step.completed_at)) : undefined,
+        collected_data: (step.collected_data as Record<string, unknown>) || {},
       }));
 
       this.log('getInterventionSteps.success', { interventionId, stepCount: data.length });
@@ -190,7 +189,7 @@ export class InterventionWorkflowService {
     }
   }
 
-  static async getInterventions(filters: any): Promise<ApiResponse<ListResponse<PPFIntervention>>> {
+  static async getInterventions(_filters: unknown): Promise<ApiResponse<ListResponse<PPFIntervention>>> {
     try {
       // Mock implementation
       const data = [
@@ -229,9 +228,9 @@ export class InterventionWorkflowService {
     }
   }
 
-  static async advanceStep(interventionId: string, stepData: any, sessionToken: string): Promise<ApiResponse<any>> {
+  static async advanceStep(interventionId: string, stepData: unknown, sessionToken: string): Promise<ApiResponse<unknown>> {
     try {
-      const result = await ipcClient.interventions.advanceStep(stepData, sessionToken);
+      const result = await ipcClient.interventions.advanceStep(stepData as AdvanceStepRequest, sessionToken);
 
       // Map backend response to frontend format
       return {
@@ -249,9 +248,9 @@ export class InterventionWorkflowService {
     }
   }
 
-  static async finalizeIntervention(interventionId: string, finalData: any, sessionToken: string): Promise<ApiResponse<any>> {
+  static async finalizeIntervention(interventionId: string, finalData: unknown, sessionToken: string): Promise<ApiResponse<unknown>> {
     try {
-      const result = await ipcClient.interventions.finalize(finalData, sessionToken);
+      const result = await ipcClient.interventions.finalize(finalData as FinalizeInterventionRequest, sessionToken);
 
       // Map backend response to frontend format
       return {
@@ -293,7 +292,13 @@ export class InterventionWorkflowService {
     }
   }
 
-  static async saveStepProgress(stepId: string, collectedData: any, sessionToken: string, notes?: string, photos?: string[]): Promise<ApiResponse<any>> {
+  static async saveStepProgress(
+    stepId: string,
+    collectedData: unknown,
+    sessionToken: string,
+    notes?: string,
+    photos?: string[]
+  ): Promise<ApiResponse<unknown>> {
     const maxRetries = 2;
     const baseDelay = 1000; // 1 second
     
@@ -303,7 +308,7 @@ export class InterventionWorkflowService {
         const result = await Promise.race([
           ipcClient.interventions.saveStepProgress({
             step_id: stepId,
-            collected_data: collectedData,
+            collected_data: collectedData as JsonValue,
             notes: notes || null,
             photos: photos || null
           }, sessionToken),
@@ -344,19 +349,19 @@ export class InterventionWorkflowService {
     }
   }
 
-  static async getActive(sessionToken: string): Promise<any[]> {
+  static async getActive(sessionToken: string): Promise<Record<string, unknown>[]> {
     try {
       const result = await ipcClient.interventions.list(
         { status: 'in_progress' },
         sessionToken
       );
-      return result.interventions || [];
+      return (result.interventions || []) as unknown as Record<string, unknown>[];
     } catch (error) {
       throw new Error(error instanceof Error ? error.message : 'Failed to get active interventions');
     }
   }
 
-  static async getRecent(sessionToken: string, days: number = 7): Promise<any[]> {
+  static async getRecent(sessionToken: string, days: number = 7): Promise<Record<string, unknown>[]> {
     try {
       // Calculate date 7 days ago
       const fromDate = new Date();
@@ -367,12 +372,12 @@ export class InterventionWorkflowService {
         sessionToken
       );
 
-      const recentInterventions = result.interventions.filter((intervention: any) => {
-        const createdAt = new Date(intervention.created_at);
+      const recentInterventions = result.interventions.filter((intervention: Record<string, unknown>) => {
+        const createdAt = new Date(String(intervention.created_at));
         return createdAt >= fromDate;
       });
 
-      return recentInterventions;
+      return recentInterventions as unknown as Record<string, unknown>[];
     } catch (error) {
       throw new Error(error instanceof Error ? error.message : 'Failed to get recent interventions');
     }
