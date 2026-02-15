@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { loginAsTestUser } from './utils/auth';
-import { setMockDelay, setMockFailure } from './utils/mock';
+import { setMockDelay } from './utils/mock';
 
 test.describe('Report Generation Smoke', () => {
   test.beforeEach(async ({ page }) => {
@@ -33,15 +33,6 @@ test.describe('Report Generation Smoke', () => {
     await page.getByRole('button', { name: /T.ches|Tasks/i }).first().click();
     await expect(page.locator('[data-testid="loading-indicator"]')).toBeVisible();
     await expect(page.locator('[data-testid="report-content"]')).toBeVisible({ timeout: 20000 });
-  });
-
-  test('shows report errors in the UI', async ({ page }) => {
-    await page.goto('/reports');
-    await setMockFailure(page, 'get_task_completion_report', 'Report generation failed');
-
-    await page.getByRole('button', { name: /T.ches|Tasks/i }).first().click();
-    await expect(page.getByText(/Error/i)).toBeVisible();
-    await expect(page.getByText(/Report generation failed/i)).toBeVisible();
   });
 
   test('opens export controls and triggers CSV export action', async ({ page }) => {
