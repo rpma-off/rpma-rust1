@@ -105,9 +105,9 @@ export function WorkflowExecutionDashboard({
         totalWorkflows: data.length,
         activeWorkflows: data.filter((w: WorkflowExecution) => w.status === 'in_progress').length,
         completedToday: data.filter((w: WorkflowExecution) => {
-          if (!w.completed_at) return false;
+          if (!w.completedAt) return false;
           const today = new Date();
-          const completedDate = new Date(w.completed_at);
+          const completedDate = new Date(w.completedAt);
           return completedDate.toDateString() === today.toDateString();
         }).length,
       }));

@@ -14,7 +14,7 @@ export function CalendarView() {
   const { goToNext, goToPrevious, getWeekDays, getCurrentWeekEvents } =
     useCalendarStore();
   const weekDays = getWeekDays();
-  const events = getCurrentWeekEvents();
+  const events = getCurrentWeekEvents() as unknown as CalendarEvent[];
   const hoursScrollRef = useRef<HTMLDivElement>(null);
   const daysScrollRefs = useRef<(HTMLDivElement | null)[]>([]);
   const hasScrolledRef = useRef(false);

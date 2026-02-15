@@ -116,7 +116,7 @@ export async function GET(
       );
     }
 
-    const steps = stepsResult.data?.data || [];
+    const steps = (stepsResult.data?.data || []) as PPFInterventionStep[];
 
     // 5. Calcul des données de progrès
     const interventionData: PPFInterventionData = {
@@ -280,7 +280,7 @@ export async function PUT(
     };
     const updatedProgressData = await calculateProgressData(
       updatedInterventionData,
-      updatedStepsResult.data?.data || []
+      (updatedStepsResult.data?.data || []) as PPFInterventionStep[]
     );
 
     // 8. Audit logging

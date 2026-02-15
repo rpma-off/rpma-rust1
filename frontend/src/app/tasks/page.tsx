@@ -1171,7 +1171,7 @@ export default function TasksPage() {
             </div>
           ) : viewMode === 'calendar' ? (
             <div className="h-[800px]">
-              <CalendarView onTaskClick={handleViewTask} className="h-full" />
+              <CalendarView />
             </div>
           ) : viewMode === 'kanban' ? (
             <div className="h-[800px]">
