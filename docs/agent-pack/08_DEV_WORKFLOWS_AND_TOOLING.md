@@ -25,26 +25,28 @@ npm run backend:build:release
 
 ## Type Synchronization
 
-**MOST IMPORTANT**: Always run after modifying Rust models.
+**MOST IMPORTANT**: Always run after modifying Rust models with `#[derive(Serialize, Deserialize, TS)]`.
 
 ```bash
-# Regenerate TypeScript types from Rust
+# Regenerate TypeScript types from Rust (via export-types binary)
 npm run types:sync
 ```
 
 **What it does**:
-1. Runs `cargo run --bin export-types`
-2. Parses JSON output
-3. Generates `frontend/src/lib/backend.ts`
+1. Runs `cargo run --bin export-types` (located at `src-tauri/src/bin/export-types.rs`)
+2. Captures JSON output of all exported Rust types
+3. Parses JSON with `scripts/write-types.js`
+4. Generates `frontend/src/lib/backend.ts` with TypeScript interfaces
 
 **Validation**:
 ```bash
-npm run types:validate        # Validate consistency
-npm run types:drift-check     # Check for type drift
-npm run types:generate-docs   # Generate type documentation
+npm run types:validate         # Validate consistency of generated types
+npm run types:drift-check      # Check for type drift between Rust and TS
+npm run types:ci-drift-check   # CI-specific drift check (stricter)
+npm run types:generate-docs    # Generate type documentation in Markdown
 ```
 
-⚠️ **WARNING**: Never manually edit `frontend/src/lib/backend.ts`!
+⚠️ **CRITICAL**: Never manually edit `frontend/src/lib/backend.ts`! Always regenerate.
 
 ---
 
@@ -138,50 +140,63 @@ cd frontend && npm run test:e2e:codegen    # Generate code
 
 ## Scripts Reference
 
-### Root Package.json (45 scripts)
+### Root Package.json (45+ scripts)
 
-| Category | Scripts |
-|----------|---------|
-| **Dev** | `dev`, `tauri` |
-| **Build** | `build` |
-| **Frontend** | `frontend:dev`, `frontend:build`, `frontend:lint`, `frontend:type-check`, `frontend:clean` |
-| **Backend** | `backend:build`, `backend:build:release`, `backend:check`, `backend:clippy`, `backend:fmt` |
-| **Types** | `types:sync`, `types:validate`, `types:drift-check`, `types:ci-drift-check`, `types:generate-docs` |
-| **Quality** | `quality:check`, `security:audit`, `duplication:detect`, `code_review:check` |
-| **Bundle** | `bundle:analyze`, `bundle:check-size` |
-| **Performance** | `performance:test`, `performance:update-baseline` |
-| **Git** | `git:start-feature`, `git:sync-feature`, `git:finish-feature`, `git:cleanup-feature`, `git:guard-main` |
-| **CI** | `ci:validate` |
+**Location**: `/home/runner/work/rpma-rust1/rpma-rust1/package.json`
+
+| Category | Scripts | Purpose |
+|----------|---------|---------|
+| **Dev** | `dev`, `tauri` | Start full development environment |
+| **Build** | `build`, `clean` | Production build, cleanup |
+| **Frontend** | `frontend:dev`, `frontend:build`, `frontend:lint`, `frontend:type-check`, `frontend:encoding-check`, `frontend:clean`, `frontend:install` | Frontend development |
+| **Backend** | `backend:build`, `backend:build:release`, `backend:check`, `backend:clippy`, `backend:fmt` | Backend development |
+| **Types** | `types:sync`, `types:validate`, `types:drift-check`, `types:ci-drift-check`, `types:generate-docs` | Type management |
+| **Quality** | `quality:check`, `security:audit`, `duplication:detect`, `code-review:check` | Quality gates |
+| **Bundle** | `bundle:analyze`, `bundle:check-size` | Bundle analysis |
+| **Performance** | `performance:test`, `performance:update-baseline` | Performance testing |
+| **Git** | `git:start-feature`, `git:sync-feature`, `git:finish-feature`, `git:cleanup-feature`, `git:guard-main` | Git workflow automation |
+| **CI** | `ci:validate`, `prepare` (husky) | CI/CD integration |
 
 ---
 
 ### Scripts in `scripts/` Directory
 
-| Script | Purpose |
-|--------|---------|
+**Location**: `/home/runner/work/rpma-rust1/rpma-rust1/scripts/`
+
+| Script | Purpose | Usage |
+|--------|---------|-------|
 | **Type Management** |
-| `write-types.js` | Convert Rust types to TypeScript |
-| `validate-types.js` | Validate generated types |
-| `check-type-drift.js` | Detect Rust/TS mismatches |
-| `generate-type-docs.js` | Generate type documentation |
+| `write-types.js` | Convert Rust types to TypeScript | Called by `npm run types:sync` |
+| `validate-types.js` | Validate generated types | `npm run types:validate` |
+| `check-type-drift.js` | Detect Rust/TS mismatches | `npm run types:drift-check` |
+| `ci-type-drift-check.js` | CI-specific drift check | `npm run types:ci-drift-check` |
+| `generate-type-docs.js` | Generate type documentation | `npm run types:generate-docs` |
+| `test-type-integration.js` | Integration tests for types | Manual |
 | **Security** |
-| `security-audit.js` | Comprehensive security scan |
-| `ipc-authorization-audit.js` | Check IPC auth |
+| `security-audit.js` | Comprehensive security scan | `npm run security:audit` |
+| `ipc-authorization-audit.js` | Check IPC auth | `node scripts/ipc-authorization-audit.js` |
 | **Migration** |
-| `validate-migration-system.js` | Validate migrations |
-| `test-migrations.js` | Test migration execution |
-| `migration-health-check.js` | Migration status |
-| `detect-schema-drift.js` | Detect schema changes |
+| `validate-migration-system.js` | Validate migrations | Manual |
+| `test-migrations.js` | Test migration execution | Manual |
+| `migration-health-check.js` | Migration status | Manual |
+| `detect-schema-drift.js` | Detect schema changes | Manual |
 | **Database** |
-| `check_db.js` | Database connectivity |
-| `check_db_schema.js` | Schema validation |
-| `cleanup_db.js` | Clean test data |
+| `check_db.js` | Database connectivity | Manual |
+| `check_db_schema.js` | Schema validation | Manual |
+| `cleanup_db.js` | Clean test data | Manual |
+| `check_clients_db.js` | Client table checks | Manual |
+| `check_client_tasks.js` | Client-task relationships | Manual |
+| `verify_user_settings.js` | User settings validation | Manual |
 | **Code Quality** |
-| `check-bundle-size.js` | Bundle analysis |
-| `detect-duplication.js` | Code duplication |
-| `check-mojibake.js` | Encoding issues |
+| `check-bundle-size.js` | Bundle analysis | `npm run bundle:check-size` |
+| `detect-duplication.js` | Code duplication | `npm run duplication:detect` |
+| `check-mojibake.js` | Encoding issues | Manual |
+| `fix-encoding.js` | Fix encoding issues | `npm run fix:encoding` |
 | **Git** |
-| `git-workflow.js` | Git automation |
+| `git-workflow.js` | Git automation | `npm run git:start-feature`, etc. |
+| **CI/CD** |
+| `ci-type-check.sh` | CI type validation | `npm run ci:validate` |
+| `test-health-check.sh` | Health check tests | Manual |
 
 ---
 
@@ -195,16 +210,32 @@ npm run types:validate
 
 ### ✅ After modifying database schema:
 ```bash
+# Create new migration file
 touch migrations/NNN_description.sql
+# Edit with your SQL changes
+
+# Validate migration system
 node scripts/validate-migration-system.js
-npm run dev  # Migrations auto-apply
+
+# Migrations auto-apply on startup
+npm run dev
+
+# Or test specific migration
+node scripts/test-migrations.js [NNN]
 ```
 
 ### ✅ After adding new IPC command:
 ```bash
-# Register in main.rs
+# 1. Implement command in src-tauri/src/commands/
+# 2. Register in main.rs invoke_handler! (lines 69-250)
+# 3. Sync types if new models added
 npm run types:sync
+
+# 4. Audit IPC authorization
 node scripts/ipc-authorization-audit.js
+
+# 5. Add frontend IPC function
+# Edit frontend/src/lib/ipc/domains/[domain].ts
 ```
 
 ### ✅ After modifying dependencies:

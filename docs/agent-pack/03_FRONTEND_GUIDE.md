@@ -115,7 +115,7 @@ const clients = await ipcClient.clients.list(filters, sessionToken);
 const report = await ipcClient.reports.getTaskCompletionReport(dateRange, filters);
 ```
 
-**IPC Utilities** (`frontend/src/lib/ipc/utils.ts`):
+**IPC Utilities** (`frontend/src/lib/ipc/utils.ts`, `cache.ts`, `retry.ts`):
 ```typescript
 // safeInvoke wraps Tauri's invoke with:
 // - Correlation ID tracking
@@ -124,8 +124,11 @@ const report = await ipcClient.reports.getTaskCompletionReport(dateRange, filter
 // - Performance logging
 await safeInvoke<T>('command_name', args, validator, timeout);
 
-// cachedInvoke adds response caching
+// cachedInvoke adds response caching with TTL and pattern invalidation
 await cachedInvoke<T>(cacheKey, 'command_name', args, validator, ttl);
+
+// invalidatePattern clears cache entries matching pattern
+invalidatePattern('tasks:*');
 ```
 
 ---
@@ -135,6 +138,8 @@ await cachedInvoke<T>(cacheKey, 'command_name', args, validator, ttl);
 RPMA v2 uses **React Query** for server state and **Zustand** for client state.
 
 #### React Query (Server State)
+
+**Provider Setup**: `frontend/src/components/providers.tsx`
 
 ```typescript
 // frontend/src/hooks/useTasks.ts
@@ -146,7 +151,8 @@ export function useTasks(filters: TaskQuery) {
   return useQuery({
     queryKey: ['tasks', filters],
     queryFn: () => ipcClient.tasks.list(filters, sessionToken),
-    staleTime: 30000,
+    staleTime: 30000,  // 30 seconds
+    cacheTime: 300000, // 5 minutes
   });
 }
 
@@ -159,6 +165,7 @@ export function useCreateTask() {
       ipcClient.tasks.create(data, sessionToken),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      toast.success('Task created successfully');
     },
   });
 }
@@ -267,14 +274,20 @@ function CreateTaskForm() {
 
 ### ❌ Pitfall 1: Type Drift (Frontend ≠ Backend)
 
+**Problem**: Manually editing `frontend/src/lib/backend.ts` causes type mismatches.
+
 **Solution**: **NEVER** manually edit `frontend/src/lib/backend.ts`. Always run:
 ```bash
-npm run types:sync
+npm run types:sync           # Regenerates from Rust models
+npm run types:validate       # Validates consistency
+npm run types:drift-check    # Detects mismatches
 ```
 
 ### ❌ Pitfall 2: IPC Naming Mismatch
 
-**Solution**: Check `src-tauri/src/main.rs` for registered command names and use exact same name.
+**Problem**: Using incorrect command names causes IPC failures.
+
+**Solution**: Check `src-tauri/src/main.rs` (lines 69-250) for registered command names in `tauri::generate_handler![]` and use exact same name. All commands are registered in the `invoke_handler`.
 
 ### ❌ Pitfall 3: Missing Session Token
 
@@ -289,7 +302,9 @@ await ipcClient.tasks.create(data, sessionToken);
 
 ### ❌ Pitfall 4: Large Payload Handling
 
-**Solution**: Use streaming or chunked uploads for large files (photos).
+**Problem**: Large photos or files can cause IPC timeouts or memory issues.
+
+**Solution**: Use streaming or chunked uploads for large files (photos). Consider `CompressedApiResponse` for payloads >1KB (MessagePack serialization available in backend).
 
 ---
 
