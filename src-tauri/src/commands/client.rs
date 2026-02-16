@@ -26,11 +26,18 @@ pub async fn client_crud(
     request: ClientCrudRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
+    // Initialize correlation context at command start
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    
     let action = request.action;
     let session_token = request.session_token;
-    let correlation_id = request.correlation_id.clone();
-    info!("client_crud command received - action: {:?}", action);
+    info!(
+        correlation_id = %correlation_id,
+        "client_crud command received - action: {:?}", 
+        action
+    );
     debug!(
+        correlation_id = %correlation_id,
         "Client CRUD operation requested with action: {:?}, session_token length: {}",
         action,
         session_token.len()
@@ -120,6 +127,9 @@ pub async fn client_crud(
 
     // Centralized authentication
     let current_user = authenticate!(&session_token, &state);
+    
+    // Update correlation context with user_id after authentication
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Rate limiting: 100 requests per minute per user for client operations
     let rate_limiter = state.auth_service.rate_limiter();
