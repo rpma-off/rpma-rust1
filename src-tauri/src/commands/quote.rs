@@ -14,12 +14,16 @@ use crate::authenticate;
 pub struct QuoteCreateRequest {
     pub session_token: String,
     pub data: CreateQuoteRequest,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct QuoteGetRequest {
     pub session_token: String,
     pub id: String,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -27,6 +31,8 @@ pub struct QuoteListRequest {
     pub session_token: String,
     #[serde(default)]
     pub filters: QuoteQuery,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -34,12 +40,16 @@ pub struct QuoteUpdateRequest {
     pub session_token: String,
     pub id: String,
     pub data: UpdateQuoteRequest,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct QuoteDeleteRequest {
     pub session_token: String,
     pub id: String,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -47,6 +57,8 @@ pub struct QuoteItemAddRequest {
     pub session_token: String,
     pub quote_id: String,
     pub item: CreateQuoteItemRequest,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -55,6 +67,8 @@ pub struct QuoteItemUpdateRequest {
     pub quote_id: String,
     pub item_id: String,
     pub data: UpdateQuoteItemRequest,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -62,12 +76,16 @@ pub struct QuoteItemDeleteRequest {
     pub session_token: String,
     pub quote_id: String,
     pub item_id: String,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct QuoteStatusRequest {
     pub session_token: String,
     pub id: String,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 // --- Helper: check RBAC for quotes ---
@@ -103,6 +121,7 @@ pub async fn quote_create(
     state: AppState<'_>,
 ) -> Result<ApiResponse<Quote>, AppError> {
     debug!("quote_create command received");
+    let correlation_id = request.correlation_id.clone();
     let current_user = authenticate!(&request.session_token, &state);
     check_quote_permission(&current_user.role, "create")?;
 
@@ -112,11 +131,11 @@ pub async fn quote_create(
     {
         Ok(quote) => {
             info!(quote_id = %quote.id, "Quote created successfully");
-            Ok(ApiResponse::success(quote))
+            Ok(ApiResponse::success(quote).with_correlation_id(correlation_id.clone()))
         }
         Err(e) => {
             error!("Failed to create quote: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e)))
+            Ok(ApiResponse::error(AppError::Validation(e)).with_correlation_id(correlation_id.clone()))
         }
     }
 }
@@ -128,19 +147,20 @@ pub async fn quote_get(
     state: AppState<'_>,
 ) -> Result<ApiResponse<Quote>, AppError> {
     debug!(quote_id = %request.id, "quote_get command received");
+    let correlation_id = request.correlation_id.clone();
     let current_user = authenticate!(&request.session_token, &state);
     check_quote_permission(&current_user.role, "read")?;
 
     match state.quote_service.get_quote(&request.id) {
-        Ok(Some(quote)) => Ok(ApiResponse::success(quote)),
+        Ok(Some(quote)) => Ok(ApiResponse::success(quote).with_correlation_id(correlation_id.clone())),
         Ok(None) => Ok(ApiResponse::error(AppError::NotFound(
             "Quote not found".to_string(),
-        ))),
+        )).with_correlation_id(correlation_id.clone())),
         Err(e) => {
             error!("Failed to get quote: {}", e);
             Ok(ApiResponse::error(AppError::Database(
                 "Failed to retrieve quote".to_string(),
-            )))
+            )).with_correlation_id(correlation_id.clone()))
         }
     }
 }
@@ -152,16 +172,17 @@ pub async fn quote_list(
     state: AppState<'_>,
 ) -> Result<ApiResponse<QuoteListResponse>, AppError> {
     debug!("quote_list command received");
+    let correlation_id = request.correlation_id.clone();
     let current_user = authenticate!(&request.session_token, &state);
     check_quote_permission(&current_user.role, "read")?;
 
     match state.quote_service.list_quotes(&request.filters) {
-        Ok(response) => Ok(ApiResponse::success(response)),
+        Ok(response) => Ok(ApiResponse::success(response).with_correlation_id(correlation_id.clone())),
         Err(e) => {
             error!("Failed to list quotes: {}", e);
             Ok(ApiResponse::error(AppError::Database(
                 "Failed to list quotes".to_string(),
-            )))
+            )).with_correlation_id(correlation_id.clone()))
         }
     }
 }
@@ -173,17 +194,18 @@ pub async fn quote_update(
     state: AppState<'_>,
 ) -> Result<ApiResponse<Quote>, AppError> {
     debug!(quote_id = %request.id, "quote_update command received");
+    let correlation_id = request.correlation_id.clone();
     let current_user = authenticate!(&request.session_token, &state);
     check_quote_permission(&current_user.role, "update")?;
 
     match state.quote_service.update_quote(&request.id, request.data) {
         Ok(quote) => {
             info!(quote_id = %quote.id, "Quote updated successfully");
-            Ok(ApiResponse::success(quote))
+            Ok(ApiResponse::success(quote).with_correlation_id(correlation_id.clone()))
         }
         Err(e) => {
             error!("Failed to update quote: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e)))
+            Ok(ApiResponse::error(AppError::Validation(e)).with_correlation_id(correlation_id.clone()))
         }
     }
 }
@@ -195,6 +217,7 @@ pub async fn quote_delete(
     state: AppState<'_>,
 ) -> Result<ApiResponse<bool>, AppError> {
     debug!(quote_id = %request.id, "quote_delete command received");
+    let correlation_id = request.correlation_id.clone();
     let current_user = authenticate!(&request.session_token, &state);
     check_quote_permission(&current_user.role, "delete")?;
 
@@ -203,11 +226,11 @@ pub async fn quote_delete(
             if deleted {
                 info!(quote_id = %request.id, "Quote deleted successfully");
             }
-            Ok(ApiResponse::success(deleted))
+            Ok(ApiResponse::success(deleted).with_correlation_id(correlation_id.clone()))
         }
         Err(e) => {
             error!("Failed to delete quote: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e)))
+            Ok(ApiResponse::error(AppError::Validation(e)).with_correlation_id(correlation_id.clone()))
         }
     }
 }
@@ -219,6 +242,7 @@ pub async fn quote_item_add(
     state: AppState<'_>,
 ) -> Result<ApiResponse<Quote>, AppError> {
     debug!(quote_id = %request.quote_id, "quote_item_add command received");
+    let correlation_id = request.correlation_id.clone();
     let current_user = authenticate!(&request.session_token, &state);
     check_quote_permission(&current_user.role, "update")?;
 
@@ -226,10 +250,10 @@ pub async fn quote_item_add(
         .quote_service
         .add_item(&request.quote_id, request.item)
     {
-        Ok(quote) => Ok(ApiResponse::success(quote)),
+        Ok(quote) => Ok(ApiResponse::success(quote).with_correlation_id(correlation_id.clone())),
         Err(e) => {
             error!("Failed to add quote item: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e)))
+            Ok(ApiResponse::error(AppError::Validation(e)).with_correlation_id(correlation_id.clone()))
         }
     }
 }
@@ -241,6 +265,7 @@ pub async fn quote_item_update(
     state: AppState<'_>,
 ) -> Result<ApiResponse<Quote>, AppError> {
     debug!(quote_id = %request.quote_id, item_id = %request.item_id, "quote_item_update command received");
+    let correlation_id = request.correlation_id.clone();
     let current_user = authenticate!(&request.session_token, &state);
     check_quote_permission(&current_user.role, "update")?;
 
@@ -248,10 +273,10 @@ pub async fn quote_item_update(
         .quote_service
         .update_item(&request.quote_id, &request.item_id, request.data)
     {
-        Ok(quote) => Ok(ApiResponse::success(quote)),
+        Ok(quote) => Ok(ApiResponse::success(quote).with_correlation_id(correlation_id.clone())),
         Err(e) => {
             error!("Failed to update quote item: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e)))
+            Ok(ApiResponse::error(AppError::Validation(e)).with_correlation_id(correlation_id.clone()))
         }
     }
 }
@@ -263,6 +288,7 @@ pub async fn quote_item_delete(
     state: AppState<'_>,
 ) -> Result<ApiResponse<Quote>, AppError> {
     debug!(quote_id = %request.quote_id, item_id = %request.item_id, "quote_item_delete command received");
+    let correlation_id = request.correlation_id.clone();
     let current_user = authenticate!(&request.session_token, &state);
     check_quote_permission(&current_user.role, "delete")?;
 
@@ -270,10 +296,10 @@ pub async fn quote_item_delete(
         .quote_service
         .delete_item(&request.quote_id, &request.item_id)
     {
-        Ok(quote) => Ok(ApiResponse::success(quote)),
+        Ok(quote) => Ok(ApiResponse::success(quote).with_correlation_id(correlation_id.clone())),
         Err(e) => {
             error!("Failed to delete quote item: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e)))
+            Ok(ApiResponse::error(AppError::Validation(e)).with_correlation_id(correlation_id.clone()))
         }
     }
 }
@@ -285,17 +311,18 @@ pub async fn quote_mark_sent(
     state: AppState<'_>,
 ) -> Result<ApiResponse<Quote>, AppError> {
     debug!(quote_id = %request.id, "quote_mark_sent command received");
+    let correlation_id = request.correlation_id.clone();
     let current_user = authenticate!(&request.session_token, &state);
     check_quote_permission(&current_user.role, "status")?;
 
     match state.quote_service.mark_sent(&request.id) {
         Ok(quote) => {
             info!(quote_id = %request.id, "Quote marked as sent");
-            Ok(ApiResponse::success(quote))
+            Ok(ApiResponse::success(quote).with_correlation_id(correlation_id.clone()))
         }
         Err(e) => {
             error!("Failed to mark quote as sent: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e)))
+            Ok(ApiResponse::error(AppError::Validation(e)).with_correlation_id(correlation_id.clone()))
         }
     }
 }
@@ -307,17 +334,18 @@ pub async fn quote_mark_accepted(
     state: AppState<'_>,
 ) -> Result<ApiResponse<QuoteAcceptResponse>, AppError> {
     debug!(quote_id = %request.id, "quote_mark_accepted command received");
+    let correlation_id = request.correlation_id.clone();
     let current_user = authenticate!(&request.session_token, &state);
     check_quote_permission(&current_user.role, "status")?;
 
     match state.quote_service.mark_accepted(&request.id) {
         Ok(response) => {
             info!(quote_id = %request.id, "Quote accepted");
-            Ok(ApiResponse::success(response))
+            Ok(ApiResponse::success(response).with_correlation_id(correlation_id.clone()))
         }
         Err(e) => {
             error!("Failed to accept quote: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e)))
+            Ok(ApiResponse::error(AppError::Validation(e)).with_correlation_id(correlation_id.clone()))
         }
     }
 }
@@ -329,17 +357,18 @@ pub async fn quote_mark_rejected(
     state: AppState<'_>,
 ) -> Result<ApiResponse<Quote>, AppError> {
     debug!(quote_id = %request.id, "quote_mark_rejected command received");
+    let correlation_id = request.correlation_id.clone();
     let current_user = authenticate!(&request.session_token, &state);
     check_quote_permission(&current_user.role, "status")?;
 
     match state.quote_service.mark_rejected(&request.id) {
         Ok(quote) => {
             info!(quote_id = %request.id, "Quote rejected");
-            Ok(ApiResponse::success(quote))
+            Ok(ApiResponse::success(quote).with_correlation_id(correlation_id.clone()))
         }
         Err(e) => {
             error!("Failed to reject quote: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e)))
+            Ok(ApiResponse::error(AppError::Validation(e)).with_correlation_id(correlation_id.clone()))
         }
     }
 }
@@ -351,6 +380,7 @@ pub async fn quote_export_pdf(
     state: AppState<'_>,
 ) -> Result<ApiResponse<QuoteExportResponse>, AppError> {
     debug!(quote_id = %request.id, "quote_export_pdf command received");
+    let correlation_id = request.correlation_id.clone();
     let current_user = authenticate!(&request.session_token, &state);
     check_quote_permission(&current_user.role, "export")?;
 
@@ -359,13 +389,13 @@ pub async fn quote_export_pdf(
         Ok(None) => {
             return Ok(ApiResponse::error(AppError::NotFound(
                 "Quote not found".to_string(),
-            )))
+            )).with_correlation_id(correlation_id.clone()))
         }
         Err(e) => {
             error!("Failed to get quote for PDF export: {}", e);
             return Ok(ApiResponse::error(AppError::Database(
                 "Failed to retrieve quote".to_string(),
-            )));
+            )).with_correlation_id(correlation_id.clone()));
         }
     };
 
@@ -388,7 +418,7 @@ pub async fn quote_export_pdf(
 
     Ok(ApiResponse::success(QuoteExportResponse {
         file_path: file_path.to_string_lossy().to_string(),
-    }))
+    }).with_correlation_id(correlation_id.clone()))
 }
 
 /// Generate a minimal PDF for a quote
