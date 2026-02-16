@@ -24,6 +24,17 @@ impl TaskRepository {
 
     /// Find tasks with complex filtering and pagination
     pub async fn find_with_query(&self, query: TaskQuery) -> RepoResult<TaskListResponse> {
+        use crate::logging::RepositoryLogger;
+        use std::collections::HashMap;
+
+        // Create logger with correlation context from thread-local storage
+        let logger = RepositoryLogger::new();
+
+        let mut log_context = HashMap::new();
+        log_context.insert("page".to_string(), serde_json::json!(query.page));
+        log_context.insert("limit".to_string(), serde_json::json!(query.limit));
+        logger.debug("Finding tasks with query", Some(log_context));
+
         let (sql, params) = self.build_task_query_sql(&query);
 
         // Execute query
@@ -48,11 +59,23 @@ impl TaskRepository {
             total_pages,
         };
 
+        let response_data = tasks
+            .into_iter()
+            .map(|task| TaskWithDetails { task })
+            .collect::<Vec<_>>();
+
+        // Log successful query
+        let mut success_context = HashMap::new();
+        success_context.insert(
+            "task_count".to_string(),
+            serde_json::json!(response_data.len()),
+        );
+        success_context.insert("total_count".to_string(), serde_json::json!(total_count));
+        success_context.insert("page".to_string(), serde_json::json!(pagination.page));
+        logger.info("Tasks queried successfully", Some(success_context));
+
         Ok(TaskListResponse {
-            data: tasks
-                .into_iter()
-                .map(|task| TaskWithDetails { task })
-                .collect(),
+            data: response_data,
             pagination,
             statistics: None,
         })

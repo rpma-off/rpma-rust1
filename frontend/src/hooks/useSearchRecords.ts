@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { safeInvoke } from '@/lib/ipc/utils';
 import { AuthSecureStorage } from '@/lib/secureStorage';
 import type {
   EntityType,
@@ -48,7 +48,7 @@ export function useSearchRecords(options: UseSearchRecordsOptions = {}): UseSear
         throw new Error('Authentication required');
       }
 
-      const response: SearchResponse = await invoke('search_records', {
+      const response: SearchResponse = await safeInvoke('search_records', {
         query,
         entityType,
         dateRange,

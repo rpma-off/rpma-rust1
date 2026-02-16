@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,8 +58,15 @@ export function InventorySettings() {
     }
   }, [t, user?.token]);
 
+  // Root cause fix: prevent StrictMode double-invoke request storms
+  const fetchingRef = useRef(false);
+
   useEffect(() => {
-    void fetchCategories();
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
+    fetchCategories().finally(() => {
+      fetchingRef.current = false;
+    });
   }, [fetchCategories]);
 
   const handleSubmit = async (e: React.FormEvent) => {

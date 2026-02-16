@@ -184,4 +184,18 @@ export const IPC_COMMANDS = {
   GET_EVENTS_FOR_TECHNICIAN: 'get_events_for_technician',
   GET_EVENTS_FOR_TASK: 'get_events_for_task',
   CALENDAR_SCHEDULE_TASK: 'calendar_schedule_task',
+
+  // Quote commands
+  QUOTE_CREATE: 'quote_create',
+  QUOTE_GET: 'quote_get',
+  QUOTE_LIST: 'quote_list',
+  QUOTE_UPDATE: 'quote_update',
+  QUOTE_DELETE: 'quote_delete',
+  QUOTE_ITEM_ADD: 'quote_item_add',
+  QUOTE_ITEM_UPDATE: 'quote_item_update',
+  QUOTE_ITEM_DELETE: 'quote_item_delete',
+  QUOTE_MARK_SENT: 'quote_mark_sent',
+  QUOTE_MARK_ACCEPTED: 'quote_mark_accepted',
+  QUOTE_MARK_REJECTED: 'quote_mark_rejected',
+  QUOTE_EXPORT_PDF: 'quote_export_pdf',
 } as const;

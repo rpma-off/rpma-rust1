@@ -327,7 +327,16 @@ impl TaskCreationService {
                 priority, user_id, created_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             "#,
-            params!["create", "task", task.id, task_json, "pending", 5, user_id, task.created_at],
+            params![
+                "create",
+                "task",
+                task.id,
+                task_json,
+                "pending",
+                5,
+                user_id,
+                task.created_at
+            ],
         ) {
             error!("Failed to add task {} to sync queue: {}", task.id, e);
             warn!("Task created but not added to sync queue: {}", e);

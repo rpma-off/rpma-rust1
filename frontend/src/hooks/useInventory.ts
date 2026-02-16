@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { safeInvoke } from '@/lib/ipc/core';
 import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import { useAuth } from '@/lib/auth/compatibility';
@@ -164,11 +164,22 @@ export function useInventory(query?: InventoryQuery) {
     }
   }, [sessionToken]);
 
+  // Root cause fix: prevent StrictMode double-invoke from firing duplicate
+  // parallel fetches. A single ref guards all four initial requests.
+  const fetchingRef = useRef(false);
+
   useEffect(() => {
-    void fetchMaterials();
-    void fetchStats();
-    void fetchLowStock();
-    void fetchExpired();
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
+
+    Promise.all([
+      fetchMaterials(),
+      fetchStats(),
+      fetchLowStock(),
+      fetchExpired(),
+    ]).finally(() => {
+      fetchingRef.current = false;
+    });
   }, [fetchExpired, fetchLowStock, fetchMaterials, fetchStats]);
 
   const createMaterial = useCallback(async (request: CreateMaterialRequest, _userId?: string) => {

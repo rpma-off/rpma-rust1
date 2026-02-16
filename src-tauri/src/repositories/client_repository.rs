@@ -484,11 +484,27 @@ impl Repository<Client, String> for ClientRepository {
     }
 
     async fn save(&self, entity: Client) -> RepoResult<Client> {
+        use crate::logging::RepositoryLogger;
+        use serde_json::json;
+        use std::collections::HashMap;
+
+        let logger = RepositoryLogger::new();
         let exists = self.exists_by_id(entity.id.clone()).await?;
 
         if exists {
+            logger.debug(
+                "Updating existing client",
+                Some({
+                    let mut context = HashMap::new();
+                    context.insert("client_id".to_string(), json!(entity.id));
+                    context.insert("client_name".to_string(), json!(entity.name));
+                    context.insert("operation".to_string(), json!("update"));
+                    context
+                }),
+            );
+
             // Update existing client
-            self.db
+            let result = self.db
                 .execute(
                     r#"
                     UPDATE clients SET
@@ -516,10 +532,39 @@ impl Repository<Client, String> for ClientRepository {
                         entity.id,
                     ],
                 )
-                .map_err(|e| RepoError::Database(format!("Failed to update client: {}", e)))?;
+                .map_err(|e| RepoError::Database(format!("Failed to update client: {}", e)));
+
+            if let Err(ref e) = result {
+                logger.error(
+                    "Failed to update client",
+                    Some(e),
+                    Some({
+                        let mut context = HashMap::new();
+                        context.insert("client_id".to_string(), json!(entity.id));
+                        context.insert("error".to_string(), json!(e.to_string()));
+                        context
+                    }),
+                );
+            }
+            result?;
         } else {
+            logger.debug(
+                "Creating new client",
+                Some({
+                    let mut context = HashMap::new();
+                    context.insert("client_id".to_string(), json!(entity.id));
+                    context.insert("client_name".to_string(), json!(entity.name));
+                    context.insert(
+                        "customer_type".to_string(),
+                        json!(entity.customer_type.to_string()),
+                    );
+                    context.insert("operation".to_string(), json!("create"));
+                    context
+                }),
+            );
+
             // Create new client
-            self.db
+            let result = self.db
                 .execute(
                     r#"
                     INSERT INTO clients (
@@ -548,8 +593,33 @@ impl Repository<Client, String> for ClientRepository {
                         entity.created_by,
                     ],
                 )
-                .map_err(|e| RepoError::Database(format!("Failed to create client: {}", e)))?;
+                .map_err(|e| RepoError::Database(format!("Failed to create client: {}", e)));
+
+            if let Err(ref e) = result {
+                logger.error(
+                    "Failed to create client",
+                    Some(e),
+                    Some({
+                        let mut context = HashMap::new();
+                        context.insert("client_id".to_string(), json!(entity.id));
+                        context.insert("error".to_string(), json!(e.to_string()));
+                        context
+                    }),
+                );
+            }
+            result?;
         }
+
+        logger.info(
+            "Client saved successfully",
+            Some({
+                let mut context = HashMap::new();
+                context.insert("client_id".to_string(), json!(entity.id));
+                context.insert("client_name".to_string(), json!(entity.name));
+                context.insert("is_update".to_string(), json!(exists));
+                context
+            }),
+        );
 
         // Invalidate cache
         self.invalidate_client_cache(&entity.id);

@@ -241,9 +241,16 @@ impl TaskService {
         Vec<crate::models::task::TaskWithDetails>,
         crate::models::task::PaginationInfo,
     )> {
+        use crate::logging::{LogDomain, ServiceLogger};
+        use std::collections::HashMap;
+
+        // Create logger with correlation context from thread-local storage
+        let logger = ServiceLogger::new(LogDomain::Task);
+        logger.debug("Getting tasks with client details", None);
+
         let result = self.client_integration.get_tasks_with_clients(query)?;
 
-        let tasks = result
+        let tasks: Vec<crate::models::task::TaskWithDetails> = result
             .data
             .into_iter()
             .map(|task_with_client| {
@@ -267,6 +274,18 @@ impl TaskService {
                 crate::models::task::TaskWithDetails { task }
             })
             .collect();
+
+        // Log successful retrieval with context
+        let mut context = HashMap::new();
+        context.insert("task_count".to_string(), serde_json::json!(tasks.len()));
+        context.insert(
+            "page".to_string(),
+            serde_json::json!(result.pagination.page),
+        );
+        logger.info(
+            "Tasks with client details retrieved successfully",
+            Some(context),
+        );
 
         Ok((tasks, result.pagination))
     }

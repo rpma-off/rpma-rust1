@@ -109,6 +109,7 @@ pub async fn calendar_get_tasks(
     let correlation_id = request
         .correlation_id
         .unwrap_or_else(crate::logging::correlation::generate_correlation_id);
+    crate::commands::init_correlation_context(&Some(correlation_id.clone()), None);
 
     info!(
         "calendar_get_tasks command received - correlation_id: {}",
@@ -117,6 +118,7 @@ pub async fn calendar_get_tasks(
 
     // Authentication
     let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Rate limiting: 200 requests per minute per user for calendar operations
     let rate_limiter = state.auth_service.rate_limiter();
@@ -138,7 +140,7 @@ pub async fn calendar_get_tasks(
     {
         Ok(tasks) => {
             info!("Successfully retrieved {} calendar tasks", tasks.len());
-            Ok(ApiResponse::success(tasks))
+            Ok(ApiResponse::success(tasks).with_correlation_id(Some(correlation_id.clone())))
         }
         Err(e) => {
             error!("Failed to get calendar tasks: {}", e);
@@ -161,6 +163,7 @@ pub async fn get_event_by_id(
     let correlation_id = request
         .correlation_id
         .unwrap_or_else(crate::logging::correlation::generate_correlation_id);
+    crate::commands::init_correlation_context(&Some(correlation_id.clone()), None);
 
     info!(
         "get_event_by_id command received - id: {}, correlation_id: {}",
@@ -169,6 +172,7 @@ pub async fn get_event_by_id(
 
     // Authentication
     let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Rate limiting
     let rate_limiter = state.auth_service.rate_limiter();
@@ -191,7 +195,7 @@ pub async fn get_event_by_id(
             } else {
                 info!("Calendar event not found");
             }
-            Ok(ApiResponse::success(event))
+            Ok(ApiResponse::success(event).with_correlation_id(Some(correlation_id.clone())))
         }
         Err(e) => {
             error!("Failed to get calendar event by ID: {}", e);
@@ -214,6 +218,7 @@ pub async fn create_event(
     let correlation_id = request
         .correlation_id
         .unwrap_or_else(crate::logging::correlation::generate_correlation_id);
+    crate::commands::init_correlation_context(&Some(correlation_id.clone()), None);
 
     info!(
         "create_event command received - title: {}, correlation_id: {}",
@@ -222,6 +227,7 @@ pub async fn create_event(
 
     // Authentication
     let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Rate limiting
     let rate_limiter = state.auth_service.rate_limiter();
@@ -243,7 +249,7 @@ pub async fn create_event(
     {
         Ok(event) => {
             info!("Successfully created calendar event with ID: {}", event.id);
-            Ok(ApiResponse::success(event))
+            Ok(ApiResponse::success(event).with_correlation_id(Some(correlation_id.clone())))
         }
         Err(e) => {
             error!("Failed to create calendar event: {}", e);
@@ -263,6 +269,7 @@ pub async fn update_event(
     let correlation_id = request
         .correlation_id
         .unwrap_or_else(crate::logging::correlation::generate_correlation_id);
+    crate::commands::init_correlation_context(&Some(correlation_id.clone()), None);
 
     info!(
         "update_event command received - id: {}, correlation_id: {}",
@@ -271,6 +278,7 @@ pub async fn update_event(
 
     // Authentication
     let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Rate limiting
     let rate_limiter = state.auth_service.rate_limiter();
@@ -296,7 +304,7 @@ pub async fn update_event(
             } else {
                 info!("Calendar event not found for update");
             }
-            Ok(ApiResponse::success(event))
+            Ok(ApiResponse::success(event).with_correlation_id(Some(correlation_id.clone())))
         }
         Err(e) => {
             error!("Failed to update calendar event: {}", e);
@@ -316,6 +324,7 @@ pub async fn delete_event(
     let correlation_id = request
         .correlation_id
         .unwrap_or_else(crate::logging::correlation::generate_correlation_id);
+    crate::commands::init_correlation_context(&Some(correlation_id.clone()), None);
 
     info!(
         "delete_event command received - id: {}, correlation_id: {}",
@@ -324,6 +333,7 @@ pub async fn delete_event(
 
     // Authentication
     let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Rate limiting
     let rate_limiter = state.auth_service.rate_limiter();
@@ -346,7 +356,7 @@ pub async fn delete_event(
             } else {
                 info!("Calendar event not found for deletion");
             }
-            Ok(ApiResponse::success(deleted))
+            Ok(ApiResponse::success(deleted).with_correlation_id(Some(correlation_id.clone())))
         }
         Err(e) => {
             error!("Failed to delete calendar event: {}", e);
@@ -369,6 +379,7 @@ pub async fn get_events_for_technician(
     let correlation_id = request
         .correlation_id
         .unwrap_or_else(crate::logging::correlation::generate_correlation_id);
+    crate::commands::init_correlation_context(&Some(correlation_id.clone()), None);
 
     info!(
         "get_events_for_technician command received - technician_id: {}, correlation_id: {}",
@@ -377,6 +388,7 @@ pub async fn get_events_for_technician(
 
     // Authentication
     let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Rate limiting
     let rate_limiter = state.auth_service.rate_limiter();
@@ -401,7 +413,7 @@ pub async fn get_events_for_technician(
                 "Successfully retrieved {} events for technician",
                 events.len()
             );
-            Ok(ApiResponse::success(events))
+            Ok(ApiResponse::success(events).with_correlation_id(Some(correlation_id.clone())))
         }
         Err(e) => {
             error!("Failed to get events for technician: {}", e);
@@ -424,6 +436,7 @@ pub async fn get_events_for_task(
     let correlation_id = request
         .correlation_id
         .unwrap_or_else(crate::logging::correlation::generate_correlation_id);
+    crate::commands::init_correlation_context(&Some(correlation_id.clone()), None);
 
     info!(
         "get_events_for_task command received - task_id: {}, correlation_id: {}",
@@ -432,6 +445,7 @@ pub async fn get_events_for_task(
 
     // Authentication
     let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Rate limiting
     let rate_limiter = state.auth_service.rate_limiter();
@@ -450,7 +464,7 @@ pub async fn get_events_for_task(
     match calendar_service.get_events_for_task(request.task_id).await {
         Ok(events) => {
             info!("Successfully retrieved {} events for task", events.len());
-            Ok(ApiResponse::success(events))
+            Ok(ApiResponse::success(events).with_correlation_id(Some(correlation_id.clone())))
         }
         Err(e) => {
             error!("Failed to get events for task: {}", e);
@@ -470,9 +484,12 @@ pub async fn get_events(
     end_date: String,
     technician_id: Option<String>,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<crate::models::calendar_event::CalendarEvent>>, AppError> {
-    let correlation_id = crate::logging::correlation::generate_correlation_id();
+    let correlation_id =
+        correlation_id.unwrap_or_else(crate::logging::correlation::generate_correlation_id);
+    crate::commands::init_correlation_context(&Some(correlation_id.clone()), None);
 
     info!(
         "get_events command received - date_range: {} to {}, technician: {:?}, correlation_id: {}",
@@ -481,6 +498,7 @@ pub async fn get_events(
 
     // Authentication
     let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Rate limiting
     let rate_limiter = state.auth_service.rate_limiter();
@@ -503,7 +521,7 @@ pub async fn get_events(
     {
         Ok(events) => {
             info!("Successfully retrieved {} events", events.len());
-            Ok(ApiResponse::success(events))
+            Ok(ApiResponse::success(events).with_correlation_id(Some(correlation_id.clone())))
         }
         Err(e) => {
             error!("Failed to get events: {}", e);
@@ -526,6 +544,7 @@ pub async fn calendar_check_conflicts(
     let correlation_id = request
         .correlation_id
         .unwrap_or_else(crate::logging::correlation::generate_correlation_id);
+    crate::commands::init_correlation_context(&Some(correlation_id.clone()), None);
 
     info!(
         "calendar_check_conflicts command received - task_id: {}, new_date: {}, correlation_id: {}",
@@ -534,6 +553,7 @@ pub async fn calendar_check_conflicts(
 
     // Authentication
     let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Rate limiting: 200 requests per minute per user for calendar operations
     let rate_limiter = state.auth_service.rate_limiter();
@@ -560,7 +580,7 @@ pub async fn calendar_check_conflicts(
     {
         Ok(conflicts) => {
             info!("Conflict check completed");
-            Ok(ApiResponse::success(conflicts))
+            Ok(ApiResponse::success(conflicts).with_correlation_id(Some(correlation_id.clone())))
         }
         Err(e) => {
             error!("Failed to check conflicts: {}", e);
@@ -583,6 +603,7 @@ pub async fn calendar_schedule_task(
     let correlation_id = request
         .correlation_id
         .unwrap_or_else(crate::logging::correlation::generate_correlation_id);
+    crate::commands::init_correlation_context(&Some(correlation_id.clone()), None);
 
     info!(
         "calendar_schedule_task command received - task_id: {}, new_date: {}, correlation_id: {}",
@@ -591,6 +612,7 @@ pub async fn calendar_schedule_task(
 
     // Authentication
     let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Rate limiting
     let rate_limiter = state.auth_service.rate_limiter();
@@ -627,7 +649,8 @@ pub async fn calendar_schedule_task(
                     conflict_type: None,
                     conflicting_tasks: vec![],
                     message: None,
-                }))
+                })
+                .with_correlation_id(Some(correlation_id.clone())))
             }
             Err(e) => {
                 error!("Failed to schedule task: {}", e);
@@ -655,7 +678,7 @@ pub async fn calendar_schedule_task(
                 } else {
                     info!("Task {} scheduled successfully", request.task_id);
                 }
-                Ok(ApiResponse::success(result))
+                Ok(ApiResponse::success(result).with_correlation_id(Some(correlation_id.clone())))
             }
             Err(e) => {
                 error!("Failed to schedule task: {}", e);

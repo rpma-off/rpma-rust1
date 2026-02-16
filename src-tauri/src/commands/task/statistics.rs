@@ -24,10 +24,12 @@ pub async fn get_task_statistics(
     request: TaskStatisticsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<TaskStatistics>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     debug!("Getting comprehensive task statistics");
 
     // Authenticate user
     let session = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&session.user_id);
 
     // Apply role-based filtering
     let mut filter = request.filter.unwrap_or_default();
@@ -61,7 +63,7 @@ pub async fn get_task_statistics(
 
     info!("Retrieved comprehensive task statistics");
 
-    Ok(ApiResponse::success(stats))
+    Ok(ApiResponse::success(stats).with_correlation_id(Some(correlation_id.clone())))
 }
 
 /// Calculate task completion rate

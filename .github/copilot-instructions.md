@@ -1,5 +1,7 @@
 # GitHub Copilot Instructions for RPMA v2
- 
+
+These repository-level instructions are configured following GitHub's Copilot coding agent best practices: https://gh.io/copilot-coding-agent-tips.
+
 ## Project Overview
 
 RPMA v2 is an **offline-first desktop application** for managing Paint Protection Film (PPF) interventions. The application handles tasks, interventions, workflow steps, photo management, inventory tracking, reporting, and user management with role-based access control.

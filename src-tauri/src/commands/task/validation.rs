@@ -47,10 +47,12 @@ pub async fn check_task_assignment(
     request: CheckTaskAssignmentRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<AssignmentCheckResponse>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     debug!("Checking task assignment eligibility");
 
     // Authenticate user
     let session = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&session.user_id);
 
     // Validate task exists and get task details
     let task_option = state
@@ -204,7 +206,7 @@ pub async fn check_task_assignment(
         request.task_id, request.user_id
     );
 
-    Ok(ApiResponse::success(response))
+    Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone())))
 }
 
 /// Check task availability
@@ -214,10 +216,12 @@ pub async fn check_task_availability(
     request: CheckTaskAvailabilityRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<AvailabilityCheckResponse>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     debug!("Checking task availability");
 
     // Authenticate user
     let _session = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&_session.user_id);
 
     // Get task details
     let task_option = state
@@ -307,7 +311,7 @@ pub async fn check_task_availability(
         request.task_id
     );
 
-    Ok(ApiResponse::success(response))
+    Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone())))
 }
 
 /// Validate task assignment change
@@ -317,10 +321,12 @@ pub async fn validate_task_assignment_change(
     request: ValidateTaskAssignmentChangeRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<ValidationResult>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     debug!("Validating task assignment change");
 
     // Authenticate user
     let session = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&session.user_id);
 
     // Validate user has permission to change assignments
     if !matches!(
@@ -460,5 +466,5 @@ pub async fn validate_task_assignment_change(
         request.task_id
     );
 
-    Ok(ApiResponse::success(validation_result))
+    Ok(ApiResponse::success(validation_result).with_correlation_id(Some(correlation_id.clone())))
 }

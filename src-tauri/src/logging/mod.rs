@@ -234,3 +234,99 @@ pub fn get_global_logger() -> Option<RPMARequestLogger> {
 pub fn clear_global_logger() {
     *GLOBAL_LOGGER.lock().expect("Global logger mutex poisoned") = None;
 }
+
+/// Service-level logging helper that reads correlation context from thread-local storage
+/// Use this in service methods to add structured logging with correlation tracking
+pub struct ServiceLogger {
+    logger: RPMARequestLogger,
+}
+
+impl ServiceLogger {
+    /// Create a new ServiceLogger with correlation context from thread-local storage
+    /// Falls back to generating a new correlation_id if none is set
+    pub fn new(domain: LogDomain) -> Self {
+        let context = correlation::get_correlation_context()
+            .unwrap_or_else(|| correlation::CorrelationContext::default());
+
+        Self {
+            logger: RPMARequestLogger::new(
+                context.get_correlation_id().to_string(),
+                context.get_user_id().map(|s| s.to_string()),
+                domain,
+            ),
+        }
+    }
+
+    pub fn trace(&self, operation: &str, context: Option<HashMap<String, serde_json::Value>>) {
+        self.logger.trace(operation, context);
+    }
+
+    pub fn debug(&self, operation: &str, context: Option<HashMap<String, serde_json::Value>>) {
+        self.logger.debug(operation, context);
+    }
+
+    pub fn info(&self, operation: &str, context: Option<HashMap<String, serde_json::Value>>) {
+        self.logger.info(operation, context);
+    }
+
+    pub fn warn(&self, operation: &str, context: Option<HashMap<String, serde_json::Value>>) {
+        self.logger.warn(operation, context);
+    }
+
+    pub fn error(
+        &self,
+        operation: &str,
+        error: Option<&dyn std::error::Error>,
+        context: Option<HashMap<String, serde_json::Value>>,
+    ) {
+        self.logger.error(operation, error, context);
+    }
+}
+
+/// Repository-level logging helper that reads correlation context from thread-local storage
+/// Use this in repository methods to add structured logging with correlation tracking
+pub struct RepositoryLogger {
+    logger: RPMARequestLogger,
+}
+
+impl RepositoryLogger {
+    /// Create a new RepositoryLogger with correlation context from thread-local storage
+    /// Falls back to generating a new correlation_id if none is set
+    pub fn new() -> Self {
+        let context = correlation::get_correlation_context()
+            .unwrap_or_else(|| correlation::CorrelationContext::default());
+
+        Self {
+            logger: RPMARequestLogger::new(
+                context.get_correlation_id().to_string(),
+                context.get_user_id().map(|s| s.to_string()),
+                LogDomain::System,
+            ),
+        }
+    }
+
+    pub fn trace(&self, operation: &str, context: Option<HashMap<String, serde_json::Value>>) {
+        self.logger.trace(operation, context);
+    }
+
+    pub fn debug(&self, operation: &str, context: Option<HashMap<String, serde_json::Value>>) {
+        self.logger.debug(operation, context);
+    }
+
+    pub fn info(&self, operation: &str, context: Option<HashMap<String, serde_json::Value>>) {
+        self.logger.info(operation, context);
+    }
+
+    pub fn warn(&self, operation: &str, context: Option<HashMap<String, serde_json::Value>>) {
+        self.logger.warn(operation, context);
+    }
+
+    pub fn error(
+        &self,
+        operation: &str,
+        error: Option<&dyn std::error::Error>,
+        context: Option<HashMap<String, serde_json::Value>>,
+    ) {
+        self.logger.error(operation, error, context);
+    }
+}

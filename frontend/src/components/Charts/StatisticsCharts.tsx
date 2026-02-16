@@ -3,6 +3,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DashboardStats } from '@/components/dashboard/types';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface StatisticsChartsProps {
   stats: DashboardStats;
@@ -24,19 +25,21 @@ interface StatisticsChartsProps {
 export const StatisticsCharts: React.FC<StatisticsChartsProps> = ({
   stats
 }) => {
+  const { t } = useTranslation();
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Statistics Charts</CardTitle>
+        <CardTitle>{t('dashboard.statistics')}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="text-center py-8 text-muted-foreground">
-          Charts component to be implemented
+          {t('dashboard.toBeImplemented')}
           <div className="mt-4 space-y-2">
-            <p>Total Tasks: {stats.total}</p>
-            <p>Completed: {stats.completed}</p>
-            <p>In Progress: {stats.inProgress}</p>
-            <p>Pending: {stats.pending}</p>
+            <p>{t('dashboard.totalTasks', { total: stats.total })}</p>
+            <p>{t('dashboard.completed', { count: stats.completed })}</p>
+            <p>{t('dashboard.inProgress', { count: stats.inProgress })}</p>
+            <p>{t('dashboard.pending', { count: stats.pending })}</p>
           </div>
         </div>
       </CardContent>

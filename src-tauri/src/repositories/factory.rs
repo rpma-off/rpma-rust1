@@ -23,6 +23,7 @@ pub use crate::repositories::message_repository::MessageRepository;
 pub use crate::repositories::notification_preferences_repository::NotificationPreferencesRepository;
 pub use crate::repositories::notification_repository::NotificationTemplateRepository;
 pub use crate::repositories::photo_repository::PhotoRepository;
+pub use crate::repositories::quote_repository::QuoteRepository;
 pub use crate::repositories::task_history_repository::TaskHistoryRepository;
 pub use crate::repositories::user_repository::UserRepository;
 
@@ -44,6 +45,7 @@ pub struct Repositories {
     pub material: Arc<MaterialRepository>,
     pub message: Arc<MessageRepository>,
     pub photo: Arc<PhotoRepository>,
+    pub quote: Arc<QuoteRepository>,
     pub notification_template: Arc<NotificationTemplateRepository>,
     pub notification_preferences: Arc<NotificationPreferencesRepository>,
     pub task_history: Arc<TaskHistoryRepository>,
@@ -70,6 +72,7 @@ impl Repositories {
             material: Arc::new(MaterialRepository::new(Arc::clone(&db), Arc::clone(&cache))),
             message: Arc::new(MessageRepository::new(Arc::clone(&db), Arc::clone(&cache))),
             photo: Arc::new(PhotoRepository::new(Arc::clone(&db), Arc::clone(&cache))),
+            quote: Arc::new(QuoteRepository::new(Arc::clone(&db), Arc::clone(&cache))),
             notification_template: Arc::new(NotificationTemplateRepository::new(
                 Arc::clone(&db),
                 Arc::clone(&cache),

@@ -26,6 +26,8 @@ pub struct UpdateUserAccessibilityRequest {
     pub speech_rate: Option<f32>,
     pub font_size: Option<u32>,
     pub color_blind_mode: Option<String>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 /// Update user accessibility settings
@@ -35,9 +37,12 @@ pub async fn update_user_accessibility(
     request: UpdateUserAccessibilityRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("Updating user accessibility settings");
 
+    let correlation_id_clone = request.correlation_id.clone();
     let user = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&user.id);
 
     let mut accessibility_settings: UserAccessibilitySettings = state
         .settings_service
@@ -79,6 +84,9 @@ pub async fn update_user_accessibility(
     state
         .settings_service
         .update_user_accessibility(&user.id, &accessibility_settings)
-        .map(|_| ApiResponse::success("Accessibility settings updated successfully".to_string()))
+        .map(|_| {
+            ApiResponse::success("Accessibility settings updated successfully".to_string())
+                .with_correlation_id(correlation_id_clone.clone())
+        })
         .map_err(|e| handle_settings_error(e, "Update user accessibility"))
 }

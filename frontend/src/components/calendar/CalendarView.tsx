@@ -8,6 +8,7 @@ import { DayView } from './DayView';
 import { AgendaView } from './AgendaView';
 import { useCalendar } from '../../hooks/useCalendar';
 import type { CalendarTask } from '../../lib/backend';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface CalendarViewProps {
   initialDate?: Date;
@@ -24,6 +25,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   onTaskReschedule,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const {
     tasks,
     isLoading,
@@ -89,7 +91,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       return (
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
-            <div className="text-red-500 mb-2">Error loading calendar</div>
+            <div className="text-red-500 mb-2">{t('errors.loadFailed')}</div>
             <div className="text-gray-600 text-sm">{error}</div>
           </div>
         </div>

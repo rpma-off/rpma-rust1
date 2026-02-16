@@ -15,6 +15,8 @@ use crate::authenticate;
 pub struct ClientCrudRequest {
     pub action: ClientAction,
     pub session_token: String,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 /// Client CRUD operations
@@ -24,10 +26,18 @@ pub async fn client_crud(
     request: ClientCrudRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
+    // Initialize correlation context at command start
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+
     let action = request.action;
     let session_token = request.session_token;
-    info!("client_crud command received - action: {:?}", action);
+    info!(
+        correlation_id = %correlation_id,
+        "client_crud command received - action: {:?}",
+        action
+    );
     debug!(
+        correlation_id = %correlation_id,
         "Client CRUD operation requested with action: {:?}, session_token length: {}",
         action,
         session_token.len()
@@ -118,6 +128,9 @@ pub async fn client_crud(
     // Centralized authentication
     let current_user = authenticate!(&session_token, &state);
 
+    // Update correlation context with user_id after authentication
+    crate::commands::update_correlation_context_user(&current_user.user_id);
+
     // Rate limiting: 100 requests per minute per user for client operations
     let rate_limiter = state.auth_service.rate_limiter();
     let rate_limit_key = format!("client_ops:{}", current_user.user_id);
@@ -153,20 +166,47 @@ pub async fn client_crud(
         async {
             match validated_action {
                 ClientAction::Create { data } => {
-                    handle_client_creation(client_service, data, &current_user.user_id).await
+                    handle_client_creation(
+                        client_service,
+                        data,
+                        &current_user.user_id,
+                        Some(correlation_id.clone()),
+                    )
+                    .await
                 }
-                ClientAction::Get { id } => handle_client_retrieval(client_service, &id).await,
+                ClientAction::Get { id } => {
+                    handle_client_retrieval(client_service, &id, Some(correlation_id.clone())).await
+                }
                 ClientAction::GetWithTasks { id } => {
-                    handle_client_with_tasks_retrieval(client_service, task_service, &id).await
+                    handle_client_with_tasks_retrieval(
+                        client_service,
+                        task_service,
+                        &id,
+                        Some(correlation_id.clone()),
+                    )
+                    .await
                 }
                 ClientAction::Update { id, data } => {
-                    handle_client_update(client_service, &id, data, &current_user.user_id).await
+                    handle_client_update(
+                        client_service,
+                        &id,
+                        data,
+                        &current_user.user_id,
+                        Some(correlation_id.clone()),
+                    )
+                    .await
                 }
                 ClientAction::Delete { id } => {
-                    handle_client_deletion(client_service, &id, &current_user.user_id).await
+                    handle_client_deletion(
+                        client_service,
+                        &id,
+                        &current_user.user_id,
+                        Some(correlation_id.clone()),
+                    )
+                    .await
                 }
                 ClientAction::List { filters } => {
-                    handle_client_listing(client_service, filters).await
+                    handle_client_listing(client_service, filters, Some(correlation_id.clone())).await
                 }
                 ClientAction::ListWithTasks {
                     filters,
@@ -177,13 +217,17 @@ pub async fn client_crud(
                         task_service,
                         filters,
                         limit_tasks,
+                        Some(correlation_id.clone()),
                     )
                     .await
                 }
                 ClientAction::Search { query, limit } => {
-                    handle_client_search(client_service, &query, limit).await
+                    handle_client_search(client_service, &query, limit, Some(correlation_id.clone()))
+                        .await
                 }
-                ClientAction::Stats => handle_client_statistics(client_service).await,
+                ClientAction::Stats => {
+                    handle_client_statistics(client_service, Some(correlation_id.clone())).await
+                }
             }
         },
     )
@@ -206,6 +250,7 @@ async fn handle_client_creation(
     client_service: std::sync::Arc<crate::services::ClientService>,
     data: crate::models::client::CreateClientRequest,
     user_id: &str,
+    correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
     info!("Creating new client");
 
@@ -221,13 +266,15 @@ async fn handle_client_creation(
     Ok(ApiResponse::success(serde_json::json!({
         "type": "Created",
         "data": client
-    })))
+    }))
+    .with_correlation_id(correlation_id.clone()))
 }
 
 /// Handle client retrieval
 async fn handle_client_retrieval(
     client_service: std::sync::Arc<crate::services::ClientService>,
     id: &str,
+    correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
     debug!("Retrieving client with ID: {}", id);
     let client = client_service.get_client_async(id).await.map_err(|e| {
@@ -241,13 +288,15 @@ async fn handle_client_retrieval(
             Ok(ApiResponse::success(serde_json::json!({
                 "type": "Found",
                 "data": client
-            })))
+            }))
+            .with_correlation_id(correlation_id.clone()))
         }
         None => {
             warn!("Client {} not found", id);
             Ok(ApiResponse::success(serde_json::json!({
                 "type": "NotFound"
-            })))
+            }))
+            .with_correlation_id(correlation_id.clone()))
         }
     }
 }
@@ -257,6 +306,7 @@ async fn handle_client_with_tasks_retrieval(
     client_service: std::sync::Arc<crate::services::ClientService>,
     task_service: std::sync::Arc<crate::services::TaskService>,
     id: &str,
+    correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
     debug!("Retrieving client with tasks for ID: {}", id);
     let client = client_service.get_client_async(id).await.map_err(|e| {
@@ -327,13 +377,15 @@ async fn handle_client_with_tasks_retrieval(
             Ok(ApiResponse::success(serde_json::json!({
                 "type": "FoundWithTasks",
                 "data": client_with_tasks
-            })))
+            }))
+            .with_correlation_id(correlation_id.clone()))
         }
         None => {
             warn!("Client {} not found", id);
             Ok(ApiResponse::success(serde_json::json!({
                 "type": "NotFound"
-            })))
+            }))
+            .with_correlation_id(correlation_id.clone()))
         }
     }
 }
@@ -344,6 +396,7 @@ async fn handle_client_update(
     id: &str,
     data: crate::models::client::UpdateClientRequest,
     user_id: &str,
+    correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
     info!("Updating client with ID: {}", id);
     let client = client_service
@@ -358,7 +411,8 @@ async fn handle_client_update(
     Ok(ApiResponse::success(serde_json::json!({
         "type": "Updated",
         "data": client
-    })))
+    }))
+    .with_correlation_id(correlation_id.clone()))
 }
 
 /// Handle client deletion
@@ -366,6 +420,7 @@ async fn handle_client_deletion(
     client_service: std::sync::Arc<crate::services::ClientService>,
     id: &str,
     user_id: &str,
+    correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
     info!("Deleting client with ID: {}", id);
     client_service
@@ -378,13 +433,15 @@ async fn handle_client_deletion(
     info!("Client {} deleted successfully", id);
     Ok(ApiResponse::success(serde_json::json!({
         "type": "Deleted"
-    })))
+    }))
+    .with_correlation_id(correlation_id.clone()))
 }
 
 /// Handle client listing
 async fn handle_client_listing(
     client_service: std::sync::Arc<crate::services::ClientService>,
     filters: crate::models::client::ClientQuery,
+    correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
     debug!("Listing clients with filters: {:?}", filters);
     let clients = client_service
@@ -398,7 +455,8 @@ async fn handle_client_listing(
     Ok(ApiResponse::success(serde_json::json!({
         "type": "List",
         "data": clients
-    })))
+    }))
+    .with_correlation_id(correlation_id.clone()))
 }
 
 /// Handle client listing with tasks
@@ -407,6 +465,7 @@ async fn handle_client_listing_with_tasks(
     task_service: std::sync::Arc<crate::services::TaskService>,
     filters: crate::models::client::ClientQuery,
     limit_tasks: Option<i32>,
+    correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
     debug!(
         "Listing clients with tasks, filters: {:?}, limit_tasks: {:?}",
@@ -487,7 +546,8 @@ async fn handle_client_listing_with_tasks(
     Ok(ApiResponse::success(serde_json::json!({
         "type": "ListWithTasks",
         "data": clients_with_tasks
-    })))
+    }))
+    .with_correlation_id(correlation_id.clone()))
 }
 
 /// Handle client search
@@ -495,6 +555,7 @@ async fn handle_client_search(
     client_service: std::sync::Arc<crate::services::ClientService>,
     query: &str,
     limit: i32,
+    correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
     debug!("Searching clients with query: {}, limit: {}", query, limit);
     let clients = client_service
@@ -508,12 +569,14 @@ async fn handle_client_search(
     Ok(ApiResponse::success(serde_json::json!({
         "type": "SearchResults",
         "data": clients
-    })))
+    }))
+    .with_correlation_id(correlation_id.clone()))
 }
 
 /// Handle client statistics
 async fn handle_client_statistics(
     client_service: std::sync::Arc<crate::services::ClientService>,
+    correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
     debug!("Retrieving client statistics");
     let stats = client_service.get_client_stats_async().await.map_err(|e| {
@@ -524,5 +587,6 @@ async fn handle_client_statistics(
     Ok(ApiResponse::success(serde_json::json!({
         "type": "Statistics",
         "data": stats
-    })))
+    }))
+    .with_correlation_id(correlation_id.clone()))
 }

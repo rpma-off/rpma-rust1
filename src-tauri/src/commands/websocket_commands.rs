@@ -37,7 +37,10 @@ pub struct SendWSMessageRequest {
 #[tauri::command]
 pub async fn init_websocket_server(
     request: InitWebSocketServerRequest,
+    correlation_id: Option<String>,
 ) -> AppResult<InitWebSocketServerResponse> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+
     let port = request.port.unwrap_or(8080);
 
     match crate::commands::websocket::init_websocket_server(port).await {
@@ -56,25 +59,33 @@ pub async fn init_websocket_server(
 
 /// Broadcast message to all connected clients
 #[tauri::command]
-pub async fn broadcast_websocket_message(request: BroadcastWSMessageRequest) -> AppResult<()> {
+pub async fn broadcast_websocket_message(request: BroadcastWSMessageRequest, correlation_id: Option<String>) -> AppResult<()> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+
     broadcast_ws_message(request.message).await
 }
 
 /// Send message to specific client
 #[tauri::command]
-pub async fn send_websocket_message_to_client(request: SendWSMessageRequest) -> AppResult<()> {
+pub async fn send_websocket_message_to_client(request: SendWSMessageRequest, correlation_id: Option<String>) -> AppResult<()> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+
     send_ws_message_to_client(&request.client_id, request.message).await
 }
 
 /// Get WebSocket server statistics
 #[tauri::command]
-pub async fn get_websocket_stats() -> AppResult<serde_json::Value> {
+pub async fn get_websocket_stats(correlation_id: Option<String>) -> AppResult<serde_json::Value> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+
     Ok(get_ws_stats().await)
 }
 
 /// Shutdown WebSocket server
 #[tauri::command]
-pub async fn shutdown_websocket_server() -> AppResult<()> {
+pub async fn shutdown_websocket_server(correlation_id: Option<String>) -> AppResult<()> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+
     shutdown_ws_server().await
 }
 
@@ -84,7 +95,10 @@ pub async fn broadcast_task_update(
     task_id: String,
     update_type: String,
     data: serde_json::Value,
+    correlation_id: Option<String>,
 ) -> AppResult<()> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+
     let message = match update_type.as_str() {
         "created" => WSMessage::TaskCreated { task: data },
         "updated" => WSMessage::TaskUpdated {
@@ -124,7 +138,10 @@ pub async fn broadcast_intervention_update(
     intervention_id: String,
     update_type: String,
     data: serde_json::Value,
+    correlation_id: Option<String>,
 ) -> AppResult<()> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+
     let message = match update_type.as_str() {
         "started" => {
             if let Some(task_id) = data.get("task_id").and_then(|v| v.as_str()) {
@@ -172,7 +189,10 @@ pub async fn broadcast_client_update(
     client_id: String,
     update_type: String,
     data: serde_json::Value,
+    correlation_id: Option<String>,
 ) -> AppResult<()> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+
     let message = match update_type.as_str() {
         "created" => WSMessage::ClientCreated { client: data },
         "updated" => WSMessage::ClientUpdated {
@@ -197,7 +217,10 @@ pub async fn broadcast_system_notification(
     title: String,
     message: String,
     level: String,
+    correlation_id: Option<String>,
 ) -> AppResult<()> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+
     let ws_message = WSMessage::Notification {
         title,
         message,

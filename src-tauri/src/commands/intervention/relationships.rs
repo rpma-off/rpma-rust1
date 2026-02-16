@@ -92,11 +92,14 @@ pub struct InterventionQueryRequest {
 pub async fn intervention_management(
     action: InterventionManagementAction,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<InterventionManagementResponse>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Processing intervention management action");
 
     let session = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&session.user_id);
 
     match action {
         InterventionManagementAction::List { query } => {
@@ -137,7 +140,8 @@ pub async fn intervention_management(
                 total: total as u64,
                 page,
                 limit,
-            }))
+            })
+            .with_correlation_id(Some(correlation_id.clone())))
         }
 
         InterventionManagementAction::GetStats {
@@ -194,11 +198,10 @@ pub async fn intervention_management(
                 technician_stats: vec![],      // TODO: Implement technician stats
             };
 
-            Ok(ApiResponse::success(
-                InterventionManagementResponse::Stats {
-                    stats: response_stats,
-                },
-            ))
+            Ok(ApiResponse::success(InterventionManagementResponse::Stats {
+                stats: response_stats,
+            })
+            .with_correlation_id(Some(correlation_id.clone())))
         }
 
         InterventionManagementAction::GetByTask {
@@ -251,9 +254,10 @@ pub async fn intervention_management(
                 }
             };
 
-            Ok(ApiResponse::success(
-                InterventionManagementResponse::ByTask { interventions },
-            ))
+            Ok(
+                ApiResponse::success(InterventionManagementResponse::ByTask { interventions })
+                    .with_correlation_id(Some(correlation_id.clone())),
+            )
         }
 
         InterventionManagementAction::BulkUpdate {
@@ -295,12 +299,13 @@ pub async fn intervention_management(
                 }
             }
 
-            Ok(ApiResponse::success(
-                InterventionManagementResponse::BulkUpdated {
+            Ok(
+                ApiResponse::success(InterventionManagementResponse::BulkUpdated {
                     updated_count,
                     message: format!("Successfully updated {} interventions", updated_count),
-                },
-            ))
+                })
+                .with_correlation_id(Some(correlation_id.clone())),
+            )
         }
     }
 }

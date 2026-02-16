@@ -3,7 +3,9 @@ import { useWebSocket } from '../lib/websocket';
 import { useTasks } from './useTasks';
 import { toast } from 'sonner';
 import { logger, LogDomain } from '../lib/logging';
+import { safeInvoke } from '../lib/ipc/utils';
 import type { TaskStatus } from '@/lib/backend';
+import type { JsonObject } from '@/types/json';
 
 interface UseRealTimeUpdatesOptions {
   enableTaskUpdates?: boolean;
@@ -140,11 +142,8 @@ export function useRealTimeUpdates(options: UseRealTimeUpdatesOptions = {}) {
   useEffect(() => {
     const initWSServer = async () => {
       try {
-        // Import the IPC client dynamically to avoid circular dependencies
-        const { invoke } = await import('@tauri-apps/api/core');
-
         // Initialize WebSocket server on backend
-        await invoke('init_websocket_server', {
+        await safeInvoke<void>('init_websocket_server', {
           port: 8080,
         });
 
@@ -171,11 +170,10 @@ export function useRealTimeBroadcast() {
     data: Record<string, unknown>
   ) => {
     try {
-      const { invoke } = await import('@tauri-apps/api/core');
-      await invoke('broadcast_task_update', {
+      await safeInvoke<void>('broadcast_task_update', {
         taskId,
         updateType,
-        data,
+        data: data as JsonObject,
       });
       } catch (error) {
         logger.error(LogDomain.TASK, 'Failed to broadcast task update', error);
@@ -188,11 +186,10 @@ export function useRealTimeBroadcast() {
     data: Record<string, unknown>
   ) => {
     try {
-      const { invoke } = await import('@tauri-apps/api/core');
-      await invoke('broadcast_intervention_update', {
+      await safeInvoke<void>('broadcast_intervention_update', {
         interventionId,
         updateType,
-        data,
+        data: data as JsonObject,
       });
       } catch (error) {
         logger.error(LogDomain.TASK, 'Failed to broadcast intervention update', error);
@@ -205,11 +202,10 @@ export function useRealTimeBroadcast() {
     data: Record<string, unknown>
   ) => {
     try {
-      const { invoke } = await import('@tauri-apps/api/core');
-      await invoke('broadcast_client_update', {
+      await safeInvoke<void>('broadcast_client_update', {
         clientId,
         updateType,
-        data,
+        data: data as JsonObject,
       });
       } catch (error) {
         logger.error(LogDomain.CLIENT, 'Failed to broadcast client update', error);
@@ -222,8 +218,7 @@ export function useRealTimeBroadcast() {
     level: string = 'info'
   ) => {
     try {
-      const { invoke } = await import('@tauri-apps/api/core');
-      await invoke('broadcast_system_notification', {
+      await safeInvoke<void>('broadcast_system_notification', {
         title,
         message,
         level,
@@ -268,5 +263,3 @@ export function useSOPRealTime() {
     enableNotifications: false,
   });
 }
-
-

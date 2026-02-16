@@ -9,14 +9,20 @@ pub async fn task_transition_status(
     request: StatusTransitionRequest,
     state: AppState<'_>,
 ) -> Result<Task, ApiError> {
+    // Initialize correlation context
+    let _correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+
     let auth_service = state.auth_service.clone();
-    let _current_user = auth_service
+    let current_user = auth_service
         .validate_session(&session_token)
         .map_err(|e| ApiError {
             message: format!("Authentication failed: {}", e),
             code: "AUTH_ERROR".to_string(),
             details: None,
         })?;
+
+    // Update correlation context with user_id
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     state
         .task_service
@@ -36,16 +42,23 @@ pub async fn task_transition_status(
 #[tauri::command]
 pub async fn task_get_status_distribution(
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<StatusDistribution, ApiError> {
+    // Initialize correlation context
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+
     let auth_service = state.auth_service.clone();
-    let _current_user = auth_service
+    let current_user = auth_service
         .validate_session(&session_token)
         .map_err(|e| ApiError {
             message: format!("Authentication failed: {}", e),
             code: "AUTH_ERROR".to_string(),
             details: None,
         })?;
+
+    // Update correlation context with user_id
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     state
         .task_service

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { safeInvoke } from '@/lib/ipc/core';
 import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import { useAuth } from '@/lib/auth/compatibility';
@@ -51,6 +51,8 @@ export function useInventoryStats() {
   const [stats, setStats] = useState<InventoryStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Root cause fix: prevent StrictMode double-invoke from firing duplicate fetches
+  const fetchingRef = useRef(false);
 
   const fetchStats = useCallback(async () => {
     if (!sessionToken) {
@@ -59,6 +61,10 @@ export function useInventoryStats() {
       setLoading(false);
       return;
     }
+
+    // Guard against concurrent/duplicate fetches (e.g. StrictMode double-invoke)
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
 
     try {
       setLoading(true);
@@ -69,6 +75,7 @@ export function useInventoryStats() {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
+      fetchingRef.current = false;
     }
   }, [sessionToken]);
 

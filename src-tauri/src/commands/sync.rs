@@ -8,16 +8,19 @@ use tracing::{error, info, instrument};
 #[tauri::command]
 #[instrument(skip(state, session_token))]
 pub async fn sync_start_background_service(
+    correlation_id: Option<String>,
     session_token: String,
     state: AppState<'_>,
 ) -> Result<(), String> {
-    state
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = state
         .auth_service
         .validate_session(&session_token)
         .map_err(|e| {
             error!(error = %e, "Authentication failed for sync_start_background_service");
             "Authentication failed".to_string()
         })?;
+    crate::commands::update_correlation_context_user(&current_user.user_id);
     let service_arc = std::sync::Arc::clone(&state.background_sync);
 
     let service_clone = {
@@ -41,16 +44,19 @@ pub async fn sync_start_background_service(
 #[tauri::command]
 #[instrument(skip(state, session_token))]
 pub async fn sync_stop_background_service(
+    correlation_id: Option<String>,
     session_token: String,
     state: AppState<'_>,
 ) -> Result<(), String> {
-    state
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = state
         .auth_service
         .validate_session(&session_token)
         .map_err(|e| {
             error!(error = %e, "Authentication failed for sync_stop_background_service");
             "Authentication failed".to_string()
         })?;
+    crate::commands::update_correlation_context_user(&current_user.user_id);
     let service_arc = std::sync::Arc::clone(&state.background_sync);
 
     let service_clone = {
@@ -73,14 +79,16 @@ pub async fn sync_stop_background_service(
 /// Trigger immediate sync
 #[tauri::command]
 #[instrument(skip(state, session_token))]
-pub async fn sync_now(session_token: String, state: AppState<'_>) -> Result<SyncResult, String> {
-    state
+pub async fn sync_now(correlation_id: Option<String>, session_token: String, state: AppState<'_>) -> Result<SyncResult, String> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = state
         .auth_service
         .validate_session(&session_token)
         .map_err(|e| {
             error!(error = %e, "Authentication failed for sync_now");
             "Authentication failed".to_string()
         })?;
+    crate::commands::update_correlation_context_user(&current_user.user_id);
     let service_arc = std::sync::Arc::clone(&state.background_sync);
 
     let service_clone = {
@@ -104,16 +112,19 @@ pub async fn sync_now(session_token: String, state: AppState<'_>) -> Result<Sync
 #[tauri::command]
 #[instrument(skip(state, session_token))]
 pub async fn sync_get_status(
+    correlation_id: Option<String>,
     session_token: String,
     state: AppState<'_>,
 ) -> Result<serde_json::Value, String> {
-    state
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = state
         .auth_service
         .validate_session(&session_token)
         .map_err(|e| {
             error!(error = %e, "Authentication failed for sync_get_status");
             "Authentication failed".to_string()
         })?;
+    crate::commands::update_correlation_context_user(&current_user.user_id);
     let service_arc = std::sync::Arc::clone(&state.background_sync);
 
     let service_clone = {
@@ -147,18 +158,21 @@ pub async fn sync_get_status(
 #[tauri::command]
 #[instrument(skip(state, session_token))]
 pub fn sync_get_operations_for_entity(
+    correlation_id: Option<String>,
     entity_id: String,
     entity_type: String,
     session_token: String,
     state: AppState<'_>,
 ) -> Result<Vec<crate::models::SyncOperation>, String> {
-    state
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = state
         .auth_service
         .validate_session(&session_token)
         .map_err(|e| {
             error!(error = %e, "Authentication failed for sync_get_operations_for_entity");
             "Authentication failed".to_string()
         })?;
+    crate::commands::update_correlation_context_user(&current_user.user_id);
     let queue = std::sync::Arc::clone(&state.sync_queue);
     queue
         .get_operations_for_entity(&entity_id, &entity_type)

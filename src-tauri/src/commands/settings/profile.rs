@@ -38,6 +38,8 @@ pub struct UpdateUserProfileRequest {
     pub department: Option<String>,
     #[serde(default)]
     pub employee_id: Option<String>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -45,12 +47,16 @@ pub struct ChangeUserPasswordRequest {
     pub session_token: String,
     pub current_password: String,
     pub new_password: String,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Deserialize)]
 pub struct DeleteUserAccountRequest {
     pub session_token: String,
     pub confirmation: String,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -58,6 +64,8 @@ pub struct UploadUserAvatarRequest {
     pub session_token: String,
     pub avatar_data: String, // Base64 encoded image
     pub mime_type: String,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 fn normalize_optional_string(value: Option<String>) -> Option<String> {
@@ -91,15 +99,18 @@ fn build_export_payload(
 pub async fn get_user_settings(
     session_token: String,
     state: AppState<'_>,
+    correlation_id: Option<String>,
 ) -> Result<ApiResponse<crate::models::settings::UserSettings>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Getting user settings");
 
     let user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&user.id);
 
     state
         .settings_service
         .get_user_settings(&user.id)
-        .map(ApiResponse::success)
+        .map(|v| ApiResponse::success(v).with_correlation_id(Some(correlation_id.clone())))
         .map_err(|e| handle_settings_error(e, "Get user settings"))
 }
 
@@ -110,9 +121,11 @@ pub async fn update_user_profile(
     request: UpdateUserProfileRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<crate::models::settings::UserProfileSettings>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("Updating user profile");
 
     let user = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&user.id);
     let mut profile_settings = state
         .settings_service
         .get_user_settings(&user.id)
@@ -153,7 +166,7 @@ pub async fn update_user_profile(
     state
         .settings_service
         .update_user_profile(&user.id, &profile_settings)
-        .map(|_| ApiResponse::success(profile_settings))
+        .map(|_| ApiResponse::success(profile_settings).with_correlation_id(Some(correlation_id.clone())))
         .map_err(|e| handle_settings_error(e, "Update user profile"))
 }
 
@@ -164,9 +177,11 @@ pub async fn change_user_password(
     request: ChangeUserPasswordRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("Changing user password");
 
     let user = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&user.id);
 
     state
         .settings_service
@@ -177,7 +192,10 @@ pub async fn change_user_password(
             &request.session_token,
             state.auth_service.as_ref(),
         )
-        .map(|_| ApiResponse::success("Password changed successfully".to_string()))
+        .map(|_| {
+            ApiResponse::success("Password changed successfully".to_string())
+                .with_correlation_id(Some(correlation_id.clone()))
+        })
         .map_err(|e| handle_settings_error(e, "Change user password"))
 }
 
@@ -187,10 +205,13 @@ pub async fn change_user_password(
 pub async fn export_user_data(
     session_token: String,
     state: AppState<'_>,
+    correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Exporting user data");
 
     let user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&user.id);
     let settings = state
         .settings_service
         .get_user_settings(&user.id)
@@ -229,11 +250,10 @@ pub async fn export_user_data(
         }),
     };
 
-    Ok(ApiResponse::success(build_export_payload(
-        user_identity,
-        &settings,
-        consent,
-    )))
+    Ok(
+        ApiResponse::success(build_export_payload(user_identity, &settings, consent))
+            .with_correlation_id(Some(correlation_id.clone())),
+    )
 }
 
 /// Delete user account
@@ -243,9 +263,11 @@ pub async fn delete_user_account(
     request: DeleteUserAccountRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("Deleting user account");
 
     let user = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&user.id);
 
     // Validate confirmation
     if request.confirmation != "DELETE" {
@@ -257,7 +279,10 @@ pub async fn delete_user_account(
     state
         .settings_service
         .delete_user_account(&user.id)
-        .map(|_| ApiResponse::success("Account deleted successfully".to_string()))
+        .map(|_| {
+            ApiResponse::success("Account deleted successfully".to_string())
+                .with_correlation_id(Some(correlation_id.clone()))
+        })
         .map_err(|e| handle_settings_error(e, "Delete user account"))
 }
 
@@ -268,9 +293,11 @@ pub async fn upload_user_avatar(
     request: UploadUserAvatarRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("Uploading user avatar");
 
     let user = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&user.id);
 
     // Decode base64 avatar data
     let avatar_data = general_purpose::STANDARD
@@ -306,7 +333,7 @@ pub async fn upload_user_avatar(
     state
         .settings_service
         .update_user_profile(&user.id, &profile_settings)
-        .map(|_| ApiResponse::success(data_url))
+        .map(|_| ApiResponse::success(data_url).with_correlation_id(Some(correlation_id.clone())))
         .map_err(|e| handle_settings_error(e, "Upload user avatar"))
 }
 

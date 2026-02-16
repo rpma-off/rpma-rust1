@@ -106,8 +106,11 @@ pub async fn ui_window_set_always_on_top(
 pub fn dashboard_get_stats(
     state: super::AppState<'_>,
     time_range: Option<String>,
+    correlation_id: Option<String>,
 ) -> Result<super::ApiResponse<serde_json::Value>, super::AppError> {
     use tracing::{debug, error, info};
+
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
 
     debug!(
         "Retrieving dashboard statistics for time range: {:?}",
@@ -124,7 +127,7 @@ pub fn dashboard_get_stats(
         })?;
 
     info!("Dashboard statistics retrieved successfully");
-    Ok(super::ApiResponse::success(stats))
+    Ok(super::ApiResponse::success(stats).with_correlation_id(Some(correlation_id.clone())))
 }
 
 /// Get recent activities for admin dashboard
@@ -132,14 +135,19 @@ pub fn dashboard_get_stats(
 pub async fn get_recent_activities(
     session_token: String,
     state: super::AppState<'_>,
+    correlation_id: Option<String>,
 ) -> Result<Vec<serde_json::Value>, String> {
     use tracing::debug;
+
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
 
     // Validate session
     let auth_service = state.auth_service.clone();
     let current_user = auth_service
         .validate_session(&session_token)
         .map_err(|e| format!("Authentication failed: {}", e))?;
+
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Check if user is admin
     if current_user.role != super::UserRole::Admin {

@@ -53,6 +53,8 @@ pub struct CacheTypeInfo {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CacheClearRequest {
     pub cache_types: Option<Vec<String>>, // If None, clear all caches
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -60,6 +62,8 @@ pub struct CacheConfigRequest {
     pub max_memory_mb: Option<usize>,
     pub default_ttl_seconds: Option<u64>,
     pub enable_disk_cache: Option<bool>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 /// Get performance statistics
@@ -67,8 +71,10 @@ pub struct CacheConfigRequest {
 #[instrument(skip(state, session_token))]
 pub async fn get_performance_stats(
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<PerformanceStatsResponse>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     // Start performance tracking
     let _timer = state
         .command_performance_tracker
@@ -76,6 +82,7 @@ pub async fn get_performance_stats(
 
     // Check if user is admin
     let _current_user = authenticate!(&session_token, &state, crate::models::auth::UserRole::Admin);
+    crate::commands::update_correlation_context_user(&_current_user.user_id);
 
     // Get real performance statistics
     let stats = state.performance_monitor_service.get_stats()?;
@@ -93,7 +100,7 @@ pub async fn get_performance_stats(
         most_frequent_commands: stats.most_frequent_commands,
     };
 
-    Ok(ApiResponse::success(response))
+    Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone())))
 }
 
 /// Get recent performance metrics
@@ -102,8 +109,10 @@ pub async fn get_performance_stats(
 pub async fn get_performance_metrics(
     session_token: String,
     limit: Option<usize>,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<PerformanceMetricResponse>>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     // Start performance tracking
     let _timer = state
         .command_performance_tracker
@@ -111,6 +120,7 @@ pub async fn get_performance_metrics(
 
     // Check if user is admin
     let _current_user = authenticate!(&session_token, &state, crate::models::auth::UserRole::Admin);
+    crate::commands::update_correlation_context_user(&_current_user.user_id);
 
     let limit = limit.unwrap_or(50).min(200); // Max 200 metrics
     let metrics = state.performance_monitor_service.get_recent_metrics(limit);
@@ -128,7 +138,7 @@ pub async fn get_performance_metrics(
         })
         .collect();
 
-    Ok(ApiResponse::success(response))
+    Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone())))
 }
 
 /// Clean up old performance metrics (admin only)
@@ -136,18 +146,22 @@ pub async fn get_performance_metrics(
 #[instrument(skip(state, session_token))]
 pub async fn cleanup_performance_metrics(
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     // Check if user is admin
     let _current_user = authenticate!(&session_token, &state, crate::models::auth::UserRole::Admin);
+    crate::commands::update_correlation_context_user(&_current_user.user_id);
 
     // TODO: Implement performance metrics cleanup
     // For now, this is a no-op
     info!("Performance metrics cleanup requested - not yet implemented");
 
-    Ok(ApiResponse::success(
-        "Performance metrics cleaned up successfully".to_string(),
-    ))
+    Ok(
+        ApiResponse::success("Performance metrics cleaned up successfully".to_string())
+            .with_correlation_id(Some(correlation_id.clone())),
+    )
 }
 
 /// Get cache statistics
@@ -155,10 +169,13 @@ pub async fn cleanup_performance_metrics(
 #[instrument(skip(state, session_token))]
 pub async fn get_cache_statistics(
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<CacheStatsResponse>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     // Check if user is admin
     let _current_user = authenticate!(&session_token, &state, crate::models::auth::UserRole::Admin);
+    crate::commands::update_correlation_context_user(&_current_user.user_id);
 
     // Get cache stats from the cache manager
     let cache_manager = CacheManager::default()?;
@@ -185,7 +202,7 @@ pub async fn get_cache_statistics(
         cache_types,
     };
 
-    Ok(ApiResponse::success(response))
+    Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone())))
 }
 
 /// Clear application cache
@@ -196,8 +213,10 @@ pub async fn clear_application_cache(
     request: CacheClearRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     // Check if user is admin
     let _current_user = authenticate!(&session_token, &state, crate::models::auth::UserRole::Admin);
+    crate::commands::update_correlation_context_user(&_current_user.user_id);
 
     let cache_manager = CacheManager::default()?;
 
@@ -214,15 +233,17 @@ pub async fn clear_application_cache(
 
             cache_manager.clear_type(cache_type)?;
         }
-        Ok(ApiResponse::success(
-            "Specified cache types cleared successfully".to_string(),
-        ))
+        Ok(
+            ApiResponse::success("Specified cache types cleared successfully".to_string())
+                .with_correlation_id(Some(correlation_id.clone())),
+        )
     } else {
         // Clear all caches
         cache_manager.clear_all()?;
-        Ok(ApiResponse::success(
-            "All caches cleared successfully".to_string(),
-        ))
+        Ok(
+            ApiResponse::success("All caches cleared successfully".to_string())
+                .with_correlation_id(Some(correlation_id.clone())),
+        )
     }
 }
 
@@ -234,14 +255,17 @@ pub async fn configure_cache_settings(
     request: CacheConfigRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     // Check if user is admin
     let _current_user = authenticate!(&session_token, &state, crate::models::auth::UserRole::Admin);
+    crate::commands::update_correlation_context_user(&_current_user.user_id);
 
     // Note: In a real implementation, this would update the cache manager configuration
     // For now, we'll just return success
     info!("Cache configuration update requested: {:?}", request);
 
-    Ok(ApiResponse::success(
-        "Cache settings updated successfully".to_string(),
-    ))
+    Ok(
+        ApiResponse::success("Cache settings updated successfully".to_string())
+            .with_correlation_id(Some(correlation_id.clone())),
+    )
 }

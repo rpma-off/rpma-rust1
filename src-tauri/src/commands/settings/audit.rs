@@ -23,6 +23,8 @@ pub struct UpdateDataConsentRequest {
     pub marketing_consent: Option<bool>,
     pub third_party_sharing: Option<bool>,
     pub data_retention_period: Option<u32>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 /// Get data consent information
@@ -31,17 +33,20 @@ pub struct UpdateDataConsentRequest {
 pub async fn get_data_consent(
     session_token: String,
     state: AppState<'_>,
+    correlation_id: Option<String>,
 ) -> Result<ApiResponse<DataConsent>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Getting data consent information");
 
     let user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&user.user_id);
     let consent_service = ConsentService::new(Arc::new((*state.db).clone()));
 
     let consent = consent_service
         .get_consent(&user.id)
         .map_err(|e| AppError::Database(format!("Failed to get consent data: {}", e)))?;
 
-    Ok(ApiResponse::success(consent))
+    Ok(ApiResponse::success(consent).with_correlation_id(Some(correlation_id.clone())))
 }
 
 /// Update data consent preferences
@@ -51,9 +56,11 @@ pub async fn update_data_consent(
     request: UpdateDataConsentRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<DataConsent>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("Updating data consent preferences");
 
     let user = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&user.user_id);
     let consent_service = ConsentService::new(Arc::new((*state.db).clone()));
 
     let consent = consent_service
@@ -66,7 +73,7 @@ pub async fn update_data_consent(
         )
         .map_err(|e| AppError::Database(format!("Failed to update consent data: {}", e)))?;
 
-    Ok(ApiResponse::success(consent))
+    Ok(ApiResponse::success(consent).with_correlation_id(Some(correlation_id.clone())))
 }
 
 #[cfg(test)]

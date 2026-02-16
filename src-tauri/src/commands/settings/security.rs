@@ -20,6 +20,8 @@ pub struct UpdateUserSecurityRequest {
     pub session_token: String,
     pub two_factor_enabled: Option<bool>,
     pub session_timeout: Option<u32>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -31,6 +33,8 @@ pub struct UpdateSecuritySettingsRequest {
     pub password_require_special_chars: Option<bool>,
     pub password_require_numbers: Option<bool>,
     pub login_attempts_max: Option<u8>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 /// Update security settings (system-wide)
@@ -40,9 +44,11 @@ pub async fn update_security_settings(
     request: UpdateSecuritySettingsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("Updating security settings");
 
     let user = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&user.user_id);
 
     // Only admins can update system security settings
     if !matches!(user.role, crate::models::auth::UserRole::Admin) {
@@ -73,7 +79,10 @@ pub async fn update_security_settings(
     }
 
     update_app_settings(app_settings)
-        .map(|_| ApiResponse::success("Security settings updated successfully".to_string()))
+        .map(|_| {
+            ApiResponse::success("Security settings updated successfully".to_string())
+                .with_correlation_id(Some(correlation_id.clone()))
+        })
         .map_err(|e| AppError::Database(e))
 }
 
@@ -84,9 +93,11 @@ pub async fn update_user_security(
     request: UpdateUserSecurityRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("Updating user security settings");
 
     let user = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&user.user_id);
 
     let mut security_settings: UserSecuritySettings = state
         .settings_service
@@ -104,6 +115,9 @@ pub async fn update_user_security(
     state
         .settings_service
         .update_user_security(&user.id, &security_settings)
-        .map(|_| ApiResponse::success("Security settings updated successfully".to_string()))
+        .map(|_| {
+            ApiResponse::success("Security settings updated successfully".to_string())
+                .with_correlation_id(Some(correlation_id.clone()))
+        })
         .map_err(|e| handle_settings_error(e, "Update user security"))
 }

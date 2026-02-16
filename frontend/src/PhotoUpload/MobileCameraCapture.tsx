@@ -16,6 +16,7 @@ import { Progress } from '@/components/ui/progress';
 import { PPFPhotoService, MobileCameraConfig, RealTimeValidationResult } from '@/lib/services/ppf/photo.service';
 import { PPFPhotoAngle, PPFPhotoCategory } from '@/types/enums';
 import { GeographicLocation } from '@/types/ppf-intervention';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface MobileCameraCaptureProps {
   interventionId: string;
@@ -39,6 +40,7 @@ export const MobileCameraCapture: React.FC<MobileCameraCaptureProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const { t } = useTranslation();
 
   const [isInitialized, setIsInitialized] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -67,21 +69,7 @@ export const MobileCameraCapture: React.FC<MobileCameraCaptureProps> = ({
     }
   }, []);
 
-  // Initialize camera
-  useEffect(() => {
-    initializeCamera();
-    return () => {
-      stopCamera();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (isInitialized) {
-      configureCamera();
-    }
-  }, [isInitialized, configureCamera]);
-
-  const initializeCamera = async () => {
+  const initializeCamera = useCallback(async () => {
     try {
       setError(null);
 
@@ -102,9 +90,9 @@ export const MobileCameraCapture: React.FC<MobileCameraCaptureProps> = ({
       }
     } catch (err) {
       console.error('Camera initialization failed:', err);
-      setError('Unable to access camera. Please check permissions.');
+      setError(t('camera.unableToAccess'));
     }
-  };
+  }, [t]);
 
   const stopCamera = () => {
     if (streamRef.current) {
@@ -113,6 +101,20 @@ export const MobileCameraCapture: React.FC<MobileCameraCaptureProps> = ({
     }
     setIsInitialized(false);
   };
+
+  // Initialize camera
+  useEffect(() => {
+    initializeCamera();
+    return () => {
+      stopCamera();
+    };
+  }, [initializeCamera]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      configureCamera();
+    }
+  }, [isInitialized, configureCamera]);
 
   const toggleFlash = () => {
     const modes: Array<'auto' | 'on' | 'off'> = ['auto', 'on', 'off'];
@@ -143,7 +145,7 @@ export const MobileCameraCapture: React.FC<MobileCameraCaptureProps> = ({
       // Convert to blob
       canvas.toBlob(async (blob) => {
         if (!blob) {
-          setError('Failed to capture photo');
+          setError(t('camera.failedToCapture'));
           setIsCapturing(false);
           return;
         }
@@ -222,7 +224,7 @@ export const MobileCameraCapture: React.FC<MobileCameraCaptureProps> = ({
 
     } catch (err) {
       console.error('Photo capture failed:', err);
-      setError('Failed to capture photo');
+      setError(t('camera.failedToCapture'));
       setIsCapturing(false);
     }
   };
@@ -266,10 +268,10 @@ export const MobileCameraCapture: React.FC<MobileCameraCaptureProps> = ({
       <Card className="w-full max-w-md mx-auto">
         <CardContent className="p-6 text-center">
           <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Camera Error</h3>
+          <h3 className="text-lg font-semibold mb-2">{t('camera.error')}</h3>
           <p className="text-gray-600 mb-4">{error}</p>
           <Button onClick={onCancel} variant="outline">
-            Close
+            {t('common.close')}
           </Button>
         </CardContent>
       </Card>
@@ -281,7 +283,7 @@ export const MobileCameraCapture: React.FC<MobileCameraCaptureProps> = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Camera className="w-5 h-5" />
-          Capture PPF Photo
+          {t('camera.capturePhoto')}
         </CardTitle>
         <div className="flex gap-2">
           <Badge variant="secondary">Step {stepNumber}</Badge>
@@ -353,7 +355,7 @@ export const MobileCameraCapture: React.FC<MobileCameraCaptureProps> = ({
         {cameraConfig && (
           <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded">
             <div className="grid grid-cols-2 gap-1">
-              <span>Resolution: {cameraConfig.resolution?.width}x{cameraConfig.resolution?.height}</span>
+              <span>{t('camera.resolution')}: {cameraConfig.resolution?.width}x{cameraConfig.resolution?.height}</span>
               <span>ISO: {cameraConfig.iso}</span>
               <span>Shutter: {cameraConfig.shutterSpeed}</span>
               <span>Flash: {flashMode}</span>
@@ -370,7 +372,7 @@ export const MobileCameraCapture: React.FC<MobileCameraCaptureProps> = ({
             disabled={isCapturing}
           >
             <RotateCcw className="w-4 h-4 mr-2" />
-            Cancel
+            {t('common.cancel')}
           </Button>
 
           <Button
@@ -381,12 +383,12 @@ export const MobileCameraCapture: React.FC<MobileCameraCaptureProps> = ({
             {isCapturing ? (
               <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                Capturing...
+                {t('camera.capturing')}
               </>
             ) : (
               <>
                 <Camera className="w-4 h-4 mr-2" />
-                Capture
+                {t('camera.capture')}
               </>
             )}
           </Button>
@@ -396,7 +398,7 @@ export const MobileCameraCapture: React.FC<MobileCameraCaptureProps> = ({
         {!isOnline && (
           <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded flex items-center gap-2">
             <AlertTriangle className="w-3 h-3" />
-            Offline mode - Photo will be queued for upload
+            {t('camera.offlineMode')}
           </div>
         )}
       </CardContent>

@@ -1,5 +1,4 @@
-import { invoke as tauriInvoke } from '@tauri-apps/api/core';
-import type { ApiResponse } from '@/types/api';
+import { safeInvoke } from './utils';
 import type { JsonObject, JsonValue } from '@/types/json';
 
 interface CacheEntry<T> {
@@ -124,25 +123,10 @@ export async function cachedInvoke<T>(
     return cached;
   }
 
-  // Cache miss, invoke and cache
+  // Cache miss, invoke via safeInvoke (which handles correlation_id, logging, metrics)
   console.log(`[IPC Cache] ${command} -> cache miss for key: ${cacheKey}, invoking...`);
 
-  const rawResult = await tauriInvoke(command, args) as ApiResponse<T> | T;
-
-  // Extract data from ApiResponse wrapper if present
-  let result: T;
-  if (rawResult && typeof rawResult === 'object' && 'success' in rawResult) {
-    const apiResult = rawResult as ApiResponse<T>;
-    if (!apiResult.success) {
-      throw new Error(typeof apiResult.error === 'string' ? apiResult.error : apiResult.error?.message || 'Unknown error');
-    }
-    result = apiResult.data as T;
-  } else {
-    result = rawResult as T;
-  }
-
-  // Validate if validator provided
-  const data = validator ? validator(result as unknown as JsonValue) : result;
+  const data = await safeInvoke<T>(command, args, validator);
 
   // Cache the result
   setCached(cacheKey, data, ttl);

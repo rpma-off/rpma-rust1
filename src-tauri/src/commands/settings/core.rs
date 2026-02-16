@@ -48,9 +48,14 @@ pub fn update_app_settings(new_settings: AppSettings) -> Result<(), String> {
 pub async fn get_app_settings(
     session_token: String,
     state: AppState<'_>,
+    correlation_id: Option<String>,
 ) -> Result<ApiResponse<AppSettings>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    
     // Always require authentication and validate admin role
     let user = authenticate_user(&session_token, &state)?;
+    
+    crate::commands::update_correlation_context_user(&user.user_id);
 
     // Only admins can view app settings
     if !matches!(user.role, crate::models::auth::UserRole::Admin) {
@@ -60,7 +65,7 @@ pub async fn get_app_settings(
     }
 
     let settings = load_app_settings().map_err(AppError::Database)?;
-    Ok(ApiResponse::success(settings))
+    Ok(ApiResponse::success(settings).with_correlation_id(Some(correlation_id.clone())))
 }
 
 /// Get system configuration with lazy initialization
