@@ -373,6 +373,8 @@ pub struct CompressedApiResponse {
     pub data: Option<String>, // base64 encoded compressed data
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<ApiError>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -381,6 +383,8 @@ pub struct ApiResponse<T> {
     pub data: Option<T>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<ApiError>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub correlation_id: Option<String>,
 }
 
 impl<T> ApiResponse<T> {
@@ -389,6 +393,7 @@ impl<T> ApiResponse<T> {
             success: true,
             data: Some(data),
             error: None,
+            correlation_id: None,
         }
     }
 
@@ -401,6 +406,7 @@ impl<T> ApiResponse<T> {
                 code: error.code().to_string(),
                 details: None,
             }),
+            correlation_id: None,
         }
     }
 
@@ -413,7 +419,14 @@ impl<T> ApiResponse<T> {
                 code: "UNKNOWN".to_string(),
                 details: None,
             }),
+            correlation_id: None,
         }
+    }
+
+    /// Set the correlation ID on this response for end-to-end tracing
+    pub fn with_correlation_id(mut self, correlation_id: Option<String>) -> Self {
+        self.correlation_id = correlation_id;
+        self
     }
 
     /// Convert to compressed response if data is large
@@ -450,6 +463,7 @@ impl<T> ApiResponse<T> {
                 compressed: true,
                 data: Some(compressed_b64),
                 error: self.error,
+                correlation_id: self.correlation_id,
             })
         } else {
             // Return uncompressed response
@@ -460,6 +474,7 @@ impl<T> ApiResponse<T> {
                     .data
                     .map(|d| serde_json::to_string(&d).unwrap_or_default()),
                 error: self.error,
+                correlation_id: self.correlation_id,
             })
         }
     }
@@ -925,5 +940,103 @@ pub async fn delete_user(
     {
         UserResponse::Deleted => Ok(()),
         _ => Err("Failed to delete user".to_string()),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_api_response_success_has_no_correlation_id_by_default() {
+        let response: ApiResponse<String> = ApiResponse::success("test data".to_string());
+        assert!(response.success);
+        assert!(response.correlation_id.is_none());
+        assert_eq!(response.data.as_deref(), Some("test data"));
+    }
+
+    #[test]
+    fn test_api_response_error_has_no_correlation_id_by_default() {
+        let response: ApiResponse<String> =
+            ApiResponse::error(AppError::Validation("bad input".to_string()));
+        assert!(!response.success);
+        assert!(response.correlation_id.is_none());
+        assert!(response.error.is_some());
+    }
+
+    #[test]
+    fn test_api_response_with_correlation_id() {
+        let corr_id = "req-abc123-0001-xyz".to_string();
+        let response: ApiResponse<String> =
+            ApiResponse::success("data".to_string()).with_correlation_id(Some(corr_id.clone()));
+        assert!(response.success);
+        assert_eq!(
+            response.correlation_id.as_deref(),
+            Some("req-abc123-0001-xyz")
+        );
+    }
+
+    #[test]
+    fn test_api_response_error_with_correlation_id() {
+        let corr_id = "req-test-0002-abc".to_string();
+        let response: ApiResponse<String> =
+            ApiResponse::error(AppError::NotFound("missing".to_string()))
+                .with_correlation_id(Some(corr_id.clone()));
+        assert!(!response.success);
+        assert_eq!(
+            response.correlation_id.as_deref(),
+            Some("req-test-0002-abc")
+        );
+        assert!(response.error.is_some());
+    }
+
+    #[test]
+    fn test_api_response_with_none_correlation_id() {
+        let response: ApiResponse<i32> = ApiResponse::success(42).with_correlation_id(None);
+        assert!(response.success);
+        assert!(response.correlation_id.is_none());
+    }
+
+    #[test]
+    fn test_api_response_error_message_with_correlation_id() {
+        let response: ApiResponse<String> = ApiResponse::error_message("something went wrong")
+            .with_correlation_id(Some("ipc-12345-6789".to_string()));
+        assert!(!response.success);
+        assert_eq!(
+            response.correlation_id.as_deref(),
+            Some("ipc-12345-6789")
+        );
+        assert_eq!(response.error.as_ref().unwrap().code, "UNKNOWN");
+    }
+
+    #[test]
+    fn test_api_response_from_app_result_ok() {
+        let result: AppResult<String> = Ok("hello".to_string());
+        let response: ApiResponse<String> = result.into();
+        assert!(response.success);
+        assert!(response.correlation_id.is_none());
+    }
+
+    #[test]
+    fn test_api_response_from_app_result_err() {
+        let result: AppResult<String> = Err(AppError::Internal("server error".to_string()));
+        let response: ApiResponse<String> = result.into();
+        assert!(!response.success);
+        assert!(response.correlation_id.is_none());
+    }
+
+    #[test]
+    fn test_api_response_serialization_includes_correlation_id() {
+        let response: ApiResponse<String> = ApiResponse::success("test".to_string())
+            .with_correlation_id(Some("req-ser-0001-abc".to_string()));
+        let json = serde_json::to_string(&response).unwrap();
+        assert!(json.contains("\"correlation_id\":\"req-ser-0001-abc\""));
+    }
+
+    #[test]
+    fn test_api_response_serialization_omits_none_correlation_id() {
+        let response: ApiResponse<String> = ApiResponse::success("test".to_string());
+        let json = serde_json::to_string(&response).unwrap();
+        assert!(!json.contains("correlation_id"));
     }
 }

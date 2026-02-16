@@ -35,9 +35,10 @@ pub async fn auth_login(
     // For desktop app, we'll use a placeholder or get from network config
     ip_address: Option<String>,
 ) -> Result<ApiResponse<crate::models::auth::UserSession>, AppError> {
-    let _correlation_id = request
+    let correlation_id = request
         .correlation_id
-        .unwrap_or_else(|| "test-correlation-id".to_string());
+        .clone()
+        .or_else(|| Some(crate::logging::correlation::generate_correlation_id()));
 
     // Validate input data
     let validator = ValidationService::new();
@@ -68,11 +69,14 @@ pub async fn auth_login(
             } else {
                 "Erreur d'authentification. Veuillez réessayer.".to_string()
             };
-            return Ok(ApiResponse::error(AppError::Authentication(error_msg)));
+            return Ok(
+                ApiResponse::error(AppError::Authentication(error_msg))
+                    .with_correlation_id(correlation_id),
+            );
         }
     };
 
-    let response = ApiResponse::success(session);
+    let response = ApiResponse::success(session).with_correlation_id(correlation_id);
     Ok(response)
 }
 
@@ -84,6 +88,11 @@ pub async fn auth_create_account(
     state: AppState<'_>,
 ) -> Result<ApiResponse<crate::models::auth::UserSession>, AppError> {
     info!("Account creation attempt for email: {}", request.email);
+
+    let correlation_id = request
+        .correlation_id
+        .clone()
+        .or_else(|| Some(crate::logging::correlation::generate_correlation_id()));
 
     // Validate input data
     let validator = ValidationService::new();
@@ -144,7 +153,7 @@ pub async fn auth_create_account(
         })?;
 
     info!("Auto-login successful for new user {}", request.email);
-    Ok(ApiResponse::success(session))
+    Ok(ApiResponse::success(session).with_correlation_id(correlation_id))
 }
 
 /// Logout command
