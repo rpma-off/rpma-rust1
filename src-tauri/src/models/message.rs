@@ -150,6 +150,8 @@ pub struct SendMessageRequest {
     pub client_id: Option<String>,
     pub priority: Option<String>,
     pub scheduled_at: Option<i64>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 /// Message template for reusable messages
@@ -242,6 +244,8 @@ pub struct UpdateNotificationPreferencesRequest {
     pub quiet_hours_end: Option<String>,
     pub email_frequency: Option<String>,
     pub email_digest_time: Option<String>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 /// Message query filters
@@ -259,6 +263,8 @@ pub struct MessageQuery {
     pub date_to: Option<i64>,
     pub limit: Option<i32>,
     pub offset: Option<i32>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 /// Message list response

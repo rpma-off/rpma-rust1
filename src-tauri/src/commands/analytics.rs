@@ -12,13 +12,14 @@ use crate::models::reports::*;
 pub async fn analytics_get_summary(
     session_token: String,
     state: AppState<'_>,
+    correlation_id: Option<String>,
 ) -> Result<ApiResponse<AnalyticsSummary>, crate::commands::AppError> {
     let _current_user = authenticate!(&session_token, &state);
 
     let service = state.analytics_service.clone();
 
     match service.get_analytics_summary() {
-        Ok(summary) => Ok(ApiResponse::success(summary)),
+        Ok(summary) => Ok(ApiResponse::success(summary).with_correlation_id(correlation_id.clone())),
         Err(e) => Err(crate::commands::AppError::from(e.to_string())),
     }
 }
