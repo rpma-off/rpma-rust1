@@ -136,7 +136,8 @@ pub async fn quote_create(
         }
         Err(e) => {
             error!("Failed to create quote: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e)).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(AppError::Validation(e))
+                .with_correlation_id(Some(correlation_id.clone())))
         }
     }
 }
@@ -154,15 +155,19 @@ pub async fn quote_get(
     check_quote_permission(&current_user.role, "read")?;
 
     match state.quote_service.get_quote(&request.id) {
-        Ok(Some(quote)) => Ok(ApiResponse::success(quote).with_correlation_id(Some(correlation_id.clone()))),
-        Ok(None) => Ok(ApiResponse::error(AppError::NotFound(
-            "Quote not found".to_string(),
-        )).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(Some(quote)) => {
+            Ok(ApiResponse::success(quote).with_correlation_id(Some(correlation_id.clone())))
+        }
+        Ok(None) => Ok(
+            ApiResponse::error(AppError::NotFound("Quote not found".to_string()))
+                .with_correlation_id(Some(correlation_id.clone())),
+        ),
         Err(e) => {
             error!("Failed to get quote: {}", e);
-            Ok(ApiResponse::error(AppError::Database(
-                "Failed to retrieve quote".to_string(),
-            )).with_correlation_id(Some(correlation_id.clone())))
+            Ok(
+                ApiResponse::error(AppError::Database("Failed to retrieve quote".to_string()))
+                    .with_correlation_id(Some(correlation_id.clone())),
+            )
         }
     }
 }
@@ -180,12 +185,15 @@ pub async fn quote_list(
     check_quote_permission(&current_user.role, "read")?;
 
     match state.quote_service.list_quotes(&request.filters) {
-        Ok(response) => Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(response) => {
+            Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone())))
+        }
         Err(e) => {
             error!("Failed to list quotes: {}", e);
-            Ok(ApiResponse::error(AppError::Database(
-                "Failed to list quotes".to_string(),
-            )).with_correlation_id(Some(correlation_id.clone())))
+            Ok(
+                ApiResponse::error(AppError::Database("Failed to list quotes".to_string()))
+                    .with_correlation_id(Some(correlation_id.clone())),
+            )
         }
     }
 }
@@ -209,7 +217,8 @@ pub async fn quote_update(
         }
         Err(e) => {
             error!("Failed to update quote: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e)).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(AppError::Validation(e))
+                .with_correlation_id(Some(correlation_id.clone())))
         }
     }
 }
@@ -235,7 +244,8 @@ pub async fn quote_delete(
         }
         Err(e) => {
             error!("Failed to delete quote: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e)).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(AppError::Validation(e))
+                .with_correlation_id(Some(correlation_id.clone())))
         }
     }
 }
@@ -256,10 +266,13 @@ pub async fn quote_item_add(
         .quote_service
         .add_item(&request.quote_id, request.item)
     {
-        Ok(quote) => Ok(ApiResponse::success(quote).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(quote) => {
+            Ok(ApiResponse::success(quote).with_correlation_id(Some(correlation_id.clone())))
+        }
         Err(e) => {
             error!("Failed to add quote item: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e)).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(AppError::Validation(e))
+                .with_correlation_id(Some(correlation_id.clone())))
         }
     }
 }
@@ -280,10 +293,13 @@ pub async fn quote_item_update(
         .quote_service
         .update_item(&request.quote_id, &request.item_id, request.data)
     {
-        Ok(quote) => Ok(ApiResponse::success(quote).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(quote) => {
+            Ok(ApiResponse::success(quote).with_correlation_id(Some(correlation_id.clone())))
+        }
         Err(e) => {
             error!("Failed to update quote item: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e)).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(AppError::Validation(e))
+                .with_correlation_id(Some(correlation_id.clone())))
         }
     }
 }
@@ -304,10 +320,13 @@ pub async fn quote_item_delete(
         .quote_service
         .delete_item(&request.quote_id, &request.item_id)
     {
-        Ok(quote) => Ok(ApiResponse::success(quote).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(quote) => {
+            Ok(ApiResponse::success(quote).with_correlation_id(Some(correlation_id.clone())))
+        }
         Err(e) => {
             error!("Failed to delete quote item: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e)).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(AppError::Validation(e))
+                .with_correlation_id(Some(correlation_id.clone())))
         }
     }
 }
@@ -331,7 +350,8 @@ pub async fn quote_mark_sent(
         }
         Err(e) => {
             error!("Failed to mark quote as sent: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e)).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(AppError::Validation(e))
+                .with_correlation_id(Some(correlation_id.clone())))
         }
     }
 }
@@ -355,7 +375,8 @@ pub async fn quote_mark_accepted(
         }
         Err(e) => {
             error!("Failed to accept quote: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e)).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(AppError::Validation(e))
+                .with_correlation_id(Some(correlation_id.clone())))
         }
     }
 }
@@ -379,7 +400,8 @@ pub async fn quote_mark_rejected(
         }
         Err(e) => {
             error!("Failed to reject quote: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e)).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(AppError::Validation(e))
+                .with_correlation_id(Some(correlation_id.clone())))
         }
     }
 }
@@ -399,15 +421,17 @@ pub async fn quote_export_pdf(
     let quote = match state.quote_service.get_quote(&request.id) {
         Ok(Some(q)) => q,
         Ok(None) => {
-            return Ok(ApiResponse::error(AppError::NotFound(
-                "Quote not found".to_string(),
-            )).with_correlation_id(Some(correlation_id.clone())))
+            return Ok(
+                ApiResponse::error(AppError::NotFound("Quote not found".to_string()))
+                    .with_correlation_id(Some(correlation_id.clone())),
+            )
         }
         Err(e) => {
             error!("Failed to get quote for PDF export: {}", e);
             return Ok(ApiResponse::error(AppError::Database(
                 "Failed to retrieve quote".to_string(),
-            )).with_correlation_id(Some(correlation_id.clone())));
+            ))
+            .with_correlation_id(Some(correlation_id.clone())));
         }
     };
 
@@ -430,7 +454,8 @@ pub async fn quote_export_pdf(
 
     Ok(ApiResponse::success(QuoteExportResponse {
         file_path: file_path.to_string_lossy().to_string(),
-    }).with_correlation_id(Some(correlation_id.clone())))
+    })
+    .with_correlation_id(Some(correlation_id.clone())))
 }
 
 /// Generate a minimal PDF for a quote

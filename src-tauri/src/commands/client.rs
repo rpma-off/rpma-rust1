@@ -28,12 +28,12 @@ pub async fn client_crud(
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
     // Initialize correlation context at command start
     let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
-    
+
     let action = request.action;
     let session_token = request.session_token;
     info!(
         correlation_id = %correlation_id,
-        "client_crud command received - action: {:?}", 
+        "client_crud command received - action: {:?}",
         action
     );
     debug!(
@@ -127,7 +127,7 @@ pub async fn client_crud(
 
     // Centralized authentication
     let current_user = authenticate!(&session_token, &state);
-    
+
     // Update correlation context with user_id after authentication
     crate::commands::update_correlation_context_user(&current_user.user_id);
 

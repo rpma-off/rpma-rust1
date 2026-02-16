@@ -94,7 +94,7 @@ pub async fn auth_create_account(
 ) -> Result<ApiResponse<crate::models::auth::UserSession>, AppError> {
     // Initialize correlation context at command start
     let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
-    
+
     info!(
         correlation_id = %correlation_id,
         email = %request.email,
@@ -172,10 +172,10 @@ pub async fn auth_create_account(
         user_id = %session.user_id,
         "Auto-login successful for new user"
     );
-    
+
     // Update correlation context with user_id after successful authentication
     crate::commands::update_correlation_context_user(&session.user_id);
-    
+
     Ok(ApiResponse::success(session).with_correlation_id(Some(correlation_id)))
 }
 
@@ -189,7 +189,7 @@ pub async fn auth_logout(
 ) -> Result<ApiResponse<String>, AppError> {
     // Initialize correlation context at command start
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    
+
     info!(
         correlation_id = %correlation_id,
         "User logout attempt"

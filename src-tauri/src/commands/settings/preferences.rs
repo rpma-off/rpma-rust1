@@ -88,7 +88,10 @@ pub async fn update_general_settings(
     }
 
     update_app_settings(app_settings)
-        .map(|_| ApiResponse::success("General settings updated successfully".to_string()).with_correlation_id(correlation_id.clone()))
+        .map(|_| {
+            ApiResponse::success("General settings updated successfully".to_string())
+                .with_correlation_id(correlation_id.clone())
+        })
         .map_err(|e| AppError::Database(e))
 }
 
@@ -162,7 +165,10 @@ pub async fn update_user_preferences(
     state
         .settings_service
         .update_user_preferences(&user.id, &preferences)
-        .map(|_| ApiResponse::success("User preferences updated successfully".to_string()).with_correlation_id(correlation_id.clone()))
+        .map(|_| {
+            ApiResponse::success("User preferences updated successfully".to_string())
+                .with_correlation_id(correlation_id.clone())
+        })
         .map_err(|e| handle_settings_error(e, "Update user preferences"))
 }
 
@@ -182,6 +188,9 @@ pub async fn update_user_performance(
     state
         .settings_service
         .update_user_performance(&user.id, &request)
-        .map(|_| ApiResponse::success("Performance settings updated successfully".to_string()).with_correlation_id(correlation_id.clone()))
+        .map(|_| {
+            ApiResponse::success("Performance settings updated successfully".to_string())
+                .with_correlation_id(correlation_id.clone())
+        })
         .map_err(|e| handle_settings_error(e, "Update user performance"))
 }

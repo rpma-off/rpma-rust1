@@ -78,7 +78,10 @@ pub async fn update_security_settings(
     }
 
     update_app_settings(app_settings)
-        .map(|_| ApiResponse::success("Security settings updated successfully".to_string()).with_correlation_id(correlation_id.clone()))
+        .map(|_| {
+            ApiResponse::success("Security settings updated successfully".to_string())
+                .with_correlation_id(correlation_id.clone())
+        })
         .map_err(|e| AppError::Database(e))
 }
 
@@ -110,6 +113,9 @@ pub async fn update_user_security(
     state
         .settings_service
         .update_user_security(&user.id, &security_settings)
-        .map(|_| ApiResponse::success("Security settings updated successfully".to_string()).with_correlation_id(correlation_id.clone()))
+        .map(|_| {
+            ApiResponse::success("Security settings updated successfully".to_string())
+                .with_correlation_id(correlation_id.clone())
+        })
         .map_err(|e| handle_settings_error(e, "Update user security"))
 }

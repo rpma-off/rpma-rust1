@@ -664,10 +664,12 @@ pub async fn task_crud(
                         error!("Task creation failed: {}", e);
                         AppError::Database(format!("Failed to create task: {}", e))
                     })?;
-                Ok(crate::commands::ApiResponse::success(
-                    crate::commands::TaskResponse::Created(task),
+                Ok(
+                    crate::commands::ApiResponse::success(crate::commands::TaskResponse::Created(
+                        task,
+                    ))
+                    .with_correlation_id(Some(correlation_id.clone())),
                 )
-                .with_correlation_id(Some(correlation_id.clone())))
             } else {
                 Err(AppError::Validation(
                     "Invalid task action after validation".to_string(),
@@ -720,10 +722,12 @@ pub async fn task_crud(
                         error!("Task update failed: {}", e);
                         AppError::Database(format!("Failed to update task: {}", e))
                     })?;
-                Ok(crate::commands::ApiResponse::success(
-                    crate::commands::TaskResponse::Updated(task),
+                Ok(
+                    crate::commands::ApiResponse::success(crate::commands::TaskResponse::Updated(
+                        task,
+                    ))
+                    .with_correlation_id(Some(correlation_id.clone())),
                 )
-                .with_correlation_id(Some(correlation_id.clone())))
             } else {
                 Err(AppError::Validation(
                     "Invalid task action after validation".to_string(),
@@ -742,10 +746,10 @@ pub async fn task_crud(
                     error!("Task deletion failed: {}", e);
                     AppError::Database(format!("Failed to delete task: {}", e))
                 })?;
-            Ok(crate::commands::ApiResponse::success(
-                crate::commands::TaskResponse::Deleted,
+            Ok(
+                crate::commands::ApiResponse::success(crate::commands::TaskResponse::Deleted)
+                    .with_correlation_id(Some(correlation_id.clone())),
             )
-            .with_correlation_id(Some(correlation_id.clone())))
         }
         crate::commands::TaskAction::List { filters } => {
             // Use the proper task listing implementation

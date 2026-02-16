@@ -1005,10 +1005,7 @@ mod tests {
         let response: ApiResponse<String> = ApiResponse::error_message("something went wrong")
             .with_correlation_id(Some("ipc-12345-6789".to_string()));
         assert!(!response.success);
-        assert_eq!(
-            response.correlation_id.as_deref(),
-            Some("ipc-12345-6789")
-        );
+        assert_eq!(response.correlation_id.as_deref(), Some("ipc-12345-6789"));
         assert_eq!(response.error.as_ref().unwrap().code, "UNKNOWN");
     }
 

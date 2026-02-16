@@ -441,10 +441,7 @@ impl QuoteRepository {
 
     // --- Helpers ---
 
-    fn build_where_clause(
-        &self,
-        query: &QuoteQuery,
-    ) -> (String, Vec<rusqlite::types::Value>) {
+    fn build_where_clause(&self, query: &QuoteQuery) -> (String, Vec<rusqlite::types::Value>) {
         let mut conditions = Vec::new();
         let mut params: Vec<rusqlite::types::Value> = Vec::new();
 

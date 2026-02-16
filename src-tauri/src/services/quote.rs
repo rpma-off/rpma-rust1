@@ -24,11 +24,7 @@ impl QuoteService {
     }
 
     /// Create a new quote
-    pub fn create_quote(
-        &self,
-        req: CreateQuoteRequest,
-        user_id: &str,
-    ) -> Result<Quote, String> {
+    pub fn create_quote(&self, req: CreateQuoteRequest, user_id: &str) -> Result<Quote, String> {
         req.validate()?;
 
         let now = Utc::now().timestamp_millis();
@@ -114,11 +110,7 @@ impl QuoteService {
     }
 
     /// Update a quote (Draft only)
-    pub fn update_quote(
-        &self,
-        id: &str,
-        req: UpdateQuoteRequest,
-    ) -> Result<Quote, String> {
+    pub fn update_quote(&self, id: &str, req: UpdateQuoteRequest) -> Result<Quote, String> {
         let quote = self
             .repo
             .find_by_id(id)
@@ -153,11 +145,7 @@ impl QuoteService {
     }
 
     /// Add an item to a quote (Draft only)
-    pub fn add_item(
-        &self,
-        quote_id: &str,
-        req: CreateQuoteItemRequest,
-    ) -> Result<Quote, String> {
+    pub fn add_item(&self, quote_id: &str, req: CreateQuoteItemRequest) -> Result<Quote, String> {
         req.validate()?;
 
         let quote = self
@@ -171,9 +159,7 @@ impl QuoteService {
         }
 
         let now = Utc::now().timestamp_millis();
-        let position = req
-            .position
-            .unwrap_or(quote.items.len() as i32);
+        let position = req.position.unwrap_or(quote.items.len() as i32);
 
         let item = QuoteItem {
             id: Uuid::new_v4().to_string(),
@@ -229,11 +215,7 @@ impl QuoteService {
     }
 
     /// Delete a quote item (Draft only)
-    pub fn delete_item(
-        &self,
-        quote_id: &str,
-        item_id: &str,
-    ) -> Result<Quote, String> {
+    pub fn delete_item(&self, quote_id: &str, item_id: &str) -> Result<Quote, String> {
         let quote = self
             .repo
             .find_by_id(quote_id)

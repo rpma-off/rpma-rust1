@@ -1584,9 +1584,7 @@ impl MaterialService {
                                 Ok((row.get::<_, String>(0)?, row.get::<_, i32>(1)?))
                             })
                             .ok()
-                            .map(|rows| {
-                                rows.filter_map(|r| r.ok()).collect::<Vec<_>>()
-                            })
+                            .map(|rows| rows.filter_map(|r| r.ok()).collect::<Vec<_>>())
                             .unwrap_or_default();
                         category_rows.into_iter().collect()
                     }
@@ -1597,7 +1595,9 @@ impl MaterialService {
         };
 
         // Get recent transactions — return empty vec on error instead of propagating
-        let recent_transactions = self.list_recent_inventory_transactions(10).unwrap_or_default();
+        let recent_transactions = self
+            .list_recent_inventory_transactions(10)
+            .unwrap_or_default();
 
         let stock_turnover_rate = 0.0;
         let average_inventory_age = 0.0;
@@ -2096,7 +2096,11 @@ mod inventory_ipc_fix_tests {
         let service = MaterialService::new(db);
 
         let result = service.get_inventory_stats();
-        assert!(result.is_ok(), "get_inventory_stats should succeed on empty DB, got: {:?}", result.err());
+        assert!(
+            result.is_ok(),
+            "get_inventory_stats should succeed on empty DB, got: {:?}",
+            result.err()
+        );
 
         let stats = result.unwrap();
         assert_eq!(stats.total_materials, 0);
@@ -2114,7 +2118,11 @@ mod inventory_ipc_fix_tests {
         let service = MaterialService::new(db);
 
         let result = service.list_material_categories(true, None, None);
-        assert!(result.is_ok(), "list_material_categories should succeed on empty DB, got: {:?}", result.err());
+        assert!(
+            result.is_ok(),
+            "list_material_categories should succeed on empty DB, got: {:?}",
+            result.err()
+        );
     }
 
     #[test]
@@ -2124,7 +2132,11 @@ mod inventory_ipc_fix_tests {
         let service = MaterialService::new(db);
 
         let result = service.list_material_categories(true, Some(10), Some(0));
-        assert!(result.is_ok(), "list_material_categories with pagination should succeed on empty DB, got: {:?}", result.err());
+        assert!(
+            result.is_ok(),
+            "list_material_categories with pagination should succeed on empty DB, got: {:?}",
+            result.err()
+        );
     }
 
     #[test]
@@ -2134,7 +2146,11 @@ mod inventory_ipc_fix_tests {
         let service = MaterialService::new(db);
 
         let result = service.get_inventory_movement_summary(None, None, None);
-        assert!(result.is_ok(), "get_inventory_movement_summary should succeed on empty DB, got: {:?}", result.err());
+        assert!(
+            result.is_ok(),
+            "get_inventory_movement_summary should succeed on empty DB, got: {:?}",
+            result.err()
+        );
         assert!(result.unwrap().is_empty());
     }
 
@@ -2144,12 +2160,13 @@ mod inventory_ipc_fix_tests {
         let db = (*test_db.db()).clone();
         let service = MaterialService::new(db);
 
-        let result = service.get_inventory_movement_summary(
-            None,
-            Some("2024-01-01"),
-            Some("2024-12-31"),
+        let result =
+            service.get_inventory_movement_summary(None, Some("2024-01-01"), Some("2024-12-31"));
+        assert!(
+            result.is_ok(),
+            "movement summary with dates should succeed on empty DB, got: {:?}",
+            result.err()
         );
-        assert!(result.is_ok(), "movement summary with dates should succeed on empty DB, got: {:?}", result.err());
         assert!(result.unwrap().is_empty());
     }
 }

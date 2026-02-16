@@ -188,7 +188,10 @@ pub async fn change_user_password(
             &request.session_token,
             state.auth_service.as_ref(),
         )
-        .map(|_| ApiResponse::success("Password changed successfully".to_string()).with_correlation_id(correlation_id.clone()))
+        .map(|_| {
+            ApiResponse::success("Password changed successfully".to_string())
+                .with_correlation_id(correlation_id.clone())
+        })
         .map_err(|e| handle_settings_error(e, "Change user password"))
 }
 
@@ -241,11 +244,10 @@ pub async fn export_user_data(
         }),
     };
 
-    Ok(ApiResponse::success(build_export_payload(
-        user_identity,
-        &settings,
-        consent,
-    )).with_correlation_id(correlation_id.clone()))
+    Ok(
+        ApiResponse::success(build_export_payload(user_identity, &settings, consent))
+            .with_correlation_id(correlation_id.clone()),
+    )
 }
 
 /// Delete user account
@@ -270,7 +272,10 @@ pub async fn delete_user_account(
     state
         .settings_service
         .delete_user_account(&user.id)
-        .map(|_| ApiResponse::success("Account deleted successfully".to_string()).with_correlation_id(correlation_id.clone()))
+        .map(|_| {
+            ApiResponse::success("Account deleted successfully".to_string())
+                .with_correlation_id(correlation_id.clone())
+        })
         .map_err(|e| handle_settings_error(e, "Delete user account"))
 }
 

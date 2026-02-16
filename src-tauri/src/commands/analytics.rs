@@ -21,7 +21,9 @@ pub async fn analytics_get_summary(
     let service = state.analytics_service.clone();
 
     match service.get_analytics_summary() {
-        Ok(summary) => Ok(ApiResponse::success(summary).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(summary) => {
+            Ok(ApiResponse::success(summary).with_correlation_id(Some(correlation_id.clone())))
+        }
         Err(e) => Err(crate::commands::AppError::from(e.to_string())),
     }
 }

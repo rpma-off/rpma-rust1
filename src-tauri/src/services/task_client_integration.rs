@@ -57,10 +57,10 @@ impl TaskClientIntegrationService {
     ) -> AppResult<TaskWithClientListResponse> {
         use crate::logging::{LogDomain, ServiceLogger};
         use std::collections::HashMap;
-        
+
         // Create logger with correlation context from thread-local storage
         let logger = ServiceLogger::new(LogDomain::Task);
-        
+
         let mut context = HashMap::new();
         context.insert("page".to_string(), serde_json::json!(query.page));
         context.insert("limit".to_string(), serde_json::json!(query.limit));
@@ -211,10 +211,16 @@ impl TaskClientIntegrationService {
 
         // Log successful retrieval
         let mut log_context = HashMap::new();
-        log_context.insert("task_count".to_string(), serde_json::json!(tasks_with_clients.len()));
+        log_context.insert(
+            "task_count".to_string(),
+            serde_json::json!(tasks_with_clients.len()),
+        );
         log_context.insert("page".to_string(), serde_json::json!(page));
         log_context.insert("total_count".to_string(), serde_json::json!(total_count));
-        logger.info("Tasks with client data retrieved successfully", Some(log_context));
+        logger.info(
+            "Tasks with client data retrieved successfully",
+            Some(log_context),
+        );
 
         Ok(TaskWithClientListResponse {
             data: tasks_with_clients,

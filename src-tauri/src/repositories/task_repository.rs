@@ -26,10 +26,10 @@ impl TaskRepository {
     pub async fn find_with_query(&self, query: TaskQuery) -> RepoResult<TaskListResponse> {
         use crate::logging::RepositoryLogger;
         use std::collections::HashMap;
-        
+
         // Create logger with correlation context from thread-local storage
         let logger = RepositoryLogger::new();
-        
+
         let mut log_context = HashMap::new();
         log_context.insert("page".to_string(), serde_json::json!(query.page));
         log_context.insert("limit".to_string(), serde_json::json!(query.limit));
@@ -66,7 +66,10 @@ impl TaskRepository {
 
         // Log successful query
         let mut success_context = HashMap::new();
-        success_context.insert("task_count".to_string(), serde_json::json!(response_data.len()));
+        success_context.insert(
+            "task_count".to_string(),
+            serde_json::json!(response_data.len()),
+        );
         success_context.insert("total_count".to_string(), serde_json::json!(total_count));
         success_context.insert("page".to_string(), serde_json::json!(pagination.page));
         logger.info("Tasks queried successfully", Some(success_context));

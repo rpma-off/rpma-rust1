@@ -88,7 +88,9 @@ pub struct GetStreamDataResponse {
 #[tauri::command]
 pub async fn compress_data_for_ipc(
     request: CompressDataRequest,
+    correlation_id: Option<String>,
 ) -> AppResult<CompressDataResponse> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let config = CompressionConfig {
         min_size: request.min_size.unwrap_or(1024),
         ..Default::default()
@@ -122,7 +124,9 @@ pub async fn compress_data_for_ipc(
 #[tauri::command]
 pub async fn decompress_data_from_ipc(
     request: DecompressDataRequest,
+    correlation_id: Option<String>,
 ) -> AppResult<serde_json::Value> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let data: serde_json::Value = decompress_json(&request.compressed)
         .map_err(|e| crate::commands::AppError::Internal(format!("Decompression failed: {}", e)))?;
 
@@ -131,7 +135,11 @@ pub async fn decompress_data_from_ipc(
 
 /// Start a streaming data transfer
 #[tauri::command]
-pub async fn start_stream_transfer(request: StartStreamRequest) -> AppResult<StartStreamResponse> {
+pub async fn start_stream_transfer(
+    request: StartStreamRequest,
+    correlation_id: Option<String>,
+) -> AppResult<StartStreamResponse> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let mut manager = STREAM_MANAGER.lock().await;
 
     let chunk_size = request
@@ -165,7 +173,9 @@ pub async fn start_stream_transfer(request: StartStreamRequest) -> AppResult<Sta
 #[tauri::command]
 pub async fn send_stream_chunk(
     request: SendStreamChunkRequest,
+    correlation_id: Option<String>,
 ) -> AppResult<SendStreamChunkResponse> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let manager = STREAM_MANAGER.lock().await;
 
     let completed = manager
@@ -188,7 +198,11 @@ pub async fn send_stream_chunk(
 
 /// Get completed stream data
 #[tauri::command]
-pub async fn get_stream_data(request: GetStreamDataRequest) -> AppResult<GetStreamDataResponse> {
+pub async fn get_stream_data(
+    request: GetStreamDataRequest,
+    correlation_id: Option<String>,
+) -> AppResult<GetStreamDataResponse> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let mut manager = STREAM_MANAGER.lock().await;
 
     let is_complete = manager
@@ -220,7 +234,8 @@ pub async fn get_stream_data(request: GetStreamDataRequest) -> AppResult<GetStre
 
 /// Get IPC optimization statistics
 #[tauri::command]
-pub async fn get_ipc_stats() -> AppResult<serde_json::Value> {
+pub async fn get_ipc_stats(correlation_id: Option<String>) -> AppResult<serde_json::Value> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     // Return mock stats for now - in production you'd track real metrics
     let stats = serde_json::json!({
         "compression": {

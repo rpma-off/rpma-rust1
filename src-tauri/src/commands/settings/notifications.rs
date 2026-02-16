@@ -97,7 +97,10 @@ pub async fn update_notification_settings(
     }
 
     update_app_settings(app_settings)
-        .map(|_| ApiResponse::success("Notification settings updated successfully".to_string()).with_correlation_id(correlation_id.clone()))
+        .map(|_| {
+            ApiResponse::success("Notification settings updated successfully".to_string())
+                .with_correlation_id(correlation_id.clone())
+        })
         .map_err(|e| AppError::Database(e))
 }
 
@@ -174,6 +177,9 @@ pub async fn update_user_notifications(
     state
         .settings_service
         .update_user_notifications(&user.id, &notification_settings)
-        .map(|_| ApiResponse::success("Notification settings updated successfully".to_string()).with_correlation_id(correlation_id.clone()))
+        .map(|_| {
+            ApiResponse::success("Notification settings updated successfully".to_string())
+                .with_correlation_id(correlation_id.clone())
+        })
         .map_err(|e| handle_settings_error(e, "Update user notifications"))
 }

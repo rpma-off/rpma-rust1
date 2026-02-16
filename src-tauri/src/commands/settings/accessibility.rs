@@ -82,6 +82,9 @@ pub async fn update_user_accessibility(
     state
         .settings_service
         .update_user_accessibility(&user.id, &accessibility_settings)
-        .map(|_| ApiResponse::success("Accessibility settings updated successfully".to_string()).with_correlation_id(correlation_id.clone()))
+        .map(|_| {
+            ApiResponse::success("Accessibility settings updated successfully".to_string())
+                .with_correlation_id(correlation_id.clone())
+        })
         .map_err(|e| handle_settings_error(e, "Update user accessibility"))
 }

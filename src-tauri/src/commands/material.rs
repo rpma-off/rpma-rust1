@@ -57,7 +57,9 @@ pub async fn material_get(
     let service = state.material_service.clone();
 
     match service.get_material(&id) {
-        Ok(material) => Ok(ApiResponse::success(material).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(material) => {
+            Ok(ApiResponse::success(material).with_correlation_id(Some(correlation_id.clone())))
+        }
         Err(e) => {
             error!(error = %e, material_id = %id, "Failed to get material");
             Err(crate::commands::AppError::internal_sanitized(
@@ -84,7 +86,9 @@ pub async fn material_get_by_sku(
     let service = state.material_service.clone();
 
     match service.get_material_by_sku(&sku) {
-        Ok(material) => Ok(ApiResponse::success(material).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(material) => {
+            Ok(ApiResponse::success(material).with_correlation_id(Some(correlation_id.clone())))
+        }
         Err(e) => {
             error!(error = %e, sku = %sku, "Failed to get material by SKU");
             Err(crate::commands::AppError::internal_sanitized(
@@ -125,7 +129,9 @@ pub async fn material_list(
     });
 
     match service.list_materials(mt, category, active_only.unwrap_or(true), limit, offset) {
-        Ok(materials) => Ok(ApiResponse::success(materials).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(materials) => {
+            Ok(ApiResponse::success(materials).with_correlation_id(Some(correlation_id.clone())))
+        }
         Err(e) => {
             error!(error = %e, "Failed to list materials");
             Err(crate::commands::AppError::internal_sanitized(
@@ -244,7 +250,9 @@ pub async fn material_get_intervention_consumption(
     let service = state.material_service.clone();
 
     match service.get_intervention_consumption(&intervention_id) {
-        Ok(consumptions) => Ok(ApiResponse::success(consumptions).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(consumptions) => Ok(
+            ApiResponse::success(consumptions).with_correlation_id(Some(correlation_id.clone()))
+        ),
         Err(e) => {
             error!(error = %e, intervention_id = %intervention_id, "Failed to get intervention consumption");
             Err(crate::commands::AppError::internal_sanitized(
@@ -274,7 +282,9 @@ pub async fn material_get_intervention_summary(
     let service = state.material_service.clone();
 
     match service.get_intervention_material_summary(&intervention_id) {
-        Ok(summary) => Ok(ApiResponse::success(summary).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(summary) => {
+            Ok(ApiResponse::success(summary).with_correlation_id(Some(correlation_id.clone())))
+        }
         Err(e) => {
             error!(error = %e, intervention_id = %intervention_id, "Failed to get intervention material summary");
             Err(crate::commands::AppError::internal_sanitized(
@@ -300,7 +310,9 @@ pub async fn material_get_stats(
     let service = state.material_service.clone();
 
     match service.get_material_stats() {
-        Ok(stats) => Ok(ApiResponse::success(stats).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(stats) => {
+            Ok(ApiResponse::success(stats).with_correlation_id(Some(correlation_id.clone())))
+        }
         Err(e) => {
             error!(error = %e, "Failed to get material stats");
             Err(crate::commands::AppError::internal_sanitized(
@@ -326,7 +338,9 @@ pub async fn material_get_low_stock(
     let service = state.material_service.clone();
 
     match service.get_low_stock_materials() {
-        Ok(materials) => Ok(ApiResponse::success(materials).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(materials) => {
+            Ok(ApiResponse::success(materials).with_correlation_id(Some(correlation_id.clone())))
+        }
         Err(e) => {
             error!(error = %e, "Failed to get low stock materials");
             Err(crate::commands::AppError::internal_sanitized(
@@ -352,7 +366,9 @@ pub async fn material_get_expired(
     let service = state.material_service.clone();
 
     match service.get_expired_materials() {
-        Ok(materials) => Ok(ApiResponse::success(materials).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(materials) => {
+            Ok(ApiResponse::success(materials).with_correlation_id(Some(correlation_id.clone())))
+        }
         Err(e) => {
             error!(error = %e, "Failed to get expired materials");
             Err(crate::commands::AppError::internal_sanitized(
@@ -378,7 +394,9 @@ pub async fn inventory_get_stats(
     let service = state.material_service.clone();
 
     match service.get_inventory_stats() {
-        Ok(stats) => Ok(ApiResponse::success(stats).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(stats) => {
+            Ok(ApiResponse::success(stats).with_correlation_id(Some(correlation_id.clone())))
+        }
         Err(e) => {
             error!(error = %e, "Failed to get inventory stats");
             Err(crate::commands::AppError::internal_sanitized(
@@ -473,7 +491,9 @@ pub async fn material_get_consumption_history(
     let service = state.material_service.clone();
 
     match service.get_consumption_history(&material_id, limit, offset) {
-        Ok(records) => Ok(ApiResponse::success(records).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(records) => {
+            Ok(ApiResponse::success(records).with_correlation_id(Some(correlation_id.clone())))
+        }
         Err(e) => {
             error!(error = %e, material_id = %material_id, "Failed to get consumption history");
             Err(crate::commands::AppError::internal_sanitized(
@@ -535,7 +555,9 @@ pub async fn material_get_transaction_history(
     let service = state.material_service.clone();
 
     match service.list_inventory_transactions_by_material(&material_id, None, limit, offset) {
-        Ok(transactions) => Ok(ApiResponse::success(transactions).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(transactions) => Ok(
+            ApiResponse::success(transactions).with_correlation_id(Some(correlation_id.clone()))
+        ),
         Err(e) => {
             error!(error = %e, material_id = %material_id, "Failed to get transaction history");
             Err(crate::commands::AppError::internal_sanitized(
@@ -595,7 +617,9 @@ pub async fn material_list_categories(
     let service = state.material_service.clone();
 
     match service.list_material_categories(active_only.unwrap_or(true), limit, offset) {
-        Ok(categories) => Ok(ApiResponse::success(categories).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(categories) => {
+            Ok(ApiResponse::success(categories).with_correlation_id(Some(correlation_id.clone())))
+        }
         Err(e) => {
             error!(error = %e, "Failed to list material categories");
             Err(crate::commands::AppError::internal_sanitized(
@@ -655,7 +679,9 @@ pub async fn material_list_suppliers(
     let service = state.material_service.clone();
 
     match service.list_suppliers(active_only.unwrap_or(true), preferred_only, limit, offset) {
-        Ok(suppliers) => Ok(ApiResponse::success(suppliers).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(suppliers) => {
+            Ok(ApiResponse::success(suppliers).with_correlation_id(Some(correlation_id.clone())))
+        }
         Err(e) => {
             error!(error = %e, "Failed to list suppliers");
             Err(crate::commands::AppError::internal_sanitized(
@@ -681,7 +707,9 @@ pub async fn material_get_low_stock_materials(
     let service = state.material_service.clone();
 
     match service.get_low_stock_materials() {
-        Ok(materials) => Ok(ApiResponse::success(materials).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(materials) => {
+            Ok(ApiResponse::success(materials).with_correlation_id(Some(correlation_id.clone())))
+        }
         Err(e) => {
             error!(error = %e, "Failed to get low stock materials");
             Err(crate::commands::AppError::internal_sanitized(
@@ -707,7 +735,9 @@ pub async fn material_get_expired_materials(
     let service = state.material_service.clone();
 
     match service.get_expired_materials() {
-        Ok(materials) => Ok(ApiResponse::success(materials).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(materials) => {
+            Ok(ApiResponse::success(materials).with_correlation_id(Some(correlation_id.clone())))
+        }
         Err(e) => {
             error!(error = %e, "Failed to get expired materials");
             Err(crate::commands::AppError::internal_sanitized(
@@ -743,7 +773,9 @@ pub async fn material_get_inventory_movement_summary(
         date_from.as_deref(),
         date_to.as_deref(),
     ) {
-        Ok(summary) => Ok(ApiResponse::success(summary).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(summary) => {
+            Ok(ApiResponse::success(summary).with_correlation_id(Some(correlation_id.clone())))
+        }
         Err(e) => {
             error!(error = %e, "Failed to get inventory movement summary");
             Err(crate::commands::AppError::internal_sanitized(

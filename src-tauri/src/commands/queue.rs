@@ -10,15 +10,25 @@ use tracing::{error, info, instrument};
 pub fn sync_enqueue(
     operation: SyncOperation,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState,
 ) -> Result<i64, String> {
-    state
+    // Initialize correlation context
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+
+    let current_user = state
         .auth_service
         .validate_session(&session_token)
         .map_err(|e| {
             error!(error = %e, "Authentication failed for sync_enqueue");
             "Authentication failed".to_string()
         })?;
+
+    // Update correlation context with user_id
+    if let Some(session) = current_user {
+        crate::commands::update_correlation_context_user(&session.user_id);
+    }
+
     let result = state.sync_queue.enqueue(operation).map_err(|e| {
         error!(error = %e, "Failed to enqueue sync operation");
         "Failed to enqueue operation".to_string()
@@ -33,15 +43,25 @@ pub fn sync_enqueue(
 pub fn sync_dequeue_batch(
     limit: usize,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState,
 ) -> Result<Vec<SyncOperation>, String> {
-    state
+    // Initialize correlation context
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+
+    let current_user = state
         .auth_service
         .validate_session(&session_token)
         .map_err(|e| {
             error!(error = %e, "Authentication failed for sync_dequeue_batch");
             "Authentication failed".to_string()
         })?;
+
+    // Update correlation context with user_id
+    if let Some(session) = current_user {
+        crate::commands::update_correlation_context_user(&session.user_id);
+    }
+
     state.sync_queue.dequeue_batch(limit).map_err(|e| {
         error!(error = %e, "Failed to dequeue sync operations");
         "Failed to dequeue operations".to_string()
@@ -53,15 +73,25 @@ pub fn sync_dequeue_batch(
 #[instrument(skip(state, session_token))]
 pub fn sync_get_metrics(
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState,
 ) -> Result<SyncQueueMetrics, String> {
-    state
+    // Initialize correlation context
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+
+    let current_user = state
         .auth_service
         .validate_session(&session_token)
         .map_err(|e| {
             error!(error = %e, "Authentication failed for sync_get_metrics");
             "Authentication failed".to_string()
         })?;
+
+    // Update correlation context with user_id
+    if let Some(session) = current_user {
+        crate::commands::update_correlation_context_user(&session.user_id);
+    }
+
     state.sync_queue.get_metrics().map_err(|e| {
         error!(error = %e, "Failed to get sync queue metrics");
         "Failed to get metrics".to_string()
@@ -74,15 +104,25 @@ pub fn sync_get_metrics(
 pub fn sync_mark_completed(
     operation_id: i64,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState,
 ) -> Result<(), String> {
-    state
+    // Initialize correlation context
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+
+    let current_user = state
         .auth_service
         .validate_session(&session_token)
         .map_err(|e| {
             error!(error = %e, "Authentication failed for sync_mark_completed");
             "Authentication failed".to_string()
         })?;
+
+    // Update correlation context with user_id
+    if let Some(session) = current_user {
+        crate::commands::update_correlation_context_user(&session.user_id);
+    }
+
     state.sync_queue.mark_completed(operation_id).map_err(|e| {
         error!(error = %e, operation_id = operation_id, "Failed to mark operation completed");
         "Failed to mark operation completed".to_string()
@@ -101,15 +141,25 @@ pub fn sync_mark_failed(
     operation_id: i64,
     error: String,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState,
 ) -> Result<(), String> {
-    state
+    // Initialize correlation context
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+
+    let current_user = state
         .auth_service
         .validate_session(&session_token)
         .map_err(|e| {
             tracing::error!(error = %e, "Authentication failed for sync_mark_failed");
             "Authentication failed".to_string()
         })?;
+
+    // Update correlation context with user_id
+    if let Some(session) = current_user {
+        crate::commands::update_correlation_context_user(&session.user_id);
+    }
+
     state
         .sync_queue
         .mark_failed(operation_id, &error)
@@ -127,15 +177,25 @@ pub fn sync_mark_failed(
 pub fn sync_get_operation(
     operation_id: i64,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState,
 ) -> Result<SyncOperation, String> {
-    state
+    // Initialize correlation context
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+
+    let current_user = state
         .auth_service
         .validate_session(&session_token)
         .map_err(|e| {
             error!(error = %e, "Authentication failed for sync_get_operation");
             "Authentication failed".to_string()
         })?;
+
+    // Update correlation context with user_id
+    if let Some(session) = current_user {
+        crate::commands::update_correlation_context_user(&session.user_id);
+    }
+
     state.sync_queue.get_operation(operation_id).map_err(|e| {
         error!(error = %e, operation_id = operation_id, "Failed to get sync operation");
         "Failed to get operation".to_string()
@@ -148,15 +208,25 @@ pub fn sync_get_operation(
 pub fn sync_cleanup_old_operations(
     days_old: i64,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState,
 ) -> Result<i64, String> {
-    state
+    // Initialize correlation context
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+
+    let current_user = state
         .auth_service
         .validate_session(&session_token)
         .map_err(|e| {
             error!(error = %e, "Authentication failed for sync_cleanup_old_operations");
             "Authentication failed".to_string()
         })?;
+
+    // Update correlation context with user_id
+    if let Some(session) = current_user {
+        crate::commands::update_correlation_context_user(&session.user_id);
+    }
+
     let cleaned = state
         .sync_queue
         .cleanup_old_operations(days_old)
