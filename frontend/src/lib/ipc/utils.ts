@@ -6,14 +6,19 @@ import { LogDomain, CorrelationContext } from '../logging/types';
 import type { ApiResponse } from '@/types/api';
 import type { JsonObject, JsonValue } from '@/types/json';
 
+const KNOWN_CLIENT_ERRORS = new Set([
+  'client introuvable. veuillez sélectionner un client existant.',
+  'client not found',
+]);
+
 /**
  * Maps backend error codes to user-friendly messages
  */
 function getUserFriendlyErrorMessage(errorCode: string, originalMessage: string): string {
-  const normalizedMessage = originalMessage.toLowerCase();
+  const normalizedMessage = originalMessage.trim().toLowerCase();
   if (
     errorCode === 'VALIDATION_ERROR' &&
-    (normalizedMessage.includes('client introuvable') || normalizedMessage.includes('client not found'))
+    (KNOWN_CLIENT_ERRORS.has(normalizedMessage) || normalizedMessage.startsWith('client introuvable'))
   ) {
     return 'Client introuvable. Sélectionnez un client existant ou créez-en un.';
   }
@@ -246,8 +251,8 @@ export async function safeInvoke<T>(
       errorDetails = { message: errorMessage };
     }
 
-    const enhancedError = error instanceof Error ? error as EnhancedError : undefined;
-    if (!enhancedError?.alreadyLogged) {
+    const errorWithFlags = error instanceof Error ? error as EnhancedError : undefined;
+    if (!errorWithFlags?.alreadyLogged) {
       logger.error(LogDomain.API, `IPC call error: ${command}`, error instanceof Error ? error : new Error(errorMessage), {
         command,
         correlation_id: effectiveCorrelationId,

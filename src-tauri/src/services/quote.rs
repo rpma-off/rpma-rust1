@@ -99,14 +99,14 @@ impl QuoteService {
     }
 
     fn client_exists(&self, client_id: &str) -> Result<bool, String> {
-        let count: i64 = self
+        let exists: bool = self
             .db
             .query_single_value(
-                "SELECT COUNT(*) FROM clients WHERE id = ?",
+                "SELECT EXISTS(SELECT 1 FROM clients WHERE id = ?)",
                 params![client_id],
             )
             .map_err(|e| format!("Failed to validate client reference: {}", e))?;
-        Ok(count > 0)
+        Ok(exists)
     }
 
     fn map_create_repo_error(error: RepoError) -> String {
@@ -533,7 +533,7 @@ mod tests {
 
         let result = service.create_quote(req, "test-user");
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("client existant"));
+        assert!(result.unwrap_err().contains("Client introuvable"));
     }
 
     #[test]
