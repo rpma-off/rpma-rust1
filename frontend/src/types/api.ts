@@ -42,6 +42,7 @@ export interface ApiResponse<T> {
    data?: T extends unknown[] ? ListResponse<T[number]> : T;
    // The error field must accommodate the custom error object or a simple string
    error?: CustomError | ApiError;
+   correlation_id?: string;
 }
 
 export interface ApiErrorResult {

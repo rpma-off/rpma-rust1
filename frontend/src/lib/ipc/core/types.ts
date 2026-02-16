@@ -12,6 +12,8 @@ export interface BackendResponse<T = unknown> {
   success?: boolean;
   data?: T;
   error?: string | ApiError;
+  // Correlation ID for end-to-end tracing
+  correlation_id?: string;
   // Allow any other fields from the discriminated union
   [key: string]: unknown;
 }
