@@ -25,6 +25,8 @@ pub struct UpdateNotificationSettingsRequest {
     pub task_completions: Option<bool>,
     pub system_alerts: Option<bool>,
     pub daily_digest: Option<bool>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -47,6 +49,8 @@ pub struct UpdateUserNotificationsRequest {
     pub batch_notifications: Option<bool>,
     pub sound_enabled: Option<bool>,
     pub sound_volume: Option<u32>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 /// Update notification settings (system-wide)
@@ -58,6 +62,7 @@ pub async fn update_notification_settings(
 ) -> Result<ApiResponse<String>, AppError> {
     info!("Updating notification settings");
 
+    let correlation_id = request.correlation_id.clone();
     let user = authenticate!(&request.session_token, &state);
 
     // Only admins can update system notification settings
@@ -92,7 +97,7 @@ pub async fn update_notification_settings(
     }
 
     update_app_settings(app_settings)
-        .map(|_| ApiResponse::success("Notification settings updated successfully".to_string()))
+        .map(|_| ApiResponse::success("Notification settings updated successfully".to_string()).with_correlation_id(correlation_id.clone()))
         .map_err(|e| AppError::Database(e))
 }
 
@@ -105,6 +110,7 @@ pub async fn update_user_notifications(
 ) -> Result<ApiResponse<String>, AppError> {
     info!("Updating user notification settings");
 
+    let correlation_id = request.correlation_id.clone();
     let user = authenticate!(&request.session_token, &state);
 
     let mut notification_settings: UserNotificationSettings = state
@@ -168,6 +174,6 @@ pub async fn update_user_notifications(
     state
         .settings_service
         .update_user_notifications(&user.id, &notification_settings)
-        .map(|_| ApiResponse::success("Notification settings updated successfully".to_string()))
+        .map(|_| ApiResponse::success("Notification settings updated successfully".to_string()).with_correlation_id(correlation_id.clone()))
         .map_err(|e| handle_settings_error(e, "Update user notifications"))
 }

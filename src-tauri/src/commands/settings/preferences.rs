@@ -23,6 +23,8 @@ pub struct UpdateGeneralSettingsRequest {
     pub timezone: Option<String>,
     pub date_format: Option<String>,
     pub currency: Option<String>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -44,6 +46,8 @@ pub struct UpdateUserPreferencesRequest {
     pub screen_reader: Option<bool>,
     pub auto_refresh: Option<bool>,
     pub refresh_interval: Option<u32>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 /// Update general settings (system-wide)
@@ -55,6 +59,7 @@ pub async fn update_general_settings(
 ) -> Result<ApiResponse<String>, AppError> {
     info!("Updating general settings");
 
+    let correlation_id = request.correlation_id.clone();
     let user = authenticate!(&request.session_token, &state);
 
     // Only admins can update system-wide settings
@@ -83,7 +88,7 @@ pub async fn update_general_settings(
     }
 
     update_app_settings(app_settings)
-        .map(|_| ApiResponse::success("General settings updated successfully".to_string()))
+        .map(|_| ApiResponse::success("General settings updated successfully".to_string()).with_correlation_id(correlation_id.clone()))
         .map_err(|e| AppError::Database(e))
 }
 
@@ -96,6 +101,7 @@ pub async fn update_user_preferences(
 ) -> Result<ApiResponse<String>, AppError> {
     info!("Updating user preferences");
 
+    let correlation_id = request.correlation_id.clone();
     let user = authenticate!(&request.session_token, &state);
 
     let mut preferences: UserPreferences = state
@@ -156,7 +162,7 @@ pub async fn update_user_preferences(
     state
         .settings_service
         .update_user_preferences(&user.id, &preferences)
-        .map(|_| ApiResponse::success("User preferences updated successfully".to_string()))
+        .map(|_| ApiResponse::success("User preferences updated successfully".to_string()).with_correlation_id(correlation_id.clone()))
         .map_err(|e| handle_settings_error(e, "Update user preferences"))
 }
 
@@ -167,6 +173,7 @@ pub async fn update_user_performance(
     request: crate::models::settings::UserPerformanceSettings,
     session_token: String,
     state: AppState<'_>,
+    correlation_id: Option<String>,
 ) -> Result<ApiResponse<String>, AppError> {
     info!("Updating user performance settings");
 
@@ -175,6 +182,6 @@ pub async fn update_user_performance(
     state
         .settings_service
         .update_user_performance(&user.id, &request)
-        .map(|_| ApiResponse::success("Performance settings updated successfully".to_string()))
+        .map(|_| ApiResponse::success("Performance settings updated successfully".to_string()).with_correlation_id(correlation_id.clone()))
         .map_err(|e| handle_settings_error(e, "Update user performance"))
 }
