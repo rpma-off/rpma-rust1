@@ -8,6 +8,7 @@ pub async fn message_send(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<Message, ApiError> {
+    let _correlation_id = request.correlation_id.clone();
     let auth_service = state.auth_service.clone();
     let _current_user = auth_service
         .validate_session(&session_token)
@@ -35,6 +36,7 @@ pub async fn message_get_list(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<MessageListResponse, ApiError> {
+    let _correlation_id = query.correlation_id.clone();
     let auth_service = state.auth_service.clone();
     let _current_user = auth_service
         .validate_session(&session_token)
@@ -61,7 +63,9 @@ pub async fn message_mark_read(
     message_id: String,
     session_token: String,
     state: AppState<'_>,
+    correlation_id: Option<String>,
 ) -> Result<(), ApiError> {
+    let _correlation_id = correlation_id;
     let auth_service = state.auth_service.clone();
     let _current_user = auth_service
         .validate_session(&session_token)
@@ -89,7 +93,9 @@ pub async fn message_get_templates(
     message_type: Option<String>,
     session_token: String,
     state: AppState<'_>,
+    correlation_id: Option<String>,
 ) -> Result<Vec<MessageTemplate>, ApiError> {
+    let _correlation_id = correlation_id;
     let auth_service = state.auth_service.clone();
     let _current_user = auth_service
         .validate_session(&session_token)
@@ -116,7 +122,9 @@ pub async fn message_get_preferences(
     user_id: String,
     session_token: String,
     state: AppState<'_>,
+    correlation_id: Option<String>,
 ) -> Result<NotificationPreferences, ApiError> {
+    let _correlation_id = correlation_id;
     let auth_service = state.auth_service.clone();
     let _current_user = auth_service
         .validate_session(&session_token)
@@ -145,6 +153,7 @@ pub async fn message_update_preferences(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<NotificationPreferences, ApiError> {
+    let _correlation_id = updates.correlation_id.clone();
     let auth_service = state.auth_service.clone();
     let _current_user = auth_service
         .validate_session(&session_token)

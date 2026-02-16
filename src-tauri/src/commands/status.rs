@@ -9,6 +9,7 @@ pub async fn task_transition_status(
     request: StatusTransitionRequest,
     state: AppState<'_>,
 ) -> Result<Task, ApiError> {
+    let _correlation_id = request.correlation_id.clone();
     let auth_service = state.auth_service.clone();
     let _current_user = auth_service
         .validate_session(&session_token)
@@ -37,7 +38,9 @@ pub async fn task_transition_status(
 pub async fn task_get_status_distribution(
     session_token: String,
     state: AppState<'_>,
+    correlation_id: Option<String>,
 ) -> Result<StatusDistribution, ApiError> {
+    let _correlation_id = correlation_id;
     let auth_service = state.auth_service.clone();
     let _current_user = auth_service
         .validate_session(&session_token)

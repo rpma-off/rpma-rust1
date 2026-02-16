@@ -40,6 +40,8 @@ pub struct StatusTransitionRequest {
     pub task_id: String,
     pub new_status: String,
     pub reason: Option<String>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]

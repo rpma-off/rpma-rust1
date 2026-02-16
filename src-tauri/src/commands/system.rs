@@ -14,7 +14,8 @@ pub struct DeviceInfo {
 
 /// Get device information for fingerprinting
 #[tauri::command]
-pub async fn get_device_info() -> Result<DeviceInfo, String> {
+pub async fn get_device_info(correlation_id: Option<String>) -> Result<DeviceInfo, String> {
+    let _correlation_id = correlation_id;
     use tokio::time::{timeout, Duration};
 
     // Add 3 second timeout
@@ -168,7 +169,8 @@ fn get_device_id() -> Result<String, String> {
 }
 
 #[tauri::command]
-pub async fn diagnose_database(state: AppState<'_>) -> Result<serde_json::Value, String> {
+pub async fn diagnose_database(state: AppState<'_>, correlation_id: Option<String>) -> Result<serde_json::Value, String> {
+    let _correlation_id = correlation_id;
     let pool = state.db.pool().clone();
 
     tokio::task::spawn_blocking(move || {
@@ -179,7 +181,8 @@ pub async fn diagnose_database(state: AppState<'_>) -> Result<serde_json::Value,
 }
 
 #[tauri::command]
-pub async fn force_wal_checkpoint(state: AppState<'_>) -> Result<String, String> {
+pub async fn force_wal_checkpoint(state: AppState<'_>, correlation_id: Option<String>) -> Result<String, String> {
+    let _correlation_id = correlation_id;
     let pool = state.db.pool().clone();
 
     tokio::task::spawn_blocking(move || {
@@ -191,7 +194,8 @@ pub async fn force_wal_checkpoint(state: AppState<'_>) -> Result<String, String>
 
 /// Health check command
 #[tauri::command]
-pub async fn health_check(state: AppState<'_>) -> Result<String, String> {
+pub async fn health_check(state: AppState<'_>, correlation_id: Option<String>) -> Result<String, String> {
+    let _correlation_id = correlation_id;
     let pool = state.db.pool().clone();
 
     tokio::task::spawn_blocking(move || crate::services::system::SystemService::health_check(&pool))
@@ -201,7 +205,8 @@ pub async fn health_check(state: AppState<'_>) -> Result<String, String> {
 
 /// Get database statistics
 #[tauri::command]
-pub async fn get_database_stats(state: AppState<'_>) -> Result<serde_json::Value, String> {
+pub async fn get_database_stats(state: AppState<'_>, correlation_id: Option<String>) -> Result<serde_json::Value, String> {
+    let _correlation_id = correlation_id;
     let pool = state.db.pool().clone();
 
     tokio::task::spawn_blocking(move || {
@@ -213,7 +218,8 @@ pub async fn get_database_stats(state: AppState<'_>) -> Result<serde_json::Value
 
 /// Get application information
 #[tauri::command]
-pub async fn get_app_info() -> Result<serde_json::Value, String> {
+pub async fn get_app_info(correlation_id: Option<String>) -> Result<serde_json::Value, String> {
+    let _correlation_id = correlation_id;
     use std::collections::HashMap;
 
     let mut info = HashMap::new();
