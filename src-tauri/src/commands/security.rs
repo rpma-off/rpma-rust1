@@ -48,6 +48,8 @@ pub struct SecurityAlertResponse {
 #[derive(Deserialize, Debug)]
 pub struct GetSecurityMetricsRequest {
     pub session_token: String,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 /// Get security metrics
@@ -57,6 +59,8 @@ pub async fn get_security_metrics(
     request: GetSecurityMetricsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<SecurityMetricsResponse>, AppError> {
+    let correlation_id = request.correlation_id.clone();
+
     // Check if user is admin
     let _current_user = authenticate!(
         &request.session_token,
@@ -77,13 +81,15 @@ pub async fn get_security_metrics(
         suspicious_activities_detected: metrics.suspicious_activities_detected,
     };
 
-    Ok(ApiResponse::success(response))
+    Ok(ApiResponse::success(response).with_correlation_id(correlation_id.clone()))
 }
 
 #[derive(Deserialize, Debug)]
 pub struct GetSecurityEventsRequest {
     pub session_token: String,
     pub limit: Option<usize>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 /// Get recent security events
@@ -93,6 +99,8 @@ pub async fn get_security_events(
     request: GetSecurityEventsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<SecurityEventResponse>>, AppError> {
+    let correlation_id = request.correlation_id.clone();
+
     // Check if user is admin
     let _current_user = authenticate!(
         &request.session_token,
@@ -121,12 +129,14 @@ pub async fn get_security_events(
         })
         .collect();
 
-    Ok(ApiResponse::success(response))
+    Ok(ApiResponse::success(response).with_correlation_id(correlation_id.clone()))
 }
 
 #[derive(Deserialize, Debug)]
 pub struct GetSecurityAlertsRequest {
     pub session_token: String,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 /// Get active security alerts
@@ -136,6 +146,8 @@ pub async fn get_security_alerts(
     request: GetSecurityAlertsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<SecurityAlertResponse>>, AppError> {
+    let correlation_id = request.correlation_id.clone();
+
     // Check if user is admin
     let _current_user = authenticate!(
         &request.session_token,
@@ -165,13 +177,15 @@ pub async fn get_security_alerts(
         })
         .collect();
 
-    Ok(ApiResponse::success(response))
+    Ok(ApiResponse::success(response).with_correlation_id(correlation_id.clone()))
 }
 
 #[derive(Deserialize, Debug)]
 pub struct AcknowledgeSecurityAlertRequest {
     pub session_token: String,
     pub alert_id: String,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 /// Acknowledge a security alert
@@ -181,6 +195,8 @@ pub async fn acknowledge_security_alert(
     request: AcknowledgeSecurityAlertRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id = request.correlation_id.clone();
+
     // Check if user is admin
     let current_user = authenticate!(
         &request.session_token,
@@ -201,7 +217,7 @@ pub async fn acknowledge_security_alert(
     info!(alert_id = %request.alert_id, user_id = %current_user.user_id, "Security alert acknowledged");
     Ok(ApiResponse::success(
         "Alert acknowledged successfully".to_string(),
-    ))
+    ).with_correlation_id(correlation_id.clone()))
 }
 
 #[derive(Deserialize, Debug)]
@@ -209,6 +225,8 @@ pub struct ResolveSecurityAlertRequest {
     pub session_token: String,
     pub alert_id: String,
     pub actions_taken: Vec<String>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 /// Resolve a security alert
@@ -218,6 +236,8 @@ pub async fn resolve_security_alert(
     request: ResolveSecurityAlertRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id = request.correlation_id.clone();
+
     // Check if user is admin
     let _current_user = authenticate!(
         &request.session_token,
@@ -238,12 +258,14 @@ pub async fn resolve_security_alert(
     info!(alert_id = %request.alert_id, "Security alert resolved");
     Ok(ApiResponse::success(
         "Alert resolved successfully".to_string(),
-    ))
+    ).with_correlation_id(correlation_id.clone()))
 }
 
 #[derive(Deserialize, Debug)]
 pub struct CleanupSecurityEventsRequest {
     pub session_token: String,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 /// Clean up old security events (admin only)
@@ -253,6 +275,8 @@ pub async fn cleanup_security_events(
     request: CleanupSecurityEventsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id = request.correlation_id.clone();
+
     // Check if user is admin
     let _current_user = authenticate!(
         &request.session_token,
@@ -273,7 +297,7 @@ pub async fn cleanup_security_events(
     info!("Security events cleaned up");
     Ok(ApiResponse::success(
         "Security events cleaned up successfully".to_string(),
-    ))
+    ).with_correlation_id(correlation_id.clone()))
 }
 
 /// Get active sessions for the current user
@@ -281,6 +305,7 @@ pub async fn cleanup_security_events(
 #[instrument(skip(state, session_token))]
 pub async fn get_active_sessions(
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<crate::models::auth::UserSession>>, AppError> {
     // Authenticate the user
@@ -301,7 +326,7 @@ pub async fn get_active_sessions(
             AppError::Internal("Failed to get active sessions".to_string())
         })?;
 
-    Ok(ApiResponse::success(sessions))
+    Ok(ApiResponse::success(sessions).with_correlation_id(correlation_id.clone()))
 }
 
 /// Revoke a specific session
@@ -310,6 +335,7 @@ pub async fn get_active_sessions(
 pub async fn revoke_session(
     session_id: String,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
     // Authenticate the user
@@ -342,7 +368,7 @@ pub async fn revoke_session(
         info!(session_id = %session_id, user_id = %current_user.user_id, "Session revoked");
         Ok(ApiResponse::success(
             "Session revoked successfully".to_string(),
-        ))
+        ).with_correlation_id(correlation_id.clone()))
     } else {
         Err(AppError::NotFound("Session not found".to_string()))
     }
@@ -353,6 +379,7 @@ pub async fn revoke_session(
 #[instrument(skip(state, session_token))]
 pub async fn revoke_all_sessions_except_current(
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<u32>, AppError> {
     // Authenticate the user
@@ -381,7 +408,7 @@ pub async fn revoke_all_sessions_except_current(
         })?;
 
     info!(user_id = %current_user.user_id, revoked_count = revoked_count, "Revoked all other sessions");
-    Ok(ApiResponse::success(revoked_count))
+    Ok(ApiResponse::success(revoked_count).with_correlation_id(correlation_id.clone()))
 }
 
 /// Update session timeout configuration (admin only)
@@ -390,6 +417,7 @@ pub async fn revoke_all_sessions_except_current(
 pub async fn update_session_timeout(
     timeout_minutes: u32,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
     // Check if user is admin
@@ -424,7 +452,7 @@ pub async fn update_session_timeout(
     Ok(ApiResponse::success(format!(
         "Session timeout updated to {} minutes",
         timeout_minutes
-    )))
+    )).with_correlation_id(correlation_id.clone()))
 }
 
 /// Get session timeout configuration
@@ -432,6 +460,7 @@ pub async fn update_session_timeout(
 #[instrument(skip(state, session_token))]
 pub async fn get_session_timeout_config(
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<crate::models::auth::SessionTimeoutConfig>, AppError> {
     // Authenticate the user (any authenticated user can view config)
@@ -443,5 +472,5 @@ pub async fn get_session_timeout_config(
     .await?;
 
     let config = state.session_service.get_session_timeout_config().await;
-    Ok(ApiResponse::success(config))
+    Ok(ApiResponse::success(config).with_correlation_id(correlation_id.clone()))
 }
