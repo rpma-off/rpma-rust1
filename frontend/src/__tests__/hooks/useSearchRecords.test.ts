@@ -1,10 +1,10 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useSearchRecords } from '../../hooks/useSearchRecords';
 import { AuthSecureStorage } from '../../lib/secureStorage';
+import { safeInvoke } from '../../lib/ipc/utils';
 
-// Mock Tauri invoke
-jest.mock('@tauri-apps/api/core', () => ({
-  invoke: jest.fn(),
+jest.mock('../../lib/ipc/utils', () => ({
+  safeInvoke: jest.fn(),
 }));
 
 jest.mock('../../lib/secureStorage', () => ({
@@ -13,14 +13,12 @@ jest.mock('../../lib/secureStorage', () => ({
   },
 }));
 
-import { invoke } from '@tauri-apps/api/core';
-
-const mockInvoke = invoke as jest.MockedFunction<typeof invoke>;
+const mockSafeInvoke = safeInvoke as jest.MockedFunction<typeof safeInvoke>;
 const mockGetSession = AuthSecureStorage.getSession as jest.MockedFunction<typeof AuthSecureStorage.getSession>;
 
 describe('useSearchRecords', () => {
   beforeEach(() => {
-    mockInvoke.mockClear();
+    mockSafeInvoke.mockClear();
     mockGetSession.mockResolvedValue({ token: 'test-token', user: null, refreshToken: null });
   });
 
@@ -37,7 +35,7 @@ describe('useSearchRecords', () => {
   });
 
   it('calls invoke with correct parameters when searching', async () => {
-    mockInvoke.mockResolvedValue({
+    mockSafeInvoke.mockResolvedValue({
       results: [],
       total_count: 0,
       has_more: false,
@@ -54,7 +52,7 @@ describe('useSearchRecords', () => {
       await result.current.search(searchQuery, entityType, dateRange, filters);
     });
 
-    expect(mockInvoke).toHaveBeenCalledWith('search_records', {
+    expect(mockSafeInvoke).toHaveBeenCalledWith('search_records', {
       query: searchQuery,
       entityType,
       dateRange,
@@ -82,7 +80,7 @@ describe('useSearchRecords', () => {
       has_more: false,
     };
 
-    mockInvoke.mockResolvedValue(mockResponse);
+    mockSafeInvoke.mockResolvedValue(mockResponse);
 
     const { result } = renderHook(() => useSearchRecords());
 
@@ -99,7 +97,7 @@ describe('useSearchRecords', () => {
 
   it('handles search errors correctly', async () => {
     const errorMessage = 'Search failed';
-    mockInvoke.mockRejectedValue(new Error(errorMessage));
+    mockSafeInvoke.mockRejectedValue(new Error(errorMessage));
 
     const { result } = renderHook(() => useSearchRecords());
 
@@ -120,7 +118,7 @@ describe('useSearchRecords', () => {
       resolvePromise = resolve;
     });
 
-    mockInvoke.mockReturnValue(promise as Promise<unknown>);
+    mockSafeInvoke.mockReturnValue(promise as Promise<unknown>);
 
     const { result } = renderHook(() => useSearchRecords());
 
@@ -157,7 +155,7 @@ describe('useSearchRecords', () => {
   });
 
   it('uses custom limit and offset', async () => {
-    mockInvoke.mockResolvedValue({
+    mockSafeInvoke.mockResolvedValue({
       results: [],
       total_count: 0,
       has_more: false,
@@ -169,7 +167,7 @@ describe('useSearchRecords', () => {
       await result.current.search('test', 'task');
     });
 
-    expect(mockInvoke).toHaveBeenCalledWith('search_records', {
+    expect(mockSafeInvoke).toHaveBeenCalledWith('search_records', {
       query: 'test',
       entityType: 'task',
       dateRange: undefined,
@@ -181,7 +179,7 @@ describe('useSearchRecords', () => {
   });
 
   it('handles undefined dateRange and filters', async () => {
-    mockInvoke.mockResolvedValue({
+    mockSafeInvoke.mockResolvedValue({
       results: [],
       total_count: 0,
       has_more: false,
@@ -193,7 +191,7 @@ describe('useSearchRecords', () => {
       await result.current.search('test', 'task', undefined, undefined);
     });
 
-    expect(mockInvoke).toHaveBeenCalledWith('search_records', {
+    expect(mockSafeInvoke).toHaveBeenCalledWith('search_records', {
       query: 'test',
       entityType: 'task',
       dateRange: undefined,
@@ -205,7 +203,7 @@ describe('useSearchRecords', () => {
   });
 
   it('handles different entity types', async () => {
-    mockInvoke.mockResolvedValue({
+    mockSafeInvoke.mockResolvedValue({
       results: [],
       total_count: 0,
       has_more: false,
@@ -217,7 +215,7 @@ describe('useSearchRecords', () => {
       await result.current.search('test', 'client');
     });
 
-    expect(mockInvoke).toHaveBeenCalledWith('search_records', {
+    expect(mockSafeInvoke).toHaveBeenCalledWith('search_records', {
       query: 'test',
       entityType: 'client',
       dateRange: undefined,

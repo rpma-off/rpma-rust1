@@ -100,6 +100,7 @@ pub use system::{
 pub use analytics::analytics_get_summary;
 
 use crate::db::Database;
+use crate::logging::correlation::generate_correlation_id;
 use crate::models::auth::UserRole;
 use crate::models::client::ClientWithTasks;
 use crate::models::task::*;
@@ -393,7 +394,7 @@ impl<T> ApiResponse<T> {
             success: true,
             data: Some(data),
             error: None,
-            correlation_id: None,
+            correlation_id: Some(generate_correlation_id()),
         }
     }
 
@@ -406,7 +407,7 @@ impl<T> ApiResponse<T> {
                 code: error.code().to_string(),
                 details: None,
             }),
-            correlation_id: None,
+            correlation_id: Some(generate_correlation_id()),
         }
     }
 
@@ -419,13 +420,13 @@ impl<T> ApiResponse<T> {
                 code: "UNKNOWN".to_string(),
                 details: None,
             }),
-            correlation_id: None,
+            correlation_id: Some(generate_correlation_id()),
         }
     }
 
     /// Set the correlation ID on this response for end-to-end tracing
     pub fn with_correlation_id(mut self, correlation_id: Option<String>) -> Self {
-        self.correlation_id = correlation_id;
+        self.correlation_id = correlation_id.or_else(|| Some(generate_correlation_id()));
         self
     }
 
@@ -948,19 +949,19 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_api_response_success_has_no_correlation_id_by_default() {
+    fn test_api_response_success_has_correlation_id_by_default() {
         let response: ApiResponse<String> = ApiResponse::success("test data".to_string());
         assert!(response.success);
-        assert!(response.correlation_id.is_none());
+        assert!(response.correlation_id.is_some());
         assert_eq!(response.data.as_deref(), Some("test data"));
     }
 
     #[test]
-    fn test_api_response_error_has_no_correlation_id_by_default() {
+    fn test_api_response_error_has_correlation_id_by_default() {
         let response: ApiResponse<String> =
             ApiResponse::error(AppError::Validation("bad input".to_string()));
         assert!(!response.success);
-        assert!(response.correlation_id.is_none());
+        assert!(response.correlation_id.is_some());
         assert!(response.error.is_some());
     }
 
@@ -994,7 +995,7 @@ mod tests {
     fn test_api_response_with_none_correlation_id() {
         let response: ApiResponse<i32> = ApiResponse::success(42).with_correlation_id(None);
         assert!(response.success);
-        assert!(response.correlation_id.is_none());
+        assert!(response.correlation_id.is_some());
     }
 
     #[test]
@@ -1014,7 +1015,7 @@ mod tests {
         let result: AppResult<String> = Ok("hello".to_string());
         let response: ApiResponse<String> = result.into();
         assert!(response.success);
-        assert!(response.correlation_id.is_none());
+        assert!(response.correlation_id.is_some());
     }
 
     #[test]
@@ -1022,7 +1023,7 @@ mod tests {
         let result: AppResult<String> = Err(AppError::Internal("server error".to_string()));
         let response: ApiResponse<String> = result.into();
         assert!(!response.success);
-        assert!(response.correlation_id.is_none());
+        assert!(response.correlation_id.is_some());
     }
 
     #[test]
@@ -1034,9 +1035,9 @@ mod tests {
     }
 
     #[test]
-    fn test_api_response_serialization_omits_none_correlation_id() {
+    fn test_api_response_serialization_includes_generated_correlation_id() {
         let response: ApiResponse<String> = ApiResponse::success("test".to_string());
         let json = serde_json::to_string(&response).unwrap();
-        assert!(!json.contains("correlation_id"));
+        assert!(json.contains("\"correlation_id\":\""));
     }
 }

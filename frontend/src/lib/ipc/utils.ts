@@ -50,6 +50,7 @@ interface BackendResponse<T = JsonValue> {
   type: string;
   payload?: T;
   error?: LocalApiError;
+  correlation_id?: string;
 }
 
 interface EnhancedError extends Error {
@@ -67,8 +68,12 @@ export async function safeInvoke<T>(
 ): Promise<T> {
   const startTime = performance.now();
 
-  // Generate or use existing correlation ID
-  const correlationId = CorrelationContext.getCurrentId() || CorrelationContext.generateNew();
+  const providedCorrelationId = typeof args?.correlation_id === 'string' ? args.correlation_id : undefined;
+  if (providedCorrelationId) {
+    CorrelationContext.set({ correlation_id: providedCorrelationId });
+  }
+  const correlationId = providedCorrelationId || CorrelationContext.getCurrentId() || CorrelationContext.generateNew();
+  let effectiveCorrelationId = correlationId;
 
   // Ensure correlation ID is in the args
   const argsWithCorrelation: JsonObject = {
@@ -111,6 +116,7 @@ export async function safeInvoke<T>(
       const apiResult = result as ApiResponse<T>;
       // Extract correlation_id echoed back from backend
       const backendCorrelationId = (apiResult as ApiResponse<T> & { correlation_id?: string }).correlation_id ?? correlationId;
+      effectiveCorrelationId = backendCorrelationId;
 
       if (!apiResult.success) {
         const errorMsg = apiResult.error?.message || 'Unknown error';
@@ -140,6 +146,7 @@ export async function safeInvoke<T>(
     } else if (result && typeof result === 'object' && 'type' in result) {
       // Handle backend response format
       const backendResult = result as BackendResponse<T>;
+      effectiveCorrelationId = backendResult.correlation_id ?? effectiveCorrelationId;
       if (backendResult.error) {
         const errObj = typeof backendResult.error === 'string'
           ? { message: backendResult.error, code: 'UNKNOWN', details: undefined }
@@ -149,7 +156,7 @@ export async function safeInvoke<T>(
 
         logger.error(LogDomain.API, `IPC call failed: ${command}`, {
           command,
-          correlation_id: correlationId,
+          correlation_id: effectiveCorrelationId,
           error: errorMsg,
           error_code: errorCode,
           duration_ms: Math.round(duration),
@@ -161,7 +168,7 @@ export async function safeInvoke<T>(
         error.code = errorCode;
         error.originalMessage = errorMsg;
         error.details = (errObj.details as Record<string, unknown> | null) ?? null;
-        error.correlationId = correlationId;
+        error.correlationId = effectiveCorrelationId;
         throw error;
       }
       const payload = backendResult.payload as JsonValue;
@@ -174,7 +181,7 @@ export async function safeInvoke<T>(
     // Log successful response
     logger.info(LogDomain.API, `IPC call completed: ${command}`, {
       command,
-      correlation_id: correlationId,
+      correlation_id: effectiveCorrelationId,
       duration_ms: Math.round(duration),
       response_type: Array.isArray(data) ? `Array(${data.length})` : typeof data,
     });
@@ -230,7 +237,7 @@ export async function safeInvoke<T>(
 
     logger.error(LogDomain.API, `IPC call error: ${command}`, error instanceof Error ? error : new Error(errorMessage), {
       command,
-      correlation_id: correlationId,
+      correlation_id: effectiveCorrelationId,
       duration_ms: Math.round(duration),
       error_details: errorDetails,
     });

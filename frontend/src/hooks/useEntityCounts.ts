@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { safeInvoke } from '@/lib/ipc/utils';
 import { AuthSecureStorage } from '@/lib/secureStorage';
 
 interface EntityCounts {
@@ -30,7 +30,7 @@ export function useEntityCounts(): UseEntityCountsReturn {
         throw new Error('Authentication required');
       }
 
-      const response: Record<string, number> = await invoke('get_entity_counts', {
+      const response: Record<string, number> = await safeInvoke('get_entity_counts', {
         sessionToken: session.token
       });
       setCounts({
