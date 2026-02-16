@@ -35,9 +35,11 @@ pub async fn get_data_consent(
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<DataConsent>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Getting data consent information");
 
     let user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&user.user_id);
     let consent_service = ConsentService::new(Arc::new((*state.db).clone()));
 
     let consent = consent_service
@@ -54,10 +56,11 @@ pub async fn update_data_consent(
     request: UpdateDataConsentRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<DataConsent>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("Updating data consent preferences");
 
-    let correlation_id = request.correlation_id.clone();
     let user = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&user.user_id);
     let consent_service = ConsentService::new(Arc::new((*state.db).clone()));
 
     let consent = consent_service

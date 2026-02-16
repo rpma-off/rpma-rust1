@@ -60,10 +60,11 @@ pub async fn update_notification_settings(
     request: UpdateNotificationSettingsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("Updating notification settings");
 
-    let correlation_id = request.correlation_id.clone();
     let user = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&user.user_id);
 
     // Only admins can update system notification settings
     if !matches!(user.role, crate::models::auth::UserRole::Admin) {
@@ -111,10 +112,11 @@ pub async fn update_user_notifications(
     request: UpdateUserNotificationsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("Updating user notification settings");
 
-    let correlation_id = request.correlation_id.clone();
     let user = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&user.user_id);
 
     let mut notification_settings: UserNotificationSettings = state
         .settings_service

@@ -57,10 +57,12 @@ pub async fn update_general_settings(
     request: UpdateGeneralSettingsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("Updating general settings");
 
-    let correlation_id = request.correlation_id.clone();
+    let correlation_id_clone = request.correlation_id.clone();
     let user = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&user.user_id);
 
     // Only admins can update system-wide settings
     if !matches!(user.role, crate::models::auth::UserRole::Admin) {
@@ -90,7 +92,7 @@ pub async fn update_general_settings(
     update_app_settings(app_settings)
         .map(|_| {
             ApiResponse::success("General settings updated successfully".to_string())
-                .with_correlation_id(correlation_id.clone())
+                .with_correlation_id(correlation_id_clone.clone())
         })
         .map_err(|e| AppError::Database(e))
 }
@@ -102,10 +104,12 @@ pub async fn update_user_preferences(
     request: UpdateUserPreferencesRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("Updating user preferences");
 
-    let correlation_id = request.correlation_id.clone();
+    let correlation_id_clone = request.correlation_id.clone();
     let user = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&user.user_id);
 
     let mut preferences: UserPreferences = state
         .settings_service
@@ -167,7 +171,7 @@ pub async fn update_user_preferences(
         .update_user_preferences(&user.id, &preferences)
         .map(|_| {
             ApiResponse::success("User preferences updated successfully".to_string())
-                .with_correlation_id(correlation_id.clone())
+                .with_correlation_id(correlation_id_clone.clone())
         })
         .map_err(|e| handle_settings_error(e, "Update user preferences"))
 }
@@ -181,9 +185,11 @@ pub async fn update_user_performance(
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id_init = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Updating user performance settings");
 
     let user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&user.user_id);
 
     state
         .settings_service

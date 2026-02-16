@@ -16,8 +16,10 @@ pub async fn search_tasks(
     filters: SearchFilters,
     limit: Option<i32>,
     session_token: String,
+    correlation_id: Option<String>,
     _state: AppState<'_>,
 ) -> AppResult<Vec<SearchResult>> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Searching tasks with query: {}", query);
 
     // TODO: Implement search service
@@ -42,8 +44,10 @@ pub async fn search_clients(
     filters: SearchFilters,
     limit: Option<i32>,
     session_token: String,
+    correlation_id: Option<String>,
     _state: AppState<'_>,
 ) -> AppResult<Vec<SearchResult>> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Searching clients with query: {}", query);
 
     // TODO: Implement search service
@@ -61,8 +65,10 @@ pub async fn search_interventions(
     filters: SearchFilters,
     limit: Option<i32>,
     session_token: String,
+    correlation_id: Option<String>,
     _state: AppState<'_>,
 ) -> AppResult<Vec<SearchResult>> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Searching interventions with query: {}", query);
 
     // TODO: Implement search service
@@ -83,8 +89,10 @@ pub async fn search_records(
     limit: u64,
     offset: u64,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> AppResult<SearchResponse> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!(
         "Search records requested: query='{}', entity_type='{}'",
         query, entity_type
@@ -99,6 +107,7 @@ pub async fn search_records(
                 search_filters,
                 Some(limit as i32),
                 session_token,
+                correlation_id.clone(),
                 state,
             )
             .await?;
@@ -115,6 +124,7 @@ pub async fn search_records(
                 search_filters,
                 Some(limit as i32),
                 session_token,
+                correlation_id.clone(),
                 state,
             )
             .await?;
@@ -131,6 +141,7 @@ pub async fn search_records(
                 search_filters,
                 Some(limit as i32),
                 session_token,
+                correlation_id.clone(),
                 state,
             )
             .await?;

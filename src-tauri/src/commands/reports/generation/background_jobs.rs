@@ -17,14 +17,17 @@ pub async fn submit_report_job(
     date_range: DateRange,
     filters: ReportFilters,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> AppResult<String> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!(
         "Submitting background report job for type: {:?}",
         report_type
     );
 
     let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Validate date range
     validation::validate_date_range(&date_range)?;
@@ -68,11 +71,14 @@ pub async fn submit_task_completion_report_job(
     date_range: DateRange,
     filters: ReportFilters,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> AppResult<String> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Submitting background job for task completion report");
 
     let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Validate date range
     validation::validate_date_range(&date_range)?;
@@ -131,11 +137,14 @@ pub async fn cancel_report_job(
 pub async fn get_report_job_result(
     job_id: String,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> AppResult<serde_json::Value> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Getting report job result for job: {}", job_id);
 
     let _current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&_current_user.user_id);
 
     // Check job status first
     let job_status = state.report_job_service().get_job_status(&job_id).await?;

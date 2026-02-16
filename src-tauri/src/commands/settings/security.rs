@@ -44,10 +44,11 @@ pub async fn update_security_settings(
     request: UpdateSecuritySettingsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("Updating security settings");
 
-    let correlation_id = request.correlation_id.clone();
     let user = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&user.user_id);
 
     // Only admins can update system security settings
     if !matches!(user.role, crate::models::auth::UserRole::Admin) {
@@ -92,10 +93,11 @@ pub async fn update_user_security(
     request: UpdateUserSecurityRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("Updating user security settings");
 
-    let correlation_id = request.correlation_id.clone();
     let user = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&user.user_id);
 
     let mut security_settings: UserSecuritySettings = state
         .settings_service
