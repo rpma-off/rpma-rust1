@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ipcClient } from '@/lib/ipc';
+import type { JsonObject } from '@/types/json';
 import type {
   Quote,
   QuoteListResponse,
@@ -133,7 +134,7 @@ export function useCreateQuote() {
         setLoading(true);
         setError(null);
         const result = await ipcClient.quotes.create(
-          data as unknown as Record<string, unknown>,
+          data as unknown as JsonObject,
           user.token,
         );
         const response = result as unknown as ApiResponse<Quote>;
@@ -172,7 +173,7 @@ export function useUpdateQuote() {
         setError(null);
         const result = await ipcClient.quotes.update(
           id,
-          data as unknown as Record<string, unknown>,
+          data as unknown as JsonObject,
           user.token,
         );
         const response = result as unknown as ApiResponse<Quote>;
@@ -235,7 +236,7 @@ export function useQuoteItems() {
         setLoading(true);
         const result = await ipcClient.quotes.addItem(
           quoteId,
-          item as unknown as Record<string, unknown>,
+          item as unknown as JsonObject,
           user.token,
         );
         const response = result as unknown as ApiResponse<Quote>;
@@ -257,7 +258,7 @@ export function useQuoteItems() {
         const result = await ipcClient.quotes.updateItem(
           quoteId,
           itemId,
-          data as unknown as Record<string, unknown>,
+          data as unknown as JsonObject,
           user.token,
         );
         const response = result as unknown as ApiResponse<Quote>;

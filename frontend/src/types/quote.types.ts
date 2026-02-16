@@ -177,4 +177,5 @@ export interface QuoteFilters {
   limit?: number;
   sort_by?: string;
   sort_order?: 'asc' | 'desc';
+  [key: string]: string | number | null | undefined;
 }

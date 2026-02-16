@@ -2,15 +2,13 @@
 
 import { useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth/compatibility';
 import {
   ArrowLeft, Send, CheckCircle, XCircle, FileDown,
-  Plus, Trash2, Edit2,
+  Plus, Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
   useQuote,
-  useUpdateQuote,
   useDeleteQuote,
   useQuoteItems,
   useQuoteStatus,
@@ -42,11 +40,9 @@ function formatCents(cents: number): string {
 export default function QuoteDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useAuth();
   const quoteId = params?.id as string;
 
   const { quote, loading, error, refetch } = useQuote(quoteId);
-  const { updateQuote } = useUpdateQuote();
   const { deleteQuote } = useDeleteQuote();
   const { addItem, deleteItem } = useQuoteItems();
   const { markSent, markAccepted, markRejected, loading: statusLoading } = useQuoteStatus();
@@ -58,7 +54,7 @@ export default function QuoteDetailPage() {
   const [newKind, setNewKind] = useState<QuoteItemKind>('service');
   const [newQty, setNewQty] = useState(1);
   const [newUnitPrice, setNewUnitPrice] = useState(0);
-  const [newTaxRate, setNewTaxRate] = useState(20);
+  const [newTaxRate] = useState(20);
 
   const handleAddItem = useCallback(async () => {
     if (!newLabel.trim() || !quoteId) return;

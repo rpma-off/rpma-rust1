@@ -32,7 +32,7 @@ interface MockWindow extends Window {
     listen: (event: string, handler: TauriEventHandler) => Promise<() => void>;
     emit: (event: string, payload?: JsonValue) => Promise<void>;
   };
-  __TAURI_EVENT_PLUGIN_INTERNALS__?: {
+  __TAURI_EVENT_PLUGIN_INTERNALS__: {
     unregisterListener: (event: string, eventId: number) => void;
   };
 }

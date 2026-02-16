@@ -1837,7 +1837,7 @@ export const ipcClient = {
 
   // Quote (Devis) operations
   quotes: {
-    create: async (data: Record<string, unknown>, sessionToken: string) => {
+    create: async (data: JsonObject, sessionToken: string) => {
       const result = await safeInvoke<JsonValue>('quote_create', {
         request: { session_token: sessionToken, data }
       });
@@ -1849,12 +1849,12 @@ export const ipcClient = {
         request: { session_token: sessionToken, id }
       }),
 
-    list: (filters: Record<string, unknown>, sessionToken: string) =>
+    list: (filters: JsonObject, sessionToken: string) =>
       safeInvoke<JsonValue>('quote_list', {
         request: { session_token: sessionToken, filters }
       }),
 
-    update: async (id: string, data: Record<string, unknown>, sessionToken: string) => {
+    update: async (id: string, data: JsonObject, sessionToken: string) => {
       const result = await safeInvoke<JsonValue>('quote_update', {
         request: { session_token: sessionToken, id, data }
       });
@@ -1868,14 +1868,14 @@ export const ipcClient = {
       return result;
     },
 
-    addItem: async (quoteId: string, item: Record<string, unknown>, sessionToken: string) => {
+    addItem: async (quoteId: string, item: JsonObject, sessionToken: string) => {
       const result = await safeInvoke<JsonValue>('quote_item_add', {
         request: { session_token: sessionToken, quote_id: quoteId, item }
       });
       return result;
     },
 
-    updateItem: async (quoteId: string, itemId: string, data: Record<string, unknown>, sessionToken: string) => {
+    updateItem: async (quoteId: string, itemId: string, data: JsonObject, sessionToken: string) => {
       const result = await safeInvoke<JsonValue>('quote_item_update', {
         request: { session_token: sessionToken, quote_id: quoteId, item_id: itemId, data }
       });

@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth/compatibility';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useCreateQuote } from '@/hooks/useQuotes';
@@ -11,7 +10,6 @@ import type { CreateQuoteRequest, CreateQuoteItemRequest, QuoteItemKind } from '
 
 export default function NewQuotePage() {
   const router = useRouter();
-  const { user } = useAuth();
   const { createQuote, loading, error } = useCreateQuote();
 
   const [clientId, setClientId] = useState('');
@@ -28,7 +26,7 @@ export default function NewQuotePage() {
   const [newKind, setNewKind] = useState<QuoteItemKind>('service');
   const [newQty, setNewQty] = useState(1);
   const [newUnitPrice, setNewUnitPrice] = useState(0);
-  const [newTaxRate, setNewTaxRate] = useState(20);
+  const [newTaxRate] = useState(20);
 
   const addItem = () => {
     if (!newLabel.trim()) return;
