@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { safeInvoke } from '@/lib/ipc/utils';
 
 export interface AnalyticsSummary {
   total_interventions: number;
@@ -24,7 +24,7 @@ export function useAnalyticsSummary() {
     try {
       setLoading(true);
       setError(null);
-      const result = await invoke<AnalyticsSummary>('analytics_get_summary', { session_token: 'dummy-session-token' });
+      const result = await safeInvoke<AnalyticsSummary>('analytics_get_summary', { session_token: 'dummy-session-token' });
       setSummary(result);
     } catch (err) {
       setError(err as string);
