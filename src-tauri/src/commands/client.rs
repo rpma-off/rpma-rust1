@@ -170,19 +170,19 @@ pub async fn client_crud(
                         client_service,
                         data,
                         &current_user.user_id,
-                        correlation_id.clone(),
+                        Some(correlation_id.clone()),
                     )
                     .await
                 }
                 ClientAction::Get { id } => {
-                    handle_client_retrieval(client_service, &id, correlation_id.clone()).await
+                    handle_client_retrieval(client_service, &id, Some(correlation_id.clone())).await
                 }
                 ClientAction::GetWithTasks { id } => {
                     handle_client_with_tasks_retrieval(
                         client_service,
                         task_service,
                         &id,
-                        correlation_id.clone(),
+                        Some(correlation_id.clone()),
                     )
                     .await
                 }
@@ -192,7 +192,7 @@ pub async fn client_crud(
                         &id,
                         data,
                         &current_user.user_id,
-                        correlation_id.clone(),
+                        Some(correlation_id.clone()),
                     )
                     .await
                 }
@@ -201,12 +201,12 @@ pub async fn client_crud(
                         client_service,
                         &id,
                         &current_user.user_id,
-                        correlation_id.clone(),
+                        Some(correlation_id.clone()),
                     )
                     .await
                 }
                 ClientAction::List { filters } => {
-                    handle_client_listing(client_service, filters, correlation_id.clone()).await
+                    handle_client_listing(client_service, filters, Some(correlation_id.clone())).await
                 }
                 ClientAction::ListWithTasks {
                     filters,
@@ -217,16 +217,16 @@ pub async fn client_crud(
                         task_service,
                         filters,
                         limit_tasks,
-                        correlation_id.clone(),
+                        Some(correlation_id.clone()),
                     )
                     .await
                 }
                 ClientAction::Search { query, limit } => {
-                    handle_client_search(client_service, &query, limit, correlation_id.clone())
+                    handle_client_search(client_service, &query, limit, Some(correlation_id.clone()))
                         .await
                 }
                 ClientAction::Stats => {
-                    handle_client_statistics(client_service, correlation_id.clone()).await
+                    handle_client_statistics(client_service, Some(correlation_id.clone())).await
                 }
             }
         },

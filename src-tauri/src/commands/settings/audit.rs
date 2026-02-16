@@ -46,7 +46,7 @@ pub async fn get_data_consent(
         .get_consent(&user.id)
         .map_err(|e| AppError::Database(format!("Failed to get consent data: {}", e)))?;
 
-    Ok(ApiResponse::success(consent).with_correlation_id(correlation_id.clone()))
+    Ok(ApiResponse::success(consent).with_correlation_id(Some(correlation_id.clone())))
 }
 
 /// Update data consent preferences
@@ -73,7 +73,7 @@ pub async fn update_data_consent(
         )
         .map_err(|e| AppError::Database(format!("Failed to update consent data: {}", e)))?;
 
-    Ok(ApiResponse::success(consent).with_correlation_id(correlation_id.clone()))
+    Ok(ApiResponse::success(consent).with_correlation_id(Some(correlation_id.clone())))
 }
 
 #[cfg(test)]

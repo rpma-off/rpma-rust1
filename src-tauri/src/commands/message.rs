@@ -20,9 +20,7 @@ pub async fn message_send(
             details: None,
         })?;
 
-    if let Some(session) = &_current_user {
-        crate::commands::update_correlation_context_user(&session.user_id);
-    }
+    crate::commands::update_correlation_context_user(&_current_user.user_id);
 
     state
         .message_service
@@ -54,9 +52,7 @@ pub async fn message_get_list(
             details: None,
         })?;
 
-    if let Some(session) = &_current_user {
-        crate::commands::update_correlation_context_user(&session.user_id);
-    }
+    crate::commands::update_correlation_context_user(&_current_user.user_id);
 
     state
         .message_service
@@ -88,9 +84,7 @@ pub async fn message_mark_read(
             details: None,
         })?;
 
-    if let Some(session) = &_current_user {
-        crate::commands::update_correlation_context_user(&session.user_id);
-    }
+    crate::commands::update_correlation_context_user(&_current_user.user_id);
 
     state
         .message_service
@@ -123,9 +117,7 @@ pub async fn message_get_templates(
             details: None,
         })?;
 
-    if let Some(session) = &_current_user {
-        crate::commands::update_correlation_context_user(&session.user_id);
-    }
+    crate::commands::update_correlation_context_user(&_current_user.user_id);
 
     state
         .message_service
@@ -157,9 +149,7 @@ pub async fn message_get_preferences(
             details: None,
         })?;
 
-    if let Some(session) = &_current_user {
-        crate::commands::update_correlation_context_user(&session.user_id);
-    }
+    crate::commands::update_correlation_context_user(&_current_user.user_id);
 
     state
         .message_service
@@ -192,9 +182,7 @@ pub async fn message_update_preferences(
             details: None,
         })?;
 
-    if let Some(session) = &_current_user {
-        crate::commands::update_correlation_context_user(&session.user_id);
-    }
+    crate::commands::update_correlation_context_user(&_current_user.user_id);
 
     state
         .message_service

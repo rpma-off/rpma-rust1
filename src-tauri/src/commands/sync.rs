@@ -20,9 +20,7 @@ pub async fn sync_start_background_service(
             error!(error = %e, "Authentication failed for sync_start_background_service");
             "Authentication failed".to_string()
         })?;
-    if let Some(session) = current_user {
-        crate::commands::update_correlation_context_user(&session.user_id);
-    }
+    crate::commands::update_correlation_context_user(&current_user.user_id);
     let service_arc = std::sync::Arc::clone(&state.background_sync);
 
     let service_clone = {
@@ -58,9 +56,7 @@ pub async fn sync_stop_background_service(
             error!(error = %e, "Authentication failed for sync_stop_background_service");
             "Authentication failed".to_string()
         })?;
-    if let Some(session) = current_user {
-        crate::commands::update_correlation_context_user(&session.user_id);
-    }
+    crate::commands::update_correlation_context_user(&current_user.user_id);
     let service_arc = std::sync::Arc::clone(&state.background_sync);
 
     let service_clone = {
@@ -92,9 +88,7 @@ pub async fn sync_now(correlation_id: Option<String>, session_token: String, sta
             error!(error = %e, "Authentication failed for sync_now");
             "Authentication failed".to_string()
         })?;
-    if let Some(session) = current_user {
-        crate::commands::update_correlation_context_user(&session.user_id);
-    }
+    crate::commands::update_correlation_context_user(&current_user.user_id);
     let service_arc = std::sync::Arc::clone(&state.background_sync);
 
     let service_clone = {
@@ -130,9 +124,7 @@ pub async fn sync_get_status(
             error!(error = %e, "Authentication failed for sync_get_status");
             "Authentication failed".to_string()
         })?;
-    if let Some(session) = current_user {
-        crate::commands::update_correlation_context_user(&session.user_id);
-    }
+    crate::commands::update_correlation_context_user(&current_user.user_id);
     let service_arc = std::sync::Arc::clone(&state.background_sync);
 
     let service_clone = {
@@ -180,9 +172,7 @@ pub fn sync_get_operations_for_entity(
             error!(error = %e, "Authentication failed for sync_get_operations_for_entity");
             "Authentication failed".to_string()
         })?;
-    if let Some(session) = current_user {
-        crate::commands::update_correlation_context_user(&session.user_id);
-    }
+    crate::commands::update_correlation_context_user(&current_user.user_id);
     let queue = std::sync::Arc::clone(&state.sync_queue);
     queue
         .get_operations_for_entity(&entity_id, &entity_type)

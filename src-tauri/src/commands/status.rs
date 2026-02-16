@@ -22,9 +22,7 @@ pub async fn task_transition_status(
         })?;
 
     // Update correlation context with user_id
-    if let Some(session) = current_user {
-        crate::commands::update_correlation_context_user(&session.user_id);
-    }
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     state
         .task_service
@@ -60,9 +58,7 @@ pub async fn task_get_status_distribution(
         })?;
 
     // Update correlation context with user_id
-    if let Some(session) = current_user {
-        crate::commands::update_correlation_context_user(&session.user_id);
-    }
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     state
         .task_service

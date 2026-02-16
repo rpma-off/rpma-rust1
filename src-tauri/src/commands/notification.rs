@@ -65,9 +65,7 @@ pub async fn initialize_notification_service(
     })?;
 
     // Update correlation context with user_id
-    if let Some(session) = current_user {
-        crate::commands::update_correlation_context_user(&session.user_id);
-    }
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     let email_config = if let (Some(provider), Some(api_key), Some(from_email), Some(from_name)) = (
         config.email_provider,
@@ -150,9 +148,7 @@ pub async fn send_notification(
     })?;
 
     // Update correlation context with user_id
-    if let Some(session) = current_user {
-        crate::commands::update_correlation_context_user(&session.user_id);
-    }
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     let service_guard = NOTIFICATION_SERVICE.lock().await;
     let service = service_guard
@@ -190,9 +186,7 @@ pub async fn test_notification_config(
     })?;
 
     // Update correlation context with user_id
-    if let Some(session) = current_user {
-        crate::commands::update_correlation_context_user(&session.user_id);
-    }
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     let service_guard = NOTIFICATION_SERVICE.lock().await;
     let service = service_guard
@@ -250,9 +244,7 @@ pub async fn get_notification_status(
     })?;
 
     // Update correlation context with user_id
-    if let Some(session) = current_user {
-        crate::commands::update_correlation_context_user(&session.user_id);
-    }
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     let service_guard = NOTIFICATION_SERVICE.lock().await;
     let _is_initialized = service_guard.is_some();
