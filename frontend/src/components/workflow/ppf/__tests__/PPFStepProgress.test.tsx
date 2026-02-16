@@ -56,4 +56,13 @@ describe('PPFStepProgress', () => {
 
     expect(mockPush).toHaveBeenCalledWith('/tasks/task-42/workflow/ppf/steps/preparation');
   });
+
+  it('supports space key activation for accessible steps', () => {
+    render(<PPFStepProgress />);
+
+    fireEvent.keyDown(screen.getByLabelText("Aller à l'étape 2: Préparation"), { key: ' ' });
+    fireEvent.keyUp(screen.getByLabelText("Aller à l'étape 2: Préparation"), { key: ' ' });
+
+    expect(mockPush).toHaveBeenCalledWith('/tasks/task-42/workflow/ppf/steps/preparation');
+  });
 });
