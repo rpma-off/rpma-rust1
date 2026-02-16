@@ -137,7 +137,8 @@ pub async fn get_tasks_with_clients(
 
     info!("Retrieved {} tasks with clients (page {})", data_len, page);
 
-    Ok(ApiResponse::success(response))
+    let correlation_id = request.correlation_id.clone();
+    Ok(ApiResponse::success(response).with_correlation_id(correlation_id))
 }
 
 /// Get user assigned tasks
@@ -199,7 +200,8 @@ pub async fn get_user_assigned_tasks(
         target_user_id
     );
 
-    Ok(ApiResponse::success(tasks))
+    let correlation_id = request.correlation_id.clone();
+    Ok(ApiResponse::success(tasks).with_correlation_id(correlation_id))
 }
 
 /// Get task statistics
@@ -245,7 +247,8 @@ pub async fn get_task_statistics(
 
     info!("Retrieved task statistics for filter: {:?}", filter);
 
-    Ok(ApiResponse::success(stats))
+    let correlation_id = request.correlation_id.clone();
+    Ok(ApiResponse::success(stats).with_correlation_id(correlation_id))
 }
 
 /// Get completion rate
@@ -292,7 +295,8 @@ pub async fn get_completion_rate(
 
     info!("Calculated completion rate: {:.2}%", completion_rate);
 
-    Ok(ApiResponse::success(completion_rate))
+    let correlation_id = request.correlation_id.clone();
+    Ok(ApiResponse::success(completion_rate).with_correlation_id(correlation_id))
 }
 
 /// Get average duration by status
@@ -343,7 +347,8 @@ pub async fn get_average_duration_by_status(
         avg_durations.len()
     );
 
-    Ok(ApiResponse::success(avg_durations))
+    let correlation_id = request.correlation_id.clone();
+    Ok(ApiResponse::success(avg_durations).with_correlation_id(correlation_id))
 }
 
 /// Get priority distribution
@@ -396,5 +401,6 @@ pub async fn get_priority_distribution(
         priority_dist.len()
     );
 
-    Ok(ApiResponse::success(priority_dist))
+    let correlation_id = request.correlation_id.clone();
+    Ok(ApiResponse::success(priority_dist).with_correlation_id(correlation_id))
 }

@@ -23,6 +23,8 @@ pub struct UpdateDataConsentRequest {
     pub marketing_consent: Option<bool>,
     pub third_party_sharing: Option<bool>,
     pub data_retention_period: Option<u32>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 /// Get data consent information
@@ -31,6 +33,7 @@ pub struct UpdateDataConsentRequest {
 pub async fn get_data_consent(
     session_token: String,
     state: AppState<'_>,
+    correlation_id: Option<String>,
 ) -> Result<ApiResponse<DataConsent>, AppError> {
     info!("Getting data consent information");
 
@@ -41,7 +44,7 @@ pub async fn get_data_consent(
         .get_consent(&user.id)
         .map_err(|e| AppError::Database(format!("Failed to get consent data: {}", e)))?;
 
-    Ok(ApiResponse::success(consent))
+    Ok(ApiResponse::success(consent).with_correlation_id(correlation_id.clone()))
 }
 
 /// Update data consent preferences
@@ -53,6 +56,7 @@ pub async fn update_data_consent(
 ) -> Result<ApiResponse<DataConsent>, AppError> {
     info!("Updating data consent preferences");
 
+    let correlation_id = request.correlation_id.clone();
     let user = authenticate!(&request.session_token, &state);
     let consent_service = ConsentService::new(Arc::new((*state.db).clone()));
 
@@ -66,7 +70,7 @@ pub async fn update_data_consent(
         )
         .map_err(|e| AppError::Database(format!("Failed to update consent data: {}", e)))?;
 
-    Ok(ApiResponse::success(consent))
+    Ok(ApiResponse::success(consent).with_correlation_id(correlation_id.clone()))
 }
 
 #[cfg(test)]

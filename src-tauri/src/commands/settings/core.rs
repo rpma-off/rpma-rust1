@@ -48,6 +48,7 @@ pub fn update_app_settings(new_settings: AppSettings) -> Result<(), String> {
 pub async fn get_app_settings(
     session_token: String,
     state: AppState<'_>,
+    correlation_id: Option<String>,
 ) -> Result<ApiResponse<AppSettings>, AppError> {
     // Always require authentication and validate admin role
     let user = authenticate_user(&session_token, &state)?;
@@ -60,7 +61,7 @@ pub async fn get_app_settings(
     }
 
     let settings = load_app_settings().map_err(AppError::Database)?;
-    Ok(ApiResponse::success(settings))
+    Ok(ApiResponse::success(settings).with_correlation_id(correlation_id.clone()))
 }
 
 /// Get system configuration with lazy initialization

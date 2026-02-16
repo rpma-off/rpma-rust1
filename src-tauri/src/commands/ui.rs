@@ -106,6 +106,7 @@ pub async fn ui_window_set_always_on_top(
 pub fn dashboard_get_stats(
     state: super::AppState<'_>,
     time_range: Option<String>,
+    correlation_id: Option<String>,
 ) -> Result<super::ApiResponse<serde_json::Value>, super::AppError> {
     use tracing::{debug, error, info};
 
@@ -124,7 +125,7 @@ pub fn dashboard_get_stats(
         })?;
 
     info!("Dashboard statistics retrieved successfully");
-    Ok(super::ApiResponse::success(stats))
+    Ok(super::ApiResponse::success(stats).with_correlation_id(correlation_id.clone()))
 }
 
 /// Get recent activities for admin dashboard

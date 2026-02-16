@@ -92,6 +92,7 @@ pub struct InterventionQueryRequest {
 pub async fn intervention_management(
     action: InterventionManagementAction,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<InterventionManagementResponse>, AppError> {
     info!("Processing intervention management action");
@@ -137,7 +138,7 @@ pub async fn intervention_management(
                 total: total as u64,
                 page,
                 limit,
-            }))
+            }).with_correlation_id(correlation_id.clone()))
         }
 
         InterventionManagementAction::GetStats {
@@ -198,7 +199,7 @@ pub async fn intervention_management(
                 InterventionManagementResponse::Stats {
                     stats: response_stats,
                 },
-            ))
+            ).with_correlation_id(correlation_id.clone()))
         }
 
         InterventionManagementAction::GetByTask {
@@ -253,7 +254,7 @@ pub async fn intervention_management(
 
             Ok(ApiResponse::success(
                 InterventionManagementResponse::ByTask { interventions },
-            ))
+            ).with_correlation_id(correlation_id.clone()))
         }
 
         InterventionManagementAction::BulkUpdate {
@@ -300,7 +301,7 @@ pub async fn intervention_management(
                     updated_count,
                     message: format!("Successfully updated {} interventions", updated_count),
                 },
-            ))
+            ).with_correlation_id(correlation_id.clone()))
         }
     }
 }

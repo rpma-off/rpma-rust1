@@ -155,7 +155,8 @@ pub async fn get_tasks_with_client_details(
         enhanced_tasks.len()
     );
 
-    Ok(ApiResponse::success(enhanced_tasks))
+    let correlation_id = request.correlation_id.clone();
+    Ok(ApiResponse::success(enhanced_tasks).with_correlation_id(correlation_id))
 }
 
 /// Determine the relationship status between task and client
@@ -243,6 +244,7 @@ pub async fn get_client_task_summary(
     session_token: &str,
     client_id: &str,
     state: &AppState<'_>,
+    correlation_id: Option<String>,
 ) -> Result<ApiResponse<crate::services::client::ClientStat>, AppError> {
     debug!("Getting task summary for client {}", client_id);
 
@@ -274,5 +276,5 @@ pub async fn get_client_task_summary(
 
     info!("Retrieved task summary for client {}", client_id);
 
-    Ok(ApiResponse::success(summary))
+    Ok(ApiResponse::success(summary).with_correlation_id(correlation_id))
 }

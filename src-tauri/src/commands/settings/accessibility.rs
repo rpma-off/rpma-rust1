@@ -26,6 +26,8 @@ pub struct UpdateUserAccessibilityRequest {
     pub speech_rate: Option<f32>,
     pub font_size: Option<u32>,
     pub color_blind_mode: Option<String>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 /// Update user accessibility settings
@@ -37,6 +39,7 @@ pub async fn update_user_accessibility(
 ) -> Result<ApiResponse<String>, AppError> {
     info!("Updating user accessibility settings");
 
+    let correlation_id = request.correlation_id.clone();
     let user = authenticate!(&request.session_token, &state);
 
     let mut accessibility_settings: UserAccessibilitySettings = state
@@ -79,6 +82,6 @@ pub async fn update_user_accessibility(
     state
         .settings_service
         .update_user_accessibility(&user.id, &accessibility_settings)
-        .map(|_| ApiResponse::success("Accessibility settings updated successfully".to_string()))
+        .map(|_| ApiResponse::success("Accessibility settings updated successfully".to_string()).with_correlation_id(correlation_id.clone()))
         .map_err(|e| handle_settings_error(e, "Update user accessibility"))
 }

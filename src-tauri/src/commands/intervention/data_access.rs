@@ -16,6 +16,7 @@ use tracing::{error, info, instrument};
 pub async fn intervention_get(
     id: String,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<crate::models::intervention::Intervention>, AppError> {
     let session = authenticate!(&session_token, &state);
@@ -45,7 +46,7 @@ pub async fn intervention_get(
         ));
     }
 
-    Ok(ApiResponse::success(intervention))
+    Ok(ApiResponse::success(intervention).with_correlation_id(correlation_id.clone()))
 }
 
 /// Get active interventions for a specific task
@@ -54,6 +55,7 @@ pub async fn intervention_get(
 pub async fn intervention_get_active_by_task(
     task_id: String,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<crate::models::intervention::Intervention>>, AppError> {
     let session = authenticate!(&session_token, &state);
@@ -82,8 +84,8 @@ pub async fn intervention_get_active_by_task(
         .intervention_service
         .get_active_intervention_by_task(&task_id)
     {
-        Ok(Some(intervention)) => Ok(ApiResponse::success(vec![intervention])),
-        Ok(None) => Ok(ApiResponse::success(vec![])),
+        Ok(Some(intervention)) => Ok(ApiResponse::success(vec![intervention]).with_correlation_id(correlation_id.clone())),
+        Ok(None) => Ok(ApiResponse::success(vec![]).with_correlation_id(correlation_id.clone())),
         Err(e) => {
             error!(error = %e, task_id = %task_id, "Failed to get active interventions");
             Err(AppError::Database(
@@ -99,6 +101,7 @@ pub async fn intervention_get_active_by_task(
 pub async fn intervention_get_latest_by_task(
     task_id: String,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Option<crate::models::intervention::Intervention>>, AppError> {
     let session = authenticate!(&session_token, &state);
@@ -126,7 +129,7 @@ pub async fn intervention_get_latest_by_task(
     state
         .intervention_service
         .get_latest_intervention_by_task(&task_id)
-        .map(ApiResponse::success)
+        .map(|v| ApiResponse::success(v).with_correlation_id(correlation_id.clone()))
         .map_err(|e| {
             error!(error = %e, task_id = %task_id, "Failed to get latest intervention");
             AppError::Database("Failed to get latest intervention".to_string())
@@ -140,6 +143,7 @@ pub async fn intervention_get_step(
     intervention_id: String,
     step_id: String,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<crate::models::step::InterventionStep>, AppError> {
     let session = authenticate!(&session_token, &state);
@@ -186,5 +190,5 @@ pub async fn intervention_get_step(
         })?
         .ok_or_else(|| AppError::NotFound(format!("Step {} not found", step_id)))?;
 
-    Ok(ApiResponse::success(response))
+    Ok(ApiResponse::success(response).with_correlation_id(correlation_id.clone()))
 }

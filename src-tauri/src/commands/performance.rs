@@ -53,6 +53,8 @@ pub struct CacheTypeInfo {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CacheClearRequest {
     pub cache_types: Option<Vec<String>>, // If None, clear all caches
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -60,6 +62,8 @@ pub struct CacheConfigRequest {
     pub max_memory_mb: Option<usize>,
     pub default_ttl_seconds: Option<u64>,
     pub enable_disk_cache: Option<bool>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 /// Get performance statistics
@@ -67,6 +71,7 @@ pub struct CacheConfigRequest {
 #[instrument(skip(state, session_token))]
 pub async fn get_performance_stats(
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<PerformanceStatsResponse>, AppError> {
     // Start performance tracking
@@ -93,7 +98,7 @@ pub async fn get_performance_stats(
         most_frequent_commands: stats.most_frequent_commands,
     };
 
-    Ok(ApiResponse::success(response))
+    Ok(ApiResponse::success(response).with_correlation_id(correlation_id.clone()))
 }
 
 /// Get recent performance metrics
@@ -102,6 +107,7 @@ pub async fn get_performance_stats(
 pub async fn get_performance_metrics(
     session_token: String,
     limit: Option<usize>,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<PerformanceMetricResponse>>, AppError> {
     // Start performance tracking
@@ -128,7 +134,7 @@ pub async fn get_performance_metrics(
         })
         .collect();
 
-    Ok(ApiResponse::success(response))
+    Ok(ApiResponse::success(response).with_correlation_id(correlation_id.clone()))
 }
 
 /// Clean up old performance metrics (admin only)
@@ -136,6 +142,7 @@ pub async fn get_performance_metrics(
 #[instrument(skip(state, session_token))]
 pub async fn cleanup_performance_metrics(
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
     // Check if user is admin
@@ -147,7 +154,8 @@ pub async fn cleanup_performance_metrics(
 
     Ok(ApiResponse::success(
         "Performance metrics cleaned up successfully".to_string(),
-    ))
+    )
+    .with_correlation_id(correlation_id.clone()))
 }
 
 /// Get cache statistics
@@ -155,6 +163,7 @@ pub async fn cleanup_performance_metrics(
 #[instrument(skip(state, session_token))]
 pub async fn get_cache_statistics(
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<CacheStatsResponse>, AppError> {
     // Check if user is admin
@@ -185,7 +194,7 @@ pub async fn get_cache_statistics(
         cache_types,
     };
 
-    Ok(ApiResponse::success(response))
+    Ok(ApiResponse::success(response).with_correlation_id(correlation_id.clone()))
 }
 
 /// Clear application cache
@@ -199,6 +208,7 @@ pub async fn clear_application_cache(
     // Check if user is admin
     let _current_user = authenticate!(&session_token, &state, crate::models::auth::UserRole::Admin);
 
+    let correlation_id = request.correlation_id.clone();
     let cache_manager = CacheManager::default()?;
 
     if let Some(cache_types) = request.cache_types {
@@ -216,13 +226,15 @@ pub async fn clear_application_cache(
         }
         Ok(ApiResponse::success(
             "Specified cache types cleared successfully".to_string(),
-        ))
+        )
+        .with_correlation_id(correlation_id.clone()))
     } else {
         // Clear all caches
         cache_manager.clear_all()?;
         Ok(ApiResponse::success(
             "All caches cleared successfully".to_string(),
-        ))
+        )
+        .with_correlation_id(correlation_id.clone()))
     }
 }
 
@@ -237,11 +249,14 @@ pub async fn configure_cache_settings(
     // Check if user is admin
     let _current_user = authenticate!(&session_token, &state, crate::models::auth::UserRole::Admin);
 
+    let correlation_id = request.correlation_id.clone();
+
     // Note: In a real implementation, this would update the cache manager configuration
     // For now, we'll just return success
     info!("Cache configuration update requested: {:?}", request);
 
     Ok(ApiResponse::success(
         "Cache settings updated successfully".to_string(),
-    ))
+    )
+    .with_correlation_id(correlation_id.clone()))
 }

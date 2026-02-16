@@ -20,6 +20,8 @@ pub struct UpdateUserSecurityRequest {
     pub session_token: String,
     pub two_factor_enabled: Option<bool>,
     pub session_timeout: Option<u32>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -31,6 +33,8 @@ pub struct UpdateSecuritySettingsRequest {
     pub password_require_special_chars: Option<bool>,
     pub password_require_numbers: Option<bool>,
     pub login_attempts_max: Option<u8>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 /// Update security settings (system-wide)
@@ -42,6 +46,7 @@ pub async fn update_security_settings(
 ) -> Result<ApiResponse<String>, AppError> {
     info!("Updating security settings");
 
+    let correlation_id = request.correlation_id.clone();
     let user = authenticate!(&request.session_token, &state);
 
     // Only admins can update system security settings
@@ -73,7 +78,7 @@ pub async fn update_security_settings(
     }
 
     update_app_settings(app_settings)
-        .map(|_| ApiResponse::success("Security settings updated successfully".to_string()))
+        .map(|_| ApiResponse::success("Security settings updated successfully".to_string()).with_correlation_id(correlation_id.clone()))
         .map_err(|e| AppError::Database(e))
 }
 
@@ -86,6 +91,7 @@ pub async fn update_user_security(
 ) -> Result<ApiResponse<String>, AppError> {
     info!("Updating user security settings");
 
+    let correlation_id = request.correlation_id.clone();
     let user = authenticate!(&request.session_token, &state);
 
     let mut security_settings: UserSecuritySettings = state
@@ -104,6 +110,6 @@ pub async fn update_user_security(
     state
         .settings_service
         .update_user_security(&user.id, &security_settings)
-        .map(|_| ApiResponse::success("Security settings updated successfully".to_string()))
+        .map(|_| ApiResponse::success("Security settings updated successfully".to_string()).with_correlation_id(correlation_id.clone()))
         .map_err(|e| handle_settings_error(e, "Update user security"))
 }
