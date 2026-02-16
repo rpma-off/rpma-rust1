@@ -274,6 +274,38 @@ macro_rules! check_user_permission {
     };
 }
 
+/// Macro for setting correlation context at the start of IPC commands
+/// This ensures correlation_id and user_id are available in thread-local storage
+/// for logging throughout the call stack (services, repositories, etc.)
+#[macro_export]
+macro_rules! set_correlation_context {
+    ($correlation_id:expr) => {
+        {
+            let correlation_id = $correlation_id
+                .as_ref()
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| $crate::logging::correlation::generate_correlation_id());
+            let context = $crate::logging::correlation::CorrelationContext::new(correlation_id.clone(), None);
+            $crate::logging::correlation::set_correlation_context(context);
+            correlation_id
+        }
+    };
+    ($correlation_id:expr, $user_id:expr) => {
+        {
+            let correlation_id = $correlation_id
+                .as_ref()
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| $crate::logging::correlation::generate_correlation_id());
+            let context = $crate::logging::correlation::CorrelationContext::new(
+                correlation_id.clone(),
+                Some($user_id.to_string())
+            );
+            $crate::logging::correlation::set_correlation_context(context);
+            correlation_id
+        }
+    };
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

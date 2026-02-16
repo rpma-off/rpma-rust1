@@ -73,10 +73,16 @@ pub async fn get_tasks_with_clients(
     request: GetTasksWithClientsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<TaskListResponse>, AppError> {
+    // Set correlation context for tracing throughout the call stack
+    let correlation_id = crate::set_correlation_context!(&request.correlation_id);
+    
     debug!("Getting tasks with client information");
 
     // Authenticate user
     let session = authenticate!(&request.session_token, &state);
+    
+    // Update correlation context with user_id after authentication
+    crate::set_correlation_context!(&Some(correlation_id.clone()), &session.user_id);
 
     // Build filter based on user role
     let mut filter = request.filter.unwrap_or_default();
@@ -137,8 +143,7 @@ pub async fn get_tasks_with_clients(
 
     info!("Retrieved {} tasks with clients (page {})", data_len, page);
 
-    let correlation_id = request.correlation_id.clone();
-    Ok(ApiResponse::success(response).with_correlation_id(correlation_id))
+    Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id)))
 }
 
 /// Get user assigned tasks
