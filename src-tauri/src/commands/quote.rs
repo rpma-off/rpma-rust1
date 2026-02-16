@@ -4,7 +4,7 @@ use crate::commands::{ApiResponse, AppError, AppState};
 use crate::models::auth::UserRole;
 use crate::models::quote::*;
 use serde::Deserialize;
-use tracing::{debug, error, info, instrument};
+use tracing::{debug, error, info, instrument, Span};
 
 use crate::authenticate;
 
@@ -115,14 +115,22 @@ fn check_quote_permission(role: &UserRole, operation: &str) -> Result<(), AppErr
 // --- Commands ---
 
 #[tauri::command]
-#[instrument(skip(state))]
+#[instrument(skip(state, request), fields(correlation_id = tracing::field::Empty, user_id = tracing::field::Empty))]
 pub async fn quote_create(
     request: QuoteCreateRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Quote>, AppError> {
     debug!("quote_create command received");
     let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    Span::current().record(
+        "correlation_id",
+        tracing::field::display(correlation_id.as_str()),
+    );
     let current_user = authenticate!(&request.session_token, &state);
+    Span::current().record(
+        "user_id",
+        tracing::field::display(current_user.user_id.as_str()),
+    );
     crate::commands::update_correlation_context_user(&current_user.user_id);
     check_quote_permission(&current_user.role, "create")?;
 
@@ -135,7 +143,7 @@ pub async fn quote_create(
             Ok(ApiResponse::success(quote).with_correlation_id(Some(correlation_id.clone())))
         }
         Err(e) => {
-            error!("Failed to create quote: {}", e);
+            error!(error = %e, "Failed to create quote");
             Ok(ApiResponse::error(AppError::Validation(e))
                 .with_correlation_id(Some(correlation_id.clone())))
         }
