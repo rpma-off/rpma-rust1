@@ -19,8 +19,10 @@ const logger = createLogger();
 
 function generateCorrelationId(): string {
   const timestamp = Date.now().toString(36);
+  // 36^4 keeps this segment fixed at 4 base36 chars for req-{ts}-{counter}-{random}
+  const counter = (Date.now() % 1679616).toString(36).padStart(4, '0');
   const random = Math.random().toString(36).substring(2, 8);
-  return `req-${timestamp}-0000-${random}`;
+  return `req-${timestamp}-${counter}-${random}`;
 }
 
 // Check if running in Tauri context

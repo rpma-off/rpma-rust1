@@ -167,13 +167,13 @@ export function useRealTimeBroadcast() {
   const broadcastTaskUpdate = useCallback(async (
     taskId: string,
     updateType: string,
-    data: JsonObject
+    data: Record<string, unknown>
   ) => {
     try {
       await safeInvoke<void>('broadcast_task_update', {
         taskId,
         updateType,
-        data,
+        data: data as JsonObject,
       });
       } catch (error) {
         logger.error(LogDomain.TASK, 'Failed to broadcast task update', error);
@@ -183,13 +183,13 @@ export function useRealTimeBroadcast() {
   const broadcastInterventionUpdate = useCallback(async (
     interventionId: string,
     updateType: string,
-    data: JsonObject
+    data: Record<string, unknown>
   ) => {
     try {
       await safeInvoke<void>('broadcast_intervention_update', {
         interventionId,
         updateType,
-        data,
+        data: data as JsonObject,
       });
       } catch (error) {
         logger.error(LogDomain.TASK, 'Failed to broadcast intervention update', error);
@@ -199,13 +199,13 @@ export function useRealTimeBroadcast() {
   const broadcastClientUpdate = useCallback(async (
     clientId: string,
     updateType: string,
-    data: JsonObject
+    data: Record<string, unknown>
   ) => {
     try {
       await safeInvoke<void>('broadcast_client_update', {
         clientId,
         updateType,
-        data,
+        data: data as JsonObject,
       });
       } catch (error) {
         logger.error(LogDomain.CLIENT, 'Failed to broadcast client update', error);
