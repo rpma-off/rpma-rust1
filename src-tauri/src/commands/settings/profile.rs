@@ -110,7 +110,7 @@ pub async fn get_user_settings(
     state
         .settings_service
         .get_user_settings(&user.id)
-        .map(|v| ApiResponse::success(v).with_correlation_id(correlation_id.clone()))
+        .map(|v| ApiResponse::success(v).with_correlation_id(Some(correlation_id.clone())))
         .map_err(|e| handle_settings_error(e, "Get user settings"))
 }
 
@@ -166,7 +166,7 @@ pub async fn update_user_profile(
     state
         .settings_service
         .update_user_profile(&user.id, &profile_settings)
-        .map(|_| ApiResponse::success(profile_settings).with_correlation_id(correlation_id.clone()))
+        .map(|_| ApiResponse::success(profile_settings).with_correlation_id(Some(correlation_id.clone())))
         .map_err(|e| handle_settings_error(e, "Update user profile"))
 }
 
@@ -194,7 +194,7 @@ pub async fn change_user_password(
         )
         .map(|_| {
             ApiResponse::success("Password changed successfully".to_string())
-                .with_correlation_id(correlation_id.clone())
+                .with_correlation_id(Some(correlation_id.clone()))
         })
         .map_err(|e| handle_settings_error(e, "Change user password"))
 }
@@ -252,7 +252,7 @@ pub async fn export_user_data(
 
     Ok(
         ApiResponse::success(build_export_payload(user_identity, &settings, consent))
-            .with_correlation_id(correlation_id.clone()),
+            .with_correlation_id(Some(correlation_id.clone())),
     )
 }
 
@@ -281,7 +281,7 @@ pub async fn delete_user_account(
         .delete_user_account(&user.id)
         .map(|_| {
             ApiResponse::success("Account deleted successfully".to_string())
-                .with_correlation_id(correlation_id.clone())
+                .with_correlation_id(Some(correlation_id.clone()))
         })
         .map_err(|e| handle_settings_error(e, "Delete user account"))
 }
@@ -333,7 +333,7 @@ pub async fn upload_user_avatar(
     state
         .settings_service
         .update_user_profile(&user.id, &profile_settings)
-        .map(|_| ApiResponse::success(data_url).with_correlation_id(correlation_id.clone()))
+        .map(|_| ApiResponse::success(data_url).with_correlation_id(Some(correlation_id.clone())))
         .map_err(|e| handle_settings_error(e, "Upload user avatar"))
 }
 

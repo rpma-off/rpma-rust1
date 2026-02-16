@@ -65,7 +65,7 @@ pub async fn get_app_settings(
     }
 
     let settings = load_app_settings().map_err(AppError::Database)?;
-    Ok(ApiResponse::success(settings).with_correlation_id(correlation_id.clone()))
+    Ok(ApiResponse::success(settings).with_correlation_id(Some(correlation_id.clone())))
 }
 
 /// Get system configuration with lazy initialization

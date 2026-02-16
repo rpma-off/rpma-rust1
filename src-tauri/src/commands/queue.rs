@@ -25,9 +25,7 @@ pub fn sync_enqueue(
         })?;
 
     // Update correlation context with user_id
-    if let Some(session) = current_user {
-        crate::commands::update_correlation_context_user(&session.user_id);
-    }
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     let result = state.sync_queue.enqueue(operation).map_err(|e| {
         error!(error = %e, "Failed to enqueue sync operation");
@@ -58,9 +56,7 @@ pub fn sync_dequeue_batch(
         })?;
 
     // Update correlation context with user_id
-    if let Some(session) = current_user {
-        crate::commands::update_correlation_context_user(&session.user_id);
-    }
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     state.sync_queue.dequeue_batch(limit).map_err(|e| {
         error!(error = %e, "Failed to dequeue sync operations");
@@ -88,9 +84,7 @@ pub fn sync_get_metrics(
         })?;
 
     // Update correlation context with user_id
-    if let Some(session) = current_user {
-        crate::commands::update_correlation_context_user(&session.user_id);
-    }
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     state.sync_queue.get_metrics().map_err(|e| {
         error!(error = %e, "Failed to get sync queue metrics");
@@ -119,9 +113,7 @@ pub fn sync_mark_completed(
         })?;
 
     // Update correlation context with user_id
-    if let Some(session) = current_user {
-        crate::commands::update_correlation_context_user(&session.user_id);
-    }
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     state.sync_queue.mark_completed(operation_id).map_err(|e| {
         error!(error = %e, operation_id = operation_id, "Failed to mark operation completed");
@@ -156,9 +148,7 @@ pub fn sync_mark_failed(
         })?;
 
     // Update correlation context with user_id
-    if let Some(session) = current_user {
-        crate::commands::update_correlation_context_user(&session.user_id);
-    }
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     state
         .sync_queue
@@ -192,9 +182,7 @@ pub fn sync_get_operation(
         })?;
 
     // Update correlation context with user_id
-    if let Some(session) = current_user {
-        crate::commands::update_correlation_context_user(&session.user_id);
-    }
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     state.sync_queue.get_operation(operation_id).map_err(|e| {
         error!(error = %e, operation_id = operation_id, "Failed to get sync operation");
@@ -223,9 +211,7 @@ pub fn sync_cleanup_old_operations(
         })?;
 
     // Update correlation context with user_id
-    if let Some(session) = current_user {
-        crate::commands::update_correlation_context_user(&session.user_id);
-    }
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     let cleaned = state
         .sync_queue

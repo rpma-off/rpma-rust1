@@ -250,7 +250,7 @@ impl TaskService {
 
         let result = self.client_integration.get_tasks_with_clients(query)?;
 
-        let tasks = result
+        let tasks: Vec<crate::models::task::TaskWithDetails> = result
             .data
             .into_iter()
             .map(|task_with_client| {

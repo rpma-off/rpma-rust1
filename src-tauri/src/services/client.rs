@@ -381,6 +381,7 @@ impl ClientService {
             .client_repo
             .delete_by_id(id.to_string())
             .await
+            .map(|_| ())
             .map_err(|e| format!("Failed to delete client: {}", e));
 
         match &result {

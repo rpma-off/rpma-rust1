@@ -127,7 +127,7 @@ pub fn dashboard_get_stats(
         })?;
 
     info!("Dashboard statistics retrieved successfully");
-    Ok(super::ApiResponse::success(stats).with_correlation_id(correlation_id.clone()))
+    Ok(super::ApiResponse::success(stats).with_correlation_id(Some(correlation_id.clone())))
 }
 
 /// Get recent activities for admin dashboard
@@ -147,9 +147,7 @@ pub async fn get_recent_activities(
         .validate_session(&session_token)
         .map_err(|e| format!("Authentication failed: {}", e))?;
 
-    if let Some(ref session) = current_user {
-        crate::commands::update_correlation_context_user(&session.user_id);
-    }
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Check if user is admin
     if current_user.role != super::UserRole::Admin {
