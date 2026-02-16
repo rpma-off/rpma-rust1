@@ -219,9 +219,9 @@ pub async fn task_archive(
 **Location**: `src-tauri/src/main.rs`
 
 ```rust
-// In the invoke_handler! macro (lines 69-250)
+// In the invoke_handler! macro (lines 69-306)
 .invoke_handler(tauri::generate_handler![
-    // ... existing commands (~260+ commands)
+    // ... existing commands (236 commands)
     commands::task::facade::task_archive,  // Add your command here
 ])
 ```
