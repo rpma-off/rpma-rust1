@@ -2,7 +2,7 @@
 
 ## What is RPMA v2?
 
-**RPMA v2** is an **offline-first desktop application** for managing Paint Protection Film (PPF) interventions, built using **Tauri** (Rust backend + Next.js frontend). It targets automotive workshops that install PPF, handling the complete workflow from task creation through execution, documentation, and reporting.
+**RPMA v2** is an **offline-first desktop application** for managing Paint Protection Film (PPF) interventions. Built using **Tauri 2.1.0** with a Rust backend and Next.js 14 frontend, it serves automotive workshops that install PPF, handling the complete workflow from task creation through execution, documentation, and reporting.
 
 ### Who Uses It
 
@@ -28,7 +28,7 @@ The application is designed to work **completely offline** with a local SQLite d
 | **Database** | SQLite (WAL mode) | Local persistent storage with r2d2 connection pooling |
 | **Frontend** | Next.js 14 (App Router) | UI and user interactions |
 | **UI Framework** | React 18 + TypeScript | Component-based UI |
-| **Styling** | Tailwind CSS + shadcn/ui | Design system (61 UI primitives) |
+| **Styling** | Tailwind CSS + shadcn/ui | Design system (245+ components) |
 | **State Management** | React Query (TanStack) + Zustand | Server state + client state |
 | **Type Sharing** | ts-rs | Rust → TypeScript type generation |
 
@@ -70,9 +70,9 @@ The application is designed to work **completely offline** with a local SQLite d
 - Quality compliance
 
 ### 7. **Auth & Access Control**
-- User authentication (email + password, 2FA support)
+- User authentication (email + password, TOTP 2FA support)
 - Role-Based Access Control (RBAC): Admin, Supervisor, Technician, Viewer
-- Session management
+- Session management with JWT (2h access, 7d refresh tokens)
 
 ### 8. **Admin / System**
 - User management
@@ -85,37 +85,55 @@ The application is designed to work **completely offline** with a local SQLite d
 ## Project Structure
 
 ```
-rpma-rust/
+rpma-rust1/
 ├── src-tauri/                # Rust/Tauri backend
 │   ├── src/
-│   │   ├── commands/         # IPC command handlers (~37 files)
+│   │   ├── commands/         # IPC command handlers (236 commands across 37+ files)
 │   │   │   ├── mod.rs        # Module exports, ApiResponse, AppState, errors
 │   │   │   ├── auth_middleware.rs # authenticate! macro, RBAC checks
 │   │   │   ├── auth.rs       # Authentication commands (login, 2FA, logout)
 │   │   │   ├── client.rs     # Client CRUD (client_crud command)
-│   │   │   ├── material.rs   # Inventory commands
-│   │   │   ├── calendar.rs   # Scheduling commands
-│   │   │   ├── user.rs       # User management
+│   │   │   ├── material.rs   # Inventory commands (21 commands)
+│   │   │   ├── calendar.rs   # Scheduling commands (9 commands)
+│   │   │   ├── user.rs       # User management (8 commands)
+│   │   │   ├── quote.rs      # Quote/Devis generation (11 commands)
 │   │   │   ├── analytics.rs  # Analytics commands
 │   │   │   ├── notification.rs # Notification commands
 │   │   │   ├── performance.rs # Performance metrics
+│   │   │   ├── security.rs   # Security monitoring (11 commands)
 │   │   │   ├── system.rs     # System info, health checks
-│   │   │   ├── task/         # Task commands submodule (facade, queries, validation, statistics)
-│   │   │   ├── intervention/ # Intervention workflow submodule (workflow, queries, data_access)
-│   │   │   ├── reports/      # Reports submodule (core, search, generation, export)
-│   │   │   └── settings/     # Settings submodule (core, profile, preferences, security)
-│   │   ├── services/         # Business logic layer (~80 files)
-│   │   ├── repositories/     # Data access layer (~18 files)
-│   │   ├── models/           # Data models with ts-rs exports
+│   │   │   ├── task/         # Task commands submodule (8 commands)
+│   │   │   │   ├── facade.rs # task_crud, edit_task, delay_task
+│   │   │   │   ├── queries.rs # get_tasks_with_clients, statistics
+│   │   │   │   ├── validation.rs # check_task_availability, assignment
+│   │   │   │   └── statistics.rs # task analytics
+│   │   │   ├── intervention/ # Intervention workflow submodule (11 commands)
+│   │   │   │   ├── workflow.rs # intervention_start, advance_step, finalize
+│   │   │   │   ├── queries.rs # get, get_active_by_task, progress
+│   │   │   │   └── data_access.rs # update, get_step
+│   │   │   ├── reports/      # Reports submodule (15 commands)
+│   │   │   │   ├── core.rs   # get_task_completion_report, etc.
+│   │   │   │   ├── search.rs
+│   │   │   │   ├── generation/ # PDF generation
+│   │   │   │   └── export/   # CSV, Excel export
+│   │   │   └── settings/     # Settings submodule (12 commands)
+│   │   │       ├── core.rs   # get_app_settings, update_app_settings
+│   │   │       ├── profile.rs # update_user_profile
+│   │   │       ├── preferences.rs
+│   │   │       └── security.rs # change_user_password
+│   │   ├── services/         # Business logic layer (80+ files)
+│   │   ├── repositories/     # Data access layer (18+ files)
+│   │   ├── models/           # Data models with ts-rs exports (15+ files)
 │   │   ├── db/               # Database management & migrations
-│   │   ├── sync/             # Offline sync queue
+│   │   ├── sync/             # Offline sync queue (2 files)
 │   │   └── lib.rs            # Module exports
+│   ├── migrations/           # SQLite migrations (35 migration files)
 │   ├── Cargo.toml            # Rust dependencies
 │   └── src/bin/export-types.rs  # Type export binary
 ├── frontend/                 # Next.js application
 │   ├── src/
 │   │   ├── app/              # Next.js App Router pages (40+ routes)
-│   │   ├── components/       # React components (~180 files)
+│   │   ├── components/       # React components (245 components)
 │   │   ├── lib/
 │   │   │   ├── ipc/          # IPC client
 │   │   │   │   ├── client.ts      # Main ipcClient object
@@ -130,10 +148,10 @@ rpma-rust/
 │   │   │   ├── services/     # Frontend business logic
 │   │   │   ├── validation/   # Zod schemas
 │   │   │   └── backend.ts    # ⚠️ AUTO-GENERATED (do not edit manually)
-│   │   ├── hooks/            # Custom React hooks (~65 hooks)
+│   │   ├── hooks/            # Custom React hooks (67 hooks)
 │   │   └── contexts/         # React contexts (4 contexts)
 │   └── package.json
-├── scripts/                  # Build and validation scripts
+├── scripts/                  # Build and validation scripts (40+ scripts)
 │   ├── write-types.js             # Convert Rust types to TypeScript
 │   ├── validate-types.js          # Validate generated types
 │   ├── check-type-drift.js        # Detect Rust/TS mismatches
@@ -149,7 +167,6 @@ rpma-rust/
 │   ├── detect-duplication.js      # Code duplication
 │   ├── check-mojibake.js          # Encoding issues
 │   └── git-workflow.js            # Git automation
-├── migrations/               # SQLite migration files
 ├── package.json              # Root package.json (45 npm scripts)
 └── docs/                     # Documentation
     └── agent-pack/           # AI agent onboarding docs (this directory!)
@@ -180,16 +197,17 @@ Database (SQLite)
 ### 3. **Offline-First + Event Bus**
 - All operations work offline with local SQLite database
 - Domain events track state changes via `InMemoryEventBus` (`src-tauri/src/services/event_bus.rs`)
-- Sync queue handles server synchronization (`src-tauri/src/sync/queue.rs`, `background.rs`)
+- Sync queue handles server synchronization (`src-tauri/src/sync/queue.rs`, `src-tauri/src/sync/background.rs`)
 - Background sync runs at 30-second intervals
 
 ### 4. **Security by Default**
-- All protected IPC commands require `session_token` parameter
-- RBAC enforcement at the command handler level via `authenticate!` macro (`auth_middleware.rs`)
-- Password hashing with Argon2 (`services/auth.rs:779-801`)
-- JWT tokens: 2-hour access, 7-day refresh (`services/token.rs:60-61`)
-- Rate limiting: 5 failed attempts, 15-minute lockout (`services/rate_limiter.rs`)
-- Audit logging for sensitive operations (`services/audit_service.rs`)
+- All 235 protected IPC commands require `session_token` parameter (1 public: auth_login)
+- RBAC enforcement at command handler level via `authenticate!` macro (`src-tauri/src/commands/auth_middleware.rs`)
+- Password hashing with Argon2 (`src-tauri/src/services/auth.rs:779-801`)
+- JWT tokens: 2-hour access, 7-day refresh (`src-tauri/src/services/token.rs:60-61`)
+- Rate limiting: 5 failed attempts, 15-minute lockout (`src-tauri/src/services/rate_limiter.rs`)
+- Audit logging for sensitive operations (`src-tauri/src/services/audit_service.rs`)
+- TOTP 2FA support (6-digit codes, 30s window) (`src-tauri/src/services/two_factor.rs`)
 
 ---
 
@@ -259,10 +277,10 @@ npm run build
 | IPC Hook | `useIpcClient()` | `frontend/src/lib/ipc/client.ts` |
 | Auth Middleware | `authenticate!` macro | `src-tauri/src/commands/auth_middleware.rs` |
 | Database Init | `Database::new()` | `src-tauri/src/db/mod.rs` |
-| Migrations | `Database::migrate()` | `src-tauri/src/db/migrations.rs` |
+| Migrations | `Database::migrate()` | `src-tauri/src/db/migrations.rs` (35 migrations embedded) |
 | Type Export | `export-types` binary | `src-tauri/src/bin/export-types.rs` |
 | AppState | Centralized service container | `src-tauri/src/lib.rs:279-320` |
-| Command Registration | `tauri::generate_handler![]` | `src-tauri/src/main.rs:69-250` |
+| Command Registration | `tauri::generate_handler![]` | `src-tauri/src/main.rs:69-306` (236 commands) |
 
 ---
 
