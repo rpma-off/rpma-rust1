@@ -35,7 +35,7 @@ pub async fn user_crud(
 ) -> Result<ApiResponse<UserResponse>, AppError> {
     let action = request.action;
     let session_token = request.session_token;
-    let correlation_id = request.correlation_id.clone();
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     debug!(
         "User CRUD operation requested with action: {:?}, session_token length: {}",
         action,
@@ -55,6 +55,7 @@ pub async fn user_crud(
 
     // Centralized authentication
     let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Check specific permission if provided
     if let Some(permission) = required_permission {
@@ -115,7 +116,8 @@ pub async fn user_crud(
                 })?;
             info!("User created successfully with ID: {}", user.id);
 
-            Ok(ApiResponse::success(UserResponse::Created(user)).with_correlation_id(correlation_id.clone()))
+            Ok(ApiResponse::success(UserResponse::Created(user))
+                .with_correlation_id(Some(correlation_id.clone())))
         }
         UserAction::Get { id } => {
             debug!("Retrieving user with ID: {}", id);
@@ -138,11 +140,13 @@ pub async fn user_crud(
             let response = match user {
                 Some(user) => {
                     debug!("User {} found", id);
-                    ApiResponse::success(UserResponse::Found(user)).with_correlation_id(correlation_id.clone())
+                    ApiResponse::success(UserResponse::Found(user))
+                        .with_correlation_id(Some(correlation_id.clone()))
                 }
                 None => {
                     warn!("User {} not found", id);
-                    ApiResponse::success(UserResponse::NotFound).with_correlation_id(correlation_id.clone())
+                    ApiResponse::success(UserResponse::NotFound)
+                        .with_correlation_id(Some(correlation_id.clone()))
                 }
             };
             Ok(response)
@@ -192,7 +196,8 @@ pub async fn user_crud(
                 })?;
             info!("User {} updated successfully", id);
 
-            Ok(ApiResponse::success(UserResponse::Updated(user)).with_correlation_id(correlation_id.clone()))
+            Ok(ApiResponse::success(UserResponse::Updated(user))
+                .with_correlation_id(Some(correlation_id.clone())))
         }
         UserAction::Delete { id } => {
             info!("Deleting user with ID: {}", id);
@@ -216,7 +221,8 @@ pub async fn user_crud(
                 AppError::Database(format!("User deletion failed: {}", e))
             })?;
             info!("User {} deleted successfully", id);
-            Ok(ApiResponse::success(UserResponse::Deleted).with_correlation_id(correlation_id.clone()))
+            Ok(ApiResponse::success(UserResponse::Deleted)
+                .with_correlation_id(Some(correlation_id.clone())))
         }
         UserAction::List { limit, offset } => {
             debug!(
@@ -241,9 +247,10 @@ pub async fn user_crud(
                     AppError::Database(format!("User listing failed: {}", e))
                 })?;
             debug!("Retrieved {} users", users.len());
-            Ok(ApiResponse::success(UserResponse::List(UserListResponse {
-                data: users,
-            })).with_correlation_id(correlation_id.clone()))
+            Ok(
+                ApiResponse::success(UserResponse::List(UserListResponse { data: users }))
+                    .with_correlation_id(Some(correlation_id.clone())),
+            )
         }
         UserAction::ChangePassword { id, new_password } => {
             info!("Changing password for user ID: {}", id);
@@ -264,7 +271,8 @@ pub async fn user_crud(
                     AppError::Database(format!("Password change failed: {}", e))
                 })?;
             info!("Password changed successfully for user {}", id);
-            Ok(ApiResponse::success(UserResponse::PasswordChanged).with_correlation_id(correlation_id.clone()))
+            Ok(ApiResponse::success(UserResponse::PasswordChanged)
+                .with_correlation_id(Some(correlation_id.clone())))
         }
         UserAction::ChangeRole { id, new_role } => {
             info!("Changing role for user ID: {} to {:?}", id, new_role);
@@ -290,7 +298,8 @@ pub async fn user_crud(
                 .await?;
 
             info!("Role changed successfully for user {}", id);
-            Ok(ApiResponse::success(UserResponse::RoleChanged).with_correlation_id(correlation_id.clone()))
+            Ok(ApiResponse::success(UserResponse::RoleChanged)
+                .with_correlation_id(Some(correlation_id.clone())))
         }
         UserAction::Ban { id } => {
             info!("Banning user ID: {}", id);
@@ -314,7 +323,8 @@ pub async fn user_crud(
             user_service.ban_user(&id, &current_user.user_id).await?;
 
             info!("User {} banned successfully", id);
-            Ok(ApiResponse::success(UserResponse::UserBanned).with_correlation_id(correlation_id.clone()))
+            Ok(ApiResponse::success(UserResponse::UserBanned)
+                .with_correlation_id(Some(correlation_id.clone())))
         }
         UserAction::Unban { id } => {
             info!("Unbanning user ID: {}", id);
@@ -331,7 +341,8 @@ pub async fn user_crud(
             user_service.unban_user(&id, &current_user.user_id).await?;
 
             info!("User {} unbanned successfully", id);
-            Ok(ApiResponse::success(UserResponse::UserUnbanned).with_correlation_id(correlation_id.clone()))
+            Ok(ApiResponse::success(UserResponse::UserUnbanned)
+                .with_correlation_id(Some(correlation_id.clone())))
         }
     }
 }
@@ -345,7 +356,7 @@ pub async fn bootstrap_first_admin(
 ) -> Result<ApiResponse<String>, AppError> {
     let user_id = request.user_id.trim().to_string();
     let session_token = request.session_token;
-    let correlation_id = request.correlation_id.clone();
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
 
     if user_id.is_empty() {
         return Err(AppError::Validation(
@@ -362,6 +373,7 @@ pub async fn bootstrap_first_admin(
     info!("Attempting to bootstrap first admin for user: {}", user_id);
 
     let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
     if current_user.user_id != user_id {
         warn!(
             "Bootstrap attempt blocked: user {} tried to promote {}",
@@ -376,18 +388,22 @@ pub async fn bootstrap_first_admin(
     let message = user_service.bootstrap_first_admin(&user_id).await?;
     info!("Bootstrap completed for user: {}", user_id);
 
-    Ok(ApiResponse::success(message).with_correlation_id(correlation_id.clone()))
+    Ok(ApiResponse::success(message).with_correlation_id(Some(correlation_id.clone())))
 }
 
 /// Check if any admin users exist in the system
 #[tauri::command]
 #[instrument(skip(state))]
-pub async fn has_admins(state: AppState<'_>, correlation_id: Option<String>) -> Result<ApiResponse<bool>, AppError> {
+pub async fn has_admins(
+    state: AppState<'_>,
+    correlation_id: Option<String>,
+) -> Result<ApiResponse<bool>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     debug!("Checking if admin users exist");
 
     let user_service = crate::services::UserService::new(state.repositories.user.clone());
     let has_admin = user_service.has_admins().await?;
 
     debug!("Admin check completed: has_admins={}", has_admin);
-    Ok(ApiResponse::success(has_admin).with_correlation_id(correlation_id.clone()))
+    Ok(ApiResponse::success(has_admin).with_correlation_id(Some(correlation_id.clone())))
 }

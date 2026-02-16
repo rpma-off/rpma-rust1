@@ -127,13 +127,14 @@ pub async fn add_task_note(
     request: AddTaskNoteRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     let _current_user = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&_current_user.user_id);
 
-    let correlation_id = request.correlation_id.clone();
     Ok(ApiResponse::error(AppError::Validation(
         "Add task note is not implemented yet".to_string(),
     ))
-    .with_correlation_id(correlation_id))
+    .with_correlation_id(Some(correlation_id.clone())))
 }
 
 /// Send task message command (placeholder)
@@ -143,13 +144,14 @@ pub async fn send_task_message(
     request: SendTaskMessageRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     let _current_user = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&_current_user.user_id);
 
-    let correlation_id = request.correlation_id.clone();
     Ok(ApiResponse::error(AppError::Validation(
         "Send task message is not implemented yet".to_string(),
     ))
-    .with_correlation_id(correlation_id))
+    .with_correlation_id(Some(correlation_id.clone())))
 }
 
 /// Report task issue command (placeholder)
@@ -159,13 +161,14 @@ pub async fn report_task_issue(
     request: ReportTaskIssueRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     let _current_user = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&_current_user.user_id);
 
-    let correlation_id = request.correlation_id.clone();
     Ok(ApiResponse::error(AppError::Validation(
         "Report task issue is not implemented yet".to_string(),
     ))
-    .with_correlation_id(correlation_id))
+    .with_correlation_id(Some(correlation_id.clone())))
 }
 
 // Delegate to validation module
@@ -184,9 +187,12 @@ pub async fn export_tasks_csv(
 ) -> Result<ApiResponse<String>, AppError> {
     debug!("Exporting tasks to CSV");
 
+    // Initialize correlation context
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+
     // Authenticate user
     let _session = authenticate!(&request.session_token, &state);
-    let correlation_id = request.correlation_id.clone();
+    crate::commands::update_correlation_context_user(&_session.user_id);
 
     // Build query for export
     let query = crate::models::task::TaskQuery {
@@ -241,7 +247,7 @@ pub async fn export_tasks_csv(
             "ID,Title,Description,Status,Priority,Client Name,Client Email,Created At,Updated At\n"
                 .to_string(),
         )
-        .with_correlation_id(correlation_id));
+        .with_correlation_id(Some(correlation_id.clone())));
     }
 
     // Export to CSV using the service
@@ -251,7 +257,7 @@ pub async fn export_tasks_csv(
         .map_err(|e| AppError::Database(format!("Failed to export tasks: {}", e)))?;
 
     info!("Successfully exported {} tasks to CSV", tasks.len());
-    Ok(ApiResponse::success(csv_content).with_correlation_id(correlation_id))
+    Ok(ApiResponse::success(csv_content).with_correlation_id(Some(correlation_id.clone())))
 }
 
 /// Import tasks from CSV command
@@ -263,8 +269,12 @@ pub async fn import_tasks_bulk(
 ) -> Result<ApiResponse<BulkImportResponse>, AppError> {
     debug!("Bulk importing tasks from CSV");
 
+    // Initialize correlation context
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+
     // Authenticate user
     let session = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&session.user_id);
 
     // Check permissions - only supervisors and admins can bulk import
     if !matches!(
@@ -307,8 +317,7 @@ pub async fn import_tasks_bulk(
         response.total_processed, response.successful, response.failed, response.duplicates_skipped
     );
 
-    let correlation_id = request.correlation_id.clone();
-    Ok(ApiResponse::success(response).with_correlation_id(correlation_id))
+    Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone())))
 }
 
 /// Delay task command
@@ -321,8 +330,12 @@ pub async fn delay_task(
 ) -> Result<ApiResponse<Task>, AppError> {
     debug!("Delaying task {}", request.task_id);
 
+    // Initialize correlation context
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+
     // Authenticate user
     let session = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&session.user_id);
 
     // Get current task
     let task_option = state
@@ -388,8 +401,7 @@ pub async fn delay_task(
         "Task {} delayed to {}",
         request.task_id, request.new_scheduled_date
     );
-    let correlation_id = request.correlation_id.clone();
-    Ok(ApiResponse::success(updated_task).with_correlation_id(correlation_id))
+    Ok(ApiResponse::success(updated_task).with_correlation_id(Some(correlation_id.clone())))
 }
 
 /// Edit task command
@@ -401,8 +413,12 @@ pub async fn edit_task(
 ) -> Result<ApiResponse<Task>, AppError> {
     debug!("Editing task {}", request.task_id);
 
+    // Initialize correlation context
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+
     // Authenticate user
     let session = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&session.user_id);
 
     // Get current task
     let task_option = state
@@ -471,8 +487,7 @@ pub async fn edit_task(
 
     info!("Task {} updated successfully", request.task_id);
 
-    let correlation_id = request.correlation_id.clone();
-    Ok(ApiResponse::success(updated_task).with_correlation_id(correlation_id))
+    Ok(ApiResponse::success(updated_task).with_correlation_id(Some(correlation_id.clone())))
 }
 
 /// Validate status change
@@ -614,11 +629,12 @@ pub async fn task_crud(
 ) -> Result<crate::commands::ApiResponse<crate::commands::TaskResponse>, AppError> {
     let action = request.action;
     let session_token = request.session_token;
-    let correlation_id = request.correlation_id.clone();
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("task_crud command received - action: {:?}", action);
 
     // Authenticate user
     let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Handle action
     match action {
@@ -651,7 +667,7 @@ pub async fn task_crud(
                 Ok(crate::commands::ApiResponse::success(
                     crate::commands::TaskResponse::Created(task),
                 )
-                .with_correlation_id(correlation_id.clone()))
+                .with_correlation_id(Some(correlation_id.clone())))
             } else {
                 Err(AppError::Validation(
                     "Invalid task action after validation".to_string(),
@@ -667,11 +683,11 @@ pub async fn task_crud(
                 Some(task) => Ok(crate::commands::ApiResponse::success(
                     crate::commands::TaskResponse::Found(task),
                 )
-                .with_correlation_id(correlation_id.clone())),
+                .with_correlation_id(Some(correlation_id.clone()))),
                 None => Ok(crate::commands::ApiResponse::success(
                     crate::commands::TaskResponse::NotFound,
                 )
-                .with_correlation_id(correlation_id.clone())),
+                .with_correlation_id(Some(correlation_id.clone()))),
             }
         }
         crate::commands::TaskAction::Update { id, data } => {
@@ -707,7 +723,7 @@ pub async fn task_crud(
                 Ok(crate::commands::ApiResponse::success(
                     crate::commands::TaskResponse::Updated(task),
                 )
-                .with_correlation_id(correlation_id.clone()))
+                .with_correlation_id(Some(correlation_id.clone())))
             } else {
                 Err(AppError::Validation(
                     "Invalid task action after validation".to_string(),
@@ -729,7 +745,7 @@ pub async fn task_crud(
             Ok(crate::commands::ApiResponse::success(
                 crate::commands::TaskResponse::Deleted,
             )
-            .with_correlation_id(correlation_id.clone()))
+            .with_correlation_id(Some(correlation_id.clone())))
         }
         crate::commands::TaskAction::List { filters } => {
             // Use the proper task listing implementation
@@ -747,7 +763,7 @@ pub async fn task_crud(
                     date_from: None, // TODO: Add date filtering support
                     date_to: None,   // TODO: Add date filtering support
                 }),
-                correlation_id: correlation_id.clone(),
+                correlation_id: Some(correlation_id.clone()),
             };
 
             // Call the actual implementation
@@ -757,11 +773,11 @@ pub async fn task_crud(
                 Some(task_list_response) => Ok(crate::commands::ApiResponse::success(
                     crate::commands::TaskResponse::List(task_list_response),
                 )
-                .with_correlation_id(correlation_id.clone())),
+                .with_correlation_id(Some(correlation_id.clone()))),
                 None => Ok(crate::commands::ApiResponse::error(
                     crate::commands::AppError::NotFound("No tasks found".to_string()),
                 )
-                .with_correlation_id(correlation_id.clone())),
+                .with_correlation_id(Some(correlation_id.clone()))),
             }
         }
         crate::commands::TaskAction::GetStatistics => {
@@ -769,7 +785,7 @@ pub async fn task_crud(
             let stats_request = crate::commands::task::queries::GetTaskStatisticsRequest {
                 session_token: session_token.clone(),
                 filter: None, // Get all statistics for the user's role
-                correlation_id: correlation_id.clone(),
+                correlation_id: Some(correlation_id.clone()),
             };
 
             let stats_response = get_task_statistics(stats_request, state).await?;
@@ -786,12 +802,12 @@ pub async fn task_crud(
                     Ok(crate::commands::ApiResponse::success(
                         crate::commands::TaskResponse::Statistics(response_stats),
                     )
-                    .with_correlation_id(correlation_id.clone()))
+                    .with_correlation_id(Some(correlation_id.clone())))
                 }
                 None => Ok(crate::commands::ApiResponse::error(
                     crate::commands::AppError::NotFound("Statistics not available".to_string()),
                 )
-                .with_correlation_id(correlation_id.clone())),
+                .with_correlation_id(Some(correlation_id.clone()))),
             }
         }
     }
