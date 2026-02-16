@@ -41,6 +41,20 @@ impl ClientService {
         req: CreateClientRequest,
         user_id: &str,
     ) -> Result<Client, String> {
+        use crate::logging::{LogDomain, ServiceLogger};
+        use std::collections::HashMap;
+        use serde_json::json;
+        
+        let logger = ServiceLogger::new(LogDomain::Client);
+        
+        logger.info("Creating new client", Some({
+            let mut context = HashMap::new();
+            context.insert("customer_type".to_string(), json!(req.customer_type.to_string()));
+            context.insert("has_email".to_string(), json!(req.email.is_some()));
+            context.insert("has_phone".to_string(), json!(req.phone.is_some()));
+            context
+        }));
+        
         // Validate request
         CreateClientRequest::validate(&req)?;
 
@@ -75,13 +89,42 @@ impl ClientService {
             last_synced_at: None,
         };
 
+        logger.debug("Saving client to repository", Some({
+            let mut context = HashMap::new();
+            context.insert("client_id".to_string(), json!(client.id));
+            context.insert("client_name".to_string(), json!(client.name));
+            context
+        }));
+
         // Save using repository
-        self.client_repo
+        let result = self.client_repo
             .save(client.clone())
             .await
-            .map_err(|e| format!("Failed to create client: {}", e))?;
+            .map_err(|e| format!("Failed to create client: {}", e));
+        
+        match &result {
+            Ok(_) => {
+                logger.info("Client created successfully", Some({
+                    let mut context = HashMap::new();
+                    context.insert("client_id".to_string(), json!(client.id));
+                    context.insert("client_name".to_string(), json!(client.name));
+                    context
+                }));
+            }
+            Err(e) => {
+                logger.error("Failed to create client", Some(&std::io::Error::new(
+                    std::io::ErrorKind::Other, 
+                    e.clone()
+                )), Some({
+                    let mut context = HashMap::new();
+                    context.insert("client_name".to_string(), json!(client.name));
+                    context.insert("error".to_string(), json!(e));
+                    context
+                }));
+            }
+        }
 
-        Ok(client)
+        result.map(|_| client)
     }
 
     /// Get clients with filtering and pagination
@@ -266,24 +309,79 @@ impl ClientService {
 
     /// Delete a client (soft delete)
     pub async fn delete_client(&self, id: &str, user_id: &str) -> Result<(), String> {
+        use crate::logging::{LogDomain, ServiceLogger};
+        use std::collections::HashMap;
+        use serde_json::json;
+        
+        let logger = ServiceLogger::new(LogDomain::Client);
+        
+        logger.info("Deleting client", Some({
+            let mut context = HashMap::new();
+            context.insert("client_id".to_string(), json!(id));
+            context
+        }));
+        
         // Check if client exists and get it for ownership check
         let client = self
             .get_client(id)
             .await?
-            .ok_or_else(|| format!("Client with id {} not found", id))?;
+            .ok_or_else(|| {
+                logger.warn("Client not found for deletion", Some({
+                    let mut context = HashMap::new();
+                    context.insert("client_id".to_string(), json!(id));
+                    context
+                }));
+                format!("Client with id {} not found", id)
+            })?;
 
         // Check ownership
         if client.created_by.as_ref() != Some(&user_id.to_string()) {
+            logger.warn("Unauthorized client deletion attempt", Some({
+                let mut context = HashMap::new();
+                context.insert("client_id".to_string(), json!(id));
+                context.insert("requester_user_id".to_string(), json!(user_id));
+                context.insert("client_owner_id".to_string(), json!(client.created_by));
+                context
+            }));
             return Err("You can only delete clients you created".to_string());
         }
 
+        logger.debug("Deleting client from repository", Some({
+            let mut context = HashMap::new();
+            context.insert("client_id".to_string(), json!(id));
+            context.insert("client_name".to_string(), json!(client.name));
+            context
+        }));
+
         // Delete using repository
-        self.client_repo
+        let result = self.client_repo
             .delete_by_id(id.to_string())
             .await
-            .map_err(|e| format!("Failed to delete client: {}", e))?;
+            .map_err(|e| format!("Failed to delete client: {}", e));
+        
+        match &result {
+            Ok(_) => {
+                logger.info("Client deleted successfully", Some({
+                    let mut context = HashMap::new();
+                    context.insert("client_id".to_string(), json!(id));
+                    context.insert("client_name".to_string(), json!(client.name));
+                    context
+                }));
+            }
+            Err(e) => {
+                logger.error("Failed to delete client", Some(&std::io::Error::new(
+                    std::io::ErrorKind::Other, 
+                    e.clone()
+                )), Some({
+                    let mut context = HashMap::new();
+                    context.insert("client_id".to_string(), json!(id));
+                    context.insert("error".to_string(), json!(e));
+                    context
+                }));
+            }
+        }
 
-        Ok(())
+        result
     }
 
     /// Search clients using FTS

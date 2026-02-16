@@ -22,7 +22,9 @@ export const handleError = (
   message: string,
   options: ErrorHandlerOptions
 ): void => {
-  const correlationId = CorrelationIdGenerator.getInstance().generate();
+  // Extract correlation_id from error if it exists, otherwise generate one
+  const errorWithCorrelation = error as { correlationId?: string };
+  const correlationId = errorWithCorrelation.correlationId || CorrelationIdGenerator.getInstance().generate();
 
   // Log the error with correlation ID
   logger.error(toLogContext(options.domain), message, {
@@ -33,9 +35,12 @@ export const handleError = (
     stack: error instanceof Error ? error.stack : undefined
   });
 
-  // Show user-friendly error message
+  // Show user-friendly error message with correlation ID for support
   if (options.showToast !== false) {
     const toastMessage = options.toastMessage || 'Une erreur inattendue s\'est produite. Veuillez réessayer.';
-    toast.error(toastMessage);
+    const fullMessage = `${toastMessage}\n\nID de référence : ${correlationId.substring(0, 12)}...`;
+    toast.error(fullMessage, {
+      duration: 6000, // Show longer to allow users to copy the ID
+    });
   }
 };

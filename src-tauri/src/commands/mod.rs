@@ -9,6 +9,7 @@ pub mod auth_middleware;
 pub mod calendar;
 pub mod client;
 pub mod compression;
+pub mod correlation_helpers;
 pub mod error_utils;
 pub mod errors;
 pub mod intervention;
@@ -36,6 +37,7 @@ pub mod user;
 pub mod websocket;
 pub mod websocket_commands;
 
+pub use correlation_helpers::*;
 pub use error_utils::*;
 pub use errors::{AppError, AppResult};
 

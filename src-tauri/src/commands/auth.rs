@@ -35,10 +35,8 @@ pub async fn auth_login(
     // For desktop app, we'll use a placeholder or get from network config
     ip_address: Option<String>,
 ) -> Result<ApiResponse<crate::models::auth::UserSession>, AppError> {
-    let correlation_id = request
-        .correlation_id
-        .clone()
-        .or_else(|| Some(crate::logging::correlation::generate_correlation_id()));
+    // Initialize correlation context at command start
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
 
     // Validate input data
     let validator = ValidationService::new();
@@ -52,12 +50,21 @@ pub async fn auth_login(
     // Use consistent authentication pattern - clone to avoid lock issues
     let auth_service = state.auth_service.clone();
 
-    debug!("Auth service acquired, attempting authentication");
+    debug!(
+        correlation_id = %correlation_id,
+        "Auth service acquired, attempting authentication"
+    );
     let session_result =
         auth_service.authenticate(&validated_email, &validated_password, ip_address.as_deref());
     let session = match session_result {
         Ok(session) => {
-            debug!("Authentication successful for user: {}", session.user_id);
+            debug!(
+                correlation_id = %correlation_id,
+                user_id = %session.user_id,
+                "Authentication successful"
+            );
+            // Update correlation context with user_id after successful authentication
+            crate::commands::update_correlation_context_user(&session.user_id);
             session
         }
         Err(e) => {
@@ -70,11 +77,11 @@ pub async fn auth_login(
                 "Erreur d'authentification. Veuillez réessayer.".to_string()
             };
             return Ok(ApiResponse::error(AppError::Authentication(error_msg))
-                .with_correlation_id(correlation_id));
+                .with_correlation_id(Some(correlation_id)));
         }
     };
 
-    let response = ApiResponse::success(session).with_correlation_id(correlation_id);
+    let response = ApiResponse::success(session).with_correlation_id(Some(correlation_id));
     Ok(response)
 }
 
@@ -85,12 +92,14 @@ pub async fn auth_create_account(
     request: SignupRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<crate::models::auth::UserSession>, AppError> {
-    info!("Account creation attempt for email: {}", request.email);
-
-    let correlation_id = request
-        .correlation_id
-        .clone()
-        .or_else(|| Some(crate::logging::correlation::generate_correlation_id()));
+    // Initialize correlation context at command start
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    
+    info!(
+        correlation_id = %correlation_id,
+        email = %request.email,
+        "Account creation attempt"
+    );
 
     // Validate input data
     let validator = ValidationService::new();
@@ -136,22 +145,38 @@ pub async fn auth_create_account(
         })?;
 
     info!(
-        "Account created successfully for {} with username {}",
-        request.email, account.username
+        correlation_id = %correlation_id,
+        email = %request.email,
+        username = %account.username,
+        "Account created successfully"
     );
 
     // Auto-login after signup
     let session = auth_service
         .authenticate(&validated_email, &validated_password, None)
         .map_err(|e| {
-            error!("Auto-login failed for {}: {}", validated_email, e);
+            error!(
+                correlation_id = %correlation_id,
+                email = %validated_email,
+                error = %e,
+                "Auto-login failed"
+            );
             AppError::Internal(
                 "Account created but login failed, please try logging in manually".to_string(),
             )
         })?;
 
-    info!("Auto-login successful for new user {}", request.email);
-    Ok(ApiResponse::success(session).with_correlation_id(correlation_id))
+    info!(
+        correlation_id = %correlation_id,
+        email = %request.email,
+        user_id = %session.user_id,
+        "Auto-login successful for new user"
+    );
+    
+    // Update correlation context with user_id after successful authentication
+    crate::commands::update_correlation_context_user(&session.user_id);
+    
+    Ok(ApiResponse::success(session).with_correlation_id(Some(correlation_id)))
 }
 
 /// Logout command
@@ -162,21 +187,32 @@ pub async fn auth_logout(
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    info!("User logout attempt");
-    let correlation_id =
-        correlation_id.or_else(|| Some(crate::logging::correlation::generate_correlation_id()));
+    // Initialize correlation context at command start
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    
+    info!(
+        correlation_id = %correlation_id,
+        "User logout attempt"
+    );
 
     // Use consistent authentication pattern - clone to avoid lock issues
     let auth_service = state.auth_service.clone();
 
     auth_service.logout(&token).map_err(|e| {
-        warn!("Logout failed: {}", e);
+        warn!(
+            correlation_id = %correlation_id,
+            error = %e,
+            "Logout failed"
+        );
         AppError::Authentication(format!("Logout failed: {}", e))
     })?;
 
-    info!("User logged out successfully");
+    info!(
+        correlation_id = %correlation_id,
+        "User logged out successfully"
+    );
     Ok(ApiResponse::success("Logged out successfully".to_string())
-        .with_correlation_id(correlation_id))
+        .with_correlation_id(Some(correlation_id)))
 }
 
 /// Validate session command
