@@ -48,10 +48,10 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
   // Update logger with user ID when user changes
   useEffect(() => {
-    if (user?.id) {
-      CorrelationContext.set({ user_id: user.id });
+    if (user?.user_id) {
+      CorrelationContext.set({ user_id: user.user_id });
       logger.info(LogDomain.AUTH, 'User authenticated', {
-        user_id: user.id,
+        user_id: user.user_id,
         email: user.email,
       });
     } else {
@@ -74,31 +74,31 @@ function AppLayout({ children }: { children: React.ReactNode }) {
      const checkAdminRedirect = async () => {
        if (!authLoading && !isAuthenticating && user) {
          logger.debug(LogDomain.AUTH, 'Admin redirect check started', {
-           pathname,
-           user_id: user.id
-         });
+            pathname,
+            user_id: user.user_id
+          });
          try {
            const { ipcClient } = await import('@/lib/ipc');
            const hasAdmins = await ipcClient.bootstrap.hasAdmins();
            logger.debug(LogDomain.AUTH, 'Admin check result', {
              has_admins: hasAdmins,
-             pathname,
-             user_id: user.id
-           });
+                pathname,
+                user_id: user.user_id
+              });
 
            if (!hasAdmins && pathname !== '/bootstrap-admin') {
              // No admins exist and not already on bootstrap page, redirect to bootstrap-admin
              logger.info(LogDomain.AUTH, 'Redirecting to /bootstrap-admin', {
-               pathname,
-               user_id: user.id
-             });
+                pathname,
+                user_id: user.user_id
+              });
              router.push('/bootstrap-admin');
            } else if ((pathname === '/login' || pathname === '/signup') && hasAdmins) {
              // User is authenticated, on login/signup page, and admins exist, redirect to dashboard
              logger.info(LogDomain.AUTH, 'Redirecting to /dashboard from login/signup', {
-               pathname,
-               user_id: user.id
-             });
+                pathname,
+                user_id: user.user_id
+              });
              router.push('/dashboard');
            } else if ((pathname === '/login' || pathname === '/signup') && !hasAdmins) {
              // User is authenticated, on login/signup page, and no admins exist, redirect to bootstrap-admin
@@ -109,16 +109,16 @@ function AppLayout({ children }: { children: React.ReactNode }) {
              router.push('/bootstrap-admin');
            } else {
              logger.debug(LogDomain.AUTH, 'No redirect needed', {
-               has_admins: hasAdmins,
-               pathname,
-               user_id: user.id
-             });
+                has_admins: hasAdmins,
+                pathname,
+                user_id: user.user_id
+              });
            }
          } catch (error) {
            logger.error(LogDomain.AUTH, 'Failed to check admin status', error, {
-             pathname,
-             user_id: user.id
-           });
+              pathname,
+              user_id: user.user_id
+            });
            // Default to dashboard on error
            if (pathname === '/login' || pathname === '/signup') {
              router.push('/dashboard');

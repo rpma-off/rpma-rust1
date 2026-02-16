@@ -6,10 +6,23 @@ import { LogDomain, CorrelationContext } from '../logging/types';
 import type { ApiResponse } from '@/types/api';
 import type { JsonObject, JsonValue } from '@/types/json';
 
+const KNOWN_CLIENT_ERRORS = new Set([
+  'client introuvable. veuillez sélectionner un client existant.',
+  'client not found',
+]);
+
 /**
  * Maps backend error codes to user-friendly messages
  */
 function getUserFriendlyErrorMessage(errorCode: string, originalMessage: string): string {
+  const normalizedMessage = originalMessage.trim().toLowerCase();
+  if (
+    errorCode === 'VALIDATION_ERROR' &&
+    (KNOWN_CLIENT_ERRORS.has(normalizedMessage) || normalizedMessage.startsWith('client introuvable'))
+  ) {
+    return 'Client introuvable. Sélectionnez un client existant ou créez-en un.';
+  }
+
   switch (errorCode) {
     case 'VALIDATION':
       return 'Les données saisies ne sont pas valides. Veuillez vérifier et réessayer.';
@@ -58,6 +71,7 @@ interface EnhancedError extends Error {
   originalMessage?: string;
   details?: Record<string, unknown> | null;
   correlationId?: string;
+  alreadyLogged?: boolean;
 }
 
 export async function safeInvoke<T>(
@@ -137,6 +151,7 @@ export async function safeInvoke<T>(
         error.originalMessage = errorMsg;
         error.details = apiResult.error?.details;
         error.correlationId = backendCorrelationId;
+        error.alreadyLogged = true;
         throw error;
       }
 
@@ -169,6 +184,7 @@ export async function safeInvoke<T>(
         error.originalMessage = errorMsg;
         error.details = (errObj.details as Record<string, unknown> | null) ?? null;
         error.correlationId = effectiveCorrelationId;
+        error.alreadyLogged = true;
         throw error;
       }
       const payload = backendResult.payload as JsonValue;
@@ -235,12 +251,15 @@ export async function safeInvoke<T>(
       errorDetails = { message: errorMessage };
     }
 
-    logger.error(LogDomain.API, `IPC call error: ${command}`, error instanceof Error ? error : new Error(errorMessage), {
-      command,
-      correlation_id: effectiveCorrelationId,
-      duration_ms: Math.round(duration),
-      error_details: errorDetails,
-    });
+    const errorWithFlags = error instanceof Error ? error as EnhancedError : undefined;
+    if (!errorWithFlags?.alreadyLogged) {
+      logger.error(LogDomain.API, `IPC call error: ${command}`, error instanceof Error ? error : new Error(errorMessage), {
+        command,
+        correlation_id: effectiveCorrelationId,
+        duration_ms: Math.round(duration),
+        error_details: errorDetails,
+      });
+    }
 
     // Record metric
     recordMetric({
