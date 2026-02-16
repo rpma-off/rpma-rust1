@@ -38,7 +38,7 @@ frontend/
 │   │       ├── tasks/            # Task API routes
 │   │       ├── workflows/        # Workflow API routes
 │   │       └── ...
-│   ├── components/               # 180+ Reusable React components
+│   ├── components/               # 245+ Reusable React components
 │   │   ├── ui/                   # shadcn/ui primitives (61 files)
 │   │   ├── dashboard/            # Dashboard widgets
 │   │   ├── calendar/             # Calendar/scheduling
@@ -48,7 +48,7 @@ frontend/
 │   │   ├── auth/                 # Login/signup forms
 │   │   ├── users/                # User management
 │   │   └── ...
-│   ├── hooks/                    # 65+ Custom React hooks
+│   ├── hooks/                    # 67 Custom React hooks
 │   ├── lib/
 │   │   ├── ipc/                  # IPC client (MOST IMPORTANT)
 │   │   │   ├── client.ts         # Main ipcClient object
@@ -287,7 +287,7 @@ npm run types:drift-check    # Detects mismatches
 
 **Problem**: Using incorrect command names causes IPC failures.
 
-**Solution**: Check `src-tauri/src/main.rs` (lines 69-250) for registered command names in `tauri::generate_handler![]` and use exact same name. All commands are registered in the `invoke_handler`.
+**Solution**: Check `src-tauri/src/main.rs` (lines 69-306) for registered command names in `tauri::generate_handler![]` and use exact same name. All 236 commands are registered in the `invoke_handler`.
 
 ### ❌ Pitfall 3: Missing Session Token
 
