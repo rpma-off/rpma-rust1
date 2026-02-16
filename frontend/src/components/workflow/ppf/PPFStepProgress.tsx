@@ -1,12 +1,15 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { CheckCircle, Circle, Clock, ArrowRight } from 'lucide-react';
 import { usePPFWorkflow } from '@/contexts/PPFWorkflowContext';
+import { getPPFStepPath } from '@/lib/ppf-workflow';
 
 export function PPFStepProgress() {
-  const { steps, currentStep } = usePPFWorkflow();
+  const router = useRouter();
+  const { taskId, steps, currentStep, canAdvanceToStep } = usePPFWorkflow();
 
   const getStepIcon = (step: typeof steps[0]) => {
     if (step.status === 'completed') {
@@ -42,6 +45,9 @@ export function PPFStepProgress() {
           {steps.map((step, index) => {
             const isCompleted = step.status === 'completed';
             const isCurrent = step.id === currentStep?.id;
+            const isAvailable = canAdvanceToStep(step.id);
+            const isAccessible = isCompleted || isCurrent || isAvailable;
+            const stepPath = `/tasks/${taskId}/workflow/ppf/${getPPFStepPath(step.id)}`;
             const _isNextCompleted = steps[index + 1]?.status === 'completed';
 
             return (
@@ -58,9 +64,34 @@ export function PPFStepProgress() {
                       isCompleted ? 'border-green-500 bg-green-500/20 shadow-lg shadow-green-500/25' :
                       isCurrent ? 'border-blue-500 bg-blue-500/20 shadow-lg shadow-blue-500/25 ring-4 ring-blue-500/10' :
                       'border-gray-500/50 bg-gray-500/10 hover:border-gray-400/70'
-                    }`}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    } ${isAccessible ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                    whileHover={isAccessible ? { scale: 1.05 } : undefined}
+                    whileTap={isAccessible ? { scale: 0.95 } : undefined}
+                    role="button"
+                    tabIndex={isAccessible ? 0 : -1}
+                    aria-disabled={!isAccessible}
+                    aria-label={`Aller à l'étape ${index + 1}: ${step.title}`}
+                    onClick={() => {
+                      if (!isAccessible) return;
+                      router.push(stepPath);
+                    }}
+                    onKeyDown={(event) => {
+                      if (!isAccessible) return;
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        router.push(stepPath);
+                      }
+                      if (event.key === ' ') {
+                        event.preventDefault();
+                      }
+                    }}
+                    onKeyUp={(event) => {
+                      if (!isAccessible) return;
+                      if (event.key === ' ') {
+                        event.preventDefault();
+                        router.push(stepPath);
+                      }
+                    }}
                   >
                     {/* Background glow effect */}
                     {isCurrent && (

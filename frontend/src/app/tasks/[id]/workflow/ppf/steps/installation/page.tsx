@@ -526,7 +526,7 @@ export default function InstallationStepPage() {
             </p>
           </div>
           <p className="text-muted-foreground text-sm">
-            Zones: {zones.filter(z => z.status === 'completed').length}/{zones.length} â€¢
+            Zones: {zones.filter(z => z.status === 'completed').length}/{zones.length} •
             Lots: {zones.filter(z => z.materialLot.trim() !== '').length}/{zones.length}
           </p>
         </div>

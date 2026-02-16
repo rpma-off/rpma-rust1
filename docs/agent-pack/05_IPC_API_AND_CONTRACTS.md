@@ -76,13 +76,15 @@ npm run types:generate-docs  # Generates type documentation
 | `import_tasks_bulk` | Bulk import | data | Admin/Supervisor | `commands/task/facade.rs` | `lib/ipc/domains/tasks.ts` |
 | `client_crud` | Unified client CRUD | action: ClientAction | Role-based | `commands/client.rs` | `lib/ipc/domains/clients.ts` |
 | `intervention_start` | Start intervention | task_id, request | Technician+ | `commands/intervention/workflow.rs` | `lib/ipc/domains/interventions.ts` |
-| `intervention_advance_step` | Complete step | intervention_id, step_id, data | Assigned Technician | `commands/intervention/workflow.rs` | `lib/ipc/domains/interventions.ts` |
+| `intervention_workflow` | Advance/pause/resume | intervention_id, action | Assigned Technician | `commands/intervention/workflow.rs` | `lib/ipc/domains/interventions.ts` |
 | `intervention_finalize` | Mark completed | intervention_id, data | Assigned Technician | `commands/intervention/workflow.rs` | `lib/ipc/domains/interventions.ts` |
 | `intervention_get` | Get by ID | id | Authenticated | `commands/intervention/queries.rs` | `lib/ipc/domains/interventions.ts` |
 | `intervention_get_active_by_task` | Get active for task | task_id | Authenticated | `commands/intervention/queries.rs` | `lib/ipc/domains/interventions.ts` |
 | `material_create` | Create material | request | Authenticated | `commands/material.rs` | `lib/ipc/domains/material.ts` |
 | `material_list` | List materials | filters | Authenticated | `commands/material.rs` | `lib/ipc/domains/material.ts` |
 | `material_record_consumption` | Record usage | data | Authenticated | `commands/material.rs` | `lib/ipc/domains/material.ts` |
+| `quote_create` | Create quote | request | Technician+ | `commands/quote.rs` | `lib/ipc/domains/quotes.ts` |
+| `quote_export_pdf` | Export as PDF | quote_id | Technician+ | `commands/quote.rs` | `lib/ipc/domains/quotes.ts` |
 | `calendar_get_tasks` | Calendar tasks | date_range, filters | Authenticated | `commands/calendar.rs` | `lib/ipc/domains/calendar.ts` |
 | `calendar_check_conflicts` | Check conflicts | technician_id, start, end | Authenticated | `commands/calendar.rs` | `lib/ipc/domains/calendar.ts` |
 | `get_task_completion_report` | Task report | date_range, filters | Admin/Supervisor | `commands/reports/core.rs` | `lib/ipc/domains/reports.ts` |
@@ -90,11 +92,11 @@ npm run types:generate-docs  # Generates type documentation
 | `user_crud` | Unified user CRUD | action: UserAction | Role-based | `commands/user.rs` | `lib/ipc/domains/users.ts` |
 | `get_app_info` | App version | - | Any | `commands/system.rs` | `lib/ipc/domains/system.ts` |
 | `health_check` | DB health | - | Any | `commands/system.rs` | `lib/ipc/domains/system.ts` |
-| `get_user_settings` | User settings | session_token | Authenticated | `commands/settings/` | `lib/ipc/domains/settings.ts` |
-| `update_user_profile` | Update profile | data | Authenticated | `commands/settings/profile.rs` | `lib/ipc/domains/settings.ts` |
+| `get_security_metrics` | Security stats | session_token | Admin | `commands/security.rs` | `lib/ipc/domains/security.ts` |
 | `sync_get_status` | Sync status | session_token | Authenticated | `commands/sync.rs` | `lib/ipc/domains/sync.ts` |
 | `sync_now` | Trigger sync | session_token | Authenticated | `commands/sync.rs` | `lib/ipc/domains/sync.ts` |
-| `analytics_get_summary` | Analytics summary | session_token | Authenticated | `commands/analytics.rs` | `lib/ipc/domains/analytics.ts` |
+
+**Total Commands Registered**: **236 commands** in `src-tauri/src/main.rs:69-306`
 
 ---
 

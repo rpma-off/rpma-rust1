@@ -365,18 +365,45 @@ pub enum UserRole {
 - `synced`: bool, `last_synced_at`: Option<i64>
 
 **Storage**:
-- Table: `calendar_events`
-- View: `calendar_tasks`
+- Table: `quotes` (new in migration 037)
+- Related: `quote_items` (line items with pricing)
+- Indexes: `client_id`, `vehicle_plate`, `status`
 
 **Code Paths**:
 - Model: `src-tauri/src/models/calendar.rs`, `src-tauri/src/models/calendar_event.rs`
 - Service: `src-tauri/src/services/calendar.rs`, `src-tauri/src/services/calendar_event_service.rs`
 - Repository: `src-tauri/src/repositories/calendar_event_repository.rs`
-- Commands: `src-tauri/src/commands/calendar.rs`
+- Commands: `src-tauri/src/commands/calendar.rs` (9 calendar commands)
 
 ---
 
-## 10. SyncOperation
+## 10. Quote/Devis
+
+**Purpose**: PPF quotation/estimation generation with line items and pricing.
+
+**Model**: **TODO (verify in code)**
+
+**Key Fields**:
+- `id`: String (UUID)
+- `quote_number`: String (unique)
+- `client_id`: String (FK → `clients.id`)
+- `vehicle_plate`: Option<String>
+- `status`: QuoteStatus enum (Draft, Sent, Accepted, Rejected)
+- `total_amount`: f64
+- `valid_until`: Option<i64>
+- `created_at`, `updated_at`: i64
+
+**Storage**:
+- Tables: `quotes`, `quote_items` (added in migration 037)
+- Indexes: `client_id`, `status`
+
+**Code Paths**:
+- Commands: `src-tauri/src/commands/quote.rs` (11 quote commands)
+  - `quote_create`, `quote_mark_sent`, `quote_export_pdf`
+
+---
+
+## 11. SyncOperation
 
 **Purpose**: Tracks pending operations for server synchronization.
 
@@ -397,8 +424,8 @@ pub enum UserRole {
 
 **Code Paths**:
 - Model: `src-tauri/src/models/sync.rs`
-- Service: `src-tauri/src/sync/queue.rs`, `background.rs`
-- Commands: `src-tauri/src/commands/sync.rs`, `queue.rs`
+- Service: `src-tauri/src/sync/queue.rs`, `src-tauri/src/sync/background.rs`
+- Commands: `src-tauri/src/commands/sync.rs`, `src-tauri/src/commands/queue.rs` (8 sync commands)
 
 ---
 
@@ -431,6 +458,7 @@ pub enum UserRole {
 | User | `users` | `id` (TEXT) | `email`, `role` |
 | Session | `user_sessions` | `id` (TEXT) | `token`, `user_id` |
 | CalendarEvent | `calendar_events` | `id` (TEXT) | `task_id`, `start_datetime` |
+| Quote | `quotes` | `id` (TEXT) | `client_id`, `status` |
 | SyncOperation | `sync_queue` | `id` (INTEGER) | `entity_type`, `status` |
 
 ---
