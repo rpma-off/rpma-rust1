@@ -559,7 +559,7 @@ export default function FinalizationStepPage() {
             </p>
           </div>
           <p className="text-muted-foreground text-sm">
-            QC: {qcChecklist.filter(item => item.completed).length}/{qcChecklist.length} â€¢
+            QC: {qcChecklist.filter(item => item.completed).length}/{qcChecklist.length} •
             Signature: {signatureValid ? 'Validée' : 'Requise'}
           </p>
         </div>
