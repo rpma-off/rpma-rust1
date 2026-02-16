@@ -4,8 +4,9 @@
 //! calculation, and task creation on acceptance.
 
 use crate::models::quote::*;
-use crate::repositories::QuoteRepository;
+use crate::repositories::{base::RepoError, QuoteRepository};
 use chrono::Utc;
+use rusqlite::params;
 use std::sync::Arc;
 use tracing::{debug, info, warn};
 use uuid::Uuid;
@@ -26,6 +27,11 @@ impl QuoteService {
     /// Create a new quote
     pub fn create_quote(&self, req: CreateQuoteRequest, user_id: &str) -> Result<Quote, String> {
         req.validate()?;
+        if !self.client_exists(&req.client_id)? {
+            return Err(
+                "Client introuvable. Veuillez sélectionner un client existant.".to_string(),
+            );
+        }
 
         let now = Utc::now().timestamp_millis();
         let id = Uuid::new_v4().to_string();
@@ -54,7 +60,9 @@ impl QuoteService {
             items: Vec::new(),
         };
 
-        self.repo.create(&quote).map_err(|e| e.to_string())?;
+        self.repo
+            .create(&quote)
+            .map_err(Self::map_create_repo_error)?;
 
         // Add items if provided
         for (i, item_req) in req.items.iter().enumerate() {
@@ -88,6 +96,26 @@ impl QuoteService {
 
         info!(quote_id = %id, "Quote created: {}", quote.quote_number);
         Ok(quote)
+    }
+
+    fn client_exists(&self, client_id: &str) -> Result<bool, String> {
+        let count: i64 = self
+            .db
+            .query_single_value(
+                "SELECT COUNT(*) FROM clients WHERE id = ?",
+                params![client_id],
+            )
+            .map_err(|e| format!("Failed to validate client reference: {}", e))?;
+        Ok(count > 0)
+    }
+
+    fn map_create_repo_error(error: RepoError) -> String {
+        match error {
+            RepoError::Database(message) if message.contains("FOREIGN KEY constraint failed") => {
+                "Référence invalide: client ou tâche introuvable.".to_string()
+            }
+            other => other.to_string(),
+        }
     }
 
     /// Get a quote by ID
@@ -483,6 +511,51 @@ mod tests {
         // tax = 50000*0.2 + 20000*0.2 = 10000 + 4000 = 14000
         assert_eq!(quote.tax_total, 14000);
         assert_eq!(quote.total, 84000);
+    }
+
+    #[test]
+    fn test_create_quote_with_missing_client_returns_validation() {
+        let (service, _db) = setup_service();
+
+        let req = CreateQuoteRequest {
+            client_id: "missing-client".to_string(),
+            task_id: None,
+            valid_until: None,
+            notes: None,
+            terms: None,
+            vehicle_plate: None,
+            vehicle_make: None,
+            vehicle_model: None,
+            vehicle_year: None,
+            vehicle_vin: None,
+            items: vec![],
+        };
+
+        let result = service.create_quote(req, "test-user");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("client existant"));
+    }
+
+    #[test]
+    fn test_create_quote_with_existing_client_succeeds() {
+        let (service, _db) = setup_service();
+
+        let req = CreateQuoteRequest {
+            client_id: "test-client".to_string(),
+            task_id: None,
+            valid_until: None,
+            notes: None,
+            terms: None,
+            vehicle_plate: None,
+            vehicle_make: None,
+            vehicle_model: None,
+            vehicle_year: None,
+            vehicle_vin: None,
+            items: vec![],
+        };
+
+        let quote = service.create_quote(req, "test-user").unwrap();
+        assert_eq!(quote.client_id, "test-client");
     }
 
     #[test]
