@@ -127,17 +127,18 @@ pub enum InterventionProgressResponse {
 pub async fn intervention_get_progress(
     intervention_id: String,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<crate::models::intervention::InterventionProgress>, AppError> {
     let session = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &session.user_id.as_str());
-    let correlation_id = crate::logging::correlation::generate_correlation_id();
-    tracing::Span::current().record("correlation_id", &correlation_id.as_str());
+    let svc_correlation_id = crate::logging::correlation::generate_correlation_id();
+    tracing::Span::current().record("correlation_id", &svc_correlation_id.as_str());
     super::ensure_intervention_permission(&session)?;
 
     info!(
         intervention_id = %intervention_id,
-        correlation_id = %correlation_id,
+        correlation_id = %svc_correlation_id,
         "Getting intervention progress"
     );
 
@@ -157,7 +158,7 @@ pub async fn intervention_get_progress(
             AppError::Database("Failed to get intervention progress".to_string())
         })?;
 
-    Ok(ApiResponse::success(progress))
+    Ok(ApiResponse::success(progress).with_correlation_id(correlation_id.clone()))
 }
 
 /// Advance an intervention step
@@ -168,18 +169,19 @@ pub async fn intervention_advance_step(
     step_id: String,
     notes: Option<String>,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<crate::models::step::InterventionStep>, AppError> {
     let session = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &session.user_id.as_str());
-    let correlation_id = crate::logging::correlation::generate_correlation_id();
-    tracing::Span::current().record("correlation_id", &correlation_id.as_str());
+    let svc_correlation_id = crate::logging::correlation::generate_correlation_id();
+    tracing::Span::current().record("correlation_id", &svc_correlation_id.as_str());
     super::ensure_intervention_permission(&session)?;
 
     info!(
         intervention_id = %intervention_id,
         step_id = %step_id,
-        correlation_id = %correlation_id,
+        correlation_id = %svc_correlation_id,
         "Advancing intervention step"
     );
 
@@ -202,9 +204,9 @@ pub async fn intervention_advance_step(
 
     state
         .intervention_service
-        .advance_step(advance_request, &correlation_id, Some(&session.user_id))
+        .advance_step(advance_request, &svc_correlation_id, Some(&session.user_id))
         .await
-        .map(|response| ApiResponse::success(response.step))
+        .map(|response| ApiResponse::success(response.step).with_correlation_id(correlation_id.clone()))
         .map_err(|e| {
             error!(error = %e, intervention_id = %intervention_id, step_id = %step_id, "Failed to advance intervention step");
             AppError::Database("Failed to advance intervention step".to_string())
@@ -222,18 +224,19 @@ pub async fn intervention_save_step_progress(
     step_id: String,
     progress_data: serde_json::Value,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
     let session = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &session.user_id.as_str());
-    let correlation_id = crate::logging::correlation::generate_correlation_id();
-    tracing::Span::current().record("correlation_id", &correlation_id.as_str());
+    let svc_correlation_id = crate::logging::correlation::generate_correlation_id();
+    tracing::Span::current().record("correlation_id", &svc_correlation_id.as_str());
     super::ensure_intervention_permission(&session)?;
 
     info!(
         intervention_id = %intervention_id,
         step_id = %step_id,
-        correlation_id = %correlation_id,
+        correlation_id = %svc_correlation_id,
         "Saving step progress"
     );
 
@@ -255,11 +258,11 @@ pub async fn intervention_save_step_progress(
         .intervention_service
         .save_step_progress(
             progress_request,
-            &correlation_id,
+            &svc_correlation_id,
             Some(&session.user_id),
         )
         .await
-        .map(|_| ApiResponse::success("Step progress saved successfully".to_string()))
+        .map(|_| ApiResponse::success("Step progress saved successfully".to_string()).with_correlation_id(correlation_id.clone()))
         .map_err(|e| {
             error!(error = %e, intervention_id = %intervention_id, step_id = %step_id, "Failed to save step progress");
             AppError::Database("Failed to save step progress".to_string())
@@ -272,15 +275,16 @@ pub async fn intervention_save_step_progress(
 pub async fn intervention_progress(
     action: InterventionProgressAction,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<InterventionProgressResponse>, AppError> {
     let session = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &session.user_id.as_str());
-    let correlation_id = crate::logging::correlation::generate_correlation_id();
-    tracing::Span::current().record("correlation_id", &correlation_id.as_str());
+    let svc_correlation_id = crate::logging::correlation::generate_correlation_id();
+    tracing::Span::current().record("correlation_id", &svc_correlation_id.as_str());
     super::ensure_intervention_permission(&session)?;
 
-    info!(correlation_id = %correlation_id, "Processing intervention progress action");
+    info!(correlation_id = %svc_correlation_id, "Processing intervention progress action");
 
     match action {
         InterventionProgressAction::Get { intervention_id } => {
@@ -311,7 +315,7 @@ pub async fn intervention_progress(
 
             Ok(ApiResponse::success(
                 InterventionProgressResponse::Retrieved { progress, steps },
-            ))
+            ).with_correlation_id(correlation_id.clone()))
         }
 
         InterventionProgressAction::AdvanceStep {
@@ -337,7 +341,7 @@ pub async fn intervention_progress(
             };
 
             debug!(
-                correlation_id = %correlation_id,
+                correlation_id = %svc_correlation_id,
                 intervention_id = %intervention_id,
                 step_id = %step_id,
                 has_collected_data = %has_collected_data,
@@ -359,7 +363,7 @@ pub async fn intervention_progress(
 
             let response = state
                 .intervention_service
-                .advance_step(advance_request, &correlation_id, Some(&session.user_id))
+                .advance_step(advance_request, &svc_correlation_id, Some(&session.user_id))
                 .await
                 .map_err(|e| {
                     error!(error = %e, "Failed to advance step");
@@ -373,7 +377,7 @@ pub async fn intervention_progress(
                     progress_percentage: response.progress_percentage,
                     requirements_completed: response.requirements_completed,
                 },
-            ))
+            ).with_correlation_id(correlation_id.clone()))
         }
 
         InterventionProgressAction::SaveStepProgress {
@@ -418,7 +422,7 @@ pub async fn intervention_progress(
 
             let step = state
                 .intervention_service
-                .save_step_progress(progress_request, &correlation_id, Some(&session.user_id))
+                .save_step_progress(progress_request, &svc_correlation_id, Some(&session.user_id))
                 .await
                 .map_err(|e| {
                     error!(error = %e, "Failed to save progress");
@@ -429,7 +433,7 @@ pub async fn intervention_progress(
                 InterventionProgressResponse::StepProgressSaved {
                     step: Box::new(step),
                 },
-            ))
+            ).with_correlation_id(correlation_id.clone()))
         }
     }
 }
