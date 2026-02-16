@@ -24,6 +24,8 @@ pub struct LogMessage {
     pub level: LogLevel,
     pub message: String,
     pub context: Option<String>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 /// Send a log message to frontend console
@@ -64,6 +66,8 @@ pub async fn send_log_to_frontend(log_message: LogMessage) -> Result<(), String>
 pub struct LogTaskCreationDebugRequest {
     pub task_data: serde_json::Value,
     pub step: String,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 /// Log task creation debug info
@@ -72,6 +76,7 @@ pub struct LogTaskCreationDebugRequest {
 pub fn log_task_creation_debug(
     request: LogTaskCreationDebugRequest,
 ) -> Result<ApiResponse<()>, String> {
+    let correlation_id = request.correlation_id.clone();
     debug!(
         "Task creation debug - Step: {}, Data keys: {:?}",
         request.step,
@@ -82,7 +87,7 @@ pub fn log_task_creation_debug(
     );
 
     // Return success - frontend can log the data
-    Ok(ApiResponse::success(()))
+    Ok(ApiResponse::success(()).with_correlation_id(correlation_id.clone()))
 }
 
 /// Log client creation debug request
@@ -90,6 +95,8 @@ pub fn log_task_creation_debug(
 pub struct LogClientCreationDebugRequest {
     pub client_data: serde_json::Value,
     pub step: String,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
 }
 
 /// Log client creation debug info
@@ -98,11 +105,12 @@ pub struct LogClientCreationDebugRequest {
 pub fn log_client_creation_debug(
     request: LogClientCreationDebugRequest,
 ) -> Result<ApiResponse<()>, String> {
+    let correlation_id = request.correlation_id.clone();
     debug!(
         "Client creation debug - Step: {}, Data: {:?}",
         request.step, request.client_data
     );
 
     // Return success - frontend can log the data
-    Ok(ApiResponse::success(()))
+    Ok(ApiResponse::success(()).with_correlation_id(correlation_id.clone()))
 }
