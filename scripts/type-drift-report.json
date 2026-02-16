@@ -1,16 +1,95 @@
 {
-  "timestamp": "2026-02-15T15:41:46.586Z",
-  "status": "PASS",
+  "timestamp": "2026-02-16T19:12:16.386Z",
+  "status": "ISSUES_FOUND",
   "summary": {
-    "rustTypes": 225,
+    "rustTypes": 238,
     "generatedTypes": 228,
     "manualTypes": 33,
-    "totalIssues": 0,
-    "highSeverity": 0,
+    "totalIssues": 13,
+    "highSeverity": 13,
     "mediumSeverity": 0,
     "lowSeverity": 0
   },
-  "issues": [],
+  "issues": [
+    {
+      "type": "missing_generated",
+      "severity": "high",
+      "message": "Rust type 'QuoteStatus' has TS derive but is not in generated types",
+      "recommendation": "Check export-types.rs registration or build process"
+    },
+    {
+      "type": "missing_generated",
+      "severity": "high",
+      "message": "Rust type 'QuoteItemKind' has TS derive but is not in generated types",
+      "recommendation": "Check export-types.rs registration or build process"
+    },
+    {
+      "type": "missing_generated",
+      "severity": "high",
+      "message": "Rust type 'Quote' has TS derive but is not in generated types",
+      "recommendation": "Check export-types.rs registration or build process"
+    },
+    {
+      "type": "missing_generated",
+      "severity": "high",
+      "message": "Rust type 'QuoteItem' has TS derive but is not in generated types",
+      "recommendation": "Check export-types.rs registration or build process"
+    },
+    {
+      "type": "missing_generated",
+      "severity": "high",
+      "message": "Rust type 'QuoteQuery' has TS derive but is not in generated types",
+      "recommendation": "Check export-types.rs registration or build process"
+    },
+    {
+      "type": "missing_generated",
+      "severity": "high",
+      "message": "Rust type 'QuoteListResponse' has TS derive but is not in generated types",
+      "recommendation": "Check export-types.rs registration or build process"
+    },
+    {
+      "type": "missing_generated",
+      "severity": "high",
+      "message": "Rust type 'CreateQuoteRequest' has TS derive but is not in generated types",
+      "recommendation": "Check export-types.rs registration or build process"
+    },
+    {
+      "type": "missing_generated",
+      "severity": "high",
+      "message": "Rust type 'UpdateQuoteRequest' has TS derive but is not in generated types",
+      "recommendation": "Check export-types.rs registration or build process"
+    },
+    {
+      "type": "missing_generated",
+      "severity": "high",
+      "message": "Rust type 'CreateQuoteItemRequest' has TS derive but is not in generated types",
+      "recommendation": "Check export-types.rs registration or build process"
+    },
+    {
+      "type": "missing_generated",
+      "severity": "high",
+      "message": "Rust type 'UpdateQuoteItemRequest' has TS derive but is not in generated types",
+      "recommendation": "Check export-types.rs registration or build process"
+    },
+    {
+      "type": "missing_generated",
+      "severity": "high",
+      "message": "Rust type 'QuoteAcceptResponse' has TS derive but is not in generated types",
+      "recommendation": "Check export-types.rs registration or build process"
+    },
+    {
+      "type": "missing_generated",
+      "severity": "high",
+      "message": "Rust type 'TaskCreatedInfo' has TS derive but is not in generated types",
+      "recommendation": "Check export-types.rs registration or build process"
+    },
+    {
+      "type": "missing_generated",
+      "severity": "high",
+      "message": "Rust type 'QuoteExportResponse' has TS derive but is not in generated types",
+      "recommendation": "Check export-types.rs registration or build process"
+    }
+  ],
   "rustExports": [
     "AdvanceStepRequest",
     "AdvanceStepResponse",
@@ -52,6 +131,8 @@
     "CostTrend",
     "CreateClientRequest",
     "CreateEventInput",
+    "CreateQuoteItemRequest",
+    "CreateQuoteRequest",
     "CreateTaskRequest",
     "CreateUserRequest",
     "CustomerType",
@@ -150,6 +231,14 @@
     "QualityIssue",
     "QualitySummary",
     "QualityTrend",
+    "Quote",
+    "QuoteAcceptResponse",
+    "QuoteExportResponse",
+    "QuoteItem",
+    "QuoteItemKind",
+    "QuoteListResponse",
+    "QuoteQuery",
+    "QuoteStatus",
     "ReportFilters",
     "ReportMaterialConsumption",
     "ReportMetadata",
@@ -194,6 +283,7 @@
     "Task",
     "TaskCompletionReport",
     "TaskCompletionSummary",
+    "TaskCreatedInfo",
     "TaskHistory",
     "TaskListResponse",
     "TaskPhoto",
@@ -214,6 +304,8 @@
     "UpdateEventInput",
     "UpdateNotificationConfigRequest",
     "UpdateNotificationPreferencesRequest",
+    "UpdateQuoteItemRequest",
+    "UpdateQuoteRequest",
     "UpdateTaskRequest",
     "UpdateUserRequest",
     "UserAccessibilitySettings",
