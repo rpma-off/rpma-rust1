@@ -204,7 +204,8 @@ pub async fn check_task_assignment(
         request.task_id, request.user_id
     );
 
-    Ok(ApiResponse::success(response))
+    let correlation_id = request.correlation_id.clone();
+    Ok(ApiResponse::success(response).with_correlation_id(correlation_id))
 }
 
 /// Check task availability
@@ -307,7 +308,8 @@ pub async fn check_task_availability(
         request.task_id
     );
 
-    Ok(ApiResponse::success(response))
+    let correlation_id = request.correlation_id.clone();
+    Ok(ApiResponse::success(response).with_correlation_id(correlation_id))
 }
 
 /// Validate task assignment change
@@ -460,5 +462,6 @@ pub async fn validate_task_assignment_change(
         request.task_id
     );
 
-    Ok(ApiResponse::success(validation_result))
+    let correlation_id = request.correlation_id.clone();
+    Ok(ApiResponse::success(validation_result).with_correlation_id(correlation_id))
 }

@@ -61,7 +61,8 @@ pub async fn get_task_statistics(
 
     info!("Retrieved comprehensive task statistics");
 
-    Ok(ApiResponse::success(stats))
+    let correlation_id = request.correlation_id.clone();
+    Ok(ApiResponse::success(stats).with_correlation_id(correlation_id))
 }
 
 /// Calculate task completion rate
