@@ -155,3 +155,99 @@ where
     }
     result
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_generate_correlation_id_format() {
+        let id = generate_correlation_id();
+        assert!(id.starts_with("ipc-"), "Expected ipc- prefix, got: {}", id);
+    }
+
+    #[test]
+    fn test_is_valid_correlation_id_frontend_format() {
+        assert!(is_valid_correlation_id("req-abc123-0001-xyz"));
+    }
+
+    #[test]
+    fn test_is_valid_correlation_id_backend_format() {
+        assert!(is_valid_correlation_id("ipc-1234567890-42"));
+    }
+
+    #[test]
+    fn test_is_valid_correlation_id_invalid() {
+        assert!(!is_valid_correlation_id("invalid-id"));
+        assert!(!is_valid_correlation_id(""));
+        assert!(!is_valid_correlation_id("random"));
+    }
+
+    #[test]
+    fn test_extract_correlation_id_from_args() {
+        let args = serde_json::json!({
+            "correlation_id": "req-test-0001-abc",
+            "other_field": "value"
+        });
+        let id = extract_correlation_id(&args);
+        assert_eq!(id, "req-test-0001-abc");
+    }
+
+    #[test]
+    fn test_extract_correlation_id_generates_when_missing() {
+        let args = serde_json::json!({
+            "other_field": "value"
+        });
+        let id = extract_correlation_id(&args);
+        assert!(id.starts_with("ipc-"));
+    }
+
+    #[test]
+    fn test_extract_correlation_id_generates_when_invalid() {
+        let args = serde_json::json!({
+            "correlation_id": "invalid-format"
+        });
+        let id = extract_correlation_id(&args);
+        assert!(id.starts_with("ipc-"));
+    }
+
+    #[test]
+    fn test_extract_user_id() {
+        let args = serde_json::json!({
+            "user_id": "user-123"
+        });
+        assert_eq!(extract_user_id(&args), Some("user-123".to_string()));
+    }
+
+    #[test]
+    fn test_extract_user_id_missing() {
+        let args = serde_json::json!({});
+        assert_eq!(extract_user_id(&args), None);
+    }
+
+    #[test]
+    fn test_correlation_context_new() {
+        let ctx = CorrelationContext::new("req-test-0001-abc".to_string(), Some("user-1".to_string()));
+        assert_eq!(ctx.get_correlation_id(), "req-test-0001-abc");
+        assert_eq!(ctx.get_user_id(), Some("user-1"));
+        assert!(ctx.get_parent_correlation_id().is_none());
+    }
+
+    #[test]
+    fn test_correlation_context_from_ipc_args() {
+        let args = serde_json::json!({
+            "correlation_id": "req-from-args-0001-xyz",
+            "user_id": "user-42"
+        });
+        let ctx = CorrelationContext::from_ipc_args(&args);
+        assert_eq!(ctx.get_correlation_id(), "req-from-args-0001-xyz");
+        assert_eq!(ctx.get_user_id(), Some("user-42"));
+    }
+
+    #[test]
+    fn test_correlation_context_with_parent() {
+        let ctx = CorrelationContext::new("child-id".to_string(), None)
+            .with_parent("parent-id".to_string());
+        assert_eq!(ctx.get_parent_correlation_id(), Some("parent-id"));
+    }
+}
