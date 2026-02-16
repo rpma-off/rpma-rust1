@@ -43,35 +43,36 @@ PRAGMA locking_mode = NORMAL;    -- Standard locking
 ### Overview
 
 RPMA uses a **hybrid migration system**:
-- **SQL files** in `migrations/` directory (embedded at compile time via `include_dir!` macro)
+- **SQL files** in `src-tauri/migrations/` directory (embedded at compile time via `include_dir!` macro)
 - **Rust-implemented migrations** in `src-tauri/src/db/migrations.rs` for complex logic
 
 **Features**:
 - Tracks applied migrations in `schema_version` table
-- Sequential version-based ordering (001, 002, ..., 036+)
+- Sequential version-based ordering (001, 002, ..., 037+)
 - **Idempotent**: Uses `CREATE TABLE IF NOT EXISTS`, safe to run multiple times
 - Validation before applying (syntax check, dependency check)
 - Transactional: Each migration runs in its own transaction
 
-**Current Version**: 36+ (as of latest code scan)
+**Current Version**: 37+ (as of latest code scan)
 
 **Discovery**: Migrations auto-discovered from embedded directory at runtime (`migrations.rs:159-181`)
+
+**IMPORTANT**: The migration system looks for files in `src-tauri/migrations/` directory, NOT the root `migrations/` directory. Always place new migration files in `src-tauri/migrations/`.
 
 ---
 
 ### Migration Types
 
 #### SQL-Only Migrations
-Located in `migrations/` directory:
-- `020_calendar_enhancements.sql` - Calendar indexes, task_conflicts table
-- `025_audit_logging.sql` - audit_events table for security
-- `026_performance_indexes.sql` - Performance optimization indexes
-- `029_add_users_first_last_name.sql` - User name fields
-- `030_add_user_sessions_updated_at.sql` - Session tracking
-- `031_report_indexes.sql` - Reporting performance
-- `034_add_indexes_for_queries.sql` - Query optimization
-- `035_add_message_templates.sql` - Message system
+Located in `src-tauri/migrations/` directory:
+- `020_fix_cache_metadata_schema.sql` - Fix cache_metadata table schema
+- `025_add_analytics_dashboard.sql` - Analytics dashboard tables
+- `026_fix_user_settings.sql` - Fix user settings table
+- `031_add_inventory_non_negative_checks.sql` - Inventory constraints
+- `034_add_session_activity_index.sql` - Session activity index
+- `035_add_tasks_deleted_at_index.sql` - Tasks deleted_at index
 - `036_core_screen_indexes.sql` - Core screen performance
+- `037_quotes.sql` - Quotes and quote_items tables for PPF quotations
 
 #### Rust-Implemented Migrations
 Complex migrations in `migrations.rs`:
@@ -157,13 +158,13 @@ pub fn migrate(&self, target_version: i32) -> DbResult<()> {
 ### Step 1: Determine Next Number
 
 ```bash
-ls migrations/*.sql | sort | tail -1
-# Next: 034
+ls src-tauri/migrations/*.sql | sort | tail -1
+# Next: 038
 ```
 
 ### Step 2: Create Migration
 
-**SQL-only** (`migrations/034_description.sql`):
+**SQL-only** (`src-tauri/migrations/038_description.sql`):
 ```sql
 -- Migration 034: Brief description
 
