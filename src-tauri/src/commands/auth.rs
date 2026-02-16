@@ -69,10 +69,8 @@ pub async fn auth_login(
             } else {
                 "Erreur d'authentification. Veuillez réessayer.".to_string()
             };
-            return Ok(
-                ApiResponse::error(AppError::Authentication(error_msg))
-                    .with_correlation_id(correlation_id),
-            );
+            return Ok(ApiResponse::error(AppError::Authentication(error_msg))
+                .with_correlation_id(correlation_id));
         }
     };
 
@@ -161,9 +159,12 @@ pub async fn auth_create_account(
 #[instrument(skip(state), fields(token_hash = %format!("{:x}", Sha256::digest(token.as_bytes()))))]
 pub async fn auth_logout(
     token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
     info!("User logout attempt");
+    let correlation_id =
+        correlation_id.or_else(|| Some(crate::logging::correlation::generate_correlation_id()));
 
     // Use consistent authentication pattern - clone to avoid lock issues
     let auth_service = state.auth_service.clone();
@@ -174,7 +175,8 @@ pub async fn auth_logout(
     })?;
 
     info!("User logged out successfully");
-    Ok(ApiResponse::success("Logged out successfully".to_string()))
+    Ok(ApiResponse::success("Logged out successfully".to_string())
+        .with_correlation_id(correlation_id))
 }
 
 /// Validate session command
@@ -182,9 +184,12 @@ pub async fn auth_logout(
 #[instrument(skip(state), fields(token_hash = %format!("{:x}", Sha256::digest(token.as_bytes()))))]
 pub async fn auth_validate_session(
     token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<crate::models::auth::UserSession>, AppError> {
     debug!("Session validation request");
+    let correlation_id =
+        correlation_id.or_else(|| Some(crate::logging::correlation::generate_correlation_id()));
 
     // Use consistent authentication pattern - clone to avoid lock issues
     let auth_service = state.auth_service.clone();
@@ -195,7 +200,7 @@ pub async fn auth_validate_session(
     })?;
 
     debug!("Session validation successful");
-    Ok(ApiResponse::success(session))
+    Ok(ApiResponse::success(session).with_correlation_id(correlation_id))
 }
 
 /// Refresh access token command
@@ -203,9 +208,12 @@ pub async fn auth_validate_session(
 #[instrument(skip(state), fields(refresh_token_hash = %format!("{:x}", Sha256::digest(refresh_token.as_bytes()))))]
 pub async fn auth_refresh_token(
     refresh_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<crate::models::auth::UserSession>, AppError> {
     info!("Token refresh request");
+    let correlation_id =
+        correlation_id.or_else(|| Some(crate::logging::correlation::generate_correlation_id()));
 
     // Use consistent authentication pattern - clone to avoid lock issues
     let auth_service = state.auth_service.clone();
@@ -216,7 +224,7 @@ pub async fn auth_refresh_token(
     })?;
 
     info!("Token refresh successful");
-    Ok(ApiResponse::success(session))
+    Ok(ApiResponse::success(session).with_correlation_id(correlation_id))
 }
 
 /// Enable 2FA for the current user
@@ -224,8 +232,11 @@ pub async fn auth_refresh_token(
 #[instrument(skip(state, session_token))]
 pub async fn enable_2fa(
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<crate::models::auth::TwoFactorSetup>, AppError> {
+    let correlation_id =
+        correlation_id.or_else(|| Some(crate::logging::correlation::generate_correlation_id()));
     // Authenticate the user
     let current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
         &session_token,
@@ -245,7 +256,7 @@ pub async fn enable_2fa(
         })?;
 
     info!(user_id = %current_user.user_id, "Generated 2FA setup");
-    Ok(ApiResponse::success(setup))
+    Ok(ApiResponse::success(setup).with_correlation_id(correlation_id))
 }
 
 /// Verify 2FA setup and enable 2FA
@@ -255,8 +266,11 @@ pub async fn verify_2fa_setup(
     verification_code: String,
     backup_codes: Vec<String>,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id =
+        correlation_id.or_else(|| Some(crate::logging::correlation::generate_correlation_id()));
     // Authenticate the user
     let current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
         &session_token,
@@ -276,9 +290,10 @@ pub async fn verify_2fa_setup(
         })?;
 
     info!(user_id = %current_user.user_id, "2FA enabled");
-    Ok(ApiResponse::success(
-        "Two-factor authentication has been enabled successfully".to_string(),
-    ))
+    Ok(
+        ApiResponse::success("Two-factor authentication has been enabled successfully".to_string())
+            .with_correlation_id(correlation_id),
+    )
 }
 
 /// Disable 2FA for the current user
@@ -287,8 +302,11 @@ pub async fn verify_2fa_setup(
 pub async fn disable_2fa(
     password: String,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id =
+        correlation_id.or_else(|| Some(crate::logging::correlation::generate_correlation_id()));
     // Authenticate the user
     let current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
         &session_token,
@@ -321,9 +339,10 @@ pub async fn disable_2fa(
         })?;
 
     info!(user_id = %current_user.user_id, "2FA disabled");
-    Ok(ApiResponse::success(
-        "Two-factor authentication has been disabled".to_string(),
-    ))
+    Ok(
+        ApiResponse::success("Two-factor authentication has been disabled".to_string())
+            .with_correlation_id(correlation_id),
+    )
 }
 
 /// Regenerate backup codes for 2FA
@@ -331,8 +350,11 @@ pub async fn disable_2fa(
 #[instrument(skip(state, session_token))]
 pub async fn regenerate_backup_codes(
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<String>>, AppError> {
+    let correlation_id =
+        correlation_id.or_else(|| Some(crate::logging::correlation::generate_correlation_id()));
     // Authenticate the user
     let current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
         &session_token,
@@ -352,7 +374,7 @@ pub async fn regenerate_backup_codes(
         })?;
 
     info!(user_id = %current_user.user_id, "Backup codes regenerated");
-    Ok(ApiResponse::success(backup_codes))
+    Ok(ApiResponse::success(backup_codes).with_correlation_id(correlation_id))
 }
 
 /// Verify 2FA code (used during login or other sensitive operations)
@@ -361,8 +383,11 @@ pub async fn regenerate_backup_codes(
 pub async fn verify_2fa_code(
     code: String,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<bool>, AppError> {
+    let correlation_id =
+        correlation_id.or_else(|| Some(crate::logging::correlation::generate_correlation_id()));
     // Authenticate the user
     let current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
         &session_token,
@@ -387,7 +412,7 @@ pub async fn verify_2fa_code(
         warn!(user_id = %current_user.user_id, "Invalid 2FA code attempt");
     }
 
-    Ok(ApiResponse::success(is_valid))
+    Ok(ApiResponse::success(is_valid).with_correlation_id(correlation_id))
 }
 
 /// Check if 2FA is enabled for the current user
@@ -395,8 +420,11 @@ pub async fn verify_2fa_code(
 #[instrument(skip(state, session_token))]
 pub async fn is_2fa_enabled(
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<bool>, AppError> {
+    let correlation_id =
+        correlation_id.or_else(|| Some(crate::logging::correlation::generate_correlation_id()));
     // Authenticate the user
     let current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
         &session_token,
@@ -415,5 +443,5 @@ pub async fn is_2fa_enabled(
             AppError::Internal("Failed to check 2FA status".to_string())
         })?;
 
-    Ok(ApiResponse::success(is_enabled))
+    Ok(ApiResponse::success(is_enabled).with_correlation_id(correlation_id))
 }

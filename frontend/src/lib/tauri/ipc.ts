@@ -17,6 +17,12 @@ import type { ApiError } from '@/lib/backend';
 
 const logger = createLogger();
 
+function generateCorrelationId(): string {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 8);
+  return `req-${timestamp}-0000-${random}`;
+}
+
 // Check if running in Tauri context
 let isTauri = false;
 let invoke: (<T>(command: string, args?: Record<string, unknown>) => Promise<T>) | null = null;
@@ -49,6 +55,7 @@ export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
+  correlation_id?: string;
 }
 
 // Service response type for frontend consistency
@@ -103,14 +110,18 @@ export class IpcService {
     ): Promise<ServiceResponse<T>> {
       const startTime = performance.now();
       const requestId = Math.random().toString(36).substring(7);
+      const providedCorrelationId = typeof args?.correlation_id === 'string' ? args.correlation_id : undefined;
+      const correlationId = providedCorrelationId || generateCorrelationId();
+      const argsWithCorrelation = { ...(args || {}), correlation_id: correlationId };
 
       logger.debug(LogContext.SYSTEM, `IPC invoke called`, {
         command,
-        hasArgs: !!args,
-        argsKeys: args ? Object.keys(args) : [],
+        hasArgs: !!argsWithCorrelation,
+        argsKeys: Object.keys(argsWithCorrelation),
         isTauriAvailable: isTauri,
         invokeAvailable: !!invoke,
-        requestId
+        requestId,
+        correlation_id: correlationId
       });
 
      // Wait for initialization if it's still pending
@@ -141,13 +152,14 @@ export class IpcService {
      }
 
     try {
-      logger.debug(LogContext.SYSTEM, `Making IPC call to ${command}`, { args });
-      const response = await invoke<ApiResponse<T>>(command, args);
+      logger.debug(LogContext.SYSTEM, `Making IPC call to ${command}`, { args: argsWithCorrelation, correlation_id: correlationId });
+      const response = await invoke<ApiResponse<T>>(command, argsWithCorrelation);
       logger.debug(LogContext.SYSTEM, `IPC call response received`, {
         command,
         success: response.success,
         hasData: response.data !== undefined,
-        hasError: !!response.error
+        hasError: !!response.error,
+        correlation_id: response.correlation_id || correlationId
       });
 
       // Handle different response formats
