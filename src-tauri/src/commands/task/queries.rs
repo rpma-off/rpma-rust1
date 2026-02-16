@@ -75,12 +75,12 @@ pub async fn get_tasks_with_clients(
 ) -> Result<ApiResponse<TaskListResponse>, AppError> {
     // Set correlation context for tracing throughout the call stack
     let correlation_id = crate::set_correlation_context!(&request.correlation_id);
-    
+
     debug!("Getting tasks with client information");
 
     // Authenticate user
     let session = authenticate!(&request.session_token, &state);
-    
+
     // Update correlation context with user_id after authentication
     crate::set_correlation_context!(&Some(correlation_id.clone()), &session.user_id);
 

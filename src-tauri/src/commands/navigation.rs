@@ -66,7 +66,9 @@ lazy_static! {
 
 /// Update current navigation path
 #[tauri::command]
-pub async fn navigation_update(path: String, _options: serde_json::Value) -> Result<(), String> {
+pub async fn navigation_update(path: String, _options: serde_json::Value, correlation_id: Option<String>) -> Result<(), String> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    
     let mut history = NAVIGATION_HISTORY.lock().map_err(|e| e.to_string())?;
     history.add(path);
     Ok(())
@@ -74,7 +76,9 @@ pub async fn navigation_update(path: String, _options: serde_json::Value) -> Res
 
 /// Add path to navigation history
 #[tauri::command]
-pub async fn navigation_add_to_history(path: String) -> Result<(), String> {
+pub async fn navigation_add_to_history(path: String, correlation_id: Option<String>) -> Result<(), String> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    
     let mut history = NAVIGATION_HISTORY.lock().map_err(|e| e.to_string())?;
     history.add(path);
     Ok(())
@@ -82,28 +86,36 @@ pub async fn navigation_add_to_history(path: String) -> Result<(), String> {
 
 /// Go back in navigation history
 #[tauri::command]
-pub async fn navigation_go_back() -> Result<Option<String>, String> {
+pub async fn navigation_go_back(correlation_id: Option<String>) -> Result<Option<String>, String> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    
     let mut history = NAVIGATION_HISTORY.lock().map_err(|e| e.to_string())?;
     Ok(history.go_back().cloned())
 }
 
 /// Go forward in navigation history
 #[tauri::command]
-pub async fn navigation_go_forward() -> Result<Option<String>, String> {
+pub async fn navigation_go_forward(correlation_id: Option<String>) -> Result<Option<String>, String> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    
     let mut history = NAVIGATION_HISTORY.lock().map_err(|e| e.to_string())?;
     Ok(history.go_forward().cloned())
 }
 
 /// Get current navigation path
 #[tauri::command]
-pub async fn navigation_get_current() -> Result<Option<String>, String> {
+pub async fn navigation_get_current(correlation_id: Option<String>) -> Result<Option<String>, String> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    
     let history = NAVIGATION_HISTORY.lock().map_err(|e| e.to_string())?;
     Ok(history.get_current().cloned())
 }
 
 /// Refresh current view
 #[tauri::command]
-pub async fn navigation_refresh() -> Result<(), String> {
+pub async fn navigation_refresh(correlation_id: Option<String>) -> Result<(), String> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    
     // This command triggers a refresh in the frontend
     // The actual refresh is handled by the frontend calling window.location.reload()
     Ok(())
@@ -112,7 +124,9 @@ pub async fn navigation_refresh() -> Result<(), String> {
 /// Register keyboard shortcuts for menu integration
 #[tauri::command]
 #[instrument]
-pub async fn shortcuts_register(shortcuts: serde_json::Value) -> Result<(), String> {
+pub async fn shortcuts_register(shortcuts: serde_json::Value, correlation_id: Option<String>) -> Result<(), String> {
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    
     debug!("Registering keyboard shortcuts");
 
     // Parse shortcuts and store them for menu integration

@@ -140,7 +140,8 @@ pub async fn intervention_management(
                 total: total as u64,
                 page,
                 limit,
-            }).with_correlation_id(Some(correlation_id.clone())))
+            })
+            .with_correlation_id(Some(correlation_id.clone())))
         }
 
         InterventionManagementAction::GetStats {
@@ -197,11 +198,10 @@ pub async fn intervention_management(
                 technician_stats: vec![],      // TODO: Implement technician stats
             };
 
-            Ok(ApiResponse::success(
-                InterventionManagementResponse::Stats {
-                    stats: response_stats,
-                },
-            ).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(InterventionManagementResponse::Stats {
+                stats: response_stats,
+            })
+            .with_correlation_id(Some(correlation_id.clone())))
         }
 
         InterventionManagementAction::GetByTask {
@@ -254,9 +254,10 @@ pub async fn intervention_management(
                 }
             };
 
-            Ok(ApiResponse::success(
-                InterventionManagementResponse::ByTask { interventions },
-            ).with_correlation_id(Some(correlation_id.clone())))
+            Ok(
+                ApiResponse::success(InterventionManagementResponse::ByTask { interventions })
+                    .with_correlation_id(Some(correlation_id.clone())),
+            )
         }
 
         InterventionManagementAction::BulkUpdate {
@@ -298,12 +299,13 @@ pub async fn intervention_management(
                 }
             }
 
-            Ok(ApiResponse::success(
-                InterventionManagementResponse::BulkUpdated {
+            Ok(
+                ApiResponse::success(InterventionManagementResponse::BulkUpdated {
                     updated_count,
                     message: format!("Successfully updated {} interventions", updated_count),
-                },
-            ).with_correlation_id(Some(correlation_id.clone())))
+                })
+                .with_correlation_id(Some(correlation_id.clone())),
+            )
         }
     }
 }

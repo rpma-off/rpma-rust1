@@ -26,15 +26,36 @@ impl InterventionDbFields {
         Self {
             status: intervention.status.to_string(),
             intervention_type: intervention.intervention_type.to_string(),
-            weather_condition: intervention.weather_condition.as_ref().map(|wc| wc.to_string()),
-            lighting_condition: intervention.lighting_condition.as_ref().map(|lc| lc.to_string()),
+            weather_condition: intervention
+                .weather_condition
+                .as_ref()
+                .map(|wc| wc.to_string()),
+            lighting_condition: intervention
+                .lighting_condition
+                .as_ref()
+                .map(|lc| lc.to_string()),
             work_location: intervention.work_location.as_ref().map(|wl| wl.to_string()),
             film_type: intervention.film_type.as_ref().map(|ft| ft.to_string()),
-            ppf_zones_config_json: intervention.ppf_zones_config.as_ref().map(|zones| serde_json::to_string(zones).unwrap_or_default()),
-            ppf_zones_extended_json: intervention.ppf_zones_extended.as_ref().map(|zones| serde_json::to_string(zones).unwrap_or_default()),
-            final_observations_json: intervention.final_observations.as_ref().map(|obs| serde_json::to_string(obs).unwrap_or_default()),
-            metadata_json: intervention.metadata.as_ref().map(|meta| serde_json::to_string(meta).unwrap_or_default()),
-            device_info_json: intervention.device_info.as_ref().map(|info| serde_json::to_string(info).unwrap_or_default()),
+            ppf_zones_config_json: intervention
+                .ppf_zones_config
+                .as_ref()
+                .map(|zones| serde_json::to_string(zones).unwrap_or_default()),
+            ppf_zones_extended_json: intervention
+                .ppf_zones_extended
+                .as_ref()
+                .map(|zones| serde_json::to_string(zones).unwrap_or_default()),
+            final_observations_json: intervention
+                .final_observations
+                .as_ref()
+                .map(|obs| serde_json::to_string(obs).unwrap_or_default()),
+            metadata_json: intervention
+                .metadata
+                .as_ref()
+                .map(|meta| serde_json::to_string(meta).unwrap_or_default()),
+            device_info_json: intervention
+                .device_info
+                .as_ref()
+                .map(|info| serde_json::to_string(info).unwrap_or_default()),
         }
     }
 }
@@ -59,15 +80,42 @@ impl StepDbFields {
         Self {
             step_type: step.step_type.to_string(),
             step_status: step.step_status.to_string(),
-            instructions_json: step.instructions.as_ref().and_then(|i| serde_json::to_string(i).ok()),
-            quality_checkpoints_json: step.quality_checkpoints.as_ref().and_then(|qc| serde_json::to_string(qc).ok()),
-            step_data_json: step.step_data.as_ref().and_then(|sd| serde_json::to_string(sd).ok()),
-            collected_data_json: step.collected_data.as_ref().and_then(|cd| serde_json::to_string(cd).ok()),
-            measurements_json: step.measurements.as_ref().and_then(|m| serde_json::to_string(m).ok()),
-            observations_json: step.observations.as_ref().and_then(|obs| serde_json::to_string(obs).ok()),
-            photo_urls_json: step.photo_urls.as_ref().and_then(|urls| serde_json::to_string(urls).ok()),
-            validation_data_json: step.validation_data.as_ref().and_then(|vd| serde_json::to_string(vd).ok()),
-            validation_errors_json: step.validation_errors.as_ref().and_then(|ve| serde_json::to_string(ve).ok()),
+            instructions_json: step
+                .instructions
+                .as_ref()
+                .and_then(|i| serde_json::to_string(i).ok()),
+            quality_checkpoints_json: step
+                .quality_checkpoints
+                .as_ref()
+                .and_then(|qc| serde_json::to_string(qc).ok()),
+            step_data_json: step
+                .step_data
+                .as_ref()
+                .and_then(|sd| serde_json::to_string(sd).ok()),
+            collected_data_json: step
+                .collected_data
+                .as_ref()
+                .and_then(|cd| serde_json::to_string(cd).ok()),
+            measurements_json: step
+                .measurements
+                .as_ref()
+                .and_then(|m| serde_json::to_string(m).ok()),
+            observations_json: step
+                .observations
+                .as_ref()
+                .and_then(|obs| serde_json::to_string(obs).ok()),
+            photo_urls_json: step
+                .photo_urls
+                .as_ref()
+                .and_then(|urls| serde_json::to_string(urls).ok()),
+            validation_data_json: step
+                .validation_data
+                .as_ref()
+                .and_then(|vd| serde_json::to_string(vd).ok()),
+            validation_errors_json: step
+                .validation_errors
+                .as_ref()
+                .and_then(|ve| serde_json::to_string(ve).ok()),
         }
     }
 }
@@ -103,7 +151,10 @@ const UPDATE_INTERVENTION_SQL: &str =
     WHERE id = ?";
 
 /// Build the params array for an INSERT intervention statement.
-fn insert_intervention_params(intervention: &Intervention, fields: &InterventionDbFields) -> Vec<rusqlite::types::Value> {
+fn insert_intervention_params(
+    intervention: &Intervention,
+    fields: &InterventionDbFields,
+) -> Vec<rusqlite::types::Value> {
     vec![
         intervention.id.clone().into(),
         intervention.task_id.clone().into(),
@@ -167,7 +218,10 @@ fn insert_intervention_params(intervention: &Intervention, fields: &Intervention
 }
 
 /// Build the params array for an UPDATE intervention statement.
-fn update_intervention_params(intervention: &Intervention, fields: &InterventionDbFields) -> Vec<rusqlite::types::Value> {
+fn update_intervention_params(
+    intervention: &Intervention,
+    fields: &InterventionDbFields,
+) -> Vec<rusqlite::types::Value> {
     vec![
         fields.status.clone().into(),
         intervention.vehicle_plate.clone().into(),

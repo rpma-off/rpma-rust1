@@ -158,10 +158,10 @@ pub async fn cleanup_performance_metrics(
     // For now, this is a no-op
     info!("Performance metrics cleanup requested - not yet implemented");
 
-    Ok(ApiResponse::success(
-        "Performance metrics cleaned up successfully".to_string(),
+    Ok(
+        ApiResponse::success("Performance metrics cleaned up successfully".to_string())
+            .with_correlation_id(Some(correlation_id.clone())),
     )
-    .with_correlation_id(Some(correlation_id.clone())))
 }
 
 /// Get cache statistics
@@ -233,17 +233,17 @@ pub async fn clear_application_cache(
 
             cache_manager.clear_type(cache_type)?;
         }
-        Ok(ApiResponse::success(
-            "Specified cache types cleared successfully".to_string(),
+        Ok(
+            ApiResponse::success("Specified cache types cleared successfully".to_string())
+                .with_correlation_id(Some(correlation_id.clone())),
         )
-        .with_correlation_id(Some(correlation_id.clone())))
     } else {
         // Clear all caches
         cache_manager.clear_all()?;
-        Ok(ApiResponse::success(
-            "All caches cleared successfully".to_string(),
+        Ok(
+            ApiResponse::success("All caches cleared successfully".to_string())
+                .with_correlation_id(Some(correlation_id.clone())),
         )
-        .with_correlation_id(Some(correlation_id.clone())))
     }
 }
 
@@ -264,8 +264,8 @@ pub async fn configure_cache_settings(
     // For now, we'll just return success
     info!("Cache configuration update requested: {:?}", request);
 
-    Ok(ApiResponse::success(
-        "Cache settings updated successfully".to_string(),
+    Ok(
+        ApiResponse::success("Cache settings updated successfully".to_string())
+            .with_correlation_id(Some(correlation_id.clone())),
     )
-    .with_correlation_id(Some(correlation_id.clone())))
 }

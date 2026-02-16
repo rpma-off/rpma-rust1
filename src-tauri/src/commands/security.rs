@@ -219,9 +219,10 @@ pub async fn acknowledge_security_alert(
         })?;
 
     info!(alert_id = %request.alert_id, user_id = %current_user.user_id, "Security alert acknowledged");
-    Ok(ApiResponse::success(
-        "Alert acknowledged successfully".to_string(),
-    ).with_correlation_id(Some(correlation_id.clone())))
+    Ok(
+        ApiResponse::success("Alert acknowledged successfully".to_string())
+            .with_correlation_id(Some(correlation_id.clone())),
+    )
 }
 
 #[derive(Deserialize, Debug)]
@@ -261,9 +262,10 @@ pub async fn resolve_security_alert(
         })?;
 
     info!(alert_id = %request.alert_id, "Security alert resolved");
-    Ok(ApiResponse::success(
-        "Alert resolved successfully".to_string(),
-    ).with_correlation_id(Some(correlation_id.clone())))
+    Ok(
+        ApiResponse::success("Alert resolved successfully".to_string())
+            .with_correlation_id(Some(correlation_id.clone())),
+    )
 }
 
 #[derive(Deserialize, Debug)]
@@ -301,9 +303,10 @@ pub async fn cleanup_security_events(
         })?;
 
     info!("Security events cleaned up");
-    Ok(ApiResponse::success(
-        "Security events cleaned up successfully".to_string(),
-    ).with_correlation_id(Some(correlation_id.clone())))
+    Ok(
+        ApiResponse::success("Security events cleaned up successfully".to_string())
+            .with_correlation_id(Some(correlation_id.clone())),
+    )
 }
 
 /// Get active sessions for the current user
@@ -376,9 +379,10 @@ pub async fn revoke_session(
             })?;
 
         info!(session_id = %session_id, user_id = %current_user.user_id, "Session revoked");
-        Ok(ApiResponse::success(
-            "Session revoked successfully".to_string(),
-        ).with_correlation_id(Some(correlation_id.clone())))
+        Ok(
+            ApiResponse::success("Session revoked successfully".to_string())
+                .with_correlation_id(Some(correlation_id.clone())),
+        )
     } else {
         Err(AppError::NotFound("Session not found".to_string()))
     }
@@ -466,7 +470,8 @@ pub async fn update_session_timeout(
     Ok(ApiResponse::success(format!(
         "Session timeout updated to {} minutes",
         timeout_minutes
-    )).with_correlation_id(Some(correlation_id.clone())))
+    ))
+    .with_correlation_id(Some(correlation_id.clone())))
 }
 
 /// Get session timeout configuration

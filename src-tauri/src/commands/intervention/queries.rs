@@ -321,9 +321,10 @@ pub async fn intervention_progress(
                     AppError::Database("Failed to get intervention steps".to_string())
                 })?;
 
-            Ok(ApiResponse::success(
-                InterventionProgressResponse::Retrieved { progress, steps },
-            ).with_correlation_id(Some(correlation_id.clone())))
+            Ok(
+                ApiResponse::success(InterventionProgressResponse::Retrieved { progress, steps })
+                    .with_correlation_id(Some(correlation_id.clone())),
+            )
         }
 
         InterventionProgressAction::AdvanceStep {
@@ -378,14 +379,15 @@ pub async fn intervention_progress(
                     AppError::Database("Failed to advance step".to_string())
                 })?;
 
-            Ok(ApiResponse::success(
-                InterventionProgressResponse::StepAdvanced {
+            Ok(
+                ApiResponse::success(InterventionProgressResponse::StepAdvanced {
                     step: Box::new(response.step),
                     next_step: response.next_step,
                     progress_percentage: response.progress_percentage,
                     requirements_completed: response.requirements_completed,
-                },
-            ).with_correlation_id(Some(correlation_id.clone())))
+                })
+                .with_correlation_id(Some(correlation_id.clone())),
+            )
         }
 
         InterventionProgressAction::SaveStepProgress {
@@ -430,18 +432,23 @@ pub async fn intervention_progress(
 
             let step = state
                 .intervention_service
-                .save_step_progress(progress_request, &svc_correlation_id, Some(&session.user_id))
+                .save_step_progress(
+                    progress_request,
+                    &svc_correlation_id,
+                    Some(&session.user_id),
+                )
                 .await
                 .map_err(|e| {
                     error!(error = %e, "Failed to save progress");
                     AppError::Database("Failed to save progress".to_string())
                 })?;
 
-            Ok(ApiResponse::success(
-                InterventionProgressResponse::StepProgressSaved {
+            Ok(
+                ApiResponse::success(InterventionProgressResponse::StepProgressSaved {
                     step: Box::new(step),
-                },
-            ).with_correlation_id(Some(correlation_id.clone())))
+                })
+                .with_correlation_id(Some(correlation_id.clone())),
+            )
         }
     }
 }

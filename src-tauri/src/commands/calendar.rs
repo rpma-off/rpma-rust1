@@ -487,8 +487,8 @@ pub async fn get_events(
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<crate::models::calendar_event::CalendarEvent>>, AppError> {
-    let correlation_id = correlation_id
-        .unwrap_or_else(crate::logging::correlation::generate_correlation_id);
+    let correlation_id =
+        correlation_id.unwrap_or_else(crate::logging::correlation::generate_correlation_id);
     crate::commands::init_correlation_context(&Some(correlation_id.clone()), None);
 
     info!(
@@ -649,7 +649,8 @@ pub async fn calendar_schedule_task(
                     conflict_type: None,
                     conflicting_tasks: vec![],
                     message: None,
-                }).with_correlation_id(Some(correlation_id.clone())))
+                })
+                .with_correlation_id(Some(correlation_id.clone())))
             }
             Err(e) => {
                 error!("Failed to schedule task: {}", e);

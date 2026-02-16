@@ -247,7 +247,7 @@ impl ServiceLogger {
     pub fn new(domain: LogDomain) -> Self {
         let context = correlation::get_correlation_context()
             .unwrap_or_else(|| correlation::CorrelationContext::default());
-        
+
         Self {
             logger: RPMARequestLogger::new(
                 context.get_correlation_id().to_string(),
@@ -295,7 +295,7 @@ impl RepositoryLogger {
     pub fn new() -> Self {
         let context = correlation::get_correlation_context()
             .unwrap_or_else(|| correlation::CorrelationContext::default());
-        
+
         Self {
             logger: RPMARequestLogger::new(
                 context.get_correlation_id().to_string(),

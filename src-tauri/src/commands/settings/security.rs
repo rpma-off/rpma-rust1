@@ -44,10 +44,11 @@ pub async fn update_security_settings(
     request: UpdateSecuritySettingsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("Updating security settings");
 
-    let correlation_id = request.correlation_id.clone();
     let user = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&user.user_id);
 
     // Only admins can update system security settings
     if !matches!(user.role, crate::models::auth::UserRole::Admin) {
@@ -78,7 +79,10 @@ pub async fn update_security_settings(
     }
 
     update_app_settings(app_settings)
-        .map(|_| ApiResponse::success("Security settings updated successfully".to_string()).with_correlation_id(correlation_id.clone()))
+        .map(|_| {
+            ApiResponse::success("Security settings updated successfully".to_string())
+                .with_correlation_id(correlation_id.clone())
+        })
         .map_err(|e| AppError::Database(e))
 }
 
@@ -89,10 +93,11 @@ pub async fn update_user_security(
     request: UpdateUserSecurityRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("Updating user security settings");
 
-    let correlation_id = request.correlation_id.clone();
     let user = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&user.user_id);
 
     let mut security_settings: UserSecuritySettings = state
         .settings_service
@@ -110,6 +115,9 @@ pub async fn update_user_security(
     state
         .settings_service
         .update_user_security(&user.id, &security_settings)
-        .map(|_| ApiResponse::success("Security settings updated successfully".to_string()).with_correlation_id(correlation_id.clone()))
+        .map(|_| {
+            ApiResponse::success("Security settings updated successfully".to_string())
+                .with_correlation_id(correlation_id.clone())
+        })
         .map_err(|e| handle_settings_error(e, "Update user security"))
 }

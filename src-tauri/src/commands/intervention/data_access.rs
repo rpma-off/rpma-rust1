@@ -88,8 +88,11 @@ pub async fn intervention_get_active_by_task(
         .intervention_service
         .get_active_intervention_by_task(&task_id)
     {
-        Ok(Some(intervention)) => Ok(ApiResponse::success(vec![intervention]).with_correlation_id(Some(correlation_id.clone()))),
-        Ok(None) => Ok(ApiResponse::success(vec![]).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(Some(intervention)) => Ok(ApiResponse::success(vec![intervention])
+            .with_correlation_id(Some(correlation_id.clone()))),
+        Ok(None) => {
+            Ok(ApiResponse::success(vec![]).with_correlation_id(Some(correlation_id.clone())))
+        }
         Err(e) => {
             error!(error = %e, task_id = %task_id, "Failed to get active interventions");
             Err(AppError::Database(

@@ -16,11 +16,14 @@ pub async fn get_task_completion_report(
     date_range: DateRange,
     filters: ReportFilters,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> AppResult<TaskCompletionReport> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Task completion report requested");
 
     let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Check permissions - technicians can only see their own reports
     let can_view_all = matches!(current_user.role, UserRole::Admin | UserRole::Supervisor);
@@ -50,11 +53,14 @@ pub async fn get_technician_performance_report(
     technician_id: Option<String>,
     date_range: DateRange,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> AppResult<TechnicianPerformanceReport> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Technician performance report requested");
 
     let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Check permissions
     let can_view_all = matches!(current_user.role, UserRole::Admin | UserRole::Supervisor);
@@ -85,11 +91,14 @@ pub async fn get_client_analytics_report(
     date_range: DateRange,
     filters: ReportFilters,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> AppResult<ClientAnalyticsReport> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Client analytics report requested");
 
     let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Check permissions - only admins and supervisors can view client analytics
     if !matches!(current_user.role, UserRole::Admin | UserRole::Supervisor) {
@@ -113,11 +122,14 @@ pub async fn get_quality_compliance_report(
     date_range: DateRange,
     filters: ReportFilters,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> AppResult<QualityComplianceReport> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Quality compliance report requested");
 
     let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Check permissions - only admins and supervisors can view quality reports
     if !matches!(current_user.role, UserRole::Admin | UserRole::Supervisor) {
@@ -141,11 +153,14 @@ pub async fn get_geographic_report(
     date_range: DateRange,
     filters: ReportFilters,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> AppResult<GeographicReport> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Geographic report requested");
 
     let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Check permissions - only admins and supervisors can access geographic reports
     if !matches!(current_user.role, UserRole::Admin | UserRole::Supervisor) {
@@ -169,11 +184,14 @@ pub async fn get_material_usage_report(
     date_range: DateRange,
     filters: ReportFilters,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> AppResult<MaterialUsageReport> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Material usage report requested");
 
     let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Check permissions - only admins and supervisors can view material reports
     if !matches!(current_user.role, UserRole::Admin | UserRole::Supervisor) {
@@ -197,11 +215,14 @@ pub async fn get_overview_report(
     date_range: DateRange,
     filters: ReportFilters,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> AppResult<OverviewReport> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Overview report requested");
 
     let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Check permissions - only admins and supervisors can view overview reports
     if !matches!(current_user.role, UserRole::Admin | UserRole::Supervisor) {
@@ -223,11 +244,14 @@ pub async fn get_overview_report(
 #[instrument(skip(state))]
 pub async fn get_available_report_types(
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> AppResult<Vec<ReportType>> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Available report types requested");
 
     let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     let mut available_types = vec![ReportType::Overview];
 
@@ -260,11 +284,14 @@ pub async fn get_seasonal_report(
     date_range: DateRange,
     filters: ReportFilters,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> AppResult<SeasonalReport> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Seasonal report requested");
 
     let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Check permissions - only admins and supervisors can view seasonal reports
     if !matches!(current_user.role, UserRole::Admin | UserRole::Supervisor) {
@@ -289,11 +316,14 @@ pub async fn get_operational_intelligence_report(
     date_range: DateRange,
     filters: ReportFilters,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> AppResult<OperationalIntelligenceReport> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Operational intelligence report requested");
 
     let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Check permissions - only admins and supervisors can view operational intelligence
     if !matches!(current_user.role, UserRole::Admin | UserRole::Supervisor) {

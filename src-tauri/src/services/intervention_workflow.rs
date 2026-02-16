@@ -473,10 +473,7 @@ impl InterventionWorkflowService {
                     attempt += 1;
                     if attempt >= MAX_RETRIES {
                         let mut ctx = std::collections::HashMap::new();
-                        ctx.insert(
-                            format!("{}_id", entity_label),
-                            serde_json::json!(entity_id),
-                        );
+                        ctx.insert(format!("{}_id", entity_label), serde_json::json!(entity_id));
                         ctx.insert("attempts".to_string(), serde_json::json!(attempt));
                         logger.error(
                             &format!("Failed to {} after retries", entity_label),
@@ -489,15 +486,9 @@ impl InterventionWorkflowService {
                         )));
                     }
                     let mut ctx = std::collections::HashMap::new();
-                    ctx.insert(
-                        format!("{}_id", entity_label),
-                        serde_json::json!(entity_id),
-                    );
+                    ctx.insert(format!("{}_id", entity_label), serde_json::json!(entity_id));
                     ctx.insert("attempt".to_string(), serde_json::json!(attempt));
-                    logger.warn(
-                        &format!("Failed to {}, retrying", entity_label),
-                        Some(ctx),
-                    );
+                    logger.warn(&format!("Failed to {}, retrying", entity_label), Some(ctx));
                     std::thread::sleep(std::time::Duration::from_millis(100 * attempt as u64));
                 }
             }
@@ -513,8 +504,9 @@ impl InterventionWorkflowService {
         let data = &self.data;
         let id = intervention_id.to_string();
         self.with_retry("get intervention", intervention_id, logger, move || {
-            data.get_intervention(&id)?
-                .ok_or_else(|| InterventionError::NotFound(format!("Intervention {} not found", id)))
+            data.get_intervention(&id)?.ok_or_else(|| {
+                InterventionError::NotFound(format!("Intervention {} not found", id))
+            })
         })
         .await
     }

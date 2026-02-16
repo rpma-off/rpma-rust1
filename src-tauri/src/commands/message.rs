@@ -6,9 +6,11 @@ use crate::models::message::*;
 pub async fn message_send(
     request: SendMessageRequest,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<Message, ApiError> {
-    let _correlation_id = request.correlation_id.clone();
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+
     let auth_service = state.auth_service.clone();
     let _current_user = auth_service
         .validate_session(&session_token)
@@ -17,6 +19,10 @@ pub async fn message_send(
             code: "AUTH_ERROR".to_string(),
             details: None,
         })?;
+
+    if let Some(session) = &_current_user {
+        crate::commands::update_correlation_context_user(&session.user_id);
+    }
 
     state
         .message_service
@@ -34,9 +40,11 @@ pub async fn message_send(
 pub async fn message_get_list(
     query: MessageQuery,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<MessageListResponse, ApiError> {
-    let _correlation_id = query.correlation_id.clone();
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+
     let auth_service = state.auth_service.clone();
     let _current_user = auth_service
         .validate_session(&session_token)
@@ -45,6 +53,10 @@ pub async fn message_get_list(
             code: "AUTH_ERROR".to_string(),
             details: None,
         })?;
+
+    if let Some(session) = &_current_user {
+        crate::commands::update_correlation_context_user(&session.user_id);
+    }
 
     state
         .message_service
@@ -62,10 +74,11 @@ pub async fn message_get_list(
 pub async fn message_mark_read(
     message_id: String,
     session_token: String,
-    state: AppState<'_>,
     correlation_id: Option<String>,
+    state: AppState<'_>,
 ) -> Result<(), ApiError> {
-    let _correlation_id = correlation_id;
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+
     let auth_service = state.auth_service.clone();
     let _current_user = auth_service
         .validate_session(&session_token)
@@ -74,6 +87,10 @@ pub async fn message_mark_read(
             code: "AUTH_ERROR".to_string(),
             details: None,
         })?;
+
+    if let Some(session) = &_current_user {
+        crate::commands::update_correlation_context_user(&session.user_id);
+    }
 
     state
         .message_service
@@ -92,10 +109,11 @@ pub async fn message_get_templates(
     category: Option<String>,
     message_type: Option<String>,
     session_token: String,
-    state: AppState<'_>,
     correlation_id: Option<String>,
+    state: AppState<'_>,
 ) -> Result<Vec<MessageTemplate>, ApiError> {
-    let _correlation_id = correlation_id;
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+
     let auth_service = state.auth_service.clone();
     let _current_user = auth_service
         .validate_session(&session_token)
@@ -104,6 +122,10 @@ pub async fn message_get_templates(
             code: "AUTH_ERROR".to_string(),
             details: None,
         })?;
+
+    if let Some(session) = &_current_user {
+        crate::commands::update_correlation_context_user(&session.user_id);
+    }
 
     state
         .message_service
@@ -121,10 +143,11 @@ pub async fn message_get_templates(
 pub async fn message_get_preferences(
     user_id: String,
     session_token: String,
-    state: AppState<'_>,
     correlation_id: Option<String>,
+    state: AppState<'_>,
 ) -> Result<NotificationPreferences, ApiError> {
-    let _correlation_id = correlation_id;
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+
     let auth_service = state.auth_service.clone();
     let _current_user = auth_service
         .validate_session(&session_token)
@@ -133,6 +156,10 @@ pub async fn message_get_preferences(
             code: "AUTH_ERROR".to_string(),
             details: None,
         })?;
+
+    if let Some(session) = &_current_user {
+        crate::commands::update_correlation_context_user(&session.user_id);
+    }
 
     state
         .message_service
@@ -151,9 +178,11 @@ pub async fn message_update_preferences(
     user_id: String,
     updates: UpdateNotificationPreferencesRequest,
     session_token: String,
+    correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<NotificationPreferences, ApiError> {
-    let _correlation_id = updates.correlation_id.clone();
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+
     let auth_service = state.auth_service.clone();
     let _current_user = auth_service
         .validate_session(&session_token)
@@ -162,6 +191,10 @@ pub async fn message_update_preferences(
             code: "AUTH_ERROR".to_string(),
             details: None,
         })?;
+
+    if let Some(session) = &_current_user {
+        crate::commands::update_correlation_context_user(&session.user_id);
+    }
 
     state
         .message_service

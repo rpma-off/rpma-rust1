@@ -192,7 +192,10 @@ pub async fn intervention_start(
     state
         .intervention_service
         .start_intervention(intervention_data, &session.user_id, &svc_correlation_id)
-        .map(|response| ApiResponse::success(response.intervention).with_correlation_id(Some(correlation_id.clone())))
+        .map(|response| {
+            ApiResponse::success(response.intervention)
+                .with_correlation_id(Some(correlation_id.clone()))
+        })
         .map_err(|e| {
             error!(error = %e, task_id = %request.task_id, "Failed to start intervention");
             AppError::Database("Failed to start intervention".to_string())
@@ -282,7 +285,10 @@ pub async fn intervention_delete(
     state
         .intervention_service
         .delete_intervention(&id)
-        .map(|_| ApiResponse::success("Intervention deleted successfully".to_string()).with_correlation_id(Some(correlation_id.clone())))
+        .map(|_| {
+            ApiResponse::success("Intervention deleted successfully".to_string())
+                .with_correlation_id(Some(correlation_id.clone()))
+        })
         .map_err(|e| {
             error!(error = %e, intervention_id = %id, "Failed to delete intervention");
             AppError::Database("Failed to delete intervention".to_string())
@@ -298,7 +304,8 @@ pub async fn intervention_finalize(
     state: AppState<'_>,
 ) -> Result<ApiResponse<crate::services::intervention_types::FinalizeInterventionResponse>, AppError>
 {
-    let req_correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let req_correlation_id =
+        crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("Finalizing intervention: {}", request.intervention_id);
 
     let session = authenticate!(&session_token, &state);
@@ -433,12 +440,11 @@ pub async fn intervention_workflow(
                 response.steps.len()
             );
 
-            Ok(ApiResponse::success(
-                InterventionWorkflowResponse::Started {
-                    intervention: response.intervention,
-                    steps: response.steps,
-                },
-            ).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(InterventionWorkflowResponse::Started {
+                intervention: response.intervention,
+                steps: response.steps,
+            })
+            .with_correlation_id(Some(correlation_id.clone())))
         }
 
         InterventionWorkflowAction::Get { id } => {
@@ -451,9 +457,10 @@ pub async fn intervention_workflow(
                 })?
                 .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", id)))?;
 
-            Ok(ApiResponse::success(
-                InterventionWorkflowResponse::Retrieved { intervention },
-            ).with_correlation_id(Some(correlation_id.clone())))
+            Ok(
+                ApiResponse::success(InterventionWorkflowResponse::Retrieved { intervention })
+                    .with_correlation_id(Some(correlation_id.clone())),
+            )
         }
 
         InterventionWorkflowAction::GetActiveByTask { task_id } => {
@@ -480,11 +487,12 @@ pub async fn intervention_workflow(
                 }
             }
 
-            Ok(ApiResponse::success(
-                InterventionWorkflowResponse::ActiveByTask {
+            Ok(
+                ApiResponse::success(InterventionWorkflowResponse::ActiveByTask {
                     interventions: intervention.map_or(vec![], |i| vec![i]),
-                },
-            ).with_correlation_id(Some(correlation_id.clone())))
+                })
+                .with_correlation_id(Some(correlation_id.clone())),
+            )
         }
 
         InterventionWorkflowAction::Update { id, data } => {
@@ -498,12 +506,11 @@ pub async fn intervention_workflow(
                     AppError::Database("Failed to update intervention".to_string())
                 })?;
 
-            Ok(ApiResponse::success(
-                InterventionWorkflowResponse::Updated {
-                    id,
-                    message: "Intervention updated successfully".to_string(),
-                },
-            ).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(InterventionWorkflowResponse::Updated {
+                id,
+                message: "Intervention updated successfully".to_string(),
+            })
+            .with_correlation_id(Some(correlation_id.clone())))
         }
 
         InterventionWorkflowAction::Delete { id } => {
@@ -516,12 +523,11 @@ pub async fn intervention_workflow(
                     AppError::Database("Failed to delete intervention".to_string())
                 })?;
 
-            Ok(ApiResponse::success(
-                InterventionWorkflowResponse::Deleted {
-                    id,
-                    message: "Intervention deleted".to_string(),
-                },
-            ).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(InterventionWorkflowResponse::Deleted {
+                id,
+                message: "Intervention deleted".to_string(),
+            })
+            .with_correlation_id(Some(correlation_id.clone())))
         }
 
         InterventionWorkflowAction::Finalize { data } => {
@@ -566,11 +572,12 @@ pub async fn intervention_workflow(
                     AppError::Database("Failed to finalize intervention".to_string())
                 })?;
 
-            Ok(ApiResponse::success(
-                InterventionWorkflowResponse::Finalized {
+            Ok(
+                ApiResponse::success(InterventionWorkflowResponse::Finalized {
                     intervention: response.intervention,
-                },
-            ).with_correlation_id(Some(correlation_id.clone())))
+                })
+                .with_correlation_id(Some(correlation_id.clone())),
+            )
         }
     }
 }

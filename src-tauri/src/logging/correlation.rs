@@ -227,7 +227,8 @@ mod tests {
 
     #[test]
     fn test_correlation_context_new() {
-        let ctx = CorrelationContext::new("req-test-0001-abc".to_string(), Some("user-1".to_string()));
+        let ctx =
+            CorrelationContext::new("req-test-0001-abc".to_string(), Some("user-1".to_string()));
         assert_eq!(ctx.get_correlation_id(), "req-test-0001-abc");
         assert_eq!(ctx.get_user_id(), Some("user-1"));
         assert!(ctx.get_parent_correlation_id().is_none());

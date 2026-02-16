@@ -32,6 +32,9 @@ pub struct LogMessage {
 #[command]
 #[tracing::instrument]
 pub async fn send_log_to_frontend(log_message: LogMessage) -> Result<(), String> {
+    // Initialize correlation context
+    let _correlation_id = crate::commands::init_correlation_context(&log_message.correlation_id, None);
+
     let level_str = match log_message.level {
         LogLevel::Debug => "DEBUG",
         LogLevel::Info => "INFO",
@@ -76,6 +79,9 @@ pub struct LogTaskCreationDebugRequest {
 pub fn log_task_creation_debug(
     request: LogTaskCreationDebugRequest,
 ) -> Result<ApiResponse<()>, String> {
+    // Initialize correlation context
+    let _correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+
     let correlation_id = request.correlation_id.clone();
     debug!(
         "Task creation debug - Step: {}, Data keys: {:?}",
@@ -105,6 +111,9 @@ pub struct LogClientCreationDebugRequest {
 pub fn log_client_creation_debug(
     request: LogClientCreationDebugRequest,
 ) -> Result<ApiResponse<()>, String> {
+    // Initialize correlation context
+    let _correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+
     let correlation_id = request.correlation_id.clone();
     debug!(
         "Client creation debug - Step: {}, Data: {:?}",

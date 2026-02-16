@@ -243,7 +243,7 @@ impl TaskService {
     )> {
         use crate::logging::{LogDomain, ServiceLogger};
         use std::collections::HashMap;
-        
+
         // Create logger with correlation context from thread-local storage
         let logger = ServiceLogger::new(LogDomain::Task);
         logger.debug("Getting tasks with client details", None);
@@ -278,8 +278,14 @@ impl TaskService {
         // Log successful retrieval with context
         let mut context = HashMap::new();
         context.insert("task_count".to_string(), serde_json::json!(tasks.len()));
-        context.insert("page".to_string(), serde_json::json!(result.pagination.page));
-        logger.info("Tasks with client details retrieved successfully", Some(context));
+        context.insert(
+            "page".to_string(),
+            serde_json::json!(result.pagination.page),
+        );
+        logger.info(
+            "Tasks with client details retrieved successfully",
+            Some(context),
+        );
 
         Ok((tasks, result.pagination))
     }
