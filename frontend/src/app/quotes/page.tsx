@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth/compatibility';
 import { Plus, Search, FileText, Send, CheckCircle, XCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { useQuotesList } from '@/hooks/useQuotes';
@@ -39,11 +38,10 @@ function formatCents(cents: number): string {
 
 export default function QuotesPage() {
   const router = useRouter();
-  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<QuoteStatus | ''>('');
 
-  const { quotes, total, loading, error, refetch, updateFilters } = useQuotesList({
+  const { quotes, total, loading, error, updateFilters } = useQuotesList({
     autoFetch: true,
   });
 
