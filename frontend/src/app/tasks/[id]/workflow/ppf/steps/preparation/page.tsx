@@ -529,7 +529,7 @@ export default function PreparationStepPage() {
             </p>
           </div>
           <p className="text-muted-foreground text-sm">
-            Checklist: {checklist.filter(item => item.completed).length}/{checklist.length} â€¢
+            Checklist: {checklist.filter(item => item.completed).length}/{checklist.length} •
             Environnement: {environmentValid ? 'Optimal' : 'À ajuster'}
           </p>
         </div>
