@@ -123,6 +123,12 @@ impl ServiceBuilder {
         // Initialize Material Service (depends on DB)
         let material_service = Arc::new(crate::services::MaterialService::new(db_instance.clone()));
 
+        // Initialize Quote Service (depends on QuoteRepository and DB)
+        let quote_service = Arc::new(crate::services::QuoteService::new(
+            self.repositories.quote.clone(),
+            self.db.clone(),
+        ));
+
         // Initialize Message Service (depends on MessageRepository and DB)
         let message_service = Arc::new(crate::services::MessageService::new(
             self.repositories.message.clone(),
@@ -194,6 +200,7 @@ impl ServiceBuilder {
             material_service,
             message_service,
             photo_service,
+            quote_service,
             analytics_service,
             auth_service,
             session_service,

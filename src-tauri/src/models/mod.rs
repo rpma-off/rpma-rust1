@@ -14,6 +14,7 @@ pub mod material_ts;
 pub mod message;
 pub mod notification;
 pub mod photo;
+pub mod quote;
 pub mod reports;
 pub mod settings;
 pub mod status;
