@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use uuid::Uuid;
 
-use crate::db::Database;
+use crate::shared::db::Database;
 use crate::models::material::{
     InventoryStats, InventoryTransaction, InventoryTransactionType, Material, MaterialConsumption,
     MaterialStats, MaterialType,
