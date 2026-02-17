@@ -1,22 +1,20 @@
 import React from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useInterventionData } from '../../hooks/useInterventionData';
-import { ipcClient } from '../../lib/ipc';
+import { useInterventionData } from '../api/useInterventionData';
+import { interventionsIpc } from '../ipc/interventions.ipc';
 
-jest.mock('../../contexts/AuthContext', () => ({
+jest.mock('@/domains/auth', () => ({
   useAuth: () => ({
     session: { token: 'test-token' },
   }),
 }));
 
-jest.mock('../../lib/ipc', () => ({
-  ipcClient: {
-    interventions: {
-      getActiveByTask: jest.fn(),
-      getLatestByTask: jest.fn(),
-      getProgress: jest.fn(),
-    },
+jest.mock('../ipc/interventions.ipc', () => ({
+  interventionsIpc: {
+    getActiveByTask: jest.fn(),
+    getLatestByTask: jest.fn(),
+    getProgress: jest.fn(),
   },
 }));
 
@@ -40,13 +38,7 @@ const createWrapper = () => {
 };
 
 describe('useInterventionData', () => {
-  const mockInterventions = (ipcClient as unknown as {
-    interventions: {
-      getActiveByTask: jest.Mock;
-      getLatestByTask: jest.Mock;
-      getProgress: jest.Mock;
-    };
-  }).interventions;
+  const mockInterventions = interventionsIpc as jest.Mocked<typeof interventionsIpc>;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -82,7 +74,7 @@ describe('useInterventionData', () => {
     mockInterventions.getActiveByTask.mockResolvedValue({
       type: 'ActiveByTask',
       intervention: mockIntervention,
-    });
+    } as never);
 
     const wrapper = createWrapper();
     const { result } = renderHook(() => useInterventionData('task-1'), { wrapper });
@@ -113,7 +105,7 @@ describe('useInterventionData', () => {
     mockInterventions.getActiveByTask.mockResolvedValue({
       type: 'ActiveRetrieved',
       intervention: mockIntervention,
-    });
+    } as never);
 
     mockInterventions.getProgress.mockResolvedValue({
       steps: [
@@ -129,7 +121,7 @@ describe('useInterventionData', () => {
           updated_at: '2024-01-01T00:00:00Z',
         },
       ],
-    });
+    } as never);
 
     const wrapper = createWrapper();
     const { result } = renderHook(() => useInterventionData('task-2'), { wrapper });

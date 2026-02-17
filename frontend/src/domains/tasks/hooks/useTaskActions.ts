@@ -4,7 +4,7 @@ import { taskService } from '../services/task.service';
 import { ApiError } from '@/lib/api-error';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
-import type { TaskWithDetails } from '@/lib/services/entities/task.service';
+import type { TaskWithDetails } from '@/types/task.types';
 
 interface UseTaskActionsProps {
   userToken?: string;

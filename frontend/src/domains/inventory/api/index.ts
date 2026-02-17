@@ -1,5 +1,6 @@
 export { useInventory } from './useInventory';
 export { useInventoryActions } from './useInventoryActions';
+export { InventoryProvider, useInventoryContext } from './InventoryProvider';
 export { useInventoryStats } from '../hooks/useInventoryStats';
 export { useMaterials } from '../hooks/useMaterials';
 export { useMaterialForm } from '../hooks/useMaterialForm';

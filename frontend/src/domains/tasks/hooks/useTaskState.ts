@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { TaskStatus, TaskPriority } from '@/lib/backend';
-import { TaskWithDetails } from '@/lib/services/entities/task.service';
+import type { TaskWithDetails } from '@/types/task.types';
 
 interface TaskFilters {
   status: TaskStatus | 'all';

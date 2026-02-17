@@ -3,7 +3,7 @@ import { TaskStatus, TaskPriority } from '@/lib/backend';
 import { taskService } from '../services/task.service';
 import { ApiError } from '@/lib/api-error';
 import { logger } from '@/lib/logger';
-import type { TaskWithDetails } from '@/lib/services/entities/task.service';
+import type { TaskWithDetails } from '@/types/task.types';
 
 interface TaskFilters {
   status: TaskStatus | 'all';
@@ -59,6 +59,7 @@ export function useTaskSync({
       requestId,
     });
 
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     try {
       // Check if user is authenticated
       if (!userToken) {
@@ -100,13 +101,17 @@ export function useTaskSync({
 
       // Add timeout to prevent hanging
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Request timeout')), 30000); // 30 second timeout
+        timeoutId = setTimeout(() => reject(new Error('Request timeout')), 30000); // 30 second timeout
       });
 
       const result = await Promise.race([
         taskService.getTasks(cleanParams),
         timeoutPromise
       ]) as { success?: boolean; data?: { data: TaskWithDetails[]; pagination?: Record<string, unknown> }; error?: Error | null };
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
 
       logger.debug('useTaskSync: TaskService result received', {
         success: result.success,
@@ -171,6 +176,10 @@ export function useTaskSync({
       onError?.(err instanceof Error ? err : new Error(errorMessage));
       return null;
     } finally {
+      // Ensure timeout is cleared in all cases to avoid open handles
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       fetchInProgressRef.current = false;
       onLoadingChange?.(false);
       logger.debug('useTaskSync: fetchTasks completed', {
