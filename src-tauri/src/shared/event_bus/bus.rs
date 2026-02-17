@@ -59,12 +59,12 @@ pub fn global_event_bus() -> Option<Arc<InMemoryEventBus>> {
 
 pub fn publish_event(event: DomainEvent) {
     if let Some(bus) = GLOBAL_EVENT_BUS.get() {
-        bus.publish(event);
+        DomainEventBus::publish(bus.as_ref(), event);
     }
 }
 
 pub fn register_handler(handler: Arc<dyn DomainEventHandler>) {
     if let Some(bus) = GLOBAL_EVENT_BUS.get() {
-        bus.subscribe(handler);
+        DomainEventBus::subscribe(bus.as_ref(), handler);
     }
 }
