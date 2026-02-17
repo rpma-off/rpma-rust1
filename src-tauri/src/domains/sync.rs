@@ -4,11 +4,3 @@
 
 // Public facade
 pub use crate::sync::BackgroundSyncService;
-
-// Models
-pub(crate) use crate::models::sync::{
-    EntityType, OperationType, SyncOperation, SyncQueueMetrics, SyncStatus,
-};
-
-// Services
-pub(crate) use crate::sync::SyncQueue;

@@ -107,8 +107,8 @@ use crate::models::auth::UserRole;
 use crate::models::client::ClientWithTasks;
 use crate::models::task::*;
 
-use crate::models::Client;
 use crate::domains::inventory::InventoryService;
+use crate::models::Client;
 use crate::services::{ClientService, SettingsService, TaskService};
 use base64::{engine::general_purpose, Engine as _};
 use serde::{Deserialize, Serialize};

@@ -11,18 +11,18 @@ rpma-rust/
 ├── frontend/                 # Next.js 14 application
 │   ├── src/
 │   │   ├── app/             # App Router pages
-│   │   ├── components/      # React components
-│   │   ├── hooks/           # Custom React hooks
-│   │   ├── lib/             # Utilities and IPC client
+│   │   ├── components/      # 260+ React components
+│   │   ├── hooks/           # 67 custom hooks
+│   │   ├── lib/             # Utilities and IPC client (19 domain modules)
 │   │   ├── types/           # TypeScript type definitions (auto-generated from Rust)
 │   │   └── ui/              # shadcn/ui components
 │   └── package.json
 ├── src-tauri/               # Rust/Tauri backend
 │   ├── src/
-│   │   ├── commands/        # Tauri IPC command handlers
-│   │   ├── models/          # Data models with ts-rs exports
-│   │   ├── repositories/    # Database access layer
-│   │   ├── services/        # Business logic layer
+│   │   ├── commands/        # 65 IPC command files
+│   │   ├── models/          # 21 data models with ts-rs exports
+│   │   ├── repositories/    # 20 repository files
+│   │   ├── services/        # 88 service files
 │   │   └── db/              # Database management
 │   └── Cargo.toml
 ├── migrations/              # SQLite migrations
@@ -63,7 +63,6 @@ SQLite Database (WAL mode)
 
 ### Security & RBAC
 - Enforce Role-Based Access Control (RBAC) in command handlers
-- Use validators in `src-tauri/src/commands/validators.rs`
 - Session tokens must be validated for all protected endpoints
 - User permissions must be checked before data access
 
@@ -78,15 +77,18 @@ SQLite Database (WAL mode)
 ```bash
 # Development
 npm run dev                    # Start both frontend and backend
-npm run frontend:dev           # Frontend only
-npm run backend:dev            # Backend only (Tauri)
+npm run frontend:dev           # Frontend only (Next.js)
 
 # Building
 npm run build                  # Production build
 npm run frontend:build         # Build frontend only
+npm run backend:build          # Build backend only (Cargo)
+npm run backend:build:release  # Build backend release version
 
+# Quality check (RECOMMENDED)
+npm run quality:check          # Run all quality checks
 
-(RECOMMENDED)
+# Linting/Type-checking
 npm run frontend:lint          # ESLint
 npm run frontend:type-check    # TypeScript checking
 npm run backend:check          # Cargo check
@@ -98,10 +100,13 @@ npm run types:sync             # Regenerate TS types from Rust
 npm run types:validate         # Validate type consistency
 npm run types:drift-check      # Check for type drift
 
+# Testing
+cd frontend && npm test        # Run frontend tests
+cd frontend && npm run test:e2e # Run E2E tests with Playwright
+cd frontend && npm run test:coverage # Run tests with coverage
+
 # Security & Validation
 npm run security:audit         # Security vulnerability scan
-node scripts/validate-rbac.js  # RBAC validation
-node scripts/validate-session-security.js  # Session security check
 node scripts/validate-migration-system.js  # Migration validation
 
 ## 🎯 Development Workflow
@@ -110,7 +115,6 @@ node scripts/validate-migration-system.js  # Migration validation
 1. Search for existing patterns in the codebase - **copy existing patterns** rather than inventing new ones
 2. Understand the 4-layer architecture and which layer your change belongs to
 3. Check related documentation in `docs/` directory
-4. Run `npm run quality:check` to establish baseline
 
 ### Making Changes
 1. **Frontend changes**: 
@@ -130,10 +134,11 @@ node scripts/validate-migration-system.js  # Migration validation
    - Follow migration naming: `YYYYMMDDHHMMSS_description.sql`
    - Test both up and down migrations
 
-## ✅ Tests Gates
+## ✅ Test Gates
 
 Run these tests before submitting code:
 
+```bash
 # All backend tests (Rust)
 cd src-tauri && cargo test --lib
 
@@ -150,7 +155,7 @@ cd frontend && npm test
 cd frontend && npm run test:e2e
 
 # Code coverage
-npm run test:coverage
+cd frontend && npm run test:coverage
 ```
 
 ### Frontend
@@ -176,8 +181,6 @@ npm run types:drift-check      # Must pass
 ### Security
 ```bash
 npm run security:audit         # Must pass
-node scripts/validate-rbac.js  # Must pass
-node scripts/validate-session-security.js  # Must pass
 ```
 
 

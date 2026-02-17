@@ -1454,7 +1454,7 @@ impl MaterialService {
         let total_cost = request.unit_cost.map(|uc| uc * request.quantity);
 
         let transaction = InventoryTransaction {
-            id: id,
+            id,
             material_id: request.material_id.clone(),
             transaction_type: request.transaction_type.clone(),
             quantity: request.quantity,

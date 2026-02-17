@@ -57,7 +57,7 @@ pub async fn update_general_settings(
     request: UpdateGeneralSettingsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let _correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("Updating general settings");
 
     let correlation_id_clone = request.correlation_id.clone();
@@ -104,7 +104,7 @@ pub async fn update_user_preferences(
     request: UpdateUserPreferencesRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let _correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("Updating user preferences");
 
     let correlation_id_clone = request.correlation_id.clone();
@@ -185,7 +185,7 @@ pub async fn update_user_performance(
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let correlation_id_init = crate::commands::init_correlation_context(&correlation_id, None);
+    let _correlation_id_init = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Updating user performance settings");
 
     let user = authenticate!(&session_token, &state);

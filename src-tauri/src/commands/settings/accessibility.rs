@@ -37,7 +37,7 @@ pub async fn update_user_accessibility(
     request: UpdateUserAccessibilityRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let _correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("Updating user accessibility settings");
 
     let correlation_id_clone = request.correlation_id.clone();

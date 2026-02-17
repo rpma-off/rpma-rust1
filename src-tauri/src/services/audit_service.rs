@@ -570,7 +570,7 @@ impl AuditService {
             query.push_str(&format!(" LIMIT {}", limit));
         }
 
-        let mut stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
+        let _stmt = conn.prepare(&query).map_err(|e| e.to_string())?;
 
         // Similar mapping logic as get_resource_history
         // For brevity, returning empty vec - implement full mapping in production

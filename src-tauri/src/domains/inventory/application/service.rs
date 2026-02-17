@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use uuid::Uuid;
 
-use crate::db::Database;
+use crate::shared::db::Database;
 use crate::models::material::{
     InventoryStats, InventoryTransaction, InventoryTransactionType, Material, MaterialConsumption,
     MaterialStats, MaterialType,
@@ -15,9 +15,7 @@ use crate::domains::inventory::domain::material::{
 };
 
 use super::errors::{InventoryError, InventoryResult};
-use crate::domains::inventory::infrastructure::{
-    InventoryTransactionRepository, MaterialGateway,
-};
+use crate::domains::inventory::infrastructure::{InventoryTransactionRepository, MaterialGateway};
 
 #[derive(Debug)]
 pub struct InventoryService {
@@ -66,16 +64,15 @@ impl InventoryService {
             .get_material(&request.material_id)
             .map_err(InventoryError::from)?
             .ok_or_else(|| {
-                InventoryError::NotFound(format!(
-                    "Material {} not found",
-                    request.material_id
-                ))
+                InventoryError::NotFound(format!("Material {} not found", request.material_id))
             })?;
 
         validate_unit_of_measure(&material.unit_of_measure)?;
         validate_stock_change(material.current_stock, request.quantity_change)?;
 
-        self.gateway.update_stock(request).map_err(InventoryError::from)
+        self.gateway
+            .update_stock(request)
+            .map_err(InventoryError::from)
     }
 
     pub fn record_consumption(
@@ -87,10 +84,7 @@ impl InventoryService {
             .get_material(&request.material_id)
             .map_err(InventoryError::from)?
             .ok_or_else(|| {
-                InventoryError::NotFound(format!(
-                    "Material {} not found",
-                    request.material_id
-                ))
+                InventoryError::NotFound(format!("Material {} not found", request.material_id))
             })?;
 
         validate_unit_of_measure(&material.unit_of_measure)?;

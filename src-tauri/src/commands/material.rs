@@ -25,7 +25,7 @@ pub async fn material_create(
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
-    let service = state.inventory_service.clone();
+    let service = state.material_service.clone();
 
     match service.create_material(request, Some(current_user.user_id)) {
         Ok(material) => {
@@ -117,7 +117,7 @@ pub async fn material_list(
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
-    let service = state.material_service.clone();
+    let service = state.inventory_service.clone();
 
     // Parse material type
     let mt = material_type.and_then(|s| match s.as_str() {
@@ -137,9 +137,9 @@ pub async fn material_list(
         limit,
         offset,
     ) {
-        Ok(materials) => Ok(
-            ApiResponse::success(materials).with_correlation_id(Some(correlation_id.clone())),
-        ),
+        Ok(materials) => {
+            Ok(ApiResponse::success(materials).with_correlation_id(Some(correlation_id.clone())))
+        }
         Err(e) => {
             error!(error = %e, "Failed to list materials");
             Err(e)
@@ -161,7 +161,7 @@ pub async fn material_update(
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
-    let service = state.inventory_service.clone();
+    let service = state.material_service.clone();
 
     match service.update_material(&id, request, Some(current_user.user_id)) {
         Ok(material) => {
@@ -191,7 +191,7 @@ pub async fn material_update_stock(
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
-    let service = state.material_service.clone();
+    let service = state.inventory_service.clone();
 
     match inventory_ipc::update_stock(service.as_ref(), request) {
         Ok(material) => {
@@ -246,7 +246,7 @@ pub async fn material_get_intervention_consumption(
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
-    let service = state.inventory_service.clone();
+    let service = state.material_service.clone();
 
     match service.get_intervention_consumption(&intervention_id) {
         Ok(consumptions) => Ok(
@@ -306,10 +306,12 @@ pub async fn material_get_stats(
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
-    let service = state.material_service.clone();
+    let service = state.inventory_service.clone();
 
     match inventory_ipc::get_material_stats(service.as_ref()) {
-        Ok(stats) => Ok(ApiResponse::success(stats).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(stats) => {
+            Ok(ApiResponse::success(stats).with_correlation_id(Some(correlation_id.clone())))
+        }
         Err(e) => {
             error!(error = %e, "Failed to get material stats");
             Err(e)
@@ -329,7 +331,7 @@ pub async fn material_get_low_stock(
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
-    let service = state.inventory_service.clone();
+    let service = state.material_service.clone();
 
     match service.get_low_stock_materials() {
         Ok(materials) => {
@@ -385,10 +387,12 @@ pub async fn inventory_get_stats(
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
-    let service = state.material_service.clone();
+    let service = state.inventory_service.clone();
 
     match inventory_ipc::get_inventory_stats(service.as_ref()) {
-        Ok(stats) => Ok(ApiResponse::success(stats).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(stats) => {
+            Ok(ApiResponse::success(stats).with_correlation_id(Some(correlation_id.clone())))
+        }
         Err(e) => {
             error!(error = %e, "Failed to get inventory stats");
             Err(e)

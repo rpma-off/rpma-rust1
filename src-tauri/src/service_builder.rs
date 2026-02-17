@@ -37,8 +37,8 @@ use crate::repositories::Repositories;
 use crate::services::audit_log_handler::AuditLogHandler;
 use crate::services::audit_service::AuditService;
 use crate::services::event_bus::InMemoryEventBus;
-use crate::shared::event_bus::{register_handler, set_global_event_bus};
 use crate::services::websocket_event_handler::WebSocketEventHandler;
+use crate::shared::event_bus::{register_handler, set_global_event_bus};
 use std::sync::{Arc, Mutex, OnceLock};
 
 /// Service Builder
@@ -126,7 +126,7 @@ impl ServiceBuilder {
 
         // Initialize Inventory Service (bounded context facade)
         let inventory_service = Arc::new(crate::domains::inventory::InventoryService::new(
-            db_instance.clone(),
+            Arc::new(db_instance.clone()),
             material_service.clone(),
         ));
 

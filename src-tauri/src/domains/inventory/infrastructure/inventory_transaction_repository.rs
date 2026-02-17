@@ -2,10 +2,11 @@ use std::sync::Arc;
 
 use rusqlite::params;
 
-use crate::db::Database;
+use crate::shared::db::Database;
 use crate::models::material::InventoryTransaction;
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub struct InventoryTransactionRepository {
     db: Arc<Database>,
 }

@@ -4,7 +4,7 @@
 //! of failed interventions and orphaned data.
 //! Delegates all database operations to InterventionRepository.
 
-use crate::db::{InterventionError, InterventionResult};
+use crate::db::InterventionResult;
 use crate::logging::RPMARequestLogger;
 use crate::repositories::intervention_repository::InterventionRepository;
 use std::sync::Arc;

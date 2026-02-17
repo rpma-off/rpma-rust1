@@ -53,7 +53,10 @@ fn test_migration_037_quotes_schema() {
         )
         .expect("Failed to get quotes columns");
 
-    assert!(column_count >= 20, "quotes table should have at least 20 columns");
+    assert!(
+        column_count >= 20,
+        "quotes table should have at least 20 columns"
+    );
 
     // Verify quote_items table columns
     let column_count: i64 = ctx
@@ -65,7 +68,10 @@ fn test_migration_037_quotes_schema() {
         )
         .expect("Failed to get quote_items columns");
 
-    assert!(column_count >= 11, "quote_items table should have at least 11 columns");
+    assert!(
+        column_count >= 11,
+        "quote_items table should have at least 11 columns"
+    );
 }
 
 #[test]
@@ -99,10 +105,7 @@ fn test_migration_037_indexes() {
     }
 
     // Check for quote_items indexes
-    let indexes = vec![
-        "idx_quote_items_quote_id",
-        "idx_quote_items_position",
-    ];
+    let indexes = vec!["idx_quote_items_quote_id", "idx_quote_items_position"];
 
     for index_name in indexes {
         let index_exists: i64 = ctx

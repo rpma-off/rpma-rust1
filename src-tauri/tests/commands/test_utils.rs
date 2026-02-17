@@ -59,10 +59,12 @@ pub async fn create_test_db() -> TestContext {
     let material_service = Arc::new(rpma_ppf_intervention::services::MaterialService::new(
         db.clone(),
     ));
-    let inventory_service = Arc::new(rpma_ppf_intervention::domains::inventory::InventoryService::new(
-        db.clone(),
-        material_service.clone(),
-    ));
+    let inventory_service = Arc::new(
+        rpma_ppf_intervention::domains::inventory::InventoryService::new(
+            db.clone(),
+            material_service.clone(),
+        ),
+    );
     let photo_service = Arc::new(rpma_ppf_intervention::services::PhotoService::new(
         db.clone(),
     ));

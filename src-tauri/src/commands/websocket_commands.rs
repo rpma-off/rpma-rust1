@@ -59,7 +59,10 @@ pub async fn init_websocket_server(
 
 /// Broadcast message to all connected clients
 #[tauri::command]
-pub async fn broadcast_websocket_message(request: BroadcastWSMessageRequest, correlation_id: Option<String>) -> AppResult<()> {
+pub async fn broadcast_websocket_message(
+    request: BroadcastWSMessageRequest,
+    correlation_id: Option<String>,
+) -> AppResult<()> {
     let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
 
     broadcast_ws_message(request.message).await
@@ -67,7 +70,10 @@ pub async fn broadcast_websocket_message(request: BroadcastWSMessageRequest, cor
 
 /// Send message to specific client
 #[tauri::command]
-pub async fn send_websocket_message_to_client(request: SendWSMessageRequest, correlation_id: Option<String>) -> AppResult<()> {
+pub async fn send_websocket_message_to_client(
+    request: SendWSMessageRequest,
+    correlation_id: Option<String>,
+) -> AppResult<()> {
     let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
 
     send_ws_message_to_client(&request.client_id, request.message).await

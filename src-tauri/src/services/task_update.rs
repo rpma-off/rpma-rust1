@@ -121,7 +121,7 @@ impl TaskUpdateService {
 
     /// Apply status updates with timestamp management
     fn apply_status_updates(
-        service: &TaskUpdateService,
+        _service: &TaskUpdateService,
         task: &mut Task,
         req: &UpdateTaskRequest,
     ) -> Result<(), AppError> {
@@ -188,11 +188,11 @@ impl TaskUpdateService {
             task.vehicle_year = req.vehicle_year.clone();
         }
 
-        if let Some(vehicle_make) = &req.vehicle_make {
+        if let Some(_vehicle_make) = &req.vehicle_make {
             task.vehicle_make = req.vehicle_make.clone();
         }
 
-        if let Some(vin) = &req.vin {
+        if let Some(_vin) = &req.vin {
             task.vin = req.vin.clone();
         }
 
@@ -270,15 +270,15 @@ impl TaskUpdateService {
 
     /// Apply simple field updates (scheduling, notes, tags, etc.)
     fn apply_simple_updates(task: &mut Task, req: &UpdateTaskRequest) {
-        if let Some(scheduled_date) = &req.scheduled_date {
+        if let Some(_scheduled_date) = &req.scheduled_date {
             task.scheduled_date = req.scheduled_date.clone();
         }
 
-        if let Some(estimated_duration) = req.estimated_duration {
+        if let Some(_estimated_duration) = req.estimated_duration {
             task.estimated_duration = req.estimated_duration;
         }
 
-        if let Some(notes) = &req.notes {
+        if let Some(_notes) = &req.notes {
             task.notes = req.notes.clone();
         }
 

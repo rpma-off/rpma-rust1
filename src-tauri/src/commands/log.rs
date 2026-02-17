@@ -33,7 +33,8 @@ pub struct LogMessage {
 #[tracing::instrument]
 pub async fn send_log_to_frontend(log_message: LogMessage) -> Result<(), String> {
     // Initialize correlation context
-    let _correlation_id = crate::commands::init_correlation_context(&log_message.correlation_id, None);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&log_message.correlation_id, None);
 
     let level_str = match log_message.level {
         LogLevel::Debug => "DEBUG",

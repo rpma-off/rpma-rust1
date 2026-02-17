@@ -4,11 +4,3 @@
 
 // Public facade
 pub use crate::services::settings::SettingsService;
-
-// Models
-pub(crate) use crate::models::settings::{
-    AppSettings, GeneralSettings, NotificationSettings, SecuritySettings, SystemConfiguration,
-};
-
-// Services
-pub(crate) use crate::services::system::SystemService;
