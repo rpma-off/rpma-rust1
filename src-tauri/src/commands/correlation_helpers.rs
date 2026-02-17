@@ -142,7 +142,7 @@ where
     F: FnOnce() -> Fut,
     Fut: std::future::Future<Output = Result<ApiResponse<T>, AppError>>,
 {
-    let corr_id = init_correlation_context(correlation_id, user_id);
+    let _corr_id = init_correlation_context(correlation_id, user_id);
 
     let result = command_fn().await;
 

@@ -189,7 +189,7 @@ impl PhotoProcessingService {
     /// Blocking WebP compression implementation
     fn compress_to_webp_blocking(
         data: &[u8],
-        quality: u8,
+        _quality: u8,
     ) -> crate::services::photo::PhotoResult<Vec<u8>> {
         // Load image
         let img = image::load_from_memory(data).map_err(|e| {
@@ -213,8 +213,6 @@ impl PhotoProcessingService {
 
         Ok(compressed_data)
     }
-
-    /// Extract image dimensions from binary data
 
     /// Extract image dimensions from binary data
     pub fn extract_image_dimensions(

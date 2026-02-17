@@ -33,7 +33,6 @@ pub trait FromSqlRow: Sized {
 /// NOTE: Repository trait has been moved to repositories::base::Repository
 /// Use `use crate::repositories::base::Repository` for repository operations
 /// This module retains legacy QueryBuilder for backward compatibility
-
 /// Backward compatibility: Re-export Repository from repositories::base
 pub use crate::repositories::base::Repository;
 

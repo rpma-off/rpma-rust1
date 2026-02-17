@@ -1,4 +1,4 @@
-use chrono::{TimeZone, Utc};
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -20,7 +20,8 @@ impl From<InterventionFinalized> for DomainEvent {
             task_id: event.task_id,
             technician_id: event.technician_id,
             completed_at_ms: event.completed_at_ms,
-            timestamp: Utc.timestamp_millis(event.completed_at_ms),
+            timestamp: chrono::DateTime::from_timestamp_millis(event.completed_at_ms)
+                .unwrap_or_else(|| Utc::now()),
             metadata: None,
         }
     }
@@ -44,7 +45,8 @@ impl From<MaterialConsumed> for DomainEvent {
             quantity: event.quantity,
             unit: event.unit.unwrap_or_else(|| "unit".to_string()),
             consumed_by: "system".to_string(),
-            timestamp: Utc.timestamp_millis(event.at_ms),
+            timestamp: chrono::DateTime::from_timestamp_millis(event.at_ms)
+                .unwrap_or_else(|| Utc::now()),
             metadata: None,
         }
     }

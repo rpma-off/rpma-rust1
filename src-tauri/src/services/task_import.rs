@@ -147,7 +147,7 @@ impl TaskImportService {
             };
 
             // Create task request
-            let create_request = CreateTaskRequest {
+            let _create_request = CreateTaskRequest {
                 title: Some(title.to_string()),
                 description: Some(description.to_string()),
                 status: Some(status),
