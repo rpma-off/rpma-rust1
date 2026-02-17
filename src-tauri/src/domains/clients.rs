@@ -2,13 +2,12 @@
 //!
 //! This module re-exports all client-related components across layers.
 
+// Public facade
+pub use crate::services::client::ClientService;
+
 // Models
-pub use crate::models::client::Client;
+pub(crate) use crate::models::client::Client;
 
 // Services
-pub use crate::services::client::ClientService;
-pub use crate::services::client_statistics::ClientStatisticsService;
-pub use crate::services::client_validation::ClientValidationService;
-
-// Repositories
-pub use crate::repositories::client_repository::ClientRepository;
+pub(crate) use crate::services::client_statistics::ClientStatisticsService;
+pub(crate) use crate::services::client_validation::ClientValidationService;

@@ -1,0 +1,6 @@
+//! Shared infrastructure for cross-domain concerns.
+
+pub mod db;
+pub mod error;
+pub mod event_bus;
+pub mod logging;

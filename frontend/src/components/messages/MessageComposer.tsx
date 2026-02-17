@@ -109,6 +109,7 @@ export function MessageComposer({
       client_id: clientId || null,
       priority,
       scheduled_at: null,
+      correlation_id: null,
     };
 
     const result = await sendMessage(request);

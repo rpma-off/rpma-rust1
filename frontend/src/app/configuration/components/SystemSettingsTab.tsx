@@ -35,7 +35,7 @@ import {
 } from 'lucide-react';
 import { SystemConfiguration, BusinessHoursConfig } from '@/types/configuration.types';
 import { useAuth } from '@/contexts/AuthContext';
-import { settingsOperations } from '@/lib/ipc/domains/settings';
+import { settingsOperations } from '@/lib/ipc';
 import type { JsonValue, JsonObject } from '@/types/json';
 
 const ConfigurationSkeleton = () => (

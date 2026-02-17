@@ -14,7 +14,10 @@ export const POST = withAuth(async (request: NextRequestWithUser) => {
     }
 
     if (body.action === 'send') {
-      const notificationRequest: SendNotificationRequest = body.request;
+      const notificationRequest: SendNotificationRequest = {
+        ...body.request,
+        correlation_id: body.request?.correlation_id ?? null,
+      };
       await notificationService.sendNotification(notificationRequest, token);
       return NextResponse.json({ success: true, message: 'Notification sent' });
     }

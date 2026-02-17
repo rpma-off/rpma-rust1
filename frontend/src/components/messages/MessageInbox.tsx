@@ -30,6 +30,7 @@ export function MessageInbox({ userId }: MessageInboxProps) {
     date_to: null,
     limit: 50,
     offset: null,
+    correlation_id: null,
   });
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
 

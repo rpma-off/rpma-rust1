@@ -17,7 +17,7 @@ import { motion } from 'framer-motion';
 import { useLogger } from '@/hooks/useLogger';
 import { LogDomain } from '@/lib/logging/types';
 import { useAuth } from '@/contexts/AuthContext';
-import { settingsOperations } from '@/lib/ipc/domains/settings';
+import { settingsOperations } from '@/lib/ipc';
 import type { JsonValue } from '@/types/json';
 import {
   Plus,

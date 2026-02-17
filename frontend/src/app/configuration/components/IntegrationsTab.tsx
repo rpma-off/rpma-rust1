@@ -35,7 +35,7 @@ import {
 } from 'lucide-react';
 import { IntegrationConfig, IntegrationType, IntegrationStatus } from '@/types/configuration.types';
 import { useAuth } from '@/contexts/AuthContext';
-import { settingsOperations } from '@/lib/ipc/domains/settings';
+import { settingsOperations } from '@/lib/ipc';
 import type { JsonValue } from '@/types/json';
 
 export function IntegrationsTab() {

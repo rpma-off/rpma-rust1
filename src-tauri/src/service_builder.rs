@@ -37,6 +37,7 @@ use crate::repositories::Repositories;
 use crate::services::audit_log_handler::AuditLogHandler;
 use crate::services::audit_service::AuditService;
 use crate::services::event_bus::InMemoryEventBus;
+use crate::shared::event_bus::{register_handler, set_global_event_bus};
 use crate::services::websocket_event_handler::WebSocketEventHandler;
 use std::sync::{Arc, Mutex, OnceLock};
 
@@ -123,6 +124,12 @@ impl ServiceBuilder {
         // Initialize Material Service (depends on DB)
         let material_service = Arc::new(crate::services::MaterialService::new(db_instance.clone()));
 
+        // Initialize Inventory Service (bounded context facade)
+        let inventory_service = Arc::new(crate::domains::inventory::InventoryService::new(
+            db_instance.clone(),
+            material_service.clone(),
+        ));
+
         // Initialize Quote Service (depends on QuoteRepository and DB)
         let quote_service = Arc::new(crate::services::QuoteService::new(
             self.repositories.quote.clone(),
@@ -169,6 +176,7 @@ impl ServiceBuilder {
 
         // Initialize Event Bus (self-contained, thread-safe)
         let event_bus = Arc::new(InMemoryEventBus::new());
+        set_global_event_bus(event_bus.clone());
 
         // Register WebSocket Event Handler for real-time updates
         let websocket_handler = WebSocketEventHandler::new();
@@ -181,6 +189,12 @@ impl ServiceBuilder {
         }
         let audit_log_handler = AuditLogHandler::new(audit_service);
         event_bus.register_handler(audit_log_handler);
+
+        register_handler(Arc::new(
+            crate::domains::inventory::application::InterventionFinalizedHandler::new(
+                inventory_service.clone(),
+            ),
+        ));
 
         // Note: Additional handlers can be registered here:
         // - SecurityMonitorHandler for security events
@@ -198,6 +212,7 @@ impl ServiceBuilder {
             dashboard_service,
             intervention_service,
             material_service,
+            inventory_service,
             message_service,
             photo_service,
             quote_service,

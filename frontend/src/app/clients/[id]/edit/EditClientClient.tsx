@@ -8,7 +8,7 @@ import { ArrowLeft, Save, X } from 'lucide-react';
 import Link from 'next/link';
 import type { Client } from '@/types';
 import { convertTimestamps } from '@/lib/types';
-import { ipcClient } from '@/lib/ipc/client';
+import { ipcClient } from '@/lib/ipc';
 import { useTranslation } from '@/hooks/useTranslation';
 import { LoadingState } from '@/components/layout/LoadingState';
 

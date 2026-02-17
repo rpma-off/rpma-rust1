@@ -20,7 +20,7 @@ import { useAuth } from '@/lib/auth/compatibility';
 import { getUserFullName } from '@/lib/types';
 import { useTasks } from '@/hooks/useTasks';
 import { useDebounce } from '@/hooks/useDebounce';
-import { ipcClient } from '@/lib/ipc/client';
+import { ipcClient } from '@/lib/ipc';
 import { useTranslation } from '@/hooks/useTranslation';
 
 import { TaskWithDetails } from '@/lib/services/entities/task.service';
