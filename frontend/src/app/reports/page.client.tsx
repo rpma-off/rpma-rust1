@@ -5,11 +5,11 @@ import { DateRangePicker } from './components/DateRangePicker';
 import { ReportTabs } from './components/ReportTabs';
 import { ReportContent } from './components/ReportContent';
 import { ExportControls } from './components/ExportControls';
-import { reportsService } from '@/lib/services/entities/reports.service';
-import { PageShell } from '@/components/layout/PageShell';
-import { enhancedToast } from '@/lib/enhanced-toast';
-import type { ReportType, ReportFilters as BackendReportFilters, DateRange as BackendDateRange, TaskCompletionReport, TechnicianPerformanceReport, ClientAnalyticsReport, QualityComplianceReport as BackendQualityComplianceReport, MaterialUsageReport as BackendMaterialUsageReport, GeographicReport as BackendGeographicReport, SeasonalReport, OperationalIntelligenceReport as BackendOperationalIntelligenceReport } from '@/lib/backend';
-import { LoadingState } from '@/components/layout/LoadingState';
+import { reportsService } from '@/shared/utils';
+import { PageShell } from '@/shared/ui/layout/PageShell';
+import { enhancedToast } from '@/shared/utils';
+import type { ReportType, ReportFilters as BackendReportFilters, DateRange as BackendDateRange, TaskCompletionReport, TechnicianPerformanceReport, ClientAnalyticsReport, QualityComplianceReport as BackendQualityComplianceReport, MaterialUsageReport as BackendMaterialUsageReport, GeographicReport as BackendGeographicReport, SeasonalReport, OperationalIntelligenceReport as BackendOperationalIntelligenceReport } from '@/shared/types';
+import { LoadingState } from '@/shared/ui/layout/LoadingState';
 
 interface DateRange {
   start: Date;

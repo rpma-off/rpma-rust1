@@ -2,16 +2,16 @@
 
 import React, { useState } from 'react';
 import { MessageSquare, Inbox, Settings, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageComposer } from '@/components/messages/MessageComposer';
-import { MessageInbox } from '@/components/messages/MessageInbox';
-import { NotificationPreferences } from '@/components/messages/NotificationPreferences';
-import { useAuth } from '@/lib/auth/compatibility';
-import { PageShell } from '@/components/layout/PageShell';
-import { PageHeader } from '@/components/ui/page-header';
-import { ErrorState } from '@/components/layout/ErrorState';
-import { useTranslation } from '@/hooks/useTranslation';
+import { Button } from '@/shared/ui/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/ui/tabs';
+import { MessageComposer } from '@/shared/ui/messages/MessageComposer';
+import { MessageInbox } from '@/shared/ui/messages/MessageInbox';
+import { NotificationPreferences } from '@/shared/ui/messages/NotificationPreferences';
+import { useAuth } from '@/domains/auth';
+import { PageShell } from '@/shared/ui/layout/PageShell';
+import { PageHeader } from '@/shared/ui/ui/page-header';
+import { ErrorState } from '@/shared/ui/layout/ErrorState';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 
 export default function MessagesPage() {
   const { t } = useTranslation();
@@ -80,3 +80,4 @@ export default function MessagesPage() {
     </PageShell>
   );
 }
+

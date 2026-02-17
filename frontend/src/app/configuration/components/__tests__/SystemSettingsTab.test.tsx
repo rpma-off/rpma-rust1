@@ -4,13 +4,13 @@ import userEvent from '@testing-library/user-event';
 import { SystemSettingsTab } from '../SystemSettingsTab';
 import { MonitoringTab } from '../MonitoringTab';
 import { BusinessRulesTab } from '../BusinessRulesTab';
-import { safeInvoke, settingsOperations } from '@/lib/ipc';
+import { safeInvoke, settingsOperations } from '@/shared/utils';
 
-jest.mock('@/contexts/AuthContext', () => ({
+jest.mock('@/domains/auth', () => ({
   useAuth: () => ({ session: { token: 'test-token' } }),
 }));
 
-jest.mock('@/lib/ipc', () => ({
+jest.mock('@/shared/utils', () => ({
   settingsOperations: {
     getAppSettings: jest.fn(),
     updateGeneralSettings: jest.fn(),
@@ -18,7 +18,7 @@ jest.mock('@/lib/ipc', () => ({
   safeInvoke: jest.fn(),
 }));
 
-jest.mock('@/components/ui/confirm-dialog', () => ({
+jest.mock('@/shared/ui/ui/confirm-dialog', () => ({
   ConfirmDialog: ({
     open,
     title,
@@ -41,7 +41,7 @@ jest.mock('@/components/ui/confirm-dialog', () => ({
     ) : null,
 }));
 
-jest.mock('@/hooks/useLogger', () => ({
+jest.mock('@/shared/hooks/useLogger', () => ({
   useLogger: () => ({
     logDebug: jest.fn(),
     logInfo: jest.fn(),
@@ -154,3 +154,4 @@ describe('Configuration tabs regressions', () => {
     });
   });
 });
+

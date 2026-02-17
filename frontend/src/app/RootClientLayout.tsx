@@ -1,18 +1,16 @@
-﻿'use client';
+'use client';
 
-import { Providers } from '@/components/providers';
+import { Providers } from '@/shared/ui/providers';
 import localFont from "next/font/local";
 import "./globals.css";
-import AppNavigation from '@/components/AppNavigation';
-import { GlobalErrorBoundary } from '@/error-boundaries';
-import { SkipLink } from '@/lib/accessibility.tsx';
-import { useAuth } from '@/lib/auth/compatibility';
+import AppNavigation from '@/shared/ui/AppNavigation';
+import { GlobalErrorBoundary, SkipLink } from '@/shared/ui';
+import { useAuth } from '@/domains/auth';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { logger } from '@/lib/logging';
-import { CorrelationContext, LogDomain } from '@/lib/logging/types';
-import { useMenuEvents } from '@/hooks/useMenuEvents';
-import { ThemeProvider } from '@/components/theme-provider';
+import { structuredLogger as logger, CorrelationContext, LogDomain } from '@/shared/utils';
+import { useMenuEvents } from '@/shared/hooks/useMenuEvents';
+import { ThemeProvider } from '@/shared/ui/theme-provider';
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -78,7 +76,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
             user_id: user.user_id
           });
          try {
-           const { ipcClient } = await import('@/lib/ipc');
+           const { ipcClient } = await import('@/shared/utils');
            const hasAdmins = await ipcClient.bootstrap.hasAdmins();
            logger.debug(LogDomain.AUTH, 'Admin check result', {
              has_admins: hasAdmins,
@@ -182,3 +180,4 @@ export default function RootClientLayout({
     </div>
   );
 }
+

@@ -2,15 +2,15 @@
 
 import React from 'react';
 import { Database, Search, BarChart3, RefreshCw, Shield } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/ui/card';
+import { Button } from '@/shared/ui/ui/button';
+import { Badge } from '@/shared/ui/ui/badge';
+import { TooltipProvider } from '@/shared/ui/ui/tooltip';
 import { DataExplorer } from '@/app/reports/components/data-explorer/DataExplorer';
-import { PageShell } from '@/components/layout/PageShell';
-import { PageHeader } from '@/components/ui/page-header';
-import { SectionCard } from '@/components/layout/SectionCard';
-import { useTranslation } from '@/hooks/useTranslation';
+import { PageShell } from '@/shared/ui/layout/PageShell';
+import { PageHeader } from '@/shared/ui/ui/page-header';
+import { SectionCard } from '@/shared/ui/layout/SectionCard';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 
 
 
@@ -92,3 +92,4 @@ export default function DataExplorerPage() {
     </TooltipProvider>
   );
 }
+

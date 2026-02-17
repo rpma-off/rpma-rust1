@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { Car, Users, FileText } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useEntityCounts } from '@/hooks/useEntityCounts';
-import type { EntityType } from '@/lib/backend';
+import { Button } from '@/shared/ui/ui/button';
+import { useEntityCounts } from '@/shared/hooks/useEntityCounts';
+import type { EntityType } from '@/shared/types';
 
 interface EntitySelectorProps {
   selectedType: EntityType;
@@ -85,3 +85,4 @@ export function EntitySelector({ selectedType, onTypeChange }: EntitySelectorPro
     </div>
   );
 }
+

@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { X, Filter, Search, Users, Car, MapPin, AlertTriangle, CheckCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Button } from '@/shared/ui/ui/button';
+import { Badge } from '@/shared/ui/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/ui/card';
+import { Checkbox } from '@/shared/ui/ui/checkbox';
+import { Input } from '@/shared/ui/ui/input';
+import { Label } from '@/shared/ui/ui/label';
 
 interface ReportFilters {
   technicians?: string[];
@@ -345,3 +345,4 @@ export function AdvancedFilters({ isOpen, onClose, filters, onFiltersChange, onA
     </div>
   );
 }
+

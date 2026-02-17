@@ -2,19 +2,19 @@
 
 import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth/compatibility';
-import { clientService } from '@/lib/services/entities/client.service';
+import { useAuth } from '@/domains/auth';
+import { clientService } from '@/shared/utils';
 import { Plus, Search, SearchX, User, Building, ChevronDown, ArrowUpDown, AlertCircle, Users, FileText } from 'lucide-react';
 import Link from 'next/link';
-import type { Client, ClientWithTasks } from '@/lib/backend';
-import type { ClientFilters } from '@/types/client.types';
+import type { Client, ClientWithTasks } from '@/shared/types';
+import type { ClientFilters } from '@/shared/types';
 import { ClientCard } from '@/clients/ClientCard';
-import { ClientCardSkeleton } from '@/components/ui/skeleton';
-import { PullToRefresh, FloatingActionButton } from '@/components/ui/mobile-components';
-import { EnhancedEmptyState } from '@/components/ui';
-import { PageHeader, StatCard } from '@/components/ui/page-header';
-import { PageShell } from '@/components/layout/PageShell';
-import { useTranslation } from '@/hooks/useTranslation';
+import { ClientCardSkeleton } from '@/shared/ui/ui/skeleton';
+import { PullToRefresh, FloatingActionButton } from '@/shared/ui/ui/mobile-components';
+import { EnhancedEmptyState } from '@/shared/ui/ui';
+import { PageHeader, StatCard } from '@/shared/ui/ui/page-header';
+import { PageShell } from '@/shared/ui/layout/PageShell';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 
 const MemoizedClientCard = memo(ClientCard);
 
@@ -344,3 +344,4 @@ export default function ClientsPage() {
     </PageShell>
   );
 }
+

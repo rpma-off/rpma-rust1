@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { CalendarIcon, ChevronLeft, Clock, Zap } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/shared/ui/ui/button';
+import { Badge } from '@/shared/ui/ui/badge';
 import { format, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths, subDays, startOfYear, endOfYear } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -172,3 +172,4 @@ export function DateRangePicker({ dateRange, onDateRangeChange }: DateRangePicke
     </div>
   );
 }
+

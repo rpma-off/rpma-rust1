@@ -6,24 +6,24 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/lib/auth/compatibility';
+import { useAuth } from '@/domains/auth';
 import { useRouter } from 'next/navigation';
 import { Activity, CheckCircle, Clock, TrendingUp, User, MapPin, Target, Link, SearchX } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { InterventionWorkflowService } from '@/lib/services/ppf/intervention-workflow.service';
-import { useTranslation } from '@/hooks/useTranslation';
-import { getStatusLabel } from '@/lib/i18n/status-labels';
-import { PageShell } from '@/components/layout/PageShell';
-import { StatCard } from '@/components/ui/page-header';
-import { LoadingState } from '@/components/layout/LoadingState';
-import { ErrorState } from '@/components/layout/ErrorState';
-import { EmptyState } from '@/components/layout/EmptyState';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/ui/card';
+import { Badge } from '@/shared/ui/ui/badge';
+import { Progress } from '@/shared/ui/ui/progress';
+import { Button } from '@/shared/ui/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/ui/tabs';
+import { InterventionWorkflowService } from '@/domains/interventions';
+import { useTranslation } from '@/shared/hooks/useTranslation';
+import { getStatusLabel } from '@/shared/utils';
+import { PageShell } from '@/shared/ui/layout/PageShell';
+import { StatCard } from '@/shared/ui/ui/page-header';
+import { LoadingState } from '@/shared/ui/layout/LoadingState';
+import { ErrorState } from '@/shared/ui/layout/ErrorState';
+import { EmptyState } from '@/shared/ui/layout/EmptyState';
 
 export default function InterventionsDashboard() {
   const { user, loading: authLoading } = useAuth();
@@ -388,3 +388,4 @@ export default function InterventionsDashboard() {
     </PageShell>
   );
 }
+

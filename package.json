@@ -33,7 +33,7 @@
     "architecture:check": "node scripts/architecture-check.js",
     "validate:architecture": "node scripts/validate-bounded-contexts.js",
     "validate:bounded-contexts": "node scripts/validate-bounded-contexts.js",
-    "quality:check": "npm run frontend:lint && npm run frontend:type-check && npm run backend:check && npm run backend:clippy && npm run backend:fmt -- --check && npm run architecture:check",
+    "quality:check": "npm run frontend:lint && npm run frontend:type-check && npm run validate:bounded-contexts && npm run backend:check && npm run backend:clippy && npm run backend:fmt -- --check && npm run architecture:check",
     "code-review:check": "node scripts/code-review-check.js",
     "install": "npm run frontend:install",
     "clean": "npm run frontend:clean && cd src-tauri && cargo clean",

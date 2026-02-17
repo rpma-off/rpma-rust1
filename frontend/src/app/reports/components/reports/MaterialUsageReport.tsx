@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import type { DateRange, ReportFilters } from '@/lib/backend';
+import type { DateRange, ReportFilters } from '@/shared/types';
 
 interface MaterialUsageReportProps {
   dateRange: DateRange;

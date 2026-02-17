@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/ui/card';
+import { Button } from '@/shared/ui/ui/button';
 import { toast } from 'sonner';
-import { LoadingState } from '@/components/layout/LoadingState';
+import { LoadingState } from '@/shared/ui/layout/LoadingState';
 import { Activity, RefreshCw, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
-import { SystemStatus } from '@/types/configuration.types';
-import { IPC_COMMANDS, safeInvoke } from '@/lib/ipc';
-import type { JsonValue } from '@/types/json';
+import { SystemStatus } from '@/shared/types';
+import { IPC_COMMANDS, safeInvoke } from '@/shared/utils';
+import type { JsonValue } from '@/shared/types';
 
 export function MonitoringTab() {
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
@@ -163,3 +163,4 @@ export function MonitoringTab() {
     </div>
   );
 }
+

@@ -2,8 +2,8 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTranslation } from '@/hooks/useTranslation';
-import { LoadingState } from '@/components/layout/LoadingState';
+import { useTranslation } from '@/shared/hooks/useTranslation';
+import { LoadingState } from '@/shared/ui/layout/LoadingState';
 
 export default function InterventionsPage() {
   const router = useRouter();
@@ -20,3 +20,4 @@ export default function InterventionsPage() {
     </div>
   );
 }
+

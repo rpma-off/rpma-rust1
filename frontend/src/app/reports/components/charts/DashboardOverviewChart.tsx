@@ -19,7 +19,7 @@ import type {
   TaskCompletionReport, 
   TechnicianPerformanceReport, 
   QualityComplianceReport 
-} from '@/lib/backend';
+} from '@/shared/types';
 
 interface DashboardOverviewChartProps {
   data: {

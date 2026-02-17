@@ -1,14 +1,14 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/shared/ui/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/ui/card';
 import { ArrowRight, CheckCircle, Clock, AlertCircle, Shield, Sparkles } from 'lucide-react';
-import { usePPFWorkflow } from '@/contexts/PPFWorkflowContext';
-import { getPPFStepPath } from '@/lib/ppf-workflow';
-import { useTranslation } from '@/hooks/useTranslation';
+import { usePPFWorkflow } from '@/domains/interventions';
+import { getPPFStepPath } from '@/domains/interventions';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 
 export default function PPFWorkflowPage() {
   const { t } = useTranslation();
@@ -172,7 +172,7 @@ export default function PPFWorkflowPage() {
                       <span>
                         {status === 'completed' ? t('common.view') :
                          status === 'current' ? t('common.next') :
-                         status === 'available' ? t('interventions.startIntervention') : 'Verrouillé'}
+                         status === 'available' ? t('interventions.startIntervention') : 'Verrouill�'}
                       </span>
                       <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
                     </span>

@@ -13,9 +13,9 @@ import {
   useQuoteItems,
   useQuoteStatus,
   useQuoteExportPdf,
-} from '@/hooks/useQuotes';
-import { PageShell } from '@/components/layout/PageShell';
-import type { QuoteStatus, CreateQuoteItemRequest, QuoteItemKind } from '@/types/quote.types';
+} from '@/shared/hooks/useQuotes';
+import { PageShell } from '@/shared/ui/layout/PageShell';
+import type { QuoteStatus, CreateQuoteItemRequest, QuoteItemKind } from '@/shared/types';
 
 const STATUS_COLORS: Record<QuoteStatus, string> = {
   draft: 'bg-gray-100 text-gray-800',

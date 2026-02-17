@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
-import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
-import { AnalyticsLayout } from '@/components/analytics/AnalyticsLayout';
-import { LoadingState } from '@/components/layout/LoadingState';
+import { AnalyticsDashboard } from '@/shared/ui/analytics/AnalyticsDashboard';
+import { AnalyticsLayout } from '@/shared/ui/analytics/AnalyticsLayout';
+import { LoadingState } from '@/shared/ui/layout/LoadingState';
 
 export default function AnalyticsPage() {
   return (
@@ -12,3 +12,4 @@ export default function AnalyticsPage() {
     </AnalyticsLayout>
   );
 }
+

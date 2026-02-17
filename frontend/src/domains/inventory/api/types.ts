@@ -1,0 +1,15 @@
+export type {
+  MaterialType,
+  UnitOfMeasure,
+  InventoryTransactionType,
+  Material,
+  MaterialConsumption,
+  MaterialStats,
+  InventoryStats,
+  InventoryTransaction,
+  Supplier,
+  MaterialCategory,
+  InterventionMaterialSummary,
+  MaterialConsumptionSummary,
+  InventoryMovementSummary,
+} from '@/lib/inventory';

@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { reportsService } from '@/lib/services/entities/reports.service';
+import { reportsService } from '@/shared/utils';
 import { TaskCompletionChart } from '../charts/TaskCompletionChart';
-import type { DateRange, ReportFilters, TaskCompletionReport as TaskReportData } from '@/lib/backend';
+import type { DateRange, ReportFilters, TaskCompletionReport as TaskReportData } from '@/shared/types';
 import { Loader2 } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/ui/alert';
 
 interface TaskPerformanceReportProps {
   dateRange: DateRange;
@@ -196,3 +196,4 @@ function TaskPerformanceReport({ dateRange, filters }: TaskPerformanceReportProp
 }
 
 export default TaskPerformanceReport;
+

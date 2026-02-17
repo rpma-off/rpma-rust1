@@ -2,13 +2,12 @@
 
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { ipcClient } from '@/lib/ipc';
-import { useAuth } from '@/lib/auth/compatibility';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useTranslation } from '@/hooks/useTranslation';
-import { logger, LogDomain } from '@/lib/logging';
+import { useAuth, authIpc } from '@/domains/auth';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/ui/card';
+import { Button } from '@/shared/ui/ui/button';
+import { Alert, AlertDescription } from '@/shared/ui/ui/alert';
+import { useTranslation } from '@/shared/hooks/useTranslation';
+import { structuredLogger as logger, LogDomain } from '@/shared/utils';
 import { useEffect } from 'react';
 
 export default function BootstrapAdminPage() {
@@ -19,7 +18,7 @@ export default function BootstrapAdminPage() {
   // Check if admins already exist
   const { data: hasAdmins, isLoading: checkingAdmins } = useQuery({
     queryKey: ['hasAdmins'],
-    queryFn: () => ipcClient.bootstrap.hasAdmins(),
+    queryFn: () => authIpc.hasAdmins(),
   });
 
   useEffect(() => {
@@ -33,7 +32,7 @@ export default function BootstrapAdminPage() {
 
   const bootstrapMutation = useMutation({
     mutationFn: ({ userId, sessionToken }: { userId: string; sessionToken: string }) =>
-      ipcClient.bootstrap.firstAdmin(userId, sessionToken),
+      authIpc.bootstrapFirstAdmin(userId, sessionToken),
     onSuccess: () => {
       logger.info(LogDomain.AUTH, 'Bootstrap admin succeeded', {
         user_id: user?.user_id
@@ -150,3 +149,4 @@ export default function BootstrapAdminPage() {
     </div>
   );
 }
+

@@ -2,12 +2,12 @@
 
 import React from 'react';
 import { X, Car, Users, FileText, Calendar, Mail, Star, Clock, CheckCircle, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/shared/ui/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/ui/card';
+import { Badge } from '@/shared/ui/ui/badge';
 import { useRouter } from 'next/navigation';
-import { reportsService } from '@/lib/services/entities/reports.service';
-import type { SearchResult, EntityType } from '@/lib/backend';
+import { reportsService } from '@/shared/utils';
+import type { SearchResult, EntityType } from '@/shared/types';
 
 interface RecordDetailPanelProps {
   record: SearchResult | null;
@@ -337,3 +337,4 @@ export function RecordDetailPanel({ record, onClose }: RecordDetailPanelProps) {
     </Card>
   );
 }
+

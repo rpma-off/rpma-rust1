@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '@/lib/auth/compatibility';
+import { useAuth } from '@/domains/auth';
 import { ROUTES } from '@/constants';
-import { createLogger } from '@/lib/logger';
-import { Button } from '@/components/ui/button';
-import { FormFeedback } from '@/components/ui/form-feedback';
-import { FadeIn } from '@/components/animations/FadeIn';
-import { UILoader } from '@/components/animations/UILoader';
+import { createLogger } from '@/shared/utils';
+import { Button } from '@/shared/ui/ui/button';
+import { FormFeedback } from '@/shared/ui/ui/form-feedback';
+import { FadeIn } from '@/shared/ui/animations/FadeIn';
+import { UILoader } from '@/shared/ui/animations/UILoader';
 
 const logger = createLogger('LoginPage');
 
@@ -191,3 +191,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

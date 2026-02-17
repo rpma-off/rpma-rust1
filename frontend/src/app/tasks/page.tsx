@@ -4,30 +4,20 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Calendar, Car, User, Shield, Eye, Edit, Trash2, RefreshCw, Download, Upload, Grid, List, AlertCircle, Filter, ChevronRight, SearchX } from 'lucide-react';
-import { CalendarView } from '@/components/calendar/CalendarView';
-import { KanbanBoard } from '@/components/tasks/KanbanBoard';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { TaskCardSkeleton } from '@/components/ui/skeleton';
-import { VirtualizedTable } from '@/components/ui/virtualized-table';
-import { FloatingActionButton, PullToRefresh } from '@/components/ui/mobile-components';
-import { cn } from '@/lib/utils';
+import { CalendarView } from '@/shared/ui/calendar/CalendarView';
+import { KanbanBoard, TaskWithDetails, TaskStatus, taskIpc, useTasks } from '@/domains/tasks';
+import { Card, CardContent } from '@/shared/ui/ui/card';
+import { Button } from '@/shared/ui/ui/button';
+import { Badge } from '@/shared/ui/ui/badge';
+import { Input } from '@/shared/ui/ui/input';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/shared/ui/ui/alert-dialog';
+import { TaskCardSkeleton } from '@/shared/ui/ui/skeleton';
+import { VirtualizedTable } from '@/shared/ui/ui/virtualized-table';
+import { FloatingActionButton, PullToRefresh } from '@/shared/ui/ui/mobile-components';
+import { cn, enhancedToast, getTaskDisplayTitle, getTaskDisplayStatus, getUserFullName, logger } from '@/shared/utils';
 
-import { useAuth } from '@/lib/auth/compatibility';
-import { getUserFullName } from '@/lib/types';
-import { useTasks } from '@/hooks/useTasks';
-import { useDebounce } from '@/hooks/useDebounce';
-import { ipcClient } from '@/lib/ipc';
-import { useTranslation } from '@/hooks/useTranslation';
-
-import { TaskWithDetails } from '@/lib/services/entities/task.service';
-import { TaskStatus } from '@/lib/backend';
-import { enhancedToast } from '@/lib/enhanced-toast';
-import { logger } from '@/lib/logger';
-import { getTaskDisplayTitle, getTaskDisplayStatus } from '@/lib/utils/task-display';
+import { useAuth } from '@/domains/auth';
+import { useDebounce, useTranslation } from '@/shared/hooks';
 
 // TypeScript interfaces
 // interface TaskPhoto {
@@ -809,7 +799,7 @@ export default function TasksPage() {
         enhancedToast.error('Authentification requise');
         return;
       }
-      await ipcClient.tasks.editTask(taskId, { status: newStatus }, user.token);
+      await taskIpc.editTask(taskId, { status: newStatus }, user.token);
       enhancedToast.success('Statut mis à jour avec succès');
       await refetch();
     } catch (err) {
@@ -909,7 +899,7 @@ export default function TasksPage() {
         return;
       }
 
-      const csvData = await ipcClient.tasks.exportTasksCsv({
+      const csvData = await taskIpc.exportTasksCsv({
         include_notes: true,
         date_range: selectedDateRange ? {
           start_date: selectedDateRange.from?.toISOString(),
@@ -959,7 +949,7 @@ export default function TasksPage() {
             return;
           }
 
-          const result = await ipcClient.tasks.importTasksBulk({
+          const result = await taskIpc.importTasksBulk({
             csv_lines: lines,
             skip_duplicates: true,
             update_existing: false
@@ -1235,3 +1225,4 @@ export default function TasksPage() {
 };
 
 TaskTable.displayName = 'TaskTable';
+

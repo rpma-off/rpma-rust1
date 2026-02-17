@@ -5,13 +5,13 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useTranslation } from '@/hooks/useTranslation';
+import { Button } from '@/shared/ui/ui/button';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 // Import test utility for debugging IPC calls
 // import '@/lib/test-task-creation';
 
 // Dynamically import TaskForm for better performance
-const TaskForm = dynamic(() => import('@/components/TaskForm').then(mod => ({ default: mod.TaskForm })), {
+const TaskForm = dynamic(() => import('@/shared/ui/TaskForm').then(mod => ({ default: mod.TaskForm })), {
   loading: () => (
     <div className="flex items-center justify-center py-12">
       <div className="flex items-center space-x-3">
@@ -118,3 +118,4 @@ export default function NewTaskPage() {
     </div>
   );
 }
+

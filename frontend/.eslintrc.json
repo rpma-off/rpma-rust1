@@ -1,5 +1,6 @@
-{
+﻿{
   "extends": ["next/core-web-vitals", "next/typescript"],
+  "plugins": ["import"],
   "rules": {
     "@typescript-eslint/no-unused-vars": ["warn", {
       "argsIgnorePattern": "^_",
@@ -8,35 +9,122 @@
       "caughtErrorsIgnorePattern": "^_"
     }],
     "@typescript-eslint/no-explicit-any": "warn",
-    "@typescript-eslint/no-require-imports": "off"
+    "@typescript-eslint/no-require-imports": "off",
+    "import/no-cycle": ["error", { "ignoreExternal": true, "maxDepth": 2 }]
   },
   "overrides": [
     {
       "files": ["src/app/**/*.{ts,tsx}"],
+      "excludedFiles": ["src/app/api/**"],
       "rules": {
         "no-restricted-imports": [
           "error",
           {
             "patterns": [
-              "@/lib/ipc/mock/*",
-              "@/lib/ipc/mock/**",
-              "@/lib/ipc/core",
-              "@/lib/ipc/core/**",
-              "@/lib/ipc/commands",
-              "@/lib/ipc/domains/*",
-              "@/lib/ipc/domains/**",
-              "@/lib/ipc/client",
-              "@/lib/ipc/secure-client",
-              "@/lib/ipc/utils",
-              "@/lib/ipc/utils/**",
-              "@/lib/ipc/cache",
-              "@/lib/ipc/metrics",
-              "@/lib/ipc/retry",
-              "@/lib/ipc/status",
-              "@/lib/ipc/message",
-              "@/lib/ipc/calendar",
-              "@/lib/ipc/types",
-              "@/lib/ipc/types/**"
+              {
+                "group": ["@/components/**", "@/lib/**", "@/hooks/**", "@/contexts/**", "@/types/**"],
+                "message": "App layer may only import from domain public APIs (e.g. `@/domains/<domain>`) or `@/shared/**`."
+              },
+              {
+                "group": ["@/domains/*/components/**", "@/domains/*/hooks/**", "@/domains/*/services/**", "@/domains/*/ipc/**"],
+                "message": "App layer must import domain public APIs only (use `@/domains/<domain>` or `@/domains/<domain>/api`)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/domains/auth/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/domains/tasks/components/**", "@/domains/tasks/hooks/**", "@/domains/tasks/services/**", "@/domains/tasks/ipc/**",
+                  "@/domains/inventory/components/**", "@/domains/inventory/hooks/**", "@/domains/inventory/services/**", "@/domains/inventory/ipc/**",
+                  "@/domains/interventions/components/**", "@/domains/interventions/hooks/**", "@/domains/interventions/services/**", "@/domains/interventions/ipc/**"
+                ],
+                "message": "Domains may only import other domains via their public API (e.g. `@/domains/<domain>`)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/domains/tasks/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/domains/auth/components/**", "@/domains/auth/hooks/**", "@/domains/auth/services/**", "@/domains/auth/ipc/**",
+                  "@/domains/inventory/components/**", "@/domains/inventory/hooks/**", "@/domains/inventory/services/**", "@/domains/inventory/ipc/**",
+                  "@/domains/interventions/components/**", "@/domains/interventions/hooks/**", "@/domains/interventions/services/**", "@/domains/interventions/ipc/**"
+                ],
+                "message": "Domains may only import other domains via their public API (e.g. `@/domains/<domain>`)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/domains/inventory/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/domains/auth/components/**", "@/domains/auth/hooks/**", "@/domains/auth/services/**", "@/domains/auth/ipc/**",
+                  "@/domains/tasks/components/**", "@/domains/tasks/hooks/**", "@/domains/tasks/services/**", "@/domains/tasks/ipc/**",
+                  "@/domains/interventions/components/**", "@/domains/interventions/hooks/**", "@/domains/interventions/services/**", "@/domains/interventions/ipc/**"
+                ],
+                "message": "Domains may only import other domains via their public API (e.g. `@/domains/<domain>`)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/domains/interventions/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/domains/auth/components/**", "@/domains/auth/hooks/**", "@/domains/auth/services/**", "@/domains/auth/ipc/**",
+                  "@/domains/tasks/components/**", "@/domains/tasks/hooks/**", "@/domains/tasks/services/**", "@/domains/tasks/ipc/**",
+                  "@/domains/inventory/components/**", "@/domains/inventory/hooks/**", "@/domains/inventory/services/**", "@/domains/inventory/ipc/**"
+                ],
+                "message": "Domains may only import other domains via their public API (e.g. `@/domains/<domain>`)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/shared/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/domains/**"],
+                "message": "Shared layer must not import from domains."
+              }
             ]
           }
         ]

@@ -2,7 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
-import { AuthProvider } from '@/contexts/AuthContext';
+import { AuthProvider } from '@/domains/auth';
 import { Toaster } from 'react-hot-toast';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 

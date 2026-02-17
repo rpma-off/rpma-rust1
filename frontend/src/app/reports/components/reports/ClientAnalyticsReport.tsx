@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { reportsService } from '@/lib/services/entities/reports.service';
-import type { DateRange, ReportFilters, ClientAnalyticsReport as ClientReportData } from '@/lib/backend';
+import { reportsService } from '@/shared/utils';
+import type { DateRange, ReportFilters, ClientAnalyticsReport as ClientReportData } from '@/shared/types';
 import { Loader2 } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/ui/alert';
 
 interface ClientAnalyticsReportProps {
   dateRange: DateRange;
@@ -135,3 +135,4 @@ function ClientAnalyticsReport({ dateRange, filters }: ClientAnalyticsReportProp
 }
 
 export default ClientAnalyticsReport;
+

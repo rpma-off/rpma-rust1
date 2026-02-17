@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useAuth } from '@/contexts/AuthContext';
-import { ipcClient } from '@/lib/ipc';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/shared/ui/ui/dialog';
+import { Button } from '@/shared/ui/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/ui/select';
+import { useAuth } from '@/domains/auth';
+import { ipcClient } from '@/shared/utils';
 
 interface ChangeRoleDialogProps {
   userId: string;
@@ -91,3 +91,4 @@ export function ChangeRoleDialog({
     </Dialog>
   );
 }
+

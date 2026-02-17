@@ -1,8 +1,8 @@
 import { Suspense } from 'react';
-import { InventoryDashboard } from '@/components/inventory/InventoryDashboard';
-import { InventoryLayout } from '@/components/inventory/InventoryLayout';
-import { PageShell } from '@/components/layout/PageShell';
-import { LoadingState } from '@/components/layout/LoadingState';
+import { InventoryDashboard } from '@/shared/ui/inventory/InventoryDashboard';
+import { InventoryLayout } from '@/shared/ui/inventory/InventoryLayout';
+import { PageShell } from '@/shared/ui/layout/PageShell';
+import { LoadingState } from '@/shared/ui/layout/LoadingState';
 
 export default function InventoryPage() {
   return (
@@ -16,3 +16,4 @@ export default function InventoryPage() {
     </PageShell>
   );
 }
+

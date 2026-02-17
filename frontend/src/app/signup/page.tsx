@@ -3,17 +3,17 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
-import { createLogger } from '@/lib/logger';
-import { UserRoleValues } from '@/lib/types';
+import { useAuth } from '@/domains/auth';
+import { createLogger } from '@/shared/utils';
+import { UserRoleValues } from '@/shared/utils';
 import { ROUTES } from '@/constants';
-import { Button } from '@/components/ui/button';
-import { FormFeedback } from '@/components/ui/form-feedback';
-import { FadeIn } from '@/components/animations/FadeIn';
-import { UILoader } from '@/components/animations/UILoader';
-import PasswordStrengthMeter from '@/components/auth/PasswordStrengthMeter';
-import { PasswordValidationResult } from '@/lib/auth/password-validator';
-import { useTranslation } from '@/hooks/useTranslation';
+import { Button } from '@/shared/ui/ui/button';
+import { FormFeedback } from '@/shared/ui/ui/form-feedback';
+import { FadeIn } from '@/shared/ui/animations/FadeIn';
+import { UILoader } from '@/shared/ui/animations/UILoader';
+import PasswordStrengthMeter from '@/shared/ui/auth/PasswordStrengthMeter';
+import { PasswordValidationResult } from '@/domains/auth';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 
 const logger = createLogger('SignupPage');
 
@@ -394,3 +394,4 @@ export default function SignupPage() {
     </div>
   );
 }
+

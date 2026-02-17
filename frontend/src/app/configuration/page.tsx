@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect, Suspense, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/ui/tabs';
+import { Button } from '@/shared/ui/ui/button';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/shared/ui/ui/sheet';
 import { 
   Settings, 
   Workflow, 
@@ -19,13 +19,13 @@ import {
    AlertTriangle,
    Menu
 } from 'lucide-react';
-import { useLogger } from '@/hooks/useLogger';
-import { LogDomain } from '@/lib/logging/types';
-import { PageShell } from '@/components/layout/PageShell';
-import { LoadingState } from '@/components/layout/LoadingState';
-import { PageHeader } from '@/components/ui/page-header';
-import { IPC_COMMANDS, safeInvoke } from '@/lib/ipc';
-import type { JsonValue } from '@/types/json';
+import { useLogger } from '@/shared/hooks/useLogger';
+import { LogDomain } from '@/shared/utils';
+import { PageShell } from '@/shared/ui/layout/PageShell';
+import { LoadingState } from '@/shared/ui/layout/LoadingState';
+import { PageHeader } from '@/shared/ui/ui/page-header';
+import { IPC_COMMANDS, safeInvoke } from '@/shared/utils';
+import type { JsonValue } from '@/shared/types';
 
 // Lazy load tab components to reduce initial bundle size
 const SystemSettingsTab = dynamic(() => import('./components/SystemSettingsTab').then(mod => ({ default: mod.SystemSettingsTab })), {
@@ -438,3 +438,4 @@ export default function ConfigurationPage() {
     </PageShell>
   );
 }
+

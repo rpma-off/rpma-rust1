@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import dynamic from 'next/dynamic';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/ui/tabs';
+import { Button } from '@/shared/ui/ui/button';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/shared/ui/ui/sheet';
 import {
   User,
   Bell,
@@ -16,36 +16,36 @@ import {
   Menu,
   Settings
 } from 'lucide-react';
-import { useLogger } from '@/hooks/useLogger';
-import { LogDomain } from '@/lib/logging/types';
-import { useAuth } from '@/contexts/AuthContext';
-import { PageShell } from '@/components/layout/PageShell';
-import { LoadingState } from '@/components/layout/LoadingState';
-import { PageHeader } from '@/components/ui/page-header';
-import { useTranslation } from '@/hooks/useTranslation';
+import { useLogger } from '@/shared/hooks/useLogger';
+import { LogDomain } from '@/shared/utils';
+import { useAuth } from '@/domains/auth';
+import { PageShell } from '@/shared/ui/layout/PageShell';
+import { LoadingState } from '@/shared/ui/layout/LoadingState';
+import { PageHeader } from '@/shared/ui/ui/page-header';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 
 // Lazy load tab components to reduce initial bundle size
-const ProfileSettingsTab = dynamic(() => import('@/components/settings/ProfileSettingsTab').then(mod => ({ default: mod.ProfileSettingsTab })), {
+const ProfileSettingsTab = dynamic(() => import('@/shared/ui/settings/ProfileSettingsTab').then(mod => ({ default: mod.ProfileSettingsTab })), {
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
 });
 
-const PreferencesTab = dynamic(() => import('@/components/settings/PreferencesTab').then(mod => ({ default: mod.PreferencesTab })), {
+const PreferencesTab = dynamic(() => import('@/shared/ui/settings/PreferencesTab').then(mod => ({ default: mod.PreferencesTab })), {
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
 });
 
-const SecurityTab = dynamic(() => import('@/components/settings/SecurityTab').then(mod => ({ default: mod.SecurityTab })), {
+const SecurityTab = dynamic(() => import('@/shared/ui/settings/SecurityTab').then(mod => ({ default: mod.SecurityTab })), {
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
 });
 
-const PerformanceTab = dynamic(() => import('@/components/settings/PerformanceTab').then(mod => ({ default: mod.PerformanceTab })), {
+const PerformanceTab = dynamic(() => import('@/shared/ui/settings/PerformanceTab').then(mod => ({ default: mod.PerformanceTab })), {
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
 });
 
-const AccessibilityTab = dynamic(() => import('@/components/settings/AccessibilityTab').then(mod => ({ default: mod.AccessibilityTab })), {
+const AccessibilityTab = dynamic(() => import('@/shared/ui/settings/AccessibilityTab').then(mod => ({ default: mod.AccessibilityTab })), {
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
 });
 
-const NotificationsTab = dynamic(() => import('@/components/settings/NotificationsTab').then(mod => ({ default: mod.NotificationsTab })), {
+const NotificationsTab = dynamic(() => import('@/shared/ui/settings/NotificationsTab').then(mod => ({ default: mod.NotificationsTab })), {
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
 });
 
@@ -353,3 +353,4 @@ export default function SettingsPage() {
     </PageShell>
   );
 }
+

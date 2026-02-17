@@ -3,14 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, PhotoUpload } from '@/shared/ui';
 import { ArrowRight, Camera, MapPin, Search, AlertTriangle, CheckCircle2 } from 'lucide-react';
-import { usePPFWorkflow } from '@/contexts/PPFWorkflowContext';
-import { getNextPPFStepId, getPPFStepPath } from '@/lib/ppf-workflow';
-import { VehicleDiagram, Defect } from '@/components/workflow/ppf/VehicleDiagram';
-import { PhotoUpload } from '@/components/PhotoUpload/PhotoUpload';
-import { useTranslation } from '@/hooks/useTranslation';
+import { usePPFWorkflow, getNextPPFStepId, getPPFStepPath, VehicleDiagram } from '@/domains/interventions';
+import type { Defect } from '@/domains/interventions';
+import { useTranslation } from '@/shared/hooks';
 
 type InspectionDefectPayload = {
   id: string;

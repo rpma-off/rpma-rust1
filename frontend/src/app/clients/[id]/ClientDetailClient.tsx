@@ -2,14 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth/compatibility';
+import { useAuth } from '@/domains/auth';
 import { Plus, Edit, Trash2, ArrowLeft, Mail, Phone, MapPin, Building2 } from 'lucide-react';
 import Link from 'next/link';
-import type { Client, Task } from '@/types';
-import { convertTimestamps } from '@/lib/types';
-import { ipcClient } from '@/lib/ipc';
-import { useTranslation } from '@/hooks/useTranslation';
-import { LoadingState } from '@/components/layout/LoadingState';
+import type { Client, Task } from '@/shared/types';
+import { convertTimestamps } from '@/shared/utils';
+import { ipcClient } from '@/shared/utils';
+import { useTranslation } from '@/shared/hooks/useTranslation';
+import { LoadingState } from '@/shared/ui/layout/LoadingState';
 
 interface ClientDetailClientProps {
   params: {

@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { reportsService } from '@/lib/services/entities/reports.service';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { reportsService } from '@/shared/utils';
+import { Input } from '@/shared/ui/ui/input';
+import { Button } from '@/shared/ui/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/ui/table';
 import { Loader2, Search, Database } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/ui/alert';
 
 export default function DataExplorerReport() {
     const [query, setQuery] = useState('');
@@ -131,3 +131,4 @@ export default function DataExplorerReport() {
         </div>
     );
 }
+

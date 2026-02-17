@@ -1,18 +1,18 @@
-ï»¿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/shared/ui/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/ui/card';
+import { Input } from '@/shared/ui/ui/input';
+import { Label } from '@/shared/ui/ui/label';
+import { Badge } from '@/shared/ui/ui/badge';
 import { ArrowRight, Play, Pause, Square, Package, Timer, CheckCircle2, Camera, Layers } from 'lucide-react';
-import { usePPFWorkflow } from '@/contexts/PPFWorkflowContext';
-import { getNextPPFStepId, getPPFStepPath } from '@/lib/ppf-workflow';
-import { PhotoUpload } from '@/components/PhotoUpload/PhotoUpload';
-import { useTranslation } from '@/hooks/useTranslation';
+import { usePPFWorkflow } from '@/domains/interventions';
+import { getNextPPFStepId, getPPFStepPath } from '@/domains/interventions';
+import { PhotoUpload } from '@/shared/ui/PhotoUpload/PhotoUpload';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 
 interface ZoneTimer {
   name: string;
@@ -266,7 +266,7 @@ export default function InstallationStepPage() {
           Installation du PPF
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          Application professionnelle du film protecteur avec suivi prÃ©cis des zones
+          Application professionnelle du film protecteur avec suivi précis des zones
         </p>
       </motion.div>
 
@@ -284,10 +284,10 @@ export default function InstallationStepPage() {
               </div>
               <div>
                 <CardTitle className="text-xl text-foreground group-hover:text-indigo-400 transition-colors">
-                  Lot de MatÃ©riel Global
+                  Lot de Matériel Global
                 </CardTitle>
                 <CardDescription className="text-muted-foreground">
-                  NumÃ©ro de lot du film PPF utilisÃ© (optionnel)
+                  Numéro de lot du film PPF utilisé (optionnel)
                 </CardDescription>
               </div>
             </div>
@@ -301,7 +301,7 @@ export default function InstallationStepPage() {
                 className="bg-[hsl(var(--rpma-surface))] border-[hsl(var(--rpma-border))] h-12 text-base transition-all duration-200 focus:border-indigo-500/50"
               />
               <p className="text-xs text-muted-foreground mt-2">
-                Ce numÃ©ro sera utilisÃ© comme valeur par dÃ©faut pour toutes les zones
+                Ce numéro sera utilisé comme valeur par défaut pour toutes les zones
               </p>
             </div>
           </CardContent>
@@ -322,7 +322,7 @@ export default function InstallationStepPage() {
                     Suivi des Zones
                   </CardTitle>
                   <CardDescription className="text-muted-foreground">
-                    ChronomÃ©trage prÃ©cis de l&apos;application par zone
+                    Chronométrage précis de l&apos;application par zone
                   </CardDescription>
                 </div>
               </div>
@@ -360,12 +360,12 @@ export default function InstallationStepPage() {
                       <h3 className="text-lg font-semibold text-foreground">{zone.name}</h3>
                       <Badge className={`text-xs ${getZoneStatusColor(zone.status)}`}>
                         {zone.status === 'pending' ? 'En attente' :
-                         zone.status === 'in_progress' ? 'En cours' : 'TerminÃ©'}
+                         zone.status === 'in_progress' ? 'En cours' : 'Terminé'}
                       </Badge>
                     </div>
                     {zone.duration > 0 && (
                       <div className="text-right">
-                        <p className="text-sm text-muted-foreground">DurÃ©e totale</p>
+                        <p className="text-sm text-muted-foreground">Durée totale</p>
                         <p className="text-lg font-mono font-bold text-foreground">
                           {formatDuration(zone.duration)}
                         </p>
@@ -379,7 +379,7 @@ export default function InstallationStepPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <Timer className="h-4 w-4 text-blue-400" />
-                          <span className="text-sm font-medium text-blue-400">ChronomÃ¨tre actif</span>
+                          <span className="text-sm font-medium text-blue-400">Chronomètre actif</span>
                         </div>
                         <div className="text-lg font-mono font-bold text-blue-300">
                           {formatDuration(Math.floor((currentTime - zone.startTime) / 1000 / 60) + zone.duration)}
@@ -391,7 +391,7 @@ export default function InstallationStepPage() {
                   {/* Material Lot Input */}
                   <div className="mb-4">
                     <Label htmlFor={`material-${index}`} className="text-sm font-medium text-foreground mb-2 block">
-                      Lot de MatÃ©riel
+                      Lot de Matériel
                     </Label>
                     <Input
                       id={`material-${index}`}
@@ -413,7 +413,7 @@ export default function InstallationStepPage() {
                           className="bg-green-600 hover:bg-green-700 text-white"
                         >
                           <Play className="h-4 w-4 mr-1" />
-                          DÃ©marrer
+                          Démarrer
                         </Button>
                       )}
 
@@ -442,14 +442,14 @@ export default function InstallationStepPage() {
                       {zone.status === 'completed' && (
                         <div className="flex items-center space-x-2 text-green-400">
                           <CheckCircle2 className="h-4 w-4" />
-                          <span className="text-sm font-medium">Zone terminÃ©e</span>
+                          <span className="text-sm font-medium">Zone terminée</span>
                         </div>
                       )}
                     </div>
 
                     {zone.status === 'completed' && zone.duration > 0 && (
                       <div className="text-right">
-                        <p className="text-xs text-muted-foreground">DurÃ©e finale</p>
+                        <p className="text-xs text-muted-foreground">Durée finale</p>
                         <p className="text-sm font-mono font-bold text-green-400">
                           {formatDuration(zone.duration)}
                         </p>
@@ -522,11 +522,11 @@ export default function InstallationStepPage() {
             <p className={`text-sm font-medium ${
               canProceed ? 'text-green-400' : 'text-yellow-400'
             }`}>
-              {canProceed ? 'PrÃªt pour la finalisation' : 'ComplÃ©tez toutes les zones'}
+              {canProceed ? 'Prêt pour la finalisation' : 'Complétez toutes les zones'}
             </p>
           </div>
           <p className="text-muted-foreground text-sm">
-            Zones: {zones.filter(z => z.status === 'completed').length}/{zones.length} â€¢
+            Zones: {zones.filter(z => z.status === 'completed').length}/{zones.length} •
             Lots: {zones.filter(z => z.materialLot.trim() !== '').length}/{zones.length}
           </p>
         </div>

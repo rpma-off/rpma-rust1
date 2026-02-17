@@ -1,4 +1,4 @@
-import { TaskStatus } from '@/lib/backend';
+import { TaskStatus } from '@/shared/types';
 
 export interface TaskCompletionData {
   date: string;

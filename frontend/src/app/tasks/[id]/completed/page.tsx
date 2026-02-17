@@ -2,20 +2,20 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/shared/ui/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/ui/card';
+import { Badge } from '@/shared/ui/ui/badge';
+import { Separator } from '@/shared/ui/ui/separator';
+import { Skeleton } from '@/shared/ui/ui/skeleton';
+import { Alert, AlertDescription } from '@/shared/ui/ui/alert';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from '@/components/ui/accordion';
-import { TaskService } from '@/lib/services/entities/task.service';
-import { PageShell } from '@/components/layout/PageShell';
+} from '@/shared/ui/ui/accordion';
+import { TaskService, TaskWithDetails } from '@/domains/tasks';
+import { PageShell } from '@/shared/ui/layout/PageShell';
 import {
   CheckCircle,
   Download,
@@ -40,14 +40,12 @@ import {
 } from 'lucide-react';
 // Removed TaskService import - now using API routes
 import { toast } from 'sonner';
-import { TaskWithDetails } from '@/types/task.types';
-import { getUserFullName } from '@/lib/types';
-import { useCustomerInfo, useCustomerDisplayName, useVehicleDisplayInfo } from '@/hooks/useNormalizedTask';
-import { useInterventionData, useWorkflowStepData } from '@/hooks/useInterventionData';
-import type { Intervention, Client as BackendClient } from '@/lib/backend';
-import { reportsService } from '@/lib/services/entities/reports.service';
+import { getUserFullName, reportsService } from '@/shared/utils';
+import { useCustomerInfo, useCustomerDisplayName, useVehicleDisplayInfo } from '@/domains/tasks';
+import { useInterventionData, useWorkflowStepData } from '@/domains/interventions';
+import type { Intervention, Client as BackendClient } from '@/shared/types';
 import { useQueryClient } from '@tanstack/react-query';
-import { useTranslation } from '@/hooks/useTranslation';
+import { useTranslation } from '@/shared/hooks';
 
 export default function TaskCompletedPage() {
   const router = useRouter();

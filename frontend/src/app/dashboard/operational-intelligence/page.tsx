@@ -10,23 +10,23 @@ import {
   RefreshCw,
   Download
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/shared/ui/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/ui/card';
+import { Badge } from '@/shared/ui/ui/badge';
 import { DateRangePicker } from '@/app/reports/components/DateRangePicker';
-import { reportsService } from '@/lib/services/entities/reports.service';
-import { useTranslation } from '@/hooks/useTranslation';
-import { PageShell } from '@/components/layout/PageShell';
-import { PageHeader, StatCard } from '@/components/ui/page-header';
-import { LoadingState } from '@/components/layout/LoadingState';
-import { ErrorState } from '@/components/layout/ErrorState';
+import { reportsService } from '@/shared/utils';
+import { useTranslation } from '@/shared/hooks/useTranslation';
+import { PageShell } from '@/shared/ui/layout/PageShell';
+import { PageHeader, StatCard } from '@/shared/ui/ui/page-header';
+import { LoadingState } from '@/shared/ui/layout/LoadingState';
+import { ErrorState } from '@/shared/ui/layout/ErrorState';
 import type {
   OperationalIntelligenceReport,
   StepBottleneck,
   InterventionBottleneck,
   ResourceUtilization,
   WorkflowRecommendation
-} from '@/lib/backend';
+} from '@/shared/types';
 
 interface DateRange {
   start: Date;
@@ -456,3 +456,4 @@ function RecommendationCard({ recommendation }: { recommendation: WorkflowRecomm
     </div>
   );
 }
+

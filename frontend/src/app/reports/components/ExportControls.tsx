@@ -2,18 +2,18 @@
 
 import { useState } from 'react';
 import { Download, FileText, Table, Calendar, Share2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/shared/ui/ui/button';
+import { Badge } from '@/shared/ui/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import type { ReportType, ExportFormat, ReportFilters } from '@/lib/backend';
-import { reportsService } from '@/lib/services/entities/reports.service';
-import { enhancedToast } from '@/lib/enhanced-toast';
+} from '@/shared/ui/ui/dropdown-menu';
+import type { ReportType, ExportFormat, ReportFilters } from '@/shared/types';
+import { reportsService } from '@/shared/utils';
+import { enhancedToast } from '@/shared/utils';
 
 interface DateRange {
   start: Date;
@@ -234,3 +234,4 @@ export function ExportControls({ reportType, dateRange, filters, onExport }: Exp
     </div>
   );
 }
+

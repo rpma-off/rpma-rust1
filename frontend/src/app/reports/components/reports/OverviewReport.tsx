@@ -14,7 +14,7 @@ import type {
   GeographicReport,
   SeasonalReport,
   OperationalIntelligenceReport
-} from '@/lib/backend';
+} from '@/shared/types';
 
 const getStatusColor = (status: string): string => {
   switch (status) {

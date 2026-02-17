@@ -24,7 +24,7 @@ import type {
   GeographicReport as BackendGeographicReport,
   SeasonalReport,
   OperationalIntelligenceReport as BackendOperationalIntelligenceReport,
-} from '@/lib/backend';
+} from '@/shared/types';
 
 interface DateRange {
   start: Date;

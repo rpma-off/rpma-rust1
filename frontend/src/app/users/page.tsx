@@ -1,19 +1,19 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { UserList } from '@/components/users/UserList';
-import { UserForm } from '@/components/users/UserForm';
-import { UserAccount } from '@/types';
-import { convertTimestamps } from '@/lib/types';
-import { useAuth } from '@/contexts/AuthContext';
-import { logger, LogContext } from '@/lib/logger';
-import { ipcClient } from '@/lib/ipc';
-import { PageHeader, HeaderActionButton } from '@/components/ui/page-header';
-import { PageShell } from '@/components/layout/PageShell';
-import { LoadingState } from '@/components/layout/LoadingState';
-import { ErrorState } from '@/components/layout/ErrorState';
+import { UserList } from '@/shared/ui/users/UserList';
+import { UserForm } from '@/shared/ui/users/UserForm';
+import { UserAccount } from '@/shared/types';
+import { convertTimestamps } from '@/shared/utils';
+import { useAuth } from '@/domains/auth';
+import { logger, LogContext } from '@/shared/utils';
+import { ipcClient } from '@/shared/utils';
+import { PageHeader, HeaderActionButton } from '@/shared/ui/ui/page-header';
+import { PageShell } from '@/shared/ui/layout/PageShell';
+import { LoadingState } from '@/shared/ui/layout/LoadingState';
+import { ErrorState } from '@/shared/ui/layout/ErrorState';
 import { Users, UserPlus } from 'lucide-react';
-import { useTranslation } from '@/hooks/useTranslation';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 
 export default function UsersPage() {
   const { t } = useTranslation();
@@ -140,3 +140,4 @@ export default function UsersPage() {
     </PageShell>
   );
 }
+

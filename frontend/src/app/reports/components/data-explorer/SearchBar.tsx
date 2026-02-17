@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { Search, X } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Input } from '@/shared/ui/ui/input';
+import { Button } from '@/shared/ui/ui/button';
 
 interface SearchBarProps {
   value: string;
@@ -43,3 +43,4 @@ export function SearchBar({ value, onChange, placeholder = "Rechercher..." }: Se
     </div>
   );
 }
+

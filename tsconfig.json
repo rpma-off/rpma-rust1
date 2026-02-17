@@ -13,6 +13,14 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/domains/auth": ["./frontend/src/domains/auth/api"],
+      "@/domains/tasks": ["./frontend/src/domains/tasks/api"],
+      "@/domains/inventory": ["./frontend/src/domains/inventory/api"],
+      "@/domains/interventions": ["./frontend/src/domains/interventions/api"],
+      "@/shared/*": ["./frontend/src/shared/*"]
+    }
   }
 }

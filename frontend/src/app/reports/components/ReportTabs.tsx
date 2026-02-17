@@ -11,7 +11,7 @@ import {
   Brain,
   Search
 } from 'lucide-react';
-import type { ReportType } from '@/lib/backend';
+import type { ReportType } from '@/shared/types';
 
 interface ReportTabsProps {
   selectedType: ReportType;

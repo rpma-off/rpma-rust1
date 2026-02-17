@@ -29,7 +29,12 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@/domains/auth": ["./src/domains/auth/api"],
+      "@/domains/tasks": ["./src/domains/tasks/api"],
+      "@/domains/inventory": ["./src/domains/inventory/api"],
+      "@/domains/interventions": ["./src/domains/interventions/api"],
+      "@/shared/*": ["./src/shared/*"]
     }
   },
   "ts-node": {

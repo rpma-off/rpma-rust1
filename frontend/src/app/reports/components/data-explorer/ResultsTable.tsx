@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { Eye, Car, Users, FileText, Calendar, CheckCircle, Clock, AlertCircle, XCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import type { SearchResult, EntityType } from '@/lib/backend';
+import { Button } from '@/shared/ui/ui/button';
+import { Badge } from '@/shared/ui/ui/badge';
+import type { SearchResult, EntityType } from '@/shared/types';
 
 interface ResultsTableProps {
   results: SearchResult[];
@@ -160,3 +160,4 @@ export function ResultsTable({ results, onRecordSelect, selectedRecordId }: Resu
     </div>
   );
 }
+

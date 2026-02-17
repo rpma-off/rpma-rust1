@@ -3,15 +3,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Search, RefreshCw, Database, FileText, Users, Car, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/shared/ui/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/ui/card';
+import { Badge } from '@/shared/ui/ui/badge';
 import { SearchBar } from './SearchBar';
 import { EntitySelector } from './EntitySelector';
 import { ResultsTable } from './ResultsTable';
 import { RecordDetailPanel } from './RecordDetailPanel';
-import { useSearchRecords } from '@/hooks/useSearchRecords';
-import type { DateRange as BackendDateRange, SearchFilters, SearchResult, EntityType } from '@/lib/backend';
+import { useSearchRecords } from '@/shared/hooks/useSearchRecords';
+import type { DateRange as BackendDateRange, SearchFilters, SearchResult, EntityType } from '@/shared/types';
 
 interface DateRange {
   start: Date;
@@ -264,3 +264,4 @@ export function DataExplorer({ dateRange, filters }: DataExplorerProps) {
     </motion.div>
   );
 }
+
