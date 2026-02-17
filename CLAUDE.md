@@ -44,33 +44,6 @@ Repositories (Data Access - Rust)
     ↓
 SQLite Database (WAL mode)
 ```
-**Key Principle**: Keep layer responsibilities strictly separated. Each layer should only communicate with adjacent layers.
-
-
-## 🔑 Critical Consistency Rules
-
-### Type Safety
-- **NEVER manually edit generated TypeScript types** in `frontend/src/types/`
-- Rust models are the single source of truth for types
-- Use `npm run types:sync` to regenerate TypeScript types from Rust
-- Run `npm run types:drift-check` to verify type consistency
-
-### IPC Communication
-- All protected IPC commands **MUST** require `session_token` parameter
-- Follow the response envelope pattern: `{ success: boolean, data?: T, error?: string }`
-- Commands must be properly exported in `src-tauri/src/lib.rs`
-- Frontend IPC calls go through `frontend/src/lib/ipc/`
-
-### Security & RBAC
-- Enforce Role-Based Access Control (RBAC) in command handlers
-- Session tokens must be validated for all protected endpoints
-- User permissions must be checked before data access
-
-### Database
-- **NEVER** modify the database schema directly
-- Always create migrations in `migrations/` directory
-- Use the migration manager for schema changes
-- Test migrations with `node scripts/validate-migration-system.js`
 
 ## 📋 Essential Commands
 
@@ -95,14 +68,6 @@ npm run backend:check          # Cargo check
 npm run backend:clippy         # Rust linting
 npm run backend:fmt            # Rust formatting
 
-# Performance testing
-npm run performance:test       # Run performance tests
-npm run bundle:analyze         # Analyze bundle size
-
-# Git workflow
-npm run git:start-feature      # Start a new feature branch
-npm run git:finish-feature     # Finish and merge feature branch
-
 # Type Management
 npm run types:sync             # Regenerate TS types from Rust
 npm run types:validate         # Validate type consistency
@@ -116,32 +81,7 @@ cd frontend && npm run test:coverage # Run tests with coverage
 # Security & Validation
 npm run security:audit         # Security vulnerability scan
 node scripts/validate-migration-system.js  # Migration validation
-```
 
-## 🎯 Development Workflow
-
-### Before Making Changes
-1. Search for existing patterns in the codebase - **copy existing patterns** rather than inventing new ones
-2. Understand the 4-layer architecture and which layer your change belongs to
-3. Check related documentation in `docs/` directory
-
-### Making Changes
-1. **Frontend changes**: 
-   - Follow existing component patterns in `frontend/src/components/`
-   - Use Tailwind CSS for styling
-   - Leverage shadcn/ui components when available
-   - Keep components small and focused
-
-2. **Backend changes**:
-   - Add/modify models in `src-tauri/src/models/` with `#[derive(Serialize, TS)]`
-   - Implement business logic in `src-tauri/src/services/`
-   - Add data access methods in `src-tauri/src/repositories/`
-   - Create IPC commands in `src-tauri/src/commands/`
-
-3. **Database changes**:
-   - Create a new migration file in `migrations/`
-   - Follow migration naming: `YYYYMMDDHHMMSS_description.sql`
-   - Test both up and down migrations
 
 ## ✅ Test Gates
 
@@ -218,3 +158,8 @@ npm run security:audit         # Must pass
   - ✅ Success path
   - ❌ Validation failures
   - 🔒 Permission failures (for protected features)
+
+## 📚 Additional Resources
+
+- **DOCUMENTATION**: See `docs\agent-pack\README.md` for detailed documentation about our project
+- **ADR**: See `docs\ADR` for architectural decision records
