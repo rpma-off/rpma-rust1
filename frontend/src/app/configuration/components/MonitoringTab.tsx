@@ -7,8 +7,7 @@ import { toast } from 'sonner';
 import { LoadingState } from '@/components/layout/LoadingState';
 import { Activity, RefreshCw, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { SystemStatus } from '@/types/configuration.types';
-import { safeInvoke } from '@/lib/ipc/core';
-import { IPC_COMMANDS } from '@/lib/ipc/commands';
+import { IPC_COMMANDS, safeInvoke } from '@/lib/ipc';
 import type { JsonValue } from '@/types/json';
 
 export function MonitoringTab() {

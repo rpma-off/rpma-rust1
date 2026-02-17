@@ -4,6 +4,7 @@
 
 use crate::authenticate;
 use crate::commands::{ApiResponse, AppState};
+use crate::domains::inventory::ipc::handlers as inventory_ipc;
 use crate::models::material::MaterialType;
 use crate::services::material::{
     CreateInventoryTransactionRequest, CreateMaterialCategoryRequest, CreateMaterialRequest,
@@ -24,7 +25,7 @@ pub async fn material_create(
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
-    let service = state.material_service.clone();
+    let service = state.inventory_service.clone();
 
     match service.create_material(request, Some(current_user.user_id)) {
         Ok(material) => {
@@ -128,16 +129,20 @@ pub async fn material_list(
         _ => None,
     });
 
-    match service.list_materials(mt, category, active_only.unwrap_or(true), limit, offset) {
-        Ok(materials) => {
-            Ok(ApiResponse::success(materials).with_correlation_id(Some(correlation_id.clone())))
-        }
+    match inventory_ipc::list_materials(
+        service.as_ref(),
+        mt,
+        category,
+        active_only.unwrap_or(true),
+        limit,
+        offset,
+    ) {
+        Ok(materials) => Ok(
+            ApiResponse::success(materials).with_correlation_id(Some(correlation_id.clone())),
+        ),
         Err(e) => {
             error!(error = %e, "Failed to list materials");
-            Err(crate::commands::AppError::internal_sanitized(
-                "list_materials",
-                &e,
-            ))
+            Err(e)
         }
     }
 }
@@ -156,7 +161,7 @@ pub async fn material_update(
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
-    let service = state.material_service.clone();
+    let service = state.inventory_service.clone();
 
     match service.update_material(&id, request, Some(current_user.user_id)) {
         Ok(material) => {
@@ -188,17 +193,14 @@ pub async fn material_update_stock(
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let service = state.material_service.clone();
 
-    match service.update_stock(request) {
+    match inventory_ipc::update_stock(service.as_ref(), request) {
         Ok(material) => {
             info!(material_id = %material.id, "Material stock updated");
             Ok(ApiResponse::success(material).with_correlation_id(Some(correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to update material stock");
-            Err(crate::commands::AppError::internal_sanitized(
-                "update_stock",
-                &e,
-            ))
+            Err(e)
         }
     }
 }
@@ -216,19 +218,16 @@ pub async fn material_record_consumption(
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
-    let service = state.material_service.clone();
+    let service = state.inventory_service.clone();
 
-    match service.record_consumption(request) {
+    match inventory_ipc::record_consumption(service.as_ref(), request) {
         Ok(consumption) => {
             info!(consumption_id = %consumption.id, "Material consumption recorded");
             Ok(ApiResponse::success(consumption).with_correlation_id(Some(correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to record material consumption");
-            Err(crate::commands::AppError::internal_sanitized(
-                "record_consumption",
-                &e,
-            ))
+            Err(e)
         }
     }
 }
@@ -247,7 +246,7 @@ pub async fn material_get_intervention_consumption(
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
-    let service = state.material_service.clone();
+    let service = state.inventory_service.clone();
 
     match service.get_intervention_consumption(&intervention_id) {
         Ok(consumptions) => Ok(
@@ -309,16 +308,11 @@ pub async fn material_get_stats(
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let service = state.material_service.clone();
 
-    match service.get_material_stats() {
-        Ok(stats) => {
-            Ok(ApiResponse::success(stats).with_correlation_id(Some(correlation_id.clone())))
-        }
+    match inventory_ipc::get_material_stats(service.as_ref()) {
+        Ok(stats) => Ok(ApiResponse::success(stats).with_correlation_id(Some(correlation_id.clone()))),
         Err(e) => {
             error!(error = %e, "Failed to get material stats");
-            Err(crate::commands::AppError::internal_sanitized(
-                "get_material_stats",
-                &e,
-            ))
+            Err(e)
         }
     }
 }
@@ -335,7 +329,7 @@ pub async fn material_get_low_stock(
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
-    let service = state.material_service.clone();
+    let service = state.inventory_service.clone();
 
     match service.get_low_stock_materials() {
         Ok(materials) => {
@@ -393,16 +387,11 @@ pub async fn inventory_get_stats(
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let service = state.material_service.clone();
 
-    match service.get_inventory_stats() {
-        Ok(stats) => {
-            Ok(ApiResponse::success(stats).with_correlation_id(Some(correlation_id.clone())))
-        }
+    match inventory_ipc::get_inventory_stats(service.as_ref()) {
+        Ok(stats) => Ok(ApiResponse::success(stats).with_correlation_id(Some(correlation_id.clone()))),
         Err(e) => {
             error!(error = %e, "Failed to get inventory stats");
-            Err(crate::commands::AppError::internal_sanitized(
-                "get_inventory_stats",
-                &e,
-            ))
+            Err(e)
         }
     }
 }

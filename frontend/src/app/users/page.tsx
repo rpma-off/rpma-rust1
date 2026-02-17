@@ -7,7 +7,7 @@ import { UserAccount } from '@/types';
 import { convertTimestamps } from '@/lib/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { logger, LogContext } from '@/lib/logger';
-import { ipcClient } from '@/lib/ipc/client';
+import { ipcClient } from '@/lib/ipc';
 import { PageHeader, HeaderActionButton } from '@/components/ui/page-header';
 import { PageShell } from '@/components/layout/PageShell';
 import { LoadingState } from '@/components/layout/LoadingState';

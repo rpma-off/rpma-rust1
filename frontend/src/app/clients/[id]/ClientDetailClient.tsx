@@ -7,7 +7,7 @@ import { Plus, Edit, Trash2, ArrowLeft, Mail, Phone, MapPin, Building2 } from 'l
 import Link from 'next/link';
 import type { Client, Task } from '@/types';
 import { convertTimestamps } from '@/lib/types';
-import { ipcClient } from '@/lib/ipc/client';
+import { ipcClient } from '@/lib/ipc';
 import { useTranslation } from '@/hooks/useTranslation';
 import { LoadingState } from '@/components/layout/LoadingState';
 

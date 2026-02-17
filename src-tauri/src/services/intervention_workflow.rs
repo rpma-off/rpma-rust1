@@ -18,6 +18,7 @@ use crate::services::workflow_strategy::{
     EnvironmentConditions, WorkflowContext, WorkflowStrategyFactory,
 };
 use crate::services::workflow_validation::WorkflowValidationService;
+use crate::shared::event_bus::{publish_event, InterventionFinalized};
 use serde_json::json;
 
 use std::sync::Arc;
@@ -792,6 +793,24 @@ impl InterventionWorkflowService {
                 Ok(())
             })
             .map_err(InterventionError::Database)?;
+
+        let completed_at_ms = intervention
+            .completed_at
+            .inner()
+            .unwrap_or_else(crate::models::common::now);
+        let technician_id = user_id
+            .map(|id| id.to_string())
+            .or_else(|| intervention.technician_id.clone())
+            .unwrap_or_else(|| "system".to_string());
+        publish_event(
+            InterventionFinalized {
+                intervention_id: intervention.id.clone(),
+                task_id: intervention.task_id.clone(),
+                technician_id,
+                completed_at_ms,
+            }
+            .into(),
+        );
 
         if updated_step.is_some() {
             logger.debug("Marked finalization step as completed", None);

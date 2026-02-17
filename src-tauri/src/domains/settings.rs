@@ -2,11 +2,13 @@
 //!
 //! This module re-exports all settings-related components across layers.
 
+// Public facade
+pub use crate::services::settings::SettingsService;
+
 // Models
-pub use crate::models::settings::{
+pub(crate) use crate::models::settings::{
     AppSettings, GeneralSettings, NotificationSettings, SecuritySettings, SystemConfiguration,
 };
 
 // Services
-pub use crate::services::settings::SettingsService;
-pub use crate::services::system::SystemService;
+pub(crate) use crate::services::system::SystemService;

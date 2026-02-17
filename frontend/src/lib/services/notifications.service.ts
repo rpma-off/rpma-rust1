@@ -31,6 +31,7 @@ export interface SendNotificationRequest {
     assignee_name: string | null;
     system_message: string | null;
   };
+  correlation_id: string | null;
 }
 
 export class NotificationService {
@@ -39,7 +40,10 @@ export class NotificationService {
   }
 
   static async sendNotification(request: SendNotificationRequest, sessionToken: string): Promise<void> {
-    return ipcClient.notifications.send(request, sessionToken);
+    return ipcClient.notifications.send({
+      ...request,
+      correlation_id: request.correlation_id ?? null,
+    }, sessionToken);
   }
 
   static async testNotificationConfig(recipient: string, channel: 'email' | 'sms', sessionToken: string): Promise<string> {

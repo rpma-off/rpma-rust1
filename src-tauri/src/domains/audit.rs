@@ -2,13 +2,14 @@
 //!
 //! This module re-exports audit and security-related components across layers.
 
+// Public facade
+pub use crate::services::audit_service::AuditService;
+
 // Models
-pub use crate::models::notification::{NotificationPriority, NotificationStatus, NotificationType};
+pub(crate) use crate::models::notification::{
+    NotificationPriority, NotificationStatus, NotificationType,
+};
 
 // Services
-pub use crate::services::alerting::AlertingService;
-pub use crate::services::audit_service::AuditService;
-pub use crate::services::security_monitor::SecurityMonitorService;
-
-// Repositories
-pub use crate::repositories::audit_repository::AuditRepository;
+pub(crate) use crate::services::alerting::AlertingService;
+pub(crate) use crate::services::security_monitor::SecurityMonitorService;

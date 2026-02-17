@@ -235,6 +235,23 @@ pub mod event_factory {
         }
     }
 
+    pub fn intervention_finalized(
+        intervention_id: String,
+        task_id: String,
+        technician_id: String,
+        completed_at_ms: i64,
+    ) -> DomainEvent {
+        DomainEvent::InterventionFinalized {
+            id: Uuid::new_v4().to_string(),
+            intervention_id,
+            task_id,
+            technician_id,
+            completed_at_ms,
+            timestamp: Utc::now(),
+            metadata: None,
+        }
+    }
+
     pub fn material_consumed(
         material_id: String,
         intervention_id: String,
@@ -381,6 +398,14 @@ mod tests {
         let intervention_started =
             event_factory::intervention_started("int-123".to_string(), "task-123".to_string());
         assert_eq!(intervention_started.event_type(), "InterventionStarted");
+
+        let intervention_finalized = event_factory::intervention_finalized(
+            "int-999".to_string(),
+            "task-999".to_string(),
+            "tech-1".to_string(),
+            Utc::now().timestamp_millis(),
+        );
+        assert_eq!(intervention_finalized.event_type(), "InterventionFinalized");
 
         let material_consumed = event_factory::material_consumed(
             "mat-1".to_string(),

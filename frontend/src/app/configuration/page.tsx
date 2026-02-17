@@ -24,8 +24,7 @@ import { LogDomain } from '@/lib/logging/types';
 import { PageShell } from '@/components/layout/PageShell';
 import { LoadingState } from '@/components/layout/LoadingState';
 import { PageHeader } from '@/components/ui/page-header';
-import { safeInvoke } from '@/lib/ipc/core';
-import { IPC_COMMANDS } from '@/lib/ipc/commands';
+import { IPC_COMMANDS, safeInvoke } from '@/lib/ipc';
 import type { JsonValue } from '@/types/json';
 
 // Lazy load tab components to reduce initial bundle size

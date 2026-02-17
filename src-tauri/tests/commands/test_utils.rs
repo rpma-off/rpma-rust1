@@ -13,6 +13,7 @@ pub mod user_commands_test;
 use crate::test_utils::TestDatabase;
 use rpma_ppf_intervention::models::*;
 use serde_json::json;
+use std::sync::Arc;
 
 /// Test context for command tests
 pub struct TestContext {
@@ -24,7 +25,7 @@ pub struct TestContext {
 pub async fn create_test_db() -> TestContext {
     use rpma_ppf_intervention::commands::AppStateType;
     use rpma_ppf_intervention::repositories;
-    use std::sync::Arc;
+    use rpma_ppf_intervention::shared::event_bus::set_global_event_bus;
 
     let test_db = TestDatabase::new().expect("Failed to create test database");
     let db = test_db.db();
@@ -58,6 +59,10 @@ pub async fn create_test_db() -> TestContext {
     let material_service = Arc::new(rpma_ppf_intervention::services::MaterialService::new(
         db.clone(),
     ));
+    let inventory_service = Arc::new(rpma_ppf_intervention::domains::inventory::InventoryService::new(
+        db.clone(),
+        material_service.clone(),
+    ));
     let photo_service = Arc::new(rpma_ppf_intervention::services::PhotoService::new(
         db.clone(),
     ));
@@ -85,6 +90,7 @@ pub async fn create_test_db() -> TestContext {
     ));
     let event_bus =
         std::sync::Arc::new(rpma_ppf_intervention::services::event_bus::InMemoryEventBus::new());
+    set_global_event_bus(event_bus.clone());
     let app_data_dir = std::env::temp_dir();
 
     // Create async db
@@ -100,6 +106,7 @@ pub async fn create_test_db() -> TestContext {
         dashboard_service,
         intervention_service,
         material_service,
+        inventory_service,
         photo_service,
         analytics_service,
         auth_service,

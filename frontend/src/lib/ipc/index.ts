@@ -15,3 +15,5 @@ export { safeInvoke } from './utils';
 export { cachedInvoke, getCacheStats, invalidateKey, clearCache, invalidatePattern } from './cache';
 export { withRetry } from './retry';
 export { recordMetric, getRawMetrics, getMetricsSummary, getCommandMetrics, clearMetrics, logMetrics, setAnalyticsHook } from './metrics';
+export { IPC_COMMANDS } from './commands';
+export { settingsOperations } from './domains/settings';

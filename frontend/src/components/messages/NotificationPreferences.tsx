@@ -35,6 +35,7 @@ export function NotificationPreferences({ userId }: NotificationPreferencesProps
     quiet_hours_end: null,
     email_frequency: null,
     email_digest_time: null,
+    correlation_id: null,
   });
 
   useEffect(() => {
@@ -56,6 +57,7 @@ export function NotificationPreferences({ userId }: NotificationPreferencesProps
         quiet_hours_end: preferences.quiet_hours_end || null,
         email_frequency: preferences.email_frequency,
         email_digest_time: preferences.email_digest_time,
+        correlation_id: null,
       });
     }
   }, [preferences]);

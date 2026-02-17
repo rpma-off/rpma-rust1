@@ -4,21 +4,17 @@ import userEvent from '@testing-library/user-event';
 import { SystemSettingsTab } from '../SystemSettingsTab';
 import { MonitoringTab } from '../MonitoringTab';
 import { BusinessRulesTab } from '../BusinessRulesTab';
-import { settingsOperations } from '@/lib/ipc/domains/settings';
-import { safeInvoke } from '@/lib/ipc/core';
+import { safeInvoke, settingsOperations } from '@/lib/ipc';
 
 jest.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({ session: { token: 'test-token' } }),
 }));
 
-jest.mock('@/lib/ipc/domains/settings', () => ({
+jest.mock('@/lib/ipc', () => ({
   settingsOperations: {
     getAppSettings: jest.fn(),
     updateGeneralSettings: jest.fn(),
   },
-}));
-
-jest.mock('@/lib/ipc/core', () => ({
   safeInvoke: jest.fn(),
 }));
 

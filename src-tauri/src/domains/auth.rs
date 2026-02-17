@@ -2,14 +2,13 @@
 //!
 //! This module re-exports all auth-related components across layers.
 
+// Public facade
+pub use crate::services::auth::AuthService;
+
 // Models
-pub use crate::models::auth::{UserAccount, UserRole, UserSession};
+pub(crate) use crate::models::auth::{UserAccount, UserRole, UserSession};
 
 // Services
-pub use crate::services::auth::AuthService;
-pub use crate::services::session::SessionService;
-pub use crate::services::token;
-pub use crate::services::two_factor::TwoFactorService;
-
-// Repositories
-pub use crate::repositories::session_repository::SessionRepository;
+pub(crate) use crate::services::session::SessionService;
+pub(crate) use crate::services::token;
+pub(crate) use crate::services::two_factor::TwoFactorService;

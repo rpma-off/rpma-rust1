@@ -44,6 +44,7 @@ export function useMessage() {
     date_to: null,
     limit: null,
     offset: null,
+    correlation_id: null,
   }) => {
     try {
       setLoading(true);

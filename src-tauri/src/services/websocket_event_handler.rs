@@ -54,6 +54,7 @@ impl WebSocketEventHandler {
             filter: vec![
                 "InterventionStarted".to_string(),
                 "InterventionCompleted".to_string(),
+                "InterventionFinalized".to_string(),
             ],
             enabled: true,
         }
@@ -153,6 +154,11 @@ impl WebSocketEventHandler {
                 task_id: task_id.clone(),
             }),
             DomainEvent::InterventionCompleted {
+                intervention_id, ..
+            } => Some(WSMessage::InterventionCompleted {
+                intervention_id: intervention_id.clone(),
+            }),
+            DomainEvent::InterventionFinalized {
                 intervention_id, ..
             } => Some(WSMessage::InterventionCompleted {
                 intervention_id: intervention_id.clone(),

@@ -9,5 +9,38 @@
     }],
     "@typescript-eslint/no-explicit-any": "warn",
     "@typescript-eslint/no-require-imports": "off"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["src/app/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              "@/lib/ipc/mock/*",
+              "@/lib/ipc/mock/**",
+              "@/lib/ipc/core",
+              "@/lib/ipc/core/**",
+              "@/lib/ipc/commands",
+              "@/lib/ipc/domains/*",
+              "@/lib/ipc/domains/**",
+              "@/lib/ipc/client",
+              "@/lib/ipc/secure-client",
+              "@/lib/ipc/utils",
+              "@/lib/ipc/utils/**",
+              "@/lib/ipc/cache",
+              "@/lib/ipc/metrics",
+              "@/lib/ipc/retry",
+              "@/lib/ipc/status",
+              "@/lib/ipc/message",
+              "@/lib/ipc/calendar",
+              "@/lib/ipc/types",
+              "@/lib/ipc/types/**"
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }

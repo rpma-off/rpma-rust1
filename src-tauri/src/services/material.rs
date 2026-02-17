@@ -535,6 +535,34 @@ impl MaterialService {
         let material_id_for_update = material_id.clone();
         let recorded_by_for_update = recorded_by.clone();
         let now = crate::models::common::now();
+        let total_used = total_needed;
+        let transaction = InventoryTransaction {
+            id: Uuid::new_v4().to_string(),
+            material_id: material_id.clone(),
+            transaction_type: InventoryTransactionType::StockOut,
+            quantity: total_used,
+            previous_stock: material.current_stock,
+            new_stock,
+            reference_number: Some(consumption.id.clone()),
+            reference_type: Some("consumption".to_string()),
+            notes: Some("Intervention consumption".to_string()),
+            unit_cost: material.unit_cost,
+            total_cost: consumption.total_cost,
+            warehouse_id: material.warehouse_id.clone(),
+            location_from: None,
+            location_to: None,
+            batch_number: consumption.batch_used.clone(),
+            expiry_date: consumption.expiry_used,
+            quality_status: None,
+            intervention_id: Some(consumption.intervention_id.clone()),
+            step_id: consumption.step_id.clone(),
+            performed_by: recorded_by.clone(),
+            performed_at: now,
+            created_at: now,
+            updated_at: now,
+            synced: false,
+            last_synced_at: None,
+        };
         self.db
             .with_transaction(|tx| {
                 tx.execute(
@@ -566,6 +594,44 @@ impl MaterialService {
                         consumption.updated_at,
                         consumption.synced,
                         consumption.last_synced_at,
+                    ],
+                )
+                .map_err(|e| e.to_string())?;
+                tx.execute(
+                    r#"
+                    INSERT INTO inventory_transactions (
+                        id, material_id, transaction_type, quantity, previous_stock, new_stock,
+                        reference_number, reference_type, notes, unit_cost, total_cost,
+                        warehouse_id, location_from, location_to, batch_number, expiry_date, quality_status,
+                        intervention_id, step_id, performed_by, performed_at, created_at, updated_at, synced, last_synced_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    "#,
+                    params![
+                        transaction.id,
+                        transaction.material_id,
+                        transaction.transaction_type.to_string(),
+                        transaction.quantity,
+                        transaction.previous_stock,
+                        transaction.new_stock,
+                        transaction.reference_number,
+                        transaction.reference_type,
+                        transaction.notes,
+                        transaction.unit_cost,
+                        transaction.total_cost,
+                        transaction.warehouse_id,
+                        transaction.location_from,
+                        transaction.location_to,
+                        transaction.batch_number,
+                        transaction.expiry_date,
+                        transaction.quality_status,
+                        transaction.intervention_id,
+                        transaction.step_id,
+                        transaction.performed_by,
+                        transaction.performed_at,
+                        transaction.created_at,
+                        transaction.updated_at,
+                        transaction.synced,
+                        transaction.last_synced_at,
                     ],
                 )
                 .map_err(|e| e.to_string())?;

@@ -8,6 +8,7 @@ pub mod memory_management;
 pub mod memory_management_helpers;
 pub mod models;
 pub mod repositories;
+pub mod shared;
 pub mod services;
 pub mod sync;
 pub mod worker_pool;

@@ -12,11 +12,13 @@
 //! - **interventions**: Intervention workflow, steps, progress
 //! - **clients**: Client management, contact info
 //! - **inventory**: Material and inventory tracking
+//! - **quotes**: Quotes and pricing
 //! - **calendar**: Calendar events, scheduling
 //! - **reports**: Report generation, analytics, exports
 //! - **settings**: User and system settings
 //! - **audit**: Audit logging, security monitoring
 //! - **sync**: Offline sync, background operations
+//! - **documents**: Document management
 //!
 //! ## Architecture
 //!
@@ -32,8 +34,10 @@ pub mod audit;
 pub mod auth;
 pub mod calendar;
 pub mod clients;
+pub mod documents;
 pub mod interventions;
 pub mod inventory;
+pub mod quotes;
 pub mod reports;
 pub mod settings;
 pub mod sync;

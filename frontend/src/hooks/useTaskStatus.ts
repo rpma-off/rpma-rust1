@@ -48,6 +48,7 @@ export function useTaskStatus() {
         task_id: taskId,
         new_status: newStatus,
         reason: reason || null,
+        correlation_id: null,
       }, 'dummy-session-token');
 
       toast.success(`Task status updated to ${newStatus}`);

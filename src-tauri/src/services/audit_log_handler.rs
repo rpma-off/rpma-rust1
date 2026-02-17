@@ -156,6 +156,30 @@ impl AuditLogHandler {
                 session_id: None,
                 request_id: None,
             },
+            DomainEvent::InterventionFinalized {
+                id,
+                intervention_id,
+                technician_id,
+                timestamp,
+                ..
+            } => AuditEvent {
+                id: id.clone(),
+                event_type: AuditEventType::InterventionCompleted,
+                user_id: technician_id.clone(),
+                action: "FINALIZE_INTERVENTION".to_string(),
+                resource_id: Some(intervention_id.clone()),
+                resource_type: Some("intervention".to_string()),
+                description: "Intervention finalized".to_string(),
+                ip_address: None,
+                user_agent: None,
+                result: ActionResult::Success,
+                previous_state: None,
+                new_state: None,
+                timestamp: *timestamp,
+                metadata: None,
+                session_id: None,
+                request_id: None,
+            },
             DomainEvent::MaterialConsumed {
                 id,
                 material_id,
@@ -226,6 +250,7 @@ impl EventHandler for AuditLogHandler {
             "TaskStatusChanged",
             "InterventionStarted",
             "InterventionCompleted",
+            "InterventionFinalized",
             "MaterialConsumed",
         ]
     }
