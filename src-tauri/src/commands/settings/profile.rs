@@ -166,7 +166,9 @@ pub async fn update_user_profile(
     state
         .settings_service
         .update_user_profile(&user.id, &profile_settings)
-        .map(|_| ApiResponse::success(profile_settings).with_correlation_id(Some(correlation_id.clone())))
+        .map(|_| {
+            ApiResponse::success(profile_settings).with_correlation_id(Some(correlation_id.clone()))
+        })
         .map_err(|e| handle_settings_error(e, "Update user profile"))
 }
 

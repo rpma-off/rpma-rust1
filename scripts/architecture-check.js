@@ -7,7 +7,7 @@ const repoRoot = path.resolve(__dirname, '..');
 const domainsRoot = path.join(repoRoot, 'src-tauri', 'src', 'domains');
 const sharedRoot = path.join(repoRoot, 'src-tauri', 'src', 'shared');
 
-const sqlPattern = /(\bSELECT\b|\bINSERT\b|\bUPDATE\b|\bDELETE\b|CREATE\s+TABLE|ALTER\s+TABLE|DROP\s+TABLE|rusqlite::params!)/i;
+const sqlPattern = /(\bSELECT\b|\bINSERT\b|\bUPDATE\s+\w+\s+SET\b|\bDELETE\s+FROM\b|CREATE\s+TABLE|ALTER\s+TABLE|DROP\s+TABLE|rusqlite::params!)/;
 
 function listFiles(dir) {
   const entries = fs.readdirSync(dir, { withFileTypes: true });

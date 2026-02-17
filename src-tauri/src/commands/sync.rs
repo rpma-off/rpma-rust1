@@ -79,7 +79,11 @@ pub async fn sync_stop_background_service(
 /// Trigger immediate sync
 #[tauri::command]
 #[instrument(skip(state, session_token))]
-pub async fn sync_now(correlation_id: Option<String>, session_token: String, state: AppState<'_>) -> Result<SyncResult, String> {
+pub async fn sync_now(
+    correlation_id: Option<String>,
+    session_token: String,
+    state: AppState<'_>,
+) -> Result<SyncResult, String> {
     let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let current_user = state
         .auth_service
