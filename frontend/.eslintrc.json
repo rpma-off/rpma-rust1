@@ -11,7 +11,7 @@
               "message": "App pages must not import mock IPC modules."
             },
             {
-              "group": ["@/lib/ipc/**/**"],
+              "group": ["@/lib/ipc/**", "!@/lib/ipc/public"],
               "message": "App pages must import IPC through public entrypoints."
             }
           ]

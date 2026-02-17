@@ -1,18 +1,16 @@
-# ADR: logging correlation
+# ADR: Logging Correlation Across Domain Boundaries
 
 - Status: Accepted
 
 ## Context
-RPMA v2 is migrating to bounded contexts and needs enforceable architectural rules that preserve existing IPC compatibility and offline-first behavior.
+Observability requires traceable request/event flow across commands and domain services.
 
 ## Decision
-Adopt bounded-context constraints for backend/frontend boundaries and keep legacy entrypoints as thin delegates during migration.
+Keep correlation IDs at command boundaries and preserve them through service calls and event publication.
 
 ## Consequences
-- Improves isolation and maintainability.
-- Requires explicit mapping layers and architecture checks.
-- Legacy modules remain temporarily for compatibility.
+- Better operational debugging.
+- Consistent telemetry for workflows.
 
 ## Alternatives considered
-- Big-bang rewrite (rejected: too risky)
-- Keep layered architecture without guardrails (rejected: regressions likely)
+- Local per-layer IDs only (rejected)

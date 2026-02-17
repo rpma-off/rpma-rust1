@@ -1,18 +1,16 @@
-# ADR: offline first strategy
+# ADR: Offline-First Strategy in Bounded Contexts
 
 - Status: Accepted
 
 ## Context
-RPMA v2 is migrating to bounded contexts and needs enforceable architectural rules that preserve existing IPC compatibility and offline-first behavior.
+RPMA uses local SQLite as source of truth and must keep operating offline.
 
 ## Decision
-Adopt bounded-context constraints for backend/frontend boundaries and keep legacy entrypoints as thin delegates during migration.
+Bounded-context migration keeps local DB persistence and avoids introducing online dependencies.
 
 ## Consequences
-- Improves isolation and maintainability.
-- Requires explicit mapping layers and architecture checks.
-- Legacy modules remain temporarily for compatibility.
+- Offline workflows remain intact.
+- Domain boundaries do not alter local-first behavior.
 
 ## Alternatives considered
-- Big-bang rewrite (rejected: too risky)
-- Keep layered architecture without guardrails (rejected: regressions likely)
+- Remote-first synchronization architecture (rejected)

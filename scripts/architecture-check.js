@@ -5,6 +5,7 @@ const path = require('path');
 const repoRoot = process.cwd();
 const rustRoot = path.join(repoRoot, 'src-tauri', 'src');
 const domainsRoot = path.join(rustRoot, 'domains');
+const MIGRATED_DOMAINS = ['inventory'];
 
 const SQL_PATTERNS = [
   /\bSELECT\s+/i,
@@ -66,11 +67,11 @@ for (const file of rustFiles) {
   }
 
   const repoImports = [...content.matchAll(/crate::repositories::([a-z_]+)/g)].map((x) => x[1]);
-  if (repoImports.length > 0 && domain !== 'inventory') {
+  if (repoImports.length > 0 && !MIGRATED_DOMAINS.includes(domain)) {
     // Keep legacy domains untouched during migration; only enforce strictly for migrated inventory context
     continue;
   }
-  if (repoImports.length > 0 && domain === 'inventory') {
+  if (repoImports.length > 0 && MIGRATED_DOMAINS.includes(domain)) {
     errors.push(`Inventory domain should not import legacy repositories directly: ${n}`);
   }
 }

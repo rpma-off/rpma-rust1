@@ -15,7 +15,10 @@ impl DomainEventHandler for CountingHandler {
     }
 
     fn handle(&self, _event: &DomainEvent) {
-        let mut count = self.count.lock().expect("count lock");
+        let mut count = self
+            .count
+            .lock()
+            .expect("Failed to acquire lock on event handler counter");
         *count += 1;
     }
 }
@@ -34,7 +37,12 @@ fn finalize_intervention_emits_event_and_inventory_updates() {
         completed_at_ms: 100,
     }));
 
-    assert_eq!(*count_ref.lock().expect("count lock"), 1);
+    assert_eq!(
+        *count_ref
+            .lock()
+            .expect("Failed to acquire lock on event handler counter for assertion"),
+        1
+    );
 }
 
 #[test]
@@ -46,5 +54,10 @@ fn finalize_intervention_rollback_does_not_update_inventory() {
     bus.subscribe(handler);
     // Simulate rollback: event is not published.
 
-    assert_eq!(*count_ref.lock().expect("count lock"), 0);
+    assert_eq!(
+        *count_ref
+            .lock()
+            .expect("Failed to acquire lock on event handler counter for assertion"),
+        0
+    );
 }

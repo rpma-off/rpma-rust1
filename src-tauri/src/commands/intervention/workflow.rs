@@ -344,7 +344,7 @@ pub async fn intervention_finalize(
                         intervention_id: request.intervention_id.clone(),
                         task_id: v.intervention.task_id.clone(),
                         technician_id: session.user_id.clone(),
-                        completed_at_ms: crate::models::common::now(),
+                        completed_at_ms: chrono::Utc::now().timestamp_millis(),
                     },
                 ),
             );
@@ -595,7 +595,7 @@ pub async fn intervention_workflow(
                         intervention_id: data.intervention_id.clone(),
                         task_id: response.intervention.task_id.clone(),
                         technician_id: session.user_id.clone(),
-                        completed_at_ms: crate::models::common::now(),
+                        completed_at_ms: chrono::Utc::now().timestamp_millis(),
                     },
                 ),
             );

@@ -27,7 +27,10 @@ impl InMemoryDomainEventBus {
 impl DomainEventBus for InMemoryDomainEventBus {
     fn publish(&self, event: DomainEvent) {
         let interested = {
-            let handlers = self.handlers.lock().expect("event-bus lock");
+            let handlers = self
+                .handlers
+                .lock()
+                .expect("Failed to acquire event bus handlers lock during publish");
             handlers
                 .get(event.event_type())
                 .cloned()
@@ -40,7 +43,10 @@ impl DomainEventBus for InMemoryDomainEventBus {
     }
 
     fn subscribe(&self, handler: Arc<dyn DomainEventHandler>) {
-        let mut handlers = self.handlers.lock().expect("event-bus lock");
+        let mut handlers = self
+            .handlers
+            .lock()
+            .expect("Failed to acquire event bus handlers lock during subscribe");
 
         for event_type in handler.interested_events() {
             handlers

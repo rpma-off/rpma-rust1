@@ -59,12 +59,18 @@ impl InventoryService {
         &self,
         event: &InterventionFinalized,
     ) -> Result<(), crate::services::material::MaterialError> {
-        let mut processed = self.processed_interventions.lock().expect("inventory processed lock");
+        let mut processed = self.processed_interventions.lock().unwrap_or_else(|_| {
+            panic!(
+                "Failed to acquire lock on processed interventions set for intervention {}",
+                event.intervention_id
+            )
+        });
         if !processed.insert(event.intervention_id.clone()) {
             return Ok(());
         }
 
-        let _ = self
+        // Read is used to surface DB errors for this intervention event path.
+        let _consumption_records = self
             .material_service
             .get_intervention_consumption(&event.intervention_id)?;
 
@@ -89,7 +95,9 @@ impl DomainEventHandler for InventoryInterventionEventHandler {
 
     fn handle(&self, event: &DomainEvent) {
         if let DomainEvent::InterventionFinalized(payload) = event {
-            let _ = self.inventory_service.on_intervention_finalized(payload);
+            if let Err(err) = self.inventory_service.on_intervention_finalized(payload) {
+                tracing::error!(error = %err, intervention_id = %payload.intervention_id, "Inventory intervention finalization handler failed");
+            }
         }
     }
 }

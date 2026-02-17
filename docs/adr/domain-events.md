@@ -1,18 +1,16 @@
-# ADR: domain events
+# ADR: Domain Events for Cross-Context Communication
 
 - Status: Accepted
 
 ## Context
-RPMA v2 is migrating to bounded contexts and needs enforceable architectural rules that preserve existing IPC compatibility and offline-first behavior.
+Cross-domain calls create coupling between bounded contexts.
 
 ## Decision
-Adopt bounded-context constraints for backend/frontend boundaries and keep legacy entrypoints as thin delegates during migration.
+Use shared domain events (`InterventionFinalized`, `MaterialConsumed`) via publish/subscribe.
 
 ## Consequences
-- Improves isolation and maintainability.
-- Requires explicit mapping layers and architecture checks.
-- Legacy modules remain temporarily for compatibility.
+- Looser coupling across domains.
+- Event payloads must carry required IDs.
 
 ## Alternatives considered
-- Big-bang rewrite (rejected: too risky)
-- Keep layered architecture without guardrails (rejected: regressions likely)
+- Direct domain-to-domain service calls (rejected)

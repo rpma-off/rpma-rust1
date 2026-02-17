@@ -1,18 +1,17 @@
-# ADR: transaction boundaries
+# ADR: Transaction Boundaries in Application Use Cases
 
 - Status: Accepted
 
 ## Context
-RPMA v2 is migrating to bounded contexts and needs enforceable architectural rules that preserve existing IPC compatibility and offline-first behavior.
+Inventory stock updates and consumption writes must be atomic while IPC handlers stay thin.
 
 ## Decision
-Adopt bounded-context constraints for backend/frontend boundaries and keep legacy entrypoints as thin delegates during migration.
+Define transaction boundaries in domain application services (use-cases), not in command handlers.
 
 ## Consequences
-- Improves isolation and maintainability.
-- Requires explicit mapping layers and architecture checks.
-- Legacy modules remain temporarily for compatibility.
+- Atomic multi-write operations are consistent.
+- IPC remains orchestration-only.
 
 ## Alternatives considered
-- Big-bang rewrite (rejected: too risky)
-- Keep layered architecture without guardrails (rejected: regressions likely)
+- Transactions in IPC commands (rejected)
+- Distributed cross-domain transactions (rejected)

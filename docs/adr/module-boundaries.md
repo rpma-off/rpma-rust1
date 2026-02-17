@@ -1,4 +1,4 @@
-# ADR: module boundaries
+# ADR: Bounded Context Module Boundaries
 
 - Status: Accepted
 

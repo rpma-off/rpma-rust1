@@ -1,18 +1,16 @@
-# ADR: error contract
+# ADR: Shared Error Contract and Mapping
 
 - Status: Accepted
 
 ## Context
-RPMA v2 is migrating to bounded contexts and needs enforceable architectural rules that preserve existing IPC compatibility and offline-first behavior.
+Bounded contexts must not leak SQL/internal errors across IPC boundaries.
 
 ## Decision
-Adopt bounded-context constraints for backend/frontend boundaries and keep legacy entrypoints as thin delegates during migration.
+Map domain/infrastructure errors to shared app error contracts in IPC mapping layers.
 
 ## Consequences
-- Improves isolation and maintainability.
-- Requires explicit mapping layers and architecture checks.
-- Legacy modules remain temporarily for compatibility.
+- Stable frontend-facing errors.
+- Reduced leakage of persistence details.
 
 ## Alternatives considered
-- Big-bang rewrite (rejected: too risky)
-- Keep layered architecture without guardrails (rejected: regressions likely)
+- Returning raw repository/database errors (rejected)
