@@ -20,7 +20,7 @@ pub async fn submit_report_job(
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> AppResult<String> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!(
         "Submitting background report job for type: {:?}",
         report_type
@@ -74,7 +74,7 @@ pub async fn submit_task_completion_report_job(
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> AppResult<String> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Submitting background job for task completion report");
 
     let current_user = authenticate!(&session_token, &state);
@@ -140,7 +140,7 @@ pub async fn get_report_job_result(
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> AppResult<serde_json::Value> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Getting report job result for job: {}", job_id);
 
     let _current_user = authenticate!(&session_token, &state);

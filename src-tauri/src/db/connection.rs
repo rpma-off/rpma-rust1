@@ -65,7 +65,7 @@ pub fn initialize_pool_with_config(
     encryption_key: &str,
     config: &PoolConfig,
 ) -> Result<Pool<SqliteConnectionManager>, Box<dyn std::error::Error>> {
-    let _encryption_key = encryption_key.to_string();
+    let encryption_key_owned = encryption_key.to_string();
     let mut open_flags = OpenFlags::SQLITE_OPEN_READ_WRITE
         | OpenFlags::SQLITE_OPEN_CREATE
         | OpenFlags::SQLITE_OPEN_NO_MUTEX; // CRITICAL: allows concurrent access
@@ -81,9 +81,9 @@ pub fn initialize_pool_with_config(
             // Set encryption key if provided and using SQLCipher
             // Note: Standard SQLite doesn't support encryption, so we skip this
             #[cfg(feature = "sqlcipher")]
-            if !encryption_key.is_empty() {
+            if !encryption_key_owned.is_empty() {
                 // Use parameterized query to prevent SQL injection
-                conn.execute("PRAGMA key = ?", [&encryption_key])
+                conn.execute("PRAGMA key = ?", [&encryption_key_owned])
                     .map_err(|e| {
                         rusqlite::Error::SqliteFailure(
                             rusqlite::ffi::Error::new(rusqlite::ffi::SQLITE_MISUSE),

@@ -13,7 +13,6 @@ use crate::services::task_constants::{
 
 use serde::Serialize;
 use std::sync::Arc;
-use tracing::debug;
 
 /// Client information for task queries
 #[derive(Debug, Serialize)]

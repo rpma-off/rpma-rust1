@@ -333,16 +333,16 @@ fn parse_timestamp_millis(value: &str) -> Option<i64> {
     }
 
     if let Ok(dt) = chrono::NaiveDateTime::parse_from_str(trimmed, "%Y-%m-%d %H:%M:%S") {
-        return Some(chrono::DateTime::<chrono::Utc>::from_utc(dt, chrono::Utc).timestamp_millis());
+        return Some(dt.and_utc().timestamp_millis());
     }
 
     if let Ok(dt) = chrono::NaiveDateTime::parse_from_str(trimmed, "%Y-%m-%d %H:%M:%S%.f") {
-        return Some(chrono::DateTime::<chrono::Utc>::from_utc(dt, chrono::Utc).timestamp_millis());
+        return Some(dt.and_utc().timestamp_millis());
     }
 
     if let Ok(d) = chrono::NaiveDate::parse_from_str(trimmed, "%Y-%m-%d") {
         let dt = d.and_hms_opt(0, 0, 0)?;
-        return Some(chrono::DateTime::<chrono::Utc>::from_utc(dt, chrono::Utc).timestamp_millis());
+        return Some(dt.and_utc().timestamp_millis());
     }
 
     None

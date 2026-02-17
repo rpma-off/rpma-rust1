@@ -23,6 +23,7 @@ impl StreamingTaskRepository {
     ///
     /// This method is ideal for large datasets (1000+ tasks) as it
     /// loads data in chunks rather than all at once.
+    #[allow(unreachable_code, unused_variables)]
     pub fn stream_tasks_with_filter(
         &self,
         status: Option<String>,
