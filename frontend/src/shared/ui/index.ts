@@ -6,8 +6,6 @@ export * from '@/components/ui/error-boundary';
 export * from '@/components/ui/virtualized-table';
 export * from '@/components/ui/mobile-components';
 
-export * from '@/components/layout';
-
 export { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
 export { AnalyticsLayout } from '@/components/analytics/AnalyticsLayout';
 

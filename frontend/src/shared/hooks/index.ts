@@ -1,15 +1,17 @@
 export { useTranslation } from '@/hooks/useTranslation';
-export { useLogger, useFormLogger } from '@/hooks/useLogger';
+export { useLogger, useFormLogger, useApiLogger } from '@/hooks/useLogger';
 export { useMenuEvents } from '@/hooks/useMenuEvents';
 export { useDebounce } from '@/hooks/useDebounce';
 export { useEntityCounts } from '@/hooks/useEntityCounts';
 export {
-  useQuotes,
   useQuotesList,
+  useQuote,
   useCreateQuote,
   useUpdateQuote,
   useDeleteQuote,
-  useQuoteDetails,
+  useQuoteItems,
+  useQuoteStatus,
+  useQuoteExportPdf,
 } from '@/hooks/useQuotes';
 export { useSearchRecords } from '@/hooks/useSearchRecords';
 export { useInView } from '@/hooks/useInView';

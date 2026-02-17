@@ -1,10 +1,117 @@
-export * from '@/lib/backend';
 export * from '@/types';
-export * from '@/types/client.types';
-export * from '@/types/task.types';
-export * from '@/types/quote.types';
-export * from '@/types/configuration.types';
-export * from '@/types/ppf-intervention';
-export * from '@/types/workflow.types';
-export * from '@/types/api';
-export * from '@/types/json';
+
+export type {
+  ClientType,
+  ClientFilters,
+  ClientSearchResult,
+  ClientStats,
+  ClientFormData,
+  ClientValidationErrors,
+  CreateClientDTO,
+  UpdateClientDTO,
+  ClientQuery,
+  ClientSearchResponse,
+  ClientStatsResponse,
+  ClientListProps,
+  ClientDetailProps,
+  ClientFormProps,
+  ClientFiltersProps,
+} from '@/types/client.types';
+
+export type {
+  QuoteStatus,
+  QuoteItemKind,
+  Quote,
+  QuoteItem,
+  QuoteQuery,
+  QuoteListResponse,
+  CreateQuoteRequest,
+  UpdateQuoteRequest,
+  CreateQuoteItemRequest,
+  UpdateQuoteItemRequest,
+  QuoteAcceptResponse,
+  QuoteExportResponse,
+  QuoteFilters,
+} from '@/types/quote.types';
+
+export type {
+  ConfigurationItem,
+  ConfigurationCategory,
+  BusinessRule,
+  RuleCondition,
+  RuleAction,
+  BusinessRuleCategory,
+  IntegrationConfig,
+  IntegrationType,
+  IntegrationStatus,
+  MonitoringConfig,
+  SecurityPolicy,
+  SecurityPolicyType,
+  SecurityPolicyException,
+  SystemStatus,
+  ConfigurationFilters,
+  BusinessRuleFilters,
+  SecurityPolicyFilters,
+  BusinessHoursConfig,
+  SystemConfiguration,
+  ConfigurationFiltersData,
+  BusinessRuleFiltersData,
+  PerformanceThreshold,
+  PerformanceMonitoring,
+  PerformanceAlert,
+  PerformanceConfig,
+  PerformanceCategory,
+  CreatePerformanceConfigDTO,
+} from '@/types/configuration.types';
+
+export type {
+  QualityIssue,
+  QualityCheckpoint,
+  CorrectiveAction,
+  QualityControlWorkflow,
+  PPFInterventionData,
+  PPFInterventionStep,
+  PPFPhoto,
+  QualityCheckpointData,
+  StartInterventionDTO,
+  AdvanceStepDTO,
+  FinalizeInterventionDTO,
+  InterventionCreationResponse,
+  StepProgressResponse,
+  InterventionFinalizationResponse,
+  GeographicLocation,
+  VehicleInfo,
+} from '@/types/ppf-intervention';
+
+export type {
+  WorkflowExecution,
+  WorkflowExecutionStep,
+  WorkflowStepStatus,
+  TaskWorkflowProgress,
+} from '@/types/workflow.types';
+
+export type {
+  JsonArray,
+  JsonObject,
+  JsonPrimitive,
+  JsonValue,
+} from '@/types/json';
+
+export type {
+  ReportType,
+  ReportFilters,
+  DateRange,
+  ExportFormat,
+  SearchFilters,
+  SearchResult,
+  EntityType,
+  TaskCompletionReport,
+  TechnicianPerformanceReport,
+  ClientAnalyticsReport,
+  QualityComplianceReport,
+  MaterialUsageReport,
+  GeographicReport,
+  SeasonalReport,
+  OperationalIntelligenceReport,
+  HeatMapPoint,
+} from '@/lib/backend';
