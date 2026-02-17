@@ -332,14 +332,30 @@ pub async fn intervention_finalize(
         customer_comments: request.customer_comments,
     };
 
-    state
+    match state
         .intervention_service
         .finalize_intervention(finalize_data, &correlation_id, Some(&session.user_id))
-        .map(|v| ApiResponse::success(v).with_correlation_id(Some(req_correlation_id.clone())))
-        .map_err(|e| {
+    {
+        Ok(v) => {
+            crate::shared::event_bus::DomainEventBus::publish(
+                state.shared_event_bus.as_ref(),
+                crate::shared::event_bus::DomainEvent::InterventionFinalized(
+                    crate::shared::event_bus::InterventionFinalized {
+                        intervention_id: request.intervention_id.clone(),
+                        task_id: v.intervention.task_id.clone(),
+                        technician_id: session.user_id.clone(),
+                        completed_at_ms: crate::models::common::now(),
+                    },
+                ),
+            );
+
+            Ok(ApiResponse::success(v).with_correlation_id(Some(req_correlation_id.clone())))
+        }
+        Err(e) => {
             error!(error = %e, intervention_id = %request.intervention_id, "Failed to finalize intervention");
-            AppError::Database("Failed to finalize intervention".to_string())
-        })
+            Err(AppError::Database("Failed to finalize intervention".to_string()))
+        }
+    }
 }
 
 /// Main intervention workflow command (unified interface)
@@ -571,6 +587,18 @@ pub async fn intervention_workflow(
                     error!(error = %e, intervention_id = %data.intervention_id, "Failed to finalize intervention via workflow");
                     AppError::Database("Failed to finalize intervention".to_string())
                 })?;
+
+            crate::shared::event_bus::DomainEventBus::publish(
+                state.shared_event_bus.as_ref(),
+                crate::shared::event_bus::DomainEvent::InterventionFinalized(
+                    crate::shared::event_bus::InterventionFinalized {
+                        intervention_id: data.intervention_id.clone(),
+                        task_id: response.intervention.task_id.clone(),
+                        technician_id: session.user_id.clone(),
+                        completed_at_ms: crate::models::common::now(),
+                    },
+                ),
+            );
 
             Ok(
                 ApiResponse::success(InterventionWorkflowResponse::Finalized {

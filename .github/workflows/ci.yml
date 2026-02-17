@@ -42,6 +42,11 @@ jobs:
             libwebkit2gtk-4.1-dev libssl-dev libgtk-3-dev \
             libayatana-appindicator3-dev librsvg2-dev build-essential
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
       - name: Install Rust (stable)
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -140,6 +145,10 @@ jobs:
         if: matrix.toolchain == 'stable'
         working-directory: src-tauri
         run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Architecture check (stable only)
+        if: matrix.toolchain == 'stable'
+        run: npm run architecture:check
 
       - name: Tests (all)
         working-directory: src-tauri

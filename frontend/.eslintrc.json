@@ -1,5 +1,24 @@
 {
   "extends": ["next/core-web-vitals", "next/typescript"],
+  "overrides": [
+    {
+      "files": ["src/app/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": ["error", {
+          "patterns": [
+            {
+              "group": ["@/lib/ipc/mock/**"],
+              "message": "App pages must not import mock IPC modules."
+            },
+            {
+              "group": ["@/lib/ipc/**/**"],
+              "message": "App pages must import IPC through public entrypoints."
+            }
+          ]
+        }]
+      }
+    }
+  ],
   "rules": {
     "@typescript-eslint/no-unused-vars": ["warn", {
       "argsIgnorePattern": "^_",

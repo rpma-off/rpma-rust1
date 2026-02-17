@@ -116,7 +116,7 @@ pub async fn material_list(
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
-    let service = state.material_service.clone();
+    let service = state.inventory_service.clone();
 
     // Parse material type
     let mt = material_type.and_then(|s| match s.as_str() {
@@ -186,7 +186,7 @@ pub async fn material_update_stock(
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
-    let service = state.material_service.clone();
+    let service = state.inventory_service.clone();
 
     match service.update_stock(request) {
         Ok(material) => {
@@ -216,7 +216,7 @@ pub async fn material_record_consumption(
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
-    let service = state.material_service.clone();
+    let service = state.inventory_service.clone();
 
     match service.record_consumption(request) {
         Ok(consumption) => {
@@ -391,9 +391,9 @@ pub async fn inventory_get_stats(
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
-    let service = state.material_service.clone();
+    let service = state.inventory_service.clone();
 
-    match service.get_inventory_stats() {
+    match service.get_stats() {
         Ok(stats) => {
             Ok(ApiResponse::success(stats).with_correlation_id(Some(correlation_id.clone())))
         }

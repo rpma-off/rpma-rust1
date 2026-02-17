@@ -3,6 +3,7 @@
 
 mod commands;
 mod db;
+mod domains;
 mod logging;
 mod memory_management;
 mod memory_management_helpers;
@@ -10,6 +11,7 @@ mod memory_management_helpers;
 mod models;
 mod repositories;
 mod service_builder;
+mod shared;
 mod services;
 mod sync;
 

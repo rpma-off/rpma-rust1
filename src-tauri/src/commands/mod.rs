@@ -290,6 +290,7 @@ pub struct AppStateType {
     pub dashboard_service: Arc<crate::services::DashboardService>,
     pub intervention_service: Arc<crate::services::InterventionService>,
     pub material_service: Arc<crate::services::MaterialService>,
+    pub inventory_service: Arc<crate::domains::inventory::InventoryService>,
     pub message_service: Arc<crate::services::MessageService>,
     pub photo_service: Arc<crate::services::PhotoService>,
     pub quote_service: Arc<crate::services::QuoteService>,
@@ -308,6 +309,7 @@ pub struct AppStateType {
     pub sync_queue: std::sync::Arc<crate::sync::SyncQueue>,
     pub background_sync: std::sync::Arc<Mutex<crate::sync::BackgroundSyncService>>,
     pub event_bus: std::sync::Arc<crate::services::event_bus::InMemoryEventBus>,
+    pub shared_event_bus: std::sync::Arc<crate::shared::event_bus::InMemoryDomainEventBus>,
     pub app_data_dir: std::path::PathBuf,
 }
 

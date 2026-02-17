@@ -38,6 +38,7 @@ use crate::services::audit_log_handler::AuditLogHandler;
 use crate::services::audit_service::AuditService;
 use crate::services::event_bus::InMemoryEventBus;
 use crate::services::websocket_event_handler::WebSocketEventHandler;
+use crate::shared::event_bus::{DomainEventBus, InMemoryDomainEventBus};
 use std::sync::{Arc, Mutex, OnceLock};
 
 /// Service Builder
@@ -122,6 +123,9 @@ impl ServiceBuilder {
 
         // Initialize Material Service (depends on DB)
         let material_service = Arc::new(crate::services::MaterialService::new(db_instance.clone()));
+        let inventory_service = Arc::new(crate::domains::inventory::InventoryService::new(
+            material_service.clone(),
+        ));
 
         // Initialize Quote Service (depends on QuoteRepository and DB)
         let quote_service = Arc::new(crate::services::QuoteService::new(
@@ -169,6 +173,7 @@ impl ServiceBuilder {
 
         // Initialize Event Bus (self-contained, thread-safe)
         let event_bus = Arc::new(InMemoryEventBus::new());
+        let shared_event_bus = Arc::new(InMemoryDomainEventBus::new());
 
         // Register WebSocket Event Handler for real-time updates
         let websocket_handler = WebSocketEventHandler::new();
@@ -181,6 +186,14 @@ impl ServiceBuilder {
         }
         let audit_log_handler = AuditLogHandler::new(audit_service);
         event_bus.register_handler(audit_log_handler);
+
+        // Register Inventory bounded-context event handler
+        let inventory_handler = Arc::new(
+            crate::domains::inventory::application::InventoryInterventionEventHandler::new(
+                inventory_service.clone(),
+            ),
+        );
+        shared_event_bus.subscribe(inventory_handler);
 
         // Note: Additional handlers can be registered here:
         // - SecurityMonitorHandler for security events
@@ -198,6 +211,7 @@ impl ServiceBuilder {
             dashboard_service,
             intervention_service,
             material_service,
+            inventory_service,
             message_service,
             photo_service,
             quote_service,
@@ -214,6 +228,7 @@ impl ServiceBuilder {
             sync_queue,
             background_sync,
             event_bus,
+            shared_event_bus,
             app_data_dir: self.app_data_dir,
         })
     }
