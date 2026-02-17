@@ -180,7 +180,10 @@ async fn finalize_intervention_emits_event_and_inventory_updates() {
         tokio::time::sleep(std::time::Duration::from_millis(50)).await;
     };
 
-    assert!(count > 0, "Expected inventory transactions from event handler");
+    assert!(
+        count > 0,
+        "Expected inventory transactions from event handler"
+    );
 }
 
 #[tokio::test]
@@ -317,7 +320,8 @@ async fn finalize_intervention_rollback_does_not_update_inventory() {
             .expect("advance step");
     }
 
-    db.execute("DROP TABLE tasks", []).expect("drop tasks table");
+    db.execute("DROP TABLE tasks", [])
+        .expect("drop tasks table");
 
     let finalize_result = intervention_service.finalize_intervention(
         FinalizeInterventionRequest {

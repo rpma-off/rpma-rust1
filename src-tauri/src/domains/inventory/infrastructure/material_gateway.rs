@@ -1,8 +1,13 @@
 use std::sync::Arc;
 
-use crate::models::material::{InventoryStats, Material, MaterialConsumption, MaterialStats, MaterialType};
-use crate::services::material::{MaterialResult, MaterialService, RecordConsumptionRequest, UpdateStockRequest};
+use crate::models::material::{
+    InventoryStats, Material, MaterialConsumption, MaterialStats, MaterialType,
+};
+use crate::services::material::{
+    MaterialResult, MaterialService, RecordConsumptionRequest, UpdateStockRequest,
+};
 
+#[derive(Debug)]
 pub struct MaterialGateway {
     service: Arc<MaterialService>,
 }
@@ -53,5 +58,4 @@ impl MaterialGateway {
     ) -> MaterialResult<Vec<MaterialConsumption>> {
         self.service.get_intervention_consumption(intervention_id)
     }
-
 }

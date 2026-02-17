@@ -51,10 +51,10 @@ pub async fn get_app_settings(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<AppSettings>, AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    
+
     // Always require authentication and validate admin role
     let user = authenticate_user(&session_token, &state)?;
-    
+
     crate::commands::update_correlation_context_user(&user.user_id);
 
     // Only admins can view app settings

@@ -119,7 +119,11 @@ pub async fn generate_intervention_pdf_report(
 /// Test PDF generation with minimal content
 #[tauri::command]
 #[instrument(skip(_state))]
-pub async fn test_pdf_generation(output_path: String, correlation_id: Option<String>, _state: AppState<'_>) -> AppResult<String> {
+pub async fn test_pdf_generation(
+    output_path: String,
+    correlation_id: Option<String>,
+    _state: AppState<'_>,
+) -> AppResult<String> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     tracing::info!("Testing PDF generation with minimal content");
 
