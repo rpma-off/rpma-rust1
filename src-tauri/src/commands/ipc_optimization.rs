@@ -271,7 +271,7 @@ mod tests {
             min_size: Some(100),
         };
 
-        let result = compress_data_for_ipc(request).await;
+        let result = compress_data_for_ipc(request, None).await;
         assert!(result.is_ok());
 
         let response = result.unwrap();
@@ -282,7 +282,7 @@ mod tests {
             compressed: response.compressed,
         };
 
-        let decompress_result = decompress_data_from_ipc(decompress_request).await;
+        let decompress_result = decompress_data_from_ipc(decompress_request, None).await;
         assert!(decompress_result.is_ok());
     }
 }

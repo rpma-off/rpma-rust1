@@ -1005,7 +1005,7 @@ impl MaterialService {
             self.db.execute(
                 r#"
                 INSERT INTO materials (
-                    id, sku, name, description, material_type, category, subcategory,
+                    id, sku, name, description, material_type, category, subcategory, category_id,
                     brand, model, specifications, unit_of_measure, current_stock,
                     minimum_stock, maximum_stock, reorder_point, unit_cost, currency,
                     supplier_id, supplier_name, supplier_sku, quality_grade, certification,
@@ -1022,6 +1022,7 @@ impl MaterialService {
                     material_type_str,
                     material.category,
                     material.subcategory,
+                    material.category_id,
                     material.brand,
                     material.model,
                     material.specifications.as_ref().map(|s| serde_json::to_string(s).unwrap_or_default()),

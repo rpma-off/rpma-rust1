@@ -3,4 +3,4 @@
 /**
  * Message query filters
  */
-export type MessageQuery = { message_type: string | null, sender_id: string | null, recipient_id: string | null, task_id: string | null, client_id: string | null, status: string | null, priority: string | null, date_from: bigint | null, date_to: bigint | null, limit: number | null, offset: number | null, };
+export type MessageQuery = { message_type: string | null, sender_id: string | null, recipient_id: string | null, task_id: string | null, client_id: string | null, status: string | null, priority: string | null, date_from: bigint | null, date_to: bigint | null, limit: number | null, offset: number | null, correlation_id: string | null, };
