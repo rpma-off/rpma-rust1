@@ -1,6 +1,5 @@
 //! Audit/Security domain — audit trails, security monitoring, and alerts
 //!
-//! This module re-exports audit and security-related components across layers.
-
-// Public facade
-pub use crate::services::audit_service::AuditService;
+//! This module represents the audit bounded context.
+//! Audit services are currently provided via `crate::services::audit_service`
+//! and will be migrated into this domain in a future iteration.

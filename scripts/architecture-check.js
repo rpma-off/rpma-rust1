@@ -27,6 +27,20 @@ function isInfrastructureFile(filePath) {
   return filePath.includes(`${path.sep}infrastructure${path.sep}`);
 }
 
+function isIpcFile(filePath) {
+  return filePath.includes(`${path.sep}ipc${path.sep}`);
+}
+
+function isTestFile(filePath) {
+  return filePath.includes(`${path.sep}tests${path.sep}`);
+}
+
+function stripRustComments(contents) {
+  return contents
+    .replace(/\/\/.*$/gm, '')
+    .replace(/\/\*[\s\S]*?\*\//g, '');
+}
+
 function isSharedDbFile(filePath) {
   return filePath.includes(`${path.sep}shared${path.sep}db${path.sep}`);
 }
@@ -60,25 +74,42 @@ function checkSqlUsage() {
 
 function checkCrossDomainInfrastructure() {
   const files = listFiles(domainsRoot)
-    .filter((file) => file.endsWith('.rs'))
-    .filter((file) => !isInfrastructureFile(file));
+    .filter((file) => file.endsWith('.rs'));
 
   const violations = [];
   for (const file of files) {
     const relative = path.relative(domainsRoot, file);
     const domainName = relative.split(path.sep)[0];
-    const contents = fs.readFileSync(file, 'utf8');
-    const matches = contents.match(/crate::domains::([a-zA-Z0-9_]+)::infrastructure/g) || [];
+    const rawContents = fs.readFileSync(file, 'utf8');
+    const contents = stripRustComments(rawContents);
+    const isInfra = isInfrastructureFile(file);
+    const isTest = isTestFile(file);
+    const isIpc = isIpcFile(file);
 
-    for (const match of matches) {
-      const [, referencedDomain] = match.match(/crate::domains::([a-zA-Z0-9_]+)::infrastructure/) || [];
-      if (referencedDomain && referencedDomain !== domainName) {
-        violations.push(`${file} imports ${referencedDomain} infrastructure`);
+    if (!isInfra) {
+      const matches = contents.match(/crate::domains::([a-zA-Z0-9_]+)::infrastructure/g) || [];
+
+      for (const match of matches) {
+        const [, referencedDomain] = match.match(/crate::domains::([a-zA-Z0-9_]+)::infrastructure/) || [];
+        if (referencedDomain && referencedDomain !== domainName) {
+          violations.push(`${file} imports ${referencedDomain} infrastructure`);
+        }
       }
     }
 
     if (/crate::repositories::/.test(contents)) {
       violations.push(`${file} imports legacy repositories`);
+    }
+
+    // Domain code must not import from crate::commands:: (use crate::shared::error instead)
+    if (/crate::commands::/.test(contents)) {
+      violations.push(`${file} imports from commands layer (use crate::shared::error for AppError)`);
+    }
+
+    // Only infrastructure (gateway), IPC (boundary adapter), and test files may import crate::services::
+    // All other domain layers must not depend on legacy services directly
+    if (!isInfra && !isTest && !isIpc && /crate::services::/.test(contents)) {
+      violations.push(`${file} imports legacy services (move to infrastructure gateway or shared)`);
     }
   }
 

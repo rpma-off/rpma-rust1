@@ -1,4 +1,4 @@
-use crate::commands::AppError;
+use crate::shared::error::AppError;
 use crate::models::material::{
     InventoryStats, Material, MaterialConsumption, MaterialStats, MaterialType,
 };
