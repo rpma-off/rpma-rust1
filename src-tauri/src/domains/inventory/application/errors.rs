@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-use crate::services::material::MaterialError;
+use crate::domains::inventory::infrastructure::MaterialError;
 
 use crate::domains::inventory::domain::InventoryDomainError;
 

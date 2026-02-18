@@ -2,7 +2,7 @@ use crate::shared::error::AppError;
 use crate::models::material::{
     InventoryStats, Material, MaterialConsumption, MaterialStats, MaterialType,
 };
-use crate::services::material::{RecordConsumptionRequest, UpdateStockRequest};
+use crate::domains::inventory::infrastructure::{RecordConsumptionRequest, UpdateStockRequest};
 
 use crate::domains::inventory::application::{InventoryError, InventoryService};
 
