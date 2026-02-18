@@ -22,7 +22,7 @@ import { cn } from '@/lib/utils';
 import { TaskWithDetails } from '@/types/task.types';
 import { useAuth } from '@/domains/auth';
 import { reportOperations } from '@/domains/reports/server';
-import toast from 'react-hot-toast';
+import enhancedToast from '@/lib/enhanced-toast';
 
 interface ActionButtonsProps {
   task: TaskWithDetails;
@@ -56,22 +56,22 @@ export function ActionButtons({
   const handleDownloadReport = async () => {
     try {
       if (!user?.token) {
-        toast.error('Authentification requise');
+        enhancedToast.error('Authentification requise');
         return;
       }
       await reportOperations.exportInterventionReport(task.id, user.token);
-      toast.success('Rapport téléchargé avec succès');
+      enhancedToast.success('Rapport téléchargé avec succès');
     } catch {
-      toast.error('Erreur lors du téléchargement du rapport');
+      enhancedToast.error('Erreur lors du téléchargement du rapport');
     }
   };
 
   const handleShareTask = async () => {
     try {
       await navigator.clipboard.writeText(`${window.location.origin}/tasks/${task.id}`);
-      toast.success('Lien copié dans le presse-papier');
+      enhancedToast.success('Lien copié dans le presse-papier');
     } catch {
-      toast.error('Impossible de copier le lien');
+      enhancedToast.error('Impossible de copier le lien');
     }
   };
 
@@ -273,4 +273,3 @@ export function ActionButtons({
     </div>
   );
 }
-

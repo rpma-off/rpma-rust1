@@ -8,7 +8,8 @@ import { TaskWithDetails } from '@/lib/backend';
 import { useAuth } from '@/domains/auth';
 import { ipcClient } from '@/lib/ipc';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
+import { InlineLoading } from '@/components/ui/loading';
+import enhancedToast from '@/lib/enhanced-toast';
 
 interface SendMessageModalProps {
   task: TaskWithDetails;
@@ -32,13 +33,13 @@ const SendMessageModal: React.FC<SendMessageModalProps> = ({ task, open, onOpenC
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      toast.success('Message envoyé avec succès');
+      enhancedToast.success('Message envoyé avec succès');
       setMessage('');
       setMessageType('general');
       onOpenChange(false);
     },
     onError: (error) => {
-      toast.error('Erreur lors de l\'envoi du message');
+      enhancedToast.error('Erreur lors de l\'envoi du message');
       console.error('Send message error:', error);
     }
   });
@@ -47,7 +48,7 @@ const SendMessageModal: React.FC<SendMessageModalProps> = ({ task, open, onOpenC
     e.preventDefault();
 
     if (!message.trim()) {
-      toast.error('Veuillez saisir un message');
+      enhancedToast.error('Veuillez saisir un message');
       return;
     }
 
@@ -117,9 +118,14 @@ const SendMessageModal: React.FC<SendMessageModalProps> = ({ task, open, onOpenC
             <Button
               type="submit"
               disabled={sendMessageMutation.isPending || !message.trim()}
-              className="bg-[hsl(var(--rpma-teal))] hover:bg-[hsl(var(--rpma-teal))]/80 text-white"
+              variant="default"
             >
-              {sendMessageMutation.isPending ? 'Envoi...' : 'Envoyer'}
+              {sendMessageMutation.isPending ? (
+                <span className="inline-flex items-center gap-2">
+                  <InlineLoading size="sm" />
+                  Envoi...
+                </span>
+              ) : 'Envoyer'}
             </Button>
           </div>
         </form>
