@@ -15,6 +15,19 @@ jest.mock('@/shared/utils', () => ({
     getAppSettings: jest.fn(),
     updateGeneralSettings: jest.fn(),
   },
+  LogDomain: {
+    AUTH: 'AUTH',
+    TASK: 'TASK',
+    CLIENT: 'CLIENT',
+    PHOTO: 'PHOTO',
+    SYNC: 'SYNC',
+    UI: 'UI',
+    API: 'API',
+    SYSTEM: 'SYSTEM',
+    USER: 'USER',
+    PERFORMANCE: 'PERFORMANCE',
+    SECURITY: 'SECURITY',
+  },
 }));
 
 jest.mock('@/shared/hooks', () => ({
