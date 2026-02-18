@@ -80,12 +80,16 @@ pub fn update_correlation_context_user(user_id: &str) {
 /// # Returns
 /// The same response with correlation_id set from context if not already set
 pub fn ensure_correlation_id<T>(response: ApiResponse<T>) -> ApiResponse<T> {
+    let corr_id =
+        correlation::get_correlation_context().map(|ctx| ctx.get_correlation_id().to_string());
+
+    if corr_id.is_some() {
+        return response.with_correlation_id(corr_id);
+    }
+
     if response.correlation_id.is_some() {
         return response;
     }
-
-    let corr_id =
-        correlation::get_correlation_context().map(|ctx| ctx.get_correlation_id().to_string());
 
     response.with_correlation_id(corr_id)
 }

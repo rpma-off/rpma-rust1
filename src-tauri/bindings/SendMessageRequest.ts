@@ -3,4 +3,4 @@
 /**
  * Request to send a new message
  */
-export type SendMessageRequest = { message_type: string, recipient_id: string | null, recipient_email: string | null, recipient_phone: string | null, subject: string | null, body: string, template_id: string | null, task_id: string | null, client_id: string | null, priority: string | null, scheduled_at: bigint | null, };
+export type SendMessageRequest = { message_type: string, recipient_id: string | null, recipient_email: string | null, recipient_phone: string | null, subject: string | null, body: string, template_id: string | null, task_id: string | null, client_id: string | null, priority: string | null, scheduled_at: bigint | null, correlation_id: string | null, };
