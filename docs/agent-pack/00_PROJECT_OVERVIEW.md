@@ -23,14 +23,16 @@ The application is designed to work **completely offline** with a local SQLite d
 
 | Layer | Technology | Purpose |
 |-------|------------|---------|
-| **Desktop Runtime** | Tauri 2.1.0 | Cross-platform app container |
-| **Backend** | Rust | Business logic, database access, IPC commands |
-| **Database** | SQLite (WAL mode) | Local persistent storage with r2d2 connection pooling |
-| **Frontend** | Next.js 14 (App Router) | UI and user interactions |
-| **UI Framework** | React 18 + TypeScript | Component-based UI |
-| **Styling** | Tailwind CSS + shadcn/ui | Design system (245+ components) |
-| **State Management** | React Query (TanStack) + Zustand | Server state + client state |
-| **Type Sharing** | ts-rs | Rust → TypeScript type generation |
+| **Desktop Runtime** | Tauri 2.1 (`@tauri-apps/api ^2.8.0`) | Cross-platform app container |
+| **Backend** | Rust 1.85 (MSRV) | Business logic, database access, IPC commands |
+| **Database** | SQLite WAL — rusqlite 0.32, r2d2 0.8, r2d2_sqlite 0.25 | Local persistent storage with connection pooling |
+| **Frontend** | Next.js ^14.2 (App Router) | UI and user interactions |
+| **UI Framework** | React ^18.3 + TypeScript ^5.3 | Component-based UI |
+| **Styling** | Tailwind CSS ^3.4 + shadcn/ui (Radix primitives) | Design system |
+| **State Management** | TanStack React Query ^5.90 + Zustand ^5.0 | Server state + client state |
+| **Validation** | Zod ^4.1 + react-hook-form ^7.64 | Forms + runtime validation |
+| **Type Sharing** | ts-rs 10.1 | Rust → TypeScript type generation |
+| **Auth** | Argon2 0.5 (passwords) + jsonwebtoken 9.3 (JWT) | Secure auth stack |
 
 ---
 
@@ -88,7 +90,7 @@ The application is designed to work **completely offline** with a local SQLite d
 rpma-rust1/
 ├── src-tauri/                # Rust/Tauri backend
 │   ├── src/
-│   │   ├── commands/         # IPC command handlers (236 commands across 37+ files)
+│   │   ├── commands/         # IPC command handlers (212 active commands across 37+ files)
 │   │   │   ├── mod.rs        # Module exports, ApiResponse, AppState, errors
 │   │   │   ├── auth_middleware.rs # authenticate! macro, RBAC checks
 │   │   │   ├── auth.rs       # Authentication commands (login, 2FA, logout)
@@ -127,13 +129,13 @@ rpma-rust1/
 │   │   ├── db/               # Database management & migrations
 │   │   ├── sync/             # Offline sync queue (2 files)
 │   │   └── lib.rs            # Module exports
-│   ├── migrations/           # SQLite migrations (35 migration files)
+│   ├── migrations/           # SQLite migrations (35 SQL files, embedded via include_dir!)
 │   ├── Cargo.toml            # Rust dependencies
 │   └── src/bin/export-types.rs  # Type export binary
 ├── frontend/                 # Next.js application
 │   ├── src/
 │   │   ├── app/              # Next.js App Router pages (40+ routes)
-│   │   ├── components/       # React components (245 components)
+│   │   ├── components/       # React components (204 components)
 │   │   ├── lib/
 │   │   │   ├── ipc/          # IPC client
 │   │   │   │   ├── client.ts      # Main ipcClient object
@@ -148,7 +150,7 @@ rpma-rust1/
 │   │   │   ├── services/     # Frontend business logic
 │   │   │   ├── validation/   # Zod schemas
 │   │   │   └── backend.ts    # ⚠️ AUTO-GENERATED (do not edit manually)
-│   │   ├── hooks/            # Custom React hooks (67 hooks)
+│   │   ├── hooks/            # Custom React hooks (64 hooks)
 │   │   └── contexts/         # React contexts (4 contexts)
 │   └── package.json
 ├── scripts/                  # Build and validation scripts (40+ scripts)
@@ -201,7 +203,7 @@ Database (SQLite)
 - Background sync runs at 30-second intervals
 
 ### 4. **Security by Default**
-- All 235 protected IPC commands require `session_token` parameter (1 public: auth_login)
+- Protected IPC commands require `session_token` parameter; system/bootstrap commands (e.g., `health_check`, `get_app_info`, `has_admins`, `bootstrap_first_admin`, `auth_login`, `auth_create_account`) are public
 - RBAC enforcement at command handler level via `authenticate!` macro (`src-tauri/src/commands/auth_middleware.rs`)
 - Password hashing with Argon2 (`src-tauri/src/services/auth.rs:779-801`)
 - JWT tokens: 2-hour access, 7-day refresh (`src-tauri/src/services/token.rs:60-61`)
@@ -277,10 +279,10 @@ npm run build
 | IPC Hook | `useIpcClient()` | `frontend/src/lib/ipc/client.ts` |
 | Auth Middleware | `authenticate!` macro | `src-tauri/src/commands/auth_middleware.rs` |
 | Database Init | `Database::new()` | `src-tauri/src/db/mod.rs` |
-| Migrations | `Database::migrate()` | `src-tauri/src/db/migrations.rs` (35 migrations embedded) |
+| Migrations | `Database::migrate()` | `src-tauri/src/db/migrations.rs` (35 SQL files in `src-tauri/migrations/` + Rust-implemented migrations 1-33) |
 | Type Export | `export-types` binary | `src-tauri/src/bin/export-types.rs` |
 | AppState | Centralized service container | `src-tauri/src/lib.rs:279-320` |
-| Command Registration | `tauri::generate_handler![]` | `src-tauri/src/main.rs:69-306` (236 commands) |
+| Command Registration | `tauri::generate_handler![]` | `src-tauri/src/main.rs:71-308` (212 active commands) |
 
 ---
 

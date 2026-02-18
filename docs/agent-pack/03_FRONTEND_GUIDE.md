@@ -1,5 +1,25 @@
 # 03 - Frontend Guide
 
+## Key Frontend Dependencies
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `next` | ^14.2 | App framework (App Router) |
+| `react` | ^18.3 | UI library |
+| `typescript` | ^5.3 | Type system |
+| `@tauri-apps/api` | ^2.8 | Tauri IPC bridge |
+| `@tanstack/react-query` | ^5.90 | Server state management |
+| `zustand` | ^5.0 | Client state management |
+| `zod` | ^4.1 | Schema validation (**v4 API**) |
+| `react-hook-form` | ^7.64 | Form management |
+| `tailwindcss` | ^3.4 | Styling |
+| `lucide-react` | ^0.552 | Icons |
+| `framer-motion` | ^12.23 | Animations |
+| `recharts` | ^3.3 | Charts |
+| `date-fns` | ^4.1 | Date utilities |
+
+---
+
 ## Frontend Structure
 
 RPMA v2 uses **Next.js 14 App Router** with TypeScript, React, and Tailwind CSS.
@@ -28,17 +48,19 @@ frontend/
 │   │   ├── reports/              # /reports
 │   │   ├── settings/             # /settings
 │   │   ├── users/                # /users
-│   │   ├── technicians/          # /technicians
-│   │   ├── team/                 # /team
+│   │   ├── admin/                # /admin (admin panel)
+│   │   ├── analytics/            # /analytics
+│   │   ├── quotes/               # /quotes (PPF quotations)
 │   │   ├── messages/             # /messages
 │   │   ├── audit/                # /audit
 │   │   ├── configuration/        # /configuration
 │   │   ├── data-explorer/        # /data-explorer
+│   │   ├── unauthorized/         # /unauthorized (access denied)
 │   │   └── api/                  # Next.js API routes
 │   │       ├── tasks/            # Task API routes
 │   │       ├── workflows/        # Workflow API routes
 │   │       └── ...
-│   ├── components/               # 245+ Reusable React components
+│   ├── components/               # 200+ Reusable React components
 │   │   ├── ui/                   # shadcn/ui primitives (61 files)
 │   │   ├── dashboard/            # Dashboard widgets
 │   │   ├── calendar/             # Calendar/scheduling
@@ -48,7 +70,7 @@ frontend/
 │   │   ├── auth/                 # Login/signup forms
 │   │   ├── users/                # User management
 │   │   └── ...
-│   ├── hooks/                    # 67 Custom React hooks
+│   ├── hooks/                    # 64 Custom React hooks
 │   ├── lib/
 │   │   ├── ipc/                  # IPC client (MOST IMPORTANT)
 │   │   │   ├── client.ts         # Main ipcClient object
@@ -195,6 +217,8 @@ export const useLayoutStore = create<LayoutState>()(
 
 ### 3. **Form Validation with Zod**
 
+> **Note**: The project uses **Zod v4** (`^4.1.12`). The core `z.object()`, `z.string()`, `z.enum()` APIs are unchanged from v3, but error-handling internals differ (use `z.ZodError` not `z.ZodIssue` directly).
+
 ```typescript
 // frontend/src/lib/validation/task.ts
 import { z } from 'zod';
@@ -287,7 +311,7 @@ npm run types:drift-check    # Detects mismatches
 
 **Problem**: Using incorrect command names causes IPC failures.
 
-**Solution**: Check `src-tauri/src/main.rs` (lines 69-306) for registered command names in `tauri::generate_handler![]` and use exact same name. All 236 commands are registered in the `invoke_handler`.
+**Solution**: Check `src-tauri/src/main.rs` (lines 71-308) for registered command names in `tauri::generate_handler![]` and use exact same name. All 212 active commands are registered in the `invoke_handler`.
 
 ### ❌ Pitfall 3: Missing Session Token
 

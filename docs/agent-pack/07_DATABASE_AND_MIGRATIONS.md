@@ -59,6 +59,8 @@ RPMA uses a **hybrid migration system**:
 
 **IMPORTANT**: Migration files are in `src-tauri/migrations/` directory (35 SQL files). Always place new migration files there.
 
+> ⚠️ **Deprecated directory**: The root `migrations/` directory at the project root is **not used** by the migration system and was created by mistake. It contains files with conflicting version numbers. **Never add migrations there.** Always use `src-tauri/migrations/`.
+
 ---
 
 ### Migration Types

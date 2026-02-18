@@ -365,9 +365,8 @@ pub enum UserRole {
 - `synced`: bool, `last_synced_at`: Option<i64>
 
 **Storage**:
-- Table: `quotes` (new in migration 037)
-- Related: `quote_items` (line items with pricing)
-- Indexes: `client_id`, `vehicle_plate`, `status`
+- Table: `calendar_events` (base schema, `src-tauri/src/db/schema.sql:1161`)
+- Indexes: `technician_id`, `task_id`, `client_id`, `start_datetime`, `end_datetime`, `status`
 
 **Code Paths**:
 - Model: `src-tauri/src/models/calendar.rs`, `src-tauri/src/models/calendar_event.rs`
@@ -381,14 +380,14 @@ pub enum UserRole {
 
 **Purpose**: PPF quotation/estimation generation with line items and pricing.
 
-**Model**: **TODO (verify in code)**
+**Model**: `src-tauri/src/models/quote.rs`
 
 **Key Fields**:
 - `id`: String (UUID)
 - `quote_number`: String (unique)
 - `client_id`: String (FK → `clients.id`)
 - `vehicle_plate`: Option<String>
-- `status`: QuoteStatus enum (Draft, Sent, Accepted, Rejected)
+- `status`: QuoteStatus enum (Draft, Sent, Accepted, Rejected, Expired)
 - `total_amount`: f64
 - `valid_until`: Option<i64>
 - `created_at`, `updated_at`: i64

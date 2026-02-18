@@ -61,11 +61,11 @@ npm run quality:check
 **Runs**:
 1. Frontend linting (ESLint)
 2. Frontend type checking (TypeScript)
-3. Backend check (Cargo check)
-4. Backend linting (Clippy)
-5. Backend formatting (Rustfmt)
-6. Type drift check
-7. Security audit
+3. Bounded contexts validation (`validate:bounded-contexts`)
+4. Backend check (Cargo check)
+5. Backend linting (Clippy)
+6. Backend formatting check (Rustfmt `--check`)
+7. Architecture check (`architecture:check`)
 
 ---
 
@@ -140,7 +140,7 @@ cd frontend && npm run test:e2e:codegen    # Generate code
 
 ## Scripts Reference
 
-### Root Package.json (45+ scripts)
+### Root Package.json (41 scripts)
 
 **Location**: `/home/runner/work/rpma-rust1/rpma-rust1/package.json`
 
@@ -151,7 +151,7 @@ cd frontend && npm run test:e2e:codegen    # Generate code
 | **Frontend** | `frontend:dev`, `frontend:build`, `frontend:lint`, `frontend:type-check`, `frontend:encoding-check`, `frontend:clean`, `frontend:install` | Frontend development |
 | **Backend** | `backend:build`, `backend:build:release`, `backend:check`, `backend:clippy`, `backend:fmt` | Backend development |
 | **Types** | `types:sync`, `types:validate`, `types:drift-check`, `types:ci-drift-check`, `types:generate-docs` | Type management |
-| **Quality** | `quality:check`, `security:audit`, `duplication:detect`, `code-review:check` | Quality gates |
+| **Quality** | `quality:check`, `security:audit`, `duplication:detect`, `code-review:check`, `architecture:check`, `validate:bounded-contexts` | Quality gates |
 | **Bundle** | `bundle:analyze`, `bundle:check-size` | Bundle analysis |
 | **Performance** | `performance:test`, `performance:update-baseline` | Performance testing |
 | **Git** | `git:start-feature`, `git:sync-feature`, `git:finish-feature`, `git:cleanup-feature`, `git:guard-main` | Git workflow automation |
@@ -210,8 +210,8 @@ npm run types:validate
 
 ### ✅ After modifying database schema:
 ```bash
-# Create new migration file
-touch migrations/NNN_description.sql
+# Create new migration file in src-tauri/migrations/ (NOT the root migrations/ dir!)
+touch src-tauri/migrations/NNN_description.sql
 # Edit with your SQL changes
 
 # Validate migration system
