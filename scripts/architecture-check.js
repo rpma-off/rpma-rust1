@@ -6,6 +6,7 @@ const path = require('path');
 const repoRoot = path.resolve(__dirname, '..');
 const domainsRoot = path.join(repoRoot, 'src-tauri', 'src', 'domains');
 const sharedRoot = path.join(repoRoot, 'src-tauri', 'src', 'shared');
+const commandsRoot = path.join(repoRoot, 'src-tauri', 'src', 'commands');
 
 const sqlPattern = /(\bSELECT\b|\bINSERT\b|\bUPDATE\s+\w+\s+SET\b|\bDELETE\s+FROM\b|CREATE\s+TABLE|ALTER\s+TABLE|DROP\s+TABLE|rusqlite::params!)/;
 
@@ -149,6 +150,20 @@ function checkDomainPublicApi() {
   return violations;
 }
 
+function checkCommandToDomainIpcImports() {
+  const files = listFiles(commandsRoot).filter((file) => file.endsWith('.rs'));
+  const violations = [];
+
+  for (const file of files) {
+    const contents = stripRustComments(fs.readFileSync(file, 'utf8'));
+    if (/crate::domains::[a-zA-Z0-9_]+::ipc::handlers/.test(contents)) {
+      violations.push(`${file} imports domain IPC handlers directly`);
+    }
+  }
+
+  return violations;
+}
+
 function main() {
   if (!fs.existsSync(domainsRoot)) {
     console.error('Domains directory not found.');
@@ -158,11 +173,13 @@ function main() {
   const sqlViolations = checkSqlUsage();
   const crossDomainViolations = checkCrossDomainInfrastructure();
   const apiViolations = checkDomainPublicApi();
+  const commandBoundaryViolations = checkCommandToDomainIpcImports();
 
   const violations = [
     ...sqlViolations.map((file) => `SQL usage outside infrastructure: ${file}`),
     ...crossDomainViolations.map((msg) => `Cross-domain access: ${msg}`),
     ...apiViolations.map((msg) => `Public API rule: ${msg}`),
+    ...commandBoundaryViolations.map((msg) => `Command boundary rule: ${msg}`),
   ];
 
   if (violations.length > 0) {

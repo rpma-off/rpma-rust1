@@ -212,7 +212,6 @@ impl ServiceBuilder {
             dashboard_service,
             intervention_service,
             material_service,
-            inventory_service,
             message_service,
             photo_service,
             quote_service,

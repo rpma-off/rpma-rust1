@@ -107,7 +107,6 @@ use crate::models::auth::UserRole;
 use crate::models::client::ClientWithTasks;
 use crate::models::task::*;
 
-use crate::domains::inventory::InventoryService;
 use crate::models::Client;
 use crate::services::{ClientService, SettingsService, TaskService};
 use base64::{engine::general_purpose, Engine as _};
@@ -291,7 +290,6 @@ pub struct AppStateType {
     pub dashboard_service: Arc<crate::services::DashboardService>,
     pub intervention_service: Arc<crate::services::InterventionService>,
     pub material_service: Arc<crate::services::MaterialService>,
-    pub inventory_service: Arc<InventoryService>,
     pub message_service: Arc<crate::services::MessageService>,
     pub photo_service: Arc<crate::services::PhotoService>,
     pub quote_service: Arc<crate::services::QuoteService>,
