@@ -10,7 +10,8 @@ import { TaskWithDetails, TaskPriority } from '@/lib/backend';
 import { useAuth } from '@/domains/auth';
 import { ipcClient } from '@/lib/ipc';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
+import { InlineLoading } from '@/components/ui/loading';
+import enhancedToast from '@/lib/enhanced-toast';
 
 interface EditTaskModalProps {
   task: TaskWithDetails;
@@ -53,11 +54,11 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, open, onOpenChange 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast.success('Tâche mise à jour avec succès');
+      enhancedToast.success('Tâche mise à jour avec succès');
       onOpenChange(false);
     },
     onError: (error) => {
-      toast.error('Erreur lors de la mise à jour de la tâche');
+      enhancedToast.error('Erreur lors de la mise à jour de la tâche');
       console.error('Edit task error:', error);
     }
   });
@@ -81,7 +82,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, open, onOpenChange 
 
     // Only submit if there are changes
     if (Object.keys(updates).length === 0) {
-      toast('Aucune modification détectée');
+      enhancedToast.info('Aucune modification détectée');
       return;
     }
 
@@ -239,9 +240,14 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, open, onOpenChange 
             <Button
               type="submit"
               disabled={editTaskMutation.isPending || !title.trim()}
-              className="bg-[hsl(var(--rpma-teal))] hover:bg-[hsl(var(--rpma-teal))]/80 text-white"
+              variant="default"
             >
-              {editTaskMutation.isPending ? 'Mise à jour...' : 'Mettre à jour'}
+              {editTaskMutation.isPending ? (
+                <span className="inline-flex items-center gap-2">
+                  <InlineLoading size="sm" />
+                  Mise à jour...
+                </span>
+              ) : 'Mettre à jour'}
             </Button>
           </div>
         </form>

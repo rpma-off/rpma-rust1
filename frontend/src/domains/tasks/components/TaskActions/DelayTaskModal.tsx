@@ -8,7 +8,8 @@ import { TaskWithDetails } from '@/lib/backend';
 import { useAuth } from '@/domains/auth';
 import { ipcClient } from '@/lib/ipc';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
+import { InlineLoading } from '@/components/ui/loading';
+import enhancedToast from '@/lib/enhanced-toast';
 
 interface DelayTaskModalProps {
   task: TaskWithDetails;
@@ -33,13 +34,13 @@ const DelayTaskModal: React.FC<DelayTaskModalProps> = ({ task, open, onOpenChang
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast.success('Tâche reportée avec succès');
+      enhancedToast.success('TÃ¢che reportÃ©e avec succÃ¨s');
       setNewDate('');
       setReason('');
       onOpenChange(false);
     },
     onError: (error) => {
-      toast.error('Erreur lors du report de la tâche');
+      enhancedToast.error('Erreur lors du report de la tÃ¢che');
       console.error('Delay task error:', error);
     }
   });
@@ -48,12 +49,12 @@ const DelayTaskModal: React.FC<DelayTaskModalProps> = ({ task, open, onOpenChang
     e.preventDefault();
 
     if (!newDate) {
-      toast.error('Veuillez sélectionner une nouvelle date');
+      enhancedToast.error('Veuillez sÃ©lectionner une nouvelle date');
       return;
     }
 
     if (!reason.trim()) {
-      toast.error('Veuillez indiquer la raison du report');
+      enhancedToast.error('Veuillez indiquer la raison du report');
       return;
     }
 
@@ -63,7 +64,7 @@ const DelayTaskModal: React.FC<DelayTaskModalProps> = ({ task, open, onOpenChang
     today.setHours(0, 0, 0, 0);
 
     if (selectedDate <= today) {
-      toast.error('La nouvelle date doit être dans le futur');
+      enhancedToast.error('La nouvelle date doit Ãªtre dans le futur');
       return;
     }
 
@@ -87,12 +88,12 @@ const DelayTaskModal: React.FC<DelayTaskModalProps> = ({ task, open, onOpenChang
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Reporter la tâche</DialogTitle>
+          <DialogTitle>Reporter la tï¿½che</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="text-sm text-muted-foreground">
-            <p>Tâche actuelle: #{task.task_number} - {task.title}</p>
+            <p>TÃ¢che actuelle: #{task.task_number} - {task.title}</p>
             {task.scheduled_date && (
               <p>Date actuelle: {new Date(task.scheduled_date).toLocaleDateString('fr-FR')}</p>
             )}
@@ -110,7 +111,7 @@ const DelayTaskModal: React.FC<DelayTaskModalProps> = ({ task, open, onOpenChang
               className="bg-muted border-border text-foreground"
             />
             <p className="text-xs text-border mt-1">
-              La date doit être dans le futur
+              La date doit Ãªtre dans le futur
             </p>
           </div>
 
@@ -120,7 +121,7 @@ const DelayTaskModal: React.FC<DelayTaskModalProps> = ({ task, open, onOpenChang
               id="reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="Expliquez pourquoi cette tâche doit être reportée..."
+              placeholder="Expliquez pourquoi cette tï¿½che doit ï¿½tre reportï¿½e..."
               rows={3}
               required
               className="bg-muted border-border text-foreground"
@@ -140,9 +141,14 @@ const DelayTaskModal: React.FC<DelayTaskModalProps> = ({ task, open, onOpenChang
             <Button
               type="submit"
               disabled={delayTaskMutation.isPending || !newDate || !reason.trim()}
-              className="bg-orange-600 hover:bg-orange-700 text-white"
+              variant="default"
             >
-              {delayTaskMutation.isPending ? 'Report...' : 'Reporter'}
+              {delayTaskMutation.isPending ? (
+                <span className="inline-flex items-center gap-2">
+                  <InlineLoading size="sm" />
+                  Report...
+                </span>
+              ) : 'Reporter'}
             </Button>
           </div>
         </form>

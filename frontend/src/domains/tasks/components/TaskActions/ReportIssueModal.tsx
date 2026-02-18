@@ -8,7 +8,8 @@ import { TaskWithDetails } from '@/lib/backend';
 import { useAuth } from '@/domains/auth';
 import { ipcClient } from '@/lib/ipc';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
+import { InlineLoading } from '@/components/ui/loading';
+import enhancedToast from '@/lib/enhanced-toast';
 
 interface ReportIssueModalProps {
   task: TaskWithDetails;
@@ -33,14 +34,14 @@ const ReportIssueModal: React.FC<ReportIssueModalProps> = ({ task, open, onOpenC
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      toast.success('Problème signalé avec succès');
+      enhancedToast.success('Problème signalé avec succès');
       setIssueType('technical');
       setSeverity('medium');
       setDescription('');
       onOpenChange(false);
     },
     onError: (error) => {
-      toast.error('Erreur lors du signalement du problème');
+      enhancedToast.error('Erreur lors du signalement du problème');
       console.error('Report issue error:', error);
     }
   });
@@ -49,7 +50,7 @@ const ReportIssueModal: React.FC<ReportIssueModalProps> = ({ task, open, onOpenC
     e.preventDefault();
 
     if (!description.trim()) {
-      toast.error('Veuillez décrire le problème');
+      enhancedToast.error('Veuillez décrire le problème');
       return;
     }
 
@@ -137,9 +138,14 @@ const ReportIssueModal: React.FC<ReportIssueModalProps> = ({ task, open, onOpenC
             <Button
               type="submit"
               disabled={reportIssueMutation.isPending || !description.trim()}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              variant="destructive"
             >
-              {reportIssueMutation.isPending ? 'Signalement...' : 'Signaler'}
+              {reportIssueMutation.isPending ? (
+                <span className="inline-flex items-center gap-2">
+                  <InlineLoading size="sm" />
+                  Signalement...
+                </span>
+              ) : 'Signaler'}
             </Button>
           </div>
         </form>
