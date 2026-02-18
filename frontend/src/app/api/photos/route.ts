@@ -1,5 +1,5 @@
- import { NextResponse } from 'next/server';
- import { taskPhotoService, TaskPhotoQueryParams } from '@/lib/services';
+﻿ import { NextResponse } from 'next/server';
+ import { taskPhotoService, TaskPhotoQueryParams } from '@/domains/tasks/server';
  import { getErrorMessage } from '@/types/api';
 
 export const dynamic = 'force-dynamic';
@@ -69,3 +69,4 @@ export async function POST(request: Request) {
     );
   }
 }
+

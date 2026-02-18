@@ -1,6 +1,6 @@
- import { NextRequest, NextResponse } from 'next/server';
+﻿ import { NextRequest, NextResponse } from 'next/server';
  
- import { configurationService } from '@/lib/services/entities/configuration.service';
+ import { configurationService } from '@/domains/admin/server';
  import { getAuthenticatedUser } from '@/lib/api-auth';
 
  export const dynamic = 'force-dynamic';
@@ -52,3 +52,4 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+

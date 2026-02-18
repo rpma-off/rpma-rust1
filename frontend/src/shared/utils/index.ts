@@ -1,4 +1,4 @@
-export * from '@/lib/utils';
+﻿export * from '@/lib/utils';
 export * from '@/lib/utils/task-display';
 export * from '@/lib/utils/timestamp-conversion';
 export * from '@/lib/utils/error-handler';
@@ -17,8 +17,6 @@ export {
 } from '@/lib/logging/types';
 
 export { ipcClient, settingsOperations } from '@/lib/ipc';
-export { reportsService } from '@/lib/services/entities/reports.service';
-export { clientService } from '@/lib/services/entities/client.service';
 
 export {
   getStatusLabel,
@@ -29,3 +27,6 @@ export {
   stepStatusLabels,
   ppfZoneLabels,
 } from '@/lib/i18n/status-labels';
+
+
+

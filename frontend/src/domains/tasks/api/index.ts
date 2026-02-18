@@ -5,8 +5,6 @@
 export { TaskProvider } from './TaskProvider';
 export { useTasks } from './useTasks';
 export { useTaskActions } from './useTaskActions';
-export { taskIpc } from '../ipc/task.ipc';
-export { TaskService, taskService } from '../services/task.service';
 
 export { KanbanBoard } from '../components/KanbanBoard';
 export { TaskAttachments } from '../components/TaskAttachments';
@@ -31,6 +29,12 @@ export {
   usePPFZonesList,
   useScheduleDisplay,
 } from '../hooks/useNormalizedTask';
+export { useTaskSync } from '../hooks/useTaskSync';
+export { useTaskStatus } from '../hooks/useTaskStatus';
+export { useTaskState } from '../hooks/useTaskState';
+export { useTaskFilters } from '../hooks/useTaskFilters';
+export { useTaskFiltering } from '../hooks/useTaskFiltering';
+export { taskGateway } from './taskGateway';
 
 export type {
   Task,

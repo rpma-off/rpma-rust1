@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { withAuth, NextRequestWithUser } from '@/lib/middleware/auth.middleware';
 import { z } from 'zod';
-import { userService } from '@/lib/services/entities/user.service';
+import { userService } from '@/domains/users/server';
 
 // Zod schema for the request body
 const UpdateRoleBodySchema = z.object({
@@ -41,3 +41,4 @@ export const PUT = withAuth(async (request: NextRequestWithUser) => {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }, 'admin');
+

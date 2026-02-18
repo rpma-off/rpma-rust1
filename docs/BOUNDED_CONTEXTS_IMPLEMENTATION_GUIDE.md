@@ -2,18 +2,21 @@
 
 **Companion to**: [BOUNDED_CONTEXTS_MIGRATION_PLAN.md](./BOUNDED_CONTEXTS_MIGRATION_PLAN.md)  
 **For**: Developers implementing bounded contexts  
-**Last Updated**: 2026-02-17
+**Last Updated**: 2026-02-18
 
 ---
 
 ## 📋 Table of Contents
 
 1. [Quick Reference](#quick-reference)
-2. [Domain Structure Templates](#domain-structure-templates)
-3. [Code Examples by Pattern](#code-examples-by-pattern)
-4. [Testing Patterns](#testing-patterns)
-5. [Common Pitfalls](#common-pitfalls)
-6. [Troubleshooting](#troubleshooting)
+2. [Server Facade Pattern](#server-facade-pattern)
+3. [Legacy Import Burn-down Workflow](#legacy-import-burn-down-workflow)
+4. [Deprecation and Removal Policy](#deprecation-and-removal-policy)
+5. [Domain Structure Templates](#domain-structure-templates)
+6. [Code Examples by Pattern](#code-examples-by-pattern)
+7. [Testing Patterns](#testing-patterns)
+8. [Common Pitfalls](#common-pitfalls)
+9. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -60,6 +63,110 @@ import { TaskService } from '@/domains/tasks/services/task.service';
 import { taskIpcClient } from '@/domains/tasks/ipc/task.ipc';
 import { useInternalHook } from '@/domains/tasks/hooks/useInternalHook';
 ```
+
+---
+
+## Server Facade Pattern
+
+Use `domains/<domain>/server/index.ts` as the **only** route-layer entry point for domain logic.
+
+### When to Use
+
+- `src/app/api/**` route handlers
+- Server-only orchestration adapters
+- Temporary migration shims for legacy `@/lib/services/**` and `@/lib/ipc/domains/**`
+
+### Route Import Rule
+
+```typescript
+// ✅ Correct (route layer)
+import { settingsService } from '@/domains/settings/server';
+import { taskService } from '@/domains/tasks/server';
+
+// ❌ Wrong (route layer)
+import { settingsService } from '@/lib/services/entities/settings.service';
+import { taskService } from '@/lib/services';
+import { interventionWorkflowService } from '@/domains/interventions';
+```
+
+### Minimal Server Facade Template
+
+```typescript
+// domains/{context}/server/index.ts
+export { {serviceName} } from '@/lib/services/{legacy-path}';
+export type { {ServiceType} } from '@/lib/services/{legacy-path}';
+```
+
+### Separation Rule
+
+- `api/index.ts`: UI/public API for pages/components/hooks
+- `server/index.ts`: route/server API
+- `src/app/**` (non-API): import `@/domains/<domain>` only, never `@/domains/<domain>/server`
+- Do not import `server/` from generic shared utilities
+
+---
+
+## Legacy Import Burn-down Workflow
+
+Use this workflow for deterministic migration and regression prevention.
+
+### 1) Measure Baseline
+
+```bash
+npm run boundary:report
+```
+
+### 2) Enforce Non-Regression
+
+```bash
+npm run boundary:enforce
+```
+
+Enforcement rules:
+- New violations fail CI
+- Existing violations must be explicitly allowlisted (temporary only)
+- Stale allowlist entries should be removed immediately
+
+### 3) Migrate by Segment
+
+Recommended order:
+1. `src/app/api/**` routes to `@/domains/*/server`
+2. `src/hooks/**`, `src/components/**`, `src/shared/**` off legacy imports
+3. Domain internal cleanup and shim retirement
+
+### 4) Re-validate
+
+```bash
+npm run frontend:lint
+npm run frontend:type-check
+npm run boundary:enforce
+npm run validate:bounded-contexts
+npm run architecture:check
+```
+
+---
+
+## Deprecation and Removal Policy
+
+Use a two-stage policy to avoid breakage.
+
+### Stage A: Deprecate
+
+- Keep transitional exports temporarily (for active consumers)
+- Add `@deprecated` comments with replacement import path
+- Migrate all callsites in the same PR batch whenever possible
+
+### Stage B: Remove
+
+- Delete deprecated exports from `api/index.ts`
+- Keep only consumer-facing UI API in `api/`
+- Keep route-layer contracts in `server/`
+
+### Mandatory Final State
+
+- No direct imports of `@/lib/services/**` or `@/lib/ipc/domains/**` outside `domains/*/server`
+- `src/app/api/**` imports domains only via `@/domains/<domain>/server`
+- `boundary:enforce` passes with zero allowlist entries
 
 ---
 

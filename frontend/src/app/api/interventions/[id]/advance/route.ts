@@ -1,6 +1,6 @@
- /**
+﻿ /**
  * API Route: POST /api/interventions/[id]/advance
- * Avance d'une étape dans le workflow d'intervention PPF
+ * Avance d'une Ã©tape dans le workflow d'intervention PPF
  * @version 2.0
  * @date 2025-01-20
  */
@@ -10,12 +10,12 @@
 
  export const dynamic = 'force-dynamic';
 import { z } from 'zod';
-import { interventionWorkflowService } from '@/domains/interventions';
+import { interventionWorkflowService } from '@/domains/interventions/server';
 import type { AdvanceStepDTO } from '@/types/ppf-intervention';
 import { handleApiError } from '@/lib/api-error';
 import { ApiResponseFactory, HttpStatus } from '@/lib/http-status';
 
-// Schéma de validation pour avancer une étape - redéfini pour éviter le bug
+// SchÃ©ma de validation pour avancer une Ã©tape - redÃ©fini pour Ã©viter le bug
 const AdvanceStepSchema = z.object({
   stepNumber: z.number().int().min(1, 'Step number must be at least 1').max(4, 'Step number must be at most 4'),
   data: z.record(z.string(), z.unknown()).optional(),
@@ -37,7 +37,7 @@ const AdvanceStepSchema = z.object({
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    // 1. Validation des paramètres de route
+    // 1. Validation des paramÃ¨tres de route
     const interventionId = (await params).id;
     if (!interventionId) {
       return NextResponse.json(ApiResponseFactory.error(
@@ -55,10 +55,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       ));
     }
 
-    // 2. Validation du corps de la requête
+    // 2. Validation du corps de la requÃªte
     const body = await request.json();
 
-    // Vérification de sécurité pour le schéma Zod
+    // VÃ©rification de sÃ©curitÃ© pour le schÃ©ma Zod
     if (!AdvanceStepSchema || typeof AdvanceStepSchema.safeParse !== 'function') {
       console.error('[API] CRITICAL: AdvanceStepSchema is not properly defined!');
       return NextResponse.json(ApiResponseFactory.error(
@@ -105,9 +105,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
 
     // 5. Validation des permissions sur l'intervention
-    // TODO: Vérifier que l'utilisateur peut modifier cette intervention
+    // TODO: VÃ©rifier que l'utilisateur peut modifier cette intervention
 
-    // 6. Validation des données métier spécifiques à l'étape
+    // 6. Validation des donnÃ©es mÃ©tier spÃ©cifiques Ã  l'Ã©tape
     const stepValidation = await validateStepSpecificData(dto.stepNumber, dto.data);
     if (!stepValidation.valid) {
       return NextResponse.json(ApiResponseFactory.error(
@@ -116,7 +116,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       ));
     }
 
-    // 7. Appel du service métier
+    // 7. Appel du service mÃ©tier
     const result = await workflowService.advanceStep(interventionId, dto, '');
 
     if (!result.success) {
@@ -126,7 +126,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       ));
     }
 
-    // 8. Retour de la réponse de succès
+    // 8. Retour de la rÃ©ponse de succÃ¨s
     return NextResponse.json(
       ApiResponseFactory.success(result.data),
       { status: HttpStatus.OK }
@@ -138,9 +138,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 }
 
 /**
- * Validation spécifique aux données de chaque étape
- * Note: La validation détaillée est gérée par le PPFValidationService
- * Cette fonction ne fait que des vérifications de base
+ * Validation spÃ©cifique aux donnÃ©es de chaque Ã©tape
+ * Note: La validation dÃ©taillÃ©e est gÃ©rÃ©e par le PPFValidationService
+ * Cette fonction ne fait que des vÃ©rifications de base
  */
 async function validateStepSpecificData(
   stepNumber: number,
@@ -164,7 +164,7 @@ async function validateStepSpecificData(
   };
 }
 
-// Gestion des autres méthodes HTTP
+// Gestion des autres mÃ©thodes HTTP
 export async function GET() {
   return NextResponse.json(ApiResponseFactory.error(
     'Method not allowed',
@@ -185,3 +185,4 @@ export async function DELETE() {
     HttpStatus.METHOD_NOT_ALLOWED
   ));
 }
+

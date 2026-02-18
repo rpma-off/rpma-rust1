@@ -1,10 +1,10 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useAuth } from '@/domains/auth';
-import { clientService } from '@/shared/utils';
+import { clientService } from '@/domains/clients';
 import { ArrowLeft, Save, X, UserPlus, Building, User } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/shared/ui/ui/button';
@@ -281,4 +281,5 @@ export default function NewClientPage() {
     </div>
   );
 }
+
 

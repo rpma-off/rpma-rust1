@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 
-import { configurationService } from '@/lib/services/entities/configuration.service';
-import { ServiceResponse } from '@/lib/services/core/base.service';
+import { configurationService } from '@/domains/admin/server';
+import { ServiceResponse } from '@/domains/admin/server';
 import { SystemConfiguration } from '@/types/configuration.types';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 
@@ -125,3 +125,4 @@ export async function PUT(
     );
   }
 }
+

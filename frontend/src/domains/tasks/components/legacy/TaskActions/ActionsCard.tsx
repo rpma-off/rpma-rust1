@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react';
+﻿import React, { memo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Play, CheckCircle, Image as ImageIcon, ListChecks, 
@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { TaskWithDetails } from '@/types/task.types';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/domains/auth';
-import { InterventionWorkflowService } from '@/domains/interventions';
+import { InterventionWorkflowService } from '@/domains/interventions/server';
 import { ipcClient } from '@/lib/ipc/client';
 import EditTaskModal from '../../TaskActions/EditTaskModal';
 
@@ -80,17 +80,17 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
       const result = await InterventionWorkflowService.startIntervention(task.id, startData, session.token);
       
       if (!result.success) {
-        toast.error(result.error?.message || 'Échec du démarrage de l\'intervention');
+        toast.error(result.error?.message || 'Ã‰chec du dÃ©marrage de l\'intervention');
         return;
       }
 
-      toast.success('Intervention démarrée avec succès');
+      toast.success('Intervention dÃ©marrÃ©e avec succÃ¨s');
       
       // Navigate to workflow after successful start
       router.push(`/tasks/${task.id}/workflow/ppf`);
     } catch (error) {
       console.error('Failed to start intervention:', error);
-      toast.error('Échec du démarrage de l\'intervention');
+      toast.error('Ã‰chec du dÃ©marrage de l\'intervention');
     } finally {
       setIsStarting(false);
     }
@@ -152,12 +152,12 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
         {isStarting ? (
           <>
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
-            Démarrage...
+            DÃ©marrage...
           </>
         ) : (
           <>
             <Play className="h-5 w-5 mr-2" />
-            Démarrer l&apos;intervention
+            DÃ©marrer l&apos;intervention
           </>
         )}
       </Button>
@@ -189,7 +189,7 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
   const moreActions = [
     {
       id: 'edit',
-      label: 'Modifier la tâche',
+      label: 'Modifier la tÃ¢che',
       icon: Edit,
       onClick: () => {
         setShowEditModal(true);
@@ -206,7 +206,7 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
           const note = window.prompt('Entrez votre note:');
           if (note && note.trim()) {
             await ipcClient.tasks.addTaskNote(task.id, note.trim(), session.token);
-            toast.success('Note ajoutée avec succès');
+            toast.success('Note ajoutÃ©e avec succÃ¨s');
           }
         } catch (error) {
           console.error('Failed to add note:', error);
@@ -223,7 +223,7 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
           const message = prompt('Entrez votre message:');
           if (message && message.trim()) {
             await ipcClient.tasks.sendTaskMessage(task.id, message.trim(), 'general', session.token);
-            toast.success('Message envoyé avec succès');
+            toast.success('Message envoyÃ© avec succÃ¨s');
           }
         } catch (error) {
           console.error('Failed to send message:', error);
@@ -233,7 +233,7 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
     },
     {
       id: 'delay',
-      label: 'Reporter la tâche',
+      label: 'Reporter la tÃ¢che',
       icon: Clock,
       onClick: async () => {
         try {
@@ -241,30 +241,30 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
           const reason = prompt('Raison du report:');
           if (newDate && reason && reason.trim()) {
             await ipcClient.tasks.delayTask(task.id, newDate, reason.trim(), session.token);
-            toast.success('Tâche reportée avec succès');
+            toast.success('TÃ¢che reportÃ©e avec succÃ¨s');
           }
         } catch (error) {
           console.error('Failed to delay task:', error);
-          toast.error('Erreur lors du report de la tâche');
+          toast.error('Erreur lors du report de la tÃ¢che');
         }
       }
     },
     {
       id: 'report',
-      label: 'Signaler un problème',
+      label: 'Signaler un problÃ¨me',
       icon: AlertCircle,
       onClick: async () => {
         try {
-          const issueType = prompt('Type de problème (technique, client, autre):') || 'autre';
-          const severity = prompt('Sévérité (low, medium, high, critical):') || 'medium';
-          const description = prompt('Description du problème:');
+          const issueType = prompt('Type de problÃ¨me (technique, client, autre):') || 'autre';
+          const severity = prompt('SÃ©vÃ©ritÃ© (low, medium, high, critical):') || 'medium';
+          const description = prompt('Description du problÃ¨me:');
           if (description && description.trim()) {
             await ipcClient.tasks.reportTaskIssue(task.id, issueType, severity, description.trim(), session.token);
-            toast.success('Problème signalé avec succès');
+            toast.success('ProblÃ¨me signalÃ© avec succÃ¨s');
           }
         } catch (error) {
           console.error('Failed to report issue:', error);
-          toast.error('Erreur lors du signalement du problème');
+          toast.error('Erreur lors du signalement du problÃ¨me');
         }
       }
     },
@@ -343,7 +343,7 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
           <div className="mt-2 p-3 bg-yellow-50 border border-yellow-100 rounded-md">
             <p className="text-xs text-yellow-700 flex items-start">
               <AlertCircle className="h-4 w-4 mr-1.5 mt-0.5 flex-shrink-0" />
-              Cette tâche est déjà assignée à un autre technicien.
+              Cette tÃ¢che est dÃ©jÃ  assignÃ©e Ã  un autre technicien.
             </p>
           </div>
         )}
@@ -370,3 +370,4 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
 };
 
 export default memo(ActionsCard);
+

@@ -1,10 +1,10 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useAuth } from '@/domains/auth';
-import { clientService } from '@/shared/utils';
+import { clientService } from '@/domains/clients';
 import { ArrowLeft, Save, X, Edit, User, Building } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/shared/ui/ui/button';
@@ -110,7 +110,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
 
       const response = await clientService.updateClient(params.id, formData, user.token);
       if (response.error) {
-        setFormErrors({ general: response.error || 'Échec de la mise à jour du client' });
+        setFormErrors({ general: response.error || 'Ã‰chec de la mise Ã  jour du client' });
         return;
       }
 
@@ -439,3 +439,4 @@ export default function EditClientPage({ params }: EditClientPageProps) {
     </div>
   );
 }
+

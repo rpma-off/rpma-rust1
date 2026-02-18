@@ -1,4 +1,5 @@
-/**
+﻿/**
  * @deprecated Use `@/domains/tasks`.
  */
-export { useTaskSync } from '@/domains/tasks/hooks/useTaskSync';
+export { useTaskSync } from '@/domains/tasks';
+

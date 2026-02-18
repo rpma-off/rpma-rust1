@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { Download, FileText, Table, Calendar, Share2 } from 'lucide-react';
@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/shared/ui/ui/dropdown-menu';
 import type { ReportType, ExportFormat, ReportFilters } from '@/shared/types';
-import { reportsService } from '@/shared/utils';
+import { reportsService } from '@/domains/reports';
 import { enhancedToast } from '@/shared/utils';
 
 interface DateRange {
@@ -50,7 +50,7 @@ function validateFilters(filters: FrontendFilters): string | null {
   if (filters.priorities?.length) {
     const invalid = filters.priorities.filter(p => !VALID_PRIORITIES.includes(p));
     if (invalid.length > 0) {
-      return `Priorité(s) invalide(s) : ${invalid.join(', ')}`;
+      return `PrioritÃ©(s) invalide(s) : ${invalid.join(', ')}`;
     }
   }
   return null;
@@ -58,12 +58,12 @@ function validateFilters(filters: FrontendFilters): string | null {
 
 function validateDateRange(dateRange: DateRange): string | null {
   if (dateRange.start >= dateRange.end) {
-    return 'La date de début doit être antérieure à la date de fin';
+    return 'La date de dÃ©but doit Ãªtre antÃ©rieure Ã  la date de fin';
   }
   const diffMs = dateRange.end.getTime() - dateRange.start.getTime();
   const diffDays = diffMs / (1000 * 60 * 60 * 24);
   if (diffDays > 365) {
-    return 'La plage de dates ne peut pas dépasser 365 jours';
+    return 'La plage de dates ne peut pas dÃ©passer 365 jours';
   }
   return null;
 }
@@ -121,7 +121,7 @@ export function ExportControls({ reportType, dateRange, filters, onExport }: Exp
         link.click();
         document.body.removeChild(link);
 
-        enhancedToast.update(toastId, 'Export terminé avec succès', 'success');
+        enhancedToast.update(toastId, 'Export terminÃ© avec succÃ¨s', 'success');
 
         // Call the onExport callback for any additional handling
         onExport(format, reportType);
@@ -181,7 +181,7 @@ export function ExportControls({ reportType, dateRange, filters, onExport }: Exp
             <Table className="h-4 w-4 mr-2" />
             CSV
             <Badge variant="secondary" className="ml-auto text-xs bg-gray-700 text-gray-300">
-              Données brutes
+              DonnÃ©es brutes
             </Badge>
           </DropdownMenuItem>
           <DropdownMenuItem 
@@ -234,4 +234,6 @@ export function ExportControls({ reportType, dateRange, filters, onExport }: Exp
     </div>
   );
 }
+
+
 

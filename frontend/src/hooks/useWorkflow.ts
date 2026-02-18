@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import { WorkflowService } from '@/lib/services/workflow.service';
-import { taskPhotoService } from '@/lib/services';
+﻿import { useState, useEffect, useCallback } from 'react';
+import { WorkflowService } from '@/domains/workflow/server';
+import { taskPhotoService } from '@/domains/tasks/server';
 import { ApiError } from '@/lib/api-error';
 import {
   WorkflowExecution,
@@ -137,7 +137,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
           }
         }
 
-       toast.success('Flux de travail démarré avec succès');
+       toast.success('Flux de travail dÃ©marrÃ© avec succÃ¨s');
        return workflow;
     } catch (err: unknown) {
       const normalizedError = normalizeError(err);
@@ -173,7 +173,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
       // Refresh workflow to get updated state
       await fetchWorkflow();
 
-      toast.success('Étape terminée avec succès');
+      toast.success('Ã‰tape terminÃ©e avec succÃ¨s');
       return result;
     } catch (err: unknown) {
       const normalizedError = normalizeError(err);
@@ -209,7 +209,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
 
       setStepTiming(timing as unknown as WorkflowTiming);
 
-      toast.success('Minuterie démarrée');
+      toast.success('Minuterie dÃ©marrÃ©e');
       return timing;
     } catch (err) {
       console.error('Failed to start step timing:', err);
@@ -326,7 +326,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
           setCurrentStep(null);
         }
 
-      toast.success(`${urls.length} photo(s) téléversée(s) avec succès`);
+      toast.success(`${urls.length} photo(s) tÃ©lÃ©versÃ©e(s) avec succÃ¨s`);
       return urls;
     } catch (err) {
       console.error('Failed to upload photos:', err);
@@ -519,3 +519,5 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
 };
 
 export default useWorkflow;
+
+

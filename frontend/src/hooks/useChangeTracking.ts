@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
-import { changeLogService } from '@/lib/services/change-log.service';
-import type { ChangeLogWithUser } from '@/lib/services/change-log.service';
+﻿import { useCallback, useEffect, useState } from 'react';
+import { changeLogService } from '@/domains/audit/server';
+import type { ChangeLogWithUser } from '@/domains/audit/server';
 
 export function useRecordChanges(
   tableName: string,
@@ -90,3 +90,4 @@ export function useTableChanges(
     refresh,
   };
 }
+

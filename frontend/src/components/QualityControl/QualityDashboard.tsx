@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Quality Control Dashboard for PPF Workflow
  * Comprehensive QC monitoring with automated checks and manual inspections
  * @version 1.0
@@ -26,7 +26,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { QualityControlService } from '@/domains/interventions';
+import { QualityControlService } from '@/domains/interventions/server';
 import type { QualityCheckpoint, QualityControlWorkflow } from '@/shared/types';
 import { QualityIssue, CorrectiveAction } from '@/types/ppf-intervention';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -273,7 +273,7 @@ export const QualityDashboard: React.FC<QualityDashboardProps> = ({
                         <div>
                           <div className="font-medium">Step {checkpoint.stepId}</div>
                           <div className="text-sm text-gray-600">
-                            {checkpoint.checkpointType} • {checkpoint.performedBy}
+                            {checkpoint.checkpointType} â€¢ {checkpoint.performedBy}
                           </div>
                         </div>
                       </div>
@@ -327,7 +327,7 @@ export const QualityDashboard: React.FC<QualityDashboardProps> = ({
                         <div className="text-sm font-medium mb-2">{t('qualityControl.correctiveActions')}</div>
                         <ul className="text-sm text-gray-600 space-y-1">
                           {checkpoint.correctiveActions.map((action: CorrectiveAction, index: number) => (
-                            <li key={index}>• {action.description}</li>
+                            <li key={index}>â€¢ {action.description}</li>
                           ))}
                         </ul>
                       </div>
@@ -349,7 +349,7 @@ export const QualityDashboard: React.FC<QualityDashboardProps> = ({
                         <div>
                           <div className="font-medium">Step {checkpoint.stepId}</div>
                           <div className="text-sm text-gray-600">
-                            {t('qualityControl.passed')} • {checkpoint.performedBy}
+                            {t('qualityControl.passed')} â€¢ {checkpoint.performedBy}
                           </div>
                         </div>
                       </div>
@@ -370,7 +370,7 @@ export const QualityDashboard: React.FC<QualityDashboardProps> = ({
                           <div>
                             <div className="font-medium">Step {checkpoint.stepId}</div>
                             <div className="text-sm text-gray-600">
-                              {t('qualityControl.failed')} • {checkpoint.issues.length} issues
+                              {t('qualityControl.failed')} â€¢ {checkpoint.issues.length} issues
                             </div>
                           </div>
                         </div>
@@ -412,3 +412,4 @@ export const QualityDashboard: React.FC<QualityDashboardProps> = ({
     </div>
   );
 };
+

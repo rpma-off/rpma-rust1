@@ -1,9 +1,9 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/domains/auth';
-import { clientService } from '@/shared/utils';
+import { clientService } from '@/domains/clients';
 import { Plus, Edit, Trash2, ArrowLeft, Mail, Phone, MapPin, Building2, User, Building } from 'lucide-react';
 import Link from 'next/link';
 import { Avatar, AvatarFallback } from '@/shared/ui/ui/avatar';
@@ -371,7 +371,7 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
                       href={`/tasks?clientId=${params.id}`}
                       className="text-sm text-muted-foreground hover:text-foreground transition-colors block text-center pt-2"
                     >
-                      {t('clients.viewAllActivity')} →
+                      {t('clients.viewAllActivity')} â†’
                     </Link>
                   )}
                 </div>
@@ -397,3 +397,5 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
     </div>
   );
 }
+
+

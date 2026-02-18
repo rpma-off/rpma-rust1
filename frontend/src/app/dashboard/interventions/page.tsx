@@ -1,6 +1,6 @@
-/**
+﻿/**
  * Page Dashboard des Interventions PPF
- * Vue d'ensemble des interventions actives, récentes et métriques
+ * Vue d'ensemble des interventions actives, rÃ©centes et mÃ©triques
  */
 
 'use client';
@@ -16,7 +16,7 @@ import { Badge } from '@/shared/ui/ui/badge';
 import { Progress } from '@/shared/ui/ui/progress';
 import { Button } from '@/shared/ui/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/ui/tabs';
-import { InterventionWorkflowService } from '@/domains/interventions';
+import { interventionDashboard } from '@/domains/interventions';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { getStatusLabel } from '@/shared/utils';
 import { PageShell } from '@/shared/ui/layout/PageShell';
@@ -80,11 +80,11 @@ export default function InterventionsDashboard() {
         setError(null);
 
         // Fetch active interventions
-        const activeInterventions = await InterventionWorkflowService.getActive(user.token);
+        const activeInterventions = await interventionDashboard.getActive(user.token);
         setActiveInterventions((activeInterventions || []) as InterventionData[]);
 
         // Fetch recent interventions
-        const recentInterventions = await InterventionWorkflowService.getRecent(user.token);
+        const recentInterventions = await interventionDashboard.getRecent(user.token);
         setRecentInterventions((recentInterventions || []) as InterventionData[]);
 
       } catch (err) {
@@ -138,7 +138,7 @@ export default function InterventionsDashboard() {
   };
 
   const getStepProgress = (currentStep: number) => {
-    return ((currentStep) / 4) * 100; // 4 étapes au total
+    return ((currentStep) / 4) * 100; // 4 Ã©tapes au total
   };
 
   if (loading) {
@@ -173,7 +173,7 @@ export default function InterventionsDashboard() {
           </div>
         </div>
 
-      {/* Métriques principales */}
+      {/* MÃ©triques principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           value={totalActive}
@@ -201,7 +201,7 @@ export default function InterventionsDashboard() {
         />
       </div>
 
-      {/* Tabs pour différentes vues */}
+      {/* Tabs pour diffÃ©rentes vues */}
         {/* Interventions Actives */}
         <TabsContent value="active" className="space-y-4">
           {activeInterventions.length === 0 ? (
@@ -248,7 +248,7 @@ export default function InterventionsDashboard() {
                           )}
                           <div className="flex items-center">
                             <Target className="h-4 w-4 mr-1" />
-                            {intervention.temperatureCelsius || t('common.notAvailable')}°C
+                            {intervention.temperatureCelsius || t('common.notAvailable')}Â°C
                           </div>
                         </div>
 
@@ -276,7 +276,7 @@ export default function InterventionsDashboard() {
           )}
         </TabsContent>
 
-        {/* Historique Récent */}
+        {/* Historique RÃ©cent */}
         <TabsContent value="recent" className="space-y-4">
           {recentInterventions.length === 0 ? (
             <EmptyState
@@ -316,7 +316,7 @@ export default function InterventionsDashboard() {
                           <div>
                             <span className="font-medium">{t('interventions.surface')}:</span>
                             <br />
-                            {intervention.totalSurfaceM2?.toFixed(1) || t('common.notAvailable')} m²
+                            {intervention.totalSurfaceM2?.toFixed(1) || t('common.notAvailable')} mÂ²
                           </div>
                           <div>
                             <span className="font-medium">{t('interventions.efficiency')}:</span>
@@ -388,4 +388,5 @@ export default function InterventionsDashboard() {
     </PageShell>
   );
 }
+
 

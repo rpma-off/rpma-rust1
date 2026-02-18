@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import { X, Car, Users, FileText, Calendar, Mail, Star, Clock, CheckCircle, AlertCircle } from 'lucide-react';
@@ -6,7 +6,7 @@ import { Button } from '@/shared/ui/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/ui/card';
 import { Badge } from '@/shared/ui/ui/badge';
 import { useRouter } from 'next/navigation';
-import { reportsService } from '@/shared/utils';
+import { reportsService } from '@/domains/reports';
 import type { SearchResult, EntityType } from '@/shared/types';
 
 interface RecordDetailPanelProps {
@@ -81,10 +81,10 @@ export function RecordDetailPanel({ record, onClose }: RecordDetailPanelProps) {
           <div className="text-center py-12">
             <FileText className="h-12 w-12 text-gray-500 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-white mb-2">
-              Aucun élément sélectionné
+              Aucun Ã©lÃ©ment sÃ©lectionnÃ©
             </h3>
             <p className="text-gray-400 text-sm">
-              Cliquez sur un résultat pour voir les détails
+              Cliquez sur un rÃ©sultat pour voir les dÃ©tails
             </p>
           </div>
         </CardContent>
@@ -140,7 +140,7 @@ export function RecordDetailPanel({ record, onClose }: RecordDetailPanelProps) {
   };
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Non spécifiée';
+    if (!dateString) return 'Non spÃ©cifiÃ©e';
     return new Date(dateString).toLocaleDateString('fr-FR', {
       year: 'numeric',
       month: 'long',
@@ -155,11 +155,11 @@ export function RecordDetailPanel({ record, onClose }: RecordDetailPanelProps) {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="text-sm font-medium text-muted-foreground">Plaque d&apos;immatriculation</label>
-          <p className="text-foreground">{record.metadata?.vehiclePlate || 'Non spécifiée'}</p>
+          <p className="text-foreground">{record.metadata?.vehiclePlate || 'Non spÃ©cifiÃ©e'}</p>
         </div>
         <div>
           <label className="text-sm font-medium text-muted-foreground">Technicien</label>
-          <p className="text-foreground">{record.metadata?.technicianName || 'Non assigné'}</p>
+          <p className="text-foreground">{record.metadata?.technicianName || 'Non assignÃ©'}</p>
         </div>
       </div>
 
@@ -167,14 +167,14 @@ export function RecordDetailPanel({ record, onClose }: RecordDetailPanelProps) {
         <label className="text-sm font-medium text-muted-foreground">Statut</label>
         <div className="mt-1">
           <Badge variant="secondary" className="capitalize">
-            {record.status || 'Non défini'}
+            {record.status || 'Non dÃ©fini'}
           </Badge>
         </div>
       </div>
 
       {record.metadata.qualityScore && (
         <div>
-          <label className="text-sm font-medium text-gray-400">Score qualité</label>
+          <label className="text-sm font-medium text-gray-400">Score qualitÃ©</label>
           <div className="flex items-center gap-2 mt-1">
             <div className="flex items-center gap-1">
               {[...Array(5)].map((_, i) => (
@@ -202,28 +202,28 @@ export function RecordDetailPanel({ record, onClose }: RecordDetailPanelProps) {
           <label className="text-sm font-medium text-muted-foreground">Email</label>
           <div className="flex items-center gap-2 mt-1">
             <Mail className="h-4 w-4 text-muted-foreground" />
-            <p className="text-foreground">{record.metadata?.email || 'Non spécifié'}</p>
+            <p className="text-foreground">{record.metadata?.email || 'Non spÃ©cifiÃ©'}</p>
           </div>
         </div>
         <div>
           <label className="text-sm font-medium text-muted-foreground">Type de client</label>
           <div className="flex items-center gap-2 mt-1">
             <Users className="h-4 w-4 text-muted-foreground" />
-            <p className="text-foreground capitalize">{record.metadata?.customerType || 'Non spécifié'}</p>
+            <p className="text-foreground capitalize">{record.metadata?.customerType || 'Non spÃ©cifiÃ©'}</p>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="text-sm font-medium text-muted-foreground">Nombre de tâches</label>
+          <label className="text-sm font-medium text-muted-foreground">Nombre de tÃ¢ches</label>
           <p className="text-foreground text-lg font-semibold">{record.metadata?.totalTasks || 0}</p>
         </div>
         <div>
           <label className="text-sm font-medium text-muted-foreground">Statut</label>
           <div className="mt-1">
             <Badge variant="secondary" className="capitalize">
-              {record.status || 'Non défini'}
+              {record.status || 'Non dÃ©fini'}
             </Badge>
           </div>
         </div>
@@ -236,24 +236,24 @@ export function RecordDetailPanel({ record, onClose }: RecordDetailPanelProps) {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="text-sm font-medium text-muted-foreground">Type d&apos;intervention</label>
-          <p className="text-foreground">{record.metadata?.interventionType || 'Non spécifié'}</p>
+          <p className="text-foreground">{record.metadata?.interventionType || 'Non spÃ©cifiÃ©'}</p>
         </div>
         <div>
           <label className="text-sm font-medium text-muted-foreground">Technicien</label>
-          <p className="text-foreground">{record.metadata?.technicianName || 'Non assigné'}</p>
+          <p className="text-foreground">{record.metadata?.technicianName || 'Non assignÃ©'}</p>
         </div>
       </div>
 
       <div>
         <label className="text-sm font-medium text-muted-foreground">Client</label>
-        <p className="text-foreground">{record.metadata?.clientName || 'Non spécifié'}</p>
+        <p className="text-foreground">{record.metadata?.clientName || 'Non spÃ©cifiÃ©'}</p>
       </div>
 
       <div>
         <label className="text-sm font-medium text-muted-foreground">Statut</label>
         <div className="mt-1">
           <Badge variant="secondary" className="capitalize">
-            {record.status || 'Non défini'}
+            {record.status || 'Non dÃ©fini'}
           </Badge>
         </div>
       </div>
@@ -266,7 +266,7 @@ export function RecordDetailPanel({ record, onClose }: RecordDetailPanelProps) {
         <div className="flex items-center justify-between">
           <CardTitle className="text-white flex items-center gap-2">
             {getEntityIcon(record.entity_type)}
-            Détails
+            DÃ©tails
           </CardTitle>
           <Button
             variant="ghost"
@@ -291,10 +291,10 @@ export function RecordDetailPanel({ record, onClose }: RecordDetailPanelProps) {
                 className={`flex items-center gap-1 ${getStatusColor(record.status)}`}
               >
                 {getStatusIcon(record.status)}
-                {record.status === 'completed' ? 'Terminé' :
+                {record.status === 'completed' ? 'TerminÃ©' :
                  record.status === 'in_progress' ? 'En cours' :
                  record.status === 'pending' ? 'En attente' :
-                 record.status === 'cancelled' ? 'Annulé' :
+                 record.status === 'cancelled' ? 'AnnulÃ©' :
                  record.status === 'active' ? 'Actif' : record.status}
               </Badge>
             )}
@@ -337,4 +337,5 @@ export function RecordDetailPanel({ record, onClose }: RecordDetailPanelProps) {
     </Card>
   );
 }
+
 

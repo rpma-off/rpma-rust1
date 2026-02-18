@@ -1,5 +1,5 @@
- import { NextRequest, NextResponse } from 'next/server';
- import { userService } from '@/lib/services/entities/user.service';
+﻿ import { NextRequest, NextResponse } from 'next/server';
+ import { userService } from '@/domains/users/server';
  import { withAuth } from '@/lib/middleware/auth.middleware';
  import { z } from 'zod';
 
@@ -88,3 +88,4 @@ export const POST = withAuth(async (request: NextRequest, _context?: unknown) =>
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }, 'admin');
+

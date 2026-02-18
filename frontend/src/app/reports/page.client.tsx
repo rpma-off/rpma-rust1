@@ -1,11 +1,11 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { DateRangePicker } from './components/DateRangePicker';
 import { ReportTabs } from './components/ReportTabs';
 import { ReportContent } from './components/ReportContent';
 import { ExportControls } from './components/ExportControls';
-import { reportsService } from '@/shared/utils';
+import { reportsService } from '@/domains/reports';
 import { PageShell } from '@/shared/ui/layout/PageShell';
 import { enhancedToast } from '@/shared/utils';
 import type { ReportType, ReportFilters as BackendReportFilters, DateRange as BackendDateRange, TaskCompletionReport, TechnicianPerformanceReport, ClientAnalyticsReport, QualityComplianceReport as BackendQualityComplianceReport, MaterialUsageReport as BackendMaterialUsageReport, GeographicReport as BackendGeographicReport, SeasonalReport, OperationalIntelligenceReport as BackendOperationalIntelligenceReport } from '@/shared/types';
@@ -130,3 +130,5 @@ export default function ReportsPage() {
     </PageShell>
   );
 }
+
+

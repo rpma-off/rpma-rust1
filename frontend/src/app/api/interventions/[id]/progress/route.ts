@@ -1,4 +1,4 @@
-/**
+﻿/**
  * API Route: GET /api/interventions/[id]/progress
  * Retrieves current progress information for a PPF intervention
  * @version 2.0
@@ -6,9 +6,9 @@
  */
 
 import { NextResponse, NextRequest } from 'next/server';
-import { interventionWorkflowService } from '@/domains/interventions';
+import { interventionWorkflowService } from '@/domains/interventions/server';
 import { validateApiAuth } from '@/lib/api-auth';
-import { InterventionWorkflowService } from '@/domains/interventions';
+import { InterventionWorkflowService } from '@/domains/interventions/server';
 import { PPFInterventionData, PPFInterventionStep } from '@/types/ppf-intervention';
 
 interface ProgressData {
@@ -45,7 +45,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // 1. Validation des paramètres de route
+    // 1. Validation des paramÃ¨tres de route
     const interventionId = (await params).id;
     if (!interventionId) {
       return NextResponse.json(
@@ -76,7 +76,7 @@ export async function GET(
     const authHeader = req.headers.get('authorization') || '';
     const sessionToken = authHeader.replace('Bearer ', '');
 
-    // 3. Récupération de l'intervention
+    // 3. RÃ©cupÃ©ration de l'intervention
     const workflowService = interventionWorkflowService;
     const interventionResult = await workflowService.getInterventionById(interventionId, sessionToken);
 
@@ -104,7 +104,7 @@ export async function GET(
       );
     }
 
-    // 4. Récupération des étapes
+    // 4. RÃ©cupÃ©ration des Ã©tapes
     const stepsResult = await workflowService.getInterventionSteps(interventionId, sessionToken);
     if (!stepsResult.success) {
       return NextResponse.json(
@@ -118,7 +118,7 @@ export async function GET(
 
     const steps = (stepsResult.data?.data || []) as PPFInterventionStep[];
 
-    // 5. Calcul des données de progrès
+    // 5. Calcul des donnÃ©es de progrÃ¨s
     const interventionData: PPFInterventionData = {
       ...intervention,
       currentStep: intervention.currentStep ?? 0,
@@ -127,7 +127,7 @@ export async function GET(
     };
     const progressData = await calculateProgressData(interventionData, steps);
 
-    // 6. Retour de la réponse
+    // 6. Retour de la rÃ©ponse
     return NextResponse.json(
       {
         success: true,
@@ -162,7 +162,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // 1. Validation des paramètres de route
+    // 1. Validation des paramÃ¨tres de route
     const interventionId = (await params).id;
     if (!interventionId) {
       return NextResponse.json(
@@ -193,7 +193,7 @@ export async function PUT(
     const authHeader = req.headers.get('authorization') || '';
     const sessionToken = authHeader.replace('Bearer ', '');
 
-    // 3. Parsing du corps de la requête
+    // 3. Parsing du corps de la requÃªte
     const updateData: ProgressUpdateRequest = await req.json();
 
     if (!updateData.step_id && updateData.progress_percentage === undefined) {
@@ -203,7 +203,7 @@ export async function PUT(
       );
     }
 
-    // 4. Validation des données d'entrée
+    // 4. Validation des donnÃ©es d'entrÃ©e
     if (updateData.progress_percentage !== undefined) {
       if (updateData.progress_percentage < 0 || updateData.progress_percentage > 100) {
         return NextResponse.json(
@@ -213,7 +213,7 @@ export async function PUT(
       }
     }
 
-    // 5. Récupération de l'intervention
+    // 5. RÃ©cupÃ©ration de l'intervention
     const workflowService = interventionWorkflowService;
     const interventionResult = await workflowService.getInterventionById(interventionId, sessionToken);
 
@@ -241,7 +241,7 @@ export async function PUT(
       );
     }
 
-    // 6. Mise à jour du progrès
+    // 6. Mise Ã  jour du progrÃ¨s
     const updateResult = await updateInterventionProgress(
       workflowService,
       interventionId,
@@ -258,7 +258,7 @@ export async function PUT(
       );
     }
 
-    // 7. Récupération des données mises à jour
+    // 7. RÃ©cupÃ©ration des donnÃ©es mises Ã  jour
     const updatedInterventionResult = await workflowService.getInterventionById(interventionId, sessionToken);
     const updatedStepsResult = await workflowService.getInterventionSteps(interventionId, sessionToken);
 
@@ -291,7 +291,7 @@ export async function PUT(
       notes: updateData.notes
     });
 
-    // 9. Retour de la réponse
+    // 9. Retour de la rÃ©ponse
     return NextResponse.json(
       {
         success: true,
@@ -318,7 +318,7 @@ export async function PUT(
 }
 
 /**
- * Calcule les données de progrès détaillées
+ * Calcule les donnÃ©es de progrÃ¨s dÃ©taillÃ©es
  */
 async function calculateProgressData(intervention: PPFInterventionData, steps: PPFInterventionStep[]): Promise<ProgressData> {
   const totalSteps = steps.length;
@@ -326,7 +326,7 @@ async function calculateProgressData(intervention: PPFInterventionData, steps: P
   const currentStepIndex = steps.findIndex(step => step.status === 'in_progress');
   const currentStep = currentStepIndex >= 0 ? currentStepIndex + 1 : completedSteps + 1;
 
-  // Calcul du progrès global
+  // Calcul du progrÃ¨s global
   let overallProgress = intervention.progress_percentage || 0;
   if (totalSteps > 0) {
     overallProgress = Math.max(overallProgress, (completedSteps / totalSteps) * 100);
@@ -336,7 +336,7 @@ async function calculateProgressData(intervention: PPFInterventionData, steps: P
   const timeElapsed = calculateTimeElapsed(intervention.created_at);
   const timeRemaining = estimateTimeRemaining(steps, currentStep);
 
-  // Analyse détaillée des étapes
+  // Analyse dÃ©taillÃ©e des Ã©tapes
   const stepBreakdown = await Promise.all(
     steps.map(async (step, index) => {
       const stepNumber = index + 1;
@@ -378,7 +378,7 @@ async function calculateProgressData(intervention: PPFInterventionData, steps: P
 }
 
 /**
- * Met à jour le progrès de l'intervention
+ * Met Ã  jour le progrÃ¨s de l'intervention
  */
 async function updateInterventionProgress(
   workflowService: InterventionWorkflowService,
@@ -386,8 +386,8 @@ async function updateInterventionProgress(
   updateData: ProgressUpdateRequest
 ) {
   try {
-    // Pour l'instant, on simule la mise à jour
-    // TODO: Implémenter la vraie logique de mise à jour dans le service
+    // Pour l'instant, on simule la mise Ã  jour
+    // TODO: ImplÃ©menter la vraie logique de mise Ã  jour dans le service
     console.log('Updating progress for intervention:', interventionId, updateData);
 
     return {
@@ -407,7 +407,7 @@ async function updateInterventionProgress(
 }
 
 /**
- * Calcule le temps écoulé depuis la création
+ * Calcule le temps Ã©coulÃ© depuis la crÃ©ation
  */
 function calculateTimeElapsed(createdAt: string | null | undefined): string {
   if (!createdAt) {
@@ -431,7 +431,7 @@ function calculateTimeElapsed(createdAt: string | null | undefined): string {
  */
 function estimateTimeRemaining(steps: PPFInterventionStep[], currentStep: number): string | undefined {
   const remainingSteps = steps.slice(currentStep - 1);
-  const estimatedMinutes = remainingSteps.length * 45; // 45 minutes par étape moyenne
+  const estimatedMinutes = remainingSteps.length * 45; // 45 minutes par Ã©tape moyenne
 
   if (estimatedMinutes === 0) return undefined;
 
@@ -445,11 +445,11 @@ function estimateTimeRemaining(steps: PPFInterventionStep[], currentStep: number
 }
 
 /**
- * Récupère le nombre de photos pour une étape
+ * RÃ©cupÃ¨re le nombre de photos pour une Ã©tape
  */
 async function getStepPhotosCount(_stepId: string): Promise<number> {
   try {
-    // TODO: Implémenter la vraie logique de comptage des photos
+    // TODO: ImplÃ©menter la vraie logique de comptage des photos
     // Pour l'instant, on retourne un nombre fictif
     return Math.floor(Math.random() * 5);
   } catch (error) {
@@ -459,16 +459,16 @@ async function getStepPhotosCount(_stepId: string): Promise<number> {
 }
 
 /**
- * Détermine le nombre de photos requis pour une étape
+ * DÃ©termine le nombre de photos requis pour une Ã©tape
  */
 function getRequiredPhotosForStep(stepType: string | null): number {
   if (!stepType) {
     return 4;
   }
   const requirements = {
-    'inspection': 8,  // Toutes les vues + détails
-    'preparation': 4, // Avant/après préparation
-    'installation': 12, // Chaque étape + vérifications
+    'inspection': 8,  // Toutes les vues + dÃ©tails
+    'preparation': 4, // Avant/aprÃ¨s prÃ©paration
+    'installation': 12, // Chaque Ã©tape + vÃ©rifications
     'finalization': 6   // Photos finales + documentation
   };
 
@@ -476,12 +476,12 @@ function getRequiredPhotosForStep(stepType: string | null): number {
 }
 
 /**
- * Identifie les bloqueurs de progrès
+ * Identifie les bloqueurs de progrÃ¨s
  */
 function identifyBlockers(steps: PPFInterventionStep[], intervention: PPFInterventionData): string[] {
   const blockers: string[] = [];
 
-  // Étapes sans photos
+  // Ã‰tapes sans photos
   const stepsWithoutPhotos = steps.filter(step => step.photo_count === 0);
   if (stepsWithoutPhotos.length > 0) {
     blockers.push(`${stepsWithoutPhotos.length} step(s) missing required photos`);
@@ -501,7 +501,7 @@ function identifyBlockers(steps: PPFInterventionStep[], intervention: PPFInterve
 }
 
 /**
- * Génère des recommandations
+ * GÃ©nÃ¨re des recommandations
  */
 function generateRecommendations(steps: PPFInterventionStep[], intervention: PPFInterventionData, blockers: string[]): string[] {
   const recommendations: string[] = [];
@@ -510,7 +510,7 @@ function generateRecommendations(steps: PPFInterventionStep[], intervention: PPF
     recommendations.push('Address blockers to continue workflow');
   }
 
-  // Étapes en cours depuis trop longtemps
+  // Ã‰tapes en cours depuis trop longtemps
   const longRunningSteps = steps.filter(step => {
     if (step.status === 'in_progress' && step.started_at) {
       const started = new Date(step.started_at);
@@ -536,3 +536,4 @@ function generateRecommendations(steps: PPFInterventionStep[], intervention: PPF
 
   return recommendations;
 }
+

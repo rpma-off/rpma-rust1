@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { configurationService } from '@/lib/services/entities/configuration.service';
+﻿import { NextRequest, NextResponse } from 'next/server';
+import { configurationService } from '@/domains/admin/server';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 
 /**
@@ -155,3 +155,4 @@ export async function DELETE(
     );
   }
 }
+

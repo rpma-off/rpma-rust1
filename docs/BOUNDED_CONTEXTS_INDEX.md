@@ -3,7 +3,7 @@
 **Project**: RPMA v2 Frontend Architecture Refactoring  
 **Status**: Implementation In Progress (Patch Mode)  
 **Created**: 2026-02-17  
-**Last Updated**: 2026-02-17  
+**Last Updated**: 2026-02-18  
 
 ---
 
@@ -234,21 +234,56 @@ node scripts/validate-bounded-contexts.js
 ### Current Status: Implementation In Progress
 
 **Latest Snapshot**:
-- Domain scaffolding: complete (auth/tasks/inventory/interventions + shared facades)
-- Path aliases: complete (`@/domains/*`, `@/shared/*`)
-- ESLint boundaries + `import/no-cycle`: added
-- Auth/Tasks/Inventory/Interventions: migrated to bounded contexts
-- Deprecated shims: added for compatibility
-- Tests: added under each migrated domain
-- Quality gates: **not green yet** (frontend type-check failures)
+- Domain scaffolding: expanded to 13 bounded contexts (`admin`, `analytics`, `audit`, `auth`, `clients`, `interventions`, `inventory`, `notifications`, `reports`, `settings`, `tasks`, `users`, `workflow`)
+- Server facades: added under `domains/*/server` for route-layer boundaries
+- Path aliases: updated for new domain APIs in both `tsconfig.json` and `frontend/tsconfig.json`
+- Boundary tooling: added (`boundary:report`, `boundary:enforce`, allowlist file)
+- Legacy import migration: completed for all tracked frontend boundary hotspots (57 files baseline -> 0 active violations)
+- App UI server-facade imports: removed (`src/app/**` non-API now has 0 imports of `@/domains/*/server`)
+- Frontend gates: `frontend:lint`, `frontend:type-check`, `boundary:enforce`, `validate:bounded-contexts`, and `architecture:check` pass
+- Full `quality:check`: pass (including `cargo fmt --check`)
 
 | Phase | Status | Duration | Domains |
 |-------|--------|----------|---------|
-| Phase 1: Foundation | In Progress | Week 1-2 | Auth |
-| Phase 2: Core | In Progress | Week 3-6 | Tasks, Workflow, Inventory, Interventions |
-| Phase 3: Supporting | Not Started | Week 7-10 | Clients, Calendar, Users, Dashboard |
-| Phase 4: Specialized | Not Started | Week 11-12 | Reporting, Others |
-| Phase 5: Cleanup | Not Started | Week 13-14 | Legacy removal |
+| Phase 1: Foundation | Completed | Week 1-2 | Auth + boundary guardrails |
+| Phase 2: Core | Completed | Week 3-6 | Tasks, Workflow, Inventory, Interventions |
+| Phase 3: Supporting | Completed | Week 7-10 | Clients, Users, Analytics, Settings, Admin |
+| Phase 4: Specialized | Completed | Week 11-12 | Reports, Notifications, Audit |
+| Phase 5: Cleanup | In Progress | Week 13-14 | API surface tightening + legacy shim retirement |
+
+---
+
+## 100% Boundary Coverage Program
+
+### Definition of Done
+
+Boundary coverage is considered **100%** when:
+
+1. No imports of `@/lib/services/**` or `@/lib/ipc/domains/**` exist outside sanctioned domain server facades.
+2. `src/app/**` UI imports only domain public APIs (`@/domains/<domain>`) and `@/shared/**`.
+3. `src/app/api/**` imports domain modules only through `@/domains/<domain>/server`.
+4. Non-domain layers avoid deep internal domain imports (`components/hooks/services/ipc`).
+5. `boundary:enforce` reports zero unexpected violations.
+
+### Burn-Down Scoreboard
+
+| Metric | Baseline | Current | Target | Status |
+|--------|----------|---------|--------|--------|
+| Legacy imports in tracked frontend layers | 57 files | 0 files | 0 | Achieved |
+| Legacy imports in `src/app/api/**` | 41 files | 0 files | 0 | Achieved |
+| Boundary enforcement violations | N/A | 0 | 0 | Achieved |
+| Allowlist entries | 0 (new file) | 0 | 0 | Achieved |
+
+### Batch Roadmap Status
+
+| Batch | Scope | Status | Notes |
+|-------|-------|--------|-------|
+| Batch 0 | Guardrails + docs | Completed | Added boundary scripts and enforcement wiring |
+| Batch 1 | Settings + Admin/User routes | Completed | Migrated to `@/domains/*/server` |
+| Batch 2 | Analytics + Clients + Notifications | Completed | Migrated and verified via lint/type-check |
+| Batch 3 | Workflow/Tasks/Photos + hook hotspots | Completed | Legacy imports removed from targeted hooks/components |
+| Batch 4 | Domain internals + shared cleanup | Completed | Shared no longer depends on domains |
+| Batch 5 | Strict surface + zero violations | Completed | Removed transitional service/IPC exports from `auth/tasks/interventions` APIs; `boundary:enforce` reports zero violations |
 
 ### Completion Checklist
 
@@ -275,7 +310,7 @@ node scripts/validate-bounded-contexts.js
 - [x] Migrate Interventions domain
 - [x] Update consumers in `app/**`
 - [x] Add domain tests
-- [ ] Validate architecture (quality gates pending)
+- [x] Validate architecture (quality gates passing)
 - [ ] Remove old code
 
 ---
@@ -286,11 +321,11 @@ node scripts/validate-bounded-contexts.js
 
 | Metric | Baseline | Current | Target | Status |
 |--------|----------|---------|--------|--------|
-| Cross-domain internal imports | ~50 | In Progress | 0 | In Progress |
-| Circular dependencies | ~8 | In Progress | 0 | In Progress |
-| Public API coverage | 0% | Partial | 100% | In Progress |
+| Cross-domain internal imports | ~50 | 0 (validated) | 0 | Achieved |
+| Circular dependencies | ~8 | 0 (validated) | 0 | Achieved |
+| Public API coverage | 0% | 13/13 domains have `api/index.ts` | 100% | In Progress |
 | Test coverage | 70% | In Progress | 85% | In Progress |
-| Domains migrated | 0/10 | 4/10 | 10/10 | In Progress |
+| Domains migrated | 0/10 (original plan) | 13/13 (current map) | 100% | Achieved |
 
 ### Qualitative Metrics
 
@@ -373,6 +408,8 @@ For questions about the migration process:
 
 | Version | Date | Changes | Author |
 |---------|------|---------|--------|
+| 1.2.1 | 2026-02-18 | Closed quality gate (`npm run quality:check`), removed remaining app UI `/server` imports, and aligned report tests to domain facades. | Codex |
+| 1.2.0 | 2026-02-18 | Added 100% boundary coverage program tracking, server facade migration status, boundary tooling (`boundary:report` / `boundary:enforce`), and updated quality-gate status. | Codex |
 | 1.1.0 | 2026-02-17 | Implementation progress update (domains migrated, lint rules added, tests added). Quality gates pending. | Codex |
 | 1.0.0 | 2026-02-17 | Initial planning package | GitHub Copilot |
 
@@ -423,8 +460,8 @@ To update these documents:
 ---
 
 **Status**: **IMPLEMENTATION IN PROGRESS**  
-**Next Action**: Resolve type-check failures and re-run `npm run quality:check`  
+**Next Action**: Continue retiring transitional server-facade broad re-exports domain by domain.  
 
-**Prepared by**: GitHub Copilot Agent  
-**Date**: 2026-02-17  
-**Document Version**: 1.1.0
+**Prepared by**: Codex  
+**Date**: 2026-02-18  
+**Document Version**: 1.2.1

@@ -1,8 +1,9 @@
-import React, { useMemo, useCallback, memo, useRef, useState, useEffect } from 'react';
+Ôªøimport React, { useMemo, useCallback, memo, useRef, useState, useEffect } from 'react';
 // Removed pose dependency - now works independently
 import { TaskWithDetails, TaskDisplay, ChecklistItem, TaskStatus, JsonValue } from '@/shared/types';
 import type { UpdateTaskRequest } from '@/lib/backend';
-import { useInterventionData, InterventionWorkflowService } from '@/domains/interventions';
+import { useInterventionData } from '@/domains/interventions';
+import { InterventionWorkflowService } from '@/domains/interventions/server';
 
 import { convertTimestamps, cn, convertNullsToUndefined } from '@/shared/utils';
 import { Suspense } from 'react';
@@ -71,8 +72,8 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
       id: task.id || '',
       task_number: task.task_number || '',
       title: task.title || 'Sans titre',
-      vehicle_plate: task.vehicle_plate || 'Non spÈcifiÈe',
-      vehicle_model: task.vehicle_model || 'Non spÈcifiÈ',
+      vehicle_plate: task.vehicle_plate || 'Non sp√©cifi√©e',
+      vehicle_model: task.vehicle_model || 'Non sp√©cifi√©',
       vehicle_year: task.vehicle_year,
       vehicle_make: task.vehicle_make,
       vin: task.vin,
@@ -191,8 +192,8 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
       en_attente: { label: 'En attente', color: 'bg-yellow-100 text-yellow-800' },
       in_progress: { label: 'En cours', color: 'bg-blue-100 text-blue-800' },
       en_cours: { label: 'En cours', color: 'bg-blue-100 text-blue-800' },
-      completed: { label: 'TerminÈ', color: 'bg-green-100 text-green-800' },
-      termine: { label: 'TerminÈ', color: 'bg-green-100 text-green-800' },
+      completed: { label: 'Termin√©', color: 'bg-green-100 text-green-800' },
+      termine: { label: 'Termin√©', color: 'bg-green-100 text-green-800' },
       default: { label: 'Inconnu', color: 'bg-gray-100 text-gray-800' },
     };
     return statusMap[safeTask?.status as keyof typeof statusMap] || statusMap.default;
@@ -249,10 +250,10 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
         }
 
         console.log('[PoseDetail] Task assigned successfully:', result.data);
-        toast.success('Intervention assignÈe avec succËs');
+        toast.success('Intervention assign√©e avec succ√®s');
       }    } catch (error) {
       console.error('Failed to start task:', error);
-      toast.error(error instanceof Error ? error.message : 'Erreur lors du dÈmarrage de l\'intervention');
+      toast.error(error instanceof Error ? error.message : 'Erreur lors du d√©marrage de l\'intervention');
     }
   }, [onStartTask, currentUserId, safeTask?.id]);
 
@@ -314,7 +315,7 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
           );
 
           saveChecklistOverrides(safeTask.id, updatedItems);
-          toast.success('…lÈment de checklist mis ‡ jour');
+          toast.success('√âl√©ment de checklist mis √† jour');
           return;
         }
       }
@@ -362,11 +363,11 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
       await taskIpc.update(safeTask.id, updateData, user.token);
 
       saveChecklistOverrides(safeTask.id, updatedItems);
-      toast.success('Statut de checklist mis ‡ jour');
+      toast.success('Statut de checklist mis √† jour');
 
     } catch (error) {
       console.error('Failed to update checklist item:', error);
-      toast.error('Erreur lors de la mise ‡ jour de l\'ÈlÈment de checklist');
+      toast.error('Erreur lors de la mise √† jour de l\'√©l√©ment de checklist');
     }
   }, [safeTask?.id, user?.token, interventionData, checklistItems, saveChecklistOverrides]);
 
@@ -415,14 +416,14 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
           </div>
           <h3 className="mt-3 text-lg font-medium text-foreground">Erreur de chargement</h3>
           <p className="mt-2 text-sm text-muted-foreground">
-            Impossible de charger les dÈtails de la t‚che. Veuillez rÈessayer.
+            Impossible de charger les d√©tails de la t√¢che. Veuillez r√©essayer.
           </p>
           <div className="mt-6 space-x-3">
             <button
               onClick={() => window.location.reload()}
               className="inline-flex items-center rounded-md bg-[hsl(var(--rpma-teal))] px-3 py-2 text-sm font-semibold text-background shadow-sm hover:bg-[hsl(var(--rpma-teal))]/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--rpma-teal))]"
             >
-              RÈessayer
+              R√©essayer
             </button>
             <button
               onClick={() => window.location.reload()}
@@ -456,8 +457,8 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
             />
           </svg>
         </div>
-        <h3 className="mt-2 text-sm font-medium text-gray-900">Aucune t‚che sÈlectionnÈe</h3>
-        <p className="mt-1 text-sm text-gray-500">SÈlectionnez une t‚che pour afficher les dÈtails</p>
+        <h3 className="mt-2 text-sm font-medium text-gray-900">Aucune t√¢che s√©lectionn√©e</h3>
+        <p className="mt-1 text-sm text-gray-500">S√©lectionnez une t√¢che pour afficher les d√©tails</p>
       </div>
     );
   }
@@ -549,11 +550,11 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
           <div className="flex items-center">
             <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
             <h3 className="text-sm font-medium text-red-800">
-              Erreur lors du chargement de la t‚che
+              Erreur lors du chargement de la t√¢che
             </h3>
           </div>
           <div className="mt-2 text-sm text-red-700">
-            Une erreur inattendue s&apos;est produite. Veuillez rafraÓchir la page.
+            Une erreur inattendue s&apos;est produite. Veuillez rafra√Æchir la page.
           </div>
           <div className="mt-4">
             <Button
@@ -561,7 +562,7 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
               size="sm"
               variant="outline"
             >
-              RafraÓchir
+              Rafra√Æchir
             </Button>
           </div>
         </div>
@@ -571,5 +572,7 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
 };
 
 export default memo(PoseDetail);
+
+
 
 

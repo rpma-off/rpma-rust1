@@ -1,4 +1,5 @@
-/**
+﻿/**
  * @deprecated Use `@/domains/tasks`.
  */
-export { useTaskStatus } from '@/domains/tasks/hooks/useTaskStatus';
+export { useTaskStatus } from '@/domains/tasks';
+

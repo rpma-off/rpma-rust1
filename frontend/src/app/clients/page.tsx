@@ -1,9 +1,9 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/domains/auth';
-import { clientService } from '@/shared/utils';
+import { clientService } from '@/domains/clients';
 import { Plus, Search, SearchX, User, Building, ChevronDown, ArrowUpDown, AlertCircle, Users, FileText } from 'lucide-react';
 import Link from 'next/link';
 import type { Client, ClientWithTasks } from '@/shared/types';
@@ -231,9 +231,9 @@ export default function ClientsPage() {
                   })}
                   className="pl-10 pr-8 py-2.5 rpma-shell text-foreground text-sm focus:outline-none focus:border-[hsl(var(--rpma-teal))] transition-all duration-200 appearance-none cursor-pointer hover:bg-muted/10"
                 >
-                  <option value="">ðŸ¢ Tous les types</option>
-                  <option value="individual">ðŸ‘¤ Particuliers</option>
-                  <option value="business">ðŸ¢ Entreprises</option>
+                  <option value="">Ã°Å¸ÂÂ¢ Tous les types</option>
+                  <option value="individual">Ã°Å¸â€˜Â¤ Particuliers</option>
+                  <option value="business">Ã°Å¸ÂÂ¢ Entreprises</option>
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               </div>
@@ -344,4 +344,5 @@ export default function ClientsPage() {
     </PageShell>
   );
 }
+
 

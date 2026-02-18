@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/middleware/auth.middleware';
-import { userService } from '@/lib/services/entities/user.service';
+import { userService } from '@/domains/users/server';
 import { createLogger, LogContext } from '@/lib/logger';
 import { getErrorMessage } from '@/types/utility.types';
 import type { NextRequestWithUser } from '@/lib/middleware/auth.middleware';
@@ -48,3 +48,4 @@ async function patchHandler(request: NextRequestWithUser, _context?: unknown) {
 
 export const GET = withAuth(getHandler);
 export const PATCH = withAuth(patchHandler);
+

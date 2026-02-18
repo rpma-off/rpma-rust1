@@ -1,8 +1,8 @@
-// API Endpoint: Skip Workflow Step
+﻿// API Endpoint: Skip Workflow Step
 // POST /api/workflows/[id]/skip-step
 
 import { NextRequest, NextResponse } from 'next/server';
-import { workflowService } from '@/lib/services';
+import { workflowService } from '@/domains/workflow/server';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 
 export async function POST(
@@ -62,3 +62,4 @@ export async function POST(
     );
   }
 }
+

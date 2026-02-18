@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @deprecated Use `@/domains/tasks`.
  */
 export {
@@ -11,4 +11,5 @@ export {
   useVehicleDisplayInfo,
   usePPFZonesList,
   useScheduleDisplay,
-} from '@/domains/tasks/hooks/useNormalizedTask';
+} from '@/domains/tasks';
+

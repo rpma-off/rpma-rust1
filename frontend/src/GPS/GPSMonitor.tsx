@@ -1,4 +1,4 @@
-/**
+﻿/**
  * GPS Monitor Component for PPF Workflow
  * Real-time GPS monitoring with accuracy validation and route analytics
  * @version 1.0
@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { GeolocationService } from '@/domains/interventions';
+import { GeolocationService } from '@/domains/interventions/server';
 
 interface GPSLocation {
   latitude: number;
@@ -272,7 +272,7 @@ export const GPSMonitor: React.FC<GPSMonitorProps> = ({
                 </Badge>
               </div>
               <div className={`text-sm ${getAccuracyColor(accuracy.accuracy)}`}>
-                ±{Math.round(accuracy.accuracy)}m
+                Â±{Math.round(accuracy.accuracy)}m
               </div>
               <Progress value={Math.min(100, 100 - (accuracy.accuracy / 2))} className="h-2" />
 
@@ -282,7 +282,7 @@ export const GPSMonitor: React.FC<GPSMonitorProps> = ({
                   <AlertDescription>
                     <ul className="text-xs space-y-1">
                       {accuracy.recommendations.map((rec: string, index: number) => (
-                        <li key={index}>• {rec}</li>
+                        <li key={index}>â€¢ {rec}</li>
                       ))}
                     </ul>
                   </AlertDescription>
@@ -304,7 +304,7 @@ export const GPSMonitor: React.FC<GPSMonitorProps> = ({
                 </div>
               </div>
               <div className="text-xs text-gray-600">
-                GPS Signal • Accuracy: {signalStrength.accuracy ? `${signalStrength.accuracy.toFixed(1)}m` : 'N/A'}
+                GPS Signal â€¢ Accuracy: {signalStrength.accuracy ? `${signalStrength.accuracy.toFixed(1)}m` : 'N/A'}
               </div>
               <Progress value={signalStrength.signalStrength} className="h-2" />
             </div>
@@ -337,7 +337,7 @@ export const GPSMonitor: React.FC<GPSMonitorProps> = ({
                   <AlertDescription>
                     <ul className="text-xs space-y-1">
                       {routeAnalytics.optimizationSuggestions.map((suggestion: string, index: number) => (
-                        <li key={index}>• {suggestion}</li>
+                        <li key={index}>â€¢ {suggestion}</li>
                       ))}
                     </ul>
                   </AlertDescription>
@@ -384,3 +384,4 @@ export const GPSMonitor: React.FC<GPSMonitorProps> = ({
     </div>
   );
 };
+

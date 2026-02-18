@@ -1,4 +1,4 @@
-interface MockResponse {
+﻿interface MockResponse {
   status: number;
   json: () => Promise<unknown>;
 }
@@ -44,7 +44,7 @@ jest.mock('@/lib/middleware/auth.middleware', () => ({
   },
 }));
 
-jest.mock('@/lib/services/entities/settings.service', () => ({
+jest.mock('@/domains/settings/server', () => ({
   settingsService: {
     getUserSettings: jest.fn(),
     updatePreferences: jest.fn(),
@@ -58,7 +58,7 @@ jest.mock('@/lib/services/entities/settings.service', () => ({
   },
 }));
 
-const { settingsService } = jest.requireMock('@/lib/services/entities/settings.service') as {
+const { settingsService } = jest.requireMock('@/domains/settings/server') as {
   settingsService: {
     getUserSettings: jest.Mock;
     updatePreferences: jest.Mock;
@@ -351,3 +351,4 @@ describe('/api/settings routes smoke', () => {
     });
   });
 });
+

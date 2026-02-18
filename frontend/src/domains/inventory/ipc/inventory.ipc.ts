@@ -1,4 +1,4 @@
-import { materialOperations, stockOperations, consumptionOperations, reportingOperations } from '@/lib/ipc/domains/inventory';
+﻿import { materialOperations, stockOperations, consumptionOperations, reportingOperations } from '@/domains/inventory/server';
 import { safeInvoke } from '@/lib/ipc/core';
 import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import type { JsonObject } from '@/types/json';
@@ -37,3 +37,4 @@ export const inventoryIpc = {
   getMaterialStats: (sessionToken: string): Promise<MaterialStats> =>
     safeInvoke<MaterialStats>(IPC_COMMANDS.MATERIAL_GET_STATS, { sessionToken } as JsonObject),
 };
+

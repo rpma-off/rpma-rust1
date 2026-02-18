@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { userService } from '@/lib/services/entities/user.service';
+﻿import { NextRequest, NextResponse } from 'next/server';
+import { userService } from '@/domains/users/server';
 import { createLogger, LogContext } from '@/lib/logger';
 import { z } from 'zod';
 
@@ -53,3 +53,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error during user creation', code: 'INTERNAL_ERROR' }, { status: 500 });
   }
 }
+

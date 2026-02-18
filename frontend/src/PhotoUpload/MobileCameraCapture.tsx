@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Mobile Camera Capture Component for PPF Workflow
  * Provides real-time photo validation and mobile-optimized capture
  * @version 1.0
@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { PPFPhotoService, type MobileCameraConfig, type RealTimeValidationResult } from '@/domains/interventions';
+import { PPFPhotoService, type MobileCameraConfig, type RealTimeValidationResult } from '@/domains/interventions/server';
 import { PPFPhotoAngle, PPFPhotoCategory } from '@/types/enums';
 import { GeographicLocation } from '@/types/ppf-intervention';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -405,3 +405,4 @@ export const MobileCameraCapture: React.FC<MobileCameraCaptureProps> = ({
     </Card>
   );
 };
+

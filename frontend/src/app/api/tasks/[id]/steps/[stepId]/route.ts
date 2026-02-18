@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import { taskService } from '@/lib/services';
+import { taskService } from '@/domains/tasks/server';
 
 export async function PATCH(
   request: NextRequest,

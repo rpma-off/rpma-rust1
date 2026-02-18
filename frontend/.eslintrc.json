@@ -33,8 +33,48 @@
                 "message": "App layer may only import from domain public APIs (e.g. `@/domains/<domain>`) or `@/shared/**`."
               },
               {
-                "group": ["@/domains/*/components/**", "@/domains/*/hooks/**", "@/domains/*/services/**", "@/domains/*/ipc/**"],
+                "group": ["@/domains/*/components/**", "@/domains/*/hooks/**", "@/domains/*/services/**", "@/domains/*/ipc/**", "@/domains/*/server/**"],
                 "message": "App layer must import domain public APIs only (use `@/domains/<domain>` or `@/domains/<domain>/api`)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/app/api/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/lib/services/**", "@/lib/ipc/domains/**"],
+                "message": "Do not import legacy service or raw IPC modules directly in API routes. Use `@/domains/<domain>/server`."
+              },
+              {
+                "group": ["@/domains/*/api", "@/domains/*/api/**", "@/domains/*/components/**", "@/domains/*/hooks/**", "@/domains/*/services/**", "@/domains/*/ipc/**"],
+                "message": "API routes must import domain modules through `@/domains/<domain>/server` only."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/hooks/**/*.{ts,tsx}", "src/components/**/*.{ts,tsx}", "src/shared/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/lib/services/**", "@/lib/ipc/domains/**"],
+                "message": "Use domain APIs or domain server facades instead of legacy service/IPC module paths."
+              },
+              {
+                "group": ["@/domains/*/components/**", "@/domains/*/hooks/**", "@/domains/*/services/**", "@/domains/*/ipc/**"],
+                "message": "Non-domain layers must not import deep domain internals. Use `@/domains/<domain>`."
               }
             ]
           }

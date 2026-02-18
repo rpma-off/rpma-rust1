@@ -1,6 +1,6 @@
- /**
+﻿ /**
  * API Route: GET /api/interventions/[id]
- * Récupère les détails complets d'une intervention PPF
+ * RÃ©cupÃ¨re les dÃ©tails complets d'une intervention PPF
  * @version 2.0
  * @date 2025-01-20
  */
@@ -8,7 +8,7 @@
  import { NextResponse } from 'next/server';
 
  export const dynamic = 'force-dynamic';
-import { interventionWorkflowService } from '@/domains/interventions';
+import { interventionWorkflowService } from '@/domains/interventions/server';
 import { PPFInterventionData } from '@/types/ppf-intervention';
 
 interface PPFPhoto {
@@ -39,7 +39,7 @@ interface InterventionPermissions {
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    // 1. Validation des paramètres de route
+    // 1. Validation des paramÃ¨tres de route
     const interventionId = (await params).id;
     if (!interventionId) {
       return NextResponse.json(
@@ -68,16 +68,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
     const sessionToken = authHeader.replace('Bearer ', '');
 
-    // 3. Récupération des paramètres de requête
+    // 3. RÃ©cupÃ©ration des paramÃ¨tres de requÃªte
     const url = new URL(request.url);
     const includeSteps = url.searchParams.get('include_steps') === 'true';
     const includePhotos = url.searchParams.get('include_photos') === 'true';
     const includeMetrics = url.searchParams.get('include_metrics') === 'true';
 
-    // 4. Appel du service métier
+    // 4. Appel du service mÃ©tier
     const workflowService = interventionWorkflowService;
 
-    // Récupération de l'intervention de base
+    // RÃ©cupÃ©ration de l'intervention de base
     const interventionResult = await workflowService.getInterventionById(interventionId, sessionToken);
     
     if (!interventionResult.success) {
@@ -92,7 +92,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
     const intervention = interventionResult.data!;
 
-    // 5. Enrichissement conditionnel des données
+    // 5. Enrichissement conditionnel des donnÃ©es
     const interventionData: PPFInterventionData = {
       ...intervention,
       currentStep: intervention.currentStep ?? 0,
@@ -109,7 +109,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       intervention: interventionData
     };
 
-    // Récupération des étapes si demandées
+    // RÃ©cupÃ©ration des Ã©tapes si demandÃ©es
     if (includeSteps) {
       const stepsResult = await workflowService.getInterventionSteps(interventionId, sessionToken);
       if (stepsResult.success) {
@@ -117,15 +117,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       }
     }
 
-    // Récupération des photos si demandées
+    // RÃ©cupÃ©ration des photos si demandÃ©es
     if (includePhotos) {
-      // TODO: Appel au service photo pour récupérer toutes les photos
+      // TODO: Appel au service photo pour rÃ©cupÃ©rer toutes les photos
       responseData.photos = [];
     }
 
-    // Récupération des métriques si demandées
+    // RÃ©cupÃ©ration des mÃ©triques si demandÃ©es
     if (includeMetrics) {
-      // TODO: Appel au service métriques
+      // TODO: Appel au service mÃ©triques
       responseData.metrics = null;
     }
 
@@ -136,7 +136,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     });
     responseData.permissions = permissions;
 
-    // 7. Retour de la réponse
+    // 7. Retour de la rÃ©ponse
     return NextResponse.json(
       {
         success: true,
@@ -210,7 +210,7 @@ async function calculateInterventionPermissions(intervention: { status: string; 
   return permissions;
 }
 
-// Gestion des autres méthodes HTTP
+// Gestion des autres mÃ©thodes HTTP
 export async function POST() {
   return NextResponse.json(
     { error: 'Method not allowed. Use /start to create interventions.' },
@@ -231,3 +231,4 @@ export async function DELETE() {
     { status: 405 }
   );
 }
+

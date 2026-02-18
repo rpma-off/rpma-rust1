@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { withMethod } from '@/lib/api-route-wrapper';
 import { handleApiError } from '@/lib/api-error';
 import { createClient } from '@/lib/supabase/server';
-import { taskWorkflowSyncService } from '@/lib/services/sync/task-workflow-sync.service';
+import { taskWorkflowSyncService } from '@/domains/workflow/server';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 import { Database } from '@/types/database.types';
 
@@ -53,3 +53,4 @@ async function handlePost(request: NextRequest, context?: unknown) {
 }
 
 export const POST = withMethod(['POST'])(handlePost);
+

@@ -1,5 +1,5 @@
- import { NextRequest, NextResponse } from 'next/server';
- import { TechnicianService, Technician } from '@/lib/services/entities/technician.service';
+﻿ import { NextRequest, NextResponse } from 'next/server';
+ import { TechnicianService, Technician } from '@/domains/clients/server';
 
  export const dynamic = 'force-dynamic';
 
@@ -34,3 +34,4 @@ export const GET = async (_request: NextRequest) => {
     );
   }
 };
+

@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { notificationService, SendNotificationRequest, NotificationConfig } from '@/lib/services/notifications.service';
+﻿import { NextResponse } from 'next/server';
+import { notificationService, SendNotificationRequest, NotificationConfig } from '@/domains/notifications/server';
 import { withAuth, NextRequestWithUser } from '@/lib/middleware/auth.middleware';
 
 export const POST = withAuth(async (request: NextRequestWithUser) => {
@@ -42,3 +42,4 @@ export const POST = withAuth(async (request: NextRequestWithUser) => {
     );
   }
 });
+

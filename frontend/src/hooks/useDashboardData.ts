@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Dashboard Data Hook
  *
  * Provides optimized dashboard data management with:
@@ -11,7 +11,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/domains/auth';
-import { dashboardApiService, DashboardFilters, DashboardData, TechnicianSummary } from '@/lib/services/dashboard/dashboard-api.service';
+import { dashboardApiService, DashboardFilters, DashboardData, TechnicianSummary } from '@/domains/analytics/server';
 import { TaskWithDetails } from '@/types/task.types';
 import { DashboardTask, transformTask, RawTaskData } from '@/components/dashboard/types';
 import { handleFetchError, FetchError } from '@/lib/utils/fetch-error-handler';
@@ -374,3 +374,4 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): [Dashbo
 
   return [state, actions];
 }
+

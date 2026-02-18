@@ -5,7 +5,7 @@
 export { AuthProvider, AuthContext } from './AuthProvider';
 export { useAuth } from './useAuth';
 export { useAuthActions } from './useAuthActions';
-export { authIpc } from '../ipc/auth.ipc';
+export { authBootstrap } from './bootstrapAdmin';
 export { default as PasswordStrengthMeter } from '../components/PasswordStrengthMeter';
 export { LoginForm } from '../components/LoginForm';
 export { SignupForm } from '../components/SignupForm';

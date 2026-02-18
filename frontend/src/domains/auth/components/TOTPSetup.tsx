@@ -1,9 +1,9 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
-import { mfaService } from '@/lib/services/auth/mfa.service';
+import { mfaService } from '@/domains/auth/server';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 
 interface TOTPSetupProps {
@@ -117,7 +117,7 @@ const TOTPSetup: React.FC<TOTPSetupProps> = ({ sessionToken, onSetupComplete }) 
             className="text-sm text-blue-600 hover:text-blue-800"
             onClick={() => {
               navigator.clipboard.writeText(recoveryCodes.join('\n'));
-              toast.success('Codes de récupération copiés dans le presse-papiers');
+              toast.success('Codes de rÃ©cupÃ©ration copiÃ©s dans le presse-papiers');
             }}
           >
             {t('auth.copyCodesToClipboard')}
@@ -182,7 +182,7 @@ const TOTPSetup: React.FC<TOTPSetupProps> = ({ sessionToken, onSetupComplete }) 
                   className="text-xs text-blue-600 hover:text-blue-800 mt-1"
                   onClick={() => {
                     navigator.clipboard.writeText(secret);
-                    toast.success('Code secret copié dans le presse-papiers');
+                    toast.success('Code secret copiÃ© dans le presse-papiers');
                   }}
                 >
                   {t('auth.copyToClipboard')}
@@ -225,3 +225,4 @@ const TOTPSetup: React.FC<TOTPSetupProps> = ({ sessionToken, onSetupComplete }) 
 };
 
 export default TOTPSetup;
+

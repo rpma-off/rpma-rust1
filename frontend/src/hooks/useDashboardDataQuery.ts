@@ -1,14 +1,14 @@
-import { useMemo } from 'react';
+﻿import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { dashboardApiService, DashboardFilters } from '@/lib/services/dashboard/dashboard-api.service';
+import { dashboardApiService, DashboardFilters } from '@/domains/analytics/server';
 import { TaskWithDetails } from '@/types/task.types';
 import { DashboardTask, RawTaskData, transformTask } from '@/components/dashboard/types';
 import { FetchError } from '@/lib/utils/fetch-error-handler';
 import { useLogger } from '@/hooks/useLogger';
 import { LogDomain } from '@/lib/logging/types';
 import { useAuth } from '@/domains/auth';
-import { taskService } from '@/domains/tasks';
+import { taskService } from '@/domains/tasks/server';
 
 
 // ==================== DASHBOARD QUERY KEYS ====================
@@ -386,3 +386,5 @@ export function useTechnicians() {
     gcTime: 30 * 60 * 1000, // 30 minutes
   });
 }
+
+

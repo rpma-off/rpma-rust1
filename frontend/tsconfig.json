@@ -30,10 +30,19 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
+      "@/domains/admin": ["./src/domains/admin/api"],
+      "@/domains/analytics": ["./src/domains/analytics/api"],
+      "@/domains/audit": ["./src/domains/audit/api"],
       "@/domains/auth": ["./src/domains/auth/api"],
+      "@/domains/clients": ["./src/domains/clients/api"],
       "@/domains/tasks": ["./src/domains/tasks/api"],
       "@/domains/inventory": ["./src/domains/inventory/api"],
       "@/domains/interventions": ["./src/domains/interventions/api"],
+      "@/domains/notifications": ["./src/domains/notifications/api"],
+      "@/domains/reports": ["./src/domains/reports/api"],
+      "@/domains/settings": ["./src/domains/settings/api"],
+      "@/domains/users": ["./src/domains/users/api"],
+      "@/domains/workflow": ["./src/domains/workflow/api"],
       "@/shared/*": ["./src/shared/*"]
     }
   },

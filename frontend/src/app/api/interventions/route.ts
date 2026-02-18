@@ -1,4 +1,4 @@
- /**
+﻿ /**
  * API Route: GET /api/interventions
  * Liste et recherche d'interventions PPF avec filtres
  * @version 2.0
@@ -9,12 +9,12 @@
 
  export const dynamic = 'force-dynamic';
 import { z } from 'zod';
-import { interventionWorkflowService } from '@/domains/interventions';
+import { interventionWorkflowService } from '@/domains/interventions/server';
 import { PPFInterventionStatus } from '@/types/enums';
 import { handleApiError } from '@/lib/api-error';
 import { ApiResponseFactory, HttpStatus } from '@/lib/http-status';
 
-// Schéma de validation pour les paramètres de requête
+// SchÃ©ma de validation pour les paramÃ¨tres de requÃªte
 const QueryParamsSchema = z.object({
   // Pagination
   page: z.coerce.number().min(1).default(1),
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
       ), { status: HttpStatus.UNAUTHORIZED });
     }
 
-    // 2. Parsing et validation des paramètres de requête
+    // 2. Parsing et validation des paramÃ¨tres de requÃªte
     const url = new URL(request.url);
     const rawParams = Object.fromEntries(url.searchParams.entries());
     
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
 }
 
 
-// Gestion des autres méthodes HTTP
+// Gestion des autres mÃ©thodes HTTP
 export async function POST() {
   return NextResponse.json(ApiResponseFactory.error(
     'Method not allowed. Interventions are created via direct IPC calls.',
@@ -130,3 +130,4 @@ export async function DELETE() {
     HttpStatus.METHOD_NOT_ALLOWED
   ), { status: HttpStatus.METHOD_NOT_ALLOWED });
 }
+

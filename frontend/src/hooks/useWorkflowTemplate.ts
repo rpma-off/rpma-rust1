@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { workflowTemplatesService, WorkflowTemplate, WorkflowStepTemplate, SOPInstruction } from '@/lib/services/workflow-templates.service';
+﻿import { useState, useEffect } from 'react';
+import { workflowTemplatesService, WorkflowTemplate, WorkflowStepTemplate, SOPInstruction } from '@/domains/workflow/server';
 
 export interface UseWorkflowTemplateReturn {
   template: WorkflowTemplate | null;
@@ -16,7 +16,7 @@ export interface UseWorkflowTemplateReturn {
 }
 
 /**
- * Hook pour gérer les templates de workflow
+ * Hook pour gÃ©rer les templates de workflow
  */
 export function useWorkflowTemplate(
   taskType: string = 'ppf_installation', 
@@ -100,7 +100,7 @@ export function useWorkflowTemplate(
 }
 
 /**
- * Hook spécialisé pour une étape spécifique
+ * Hook spÃ©cialisÃ© pour une Ã©tape spÃ©cifique
  */
 export function useWorkflowStep(
   taskType: string = 'ppf_installation',

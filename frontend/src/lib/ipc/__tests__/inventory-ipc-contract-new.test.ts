@@ -1,10 +1,10 @@
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+﻿import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { 
   materialOperations, 
   materialCategoryOperations,
   supplierOperations,
   inventoryStats 
-} from '@/lib/ipc/domains/inventory';
+} from '@/domains/inventory/server';
 import { safeInvoke } from '@/lib/ipc/core';
 import { Material, MaterialType, UnitOfMeasure } from '@/shared/types';
 
@@ -858,3 +858,4 @@ describe('Inventory IPC Contract Tests', () => {
     });
   });
 });
+

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { designTokens } from '@/lib/design-tokens';
 import { useCalendarStore } from '@/lib/stores/calendarStore';
 import { useAuth } from '@/domains/auth';
-import { taskService } from '@/domains/tasks';
+import { taskService } from '@/domains/tasks/server';
 import type { CreateTaskRequest } from '@/lib/backend';
 import { format } from 'date-fns';
 
@@ -93,7 +93,7 @@ export function QuickAddDialog({ isOpen, onClose }: QuickAddDialogProps) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Nouvelle tâche</DialogTitle>
+          <DialogTitle>Nouvelle tÃ¢che</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -109,7 +109,7 @@ export function QuickAddDialog({ isOpen, onClose }: QuickAddDialogProps) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium">Véhicule *</label>
+              <label className="text-sm font-medium">VÃ©hicule *</label>
               <Input
                 value={vehicle}
                 onChange={(e) => setVehicle(e.target.value)}
@@ -122,10 +122,10 @@ export function QuickAddDialog({ isOpen, onClose }: QuickAddDialogProps) {
               <label className="text-sm font-medium">Technicien</label>
               <Select value={technicianId} onValueChange={setTechnicianId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner" />
+                  <SelectValue placeholder="SÃ©lectionner" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="unassigned">Non assigné</SelectItem>
+                  <SelectItem value="unassigned">Non assignÃ©</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -150,7 +150,7 @@ export function QuickAddDialog({ isOpen, onClose }: QuickAddDialogProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="PPF">PPF</SelectItem>
-                  <SelectItem value="Céramique">Céramique</SelectItem>
+                  <SelectItem value="CÃ©ramique">CÃ©ramique</SelectItem>
                   <SelectItem value="Detailing">Detailing</SelectItem>
                   <SelectItem value="Autre">Autre</SelectItem>
                 </SelectContent>
@@ -160,7 +160,7 @@ export function QuickAddDialog({ isOpen, onClose }: QuickAddDialogProps) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium">Début</label>
+              <label className="text-sm font-medium">DÃ©but</label>
               <Input
                 type="time"
                 value={startTime}
@@ -183,7 +183,7 @@ export function QuickAddDialog({ isOpen, onClose }: QuickAddDialogProps) {
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Notes supplémentaires..."
+              placeholder="Notes supplÃ©mentaires..."
               rows={3}
             />
           </div>
@@ -203,7 +203,7 @@ export function QuickAddDialog({ isOpen, onClose }: QuickAddDialogProps) {
               className="flex-1"
               style={{ backgroundColor: designTokens.colors.primary }}
             >
-              {isSubmitting ? 'Création...' : 'Créer'}
+              {isSubmitting ? 'CrÃ©ation...' : 'CrÃ©er'}
             </Button>
           </div>
         </form>
@@ -211,3 +211,4 @@ export function QuickAddDialog({ isOpen, onClose }: QuickAddDialogProps) {
     </Dialog>
   );
 }
+

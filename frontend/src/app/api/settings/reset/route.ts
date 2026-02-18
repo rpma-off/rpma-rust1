@@ -1,4 +1,4 @@
-import { settingsService } from '@/lib/services/entities/settings.service';
+﻿import { settingsService } from '@/domains/settings/server';
 import { withAuth, NextRequestWithUser } from '@/lib/middleware/auth.middleware';
 import { settingsError, settingsSuccess } from '../_shared';
 
@@ -15,3 +15,4 @@ export const POST = withAuth(async (request: NextRequestWithUser) => {
     settings: result.data,
   });
 }, 'all');
+

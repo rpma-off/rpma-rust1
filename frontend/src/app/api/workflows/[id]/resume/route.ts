@@ -1,8 +1,8 @@
-// API Endpoint: Resume Workflow Execution
+﻿// API Endpoint: Resume Workflow Execution
 // POST /api/workflows/[id]/resume
 
 import { NextRequest, NextResponse } from 'next/server';
-import { workflowService } from '@/lib/services';
+import { workflowService } from '@/domains/workflow/server';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 
 export async function POST(
@@ -55,3 +55,4 @@ export async function POST(
     );
   }
 }
+

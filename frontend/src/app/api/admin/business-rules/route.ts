@@ -1,6 +1,6 @@
- import { NextRequest, NextResponse } from 'next/server';
- import { configurationService } from '@/lib/services/entities/configuration.service';
- import { BusinessRuleFiltersData } from '@/lib/services/core/schemas';
+﻿ import { NextRequest, NextResponse } from 'next/server';
+ import { configurationService } from '@/domains/admin/server';
+ import { BusinessRuleFiltersData } from '@/domains/admin/server';
  import { getAuthenticatedUser } from '@/lib/api-auth';
 
  export const dynamic = 'force-dynamic';
@@ -108,3 +108,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+

@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { PPFPhotoService } from '@/domains/interventions';
+﻿import { NextRequest, NextResponse } from 'next/server';
+import { PPFPhotoService } from '@/domains/interventions/server';
 import { PPFPhotoAngle, PPFPhotoCategory } from '@/types/enums';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
@@ -146,3 +146,4 @@ export async function DELETE(
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
+

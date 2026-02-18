@@ -1,7 +1,7 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { reportsService } from '@/shared/utils';
+import { reportsService } from '@/domains/reports';
 import { Input } from '@/shared/ui/ui/input';
 import { Button } from '@/shared/ui/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/ui/select';
@@ -26,7 +26,7 @@ export default function DataExplorerReport() {
                 setData(response.data.results);
                 setTotalCount(response.data.total_count);
             } else {
-                setError(response.error || 'Impossible de récupérer les données');
+                setError(response.error || 'Impossible de rÃ©cupÃ©rer les donnÃ©es');
             }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Une erreur est survenue');
@@ -44,21 +44,21 @@ export default function DataExplorerReport() {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row gap-4 items-end">
                 <div className="w-full md:w-1/3">
-                    <label className="text-sm font-medium mb-2 block">Type d&apos;entité</label>
+                    <label className="text-sm font-medium mb-2 block">Type d&apos;entitÃ©</label>
                     <Select value={entityType} onValueChange={setEntityType}>
                         <SelectTrigger>
-                            <SelectValue placeholder="Sélectionner une entité" />
+                            <SelectValue placeholder="SÃ©lectionner une entitÃ©" />
                         </SelectTrigger>
                         <SelectContent>
                             {/* Values map to backend entity keys */}
-                            <SelectItem value="tasks">Tâches</SelectItem>
+                            <SelectItem value="tasks">TÃ¢ches</SelectItem>
                             <SelectItem value="clients">Clients</SelectItem>
                             <SelectItem value="interventions">Interventions</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
                 <div className="w-full md:w-1/2">
-                    <label className="text-sm font-medium mb-2 block">Requête de recherche</label>
+                    <label className="text-sm font-medium mb-2 block">RequÃªte de recherche</label>
                     <div className="relative">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -86,7 +86,7 @@ export default function DataExplorerReport() {
             <div className="rounded-md border bg-white dark:bg-slate-900">
                 <div className="p-4 border-b bg-slate-50 dark:bg-slate-800 flex justify-between items-center">
                     <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
-                        Résultats ({totalCount})
+                        RÃ©sultats ({totalCount})
                     </h3>
                 </div>
                 <div className="overflow-x-auto">
@@ -96,7 +96,7 @@ export default function DataExplorerReport() {
                                 {data.length > 0 && Object.keys(data[0]).slice(0, 6).map((key) => (
                                     <TableHead key={key} className="whitespace-nowrap">{key}</TableHead>
                                 ))}
-                                {data.length === 0 && <TableHead>Aucune donnée</TableHead>}
+                                {data.length === 0 && <TableHead>Aucune donnÃ©e</TableHead>}
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -120,7 +120,7 @@ export default function DataExplorerReport() {
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={1} className="h-24 text-center text-muted-foreground">
-                                        Aucun résultat trouvé
+                                        Aucun rÃ©sultat trouvÃ©
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -131,4 +131,5 @@ export default function DataExplorerReport() {
         </div>
     );
 }
+
 

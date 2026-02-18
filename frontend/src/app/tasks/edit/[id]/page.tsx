@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic';
 import { ArrowLeft, Loader2, Edit } from 'lucide-react';
 import { Button } from '@/shared/ui';
 import { useAuth } from '@/domains/auth';
-import { taskIpc } from '@/domains/tasks';
+import { taskGateway } from '@/domains/tasks';
 import { useTranslation } from '@/shared/hooks';
 import type { Task, TaskFormData } from '@/domains/tasks';
 
@@ -41,7 +41,7 @@ export default function EditTaskPage() {
 
       try {
         setLoading(true);
-        const task = await taskIpc.get(taskId, user.token);
+        const task = await taskGateway.getTask(taskId, user.token);
         setTaskData(task);
       } catch (err) {
         console.error('Failed to fetch task:', err);
@@ -165,7 +165,7 @@ export default function EditTaskPage() {
                     {t('tasks.editTask')} {taskData.task_number}
                   </h1>
                   <p className="text-muted-foreground mt-1 text-sm md:text-base">
-                    Modifiez les informations de la tâche. Les changements seront sauvegardés automatiquement.
+                    Modifiez les informations de la tÃ¢che. Les changements seront sauvegardÃ©s automatiquement.
                   </p>
                 </div>
               </div>
@@ -205,3 +205,4 @@ export default function EditTaskPage() {
     </div>
   );
 }
+
