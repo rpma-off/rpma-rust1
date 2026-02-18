@@ -1,6 +1,5 @@
 //! Auth domain — authentication, sessions, tokens, 2FA
 //!
-//! This module re-exports all auth-related components across layers.
-
-// Public facade
-pub use crate::services::auth::AuthService;
+//! This module represents the auth bounded context.
+//! Auth services are currently provided via `crate::services::auth`
+//! and will be migrated into this domain in a future iteration.

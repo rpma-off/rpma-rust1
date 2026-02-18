@@ -1,6 +1,5 @@
 //! Settings domain — user preferences and system configuration
 //!
-//! This module re-exports all settings-related components across layers.
-
-// Public facade
-pub use crate::services::settings::SettingsService;
+//! This module represents the settings bounded context.
+//! Settings services are currently provided via `crate::services::settings`
+//! and will be migrated into this domain in a future iteration.

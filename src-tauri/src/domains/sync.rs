@@ -1,6 +1,5 @@
 //! Sync domain — offline queue and background synchronization
 //!
-//! This module re-exports all sync-related components across layers.
-
-// Public facade
-pub use crate::sync::BackgroundSyncService;
+//! This module represents the sync bounded context.
+//! Sync services are currently provided via `crate::sync`
+//! and will be migrated into this domain in a future iteration.

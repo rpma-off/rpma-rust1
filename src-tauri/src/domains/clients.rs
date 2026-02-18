@@ -1,6 +1,5 @@
 //! Clients domain — client management, contact info
 //!
-//! This module re-exports all client-related components across layers.
-
-// Public facade
-pub use crate::services::client::ClientService;
+//! This module represents the clients bounded context.
+//! Client services are currently provided via `crate::services::client`
+//! and will be migrated into this domain in a future iteration.

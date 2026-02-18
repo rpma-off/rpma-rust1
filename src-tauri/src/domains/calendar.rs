@@ -1,6 +1,5 @@
 //! Calendar domain — scheduling, planning, and calendar events
 //!
-//! This module re-exports all calendar-related components across layers.
-
-// Public facade
-pub use crate::services::calendar::CalendarService;
+//! This module represents the calendar bounded context.
+//! Calendar services are currently provided via `crate::services::calendar`
+//! and will be migrated into this domain in a future iteration.
