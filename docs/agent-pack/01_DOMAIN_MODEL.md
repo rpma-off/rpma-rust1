@@ -388,7 +388,7 @@ pub enum UserRole {
 - `quote_number`: String (unique)
 - `client_id`: String (FK → `clients.id`)
 - `vehicle_plate`: Option<String>
-- `status`: QuoteStatus enum (Draft, Sent, Accepted, Rejected)
+- `status`: QuoteStatus enum (Draft, Sent, Accepted, Rejected, Expired)
 - `total_amount`: f64
 - `valid_until`: Option<i64>
 - `created_at`, `updated_at`: i64

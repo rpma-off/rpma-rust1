@@ -1,5 +1,25 @@
 # 04 - Backend Guide
 
+## Key Rust Dependencies
+
+| Crate | Version | Purpose |
+|-------|---------|---------|
+| `tauri` | 2.1 | Desktop app runtime + IPC |
+| `rusqlite` | 0.32 (bundled) | SQLite driver |
+| `r2d2` | 0.8 | Connection pool |
+| `r2d2_sqlite` | 0.25 | SQLite r2d2 adapter |
+| `argon2` | 0.5 | Password hashing |
+| `jsonwebtoken` | 9.3 | JWT creation/validation |
+| `ts-rs` | 10.1 | Rust → TypeScript type export |
+| `uuid` | 1.11 | UUID v4 generation |
+| `chrono` | 0.4 | Timestamps |
+| `tracing` | 0.1 | Structured logging |
+| `tokio` | (via tauri) | Async runtime |
+
+MSRV: **Rust 1.85** (set in workspace `Cargo.toml`)
+
+---
+
 ## Backend Structure
 
 The Rust/Tauri backend is organized into distinct layers following clean architecture principles.
@@ -42,7 +62,7 @@ src-tauri/src/
 │       ├── profile.rs
 │       ├── preferences.rs
 │       └── security.rs
-├── services/                # Business logic (Layer 2) - ~80 files
+├── services/                # Business logic (Layer 2) - ~88 files
 │   ├── mod.rs
 │   ├── auth.rs              # AuthService: login, password hashing (Argon2)
 │   ├── session.rs           # SessionService: lifecycle management
@@ -52,18 +72,24 @@ src-tauri/src/
 │   ├── security_monitor.rs  # SecurityMonitorService: event monitoring
 │   ├── user.rs              # UserService
 │   ├── client.rs            # ClientService
-│   ├── client_validation.rs
+│   ├── client_queries.rs    # ClientQueryService
 │   ├── client_statistics.rs
+│   ├── client_task_integration.rs # Client-task link
+│   ├── client_validation.rs
 │   ├── task.rs              # TaskService
 │   ├── task_creation.rs     # TaskCreationService
 │   ├── task_update.rs
 │   ├── task_deletion.rs
+│   ├── task_import.rs       # Bulk task import
 │   ├── task_validation.rs
 │   ├── task_queries.rs
 │   ├── task_statistics.rs
 │   ├── intervention.rs      # InterventionService
 │   ├── intervention_workflow.rs
 │   ├── intervention_validation.rs
+│   ├── intervention_calculation.rs
+│   ├── intervention_data.rs
+│   ├── intervention_types.rs
 │   ├── material.rs          # MaterialService
 │   ├── calendar.rs          # CalendarService
 │   ├── calendar_event_service.rs
@@ -78,7 +104,7 @@ src-tauri/src/
 │   ├── photo/               # Photo services
 │   ├── reports/             # Report generation
 │   └── ...
-├── repositories/            # Data access (Layer 3) - ~18 files
+├── repositories/            # Data access (Layer 3) - 20 files
 │   ├── mod.rs
 │   ├── base.rs              # Repository trait, RepoError, RepoResult
 │   ├── factory.rs           # Repositories container
@@ -90,11 +116,15 @@ src-tauri/src/
 │   ├── task_repository_streaming.rs
 │   ├── intervention_repository.rs
 │   ├── material_repository.rs
+│   ├── message_repository.rs
+│   ├── notification_repository.rs
+│   ├── notification_preferences_repository.rs
 │   ├── photo_repository.rs
+│   ├── quote_repository.rs
 │   ├── session_repository.rs
 │   ├── calendar_event_repository.rs
-│   ├── audit_repository.rs
-│   └── ...
+│   ├── dashboard_repository.rs
+│   └── audit_repository.rs
 ├── models/                  # Data models with ts-rs exports
 │   ├── mod.rs
 │   ├── task.rs              # Task, TaskStatus, TaskPriority, CreateTaskRequest
@@ -113,7 +143,11 @@ src-tauri/src/
 ├── db/                      # Database management
 │   ├── mod.rs               # Database, AsyncDatabase wrappers
 │   ├── connection.rs        # PoolConfig, QueryPerformanceMonitor
-│   ├── migrations.rs        # Migration runner (versions 1-33+)
+│   ├── migrations.rs        # Migration runner (versions 1-37)
+│   ├── operation_pool.rs    # OperationPoolManager
+│   ├── metrics.rs           # Query metrics
+│   ├── import.rs            # Bulk import helpers
+│   ├── queries.rs           # Common query helpers
 │   ├── schema.sql           # Base schema
 │   └── utils.rs
 ├── sync/                    # Sync queue
