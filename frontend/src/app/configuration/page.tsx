@@ -24,8 +24,7 @@ import { LogDomain } from '@/shared/utils';
 import { PageShell } from '@/shared/ui/layout/PageShell';
 import { LoadingState } from '@/shared/ui/layout/LoadingState';
 import { PageHeader } from '@/shared/ui/ui/page-header';
-import { IPC_COMMANDS, safeInvoke } from '@/shared/utils';
-import type { JsonValue } from '@/shared/types';
+import { useSystemHealth } from '@/shared/hooks';
 
 // Lazy load tab components to reduce initial bundle size
 const SystemSettingsTab = dynamic(() => import('./components/SystemSettingsTab').then(mod => ({ default: mod.SystemSettingsTab })), {
@@ -83,23 +82,22 @@ const tabConfig = [
 export default function ConfigurationPage() {
   const [activeTab, setActiveTab] = useState('system');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [systemStatus, setSystemStatus] = useState<'healthy' | 'warning' | 'error'>('healthy');
   
   // Initialize logging
-  const { logInfo, logError, logUserAction, logPerformance } = useLogger({
+  const { logInfo, logUserAction, logPerformance } = useLogger({
     context: LogDomain.SYSTEM,
     component: 'ConfigurationPage',
     enablePerformanceLogging: true
   });
 
+  // System health via shared hook (no direct IPC in page)
+  const { systemStatus, refreshing: isRefreshing, refresh } = useSystemHealth({
+    pollInterval: 30000,
+  });
+
   // Use refs for logger functions to prevent useEffect re-runs
   const logInfoRef = useRef(logInfo);
-  const logErrorRef = useRef(logError);
-  const logPerformanceRef = useRef(logPerformance);
   logInfoRef.current = logInfo;
-  logErrorRef.current = logError;
-  logPerformanceRef.current = logPerformance;
 
   // Log page load (only once on mount)
   useEffect(() => {
@@ -170,62 +168,12 @@ export default function ConfigurationPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeTab, logUserAction]);
 
-  // System status check via IPC (instead of HTTP)
-  useEffect(() => {
-    let cancelled = false;
-    const checkSystemStatus = async () => {
-      const timer = logPerformanceRef.current('System status check');
-      try {
-        logInfoRef.current('Checking system status via IPC');
-        const result = await safeInvoke<JsonValue>(IPC_COMMANDS.HEALTH_CHECK, {});
-        if (!cancelled) {
-          if (result && typeof result === 'object' && 'status' in result) {
-            const status = result as { status: string };
-            const newStatus = status.status === 'healthy' ? 'healthy' as const : 'warning' as const;
-            setSystemStatus(newStatus);
-            logInfoRef.current('System status updated', { status: newStatus });
-          } else {
-            setSystemStatus('healthy');
-          }
-        }
-      } catch (error) {
-        if (!cancelled) {
-          logErrorRef.current('System status check failed', { error: error instanceof Error ? error.message : error });
-          setSystemStatus('error');
-        }
-      } finally {
-        timer();
-      }
-    };
-    
-    checkSystemStatus();
-    const interval = setInterval(checkSystemStatus, 30000); // Check every 30 seconds
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, []);
-
   const handleRefresh = async () => {
     const timer = logPerformance('Page refresh');
-    setIsRefreshing(true);
     logUserAction('Page refresh initiated');
-    
-    try {
-      const result = await safeInvoke<JsonValue>(IPC_COMMANDS.HEALTH_CHECK, {});
-      if (result && typeof result === 'object' && 'status' in result) {
-        const status = result as { status: string };
-        const newStatus = status.status === 'healthy' ? 'healthy' as const : 'warning' as const;
-        setSystemStatus(newStatus);
-      }
-      logInfo('Page refresh completed');
-    } catch (error) {
-      logError('Page refresh failed', { error: error instanceof Error ? error.message : error });
-      setSystemStatus('error');
-    } finally {
-      setIsRefreshing(false);
-      timer();
-    }
+    await refresh();
+    logInfo('Page refresh completed');
+    timer();
   };
 
   const handleTabChange = (newTab: string) => {

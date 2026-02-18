@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { SystemSettingsTab } from '../SystemSettingsTab';
 import { MonitoringTab } from '../MonitoringTab';
 import { BusinessRulesTab } from '../BusinessRulesTab';
-import { safeInvoke, settingsOperations } from '@/shared/utils';
+import { settingsOperations } from '@/shared/utils';
 
 jest.mock('@/domains/auth', () => ({
   useAuth: () => ({ session: { token: 'test-token' } }),
@@ -15,7 +15,35 @@ jest.mock('@/shared/utils', () => ({
     getAppSettings: jest.fn(),
     updateGeneralSettings: jest.fn(),
   },
-  safeInvoke: jest.fn(),
+  LogDomain: {
+    AUTH: 'AUTH',
+    TASK: 'TASK',
+    CLIENT: 'CLIENT',
+    PHOTO: 'PHOTO',
+    SYNC: 'SYNC',
+    UI: 'UI',
+    API: 'API',
+    SYSTEM: 'SYSTEM',
+    USER: 'USER',
+    PERFORMANCE: 'PERFORMANCE',
+    SECURITY: 'SECURITY',
+  },
+}));
+
+jest.mock('@/shared/hooks', () => ({
+  useSystemHealth: () => ({
+    systemStatus: 'healthy',
+    statusDetails: {
+      status: 'healthy',
+      components: {
+        database: { status: 'healthy', message: 'OK', lastChecked: new Date().toISOString() },
+      },
+      timestamp: new Date().toISOString(),
+    },
+    loading: false,
+    refreshing: false,
+    refresh: jest.fn(),
+  }),
 }));
 
 jest.mock('@/shared/ui/ui/confirm-dialog', () => ({
@@ -72,19 +100,12 @@ jest.mock('sonner', () => ({
 
 const mockGetAppSettings = settingsOperations.getAppSettings as jest.Mock;
 const mockUpdateGeneralSettings = settingsOperations.updateGeneralSettings as jest.Mock;
-const mockSafeInvoke = safeInvoke as jest.Mock;
 
 describe('Configuration tabs regressions', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetAppSettings.mockResolvedValue({ general: {} });
     mockUpdateGeneralSettings.mockResolvedValue({});
-    mockSafeInvoke.mockResolvedValue({
-      status: 'healthy',
-      components: {
-        database: { status: 'healthy', message: 'OK', lastChecked: new Date().toISOString() },
-      },
-    });
   });
 
   it('renders business hours schedule entries', async () => {

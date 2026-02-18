@@ -2,12 +2,12 @@ use std::sync::Arc;
 
 use uuid::Uuid;
 
-use crate::shared::db::Database;
 use crate::models::material::{
     InventoryStats, InventoryTransaction, InventoryTransactionType, Material, MaterialConsumption,
     MaterialStats, MaterialType,
 };
 use crate::services::material::{MaterialService, RecordConsumptionRequest, UpdateStockRequest};
+use crate::shared::db::Database;
 use crate::shared::event_bus::InterventionFinalized;
 
 use crate::domains::inventory::domain::material::{

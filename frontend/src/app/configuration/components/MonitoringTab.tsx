@@ -1,84 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/ui/card';
 import { Button } from '@/shared/ui/ui/button';
-import { toast } from 'sonner';
 import { LoadingState } from '@/shared/ui/layout/LoadingState';
 import { Activity, RefreshCw, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
-import { SystemStatus } from '@/shared/types';
-import { IPC_COMMANDS, safeInvoke } from '@/shared/utils';
-import type { JsonValue } from '@/shared/types';
+import { useSystemHealth } from '@/shared/hooks';
 
 export function MonitoringTab() {
-  const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-
-  useEffect(() => {
-    loadSystemStatus();
-  }, []);
-
-  const loadSystemStatus = async () => {
-    try {
-      const result = await safeInvoke<JsonValue>(IPC_COMMANDS.HEALTH_CHECK, {});
-      if (result && typeof result === 'object') {
-        const healthData = result as Record<string, JsonValue>;
-        const overallStatus = (healthData.status as string) === 'healthy' ? 'healthy' as const : 'warning' as const;
-        const now = new Date().toISOString();
-
-        const components: Record<
-          string,
-          { status: 'healthy' | 'warning' | 'error'; message?: string; lastChecked: string }
-        > = {};
-
-        if (healthData.components && typeof healthData.components === 'object') {
-          for (const [key, val] of Object.entries(healthData.components as Record<string, JsonValue>)) {
-            const comp = val as Record<string, JsonValue>;
-            components[key] = {
-              status:
-                (comp.status as string) === 'healthy'
-                  ? 'healthy'
-                  : (comp.status as string) === 'warning'
-                    ? 'warning'
-                    : 'error',
-              message: (comp.message as string) || '',
-              lastChecked: (comp.lastChecked as string) || now,
-            };
-          }
-        }
-
-        const status: SystemStatus = {
-          status: overallStatus,
-          components,
-          timestamp: now,
-        };
-        setSystemStatus(status);
-      }
-    } catch (error) {
-      console.error('Error loading system status:', error);
-      toast.error('Erreur lors du chargement du statut système');
-      setSystemStatus({
-        status: 'error',
-        components: {
-          system: {
-            status: 'error',
-            message: 'Impossible de contacter le backend',
-            lastChecked: new Date().toISOString(),
-          },
-        },
-        timestamp: new Date().toISOString(),
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const refreshStatus = async () => {
-    setRefreshing(true);
-    await loadSystemStatus();
-    setRefreshing(false);
-  };
+  const { statusDetails: systemStatus, loading, refreshing, refresh } = useSystemHealth({
+    autoStart: true,
+  });
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -119,7 +50,7 @@ export function MonitoringTab() {
           <h2 className="text-2xl font-bold text-foreground">Monitoring</h2>
           <p className="text-muted-foreground">Surveillez la santé du système en temps réel</p>
         </div>
-        <Button onClick={refreshStatus} disabled={refreshing} variant="outline">
+        <Button onClick={refresh} disabled={refreshing} variant="outline">
           {refreshing ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
           Actualiser
         </Button>

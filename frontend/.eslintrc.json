@@ -20,6 +20,13 @@
         "no-restricted-imports": [
           "error",
           {
+            "paths": [
+              {
+                "name": "@/shared/utils",
+                "importNames": ["safeInvoke", "IPC_COMMANDS"],
+                "message": "Do not use raw IPC (safeInvoke/IPC_COMMANDS) in app pages. Use a domain hook or shared hook instead."
+              }
+            ],
             "patterns": [
               {
                 "group": ["@/components/**", "@/lib/**", "@/hooks/**", "@/contexts/**", "@/types/**"],
