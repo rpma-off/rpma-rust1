@@ -110,7 +110,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
 
       const response = await clientService.updateClient(params.id, formData, user.token);
       if (response.error) {
-        setFormErrors({ general: response.error || 'Ã‰chec de la mise Ã  jour du client' });
+        setFormErrors({ general: response.error || 'Échec de la mise Ã  jour du client' });
         return;
       }
 

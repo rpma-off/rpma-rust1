@@ -165,7 +165,7 @@ export default function EditTaskPage() {
                     {t('tasks.editTask')} {taskData.task_number}
                   </h1>
                   <p className="text-muted-foreground mt-1 text-sm md:text-base">
-                    Modifiez les informations de la tÃ¢che. Les changements seront sauvegardÃ©s automatiquement.
+                    Modifiez les informations de la tâche. Les changements seront sauvegardés automatiquement.
                   </p>
                 </div>
               </div>

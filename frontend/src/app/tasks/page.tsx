@@ -67,7 +67,7 @@ const TaskCard = React.memo(({
   }, []);
 
   const formatDate = useCallback((dateString: string | null) => {
-    if (!dateString) return 'Non planifiÃ©e';
+    if (!dateString) return 'Non planifiée';
     return new Date(dateString).toLocaleDateString('fr-FR', {
       year: 'numeric',
       month: 'short',
@@ -104,12 +104,12 @@ const TaskCard = React.memo(({
                 <Car className="h-4 w-4 text-muted-foreground shrink-0" />
                 <div className="min-w-0 flex-1">
                   <span className="text-foreground font-medium text-sm block truncate">
-                    {task.vehicle_plate || 'Plaque non dÃ©finie'}
+                    {task.vehicle_plate || 'Plaque non définie'}
                   </span>
                   <span className="text-muted-foreground text-xs truncate block">
                     {task.vehicle_make && task.vehicle_model ?
                       `${task.vehicle_make} ${task.vehicle_model}` :
-                      'VÃ©hicule non spÃ©cifiÃ©'
+                      'Véhicule non spécifié'
                     }
                   </span>
                 </div>
@@ -118,14 +118,14 @@ const TaskCard = React.memo(({
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-muted-foreground shrink-0" />
                 <span className="text-foreground text-sm truncate">
-                  {task.customer_name || 'Client non spÃ©cifiÃ©'}
+                  {task.customer_name || 'Client non spécifié'}
                 </span>
               </div>
 
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
                 <span className="text-foreground text-sm">
-                  {task.scheduled_date ? formatDate(task.scheduled_date) : 'Non planifiÃ©e'}
+                  {task.scheduled_date ? formatDate(task.scheduled_date) : 'Non planifiée'}
                 </span>
               </div>
 
@@ -171,7 +171,7 @@ const TaskCard = React.memo(({
                 size="sm"
                 onClick={() => onView(task)}
                 className="h-8 w-8 p-0 hover:bg-muted/10 text-muted-foreground hover:text-foreground"
-                title="Voir les dÃ©tails"
+                title="Voir les détails"
               >
                 <Eye className="h-4 w-4" />
               </Button>
@@ -199,8 +199,8 @@ const TaskCard = React.memo(({
                   <AlertDialogHeader>
                     <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
                     <AlertDialogDescription>
-                      ÃŠtes-vous sÃ»r de vouloir supprimer la tÃ¢che &ldquo;{task.title || `TÃ¢che #${task.id.slice(0, 8)}`}&rdquo; ?
-                      Cette action est irrÃ©versible.
+                      Êtes-vous sÃ»r de vouloir supprimer la tâche &ldquo;{task.title || `Tâche #${task.id.slice(0, 8)}`}&rdquo; ?
+                      Cette action est irréversible.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -267,7 +267,7 @@ const TaskTable = React.memo(({
   const columns = [
     {
       key: 'title',
-      header: 'TÃ¢che',
+      header: 'Tâche',
       width: 200,
       sortable: true,
       render: (_value: unknown, task: TaskWithDetails) => (
@@ -284,7 +284,7 @@ const TaskTable = React.memo(({
     },
     {
       key: 'vehicle',
-      header: 'VÃ©hicule',
+      header: 'Véhicule',
       width: 150,
       sortable: true,
       className: 'hidden sm:table-cell',
@@ -375,7 +375,7 @@ const TaskTable = React.memo(({
               onView(task);
             }}
             className="h-8 w-8 p-0 touch-manipulation"
-            title="Voir les dÃ©tails"
+            title="Voir les détails"
           >
             <Eye className="h-3 w-3" />
           </Button>
@@ -407,8 +407,8 @@ const TaskTable = React.memo(({
                 <AlertDialogHeader>
                   <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
                   <AlertDialogDescription>
-                    ÃŠtes-vous sÃ»r de vouloir supprimer la tÃ¢che &ldquo;{task.title || `TÃ¢che #${task.id.slice(0, 8)}`}&rdquo; ?
-                    Cette action est irrÃ©versible.
+                    Êtes-vous sÃ»r de vouloir supprimer la tâche &ldquo;{task.title || `Tâche #${task.id.slice(0, 8)}`}&rdquo; ?
+                    Cette action est irréversible.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -496,7 +496,7 @@ const debouncedSearchTerm = useDebounce(searchTerm, 300);
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Rechercher tÃ¢ches, vÃ©hicules, clients..."
+              placeholder="Rechercher tâches, véhicules, clients..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 h-9 rounded-full bg-muted/30 border-border"
@@ -563,11 +563,11 @@ const debouncedSearchTerm = useDebounce(searchTerm, 300);
           >
             <option value="all">Tous les statuts</option>
             <option value="draft">Devis</option>
-            <option value="scheduled">PlanifiÃ©</option>
+            <option value="scheduled">Planifié</option>
             <option value="in_progress">En cours</option>
-            <option value="completed">TerminÃ©</option>
-            <option value="cancelled">AnnulÃ©</option>
-            <option value="archived">ArchivÃ©</option>
+            <option value="completed">Terminé</option>
+            <option value="cancelled">Annulé</option>
+            <option value="archived">Archivé</option>
           </select>
 
           <select
@@ -616,7 +616,7 @@ const debouncedSearchTerm = useDebounce(searchTerm, 300);
               }}
               className="text-muted-foreground"
             >
-              RÃ©initialiser
+              Réinitialiser
             </Button>
           )}
 
@@ -734,7 +734,7 @@ export default function TasksPage() {
   ]), [tasks, t]);
 
   const formatTaskDate = (task: TaskWithDetails) => {
-    if (!task.scheduled_date) return 'Date Ã  dÃ©finir';
+    if (!task.scheduled_date) return 'Date Ã  définir';
     const date = new Date(task.scheduled_date);
     const dateText = date.toLocaleDateString('fr-FR', { month: 'numeric', day: 'numeric', year: '2-digit' });
     const timeText = task.start_time || task.heure_rdv;
@@ -800,7 +800,7 @@ export default function TasksPage() {
         return;
       }
       await taskGateway.editTask(taskId, { status: newStatus }, user.token);
-      enhancedToast.success('Statut mis Ã  jour avec succÃ¨s');
+      enhancedToast.success('Statut mis Ã  jour avec succès');
       await refetch();
     } catch (err) {
       logger.error('Failed to update task status', { taskId, newStatus, error: err });
@@ -841,7 +841,7 @@ export default function TasksPage() {
         taskId: task.id,
         component: 'TasksPage'
       });
-      enhancedToast.success('TÃ¢che supprimÃ©e avec succÃ¨s', {
+      enhancedToast.success('Tâche supprimée avec succès', {
         action: {
           label: 'Actualiser',
           onClick: () => {
@@ -857,24 +857,24 @@ export default function TasksPage() {
       });
 
       // Extract meaningful error message for user
-      let userErrorMessage = 'Erreur lors de la suppression de la tÃ¢che';
+      let userErrorMessage = 'Erreur lors de la suppression de la tâche';
       if (err instanceof Error) {
         if (err.message.includes('Network')) {
-          userErrorMessage = 'Erreur de rÃ©seau - vÃ©rifiez votre connexion';
+          userErrorMessage = 'Erreur de réseau - vérifiez votre connexion';
         } else if (err.message.includes('401')) {
-          userErrorMessage = 'Non autorisÃ© - veuillez vous reconnecter';
+          userErrorMessage = 'Non autorisé - veuillez vous reconnecter';
         } else if (err.message.includes('403')) {
-          userErrorMessage = 'AccÃ¨s interdit - permissions insuffisantes';
+          userErrorMessage = 'Accès interdit - permissions insuffisantes';
         } else if (err.message.includes('404')) {
-          userErrorMessage = 'TÃ¢che introuvable - elle a peut-Ãªtre dÃ©jÃ  Ã©tÃ© supprimÃ©e';
+          userErrorMessage = 'Tâche introuvable - elle a peut-être déjÃ  été supprimée';
         } else if (err.message.includes('500')) {
-          userErrorMessage = 'Erreur serveur - veuillez rÃ©essayer plus tard';
+          userErrorMessage = 'Erreur serveur - veuillez réessayer plus tard';
         }
       }
 
       enhancedToast.error(userErrorMessage, {
         action: {
-          label: 'RÃ©essayer',
+          label: 'Réessayer',
           onClick: () => handleDeleteTask(task)
         }
       });
@@ -895,7 +895,7 @@ export default function TasksPage() {
   const handleExport = useCallback(async () => {
     try {
       if (!user?.token) {
-        enhancedToast.error('Session expirÃ©e, veuillez vous reconnecter');
+        enhancedToast.error('Session expirée, veuillez vous reconnecter');
         return;
       }
 
@@ -918,7 +918,7 @@ export default function TasksPage() {
       link.click();
       document.body.removeChild(link);
 
-      enhancedToast.success('Export terminÃ© avec succÃ¨s');
+      enhancedToast.success('Export terminé avec succès');
     } catch (error) {
       console.error('Export failed:', error);
       enhancedToast.error('Erreur lors de l\'export');
@@ -928,7 +928,7 @@ export default function TasksPage() {
   const handleImport = useCallback(async () => {
     try {
       if (!user?.token) {
-        enhancedToast.error('Session expirÃ©e, veuillez vous reconnecter');
+        enhancedToast.error('Session expirée, veuillez vous reconnecter');
         return;
       }
 
@@ -955,7 +955,7 @@ export default function TasksPage() {
             update_existing: false
           }, user.token);
 
-          enhancedToast.success(`${result.successful} tÃ¢ches importÃ©es avec succÃ¨s`);
+          enhancedToast.success(`${result.successful} tâches importées avec succès`);
           refetch(); // Refresh the task list
         } catch (error) {
           console.error('Import failed:', error);
@@ -981,8 +981,8 @@ export default function TasksPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-foreground mb-4">AccÃ¨s non autorisÃ©</h1>
-          <p className="text-muted-foreground">Veuillez vous connecter pour accÃ©der Ã  cette page.</p>
+          <h1 className="text-2xl font-bold text-foreground mb-4">Accès non autorisé</h1>
+          <p className="text-muted-foreground">Veuillez vous connecter pour accéder Ã  cette page.</p>
         </div>
       </div>
     );
@@ -1184,7 +1184,7 @@ export default function TasksPage() {
 
         {filteredTasks.length > 0 && filteredTasks.length !== tasks.length && (
           <div className="mt-3 text-center text-xs text-muted-foreground">
-            {filteredTasks.length} sur {tasks.length} tÃ¢ches
+            {filteredTasks.length} sur {tasks.length} tâches
           </div>
         )}
 
@@ -1203,7 +1203,7 @@ export default function TasksPage() {
           actions={[
             {
               icon: <Plus className="w-4 h-4" />,
-              label: 'Nouvelle tÃ¢che',
+              label: 'Nouvelle tâche',
               onClick: () => router.push('/tasks/new')
             },
             {

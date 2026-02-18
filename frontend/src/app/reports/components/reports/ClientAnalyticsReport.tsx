@@ -94,18 +94,18 @@ function ClientAnalyticsReport({ dateRange, filters }: ClientAnalyticsReportProp
             {data.summary.total_clients.toString()}
           </div>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Clients enregistrÃ©s
+            Clients enregistrés
           </p>
         </div>
 
         <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-            Taux de RÃ©tention
+            Taux de Rétention
           </h3>
           <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
             {data.summary.retention_rate.toFixed(1)}%
           </div>
-          <p className="text-sm text-slate-600 dark:text-slate-400">Taux de rÃ©tention client</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">Taux de rétention client</p>
         </div>
 
         <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">

@@ -93,7 +93,7 @@ export function QuickAddDialog({ isOpen, onClose }: QuickAddDialogProps) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Nouvelle tÃ¢che</DialogTitle>
+          <DialogTitle>Nouvelle tâche</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -109,7 +109,7 @@ export function QuickAddDialog({ isOpen, onClose }: QuickAddDialogProps) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium">VÃ©hicule *</label>
+              <label className="text-sm font-medium">Véhicule *</label>
               <Input
                 value={vehicle}
                 onChange={(e) => setVehicle(e.target.value)}
@@ -122,10 +122,10 @@ export function QuickAddDialog({ isOpen, onClose }: QuickAddDialogProps) {
               <label className="text-sm font-medium">Technicien</label>
               <Select value={technicianId} onValueChange={setTechnicianId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="SÃ©lectionner" />
+                  <SelectValue placeholder="Sélectionner" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="unassigned">Non assignÃ©</SelectItem>
+                  <SelectItem value="unassigned">Non assigné</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -150,7 +150,7 @@ export function QuickAddDialog({ isOpen, onClose }: QuickAddDialogProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="PPF">PPF</SelectItem>
-                  <SelectItem value="CÃ©ramique">CÃ©ramique</SelectItem>
+                  <SelectItem value="Céramique">Céramique</SelectItem>
                   <SelectItem value="Detailing">Detailing</SelectItem>
                   <SelectItem value="Autre">Autre</SelectItem>
                 </SelectContent>
@@ -160,7 +160,7 @@ export function QuickAddDialog({ isOpen, onClose }: QuickAddDialogProps) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium">DÃ©but</label>
+              <label className="text-sm font-medium">Début</label>
               <Input
                 type="time"
                 value={startTime}
@@ -183,7 +183,7 @@ export function QuickAddDialog({ isOpen, onClose }: QuickAddDialogProps) {
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Notes supplÃ©mentaires..."
+              placeholder="Notes supplémentaires..."
               rows={3}
             />
           </div>
@@ -203,7 +203,7 @@ export function QuickAddDialog({ isOpen, onClose }: QuickAddDialogProps) {
               className="flex-1"
               style={{ backgroundColor: designTokens.colors.primary }}
             >
-              {isSubmitting ? 'CrÃ©ation...' : 'CrÃ©er'}
+              {isSubmitting ? 'Création...' : 'Créer'}
             </Button>
           </div>
         </form>

@@ -115,7 +115,7 @@ function TaskPerformanceReport({ dateRange, filters }: TaskPerformanceReportProp
     <div className="space-y-8">
       <div className="text-center py-6">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-          Rapport de Performance des TÃ¢ches
+          Rapport de Performance des Tâches
         </h2>
         <p className="text-slate-600 dark:text-slate-400">
           Du {new Date(dateRange.start).toLocaleDateString()} au {new Date(dateRange.end).toLocaleDateString()}
@@ -125,30 +125,30 @@ function TaskPerformanceReport({ dateRange, filters }: TaskPerformanceReportProp
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-            Ã‰volution des TÃ¢ches
+            Évolution des Tâches
           </h3>
           <TaskCompletionChart data={chartData} statusDistribution={statusDistribution} />
         </div>
 
         <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-            Performances ClÃ©s
+            Performances Clés
           </h3>
           <dl className="grid grid-cols-2 gap-4">
             <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg">
-              <dt className="text-sm font-medium text-slate-500 dark:text-slate-400">Total TÃ¢ches</dt>
+              <dt className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Tâches</dt>
               <dd className="text-2xl font-bold text-slate-900 dark:text-white">{data.summary.total_tasks}</dd>
             </div>
             <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg">
-              <dt className="text-sm font-medium text-slate-500 dark:text-slate-400">ComplÃ©tÃ©es</dt>
+              <dt className="text-sm font-medium text-slate-500 dark:text-slate-400">Complétées</dt>
               <dd className="text-2xl font-bold text-green-600 dark:text-green-500">{data.summary.completed_tasks}</dd>
             </div>
             <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg">
-              <dt className="text-sm font-medium text-slate-500 dark:text-slate-400">Taux de RÃ©ussite</dt>
+              <dt className="text-sm font-medium text-slate-500 dark:text-slate-400">Taux de Réussite</dt>
               <dd className="text-2xl font-bold text-blue-600 dark:text-blue-500">{data.summary.completion_rate.toFixed(1)}%</dd>
             </div>
             <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg">
-              <dt className="text-sm font-medium text-slate-500 dark:text-slate-400">DÃ©lais RespectÃ©s</dt>
+              <dt className="text-sm font-medium text-slate-500 dark:text-slate-400">Délais Respectés</dt>
               <dd className="text-2xl font-bold text-purple-600 dark:text-purple-500">{data.summary.on_time_completion_rate.toFixed(1)}%</dd>
             </div>
           </dl>
@@ -157,16 +157,16 @@ function TaskPerformanceReport({ dateRange, filters }: TaskPerformanceReportProp
 
       <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-          DÃ©tails des TÃ¢ches par Technicien
+          Détails des Tâches par Technicien
         </h3>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-700">
                 <th className="text-left py-3 px-4 font-medium text-slate-600 dark:text-slate-400">Technicien</th>
-                <th className="text-right py-3 px-4 font-medium text-slate-600 dark:text-slate-400">TÃ¢ches ComplÃ©tÃ©es</th>
+                <th className="text-right py-3 px-4 font-medium text-slate-600 dark:text-slate-400">Tâches Complétées</th>
                 <th className="text-right py-3 px-4 font-medium text-slate-600 dark:text-slate-400">Temps Moyen (h)</th>
-                <th className="text-right py-3 px-4 font-medium text-slate-600 dark:text-slate-400">Score QualitÃ©</th>
+                <th className="text-right py-3 px-4 font-medium text-slate-600 dark:text-slate-400">Score Qualité</th>
               </tr>
             </thead>
             <tbody>
@@ -184,7 +184,7 @@ function TaskPerformanceReport({ dateRange, filters }: TaskPerformanceReportProp
               ))}
               {data.technician_breakdown.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="py-8 text-center text-slate-500">Aucune donnÃ©e technicien disponible</td>
+                  <td colSpan={4} className="py-8 text-center text-slate-500">Aucune donnée technicien disponible</td>
                 </tr>
               )}
             </tbody>

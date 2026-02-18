@@ -1,6 +1,6 @@
 ﻿ /**
  * API Route: POST /api/interventions/[id]/finalize
- * Finalise une intervention PPF complÃ¨tement
+ * Finalise une intervention PPF complètement
  * @version 2.0
  * @date 2025-01-20
  */
@@ -12,9 +12,9 @@ import { z } from 'zod';
 import { interventionWorkflowService } from '@/domains/interventions/server';
 import type { PPFStep } from '@/domains/interventions/server';
 
-// SchÃ©ma de validation pour finaliser une intervention
+// Schéma de validation pour finaliser une intervention
 const FinalizeInterventionSchema = z.object({
-  // RÃ©sultats finaux
+  // Résultats finaux
   customer_satisfaction: z.number().min(1).max(5).optional(),
   quality_score: z.number().min(0).max(100).optional(),
   final_observations: z.array(z.string()).optional(),
@@ -26,7 +26,7 @@ const FinalizeInterventionSchema = z.object({
   customer_signature: z.string().optional(),
   customer_comments: z.string().optional(),
   
-   // MÃ©triques finales
+   // Métriques finales
    actual_duration: z.number().min(1).optional(),
    material_usage: z.record(z.string(), z.number()).optional(),
   
@@ -48,7 +48,7 @@ const FinalizeInterventionSchema = z.object({
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    // 1. Validation des paramÃ¨tres de route
+    // 1. Validation des paramètres de route
     const interventionId = (await params).id;
     if (!interventionId) {
       return NextResponse.json(
@@ -66,7 +66,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       );
     }
 
-    // 2. Validation du corps de la requÃªte
+    // 2. Validation du corps de la requête
     const body = await request.json();
     const validationResult = FinalizeInterventionSchema.safeParse(body);
     
@@ -110,7 +110,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       );
     }
 
-    // VÃ©rifier que l'intervention est en status FINALIZING
+    // Vérifier que l'intervention est en status FINALIZING
     if (interventionCheck.data?.status !== 'finalizing') {
       return NextResponse.json(
         { 
@@ -123,9 +123,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
 
     // 5. Validation des permissions sur l'intervention
-    // TODO: VÃ©rifier que l'utilisateur peut finaliser cette intervention
+    // TODO: Vérifier que l'utilisateur peut finaliser cette intervention
 
-    // 6. Validation mÃ©tier de finalisation
+    // 6. Validation métier de finalisation
     const finalizationValidation = await validateFinalizationRequirements(interventionId, sessionToken);
     if (!finalizationValidation.valid) {
       return NextResponse.json(
@@ -152,7 +152,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       }
     }
 
-    // 8. Appel du service mÃ©tier
+    // 8. Appel du service métier
     const result = await workflowService.finalizeIntervention(interventionId, dto, '');
 
     if (!result.success) {
@@ -165,7 +165,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       );
     }
 
-    // 9. Retour de la rÃ©ponse de succÃ¨s avec rÃ©sumÃ© complet
+    // 9. Retour de la réponse de succès avec résumé complet
     const typedData = result.data as {
       intervention: { intervention_completed_at: string };
       completion_summary: { efficiency_rating: number; quality_score: number };
@@ -200,7 +200,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 }
 
 /**
- * Valide que l'intervention peut Ãªtre finalisÃ©e
+ * Valide que l'intervention peut être finalisée
  */
 async function validateFinalizationRequirements(
   interventionId: string,
@@ -211,7 +211,7 @@ async function validateFinalizationRequirements(
   try {
     const workflowService = interventionWorkflowService;
     
-      // VÃ©rifier que toutes les Ã©tapes sont complÃ©tÃ©es
+      // Vérifier que toutes les étapes sont complétées
       const stepsResult = await workflowService.getInterventionSteps(interventionId, sessionToken);
       if (stepsResult.success && stepsResult.data) {
         const steps: PPFStep[] = stepsResult.data.data.map(step => ({
@@ -232,7 +232,7 @@ async function validateFinalizationRequirements(
           errors.push(`Incomplete mandatory steps: ${incompleteSteps.map((s: PPFStep) => s.stepName).join(', ')}`);
         }
 
-         // VÃ©rifier que chaque Ã©tape a le minimum de photos requises
+         // Vérifier que chaque étape a le minimum de photos requises
          // TODO: Rewrite to fetch photos separately from PPFPhotoService
          for (const _step of steps) {
            // Temporarily skip photo validation until photos are fetched separately
@@ -245,10 +245,10 @@ async function validateFinalizationRequirements(
          }
         }
 
-    // TODO: Ajouter d'autres validations mÃ©tier
-    // - VÃ©rification des signatures requises
-    // - Validation de la qualitÃ© minimale
-    // - ContrÃ´le des mesures critiques
+    // TODO: Ajouter d'autres validations métier
+    // - Vérification des signatures requises
+    // - Validation de la qualité minimale
+    // - Contrôle des mesures critiques
   }
   catch (error) {
     console.error('Error validating finalization requirements:', error);
@@ -261,7 +261,7 @@ async function validateFinalizationRequirements(
   };
 }
 
-// Gestion des autres mÃ©thodes HTTP
+// Gestion des autres méthodes HTTP
 export async function GET() {
   return NextResponse.json(
     { error: 'Method not allowed' },

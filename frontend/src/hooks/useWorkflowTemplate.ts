@@ -16,7 +16,7 @@ export interface UseWorkflowTemplateReturn {
 }
 
 /**
- * Hook pour gÃ©rer les templates de workflow
+ * Hook pour gérer les templates de workflow
  */
 export function useWorkflowTemplate(
   taskType: string = 'ppf_installation', 
@@ -100,7 +100,7 @@ export function useWorkflowTemplate(
 }
 
 /**
- * Hook spÃ©cialisÃ© pour une Ã©tape spÃ©cifique
+ * Hook spécialisé pour une étape spécifique
  */
 export function useWorkflowStep(
   taskType: string = 'ppf_installation',

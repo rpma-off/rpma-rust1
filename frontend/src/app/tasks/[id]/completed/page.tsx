@@ -274,9 +274,9 @@ export default function TaskCompletedPage() {
       let errorMessage = t('errors.printPreparationError');
 
       if (error instanceof Error) {
-        if (error.message.includes('popup') || error.message.includes('bloquÃ©e')) {
+        if (error.message.includes('popup') || error.message.includes('bloquée')) {
           errorMessage = t('errors.printWindowBlocked');
-        } else if (error.message.includes('tÃ©lÃ©chargement')) {
+        } else if (error.message.includes('téléchargement')) {
           errorMessage = t('errors.fileAccessProblem');
         } else if (error.message.includes('timeout')) {
           errorMessage = t('errors.generationTimeout');
@@ -399,10 +399,10 @@ export default function TaskCompletedPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              Intervention terminÃ©e âœ…
+              Intervention terminée âœ…
             </h1>
             <p className="text-sm text-gray-600">
-              {task.title || `TÃ¢che #${task.external_id || task.id.slice(0, 8)}`}
+              {task.title || `Tâche #${task.external_id || task.id.slice(0, 8)}`}
             </p>
           </div>
         </div>
@@ -410,7 +410,7 @@ export default function TaskCompletedPage() {
         <div className="flex items-center space-x-2">
           <Badge className="bg-green-100 text-green-800 border-green-200">
             <CheckCircle className="h-3 w-3 mr-1" />
-            TerminÃ©
+            Terminé
           </Badge>
         </div>
       </div>
@@ -425,8 +425,8 @@ export default function TaskCompletedPage() {
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="h-6 w-6 text-green-600" />
                   <div className="text-left">
-                    <h3 className="text-lg font-semibold text-green-800">RÃ©sumÃ© de l&apos;Intervention</h3>
-                    <p className="text-sm text-green-600">Statut et informations gÃ©nÃ©rales</p>
+                    <h3 className="text-lg font-semibold text-green-800">Résumé de l&apos;Intervention</h3>
+                    <p className="text-sm text-green-600">Statut et informations générales</p>
                   </div>
                 </div>
               </AccordionTrigger>
@@ -434,20 +434,20 @@ export default function TaskCompletedPage() {
                 <div className="text-center py-4">
                   <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-3" />
                   <h4 className="text-xl font-bold text-green-800 mb-2">
-                    FÃ©licitations !
+                    Félicitations !
                   </h4>
                   <p className="text-green-700 mb-4">
-                    L&apos;intervention a Ã©tÃ© terminÃ©e avec succÃ¨s. Toutes les Ã©tapes ont Ã©tÃ© complÃ©tÃ©es et la checklist a Ã©tÃ© validÃ©e.
+                    L&apos;intervention a été terminée avec succès. Toutes les étapes ont été complétées et la checklist a été validée.
                   </p>
                   <div className="flex items-center justify-center space-x-6 text-sm text-green-600">
                     <div className="flex items-center space-x-2">
                       <Clock className="h-4 w-4" />
-                      <span>TerminÃ© le {formatDate(task.end_time)}</span>
+                      <span>Terminé le {formatDate(task.end_time)}</span>
                     </div>
                     {duration && (
                       <div className="flex items-center space-x-2">
                         <Clock className="h-4 w-4" />
-                        <span>DurÃ©e: {duration}</span>
+                        <span>Durée: {duration}</span>
                       </div>
                     )}
                   </div>
@@ -462,7 +462,7 @@ export default function TaskCompletedPage() {
                   <User className="h-5 w-5 text-blue-600" />
                   <div className="text-left">
                     <h3 className="text-lg font-semibold">Informations Client</h3>
-                    <p className="text-sm text-gray-600">CoordonnÃ©es complÃ¨tes et historique client</p>
+                    <p className="text-sm text-gray-600">Coordonnées complètes et historique client</p>
                   </div>
                 </div>
               </AccordionTrigger>
@@ -545,7 +545,7 @@ export default function TaskCompletedPage() {
                           {fullClientData.total_tasks !== undefined && (
                             <div className="text-center p-3 bg-blue-50 rounded-lg">
                               <div className="text-lg font-bold text-blue-600">{fullClientData.total_tasks}</div>
-                              <div className="text-xs text-blue-600">Total tÃ¢ches</div>
+                              <div className="text-xs text-blue-600">Total tâches</div>
                             </div>
                           )}
                           {fullClientData.active_tasks !== undefined && (
@@ -557,7 +557,7 @@ export default function TaskCompletedPage() {
                           {fullClientData.completed_tasks !== undefined && (
                             <div className="text-center p-3 bg-green-50 rounded-lg">
                               <div className="text-lg font-bold text-green-600">{fullClientData.completed_tasks}</div>
-                              <div className="text-xs text-green-600">TerminÃ©es</div>
+                              <div className="text-xs text-green-600">Terminées</div>
                             </div>
                           )}
                           {fullClientData.last_task_date && (
@@ -565,7 +565,7 @@ export default function TaskCompletedPage() {
                               <div className="text-sm font-medium text-gray-600">
                                 {new Date(fullClientData.last_task_date).toLocaleDateString('fr-FR')}
                               </div>
-                              <div className="text-xs text-gray-500">DerniÃ¨re tÃ¢che</div>
+                              <div className="text-xs text-gray-500">Dernière tâche</div>
                             </div>
                           )}
                         </div>
@@ -578,7 +578,7 @@ export default function TaskCompletedPage() {
                     <>
                       <Separator />
                       <div className="space-y-3">
-                        <h4 className="text-sm font-medium text-gray-700">Notes et Ã©tiquettes</h4>
+                        <h4 className="text-sm font-medium text-gray-700">Notes et étiquettes</h4>
                         <div className="space-y-2">
                           {fullClientData.notes && (
                             <div className="p-3 bg-gray-50 rounded-lg">
@@ -604,13 +604,13 @@ export default function TaskCompletedPage() {
                     <>
                       <Separator />
                       <div className="space-y-3">
-                        <h4 className="text-sm font-medium text-gray-700">Informations systÃ¨me</h4>
+                        <h4 className="text-sm font-medium text-gray-700">Informations système</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-500">
                           {fullClientData.created_at && (
-                            <div>CrÃ©Ã© le {new Date(fullClientData.created_at as unknown as string).toLocaleString('fr-FR')}</div>
+                            <div>Créé le {new Date(fullClientData.created_at as unknown as string).toLocaleString('fr-FR')}</div>
                           )}
                           {fullClientData.updated_at && (
-                            <div>ModifiÃ© le {new Date(fullClientData.updated_at as unknown as string).toLocaleString('fr-FR')}</div>
+                            <div>Modifié le {new Date(fullClientData.updated_at as unknown as string).toLocaleString('fr-FR')}</div>
                           )}
                         </div>
                       </div>
@@ -626,8 +626,8 @@ export default function TaskCompletedPage() {
                 <div className="flex items-center space-x-3">
                   <FileText className="h-5 w-5 text-indigo-600" />
                   <div className="text-left">
-                    <h3 className="text-lg font-semibold">DÃ©tails de la TÃ¢che</h3>
-                    <p className="text-sm text-gray-600">Informations complÃ¨tes sur la tÃ¢che #{task.task_number || task.external_id}</p>
+                    <h3 className="text-lg font-semibold">Détails de la Tâche</h3>
+                    <p className="text-sm text-gray-600">Informations complètes sur la tâche #{task.task_number || task.external_id}</p>
                   </div>
                 </div>
               </AccordionTrigger>
@@ -639,7 +639,7 @@ export default function TaskCompletedPage() {
                       <div className="flex items-center space-x-2">
                         <FileText className="h-4 w-4 text-gray-500" />
                         <div>
-                          <div className="text-xs text-gray-500">NÂ° TÃ¢che</div>
+                          <div className="text-xs text-gray-500">NÂ° Tâche</div>
                           <div className="text-sm font-medium">{task.task_number}</div>
                         </div>
                       </div>
@@ -691,7 +691,7 @@ export default function TaskCompletedPage() {
                     <>
                       <Separator />
                       <div className="space-y-2">
-                        <h4 className="text-sm font-medium text-gray-700">Ã‰tiquettes</h4>
+                        <h4 className="text-sm font-medium text-gray-700">Étiquettes</h4>
                         <div className="flex flex-wrap gap-1">
                           {task.tags.split(',').map((tag, index) => (
                             <Badge key={index} variant="outline" className="text-xs">
@@ -706,14 +706,14 @@ export default function TaskCompletedPage() {
                   {/* Duration Information */}
                   <Separator />
                   <div className="space-y-3">
-                    <h4 className="text-sm font-medium text-gray-700">DurÃ©e et planning</h4>
+                    <h4 className="text-sm font-medium text-gray-700">Durée et planning</h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {task.estimated_duration && (
                         <div className="text-center p-3 bg-blue-50 rounded-lg">
                           <div className="text-sm font-medium text-blue-600">
                             {Math.floor(task.estimated_duration / 60)}h {task.estimated_duration % 60}min
                           </div>
-                          <div className="text-xs text-blue-600">EstimÃ©e</div>
+                          <div className="text-xs text-blue-600">Estimée</div>
                         </div>
                       )}
                       {task.actual_duration && (
@@ -721,7 +721,7 @@ export default function TaskCompletedPage() {
                           <div className="text-sm font-medium text-green-600">
                             {Math.floor(task.actual_duration / 60)}h {task.actual_duration % 60}min
                           </div>
-                          <div className="text-xs text-green-600">RÃ©elle</div>
+                          <div className="text-xs text-green-600">Réelle</div>
                         </div>
                       )}
                       {task.scheduled_date && (
@@ -729,7 +729,7 @@ export default function TaskCompletedPage() {
                           <div className="text-sm font-medium text-orange-600">
                             {formatDate(task.scheduled_date)}
                           </div>
-                          <div className="text-xs text-orange-600">PlanifiÃ©e</div>
+                          <div className="text-xs text-orange-600">Planifiée</div>
                         </div>
                       )}
                     </div>
@@ -738,21 +738,21 @@ export default function TaskCompletedPage() {
                   {/* Task Audit Information */}
                   <Separator />
                   <div className="space-y-3">
-                    <h4 className="text-sm font-medium text-gray-700">Informations systÃ¨me</h4>
+                    <h4 className="text-sm font-medium text-gray-700">Informations système</h4>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-500">
                         <div>
-                          <strong>CrÃ©Ã©:</strong> {task.created_at ? new Date(task.created_at).toLocaleString('fr-FR') : 'N/A'}
+                          <strong>Créé:</strong> {task.created_at ? new Date(task.created_at).toLocaleString('fr-FR') : 'N/A'}
                           {task.created_by && <div>Par: {task.created_by}</div>}
                         </div>
                         <div>
-                          <strong>ModifiÃ©:</strong> {task.updated_at ? new Date(task.updated_at as unknown as string).toLocaleString('fr-FR') : 'N/A'}
+                          <strong>Modifié:</strong> {task.updated_at ? new Date(task.updated_at as unknown as string).toLocaleString('fr-FR') : 'N/A'}
                           {task.updated_by && <div>Par: {task.updated_by}</div>}
                         </div>
                      </div>
                     {task.synced !== undefined && (
                       <div className="flex items-center space-x-2 text-xs">
                         <div className={`w-2 h-2 rounded-full ${task.synced ? 'bg-green-500' : 'bg-orange-500'}`}></div>
-                        <span>{task.synced ? 'SynchronisÃ©' : 'Non synchronisÃ©'}</span>
+                        <span>{task.synced ? 'Synchronisé' : 'Non synchronisé'}</span>
                         {task.last_synced_at && (
                           <span>le {new Date(task.last_synced_at as unknown as string).toLocaleString('fr-FR')}</span>
                         )}
@@ -769,8 +769,8 @@ export default function TaskCompletedPage() {
                 <div className="flex items-center space-x-3">
                   <Car className="h-5 w-5 text-green-600" />
                   <div className="text-left">
-                    <h3 className="text-lg font-semibold">Informations VÃ©hicule</h3>
-                    <p className="text-sm text-gray-600">DÃ©tails du vÃ©hicule et zones PPF</p>
+                    <h3 className="text-lg font-semibold">Informations Véhicule</h3>
+                    <p className="text-sm text-gray-600">Détails du véhicule et zones PPF</p>
                   </div>
                 </div>
               </AccordionTrigger>
@@ -814,7 +814,7 @@ export default function TaskCompletedPage() {
                       <div className="space-y-2">
                         <div className="flex items-center space-x-2">
                           <Shield className="h-4 w-4 text-gray-500" />
-                          <span className="text-sm font-medium">Zones PPF personnalisÃ©es ({task.custom_ppf_zones.length})</span>
+                          <span className="text-sm font-medium">Zones PPF personnalisées ({task.custom_ppf_zones.length})</span>
                         </div>
                         <div className="flex flex-wrap gap-1">
                           {task.custom_ppf_zones.map((zone, index) => (
@@ -838,7 +838,7 @@ export default function TaskCompletedPage() {
                     <Thermometer className="h-5 w-5 text-red-600" />
                     <div className="text-left">
                       <h3 className="text-lg font-semibold">Conditions d&apos;Intervention</h3>
-                      <p className="text-sm text-gray-600">MÃ©tÃ©o, environnement et localisation GPS</p>
+                      <p className="text-sm text-gray-600">Météo, environnement et localisation GPS</p>
                     </div>
                   </div>
                 </AccordionTrigger>
@@ -849,13 +849,13 @@ export default function TaskCompletedPage() {
                       {fullInterventionData?.weather_condition && fullInterventionData.weather_condition && (
                         <div className="text-center p-3 bg-blue-50 rounded-lg">
                           <div className="text-sm font-medium text-blue-600 capitalize">
-                            {fullInterventionData.weather_condition === 'sunny' ? 'EnsoleillÃ©' :
+                            {fullInterventionData.weather_condition === 'sunny' ? 'Ensoleillé' :
                              fullInterventionData.weather_condition === 'cloudy' ? 'Nuageux' :
                              fullInterventionData.weather_condition === 'rainy' ? 'Pluvieux' :
                              fullInterventionData.weather_condition === 'foggy' ? 'Brumeux' :
                              fullInterventionData.weather_condition === 'windy' ? 'Venteux' : fullInterventionData.weather_condition}
                           </div>
-                          <div className="text-xs text-blue-600">MÃ©tÃ©o</div>
+                          <div className="text-xs text-blue-600">Météo</div>
                         </div>
                       )}
                       {fullInterventionData?.lighting_condition && (
@@ -865,14 +865,14 @@ export default function TaskCompletedPage() {
                              fullInterventionData.lighting_condition === 'artificial' ? 'Artificiel' :
                              fullInterventionData.lighting_condition === 'mixed' ? 'Mixte' : fullInterventionData.lighting_condition}
                           </div>
-                          <div className="text-xs text-yellow-600">Ã‰clairage</div>
+                          <div className="text-xs text-yellow-600">Éclairage</div>
                         </div>
                       )}
                       {fullInterventionData?.work_location && (
                         <div className="text-center p-3 bg-green-50 rounded-lg">
                           <div className="text-sm font-medium text-green-600 capitalize">
-                            {fullInterventionData.work_location === 'indoor' ? 'IntÃ©rieur' :
-                             fullInterventionData.work_location === 'outdoor' ? 'ExtÃ©rieur' :
+                            {fullInterventionData.work_location === 'indoor' ? 'Intérieur' :
+                             fullInterventionData.work_location === 'outdoor' ? 'Extérieur' :
                              fullInterventionData.work_location === 'semi_covered' ? 'Semi-couvert' : fullInterventionData.work_location}
                           </div>
                           <div className="text-xs text-green-600">Lieu</div>
@@ -885,14 +885,14 @@ export default function TaskCompletedPage() {
                       <>
                         <Separator />
                         <div className="space-y-3">
-                          <h4 className="text-sm font-medium text-gray-700">Conditions atmosphÃ©riques</h4>
+                          <h4 className="text-sm font-medium text-gray-700">Conditions atmosphériques</h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {fullInterventionData?.temperature_celsius !== null && (
                               <div className="flex items-center space-x-2 p-3 bg-red-50 rounded-lg">
                                 <Thermometer className="h-5 w-5 text-red-500" />
                                 <div>
                                   <div className="text-sm font-medium text-red-600">{fullInterventionData!.temperature_celsius}Â°C</div>
-                                  <div className="text-xs text-red-600">TempÃ©rature</div>
+                                  <div className="text-xs text-red-600">Température</div>
                                 </div>
                               </div>
                             )}
@@ -901,7 +901,7 @@ export default function TaskCompletedPage() {
                                 <Droplets className="h-5 w-5 text-blue-500" />
                                 <div>
                                   <div className="text-sm font-medium text-blue-600">{fullInterventionData!.humidity_percentage}%</div>
-                                  <div className="text-xs text-blue-600">HumiditÃ©</div>
+                                  <div className="text-xs text-blue-600">Humidité</div>
                                 </div>
                               </div>
                             )}
@@ -919,24 +919,24 @@ export default function TaskCompletedPage() {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {(fullInterventionData?.start_location_lat && fullInterventionData?.start_location_lon) && (
                               <div className="p-3 bg-green-50 rounded-lg">
-                                <div className="text-sm font-medium text-green-600 mb-1">Position de dÃ©part</div>
+                                <div className="text-sm font-medium text-green-600 mb-1">Position de départ</div>
                                 <div className="text-xs text-green-600 space-y-1">
                                   <div>Lat: {fullInterventionData.start_location_lat.toFixed(6)}</div>
                                   <div>Lon: {fullInterventionData.start_location_lon.toFixed(6)}</div>
                                   {fullInterventionData.start_location_accuracy && (
-                                    <div>PrÃ©cision: Â±{fullInterventionData.start_location_accuracy}m</div>
+                                    <div>Précision: Â±{fullInterventionData.start_location_accuracy}m</div>
                                   )}
                                 </div>
                               </div>
                             )}
                             {(fullInterventionData?.end_location_lat && fullInterventionData?.end_location_lon) && (
                               <div className="p-3 bg-red-50 rounded-lg">
-                                <div className="text-sm font-medium text-red-600 mb-1">Position d&apos;arrivÃ©e</div>
+                                <div className="text-sm font-medium text-red-600 mb-1">Position d&apos;arrivée</div>
                                 <div className="text-xs text-red-600 space-y-1">
                                   <div>Lat: {fullInterventionData.end_location_lat.toFixed(6)}</div>
                                   <div>Lon: {fullInterventionData.end_location_lon.toFixed(6)}</div>
                                   {fullInterventionData.end_location_accuracy && (
-                                    <div>PrÃ©cision: Â±{fullInterventionData.end_location_accuracy}m</div>
+                                    <div>Précision: Â±{fullInterventionData.end_location_accuracy}m</div>
                                   )}
                                 </div>
                               </div>
@@ -951,7 +951,7 @@ export default function TaskCompletedPage() {
                       <>
                         <Separator />
                         <div className="space-y-3">
-                          <h4 className="text-sm font-medium text-gray-700">MatÃ©riel utilisÃ©</h4>
+                          <h4 className="text-sm font-medium text-gray-700">Matériel utilisé</h4>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {fullInterventionData?.film_type && (
                               <div className="text-center p-3 bg-purple-50 rounded-lg">
@@ -959,7 +959,7 @@ export default function TaskCompletedPage() {
                                   {fullInterventionData.film_type === 'standard' ? 'Standard' :
                                    fullInterventionData.film_type === 'premium' ? 'Premium' :
                                    fullInterventionData.film_type === 'matte' ? 'Mat' :
-                                   fullInterventionData.film_type === 'colored' ? 'ColorÃ©' : fullInterventionData.film_type}
+                                   fullInterventionData.film_type === 'colored' ? 'Coloré' : fullInterventionData.film_type}
                                 </div>
                                 <div className="text-xs text-purple-600">Type de film</div>
                               </div>
@@ -973,7 +973,7 @@ export default function TaskCompletedPage() {
                             {fullInterventionData?.film_model && (
                               <div className="text-center p-3 bg-pink-50 rounded-lg">
                                 <div className="text-sm font-medium text-pink-600">{fullInterventionData.film_model}</div>
-                                <div className="text-xs text-pink-600">ModÃ¨le</div>
+                                <div className="text-xs text-pink-600">Modèle</div>
                               </div>
                             )}
                           </div>
@@ -991,7 +991,7 @@ export default function TaskCompletedPage() {
                 <div className="flex items-center space-x-3">
                   <Wrench className="h-5 w-5 text-purple-600" />
                   <div className="text-left">
-                    <h3 className="text-lg font-semibold">DÃ©tails de l&apos;Intervention</h3>
+                    <h3 className="text-lg font-semibold">Détails de l&apos;Intervention</h3>
                     <p className="text-sm text-gray-600">Chronologie, documentation et technicien</p>
                   </div>
                 </div>
@@ -1003,7 +1003,7 @@ export default function TaskCompletedPage() {
                     <h4 className="text-sm font-medium text-gray-700">Chronologie</h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="text-center p-3 bg-gray-50 rounded-lg">
-                        <div className="text-xs text-gray-500 mb-1">DÃ©but</div>
+                        <div className="text-xs text-gray-500 mb-1">Début</div>
                         <div className="text-sm font-medium">{formatTime(task.start_time)}</div>
                         <div className="text-xs text-gray-500">{formatDate(task.start_time)}</div>
                       </div>
@@ -1014,9 +1014,9 @@ export default function TaskCompletedPage() {
                       </div>
                       {duration && (
                         <div className="text-center p-3 bg-green-50 rounded-lg">
-                          <div className="text-xs text-gray-500 mb-1">DurÃ©e totale</div>
+                          <div className="text-xs text-gray-500 mb-1">Durée totale</div>
                           <div className="text-sm font-medium text-green-600">{duration}</div>
-                          <div className="text-xs text-green-600">TerminÃ©</div>
+                          <div className="text-xs text-green-600">Terminé</div>
                         </div>
                       )}
                     </div>
@@ -1047,7 +1047,7 @@ export default function TaskCompletedPage() {
                         </div>
                         <span className="text-sm font-medium text-green-600">
                           {task.checklist_items?.filter((item: { is_completed?: boolean }) => item.is_completed).length || 0}/
-                          {task.checklist_items?.length || 0} terminÃ©s
+                          {task.checklist_items?.length || 0} terminés
                         </span>
                       </div>
                     </div>
@@ -1066,7 +1066,7 @@ export default function TaskCompletedPage() {
                           <User className="h-8 w-8 text-gray-400" />
                           <div>
                             <div className="text-sm font-medium">{getUserFullName(task.technician)}</div>
-                            <div className="text-xs text-gray-500">Technicien assignÃ©</div>
+                            <div className="text-xs text-gray-500">Technicien assigné</div>
                           </div>
                         </div>
                       </div>
@@ -1083,8 +1083,8 @@ export default function TaskCompletedPage() {
                   <div className="flex items-center space-x-3">
                     <CheckSquare className="h-5 w-5 text-emerald-600" />
                     <div className="text-left">
-                      <h3 className="text-lg font-semibold">QualitÃ© & Satisfaction</h3>
-                      <p className="text-sm text-gray-600">Ã‰valuation client et observations finales</p>
+                      <h3 className="text-lg font-semibold">Qualité & Satisfaction</h3>
+                      <p className="text-sm text-gray-600">Évaluation client et observations finales</p>
                     </div>
                   </div>
               </AccordionTrigger>
@@ -1113,7 +1113,7 @@ export default function TaskCompletedPage() {
                           <div className="text-2xl font-bold text-blue-600 mb-1">
                             {fullInterventionData.quality_score}/100
                           </div>
-                          <div className="text-sm text-blue-600">Score qualitÃ©</div>
+                          <div className="text-sm text-blue-600">Score qualité</div>
                           <div className="w-full bg-blue-200 rounded-full h-2 mt-2">
                             <div
                               className="bg-blue-600 h-2 rounded-full"
@@ -1171,11 +1171,11 @@ export default function TaskCompletedPage() {
                       <>
                         <Separator />
                         <div className="space-y-3">
-                          <h4 className="text-sm font-medium text-gray-700">Instructions spÃ©ciales et notes</h4>
+                          <h4 className="text-sm font-medium text-gray-700">Instructions spéciales et notes</h4>
                           <div className="space-y-2">
                             {fullInterventionData.special_instructions && (
                               <div className="p-3 bg-orange-50 rounded-lg">
-                                <div className="text-sm font-medium text-orange-700 mb-1">Instructions spÃ©ciales:</div>
+                                <div className="text-sm font-medium text-orange-700 mb-1">Instructions spéciales:</div>
                                 <div className="text-sm text-orange-600">{fullInterventionData.special_instructions}</div>
                               </div>
                             )}
@@ -1203,7 +1203,7 @@ export default function TaskCompletedPage() {
                     <FileText className="h-5 w-5 text-indigo-600" />
                     <div className="text-left">
                       <h3 className="text-lg font-semibold">Processus d&apos;Intervention</h3>
-                      <p className="text-sm text-gray-600">Ã‰tapes dÃ©taillÃ©es du workflow PPF</p>
+                      <p className="text-sm text-gray-600">Étapes détaillées du workflow PPF</p>
                     </div>
                   </div>
                 </AccordionTrigger>
@@ -1241,7 +1241,7 @@ export default function TaskCompletedPage() {
                               <span>Inspection</span>
                             </h5>
                             <Badge variant={workflowSteps.inspection.step_status === 'completed' ? 'default' : 'secondary'}>
-                              {workflowSteps.inspection.step_status === 'completed' ? 'TerminÃ©' : 'En cours'}
+                              {workflowSteps.inspection.step_status === 'completed' ? 'Terminé' : 'En cours'}
                             </Badge>
                           </div>
                           {workflowSteps.inspection.collected_data && (
@@ -1253,7 +1253,7 @@ export default function TaskCompletedPage() {
                               )}
                               {workflowSteps.inspection.completed_at && (
                                 <div className="text-xs text-gray-500">
-                                  TerminÃ© le {new Date(workflowSteps.inspection.completed_at).toLocaleString('fr-FR')}
+                                  Terminé le {new Date(workflowSteps.inspection.completed_at).toLocaleString('fr-FR')}
                                 </div>
                               )}
                             </div>
@@ -1267,10 +1267,10 @@ export default function TaskCompletedPage() {
                           <div className="flex items-center justify-between">
                             <h5 className="text-sm font-medium text-gray-700 flex items-center space-x-2">
                               <CheckCircle className="h-4 w-4 text-orange-600" />
-                              <span>PrÃ©paration</span>
+                              <span>Préparation</span>
                             </h5>
                             <Badge variant={workflowSteps.preparation.step_status === 'completed' ? 'default' : 'secondary'}>
-                              {workflowSteps.preparation.step_status === 'completed' ? 'TerminÃ©' : 'En cours'}
+                              {workflowSteps.preparation.step_status === 'completed' ? 'Terminé' : 'En cours'}
                             </Badge>
                           </div>
                           {workflowSteps.preparation.collected_data && (
@@ -1287,7 +1287,7 @@ export default function TaskCompletedPage() {
                                   {!!(workflowSteps.preparation.collected_data.environment as Record<string, unknown>).humidity_percent && (
                                     <div className="flex items-center space-x-2 text-sm">
                                       <Droplets className="h-4 w-4 text-blue-500" />
-                                      <span>{String((workflowSteps.preparation.collected_data.environment as Record<string, unknown>).humidity_percent)}% humiditÃ©</span>
+                                      <span>{String((workflowSteps.preparation.collected_data.environment as Record<string, unknown>).humidity_percent)}% humidité</span>
                                     </div>
                                   )}
                                 </div>
@@ -1296,7 +1296,7 @@ export default function TaskCompletedPage() {
                               {/* Preparation Checklist */}
                               {!!workflowSteps.preparation.collected_data.checklist && (
                                 <div className="space-y-2">
-                                  <div className="text-sm font-medium text-gray-700">Ã‰tapes de prÃ©paration:</div>
+                                  <div className="text-sm font-medium text-gray-700">Étapes de préparation:</div>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                     {Object.entries(workflowSteps.preparation.collected_data.checklist as Record<string, unknown>).map(([key, completed]: [string, unknown]) => (
                                       <div key={key} className="flex items-center space-x-2 text-sm">
@@ -1304,7 +1304,7 @@ export default function TaskCompletedPage() {
                                         <span className={completed ? 'text-gray-900' : 'text-gray-500'}>
                                           {key === 'wash' ? 'Lavage' :
                                            key === 'clay_bar' ? 'Clay Bar' :
-                                           key === 'degrease' ? 'DÃ©graissage' :
+                                           key === 'degrease' ? 'Dégraissage' :
                                            key === 'masking' ? 'Masquage' : key}
                                         </span>
                                       </div>
@@ -1315,7 +1315,7 @@ export default function TaskCompletedPage() {
 
                               {workflowSteps.preparation.completed_at && (
                                 <div className="text-xs text-gray-500">
-                                  TerminÃ© le {new Date(workflowSteps.preparation.completed_at).toLocaleString('fr-FR')}
+                                  Terminé le {new Date(workflowSteps.preparation.completed_at).toLocaleString('fr-FR')}
                                 </div>
                               )}
                             </div>
@@ -1332,7 +1332,7 @@ export default function TaskCompletedPage() {
                               <span>Installation</span>
                             </h5>
                             <Badge variant={workflowSteps.installation.step_status === 'completed' ? 'default' : 'secondary'}>
-                              {workflowSteps.installation.step_status === 'completed' ? 'TerminÃ©' : 'En cours'}
+                              {workflowSteps.installation.step_status === 'completed' ? 'Terminé' : 'En cours'}
                             </Badge>
                           </div>
                           {workflowSteps.installation.collected_data && (
@@ -1349,7 +1349,7 @@ export default function TaskCompletedPage() {
                               )}
                               {workflowSteps.installation.completed_at && (
                                 <div className="text-xs text-gray-500">
-                                  TerminÃ© le {new Date(workflowSteps.installation.completed_at).toLocaleString('fr-FR')}
+                                  Terminé le {new Date(workflowSteps.installation.completed_at).toLocaleString('fr-FR')}
                                 </div>
                               )}
                             </div>
@@ -1366,7 +1366,7 @@ export default function TaskCompletedPage() {
                               <span>Finalisation</span>
                             </h5>
                             <Badge variant={workflowSteps.finalization.step_status === 'completed' ? 'default' : 'secondary'}>
-                              {workflowSteps.finalization.step_status === 'completed' ? 'TerminÃ©' : 'En cours'}
+                              {workflowSteps.finalization.step_status === 'completed' ? 'Terminé' : 'En cours'}
                             </Badge>
                           </div>
                           {workflowSteps.finalization.collected_data && (
@@ -1374,18 +1374,18 @@ export default function TaskCompletedPage() {
                               {/* QC Checklist */}
                               {!!workflowSteps.finalization.collected_data.qc_checklist && (
                                 <div className="space-y-2">
-                                  <div className="text-sm font-medium text-gray-700">ContrÃ´le qualitÃ©:</div>
+                                  <div className="text-sm font-medium text-gray-700">Contrôle qualité:</div>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                     {Object.entries(workflowSteps.finalization.collected_data.qc_checklist as Record<string, unknown>).map(([key, completed]: [string, unknown]) => (
                                       <div key={key} className="flex items-center space-x-2 text-sm">
                                         <CheckCircle className={`h-3 w-3 ${completed ? 'text-green-600' : 'text-gray-400'}`} />
                                         <span className={completed ? 'text-gray-900' : 'text-gray-500'}>
-                                          {key === 'edges_sealed' ? 'Bords scellÃ©s' :
+                                          {key === 'edges_sealed' ? 'Bords scellés' :
                                            key === 'no_bubbles' ? 'Aucune bulle' :
                                            key === 'smooth_surface' ? 'Surface lisse' :
                                            key === 'alignment_correct' ? 'Alignement correct' :
-                                           key === 'no_dust' ? 'Pas de poussiÃ¨re' :
-                                           key === 'cure_time_respected' ? 'Temps de polymÃ©risation' : key}
+                                           key === 'no_dust' ? 'Pas de poussière' :
+                                           key === 'cure_time_respected' ? 'Temps de polymérisation' : key}
                                         </span>
                                       </div>
                                     ))}
@@ -1414,7 +1414,7 @@ export default function TaskCompletedPage() {
                   <FileText className="h-5 w-5 text-cyan-600" />
                   <div className="text-left">
                     <h3 className="text-lg font-semibold">Galerie Photos</h3>
-                    <p className="text-sm text-gray-600">Photos avec mÃ©tadonnÃ©es et scores qualitÃ©</p>
+                    <p className="text-sm text-gray-600">Photos avec métadonnées et scores qualité</p>
                   </div>
                 </div>
               </AccordionTrigger>
@@ -1438,7 +1438,7 @@ export default function TaskCompletedPage() {
                       <div className="text-lg font-bold text-purple-600">
                         {task.photos_after?.length || 0}
                       </div>
-                      <div className="text-xs text-purple-600">AprÃ¨s</div>
+                      <div className="text-xs text-purple-600">Après</div>
                     </div>
                     <div className="text-center p-3 bg-orange-50 rounded-lg">
                       <div className="text-lg font-bold text-orange-600">
@@ -1451,19 +1451,19 @@ export default function TaskCompletedPage() {
                   {/* Photo Categories */}
                   <Separator />
                   <div className="space-y-3">
-                    <h4 className="text-sm font-medium text-gray-700">RÃ©partition par catÃ©gorie</h4>
+                    <h4 className="text-sm font-medium text-gray-700">Répartition par catégorie</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {/* This would need actual photo data with categories */}
                       <div className="text-center p-3 bg-gray-50 rounded-lg">
-                        <div className="text-sm font-medium text-gray-600">Ã‰tat vÃ©hicule</div>
-                        <div className="text-xs text-gray-500">Photos de l&apos;Ã©tat du vÃ©hicule</div>
+                        <div className="text-sm font-medium text-gray-600">État véhicule</div>
+                        <div className="text-xs text-gray-500">Photos de l&apos;état du véhicule</div>
                       </div>
                       <div className="text-center p-3 bg-gray-50 rounded-lg">
-                        <div className="text-sm font-medium text-gray-600">Progression Ã©tape</div>
+                        <div className="text-sm font-medium text-gray-600">Progression étape</div>
                         <div className="text-xs text-gray-500">Photos du travail en cours</div>
                       </div>
                       <div className="text-center p-3 bg-gray-50 rounded-lg">
-                        <div className="text-sm font-medium text-gray-600">ContrÃ´le qualitÃ©</div>
+                        <div className="text-sm font-medium text-gray-600">Contrôle qualité</div>
                         <div className="text-xs text-gray-500">Photos de validation</div>
                       </div>
                     </div>
@@ -1472,11 +1472,11 @@ export default function TaskCompletedPage() {
                   {/* Quality Scores */}
                   <Separator />
                   <div className="space-y-3">
-                    <h4 className="text-sm font-medium text-gray-700">Scores qualitÃ© moyens</h4>
+                    <h4 className="text-sm font-medium text-gray-700">Scores qualité moyens</h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="text-center p-3 bg-green-50 rounded-lg">
                         <div className="text-lg font-bold text-green-600">85%</div>
-                        <div className="text-xs text-green-600">NettetÃ©</div>
+                        <div className="text-xs text-green-600">Netteté</div>
                       </div>
                       <div className="text-center p-3 bg-blue-50 rounded-lg">
                         <div className="text-lg font-bold text-blue-600">92%</div>
@@ -1502,7 +1502,7 @@ export default function TaskCompletedPage() {
                       <h3 className="text-lg font-semibold">Checklist de Validation</h3>
                       <p className="text-sm text-gray-600">
                         {task.checklist_items.filter((item: { is_completed?: boolean }) => item.is_completed).length}/
-                        {task.checklist_items.length} Ã©lÃ©ments validÃ©s
+                        {task.checklist_items.length} éléments validés
                       </p>
                     </div>
                   </div>
@@ -1513,7 +1513,7 @@ export default function TaskCompletedPage() {
                       <div key={index} className="flex items-center space-x-3 p-3 rounded-lg bg-gray-50">
                         <CheckCircle className={`h-4 w-4 ${item.is_completed ? 'text-green-600' : 'text-gray-400'}`} />
                         <span className={`text-sm ${item.is_completed ? 'text-gray-900' : 'text-gray-500 line-through'}`}>
-                          {item.description || item.title || `Ã‰tape ${index + 1}`}
+                          {item.description || item.title || `Étape ${index + 1}`}
                         </span>
                       </div>
                     ))}
@@ -1527,7 +1527,7 @@ export default function TaskCompletedPage() {
 
                               {workflowSteps.finalization.completed_at && (
                                 <div className="text-xs text-gray-500">
-                                  TerminÃ© le {new Date(workflowSteps.finalization.completed_at).toLocaleString('fr-FR')}
+                                  Terminé le {new Date(workflowSteps.finalization.completed_at).toLocaleString('fr-FR')}
                                 </div>
                               )}
                             </div>
@@ -1546,8 +1546,8 @@ export default function TaskCompletedPage() {
                 <div className="flex items-center space-x-3">
                   <Clock className="h-5 w-5 text-gray-600" />
                   <div className="text-left">
-                    <h3 className="text-lg font-semibold">Historique & SystÃ¨me</h3>
-                    <p className="text-sm text-gray-600">Audit trail et informations systÃ¨me</p>
+                    <h3 className="text-lg font-semibold">Historique & Système</h3>
+                    <p className="text-sm text-gray-600">Audit trail et informations système</p>
                   </div>
                 </div>
               </AccordionTrigger>
@@ -1555,30 +1555,30 @@ export default function TaskCompletedPage() {
                 <div className="space-y-6">
                   {/* Task Audit Information */}
                   <div className="space-y-3">
-                    <h4 className="text-sm font-medium text-gray-700">TÃ¢che</h4>
+                    <h4 className="text-sm font-medium text-gray-700">Tâche</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-500">
                       <div>
                         <strong>ID:</strong> {task.id}
                       </div>
                         <div>
-                          <strong>CrÃ©Ã©:</strong> {task.created_at ? new Date(task.created_at).toLocaleString('fr-FR') : 'N/A'}
+                          <strong>Créé:</strong> {task.created_at ? new Date(task.created_at).toLocaleString('fr-FR') : 'N/A'}
                         </div>
                         <div>
-                          <strong>CrÃ©Ã© par:</strong> {task.created_by || 'SystÃ¨me'}
+                          <strong>Créé par:</strong> {task.created_by || 'Système'}
                         </div>
                         <div>
-                          <strong>ModifiÃ©:</strong> {task.updated_at ? new Date(task.updated_at as unknown as string).toLocaleString('fr-FR') : 'N/A'}
+                          <strong>Modifié:</strong> {task.updated_at ? new Date(task.updated_at as unknown as string).toLocaleString('fr-FR') : 'N/A'}
                         </div>
                       <div>
-                        <strong>ModifiÃ© par:</strong> {task.updated_by || 'N/A'}
+                        <strong>Modifié par:</strong> {task.updated_by || 'N/A'}
                       </div>
                       <div>
-                        <strong>SynchronisÃ©:</strong>
+                        <strong>Synchronisé:</strong>
                         <span className={`ml-1 ${task.synced ? 'text-green-600' : 'text-orange-600'}`}>
                           {task.synced ? 'Oui' : 'Non'}
                         </span>
                         {task.last_synced_at && (
-                          <div className="text-xs">DerniÃ¨re sync: {new Date(task.last_synced_at as unknown as string).toLocaleString('fr-FR')}</div>
+                          <div className="text-xs">Dernière sync: {new Date(task.last_synced_at as unknown as string).toLocaleString('fr-FR')}</div>
                         )}
                       </div>
                     </div>
@@ -1595,24 +1595,24 @@ export default function TaskCompletedPage() {
                             <strong>ID:</strong> {fullInterventionData.id}
                           </div>
                            <div>
-                             <strong>CrÃ©Ã©:</strong> {new Date(fullInterventionData.created_at as unknown as string).toLocaleString('fr-FR')}
+                             <strong>Créé:</strong> {new Date(fullInterventionData.created_at as unknown as string).toLocaleString('fr-FR')}
                            </div>
                            <div>
-                             <strong>CrÃ©Ã© par:</strong> {fullInterventionData.created_by || 'SystÃ¨me'}
+                             <strong>Créé par:</strong> {fullInterventionData.created_by || 'Système'}
                            </div>
                            <div>
-                             <strong>ModifiÃ©:</strong> {new Date(fullInterventionData.updated_at as unknown as string).toLocaleString('fr-FR')}
+                             <strong>Modifié:</strong> {new Date(fullInterventionData.updated_at as unknown as string).toLocaleString('fr-FR')}
                            </div>
                           <div>
-                            <strong>ModifiÃ© par:</strong> {fullInterventionData.updated_by || 'N/A'}
+                            <strong>Modifié par:</strong> {fullInterventionData.updated_by || 'N/A'}
                           </div>
                           <div>
-                            <strong>SynchronisÃ©:</strong>
+                            <strong>Synchronisé:</strong>
                             <span className={`ml-1 ${fullInterventionData.synced ? 'text-green-600' : 'text-orange-600'}`}>
                               {fullInterventionData.synced ? 'Oui' : 'Non'}
                             </span>
                              {fullInterventionData.last_synced_at && (
-                               <div className="text-xs">DerniÃ¨re sync: {new Date(fullInterventionData.last_synced_at as unknown as string).toLocaleString('fr-FR')}</div>
+                               <div className="text-xs">Dernière sync: {new Date(fullInterventionData.last_synced_at as unknown as string).toLocaleString('fr-FR')}</div>
                              )}
                           </div>
                           {fullInterventionData.sync_error && (
@@ -1637,16 +1637,16 @@ export default function TaskCompletedPage() {
                             <strong>ID:</strong> {fullClientData.id || 'N/A'}
                           </div>
                            <div>
-                             <strong>CrÃ©Ã©:</strong> {fullClientData.created_at ? new Date(fullClientData.created_at as unknown as string).toLocaleString('fr-FR') : 'N/A'}
+                             <strong>Créé:</strong> {fullClientData.created_at ? new Date(fullClientData.created_at as unknown as string).toLocaleString('fr-FR') : 'N/A'}
                            </div>
                            <div>
-                             <strong>CrÃ©Ã© par:</strong> {fullClientData.created_by || 'SystÃ¨me'}
+                             <strong>Créé par:</strong> {fullClientData.created_by || 'Système'}
                            </div>
                            <div>
-                             <strong>ModifiÃ©:</strong> {fullClientData.updated_at ? new Date(fullClientData.updated_at as unknown as string).toLocaleString('fr-FR') : 'N/A'}
+                             <strong>Modifié:</strong> {fullClientData.updated_at ? new Date(fullClientData.updated_at as unknown as string).toLocaleString('fr-FR') : 'N/A'}
                            </div>
                           <div>
-                            <strong>SynchronisÃ©:</strong>
+                            <strong>Synchronisé:</strong>
                             <span className={`ml-1 ${fullClientData.synced ? 'text-green-600' : 'text-orange-600'}`}>
                               {fullClientData.synced ? 'Oui' : 'Non'}
                             </span>
@@ -1667,7 +1667,7 @@ export default function TaskCompletedPage() {
                             <strong>Version app:</strong> {fullInterventionData.app_version}
                           </div>
                           <div>
-                            <strong>Type intervention:</strong> {fullInterventionData.intervention_type === 'ppf' ? 'PPF' : fullInterventionData.intervention_type === 'ceramic' ? 'CÃ©ramique' : fullInterventionData.intervention_type === 'detailing' ? 'DÃ©tailing' : fullInterventionData.intervention_type}
+                            <strong>Type intervention:</strong> {fullInterventionData.intervention_type === 'ppf' ? 'PPF' : fullInterventionData.intervention_type === 'ceramic' ? 'Céramique' : fullInterventionData.intervention_type === 'detailing' ? 'Détailing' : fullInterventionData.intervention_type}
                           </div>
                         </div>
                       </div>
@@ -1684,7 +1684,7 @@ export default function TaskCompletedPage() {
                   <Download className="h-5 w-5 text-gray-600" />
                   <div className="text-left">
                     <h3 className="text-lg font-semibold">Actions & Navigation</h3>
-                    <p className="text-sm text-gray-600">TÃ©lÃ©chargements, partage et navigation</p>
+                    <p className="text-sm text-gray-600">Téléchargements, partage et navigation</p>
                   </div>
                 </div>
               </AccordionTrigger>
@@ -1783,7 +1783,7 @@ export default function TaskCompletedPage() {
           {/* Task Summary */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">RÃ©sumÃ©</CardTitle>
+              <CardTitle className="text-sm">Résumé</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
@@ -1791,11 +1791,11 @@ export default function TaskCompletedPage() {
                   <span className="text-xs text-gray-500">Statut</span>
                   <Badge className="bg-green-100 text-green-800 border-green-200">
                     <CheckCircle className="h-3 w-3 mr-1" />
-                    TerminÃ©
+                    Terminé
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">ID TÃ¢che</span>
+                  <span className="text-xs text-gray-500">ID Tâche</span>
                   <span className="text-xs font-mono">{task.id?.slice(-8) || 'N/A'}</span>
                 </div>
                 {task.external_id && (
@@ -1806,7 +1806,7 @@ export default function TaskCompletedPage() {
                 )}
                 {task.task_number && (
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">NÂ° TÃ¢che</span>
+                    <span className="text-xs text-gray-500">NÂ° Tâche</span>
                     <span className="text-xs font-medium">{task.task_number}</span>
                   </div>
                 )}
@@ -1816,7 +1816,7 @@ export default function TaskCompletedPage() {
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">PrioritÃ©</span>
+                  <span className="text-xs text-gray-500">Priorité</span>
                   <Badge variant={task.priority === 'high' ? 'destructive' : task.priority === 'medium' ? 'default' : 'secondary'}>
                     {task.priority === 'high' ? 'Haute' : task.priority === 'medium' ? 'Moyenne' : 'Basse'}
                   </Badge>

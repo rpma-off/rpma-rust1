@@ -117,7 +117,7 @@ const TOTPSetup: React.FC<TOTPSetupProps> = ({ sessionToken, onSetupComplete }) 
             className="text-sm text-blue-600 hover:text-blue-800"
             onClick={() => {
               navigator.clipboard.writeText(recoveryCodes.join('\n'));
-              toast.success('Codes de rÃ©cupÃ©ration copiÃ©s dans le presse-papiers');
+              toast.success('Codes de récupération copiés dans le presse-papiers');
             }}
           >
             {t('auth.copyCodesToClipboard')}
@@ -182,7 +182,7 @@ const TOTPSetup: React.FC<TOTPSetupProps> = ({ sessionToken, onSetupComplete }) 
                   className="text-xs text-blue-600 hover:text-blue-800 mt-1"
                   onClick={() => {
                     navigator.clipboard.writeText(secret);
-                    toast.success('Code secret copiÃ© dans le presse-papiers');
+                    toast.success('Code secret copié dans le presse-papiers');
                   }}
                 >
                   {t('auth.copyToClipboard')}

@@ -137,7 +137,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
           }
         }
 
-       toast.success('Flux de travail dÃ©marrÃ© avec succÃ¨s');
+       toast.success('Flux de travail démarré avec succès');
        return workflow;
     } catch (err: unknown) {
       const normalizedError = normalizeError(err);
@@ -173,7 +173,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
       // Refresh workflow to get updated state
       await fetchWorkflow();
 
-      toast.success('Ã‰tape terminÃ©e avec succÃ¨s');
+      toast.success('Étape terminée avec succès');
       return result;
     } catch (err: unknown) {
       const normalizedError = normalizeError(err);
@@ -209,7 +209,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
 
       setStepTiming(timing as unknown as WorkflowTiming);
 
-      toast.success('Minuterie dÃ©marrÃ©e');
+      toast.success('Minuterie démarrée');
       return timing;
     } catch (err) {
       console.error('Failed to start step timing:', err);
@@ -326,7 +326,7 @@ export const useWorkflow = (options: UseWorkflowOptions = {}) => {
           setCurrentStep(null);
         }
 
-      toast.success(`${urls.length} photo(s) tÃ©lÃ©versÃ©e(s) avec succÃ¨s`);
+      toast.success(`${urls.length} photo(s) téléversée(s) avec succès`);
       return urls;
     } catch (err) {
       console.error('Failed to upload photos:', err);

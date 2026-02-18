@@ -142,7 +142,7 @@ export default function OperationalIntelligencePage() {
       {/* Header */}
       <PageHeader
         title={t('nav.operationalIntelligence')}
-        subtitle="Analyse des goulots d'Ã©tranglement et optimisation des processus"
+        subtitle="Analyse des goulots d'étranglement et optimisation des processus"
         icon={<BarChart3 className="w-6 h-6 text-[hsl(var(--rpma-teal))]" />}
         actions={
           <>
@@ -183,13 +183,13 @@ export default function OperationalIntelligencePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
               value={reportData.step_bottlenecks.length}
-              label="Goulots d'Ã‰tranglement Ã‰tapes"
+              label="Goulots d'Étranglement Étapes"
               icon={AlertTriangle}
               color="red"
             />
             <StatCard
               value={reportData.intervention_bottlenecks.length}
-              label="Interventions BloquÃ©es"
+              label="Interventions Bloquées"
               icon={Clock}
               color="yellow"
             />
@@ -201,7 +201,7 @@ export default function OperationalIntelligencePage() {
             />
             <StatCard
               value={`${Math.round(reportData.process_efficiency.overall_efficiency_score)}%`}
-              label="Score d'EfficacitÃ©"
+              label="Score d'Efficacité"
               icon={BarChart3}
               color="blue"
             />
@@ -212,17 +212,17 @@ export default function OperationalIntelligencePage() {
             <CardHeader>
               <CardTitle className="text-lg text-foreground flex items-center">
                 <AlertTriangle className="h-5 w-5 mr-2 text-red-500" />
-                Goulots d&apos;Ã‰tranglement par Ã‰tape
+                Goulots d&apos;Étranglement par Étape
               </CardTitle>
               <CardDescription className="text-muted-foreground">
-                Ã‰tapes qui causent des retards ou des problÃ¨mes de qualitÃ©
+                Étapes qui causent des retards ou des problèmes de qualité
               </CardDescription>
             </CardHeader>
             <CardContent>
               {reportData.step_bottlenecks.length === 0 ? (
                 <div className="text-center py-8">
                   <div className="text-green-500 mb-2">âœ“</div>
-                  <p className="text-muted-foreground">Aucun goulot d&apos;Ã©tranglement dÃ©tectÃ©</p>
+                  <p className="text-muted-foreground">Aucun goulot d&apos;étranglement détecté</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -239,17 +239,17 @@ export default function OperationalIntelligencePage() {
             <CardHeader>
               <CardTitle className="text-lg text-foreground flex items-center">
                 <Clock className="h-5 w-5 mr-2 text-orange-500" />
-                Interventions BloquÃ©es
+                Interventions Bloquées
               </CardTitle>
               <CardDescription className="text-muted-foreground">
-                Interventions qui restent trop longtemps dans le mÃªme Ã©tat
+                Interventions qui restent trop longtemps dans le même état
               </CardDescription>
             </CardHeader>
             <CardContent>
               {reportData.intervention_bottlenecks.length === 0 ? (
                 <div className="text-center py-8">
                   <div className="text-green-500 mb-2">âœ“</div>
-                  <p className="text-muted-foreground">Aucune intervention bloquÃ©e</p>
+                  <p className="text-muted-foreground">Aucune intervention bloquée</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -269,7 +269,7 @@ export default function OperationalIntelligencePage() {
                 Utilisation des Ressources
               </CardTitle>
               <CardDescription className="text-muted-foreground">
-                RÃ©partition de la charge de travail par technicien
+                Répartition de la charge de travail par technicien
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -286,10 +286,10 @@ export default function OperationalIntelligencePage() {
             <CardHeader>
               <CardTitle className="text-lg text-foreground flex items-center">
                 <TrendingUp className="h-5 w-5 mr-2 text-green-500" />
-                Recommandations d&apos;AmÃ©lioration
+                Recommandations d&apos;Amélioration
               </CardTitle>
               <CardDescription className="text-muted-foreground">
-                Suggestions automatisÃ©es pour optimiser les processus
+                Suggestions automatisées pour optimiser les processus
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -321,17 +321,17 @@ function StepBottleneckCard({ bottleneck }: { bottleneck: StepBottleneck }) {
         <div className="flex-1">
           <div className="flex items-center space-x-2 mb-2">
             <Badge variant="destructive" className="text-xs">
-              Ã‰tape {bottleneck.step_number}
+              Étape {bottleneck.step_number}
             </Badge>
             <span className="text-foreground font-medium">{bottleneck.step_name}</span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div>
-              <span className="text-muted-foreground">DurÃ©e moyenne:</span>
+              <span className="text-muted-foreground">Durée moyenne:</span>
               <div className="text-foreground font-semibold">{Math.round(bottleneck.average_duration_minutes)} min</div>
             </div>
             <div>
-              <span className="text-muted-foreground">Taux d&apos;Ã©chec:</span>
+              <span className="text-muted-foreground">Taux d&apos;échec:</span>
               <div className="text-red-500 font-semibold">{Math.round(bottleneck.failure_rate * 100)}%</div>
             </div>
             <div>
@@ -339,7 +339,7 @@ function StepBottleneckCard({ bottleneck }: { bottleneck: StepBottleneck }) {
               <div className="text-orange-500 font-semibold">{Math.round(bottleneck.rework_rate * 100)}%</div>
             </div>
             <div>
-              <span className="text-muted-foreground">SÃ©vÃ©ritÃ©:</span>
+              <span className="text-muted-foreground">Sévérité:</span>
               <div className="text-red-500 font-semibold capitalize">{bottleneck.bottleneck_severity}</div>
             </div>
           </div>
@@ -359,19 +359,19 @@ function InterventionBottleneckCard({ bottleneck }: { bottleneck: InterventionBo
             <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-600 border-orange-200">
               Intervention #{bottleneck.intervention_id}
             </Badge>
-            <span className="text-foreground font-medium">Ã‰tape {bottleneck.stuck_at_step}</span>
+            <span className="text-foreground font-medium">Étape {bottleneck.stuck_at_step}</span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
             <div>
-              <span className="text-muted-foreground">Temps bloquÃ©:</span>
+              <span className="text-muted-foreground">Temps bloqué:</span>
               <div className="text-orange-500 font-semibold">{Math.round(bottleneck.time_at_current_step_hours)}h</div>
             </div>
             <div>
               <span className="text-muted-foreground">Technicien:</span>
-              <div className="text-foreground font-semibold">{bottleneck.technician_name || 'Non assignÃ©'}</div>
+              <div className="text-foreground font-semibold">{bottleneck.technician_name || 'Non assigné'}</div>
             </div>
             <div>
-              <span className="text-muted-foreground">PrioritÃ©:</span>
+              <span className="text-muted-foreground">Priorité:</span>
               <Badge variant="outline" className="text-xs">
                 {bottleneck.priority}
               </Badge>
@@ -401,7 +401,7 @@ function ResourceUtilizationCard({ resource }: { resource: ResourceUtilization }
           <span className="text-foreground">{resource.active_interventions}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">ComplÃ©tÃ©es aujourd&apos;hui:</span>
+          <span className="text-muted-foreground">Complétées aujourd&apos;hui:</span>
           <span className="text-foreground">{resource.completed_today}</span>
         </div>
         <div className="w-full bg-[hsl(var(--rpma-border))] rounded-full h-2">
@@ -443,11 +443,11 @@ function RecommendationCard({ recommendation }: { recommendation: WorkflowRecomm
               <div className="text-green-600 font-semibold">{Math.round(recommendation.impact_score * 100)}%</div>
             </div>
             <div>
-              <span className="text-muted-foreground">Effort d&apos;implÃ©mentation:</span>
+              <span className="text-muted-foreground">Effort d&apos;implémentation:</span>
               <div className="text-foreground font-semibold capitalize">{recommendation.implementation_effort}</div>
             </div>
             <div>
-              <span className="text-muted-foreground">Ã‰tapes affectÃ©es:</span>
+              <span className="text-muted-foreground">Étapes affectées:</span>
               <div className="text-foreground font-semibold">{recommendation.affected_steps.length}</div>
             </div>
           </div>

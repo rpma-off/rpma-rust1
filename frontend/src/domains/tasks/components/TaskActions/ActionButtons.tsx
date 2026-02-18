@@ -60,16 +60,16 @@ export function ActionButtons({
         return;
       }
       await reportOperations.exportInterventionReport(task.id, user.token);
-      toast.success('Rapport tÃ©lÃ©chargÃ© avec succÃ¨s');
+      toast.success('Rapport téléchargé avec succès');
     } catch {
-      toast.error('Erreur lors du tÃ©lÃ©chargement du rapport');
+      toast.error('Erreur lors du téléchargement du rapport');
     }
   };
 
   const handleShareTask = async () => {
     try {
       await navigator.clipboard.writeText(`${window.location.origin}/tasks/${task.id}`);
-      toast.success('Lien copiÃ© dans le presse-papier');
+      toast.success('Lien copié dans le presse-papier');
     } catch {
       toast.error('Impossible de copier le lien');
     }
@@ -102,18 +102,18 @@ export function ActionButtons({
               size="lg"
             >
               <Play className="h-4 w-4 mr-2" />
-              DÃ©marrer l&apos;intervention
+              Démarrer l&apos;intervention
             </Button>
           ) : isTaskCompleted ? (
             <div className="space-y-2">
               <div className="flex items-center justify-center space-x-2 text-green-600 bg-green-50 p-3 rounded-lg">
                 <CheckCircle className="h-5 w-5" />
-                <span className="text-sm font-medium">Intervention terminÃ©e</span>
+                <span className="text-sm font-medium">Intervention terminée</span>
               </div>
               {duration && (
                 <div className="flex items-center justify-center space-x-2 text-gray-600">
                   <Clock className="h-4 w-4" />
-                  <span className="text-xs">DurÃ©e: {duration}</span>
+                  <span className="text-xs">Durée: {duration}</span>
                 </div>
               )}
             </div>
@@ -127,14 +127,14 @@ export function ActionButtons({
                 variant={canComplete ? "default" : "secondary"}
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
-                {canComplete ? 'Finaliser l&apos;intervention' : 'Terminer toutes les Ã©tapes'}
+                {canComplete ? 'Finaliser l&apos;intervention' : 'Terminer toutes les étapes'}
               </Button>
               
               {!canComplete && (
                 <Alert>
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription className="text-xs">
-                    ComplÃ©tez toutes les Ã©tapes du workflow pour finaliser l&apos;intervention.
+                    Complétez toutes les étapes du workflow pour finaliser l&apos;intervention.
                   </AlertDescription>
                 </Alert>
               )}
@@ -205,7 +205,7 @@ export function ActionButtons({
               onClick={handleDownloadReport}
             >
               <Download className="h-4 w-4 mr-2" />
-              TÃ©lÃ©charger le rapport PDF
+              Télécharger le rapport PDF
             </Button>
 
             <Button
@@ -237,7 +237,7 @@ export function ActionButtons({
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-blue-800">Progression</span>
               <span className="text-xs text-blue-600">
-                {completedSteps.size}/5 Ã©tapes
+                {completedSteps.size}/5 étapes
               </span>
             </div>
             

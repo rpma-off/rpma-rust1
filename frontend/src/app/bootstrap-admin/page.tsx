@@ -74,15 +74,15 @@ export default function BootstrapAdminPage() {
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle>Administrateur dÃ©jÃ  existant</CardTitle>
+            <CardTitle>Administrateur déjÃ  existant</CardTitle>
             <CardDescription>
-              Un compte administrateur a dÃ©jÃ  Ã©tÃ© crÃ©Ã©.
+              Un compte administrateur a déjÃ  été créé.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Alert>
               <AlertDescription>
-                Le systÃ¨me possÃ¨de dÃ©jÃ  un utilisateur administrateur. Si vous devez gÃ©rer les rÃ´les ou crÃ©er des administrateurs supplÃ©mentaires,
+                Le système possède déjÃ  un utilisateur administrateur. Si vous devez gérer les rôles ou créer des administrateurs supplémentaires,
                 veuillez vous connecter avec un compte administrateur existant et utiliser le panneau d&apos;administration.
               </AlertDescription>
             </Alert>
@@ -102,17 +102,17 @@ export default function BootstrapAdminPage() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>CrÃ©er le premier administrateur</CardTitle>
+          <CardTitle>Créer le premier administrateur</CardTitle>
           <CardDescription>
-            CrÃ©ez le premier compte administrateur. Cela ne peut Ãªtre fait qu&apos;une seule fois.
+            Créez le premier compte administrateur. Cela ne peut être fait qu&apos;une seule fois.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <Alert>
               <AlertDescription>
-                Promouvoir l&apos;utilisateur actuellement connectÃ© ({user?.email}) en administrateur.
-                Cela ne peut Ãªtre fait qu&apos;une seule fois lorsqu&apos;aucun administrateur n&apos;existe.
+                Promouvoir l&apos;utilisateur actuellement connecté ({user?.email}) en administrateur.
+                Cela ne peut être fait qu&apos;une seule fois lorsqu&apos;aucun administrateur n&apos;existe.
               </AlertDescription>
             </Alert>
 
@@ -121,13 +121,13 @@ export default function BootstrapAdminPage() {
               className="w-full"
               disabled={bootstrapMutation.isPending || !user?.user_id || !user?.token}
             >
-              {bootstrapMutation.isPending ? 'CrÃ©ation de l\'admin...' : 'Promouvoir en Admin'}
+              {bootstrapMutation.isPending ? 'Création de l\'admin...' : 'Promouvoir en Admin'}
             </Button>
 
             {bootstrapMutation.isSuccess && (
               <Alert>
                 <AlertDescription>
-                  âœ“ Administrateur crÃ©Ã© avec succÃ¨s ! Redirection vers le tableau de bord...
+                  âœ“ Administrateur créé avec succès ! Redirection vers le tableau de bord...
                 </AlertDescription>
               </Alert>
             )}
@@ -138,7 +138,7 @@ export default function BootstrapAdminPage() {
                   {(() => {
                     const error = bootstrapMutation.error as { message?: string; error?: string };
                     return error?.message || (error as { error?: string })?.error ||
-                      'Ã‰chec de la crÃ©ation de l\'admin. L\'utilisateur peut ne pas exister ou l\'admin existe dÃ©jÃ .';
+                      'Échec de la création de l\'admin. L\'utilisateur peut ne pas exister ou l\'admin existe déjÃ .';
                   })()}
                 </AlertDescription>
               </Alert>

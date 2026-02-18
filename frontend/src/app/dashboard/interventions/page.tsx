@@ -1,6 +1,6 @@
 ﻿/**
  * Page Dashboard des Interventions PPF
- * Vue d'ensemble des interventions actives, rÃ©centes et mÃ©triques
+ * Vue d'ensemble des interventions actives, récentes et métriques
  */
 
 'use client';
@@ -138,7 +138,7 @@ export default function InterventionsDashboard() {
   };
 
   const getStepProgress = (currentStep: number) => {
-    return ((currentStep) / 4) * 100; // 4 Ã©tapes au total
+    return ((currentStep) / 4) * 100; // 4 étapes au total
   };
 
   if (loading) {
@@ -173,7 +173,7 @@ export default function InterventionsDashboard() {
           </div>
         </div>
 
-      {/* MÃ©triques principales */}
+      {/* Métriques principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           value={totalActive}
@@ -201,7 +201,7 @@ export default function InterventionsDashboard() {
         />
       </div>
 
-      {/* Tabs pour diffÃ©rentes vues */}
+      {/* Tabs pour différentes vues */}
         {/* Interventions Actives */}
         <TabsContent value="active" className="space-y-4">
           {activeInterventions.length === 0 ? (
@@ -276,7 +276,7 @@ export default function InterventionsDashboard() {
           )}
         </TabsContent>
 
-        {/* Historique RÃ©cent */}
+        {/* Historique Récent */}
         <TabsContent value="recent" className="space-y-4">
           {recentInterventions.length === 0 ? (
             <EmptyState
