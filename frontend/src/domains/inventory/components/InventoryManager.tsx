@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { VirtualizedTable } from '@/components/ui/virtualized-table';
 import { StockLevelIndicator } from './StockLevelIndicator';
-import { MaterialForm } from './inventory/MaterialForm';
+import { MaterialForm } from './MaterialForm';
 import { useInventory } from '../hooks/useInventory';
 import { useInventoryStats } from '../hooks/useInventoryStats';
 import { useTranslation } from '@/shared/hooks/useTranslation';

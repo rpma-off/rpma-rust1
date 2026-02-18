@@ -25,7 +25,8 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingState } from '@/components/layout/LoadingState';
 import { ErrorState } from '@/components/layout/ErrorState';
 import { Plus, Search, Edit, AlertTriangle, Package, Trash2, ArrowUpDown, X } from 'lucide-react';
-import { useMaterials, type Material } from '../hooks/useMaterials';
+import { useMaterials } from '../hooks/useMaterials';
+import type { Material, MaterialType } from '../api/types';
 import { useInventoryStats } from '../hooks/useInventoryStats';
 import { useInventory } from '../hooks/useInventory';
 import { MaterialForm } from './MaterialForm';
@@ -56,7 +57,7 @@ export function MaterialCatalog() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [materialTypeFilter, setMaterialTypeFilter] = useState<string>('all');
+  const [materialTypeFilter, setMaterialTypeFilter] = useState<MaterialType | 'all'>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [showForm, setShowForm] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
@@ -224,7 +225,7 @@ export function MaterialCatalog() {
                 />
               </div>
             </div>
-            <Select value={materialTypeFilter} onValueChange={setMaterialTypeFilter}>
+            <Select value={materialTypeFilter} onValueChange={(value) => setMaterialTypeFilter(value as MaterialType | 'all')}>
               <SelectTrigger className="w-full lg:w-52">
                 <SelectValue placeholder={t('inventory.materialType')} />
               </SelectTrigger>

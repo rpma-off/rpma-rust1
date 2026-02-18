@@ -2,19 +2,20 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/domains/auth';
 import { inventoryIpc } from '../ipc/inventory.ipc';
 import type { JsonValue } from '@/types/json';
+import type { MaterialType, UnitOfMeasure } from '../api/types';
 
 interface MaterialFormData {
   sku: string;
   name: string;
   description: string;
-  material_type: string;
+  material_type: MaterialType;
   category: string;
   subcategory: string;
   category_id?: string;
   brand: string;
   model: string;
-  specifications?: Record<string, unknown>;
-  unit_of_measure: string;
+  specifications?: JsonValue;
+  unit_of_measure: UnitOfMeasure;
   current_stock: number;
   minimum_stock?: number;
   maximum_stock?: number;
@@ -74,14 +75,14 @@ export function useMaterialForm(initialMaterial?: Record<string, unknown>) {
         sku: (initialMaterial.sku as string) || '',
         name: (initialMaterial.name as string) || '',
         description: (initialMaterial.description as string) || '',
-        material_type: (initialMaterial.material_type as string) || 'ppf_film',
+        material_type: (initialMaterial.material_type as MaterialType) || 'ppf_film',
         category: (initialMaterial.category as string) || '',
         subcategory: (initialMaterial.subcategory as string) || '',
         category_id: initialMaterial.category_id as string | undefined,
         brand: (initialMaterial.brand as string) || '',
         model: (initialMaterial.model as string) || '',
-        specifications: initialMaterial.specifications as Record<string, unknown> | undefined,
-        unit_of_measure: (initialMaterial.unit_of_measure as string) || 'piece',
+        specifications: initialMaterial.specifications as JsonValue | undefined,
+        unit_of_measure: (initialMaterial.unit_of_measure as UnitOfMeasure) || 'piece',
         current_stock: (initialMaterial.current_stock as number | undefined) ?? 0,
         minimum_stock: initialMaterial.minimum_stock as number | undefined,
         maximum_stock: initialMaterial.maximum_stock as number | undefined,

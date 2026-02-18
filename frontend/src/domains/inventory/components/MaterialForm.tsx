@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useMaterialForm } from '../hooks/useMaterialForm';
+import type { MaterialType, UnitOfMeasure } from '../api/types';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { toast } from 'sonner';
@@ -74,7 +75,7 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
           <Label htmlFor="material_type" className="text-foreground">{t('inventory.materialType')} *</Label>
           <Select
             value={formData.material_type}
-            onValueChange={(value) => updateFormData('material_type', value)}
+            onValueChange={(value) => updateFormData('material_type', value as MaterialType)}
           >
             <SelectTrigger>
               <SelectValue placeholder={t('inventory.selectType')} />
@@ -92,7 +93,7 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
           <Label htmlFor="unit_of_measure" className="text-foreground">{t('inventory.unitOfMeasure')} *</Label>
           <Select
             value={formData.unit_of_measure}
-            onValueChange={(value) => updateFormData('unit_of_measure', value)}
+            onValueChange={(value) => updateFormData('unit_of_measure', value as UnitOfMeasure)}
           >
             <SelectTrigger>
               <SelectValue placeholder={t('inventory.selectUnit')} />

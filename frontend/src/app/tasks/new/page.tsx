@@ -7,11 +7,12 @@ import dynamic from 'next/dynamic';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/shared/ui/ui/button';
 import { useTranslation } from '@/shared/hooks/useTranslation';
+import type { TaskFormProps } from '@/domains/tasks';
 // Import test utility for debugging IPC calls
 // import '@/lib/test-task-creation';
 
 // Dynamically import TaskForm for better performance
-const TaskForm = dynamic(() => import('@/shared/ui/TaskForm').then(mod => ({ default: mod.TaskForm })), {
+const TaskForm = dynamic<TaskFormProps>(() => import('@/domains/tasks').then(mod => ({ default: mod.TaskForm })), {
   loading: () => (
     <div className="flex items-center justify-center py-12">
       <div className="flex items-center space-x-3">

@@ -10,6 +10,7 @@ import type {
   MaterialType,
   UnitOfMeasure,
 } from '../api/types';
+import type { JsonValue } from '@/types/json';
 
 export interface CreateMaterialRequest {
   sku: string;
@@ -21,7 +22,7 @@ export interface CreateMaterialRequest {
   category_id?: string;
   brand?: string;
   model?: string;
-  specifications?: Record<string, unknown>;
+  specifications?: JsonValue;
   unit_of_measure: UnitOfMeasure;
   current_stock?: number;
   minimum_stock?: number;

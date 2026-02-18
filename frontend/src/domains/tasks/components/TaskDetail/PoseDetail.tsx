@@ -1,6 +1,7 @@
 import React, { useMemo, useCallback, memo, useRef, useState, useEffect } from 'react';
 // Removed pose dependency - now works independently
-import { TaskWithDetails, TaskDisplay, ChecklistItem, TaskStatus, UpdateTaskRequest, JsonValue } from '@/shared/types';
+import { TaskWithDetails, TaskDisplay, ChecklistItem, TaskStatus, JsonValue } from '@/shared/types';
+import type { UpdateTaskRequest } from '@/lib/backend';
 import { useInterventionData, InterventionWorkflowService } from '@/domains/interventions';
 
 import { convertTimestamps, cn, convertNullsToUndefined } from '@/shared/utils';
@@ -10,7 +11,7 @@ import { Skeleton, Button, ErrorFallback } from '@/shared/ui';
 
 import { AlertCircle } from 'lucide-react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { useInView } from '@/shared/hooks/useInView';
+import { useInView } from '@/shared/hooks';
 // import { useVirtualizer } from '@tanstack/react-virtual'; // Uncomment when needed for virtual scrolling
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { taskService } from '../../services/task.service';
@@ -308,8 +309,8 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
             currentStep.id,
             updatedCollectedData as unknown as JsonValue,
             user.token,
-            currentStep.notes,
-            currentStep.photo_urls
+            currentStep.notes ?? undefined,
+            currentStep.photo_urls ?? undefined
           );
 
           saveChecklistOverrides(safeTask.id, updatedItems);

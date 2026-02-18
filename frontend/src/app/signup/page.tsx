@@ -11,8 +11,7 @@ import { Button } from '@/shared/ui/ui/button';
 import { FormFeedback } from '@/shared/ui/ui/form-feedback';
 import { FadeIn } from '@/shared/ui/animations/FadeIn';
 import { UILoader } from '@/shared/ui/animations/UILoader';
-import PasswordStrengthMeter from '@/shared/ui/auth/PasswordStrengthMeter';
-import { PasswordValidationResult } from '@/domains/auth';
+import { PasswordValidationResult, PasswordStrengthMeter } from '@/domains/auth';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 
 const logger = createLogger('SignupPage');

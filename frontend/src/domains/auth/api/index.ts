@@ -9,7 +9,7 @@ export { authIpc } from '../ipc/auth.ipc';
 export { default as PasswordStrengthMeter } from '../components/PasswordStrengthMeter';
 export { LoginForm } from '../components/LoginForm';
 export { SignupForm } from '../components/SignupForm';
-export { TOTPSetup } from '../components/TOTPSetup';
+export { default as TOTPSetup } from '../components/TOTPSetup';
 
 export type {
   AuthContextType,
@@ -21,4 +21,5 @@ export type {
   UserSession,
   UserRole,
   UserAccount,
+  PasswordValidationResult,
 } from './types';

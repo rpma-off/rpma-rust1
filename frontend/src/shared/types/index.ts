@@ -113,5 +113,10 @@ export type {
   GeographicReport,
   SeasonalReport,
   OperationalIntelligenceReport,
+  CreateUserRequest,
+  StepBottleneck,
+  InterventionBottleneck,
+  ResourceUtilization,
+  WorkflowRecommendation,
   HeatMapPoint,
 } from '@/lib/backend';

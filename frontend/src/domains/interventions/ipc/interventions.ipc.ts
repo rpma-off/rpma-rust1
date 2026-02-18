@@ -25,9 +25,6 @@ export const interventionsIpc = {
   getProgress: (interventionId: string, sessionToken: string) =>
     ipcClient.interventions.getProgress(interventionId, sessionToken),
 
-  getSteps: (interventionId: string, sessionToken: string) =>
-    ipcClient.interventions.getSteps(interventionId, sessionToken),
-
   getStep: (stepId: string, sessionToken: string) =>
     ipcClient.interventions.getStep(stepId, sessionToken),
 

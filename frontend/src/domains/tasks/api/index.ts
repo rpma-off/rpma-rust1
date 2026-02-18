@@ -12,7 +12,7 @@ export { KanbanBoard } from '../components/KanbanBoard';
 export { TaskAttachments } from '../components/TaskAttachments';
 export { TaskDetails } from '../components/TaskDetails';
 export { TaskHistory } from '../components/TaskHistory';
-export { TaskManager } from '../components/TaskManager';
+export { default as TaskManager } from '../components/TaskManager';
 export { TaskOverview } from '../components/TaskOverview';
 export { TaskTimeline } from '../components/TaskTimeline';
 export { WorkflowProgressCard } from '../components/WorkflowProgressCard';

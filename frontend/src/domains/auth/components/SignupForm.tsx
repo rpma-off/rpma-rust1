@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { DesktopForm } from '../forms/DesktopForm';
+import { DesktopForm } from '@/shared/ui';
 import { z } from 'zod';
 import { UserPlus, Eye, EyeOff } from 'lucide-react';
 

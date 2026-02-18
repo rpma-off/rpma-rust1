@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { DesktopTable, Column } from '../ui/DesktopTable';
-import { EntitySyncIndicator } from '../sync/EntitySyncIndicator';
-import { DesktopForm } from '../forms/DesktopForm';
+import { DesktopForm, DesktopTable, type Column, EntitySyncIndicator } from '@/shared/ui';
 import { z } from 'zod';
 import { Plus, Calendar, User } from 'lucide-react';
 import { Task, Client } from '@/types';

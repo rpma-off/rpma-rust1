@@ -31,3 +31,10 @@ export type {
   MaterialConsumptionSummary,
   InventoryMovementSummary,
 } from './types';
+
+export type {
+  InventoryQuery,
+  CreateMaterialRequest,
+  UpdateStockRequest,
+  RecordConsumptionRequest,
+} from '../hooks/useInventory';

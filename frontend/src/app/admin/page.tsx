@@ -27,7 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/ui/tabs';
 import { Input } from '@/shared/ui/ui/input';
 import { useAuth } from '@/domains/auth';
 import { useRouter } from 'next/navigation';
-import { ipcClient } from '@/shared/utils';
+import { ipcClient, convertTimestamps } from '@/shared/utils';
 import type { CreateUserRequest, UserAccount } from '@/shared/types';
 import { WorkflowExecutionDashboard } from '@/shared/ui/dashboard/WorkflowExecutionDashboard';
 import { QualityAssuranceDashboard } from '@/shared/ui/dashboard/QualityAssuranceDashboard';
@@ -173,7 +173,8 @@ export default function AdminPage() {
        setIsLoadingUsers(true);
        const result = await ipcClient.users.list(50, 0, user.token);
        if (result && result.data) {
-         setUsers(result.data || []);
+         const normalizedUsers = (result.data || []).map(user => convertTimestamps(user));
+         setUsers(normalizedUsers as UserAccount[]);
        }
      } catch (error) {
        console.error('Failed to load users:', error);

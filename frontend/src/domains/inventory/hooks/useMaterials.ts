@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/domains/auth';
 import { inventoryIpc } from '../ipc/inventory.ipc';
-import type { Material } from '../api/types';
+import type { Material, MaterialType } from '../api/types';
 
 interface UseMaterialsOptions {
-  materialType?: string;
+  materialType?: MaterialType;
   category?: string;
   activeOnly?: boolean;
   search?: string;
