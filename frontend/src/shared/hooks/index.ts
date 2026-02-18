@@ -15,3 +15,4 @@ export {
 } from '@/hooks/useQuotes';
 export { useSearchRecords } from '@/hooks/useSearchRecords';
 export { useInView } from '@/hooks/useInView';
+export { useSystemHealth } from '@/hooks/useSystemHealth';

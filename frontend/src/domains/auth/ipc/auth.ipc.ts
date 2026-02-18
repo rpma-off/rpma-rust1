@@ -1,7 +1,7 @@
 import { ipcClient } from '@/lib/ipc';
 import type { UserSession } from '@/lib/backend';
 import type { UserAccount } from '@/lib/types';
-import type { SignupRequest } from '@/lib/ipc/types';
+import type { SignupRequest } from '@/lib/ipc/types/auth.types';
 
 export const authIpc = {
   login: (email: string, password: string): Promise<UserSession> =>

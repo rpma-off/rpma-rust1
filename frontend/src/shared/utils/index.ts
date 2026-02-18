@@ -16,7 +16,7 @@ export {
   CorrelationIdGenerator,
 } from '@/lib/logging/types';
 
-export { ipcClient, safeInvoke, IPC_COMMANDS, settingsOperations } from '@/lib/ipc';
+export { ipcClient, settingsOperations } from '@/lib/ipc';
 export { reportsService } from '@/lib/services/entities/reports.service';
 export { clientService } from '@/lib/services/entities/client.service';
 
