@@ -7,7 +7,7 @@ import type {
   TaskStatistics,
   ClientStatistics
 } from '@/lib/backend';
-import type { Material, MaterialStats } from '@/lib/inventory';
+import type { Material, MaterialStats } from '@/shared/types';
 import type { JsonObject } from '@/types/json';
 import { handleInvoke } from './mock-db';
 import { installMockControls } from './mock-controls';

@@ -10,7 +10,7 @@
 
  export const dynamic = 'force-dynamic';
 import { z } from 'zod';
-import { interventionWorkflowService } from '@/lib/services/ppf';
+import { interventionWorkflowService } from '@/domains/interventions';
 import type { AdvanceStepDTO } from '@/types/ppf-intervention';
 import { handleApiError } from '@/lib/api-error';
 import { ApiResponseFactory, HttpStatus } from '@/lib/http-status';

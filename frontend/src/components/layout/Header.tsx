@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useLayoutStore } from '@/lib/stores/layoutStore';
-import { useAuth } from '@/lib/auth/compatibility';
+import { useAuth } from '@/domains/auth';
 import { Menu, Search, Star, Bell, X, RefreshCw, UserCircle, Settings, LogOut } from 'lucide-react';
 import { Breadcrumbs } from './Breadcrumbs';
 import { Button } from '@/components/ui/button';

@@ -7,8 +7,8 @@ import { DashboardTask, RawTaskData, transformTask } from '@/components/dashboar
 import { FetchError } from '@/lib/utils/fetch-error-handler';
 import { useLogger } from '@/hooks/useLogger';
 import { LogDomain } from '@/lib/logging/types';
-import { useAuth } from '@/contexts/AuthContext';
-import { taskService } from '@/lib/services/entities/task.service';
+import { useAuth } from '@/domains/auth';
+import { taskService } from '@/domains/tasks';
 
 
 // ==================== DASHBOARD QUERY KEYS ====================

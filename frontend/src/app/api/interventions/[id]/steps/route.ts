@@ -8,7 +8,7 @@
  import { NextRequest, NextResponse } from 'next/server';
 
  export const dynamic = 'force-dynamic';
-import { interventionWorkflowService } from '@/lib/services/ppf';
+import { interventionWorkflowService } from '@/domains/interventions';
 
 
 

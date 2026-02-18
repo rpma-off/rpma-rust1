@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { messageApi } from '@/lib/ipc/message';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/domains/auth';
 import type {
   Message,
   MessageQuery,

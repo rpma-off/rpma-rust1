@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { TaskWithDetails } from '@/types/task.types';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/domains/auth';
-import { InterventionWorkflowService } from '@/lib/services/ppf/intervention-workflow.service';
+import { InterventionWorkflowService } from '@/domains/interventions';
 import { ipcClient } from '@/lib/ipc/client';
 import EditTaskModal from '../../TaskActions/EditTaskModal';
 

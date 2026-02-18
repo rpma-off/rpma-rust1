@@ -1,6 +1,6 @@
 // Auth token utilities for API requests
 
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/domains/auth';
 
 /**
  * Get the current authentication token from the AuthContext

@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { useWorkflow } from '@/contexts/WorkflowContext';
+import { useWorkflow } from '@/domains/interventions';
 import { WorkflowExecutionStep } from '@/types/workflow.types';
 
 // Utility function to convert WorkflowExecutionStep to display format

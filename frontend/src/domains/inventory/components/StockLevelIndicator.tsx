@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge, type BadgeProps } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Material } from '@/lib/inventory';
+import { Material } from '@/shared/types';
 import { 
   AlertTriangle, 
   CheckCircle, 

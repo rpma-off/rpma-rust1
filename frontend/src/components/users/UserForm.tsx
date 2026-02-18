@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { UserAccount, UserRole } from '@/types';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/domains/auth';
 import { ipcClient } from '@/lib/ipc';
 import { useTranslation } from '@/hooks/useTranslation';
 

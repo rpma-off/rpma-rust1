@@ -6,7 +6,7 @@ import {
   inventoryStats 
 } from '@/lib/ipc/domains/inventory';
 import { safeInvoke } from '@/lib/ipc/core';
-import { Material, MaterialType, UnitOfMeasure } from '@/lib/inventory';
+import { Material, MaterialType, UnitOfMeasure } from '@/shared/types';
 
 // Mock the core IPC module
 jest.mock('@/lib/ipc/core', () => ({

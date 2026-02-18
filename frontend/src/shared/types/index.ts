@@ -98,6 +98,22 @@ export type {
 } from '@/types/json';
 
 export type {
+  MaterialType,
+  UnitOfMeasure,
+  InventoryTransactionType,
+  Material,
+  MaterialConsumption,
+  MaterialStats,
+  InventoryStats,
+  InventoryTransaction,
+  Supplier,
+  MaterialCategory,
+  InterventionMaterialSummary,
+  MaterialConsumptionSummary,
+  InventoryMovementSummary,
+} from './inventory.types';
+
+export type {
   ReportType,
   ReportFilters,
   DateRange,

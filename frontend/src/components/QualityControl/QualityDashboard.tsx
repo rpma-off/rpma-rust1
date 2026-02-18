@@ -26,7 +26,8 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { QualityControlService, QualityCheckpoint, QualityControlWorkflow } from '@/lib/services/ppf/quality-control.service';
+import { QualityControlService } from '@/domains/interventions';
+import type { QualityCheckpoint, QualityControlWorkflow } from '@/shared/types';
 import { QualityIssue, CorrectiveAction } from '@/types/ppf-intervention';
 import { useTranslation } from '@/hooks/useTranslation';
 

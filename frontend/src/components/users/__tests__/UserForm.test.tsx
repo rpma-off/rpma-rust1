@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { AuthContext } from '@/contexts/AuthContext';
+import { AuthContext } from '@/domains/auth';
 import { ipcClient } from '@/lib/ipc';
 import { UserForm } from '../UserForm';
 import { UserAccount } from '@/types';

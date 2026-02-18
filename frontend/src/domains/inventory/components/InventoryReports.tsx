@@ -12,7 +12,7 @@ import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useAuth } from '@/domains/auth';
 import { safeInvoke } from '@/lib/ipc/core';
 import { IPC_COMMANDS } from '@/lib/ipc/commands';
-import type { Material, InventoryMovementSummary } from '@/lib/inventory';
+import type { Material, InventoryMovementSummary } from '@/shared/types';
 
 export function InventoryReports() {
   const { t } = useTranslation();

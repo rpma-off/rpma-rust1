@@ -6,7 +6,7 @@ import { Search, Bell, ChevronDown, UserCircle, Settings, LogOut, X, Menu } from
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { SyncIndicator } from '@/components/ui/SyncIndicator';
-import { useAuth } from '@/lib/auth/compatibility';
+import { useAuth } from '@/domains/auth';
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface Task {

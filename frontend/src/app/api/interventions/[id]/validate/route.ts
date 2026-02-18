@@ -8,8 +8,8 @@
  import { NextResponse } from 'next/server';
 
  export const dynamic = 'force-dynamic';
-import { interventionWorkflowService } from '@/lib/services/ppf';
-import { PPFPhotoService, PPFPhoto } from '@/lib/services/ppf/photo.service';
+import { interventionWorkflowService, PPFPhotoService } from '@/domains/interventions';
+import type { PPFPhoto } from '@/domains/interventions';
 import { PPFInterventionData } from '@/types/ppf-intervention';
 
 interface ValidationResult {

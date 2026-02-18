@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { taskService } from '@/lib/services/entities/task.service';
+import { taskService } from '@/domains/tasks';
 
 export interface AutoSaveOptions<T = Record<string, unknown>> {
   delay?: number; // Délai en ms avant sauvegarde (défaut: 30s)

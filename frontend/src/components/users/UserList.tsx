@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { UserAccount } from '@/types';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/domains/auth';
 import { bigintToNumber } from '@/lib/utils/timestamp-conversion';
 import { ipcClient } from '@/lib/ipc';
 import { ChangeRoleDialog } from '@/app/admin/users/components/ChangeRoleDialog';

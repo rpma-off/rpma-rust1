@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PPFPhotoService } from '@/lib/services/ppf/photo.service';
+import { PPFPhotoService } from '@/domains/interventions';
 import { PPFPhotoAngle, PPFPhotoCategory } from '@/types/enums';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';

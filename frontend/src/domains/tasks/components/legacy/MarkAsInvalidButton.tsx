@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { taskService } from '@/lib/services/entities/task.service';
+import { taskService } from '../../services/task.service';
 import {
   Dialog,
   DialogContent,
@@ -155,4 +155,3 @@ export function MarkAsInvalidButton({
     </>
   );
 }
-

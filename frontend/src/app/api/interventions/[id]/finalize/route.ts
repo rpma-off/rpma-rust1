@@ -9,8 +9,8 @@
 
  export const dynamic = 'force-dynamic';
 import { z } from 'zod';
-import { interventionWorkflowService } from '@/lib/services/ppf';
-import type { PPFStep } from '@/lib/services/ppf';
+import { interventionWorkflowService } from '@/domains/interventions';
+import type { PPFStep } from '@/domains/interventions';
 
 // Schéma de validation pour finaliser une intervention
 const FinalizeInterventionSchema = z.object({

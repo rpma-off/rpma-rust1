@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { InventoryManager } from '../InventoryManager';
 import { useInventory } from '@/hooks/useInventory';
 import { useInventoryStats } from '@/hooks/useInventoryStats';
-import { Material, MaterialType, UnitOfMeasure, InventoryStats } from '@/lib/inventory';
+import { Material, MaterialType, UnitOfMeasure, InventoryStats } from '@/shared/types';
 
 // Mock the hooks
 jest.mock('@/hooks/useInventory');

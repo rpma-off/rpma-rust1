@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { StockLevelIndicator } from '../StockLevelIndicator';
-import { Material, MaterialType, UnitOfMeasure } from '@/lib/inventory';
+import { Material, MaterialType, UnitOfMeasure } from '@/shared/types';
 
 jest.mock('lucide-react', () => ({
   AlertTriangle: ({ className }: { className?: string }) => <div data-testid="alert-triangle" className={className} />,

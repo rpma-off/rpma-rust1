@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { GeolocationService } from '@/lib/services/ppf/geolocation.service';
+import { GeolocationService } from '@/domains/interventions';
 
 interface GPSLocation {
   latitude: number;

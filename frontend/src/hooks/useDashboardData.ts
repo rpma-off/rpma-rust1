@@ -10,7 +10,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/domains/auth';
 import { dashboardApiService, DashboardFilters, DashboardData, TechnicianSummary } from '@/lib/services/dashboard/dashboard-api.service';
 import { TaskWithDetails } from '@/types/task.types';
 import { DashboardTask, transformTask, RawTaskData } from '@/components/dashboard/types';

@@ -8,8 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { designTokens } from '@/lib/design-tokens';
 import { useCalendarStore } from '@/lib/stores/calendarStore';
-import { useAuth } from '@/lib/auth/compatibility';
-import { taskService } from '@/lib/services/entities/task.service';
+import { useAuth } from '@/domains/auth';
+import { taskService } from '@/domains/tasks';
 import type { CreateTaskRequest } from '@/lib/backend';
 import { format } from 'date-fns';
 

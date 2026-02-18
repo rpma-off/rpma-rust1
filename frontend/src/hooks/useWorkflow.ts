@@ -14,7 +14,7 @@ import { PPFPhotoAngle, PPFPhotoCategory } from '@/types/enums';
 import { toast } from 'sonner';
 import { normalizeError, getErrorMessage } from '@/types/type-utils';
 import type { JsonRecord } from '@/types/utility.types';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/domains/auth';
 
 export interface UseWorkflowOptions {
   taskId?: string;

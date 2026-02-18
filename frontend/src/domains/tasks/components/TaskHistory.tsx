@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Edit3, Trash, UserPlus, Check, History, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/domains/auth';
-import { taskService } from '@/lib/services/entities/task.service';
+import { taskService } from '../services/task.service';
 import { TaskWithDetails } from '@/types/task.types';
 
 type ChangeLog = {

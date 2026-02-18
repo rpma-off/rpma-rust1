@@ -46,7 +46,7 @@ export function EventDetailPopover({ isOpen, onClose, event }: EventDetailPopove
     }
 
     try {
-      const { taskService } = await import('@/lib/services/entities/task.service');
+      const { taskService } = await import('@/domains/tasks');
       await taskService.deleteTask(event.id);
       onClose();
       router.push('/dashboard');

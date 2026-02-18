@@ -6,9 +6,9 @@
  */
 
 import { NextResponse, NextRequest } from 'next/server';
-import { interventionWorkflowService } from '@/lib/services/ppf';
+import { interventionWorkflowService } from '@/domains/interventions';
 import { validateApiAuth } from '@/lib/api-auth';
-import { InterventionWorkflowService } from '@/lib/services/ppf/intervention-workflow.service';
+import { InterventionWorkflowService } from '@/domains/interventions';
 import { PPFInterventionData, PPFInterventionStep } from '@/types/ppf-intervention';
 
 interface ProgressData {

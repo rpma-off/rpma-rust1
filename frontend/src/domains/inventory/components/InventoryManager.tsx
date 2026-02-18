@@ -15,7 +15,7 @@ import { MaterialForm } from './MaterialForm';
 import { useInventory } from '../hooks/useInventory';
 import { useInventoryStats } from '../hooks/useInventoryStats';
 import { useTranslation } from '@/shared/hooks/useTranslation';
-import { Material, MaterialType } from '@/lib/inventory';
+import { Material, MaterialType } from '@/shared/types';
 import { 
   Plus, 
   Search, 

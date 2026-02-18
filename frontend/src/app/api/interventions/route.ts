@@ -9,7 +9,7 @@
 
  export const dynamic = 'force-dynamic';
 import { z } from 'zod';
-import { interventionWorkflowService } from '@/lib/services/ppf';
+import { interventionWorkflowService } from '@/domains/interventions';
 import { PPFInterventionStatus } from '@/types/enums';
 import { handleApiError } from '@/lib/api-error';
 import { ApiResponseFactory, HttpStatus } from '@/lib/http-status';

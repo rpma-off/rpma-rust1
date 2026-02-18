@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { PPFPhotoService, MobileCameraConfig, RealTimeValidationResult } from '@/lib/services/ppf/photo.service';
+import { PPFPhotoService, type MobileCameraConfig, type RealTimeValidationResult } from '@/domains/interventions';
 import { PPFPhotoAngle, PPFPhotoCategory } from '@/types/enums';
 import { GeographicLocation } from '@/types/ppf-intervention';
 import { useTranslation } from '@/hooks/useTranslation';

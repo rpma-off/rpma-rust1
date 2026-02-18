@@ -1,6 +1,6 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { useAutoSave, useWorkflowStepAutoSave, useBeforeUnloadSave } from './useAutoSave'
-import { taskService } from '@/lib/services/entities/task.service'
+import { taskService } from '@/domains/tasks'
 
 // Mock sonner
 jest.mock('sonner', () => ({
@@ -10,7 +10,7 @@ jest.mock('sonner', () => ({
   }
 }))
 
-jest.mock('@/lib/services/entities/task.service', () => ({
+jest.mock('@/domains/tasks', () => ({
   taskService: {
     updateTaskStepData: jest.fn()
   }
@@ -451,4 +451,3 @@ describe('useBeforeUnloadSave', () => {
     expect(mockSaveFunction).not.toHaveBeenCalled()
   })
 })
-

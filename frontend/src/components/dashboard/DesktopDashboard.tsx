@@ -16,7 +16,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/domains/auth';
 import { ipcClient } from '@/lib/ipc';
 import { getTaskDisplayTitle, getTaskDisplayStatus, getTaskDisplayPriority } from '@/lib/utils/task-display';
 
