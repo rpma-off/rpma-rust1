@@ -3,8 +3,8 @@ use std::sync::Arc;
 use crate::models::material::{
     InventoryStats, Material, MaterialConsumption, MaterialStats, MaterialType,
 };
-use crate::services::material::{
-    MaterialResult, MaterialService, RecordConsumptionRequest, UpdateStockRequest,
+pub use crate::services::material::{
+    MaterialError, MaterialResult, MaterialService, RecordConsumptionRequest, UpdateStockRequest,
 };
 
 #[derive(Debug)]

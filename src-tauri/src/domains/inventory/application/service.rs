@@ -6,7 +6,9 @@ use crate::models::material::{
     InventoryStats, InventoryTransaction, InventoryTransactionType, Material, MaterialConsumption,
     MaterialStats, MaterialType,
 };
-use crate::services::material::{MaterialService, RecordConsumptionRequest, UpdateStockRequest};
+use crate::domains::inventory::infrastructure::{
+    MaterialService, RecordConsumptionRequest, UpdateStockRequest,
+};
 use crate::shared::db::Database;
 use crate::shared::event_bus::InterventionFinalized;
 
