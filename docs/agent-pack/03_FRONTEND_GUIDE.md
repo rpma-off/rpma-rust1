@@ -60,7 +60,7 @@ frontend/
 │   │       ├── tasks/            # Task API routes
 │   │       ├── workflows/        # Workflow API routes
 │   │       └── ...
-│   ├── components/               # 245+ Reusable React components
+│   ├── components/               # 200+ Reusable React components
 │   │   ├── ui/                   # shadcn/ui primitives (61 files)
 │   │   ├── dashboard/            # Dashboard widgets
 │   │   ├── calendar/             # Calendar/scheduling
@@ -311,7 +311,7 @@ npm run types:drift-check    # Detects mismatches
 
 **Problem**: Using incorrect command names causes IPC failures.
 
-**Solution**: Check `src-tauri/src/main.rs` (lines 69-306) for registered command names in `tauri::generate_handler![]` and use exact same name. All 236 commands are registered in the `invoke_handler`.
+**Solution**: Check `src-tauri/src/main.rs` (lines 71-308) for registered command names in `tauri::generate_handler![]` and use exact same name. All 212 active commands are registered in the `invoke_handler`.
 
 ### ❌ Pitfall 3: Missing Session Token
 

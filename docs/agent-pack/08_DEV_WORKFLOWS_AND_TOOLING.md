@@ -140,7 +140,7 @@ cd frontend && npm run test:e2e:codegen    # Generate code
 
 ## Scripts Reference
 
-### Root Package.json (45+ scripts)
+### Root Package.json (41 scripts)
 
 **Location**: `/home/runner/work/rpma-rust1/rpma-rust1/package.json`
 

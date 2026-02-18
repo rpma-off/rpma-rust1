@@ -96,7 +96,7 @@ npm run types:generate-docs  # Generates type documentation
 | `sync_get_status` | Sync status | session_token | Authenticated | `commands/sync.rs` | `lib/ipc/domains/sync.ts` |
 | `sync_now` | Trigger sync | session_token | Authenticated | `commands/sync.rs` | `lib/ipc/domains/sync.ts` |
 
-**Total Commands Registered**: **236 commands** in `src-tauri/src/main.rs:69-306`
+**Total Commands Registered**: **212 active commands** in `src-tauri/src/main.rs:71-308`
 
 ---
 

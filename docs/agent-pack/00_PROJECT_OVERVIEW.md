@@ -90,7 +90,7 @@ The application is designed to work **completely offline** with a local SQLite d
 rpma-rust1/
 ├── src-tauri/                # Rust/Tauri backend
 │   ├── src/
-│   │   ├── commands/         # IPC command handlers (236 commands across 37+ files)
+│   │   ├── commands/         # IPC command handlers (212 active commands across 37+ files)
 │   │   │   ├── mod.rs        # Module exports, ApiResponse, AppState, errors
 │   │   │   ├── auth_middleware.rs # authenticate! macro, RBAC checks
 │   │   │   ├── auth.rs       # Authentication commands (login, 2FA, logout)
@@ -135,7 +135,7 @@ rpma-rust1/
 ├── frontend/                 # Next.js application
 │   ├── src/
 │   │   ├── app/              # Next.js App Router pages (40+ routes)
-│   │   ├── components/       # React components (245 components)
+│   │   ├── components/       # React components (204 components)
 │   │   ├── lib/
 │   │   │   ├── ipc/          # IPC client
 │   │   │   │   ├── client.ts      # Main ipcClient object
@@ -203,7 +203,7 @@ Database (SQLite)
 - Background sync runs at 30-second intervals
 
 ### 4. **Security by Default**
-- All 235 protected IPC commands require `session_token` parameter (1 public: auth_login)
+- Protected IPC commands require `session_token` parameter; system/bootstrap commands (e.g., `health_check`, `get_app_info`, `has_admins`, `bootstrap_first_admin`, `auth_login`, `auth_create_account`) are public
 - RBAC enforcement at command handler level via `authenticate!` macro (`src-tauri/src/commands/auth_middleware.rs`)
 - Password hashing with Argon2 (`src-tauri/src/services/auth.rs:779-801`)
 - JWT tokens: 2-hour access, 7-day refresh (`src-tauri/src/services/token.rs:60-61`)
@@ -282,7 +282,7 @@ npm run build
 | Migrations | `Database::migrate()` | `src-tauri/src/db/migrations.rs` (35 SQL files in `src-tauri/migrations/` + Rust-implemented migrations 1-33) |
 | Type Export | `export-types` binary | `src-tauri/src/bin/export-types.rs` |
 | AppState | Centralized service container | `src-tauri/src/lib.rs:279-320` |
-| Command Registration | `tauri::generate_handler![]` | `src-tauri/src/main.rs:69-306` (236 commands) |
+| Command Registration | `tauri::generate_handler![]` | `src-tauri/src/main.rs:71-308` (212 active commands) |
 
 ---
 
