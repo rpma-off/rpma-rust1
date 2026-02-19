@@ -146,7 +146,7 @@ pub async fn task_archive(
 ```rust
 // In the invoke_handler! macro (lines 71-308)
 .invoke_handler(tauri::generate_handler![
-    // ... existing commands (212 active commands)
+    // ... existing commands (~205 registered commands)
     commands::task::facade::task_archive,  // Add your command here
 ])
 ```
@@ -218,7 +218,10 @@ return Err(AppError::Database("Failed to fetch task".into())); // GOOD
 
 ## Authentication Middleware
 
-### authenticate! Macro (`src-tauri/src/commands/auth_middleware.rs:27-66`)
+### authenticate! Macro
+
+**Canonical location**: `src-tauri/src/domains/auth/ipc/auth_middleware.rs`
+(shim at `src-tauri/src/commands/auth_middleware.rs` — 1-line `pub use` re-export)
 
 ```rust
 // Basic authentication - validates session token
@@ -288,8 +291,8 @@ pub async fn task_archive(...) -> Result<ApiResponse<Task>, AppError> {
 | `InterventionService` | Workflow management | `domains/interventions/infrastructure/intervention.rs` |
 | `MaterialService` | Inventory management | `domains/inventory/infrastructure/material.rs` |
 | `CalendarService` | Scheduling | `domains/calendar/infrastructure/calendar.rs` |
-| `CacheService` | In-memory caching | `services/cache.rs` |
-| `InMemoryEventBus` | Domain events | `services/event_bus.rs` |
+| `CacheService` | In-memory caching | `services/cache.rs` *(true shared infra)* |
+| `InMemoryEventBus` | Domain events | `services/event_bus.rs` *(true shared infra)* |
 | `SyncQueue` | Offline sync queue | `domains/sync/infrastructure/sync/queue.rs` |
 
 ---

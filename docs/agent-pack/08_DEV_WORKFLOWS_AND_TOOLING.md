@@ -226,8 +226,9 @@ node scripts/test-migrations.js [NNN]
 
 ### ✅ After adding new IPC command:
 ```bash
-# 1. Implement command in src-tauri/src/commands/
-# 2. Register in main.rs invoke_handler! (lines 69-250)
+# 1. Implement command in canonical location: src-tauri/src/domains/<context>/ipc/
+#    (the shim in src-tauri/src/commands/ re-exports from there)
+# 2. Register in main.rs invoke_handler!
 # 3. Sync types if new models added
 npm run types:sync
 
@@ -282,9 +283,10 @@ npm run performance:update-baseline # Update baselines
 2. **Create branch**: `npm run git:start-feature archive-task`
 3. **Modify Rust model** (if needed): `src-tauri/src/models/task.rs`
 4. **Sync types**: `npm run types:sync`
-5. **Add repository method**: `src-tauri/src/repositories/task_repository.rs`
-6. **Add service method**: `src-tauri/src/services/task.rs`
-7. **Add IPC command**: `src-tauri/src/commands/task/facade.rs`
+5. **Add repository method** (canonical): `src-tauri/src/domains/tasks/infrastructure/task_repository.rs`
+6. **Add service method** (canonical): `src-tauri/src/domains/tasks/infrastructure/task.rs`
+7. **Add IPC command** (canonical): `src-tauri/src/domains/tasks/ipc/task/facade.rs`
+   - Shims in `src-tauri/src/commands/task/` re-export from the canonical location
 8. **Register in main.rs**: Add to `invoke_handler`
 9. **Add frontend IPC**: `frontend/src/lib/ipc/domains/tasks.ts`
 10. **Add UI component**: `frontend/src/components/tasks/`

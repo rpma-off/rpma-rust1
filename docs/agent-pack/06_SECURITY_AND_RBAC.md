@@ -12,13 +12,15 @@
        ↓
 ┌────────────────────────────────────────┐
 │  Command: auth_login                    │  1. No session required (public)
-│  (src-tauri/src/commands/auth.rs:31)    │  2. Rate limiting applied
+│  Canonical: `src-tauri/src/domains/auth/ipc/auth.rs`   │  2. Rate limiting applied
+│  (shim: `src-tauri/src/commands/auth.rs:31`)            │
 └──────┬─────────────────────────────────┘
        │ auth_service.authenticate(email, password)
        ↓
 ┌─────────────────────────────────────────────────┐
 │  Service: AuthService::authenticate              │  1. Lookup user by email
-│  (src-tauri/src/services/auth.rs:449-666)       │  2. Check rate limit/lockout
+│  Canonical: `src-tauri/src/domains/auth/infrastructure/auth.rs` │  2. Check rate limit/lockout
+│  (shim: `src-tauri/src/services/auth.rs`)        │  3. Verify password (Argon2)
 └──────┬──────────────────────────────────────────┘  3. Verify password (Argon2)
        │                                            4. Generate JWT token
        │ user_repo.get_by_email()                   5. Create session in DB
@@ -31,11 +33,11 @@
 ```
 
 **Security Features**:
-- Password hashing: **Argon2** with random salt per password (`services/auth.rs:779-801`)
-- JWT access tokens: **2 hours** expiration (`services/token.rs:60`)
-- Refresh tokens: **7 days** expiration (`services/token.rs:61`)
-- Token storage: **SHA256 hash** in database, not plain text (`services/token.rs:66-72`, `user_sessions` table)
-- Rate limiting: Applied before authentication attempt (`services/rate_limiter.rs`)
+- Password hashing: **Argon2** with random salt per password (canonical: `domains/auth/infrastructure/auth.rs`)
+- JWT access tokens: **2 hours** expiration (canonical: `domains/auth/infrastructure/token.rs`)
+- Refresh tokens: **7 days** expiration (canonical: `domains/auth/infrastructure/token.rs`)
+- Token storage: **SHA256 hash** in database, not plain text (`user_sessions` table)
+- Rate limiting: Applied before authentication attempt (canonical: `domains/auth/infrastructure/rate_limiter.rs`)
 
 ---
 
@@ -43,7 +45,8 @@
 
 All protected IPC commands use the `authenticate!` macro:
 
-**Location**: `src-tauri/src/commands/auth_middleware.rs:27-66`
+**Canonical location**: `src-tauri/src/domains/auth/ipc/auth_middleware.rs`
+(1-line shim at `src-tauri/src/commands/auth_middleware.rs`: `pub use crate::domains::auth::ipc::auth_middleware::*;`)
 
 ```rust
 #[tauri::command]
@@ -80,15 +83,15 @@ pub async fn protected_command(
 
 **Status**: **Fully Implemented**
 
-**Service**: `src-tauri/src/services/two_factor.rs`
+**Service**: `src-tauri/src/domains/auth/infrastructure/two_factor.rs` (shim: `src-tauri/src/services/two_factor.rs`)
 
 | Command | Purpose | Backend | Frontend |
 |---------|---------|---------|----------|
-| `enable_2fa` | Generate TOTP setup (QR code + backup codes) | `auth.rs:216-243` | `lib/ipc/domains/auth.ts` |
-| `verify_2fa_setup` | Verify and enable 2FA | `auth.rs:245-276` | `lib/ipc/domains/auth.ts` |
-| `disable_2fa` | Disable 2FA (requires password) | `auth.rs:278-306` | `lib/ipc/domains/auth.ts` |
-| `verify_2fa_code` | Verify TOTP code during login | `auth.rs:352-387` | `lib/ipc/domains/auth.ts` |
-| `regenerate_backup_codes` | Generate new backup codes | `auth.rs:323-350` | `lib/ipc/domains/auth.ts` |
+| `enable_2fa` | Generate TOTP setup (QR code + backup codes) | canonical: `domains/auth/ipc/auth.rs` | `lib/ipc/domains/auth.ts` |
+| `verify_2fa_setup` | Verify and enable 2FA | canonical: `domains/auth/ipc/auth.rs` | `lib/ipc/domains/auth.ts` |
+| `disable_2fa` | Disable 2FA (requires password) | canonical: `domains/auth/ipc/auth.rs` | `lib/ipc/domains/auth.ts` |
+| `verify_2fa_code` | Verify TOTP code during login | canonical: `domains/auth/ipc/auth.rs` | `lib/ipc/domains/auth.ts` |
+| `regenerate_backup_codes` | Generate new backup codes | canonical: `domains/auth/ipc/auth.rs` | `lib/ipc/domains/auth.ts` |
 
 **Configuration**:
 - Algorithm: TOTP (RFC 6238) with SHA-1
@@ -111,7 +114,7 @@ pub async fn protected_command(
 
 ### User Roles
 
-**Location**: `src-tauri/src/models/auth.rs:31-41`
+**Location**: `src-tauri/src/models/auth.rs`
 
 ```rust
 pub enum UserRole {
@@ -157,7 +160,7 @@ Admin > Supervisor > Technician > Viewer
 
 ### Enforcement in Code
 
-**Location**: `src-tauri/src/commands/auth_middleware.rs`
+**Location**: `src-tauri/src/domains/auth/ipc/auth_middleware.rs`
 
 **Pattern 1: Role Check**
 ```rust
@@ -186,7 +189,7 @@ check_task_permission!(&user.role, "delete")             // Task operation
 
 ## Rate Limiting
 
-**Service**: `src-tauri/src/services/rate_limiter.rs`
+**Service**: `src-tauri/src/domains/auth/infrastructure/rate_limiter.rs` (shim: `src-tauri/src/services/rate_limiter.rs`)
 
 | Setting | Value | Location |
 |---------|-------|----------|
@@ -205,7 +208,7 @@ check_task_permission!(&user.role, "delete")             // Task operation
 
 ## Security Monitoring
 
-**Service**: `src-tauri/src/services/security_monitor.rs`
+**Service**: `src-tauri/src/domains/audit/infrastructure/security_monitor.rs` (shim: `src-tauri/src/services/security_monitor.rs`)
 
 **Event Types Tracked**:
 - Authentication failures (wrong password, invalid token)
@@ -271,7 +274,7 @@ npm run dev
 
 ### Audit Service
 
-**Location**: `src-tauri/src/services/audit_service.rs`
+**Location**: `src-tauri/src/domains/audit/infrastructure/audit_service.rs` (shim: `src-tauri/src/services/audit_service.rs`)
 
 **What Gets Logged**:
 - User creation, deletion, role changes

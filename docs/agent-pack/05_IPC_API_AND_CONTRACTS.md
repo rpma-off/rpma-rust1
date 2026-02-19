@@ -17,6 +17,10 @@ RPMA v2 uses **Tauri's IPC** mechanism for communication between the Next.js fro
 
 All IPC commands return a consistent response structure defined in `src-tauri/src/commands/mod.rs`:
 
+> **Note**: `src-tauri/src/commands/` files are **compatibility shims**. The real command
+> handlers live in `src-tauri/src/domains/*/ipc/`. The `commands/mod.rs` file still owns
+> `ApiResponse`, `AppState`, and error definitions.
+
 ```typescript
 interface ApiResponse<T> {
   success: boolean;
@@ -96,7 +100,7 @@ npm run types:generate-docs  # Generates type documentation
 | `sync_get_status` | Sync status | session_token | Authenticated | `commands/sync.rs` | `lib/ipc/domains/sync.ts` |
 | `sync_now` | Trigger sync | session_token | Authenticated | `commands/sync.rs` | `lib/ipc/domains/sync.ts` |
 
-**Total Commands Registered**: **212 active commands** in `src-tauri/src/main.rs:71-308`
+**Total Commands Registered**: **~205 registered commands** in `src-tauri/src/main.rs`
 
 ---
 
@@ -115,7 +119,7 @@ npm run types:generate-docs  # Generates type documentation
 
 **Backend**: `src-tauri/src/commands/auth.rs:31`
 
-**Service**: `src-tauri/src/services/auth.rs:449-666` (authenticate method)
+**Service**: `src-tauri/src/domains/auth/infrastructure/auth.rs` (shim: `src-tauri/src/services/auth.rs`)
 
 ---
 
@@ -128,7 +132,7 @@ npm run types:generate-docs  # Generates type documentation
 | `disable_2fa` | Disable 2FA | `auth.rs:278` |
 | `verify_2fa_code` | Verify code | `auth.rs:352` |
 
-**2FA Service**: `src-tauri/src/services/two_factor.rs`
+**2FA Service**: `src-tauri/src/domains/auth/infrastructure/two_factor.rs` (shim: `src-tauri/src/services/two_factor.rs`)
 - Algorithm: TOTP (SHA-1)
 - Code length: 6 digits
 - Time window: 30 seconds

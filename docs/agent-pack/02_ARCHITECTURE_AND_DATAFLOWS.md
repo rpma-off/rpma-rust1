@@ -362,9 +362,15 @@ async_db.with_transaction_async(move |tx| {
 ## Bounded-Context Migration Notes
 
 - Domain business code is no longer authored in `src-tauri/src/services/*` or
-  `src-tauri/src/repositories/*`; those legacy paths are compatibility shims.
-- Domain command files in `src-tauri/src/commands/*` are compatibility shims;
+  `src-tauri/src/repositories/*`; those legacy paths are **compatibility shims** that
+  re-export from `src-tauri/src/domains/*/infrastructure/`.
+- **Exception**: `event_bus.rs`, `event_system.rs`, `cache.rs`, and `domain_event.rs`
+  remain in `src-tauri/src/services/` as true shared infrastructure (not shims).
+- Domain command files in `src-tauri/src/commands/*` are **compatibility shims**;
   actual command handlers live in `src-tauri/src/domains/*/ipc/*`.
+- `src-tauri/src/commands/auth_middleware.rs` is a 1-line shim:
+  `pub use crate::domains::auth::ipc::auth_middleware::*;`
+  The `authenticate!` macro is defined in `src-tauri/src/domains/auth/ipc/auth_middleware.rs`.
 - New backend domains included in the migration: `analytics` and `notifications`.
 - IPC response caching via `cachedInvoke` in `frontend/src/lib/ipc/cache.ts`
 - `cache_metadata` table for persistent cache (key-value with expiration)
