@@ -125,7 +125,7 @@ impl ServiceBuilder {
         let material_service = Arc::new(crate::services::MaterialService::new(db_instance.clone()));
 
         // Initialize Inventory Service (bounded context facade)
-        let inventory_service = Arc::new(crate::domains::inventory::InventoryService::new(
+        let inventory_service = Arc::new(crate::domains::inventory::InventoryFacade::new(
             Arc::new(db_instance.clone()),
             material_service.clone(),
         ));
@@ -190,11 +190,7 @@ impl ServiceBuilder {
         let audit_log_handler = AuditLogHandler::new(audit_service);
         event_bus.register_handler(audit_log_handler);
 
-        register_handler(Arc::new(
-            crate::domains::inventory::application::InterventionFinalizedHandler::new(
-                inventory_service.clone(),
-            ),
-        ));
+        register_handler(inventory_service.intervention_finalized_handler());
 
         // Note: Additional handlers can be registered here:
         // - SecurityMonitorHandler for security events

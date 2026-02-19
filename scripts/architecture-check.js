@@ -6,6 +6,9 @@ const path = require('path');
 const repoRoot = path.resolve(__dirname, '..');
 const domainsRoot = path.join(repoRoot, 'src-tauri', 'src', 'domains');
 const sharedRoot = path.join(repoRoot, 'src-tauri', 'src', 'shared');
+const commandMaterialPath = path.join(repoRoot, 'src-tauri', 'src', 'commands', 'material.rs');
+const serviceBuilderPath = path.join(repoRoot, 'src-tauri', 'src', 'service_builder.rs');
+const enforcedTouchpoints = [commandMaterialPath, serviceBuilderPath];
 
 const sqlPattern = /(\bSELECT\b|\bINSERT\b|\bUPDATE\s+\w+\s+SET\b|\bDELETE\s+FROM\b|CREATE\s+TABLE|ALTER\s+TABLE|DROP\s+TABLE|rusqlite::params!)/;
 
@@ -69,10 +72,18 @@ function checkSqlUsage() {
     }
   }
 
+  for (const file of enforcedTouchpoints) {
+    if (!fs.existsSync(file)) continue;
+    const contents = stripRustComments(fs.readFileSync(file, 'utf8'));
+    if (sqlPattern.test(contents)) {
+      violations.push(file);
+    }
+  }
+
   return violations;
 }
 
-function checkCrossDomainInfrastructure() {
+function checkBoundedContextImports() {
   const files = listFiles(domainsRoot)
     .filter((file) => file.endsWith('.rs'));
 
@@ -86,14 +97,14 @@ function checkCrossDomainInfrastructure() {
     const isTest = isTestFile(file);
     const isIpc = isIpcFile(file);
 
-    if (!isInfra) {
-      const matches = contents.match(/crate::domains::([a-zA-Z0-9_]+)::infrastructure/g) || [];
-
-      for (const match of matches) {
-        const [, referencedDomain] = match.match(/crate::domains::([a-zA-Z0-9_]+)::infrastructure/) || [];
-        if (referencedDomain && referencedDomain !== domainName) {
-          violations.push(`${file} imports ${referencedDomain} infrastructure`);
-        }
+    const internalMatches = [...contents.matchAll(/crate::domains::([a-zA-Z0-9_]+)::(application|infrastructure|domain|ipc)/g)];
+    for (const match of internalMatches) {
+      const referencedDomain = match[1];
+      const referencedLayer = match[2];
+      if (referencedDomain !== domainName) {
+        violations.push(
+          `${file} imports ${referencedDomain}::${referencedLayer}; cross-domain communication must go through event bus/shared contracts`
+        );
       }
     }
 
@@ -108,8 +119,28 @@ function checkCrossDomainInfrastructure() {
 
     // Only infrastructure (gateway), IPC (boundary adapter), and test files may import crate::services::
     // All other domain layers must not depend on legacy services directly
-    if (!isInfra && !isTest && !isIpc && /crate::services::/.test(contents)) {
+    const isApplicationInput = file.endsWith(`${path.sep}application${path.sep}input.rs`);
+    if (!isInfra && !isTest && !isIpc && !isApplicationInput && /crate::services::/.test(contents)) {
       violations.push(`${file} imports legacy services (move to infrastructure gateway or shared)`);
+    }
+
+    if (isIpc && /crate::domains::[a-zA-Z0-9_]+::infrastructure/.test(contents)) {
+      violations.push(`${file} imports infrastructure from IPC layer`);
+    }
+    if (isIpc && /crate::domains::[a-zA-Z0-9_]+::application::[a-zA-Z0-9_]*(validate|rule|policy)/.test(contents)) {
+      violations.push(`${file} appears to run business validation from IPC layer`);
+    }
+    if (isIpc && /fn\s+map_[a-zA-Z0-9_]*error/.test(contents)) {
+      violations.push(`${file} defines error mapping logic in IPC layer (move to application/facade)`);
+    }
+  }
+
+  for (const file of enforcedTouchpoints) {
+    if (!fs.existsSync(file)) continue;
+    const contents = stripRustComments(fs.readFileSync(file, 'utf8'));
+    const matches = [...contents.matchAll(/crate::domains::([a-zA-Z0-9_]+)::(application|infrastructure|domain|ipc)/g)];
+    for (const match of matches) {
+      violations.push(`${file} imports internal domain module ${match[1]}::${match[2]} (use domain facade only)`);
     }
   }
 
@@ -134,18 +165,29 @@ function checkDomainPublicApi() {
       violations.push(`${modPath} should not expose pub mod declarations`);
     }
 
-    const publicUses = contents.match(/^\s*pub\s+use\s+[^;]+;/gm) || [];
-    if (publicUses.length > 1) {
+    const facadeUses = contents.match(/^\s*pub\(crate\)\s+use\s+[^;]+;/gm) || [];
+    if (facadeUses.length !== 1) {
       violations.push(`${modPath} should expose a single public facade`);
     }
-    if (publicUses.some((line) => line.includes('crate::repositories'))) {
+    if (facadeUses.some((line) => line.includes('crate::repositories'))) {
       violations.push(`${modPath} should not re-export repositories`);
     }
-    if (publicUses.some((line) => line.includes('crate::models'))) {
+    if (facadeUses.some((line) => line.includes('crate::models'))) {
       violations.push(`${modPath} should not re-export models`);
     }
   }
 
+  return violations;
+}
+
+function checkCommandBusinessLogic() {
+  const violations = [];
+  if (fs.existsSync(commandMaterialPath)) {
+    const contents = stripRustComments(fs.readFileSync(commandMaterialPath, 'utf8'));
+    if (/and_then\(\|[a-zA-Z0-9_]+\|\s+match\s+[a-zA-Z0-9_]+\.as_str\(\)/.test(contents)) {
+      violations.push(`${commandMaterialPath} contains request parsing logic (move to application/facade)`);
+    }
+  }
   return violations;
 }
 
@@ -156,13 +198,15 @@ function main() {
   }
 
   const sqlViolations = checkSqlUsage();
-  const crossDomainViolations = checkCrossDomainInfrastructure();
+  const crossDomainViolations = checkBoundedContextImports();
   const apiViolations = checkDomainPublicApi();
+  const ipcLogicViolations = checkCommandBusinessLogic();
 
   const violations = [
     ...sqlViolations.map((file) => `SQL usage outside infrastructure: ${file}`),
     ...crossDomainViolations.map((msg) => `Cross-domain access: ${msg}`),
     ...apiViolations.map((msg) => `Public API rule: ${msg}`),
+    ...ipcLogicViolations.map((msg) => `IPC business logic rule: ${msg}`),
   ];
 
   if (violations.length > 0) {

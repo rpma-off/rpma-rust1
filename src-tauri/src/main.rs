@@ -14,6 +14,8 @@ mod service_builder;
 mod services;
 mod shared;
 mod sync;
+#[cfg(test)]
+mod test_utils;
 
 use commands::navigation;
 

@@ -2,9 +2,7 @@ use std::sync::Arc;
 
 use uuid::Uuid;
 
-use crate::domains::inventory::infrastructure::{
-    MaterialService, RecordConsumptionRequest, UpdateStockRequest,
-};
+use crate::domains::inventory::infrastructure::MaterialService;
 use crate::models::material::{
     InventoryStats, InventoryTransaction, InventoryTransactionType, Material, MaterialConsumption,
     MaterialStats, MaterialType,
@@ -17,6 +15,7 @@ use crate::domains::inventory::domain::material::{
 };
 
 use super::errors::{InventoryError, InventoryResult};
+use super::input::{RecordConsumptionRequest, UpdateStockRequest};
 use crate::domains::inventory::infrastructure::{InventoryTransactionRepository, MaterialGateway};
 
 #[derive(Debug)]

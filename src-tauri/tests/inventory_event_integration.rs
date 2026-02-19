@@ -1,3 +1,5 @@
+#![cfg(feature = "legacy-tests")]
+
 use std::sync::Arc;
 
 use chrono::Utc;

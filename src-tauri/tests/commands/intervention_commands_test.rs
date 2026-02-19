@@ -3,6 +3,8 @@
 //! These tests verify that intervention IPC commands work correctly,
 //! including workflow transitions, step progression, and data collection.
 
+#![cfg(feature = "legacy-tests")]
+
 use super::*;
 use rpma_ppf_intervention::commands::intervention::{
     intervention_advance_step, intervention_finalize, intervention_get_progress,

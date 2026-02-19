@@ -1,6 +1,7 @@
 //! Inventory bounded context.
 
-pub(crate) use application::InventoryService;
+mod facade;
+pub(crate) use facade::InventoryFacade;
 
 pub(crate) mod application;
 pub(crate) mod domain;

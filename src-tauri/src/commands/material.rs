@@ -4,8 +4,6 @@
 
 use crate::authenticate;
 use crate::commands::{ApiResponse, AppState};
-use crate::domains::inventory::ipc::handlers as inventory_ipc;
-use crate::models::material::MaterialType;
 use crate::services::material::{
     CreateInventoryTransactionRequest, CreateMaterialCategoryRequest, CreateMaterialRequest,
     CreateSupplierRequest, RecordConsumptionRequest, UpdateStockRequest,
@@ -119,19 +117,8 @@ pub async fn material_list(
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let service = state.inventory_service.clone();
 
-    // Parse material type
-    let mt = material_type.and_then(|s| match s.as_str() {
-        "ppf_film" => Some(MaterialType::PpfFilm),
-        "adhesive" => Some(MaterialType::Adhesive),
-        "cleaning_solution" => Some(MaterialType::CleaningSolution),
-        "tool" => Some(MaterialType::Tool),
-        "consumable" => Some(MaterialType::Consumable),
-        _ => None,
-    });
-
-    match inventory_ipc::list_materials(
-        service.as_ref(),
-        mt,
+    match service.list_materials(
+        material_type,
         category,
         active_only.unwrap_or(true),
         limit,
@@ -193,7 +180,7 @@ pub async fn material_update_stock(
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let service = state.inventory_service.clone();
 
-    match inventory_ipc::update_stock(service.as_ref(), request) {
+    match service.update_stock(request) {
         Ok(material) => {
             info!(material_id = %material.id, "Material stock updated");
             Ok(ApiResponse::success(material).with_correlation_id(Some(correlation_id.clone())))
@@ -220,7 +207,7 @@ pub async fn material_record_consumption(
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let service = state.inventory_service.clone();
 
-    match inventory_ipc::record_consumption(service.as_ref(), request) {
+    match service.record_consumption(request) {
         Ok(consumption) => {
             info!(consumption_id = %consumption.id, "Material consumption recorded");
             Ok(ApiResponse::success(consumption).with_correlation_id(Some(correlation_id.clone())))
@@ -308,7 +295,7 @@ pub async fn material_get_stats(
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let service = state.inventory_service.clone();
 
-    match inventory_ipc::get_material_stats(service.as_ref()) {
+    match service.get_material_stats() {
         Ok(stats) => {
             Ok(ApiResponse::success(stats).with_correlation_id(Some(correlation_id.clone())))
         }
@@ -389,7 +376,7 @@ pub async fn inventory_get_stats(
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let service = state.inventory_service.clone();
 
-    match inventory_ipc::get_inventory_stats(service.as_ref()) {
+    match service.get_inventory_stats() {
         Ok(stats) => {
             Ok(ApiResponse::success(stats).with_correlation_id(Some(correlation_id.clone())))
         }
