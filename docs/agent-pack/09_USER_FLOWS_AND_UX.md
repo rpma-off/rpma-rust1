@@ -67,7 +67,7 @@
    - If no session or expired → Show login screen
 2. Enter email + password (with validation)
 3. Click "Sign In" button
-4. Backend validates via `auth_login` command (`src-tauri/src/commands/auth.rs:31-77`)
+4. Backend validates via `auth_login` command (canonical: `src-tauri/src/domains/auth/ipc/auth.rs`; shim: `src-tauri/src/commands/auth.rs`)
    - Rate limiting check (5 attempts max per 15 min)
    - Password verification with Argon2
    - If 2FA enabled → Prompt for TOTP code
@@ -84,9 +84,9 @@
 - Auto-focus on email field
 
 **Backend**: 
-- Command: `auth_login` (`src-tauri/src/commands/auth.rs:31-77`)
-- Service: `AuthService::authenticate` (`src-tauri/src/services/auth.rs:449-666`)
-- Rate Limiter: `RateLimiterService` (`src-tauri/src/services/rate_limiter.rs`)
+- Command: `auth_login` (canonical: `src-tauri/src/domains/auth/ipc/auth.rs`)
+- Service: `AuthService::authenticate` (canonical: `src-tauri/src/domains/auth/infrastructure/auth.rs`)
+- Rate Limiter: `RateLimiterService` (canonical: `src-tauri/src/domains/auth/infrastructure/rate_limiter.rs`)
 
 ---
 
@@ -113,7 +113,7 @@
 4. Submit via `task_crud` command with `TaskAction::Create`
 5. Backend processing (`src-tauri/src/commands/task/facade.rs`):
    - Permission check (Admin/Supervisor only)
-   - Business validation (`src-tauri/src/services/task_validation.rs`)
+   - Business validation (canonical: `src-tauri/src/domains/tasks/infrastructure/task_validation.rs`)
    - Generate unique task_number (format: `T-YYYYMMDD-NNN`)
    - Set timestamps (created_at, updated_at)
    - Publish TaskCreated event
@@ -137,7 +137,7 @@
 
 **Backend**: 
 - Command: `task_crud` with `TaskAction::Create` (`src-tauri/src/commands/task/facade.rs`)
-- Service: `TaskCreationService::create_task` (`src-tauri/src/services/task_creation.rs`)
+- Service: `TaskCreationService::create_task` (canonical: `src-tauri/src/domains/tasks/infrastructure/task_creation.rs`)
 
 ---
 
@@ -282,8 +282,8 @@
 
 **Backend**:
 - Command: `intervention_advance_step` (`src-tauri/src/commands/intervention/workflow.rs`)
-- Service: `InterventionWorkflowService::advance_step` (`src-tauri/src/services/intervention_workflow.rs`)
-- Photo Service: `PhotoService::save_photo` (`src-tauri/src/services/photo/`)
+- Service: `InterventionWorkflowService::advance_step` (canonical: `src-tauri/src/domains/interventions/infrastructure/intervention_workflow.rs`)
+- Photo Service: `PhotoService::save_photo` (canonical: `src-tauri/src/domains/interventions/infrastructure/photo/`)
 
 ---
 

@@ -90,9 +90,9 @@ The application is designed to work **completely offline** with a local SQLite d
 rpma-rust1/
 ├── src-tauri/                # Rust/Tauri backend
 │   ├── src/
-│   │   ├── commands/         # IPC command handlers (212 active commands across 37+ files)
+│   │   ├── commands/         # Compatibility shims re-exporting from domains/*/ipc/ (~205 registered commands)
 │   │   │   ├── mod.rs        # Module exports, ApiResponse, AppState, errors
-│   │   │   ├── auth_middleware.rs # authenticate! macro, RBAC checks
+│   │   │   ├── auth_middleware.rs # 1-line shim: pub use crate::domains::auth::ipc::auth_middleware::*;
 │   │   │   ├── auth.rs       # Authentication commands (login, 2FA, logout)
 │   │   │   ├── client.rs     # Client CRUD (client_crud command)
 │   │   │   ├── material.rs   # Inventory commands (21 commands)
@@ -123,8 +123,8 @@ rpma-rust1/
 │   │   │       ├── profile.rs # update_user_profile
 │   │   │       ├── preferences.rs
 │   │   │       └── security.rs # change_user_password
-│   │   ├── services/         # Business logic layer (80+ files)
-│   │   ├── repositories/     # Data access layer (18+ files)
+│   │   ├── services/         # Shims re-exporting from domains/*/infrastructure/ (EXCEPT: event_bus.rs, event_system.rs, cache.rs, domain_event.rs — true shared infra)
+│   │   ├── repositories/     # Shims re-exporting from domains/*/infrastructure/
 │   │   ├── models/           # Data models with ts-rs exports (15+ files)
 │   │   ├── db/               # Database management & migrations
 │   │   ├── sync/             # Offline sync queue (2 files)
@@ -150,7 +150,7 @@ rpma-rust1/
 │   │   │   ├── services/     # Frontend business logic
 │   │   │   ├── validation/   # Zod schemas
 │   │   │   └── backend.ts    # ⚠️ AUTO-GENERATED (do not edit manually)
-│   │   ├── hooks/            # Custom React hooks (64 hooks)
+│   │   ├── hooks/            # Custom React hooks (30 hooks)
 │   │   └── contexts/         # React contexts (4 contexts)
 │   └── package.json
 ├── scripts/                  # Build and validation scripts (40+ scripts)
@@ -215,7 +215,7 @@ Database (SQLite)
 
 ### 4. **Security by Default**
 - Protected IPC commands require `session_token` parameter; system/bootstrap commands (e.g., `health_check`, `get_app_info`, `has_admins`, `bootstrap_first_admin`, `auth_login`, `auth_create_account`) are public
-- RBAC enforcement at command handler level via `authenticate!` macro (`src-tauri/src/commands/auth_middleware.rs`)
+- RBAC enforcement at command handler level via `authenticate!` macro (real impl: `src-tauri/src/domains/auth/ipc/auth_middleware.rs`; `src-tauri/src/commands/auth_middleware.rs` is a 1-line shim)
 - Password hashing with Argon2 (`src-tauri/src/domains/auth/infrastructure/auth.rs`)
 - JWT tokens: 2-hour access, 7-day refresh (`src-tauri/src/domains/auth/infrastructure/token.rs`)
 - Rate limiting: 5 failed attempts, 15-minute lockout (`src-tauri/src/domains/auth/infrastructure/rate_limiter.rs`)
@@ -288,12 +288,12 @@ npm run build
 | Frontend Providers | QueryClientProvider, AuthProvider, Toaster, ThemeProvider | `frontend/src/components/providers.tsx` |
 | IPC Client | `ipcClient` object | `frontend/src/lib/ipc/client.ts` |
 | IPC Hook | `useIpcClient()` | `frontend/src/lib/ipc/client.ts` |
-| Auth Middleware | `authenticate!` macro | `src-tauri/src/commands/auth_middleware.rs` |
+| Auth Middleware | `authenticate!` macro | real: `src-tauri/src/domains/auth/ipc/auth_middleware.rs` (shim: `src-tauri/src/commands/auth_middleware.rs`) |
 | Database Init | `Database::new()` | `src-tauri/src/db/mod.rs` |
 | Migrations | `Database::migrate()` | `src-tauri/src/db/migrations.rs` (35 SQL files in `src-tauri/migrations/` + Rust-implemented migrations 1-33) |
 | Type Export | `export-types` binary | `src-tauri/src/bin/export-types.rs` |
 | AppState | Centralized service container | `src-tauri/src/commands/mod.rs` |
-| Command Registration | `tauri::generate_handler![]` | `src-tauri/src/main.rs:71-308` (212 active commands) |
+| Command Registration | `tauri::generate_handler![]` | `src-tauri/src/main.rs` (~205 registered commands) |
 
 ---
 

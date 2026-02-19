@@ -70,7 +70,8 @@ frontend/
 │   │   ├── auth/                 # Login/signup forms
 │   │   ├── users/                # User management
 │   │   └── ...
-│   ├── hooks/                    # 64 Custom React hooks
+│   ├── hooks/                    # 30 Custom React hooks
+│   ├── domains/                  # 14 feature domains (admin, analytics, audit, auth, clients, interventions, inventory, notifications, reports, settings, tasks, users, workflow)
 │   ├── lib/
 │   │   ├── ipc/                  # IPC client (MOST IMPORTANT)
 │   │   │   ├── client.ts         # Main ipcClient object
@@ -91,7 +92,7 @@ frontend/
 │   │   ├── services/             # Frontend business logic
 │   │   ├── backend.ts            # ⚠️ AUTO-GENERATED (do not edit)
 │   │   └── validation/           # Zod schemas
-│   ├── types/                    # TypeScript types
+│   ├── types/                    # Hand-maintained supplementary TypeScript types (NOT auto-generated)
 │   │   ├── index.ts
 │   │   ├── auth.types.ts
 │   │   ├── task.types.ts
@@ -311,7 +312,7 @@ npm run types:drift-check    # Detects mismatches
 
 **Problem**: Using incorrect command names causes IPC failures.
 
-**Solution**: Check `src-tauri/src/main.rs` (lines 71-308) for registered command names in `tauri::generate_handler![]` and use exact same name. All 212 active commands are registered in the `invoke_handler`.
+**Solution**: Check `src-tauri/src/main.rs` for registered command names in `tauri::generate_handler![]` and use the exact same name. All ~205 registered commands are in the `invoke_handler`.
 
 ### ❌ Pitfall 3: Missing Session Token
 
