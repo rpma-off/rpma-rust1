@@ -20,7 +20,7 @@ interface NavItem {
 
 const mainItems: NavItem[] = [
   { href: '/messages', label: 'Centre de messages', icon: <MessageSquare className="h-5 w-5" /> },
-  { href: '/team', label: 'Employés/Ressources', icon: <Users className="h-5 w-5" /> },
+  { href: '/staff', label: 'Employés/Ressources', icon: <Users className="h-5 w-5" /> },
   { href: '/inventory', label: 'Inventaire', icon: <Package className="h-5 w-5" /> },
   { href: '/configuration', label: 'Intégrations', icon: <Workflow className="h-5 w-5" /> },
   { href: '/settings', label: 'Préférences', icon: <Settings className="h-5 w-5" /> },
@@ -177,7 +177,7 @@ export function DrawerSidebar({ isOpen, onToggle }: { isOpen: boolean; onToggle:
   const isActive = (href?: string) => {
     if (!href) return false;
     if (href === '/tasks' && pathname.startsWith('/tasks')) return true;
-    if (href === '/team' && pathname.startsWith('/team')) return true;
+    if (href === '/staff' && pathname.startsWith('/staff')) return true;
     if (href === '/settings' && (pathname === '/settings' || pathname.startsWith('/configuration'))) return true;
     return pathname === href;
   };
@@ -268,7 +268,7 @@ export function DrawerSidebarMobile({ isOpen, onClose }: { isOpen: boolean; onCl
   const isActive = (href?: string) => {
     if (!href) return false;
     if (href === '/tasks' && pathname.startsWith('/tasks')) return true;
-    if (href === '/team' && pathname.startsWith('/team')) return true;
+    if (href === '/staff' && pathname.startsWith('/staff')) return true;
     if (href === '/settings' && (pathname === '/settings' || pathname.startsWith('/configuration'))) return true;
     return pathname === href;
   };
