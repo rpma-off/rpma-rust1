@@ -88,7 +88,7 @@ pub async fn check_task_assignment(
         .get_user_assigned_tasks(&request.user_id, None, None, None)
         .map_err(|e| {
             debug!("Failed to get user workload: {}", e);
-            AppError::Database(format!("Failed to get user workload: {}", e))
+            AppError::db_sanitized("get_user_workload", &e)
         })?;
 
     // Get max tasks per user from settings (configurable)
@@ -97,7 +97,7 @@ pub async fn check_task_assignment(
         .get_max_tasks_per_user()
         .map_err(|e| {
             debug!("Failed to get max_tasks_per_user setting: {}", e);
-            AppError::Database(format!("Failed to get settings: {}", e))
+            AppError::db_sanitized("get_settings", &e)
         })? as usize;
     let current_task_count = user_workload.len();
 
@@ -134,7 +134,7 @@ pub async fn check_task_assignment(
             )
             .map_err(|e| {
                 debug!("Failed to check schedule conflicts: {}", e);
-                AppError::Database(format!("Failed to check schedule conflicts: {}", e))
+                AppError::db_sanitized("check_schedule_conflicts", &e)
             })?
     } else {
         false // No conflicts if no duration or scheduled date specified
@@ -271,7 +271,7 @@ pub async fn check_task_availability(
         .check_dependencies_satisfied(&request.task_id)
         .map_err(|e| {
             debug!("Failed to check dependencies: {}", e);
-            AppError::Database(format!("Failed to check task dependencies: {}", e))
+            AppError::db_sanitized("check_task_dependencies", &e)
         })?;
 
     // Determine availability status
@@ -379,7 +379,7 @@ pub async fn validate_task_assignment_change(
         .get_user_assigned_tasks(&request.new_user_id, None, None, None)
         .map_err(|e| {
             debug!("Failed to get new user workload: {}", e);
-            AppError::Database(format!("Failed to check user workload: {}", e))
+            AppError::db_sanitized("check_user_workload", &e)
         })?;
 
     // Get max tasks per user from settings (configurable)
@@ -388,7 +388,7 @@ pub async fn validate_task_assignment_change(
         .get_max_tasks_per_user()
         .map_err(|e| {
             debug!("Failed to get max_tasks_per_user setting: {}", e);
-            AppError::Database(format!("Failed to get settings: {}", e))
+            AppError::db_sanitized("get_settings", &e)
         })? as usize;
     let new_user_task_count = new_user_workload.len();
 
@@ -423,7 +423,7 @@ pub async fn validate_task_assignment_change(
             )
             .map_err(|e| {
                 debug!("Failed to check schedule conflicts: {}", e);
-                AppError::Database(format!("Failed to check schedule conflicts: {}", e))
+                AppError::db_sanitized("check_schedule_conflicts", &e)
             })?
     } else {
         false // No conflicts if no duration or scheduled date specified
@@ -445,7 +445,7 @@ pub async fn validate_task_assignment_change(
             .get_user_assigned_tasks(old_user_id, None, None, None)
             .map_err(|e| {
                 debug!("Failed to get old user workload: {}", e);
-                AppError::Database(format!("Failed to check old user workload: {}", e))
+                AppError::db_sanitized("check_old_user_workload", &e)
             })?;
 
         if old_user_workload.len() <= 1 {

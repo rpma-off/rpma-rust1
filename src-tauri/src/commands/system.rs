@@ -1,5 +1,6 @@
 //! System information commands
 
+use tracing;
 use crate::commands::AppState;
 use serde::Serialize;
 use std::process::Command;
@@ -13,6 +14,7 @@ pub struct DeviceInfo {
 }
 
 /// Get device information for fingerprinting
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn get_device_info(correlation_id: Option<String>) -> Result<DeviceInfo, String> {
     let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
@@ -168,6 +170,7 @@ fn get_device_id() -> Result<String, String> {
     Ok(fallback_id)
 }
 
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn diagnose_database(
     state: AppState<'_>,
@@ -183,6 +186,7 @@ pub async fn diagnose_database(
     .map_err(|e| format!("Task join error: {}", e))?
 }
 
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn force_wal_checkpoint(
     state: AppState<'_>,
@@ -199,6 +203,7 @@ pub async fn force_wal_checkpoint(
 }
 
 /// Health check command
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn health_check(
     state: AppState<'_>,
@@ -213,6 +218,7 @@ pub async fn health_check(
 }
 
 /// Get database statistics
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn get_database_stats(
     state: AppState<'_>,
@@ -229,6 +235,7 @@ pub async fn get_database_stats(
 }
 
 /// Get application information
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn get_app_info(correlation_id: Option<String>) -> Result<serde_json::Value, String> {
     let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);

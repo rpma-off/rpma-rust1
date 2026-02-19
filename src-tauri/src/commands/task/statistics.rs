@@ -58,7 +58,7 @@ pub async fn get_task_statistics(
     // Get statistics from service
     let stats = state.task_service.get_task_statistics().map_err(|e| {
         debug!("Failed to get task statistics: {}", e);
-        AppError::Database(format!("Failed to retrieve statistics: {}", e))
+        AppError::db_sanitized("get_task_statistics", &e)
     })?;
 
     info!("Retrieved comprehensive task statistics");

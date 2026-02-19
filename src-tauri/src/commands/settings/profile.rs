@@ -94,6 +94,7 @@ fn build_export_payload(
 }
 
 /// Get user settings
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 
 pub async fn get_user_settings(
@@ -115,6 +116,7 @@ pub async fn get_user_settings(
 }
 
 /// Update user profile
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 
 pub async fn update_user_profile(
@@ -173,6 +175,7 @@ pub async fn update_user_profile(
 }
 
 /// Change user password
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 
 pub async fn change_user_password(
@@ -202,6 +205,7 @@ pub async fn change_user_password(
 }
 
 /// Export user data
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 
 pub async fn export_user_data(
@@ -259,6 +263,7 @@ pub async fn export_user_data(
 }
 
 /// Delete user account
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 
 pub async fn delete_user_account(
@@ -289,6 +294,7 @@ pub async fn delete_user_account(
 }
 
 /// Upload user avatar
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 
 pub async fn upload_user_avatar(

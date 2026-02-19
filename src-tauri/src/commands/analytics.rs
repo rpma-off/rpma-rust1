@@ -3,11 +3,13 @@
 //! Provides IPC endpoints for analytics data retrieval, KPI calculations,
 //! and dashboard management.
 
+use tracing;
 use crate::authenticate;
 use crate::commands::{ApiResponse, AppState};
 use crate::models::reports::*;
 
 /// Get analytics summary for quick overview
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn analytics_get_summary(
     session_token: String,

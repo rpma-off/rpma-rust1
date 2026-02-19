@@ -8,7 +8,7 @@
 use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
 use serde::{Deserialize, Serialize};
-use tracing::info;
+use tracing::{info, instrument};
 
 #[derive(Deserialize, Debug)]
 #[serde(tag = "action")]
@@ -88,7 +88,7 @@ pub struct InterventionQueryRequest {
 
 /// Main intervention management command (unified interface)
 #[tauri::command]
-
+#[instrument(skip(state, session_token))]
 pub async fn intervention_management(
     action: InterventionManagementAction,
     session_token: String,
@@ -133,7 +133,7 @@ pub async fn intervention_management(
                     Some(limit as i32),
                     Some(offset),
                 )
-                .map_err(|e| AppError::Database(format!("Failed to list interventions: {}", e)))?;
+                .map_err(|e| AppError::db_sanitized("list_interventions", &e))?;
 
             Ok(ApiResponse::success(InterventionManagementResponse::List {
                 interventions,
@@ -167,7 +167,7 @@ pub async fn intervention_management(
                 .intervention_service
                 .list_interventions(None, Some(&target_technician_id), None, None)
                 .map_err(|e| {
-                    AppError::Database(format!("Failed to get interventions for stats: {}", e))
+                    AppError::db_sanitized("get_interventions_for_stats", &e)
                 })?;
 
             let total_interventions = interventions.len() as u64;
@@ -234,7 +234,7 @@ pub async fn intervention_management(
                     .intervention_service
                     .get_latest_intervention_by_task(&task_id)
                     .map_err(|e| {
-                        AppError::Database(format!("Failed to get interventions by task: {}", e))
+                        AppError::db_sanitized("get_latest_intervention_by_task", &e)
                     })? {
                     Some(intervention) => vec![intervention],
                     None => vec![],
@@ -244,10 +244,7 @@ pub async fn intervention_management(
                     .intervention_service
                     .get_active_intervention_by_task(&task_id)
                     .map_err(|e| {
-                        AppError::Database(format!(
-                            "Failed to get active interventions by task: {}",
-                            e
-                        ))
+                        AppError::db_sanitized("get_active_intervention_by_task", &e)
                     })? {
                     Some(intervention) => vec![intervention],
                     None => vec![],

@@ -54,6 +54,7 @@ pub struct UpdateUserNotificationsRequest {
 }
 
 /// Update notification settings (system-wide)
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 
 pub async fn update_notification_settings(
@@ -106,6 +107,7 @@ pub async fn update_notification_settings(
 }
 
 /// Update user notification settings
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 
 pub async fn update_user_notifications(

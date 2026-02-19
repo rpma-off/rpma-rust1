@@ -39,10 +39,13 @@ pub async fn get_tasks_with_client_details(
     request: TasksWithClientsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<TaskWithClientDetails>>, AppError> {
+    let correlation_id =
+        crate::commands::init_correlation_context(&request.correlation_id, None);
     debug!("Getting tasks with detailed client information");
 
     // Authenticate user
     let session = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&session.user_id);
 
     // Apply role-based access control
     let mut filter = request.filter.unwrap_or_default();
@@ -104,7 +107,7 @@ pub async fn get_tasks_with_client_details(
         .get_tasks_with_clients(query)
         .map_err(|e| {
             debug!("Failed to get tasks with client details: {}", e);
-            AppError::Database(format!("Failed to retrieve tasks: {}", e))
+            AppError::db_sanitized("get_tasks_with_clients", &e)
         })?;
 
     // Convert to enhanced response format
@@ -155,8 +158,7 @@ pub async fn get_tasks_with_client_details(
         enhanced_tasks.len()
     );
 
-    let correlation_id = request.correlation_id.clone();
-    Ok(ApiResponse::success(enhanced_tasks).with_correlation_id(correlation_id))
+    Ok(ApiResponse::success(enhanced_tasks).with_correlation_id(Some(correlation_id)))
 }
 
 /// Determine the relationship status between task and client
@@ -239,17 +241,20 @@ pub async fn validate_task_client_relationship(
 }
 
 /// Get client task summary
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip(state, session_token))]
 pub async fn get_client_task_summary(
     session_token: &str,
     client_id: &str,
     state: &AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<crate::services::client::ClientStat>, AppError> {
+    let correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, None);
     debug!("Getting task summary for client {}", client_id);
 
     // Authenticate user
     let session = authenticate!(session_token, &state);
+    crate::commands::update_correlation_context_user(&session.user_id);
 
     // Check permissions - only Admin and Supervisor can view client data
     // (Technician and Viewer have restricted access)
@@ -271,10 +276,10 @@ pub async fn get_client_task_summary(
         .await
         .map_err(|e| {
             debug!("Failed to get client task summary: {}", e);
-            AppError::Database(format!("Failed to get client summary: {}", e))
+            AppError::db_sanitized("get_client_task_summary", &e)
         })?;
 
     info!("Retrieved task summary for client {}", client_id);
 
-    Ok(ApiResponse::success(summary).with_correlation_id(correlation_id))
+    Ok(ApiResponse::success(summary).with_correlation_id(Some(correlation_id)))
 }

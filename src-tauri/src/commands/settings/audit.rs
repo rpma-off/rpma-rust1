@@ -28,6 +28,7 @@ pub struct UpdateDataConsentRequest {
 }
 
 /// Get data consent information
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 
 pub async fn get_data_consent(
@@ -50,6 +51,7 @@ pub async fn get_data_consent(
 }
 
 /// Update data consent preferences
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 
 pub async fn update_data_consent(

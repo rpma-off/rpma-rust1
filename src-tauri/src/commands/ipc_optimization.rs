@@ -3,6 +3,7 @@
 //! This module provides commands for optimized IPC communication
 //! including compression and streaming for large data transfers.
 
+use tracing;
 use crate::commands::compression::{
     compress_json, decompress_json, CompressedData, CompressionConfig,
 };
@@ -85,6 +86,7 @@ pub struct GetStreamDataResponse {
 }
 
 /// Compress data for IPC transfer
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn compress_data_for_ipc(
     request: CompressDataRequest,
@@ -121,6 +123,7 @@ pub async fn compress_data_for_ipc(
 }
 
 /// Decompress data from IPC transfer
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn decompress_data_from_ipc(
     request: DecompressDataRequest,
@@ -134,6 +137,7 @@ pub async fn decompress_data_from_ipc(
 }
 
 /// Start a streaming data transfer
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn start_stream_transfer(
     request: StartStreamRequest,
@@ -170,6 +174,7 @@ pub async fn start_stream_transfer(
 }
 
 /// Send a chunk of streaming data
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn send_stream_chunk(
     request: SendStreamChunkRequest,
@@ -197,6 +202,7 @@ pub async fn send_stream_chunk(
 }
 
 /// Get completed stream data
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn get_stream_data(
     request: GetStreamDataRequest,
@@ -233,6 +239,7 @@ pub async fn get_stream_data(
 }
 
 /// Get IPC optimization statistics
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn get_ipc_stats(correlation_id: Option<String>) -> AppResult<serde_json::Value> {
     let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
