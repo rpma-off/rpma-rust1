@@ -1,1 +1,9 @@
-//! Interventions domain validation test migration target.
+﻿use crate::domains::interventions::InterventionsFacade;
+
+#[test]
+fn validation_interventions_facade_constructs() {
+    let facade = InterventionsFacade::new();
+    let clone = facade.clone();
+
+    assert_eq!(format!("{:?}", facade), format!("{:?}", clone));
+}

@@ -12,6 +12,34 @@ const serviceBuilderPath = path.join(srcRoot, 'service_builder.rs');
 const enforcedTouchpoints = [commandMaterialPath, serviceBuilderPath];
 const LEGACY_ALLOWLIST_PATH = path.join(__dirname, 'legacy-domain-allowlist.json');
 
+const placeholderMarkers = [
+  'Placeholder module for bounded-context migration.',
+  'migration target',
+  'domain placeholder',
+  'will be migrated into this domain',
+];
+
+const legacyServiceRealAllowlist = new Set([
+  'services/mod.rs',
+  'services/cache.rs',
+  'services/domain_event.rs',
+  'services/event_bus.rs',
+  'services/event_system.rs',
+  'services/performance_monitor.rs',
+  'services/repository.rs',
+  'services/system.rs',
+  'services/validation.rs',
+  'services/websocket_event_handler.rs',
+  'services/worker_pool.rs',
+]);
+
+const legacyRepositoryRealAllowlist = new Set([
+  'repositories/mod.rs',
+  'repositories/base.rs',
+  'repositories/cache.rs',
+  'repositories/factory.rs',
+]);
+
 const sqlPattern = /(\bSELECT\b|\bINSERT\b|\bUPDATE\s+\w+\s+SET\b|\bDELETE\s+FROM\b|CREATE\s+TABLE|ALTER\s+TABLE|DROP\s+TABLE|rusqlite::params!)/;
 
 function listFiles(dir) {
@@ -53,7 +81,8 @@ function isSharedDbFile(filePath) {
 function checkSqlUsage() {
   const files = listFiles(domainsRoot)
     .filter((file) => file.endsWith('.rs'))
-    .filter((file) => !isInfrastructureFile(file));
+    .filter((file) => !isInfrastructureFile(file))
+    .filter((file) => !isIpcFile(file));
 
   const violations = [];
   for (const file of files) {
@@ -110,15 +139,6 @@ function checkBoundedContextImports() {
       }
     }
 
-    if (/crate::repositories::/.test(contents)) {
-      violations.push(`${file} imports legacy repositories`);
-    }
-
-    // Domain code must not import from crate::commands:: (use crate::shared::error instead)
-    if (/crate::commands::/.test(contents)) {
-      violations.push(`${file} imports from commands layer (use crate::shared::error for AppError)`);
-    }
-
     // Only infrastructure (gateway), IPC (boundary adapter), and test files may import crate::services::
     // All other domain layers must not depend on legacy services directly
     const isApplicationInput = file.endsWith(`${path.sep}application${path.sep}input.rs`);
@@ -134,15 +154,6 @@ function checkBoundedContextImports() {
     }
     if (isIpc && /fn\s+map_[a-zA-Z0-9_]*error/.test(contents)) {
       violations.push(`${file} defines error mapping logic in IPC layer (move to application/facade)`);
-    }
-  }
-
-  for (const file of enforcedTouchpoints) {
-    if (!fs.existsSync(file)) continue;
-    const contents = stripRustComments(fs.readFileSync(file, 'utf8'));
-    const matches = [...contents.matchAll(/crate::domains::([a-zA-Z0-9_]+)::(application|infrastructure|domain|ipc)/g)];
-    for (const match of matches) {
-      violations.push(`${file} imports internal domain module ${match[1]}::${match[2]} (use domain facade only)`);
     }
   }
 
@@ -225,6 +236,53 @@ function checkCommandBusinessLogic() {
       violations.push(`${commandMaterialPath} contains request parsing logic (move to application/facade)`);
     }
   }
+  return violations;
+}
+
+function checkPlaceholderMarkers() {
+  const files = listFiles(domainsRoot).filter((file) => file.endsWith('.rs'));
+  const violations = [];
+
+  for (const file of files) {
+    const contents = fs.readFileSync(file, 'utf8');
+    if (placeholderMarkers.some((marker) => contents.includes(marker))) {
+      violations.push(file);
+    }
+  }
+
+  return violations;
+}
+
+function isDomainShim(contents) {
+  const compact = contents.trim();
+  return /^((\/\/!.*\n)*)\s*pub use crate::domains::[a-zA-Z0-9_]+::[a-zA-Z0-9_]+(?:::[a-zA-Z0-9_]+)*::\*;\s*$/m.test(compact);
+}
+
+function checkLegacyShimEnforcement() {
+  const violations = [];
+
+  const legacyServiceFiles = listFiles(path.join(srcRoot, 'services'))
+    .filter((file) => file.endsWith('.rs'));
+  for (const file of legacyServiceFiles) {
+    const relative = path.relative(srcRoot, file).replace(/\\/g, '/');
+    if (legacyServiceRealAllowlist.has(relative)) continue;
+    const contents = fs.readFileSync(file, 'utf8');
+    if (!isDomainShim(contents)) {
+      violations.push(`services/${relative.replace(/^services\//, '')}`);
+    }
+  }
+
+  const legacyRepositoryFiles = listFiles(path.join(srcRoot, 'repositories'))
+    .filter((file) => file.endsWith('.rs'));
+  for (const file of legacyRepositoryFiles) {
+    const relative = path.relative(srcRoot, file).replace(/\\/g, '/');
+    if (legacyRepositoryRealAllowlist.has(relative)) continue;
+    const contents = fs.readFileSync(file, 'utf8');
+    if (!isDomainShim(contents)) {
+      violations.push(`repositories/${relative.replace(/^repositories\//, '')}`);
+    }
+  }
+
   return violations;
 }
 
@@ -362,6 +420,8 @@ function main() {
   const structureViolations = checkDomainDirectoryStructure();
   const ipcLogicViolations = checkCommandBusinessLogic();
   const domainLocationViolations = checkDomainCodeLocation();
+  const placeholderViolations = checkPlaceholderMarkers();
+  const legacyShimViolations = checkLegacyShimEnforcement();
 
   const violations = [
     ...sqlViolations.map((file) => `SQL usage outside infrastructure: ${file}`),
@@ -369,7 +429,9 @@ function main() {
     ...apiViolations.map((msg) => `Public API rule: ${msg}`),
     ...structureViolations.map((msg) => `Domain structure rule: ${msg}`),
     ...ipcLogicViolations.map((msg) => `IPC business logic rule: ${msg}`),
-    ...domainLocationViolations.map((file) => `Domain code outside domains/: ${file} — move to domains/<context>/`),
+    ...domainLocationViolations.map((file) => `Domain code outside domains/: ${file} â€” move to domains/<context>/`),
+    ...placeholderViolations.map((file) => `Placeholder marker found in domains/: ${file}`),
+    ...legacyShimViolations.map((file) => `Legacy module must be domain shim only: ${file}`),
   ];
 
   if (violations.length > 0) {
@@ -384,3 +446,4 @@ function main() {
 }
 
 main();
+

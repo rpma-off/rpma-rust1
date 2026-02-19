@@ -149,9 +149,7 @@ impl SystemService {
 
     /// Get database status (initialisation, tables, version) via the Database
     /// abstraction.  This moves the status logic out of the IPC command handler.
-    pub fn get_database_status(
-        db: &crate::db::Database,
-    ) -> Result<serde_json::Value, String> {
+    pub fn get_database_status(db: &crate::db::Database) -> Result<serde_json::Value, String> {
         let is_initialized = db
             .is_initialized()
             .map_err(|e| format!("Failed to check database initialization: {}", e))?;

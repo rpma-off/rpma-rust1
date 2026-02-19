@@ -1,1 +1,2 @@
-//! Placeholder module for bounded-context migration.
+pub(crate) mod user;
+pub(crate) mod user_repository;

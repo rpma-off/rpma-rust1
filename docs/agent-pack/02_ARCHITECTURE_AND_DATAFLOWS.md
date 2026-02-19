@@ -17,7 +17,8 @@ RPMA v2 follows a strict **four-layer architecture** that separates concerns and
                           ↓
 ┌───────────────────────────────────────────────────────────┐
 │                    COMMAND LAYER                          │
-│   Tauri IPC Commands (src-tauri/src/commands/)            │
+│   Domain IPC (src-tauri/src/domains/*/ipc/)               │
+│   (invoked via compatibility shims in commands/)          │
 │   - Request validation                                    │
 │   - Authorization checks (AuthMiddleware)                 │
 │   - Session token validation (authenticate! macro)        │
@@ -28,7 +29,8 @@ RPMA v2 follows a strict **four-layer architecture** that separates concerns and
                           ↓
 ┌───────────────────────────────────────────────────────────┐
 │                    SERVICE LAYER                          │
-│   Business Logic (src-tauri/src/services/)                │
+│   Domain Logic (src-tauri/src/domains/*/{application,     │
+│   domain,infrastructure})                                 │
 │   - Domain validation                                     │
 │   - Workflow orchestration                                │
 │   - Business rule enforcement                             │
@@ -39,7 +41,8 @@ RPMA v2 follows a strict **four-layer architecture** that separates concerns and
                           ↓
 ┌───────────────────────────────────────────────────────────┐
 │                  REPOSITORY LAYER                         │
-│   Data Access (src-tauri/src/repositories/)               │
+│   Domain Infrastructure Repositories                      │
+│   (src-tauri/src/domains/*/infrastructure/)               │
 │   - SQL query construction                                │
 │   - Transaction management                                │
 │   - CRUD operations                                       │
@@ -80,19 +83,19 @@ RPMA v2 follows a strict **four-layer architecture** that separates concerns and
        ↓
 ┌──────────────────────────────────────────┐
 │  Command: task_crud                       │  1. authenticate!(session_token, state)
-│  (src-tauri/src/commands/task/facade.rs) │  2. Match action → TaskAction::Create
+│  (src-tauri/src/domains/tasks/ipc/task/facade.rs) │  2. Match action → TaskAction::Create
 └──────┬───────────────────────────────────┘
        │ task_service.create_task(data)
        ↓
 ┌────────────────────────────────────────────┐
 │  Service: TaskCreationService::create_task │  1. Validate business rules
-│  (src-tauri/src/services/task_creation.rs) │  2. Generate task_number
+│  (src-tauri/src/domains/tasks/infrastructure/task_creation.rs) │  2. Generate task_number
 └──────┬─────────────────────────────────────┘  3. Set timestamps
        │ task_repo.create(task)                 4. Publish TaskCreated event
        ↓
 ┌──────────────────────────────────────────────┐
 │  Repository: TaskRepository::create          │  1. Build INSERT query
-│  (src-tauri/src/repositories/task_repository)│  2. Execute in transaction
+│  (src-tauri/src/domains/tasks/infrastructure/task_repository.rs)│  2. Execute in transaction
 └──────┬───────────────────────────────────────┘  3. Return created task
        │ INSERT INTO tasks ...
        ↓
@@ -118,14 +121,14 @@ RPMA v2 follows a strict **four-layer architecture** that separates concerns and
        ↓
 ┌───────────────────────────────────────────┐
 │  Command: intervention_start               │  1. authenticate!(session_token, state)
-│  (src-tauri/src/commands/intervention/     │  2. Verify user assigned to task
+│  (src-tauri/src/domains/interventions/ipc/intervention/workflow.rs) │  2. Verify user assigned to task
 │   workflow.rs)                             │
 └──────┬────────────────────────────────────┘
        │ intervention_service.start_intervention(...)
        ↓
 ┌─────────────────────────────────────────────────────────┐
 │  Service: InterventionWorkflowService::start_intervention│  1. Check: no active intervention
-│  (src-tauri/src/services/intervention_workflow.rs)       │  2. Load task details
+│  (src-tauri/src/domains/interventions/infrastructure/intervention_workflow.rs) │  2. Load task details
 └──────┬───────────────────────────────────────────────────┘  3. Create intervention
        │                                                        4. Create workflow steps
        │ with_transaction:                                     5. Set task.status = "in_progress"
@@ -162,14 +165,14 @@ RPMA v2 follows a strict **four-layer architecture** that separates concerns and
        ↓
 ┌────────────────────────────────────────┐
 │  Command: intervention_advance_step     │  1. authenticate!(session_token, state)
-│  (src-tauri/src/commands/intervention/  │  2. Validate step ownership
+│  (src-tauri/src/domains/interventions/ipc/intervention/workflow.rs)  │  2. Validate step ownership
 │   workflow.rs)                          │
 └──────┬─────────────────────────────────┘
        │ intervention_service.advance_step(...)
        ↓
 ┌──────────────────────────────────────────────────────┐
 │  Service: InterventionWorkflow::advance_step         │  1. Load intervention + step
-│  (src-tauri/src/services/intervention_workflow.rs)   │  2. Validate step order
+│  (src-tauri/src/domains/interventions/infrastructure/intervention_workflow.rs)   │  2. Validate step order
 └──────┬───────────────────────────────────────────────┘  3. Save photo (if any)
        │                                                    4. Mark step as "completed"
        │ with_transaction:                                 5. Check if all steps done
@@ -194,13 +197,13 @@ RPMA v2 follows a strict **four-layer architecture** that separates concerns and
        ↓
 ┌────────────────────────────────────────┐
 │  Command: calendar_schedule_task       │  1. authenticate!(session_token, state)
-│  (src-tauri/src/commands/calendar.rs)  │  2. Check RBAC (Supervisor/Admin)
+│  (src-tauri/src/domains/calendar/ipc/calendar.rs)  │  2. Check RBAC (Supervisor/Admin)
 └──────┬─────────────────────────────────┘
        │ calendar_service.schedule_task(...)
        ↓
 ┌──────────────────────────────────────────────────────────┐
 │  Service: CalendarService::schedule_task                 │  1. Check conflicts
-│  (src-tauri/src/services/calendar.rs)                    │  2. If conflict: return error
+│  (src-tauri/src/domains/calendar/infrastructure/calendar.rs)                    │  2. If conflict: return error
 └──────┬───────────────────────────────────────────────────┘  3. Create calendar event
        │                                                        4. Update task scheduled_date
        │ calendar_repo.check_conflicts(tech_id, start, end)
@@ -238,7 +241,7 @@ RPMA v2 is **fully offline** with sync queue for future server synchronization.
                            │ After successful DB write
                            ↓
 ┌─────────────────────────────────────────────────────────────┐
-│  Sync Queue Service (src-tauri/src/sync/queue.rs)           │
+│  Sync Queue Service (src-tauri/src/domains/sync/infrastructure/sync/queue.rs)           │
 │  - enqueue(operation): Add to sync_queue table              │
 │  - dequeue_batch(limit): Get pending operations             │
 │  - mark_completed(id) / mark_failed(id, error)              │
@@ -246,7 +249,7 @@ RPMA v2 is **fully offline** with sync queue for future server synchronization.
                            │ Background worker (30s interval)
                            ↓
 ┌─────────────────────────────────────────────────────────────┐
-│  Background Sync Service (src-tauri/src/sync/background.rs) │
+│  Background Sync Service (src-tauri/src/domains/sync/infrastructure/sync/background.rs) │
 │  - Check network connectivity                               │
 │  - Process pending operations                               │
 │  - Handle conflicts (LastWriteWins, ClientWins, ServerWins) │
@@ -273,7 +276,7 @@ RPMA v2 is **fully offline** with sync queue for future server synchronization.
 
 RPMA v2 uses an **in-memory event bus** to decouple domain events from their side effects.
 
-**Location**: `src-tauri/src/services/event_bus.rs`
+**Location**: `src-tauri/src/services/event_bus.rs` (shared infrastructure, outside domain contexts by design)
 
 ```
 ┌──────────────────────────────┐
@@ -348,11 +351,21 @@ async_db.with_transaction_async(move |tx| {
 
 ### 3. Streaming Large Result Sets
 - `ChunkedQuery` in `src-tauri/src/db/connection.rs` for paginated queries
-- `StreamingTaskRepository` for large task lists (`src-tauri/src/repositories/task_repository_streaming.rs`)
+- `StreamingTaskRepository` for large task lists (`src-tauri/src/domains/tasks/infrastructure/task_repository_streaming.rs`)
 - Configurable chunk_size (default 1000 rows)
 
 ### 4. Caching
 - `CacheService` with TTL support (`src-tauri/src/services/cache.rs`)
+
+---
+
+## Bounded-Context Migration Notes
+
+- Domain business code is no longer authored in `src-tauri/src/services/*` or
+  `src-tauri/src/repositories/*`; those legacy paths are compatibility shims.
+- Domain command files in `src-tauri/src/commands/*` are compatibility shims;
+  actual command handlers live in `src-tauri/src/domains/*/ipc/*`.
+- New backend domains included in the migration: `analytics` and `notifications`.
 - IPC response caching via `cachedInvoke` in `frontend/src/lib/ipc/cache.ts`
 - `cache_metadata` table for persistent cache (key-value with expiration)
 - `invalidatePattern` for cache invalidation patterns

@@ -1,1 +1,2 @@
-//! Placeholder module for bounded-context migration.
+pub(crate) mod auth;
+pub(crate) mod auth_middleware;

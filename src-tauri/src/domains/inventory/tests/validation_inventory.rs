@@ -1,1 +1,20 @@
-//! Inventory domain validation test migration target.
+use std::sync::Arc;
+
+use crate::db::Database;
+use crate::domains::inventory::InventoryFacade;
+use crate::services::material::MaterialService;
+
+#[tokio::test]
+async fn validation_inventory_facade_constructs() {
+    let db = Arc::new(
+        Database::new_in_memory()
+            .await
+            .expect("create in-memory database"),
+    );
+    let material_service = Arc::new(MaterialService::new((*db).clone()));
+
+    let facade = InventoryFacade::new(db, material_service);
+    let debug_output = format!("{:?}", facade);
+
+    assert!(debug_output.contains("InventoryFacade"));
+}

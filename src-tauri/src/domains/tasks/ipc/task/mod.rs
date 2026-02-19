@@ -1,0 +1,14 @@
+//! Task command modules
+//!
+//! This module contains all task-related command operations,
+//! split into specialized modules for better maintainability.
+
+// Refactored task command modules
+pub mod client_integration;
+pub mod facade;
+pub mod queries;
+pub mod statistics;
+pub mod validation;
+
+// Re-export the main facade for backward compatibility
+pub use facade::*;

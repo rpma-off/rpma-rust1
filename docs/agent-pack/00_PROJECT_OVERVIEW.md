@@ -191,6 +191,17 @@ Repository Layer (Data Access)
 Database (SQLite)
 ```
 
+### Backend Bounded-Context Layout (Current)
+- Business code lives under `src-tauri/src/domains/<context>/` with strict layers:
+  `application/`, `domain/`, `infrastructure/`, `ipc/`, `tests/`.
+- Backend bounded contexts:
+  `auth`, `users`, `tasks`, `clients`, `interventions`, `inventory`, `quotes`,
+  `calendar`, `reports`, `settings`, `sync`, `audit`, `documents`, `analytics`, `notifications`.
+- `src-tauri/src/commands/*` domain files are compatibility shims that re-export
+  domain IPC handlers (command names/contracts are unchanged).
+- `src-tauri/src/services/*` and `src-tauri/src/repositories/*` domain files are
+  temporary compatibility shims that re-export domain infrastructure modules.
+
 ### 2. **Type Safety Everywhere**
 - Rust models use `#[derive(Serialize, TS)]` to export TypeScript types
 - Frontend uses **auto-generated** types from backend
@@ -199,17 +210,17 @@ Database (SQLite)
 ### 3. **Offline-First + Event Bus**
 - All operations work offline with local SQLite database
 - Domain events track state changes via `InMemoryEventBus` (`src-tauri/src/services/event_bus.rs`)
-- Sync queue handles server synchronization (`src-tauri/src/sync/queue.rs`, `src-tauri/src/sync/background.rs`)
+- Sync queue handles server synchronization (`src-tauri/src/domains/sync/infrastructure/sync/queue.rs`, `src-tauri/src/domains/sync/infrastructure/sync/background.rs`)
 - Background sync runs at 30-second intervals
 
 ### 4. **Security by Default**
 - Protected IPC commands require `session_token` parameter; system/bootstrap commands (e.g., `health_check`, `get_app_info`, `has_admins`, `bootstrap_first_admin`, `auth_login`, `auth_create_account`) are public
 - RBAC enforcement at command handler level via `authenticate!` macro (`src-tauri/src/commands/auth_middleware.rs`)
-- Password hashing with Argon2 (`src-tauri/src/services/auth.rs:779-801`)
-- JWT tokens: 2-hour access, 7-day refresh (`src-tauri/src/services/token.rs:60-61`)
-- Rate limiting: 5 failed attempts, 15-minute lockout (`src-tauri/src/services/rate_limiter.rs`)
-- Audit logging for sensitive operations (`src-tauri/src/services/audit_service.rs`)
-- TOTP 2FA support (6-digit codes, 30s window) (`src-tauri/src/services/two_factor.rs`)
+- Password hashing with Argon2 (`src-tauri/src/domains/auth/infrastructure/auth.rs`)
+- JWT tokens: 2-hour access, 7-day refresh (`src-tauri/src/domains/auth/infrastructure/token.rs`)
+- Rate limiting: 5 failed attempts, 15-minute lockout (`src-tauri/src/domains/auth/infrastructure/rate_limiter.rs`)
+- Audit logging for sensitive operations (`src-tauri/src/domains/audit/infrastructure/audit_service.rs`)
+- TOTP 2FA support (6-digit codes, 30s window) (`src-tauri/src/domains/auth/infrastructure/two_factor.rs`)
 
 ---
 
@@ -281,7 +292,7 @@ npm run build
 | Database Init | `Database::new()` | `src-tauri/src/db/mod.rs` |
 | Migrations | `Database::migrate()` | `src-tauri/src/db/migrations.rs` (35 SQL files in `src-tauri/migrations/` + Rust-implemented migrations 1-33) |
 | Type Export | `export-types` binary | `src-tauri/src/bin/export-types.rs` |
-| AppState | Centralized service container | `src-tauri/src/lib.rs:279-320` |
+| AppState | Centralized service container | `src-tauri/src/commands/mod.rs` |
 | Command Registration | `tauri::generate_handler![]` | `src-tauri/src/main.rs:71-308` (212 active commands) |
 
 ---
