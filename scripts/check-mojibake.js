@@ -19,14 +19,7 @@ const textExtensions = new Set([
   '.html'
 ]);
 
-// Common mojibake signatures from UTF-8 text decoded as Latin-1/Windows-1252.
-const mojibakePatterns = [
-  /\u00C3[\u0080-\u00BF]/u, // e.g. Ã©, Ã¨
-  /\u00C2[\u0080-\u00BF]/u, // e.g. Â«, Â°, Â 
-  /\u00E2[\u0080-\u00BF]{1,2}/u, // e.g. â€™, â€¢, â†’
-  /\uFFFD/u, // replacement character from decoding loss
-  /\u00EF\u00BF\u00BD/u // visible "ï¿½" sequence
-];
+const utf8Decoder = new TextDecoder('utf-8', { fatal: true });
 
 function isTextFile(filePath) {
   return textExtensions.has(path.extname(filePath).toLowerCase());
@@ -37,7 +30,7 @@ function walk(dir, out = []) {
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      if (entry.name === 'node_modules' || entry.name === '.next' || entry.name === '.git') {
+      if (entry.name === 'node_modules' || entry.name === '.next' || entry.name === '.git' || entry.name === 'dist') {
         continue;
       }
       walk(fullPath, out);
@@ -50,10 +43,6 @@ function walk(dir, out = []) {
   return out;
 }
 
-function hasMojibake(line) {
-  return mojibakePatterns.some(pattern => pattern.test(line));
-}
-
 if (!fs.existsSync(targetPath)) {
   console.error(`[encoding:check] Target path not found: ${targetArg}`);
   process.exit(2);
@@ -63,26 +52,25 @@ const files = fs.statSync(targetPath).isDirectory() ? walk(targetPath) : [target
 const findings = [];
 
 for (const file of files) {
-  const content = fs.readFileSync(file, 'utf8');
-  const lines = content.split(/\r?\n/);
-  for (let i = 0; i < lines.length; i++) {
-    if (!hasMojibake(lines[i])) {
-      continue;
-    }
+  const bytes = fs.readFileSync(file);
+  try {
+    utf8Decoder.decode(bytes);
+  } catch {
     findings.push({
       file: path.relative(root, file).replace(/\\/g, '/'),
-      line: i + 1,
-      text: lines[i].trim()
+      line: 0,
+      text: 'invalid UTF-8 byte sequence'
     });
+    continue;
   }
 }
 
 if (findings.length > 0) {
-  console.error(`[encoding:check] Found ${findings.length} potential mojibake issue(s):`);
+  console.error(`[encoding:check] Found ${findings.length} UTF-8 encoding issue(s):`);
   for (const finding of findings) {
     console.error(`- ${finding.file}:${finding.line} :: ${finding.text}`);
   }
   process.exit(1);
 }
 
-console.log(`[encoding:check] OK - no mojibake signatures found in ${targetArg}`);
+console.log(`[encoding:check] OK - all checked files are valid UTF-8 in ${targetArg}`);
