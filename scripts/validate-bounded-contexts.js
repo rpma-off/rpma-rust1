@@ -22,6 +22,10 @@ const FRONTEND_SRC = path.join(FRONTEND_ROOT, 'src');
 const DOMAINS_DIR = path.join(FRONTEND_SRC, 'domains');
 const SHARED_DIR = path.join(FRONTEND_SRC, 'shared');
 const APP_DIR = path.join(FRONTEND_SRC, 'app');
+const strictMode =
+  process.env.BOUNDED_CONTEXT_STRICT === '1' ||
+  process.env.BOUNDED_CONTEXT_STRICT === 'true' ||
+  process.argv.includes('--strict');
 
 const SCAFFOLD_MARKERS = [
   'Bounded-context domain scaffold.',
@@ -436,6 +440,42 @@ function validateNoDomainPlaceholders() {
   }
 }
 
+// ============================================================================
+// RULE 8 (strict): No legacy service/ipc imports in app/domain/shared layers
+// ============================================================================
+function validateNoLegacyFrontendImports() {
+  section('RULE 8: Legacy Import Ban (Strict)');
+
+  const roots = [DOMAINS_DIR, APP_DIR, SHARED_DIR];
+  const files = roots.flatMap((root) => listFilesRecursive(root));
+  const legacyPattern = /@\/lib\/services|@\/lib\/ipc\/domains/g;
+  const strictErrorsBefore = errors.length;
+
+  for (const file of files) {
+    const rel = relativeFromFrontend(file);
+    const content = readFile(file);
+    checksRun++;
+
+    let match;
+    while ((match = legacyPattern.exec(content)) !== null) {
+      if (strictMode) {
+        error(
+          `${rel}\n  imports legacy module '${match[0]}'. Use domain-owned modules instead.`
+        );
+      }
+    }
+  }
+
+  if (!strictMode) {
+    log('  INFO Strict mode disabled; skipping legacy import enforcement', 'yellow');
+    return;
+  }
+
+  if (errors.length === strictErrorsBefore) {
+    log('  OK No legacy @/lib/services or @/lib/ipc/domains imports found', 'green');
+  }
+}
+
 function main() {
   log('\nBounded Context Architecture Validator', 'blue');
   log('======================================\n', 'blue');
@@ -449,6 +489,7 @@ function main() {
   validatePathAliases();
   validateDomainStructure();
   validateNoDomainPlaceholders();
+  validateNoLegacyFrontendImports();
 
   section('SUMMARY');
 
