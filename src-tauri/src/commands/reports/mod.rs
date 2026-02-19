@@ -9,6 +9,7 @@ pub use core::*;
 pub use search::*;
 
 // Create wrapper commands for Tauri registration
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn get_entity_counts(
     session_token: String,
@@ -19,6 +20,7 @@ pub async fn get_entity_counts(
     generation::entity_counts::get_entity_counts(session_token, state).await
 }
 
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn export_report_data(
     report_type: crate::models::reports::ReportType,
@@ -41,6 +43,7 @@ pub async fn export_report_data(
     .await
 }
 
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn export_intervention_report(
     intervention_id: String,
@@ -53,6 +56,7 @@ pub async fn export_intervention_report(
         .await
 }
 
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn save_intervention_report(
     intervention_id: String,
@@ -71,6 +75,7 @@ pub async fn save_intervention_report(
     .await
 }
 
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn get_report_status(
     job_id: String,
@@ -82,6 +87,7 @@ pub async fn get_report_status(
     generation::background_jobs::get_report_job_status(job_id, session_token, state).await
 }
 
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn cancel_report(
     job_id: String,

@@ -51,6 +51,7 @@ pub struct UpdateUserPreferencesRequest {
 }
 
 /// Update general settings (system-wide)
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 
 pub async fn update_general_settings(
@@ -98,6 +99,7 @@ pub async fn update_general_settings(
 }
 
 /// Update user preferences
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 
 pub async fn update_user_preferences(
@@ -177,6 +179,7 @@ pub async fn update_user_preferences(
 }
 
 /// Update user performance settings
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 
 pub async fn update_user_performance(

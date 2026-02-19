@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use tracing::instrument;
 use uuid::Uuid;
 
 use crate::domains::inventory::infrastructure::MaterialService;
@@ -34,6 +35,7 @@ impl InventoryService {
         }
     }
 
+    #[instrument(skip(self))]
     pub fn list_materials(
         &self,
         material_type: Option<MaterialType>,
@@ -47,18 +49,21 @@ impl InventoryService {
             .map_err(InventoryError::from)
     }
 
+    #[instrument(skip(self))]
     pub fn get_material_stats(&self) -> InventoryResult<MaterialStats> {
         self.gateway
             .get_material_stats()
             .map_err(InventoryError::from)
     }
 
+    #[instrument(skip(self))]
     pub fn get_inventory_stats(&self) -> InventoryResult<InventoryStats> {
         self.gateway
             .get_inventory_stats()
             .map_err(InventoryError::from)
     }
 
+    #[instrument(skip(self))]
     pub fn update_stock(&self, request: UpdateStockRequest) -> InventoryResult<Material> {
         let material = self
             .gateway
@@ -76,6 +81,7 @@ impl InventoryService {
             .map_err(InventoryError::from)
     }
 
+    #[instrument(skip(self))]
     pub fn record_consumption(
         &self,
         request: RecordConsumptionRequest,
@@ -95,6 +101,7 @@ impl InventoryService {
             .map_err(InventoryError::from)
     }
 
+    #[instrument(skip(self, event), fields(intervention_id = %event.intervention_id))]
     pub fn handle_intervention_finalized(
         &self,
         event: &InterventionFinalized,

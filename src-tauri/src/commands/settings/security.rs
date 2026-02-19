@@ -38,6 +38,7 @@ pub struct UpdateSecuritySettingsRequest {
 }
 
 /// Update security settings (system-wide)
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 
 pub async fn update_security_settings(
@@ -87,6 +88,7 @@ pub async fn update_security_settings(
 }
 
 /// Update user security settings
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 
 pub async fn update_user_security(

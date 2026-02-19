@@ -1,8 +1,10 @@
+use tracing;
 use crate::commands::{ApiError, AppState};
 use crate::models::status::{StatusDistribution, StatusTransitionRequest};
 use crate::models::task::Task;
 
 /// Transition a task to a new status with validation
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn task_transition_status(
     session_token: String,
@@ -39,6 +41,7 @@ pub async fn task_transition_status(
 }
 
 /// Get status distribution for all tasks
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn task_get_status_distribution(
     session_token: String,
