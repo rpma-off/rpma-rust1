@@ -1,2 +1,2 @@
-﻿export { mfaService } from '@/lib/services/auth/mfa.service';
+export { mfaService } from './services/mfa.service';
 export { authIpc } from '../ipc/auth.ipc';

@@ -1,9 +1,11 @@
 //! User CRUD commands for Tauri IPC
 
-use crate::commands::{
-    ApiResponse, AppError, AppState, CreateUserRequest, UpdateUserRequest, UserAction,
-    UserListResponse, UserResponse,
+use crate::domains::users::application::{
+    CreateUserRequest, UpdateUserRequest, UserAction, UserListResponse, UserResponse,
 };
+use crate::domains::users::UsersFacade;
+use crate::shared::app_state::AppState;
+use crate::shared::ipc::{ApiResponse, AppError};
 use serde::Deserialize;
 use tracing::{debug, error, info, instrument, warn};
 
@@ -43,53 +45,18 @@ pub async fn user_crud(
         session_token.len()
     );
 
-    // Determine required permission based on action
-    let required_permission = match &action {
-        UserAction::Create { .. } => Some("create"),
-        UserAction::Update { .. } => Some("update"),
-        UserAction::Delete { .. } => Some("delete"),
-        UserAction::ChangePassword { .. } => Some("update"),
-        UserAction::ChangeRole { .. } => Some("update"), // Role changes require update permission
-        UserAction::Ban { .. } | UserAction::Unban { .. } => Some("update"), // Ban/unban requires update permission
-        UserAction::Get { .. } | UserAction::List { .. } => Some("read"),
-    };
-
     // Centralized authentication
     let current_user = authenticate!(&session_token, &state);
     crate::commands::update_correlation_context_user(&current_user.user_id);
-
-    // Check specific permission if provided
-    if let Some(permission) = required_permission {
-        if !crate::commands::auth_middleware::AuthMiddleware::can_perform_user_operation(
-            &current_user.role,
-            permission,
-            None,
-            &current_user.user_id,
-        ) {
-            return Err(crate::commands::AppError::Authorization(format!(
-                "Insufficient permissions to {} users",
-                permission
-            )));
-        }
-    }
+    let facade = UsersFacade::new();
+    facade.enforce_action_permissions(&current_user, &action)?;
 
     let auth_service = state.auth_service.clone();
 
     match action {
         UserAction::Create { data } => {
             info!("Creating new user");
-
-            // For user creation, we need admin/supervisor permissions
-            if !matches!(
-                current_user.role,
-                crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
-            ) {
-                return Err(crate::commands::AppError::Authorization(
-                    "Only admins and supervisors can create users".to_string(),
-                ));
-            }
-
-            let role = crate::services::UserService::parse_user_role(&data.role)?;
+            let role = facade.parse_role(&data.role)?;
 
             let user = auth_service
                 .create_account(
@@ -112,17 +79,6 @@ pub async fn user_crud(
         UserAction::Get { id } => {
             debug!("Retrieving user with ID: {}", id);
 
-            // Users can only view their own profile unless they're admin/supervisor
-            if !matches!(
-                current_user.role,
-                crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
-            ) && current_user.user_id != id
-            {
-                return Err(crate::commands::AppError::Authorization(
-                    "You can only view your own profile".to_string(),
-                ));
-            }
-
             let user = auth_service.get_user(&id).map_err(|e| {
                 error!("Failed to retrieve user {}: {}", id, e);
                 AppError::Database(format!("User retrieval failed: {}", e))
@@ -144,19 +100,8 @@ pub async fn user_crud(
         UserAction::Update { id, data } => {
             info!("Updating user with ID: {}", id);
 
-            // Users can only update their own profile unless they're admin/supervisor
-            if !matches!(
-                current_user.role,
-                crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
-            ) && current_user.user_id != id
-            {
-                return Err(crate::commands::AppError::Authorization(
-                    "You can only update your own profile".to_string(),
-                ));
-            }
-
             let role = match data.role.as_ref() {
-                Some(r) => Some(crate::services::UserService::parse_user_role(r)?),
+                Some(r) => Some(facade.parse_role(r)?),
                 None => None,
             };
 
@@ -181,19 +126,8 @@ pub async fn user_crud(
         UserAction::Delete { id } => {
             info!("Deleting user with ID: {}", id);
 
-            // Only admins can delete users
-            if !matches!(current_user.role, crate::models::auth::UserRole::Admin) {
-                return Err(crate::commands::AppError::Authorization(
-                    "Only admins can delete users".to_string(),
-                ));
-            }
-
             // Prevent self-deletion
-            crate::services::UserService::validate_not_self_action(
-                &current_user.user_id,
-                &id,
-                "delete your own account",
-            )?;
+            facade.ensure_not_self_action(&current_user.user_id, &id, "delete your own account")?;
 
             auth_service.delete_user(&id).map_err(|e| {
                 error!("Failed to delete user {}: {}", id, e);
@@ -208,16 +142,6 @@ pub async fn user_crud(
                 "Listing users with limit: {:?}, offset: {:?}",
                 limit, offset
             );
-
-            // Only admins and supervisors can list users
-            if !matches!(
-                current_user.role,
-                crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
-            ) {
-                return Err(crate::commands::AppError::Authorization(
-                    "Only admins and supervisors can list users".to_string(),
-                ));
-            }
 
             let users = auth_service
                 .list_users(Some(limit.unwrap_or(50)), Some(offset.unwrap_or(0)))
@@ -234,15 +158,6 @@ pub async fn user_crud(
         UserAction::ChangePassword { id, new_password } => {
             info!("Changing password for user ID: {}", id);
 
-            // Users can only change their own password unless they're admin
-            if !matches!(current_user.role, crate::models::auth::UserRole::Admin)
-                && current_user.user_id != id
-            {
-                return Err(crate::commands::AppError::Authorization(
-                    "You can only change your own password".to_string(),
-                ));
-            }
-
             auth_service
                 .change_password(&id, &new_password)
                 .map_err(|e| {
@@ -256,19 +171,8 @@ pub async fn user_crud(
         UserAction::ChangeRole { id, new_role } => {
             info!("Changing role for user ID: {} to {:?}", id, new_role);
 
-            // Only admin can change roles
-            if !matches!(current_user.role, crate::models::auth::UserRole::Admin) {
-                return Err(crate::commands::AppError::Authorization(
-                    "Only administrators can change user roles".to_string(),
-                ));
-            }
-
             // Prevent changing own role
-            crate::services::UserService::validate_not_self_action(
-                &current_user.user_id,
-                &id,
-                "change your own role",
-            )?;
+            facade.ensure_not_self_action(&current_user.user_id, &id, "change your own role")?;
 
             // Use UserService to change role
             let user_service = crate::services::UserService::new(state.repositories.user.clone());
@@ -283,19 +187,8 @@ pub async fn user_crud(
         UserAction::Ban { id } => {
             info!("Banning user ID: {}", id);
 
-            // Only admin can ban users
-            if !matches!(current_user.role, crate::models::auth::UserRole::Admin) {
-                return Err(crate::commands::AppError::Authorization(
-                    "Only administrators can ban users".to_string(),
-                ));
-            }
-
             // Prevent banning self
-            crate::services::UserService::validate_not_self_action(
-                &current_user.user_id,
-                &id,
-                "ban yourself",
-            )?;
+            facade.ensure_not_self_action(&current_user.user_id, &id, "ban yourself")?;
 
             // Use UserService to ban user
             let user_service = crate::services::UserService::new(state.repositories.user.clone());
@@ -307,13 +200,6 @@ pub async fn user_crud(
         }
         UserAction::Unban { id } => {
             info!("Unbanning user ID: {}", id);
-
-            // Only admin can unban users
-            if !matches!(current_user.role, crate::models::auth::UserRole::Admin) {
-                return Err(crate::commands::AppError::Authorization(
-                    "Only administrators can unban users".to_string(),
-                ));
-            }
 
             // Use UserService to unban user
             let user_service = crate::services::UserService::new(state.repositories.user.clone());
@@ -336,31 +222,20 @@ pub async fn bootstrap_first_admin(
     let user_id = request.user_id.trim().to_string();
     let session_token = request.session_token;
     let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
-
-    if user_id.is_empty() {
-        return Err(AppError::Validation(
-            "user_id is required for bootstrap".to_string(),
-        ));
-    }
-
-    if session_token.trim().is_empty() {
-        return Err(AppError::Authentication(
-            "Session token is required".to_string(),
-        ));
-    }
+    let facade = UsersFacade::new();
 
     info!("Attempting to bootstrap first admin for user: {}", user_id);
 
     let current_user = authenticate!(&session_token, &state);
     crate::commands::update_correlation_context_user(&current_user.user_id);
-    if current_user.user_id != user_id {
+    if let Err(error) =
+        facade.validate_bootstrap_request(&user_id, &session_token, &current_user.user_id)
+    {
         warn!(
             "Bootstrap attempt blocked: user {} tried to promote {}",
             current_user.user_id, user_id
         );
-        return Err(AppError::Authorization(
-            "You can only bootstrap your own account".to_string(),
-        ));
+        return Err(error);
     }
 
     let user_service = crate::services::UserService::new(state.repositories.user.clone());
@@ -398,10 +273,7 @@ pub async fn get_users(
     let limit = Some(page_size);
     let offset = Some((page - 1) * page_size);
 
-    match crate::commands::user_crud(UserAction::List { limit, offset }, session_token, state)
-        .await
-        .map_err(|e| e.to_string())?
-    {
+    match execute_user_action(UserAction::List { limit, offset }, session_token, state).await? {
         UserResponse::List(users) => Ok(serde_json::json!({
             "users": users.data,
             "total": users.data.len(),
@@ -417,10 +289,7 @@ pub async fn create_user(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<serde_json::Value, String> {
-    match crate::commands::user_crud(UserAction::Create { data: user_data }, session_token, state)
-        .await
-        .map_err(|e| e.to_string())?
-    {
+    match execute_user_action(UserAction::Create { data: user_data }, session_token, state).await? {
         UserResponse::Created(user) => Ok(serde_json::json!(user)),
         _ => Err("Failed to create user".to_string()),
     }
@@ -432,7 +301,7 @@ pub async fn update_user(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<serde_json::Value, String> {
-    match crate::commands::user_crud(
+    match execute_user_action(
         UserAction::Update {
             id: user_id,
             data: user_data,
@@ -440,8 +309,7 @@ pub async fn update_user(
         session_token,
         state,
     )
-    .await
-    .map_err(|e| e.to_string())?
+    .await?
     {
         UserResponse::Updated(user) => Ok(serde_json::json!(user)),
         _ => Err("Failed to update user".to_string()),
@@ -462,7 +330,7 @@ pub async fn update_user_status(
         is_active: Some(is_active),
     };
 
-    match crate::commands::user_crud(
+    match execute_user_action(
         UserAction::Update {
             id: user_id,
             data: update_data,
@@ -470,8 +338,7 @@ pub async fn update_user_status(
         session_token,
         state,
     )
-    .await
-    .map_err(|e| e.to_string())?
+    .await?
     {
         UserResponse::Updated(_) => Ok(()),
         _ => Err("Failed to update user status".to_string()),
@@ -483,11 +350,25 @@ pub async fn delete_user(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<(), String> {
-    match crate::commands::user_crud(UserAction::Delete { id: user_id }, session_token, state)
-        .await
-        .map_err(|e| e.to_string())?
-    {
+    match execute_user_action(UserAction::Delete { id: user_id }, session_token, state).await? {
         UserResponse::Deleted => Ok(()),
         _ => Err("Failed to delete user".to_string()),
     }
+}
+
+async fn execute_user_action(
+    action: UserAction,
+    session_token: String,
+    state: AppState<'_>,
+) -> Result<UserResponse, String> {
+    let request = UserCrudRequest {
+        action,
+        session_token,
+        correlation_id: None,
+    };
+
+    let response = user_crud(request, state).await.map_err(|e| e.to_string())?;
+    response
+        .data
+        .ok_or_else(|| "Missing user CRUD response payload".to_string())
 }

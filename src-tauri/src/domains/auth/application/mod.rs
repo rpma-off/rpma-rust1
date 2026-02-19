@@ -1,1 +1,3 @@
-// Domain layer module index.
+mod input;
+
+pub use input::SignupRequest;

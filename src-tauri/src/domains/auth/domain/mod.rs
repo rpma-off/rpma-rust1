@@ -1,1 +1,3 @@
-// Domain layer module index.
+mod policy;
+
+pub(crate) use policy::AuthErrorPolicy;

@@ -8,7 +8,7 @@ This tracker is the execution baseline for the strict bounded-context completion
 
 ## Wave Status
 - [x] Wave 0 - Foundation and strictness scaffolding
-- [ ] Wave 1 - Auth + Users
+- [ ] Wave 1 - Auth + Users (in progress)
 - [ ] Wave 2 - Tasks + Clients
 - [ ] Wave 3 - Interventions + Inventory + Documents
 - [ ] Wave 4 - Reports + Analytics + Quotes
@@ -22,6 +22,14 @@ This tracker is the execution baseline for the strict bounded-context completion
 - [x] Strict-mode scaffolding in architecture validators
 - [x] Migration audit script with strict/progressive behavior
 - [x] Tracker document added
+
+## Wave 1 Progress (Auth + Users)
+- [x] Replaced trivial `auth/users` facades with orchestration and validation logic
+- [x] Replaced scaffold-only `application/domain/mod.rs` in `auth/users`
+- [x] Moved user IPC contracts to `domains/users/application/contracts.rs`
+- [x] Replaced trivial `auth/users` facade tests with behavior-focused tests
+- [x] Frontend `domains/auth/server` and `domains/users/server` now use domain-owned `server/services/*`
+- [ ] Remove auth/user legacy command shims from `src-tauri/src/commands/*` (deferred to strict global cleanup wave)
 
 ## Migration Counters
 Run:

@@ -1,3 +1,3 @@
-﻿export { userService } from '@/lib/services/entities/user.service';
-export { AuthService, authService } from '@/lib/services/auth/auth.service';
-export type { User } from '@/lib/services/entities/user.service';
+export { userService } from './services/user.service';
+export { AuthService, authService } from './services/auth.service';
+export type { User } from './services/user.service';
