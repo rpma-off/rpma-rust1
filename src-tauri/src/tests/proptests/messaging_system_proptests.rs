@@ -159,7 +159,7 @@ fn message_status_strategy() -> impl Strategy<Value = MessageStatus> {
 }
 
 // Strategy for generating valid message priorities
-fn message_priority_strategy() -> impl Strategy<Value -> MessagePriority> {
+fn message_priority_strategy() -> impl Strategy<Value = MessagePriority> {
     prop_oneof![
         Just(MessagePriority::Low),
         Just(MessagePriority::Normal),
@@ -169,12 +169,12 @@ fn message_priority_strategy() -> impl Strategy<Value -> MessagePriority> {
 }
 
 // Strategy for generating valid email addresses
-fn email_strategy() -> impl Strategy<Value -> String> {
+fn email_strategy() -> impl Strategy<Value = String> {
     "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"
 }
 
 // Strategy for generating valid phone numbers
-fn phone_strategy() -> impl Strategy<Value -> String> {
+fn phone_strategy() -> impl Strategy<Value = String> {
     prop_oneof![
         "\\+[0-9]{10,15}".prop_map(|s| s.to_string()),
         "[0-9]{10}".prop_map(|s| s.to_string()),
@@ -182,7 +182,7 @@ fn phone_strategy() -> impl Strategy<Value -> String> {
 }
 
 // Strategy for generating valid message subjects
-fn subject_strategy() -> impl Strategy<Value -> Option<String>> {
+fn subject_strategy() -> impl Strategy<Value = Option<String>> {
     prop_oneof![
         Just(None),
         "[a-zA-Z0-9\\s\\.\\,\\!]{5,100}".prop_map(Some)
@@ -190,12 +190,12 @@ fn subject_strategy() -> impl Strategy<Value -> Option<String>> {
 }
 
 // Strategy for generating valid message bodies
-fn body_strategy() -> impl Strategy<Value -> String> {
+fn body_strategy() -> impl Strategy<Value = String> {
     "[a-zA-Z0-9\\s\\.\\,\\!\\?]{10,1000}"
 }
 
 // Strategy for generating valid dates (now +/- 1 year)
-fn date_strategy() -> impl Strategy<Value -> Option<i64>> {
+fn date_strategy() -> impl Strategy<Value = Option<i64>> {
     let now = chrono::Utc::now();
     let year_ago = (now - chrono::Duration::days(365)).timestamp();
     let year_ahead = (now + chrono::Duration::days(365)).timestamp();
@@ -207,7 +207,7 @@ fn date_strategy() -> impl Strategy<Value -> Option<i64>> {
 }
 
 // Strategy for generating valid time strings (HH:MM)
-fn time_strategy() -> impl Strategy<Value -> String> {
+fn time_strategy() -> impl Strategy<Value = String> {
     let hour = 0u8..=23u8;
     let minute = 0u8..=59u8;
     
@@ -215,7 +215,7 @@ fn time_strategy() -> impl Strategy<Value -> String> {
 }
 
 // Strategy for generating valid email frequencies
-fn email_frequency_strategy() -> impl Strategy<Value -> String> {
+fn email_frequency_strategy() -> impl Strategy<Value = String> {
     prop_oneof![
         Just("immediate".to_string()),
         Just("daily".to_string()),
@@ -224,7 +224,7 @@ fn email_frequency_strategy() -> impl Strategy<Value -> String> {
 }
 
 // Strategy for generating valid template categories
-fn template_category_strategy() -> impl Strategy<Value -> String> {
+fn template_category_strategy() -> impl Strategy<Value = String> {
     prop_oneof![
         Just("general".to_string()),
         Just("task".to_string()),

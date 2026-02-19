@@ -1,3 +1,10 @@
+//! Inventory domain test modules.
+
+pub mod integration_inventory;
+pub mod permission_inventory;
+pub mod unit_inventory;
+pub mod validation_inventory;
+
 use std::sync::Arc;
 
 use crate::domains::inventory::application::InventoryService;

@@ -155,7 +155,7 @@ fn stock_quantity_strategy() -> impl Strategy<Value = f64> {
 }
 
 // Strategy for generating valid costs (0-10000)
-fn cost_strategy() -> impl Strategy<Value -> Option<f64>> {
+fn cost_strategy() -> impl Strategy<Value = Option<f64>> {
     prop_oneof![
         Just(None),
         prop::num::f64::POSITIVE.prop_map(|v| Some(v % 10000.0))
@@ -185,7 +185,7 @@ fn transaction_type_strategy() -> impl Strategy<Value = InventoryTransactionType
 }
 
 // Strategy for generating valid dates (today +/- 1 year)
-fn date_strategy() -> impl Strategy<Value -> Option<i64>> {
+fn date_strategy() -> impl Strategy<Value = Option<i64>> {
     let now = chrono::Utc::now();
     let year_ago = (now - chrono::Duration::days(365)).timestamp_millis();
     let year_ahead = (now + chrono::Duration::days(365)).timestamp_millis();
@@ -197,7 +197,7 @@ fn date_strategy() -> impl Strategy<Value -> Option<i64>> {
 }
 
 // Strategy for generating valid reference numbers
-fn reference_number_strategy() -> impl Strategy<Value -> Option<String>> {
+fn reference_number_strategy() -> impl Strategy<Value = Option<String>> {
     prop_oneof![
         Just(None),
         "[A-Z]{2,4}-[0-9]{4,8}".prop_map(Some)

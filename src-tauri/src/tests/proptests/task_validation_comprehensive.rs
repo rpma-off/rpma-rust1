@@ -7,44 +7,38 @@ use proptest::prelude::*;
 use rpma_ppf_intervention::models::task::{CreateTaskRequest, Task, TaskPriority, TaskStatus};
 use rpma_ppf_intervention::services::task_validation::TaskValidationError;
 
-prop_compose! {
-    fn arb_task_priority() -> TaskPriority {
-        prop_oneof![
-            Just(TaskPriority::Low),
-            Just(TaskPriority::Normal),
-            Just(TaskPriority::High),
-            Just(TaskPriority::Critical),
-        ]
-    }
+fn arb_task_priority() -> impl Strategy<Value = TaskPriority> {
+    prop_oneof![
+        Just(TaskPriority::Low),
+        Just(TaskPriority::Normal),
+        Just(TaskPriority::High),
+        Just(TaskPriority::Critical),
+    ]
 }
 
-prop_compose! {
-    fn arb_valid_status() -> TaskStatus {
-        prop_oneof![
-            Just(TaskStatus::Draft),
-            Just(TaskStatus::Pending),
-            Just(TaskStatus::InProgress),
-        ]
-    }
+fn arb_valid_status() -> impl Strategy<Value = TaskStatus> {
+    prop_oneof![
+        Just(TaskStatus::Draft),
+        Just(TaskStatus::Pending),
+        Just(TaskStatus::InProgress),
+    ]
 }
 
-prop_compose! {
-    fn arb_invalid_status() -> TaskStatus {
-        prop_oneof![
-            Just(TaskStatus::Completed),
-            Just(TaskStatus::Cancelled),
-            Just(TaskStatus::OnHold),
-        ]
-    }
+fn arb_invalid_status() -> impl Strategy<Value = TaskStatus> {
+    prop_oneof![
+        Just(TaskStatus::Completed),
+        Just(TaskStatus::Cancelled),
+        Just(TaskStatus::OnHold),
+    ]
 }
 
-prop_compose! {
-    fn arb_create_task_request(
-        title: String,
-        description: Option<String>,
-        priority: TaskPriority,
-    ) -> CreateTaskRequest {
-        CreateTaskRequest {
+fn arb_create_task_request() -> impl Strategy<Value = CreateTaskRequest> {
+    (
+        "[a-zA-Z0-9\\s]{1,50}",
+        prop::option::of("[a-zA-Z0-9\\s]{1,200}"),
+        arb_task_priority(),
+    )
+        .prop_map(|(title, description, priority)| CreateTaskRequest {
             title,
             description,
             priority,
@@ -54,8 +48,7 @@ prop_compose! {
             estimated_duration_hours: Some(1.0),
             scheduled_date: None,
             assigned_technician_id: None,
-        }
-    }
+        })
 }
 
 proptest! {
@@ -253,11 +246,7 @@ proptest! {
     }
 
     #[test]
-    fn test_roundtrip_validation(request in arb_create_task_request(
-        "[a-zA-Z0-9\\s]{1,50}",
-        prop::option::of("[a-zA-Z0-9\\s]{1,200}"),
-        arb_task_priority()
-    )) {
+    fn test_roundtrip_validation(request in arb_create_task_request()) {
         // If we can create it, it should validate
         let result = rpma_ppf_intervention::services::task_validation::validate_create_task_request(&request);
         prop_assert!(result.is_ok(), "Validation failed for: {:?}", request);
