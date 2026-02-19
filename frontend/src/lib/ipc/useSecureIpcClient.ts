@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/domains/auth';
 import { createSecureIpcClient } from '@/lib/ipc/secure-client';
 import type { UserAccount } from '@/lib/backend';
 

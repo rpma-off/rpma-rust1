@@ -3,16 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/shared/ui/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/ui/card';
+import { Input } from '@/shared/ui/ui/input';
+import { Label } from '@/shared/ui/ui/label';
+import { Checkbox } from '@/shared/ui/ui/checkbox';
 import { ArrowRight, CheckCircle, Thermometer, Droplets, Wrench, AlertTriangle, Camera } from 'lucide-react';
-import { usePPFWorkflow } from '@/contexts/PPFWorkflowContext';
-import { getNextPPFStepId, getPPFStepPath } from '@/lib/ppf-workflow';
-import { PhotoUpload } from '@/components/PhotoUpload/PhotoUpload';
-import { useTranslation } from '@/hooks/useTranslation';
+import { usePPFWorkflow } from '@/domains/interventions';
+import { getNextPPFStepId, getPPFStepPath } from '@/domains/interventions';
+import { PhotoUpload } from '@/domains/workflow';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 
 interface PreparationChecklistItem {
   id: string;
@@ -501,7 +501,7 @@ export default function PreparationStepPage() {
                 type="before"
                 maxFiles={6}
                 minPhotos={0}
-                onUploadComplete={(urls) => setUploadedPhotos(urls)}
+                onUploadComplete={(urls: string[]) => setUploadedPhotos(urls)}
                 title="Photos de préparation"
                 uploadButtonText="Ajouter des photos"
               />

@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { ReportContent } from '../../../app/reports/components/ReportContent';
 
 // Mock the reports service
-jest.mock('@/lib/services/entities/reports.service', () => ({
+jest.mock('@/domains/reports', () => ({
   reportsService: {
     getOverviewReport: jest.fn(),
     getTaskCompletionReport: jest.fn(),
@@ -17,7 +17,7 @@ jest.mock('@/lib/services/entities/reports.service', () => ({
 }));
 
 // Mock the reports service to avoid actual API calls
-jest.mock('@/lib/services/entities/reports.service');
+jest.mock('@/domains/reports');
 
 describe('ReportContent', () => {
   const mockDateRange = {

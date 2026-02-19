@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { PPFStepProgress } from '../PPFStepProgress';
-import { usePPFWorkflow } from '@/contexts/PPFWorkflowContext';
+import { usePPFWorkflow } from '@/domains/interventions';
 
 const mockPush = jest.fn();
 
@@ -11,7 +11,7 @@ jest.mock('next/navigation', () => ({
   }),
 }));
 
-jest.mock('@/contexts/PPFWorkflowContext', () => ({
+jest.mock('@/domains/interventions', () => ({
   usePPFWorkflow: jest.fn(),
 }));
 

@@ -2,12 +2,10 @@
 
 import React from 'react';
 import { useParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/shared/ui';
 import { AlertCircle } from 'lucide-react';
-import { PPFWorkflowProvider, usePPFWorkflow } from '@/contexts/PPFWorkflowContext';
-import { PPFWorkflowHeader } from '@/components/workflow/ppf/PPFWorkflowHeader';
-import { PPFStepProgress } from '@/components/workflow/ppf/PPFStepProgress';
-import { useTranslation } from '@/hooks/useTranslation';
+import { PPFWorkflowProvider, usePPFWorkflow, PPFWorkflowHeader, PPFStepProgress } from '@/domains/interventions';
+import { useTranslation } from '@/shared/hooks';
 
 interface PPFWorkflowLayoutProps {
   children: React.ReactNode;

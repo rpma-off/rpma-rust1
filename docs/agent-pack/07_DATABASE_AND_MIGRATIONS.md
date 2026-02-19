@@ -48,16 +48,26 @@ RPMA uses a **hybrid migration system**:
 
 **Features**:
 - Tracks applied migrations in `schema_version` table
-- Sequential version-based ordering (001, 002, ..., 037)
+- Sequential version-based ordering (002, 003, ..., 037)
 - **Idempotent**: Uses `CREATE TABLE IF NOT EXISTS`, safe to run multiple times
 - Validation before applying (syntax check, dependency check)
 - Transactional: Each migration runs in its own transaction
 
-**Current Version**: 37 (as of migration 037_quotes.sql)
+**Schema baseline**: `src-tauri/src/db/schema.sql` is embedded in the db module and
+initializes the database schema to **version 25**. SQL migration files then apply
+incremental changes from version 002 up to 037.
+
+**⚠️ Duplicate migration 027**: There are two files with version prefix `027` in
+`src-tauri/migrations/`. This is a known issue — do not add another `027_*` file.
+The migration runner may log a warning; verify behavior before releasing.
+
+**Current Version**: 37 (highest SQL migration file: `037_quotes.sql`)
 
 **Discovery**: Migrations auto-discovered from embedded directory at runtime (`migrations.rs:159-181`)
 
 **IMPORTANT**: Migration files are in `src-tauri/migrations/` directory (35 SQL files). Always place new migration files there.
+
+> ⚠️ **Deprecated directory**: The root `migrations/` directory at the project root is **not used** by the migration system and was created by mistake. It contains files with conflicting version numbers. **Never add migrations there.** Always use `src-tauri/migrations/`.
 
 ---
 

@@ -1,1 +1,20 @@
-//! Placeholder module for bounded-context migration.
+pub(crate) mod task;
+pub(crate) mod task_client_integration;
+pub(crate) mod task_constants;
+pub(crate) mod task_creation;
+pub(crate) mod task_crud;
+pub(crate) mod task_deletion;
+pub(crate) mod task_history_repository;
+pub(crate) mod task_import;
+pub(crate) mod task_queries;
+pub(crate) mod task_repository;
+pub(crate) mod task_repository_streaming;
+pub(crate) mod task_statistics;
+pub(crate) mod task_update;
+pub(crate) mod task_validation;
+pub(crate) mod workflow_cleanup;
+pub(crate) mod workflow_progression;
+pub(crate) mod workflow_strategy;
+#[cfg(test)]
+pub(crate) mod workflow_strategy_tests;
+pub(crate) mod workflow_validation;

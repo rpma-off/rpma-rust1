@@ -15,6 +15,7 @@ use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use tracing;
 
 lazy_static! {
     static ref STREAM_MANAGER: Arc<Mutex<StreamManager>> =
@@ -85,6 +86,7 @@ pub struct GetStreamDataResponse {
 }
 
 /// Compress data for IPC transfer
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn compress_data_for_ipc(
     request: CompressDataRequest,
@@ -121,6 +123,7 @@ pub async fn compress_data_for_ipc(
 }
 
 /// Decompress data from IPC transfer
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn decompress_data_from_ipc(
     request: DecompressDataRequest,
@@ -134,6 +137,7 @@ pub async fn decompress_data_from_ipc(
 }
 
 /// Start a streaming data transfer
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn start_stream_transfer(
     request: StartStreamRequest,
@@ -170,6 +174,7 @@ pub async fn start_stream_transfer(
 }
 
 /// Send a chunk of streaming data
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn send_stream_chunk(
     request: SendStreamChunkRequest,
@@ -197,6 +202,7 @@ pub async fn send_stream_chunk(
 }
 
 /// Get completed stream data
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn get_stream_data(
     request: GetStreamDataRequest,
@@ -233,6 +239,7 @@ pub async fn get_stream_data(
 }
 
 /// Get IPC optimization statistics
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn get_ipc_stats(correlation_id: Option<String>) -> AppResult<serde_json::Value> {
     let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
@@ -271,7 +278,7 @@ mod tests {
             min_size: Some(100),
         };
 
-        let result = compress_data_for_ipc(request).await;
+        let result = compress_data_for_ipc(request, None).await;
         assert!(result.is_ok());
 
         let response = result.unwrap();
@@ -282,7 +289,7 @@ mod tests {
             compressed: response.compressed,
         };
 
-        let decompress_result = decompress_data_from_ipc(decompress_request).await;
+        let decompress_result = decompress_data_from_ipc(decompress_request, None).await;
         assert!(decompress_result.is_ok());
     }
 }

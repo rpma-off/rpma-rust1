@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useAuth } from '@/lib/auth/compatibility';
+import { useAuth } from '@/domains/auth';
 import { X } from 'lucide-react';
 import { useTaskForm } from './useTaskForm';
 import { FormStep, TaskFormProps, ENHANCED_STEPS as STEPS_CONFIG } from './types';

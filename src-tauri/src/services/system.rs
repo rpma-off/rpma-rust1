@@ -146,6 +146,26 @@ impl SystemService {
             "database_path": db_path
         }))
     }
+
+    /// Get database status (initialisation, tables, version) via the Database
+    /// abstraction.  This moves the status logic out of the IPC command handler.
+    pub fn get_database_status(db: &crate::db::Database) -> Result<serde_json::Value, String> {
+        let is_initialized = db
+            .is_initialized()
+            .map_err(|e| format!("Failed to check database initialization: {}", e))?;
+        let tables = db
+            .list_tables()
+            .map_err(|e| format!("Failed to list database tables: {}", e))?;
+        let version = db
+            .get_version()
+            .map_err(|e| format!("Failed to get database version: {}", e))?;
+
+        Ok(json!({
+            "initialized": is_initialized,
+            "tables": tables,
+            "version": version
+        }))
+    }
 }
 
 #[cfg(test)]

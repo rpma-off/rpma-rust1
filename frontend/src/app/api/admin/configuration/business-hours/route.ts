@@ -1,5 +1,5 @@
- import { NextResponse } from 'next/server';
- import { configurationService } from '@/lib/services/entities/configuration.service';
+﻿ import { NextResponse } from 'next/server';
+ import { configurationService } from '@/domains/admin/server';
  import { withAuth } from '@/lib/middleware/auth.middleware';
 
  export const dynamic = 'force-dynamic';
@@ -46,3 +46,4 @@ export const PUT = withAuth(async (request) => {
     );
   }
 }, 'admin');
+

@@ -1,21 +1,21 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/shared/ui/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/ui/card';
+import { Badge } from '@/shared/ui/ui/badge';
+import { Separator } from '@/shared/ui/ui/separator';
+import { Skeleton } from '@/shared/ui/ui/skeleton';
+import { Alert, AlertDescription } from '@/shared/ui/ui/alert';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from '@/components/ui/accordion';
-import { TaskService } from '@/lib/services/entities/task.service';
-import { PageShell } from '@/components/layout/PageShell';
+} from '@/shared/ui/ui/accordion';
+import { taskGateway, TaskWithDetails } from '@/domains/tasks';
+import { PageShell } from '@/shared/ui/layout/PageShell';
 import {
   CheckCircle,
   Download,
@@ -38,16 +38,14 @@ import {
   Droplets,
   Building
 } from 'lucide-react';
-// Removed TaskService import - now using API routes
 import { toast } from 'sonner';
-import { TaskWithDetails } from '@/types/task.types';
-import { getUserFullName } from '@/lib/types';
-import { useCustomerInfo, useCustomerDisplayName, useVehicleDisplayInfo } from '@/hooks/useNormalizedTask';
-import { useInterventionData, useWorkflowStepData } from '@/hooks/useInterventionData';
-import type { Intervention, Client as BackendClient } from '@/lib/backend';
-import { reportsService } from '@/lib/services/entities/reports.service';
+import { reportsService } from '@/domains/reports';
+import { getUserFullName } from '@/shared/utils';
+import { useCustomerInfo, useCustomerDisplayName, useVehicleDisplayInfo } from '@/domains/tasks';
+import { useInterventionData, useWorkflowStepData } from '@/domains/interventions';
+import type { Intervention, Client as BackendClient } from '@/shared/types';
 import { useQueryClient } from '@tanstack/react-query';
-import { useTranslation } from '@/hooks/useTranslation';
+import { useTranslation } from '@/shared/hooks';
 
 export default function TaskCompletedPage() {
   const router = useRouter();
@@ -84,8 +82,7 @@ export default function TaskCompletedPage() {
       setError(null);
       
       try {
-        const taskService = TaskService.getInstance();
-        const result = await taskService.getTaskById(taskId);
+        const result = await taskGateway.getTaskById(taskId);
 
         if (result.error) {
           throw new Error(result.error);
@@ -402,7 +399,7 @@ export default function TaskCompletedPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              Intervention terminée ✅
+              Intervention terminée âœ…
             </h1>
             <p className="text-sm text-gray-600">
               {task.title || `Tâche #${task.external_id || task.id.slice(0, 8)}`}
@@ -642,7 +639,7 @@ export default function TaskCompletedPage() {
                       <div className="flex items-center space-x-2">
                         <FileText className="h-4 w-4 text-gray-500" />
                         <div>
-                          <div className="text-xs text-gray-500">N° Tâche</div>
+                          <div className="text-xs text-gray-500">NÂ° Tâche</div>
                           <div className="text-sm font-medium">{task.task_number}</div>
                         </div>
                       </div>
@@ -894,7 +891,7 @@ export default function TaskCompletedPage() {
                               <div className="flex items-center space-x-2 p-3 bg-red-50 rounded-lg">
                                 <Thermometer className="h-5 w-5 text-red-500" />
                                 <div>
-                                  <div className="text-sm font-medium text-red-600">{fullInterventionData!.temperature_celsius}°C</div>
+                                  <div className="text-sm font-medium text-red-600">{fullInterventionData!.temperature_celsius}Â°C</div>
                                   <div className="text-xs text-red-600">Température</div>
                                 </div>
                               </div>
@@ -927,7 +924,7 @@ export default function TaskCompletedPage() {
                                   <div>Lat: {fullInterventionData.start_location_lat.toFixed(6)}</div>
                                   <div>Lon: {fullInterventionData.start_location_lon.toFixed(6)}</div>
                                   {fullInterventionData.start_location_accuracy && (
-                                    <div>Précision: ±{fullInterventionData.start_location_accuracy}m</div>
+                                    <div>Précision: Â±{fullInterventionData.start_location_accuracy}m</div>
                                   )}
                                 </div>
                               </div>
@@ -939,7 +936,7 @@ export default function TaskCompletedPage() {
                                   <div>Lat: {fullInterventionData.end_location_lat.toFixed(6)}</div>
                                   <div>Lon: {fullInterventionData.end_location_lon.toFixed(6)}</div>
                                   {fullInterventionData.end_location_accuracy && (
-                                    <div>Précision: ±{fullInterventionData.end_location_accuracy}m</div>
+                                    <div>Précision: Â±{fullInterventionData.end_location_accuracy}m</div>
                                   )}
                                 </div>
                               </div>
@@ -1105,7 +1102,7 @@ export default function TaskCompletedPage() {
                           <div className="flex justify-center mt-2">
                             {[...Array(5)].map((_, i) => (
                               <span key={i} className={`text-lg ${i < fullInterventionData.customer_satisfaction! ? 'text-yellow-400' : 'text-gray-300'}`}>
-                                ★
+                                â˜…
                               </span>
                             ))}
                           </div>
@@ -1284,7 +1281,7 @@ export default function TaskCompletedPage() {
                                   {!!(workflowSteps.preparation.collected_data.environment as Record<string, unknown>).temp_celsius && (
                                     <div className="flex items-center space-x-2 text-sm">
                                       <Thermometer className="h-4 w-4 text-red-500" />
-                                      <span>{String((workflowSteps.preparation.collected_data.environment as Record<string, unknown>).temp_celsius)}°C</span>
+                                      <span>{String((workflowSteps.preparation.collected_data.environment as Record<string, unknown>).temp_celsius)}Â°C</span>
                                     </div>
                                   )}
                                   {!!(workflowSteps.preparation.collected_data.environment as Record<string, unknown>).humidity_percent && (
@@ -1803,13 +1800,13 @@ export default function TaskCompletedPage() {
                 </div>
                 {task.external_id && (
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">N° Externe</span>
+                    <span className="text-xs text-gray-500">NÂ° Externe</span>
                     <span className="text-xs font-medium">{task.external_id}</span>
                   </div>
                 )}
                 {task.task_number && (
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">N° Tâche</span>
+                    <span className="text-xs text-gray-500">NÂ° Tâche</span>
                     <span className="text-xs font-medium">{task.task_number}</span>
                   </div>
                 )}
@@ -1840,3 +1837,5 @@ export default function TaskCompletedPage() {
     </PageShell>
   );
 }
+
+

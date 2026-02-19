@@ -10,23 +10,23 @@ import {
   RefreshCw,
   Download
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { DateRangePicker } from '@/app/reports/components/DateRangePicker';
-import { reportsService } from '@/lib/services/entities/reports.service';
-import { useTranslation } from '@/hooks/useTranslation';
-import { PageShell } from '@/components/layout/PageShell';
-import { PageHeader, StatCard } from '@/components/ui/page-header';
-import { LoadingState } from '@/components/layout/LoadingState';
-import { ErrorState } from '@/components/layout/ErrorState';
+import { Button } from '@/shared/ui/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/ui/card';
+import { Badge } from '@/shared/ui/ui/badge';
+import { DateRangePicker } from '@/domains/reports';
+import { reportsService } from '@/domains/reports';
+import { useTranslation } from '@/shared/hooks/useTranslation';
+import { PageShell } from '@/shared/ui/layout/PageShell';
+import { PageHeader, StatCard } from '@/shared/ui/ui/page-header';
+import { LoadingState } from '@/shared/ui/layout/LoadingState';
+import { ErrorState } from '@/shared/ui/layout/ErrorState';
 import type {
   OperationalIntelligenceReport,
   StepBottleneck,
   InterventionBottleneck,
   ResourceUtilization,
   WorkflowRecommendation
-} from '@/lib/backend';
+} from '@/shared/types';
 
 interface DateRange {
   start: Date;
@@ -221,7 +221,7 @@ export default function OperationalIntelligencePage() {
             <CardContent>
               {reportData.step_bottlenecks.length === 0 ? (
                 <div className="text-center py-8">
-                  <div className="text-green-500 mb-2">✓</div>
+                  <div className="text-green-500 mb-2">âœ“</div>
                   <p className="text-muted-foreground">Aucun goulot d&apos;étranglement détecté</p>
                 </div>
               ) : (
@@ -248,7 +248,7 @@ export default function OperationalIntelligencePage() {
             <CardContent>
               {reportData.intervention_bottlenecks.length === 0 ? (
                 <div className="text-center py-8">
-                  <div className="text-green-500 mb-2">✓</div>
+                  <div className="text-green-500 mb-2">âœ“</div>
                   <p className="text-muted-foreground">Aucune intervention bloquée</p>
                 </div>
               ) : (
@@ -295,7 +295,7 @@ export default function OperationalIntelligencePage() {
             <CardContent>
               {reportData.recommendations.length === 0 ? (
                 <div className="text-center py-8">
-                  <div className="text-green-500 mb-2">✓</div>
+                  <div className="text-green-500 mb-2">âœ“</div>
                   <p className="text-muted-foreground">Aucune recommandation disponible</p>
                 </div>
               ) : (
@@ -456,3 +456,5 @@ function RecommendationCard({ recommendation }: { recommendation: WorkflowRecomm
     </div>
   );
 }
+
+

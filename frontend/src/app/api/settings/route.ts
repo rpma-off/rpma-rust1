@@ -1,10 +1,10 @@
-import { settingsService } from '@/lib/services/entities/settings.service';
+﻿import { settingsService } from '@/domains/settings/server';
 import type {
   UpdateAccessibilityRequest,
   UpdateNotificationsRequest,
   UpdatePerformanceRequest,
   UpdatePreferencesRequest,
-} from '@/lib/services/entities/settings.service';
+} from '@/domains/settings/server';
 import { withAuth, NextRequestWithUser } from '@/lib/middleware/auth.middleware';
 import { settingsError, settingsSuccess } from './_shared';
 
@@ -101,3 +101,4 @@ export const PUT = withAuth(async (request: NextRequestWithUser) => {
     return settingsError(error instanceof Error ? error.message : 'Invalid request body', 400);
   }
 }, 'all');
+

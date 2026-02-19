@@ -21,7 +21,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useCalendarStore } from "@/lib/stores/calendarStore";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/domains/auth";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
 import type { CreateEventInput } from "@/types/calendar";

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/domains/auth';
 import { ipcClient } from '@/lib/ipc';
 import type { JsonObject } from '@/types/json';
 import type {

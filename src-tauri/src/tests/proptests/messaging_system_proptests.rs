@@ -4,9 +4,8 @@
 
 use crate::db::Database;
 use crate::models::message::{
-    Message, MessageStatus, MessageType, MessagePriority,
-    SendMessageRequest, MessageTemplate, MessageTemplateRequest,
-    NotificationPreferences
+    Message, MessagePriority, MessageStatus, MessageTemplate, MessageTemplateRequest, MessageType,
+    NotificationPreferences, SendMessageRequest,
 };
 use crate::repositories::message::MessageRepository;
 use proptest::prelude::*;
@@ -17,7 +16,7 @@ use uuid::Uuid;
 // Helper to create a test database with messaging tables
 async fn create_test_db() -> Database {
     let db = Database::new_in_memory().await.unwrap();
-    
+
     // Create messaging tables
     db.execute_batch(r#"
         CREATE TABLE IF NOT EXISTS users (
@@ -95,7 +94,7 @@ async fn create_test_db() -> Database {
             updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
         );
     "#).unwrap();
-    
+
     db
 }
 
@@ -120,7 +119,8 @@ fn create_test_user(db: &Database, user_id: &str, email: &str) {
 
 // Helper to create default notification preferences
 fn create_default_notification_preferences(db: &Database, user_id: &str) {
-    db.execute(r#"
+    db.execute(
+        r#"
         INSERT OR IGNORE INTO notification_preferences (
             id, user_id, email_enabled, sms_enabled, in_app_enabled,
             task_assigned, task_updated, task_completed, task_overdue,
@@ -128,14 +128,31 @@ fn create_default_notification_preferences(db: &Database, user_id: &str) {
             quiet_hours_enabled, quiet_hours_start, quiet_hours_end,
             email_frequency, email_digest_time, created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    "#, params![
-        Uuid::new_v4().to_string(),
-        user_id,
-        1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1,
-        0, "22:00", "08:00", "immediate", "09:00",
-        chrono::Utc::now().timestamp(),
-        chrono::Utc::now().timestamp()
-    ]).unwrap();
+    "#,
+        params![
+            Uuid::new_v4().to_string(),
+            user_id,
+            1,
+            1,
+            1,
+            1,
+            1,
+            0,
+            1,
+            1,
+            1,
+            1,
+            1,
+            0,
+            "22:00",
+            "08:00",
+            "immediate",
+            "09:00",
+            chrono::Utc::now().timestamp(),
+            chrono::Utc::now().timestamp()
+        ],
+    )
+    .unwrap();
 }
 
 // Strategy for generating valid message types
@@ -159,7 +176,7 @@ fn message_status_strategy() -> impl Strategy<Value = MessageStatus> {
 }
 
 // Strategy for generating valid message priorities
-fn message_priority_strategy() -> impl Strategy<Value -> MessagePriority> {
+fn message_priority_strategy() -> impl Strategy<Value = MessagePriority> {
     prop_oneof![
         Just(MessagePriority::Low),
         Just(MessagePriority::Normal),
@@ -169,12 +186,12 @@ fn message_priority_strategy() -> impl Strategy<Value -> MessagePriority> {
 }
 
 // Strategy for generating valid email addresses
-fn email_strategy() -> impl Strategy<Value -> String> {
+fn email_strategy() -> impl Strategy<Value = String> {
     "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"
 }
 
 // Strategy for generating valid phone numbers
-fn phone_strategy() -> impl Strategy<Value -> String> {
+fn phone_strategy() -> impl Strategy<Value = String> {
     prop_oneof![
         "\\+[0-9]{10,15}".prop_map(|s| s.to_string()),
         "[0-9]{10}".prop_map(|s| s.to_string()),
@@ -182,40 +199,34 @@ fn phone_strategy() -> impl Strategy<Value -> String> {
 }
 
 // Strategy for generating valid message subjects
-fn subject_strategy() -> impl Strategy<Value -> Option<String>> {
-    prop_oneof![
-        Just(None),
-        "[a-zA-Z0-9\\s\\.\\,\\!]{5,100}".prop_map(Some)
-    ]
+fn subject_strategy() -> impl Strategy<Value = Option<String>> {
+    prop_oneof![Just(None), "[a-zA-Z0-9\\s\\.\\,\\!]{5,100}".prop_map(Some)]
 }
 
 // Strategy for generating valid message bodies
-fn body_strategy() -> impl Strategy<Value -> String> {
+fn body_strategy() -> impl Strategy<Value = String> {
     "[a-zA-Z0-9\\s\\.\\,\\!\\?]{10,1000}"
 }
 
 // Strategy for generating valid dates (now +/- 1 year)
-fn date_strategy() -> impl Strategy<Value -> Option<i64>> {
+fn date_strategy() -> impl Strategy<Value = Option<i64>> {
     let now = chrono::Utc::now();
     let year_ago = (now - chrono::Duration::days(365)).timestamp();
     let year_ahead = (now + chrono::Duration::days(365)).timestamp();
-    
-    prop_oneof![
-        Just(None),
-        (year_ago..=year_ahead).prop_map(Some)
-    ]
+
+    prop_oneof![Just(None), (year_ago..=year_ahead).prop_map(Some)]
 }
 
 // Strategy for generating valid time strings (HH:MM)
-fn time_strategy() -> impl Strategy<Value -> String> {
+fn time_strategy() -> impl Strategy<Value = String> {
     let hour = 0u8..=23u8;
     let minute = 0u8..=59u8;
-    
+
     (hour, minute).prop_map(|(h, m)| format!("{:02}:{:02}", h, m))
 }
 
 // Strategy for generating valid email frequencies
-fn email_frequency_strategy() -> impl Strategy<Value -> String> {
+fn email_frequency_strategy() -> impl Strategy<Value = String> {
     prop_oneof![
         Just("immediate".to_string()),
         Just("daily".to_string()),
@@ -224,7 +235,7 @@ fn email_frequency_strategy() -> impl Strategy<Value -> String> {
 }
 
 // Strategy for generating valid template categories
-fn template_category_strategy() -> impl Strategy<Value -> String> {
+fn template_category_strategy() -> impl Strategy<Value = String> {
     prop_oneof![
         Just("general".to_string()),
         Just("task".to_string()),
@@ -236,7 +247,7 @@ fn template_category_strategy() -> impl Strategy<Value -> String> {
 
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(100))]
-    
+
     #[test]
     fn test_create_message_with_random_valid_data(
         message_type in message_type_strategy(),
@@ -252,11 +263,11 @@ proptest! {
         rt.block_on(async {
             let db = create_test_db().await;
             let repo = MessageRepository::new(Arc::new(db), Arc::new(crate::repositories::cache::Cache::new(100)));
-            
+
             // Create test users
             create_test_user(&repo.db.get_connection().unwrap(), "sender_random", "sender@example.com");
             create_test_user(&repo.db.get_connection().unwrap(), "recipient_random", "recipient@example.com");
-            
+
             // Create a message with random valid data
             let message = Message {
                 id: Uuid::new_v4().to_string(),
@@ -280,36 +291,36 @@ proptest! {
                 created_at: chrono::Utc::now().timestamp(),
                 updated_at: chrono::Utc::now().timestamp(),
             };
-            
+
             // Save message
             let result = repo.save(message).await;
             prop_assert!(result.is_ok(), "Should successfully create message with valid random data");
-            
+
             let saved_message = result.unwrap();
-            
+
             // Verify the saved message has correct properties
             prop_assert_eq!(saved_message.message_type, message_type.to_string());
             prop_assert_eq!(saved_message.status, status.to_string());
             prop_assert_eq!(saved_message.priority, priority.to_string());
-            
+
             if message_type == MessageType::Email {
                 prop_assert_eq!(saved_message.recipient_email, Some(email));
             } else {
                 prop_assert!(saved_message.recipient_email.is_none());
             }
-            
+
             if message_type == MessageType::Sms {
                 prop_assert_eq!(saved_message.recipient_phone, Some(phone));
             } else {
                 prop_assert!(saved_message.recipient_phone.is_none());
             }
-            
+
             prop_assert_eq!(saved_message.subject, subject);
             prop_assert_eq!(saved_message.body, body);
             prop_assert_eq!(saved_message.scheduled_at, scheduled_at);
         });
     }
-    
+
     #[test]
     fn test_message_status_transitions_with_random_sequence(
         initial_status in message_status_strategy()
@@ -318,11 +329,11 @@ proptest! {
         rt.block_on(async {
             let db = create_test_db().await;
             let repo = MessageRepository::new(Arc::new(db), Arc::new(crate::repositories::cache::Cache::new(100)));
-            
+
             // Create test users
             create_test_user(&repo.db.get_connection().unwrap(), "sender_transition", "sender@example.com");
             create_test_user(&repo.db.get_connection().unwrap(), "recipient_transition", "recipient@example.com");
-            
+
             // Create a message
             let message = Message {
                 id: Uuid::new_v4().to_string(),
@@ -346,9 +357,9 @@ proptest! {
                 created_at: chrono::Utc::now().timestamp(),
                 updated_at: chrono::Utc::now().timestamp(),
             };
-            
+
             repo.save(message).await.unwrap();
-            
+
             // Test valid status transitions
             match initial_status {
                 MessageStatus::Pending => {
@@ -357,7 +368,7 @@ proptest! {
                     let updated = repo.find_by_id(&message.id).await.unwrap().unwrap();
                     prop_assert_eq!(updated.status, "sent");
                     prop_assert!(updated.sent_at.is_some());
-                    
+
                     // Can also transition to Failed
                     repo.update_status(&message.id, MessageStatus::Failed).await.unwrap();
                     let failed = repo.find_by_id(&message.id).await.unwrap().unwrap();
@@ -389,7 +400,7 @@ proptest! {
             }
         });
     }
-    
+
     #[test]
     fn test_message_template_with_random_valid_data(
         template_name in "[a-zA-Z\\s]{5,50}",
@@ -403,10 +414,10 @@ proptest! {
         rt.block_on(async {
             let db = create_test_db().await;
             let cache = Arc::new(crate::repositories::cache::Cache::new(100));
-            
+
             // Create test user
             create_test_user(&db, "user_template", "user@example.com");
-            
+
             // Create a message template with random valid data
             let template_id = Uuid::new_v4().to_string();
             db.execute(r#"
@@ -428,7 +439,7 @@ proptest! {
                 chrono::Utc::now().timestamp_millis(),
                 chrono::Utc::now().timestamp_millis()
             ]).unwrap();
-            
+
             // Retrieve template
             let retrieved: Option<MessageTemplate> = db
                 .query_single_as(
@@ -436,10 +447,10 @@ proptest! {
                     params![template_id]
                 )
                 .unwrap();
-            
+
             prop_assert!(retrieved.is_some(), "Template should be retrievable");
             let template = retrieved.unwrap();
-            
+
             prop_assert_eq!(template.name, template_name);
             prop_assert_eq!(template.description, description);
             prop_assert_eq!(template.message_type, message_type.to_string());
@@ -450,7 +461,7 @@ proptest! {
             prop_assert_eq!(template.created_by, Some("user_template".to_string()));
         });
     }
-    
+
     #[test]
     fn test_notification_preferences_with_random_valid_data(
         email_enabled in prop::bool::ANY,
@@ -473,11 +484,11 @@ proptest! {
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(async {
             let db = create_test_db().await;
-            
+
             // Create test user
             let user_id = "user_prefs_random";
             create_test_user(&db, user_id, "user@example.com");
-            
+
             // Create notification preferences with random valid data
             let pref_id = Uuid::new_v4().to_string();
             db.execute(r#"
@@ -510,7 +521,7 @@ proptest! {
                 chrono::Utc::now().timestamp(),
                 chrono::Utc::now().timestamp()
             ]).unwrap();
-            
+
             // Retrieve preferences
             let retrieved: Option<NotificationPreferences> = db
                 .query_single_as(
@@ -518,10 +529,10 @@ proptest! {
                     params![user_id]
                 )
                 .unwrap();
-            
+
             prop_assert!(retrieved.is_some(), "Preferences should be retrievable");
             let prefs = retrieved.unwrap();
-            
+
             prop_assert_eq!(prefs.user_id, user_id);
             prop_assert_eq!(prefs.email_enabled, email_enabled);
             prop_assert_eq!(prefs.sms_enabled, sms_enabled);
@@ -539,7 +550,7 @@ proptest! {
             prop_assert_eq!(prefs.quiet_hours_end, Some(quiet_hours_end));
             prop_assert_eq!(prefs.email_frequency, email_frequency);
             prop_assert_eq!(prefs.email_digest_time, email_digest_time);
-            
+
             // Validate quiet hours logic
             if quiet_hours_enabled {
                 // In a real implementation, we'd validate that start < end
@@ -549,7 +560,7 @@ proptest! {
             }
         });
     }
-    
+
     #[test]
     fn test_message_search_with_random_filters(
         messages_count in 10usize..=50usize,
@@ -559,17 +570,17 @@ proptest! {
         rt.block_on(async {
             let db = create_test_db().await;
             let repo = MessageRepository::new(Arc::new(db), Arc::new(crate::repositories::cache::Cache::new(100)));
-            
+
             // Create test users
             create_test_user(&repo.db.get_connection().unwrap(), "sender_search", "sender@example.com");
             create_test_user(&repo.db.get_connection().unwrap(), "recipient_search", "recipient@example.com");
-            
+
             // Create messages with searchable content
             let mut searchable_content = Vec::new();
             for i in 0..messages_count {
                 let content = format!("SearchableContent{} with keyword TestKeyword{}", i, i % 10);
                 searchable_content.push(content.clone());
-                
+
                 let message = Message {
                     id: format!("msg_search_{}", i),
                     message_type: "email".to_string(),
@@ -592,10 +603,10 @@ proptest! {
                     created_at: chrono::Utc::now().timestamp() + (i as i64),
                     updated_at: chrono::Utc::now().timestamp() + (i as i64),
                 };
-                
+
                 repo.save(message).await.unwrap();
             }
-            
+
             // Test search functionality
             match search_term {
                 Some(term) => {
@@ -605,11 +616,11 @@ proptest! {
                             search: Some(term.clone()),
                             ..Default::default()
                         }).await.unwrap();
-                        
+
                         // Should find approximately 1/10 of messages (those with TestKeyword0-9)
                         prop_assert!(search_results.len() > 0);
                         prop_assert!(search_results.len() <= messages_count / 10 + 1);
-                        
+
                         // All results should contain the search term
                         for result in &search_results {
                             let content = format!("{} {}", result.subject.as_ref().unwrap_or(""), result.body);
@@ -621,7 +632,7 @@ proptest! {
                             search: Some(term.clone()),
                             ..Default::default()
                         }).await.unwrap();
-                        
+
                         // Results should contain the search term
                         for result in &search_results {
                             let content = format!("{} {}", result.subject.as_ref().unwrap_or(""), result.body);
@@ -637,7 +648,7 @@ proptest! {
             }
         });
     }
-    
+
     #[test]
     fn test_message_scheduling_with_random_times(
         scheduled_offset in 0i64..=86400i64 // 0 to 24 hours from now
@@ -646,13 +657,13 @@ proptest! {
         rt.block_on(async {
             let db = create_test_db().await;
             let repo = MessageRepository::new(Arc::new(db), Arc::new(crate::repositories::cache::Cache::new(100)));
-            
+
             // Create test users
             create_test_user(&repo.db.get_connection().unwrap(), "sender_schedule", "sender@example.com");
             create_test_user(&repo.db.get_connection().unwrap(), "recipient_schedule", "recipient@example.com");
-            
+
             let scheduled_time = chrono::Utc::now().timestamp() + scheduled_offset;
-            
+
             // Create a scheduled message
             let message = Message {
                 id: Uuid::new_v4().to_string(),
@@ -676,16 +687,16 @@ proptest! {
                 created_at: chrono::Utc::now().timestamp(),
                 updated_at: chrono::Utc::now().timestamp(),
             };
-            
+
             // Save message
             let result = repo.save(message).await;
             prop_assert!(result.is_ok());
-            
+
             let saved_message = result.unwrap();
             prop_assert_eq!(saved_message.scheduled_at, Some(scheduled_time));
             prop_assert_eq!(saved_message.status, "pending");
             prop_assert!(saved_message.sent_at.is_none());
-            
+
             // Should not be in unsent messages if scheduled for future
             if scheduled_offset > 3600 { // More than 1 hour in future
                 // In a real implementation, we might filter out future-scheduled messages
@@ -694,7 +705,7 @@ proptest! {
             }
         });
     }
-    
+
     #[test]
     fn test_message_priority_ordering_with_random_data(
         message_count in 5usize..=20usize
@@ -703,17 +714,17 @@ proptest! {
         rt.block_on(async {
             let db = create_test_db().await;
             let repo = MessageRepository::new(Arc::new(db), Arc::new(crate::repositories::cache::Cache::new(100)));
-            
+
             // Create test users
             create_test_user(&repo.db.get_connection().unwrap(), "sender_priority", "sender@example.com");
             create_test_user(&repo.db.get_connection().unwrap(), "recipient_priority", "recipient@example.com");
-            
+
             // Create messages with different priorities
             let priorities = vec!["low", "normal", "high", "urgent"];
-            
+
             for i in 0..message_count {
                 let priority = priorities[i % priorities.len()];
-                
+
                 let message = Message {
                     id: format!("msg_priority_{}", i),
                     message_type: "email".to_string(),
@@ -736,35 +747,35 @@ proptest! {
                     created_at: chrono::Utc::now().timestamp() + (i as i64),
                     updated_at: chrono::Utc::now().timestamp() + (i as i64),
                 };
-                
+
                 repo.save(message).await.unwrap();
             }
-            
+
             // Search for urgent messages
             let urgent_messages = repo.search(MessageQuery {
                 priority: Some("urgent".to_string()),
                 ..Default::default()
             }).await.unwrap();
-            
+
             // Should contain only urgent messages
             for message in &urgent_messages {
                 prop_assert_eq!(message.priority, "urgent");
             }
-            
+
             // Search for high priority messages
             let high_priority_messages = repo.search(MessageQuery {
                 priority: Some("high".to_string()),
                 ..Default::default()
             }).await.unwrap();
-            
+
             // Should contain only high priority messages
             for message in &high_priority_messages {
                 prop_assert_eq!(message.priority, "high");
             }
-            
+
             // Verify priority ordering in combined results
             let all_messages = repo.search(MessageQuery::default()).await.unwrap();
-            
+
             // Sort by priority (urgent > high > normal > low)
             let priority_order = |p: &str| match p {
                 "urgent" => 4,
@@ -773,11 +784,11 @@ proptest! {
                 "low" => 1,
                 _ => 0,
             };
-            
+
             for i in 1..all_messages.len() {
                 let prev_priority = priority_order(all_messages[i-1].priority.as_str());
                 let curr_priority = priority_order(all_messages[i].priority.as_str());
-                
+
                 // Should be sorted by creation time descending (newest first)
                 // For equal creation times, higher priority should come first
                 if all_messages[i-1].created_at == all_messages[i].created_at {
@@ -787,7 +798,7 @@ proptest! {
             }
         });
     }
-    
+
     #[test]
     fn test_message_metadata_with_random_content(
         metadata_content in prop::option::of("[a-zA-Z0-9\\s\\.\\,\\\":{}]{10,200}")
@@ -796,11 +807,11 @@ proptest! {
         rt.block_on(async {
             let db = create_test_db().await;
             let repo = MessageRepository::new(Arc::new(db), Arc::new(crate::repositories::cache::Cache::new(100)));
-            
+
             // Create test users
             create_test_user(&repo.db.get_connection().unwrap(), "sender_metadata", "sender@example.com");
             create_test_user(&repo.db.get_connection().unwrap(), "recipient_metadata", "recipient@example.com");
-            
+
             // Create a message with metadata
             let message = Message {
                 id: Uuid::new_v4().to_string(),
@@ -824,18 +835,18 @@ proptest! {
                 created_at: chrono::Utc::now().timestamp(),
                 updated_at: chrono::Utc::now().timestamp(),
             };
-            
+
             // Save message
             let result = repo.save(message).await;
             prop_assert!(result.is_ok());
-            
+
             let saved_message = result.unwrap();
             prop_assert_eq!(saved_message.metadata, metadata_content);
-            
+
             // Verify metadata is preserved in search
             let search_results = repo.search(MessageQuery::default()).await.unwrap();
             let found_message = search_results.iter().find(|m| m.id == saved_message.id);
-            
+
             prop_assert!(found_message.is_some());
             let found_message = found_message.unwrap();
             prop_assert_eq!(found_message.metadata, metadata_content);

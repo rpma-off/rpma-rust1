@@ -1,1 +1,3 @@
-//! Placeholder module for bounded-context migration.
+pub(crate) mod document_storage;
+pub(crate) mod photo;
+pub(crate) mod photo_repository;

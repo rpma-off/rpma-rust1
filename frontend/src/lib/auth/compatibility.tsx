@@ -1,11 +1,14 @@
 'use client';
 
-import { useAuth as useNewAuth } from '@/contexts/AuthContext';
-import type { AuthContextType } from '@/types/auth.types';
+import { useAuth as useNewAuth } from '@/domains/auth';
+import type { AuthContextType } from '@/domains/auth';
 
 /**
  * Wrapper de compatibilité pour faciliter la migration progressive
  * Expose la même interface que l'ancien useAuth mais utilise le nouveau système
+ */
+/**
+ * @deprecated Use `@/domains/auth` directly.
  */
 export function useAuth(): AuthContextType {
   const newAuth = useNewAuth();

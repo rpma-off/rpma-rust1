@@ -6,11 +6,16 @@
 use proptest::test_runner::Config;
 
 // Import all proptest modules
+mod analytics_service_proptests;
 mod audit_service_proptests;
 mod auth_service_proptests;
 mod client_validation_proptests;
+mod inventory_management_proptests;
+mod messaging_system_proptests;
+mod task_validation_comprehensive;
 mod task_validation_proptests;
 mod task_validation_service_proptests;
+mod user_settings_proptests;
 
 #[cfg(test)]
 mod main {

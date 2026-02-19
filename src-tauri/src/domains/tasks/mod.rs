@@ -1,4 +1,8 @@
-//! Tasks domain — task CRUD, status transitions, assignments.
-
-// Public facade
-pub use crate::services::task::TaskService;
+mod facade;
+pub(crate) use facade::TasksFacade;
+pub(crate) mod application;
+pub(crate) mod domain;
+pub(crate) mod infrastructure;
+pub(crate) mod ipc;
+#[cfg(test)]
+pub(crate) mod tests;

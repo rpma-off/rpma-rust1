@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '../../../../../lib/supabase/server';
 import { getAuthenticatedUser } from '@/lib/api-auth';
-import { AuthService } from '@/lib/services/auth/auth.service';
+import { AuthService } from '@/domains/users/server';
 import { Database } from '@/types/database.types';
 
 type Technician = Database['public']['Tables']['technicians']['Row'];

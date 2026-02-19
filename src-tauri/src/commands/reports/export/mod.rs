@@ -1,13 +1,4 @@
-//! Export and file operation commands
-//!
-//! This module contains commands for exporting reports to various formats
-//! and handling file system operations.
+//! Legacy compatibility shim for bounded-context migration.
 
-pub mod auth;
-pub mod data_export;
-pub mod file_operations;
-pub mod intervention_export;
-pub mod validation;
+pub use crate::domains::reports::ipc::reports::export::mod::*;
 
-// Re-export main command functions for external use
-pub use intervention_export::get_intervention_with_details;

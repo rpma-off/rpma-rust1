@@ -1,6 +1,6 @@
 // Dashboard hooks
-export { useDashboardStats } from './useDashboardStats';
-export { useTaskFiltering } from './useTaskFiltering';
+export { useDashboardStats } from '@/domains/analytics';
+export { useTaskFiltering } from '@/domains/tasks';
 
 // Performance optimization hooks
 export { useVirtualScrolling, useTaskVirtualScrolling, useSOPVirtualScrolling, useUserVirtualScrolling } from './useVirtualScrolling';
@@ -14,6 +14,6 @@ export { useAdvancedAnalytics, useDashboardAnalytics, useTaskAnalytics, useSOPAn
 export { useAdvancedFiltering, useTaskFiltering as useAdvancedTaskFiltering, useSOPFiltering as useAdvancedSOPFiltering } from './useAdvancedFiltering';
 
 // Existing hooks
-export * from './useChangeTracking';
+export { useChangeTracking } from '@/domains/audit';
 export * from './useConnectionStatus';
 export * from './useDebounce';

@@ -2,13 +2,15 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { InventoryManager } from '../InventoryManager';
-import { useInventory } from '@/hooks/useInventory';
-import { useInventoryStats } from '@/hooks/useInventoryStats';
-import { Material, MaterialType, UnitOfMeasure, InventoryStats } from '@/lib/inventory';
+import { useInventory, useInventoryStats } from '@/domains/inventory';
+import { Material, MaterialType, UnitOfMeasure, InventoryStats } from '@/shared/types';
 
 // Mock the hooks
-jest.mock('@/hooks/useInventory');
-jest.mock('@/hooks/useInventoryStats');
+jest.mock('@/domains/inventory', () => ({
+  ...jest.requireActual('@/domains/inventory'),
+  useInventory: jest.fn(),
+  useInventoryStats: jest.fn(),
+}));
 
 // Mock lucide-react icons
 jest.mock('lucide-react', () => ({

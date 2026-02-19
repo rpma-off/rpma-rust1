@@ -1,3 +1,2 @@
-//! Shared types for reports services
-//!
-//! This module contains common types used across report services.
+//! Legacy compatibility shim for bounded-context migration.
+pub use crate::domains::reports::infrastructure::reports::types::*;

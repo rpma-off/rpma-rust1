@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useCalendarStore } from '@/lib/stores/calendarStore';
-import { useAuth } from '@/lib/auth/compatibility';
+import { useAuth } from '@/domains/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

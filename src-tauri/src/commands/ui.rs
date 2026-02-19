@@ -108,26 +108,11 @@ pub fn dashboard_get_stats(
     time_range: Option<String>,
     correlation_id: Option<String>,
 ) -> Result<super::ApiResponse<serde_json::Value>, super::AppError> {
-    use tracing::{debug, error, info};
-
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-
-    debug!(
-        "Retrieving dashboard statistics for time range: {:?}",
-        time_range
-    );
-
-    let dashboard_service = state.dashboard_service.clone();
-
-    let stats = dashboard_service
-        .get_dashboard_stats(time_range)
-        .map_err(|e| {
-            error!("Failed to get dashboard statistics: {}", e);
-            super::AppError::Database(format!("Failed to get dashboard statistics: {}", e))
-        })?;
-
-    info!("Dashboard statistics retrieved successfully");
-    Ok(super::ApiResponse::success(stats).with_correlation_id(Some(correlation_id.clone())))
+    crate::domains::analytics::ipc::dashboard::dashboard_get_stats(
+        state,
+        time_range,
+        correlation_id,
+    )
 }
 
 /// Get recent activities for admin dashboard

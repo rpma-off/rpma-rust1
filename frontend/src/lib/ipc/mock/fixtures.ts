@@ -1,5 +1,5 @@
 import type { UserSession, UserRole, Task, Client } from '@/lib/backend';
-import type { Material, Supplier, MaterialCategory } from '@/lib/inventory';
+import type { Material, Supplier, MaterialCategory } from '@/shared/types';
 
 export interface MockUser {
   id: string;

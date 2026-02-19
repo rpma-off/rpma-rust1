@@ -1,20 +1,20 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { useAuth } from '@/lib/auth/compatibility';
-import { clientService } from '@/lib/services/entities/client.service';
+import { useAuth } from '@/domains/auth';
+import { clientService } from '@/domains/clients';
 import { ArrowLeft, Save, X, Edit, User, Building } from 'lucide-react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import type { Client } from '@/lib/backend';
-import { LoadingState } from '@/components/layout/LoadingState';
-import type { UpdateClientDTO } from '@/types/client.types';
-import { useTranslation } from '@/hooks/useTranslation';
+import { Button } from '@/shared/ui/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/ui/card';
+import { Input } from '@/shared/ui/ui/input';
+import { Textarea } from '@/shared/ui/ui/textarea';
+import type { Client } from '@/shared/types';
+import { LoadingState } from '@/shared/ui/layout/LoadingState';
+import type { UpdateClientDTO } from '@/shared/types';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 
 interface EditClientPageProps {
   params: {
@@ -110,7 +110,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
 
       const response = await clientService.updateClient(params.id, formData, user.token);
       if (response.error) {
-        setFormErrors({ general: response.error || 'Échec de la mise à jour du client' });
+        setFormErrors({ general: response.error || 'Échec de la mise Ã  jour du client' });
         return;
       }
 
@@ -439,3 +439,4 @@ export default function EditClientPage({ params }: EditClientPageProps) {
     </div>
   );
 }
+

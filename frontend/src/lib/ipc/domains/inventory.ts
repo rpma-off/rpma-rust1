@@ -10,7 +10,7 @@ import type {
   MaterialType,
   Supplier,
   UnitOfMeasure
-} from '@/lib/inventory';
+} from '@/shared/types';
 import type { Pagination } from '@/types/api';
 import type { JsonValue } from '@/types/json';
 

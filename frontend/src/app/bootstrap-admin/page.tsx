@@ -1,14 +1,13 @@
-'use client';
+﻿'use client';
 
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { ipcClient } from '@/lib/ipc';
-import { useAuth } from '@/lib/auth/compatibility';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useTranslation } from '@/hooks/useTranslation';
-import { logger, LogDomain } from '@/lib/logging';
+import { authBootstrap, useAuth } from '@/domains/auth';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/ui/card';
+import { Button } from '@/shared/ui/ui/button';
+import { Alert, AlertDescription } from '@/shared/ui/ui/alert';
+import { useTranslation } from '@/shared/hooks/useTranslation';
+import { structuredLogger as logger, LogDomain } from '@/shared/utils';
 import { useEffect } from 'react';
 
 export default function BootstrapAdminPage() {
@@ -19,7 +18,7 @@ export default function BootstrapAdminPage() {
   // Check if admins already exist
   const { data: hasAdmins, isLoading: checkingAdmins } = useQuery({
     queryKey: ['hasAdmins'],
-    queryFn: () => ipcClient.bootstrap.hasAdmins(),
+    queryFn: () => authBootstrap.hasAdmins(),
   });
 
   useEffect(() => {
@@ -33,7 +32,7 @@ export default function BootstrapAdminPage() {
 
   const bootstrapMutation = useMutation({
     mutationFn: ({ userId, sessionToken }: { userId: string; sessionToken: string }) =>
-      ipcClient.bootstrap.firstAdmin(userId, sessionToken),
+      authBootstrap.bootstrapFirstAdmin(userId, sessionToken),
     onSuccess: () => {
       logger.info(LogDomain.AUTH, 'Bootstrap admin succeeded', {
         user_id: user?.user_id
@@ -75,15 +74,15 @@ export default function BootstrapAdminPage() {
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle>Administrateur déjà existant</CardTitle>
+            <CardTitle>Administrateur déjÃ  existant</CardTitle>
             <CardDescription>
-              Un compte administrateur a déjà été créé.
+              Un compte administrateur a déjÃ  été créé.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Alert>
               <AlertDescription>
-                Le système possède déjà un utilisateur administrateur. Si vous devez gérer les rôles ou créer des administrateurs supplémentaires,
+                Le système possède déjÃ  un utilisateur administrateur. Si vous devez gérer les rôles ou créer des administrateurs supplémentaires,
                 veuillez vous connecter avec un compte administrateur existant et utiliser le panneau d&apos;administration.
               </AlertDescription>
             </Alert>
@@ -128,7 +127,7 @@ export default function BootstrapAdminPage() {
             {bootstrapMutation.isSuccess && (
               <Alert>
                 <AlertDescription>
-                  ✓ Administrateur créé avec succès ! Redirection vers le tableau de bord...
+                  âœ“ Administrateur créé avec succès ! Redirection vers le tableau de bord...
                 </AlertDescription>
               </Alert>
             )}
@@ -139,7 +138,7 @@ export default function BootstrapAdminPage() {
                   {(() => {
                     const error = bootstrapMutation.error as { message?: string; error?: string };
                     return error?.message || (error as { error?: string })?.error ||
-                      'Échec de la création de l\'admin. L\'utilisateur peut ne pas exister ou l\'admin existe déjà.';
+                      'Échec de la création de l\'admin. L\'utilisateur peut ne pas exister ou l\'admin existe déjÃ .';
                   })()}
                 </AlertDescription>
               </Alert>
@@ -150,3 +149,5 @@ export default function BootstrapAdminPage() {
     </div>
   );
 }
+
+

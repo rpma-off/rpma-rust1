@@ -1,6 +1,6 @@
 import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
-import { LoadingState } from '@/components/layout/LoadingState';
+import { LoadingState } from '@/shared/ui/layout/LoadingState';
 
 // Dynamically import the reports page to enable code splitting
 const ReportsPage = dynamic(() => import('./page.client'), {
@@ -15,3 +15,4 @@ export default function Reports() {
     </Suspense>
   );
 }
+

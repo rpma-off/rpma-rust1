@@ -1,5 +1,5 @@
  import { NextRequest, NextResponse } from 'next/server';
- import { ClientService } from '@/lib/services';
+ import { ClientService } from '@/domains/clients/server';
  import { CreateClientRequest } from '@/types/client.types';
 import { ApiResponseFactory } from '@/lib/http-status';
 import { getAuthenticatedUser } from '@/lib/api-auth';
@@ -112,3 +112,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+

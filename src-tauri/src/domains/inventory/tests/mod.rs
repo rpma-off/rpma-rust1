@@ -1,3 +1,10 @@
+//! Inventory domain test modules.
+
+pub mod integration_inventory;
+pub mod permission_inventory;
+pub mod unit_inventory;
+pub mod validation_inventory;
+
 use std::sync::Arc;
 
 use crate::domains::inventory::application::InventoryService;
@@ -16,7 +23,7 @@ fn stock_cannot_go_negative() {
 fn update_stock_validates_invariants() {
     let test_db = TestDatabase::new().expect("create test db");
     let db = test_db.db();
-    let material_service = Arc::new(MaterialService::new(db.clone()));
+    let material_service = Arc::new(MaterialService::new((*db).clone()));
     let inventory_service = InventoryService::new(db.clone(), material_service.clone());
 
     let request = CreateMaterialRequest {
@@ -53,7 +60,7 @@ fn update_stock_validates_invariants() {
 
     material_service
         .update_stock(UpdateStockRequest {
-            material_id: material.id.clone().unwrap(),
+            material_id: material.id.clone(),
             quantity_change: 5.0,
             reason: "Initial stock".to_string(),
             recorded_by: Some("test_user".to_string()),
@@ -61,7 +68,7 @@ fn update_stock_validates_invariants() {
         .expect("seed stock");
 
     let result = inventory_service.update_stock(UpdateStockRequest {
-        material_id: material.id.clone().unwrap(),
+        material_id: material.id.clone(),
         quantity_change: -10.0,
         reason: "Overdraw".to_string(),
         recorded_by: Some("test_user".to_string()),

@@ -9,7 +9,7 @@ declare global {
     gtag?: (command: string, targetId: string, config?: Record<string, unknown>) => void;
   }
 }
-import { Button } from '@/components/ui/button';
+import { Button } from '@/shared/ui/ui/button';
 import { Bug, Home, RefreshCw } from 'lucide-react';
 
 interface ErrorPageProps {
@@ -148,3 +148,4 @@ const ErrorPage = ({ error, reset }: ErrorPageProps) => {
 };
 
 export default ErrorPage;
+

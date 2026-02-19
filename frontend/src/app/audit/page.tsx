@@ -1,11 +1,11 @@
 'use client';
 
 import React from 'react';
-import { PageShell } from '@/components/layout/PageShell';
-import { PageHeader } from '@/components/ui/page-header';
-import { EmptyState } from '@/components/layout/EmptyState';
+import { PageShell } from '@/shared/ui/layout/PageShell';
+import { PageHeader } from '@/shared/ui/ui/page-header';
+import { EmptyState } from '@/shared/ui/layout/EmptyState';
 import { ClipboardList } from 'lucide-react';
-import { useTranslation } from '@/hooks/useTranslation';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 
 export default function AuditPage() {
   const { t } = useTranslation();
@@ -25,3 +25,4 @@ export default function AuditPage() {
     </PageShell>
   );
 }
+

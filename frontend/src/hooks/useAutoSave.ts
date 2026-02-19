@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { taskService } from '@/lib/services/entities/task.service';
+import { taskService } from '@/domains/tasks';
 
 export interface AutoSaveOptions<T = Record<string, unknown>> {
-  delay?: number; // DÃ©lai en ms avant sauvegarde (dÃ©faut: 30s)
-  enabled?: boolean; // Activer/dÃ©sactiver l'auto-save
-  onSave?: (data: T) => void; // Callback de succÃ¨s
+  delay?: number; // Délai en ms avant sauvegarde (défaut: 30s)
+  enabled?: boolean; // Activer/désactiver l'auto-save
+  onSave?: (data: T) => void; // Callback de succès
   onError?: (error: Error) => void; // Callback d'erreur
-  immediate?: boolean; // Sauvegarder immÃ©diatement sur changement
+  immediate?: boolean; // Sauvegarder immédiatement sur changement
 }
 
 export interface AutoSaveStatus {
@@ -23,7 +23,7 @@ export function useAutoSave<T>(
   options: AutoSaveOptions<T> = {}
 ) {
   const {
-    delay = 30000, // 30 secondes par dÃ©faut
+    delay = 30000, // 30 secondes par défaut
     enabled = true,
     onSave,
     onError,
@@ -73,7 +73,7 @@ export function useAutoSave<T>(
       }));
 
       onError?.(error instanceof Error ? error : new Error(errorMessage));
-      toast.error(`Auto-save Ã©chec: ${errorMessage}`);
+      toast.error(`Auto-save échec: ${errorMessage}`);
     } finally {
       saveInProgressRef.current = false;
     }
@@ -84,45 +84,45 @@ export function useAutoSave<T>(
     await performSave(data);
   };
 
-  // Effet principal pour gÃ©rer l'auto-save
+  // Effet principal pour gérer l'auto-save
   useEffect(() => {
-    // VÃ©rifier si les donnÃ©es ont changÃ©
+    // Vérifier si les données ont changé
     const hasChanged = JSON.stringify(data) !== JSON.stringify(previousDataRef.current);
     
     if (!hasChanged) return;
 
-    // Marquer comme ayant des changements non sauvÃ©s
+    // Marquer comme ayant des changements non sauvés
     setStatus(prev => ({ 
       ...prev, 
       hasUnsavedChanges: true,
       error: null 
     }));
 
-    // Sauvegarder immÃ©diatement si demandÃ©
+    // Sauvegarder immédiatement si demandé
     if (immediate) {
       performSave(data);
       previousDataRef.current = data;
       return;
     }
 
-    // Nettoyer le timeout prÃ©cÃ©dent
+    // Nettoyer le timeout précédent
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
 
-    // Programmer la sauvegarde diffÃ©rÃ©e
+    // Programmer la sauvegarde différée
     if (enabled) {
       timeoutRef.current = setTimeout(() => {
         performSave(data);
       }, delay);
     }
 
-    // Mettre Ã  jour la rÃ©fÃ©rence des donnÃ©es prÃ©cÃ©dentes
+    // Mettre Ã  jour la référence des données précédentes
     previousDataRef.current = data;
 
   }, [data, delay, enabled, immediate, performSave]);
 
-  // Nettoyer le timeout au dÃ©montage
+  // Nettoyer le timeout au démontage
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
@@ -137,7 +137,7 @@ export function useAutoSave<T>(
   };
 }
 
-// Hook spÃ©cialisÃ© pour les Ã©tapes de workflow
+// Hook spécialisé pour les étapes de workflow
 export function useWorkflowStepAutoSave(
   stepData: Record<string, unknown>,
   taskId: string,
@@ -151,14 +151,14 @@ export function useWorkflowStepAutoSave(
     });
 
     if (!result.success) {
-      throw new Error(`Erreur sauvegarde Ã©tape: ${result.error ?? 'Erreur inconnue'}`);
+      throw new Error(`Erreur sauvegarde étape: ${result.error ?? 'Erreur inconnue'}`);
     }
   };
 
   return useAutoSave(stepData, saveStepData, {
-    delay: 30000, // 30s pour les Ã©tapes workflow
+    delay: 30000, // 30s pour les étapes workflow
     onSave: (data) => {
-      toast.success('Ã‰tape sauvegardÃ©e automatiquement', {
+      toast.success('Étape sauvegardée automatiquement', {
         duration: 2000,
         description: `${stepId} - ${new Date().toLocaleTimeString()}`
       });
@@ -182,14 +182,14 @@ export function useBeforeUnloadSave<T>(
       if (hasUnsavedChanges) {
         // Tenter une sauvegarde synchrone rapide si possible
         try {
-          // Note: navigator.sendBeacon pourrait Ãªtre utilisÃ© ici pour une sauvegarde plus fiable
+          // Note: navigator.sendBeacon pourrait être utilisé ici pour une sauvegarde plus fiable
           saveFunction(data);
         } catch (error) {
           console.error('Emergency save failed:', error);
         }
 
         // Afficher la confirmation de fermeture
-        const message = 'Vous avez des modifications non sauvegardÃ©es. Voulez-vous vraiment quitter ?';
+        const message = 'Vous avez des modifications non sauvegardées. Voulez-vous vraiment quitter ?';
         event.returnValue = message;
         return message;
       }
@@ -203,5 +203,6 @@ export function useBeforeUnloadSave<T>(
     };
   }, [data, hasUnsavedChanges, saveFunction]);
 }
+
 
 

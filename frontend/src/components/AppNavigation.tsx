@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/lib/auth/compatibility';
+import { useAuth } from '@/domains/auth';
 import { usePathname } from 'next/navigation';
 import { RPMALayout } from '@/components/RPMALayout';
 

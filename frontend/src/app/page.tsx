@@ -2,8 +2,8 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { CalendarDashboard } from '@/components/dashboard/CalendarDashboard';
+import { useAuth } from '@/domains/auth';
+import { CalendarDashboard } from '@/domains/workflow';
 
 export default function Home() {
   const router = useRouter();
@@ -34,3 +34,4 @@ export default function Home() {
     </div>
   );
 }
+

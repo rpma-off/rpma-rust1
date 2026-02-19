@@ -11,9 +11,10 @@ use uuid::Uuid;
 // Helper to create a test database with settings tables
 async fn create_test_db() -> Database {
     let db = Database::new_in_memory().await.unwrap();
-    
+
     // Create user table and user_settings table (from migration 026)
-    db.execute_batch(r#"
+    db.execute_batch(
+        r#"
         CREATE TABLE IF NOT EXISTS users (
             id TEXT PRIMARY KEY,
             email TEXT NOT NULL UNIQUE,
@@ -115,8 +116,10 @@ async fn create_test_db() -> Database {
             timestamp INTEGER NOT NULL,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
         );
-    "#).unwrap();
-    
+    "#,
+    )
+    .unwrap();
+
     db
 }
 
@@ -216,36 +219,45 @@ fn create_default_settings() -> UserSettings {
 async fn test_create_user_settings() {
     let db = create_test_db().await;
     let service = SettingsService::new(db);
-    
+
     // Create a test user
     let user_id = "user_test_create";
     create_test_user(&service.db, user_id, "test_create@example.com");
-    
+
     // Create default settings
     let settings = create_default_settings();
     let result = service.create_user_settings(user_id, &settings);
-    
+
     assert!(result.is_ok(), "Should successfully create user settings");
-    
+
     // Verify settings were created
     let retrieved_settings = service.get_user_settings(user_id).unwrap();
-    assert_eq!(retrieved_settings.profile.full_name, settings.profile.full_name);
-    assert_eq!(retrieved_settings.preferences.theme, settings.preferences.theme);
-    assert_eq!(retrieved_settings.security.session_timeout, settings.security.session_timeout);
+    assert_eq!(
+        retrieved_settings.profile.full_name,
+        settings.profile.full_name
+    );
+    assert_eq!(
+        retrieved_settings.preferences.theme,
+        settings.preferences.theme
+    );
+    assert_eq!(
+        retrieved_settings.security.session_timeout,
+        settings.security.session_timeout
+    );
 }
 
 #[tokio::test]
 async fn test_get_user_settings_default() {
     let db = create_test_db().await;
     let service = SettingsService::new(db);
-    
+
     // Create a test user but no settings
     let user_id = "user_test_default";
     create_test_user(&service.db, user_id, "test_default@example.com");
-    
+
     // Get settings - should create defaults
     let settings = service.get_user_settings(user_id).unwrap();
-    
+
     // Verify default values
     assert_eq!(settings.profile.full_name, "");
     assert_eq!(settings.preferences.theme, "system");
@@ -265,11 +277,11 @@ async fn test_get_user_settings_default() {
 async fn test_get_user_settings_existing() {
     let db = create_test_db().await;
     let service = SettingsService::new(db);
-    
+
     // Create a test user and settings
     let user_id = "user_test_existing";
     create_test_user(&service.db, user_id, "test_existing@example.com");
-    
+
     // Create custom settings
     let mut settings = create_default_settings();
     settings.profile.full_name = "John Doe".to_string();
@@ -278,12 +290,12 @@ async fn test_get_user_settings_existing() {
     settings.performance.cache_size = 200;
     settings.accessibility.font_size = 20;
     settings.notifications.quiet_hours_enabled = true;
-    
+
     service.create_user_settings(user_id, &settings).unwrap();
-    
+
     // Get settings
     let retrieved_settings = service.get_user_settings(user_id).unwrap();
-    
+
     // Verify custom values
     assert_eq!(retrieved_settings.profile.full_name, "John Doe");
     assert_eq!(retrieved_settings.preferences.theme, "dark");
@@ -297,14 +309,14 @@ async fn test_get_user_settings_existing() {
 async fn test_update_user_profile() {
     let db = create_test_db().await;
     let service = SettingsService::new(db);
-    
+
     // Create a test user and settings
     let user_id = "user_test_profile";
     create_test_user(&service.db, user_id, "test_profile@example.com");
-    
+
     let settings = create_default_settings();
     service.create_user_settings(user_id, &settings).unwrap();
-    
+
     // Update profile
     let new_profile = UserProfileSettings {
         full_name: "Jane Smith".to_string(),
@@ -313,31 +325,40 @@ async fn test_update_user_profile() {
         avatar_url: Some("https://example.com/avatar.jpg".to_string()),
         notes: Some("Test notes".to_string()),
     };
-    
+
     let result = service.update_user_profile(user_id, &new_profile);
     assert!(result.is_ok(), "Should successfully update user profile");
-    
+
     // Verify update
     let retrieved_settings = service.get_user_settings(user_id).unwrap();
     assert_eq!(retrieved_settings.profile.full_name, "Jane Smith");
     assert_eq!(retrieved_settings.profile.email, "jane@example.com");
-    assert_eq!(retrieved_settings.profile.phone, Some("555-1234".to_string()));
-    assert_eq!(retrieved_settings.profile.avatar_url, Some("https://example.com/avatar.jpg".to_string()));
-    assert_eq!(retrieved_settings.profile.notes, Some("Test notes".to_string()));
+    assert_eq!(
+        retrieved_settings.profile.phone,
+        Some("555-1234".to_string())
+    );
+    assert_eq!(
+        retrieved_settings.profile.avatar_url,
+        Some("https://example.com/avatar.jpg".to_string())
+    );
+    assert_eq!(
+        retrieved_settings.profile.notes,
+        Some("Test notes".to_string())
+    );
 }
 
 #[tokio::test]
 async fn test_update_user_preferences() {
     let db = create_test_db().await;
     let service = SettingsService::new(db);
-    
+
     // Create a test user and settings
     let user_id = "user_test_preferences";
     create_test_user(&service.db, user_id, "test_preferences@example.com");
-    
+
     let settings = create_default_settings();
     service.create_user_settings(user_id, &settings).unwrap();
-    
+
     // Update preferences
     let new_preferences = UserPreferences {
         email_notifications: false,
@@ -357,10 +378,13 @@ async fn test_update_user_preferences() {
         auto_refresh: false,
         refresh_interval: 30,
     };
-    
+
     let result = service.update_user_preferences(user_id, &new_preferences);
-    assert!(result.is_ok(), "Should successfully update user preferences");
-    
+    assert!(
+        result.is_ok(),
+        "Should successfully update user preferences"
+    );
+
     // Verify update
     let retrieved_settings = service.get_user_settings(user_id).unwrap();
     assert_eq!(retrieved_settings.preferences.email_notifications, false);
@@ -378,23 +402,26 @@ async fn test_update_user_preferences() {
 async fn test_update_user_security() {
     let db = create_test_db().await;
     let service = SettingsService::new(db);
-    
+
     // Create a test user and settings
     let user_id = "user_test_security";
     create_test_user(&service.db, user_id, "test_security@example.com");
-    
+
     let settings = create_default_settings();
     service.create_user_settings(user_id, &settings).unwrap();
-    
+
     // Update security settings
     let new_security = UserSecuritySettings {
         two_factor_enabled: true,
         session_timeout: 300, // 5 minutes
     };
-    
+
     let result = service.update_user_security(user_id, &new_security);
-    assert!(result.is_ok(), "Should successfully update user security settings");
-    
+    assert!(
+        result.is_ok(),
+        "Should successfully update user security settings"
+    );
+
     // Verify update
     let retrieved_settings = service.get_user_settings(user_id).unwrap();
     assert_eq!(retrieved_settings.security.two_factor_enabled, true);
@@ -405,14 +432,14 @@ async fn test_update_user_security() {
 async fn test_update_user_performance() {
     let db = create_test_db().await;
     let service = SettingsService::new(db);
-    
+
     // Create a test user and settings
     let user_id = "user_test_performance";
     create_test_user(&service.db, user_id, "test_performance@example.com");
-    
+
     let settings = create_default_settings();
     service.create_user_settings(user_id, &settings).unwrap();
-    
+
     // Update performance settings
     let new_performance = UserPerformanceSettings {
         cache_enabled: false,
@@ -423,10 +450,13 @@ async fn test_update_user_performance() {
         image_compression: false,
         preload_data: true,
     };
-    
+
     let result = service.update_user_performance(user_id, &new_performance);
-    assert!(result.is_ok(), "Should successfully update user performance settings");
-    
+    assert!(
+        result.is_ok(),
+        "Should successfully update user performance settings"
+    );
+
     // Verify update
     let retrieved_settings = service.get_user_settings(user_id).unwrap();
     assert_eq!(retrieved_settings.performance.cache_enabled, false);
@@ -442,14 +472,14 @@ async fn test_update_user_performance() {
 async fn test_update_user_accessibility() {
     let db = create_test_db().await;
     let service = SettingsService::new(db);
-    
+
     // Create a test user and settings
     let user_id = "user_test_accessibility";
     create_test_user(&service.db, user_id, "test_accessibility@example.com");
-    
+
     let settings = create_default_settings();
     service.create_user_settings(user_id, &settings).unwrap();
-    
+
     // Update accessibility settings
     let new_accessibility = UserAccessibilitySettings {
         high_contrast: true,
@@ -463,10 +493,13 @@ async fn test_update_user_accessibility() {
         font_size: 24,
         color_blind_mode: "protanopia".to_string(),
     };
-    
+
     let result = service.update_user_accessibility(user_id, &new_accessibility);
-    assert!(result.is_ok(), "Should successfully update user accessibility settings");
-    
+    assert!(
+        result.is_ok(),
+        "Should successfully update user accessibility settings"
+    );
+
     // Verify update
     let retrieved_settings = service.get_user_settings(user_id).unwrap();
     assert_eq!(retrieved_settings.accessibility.high_contrast, true);
@@ -478,21 +511,24 @@ async fn test_update_user_accessibility() {
     assert_eq!(retrieved_settings.accessibility.text_to_speech, true);
     assert_eq!(retrieved_settings.accessibility.speech_rate, 1.5);
     assert_eq!(retrieved_settings.accessibility.font_size, 24);
-    assert_eq!(retrieved_settings.accessibility.color_blind_mode, "protanopia");
+    assert_eq!(
+        retrieved_settings.accessibility.color_blind_mode,
+        "protanopia"
+    );
 }
 
 #[tokio::test]
 async fn test_update_user_notifications() {
     let db = create_test_db().await;
     let service = SettingsService::new(db);
-    
+
     // Create a test user and settings
     let user_id = "user_test_notifications";
     create_test_user(&service.db, user_id, "test_notifications@example.com");
-    
+
     let settings = create_default_settings();
     service.create_user_settings(user_id, &settings).unwrap();
-    
+
     // Update notification settings
     let new_notifications = UserNotificationSettings {
         email_enabled: false,
@@ -513,10 +549,13 @@ async fn test_update_user_notifications() {
         sound_enabled: false,
         sound_volume: 50,
     };
-    
+
     let result = service.update_user_notifications(user_id, &new_notifications);
-    assert!(result.is_ok(), "Should successfully update user notification settings");
-    
+    assert!(
+        result.is_ok(),
+        "Should successfully update user notification settings"
+    );
+
     // Verify update
     let retrieved_settings = service.get_user_settings(user_id).unwrap();
     assert_eq!(retrieved_settings.notifications.email_enabled, false);
@@ -538,39 +577,39 @@ async fn test_update_user_notifications() {
 async fn test_settings_validation() {
     let db = create_test_db().await;
     let service = SettingsService::new(db);
-    
+
     // Create a test user
     let user_id = "user_test_validation";
     create_test_user(&service.db, user_id, "test_validation@example.com");
-    
+
     let settings = create_default_settings();
     service.create_user_settings(user_id, &settings).unwrap();
-    
+
     // Test invalid refresh interval (should be positive)
     let mut invalid_preferences = create_default_settings().preferences;
     invalid_preferences.refresh_interval = 0; // Invalid
-    
+
     let result = service.update_user_preferences(user_id, &invalid_preferences);
     // Note: The current implementation doesn't validate this, but a real implementation should
-    
+
     // Test invalid session timeout (should be positive)
     let mut invalid_security = create_default_settings().security;
     invalid_security.session_timeout = 0; // Invalid
-    
+
     let result = service.update_user_security(user_id, &invalid_security);
     // Note: The current implementation doesn't validate this, but a real implementation should
-    
+
     // Test invalid speech rate (should be positive)
     let mut invalid_accessibility = create_default_settings().accessibility;
     invalid_accessibility.speech_rate = -1.0; // Invalid
-    
+
     let result = service.update_user_accessibility(user_id, &invalid_accessibility);
     // Note: The current implementation doesn't validate this, but a real implementation should
-    
+
     // Test invalid sound volume (should be 0-100)
     let mut invalid_notifications = create_default_settings().notifications;
     invalid_notifications.sound_volume = 150; // Invalid
-    
+
     let result = service.update_user_notifications(user_id, &invalid_notifications);
     // Note: The current implementation doesn't validate this, but a real implementation should
 }
@@ -579,22 +618,25 @@ async fn test_settings_validation() {
 async fn test_delete_user_settings() {
     let db = create_test_db().await;
     let service = SettingsService::new(db);
-    
+
     // Create a test user and settings
     let user_id = "user_test_delete";
     create_test_user(&service.db, user_id, "test_delete@example.com");
-    
+
     let settings = create_default_settings();
     service.create_user_settings(user_id, &settings).unwrap();
-    
+
     // Verify settings exist
     let retrieved_settings = service.get_user_settings(user_id).unwrap();
-    assert_eq!(retrieved_settings.profile.full_name, settings.profile.full_name);
-    
+    assert_eq!(
+        retrieved_settings.profile.full_name,
+        settings.profile.full_name
+    );
+
     // Delete settings
     let result = service.delete_user_settings(user_id);
     assert!(result.is_ok(), "Should successfully delete user settings");
-    
+
     // Try to get settings again - should create defaults
     let new_settings = service.get_user_settings(user_id).unwrap();
     assert_eq!(new_settings.profile.full_name, ""); // Default empty string
@@ -604,14 +646,14 @@ async fn test_delete_user_settings() {
 async fn test_settings_audit_logging() {
     let db = create_test_db().await;
     let service = SettingsService::new(db);
-    
+
     // Create a test user and settings
     let user_id = "user_test_audit";
     create_test_user(&service.db, user_id, "test_audit@example.com");
-    
+
     let settings = create_default_settings();
     service.create_user_settings(user_id, &settings).unwrap();
-    
+
     // Update profile
     let new_profile = UserProfileSettings {
         full_name: "Audit User".to_string(),
@@ -620,20 +662,24 @@ async fn test_settings_audit_logging() {
         avatar_url: None,
         notes: None,
     };
-    
+
     service.update_user_profile(user_id, &new_profile).unwrap();
-    
+
     // Check audit log
-    let audit_logs: Vec<(String, String, String, i64)> = service.db
-        .query_as(r#"
+    let audit_logs: Vec<(String, String, String, i64)> = service
+        .db
+        .query_as(
+            r#"
             SELECT id, user_id, setting_type, timestamp
             FROM settings_audit_log
             WHERE user_id = ?
             ORDER BY timestamp DESC
             LIMIT 1
-        "#, params![user_id])
+        "#,
+            params![user_id],
+        )
         .unwrap_or_default();
-    
+
     assert_eq!(audit_logs.len(), 1, "Should have one audit log entry");
     assert_eq!(audit_logs[0].1, user_id);
     assert_eq!(audit_logs[0].2, "profile");
@@ -643,33 +689,33 @@ async fn test_settings_audit_logging() {
 async fn test_multiple_users_settings() {
     let db = create_test_db().await;
     let service = SettingsService::new(db);
-    
+
     // Create multiple users
     let user1_id = "user_test_1";
     let user2_id = "user_test_2";
-    
+
     create_test_user(&service.db, user1_id, "test1@example.com");
     create_test_user(&service.db, user2_id, "test2@example.com");
-    
+
     // Create different settings for each user
     let mut settings1 = create_default_settings();
     settings1.profile.full_name = "User One".to_string();
     settings1.preferences.theme = "dark".to_string();
-    
+
     let mut settings2 = create_default_settings();
     settings2.profile.full_name = "User Two".to_string();
     settings2.preferences.theme = "light".to_string();
-    
+
     service.create_user_settings(user1_id, &settings1).unwrap();
     service.create_user_settings(user2_id, &settings2).unwrap();
-    
+
     // Verify settings are isolated
     let retrieved1 = service.get_user_settings(user1_id).unwrap();
     let retrieved2 = service.get_user_settings(user2_id).unwrap();
-    
+
     assert_eq!(retrieved1.profile.full_name, "User One");
     assert_eq!(retrieved1.preferences.theme, "dark");
-    
+
     assert_eq!(retrieved2.profile.full_name, "User Two");
     assert_eq!(retrieved2.preferences.theme, "light");
 }
@@ -678,14 +724,14 @@ async fn test_multiple_users_settings() {
 async fn test_max_tasks_per_user_setting() {
     let db = create_test_db().await;
     let service = SettingsService::new(db);
-    
+
     // Initially should have default value
     let max_tasks = service.get_max_tasks_per_user().unwrap();
     assert_eq!(max_tasks, 10, "Default max tasks should be 10");
-    
+
     // Set custom value
     service.set_max_tasks_per_user(20).unwrap();
-    
+
     // Verify new value
     let max_tasks = service.get_max_tasks_per_user().unwrap();
     assert_eq!(max_tasks, 20, "Should get updated max tasks value");

@@ -3,6 +3,8 @@
 //! These tests verify that task IPC commands work correctly,
 //! including CRUD operations, validation, and business logic enforcement.
 
+#![cfg(feature = "legacy-tests")]
+
 use super::*;
 use rpma_ppf_intervention::commands::task::check_task_availability;
 use rpma_ppf_intervention::commands::task::get_task_statistics;

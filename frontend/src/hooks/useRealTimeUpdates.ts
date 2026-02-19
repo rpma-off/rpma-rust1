@@ -1,6 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { useWebSocket } from '../lib/websocket';
-import { useTasks } from './useTasks';
+import { useTasks } from '@/domains/tasks';
 import { toast } from 'sonner';
 import { logger, LogDomain } from '../lib/logging';
 import { safeInvoke } from '../lib/ipc/utils';
@@ -39,8 +39,8 @@ export function useRealTimeUpdates(options: UseRealTimeUpdatesOptions = {}) {
       if (!enableTaskUpdates) return;
       logger.info(LogDomain.TASK, 'Real-time: Task updated', { taskId, updates });
       // Update local state optimistically
-      updateTask(taskId, { status: updates.status as TaskStatus }).catch(err => {
-        logger.warn(LogDomain.TASK, 'Failed to update task from real-time event', err);
+      updateTask(taskId, { status: updates.status as TaskStatus }).catch((err: unknown) => {
+        logger.warn(LogDomain.TASK, 'Failed to update task from real-time event', { err });
       });
     }, [enableTaskUpdates, updateTask]),
 
@@ -54,8 +54,8 @@ export function useRealTimeUpdates(options: UseRealTimeUpdatesOptions = {}) {
       if (!enableTaskUpdates) return;
       logger.info(LogDomain.TASK, 'Real-time: Task status changed', { taskId, oldStatus, newStatus });
       // Update local state
-      updateTask(taskId, { status: newStatus as TaskStatus }).catch(err => {
-        logger.warn(LogDomain.TASK, 'Failed to update task status from real-time event', err);
+      updateTask(taskId, { status: newStatus as TaskStatus }).catch((err: unknown) => {
+        logger.warn(LogDomain.TASK, 'Failed to update task status from real-time event', { err });
       });
       toast.info(`Task status changed from ${oldStatus} to ${newStatus}`);
     }, [enableTaskUpdates, updateTask]),

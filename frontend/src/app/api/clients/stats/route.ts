@@ -1,5 +1,5 @@
  import { NextResponse } from 'next/server';
- import { clientService } from '@/lib/services/entities/client.service';
+ import { clientService } from '@/domains/clients/server';
  import { getErrorMessage } from '@/types/api';
 
 /**
@@ -27,3 +27,4 @@ export async function GET() {
     );
   }
 }
+

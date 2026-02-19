@@ -345,6 +345,21 @@ npm run types:drift-check
 
 ---
 
+## ⚠️ Version-Specific Notes
+
+Key library versions that have breaking APIs vs older documentation you may encounter:
+
+| Library | Version | Breaking Change to Know |
+|---------|---------|------------------------|
+| **Zod** | ^4.1.12 | Uses Zod v4 API. Core `z.object()`, `z.string()` unchanged; error internals differ from v3 docs. |
+| **TanStack Query** | ^5.90 | v5 API (hooks renamed: `useQuery`, `useMutation` same; `cacheTime` → `gcTime`). |
+| **Zustand** | ^5.0 | v5 API. `create()` import changed; no default export. |
+| **Tauri** | 2.x | Uses `@tauri-apps/api` v2 (`invoke` from `@tauri-apps/api/core`). |
+
+> ⚠️ **Deprecated**: The root `migrations/` directory is **not used**. Always use `src-tauri/migrations/` for new migrations.
+
+---
+
 ## ✅ Validation Checklist
 
 Before making any changes, ensure you've:
@@ -385,8 +400,8 @@ For questions or issues:
 
 ---
 
-**Version**: 1.0  
-**Last Updated**: 2026-02-11  
+**Version**: 1.1  
+**Last Updated**: 2026-02-18  
 **Maintained by**: RPMA Development Team
 
 ---

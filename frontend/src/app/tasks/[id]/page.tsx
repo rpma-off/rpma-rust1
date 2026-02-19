@@ -1,25 +1,14 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, AlertCircle, Home, Calendar, Car, User, Gauge, CheckCircle, Settings } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { TaskWithDetails, TaskService } from '@/lib/services/entities/task.service';
-import { bigintToNumber } from '@/lib/utils/timestamp-conversion';
+import { Badge, Button, TaskErrorBoundary } from '@/shared/ui';
+import { TaskAttachments, TaskOverview, TaskTimeline, ActionsCard, taskGateway, TaskWithDetails } from '@/domains/tasks';
+import { bigintToNumber, getTaskDisplayTitle, handleError, LogDomain, taskStatusLabels } from '@/shared/utils';
 import { toast } from 'sonner';
-import { TaskErrorBoundary } from '@/error-boundaries/TaskErrorBoundary';
-import { TaskOverview } from '@/components/tasks/TaskOverview';
-import { ActionsCard } from '@/components/tasks/TaskActions';
-import { TaskTimeline } from '@/components/tasks/TaskTimeline';
-import { TaskAttachments } from '@/components/tasks/TaskAttachments';
-import { getTaskDisplayTitle } from '@/lib/utils/task-display';
-import { handleError } from '@/lib/utils/error-handler';
-import { LogDomain } from '@/lib/logging/types';
-import { useAuth } from '@/contexts/AuthContext';
-import { ipcClient } from '@/lib/ipc';
-import { useTranslation } from '@/hooks/useTranslation';
-import { taskStatusLabels } from '@/lib/i18n/status-labels';
+import { useAuth } from '@/domains/auth';
+import { useTranslation } from '@/shared/hooks';
 
 const QUICK_NAV_SECTIONS = [
   { id: 'task-actions', label: 'tasks.actions' },
@@ -51,8 +40,7 @@ export default function TaskDetailPage() {
         setLoading(true);
         setError(null);
 
-        const taskService = TaskService.getInstance();
-        const result = await taskService.getTaskById(taskId);
+        const result = await taskGateway.getTaskById(taskId);
 
         if (result.error) {
           if (result.status === 404) {
@@ -73,10 +61,10 @@ export default function TaskDetailPage() {
 
         if (result.data && user?.token) {
           try {
-            const assignmentCheck = await ipcClient.tasks.checkTaskAssignment(result.data.id, user.user_id, user.token);
+            const assignmentCheck = await taskGateway.checkTaskAssignment(result.data.id, user.user_id, user.token);
             setIsAssignedToCurrentUser((assignmentCheck as { assigned?: boolean })?.assigned || false);
 
-            const availabilityCheck = await ipcClient.tasks.checkTaskAvailability(result.data.id, user.token);
+            const availabilityCheck = await taskGateway.checkTaskAvailability(result.data.id, user.token);
             setIsTaskAvailable((availabilityCheck as { available?: boolean })?.available !== false);
           } catch (validationErr) {
             const validationError = validationErr as Error;
@@ -433,4 +421,5 @@ export default function TaskDetailPage() {
     </TaskErrorBoundary>
   );
 }
+
 

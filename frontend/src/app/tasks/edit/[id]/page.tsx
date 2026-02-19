@@ -1,19 +1,18 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
 import { ArrowLeft, Loader2, Edit } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/lib/auth/compatibility';
-import { ipcClient } from '@/lib/ipc';
-import { useTranslation } from '@/hooks/useTranslation';
-import type { Task } from '@/lib/backend';
-import type { TaskFormData } from '@/components/TaskForm/types';
+import { Button } from '@/shared/ui';
+import { useAuth } from '@/domains/auth';
+import { taskGateway } from '@/domains/tasks';
+import { useTranslation } from '@/shared/hooks';
+import type { Task, TaskFormData } from '@/domains/tasks';
 
 // Dynamically import TaskForm for better performance
-const TaskForm = dynamic(() => import('@/components/TaskForm').then(mod => ({ default: mod.TaskForm })), {
+const TaskForm = dynamic(() => import('@/domains/tasks').then(mod => ({ default: mod.TaskForm })), {
   loading: () => (
     <div className="flex items-center justify-center py-12">
       <div className="flex items-center space-x-3">
@@ -42,7 +41,7 @@ export default function EditTaskPage() {
 
       try {
         setLoading(true);
-        const task = await ipcClient.tasks.get(taskId, user.token);
+        const task = await taskGateway.getTask(taskId, user.token);
         setTaskData(task);
       } catch (err) {
         console.error('Failed to fetch task:', err);
@@ -206,3 +205,4 @@ export default function EditTaskPage() {
     </div>
   );
 }
+

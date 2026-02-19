@@ -1,12 +1,12 @@
 import React from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useDashboardData } from '../../hooks/useDashboardDataQuery';
+import { useDashboardData } from '../../domains/analytics/hooks/useDashboardDataQuery';
 import { taskService } from '../../lib/services/entities/task.service';
 import type { TaskWithDetails } from '../../types/task.types';
 import { dashboardApiService } from '../../lib/services/dashboard/dashboard-api.service';
 
-jest.mock('../../contexts/AuthContext', () => ({
+jest.mock('@/domains/auth', () => ({
   useAuth: () => ({
     user: { user_id: 'user-1', role: 'technician', token: 'token-123' },
     profile: null,

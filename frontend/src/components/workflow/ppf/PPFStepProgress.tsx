@@ -4,7 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { CheckCircle, Circle, Clock, ArrowRight } from 'lucide-react';
-import { usePPFWorkflow } from '@/contexts/PPFWorkflowContext';
+import { usePPFWorkflow } from '@/domains/interventions';
 import { getPPFStepPath } from '@/lib/ppf-workflow';
 
 export function PPFStepProgress() {

@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react';
-import { useTaskState } from '../../hooks/useTaskState';
+import { useTaskState } from '../../domains/tasks/hooks/useTaskState';
 import { TaskStatus, TaskPriority } from '../../lib/types';
 import type { TaskWithDetails } from '../../lib/services/entities/task.service';
 

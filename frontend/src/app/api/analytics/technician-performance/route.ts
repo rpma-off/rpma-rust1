@@ -2,8 +2,8 @@
  import { NextRequest } from 'next/server';
  import { withMethod } from '@/lib/api-route-wrapper';
  import { handleApiError } from '@/lib/api-error';
- import { analyticsService } from '@/lib/services/entities/analytics.service';
- import { userService } from '@/lib/services/entities/user.service';
+ import { analyticsService } from '@/domains/analytics/server';
+ import { userService } from '@/domains/users/server';
 
  export const dynamic = 'force-dynamic';
 
@@ -53,3 +53,4 @@ async function handleGet(request: NextRequest, _context?: unknown) {
 }
 
 export const GET = withMethod(['GET'])(handleGet);
+

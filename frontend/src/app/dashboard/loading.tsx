@@ -1,4 +1,4 @@
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@/shared/ui/ui/skeleton';
 
 export default function DashboardLoading() {
   return (
@@ -138,3 +138,4 @@ export default function DashboardLoading() {
     </div>
   );
 }
+

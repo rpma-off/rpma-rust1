@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useAuth } from '@/lib/auth/compatibility';
+import { useAuth } from '@/domains/auth';
 import type { UserAccount } from '@/types/auth.types';
 import type { UserSession } from '@/lib/backend';
 import { useRouter } from 'next/navigation';

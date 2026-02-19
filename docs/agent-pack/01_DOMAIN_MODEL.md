@@ -86,9 +86,12 @@ pub enum TaskPriority { Low, Medium, High, Urgent }
 
 **Code Paths**:
 - Model: `src-tauri/src/models/task.rs`
-- Service: `src-tauri/src/services/task.rs`, `task_validation.rs`, `task_creation.rs`
-- Repository: `src-tauri/src/repositories/task_repository.rs`
-- Commands: `src-tauri/src/commands/task/facade.rs`
+- Service (canonical): `src-tauri/src/domains/tasks/infrastructure/task_creation.rs`, `task.rs`, `task_validation.rs`
+- Service (shim): `src-tauri/src/services/task.rs`, `task_validation.rs`, `task_creation.rs`
+- Repository (canonical): `src-tauri/src/domains/tasks/infrastructure/task_repository.rs`
+- Repository (shim): `src-tauri/src/repositories/task_repository.rs`
+- Commands (canonical): `src-tauri/src/domains/tasks/ipc/task/facade.rs`
+- Commands (shim): `src-tauri/src/commands/task/facade.rs`
 
 ---
 
@@ -123,9 +126,12 @@ pub enum TaskPriority { Low, Medium, High, Urgent }
 
 **Code Paths**:
 - Model: `src-tauri/src/models/client.rs`
-- Service: `src-tauri/src/services/client.rs`, `client_validation.rs`
-- Repository: `src-tauri/src/repositories/client_repository.rs`
-- Commands: `src-tauri/src/commands/client.rs`
+- Service (canonical): `src-tauri/src/domains/clients/infrastructure/client.rs`, `client_validation.rs`
+- Service (shim): `src-tauri/src/services/client.rs`, `client_validation.rs`
+- Repository (canonical): `src-tauri/src/domains/clients/infrastructure/client_repository.rs`
+- Repository (shim): `src-tauri/src/repositories/client_repository.rs`
+- Commands (canonical): `src-tauri/src/domains/clients/ipc/client.rs`
+- Commands (shim): `src-tauri/src/commands/client.rs`
 
 ---
 
@@ -169,9 +175,12 @@ pub enum InterventionStatus {
 
 **Code Paths**:
 - Model: `src-tauri/src/models/intervention.rs`
-- Service: `src-tauri/src/services/intervention.rs`, `intervention_workflow.rs`
-- Repository: `src-tauri/src/repositories/intervention_repository.rs`
-- Commands: `src-tauri/src/commands/intervention/workflow.rs`
+- Service (canonical): `src-tauri/src/domains/interventions/infrastructure/intervention.rs`, `intervention_workflow.rs`
+- Service (shim): `src-tauri/src/services/intervention.rs`, `intervention_workflow.rs`
+- Repository (canonical): `src-tauri/src/domains/interventions/infrastructure/intervention_repository.rs`
+- Repository (shim): `src-tauri/src/repositories/intervention_repository.rs`
+- Commands (canonical): `src-tauri/src/domains/interventions/ipc/intervention/workflow.rs`
+- Commands (shim): `src-tauri/src/commands/intervention/workflow.rs`
 
 ---
 
@@ -211,8 +220,10 @@ pub enum StepStatus { Pending, InProgress, Completed, Skipped }
 
 **Code Paths**:
 - Model: `src-tauri/src/models/step.rs`
-- Service: `src-tauri/src/services/intervention_workflow.rs`
-- Commands: `src-tauri/src/commands/intervention/`
+- Service (canonical): `src-tauri/src/domains/interventions/infrastructure/intervention_workflow.rs`
+- Service (shim): `src-tauri/src/services/intervention_workflow.rs`
+- Commands (canonical): `src-tauri/src/domains/interventions/ipc/intervention/`
+- Commands (shim): `src-tauri/src/commands/intervention/`
 
 ---
 
@@ -316,9 +327,12 @@ pub enum UserRole {
 
 **Code Paths**:
 - Model: `src-tauri/src/models/auth.rs`, `src-tauri/src/models/user.rs`
-- Service: `src-tauri/src/services/auth.rs`, `src-tauri/src/services/user.rs`, `src-tauri/src/services/session.rs`, `src-tauri/src/services/token.rs`, `src-tauri/src/services/two_factor.rs`
-- Repository: `src-tauri/src/repositories/user_repository.rs`
-- Commands: `src-tauri/src/commands/auth.rs`, `src-tauri/src/commands/user.rs`
+- Service (canonical): `src-tauri/src/domains/auth/infrastructure/auth.rs`, `session.rs`, `token.rs`, `two_factor.rs`
+- Service (shim): `src-tauri/src/services/auth.rs`, `user.rs`, `session.rs`, `token.rs`, `two_factor.rs`
+- Repository (canonical): `src-tauri/src/domains/users/infrastructure/user_repository.rs`
+- Repository (shim): `src-tauri/src/repositories/user_repository.rs`
+- Commands (canonical): `src-tauri/src/domains/auth/ipc/auth.rs`, `src-tauri/src/domains/users/ipc/user.rs`
+- Commands (shim): `src-tauri/src/commands/auth.rs`, `src-tauri/src/commands/user.rs`
 
 ---
 
@@ -346,7 +360,7 @@ pub enum UserRole {
 - Model: `src-tauri/src/models/auth.rs`
 - Service: `src-tauri/src/services/session.rs`, `src-tauri/src/services/token.rs`
 - Repository: `src-tauri/src/repositories/session_repository.rs`
-- Middleware: `src-tauri/src/commands/auth_middleware.rs`
+- Middleware: real: `src-tauri/src/domains/auth/ipc/auth_middleware.rs` (shim: `src-tauri/src/commands/auth_middleware.rs`)
 
 ---
 
@@ -365,9 +379,8 @@ pub enum UserRole {
 - `synced`: bool, `last_synced_at`: Option<i64>
 
 **Storage**:
-- Table: `quotes` (new in migration 037)
-- Related: `quote_items` (line items with pricing)
-- Indexes: `client_id`, `vehicle_plate`, `status`
+- Table: `calendar_events` (base schema, `src-tauri/src/db/schema.sql:1161`)
+- Indexes: `technician_id`, `task_id`, `client_id`, `start_datetime`, `end_datetime`, `status`
 
 **Code Paths**:
 - Model: `src-tauri/src/models/calendar.rs`, `src-tauri/src/models/calendar_event.rs`
@@ -381,14 +394,14 @@ pub enum UserRole {
 
 **Purpose**: PPF quotation/estimation generation with line items and pricing.
 
-**Model**: **TODO (verify in code)**
+**Model**: `src-tauri/src/models/quote.rs`
 
 **Key Fields**:
 - `id`: String (UUID)
 - `quote_number`: String (unique)
 - `client_id`: String (FK → `clients.id`)
 - `vehicle_plate`: Option<String>
-- `status`: QuoteStatus enum (Draft, Sent, Accepted, Rejected)
+- `status`: QuoteStatus enum (Draft, Sent, Accepted, Rejected, Expired)
 - `total_amount`: f64
 - `valid_until`: Option<i64>
 - `created_at`, `updated_at`: i64

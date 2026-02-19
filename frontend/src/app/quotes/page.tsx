@@ -4,9 +4,9 @@ import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Search, FileText, Send, CheckCircle, XCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
-import { useQuotesList } from '@/hooks/useQuotes';
-import { PageShell } from '@/components/layout/PageShell';
-import type { QuoteStatus } from '@/types/quote.types';
+import { useQuotesList } from '@/shared/hooks/useQuotes';
+import { PageShell } from '@/shared/ui/layout/PageShell';
+import type { QuoteStatus } from '@/shared/types';
 
 const STATUS_COLORS: Record<QuoteStatus, string> = {
   draft: 'bg-gray-100 text-gray-800',
@@ -228,3 +228,4 @@ export default function QuotesPage() {
     </PageShell>
   );
 }
+

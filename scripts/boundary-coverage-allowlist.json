@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "description": "Temporary boundary exceptions for legacy migration. Keep this list empty in strict mode.",
+  "allowed": []
+}

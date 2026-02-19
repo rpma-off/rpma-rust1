@@ -1,7 +1,7 @@
- import { NextRequest, NextResponse } from 'next/server';
- import { configurationService } from '@/lib/services/entities/configuration.service';
+﻿ import { NextRequest, NextResponse } from 'next/server';
+ import { configurationService } from '@/domains/admin/server';
  import { withAuth } from '@/lib/middleware/auth.middleware';
- import { ConfigurationFiltersData } from '@/lib/services/core/schemas';
+ import { ConfigurationFiltersData } from '@/domains/admin/server';
 
  export const dynamic = 'force-dynamic';
 
@@ -81,3 +81,4 @@ export const POST = withAuth(async (request: NextRequest) => {
     );
   }
 }, 'admin');
+

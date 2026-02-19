@@ -12,9 +12,10 @@ use uuid::Uuid;
 // Helper to create a test database with settings tables
 async fn create_test_db() -> Database {
     let db = Database::new_in_memory().await.unwrap();
-    
+
     // Create user and settings tables
-    db.execute_batch(r#"
+    db.execute_batch(
+        r#"
         CREATE TABLE IF NOT EXISTS users (
             id TEXT PRIMARY KEY,
             email TEXT NOT NULL UNIQUE,
@@ -107,8 +108,10 @@ async fn create_test_db() -> Database {
             
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
-    "#).unwrap();
-    
+    "#,
+    )
+    .unwrap();
+
     db
 }
 
@@ -159,10 +162,7 @@ fn date_format_strategy() -> impl Strategy<Value = String> {
 
 // Strategy for generating valid time formats
 fn time_format_strategy() -> impl Strategy<Value = String> {
-    prop_oneof![
-        Just("24h".to_string()),
-        Just("12h".to_string()),
-    ]
+    prop_oneof![Just("24h".to_string()), Just("12h".to_string()),]
 }
 
 // Strategy for generating valid digest frequencies
@@ -217,7 +217,7 @@ fn sound_volume_strategy() -> impl Strategy<Value = u32> {
 
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(100))]
-    
+
     #[test]
     fn test_user_preferences_with_random_valid_values(
         email_notifications in prop::bool::ANY,
@@ -241,12 +241,12 @@ proptest! {
         rt.block_on(async {
             let db = create_test_db().await;
             let service = SettingsService::new(db);
-            
+
             // Create a test user
             let user_id = Uuid::new_v4().to_string();
             let email = format!("{}@example.com", user_id);
             create_test_user(&service.db, &user_id, &email);
-            
+
             // Create preferences with random valid values
             let preferences = UserPreferences {
                 email_notifications,
@@ -266,15 +266,15 @@ proptest! {
                 auto_refresh,
                 refresh_interval,
             };
-            
+
             // Update preferences
             let result = service.update_user_preferences(&user_id, &preferences);
             prop_assert!(result.is_ok(), "Should successfully update preferences with valid values");
-            
+
             // Verify the values were persisted correctly
             let retrieved_settings = service.get_user_settings(&user_id).unwrap();
             let retrieved = &retrieved_settings.preferences;
-            
+
             prop_assert_eq!(retrieved.email_notifications, email_notifications);
             prop_assert_eq!(retrieved.push_notifications, push_notifications);
             prop_assert_eq!(retrieved.task_assignments, task_assignments);
@@ -293,7 +293,7 @@ proptest! {
             prop_assert_eq!(retrieved.refresh_interval, refresh_interval);
         });
     }
-    
+
     #[test]
     fn test_user_security_with_random_valid_values(
         two_factor_enabled in prop::bool::ANY,
@@ -303,31 +303,31 @@ proptest! {
         rt.block_on(async {
             let db = create_test_db().await;
             let service = SettingsService::new(db);
-            
+
             // Create a test user
             let user_id = Uuid::new_v4().to_string();
             let email = format!("{}@example.com", user_id);
             create_test_user(&service.db, &user_id, &email);
-            
+
             // Create security settings with random valid values
             let security = UserSecuritySettings {
                 two_factor_enabled,
                 session_timeout,
             };
-            
+
             // Update security settings
             let result = service.update_user_security(&user_id, &security);
             prop_assert!(result.is_ok(), "Should successfully update security settings with valid values");
-            
+
             // Verify the values were persisted correctly
             let retrieved_settings = service.get_user_settings(&user_id).unwrap();
             let retrieved = &retrieved_settings.security;
-            
+
             prop_assert_eq!(retrieved.two_factor_enabled, two_factor_enabled);
             prop_assert_eq!(retrieved.session_timeout, session_timeout);
         });
     }
-    
+
     #[test]
     fn test_user_performance_with_random_valid_values(
         cache_enabled in prop::bool::ANY,
@@ -342,12 +342,12 @@ proptest! {
         rt.block_on(async {
             let db = create_test_db().await;
             let service = SettingsService::new(db);
-            
+
             // Create a test user
             let user_id = Uuid::new_v4().to_string();
             let email = format!("{}@example.com", user_id);
             create_test_user(&service.db, &user_id, &email);
-            
+
             // Create performance settings with random valid values
             let performance = UserPerformanceSettings {
                 cache_enabled,
@@ -358,15 +358,15 @@ proptest! {
                 image_compression,
                 preload_data,
             };
-            
+
             // Update performance settings
             let result = service.update_user_performance(&user_id, &performance);
             prop_assert!(result.is_ok(), "Should successfully update performance settings with valid values");
-            
+
             // Verify the values were persisted correctly
             let retrieved_settings = service.get_user_settings(&user_id).unwrap();
             let retrieved = &retrieved_settings.performance;
-            
+
             prop_assert_eq!(retrieved.cache_enabled, cache_enabled);
             prop_assert_eq!(retrieved.cache_size, cache_size);
             prop_assert_eq!(retrieved.offline_mode, offline_mode);
@@ -376,7 +376,7 @@ proptest! {
             prop_assert_eq!(retrieved.preload_data, preload_data);
         });
     }
-    
+
     #[test]
     fn test_user_accessibility_with_random_valid_values(
         high_contrast in prop::bool::ANY,
@@ -394,12 +394,12 @@ proptest! {
         rt.block_on(async {
             let db = create_test_db().await;
             let service = SettingsService::new(db);
-            
+
             // Create a test user
             let user_id = Uuid::new_v4().to_string();
             let email = format!("{}@example.com", user_id);
             create_test_user(&service.db, &user_id, &email);
-            
+
             // Create accessibility settings with random valid values
             let accessibility = UserAccessibilitySettings {
                 high_contrast,
@@ -413,15 +413,15 @@ proptest! {
                 font_size,
                 color_blind_mode: color_blind_mode.clone(),
             };
-            
+
             // Update accessibility settings
             let result = service.update_user_accessibility(&user_id, &accessibility);
             prop_assert!(result.is_ok(), "Should successfully update accessibility settings with valid values");
-            
+
             // Verify the values were persisted correctly
             let retrieved_settings = service.get_user_settings(&user_id).unwrap();
             let retrieved = &retrieved_settings.accessibility;
-            
+
             prop_assert_eq!(retrieved.high_contrast, high_contrast);
             prop_assert_eq!(retrieved.large_text, large_text);
             prop_assert_eq!(retrieved.reduce_motion, reduce_motion);
@@ -434,7 +434,7 @@ proptest! {
             prop_assert_eq!(retrieved.color_blind_mode, color_blind_mode);
         });
     }
-    
+
     #[test]
     fn test_user_notifications_with_random_valid_values(
         email_enabled in prop::bool::ANY,
@@ -457,12 +457,12 @@ proptest! {
         rt.block_on(async {
             let db = create_test_db().await;
             let service = SettingsService::new(db);
-            
+
             // Create a test user
             let user_id = Uuid::new_v4().to_string();
             let email = format!("{}@example.com", user_id);
             create_test_user(&service.db, &user_id, &email);
-            
+
             // Create notification settings with random valid values
             let notifications = UserNotificationSettings {
                 email_enabled,
@@ -483,15 +483,15 @@ proptest! {
                 sound_enabled,
                 sound_volume,
             };
-            
+
             // Update notification settings
             let result = service.update_user_notifications(&user_id, &notifications);
             prop_assert!(result.is_ok(), "Should successfully update notification settings with valid values");
-            
+
             // Verify the values were persisted correctly
             let retrieved_settings = service.get_user_settings(&user_id).unwrap();
             let retrieved = &retrieved_settings.notifications;
-            
+
             prop_assert_eq!(retrieved.email_enabled, email_enabled);
             prop_assert_eq!(retrieved.push_enabled, push_enabled);
             prop_assert_eq!(retrieved.in_app_enabled, in_app_enabled);
@@ -511,7 +511,7 @@ proptest! {
             prop_assert_eq!(retrieved.sound_volume, sound_volume);
         });
     }
-    
+
     #[test]
     fn test_user_profile_with_random_valid_strings(
         full_name in "[a-zA-Z]{1,50}",
@@ -523,12 +523,12 @@ proptest! {
         rt.block_on(async {
             let db = create_test_db().await;
             let service = SettingsService::new(db);
-            
+
             // Create a test user
             let user_id = Uuid::new_v4().to_string();
             let email = format!("{}@example.com", user_id);
             create_test_user(&service.db, &user_id, &email);
-            
+
             // Create profile with random valid strings
             let profile = UserProfileSettings {
                 full_name: full_name.clone(),
@@ -537,22 +537,22 @@ proptest! {
                 avatar_url: None,
                 notes: if notes.is_empty() { None } else { Some(notes.clone()) },
             };
-            
+
             // Update profile
             let result = service.update_user_profile(&user_id, &profile);
             prop_assert!(result.is_ok(), "Should successfully update profile with valid strings");
-            
+
             // Verify the values were persisted correctly
             let retrieved_settings = service.get_user_settings(&user_id).unwrap();
             let retrieved = &retrieved_settings.profile;
-            
+
             prop_assert_eq!(retrieved.full_name, full_name);
             prop_assert!(retrieved.email.starts_with(&email_prefix));
             prop_assert_eq!(retrieved.phone, if phone.is_empty() { None } else { Some(phone) });
             prop_assert_eq!(retrieved.notes, if notes.is_empty() { None } else { Some(notes) });
         });
     }
-    
+
     #[test]
     fn test_max_tasks_per_user_boundary_values(
         max_tasks in prop::num::i32::ANY
@@ -561,19 +561,19 @@ proptest! {
         rt.block_on(async {
             let db = create_test_db().await;
             let service = SettingsService::new(db);
-            
+
             // Test with boundary values including negative and very large values
             let result = service.set_max_tasks_per_user(max_tasks);
-            
+
             // The implementation should accept the value (validation might be added later)
             prop_assert!(result.is_ok(), "Should successfully set max tasks per user");
-            
+
             // Verify the value
             let retrieved = service.get_max_tasks_per_user().unwrap();
             prop_assert_eq!(retrieved, max_tasks);
         });
     }
-    
+
     #[test]
     fn test_user_settings_roundtrip_persistence(
         profile_full_name in "[a-zA-Z]{1,30}",
@@ -589,12 +589,12 @@ proptest! {
         rt.block_on(async {
             let db = create_test_db().await;
             let service = SettingsService::new(db);
-            
+
             // Create a test user
             let user_id = Uuid::new_v4().to_string();
             let email = format!("{}@example.com", user_id);
             create_test_user(&service.db, &user_id, &email);
-            
+
             // Create complete settings with random values
             let original_settings = UserSettings {
                 profile: UserProfileSettings {
@@ -627,7 +627,7 @@ proptest! {
                     ..Default::default()
                 },
             };
-            
+
             // Update all settings
             service.update_user_profile(&user_id, &original_settings.profile).unwrap();
             service.update_user_preferences(&user_id, &original_settings.preferences).unwrap();
@@ -635,10 +635,10 @@ proptest! {
             service.update_user_performance(&user_id, &original_settings.performance).unwrap();
             service.update_user_accessibility(&user_id, &original_settings.accessibility).unwrap();
             service.update_user_notifications(&user_id, &original_settings.notifications).unwrap();
-            
+
             // Verify round-trip persistence
             let retrieved_settings = service.get_user_settings(&user_id).unwrap();
-            
+
             prop_assert_eq!(retrieved_settings.profile.full_name, profile_full_name);
             prop_assert_eq!(retrieved_settings.profile.email, email);
             prop_assert_eq!(retrieved_settings.preferences.theme, theme);

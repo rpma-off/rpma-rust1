@@ -1,129 +1,54 @@
 # 04 - Backend Guide
 
+## Key Rust Dependencies
+
+| Crate | Version | Purpose |
+|-------|---------|---------|
+| `tauri` | 2.1 | Desktop app runtime + IPC |
+| `rusqlite` | 0.32 (bundled) | SQLite driver |
+| `r2d2` | 0.8 | Connection pool |
+| `r2d2_sqlite` | 0.25 | SQLite r2d2 adapter |
+| `argon2` | 0.5 | Password hashing |
+| `jsonwebtoken` | 9.3 | JWT creation/validation |
+| `ts-rs` | 10.1 | Rust → TypeScript type export |
+| `uuid` | 1.11 | UUID v4 generation |
+| `chrono` | 0.4 | Timestamps |
+| `tracing` | 0.1 | Structured logging |
+| `tokio` | (via tauri) | Async runtime |
+
+MSRV: **Rust 1.85** (set in workspace `Cargo.toml`)
+
+---
+
 ## Backend Structure
 
-The Rust/Tauri backend is organized into distinct layers following clean architecture principles.
+The backend is now organized by bounded contexts under `src-tauri/src/domains/`.
+Each context follows the same layered shape:
 
 ```
-src-tauri/src/
-├── commands/                # IPC command handlers (Layer 1)
-│   ├── mod.rs               # Exports ApiResponse, AppState
-│   ├── errors.rs            # AppError enum
-│   ├── auth_middleware.rs   # authenticate! macro, permission checks
-│   ├── auth.rs              # Authentication commands
-│   ├── client.rs            # Client CRUD (client_crud)
-│   ├── material.rs          # Material/inventory commands
-│   ├── calendar.rs          # Calendar/scheduling
-│   ├── user.rs              # User management
-│   ├── analytics.rs         # Analytics
-│   ├── notification.rs      # Notifications
-│   ├── performance.rs       # Performance metrics
-│   ├── system.rs            # System info, health checks
-│   ├── task/                # Task commands submodule
-│   │   ├── mod.rs
-│   │   ├── facade.rs        # task_crud, edit_task, delay_task, etc.
-│   │   ├── queries.rs       # get_tasks_with_clients, statistics
-│   │   ├── validation.rs    # check_task_availability, assignment
-│   │   └── statistics.rs
-│   ├── intervention/        # Intervention workflow submodule
-│   │   ├── mod.rs
-│   │   ├── workflow.rs      # intervention_start, advance_step, finalize
-│   │   ├── queries.rs       # get, get_active_by_task, progress
-│   │   └── data_access.rs   # update, get_step
-│   ├── reports/             # Reports submodule
-│   │   ├── mod.rs           # export_report_data, save_intervention_report
-│   │   ├── core.rs
-│   │   ├── search.rs
-│   │   ├── generation/
-│   │   └── export/
-│   └── settings/            # Settings submodule
-│       ├── mod.rs
-│       ├── core.rs
-│       ├── profile.rs
-│       ├── preferences.rs
-│       └── security.rs
-├── services/                # Business logic (Layer 2) - ~80 files
-│   ├── mod.rs
-│   ├── auth.rs              # AuthService: login, password hashing (Argon2)
-│   ├── session.rs           # SessionService: lifecycle management
-│   ├── token.rs             # TokenService: JWT generation/validation
-│   ├── two_factor.rs        # TwoFactorService: TOTP setup/verification
-│   ├── rate_limiter.rs      # RateLimiterService: request limiting
-│   ├── security_monitor.rs  # SecurityMonitorService: event monitoring
-│   ├── user.rs              # UserService
-│   ├── client.rs            # ClientService
-│   ├── client_validation.rs
-│   ├── client_statistics.rs
-│   ├── task.rs              # TaskService
-│   ├── task_creation.rs     # TaskCreationService
-│   ├── task_update.rs
-│   ├── task_deletion.rs
-│   ├── task_validation.rs
-│   ├── task_queries.rs
-│   ├── task_statistics.rs
-│   ├── intervention.rs      # InterventionService
-│   ├── intervention_workflow.rs
-│   ├── intervention_validation.rs
-│   ├── material.rs          # MaterialService
-│   ├── calendar.rs          # CalendarService
-│   ├── calendar_event_service.rs
-│   ├── dashboard.rs         # DashboardService
-│   ├── analytics.rs         # AnalyticsService
-│   ├── cache.rs             # CacheService
-│   ├── event_bus.rs         # InMemoryEventBus
-│   ├── event_system.rs      # Domain event definitions
-│   ├── domain_event.rs      # EventEnvelope, EventMetadata
-│   ├── audit_service.rs     # AuditService
-│   ├── validation.rs        # ValidationService
-│   ├── photo/               # Photo services
-│   ├── reports/             # Report generation
-│   └── ...
-├── repositories/            # Data access (Layer 3) - ~18 files
-│   ├── mod.rs
-│   ├── base.rs              # Repository trait, RepoError, RepoResult
-│   ├── factory.rs           # Repositories container
-│   ├── cache.rs             # In-memory cache
-│   ├── user_repository.rs
-│   ├── client_repository.rs
-│   ├── task_repository.rs
-│   ├── task_history_repository.rs
-│   ├── task_repository_streaming.rs
-│   ├── intervention_repository.rs
-│   ├── material_repository.rs
-│   ├── photo_repository.rs
-│   ├── session_repository.rs
-│   ├── calendar_event_repository.rs
-│   ├── audit_repository.rs
-│   └── ...
-├── models/                  # Data models with ts-rs exports
-│   ├── mod.rs
-│   ├── task.rs              # Task, TaskStatus, TaskPriority, CreateTaskRequest
-│   ├── client.rs            # Client, CustomerType, ClientQuery
-│   ├── intervention.rs      # Intervention, InterventionStatus
-│   ├── step.rs              # InterventionStep, StepStatus
-│   ├── auth.rs              # UserSession, UserRole, UserAccount, DeviceInfo
-│   ├── user.rs              # UserRole
-│   ├── material.rs          # Material, MaterialType, InventoryTransaction
-│   ├── photo.rs             # Photo
-│   ├── calendar.rs          # CalendarEvent
-│   ├── calendar_event.rs
-│   ├── settings.rs          # Settings types
-│   ├── sync.rs              # SyncOperation, SyncStatus
-│   └── ...
-├── db/                      # Database management
-│   ├── mod.rs               # Database, AsyncDatabase wrappers
-│   ├── connection.rs        # PoolConfig, QueryPerformanceMonitor
-│   ├── migrations.rs        # Migration runner (versions 1-33+)
-│   ├── schema.sql           # Base schema
-│   └── utils.rs
-├── sync/                    # Sync queue
-│   ├── queue.rs             # SyncQueue service
-│   └── background.rs        # BackgroundSyncService
-├── logging/                 # Structured logging
-├── lib.rs                   # Module exports
-└── bin/
-    └── export-types.rs      # Type export binary for ts-rs
+src-tauri/src/domains/<context>/
+├── mod.rs                   # Single public facade export
+├── facade.rs                # Context facade
+├── application/             # Orchestration/use-case logic
+├── domain/                  # Domain rules/value types/errors
+├── infrastructure/          # SQL repositories + infrastructure adapters
+├── ipc/                     # Tauri command handlers
+└── tests/                   # Unit/integration/validation/permission tests
 ```
+
+Current backend contexts:
+`auth`, `users`, `tasks`, `clients`, `interventions`, `inventory`, `quotes`,
+`calendar`, `reports`, `settings`, `sync`, `audit`, `documents`, `analytics`,
+`notifications`.
+
+Compatibility layer during migration:
+- `src-tauri/src/commands/*` domain files: IPC shim re-exports.
+- `src-tauri/src/services/*` domain files: shim re-exports.
+- `src-tauri/src/repositories/*` domain files: shim re-exports.
+
+Shared technical infrastructure remains outside domains (by design):
+`db/`, `shared/`, transport/websocket/compression utilities, cache/event bus,
+and runtime wiring (`service_builder.rs`, `main.rs`).
 
 ---
 
@@ -146,7 +71,7 @@ pub struct ArchiveTaskRequest {
 
 #### Step 2: Add Repository Method
 
-**Location**: `src-tauri/src/repositories/task_repository.rs`
+**Location**: `src-tauri/src/domains/tasks/infrastructure/task_repository.rs`
 
 ```rust
 impl TaskRepository {
@@ -166,7 +91,7 @@ impl TaskRepository {
 
 #### Step 3: Add Service Method
 
-**Location**: `src-tauri/src/services/task.rs`
+**Location**: `src-tauri/src/domains/tasks/infrastructure/task.rs`
 
 ```rust
 impl TaskService {
@@ -194,7 +119,7 @@ impl TaskService {
 
 #### Step 4: Add Command Handler
 
-**Location**: `src-tauri/src/commands/task/facade.rs`
+**Location**: `src-tauri/src/domains/tasks/ipc/task/facade.rs`
 
 ```rust
 #[tauri::command]
@@ -219,9 +144,9 @@ pub async fn task_archive(
 **Location**: `src-tauri/src/main.rs`
 
 ```rust
-// In the invoke_handler! macro (lines 69-306)
+// In the invoke_handler! macro (lines 71-308)
 .invoke_handler(tauri::generate_handler![
-    // ... existing commands (236 commands)
+    // ... existing commands (~205 registered commands)
     commands::task::facade::task_archive,  // Add your command here
 ])
 ```
@@ -293,7 +218,10 @@ return Err(AppError::Database("Failed to fetch task".into())); // GOOD
 
 ## Authentication Middleware
 
-### authenticate! Macro (`src-tauri/src/commands/auth_middleware.rs:27-66`)
+### authenticate! Macro
+
+**Canonical location**: `src-tauri/src/domains/auth/ipc/auth_middleware.rs`
+(shim at `src-tauri/src/commands/auth_middleware.rs` — 1-line `pub use` re-export)
 
 ```rust
 // Basic authentication - validates session token
@@ -353,19 +281,19 @@ pub async fn task_archive(...) -> Result<ApiResponse<Task>, AppError> {
 
 | Service | Purpose | Location |
 |---------|---------|----------|
-| `AuthService` | Authentication, password hashing | `services/auth.rs` |
-| `SessionService` | Session lifecycle | `services/session.rs` |
-| `TokenService` | JWT generation (2h access, 7d refresh) | `services/token.rs` |
-| `TwoFactorService` | TOTP 2FA (6-digit, 30s window) | `services/two_factor.rs` |
-| `RateLimiterService` | Request limiting (5 attempts, 15m lockout) | `services/rate_limiter.rs` |
-| `SecurityMonitorService` | Security event monitoring | `services/security_monitor.rs` |
-| `TaskService` | Task CRUD, assignment | `services/task.rs` |
-| `InterventionService` | Workflow management | `services/intervention.rs` |
-| `MaterialService` | Inventory management | `services/material.rs` |
-| `CalendarService` | Scheduling | `services/calendar.rs` |
-| `CacheService` | In-memory caching | `services/cache.rs` |
-| `InMemoryEventBus` | Domain events | `services/event_bus.rs` |
-| `SyncQueue` | Offline sync queue | `sync/queue.rs` |
+| `AuthService` | Authentication, password hashing | `domains/auth/infrastructure/auth.rs` |
+| `SessionService` | Session lifecycle | `domains/auth/infrastructure/session.rs` |
+| `TokenService` | JWT generation (2h access, 7d refresh) | `domains/auth/infrastructure/token.rs` |
+| `TwoFactorService` | TOTP 2FA (6-digit, 30s window) | `domains/auth/infrastructure/two_factor.rs` |
+| `RateLimiterService` | Request limiting (5 attempts, 15m lockout) | `domains/auth/infrastructure/rate_limiter.rs` |
+| `SecurityMonitorService` | Security event monitoring | `domains/audit/infrastructure/security_monitor.rs` |
+| `TaskService` | Task CRUD, assignment | `domains/tasks/infrastructure/task.rs` |
+| `InterventionService` | Workflow management | `domains/interventions/infrastructure/intervention.rs` |
+| `MaterialService` | Inventory management | `domains/inventory/infrastructure/material.rs` |
+| `CalendarService` | Scheduling | `domains/calendar/infrastructure/calendar.rs` |
+| `CacheService` | In-memory caching | `services/cache.rs` *(true shared infra)* |
+| `InMemoryEventBus` | Domain events | `services/event_bus.rs` *(true shared infra)* |
+| `SyncQueue` | Offline sync queue | `domains/sync/infrastructure/sync/queue.rs` |
 
 ---
 

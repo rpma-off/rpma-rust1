@@ -1,13 +1,13 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth/compatibility';
-import { CalendarDashboard } from '@/components/dashboard/CalendarDashboard';
-import { ErrorBoundary } from '@/components/ui/error-boundary';
-import { PageShell } from '@/components/layout/PageShell';
-import { LoadingState } from '@/components/layout/LoadingState';
-import { useTranslation } from '@/hooks/useTranslation';
+import { useAuth } from '@/domains/auth';
+import { CalendarDashboard } from '@/domains/workflow';
+import { ErrorBoundary } from '@/shared/ui/ui/error-boundary';
+import { PageShell } from '@/shared/ui/layout/PageShell';
+import { LoadingState } from '@/shared/ui/layout/LoadingState';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -34,3 +34,4 @@ export default function DashboardPage() {
     </ErrorBoundary>
   );
 }
+

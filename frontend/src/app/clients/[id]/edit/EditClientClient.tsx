@@ -3,14 +3,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { useAuth } from '@/lib/auth/compatibility';
+import { useAuth } from '@/domains/auth';
 import { ArrowLeft, Save, X } from 'lucide-react';
 import Link from 'next/link';
-import type { Client } from '@/types';
-import { convertTimestamps } from '@/lib/types';
-import { ipcClient } from '@/lib/ipc';
-import { useTranslation } from '@/hooks/useTranslation';
-import { LoadingState } from '@/components/layout/LoadingState';
+import type { Client } from '@/shared/types';
+import { convertTimestamps } from '@/shared/utils';
+import { ipcClient } from '@/shared/utils';
+import { useTranslation } from '@/shared/hooks/useTranslation';
+import { LoadingState } from '@/shared/ui/layout/LoadingState';
 
 interface EditClientClientProps {
   params: {

@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { useCreateQuote } from '@/hooks/useQuotes';
-import { PageShell } from '@/components/layout/PageShell';
-import type { CreateQuoteRequest, CreateQuoteItemRequest, QuoteItemKind } from '@/types/quote.types';
+import { useCreateQuote } from '@/shared/hooks/useQuotes';
+import { PageShell } from '@/shared/ui/layout/PageShell';
+import type { CreateQuoteRequest, CreateQuoteItemRequest, QuoteItemKind } from '@/shared/types';
 
 export default function NewQuotePage() {
   const router = useRouter();
@@ -329,3 +329,4 @@ export default function NewQuotePage() {
     </PageShell>
   );
 }
+

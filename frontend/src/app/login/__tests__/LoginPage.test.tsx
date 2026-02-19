@@ -8,7 +8,7 @@ import LoginPage from '../page';
 const mockSignIn = jest.fn();
 const mockPush = jest.fn();
 
-jest.mock('@/lib/auth/compatibility', () => ({
+jest.mock('@/domains/auth', () => ({
   useAuth: () => ({
     signIn: mockSignIn,
     loading: false,
@@ -34,7 +34,7 @@ jest.mock('next/navigation', () => ({
   usePathname: () => '/login',
 }));
 
-jest.mock('@/lib/logger', () => ({
+jest.mock('@/shared/utils', () => ({
   createLogger: () => ({
     debug: jest.fn(),
     info: jest.fn(),

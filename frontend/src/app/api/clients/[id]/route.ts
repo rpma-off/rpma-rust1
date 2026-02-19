@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { clientService } from '@/lib/services/entities/client.service';
+import { clientService } from '@/domains/clients/server';
 import { handleApiError, ApiError } from '@/lib/api-error';
 import { HttpStatus } from '@/lib/http-status';
 import { validateApiAuth } from '@/lib/api-auth';
@@ -146,3 +146,4 @@ export async function DELETE(
     return handleApiError(error, 'client-delete');
   }
 }
+

@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { configurationService } from '@/lib/services/entities/configuration.service';
+﻿import { NextRequest, NextResponse } from 'next/server';
+import { configurationService } from '@/domains/admin/server';
 import { SystemConfiguration } from '@/types/configuration.types';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 
@@ -43,3 +43,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+

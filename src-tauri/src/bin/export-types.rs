@@ -39,6 +39,11 @@ use rpma_ppf_intervention::models::{
         SmsConfig, SmsProvider, TemplateVariables,
     },
     photo::{Photo, PhotoCategory, PhotoType},
+    quote::{
+        CreateQuoteItemRequest, CreateQuoteRequest, Quote, QuoteAcceptResponse,
+        QuoteExportResponse, QuoteItem, QuoteItemKind, QuoteListResponse, QuoteQuery, QuoteStatus,
+        TaskCreatedInfo, UpdateQuoteItemRequest, UpdateQuoteRequest,
+    },
     reports::{
         AnalyticsDashboard, AnalyticsDashboardData, AnalyticsKpi, AnalyticsMetric,
         AnalyticsSummary, AnalyticsTimeSeries, CalculationPeriod, ChartConfig, ChartDataPoint,
@@ -386,6 +391,59 @@ fn main() {
     type_definitions.push_str("\n");
     type_definitions
         .push_str(&PhotoCategory::export_to_string().expect("Failed to export PhotoCategory type"));
+    type_definitions.push_str("\n\n");
+
+    // Quote types
+    type_definitions.push_str("// Quote types\n");
+    type_definitions
+        .push_str(&QuoteStatus::export_to_string().expect("Failed to export QuoteStatus type"));
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&QuoteItemKind::export_to_string().expect("Failed to export QuoteItemKind type"));
+    type_definitions.push_str("\n");
+    type_definitions.push_str(&Quote::export_to_string().expect("Failed to export Quote type"));
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&QuoteItem::export_to_string().expect("Failed to export QuoteItem type"));
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&QuoteQuery::export_to_string().expect("Failed to export QuoteQuery type"));
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &QuoteListResponse::export_to_string().expect("Failed to export QuoteListResponse type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &CreateQuoteRequest::export_to_string().expect("Failed to export CreateQuoteRequest type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &UpdateQuoteRequest::export_to_string().expect("Failed to export UpdateQuoteRequest type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &CreateQuoteItemRequest::export_to_string()
+            .expect("Failed to export CreateQuoteItemRequest type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &UpdateQuoteItemRequest::export_to_string()
+            .expect("Failed to export UpdateQuoteItemRequest type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &QuoteAcceptResponse::export_to_string()
+            .expect("Failed to export QuoteAcceptResponse type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &TaskCreatedInfo::export_to_string().expect("Failed to export TaskCreatedInfo type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &QuoteExportResponse::export_to_string()
+            .expect("Failed to export QuoteExportResponse type"),
+    );
     type_definitions.push_str("\n\n");
 
     // Intervention types

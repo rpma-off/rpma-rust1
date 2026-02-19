@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withMethod } from '@/lib/api-route-wrapper';
 import { handleApiError } from '@/lib/api-error';
-import { taskWorkflowSyncService } from '@/lib/services/sync/task-workflow-sync.service';
+import { taskWorkflowSyncService } from '@/domains/workflow/server';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 
 /**
@@ -79,3 +79,4 @@ async function handleGet(
 
 export const POST = withMethod(['POST'])(handlePost);
 export const GET = withMethod(['GET'])(handleGet);
+

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
@@ -32,9 +32,9 @@ import { StatsGrid } from './StatsGrid';
 import { PerformanceMetrics } from './PerformanceMetrics';
 import { QuickActions } from './QuickActions';
 import { RecentTasksPreview } from './RecentTasksPreview';
-import { WorkflowExecutionDashboard } from './WorkflowExecutionDashboard';
-import { QualityAssuranceDashboard } from './QualityAssuranceDashboard';
-import { PhotoDocumentationDashboard } from './PhotoDocumentationDashboard';
+import { WorkflowExecutionDashboard } from '@/domains/workflow';
+import { QualityAssuranceDashboard } from '@/domains/admin';
+import { PhotoDocumentationDashboard } from '@/domains/admin';
 
 // Import types
 import { DashboardTask, TaskStatus, Priority, DashboardProps, ViewMode, DashboardStats } from './types';

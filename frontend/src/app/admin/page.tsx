@@ -20,25 +20,25 @@ import {
   Search,
   Download
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { useAuth } from '@/lib/auth/compatibility';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/ui/card';
+import { Button } from '@/shared/ui/ui/button';
+import { Badge } from '@/shared/ui/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/ui/tabs';
+import { Input } from '@/shared/ui/ui/input';
+import { useAuth } from '@/domains/auth';
 import { useRouter } from 'next/navigation';
-import { ipcClient } from '@/lib/ipc';
-import type { CreateUserRequest, UserAccount } from '@/lib/backend';
-import { WorkflowExecutionDashboard } from '@/components/dashboard/WorkflowExecutionDashboard';
-import { QualityAssuranceDashboard } from '@/components/dashboard/QualityAssuranceDashboard';
-import { PhotoDocumentationDashboard } from '@/components/dashboard/PhotoDocumentationDashboard';
-import { SecurityDashboard } from '@/components/dashboard/SecurityDashboard';
-import { PageShell } from '@/components/layout/PageShell';
-import { PageHeader, StatCard } from '@/components/ui/page-header';
-import { ErrorState } from '@/components/layout/ErrorState';
-import { EmptyState } from '@/components/layout/EmptyState';
-import { LoadingState } from '@/components/layout/LoadingState';
-import { useTranslation } from '@/hooks/useTranslation';
+import { ipcClient, convertTimestamps } from '@/shared/utils';
+import type { CreateUserRequest, UserAccount } from '@/shared/types';
+import { WorkflowExecutionDashboard } from '@/domains/workflow';
+import { QualityAssuranceDashboard } from '@/domains/admin';
+import { PhotoDocumentationDashboard } from '@/domains/admin';
+import { SecurityDashboard } from '@/domains/admin';
+import { PageShell } from '@/shared/ui/layout/PageShell';
+import { PageHeader, StatCard } from '@/shared/ui/ui/page-header';
+import { ErrorState } from '@/shared/ui/layout/ErrorState';
+import { EmptyState } from '@/shared/ui/layout/EmptyState';
+import { LoadingState } from '@/shared/ui/layout/LoadingState';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 
 interface SystemStats {
   totalUsers: number;
@@ -173,7 +173,8 @@ export default function AdminPage() {
        setIsLoadingUsers(true);
        const result = await ipcClient.users.list(50, 0, user.token);
        if (result && result.data) {
-         setUsers(result.data || []);
+         const normalizedUsers = (result.data || []).map(user => convertTimestamps(user));
+         setUsers(normalizedUsers as UserAccount[]);
        }
      } catch (error) {
        console.error('Failed to load users:', error);
@@ -670,3 +671,4 @@ export default function AdminPage() {
     </PageShell>
   );
 }
+

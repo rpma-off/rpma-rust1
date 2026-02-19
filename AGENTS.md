@@ -1,4 +1,4 @@
-# AGENTS.md 
+# AGENTS.md
 
 ## Project Overview
 
@@ -10,22 +10,25 @@ RPMA v2 is an **offline-first desktop application** for managing Paint Protectio
 rpma-rust/
 ├── frontend/                 # Next.js 14 application
 │   ├── src/
-│   │   ├── app/             # App Router pages
-│   │   ├── components/      # 260+ React components
-│   │   ├── hooks/           # 67 custom hooks
-│   │   ├── lib/             # Utilities and IPC client (19 domain modules)
-│   │   ├── types/           # TypeScript type definitions (auto-generated from Rust)
-│   │   └── ui/              # shadcn/ui components
+│   │   ├── app/             # App Router pages (38 pages)
+│   │   ├── components/      # Shared React components (179+)
+│   │   ├── domains/         # Feature domains (auth, interventions, inventory, tasks)
+│   │   ├── hooks/           # Shared custom hooks (63+)
+│   │   ├── lib/             # Utilities and IPC client (20 domain modules)
+│   │   ├── shared/          # Shared utilities, types, and UI components
+│   │   └── types/           # TypeScript types (auto-generated — DO NOT EDIT)
 │   └── package.json
 ├── src-tauri/               # Rust/Tauri backend
 │   ├── src/
 │   │   ├── commands/        # 65 IPC command files
+│   │   ├── domains/         # Bounded contexts (documents, interventions, inventory, quotes, tasks, users)
 │   │   ├── models/          # 21 data models with ts-rs exports
 │   │   ├── repositories/    # 20 repository files
 │   │   ├── services/        # 88 service files
+│   │   ├── shared/          # Shared backend utilities
 │   │   └── db/              # Database management
 │   └── Cargo.toml
-├── migrations/              # SQLite migrations
+├── migrations/              # SQLite migrations (6 SQL files)
 ├── scripts/                 # Build and validation scripts
 └── docs/                    # Project documentation
 ```
@@ -44,33 +47,22 @@ Repositories (Data Access - Rust)
     ↓
 SQLite Database (WAL mode)
 ```
-**Key Principle**: Keep layer responsibilities strictly separated. Each layer should only communicate with adjacent layers.
 
+### Bounded Context Architecture
+The backend uses Domain-Driven Design with bounded contexts under `src-tauri/src/domains/`:
+- **documents** — Document storage and management
+- **interventions** — PPF intervention lifecycle
+- **inventory** — Material and stock tracking
+- **quotes** — Quote creation and management
+- **tasks** — Task and work order management
+- **users** — User management and authentication
 
-## 🔑 Critical Consistency Rules
+Each domain follows the structure: `application/` | `domain/` | `infrastructure/` | `ipc/` | `tests/`
 
-### Type Safety
-- **NEVER manually edit generated TypeScript types** in `frontend/src/types/`
-- Rust models are the single source of truth for types
-- Use `npm run types:sync` to regenerate TypeScript types from Rust
-- Run `npm run types:drift-check` to verify type consistency
+The frontend mirrors this with feature domains under `frontend/src/domains/`:
+- **auth** | **interventions** | **inventory** | **tasks**
 
-### IPC Communication
-- All protected IPC commands **MUST** require `session_token` parameter
-- Follow the response envelope pattern: `{ success: boolean, data?: T, error?: string }`
-- Commands must be properly exported in `src-tauri/src/lib.rs`
-- Frontend IPC calls go through `frontend/src/lib/ipc/`
-
-### Security & RBAC
-- Enforce Role-Based Access Control (RBAC) in command handlers
-- Session tokens must be validated for all protected endpoints
-- User permissions must be checked before data access
-
-### Database
-- **NEVER** modify the database schema directly
-- Always create migrations in `migrations/` directory
-- Use the migration manager for schema changes
-- Test migrations with `node scripts/validate-migration-system.js`
+Each frontend domain follows the structure: `api/` | `components/` | `hooks/` | `ipc/` | `services/`
 
 ## 📋 Essential Commands
 
@@ -85,7 +77,7 @@ npm run frontend:build         # Build frontend only
 npm run backend:build          # Build backend only (Cargo)
 npm run backend:build:release  # Build backend release version
 
-# Quality check (RECOMMENDED)
+# Quality check (REQUIRED before every commit)
 npm run quality:check          # Run all quality checks
 
 # Linting/Type-checking
@@ -94,6 +86,10 @@ npm run frontend:type-check    # TypeScript checking
 npm run backend:check          # Cargo check
 npm run backend:clippy         # Rust linting
 npm run backend:fmt            # Rust formatting
+
+# Architecture validation
+npm run validate:bounded-contexts  # Validate domain boundaries
+npm run architecture:check         # Check architecture rules
 
 # Type Management
 npm run types:sync             # Regenerate TS types from Rust
@@ -108,31 +104,7 @@ cd frontend && npm run test:coverage # Run tests with coverage
 # Security & Validation
 npm run security:audit         # Security vulnerability scan
 node scripts/validate-migration-system.js  # Migration validation
-
-## 🎯 Development Workflow
-
-### Before Making Changes
-1. Search for existing patterns in the codebase - **copy existing patterns** rather than inventing new ones
-2. Understand the 4-layer architecture and which layer your change belongs to
-3. Check related documentation in `docs/` directory
-
-### Making Changes
-1. **Frontend changes**: 
-   - Follow existing component patterns in `frontend/src/components/`
-   - Use Tailwind CSS for styling
-   - Leverage shadcn/ui components when available
-   - Keep components small and focused
-
-2. **Backend changes**:
-   - Add/modify models in `src-tauri/src/models/` with `#[derive(Serialize, TS)]`
-   - Implement business logic in `src-tauri/src/services/`
-   - Add data access methods in `src-tauri/src/repositories/`
-   - Create IPC commands in `src-tauri/src/commands/`
-
-3. **Database changes**:
-   - Create a new migration file in `migrations/`
-   - Follow migration naming: `YYYYMMDDHHMMSS_description.sql`
-   - Test both up and down migrations
+```
 
 ## ✅ Test Gates
 
@@ -183,6 +155,47 @@ npm run types:drift-check      # Must pass
 npm run security:audit         # Must pass
 ```
 
+## 🚨 Strict Rules
+
+### Architecture — MUST follow at all times
+- ✅ **ALWAYS** follow the 4-layer architecture: Frontend → Commands → Services → Repositories → DB
+- ❌ **NEVER** skip layers (e.g., no direct DB access from services — use repositories)
+- ❌ **NEVER** put business logic in IPC command handlers
+- ❌ **NEVER** import across domain boundaries internally (use each domain's public `api/index.ts`)
+- ❌ **NEVER** write SQL outside of `infrastructure/` files in domain modules
+- ✅ **ALWAYS** place new backend features inside the appropriate bounded context under `src-tauri/src/domains/`
+- ✅ **ALWAYS** validate bounded contexts pass: `npm run validate:bounded-contexts`
+
+### Type Safety — MUST follow at all times
+- ❌ **NEVER** manually edit any file under `frontend/src/types/` — these are auto-generated
+- ✅ **ALWAYS** run `npm run types:sync` after modifying any Rust model that derives `ts-rs::TS`
+- ✅ **ALWAYS** run `npm run types:drift-check` before committing
+
+### Security — MUST follow at all times
+- ✅ **ALWAYS** validate `session_token` in every protected IPC command
+- ✅ **ALWAYS** enforce RBAC permissions before executing protected operations
+- ❌ **NEVER** commit secrets, tokens, or credentials to Git
+- ❌ **NEVER** bypass authentication or authorization checks
+- ✅ **ALWAYS** run `npm run security:audit` before submitting code
+
+### Database — MUST follow at all times
+- ✅ **ALWAYS** use numbered migration files for schema changes
+- ✅ **ALWAYS** make migrations idempotent (`IF NOT EXISTS`, `IF EXISTS`)
+- ❌ **NEVER** modify the database schema outside of migration files
+- ✅ **ALWAYS** validate migrations: `node scripts/validate-migration-system.js`
+
+### Code Quality — MUST follow at all times
+- ✅ **ALWAYS** run `npm run quality:check` before every commit
+- ✅ **ALWAYS** use UTF-8 encoding for all source files
+- ✅ **ALWAYS** use conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, `perf:`, `security:`
+- ❌ **NEVER** push directly to `main` (enforced by `git:guard-main` hook)
+- ❌ **NEVER** disable or skip linting, type-checking, or architecture validation
+
+### Testing — MUST follow at all times
+- ✅ **ALWAYS** write a regression test for every bug fix
+- ✅ **ALWAYS** write tests for new features (success path, validation failure, permission failure)
+- ❌ **NEVER** write flaky or time-dependent tests
+- ❌ **NEVER** delete or weaken existing tests to make a build pass
 
 ## 🧪 Testing Requirements
 
@@ -198,7 +211,7 @@ npm run security:audit         # Must pass
 - **E2E tests**: For critical user flows
 
 ### Test Quality Standards
-- No flaky tests - tests must be deterministic
+- No flaky tests — tests must be deterministic
 - Use stable fixtures, avoid time-based dependencies
 - Keep tests fast, focused, and readable
 - Test success path AND error conditions
@@ -209,3 +222,8 @@ npm run security:audit         # Must pass
   - ✅ Success path
   - ❌ Validation failures
   - 🔒 Permission failures (for protected features)
+
+## 📚 Additional Resources
+
+- **DOCUMENTATION**: See `docs/agent-pack/README.md` for detailed documentation about our project
+- **ADR**: See `docs/adr/` for architectural decision records

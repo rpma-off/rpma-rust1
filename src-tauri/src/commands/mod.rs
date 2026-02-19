@@ -107,7 +107,7 @@ use crate::models::auth::UserRole;
 use crate::models::client::ClientWithTasks;
 use crate::models::task::*;
 
-use crate::domains::inventory::InventoryService;
+use crate::domains::inventory::InventoryFacade;
 use crate::models::Client;
 use crate::services::{ClientService, SettingsService, TaskService};
 use base64::{engine::general_purpose, Engine as _};
@@ -291,7 +291,7 @@ pub struct AppStateType {
     pub dashboard_service: Arc<crate::services::DashboardService>,
     pub intervention_service: Arc<crate::services::InterventionService>,
     pub material_service: Arc<crate::services::MaterialService>,
-    pub inventory_service: Arc<InventoryService>,
+    pub inventory_service: Arc<InventoryFacade>,
     pub message_service: Arc<crate::services::MessageService>,
     pub photo_service: Arc<crate::services::PhotoService>,
     pub quote_service: Arc<crate::services::QuoteService>,
@@ -549,168 +549,16 @@ pub async fn user_crud(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<UserResponse, AppError> {
-    let current_user = authenticate!(&session_token, &state);
+    let request = crate::commands::user::UserCrudRequest {
+        action,
+        session_token,
+        correlation_id: None,
+    };
 
-    match action {
-        UserAction::Create { data } => {
-            if !matches!(current_user.role, UserRole::Admin | UserRole::Supervisor) {
-                return Err(AppError::Authorization(
-                    "Only admins and supervisors can create users".to_string(),
-                ));
-            }
-            let role = match data.role.as_str() {
-                "admin" => UserRole::Admin,
-                "technician" => UserRole::Technician,
-                "supervisor" => UserRole::Supervisor,
-                "viewer" => UserRole::Viewer,
-                _ => return Err(AppError::Validation(format!("Invalid role: {}", data.role))),
-            };
-            let user = state
-                .auth_service
-                .create_account(
-                    &data.email,
-                    &data.email,
-                    &data.first_name,
-                    &data.last_name,
-                    role,
-                    &data.password,
-                )
-                .map_db_error("User creation")?;
-            Ok(UserResponse::Created(user))
-        }
-        UserAction::Get { id } => {
-            if !matches!(current_user.role, UserRole::Admin | UserRole::Supervisor)
-                && current_user.user_id != id
-            {
-                return Err(AppError::Authorization(
-                    "You can only view your own profile".to_string(),
-                ));
-            }
-            let user = state
-                .auth_service
-                .get_user(&id)
-                .map_db_error("User retrieval")?;
-            match user {
-                Some(user) => Ok(UserResponse::Found(user)),
-                None => Ok(UserResponse::NotFound),
-            }
-        }
-        UserAction::Update { id, data } => {
-            if !matches!(current_user.role, UserRole::Admin | UserRole::Supervisor)
-                && current_user.user_id != id
-            {
-                return Err(AppError::Authorization(
-                    "You can only update your own profile".to_string(),
-                ));
-            }
-            let role = match data.role.as_ref() {
-                Some(r) => Some(match r.as_str() {
-                    "admin" => UserRole::Admin,
-                    "technician" => UserRole::Technician,
-                    "supervisor" => UserRole::Supervisor,
-                    "viewer" => UserRole::Viewer,
-                    _ => return Err(AppError::Validation(format!("Invalid role: {}", r))),
-                }),
-                None => None,
-            };
-            let user = state
-                .auth_service
-                .update_user(
-                    &id,
-                    data.email.as_deref(),
-                    data.first_name.as_deref(),
-                    data.last_name.as_deref(),
-                    role,
-                    data.is_active,
-                )
-                .map_db_error("User update")?;
-            Ok(UserResponse::Updated(user))
-        }
-        UserAction::Delete { id } => {
-            if !matches!(current_user.role, UserRole::Admin) {
-                return Err(AppError::Authorization(
-                    "Only admins can delete users".to_string(),
-                ));
-            }
-            if current_user.user_id == id {
-                return Err(AppError::Validation(
-                    "You cannot delete your own account".to_string(),
-                ));
-            }
-            state
-                .auth_service
-                .delete_user(&id)
-                .map_err(|e| AppError::Database(format!("User deletion failed: {}", e)))?;
-            Ok(UserResponse::Deleted)
-        }
-        UserAction::List { limit, offset } => {
-            if !matches!(current_user.role, UserRole::Admin | UserRole::Supervisor) {
-                return Err(AppError::Authorization(
-                    "Only admins and supervisors can list users".to_string(),
-                ));
-            }
-            let users = state
-                .auth_service
-                .list_users(limit, offset)
-                .map_err(|e| AppError::Database(format!("User listing failed: {}", e)))?;
-            Ok(UserResponse::List(UserListResponse { data: users }))
-        }
-        UserAction::ChangePassword { id, new_password } => {
-            if !matches!(current_user.role, UserRole::Admin) && current_user.user_id != id {
-                return Err(AppError::Authorization(
-                    "You can only change your own password".to_string(),
-                ));
-            }
-            state
-                .auth_service
-                .change_password(&id, &new_password)
-                .map_err(|e| AppError::Database(format!("Password change failed: {}", e)))?;
-            Ok(UserResponse::PasswordChanged)
-        }
-        UserAction::ChangeRole { id, new_role } => {
-            if !matches!(current_user.role, UserRole::Admin) {
-                return Err(AppError::Authorization(
-                    "Only administrators can change user roles".to_string(),
-                ));
-            }
-            if id == current_user.user_id {
-                return Err(AppError::Validation(
-                    "You cannot change your own role".to_string(),
-                ));
-            }
-            // Use UserService to change role
-            let user_service = crate::services::UserService::new(state.repositories.user.clone());
-            user_service
-                .change_role(&id, new_role, &current_user.user_id)
-                .await?;
-            Ok(UserResponse::RoleChanged)
-        }
-        UserAction::Ban { id } => {
-            if !matches!(current_user.role, UserRole::Admin) {
-                return Err(AppError::Authorization(
-                    "Only administrators can ban users".to_string(),
-                ));
-            }
-            if id == current_user.user_id {
-                return Err(AppError::Validation("You cannot ban yourself".to_string()));
-            }
-            // Use UserService to ban user
-            let user_service = crate::services::UserService::new(state.repositories.user.clone());
-            user_service.ban_user(&id, &current_user.user_id).await?;
-            Ok(UserResponse::UserBanned)
-        }
-        UserAction::Unban { id } => {
-            if !matches!(current_user.role, UserRole::Admin) {
-                return Err(AppError::Authorization(
-                    "Only administrators can unban users".to_string(),
-                ));
-            }
-            // Use UserService to unban user
-            let user_service = crate::services::UserService::new(state.repositories.user.clone());
-            user_service.unban_user(&id, &current_user.user_id).await?;
-            Ok(UserResponse::UserUnbanned)
-        }
-    }
+    let response = crate::commands::user::user_crud(request, state).await?;
+    response
+        .data
+        .ok_or_else(|| AppError::Internal("Missing user_crud response payload".to_string()))
 }
 
 /// Health check command
@@ -720,26 +568,14 @@ pub async fn user_crud(
 pub fn get_database_status(state: AppState) -> Result<ApiResponse<serde_json::Value>, AppError> {
     debug!("Database status requested");
 
-    let db = &state.db;
-    let is_initialized = db.is_initialized().map_err(|e| {
-        error!("Failed to check database initialization: {}", e);
-        AppError::Database(e.to_string())
-    })?;
-    let tables = db.list_tables().map_err(|e| {
-        error!("Failed to list database tables: {}", e);
-        AppError::Database(e.to_string())
-    })?;
-    let version = db.get_version().map_err(|e| {
-        error!("Failed to get database version: {}", e);
-        AppError::Database(e.to_string())
-    })?;
+    let status =
+        crate::services::system::SystemService::get_database_status(&state.db).map_err(|e| {
+            error!("Failed to get database status: {}", e);
+            AppError::Database(e)
+        })?;
 
     debug!("Database status retrieved successfully");
-    Ok(ApiResponse::success(serde_json::json!({
-        "initialized": is_initialized,
-        "tables": tables,
-        "version": version
-    })))
+    Ok(ApiResponse::success(status))
 }
 
 /// Get database connection pool statistics
@@ -838,26 +674,12 @@ pub struct ClientCrudRequest {
 pub async fn get_users(
     page: i32,
     page_size: i32,
-    _search: Option<String>,
-    _role: Option<String>,
+    search: Option<String>,
+    role: Option<String>,
     session_token: String,
     state: AppState<'_>,
 ) -> Result<serde_json::Value, String> {
-    let limit = Some(page_size);
-    let offset = Some((page - 1) * page_size);
-
-    match user_crud(UserAction::List { limit, offset }, session_token, state)
-        .await
-        .map_err(|e| e.to_string())?
-    {
-        UserResponse::List(users) => Ok(serde_json::json!({
-            "users": users.data,
-            "total": users.data.len(),
-            "page": page,
-            "page_size": page_size
-        })),
-        _ => Err("Unexpected response".to_string()),
-    }
+    crate::commands::user::get_users(page, page_size, search, role, session_token, state).await
 }
 
 /// Create user
@@ -867,13 +689,7 @@ pub async fn create_user(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<serde_json::Value, String> {
-    match user_crud(UserAction::Create { data: user_data }, session_token, state)
-        .await
-        .map_err(|e| e.to_string())?
-    {
-        UserResponse::Created(user) => Ok(serde_json::json!(user)),
-        _ => Err("Failed to create user".to_string()),
-    }
+    crate::commands::user::create_user(user_data, session_token, state).await
 }
 
 /// Update user
@@ -884,20 +700,7 @@ pub async fn update_user(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<serde_json::Value, String> {
-    match user_crud(
-        UserAction::Update {
-            id: user_id,
-            data: user_data,
-        },
-        session_token,
-        state,
-    )
-    .await
-    .map_err(|e| e.to_string())?
-    {
-        UserResponse::Updated(user) => Ok(serde_json::json!(user)),
-        _ => Err("Failed to update user".to_string()),
-    }
+    crate::commands::user::update_user(user_id, user_data, session_token, state).await
 }
 
 /// Update user status
@@ -908,28 +711,7 @@ pub async fn update_user_status(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<(), String> {
-    let update_data = UpdateUserRequest {
-        email: None,
-        first_name: None,
-        last_name: None,
-        role: None,
-        is_active: Some(is_active),
-    };
-
-    match user_crud(
-        UserAction::Update {
-            id: user_id,
-            data: update_data,
-        },
-        session_token,
-        state,
-    )
-    .await
-    .map_err(|e| e.to_string())?
-    {
-        UserResponse::Updated(_) => Ok(()),
-        _ => Err("Failed to update user status".to_string()),
-    }
+    crate::commands::user::update_user_status(user_id, is_active, session_token, state).await
 }
 
 /// Delete user
@@ -939,13 +721,7 @@ pub async fn delete_user(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<(), String> {
-    match user_crud(UserAction::Delete { id: user_id }, session_token, state)
-        .await
-        .map_err(|e| e.to_string())?
-    {
-        UserResponse::Deleted => Ok(()),
-        _ => Err("Failed to delete user".to_string()),
-    }
+    crate::commands::user::delete_user(user_id, session_token, state).await
 }
 
 #[cfg(test)]

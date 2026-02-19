@@ -13,6 +13,23 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/domains/admin": ["./frontend/src/domains/admin/api"],
+      "@/domains/analytics": ["./frontend/src/domains/analytics/api"],
+      "@/domains/audit": ["./frontend/src/domains/audit/api"],
+      "@/domains/auth": ["./frontend/src/domains/auth/api"],
+      "@/domains/clients": ["./frontend/src/domains/clients/api"],
+      "@/domains/tasks": ["./frontend/src/domains/tasks/api"],
+      "@/domains/inventory": ["./frontend/src/domains/inventory/api"],
+      "@/domains/interventions": ["./frontend/src/domains/interventions/api"],
+      "@/domains/notifications": ["./frontend/src/domains/notifications/api"],
+      "@/domains/reports": ["./frontend/src/domains/reports/api"],
+      "@/domains/settings": ["./frontend/src/domains/settings/api"],
+      "@/domains/users": ["./frontend/src/domains/users/api"],
+      "@/domains/workflow": ["./frontend/src/domains/workflow/api"],
+      "@/shared/*": ["./frontend/src/shared/*"]
+    }
   }
 }

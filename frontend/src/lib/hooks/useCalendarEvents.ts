@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
-import { useAuth } from '@/lib/auth/compatibility';
+import { useAuth } from '@/domains/auth';
 import { getCalendarTasks } from '@/lib/ipc/calendar';
 import { useCalendarStore } from '@/lib/stores/calendarStore';
 

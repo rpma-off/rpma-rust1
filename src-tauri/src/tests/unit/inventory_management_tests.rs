@@ -4,8 +4,8 @@
 
 use crate::db::Database;
 use crate::models::material::{
-    InventoryTransaction, InventoryTransactionType, Material, MaterialCategory, 
-    MaterialType, UnitOfMeasure, Supplier
+    InventoryTransaction, InventoryTransactionType, Material, MaterialCategory, MaterialType,
+    Supplier, UnitOfMeasure,
 };
 use crate::services::material::MaterialService;
 use chrono::{DateTime, Utc};
@@ -15,9 +15,10 @@ use uuid::Uuid;
 // Helper to create a test database with inventory tables
 async fn create_test_db() -> Database {
     let db = Database::new_in_memory().await.unwrap();
-    
+
     // Create inventory tables from migration 024
-    db.execute_batch(r#"
+    db.execute_batch(
+        r#"
         -- Material categories table
         CREATE TABLE IF NOT EXISTS material_categories (
             -- Identifiers
@@ -169,8 +170,10 @@ async fn create_test_db() -> Database {
             synced INTEGER NOT NULL DEFAULT 0,
             last_synced_at INTEGER
         );
-    "#).unwrap();
-    
+    "#,
+    )
+    .unwrap();
+
     // Insert default categories from migration 024
     db.execute_batch(r#"
         INSERT OR IGNORE INTO material_categories (id, name, code, level, description, color, created_at, updated_at)
@@ -181,28 +184,32 @@ async fn create_test_db() -> Database {
             ('cat_tools', 'Tools & Equipment', 'TLS', 1, 'Tools and installation equipment', '#EF4444', unixepoch() * 1000, unixepoch() * 1000),
             ('cat_consumables', 'Consumables', 'CON', 1, 'Consumable supplies', '#8B5CF6', unixepoch() * 1000, unixepoch() * 1000);
     "#).unwrap();
-    
+
     db
 }
 
 // Helper to create a test supplier
 fn create_test_supplier(db: &Database, name: &str) -> String {
     let supplier_id = Uuid::new_v4().to_string();
-    
-    db.execute(r#"
+
+    db.execute(
+        r#"
         INSERT INTO suppliers (id, name, code, email, phone, is_active, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    "#, params![
-        supplier_id,
-        name,
-        format!("SUP_{}", name.to_uppercase()),
-        format!("{}@example.com", name),
-        "555-1234",
-        1,
-        chrono::Utc::now().timestamp_millis(),
-        chrono::Utc::now().timestamp_millis()
-    ]).unwrap();
-    
+    "#,
+        params![
+            supplier_id,
+            name,
+            format!("SUP_{}", name.to_uppercase()),
+            format!("{}@example.com", name),
+            "555-1234",
+            1,
+            chrono::Utc::now().timestamp_millis(),
+            chrono::Utc::now().timestamp_millis()
+        ],
+    )
+    .unwrap();
+
     supplier_id
 }
 
@@ -210,7 +217,7 @@ fn create_test_supplier(db: &Database, name: &str) -> String {
 async fn test_create_material_category() {
     let db = create_test_db().await;
     let service = MaterialService::new(db);
-    
+
     // Create a new category
     let request = crate::services::material::CreateMaterialCategoryRequest {
         name: "Test Category".to_string(),
@@ -220,15 +227,20 @@ async fn test_create_material_category() {
         description: Some("Test category description".to_string()),
         color: Some("#FF0000".to_string()),
     };
-    
-    let category = service.create_material_category(request, Some("user_1".to_string())).unwrap();
-    
+
+    let category = service
+        .create_material_category(request, Some("user_1".to_string()))
+        .unwrap();
+
     // Verify category properties
     assert_eq!(category.name, "Test Category");
     assert_eq!(category.code, Some("TEST".to_string()));
     assert_eq!(category.parent_id, None);
     assert_eq!(category.level, 1);
-    assert_eq!(category.description, Some("Test category description".to_string()));
+    assert_eq!(
+        category.description,
+        Some("Test category description".to_string())
+    );
     assert_eq!(category.color, Some("#FF0000".to_string()));
     assert!(category.is_active);
 }
@@ -237,7 +249,7 @@ async fn test_create_material_category() {
 async fn test_create_material_category_with_parent() {
     let db = create_test_db().await;
     let service = MaterialService::new(db);
-    
+
     // Create parent category first
     let parent_request = crate::services::material::CreateMaterialCategoryRequest {
         name: "Parent Category".to_string(),
@@ -247,9 +259,11 @@ async fn test_create_material_category_with_parent() {
         description: None,
         color: None,
     };
-    
-    let parent = service.create_material_category(parent_request, Some("user_1".to_string())).unwrap();
-    
+
+    let parent = service
+        .create_material_category(parent_request, Some("user_1".to_string()))
+        .unwrap();
+
     // Create child category
     let child_request = crate::services::material::CreateMaterialCategoryRequest {
         name: "Child Category".to_string(),
@@ -259,9 +273,11 @@ async fn test_create_material_category_with_parent() {
         description: None,
         color: None,
     };
-    
-    let child = service.create_material_category(child_request, Some("user_1".to_string())).unwrap();
-    
+
+    let child = service
+        .create_material_category(child_request, Some("user_1".to_string()))
+        .unwrap();
+
     // Verify relationship
     assert_eq!(child.parent_id, Some(parent.id.clone()));
     assert_eq!(child.level, 2);
@@ -271,10 +287,10 @@ async fn test_create_material_category_with_parent() {
 async fn test_create_material() {
     let db = create_test_db().await;
     let service = MaterialService::new(db);
-    
+
     // Create a test supplier
     let supplier_id = create_test_supplier(&service.db, "Test Supplier");
-    
+
     // Create material request
     let request = crate::services::material::CreateMaterialRequest {
         sku: "MAT-001".to_string(),
@@ -303,13 +319,18 @@ async fn test_create_material() {
         storage_location: Some("Warehouse A".to_string()),
         warehouse_id: Some("WH-01".to_string()),
     };
-    
-    let material = service.create_material(request, Some("user_1".to_string())).unwrap();
-    
+
+    let material = service
+        .create_material(request, Some("user_1".to_string()))
+        .unwrap();
+
     // Verify material properties
     assert_eq!(material.sku, "MAT-001");
     assert_eq!(material.name, "Test Material");
-    assert_eq!(material.description, Some("Test material description".to_string()));
+    assert_eq!(
+        material.description,
+        Some("Test material description".to_string())
+    );
     assert_eq!(material.material_type, MaterialType::Film);
     assert_eq!(material.category, Some("PPF Films".to_string()));
     assert_eq!(material.category_id, Some("cat_ppf_films".to_string()));
@@ -329,7 +350,7 @@ async fn test_create_material() {
 async fn test_create_inventory_transaction() {
     let db = create_test_db().await;
     let service = MaterialService::new(db);
-    
+
     // Create a material first
     let material_request = crate::services::material::CreateMaterialRequest {
         sku: "MAT-002".to_string(),
@@ -358,9 +379,11 @@ async fn test_create_inventory_transaction() {
         storage_location: None,
         warehouse_id: None,
     };
-    
-    let material = service.create_material(material_request, Some("user_1".to_string())).unwrap();
-    
+
+    let material = service
+        .create_material(material_request, Some("user_1".to_string()))
+        .unwrap();
+
     // Create inventory transaction request
     let transaction_request = crate::services::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
@@ -379,24 +402,32 @@ async fn test_create_inventory_transaction() {
         intervention_id: None,
         step_id: None,
     };
-    
-    let transaction = service.create_inventory_transaction(transaction_request, "user_1".to_string()).unwrap();
-    
+
+    let transaction = service
+        .create_inventory_transaction(transaction_request, "user_1".to_string())
+        .unwrap();
+
     // Verify transaction properties
     assert_eq!(transaction.material_id, material.id);
-    assert_eq!(transaction.transaction_type, InventoryTransactionType::StockIn);
+    assert_eq!(
+        transaction.transaction_type,
+        InventoryTransactionType::StockIn
+    );
     assert_eq!(transaction.quantity, 50.0);
     assert_eq!(transaction.previous_stock, 0.0);
     assert_eq!(transaction.new_stock, 50.0);
     assert_eq!(transaction.reference_number, Some("PO-001".to_string()));
-    assert_eq!(transaction.reference_type, Some("purchase_order".to_string()));
+    assert_eq!(
+        transaction.reference_type,
+        Some("purchase_order".to_string())
+    );
     assert_eq!(transaction.notes, Some("Initial stock".to_string()));
     assert_eq!(transaction.unit_cost, Some(25.0));
     assert_eq!(transaction.warehouse_id, Some("WH-01".to_string()));
     assert_eq!(transaction.location_to, Some("Rack A1".to_string()));
     assert_eq!(transaction.batch_number, Some("BATCH-001".to_string()));
     assert_eq!(transaction.quality_status, Some("approved".to_string()));
-    
+
     // Verify material stock was updated
     let updated_material = service.get_material_by_id(&material.id).unwrap().unwrap();
     assert_eq!(updated_material.current_stock, 50.0);
@@ -406,7 +437,7 @@ async fn test_create_inventory_transaction() {
 async fn test_stock_out_transaction() {
     let db = create_test_db().await;
     let service = MaterialService::new(db);
-    
+
     // Create a material
     let material_request = crate::services::material::CreateMaterialRequest {
         sku: "MAT-003".to_string(),
@@ -435,9 +466,11 @@ async fn test_stock_out_transaction() {
         storage_location: None,
         warehouse_id: None,
     };
-    
-    let material = service.create_material(material_request, Some("user_1".to_string())).unwrap();
-    
+
+    let material = service
+        .create_material(material_request, Some("user_1".to_string()))
+        .unwrap();
+
     // Stock in first
     let stock_in_request = crate::services::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
@@ -456,9 +489,11 @@ async fn test_stock_out_transaction() {
         intervention_id: None,
         step_id: None,
     };
-    
-    service.create_inventory_transaction(stock_in_request, "user_1".to_string()).unwrap();
-    
+
+    service
+        .create_inventory_transaction(stock_in_request, "user_1".to_string())
+        .unwrap();
+
     // Stock out
     let stock_out_request = crate::services::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
@@ -477,12 +512,17 @@ async fn test_stock_out_transaction() {
         intervention_id: Some("INT-001".to_string()),
         step_id: Some("STEP-001".to_string()),
     };
-    
-    let transaction = service.create_inventory_transaction(stock_out_request, "user_1".to_string()).unwrap();
-    
+
+    let transaction = service
+        .create_inventory_transaction(stock_out_request, "user_1".to_string())
+        .unwrap();
+
     // Verify transaction properties
     assert_eq!(transaction.material_id, material.id);
-    assert_eq!(transaction.transaction_type, InventoryTransactionType::StockOut);
+    assert_eq!(
+        transaction.transaction_type,
+        InventoryTransactionType::StockOut
+    );
     assert_eq!(transaction.quantity, 25.0);
     assert_eq!(transaction.previous_stock, 100.0);
     assert_eq!(transaction.new_stock, 75.0);
@@ -491,7 +531,7 @@ async fn test_stock_out_transaction() {
     assert_eq!(transaction.location_from, Some("Rack A1".to_string()));
     assert_eq!(transaction.intervention_id, Some("INT-001".to_string()));
     assert_eq!(transaction.step_id, Some("STEP-001".to_string()));
-    
+
     // Verify material stock was updated
     let updated_material = service.get_material_by_id(&material.id).unwrap().unwrap();
     assert_eq!(updated_material.current_stock, 75.0);
@@ -501,7 +541,7 @@ async fn test_stock_out_transaction() {
 async fn test_adjustment_transaction() {
     let db = create_test_db().await;
     let service = MaterialService::new(db);
-    
+
     // Create a material
     let material_request = crate::services::material::CreateMaterialRequest {
         sku: "MAT-004".to_string(),
@@ -530,9 +570,11 @@ async fn test_adjustment_transaction() {
         storage_location: None,
         warehouse_id: None,
     };
-    
-    let material = service.create_material(material_request, Some("user_1".to_string())).unwrap();
-    
+
+    let material = service
+        .create_material(material_request, Some("user_1".to_string()))
+        .unwrap();
+
     // Stock in first
     let stock_in_request = crate::services::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
@@ -551,9 +593,11 @@ async fn test_adjustment_transaction() {
         intervention_id: None,
         step_id: None,
     };
-    
-    service.create_inventory_transaction(stock_in_request, "user_1".to_string()).unwrap();
-    
+
+    service
+        .create_inventory_transaction(stock_in_request, "user_1".to_string())
+        .unwrap();
+
     // Adjustment (positive)
     let adjustment_request = crate::services::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
@@ -572,18 +616,26 @@ async fn test_adjustment_transaction() {
         intervention_id: None,
         step_id: None,
     };
-    
-    let transaction = service.create_inventory_transaction(adjustment_request, "user_1".to_string()).unwrap();
-    
+
+    let transaction = service
+        .create_inventory_transaction(adjustment_request, "user_1".to_string())
+        .unwrap();
+
     // Verify transaction properties
     assert_eq!(transaction.material_id, material.id);
-    assert_eq!(transaction.transaction_type, InventoryTransactionType::Adjustment);
+    assert_eq!(
+        transaction.transaction_type,
+        InventoryTransactionType::Adjustment
+    );
     assert_eq!(transaction.quantity, 5.0);
     assert_eq!(transaction.previous_stock, 20.0);
     assert_eq!(transaction.new_stock, 25.0);
     assert_eq!(transaction.reference_number, Some("ADJ-001".to_string()));
-    assert_eq!(transaction.reference_type, Some("manual_adjustment".to_string()));
-    
+    assert_eq!(
+        transaction.reference_type,
+        Some("manual_adjustment".to_string())
+    );
+
     // Verify material stock was updated
     let updated_material = service.get_material_by_id(&material.id).unwrap().unwrap();
     assert_eq!(updated_material.current_stock, 25.0);
@@ -593,7 +645,7 @@ async fn test_adjustment_transaction() {
 async fn test_transfer_transaction() {
     let db = create_test_db().await;
     let service = MaterialService::new(db);
-    
+
     // Create a material
     let material_request = crate::services::material::CreateMaterialRequest {
         sku: "MAT-005".to_string(),
@@ -622,9 +674,11 @@ async fn test_transfer_transaction() {
         storage_location: None,
         warehouse_id: None,
     };
-    
-    let material = service.create_material(material_request, Some("user_1".to_string())).unwrap();
-    
+
+    let material = service
+        .create_material(material_request, Some("user_1".to_string()))
+        .unwrap();
+
     // Stock in first
     let stock_in_request = crate::services::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
@@ -643,9 +697,11 @@ async fn test_transfer_transaction() {
         intervention_id: None,
         step_id: None,
     };
-    
-    service.create_inventory_transaction(stock_in_request, "user_1".to_string()).unwrap();
-    
+
+    service
+        .create_inventory_transaction(stock_in_request, "user_1".to_string())
+        .unwrap();
+
     // Transfer to another location
     let transfer_request = crate::services::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
@@ -664,20 +720,28 @@ async fn test_transfer_transaction() {
         intervention_id: None,
         step_id: None,
     };
-    
-    let transaction = service.create_inventory_transaction(transfer_request, "user_1".to_string()).unwrap();
-    
+
+    let transaction = service
+        .create_inventory_transaction(transfer_request, "user_1".to_string())
+        .unwrap();
+
     // Verify transaction properties
     assert_eq!(transaction.material_id, material.id);
-    assert_eq!(transaction.transaction_type, InventoryTransactionType::Transfer);
+    assert_eq!(
+        transaction.transaction_type,
+        InventoryTransactionType::Transfer
+    );
     assert_eq!(transaction.quantity, 3.0);
     assert_eq!(transaction.previous_stock, 10.0);
     assert_eq!(transaction.new_stock, 7.0); // Stock remains the same, just location changes
     assert_eq!(transaction.reference_number, Some("TRF-001".to_string()));
-    assert_eq!(transaction.reference_type, Some("location_transfer".to_string()));
+    assert_eq!(
+        transaction.reference_type,
+        Some("location_transfer".to_string())
+    );
     assert_eq!(transaction.location_from, Some("Toolbox A".to_string()));
     assert_eq!(transaction.location_to, Some("Mobile Unit 1".to_string()));
-    
+
     // Verify material stock wasn't changed (transfer doesn't change total stock)
     let updated_material = service.get_material_by_id(&material.id).unwrap().unwrap();
     assert_eq!(updated_material.current_stock, 10.0); // Should still be 10
@@ -687,7 +751,7 @@ async fn test_transfer_transaction() {
 async fn test_waste_transaction() {
     let db = create_test_db().await;
     let service = MaterialService::new(db);
-    
+
     // Create a material
     let material_request = crate::services::material::CreateMaterialRequest {
         sku: "MAT-006".to_string(),
@@ -716,9 +780,11 @@ async fn test_waste_transaction() {
         storage_location: None,
         warehouse_id: None,
     };
-    
-    let material = service.create_material(material_request, Some("user_1".to_string())).unwrap();
-    
+
+    let material = service
+        .create_material(material_request, Some("user_1".to_string()))
+        .unwrap();
+
     // Stock in first
     let stock_in_request = crate::services::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
@@ -737,9 +803,11 @@ async fn test_waste_transaction() {
         intervention_id: None,
         step_id: None,
     };
-    
-    service.create_inventory_transaction(stock_in_request, "user_1".to_string()).unwrap();
-    
+
+    service
+        .create_inventory_transaction(stock_in_request, "user_1".to_string())
+        .unwrap();
+
     // Waste transaction
     let waste_request = crate::services::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
@@ -758,12 +826,17 @@ async fn test_waste_transaction() {
         intervention_id: None,
         step_id: None,
     };
-    
-    let transaction = service.create_inventory_transaction(waste_request, "user_1".to_string()).unwrap();
-    
+
+    let transaction = service
+        .create_inventory_transaction(waste_request, "user_1".to_string())
+        .unwrap();
+
     // Verify transaction properties
     assert_eq!(transaction.material_id, material.id);
-    assert_eq!(transaction.transaction_type, InventoryTransactionType::Waste);
+    assert_eq!(
+        transaction.transaction_type,
+        InventoryTransactionType::Waste
+    );
     assert_eq!(transaction.quantity, 5.0);
     assert_eq!(transaction.previous_stock, 30.0);
     assert_eq!(transaction.new_stock, 25.0);
@@ -773,7 +846,7 @@ async fn test_waste_transaction() {
     assert_eq!(transaction.location_to, Some("Waste Disposal".to_string()));
     assert_eq!(transaction.batch_number, Some("BATCH-002".to_string()));
     assert_eq!(transaction.quality_status, Some("damaged".to_string()));
-    
+
     // Verify material stock was updated
     let updated_material = service.get_material_by_id(&material.id).unwrap().unwrap();
     assert_eq!(updated_material.current_stock, 25.0);
@@ -783,7 +856,7 @@ async fn test_waste_transaction() {
 async fn test_get_material_by_id() {
     let db = create_test_db().await;
     let service = MaterialService::new(db);
-    
+
     // Create a material
     let material_request = crate::services::material::CreateMaterialRequest {
         sku: "MAT-007".to_string(),
@@ -812,14 +885,16 @@ async fn test_get_material_by_id() {
         storage_location: None,
         warehouse_id: None,
     };
-    
-    let created_material = service.create_material(material_request, Some("user_1".to_string())).unwrap();
-    
+
+    let created_material = service
+        .create_material(material_request, Some("user_1".to_string()))
+        .unwrap();
+
     // Get material by ID
     let retrieved_material = service.get_material_by_id(&created_material.id).unwrap();
-    
+
     assert!(retrieved_material.is_some(), "Should find material by ID");
-    
+
     let material = retrieved_material.unwrap();
     assert_eq!(material.id, created_material.id);
     assert_eq!(material.sku, "MAT-007");
@@ -832,7 +907,7 @@ async fn test_get_material_by_id() {
 async fn test_get_material_by_sku() {
     let db = create_test_db().await;
     let service = MaterialService::new(db);
-    
+
     // Create a material
     let material_request = crate::services::material::CreateMaterialRequest {
         sku: "MAT-008".to_string(),
@@ -861,14 +936,16 @@ async fn test_get_material_by_sku() {
         storage_location: None,
         warehouse_id: None,
     };
-    
-    let created_material = service.create_material(material_request, Some("user_1".to_string())).unwrap();
-    
+
+    let created_material = service
+        .create_material(material_request, Some("user_1".to_string()))
+        .unwrap();
+
     // Get material by SKU
     let retrieved_material = service.get_material_by_sku("MAT-008").unwrap();
-    
+
     assert!(retrieved_material.is_some(), "Should find material by SKU");
-    
+
     let material = retrieved_material.unwrap();
     assert_eq!(material.id, created_material.id);
     assert_eq!(material.sku, "MAT-008");
@@ -879,7 +956,7 @@ async fn test_get_material_by_sku() {
 async fn test_list_materials() {
     let db = create_test_db().await;
     let service = MaterialService::new(db);
-    
+
     // Create multiple materials
     for i in 1..=5 {
         let material_request = crate::services::material::CreateMaterialRequest {
@@ -909,15 +986,17 @@ async fn test_list_materials() {
             storage_location: None,
             warehouse_id: None,
         };
-        
-        service.create_material(material_request, Some("user_1".to_string())).unwrap();
+
+        service
+            .create_material(material_request, Some("user_1".to_string()))
+            .unwrap();
     }
-    
+
     // List materials
     let materials = service.list_materials(None, None, None).unwrap();
-    
+
     assert_eq!(materials.len(), 5, "Should have 5 materials");
-    
+
     // Verify materials are sorted by name
     for i in 1..5 {
         let expected_name = format!("Test Material List {}", i);
@@ -929,7 +1008,7 @@ async fn test_list_materials() {
 async fn test_list_materials_with_filters() {
     let db = create_test_db().await;
     let service = MaterialService::new(db);
-    
+
     // Create materials with different types
     let film_request = crate::services::material::CreateMaterialRequest {
         sku: "MAT-FILM".to_string(),
@@ -958,7 +1037,7 @@ async fn test_list_materials_with_filters() {
         storage_location: None,
         warehouse_id: None,
     };
-    
+
     let liquid_request = crate::services::material::CreateMaterialRequest {
         sku: "MAT-LIQUID".to_string(),
         name: "Liquid Material".to_string(),
@@ -986,38 +1065,47 @@ async fn test_list_materials_with_filters() {
         storage_location: None,
         warehouse_id: None,
     };
-    
-    service.create_material(film_request, Some("user_1".to_string())).unwrap();
-    service.create_material(liquid_request, Some("user_1".to_string())).unwrap();
-    
+
+    service
+        .create_material(film_request, Some("user_1".to_string()))
+        .unwrap();
+    service
+        .create_material(liquid_request, Some("user_1".to_string()))
+        .unwrap();
+
     // Filter by material type
-    let film_materials = service.list_materials(
-        Some(MaterialType::Film), 
-        None, 
-        None
-    ).unwrap();
-    
+    let film_materials = service
+        .list_materials(Some(MaterialType::Film), None, None)
+        .unwrap();
+
     assert_eq!(film_materials.len(), 1, "Should have 1 film material");
     assert_eq!(film_materials[0].material_type, MaterialType::Film);
-    
+
     // Filter by category
-    let cleaning_materials = service.list_materials(
-        None, 
-        Some("cat_cleaning".to_string()), 
-        None
-    ).unwrap();
-    
-    assert_eq!(cleaning_materials.len(), 1, "Should have 1 cleaning material");
-    assert_eq!(cleaning_materials[0].category_id, Some("cat_cleaning".to_string()));
-    
+    let cleaning_materials = service
+        .list_materials(None, Some("cat_cleaning".to_string()), None)
+        .unwrap();
+
+    assert_eq!(
+        cleaning_materials.len(),
+        1,
+        "Should have 1 cleaning material"
+    );
+    assert_eq!(
+        cleaning_materials[0].category_id,
+        Some("cat_cleaning".to_string())
+    );
+
     // Filter by search term
-    let search_materials = service.list_materials(
-        None, 
-        None, 
-        Some("Liquid".to_string())
-    ).unwrap();
-    
-    assert_eq!(search_materials.len(), 1, "Should have 1 material matching search");
+    let search_materials = service
+        .list_materials(None, None, Some("Liquid".to_string()))
+        .unwrap();
+
+    assert_eq!(
+        search_materials.len(),
+        1,
+        "Should have 1 material matching search"
+    );
     assert_eq!(search_materials[0].name, "Liquid Material");
 }
 
@@ -1025,7 +1113,7 @@ async fn test_list_materials_with_filters() {
 async fn test_list_material_categories() {
     let db = create_test_db().await;
     let service = MaterialService::new(db);
-    
+
     // Create additional categories
     let category_request_1 = crate::services::material::CreateMaterialCategoryRequest {
         name: "Custom Category 1".to_string(),
@@ -1035,7 +1123,7 @@ async fn test_list_material_categories() {
         description: None,
         color: None,
     };
-    
+
     let category_request_2 = crate::services::material::CreateMaterialCategoryRequest {
         name: "Custom Category 2".to_string(),
         code: Some("CUST2".to_string()),
@@ -1044,23 +1132,27 @@ async fn test_list_material_categories() {
         description: None,
         color: None,
     };
-    
-    service.create_material_category(category_request_1, Some("user_1".to_string())).unwrap();
-    service.create_material_category(category_request_2, Some("user_1".to_string())).unwrap();
-    
+
+    service
+        .create_material_category(category_request_1, Some("user_1".to_string()))
+        .unwrap();
+    service
+        .create_material_category(category_request_2, Some("user_1".to_string()))
+        .unwrap();
+
     // List categories
     let categories = service.list_material_categories(None).unwrap();
-    
+
     // Should have default categories (5) + custom categories (2) = 7
     assert_eq!(categories.len(), 7, "Should have 7 categories");
-    
+
     // Verify default categories exist
     assert!(categories.iter().any(|c| c.name == "PPF Films"));
     assert!(categories.iter().any(|c| c.name == "Adhesives"));
     assert!(categories.iter().any(|c| c.name == "Cleaning Solutions"));
     assert!(categories.iter().any(|c| c.name == "Tools & Equipment"));
     assert!(categories.iter().any(|c| c.name == "Consumables"));
-    
+
     // Verify custom categories exist
     assert!(categories.iter().any(|c| c.name == "Custom Category 1"));
     assert!(categories.iter().any(|c| c.name == "Custom Category 2"));
@@ -1070,7 +1162,7 @@ async fn test_list_material_categories() {
 async fn test_list_material_categories_with_parent() {
     let db = create_test_db().await;
     let service = MaterialService::new(db);
-    
+
     // Create parent category
     let parent_request = crate::services::material::CreateMaterialCategoryRequest {
         name: "Parent Category".to_string(),
@@ -1080,9 +1172,11 @@ async fn test_list_material_categories_with_parent() {
         description: None,
         color: None,
     };
-    
-    let parent = service.create_material_category(parent_request, Some("user_1".to_string())).unwrap();
-    
+
+    let parent = service
+        .create_material_category(parent_request, Some("user_1".to_string()))
+        .unwrap();
+
     // Create child categories
     for i in 1..=3 {
         let child_request = crate::services::material::CreateMaterialCategoryRequest {
@@ -1093,15 +1187,17 @@ async fn test_list_material_categories_with_parent() {
             description: None,
             color: None,
         };
-        
-        service.create_material_category(child_request, Some("user_1".to_string())).unwrap();
+
+        service
+            .create_material_category(child_request, Some("user_1".to_string()))
+            .unwrap();
     }
-    
+
     // List child categories
     let child_categories = service.list_material_categories(Some(&parent.id)).unwrap();
-    
+
     assert_eq!(child_categories.len(), 3, "Should have 3 child categories");
-    
+
     // Verify all children have the correct parent
     for child in &child_categories {
         assert_eq!(child.parent_id, Some(parent.id.clone()));

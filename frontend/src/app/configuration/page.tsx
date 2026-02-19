@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect, Suspense, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/ui/tabs';
+import { Button } from '@/shared/ui/ui/button';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/shared/ui/ui/sheet';
 import { 
   Settings, 
   Workflow, 
@@ -19,32 +19,31 @@ import {
    AlertTriangle,
    Menu
 } from 'lucide-react';
-import { useLogger } from '@/hooks/useLogger';
-import { LogDomain } from '@/lib/logging/types';
-import { PageShell } from '@/components/layout/PageShell';
-import { LoadingState } from '@/components/layout/LoadingState';
-import { PageHeader } from '@/components/ui/page-header';
-import { IPC_COMMANDS, safeInvoke } from '@/lib/ipc';
-import type { JsonValue } from '@/types/json';
+import { useLogger } from '@/shared/hooks/useLogger';
+import { LogDomain } from '@/shared/utils';
+import { PageShell } from '@/shared/ui/layout/PageShell';
+import { LoadingState } from '@/shared/ui/layout/LoadingState';
+import { PageHeader } from '@/shared/ui/ui/page-header';
+import { useSystemHealth } from '@/domains/admin';
 
 // Lazy load tab components to reduce initial bundle size
-const SystemSettingsTab = dynamic(() => import('./components/SystemSettingsTab').then(mod => ({ default: mod.SystemSettingsTab })), {
+const SystemSettingsTab = dynamic(() => import('@/domains/admin').then(mod => ({ default: mod.SystemSettingsTab })), {
   loading: () => <LoadingState />
 });
 
-const BusinessRulesTab = dynamic(() => import('./components/BusinessRulesTab').then(mod => ({ default: mod.BusinessRulesTab })), {
+const BusinessRulesTab = dynamic(() => import('@/domains/admin').then(mod => ({ default: mod.BusinessRulesTab })), {
   loading: () => <LoadingState />
 });
 
-const SecurityPoliciesTab = dynamic(() => import('./components/SecurityPoliciesTab').then(mod => ({ default: mod.SecurityPoliciesTab })), {
+const SecurityPoliciesTab = dynamic(() => import('@/domains/admin').then(mod => ({ default: mod.SecurityPoliciesTab })), {
   loading: () => <LoadingState />
 });
 
-const IntegrationsTab = dynamic(() => import('./components/IntegrationsTab').then(mod => ({ default: mod.IntegrationsTab })), {
+const IntegrationsTab = dynamic(() => import('@/domains/admin').then(mod => ({ default: mod.IntegrationsTab })), {
   loading: () => <LoadingState />
 });
-import { PerformanceTab } from './components/PerformanceTab';
-import { MonitoringTab } from './components/MonitoringTab';
+import { PerformanceTab } from '@/domains/admin';
+import { MonitoringTab } from '@/domains/admin';
 
 // Tab configuration
 const tabConfig = [
@@ -83,23 +82,22 @@ const tabConfig = [
 export default function ConfigurationPage() {
   const [activeTab, setActiveTab] = useState('system');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [systemStatus, setSystemStatus] = useState<'healthy' | 'warning' | 'error'>('healthy');
   
   // Initialize logging
-  const { logInfo, logError, logUserAction, logPerformance } = useLogger({
+  const { logInfo, logUserAction, logPerformance } = useLogger({
     context: LogDomain.SYSTEM,
     component: 'ConfigurationPage',
     enablePerformanceLogging: true
   });
 
+  // System health via shared hook (no direct IPC in page)
+  const { systemStatus, refreshing: isRefreshing, refresh } = useSystemHealth({
+    pollInterval: 30000,
+  });
+
   // Use refs for logger functions to prevent useEffect re-runs
   const logInfoRef = useRef(logInfo);
-  const logErrorRef = useRef(logError);
-  const logPerformanceRef = useRef(logPerformance);
   logInfoRef.current = logInfo;
-  logErrorRef.current = logError;
-  logPerformanceRef.current = logPerformance;
 
   // Log page load (only once on mount)
   useEffect(() => {
@@ -170,62 +168,12 @@ export default function ConfigurationPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeTab, logUserAction]);
 
-  // System status check via IPC (instead of HTTP)
-  useEffect(() => {
-    let cancelled = false;
-    const checkSystemStatus = async () => {
-      const timer = logPerformanceRef.current('System status check');
-      try {
-        logInfoRef.current('Checking system status via IPC');
-        const result = await safeInvoke<JsonValue>(IPC_COMMANDS.HEALTH_CHECK, {});
-        if (!cancelled) {
-          if (result && typeof result === 'object' && 'status' in result) {
-            const status = result as { status: string };
-            const newStatus = status.status === 'healthy' ? 'healthy' as const : 'warning' as const;
-            setSystemStatus(newStatus);
-            logInfoRef.current('System status updated', { status: newStatus });
-          } else {
-            setSystemStatus('healthy');
-          }
-        }
-      } catch (error) {
-        if (!cancelled) {
-          logErrorRef.current('System status check failed', { error: error instanceof Error ? error.message : error });
-          setSystemStatus('error');
-        }
-      } finally {
-        timer();
-      }
-    };
-    
-    checkSystemStatus();
-    const interval = setInterval(checkSystemStatus, 30000); // Check every 30 seconds
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, []);
-
   const handleRefresh = async () => {
     const timer = logPerformance('Page refresh');
-    setIsRefreshing(true);
     logUserAction('Page refresh initiated');
-    
-    try {
-      const result = await safeInvoke<JsonValue>(IPC_COMMANDS.HEALTH_CHECK, {});
-      if (result && typeof result === 'object' && 'status' in result) {
-        const status = result as { status: string };
-        const newStatus = status.status === 'healthy' ? 'healthy' as const : 'warning' as const;
-        setSystemStatus(newStatus);
-      }
-      logInfo('Page refresh completed');
-    } catch (error) {
-      logError('Page refresh failed', { error: error instanceof Error ? error.message : error });
-      setSystemStatus('error');
-    } finally {
-      setIsRefreshing(false);
-      timer();
-    }
+    await refresh();
+    logInfo('Page refresh completed');
+    timer();
   };
 
   const handleTabChange = (newTab: string) => {
@@ -438,3 +386,4 @@ export default function ConfigurationPage() {
     </PageShell>
   );
 }
+

@@ -1,18 +1,18 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { useAuth } from '@/lib/auth/compatibility';
-import { clientService } from '@/lib/services/entities/client.service';
+import { useAuth } from '@/domains/auth';
+import { clientService } from '@/domains/clients';
 import { ArrowLeft, Save, X, UserPlus, Building, User } from 'lucide-react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import type { CreateClientDTO } from '@/types/client.types';
-import { useTranslation } from '@/hooks/useTranslation';
+import { Button } from '@/shared/ui/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/ui/card';
+import { Input } from '@/shared/ui/ui/input';
+import { Textarea } from '@/shared/ui/ui/textarea';
+import type { CreateClientDTO } from '@/shared/types';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 
 export default function NewClientPage() {
   const router = useRouter();
@@ -281,3 +281,5 @@ export default function NewClientPage() {
     </div>
   );
 }
+
+

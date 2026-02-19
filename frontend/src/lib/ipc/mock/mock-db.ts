@@ -1,5 +1,5 @@
 import type { UserSession, Task, Client, ClientStatistics, TaskStatistics, UserAccount } from '@/lib/backend';
-import type { Material, Supplier, MaterialCategory, InventoryStats, MaterialStats, MaterialConsumption, InterventionMaterialSummary } from '@/lib/inventory';
+import type { Material, Supplier, MaterialCategory, InventoryStats, MaterialStats, MaterialConsumption, InterventionMaterialSummary } from '@/shared/types';
 import type { JsonObject } from '@/types/json';
 import { defaultFixtures, type MockFixtures, type MockUser } from './fixtures';
 
