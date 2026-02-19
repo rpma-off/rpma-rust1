@@ -180,6 +180,41 @@ function checkDomainPublicApi() {
   return violations;
 }
 
+function checkDomainDirectoryStructure() {
+  const entries = fs.readdirSync(domainsRoot, { withFileTypes: true });
+  const violations = [];
+  const requiredSubdirs = ['application', 'domain', 'infrastructure', 'ipc', 'tests'];
+
+  // Ensure no loose .rs files exist (except mod.rs) — domains must be directories
+  for (const entry of entries) {
+    if (entry.isFile() && entry.name !== 'mod.rs') {
+      violations.push(
+        `${path.join(domainsRoot, entry.name)} is a loose file; each domain must be a directory with DDD layers`
+      );
+    }
+  }
+
+  // Ensure each domain directory has required DDD subdirectories and a facade
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const domainDir = path.join(domainsRoot, entry.name);
+
+    for (const sub of requiredSubdirs) {
+      const subDir = path.join(domainDir, sub);
+      if (!fs.existsSync(subDir) || !fs.statSync(subDir).isDirectory()) {
+        violations.push(`${entry.name}/ missing required subdirectory: ${sub}/`);
+      }
+    }
+
+    const facadePath = path.join(domainDir, 'facade.rs');
+    if (!fs.existsSync(facadePath)) {
+      violations.push(`${entry.name}/ missing facade.rs`);
+    }
+  }
+
+  return violations;
+}
+
 function checkCommandBusinessLogic() {
   const violations = [];
   if (fs.existsSync(commandMaterialPath)) {
@@ -200,12 +235,14 @@ function main() {
   const sqlViolations = checkSqlUsage();
   const crossDomainViolations = checkBoundedContextImports();
   const apiViolations = checkDomainPublicApi();
+  const structureViolations = checkDomainDirectoryStructure();
   const ipcLogicViolations = checkCommandBusinessLogic();
 
   const violations = [
     ...sqlViolations.map((file) => `SQL usage outside infrastructure: ${file}`),
     ...crossDomainViolations.map((msg) => `Cross-domain access: ${msg}`),
     ...apiViolations.map((msg) => `Public API rule: ${msg}`),
+    ...structureViolations.map((msg) => `Domain structure rule: ${msg}`),
     ...ipcLogicViolations.map((msg) => `IPC business logic rule: ${msg}`),
   ];
 
