@@ -35,7 +35,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { href: '/team', label: 'Employés/Ressources', icon: <Users className="w-5 h-5" /> },
+  { href: '/staff', label: 'Employés/Ressources', icon: <Users className="w-5 h-5" /> },
   { href: '/inventory', label: 'Inventaire', icon: <Package className="w-5 h-5" /> },
   { href: '/configuration', label: 'Intégrations', icon: <Workflow className="w-5 h-5" /> },
   { href: '/settings', label: 'Préférences', icon: <SettingsIcon className="w-5 h-5" /> },
@@ -190,7 +190,7 @@ export function RPMASidebar({ onMobileClose, isOpen, onToggle }: { onMobileClose
     if (href === '/tasks' && pathname === '/interventions') return true;
     if (href === '/settings' && pathname.startsWith('/configuration')) return true;
     if (href === '/tasks' && pathname.startsWith('/tasks')) return true;
-    if (href === '/team' && pathname.startsWith('/team')) return true;
+    if (href === '/staff' && pathname.startsWith('/staff')) return true;
     if (href === '/technicians' && pathname.startsWith('/technicians')) return true;
     return pathname === href;
   };
@@ -298,7 +298,7 @@ export function RPMAMobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClos
     if (href === '/tasks' && pathname === '/interventions') return true;
     if (href === '/settings' && pathname.startsWith('/configuration')) return true;
     if (href === '/tasks' && pathname.startsWith('/tasks')) return true;
-    if (href === '/team' && pathname.startsWith('/team')) return true;
+    if (href === '/staff' && pathname.startsWith('/staff')) return true;
     if (href === '/technicians' && pathname.startsWith('/technicians')) return true;
     return pathname === href;
   };

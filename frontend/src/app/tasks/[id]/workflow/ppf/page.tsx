@@ -172,7 +172,7 @@ export default function PPFWorkflowPage() {
                       <span>
                         {status === 'completed' ? t('common.view') :
                          status === 'current' ? t('common.next') :
-                         status === 'available' ? t('interventions.startIntervention') : 'Verrouillé'}
+                         status === 'available' ? t('interventions.startIntervention') : 'VerrouillÃ©'}
                       </span>
                       <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
                     </span>

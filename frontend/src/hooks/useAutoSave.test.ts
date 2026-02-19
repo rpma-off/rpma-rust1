@@ -392,7 +392,7 @@ describe('useWorkflowStepAutoSave', () => {
       await result.current.forceSave()
     })
 
-    expect(result.current.error).toContain('Erreur sauvegarde étape')
+    expect(result.current.error).toContain('Erreur sauvegarde Ã©tape')
   })
 })
 describe('useBeforeUnloadSave', () => {

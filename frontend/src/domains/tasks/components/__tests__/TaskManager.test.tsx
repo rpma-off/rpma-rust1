@@ -261,7 +261,7 @@ describe('TaskManager', () => {
       // Check for loading spinner by its test ID
       expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
       // Also ensure the main content is not loaded yet
-      expect(screen.queryByText('Gestion des tâches')).not.toBeInTheDocument();
+      expect(screen.queryByText('Gestion des tÃ¢ches')).not.toBeInTheDocument();
     });
 
     it('loads and displays tasks and clients on mount', async () => {
@@ -313,7 +313,7 @@ describe('TaskManager', () => {
             domain: 'TASK',
             userId: 'user-123',
             component: 'TaskManager',
-            toastMessage: 'Erreur lors du chargement des données',
+            toastMessage: 'Erreur lors du chargement des donnÃ©es',
           })
         );
       });
@@ -387,7 +387,7 @@ describe('TaskManager', () => {
       fireEvent.click(buttons[0]); // First occurrence should be the button
       
       // Check for modal title specifically
-      const modalTitle = screen.getByRole('heading', { name: 'Nouvelle tâche' });
+      const modalTitle = screen.getByRole('heading', { name: 'Nouvelle tÃ¢che' });
       expect(modalTitle).toBeInTheDocument();
       expect(screen.getByPlaceholderText('Titre de l\'intervention')).toBeInTheDocument();
     });
@@ -406,7 +406,7 @@ describe('TaskManager', () => {
       await userEvent.clear(titleInput);
       await userEvent.type(titleInput, 'New Task Title');
       
-      const descriptionTextarea = screen.getByPlaceholderText('Description détaillée de l\'intervention');
+      const descriptionTextarea = screen.getByPlaceholderText('Description dÃ©taillÃ©e de l\'intervention');
       await userEvent.type(descriptionTextarea, 'New task description');
       
       // Select client and priority
@@ -420,7 +420,7 @@ describe('TaskManager', () => {
       await userEvent.type(dateInput as HTMLInputElement, '2024-01-20');
       
       // Submit form with userEvent for proper form submission
-      const submitButton = screen.getByRole('button', { name: 'Créer' });
+      const submitButton = screen.getByRole('button', { name: 'CrÃ©er' });
       
       // Check that button is not disabled
       expect(submitButton).not.toBeDisabled();
@@ -449,7 +449,7 @@ describe('TaskManager', () => {
       });
       
       // Submit form without filling required fields
-      const submitButton = screen.getByRole('button', { name: 'Créer' });
+      const submitButton = screen.getByRole('button', { name: 'CrÃ©er' });
       await userEvent.click(submitButton);
       
       // Should show validation errors - if they exist
@@ -497,7 +497,7 @@ describe('TaskManager', () => {
       const modifyButtons = screen.getAllByText('Modifier');
       fireEvent.click(modifyButtons[0]);
       
-      expect(screen.getByText('Modifier la tâche')).toBeInTheDocument();
+      expect(screen.getByText('Modifier la tÃ¢che')).toBeInTheDocument();
       expect(screen.getByDisplayValue('Task 1')).toBeInTheDocument();
     });
 
@@ -515,7 +515,7 @@ describe('TaskManager', () => {
       fireEvent.click(modifyButtons[0]);
       
       await waitFor(() => {
-        expect(screen.getByText('Modifier la tâche')).toBeInTheDocument();
+        expect(screen.getByText('Modifier la tÃ¢che')).toBeInTheDocument();
       });
       
       // Update title
@@ -526,7 +526,7 @@ describe('TaskManager', () => {
       await userEvent.selectOptions(clientSelect, 'client-1');
       
       // Submit form with userEvent for proper form submission
-      const submitButton = screen.getByRole('button', { name: /mettre à jour/i });
+      const submitButton = screen.getByRole('button', { name: /mettre Ã  jour/i });
       
       await userEvent.click(submitButton);
       
@@ -556,7 +556,7 @@ describe('TaskManager', () => {
       const deleteButtons = screen.getAllByText('Supprimer');
       fireEvent.click(deleteButtons[0]);
       
-      expect(global.confirm).toHaveBeenCalledWith('Êtes-vous sûr de vouloir supprimer cette tâche ?');
+      expect(global.confirm).toHaveBeenCalledWith('ÃŠtes-vous sÃ»r de vouloir supprimer cette tÃ¢che ?');
       
       await waitFor(() => {
         expect(mockTasksDelete).toHaveBeenCalledWith('task-1', 'mock-token');
@@ -599,7 +599,7 @@ describe('TaskManager', () => {
       const [clientSelect] = screen.getAllByRole('combobox');
       await userEvent.selectOptions(clientSelect, 'client-1');
       
-      fireEvent.click(screen.getByText('Créer'));
+      fireEvent.click(screen.getByText('CrÃ©er'));
       
       await waitFor(() => {
         expect(handleError).toHaveBeenCalledWith(
@@ -609,7 +609,7 @@ describe('TaskManager', () => {
             domain: 'TASK',
             userId: 'user-123',
             component: 'TaskManager',
-            toastMessage: 'Erreur lors de la création de la tâche',
+            toastMessage: 'Erreur lors de la crÃ©ation de la tÃ¢che',
           })
         );
       });
@@ -630,14 +630,14 @@ describe('TaskManager', () => {
       fireEvent.click(modifyButtons[0]);
       
       await waitFor(() => {
-        expect(screen.getByText('Modifier la tâche')).toBeInTheDocument();
+        expect(screen.getByText('Modifier la tÃ¢che')).toBeInTheDocument();
       });
 
       const [clientSelect] = screen.getAllByRole('combobox');
       await userEvent.selectOptions(clientSelect, 'client-1');
 
       // Submit form without changes using submit button
-      const submitButton = screen.getByRole('button', { name: /mettre à jour/i });
+      const submitButton = screen.getByRole('button', { name: /mettre Ã  jour/i });
       await userEvent.click(submitButton);
       
       await waitFor(() => {
@@ -648,7 +648,7 @@ describe('TaskManager', () => {
             domain: 'TASK',
             userId: 'user-123',
             component: 'TaskManager',
-            toastMessage: 'Erreur lors de la mise à jour de la tâche',
+            toastMessage: 'Erreur lors de la mise Ã  jour de la tÃ¢che',
           })
         );
       });
@@ -676,7 +676,7 @@ describe('TaskManager', () => {
             domain: 'TASK',
             userId: 'user-123',
             component: 'TaskManager',
-            toastMessage: 'Erreur lors de la suppression de la tâche',
+            toastMessage: 'Erreur lors de la suppression de la tÃ¢che',
           })
         );
       });
@@ -710,7 +710,7 @@ describe('TaskManager', () => {
       });
       
       // Click close button (mojibake/close glyph)
-      const closeButton = screen.getByRole('button', { name: /âœ•|?|×/ });
+      const closeButton = screen.getByRole('button', { name: /Ã¢ÂœÂ•|?|Ã—/ });
       fireEvent.click(closeButton);
       
       // Modal should close but button should remain
