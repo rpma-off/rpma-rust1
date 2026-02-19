@@ -558,13 +558,7 @@ pub async fn user_crud(
                     "Only admins and supervisors can create users".to_string(),
                 ));
             }
-            let role = match data.role.as_str() {
-                "admin" => UserRole::Admin,
-                "technician" => UserRole::Technician,
-                "supervisor" => UserRole::Supervisor,
-                "viewer" => UserRole::Viewer,
-                _ => return Err(AppError::Validation(format!("Invalid role: {}", data.role))),
-            };
+            let role = crate::services::UserService::parse_user_role(&data.role)?;
             let user = state
                 .auth_service
                 .create_account(
@@ -604,13 +598,7 @@ pub async fn user_crud(
                 ));
             }
             let role = match data.role.as_ref() {
-                Some(r) => Some(match r.as_str() {
-                    "admin" => UserRole::Admin,
-                    "technician" => UserRole::Technician,
-                    "supervisor" => UserRole::Supervisor,
-                    "viewer" => UserRole::Viewer,
-                    _ => return Err(AppError::Validation(format!("Invalid role: {}", r))),
-                }),
+                Some(r) => Some(crate::services::UserService::parse_user_role(r)?),
                 None => None,
             };
             let user = state
@@ -632,11 +620,11 @@ pub async fn user_crud(
                     "Only admins can delete users".to_string(),
                 ));
             }
-            if current_user.user_id == id {
-                return Err(AppError::Validation(
-                    "You cannot delete your own account".to_string(),
-                ));
-            }
+            crate::services::UserService::validate_not_self_action(
+                &current_user.user_id,
+                &id,
+                "delete your own account",
+            )?;
             state
                 .auth_service
                 .delete_user(&id)
@@ -673,12 +661,11 @@ pub async fn user_crud(
                     "Only administrators can change user roles".to_string(),
                 ));
             }
-            if id == current_user.user_id {
-                return Err(AppError::Validation(
-                    "You cannot change your own role".to_string(),
-                ));
-            }
-            // Use UserService to change role
+            crate::services::UserService::validate_not_self_action(
+                &current_user.user_id,
+                &id,
+                "change your own role",
+            )?;
             let user_service = crate::services::UserService::new(state.repositories.user.clone());
             user_service
                 .change_role(&id, new_role, &current_user.user_id)
@@ -691,10 +678,11 @@ pub async fn user_crud(
                     "Only administrators can ban users".to_string(),
                 ));
             }
-            if id == current_user.user_id {
-                return Err(AppError::Validation("You cannot ban yourself".to_string()));
-            }
-            // Use UserService to ban user
+            crate::services::UserService::validate_not_self_action(
+                &current_user.user_id,
+                &id,
+                "ban yourself",
+            )?;
             let user_service = crate::services::UserService::new(state.repositories.user.clone());
             user_service.ban_user(&id, &current_user.user_id).await?;
             Ok(UserResponse::UserBanned)
@@ -705,7 +693,6 @@ pub async fn user_crud(
                     "Only administrators can unban users".to_string(),
                 ));
             }
-            // Use UserService to unban user
             let user_service = crate::services::UserService::new(state.repositories.user.clone());
             user_service.unban_user(&id, &current_user.user_id).await?;
             Ok(UserResponse::UserUnbanned)
@@ -720,26 +707,14 @@ pub async fn user_crud(
 pub fn get_database_status(state: AppState) -> Result<ApiResponse<serde_json::Value>, AppError> {
     debug!("Database status requested");
 
-    let db = &state.db;
-    let is_initialized = db.is_initialized().map_err(|e| {
-        error!("Failed to check database initialization: {}", e);
-        AppError::Database(e.to_string())
-    })?;
-    let tables = db.list_tables().map_err(|e| {
-        error!("Failed to list database tables: {}", e);
-        AppError::Database(e.to_string())
-    })?;
-    let version = db.get_version().map_err(|e| {
-        error!("Failed to get database version: {}", e);
-        AppError::Database(e.to_string())
-    })?;
+    let status = crate::services::system::SystemService::get_database_status(&state.db)
+        .map_err(|e| {
+            error!("Failed to get database status: {}", e);
+            AppError::Database(e)
+        })?;
 
     debug!("Database status retrieved successfully");
-    Ok(ApiResponse::success(serde_json::json!({
-        "initialized": is_initialized,
-        "tables": tables,
-        "version": version
-    })))
+    Ok(ApiResponse::success(status))
 }
 
 /// Get database connection pool statistics

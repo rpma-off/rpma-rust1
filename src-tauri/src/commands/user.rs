@@ -88,18 +88,7 @@ pub async fn user_crud(
                 ));
             }
 
-            let role = match data.role.as_str() {
-                "admin" => crate::models::auth::UserRole::Admin,
-                "technician" => crate::models::auth::UserRole::Technician,
-                "supervisor" => crate::models::auth::UserRole::Supervisor,
-                "viewer" => crate::models::auth::UserRole::Viewer,
-                _ => {
-                    return Err(crate::commands::AppError::Validation(format!(
-                        "Invalid role: {}",
-                        data.role
-                    )))
-                }
-            };
+            let role = crate::services::UserService::parse_user_role(&data.role)?;
 
             let user = auth_service
                 .create_account(
@@ -166,18 +155,7 @@ pub async fn user_crud(
             }
 
             let role = match data.role.as_ref() {
-                Some(r) => Some(match r.as_str() {
-                    "admin" => crate::models::auth::UserRole::Admin,
-                    "technician" => crate::models::auth::UserRole::Technician,
-                    "supervisor" => crate::models::auth::UserRole::Supervisor,
-                    "viewer" => crate::models::auth::UserRole::Viewer,
-                    _ => {
-                        return Err(crate::commands::AppError::Validation(format!(
-                            "Invalid role: {}",
-                            r
-                        )))
-                    }
-                }),
+                Some(r) => Some(crate::services::UserService::parse_user_role(r)?),
                 None => None,
             };
 
@@ -210,11 +188,11 @@ pub async fn user_crud(
             }
 
             // Prevent self-deletion
-            if current_user.user_id == id {
-                return Err(crate::commands::AppError::Validation(
-                    "You cannot delete your own account".to_string(),
-                ));
-            }
+            crate::services::UserService::validate_not_self_action(
+                &current_user.user_id,
+                &id,
+                "delete your own account",
+            )?;
 
             auth_service.delete_user(&id).map_err(|e| {
                 error!("Failed to delete user {}: {}", id, e);
@@ -285,11 +263,11 @@ pub async fn user_crud(
             }
 
             // Prevent changing own role
-            if id == current_user.user_id {
-                return Err(crate::commands::AppError::Validation(
-                    "You cannot change your own role".to_string(),
-                ));
-            }
+            crate::services::UserService::validate_not_self_action(
+                &current_user.user_id,
+                &id,
+                "change your own role",
+            )?;
 
             // Use UserService to change role
             let user_service = crate::services::UserService::new(state.repositories.user.clone());
@@ -312,11 +290,11 @@ pub async fn user_crud(
             }
 
             // Prevent banning self
-            if id == current_user.user_id {
-                return Err(crate::commands::AppError::Validation(
-                    "You cannot ban yourself".to_string(),
-                ));
-            }
+            crate::services::UserService::validate_not_self_action(
+                &current_user.user_id,
+                &id,
+                "ban yourself",
+            )?;
 
             // Use UserService to ban user
             let user_service = crate::services::UserService::new(state.repositories.user.clone());

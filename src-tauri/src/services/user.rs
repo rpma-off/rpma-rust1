@@ -71,6 +71,37 @@ impl UserService {
         }
     }
 
+    /// Parse a role string into a UserRole enum.
+    ///
+    /// Centralises the role-string → enum conversion so that IPC command
+    /// handlers do not contain this business logic.
+    pub fn parse_user_role(role_str: &str) -> Result<UserRole, AppError> {
+        match role_str {
+            "admin" => Ok(UserRole::Admin),
+            "technician" => Ok(UserRole::Technician),
+            "supervisor" => Ok(UserRole::Supervisor),
+            "viewer" => Ok(UserRole::Viewer),
+            _ => Err(AppError::Validation(format!("Invalid role: {}", role_str))),
+        }
+    }
+
+    /// Validate that the acting user is not performing an action on themselves
+    /// when the action type forbids it (e.g. delete, ban, role-change).
+    pub fn validate_not_self_action(
+        current_user_id: &str,
+        target_user_id: &str,
+        action: &str,
+    ) -> Result<(), AppError> {
+        if current_user_id == target_user_id {
+            Err(AppError::Validation(format!(
+                "You cannot {} yourself",
+                action
+            )))
+        } else {
+            Ok(())
+        }
+    }
+
     /// Change user role with audit logging and session invalidation
     pub async fn change_role(
         &self,
@@ -331,6 +362,44 @@ mod tests {
         repo.save(user.clone()).await.unwrap();
 
         let err = service.bootstrap_first_admin(&user.id).await.unwrap_err();
+        assert!(matches!(err, AppError::Validation(_)));
+    }
+
+    #[test]
+    fn test_parse_user_role_valid() {
+        assert!(matches!(
+            UserService::parse_user_role("admin"),
+            Ok(UserRole::Admin)
+        ));
+        assert!(matches!(
+            UserService::parse_user_role("technician"),
+            Ok(UserRole::Technician)
+        ));
+        assert!(matches!(
+            UserService::parse_user_role("supervisor"),
+            Ok(UserRole::Supervisor)
+        ));
+        assert!(matches!(
+            UserService::parse_user_role("viewer"),
+            Ok(UserRole::Viewer)
+        ));
+    }
+
+    #[test]
+    fn test_parse_user_role_invalid() {
+        let err = UserService::parse_user_role("unknown").unwrap_err();
+        assert!(matches!(err, AppError::Validation(_)));
+    }
+
+    #[test]
+    fn test_validate_not_self_action_different_users() {
+        assert!(UserService::validate_not_self_action("user1", "user2", "delete").is_ok());
+    }
+
+    #[test]
+    fn test_validate_not_self_action_same_user() {
+        let err = UserService::validate_not_self_action("user1", "user1", "ban yourself")
+            .unwrap_err();
         assert!(matches!(err, AppError::Validation(_)));
     }
 }

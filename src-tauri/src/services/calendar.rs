@@ -333,6 +333,35 @@ impl CalendarService {
             message: None,
         })
     }
+
+    /// Schedule a task, optionally skipping conflict detection.
+    ///
+    /// When `force` is true, the task is scheduled directly without checking
+    /// for conflicts. Otherwise conflicts are checked first and, if any exist,
+    /// the operation is aborted and the conflicts are returned.
+    pub async fn schedule_task_with_options(
+        &self,
+        task_id: String,
+        new_date: String,
+        new_start: Option<String>,
+        new_end: Option<String>,
+        user_id: &str,
+        force: bool,
+    ) -> Result<ConflictDetection, AppError> {
+        if force {
+            self.schedule_task(task_id, new_date, new_start, new_end, user_id)
+                .await?;
+            Ok(ConflictDetection {
+                has_conflict: false,
+                conflict_type: None,
+                conflicting_tasks: vec![],
+                message: None,
+            })
+        } else {
+            self.schedule_task_with_conflict_check(task_id, new_date, new_start, new_end, user_id)
+                .await
+        }
+    }
 }
 
 #[cfg(test)]
@@ -999,6 +1028,94 @@ mod tests {
         assert!(
             !result.has_conflict,
             "Adjacent events should allow scheduling"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_schedule_task_with_options_force_skips_conflicts() {
+        let (db, _test_db) = setup_test_db();
+        let service = CalendarService::new(db.clone());
+
+        // Existing task: 09:00-11:00
+        insert_test_task(
+            &db,
+            "task-existing",
+            "tech1",
+            "2025-06-15",
+            Some("09:00"),
+            Some("11:00"),
+            "pending",
+        );
+        // New task to be force-scheduled despite overlap
+        insert_test_task(
+            &db,
+            "task-force",
+            "tech1",
+            "2025-06-14",
+            None,
+            None,
+            "pending",
+        );
+
+        let result = service
+            .schedule_task_with_options(
+                "task-force".to_string(),
+                "2025-06-15".to_string(),
+                Some("10:00".to_string()),
+                Some("12:00".to_string()),
+                "test_user",
+                true, // force
+            )
+            .await
+            .expect("schedule_task_with_options (force) failed");
+
+        assert!(
+            !result.has_conflict,
+            "Force mode should always report no conflict"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_schedule_task_with_options_no_force_detects_conflict() {
+        let (db, _test_db) = setup_test_db();
+        let service = CalendarService::new(db.clone());
+
+        // Existing task: 09:00-11:00
+        insert_test_task(
+            &db,
+            "task-existing",
+            "tech1",
+            "2025-06-15",
+            Some("09:00"),
+            Some("11:00"),
+            "pending",
+        );
+        // New task that would overlap
+        insert_test_task(
+            &db,
+            "task-no-force",
+            "tech1",
+            "2025-06-14",
+            None,
+            None,
+            "pending",
+        );
+
+        let result = service
+            .schedule_task_with_options(
+                "task-no-force".to_string(),
+                "2025-06-15".to_string(),
+                Some("10:00".to_string()),
+                Some("12:00".to_string()),
+                "test_user",
+                false, // no force
+            )
+            .await
+            .expect("schedule_task_with_options (no force) failed");
+
+        assert!(
+            result.has_conflict,
+            "Non-force mode should detect conflict"
         );
     }
 }
