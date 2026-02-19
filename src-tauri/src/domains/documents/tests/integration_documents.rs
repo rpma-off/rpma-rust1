@@ -1,2 +1,1 @@
-﻿//! Documents domain integration test migration target.
-
+//! Documents domain integration test migration target.

@@ -1,2 +1,1 @@
-﻿//! Quotes domain unit test migration target.
-
+//! Quotes domain unit test migration target.

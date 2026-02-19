@@ -1,2 +1,1 @@
-﻿//! Documents domain permission test migration target.
-
+//! Documents domain permission test migration target.

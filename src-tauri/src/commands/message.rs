@@ -1,6 +1,6 @@
-use tracing;
 use crate::commands::{ApiError, AppState};
 use crate::models::message::*;
+use tracing;
 
 /// Send a new message
 #[tracing::instrument(skip_all)]

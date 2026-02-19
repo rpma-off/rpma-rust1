@@ -1,2 +1,1 @@
-﻿//! Quotes domain permission test migration target.
-
+//! Quotes domain permission test migration target.

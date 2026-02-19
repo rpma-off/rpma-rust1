@@ -566,7 +566,10 @@ pub async fn calendar_check_conflicts(
         }
         Err(e) => {
             error!("Failed to check conflicts: {}", e);
-            Err(AppError::internal_sanitized("check_scheduling_conflicts", &e))
+            Err(AppError::internal_sanitized(
+                "check_scheduling_conflicts",
+                &e,
+            ))
         }
     }
 }

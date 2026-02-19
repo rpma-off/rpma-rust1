@@ -1,2 +1,1 @@
-﻿//! Inventory domain integration test migration target.
-
+//! Inventory domain integration test migration target.

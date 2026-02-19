@@ -1,2 +1,1 @@
-﻿//! Inventory domain permission test migration target.
-
+//! Inventory domain permission test migration target.

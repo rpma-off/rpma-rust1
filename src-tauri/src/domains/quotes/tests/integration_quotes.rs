@@ -1,2 +1,1 @@
-﻿//! Quotes domain integration test migration target.
-
+//! Quotes domain integration test migration target.

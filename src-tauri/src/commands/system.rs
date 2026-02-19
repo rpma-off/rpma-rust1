@@ -1,9 +1,9 @@
 //! System information commands
 
-use tracing;
 use crate::commands::AppState;
 use serde::Serialize;
 use std::process::Command;
+use tracing;
 
 #[derive(Serialize)]
 pub struct DeviceInfo {

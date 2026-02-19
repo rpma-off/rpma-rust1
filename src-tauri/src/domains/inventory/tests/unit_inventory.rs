@@ -1,2 +1,1 @@
-﻿//! Inventory domain unit test migration target.
-
+//! Inventory domain unit test migration target.

@@ -1,2 +1,1 @@
-﻿//! Interventions domain unit test migration target.
-
+//! Interventions domain unit test migration target.

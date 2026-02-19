@@ -1,2 +1,1 @@
-﻿//! Interventions domain permission test migration target.
-
+//! Interventions domain permission test migration target.

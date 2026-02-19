@@ -166,9 +166,7 @@ pub async fn intervention_management(
             let (interventions, _) = state
                 .intervention_service
                 .list_interventions(None, Some(&target_technician_id), None, None)
-                .map_err(|e| {
-                    AppError::db_sanitized("get_interventions_for_stats", &e)
-                })?;
+                .map_err(|e| AppError::db_sanitized("get_interventions_for_stats", &e))?;
 
             let total_interventions = interventions.len() as u64;
             let completed_interventions = interventions
@@ -233,9 +231,8 @@ pub async fn intervention_management(
                 match state
                     .intervention_service
                     .get_latest_intervention_by_task(&task_id)
-                    .map_err(|e| {
-                        AppError::db_sanitized("get_latest_intervention_by_task", &e)
-                    })? {
+                    .map_err(|e| AppError::db_sanitized("get_latest_intervention_by_task", &e))?
+                {
                     Some(intervention) => vec![intervention],
                     None => vec![],
                 }
@@ -243,9 +240,8 @@ pub async fn intervention_management(
                 match state
                     .intervention_service
                     .get_active_intervention_by_task(&task_id)
-                    .map_err(|e| {
-                        AppError::db_sanitized("get_active_intervention_by_task", &e)
-                    })? {
+                    .map_err(|e| AppError::db_sanitized("get_active_intervention_by_task", &e))?
+                {
                     Some(intervention) => vec![intervention],
                     None => vec![],
                 }

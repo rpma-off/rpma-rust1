@@ -12,7 +12,7 @@ use std::sync::Arc;
 // Helper to create a test database with full schema
 async fn create_test_db() -> Database {
     let db = Database::new_in_memory().await.unwrap();
-    
+
     // Load migration 025 for analytics tables
     let migration_sql = r#"
         -- Table: analytics_kpis
@@ -281,9 +281,9 @@ async fn create_test_db() -> Database {
             FOREIGN KEY (performed_by) REFERENCES users(id) ON DELETE RESTRICT
         );
     "#;
-    
+
     db.execute_batch(migration_sql).unwrap();
-    
+
     // Insert default KPIs
     let now = Utc::now().timestamp_millis();
     db.execute_batch(r#"
@@ -308,7 +308,7 @@ async fn create_test_db() -> Database {
              'Overall quality compliance score', 'percentage', 
              'QUALITY_CHECKS_PASSED / TOTAL_CHECKS * 100', 98.0, 'daily', 10, ?, ?, 1);
     "#, params![now, now, now, now, now, now, now, now, now, now]).unwrap();
-    
+
     db
 }
 
@@ -322,7 +322,7 @@ fn create_sample_data(db: &Database) {
         .unwrap_or_default()
         .and_utc()
         .timestamp_millis();
-    
+
     // Create users
     db.execute_batch(r#"
         INSERT OR IGNORE INTO users (id, username, email, first_name, last_name, role, is_active, created_at, updated_at)
@@ -331,7 +331,7 @@ fn create_sample_data(db: &Database) {
             ('user_2', 'tech2', 'tech2@example.com', 'Technician', 'Two', 'technician', 1, ?, ?),
             ('user_3', 'manager', 'manager@example.com', 'Manager', 'One', 'manager', 1, ?, ?);
     "#, params![now, now, now, now, now, now]).unwrap();
-    
+
     // Create clients
     db.execute_batch(r#"
         INSERT OR IGNORE INTO clients (id, name, email, phone, address, is_active, created_at, updated_at)
@@ -339,9 +339,10 @@ fn create_sample_data(db: &Database) {
             ('client_1', 'Client One', 'client1@example.com', '555-0001', '123 Main St', 1, ?, ?),
             ('client_2', 'Client Two', 'client2@example.com', '555-0002', '456 Oak Ave', 1, ?, ?);
     "#, params![now, now, now, now]).unwrap();
-    
+
     // Create interventions
-    db.execute_batch(r#"
+    db.execute_batch(
+        r#"
         INSERT OR IGNORE INTO interventions (
             id, client_id, title, description, status, priority, 
             created_at, updated_at, created_by, assigned_to, 
@@ -355,15 +356,29 @@ fn create_sample_data(db: &Database) {
              ?, ?, 'user_3', 'user_2', ?, NULL, 1, NULL),
             ('int_4', 'client_2', 'Ceramic Coating', 'Full vehicle coating', 'pending', 'normal', 
              ?, ?, 'user_3', NULL, NULL, NULL, 1, NULL);
-    "#, params![
-        thirty_days_ago, now, thirty_days_ago, now,
-        thirty_days_ago, now, thirty_days_ago, today_start,
-        today_start, now, today_start, today_start,
-        today_start, now
-    ]).unwrap();
-    
+    "#,
+        params![
+            thirty_days_ago,
+            now,
+            thirty_days_ago,
+            now,
+            thirty_days_ago,
+            now,
+            thirty_days_ago,
+            today_start,
+            today_start,
+            now,
+            today_start,
+            today_start,
+            today_start,
+            now
+        ],
+    )
+    .unwrap();
+
     // Create tasks
-    db.execute_batch(r#"
+    db.execute_batch(
+        r#"
         INSERT OR IGNORE INTO tasks (
             id, title, description, status, priority,
             created_at, updated_at, created_by, assigned_to,
@@ -377,15 +392,29 @@ fn create_sample_data(db: &Database) {
              ?, ?, 'user_3', 'user_1', ?, NULL, 'int_2', 'client_1'),
             ('task_4', 'Window Preparation', 'Clean windows for tint', 'pending', 'normal',
              ?, ?, 'user_3', 'user_2', NULL, NULL, 'int_3', 'client_2');
-    "#, params![
-        thirty_days_ago, now, thirty_days_ago, now,
-        thirty_days_ago, now, thirty_days_ago, today_start,
-        today_start, now, today_start, today_start,
-        today_start, now
-    ]).unwrap();
-    
+    "#,
+        params![
+            thirty_days_ago,
+            now,
+            thirty_days_ago,
+            now,
+            thirty_days_ago,
+            now,
+            thirty_days_ago,
+            today_start,
+            today_start,
+            now,
+            today_start,
+            today_start,
+            today_start,
+            now
+        ],
+    )
+    .unwrap();
+
     // Create materials
-    db.execute_batch(r#"
+    db.execute_batch(
+        r#"
         INSERT OR IGNORE INTO materials (
             id, sku, name, material_type, unit_of_measure, current_stock,
             minimum_stock, unit_cost, created_at, updated_at
@@ -393,34 +422,46 @@ fn create_sample_data(db: &Database) {
             ('mat_1', 'PPF-001', 'Clear PPF Film', 'film', 'meter', 100, 20, 50.0, ?, ?),
             ('mat_2', 'TINT-001', 'Window Tint Film', 'film', 'meter', 50, 10, 20.0, ?, ?),
             ('mat_3', 'CLEAN-001', 'Cleaning Solution', 'liquid', 'liter', 25, 5, 5.0, ?, ?);
-    "#, params![now, now, now, now, now, now]).unwrap();
-    
+    "#,
+        params![now, now, now, now, now, now],
+    )
+    .unwrap();
+
     // Create material consumption
-    db.execute_batch(r#"
+    db.execute_batch(
+        r#"
         INSERT OR IGNORE INTO material_consumption (
             id, intervention_id, material_id, quantity_used, recorded_at
         ) VALUES
             ('cons_1', 'int_1', 'mat_1', 10, ?),
             ('cons_2', 'int_1', 'mat_3', 2, ?),
             ('cons_3', 'int_2', 'mat_1', 5, ?);
-    "#, params![now, now, now]).unwrap();
-    
+    "#,
+        params![now, now, now],
+    )
+    .unwrap();
+
     // Create quality checks
-    db.execute_batch(r#"
+    db.execute_batch(
+        r#"
         INSERT OR IGNORE INTO quality_checks (
             id, intervention_id, check_type, result, passed, performed_at
         ) VALUES
             ('qc_1', 'int_1', 'final_inspection', 'passed', 1, ?),
             ('qc_2', 'int_2', 'visual_check', 'passed', 1, ?),
             ('qc_3', 'int_3', 'pre_check', 'failed', 0, ?);
-    "#, params![
-        (Utc::now() - Duration::hours(24)).timestamp_millis(),
-        (Utc::now() - Duration::hours(12)).timestamp_millis(),
-        (Utc::now() - Duration::hours(6)).timestamp_millis()
-    ]).unwrap();
-    
+    "#,
+        params![
+            (Utc::now() - Duration::hours(24)).timestamp_millis(),
+            (Utc::now() - Duration::hours(12)).timestamp_millis(),
+            (Utc::now() - Duration::hours(6)).timestamp_millis()
+        ],
+    )
+    .unwrap();
+
     // Create inventory transactions
-    db.execute_batch(r#"
+    db.execute_batch(
+        r#"
         INSERT OR IGNORE INTO inventory_transactions (
             id, material_id, transaction_type, quantity, previous_stock, new_stock, performed_at
         ) VALUES
@@ -428,41 +469,60 @@ fn create_sample_data(db: &Database) {
             ('tx_2', 'mat_2', 'stock_in', 50, 0, 50, ?),
             ('tx_3', 'mat_1', 'stock_out', 10, 100, 90, ?),
             ('tx_4', 'mat_3', 'stock_in', 25, 0, 25, ?);
-    "#, params![
-        (Utc::now() - Duration::days(10)).timestamp_millis(),
-        (Utc::now() - Duration::days(8)).timestamp_millis(),
-        (Utc::now() - Duration::days(2)).timestamp_millis(),
-        (Utc::now() - Duration::days(5)).timestamp_millis()
-    ]).unwrap();
+    "#,
+        params![
+            (Utc::now() - Duration::days(10)).timestamp_millis(),
+            (Utc::now() - Duration::days(8)).timestamp_millis(),
+            (Utc::now() - Duration::days(2)).timestamp_millis(),
+            (Utc::now() - Duration::days(5)).timestamp_millis()
+        ],
+    )
+    .unwrap();
 }
 
 #[tokio::test]
 async fn test_analytics_end_to_end_workflow() {
     let db = create_test_db().await;
     let service = AnalyticsService::new(db);
-    
+
     // Create sample data
     create_sample_data(&service.db);
-    
+
     // Calculate all KPIs
     let result = service.calculate_all_kpis();
     assert!(result.is_ok(), "Should successfully calculate all KPIs");
-    
+
     // Get analytics summary
     let summary = service.get_analytics_summary().unwrap();
-    
+
     // Verify calculated values
-    assert_eq!(summary.total_interventions, 4, "Should have 4 total interventions");
+    assert_eq!(
+        summary.total_interventions, 4,
+        "Should have 4 total interventions"
+    );
     assert_eq!(summary.completed_today, 1, "Should have 1 completed today");
-    assert_eq!(summary.active_technicians, 2, "Should have 2 active technicians");
-    assert!(summary.average_completion_time > 0.0, "Average completion time should be > 0");
-    
+    assert_eq!(
+        summary.active_technicians, 2,
+        "Should have 2 active technicians"
+    );
+    assert!(
+        summary.average_completion_time > 0.0,
+        "Average completion time should be > 0"
+    );
+
     // Verify KPI values were calculated
     let kpis = service.get_active_kpis().unwrap();
     for kpi in kpis {
         if kpi.kpi_name == "task_completion_rate" {
-            assert!(kpi.current_value.is_some(), "Task completion rate should be calculated");
-            assert_eq!(kpi.current_value.unwrap(), 50.0, "Should be 50% completion (2/4)");
+            assert!(
+                kpi.current_value.is_some(),
+                "Task completion rate should be calculated"
+            );
+            assert_eq!(
+                kpi.current_value.unwrap(),
+                50.0,
+                "Should be 50% completion (2/4)"
+            );
         }
     }
 }
@@ -471,12 +531,13 @@ async fn test_analytics_end_to_end_workflow() {
 async fn test_analytics_with_intervention_data() {
     let db = create_test_db().await;
     let service = AnalyticsService::new(db);
-    
+
     // Create intervention-specific test data
     let now = Utc::now().timestamp_millis();
     let thirty_days_ago = (Utc::now() - Duration::days(30)).timestamp_millis();
-    
-    db.execute_batch(r#"
+
+    db.execute_batch(
+        r#"
         INSERT OR IGNORE INTO users (id, username, email, role, is_active, created_at, updated_at)
         VALUES ('tech_1', 'tech1', 'tech1@example.com', 'technician', 1, ?, ?);
         
@@ -491,15 +552,27 @@ async fn test_analytics_with_intervention_data() {
              ?, ?, 1, 5),
             ('int_multi', 'client_test', 'Multi Visit', 'completed', ?, ?, 'tech_1',
              ?, ?, 2, 3);
-    "#, params![
-        now, now, now, now,
-        thirty_days_ago, now, thirty_days_ago, (Utc::now() - Duration::hours(4)).timestamp_millis(),
-        thirty_days_ago, now, thirty_days_ago, (Utc::now() - Duration::hours(8)).timestamp_millis()
-    ]).unwrap();
-    
+    "#,
+        params![
+            now,
+            now,
+            now,
+            now,
+            thirty_days_ago,
+            now,
+            thirty_days_ago,
+            (Utc::now() - Duration::hours(4)).timestamp_millis(),
+            thirty_days_ago,
+            now,
+            thirty_days_ago,
+            (Utc::now() - Duration::hours(8)).timestamp_millis()
+        ],
+    )
+    .unwrap();
+
     // Calculate first time fix rate
     let rate = service.calculate_first_time_fix_rate().unwrap();
-    
+
     // Should be 50% (1 out of 2 interventions completed in single visit)
     assert_eq!(rate, 50.0, "First time fix rate should be 50%");
 }
@@ -508,12 +581,13 @@ async fn test_analytics_with_intervention_data() {
 async fn test_analytics_with_material_consumption() {
     let db = create_test_db().await;
     let service = AnalyticsService::new(db);
-    
+
     // Create material test data
     let now = Utc::now().timestamp_millis();
     let thirty_days_ago = (Utc::now() - Duration::days(30)).timestamp_millis();
-    
-    db.execute_batch(r#"
+
+    db.execute_batch(
+        r#"
         INSERT OR IGNORE INTO materials (
             id, sku, name, material_type, unit_of_measure, current_stock,
             created_at, updated_at
@@ -527,14 +601,22 @@ async fn test_analytics_with_material_consumption() {
             ('cons_a', 'mat_a', 20, ?),
             ('cons_b', 'mat_a', 30, ?),
             ('cons_c', 'mat_b', 10, ?);
-    "#, params![
-        now, now, now, now,
-        thirty_days_ago, thirty_days_ago, thirty_days_ago
-    ]).unwrap();
-    
+    "#,
+        params![
+            now,
+            now,
+            now,
+            now,
+            thirty_days_ago,
+            thirty_days_ago,
+            thirty_days_ago
+        ],
+    )
+    .unwrap();
+
     // Calculate material utilization
     let utilization = service.calculate_material_utilization().unwrap();
-    
+
     // Should be 40% (60 used out of 150 total stock)
     assert_eq!(utilization, 40.0, "Material utilization should be 40%");
 }
@@ -543,11 +625,12 @@ async fn test_analytics_with_material_consumption() {
 async fn test_analytics_with_quality_checks() {
     let db = create_test_db().await;
     let service = AnalyticsService::new(db);
-    
+
     // Create quality check test data
     let thirty_days_ago = (Utc::now() - Duration::days(30)).timestamp_millis();
-    
-    db.execute_batch(r#"
+
+    db.execute_batch(
+        r#"
         INSERT OR IGNORE INTO quality_checks (
             id, check_type, result, passed, performed_at
         ) VALUES
@@ -555,16 +638,19 @@ async fn test_analytics_with_quality_checks() {
             ('qc_2', 'measurement', 'passed', 1, ?),
             ('qc_3', 'functional', 'failed', 0, ?),
             ('qc_4', 'visual', 'passed', 1, ?);
-    "#, params![
-        thirty_days_ago,
-        thirty_days_ago,
-        thirty_days_ago,
-        thirty_days_ago
-    ]).unwrap();
-    
+    "#,
+        params![
+            thirty_days_ago,
+            thirty_days_ago,
+            thirty_days_ago,
+            thirty_days_ago
+        ],
+    )
+    .unwrap();
+
     // Calculate quality score
     let score = service.calculate_quality_score().unwrap();
-    
+
     // Should be 75% (3 passed out of 4 checks)
     assert_eq!(score, 75.0, "Quality score should be 75%");
 }
@@ -573,11 +659,12 @@ async fn test_analytics_with_quality_checks() {
 async fn test_analytics_with_inventory_transactions() {
     let db = create_test_db().await;
     let service = AnalyticsService::new(db);
-    
+
     // Create inventory transaction test data
     let year_ago = (Utc::now() - Duration::days(365)).timestamp_millis();
-    
-    db.execute_batch(r#"
+
+    db.execute_batch(
+        r#"
         INSERT OR IGNORE INTO materials (
             id, sku, name, material_type, unit_of_measure, current_stock,
             created_at, updated_at
@@ -591,30 +678,34 @@ async fn test_analytics_with_inventory_transactions() {
             ('tx_1', 'mat_1', 'stock_out', 50, ?),
             ('tx_2', 'mat_1', 'stock_out', 30, ?),
             ('tx_3', 'mat_2', 'stock_out', 25, ?);
-    "#, params![
-        year_ago, year_ago, year_ago, year_ago,
-        year_ago, year_ago, year_ago
-    ]).unwrap();
-    
+    "#,
+        params![year_ago, year_ago, year_ago, year_ago, year_ago, year_ago, year_ago],
+    )
+    .unwrap();
+
     // Calculate inventory turnover
     let turnover = service.calculate_inventory_turnover().unwrap();
-    
+
     // Should be 105/75 = 1.4
-    assert!((turnover - 1.4).abs() < 0.01, "Inventory turnover should be ~1.4");
+    assert!(
+        (turnover - 1.4).abs() < 0.01,
+        "Inventory turnover should be ~1.4"
+    );
 }
 
 #[tokio::test]
 async fn test_analytics_time_series_aggregation() {
     let db = create_test_db().await;
     let service = AnalyticsService::new(db);
-    
+
     // Create time series test data
     let now = Utc::now().timestamp_millis();
     let one_day_ago = (Utc::now() - Duration::days(1)).timestamp_millis();
     let two_days_ago = (Utc::now() - Duration::days(2)).timestamp_millis();
     let three_days_ago = (Utc::now() - Duration::days(3)).timestamp_millis();
-    
-    db.execute_batch(r#"
+
+    db.execute_batch(
+        r#"
         INSERT OR IGNORE INTO analytics_metrics (
             id, metric_name, metric_category, value, value_type, timestamp, source
         ) VALUES
@@ -622,89 +713,102 @@ async fn test_analytics_time_series_aggregation() {
             ('m2', 'daily_sales', 'financial', 1500.0, 'currency', ?, 'intervention'),
             ('m3', 'daily_sales', 'financial', 1200.0, 'currency', ?, 'intervention'),
             ('m4', 'daily_sales', 'financial', 1800.0, 'currency', ?, 'intervention');
-    "#, params![
-        three_days_ago,
-        two_days_ago,
-        one_day_ago,
-        now
-    ]).unwrap();
-    
+    "#,
+        params![three_days_ago, two_days_ago, one_day_ago, now],
+    )
+    .unwrap();
+
     // Get time series data
     let time_series = service.get_metric_time_series("daily_sales", 30).unwrap();
-    
+
     assert_eq!(time_series.metric_name, "daily_sales");
-    assert_eq!(time_series.data_points.len(), 4, "Should have 4 data points");
-    
+    assert_eq!(
+        time_series.data_points.len(),
+        4,
+        "Should have 4 data points"
+    );
+
     // Verify data points are ordered by timestamp
     for i in 1..time_series.data_points.len() {
         assert!(
-            time_series.data_points[i-1].timestamp <= time_series.data_points[i].timestamp,
+            time_series.data_points[i - 1].timestamp <= time_series.data_points[i].timestamp,
             "Data points should be in chronological order"
         );
     }
-    
+
     // Verify values
     let values: Vec<f64> = time_series.data_points.iter().map(|p| p.value).collect();
-    assert_eq!(values, vec![1000.0, 1500.0, 1200.0, 1800.0], "Values should match expected");
+    assert_eq!(
+        values,
+        vec![1000.0, 1500.0, 1200.0, 1800.0],
+        "Values should match expected"
+    );
 }
 
 #[tokio::test]
 async fn test_analytics_dashboard_configuration() {
     let db = create_test_db().await;
     let service = AnalyticsService::new(db);
-    
+
     // Create a test dashboard
     let now = Utc::now().timestamp_millis();
-    db.execute(r#"
+    db.execute(
+        r#"
         INSERT INTO analytics_dashboards (
             id, name, dashboard_type, layout_config, widget_configs, 
             is_public, is_default, created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    "#, params![
-        "dashboard_test",
-        "Test Dashboard",
-        "custom",
-        r#"{"layout": "grid"}"#,
-        r#"[{"type": "chart", "id": "chart1"}]"#,
-        1,
-        0,
-        now,
-        now
-    ]).unwrap();
-    
+    "#,
+        params![
+            "dashboard_test",
+            "Test Dashboard",
+            "custom",
+            r#"{"layout": "grid"}"#,
+            r#"[{"type": "chart", "id": "chart1"}]"#,
+            1,
+            0,
+            now,
+            now
+        ],
+    )
+    .unwrap();
+
     // Get dashboard data
     let dashboard_data = service.get_dashboard_data("dashboard_test").unwrap();
-    
+
     assert_eq!(dashboard_data.dashboard.name, "Test Dashboard");
     assert_eq!(dashboard_data.dashboard.dashboard_type, "custom");
     assert_eq!(dashboard_data.dashboard.is_public, 1);
     assert_eq!(dashboard_data.dashboard.is_default, 0);
-    
+
     // Verify widgets were created
     assert!(!dashboard_data.widgets.is_empty(), "Should have widgets");
-    
+
     // Verify KPIs are included
     assert!(!dashboard_data.kpis.is_empty(), "Should include KPIs");
-    
+
     // Verify date range
-    assert!(dashboard_data.date_range.end >= dashboard_data.date_range.start, "Date range should be valid");
+    assert!(
+        dashboard_data.date_range.end >= dashboard_data.date_range.start,
+        "Date range should be valid"
+    );
 }
 
 #[tokio::test]
 async fn test_analytics_performance_with_large_dataset() {
     let db = create_test_db().await;
     let service = AnalyticsService::new(db);
-    
+
     // Create a large dataset to test performance
     let now = Utc::now();
     let mut batch_params = Vec::new();
-    
+
     // Create 1000 interventions
     for i in 0..1000 {
         let timestamp = (now - Duration::days(i % 365)).timestamp_millis();
         batch_params.push(("int_".to_string() + &i.to_string(), timestamp));
     }
-    
+
     // Batch insert interventions
     let tx = db.get_connection().unwrap().transaction().unwrap();
     for (id, timestamp) in batch_params {
@@ -714,17 +818,20 @@ async fn test_analytics_performance_with_large_dataset() {
         "#, params![id, "Test Intervention", timestamp, timestamp, timestamp]).unwrap();
     }
     tx.commit().unwrap();
-    
+
     // Test performance of KPI calculation
     let start = std::time::Instant::now();
-    
+
     let kpis = service.get_active_kpis().unwrap();
     let result = service.calculate_all_kpis();
-    
+
     let duration = start.elapsed();
-    
+
     assert!(result.is_ok(), "Should calculate all KPIs successfully");
-    assert!(duration.as_millis() < 5000, "Should complete within 5 seconds"); // 5 second threshold
+    assert!(
+        duration.as_millis() < 5000,
+        "Should complete within 5 seconds"
+    ); // 5 second threshold
     assert!(!kpis.is_empty(), "Should have KPIs to calculate");
 }
 
@@ -732,12 +839,12 @@ async fn test_analytics_performance_with_large_dataset() {
 async fn test_analytics_data_integrity() {
     let db = create_test_db().await;
     let service = AnalyticsService::new(db);
-    
+
     // Create test data with edge cases
     let now = Utc::now().timestamp_millis();
     let future_time = (Utc::now() + Duration::days(1)).timestamp_millis();
     let past_time = (Utc::now() - Duration::days(400)).timestamp_millis(); // Older than 1 year
-    
+
     db.execute_batch(r#"
         -- Normal data
         INSERT INTO interventions (id, client_id, title, status, created_at, updated_at, completed_at)
@@ -755,52 +862,69 @@ async fn test_analytics_data_integrity() {
         future_time, future_time,
         past_time, past_time, past_time
     ]).unwrap();
-    
+
     // Calculate KPIs to verify data integrity
     let result = service.calculate_all_kpis();
     assert!(result.is_ok(), "Should handle edge case dates gracefully");
-    
+
     // Get summary to verify data integrity
     let summary = service.get_analytics_summary().unwrap();
-    
+
     // Should include all interventions, regardless of date
-    assert_eq!(summary.total_interventions, 3, "Should count all interventions including edge cases");
-    
+    assert_eq!(
+        summary.total_interventions, 3,
+        "Should count all interventions including edge cases"
+    );
+
     // Should only count completed today (none in this test)
-    assert_eq!(summary.completed_today, 0, "Should not count future or past interventions as today's completions");
+    assert_eq!(
+        summary.completed_today, 0,
+        "Should not count future or past interventions as today's completions"
+    );
 }
 
 #[tokio::test]
 async fn test_analytics_concurrent_access() {
     let db = Arc::new(create_test_db().await);
     let service = Arc::new(AnalyticsService::new((*db).clone()));
-    
+
     // Create sample data
     create_sample_data(&service.db);
-    
+
     // Test concurrent access to analytics
     let mut handles = vec![];
-    
+
     for i in 0..5 {
         let service_clone = Arc::clone(&service);
         let handle = tokio::spawn(async move {
             // Calculate all KPIs
             let result = service_clone.calculate_all_kpis();
-            assert!(result.is_ok(), "Thread {} should calculate KPIs successfully", i);
-            
+            assert!(
+                result.is_ok(),
+                "Thread {} should calculate KPIs successfully",
+                i
+            );
+
             // Get summary
             let summary = service_clone.get_analytics_summary().unwrap();
-            assert!(summary.total_interventions > 0, "Thread {} should get valid summary", i);
+            assert!(
+                summary.total_interventions > 0,
+                "Thread {} should get valid summary",
+                i
+            );
         });
         handles.push(handle);
     }
-    
+
     // Wait for all threads to complete
     for handle in handles {
         handle.await.unwrap();
     }
-    
+
     // Verify data integrity after concurrent access
     let final_summary = service.get_analytics_summary().unwrap();
-    assert!(final_summary.total_interventions > 0, "Data should remain valid after concurrent access");
+    assert!(
+        final_summary.total_interventions > 0,
+        "Data should remain valid after concurrent access"
+    );
 }

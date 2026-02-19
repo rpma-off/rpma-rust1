@@ -1,2 +1,1 @@
-﻿//! Documents domain unit test migration target.
-
+//! Documents domain unit test migration target.

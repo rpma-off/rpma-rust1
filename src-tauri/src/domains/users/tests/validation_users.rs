@@ -1,2 +1,1 @@
-﻿//! Users domain validation test migration target.
-
+//! Users domain validation test migration target.
