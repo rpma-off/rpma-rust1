@@ -333,6 +333,35 @@ impl CalendarService {
             message: None,
         })
     }
+
+    /// Schedule a task, optionally skipping conflict detection.
+    ///
+    /// When `force` is true, the task is scheduled directly without checking
+    /// for conflicts. Otherwise conflicts are checked first and, if any exist,
+    /// the operation is aborted and the conflicts are returned.
+    pub async fn schedule_task_with_options(
+        &self,
+        task_id: String,
+        new_date: String,
+        new_start: Option<String>,
+        new_end: Option<String>,
+        user_id: &str,
+        force: bool,
+    ) -> Result<ConflictDetection, AppError> {
+        if force {
+            self.schedule_task(task_id, new_date, new_start, new_end, user_id)
+                .await?;
+            Ok(ConflictDetection {
+                has_conflict: false,
+                conflict_type: None,
+                conflicting_tasks: vec![],
+                message: None,
+            })
+        } else {
+            self.schedule_task_with_conflict_check(task_id, new_date, new_start, new_end, user_id)
+                .await
+        }
+    }
 }
 
 #[cfg(test)]

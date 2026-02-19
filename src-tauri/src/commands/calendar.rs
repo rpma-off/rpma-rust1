@@ -612,57 +612,33 @@ pub async fn calendar_schedule_task(
 
     let force = request.force.unwrap_or(false);
 
-    if force {
-        // Skip conflict check, schedule directly
-        match calendar_service
-            .schedule_task(
-                request.task_id.clone(),
-                request.new_date,
-                request.new_start,
-                request.new_end,
-                &current_user.user_id,
-            )
-            .await
-        {
-            Ok(()) => {
-                info!("Task {} scheduled (force mode)", request.task_id);
-                Ok(ApiResponse::success(ConflictDetection {
-                    has_conflict: false,
-                    conflict_type: None,
-                    conflicting_tasks: vec![],
-                    message: None,
-                })
-                .with_correlation_id(Some(correlation_id.clone())))
+    // Delegate the force/no-force routing entirely to the service layer
+    match calendar_service
+        .schedule_task_with_options(
+            request.task_id.clone(),
+            request.new_date,
+            request.new_start,
+            request.new_end,
+            &current_user.user_id,
+            force,
+        )
+        .await
+    {
+        Ok(result) => {
+            if result.has_conflict {
+                info!("Task {} has scheduling conflicts", request.task_id);
+            } else {
+                info!(
+                    "Task {} scheduled successfully{}",
+                    request.task_id,
+                    if force { " (force mode)" } else { "" }
+                );
             }
-            Err(e) => {
-                error!("Failed to schedule task: {}", e);
-                Err(AppError::internal_sanitized("schedule_task", &e))
-            }
+            Ok(ApiResponse::success(result).with_correlation_id(Some(correlation_id.clone())))
         }
-    } else {
-        // Check conflicts first, then schedule if no conflicts
-        match calendar_service
-            .schedule_task_with_conflict_check(
-                request.task_id.clone(),
-                request.new_date,
-                request.new_start,
-                request.new_end,
-                &current_user.user_id,
-            )
-            .await
-        {
-            Ok(result) => {
-                if result.has_conflict {
-                    info!("Task {} has scheduling conflicts", request.task_id);
-                } else {
-                    info!("Task {} scheduled successfully", request.task_id);
-                }
-                Ok(ApiResponse::success(result).with_correlation_id(Some(correlation_id.clone())))
-            }
-            Err(e) => {
-                error!("Failed to schedule task: {}", e);
-                Err(AppError::internal_sanitized("schedule_task", &e))
-            }
+        Err(e) => {
+            error!("Failed to schedule task: {}", e);
+            Err(AppError::internal_sanitized("schedule_task", &e))
         }
     }
 }
