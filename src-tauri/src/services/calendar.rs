@@ -1030,4 +1030,92 @@ mod tests {
             "Adjacent events should allow scheduling"
         );
     }
+
+    #[tokio::test]
+    async fn test_schedule_task_with_options_force_skips_conflicts() {
+        let (db, _test_db) = setup_test_db();
+        let service = CalendarService::new(db.clone());
+
+        // Existing task: 09:00-11:00
+        insert_test_task(
+            &db,
+            "task-existing",
+            "tech1",
+            "2025-06-15",
+            Some("09:00"),
+            Some("11:00"),
+            "pending",
+        );
+        // New task to be force-scheduled despite overlap
+        insert_test_task(
+            &db,
+            "task-force",
+            "tech1",
+            "2025-06-14",
+            None,
+            None,
+            "pending",
+        );
+
+        let result = service
+            .schedule_task_with_options(
+                "task-force".to_string(),
+                "2025-06-15".to_string(),
+                Some("10:00".to_string()),
+                Some("12:00".to_string()),
+                "test_user",
+                true, // force
+            )
+            .await
+            .expect("schedule_task_with_options (force) failed");
+
+        assert!(
+            !result.has_conflict,
+            "Force mode should always report no conflict"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_schedule_task_with_options_no_force_detects_conflict() {
+        let (db, _test_db) = setup_test_db();
+        let service = CalendarService::new(db.clone());
+
+        // Existing task: 09:00-11:00
+        insert_test_task(
+            &db,
+            "task-existing",
+            "tech1",
+            "2025-06-15",
+            Some("09:00"),
+            Some("11:00"),
+            "pending",
+        );
+        // New task that would overlap
+        insert_test_task(
+            &db,
+            "task-no-force",
+            "tech1",
+            "2025-06-14",
+            None,
+            None,
+            "pending",
+        );
+
+        let result = service
+            .schedule_task_with_options(
+                "task-no-force".to_string(),
+                "2025-06-15".to_string(),
+                Some("10:00".to_string()),
+                Some("12:00".to_string()),
+                "test_user",
+                false, // no force
+            )
+            .await
+            .expect("schedule_task_with_options (no force) failed");
+
+        assert!(
+            result.has_conflict,
+            "Non-force mode should detect conflict"
+        );
+    }
 }

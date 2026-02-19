@@ -364,4 +364,42 @@ mod tests {
         let err = service.bootstrap_first_admin(&user.id).await.unwrap_err();
         assert!(matches!(err, AppError::Validation(_)));
     }
+
+    #[test]
+    fn test_parse_user_role_valid() {
+        assert!(matches!(
+            UserService::parse_user_role("admin"),
+            Ok(UserRole::Admin)
+        ));
+        assert!(matches!(
+            UserService::parse_user_role("technician"),
+            Ok(UserRole::Technician)
+        ));
+        assert!(matches!(
+            UserService::parse_user_role("supervisor"),
+            Ok(UserRole::Supervisor)
+        ));
+        assert!(matches!(
+            UserService::parse_user_role("viewer"),
+            Ok(UserRole::Viewer)
+        ));
+    }
+
+    #[test]
+    fn test_parse_user_role_invalid() {
+        let err = UserService::parse_user_role("unknown").unwrap_err();
+        assert!(matches!(err, AppError::Validation(_)));
+    }
+
+    #[test]
+    fn test_validate_not_self_action_different_users() {
+        assert!(UserService::validate_not_self_action("user1", "user2", "delete").is_ok());
+    }
+
+    #[test]
+    fn test_validate_not_self_action_same_user() {
+        let err = UserService::validate_not_self_action("user1", "user1", "ban yourself")
+            .unwrap_err();
+        assert!(matches!(err, AppError::Validation(_)));
+    }
 }
