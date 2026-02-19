@@ -1,2 +1,1 @@
-﻿//! Interventions domain validation test migration target.
-
+//! Interventions domain validation test migration target.

@@ -1,2 +1,1 @@
-﻿//! Quotes domain validation test migration target.
-
+//! Quotes domain validation test migration target.

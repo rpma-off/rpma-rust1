@@ -3,9 +3,7 @@
 //! Uses proptest to test inventory operations with random inputs
 
 use crate::db::Database;
-use crate::models::material::{
-    InventoryTransactionType, Material, MaterialType, UnitOfMeasure
-};
+use crate::models::material::{InventoryTransactionType, Material, MaterialType, UnitOfMeasure};
 use crate::services::material::MaterialService;
 use proptest::prelude::*;
 use rusqlite::params;
@@ -14,9 +12,10 @@ use uuid::Uuid;
 // Helper to create a test database with inventory tables
 async fn create_test_db() -> Database {
     let db = Database::new_in_memory().await.unwrap();
-    
+
     // Create inventory tables
-    db.execute_batch(r#"
+    db.execute_batch(
+        r#"
         CREATE TABLE IF NOT EXISTS material_categories (
             id TEXT PRIMARY KEY NOT NULL,
             name TEXT NOT NULL,
@@ -98,8 +97,10 @@ async fn create_test_db() -> Database {
             synced INTEGER NOT NULL DEFAULT 0,
             last_synced_at INTEGER
         );
-    "#).unwrap();
-    
+    "#,
+    )
+    .unwrap();
+
     db
 }
 
@@ -115,10 +116,7 @@ fn material_name_strategy() -> impl Strategy<Value = String> {
 
 // Strategy for generating valid material descriptions
 fn material_description_strategy() -> impl Strategy<Value = Option<String>> {
-    prop_oneof![
-        Just(None),
-        "[a-zA-Z0-9\\s\\.\\,]{10,200}".prop_map(Some)
-    ]
+    prop_oneof![Just(None), "[a-zA-Z0-9\\s\\.\\,]{10,200}".prop_map(Some)]
 }
 
 // Strategy for generating valid material types
@@ -189,24 +187,18 @@ fn date_strategy() -> impl Strategy<Value = Option<i64>> {
     let now = chrono::Utc::now();
     let year_ago = (now - chrono::Duration::days(365)).timestamp_millis();
     let year_ahead = (now + chrono::Duration::days(365)).timestamp_millis();
-    
-    prop_oneof![
-        Just(None),
-        (year_ago..=year_ahead).prop_map(Some)
-    ]
+
+    prop_oneof![Just(None), (year_ago..=year_ahead).prop_map(Some)]
 }
 
 // Strategy for generating valid reference numbers
 fn reference_number_strategy() -> impl Strategy<Value = Option<String>> {
-    prop_oneof![
-        Just(None),
-        "[A-Z]{2,4}-[0-9]{4,8}".prop_map(Some)
-    ]
+    prop_oneof![Just(None), "[A-Z]{2,4}-[0-9]{4,8}".prop_map(Some)]
 }
 
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(100))]
-    
+
     #[test]
     fn test_create_material_with_random_valid_data(
         sku in sku_strategy(),
@@ -225,12 +217,12 @@ proptest! {
         rt.block_on(async {
             let db = create_test_db().await;
             let service = MaterialService::new(db);
-            
+
             // Ensure max_stock >= min_stock and reorder_point <= max_stock
             let min_stock = minimum_stock.min(maximum_stock);
             let max_stock = maximum_stock.max(min_stock);
             let reorder = reorder_point.min(max_stock);
-            
+
             // Create material with random valid data
             let request = crate::services::material::CreateMaterialRequest {
                 sku: sku.clone(),
@@ -259,10 +251,10 @@ proptest! {
                 storage_location: None,
                 warehouse_id: None,
             };
-            
+
             let result = service.create_material(request, Some("user_test".to_string()));
             prop_assert!(result.is_ok(), "Should successfully create material with valid random data");
-            
+
             let material = result.unwrap();
             prop_assert_eq!(material.sku, sku);
             prop_assert_eq!(material.name, name);
@@ -276,7 +268,7 @@ proptest! {
             prop_assert_eq!(material.currency, currency);
         });
     }
-    
+
     #[test]
     fn test_inventory_transaction_with_random_valid_data(
         transaction_type in transaction_type_strategy(),
@@ -291,7 +283,7 @@ proptest! {
         rt.block_on(async {
             let db = create_test_db().await;
             let service = MaterialService::new(db);
-            
+
             // Create a material first
             let material_request = crate::services::material::CreateMaterialRequest {
                 sku: "MAT-PROPTEST".to_string(),
@@ -320,9 +312,9 @@ proptest! {
                 storage_location: None,
                 warehouse_id: None,
             };
-            
+
             let material = service.create_material(material_request, Some("user_test".to_string())).unwrap();
-            
+
             // Create inventory transaction with random valid data
             let transaction_request = crate::services::material::CreateInventoryTransactionRequest {
                 material_id: material.id.clone(),
@@ -341,10 +333,10 @@ proptest! {
                 intervention_id: Some("INT-TEST".to_string()),
                 step_id: Some("STEP-TEST".to_string()),
             };
-            
+
             let result = service.create_inventory_transaction(transaction_request, "user_test".to_string());
             prop_assert!(result.is_ok(), "Should successfully create transaction with valid random data");
-            
+
             let transaction = result.unwrap();
             prop_assert_eq!(transaction.material_id, material.id);
             prop_assert_eq!(transaction.transaction_type, transaction_type);
@@ -357,10 +349,10 @@ proptest! {
             prop_assert_eq!(transaction.batch_number, batch_number);
             prop_assert_eq!(transaction.intervention_id, Some("INT-TEST".to_string()));
             prop_assert_eq!(transaction.step_id, Some("STEP-TEST".to_string()));
-            
+
             // Verify stock was updated appropriately based on transaction type
             let updated_material = service.get_material_by_id(&material.id).unwrap().unwrap();
-            
+
             match transaction_type {
                 InventoryTransactionType::StockIn | InventoryTransactionType::Adjustment => {
                     prop_assert_eq!(updated_material.current_stock, quantity);
@@ -380,7 +372,7 @@ proptest! {
             }
         });
     }
-    
+
     #[test]
     fn test_multiple_transactions_roundtrip(
         transaction_count in 1usize..=20usize
@@ -389,7 +381,7 @@ proptest! {
         rt.block_on(async {
             let db = create_test_db().await;
             let service = MaterialService::new(db);
-            
+
             // Create a material
             let material_request = crate::services::material::CreateMaterialRequest {
                 sku: "MAT-ROUNDTRIP".to_string(),
@@ -418,22 +410,22 @@ proptest! {
                 storage_location: None,
                 warehouse_id: None,
             };
-            
+
             let material = service.create_material(material_request, Some("user_test".to_string())).unwrap();
-            
+
             // Create multiple transactions
             let mut expected_stock = 0.0;
-            
+
             for i in 0..transaction_count {
                 let is_stock_in = i % 2 == 0; // Alternate between stock in and out
                 let quantity = (i as f64 + 1.0) * 10.0;
-                
+
                 let transaction_type = if is_stock_in {
                     InventoryTransactionType::StockIn
                 } else {
                     InventoryTransactionType::StockOut
                 };
-                
+
                 let transaction_request = crate::services::material::CreateInventoryTransactionRequest {
                     material_id: material.id.clone(),
                     transaction_type,
@@ -451,27 +443,27 @@ proptest! {
                     intervention_id: None,
                     step_id: None,
                 };
-                
+
                 let result = service.create_inventory_transaction(transaction_request, "user_test".to_string());
                 prop_assert!(result.is_ok(), "Transaction {} should succeed", i);
-                
+
                 if is_stock_in {
                     expected_stock += quantity;
                 } else {
                     expected_stock = (expected_stock - quantity).max(0.0);
                 }
             }
-            
+
             // Verify final stock
             let final_material = service.get_material_by_id(&material.id).unwrap().unwrap();
             prop_assert!((final_material.current_stock - expected_stock).abs() < 0.01,
                 "Final stock {} should match expected {}",
                 final_material.current_stock, expected_stock);
-            
+
             // Verify transaction history
             let transactions = service.get_material_transactions(&material.id, None).unwrap();
             prop_assert_eq!(transactions.len(), transaction_count);
-            
+
             // Verify transaction sequence
             let mut running_stock = 0.0;
             for (i, transaction) in transactions.iter().enumerate() {
@@ -480,14 +472,14 @@ proptest! {
                 } else { // Stock out
                     running_stock = (running_stock - transaction.quantity).max(0.0);
                 }
-                
+
                 prop_assert_eq!(transaction.new_stock, running_stock,
                     "Transaction {} new_stock should match running stock",
                     i);
             }
         });
     }
-    
+
     #[test]
     fn test_material_search_with_random_terms(
         materials_count in 10usize..=50usize,
@@ -497,13 +489,13 @@ proptest! {
         rt.block_on(async {
             let db = create_test_db().await;
             let service = MaterialService::new(db);
-            
+
             // Create materials with random names
             let mut material_names = Vec::new();
             for i in 0..materials_count {
                 let name = format!("Material {} {}", i, "TestItem");
                 material_names.push(name);
-                
+
                 let material_request = crate::services::material::CreateMaterialRequest {
                     sku: format!("MAT-SEARCH-{}", i),
                     name: material_names[i].clone(),
@@ -531,10 +523,10 @@ proptest! {
                     storage_location: None,
                     warehouse_id: None,
                 };
-                
+
                 service.create_material(material_request, Some("user_test".to_string())).unwrap();
             }
-            
+
             // Test search functionality
             let search_term = if search_term_length > 0 && material_names.len() > 0 {
                 // Pick a random material and use part of its name for search
@@ -548,13 +540,13 @@ proptest! {
             } else {
                 "TestItem".to_string()
             };
-            
+
             let search_results = service.list_materials(
                 None,
                 None,
                 Some(search_term.clone())
             ).unwrap();
-            
+
             // Verify search results contain the search term
             for material in &search_results {
                 prop_assert!(
@@ -563,14 +555,14 @@ proptest! {
                     "Search result should contain search term"
                 );
             }
-            
+
             // If search term is "TestItem", should find all materials
             if search_term == "TestItem" {
                 prop_assert_eq!(search_results.len(), materials_count);
             }
         });
     }
-    
+
     #[test]
     fn test_stock_levels_boundary_conditions(
         initial_stock in stock_quantity_strategy(),
@@ -580,7 +572,7 @@ proptest! {
         rt.block_on(async {
             let db = create_test_db().await;
             let service = MaterialService::new(db);
-            
+
             // Create a material
             let material_request = crate::services::material::CreateMaterialRequest {
                 sku: "MAT-BOUNDARY".to_string(),
@@ -609,9 +601,9 @@ proptest! {
                 storage_location: None,
                 warehouse_id: None,
             };
-            
+
             let material = service.create_material(material_request, Some("user_test".to_string())).unwrap();
-            
+
             // Stock in initial amount
             if initial_stock > 0.0 {
                 let stock_in_request = crate::services::material::CreateInventoryTransactionRequest {
@@ -631,10 +623,10 @@ proptest! {
                     intervention_id: None,
                     step_id: None,
                 };
-                
+
                 service.create_inventory_transaction(stock_in_request, "user_test".to_string()).unwrap();
             }
-            
+
             // Stock out transaction (could be larger than available stock)
             let stock_out_request = crate::services::material::CreateInventoryTransactionRequest {
                 material_id: material.id.clone(),
@@ -653,19 +645,19 @@ proptest! {
                 intervention_id: None,
                 step_id: None,
             };
-            
+
             let result = service.create_inventory_transaction(stock_out_request, "user_test".to_string());
-            
+
             // Transaction should succeed even if quantity exceeds available stock
             prop_assert!(result.is_ok(), "Stock out transaction should succeed");
-            
+
             let transaction = result.unwrap();
             let final_material = service.get_material_by_id(&material.id).unwrap().unwrap();
-            
+
             // Stock should not go negative
             prop_assert!(final_material.current_stock >= 0.0,
                 "Final stock should not be negative");
-            
+
             // If transaction quantity exceeds available stock, final stock should be 0
             if transaction_quantity > initial_stock {
                 prop_assert_eq!(final_material.current_stock, 0.0,
@@ -679,7 +671,7 @@ proptest! {
             }
         });
     }
-    
+
     #[test]
     fn test_transaction_cost_calculation(
         unit_cost in cost_strategy(),
@@ -689,7 +681,7 @@ proptest! {
         rt.block_on(async {
             let db = create_test_db().await;
             let service = MaterialService::new(db);
-            
+
             // Create a material
             let material_request = crate::services::material::CreateMaterialRequest {
                 sku: "MAT-COST".to_string(),
@@ -718,9 +710,9 @@ proptest! {
                 storage_location: None,
                 warehouse_id: None,
             };
-            
+
             let material = service.create_material(material_request, Some("user_test".to_string())).unwrap();
-            
+
             // Create transaction with cost
             let transaction_request = crate::services::material::CreateInventoryTransactionRequest {
                 material_id: material.id.clone(),
@@ -739,12 +731,12 @@ proptest! {
                 intervention_id: None,
                 step_id: None,
             };
-            
+
             let result = service.create_inventory_transaction(transaction_request, "user_test".to_string());
             prop_assert!(result.is_ok());
-            
+
             let transaction = result.unwrap();
-            
+
             // Verify cost calculation
             match unit_cost {
                 Some(cost) => {

@@ -3,7 +3,6 @@
 //! This module provides commands for optimized IPC communication
 //! including compression and streaming for large data transfers.
 
-use tracing;
 use crate::commands::compression::{
     compress_json, decompress_json, CompressedData, CompressionConfig,
 };
@@ -16,6 +15,7 @@ use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use tracing;
 
 lazy_static! {
     static ref STREAM_MANAGER: Arc<Mutex<StreamManager>> =

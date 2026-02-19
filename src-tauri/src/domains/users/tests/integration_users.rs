@@ -1,2 +1,1 @@
-﻿//! Users domain integration test migration target.
-
+//! Users domain integration test migration target.

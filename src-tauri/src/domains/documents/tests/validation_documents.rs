@@ -1,2 +1,1 @@
-﻿//! Documents domain validation test migration target.
-
+//! Documents domain validation test migration target.

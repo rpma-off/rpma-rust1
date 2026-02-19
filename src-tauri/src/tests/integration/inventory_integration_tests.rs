@@ -24,7 +24,7 @@ mod tests {
         let state = AppState {
             db: Box::leak(Box::new(db)),
             material_service: std::sync::Arc::new(tokio::sync::Mutex::new(
-                crate::services::material::MaterialService::new(test_db.db())
+                crate::services::material::MaterialService::new(test_db.db()),
             )),
             // Add other fields as needed for AppState
         };
@@ -62,7 +62,8 @@ mod tests {
         let material = tokio::task::block_in_place(|| {
             let mut service = service.blocking_lock();
             service.create_material(material_request, Some("test_user".to_string()))
-        }).unwrap();
+        })
+        .unwrap();
 
         (state, material.id.unwrap())
     }
@@ -74,7 +75,7 @@ mod tests {
         AppState {
             db: Box::leak(Box::new(db)),
             material_service: std::sync::Arc::new(tokio::sync::Mutex::new(
-                crate::services::material::MaterialService::new(test_db.db())
+                crate::services::material::MaterialService::new(test_db.db()),
             )),
             // Add other fields as needed for AppState
         }
@@ -83,7 +84,7 @@ mod tests {
     #[tokio::test]
     async fn test_material_create_command_success() {
         let state = create_test_state();
-        
+
         let request = CreateMaterialRequest {
             sku: "CMD-TEST-001".to_string(),
             name: "Command Test Material".to_string(),
@@ -112,8 +113,10 @@ mod tests {
             warehouse_id: None,
         };
 
-        let result = crate::commands::material::material_create(state, request, "test_user".to_string()).await;
-        
+        let result =
+            crate::commands::material::material_create(state, request, "test_user".to_string())
+                .await;
+
         assert!(result.is_ok());
         let response = result.unwrap();
         assert!(response.success);
@@ -134,7 +137,7 @@ mod tests {
     #[tokio::test]
     async fn test_material_create_command_validation_error() {
         let state = create_test_state();
-        
+
         let mut request = CreateMaterialRequest {
             sku: "".to_string(), // Empty SKU should cause validation error
             name: "Command Test Material".to_string(),
@@ -163,10 +166,12 @@ mod tests {
             warehouse_id: None,
         };
 
-        let result = crate::commands::material::material_create(state, request, "test_user".to_string()).await;
-        
+        let result =
+            crate::commands::material::material_create(state, request, "test_user".to_string())
+                .await;
+
         assert!(result.is_err());
-        
+
         let error = result.unwrap_err();
         assert!(error.to_string().contains("SKU"));
     }
@@ -174,9 +179,9 @@ mod tests {
     #[tokio::test]
     async fn test_material_get_command_success() {
         let (state, material_id) = create_test_state_with_material();
-        
+
         let result = crate::commands::material::material_get(state, material_id).await;
-        
+
         assert!(result.is_ok());
         let response = result.unwrap();
         assert!(response.success);
@@ -191,9 +196,10 @@ mod tests {
     #[tokio::test]
     async fn test_material_get_command_not_found() {
         let state = create_test_state();
-        
-        let result = crate::commands::material::material_get(state, "non-existent-id".to_string()).await;
-        
+
+        let result =
+            crate::commands::material::material_get(state, "non-existent-id".to_string()).await;
+
         assert!(result.is_ok());
         let response = result.unwrap();
         assert!(response.success);
@@ -203,9 +209,10 @@ mod tests {
     #[tokio::test]
     async fn test_material_get_by_sku_command_success() {
         let (state, _) = create_test_state_with_material();
-        
-        let result = crate::commands::material::material_get_by_sku(state, "TEST-MAT-001".to_string()).await;
-        
+
+        let result =
+            crate::commands::material::material_get_by_sku(state, "TEST-MAT-001".to_string()).await;
+
         assert!(result.is_ok());
         let response = result.unwrap();
         assert!(response.success);
@@ -219,9 +226,11 @@ mod tests {
     #[tokio::test]
     async fn test_material_get_by_sku_command_not_found() {
         let state = create_test_state();
-        
-        let result = crate::commands::material::material_get_by_sku(state, "NON-EXISTENT-SKU".to_string()).await;
-        
+
+        let result =
+            crate::commands::material::material_get_by_sku(state, "NON-EXISTENT-SKU".to_string())
+                .await;
+
         assert!(result.is_ok());
         let response = result.unwrap();
         assert!(response.success);
@@ -231,14 +240,18 @@ mod tests {
     #[tokio::test]
     async fn test_material_list_command_success() {
         let state = create_test_state();
-        
+
         // Create multiple test materials
         for i in 1..=5 {
             let request = CreateMaterialRequest {
                 sku: format!("LIST-TEST-{:03}", i),
                 name: format!("List Test Material {}", i),
                 description: Some("Test material for list command".to_string()),
-                material_type: if i % 2 == 0 { MaterialType::PpfFilm } else { MaterialType::Adhesive },
+                material_type: if i % 2 == 0 {
+                    MaterialType::PpfFilm
+                } else {
+                    MaterialType::Adhesive
+                },
                 category: Some(if i % 2 == 0 { "Films" } else { "Adhesives" }.to_string()),
                 subcategory: None,
                 category_id: None,
@@ -262,19 +275,26 @@ mod tests {
                 warehouse_id: None,
             };
 
-            crate::commands::material::material_create(state.clone(), request, "test_user".to_string()).await.unwrap();
+            crate::commands::material::material_create(
+                state.clone(),
+                request,
+                "test_user".to_string(),
+            )
+            .await
+            .unwrap();
         }
 
         // List all materials
         let result = crate::commands::material::material_list(
             state.clone(),
-            None, // material_type
-            None, // category
+            None,       // material_type
+            None,       // category
             Some(true), // active_only
-            None, // limit
-            None, // offset
-        ).await;
-        
+            None,       // limit
+            None,       // offset
+        )
+        .await;
+
         assert!(result.is_ok());
         let response = result.unwrap();
         assert!(response.success);
@@ -287,7 +307,7 @@ mod tests {
     #[tokio::test]
     async fn test_material_list_command_with_filter() {
         let state = create_test_state();
-        
+
         // Create test materials of different types
         for i in 1..=4 {
             let material_type = match i {
@@ -324,19 +344,26 @@ mod tests {
                 warehouse_id: None,
             };
 
-            crate::commands::material::material_create(state.clone(), request, "test_user".to_string()).await.unwrap();
+            crate::commands::material::material_create(
+                state.clone(),
+                request,
+                "test_user".to_string(),
+            )
+            .await
+            .unwrap();
         }
 
         // List only PPF films
         let result = crate::commands::material::material_list(
             state.clone(),
             Some("ppf_film".to_string()), // material_type
-            None, // category
-            Some(true), // active_only
-            None, // limit
-            None, // offset
-        ).await;
-        
+            None,                         // category
+            Some(true),                   // active_only
+            None,                         // limit
+            None,                         // offset
+        )
+        .await;
+
         assert!(result.is_ok());
         let response = result.unwrap();
         assert!(response.success);
@@ -344,13 +371,15 @@ mod tests {
 
         let materials = response.data.unwrap();
         assert_eq!(materials.len(), 2);
-        assert!(materials.iter().all(|m| matches!(m.material_type, MaterialType::PpfFilm)));
+        assert!(materials
+            .iter()
+            .all(|m| matches!(m.material_type, MaterialType::PpfFilm)));
     }
 
     #[tokio::test]
     async fn test_material_update_command_success() {
         let (state, material_id) = create_test_state_with_material();
-        
+
         let request = CreateMaterialRequest {
             sku: "TEST-MAT-001".to_string(),
             name: "Updated Test Material".to_string(),
@@ -384,8 +413,9 @@ mod tests {
             material_id.clone(),
             request,
             "test_user".to_string(),
-        ).await;
-        
+        )
+        .await;
+
         assert!(result.is_ok());
         let response = result.unwrap();
         assert!(response.success);
@@ -405,7 +435,7 @@ mod tests {
     #[tokio::test]
     async fn test_material_update_command_not_found() {
         let state = create_test_state();
-        
+
         let request = CreateMaterialRequest {
             sku: "NON-EXISTENT-001".to_string(),
             name: "Non-existent Material".to_string(),
@@ -439,10 +469,11 @@ mod tests {
             "non-existent-id".to_string(),
             request,
             "test_user".to_string(),
-        ).await;
-        
+        )
+        .await;
+
         assert!(result.is_err());
-        
+
         let error = result.unwrap_err();
         assert!(error.to_string().contains("not found"));
     }
@@ -450,7 +481,7 @@ mod tests {
     #[tokio::test]
     async fn test_material_update_stock_command_success() {
         let (state, material_id) = create_test_state_with_material();
-        
+
         // First update stock
         let initial_update = UpdateStockRequest {
             material_id: material_id.clone(),
@@ -459,8 +490,9 @@ mod tests {
             recorded_by: Some("test_user".to_string()),
         };
 
-        let result = crate::commands::material::material_update_stock(state.clone(), initial_update).await;
-        
+        let result =
+            crate::commands::material::material_update_stock(state.clone(), initial_update).await;
+
         assert!(result.is_ok());
         let response = result.unwrap();
         assert!(response.success);
@@ -478,8 +510,9 @@ mod tests {
             recorded_by: Some("test_user".to_string()),
         };
 
-        let result = crate::commands::material::material_update_stock(state.clone(), second_update).await;
-        
+        let result =
+            crate::commands::material::material_update_stock(state.clone(), second_update).await;
+
         assert!(result.is_ok());
         let response = result.unwrap();
         assert!(response.success);
@@ -497,7 +530,7 @@ mod tests {
         };
 
         let result = crate::commands::material::material_update_stock(state, third_update).await;
-        
+
         assert!(result.is_ok());
         let response = result.unwrap();
         assert!(response.success);
@@ -510,7 +543,7 @@ mod tests {
     #[tokio::test]
     async fn test_material_update_stock_command_insufficient_stock() {
         let (state, material_id) = create_test_state_with_material();
-        
+
         // First update to set some stock
         let initial_update = UpdateStockRequest {
             material_id: material_id.clone(),
@@ -519,7 +552,9 @@ mod tests {
             recorded_by: Some("test_user".to_string()),
         };
 
-        crate::commands::material::material_update_stock(state.clone(), initial_update).await.unwrap();
+        crate::commands::material::material_update_stock(state.clone(), initial_update)
+            .await
+            .unwrap();
 
         // Try to reduce more than available
         let excessive_update = UpdateStockRequest {
@@ -529,10 +564,11 @@ mod tests {
             recorded_by: Some("test_user".to_string()),
         };
 
-        let result = crate::commands::material::material_update_stock(state, excessive_update).await;
-        
+        let result =
+            crate::commands::material::material_update_stock(state, excessive_update).await;
+
         assert!(result.is_err());
-        
+
         let error = result.unwrap_err();
         assert!(error.to_string().contains("Cannot reduce stock below 0"));
     }
@@ -540,7 +576,7 @@ mod tests {
     #[tokio::test]
     async fn test_material_record_consumption_command_success() {
         let (state, material_id) = create_test_state_with_material();
-        
+
         // First update stock
         let stock_update = UpdateStockRequest {
             material_id: material_id.clone(),
@@ -549,7 +585,9 @@ mod tests {
             recorded_by: Some("test_user".to_string()),
         };
 
-        crate::commands::material::material_update_stock(state.clone(), stock_update).await.unwrap();
+        crate::commands::material::material_update_stock(state.clone(), stock_update)
+            .await
+            .unwrap();
 
         // Record consumption
         let consumption_request = RecordConsumptionRequest {
@@ -565,8 +603,12 @@ mod tests {
             recorded_by: Some("test_user".to_string()),
         };
 
-        let result = crate::commands::material::material_record_consumption(state.clone(), consumption_request).await;
-        
+        let result = crate::commands::material::material_record_consumption(
+            state.clone(),
+            consumption_request,
+        )
+        .await;
+
         assert!(result.is_ok());
         let response = result.unwrap();
         assert!(response.success);
@@ -584,7 +626,7 @@ mod tests {
         assert!(get_result.is_ok());
         let get_response = get_result.unwrap();
         assert!(get_response.success);
-        
+
         let material = get_response.data.unwrap();
         assert_eq!(material.current_stock, 70.0); // 100 - 25 - 5
     }
@@ -592,7 +634,7 @@ mod tests {
     #[tokio::test]
     async fn test_material_record_consumption_command_not_found() {
         let state = create_test_state();
-        
+
         let consumption_request = RecordConsumptionRequest {
             intervention_id: "INT-001".to_string(),
             material_id: "non-existent-material".to_string(),
@@ -606,10 +648,12 @@ mod tests {
             recorded_by: Some("test_user".to_string()),
         };
 
-        let result = crate::commands::material::material_record_consumption(state, consumption_request).await;
-        
+        let result =
+            crate::commands::material::material_record_consumption(state, consumption_request)
+                .await;
+
         assert!(result.is_err());
-        
+
         let error = result.unwrap_err();
         assert!(error.to_string().contains("not found"));
     }
@@ -617,7 +661,7 @@ mod tests {
     #[tokio::test]
     async fn test_material_get_intervention_consumption_command_success() {
         let (state, material_id) = create_test_state_with_material();
-        
+
         // Update stock
         let stock_update = UpdateStockRequest {
             material_id: material_id.clone(),
@@ -626,7 +670,9 @@ mod tests {
             recorded_by: Some("test_user".to_string()),
         };
 
-        crate::commands::material::material_update_stock(state.clone(), stock_update).await.unwrap();
+        crate::commands::material::material_update_stock(state.clone(), stock_update)
+            .await
+            .unwrap();
 
         // Record consumption
         let consumption_request = RecordConsumptionRequest {
@@ -642,14 +688,17 @@ mod tests {
             recorded_by: Some("test_user".to_string()),
         };
 
-        crate::commands::material::material_record_consumption(state.clone(), consumption_request).await.unwrap();
+        crate::commands::material::material_record_consumption(state.clone(), consumption_request)
+            .await
+            .unwrap();
 
         // Get intervention consumption
         let result = crate::commands::material::material_get_intervention_consumption(
             state,
             "INT-001".to_string(),
-        ).await;
-        
+        )
+        .await;
+
         assert!(result.is_ok());
         let response = result.unwrap();
         assert!(response.success);
@@ -665,13 +714,14 @@ mod tests {
     #[tokio::test]
     async fn test_material_get_intervention_consumption_command_empty() {
         let state = create_test_state();
-        
+
         // Get consumption for non-existent intervention
         let result = crate::commands::material::material_get_intervention_consumption(
             state,
             "NON-EXISTENT-INT".to_string(),
-        ).await;
-        
+        )
+        .await;
+
         assert!(result.is_ok());
         let response = result.unwrap();
         assert!(response.success);
@@ -684,14 +734,18 @@ mod tests {
     #[tokio::test]
     async fn test_material_get_stats_command_success() {
         let state = create_test_state();
-        
+
         // Create test materials
         for i in 1..=5 {
             let request = CreateMaterialRequest {
                 sku: format!("STATS-TEST-{:03}", i),
                 name: format!("Stats Test Material {}", i),
                 description: Some("Test material for stats".to_string()),
-                material_type: if i % 2 == 0 { MaterialType::PpfFilm } else { MaterialType::Adhesive },
+                material_type: if i % 2 == 0 {
+                    MaterialType::PpfFilm
+                } else {
+                    MaterialType::Adhesive
+                },
                 category: Some(if i % 2 == 0 { "Films" } else { "Adhesives" }.to_string()),
                 subcategory: None,
                 category_id: None,
@@ -715,12 +769,18 @@ mod tests {
                 warehouse_id: None,
             };
 
-            crate::commands::material::material_create(state.clone(), request, "test_user".to_string()).await.unwrap();
+            crate::commands::material::material_create(
+                state.clone(),
+                request,
+                "test_user".to_string(),
+            )
+            .await
+            .unwrap();
         }
 
         // Get material stats
         let result = crate::commands::material::material_get_stats(state).await;
-        
+
         assert!(result.is_ok());
         let response = result.unwrap();
         assert!(response.success);
@@ -736,7 +796,7 @@ mod tests {
     #[tokio::test]
     async fn test_material_get_low_stock_command_success() {
         let state = create_test_state();
-        
+
         // Create normal stock material
         let normal_request = CreateMaterialRequest {
             sku: "NORMAL-001".to_string(),
@@ -766,7 +826,13 @@ mod tests {
             warehouse_id: None,
         };
 
-        let normal_material = crate::commands::material::material_create(state.clone(), normal_request, "test_user".to_string()).await.unwrap();
+        let normal_material = crate::commands::material::material_create(
+            state.clone(),
+            normal_request,
+            "test_user".to_string(),
+        )
+        .await
+        .unwrap();
         let normal_id = normal_material.data.unwrap().id;
 
         // Update normal stock
@@ -776,7 +842,9 @@ mod tests {
             reason: "Normal stock".to_string(),
             recorded_by: Some("test_user".to_string()),
         };
-        crate::commands::material::material_update_stock(state.clone(), normal_stock_update).await.unwrap();
+        crate::commands::material::material_update_stock(state.clone(), normal_stock_update)
+            .await
+            .unwrap();
 
         // Create low stock material
         let low_stock_request = CreateMaterialRequest {
@@ -807,7 +875,13 @@ mod tests {
             warehouse_id: None,
         };
 
-        let low_stock_material = crate::commands::material::material_create(state.clone(), low_stock_request, "test_user".to_string()).await.unwrap();
+        let low_stock_material = crate::commands::material::material_create(
+            state.clone(),
+            low_stock_request,
+            "test_user".to_string(),
+        )
+        .await
+        .unwrap();
         let low_stock_id = low_stock_material.data.unwrap().id;
 
         // Update low stock
@@ -817,11 +891,13 @@ mod tests {
             reason: "Low stock".to_string(),
             recorded_by: Some("test_user".to_string()),
         };
-        crate::commands::material::material_update_stock(state, low_stock_update).await.unwrap();
+        crate::commands::material::material_update_stock(state, low_stock_update)
+            .await
+            .unwrap();
 
         // Get low stock materials
         let result = crate::commands::material::material_get_low_stock(state).await;
-        
+
         assert!(result.is_ok());
         let response = result.unwrap();
         assert!(response.success);
@@ -835,7 +911,7 @@ mod tests {
     #[tokio::test]
     async fn test_material_get_expired_command_success() {
         let state = create_test_state();
-        
+
         // Create normal material
         let normal_request = CreateMaterialRequest {
             sku: "NORMAL-EXP-001".to_string(),
@@ -865,7 +941,13 @@ mod tests {
             warehouse_id: None,
         };
 
-        crate::commands::material::material_create(state.clone(), normal_request, "test_user".to_string()).await.unwrap();
+        crate::commands::material::material_create(
+            state.clone(),
+            normal_request,
+            "test_user".to_string(),
+        )
+        .await
+        .unwrap();
 
         // Create expired material
         let expired_request = CreateMaterialRequest {
@@ -896,11 +978,13 @@ mod tests {
             warehouse_id: None,
         };
 
-        crate::commands::material::material_create(state, expired_request, "test_user".to_string()).await.unwrap();
+        crate::commands::material::material_create(state, expired_request, "test_user".to_string())
+            .await
+            .unwrap();
 
         // Get expired materials
         let result = crate::commands::material::material_get_expired(state).await;
-        
+
         assert!(result.is_ok());
         let response = result.unwrap();
         assert!(response.success);
@@ -914,7 +998,7 @@ mod tests {
     #[tokio::test]
     async fn test_material_create_inventory_transaction_command_success() {
         let (state, material_id) = create_test_state_with_material();
-        
+
         let request = CreateInventoryTransactionRequest {
             material_id: material_id.clone(),
             transaction_type: InventoryTransactionType::StockIn,
@@ -933,8 +1017,13 @@ mod tests {
             step_id: None,
         };
 
-        let result = crate::commands::material::material_create_inventory_transaction(state, request, "test_user".to_string()).await;
-        
+        let result = crate::commands::material::material_create_inventory_transaction(
+            state,
+            request,
+            "test_user".to_string(),
+        )
+        .await;
+
         assert!(result.is_ok());
         let response = result.unwrap();
         assert!(response.success);
@@ -942,7 +1031,10 @@ mod tests {
 
         let transaction = response.data.unwrap();
         assert_eq!(transaction.material_id, material_id);
-        assert_eq!(transaction.transaction_type, InventoryTransactionType::StockIn);
+        assert_eq!(
+            transaction.transaction_type,
+            InventoryTransactionType::StockIn
+        );
         assert_eq!(transaction.quantity, 100.0);
         assert_eq!(transaction.reference_number.unwrap(), "PO-001");
         assert_eq!(transaction.performed_by, "test_user");
@@ -951,7 +1043,7 @@ mod tests {
     #[tokio::test]
     async fn test_material_create_inventory_transaction_command_insufficient_stock() {
         let (state, material_id) = create_test_state_with_material();
-        
+
         let request = CreateInventoryTransactionRequest {
             material_id: material_id.clone(),
             transaction_type: InventoryTransactionType::StockOut,
@@ -970,10 +1062,15 @@ mod tests {
             step_id: None,
         };
 
-        let result = crate::commands::material::material_create_inventory_transaction(state, request, "test_user".to_string()).await;
-        
+        let result = crate::commands::material::material_create_inventory_transaction(
+            state,
+            request,
+            "test_user".to_string(),
+        )
+        .await;
+
         assert!(result.is_err());
-        
+
         let error = result.unwrap_err();
         assert!(error.to_string().contains("Insufficient stock"));
     }
@@ -981,7 +1078,7 @@ mod tests {
     #[tokio::test]
     async fn test_material_create_inventory_transaction_command_not_found() {
         let state = create_test_state();
-        
+
         let request = CreateInventoryTransactionRequest {
             material_id: "non-existent-material".to_string(),
             transaction_type: InventoryTransactionType::StockIn,
@@ -1000,10 +1097,15 @@ mod tests {
             step_id: None,
         };
 
-        let result = crate::commands::material::material_create_inventory_transaction(state, request, "test_user".to_string()).await;
-        
+        let result = crate::commands::material::material_create_inventory_transaction(
+            state,
+            request,
+            "test_user".to_string(),
+        )
+        .await;
+
         assert!(result.is_err());
-        
+
         let error = result.unwrap_err();
         assert!(error.to_string().contains("not found"));
     }
@@ -1011,9 +1113,14 @@ mod tests {
     #[tokio::test]
     async fn test_material_delete_command_success() {
         let (state, material_id) = create_test_state_with_material();
-        
-        let result = crate::commands::material::material_delete(state, material_id.clone(), "test_user".to_string()).await;
-        
+
+        let result = crate::commands::material::material_delete(
+            state,
+            material_id.clone(),
+            "test_user".to_string(),
+        )
+        .await;
+
         assert!(result.is_ok());
         let response = result.unwrap();
         assert!(response.success);
@@ -1033,11 +1140,16 @@ mod tests {
     #[tokio::test]
     async fn test_material_delete_command_not_found() {
         let state = create_test_state();
-        
-        let result = crate::commands::material::material_delete(state, "non-existent-id".to_string(), "test_user".to_string()).await;
-        
+
+        let result = crate::commands::material::material_delete(
+            state,
+            "non-existent-id".to_string(),
+            "test_user".to_string(),
+        )
+        .await;
+
         assert!(result.is_err());
-        
+
         let error = result.unwrap_err();
         assert!(error.to_string().contains("not found"));
     }
@@ -1045,7 +1157,7 @@ mod tests {
     #[tokio::test]
     async fn test_material_create_category_command_success() {
         let state = create_test_state();
-        
+
         let request = CreateMaterialCategoryRequest {
             name: "Test Category".to_string(),
             code: Some("TEST-CAT".to_string()),
@@ -1055,8 +1167,13 @@ mod tests {
             color: Some("#FF0000".to_string()),
         };
 
-        let result = crate::commands::material::material_create_category(state, request, "test_user".to_string()).await;
-        
+        let result = crate::commands::material::material_create_category(
+            state,
+            request,
+            "test_user".to_string(),
+        )
+        .await;
+
         assert!(result.is_ok());
         let response = result.unwrap();
         assert!(response.success);
@@ -1073,7 +1190,7 @@ mod tests {
     #[tokio::test]
     async fn test_material_create_category_command_validation_error() {
         let state = create_test_state();
-        
+
         let mut request = CreateMaterialCategoryRequest {
             name: "".to_string(), // Empty name should cause validation error
             code: Some("TEST-CAT".to_string()),
@@ -1083,10 +1200,15 @@ mod tests {
             color: Some("#FF0000".to_string()),
         };
 
-        let result = crate::commands::material::material_create_category(state, request, "test_user".to_string()).await;
-        
+        let result = crate::commands::material::material_create_category(
+            state,
+            request,
+            "test_user".to_string(),
+        )
+        .await;
+
         assert!(result.is_err());
-        
+
         let error = result.unwrap_err();
         assert!(error.to_string().contains("Category name"));
     }
@@ -1094,7 +1216,7 @@ mod tests {
     #[tokio::test]
     async fn test_material_create_supplier_command_success() {
         let state = create_test_state();
-        
+
         let request = CreateSupplierRequest {
             name: "Test Supplier".to_string(),
             code: Some("TEST-SUP".to_string()),
@@ -1119,8 +1241,13 @@ mod tests {
             special_instructions: Some("Special instructions".to_string()),
         };
 
-        let result = crate::commands::material::material_create_supplier(state, request, "test_user".to_string()).await;
-        
+        let result = crate::commands::material::material_create_supplier(
+            state,
+            request,
+            "test_user".to_string(),
+        )
+        .await;
+
         assert!(result.is_ok());
         let response = result.unwrap();
         assert!(response.success);
@@ -1138,7 +1265,7 @@ mod tests {
     #[tokio::test]
     async fn test_material_create_supplier_command_validation_error() {
         let state = create_test_state();
-        
+
         let mut request = CreateSupplierRequest {
             name: "".to_string(), // Empty name should cause validation error
             code: Some("TEST-SUP".to_string()),
@@ -1163,10 +1290,15 @@ mod tests {
             special_instructions: Some("Special instructions".to_string()),
         };
 
-        let result = crate::commands::material::material_create_supplier(state, request, "test_user".to_string()).await;
-        
+        let result = crate::commands::material::material_create_supplier(
+            state,
+            request,
+            "test_user".to_string(),
+        )
+        .await;
+
         assert!(result.is_err());
-        
+
         let error = result.unwrap_err();
         assert!(error.to_string().contains("Supplier name"));
     }

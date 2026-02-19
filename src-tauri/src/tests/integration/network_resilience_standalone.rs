@@ -4,15 +4,17 @@
 
 use crate::commands::AppResult;
 use crate::models::client::{Client, CustomerType};
-use crate::models::material::{Material, MaterialType, UnitOfMeasure};
-use crate::models::task::{Task, TaskStatus, TaskPriority};
 use crate::models::intervention::Intervention;
-use crate::services::audit_service::{AuditService, AuditEvent};
+use crate::models::material::{Material, MaterialType, UnitOfMeasure};
+use crate::models::task::{Task, TaskPriority, TaskStatus};
+use crate::services::audit_service::{AuditEvent, AuditService};
 use crate::services::client::ClientService;
-use crate::services::intervention_types::{AdvanceStepRequest, FinalizeInterventionRequest, StartInterventionRequest};
+use crate::services::intervention_types::{
+    AdvanceStepRequest, FinalizeInterventionRequest, StartInterventionRequest,
+};
 use crate::services::intervention_workflow::InterventionWorkflowService;
 use crate::services::material::{
-    CreateMaterialRequest, MaterialService, RecordConsumptionRequest, UpdateStockRequest
+    CreateMaterialRequest, MaterialService, RecordConsumptionRequest, UpdateStockRequest,
 };
 use crate::services::task_crud::TaskCrudService;
 use crate::test_utils::TestDatabase;
@@ -83,11 +85,11 @@ impl NetworkResilienceTestFixture {
         let intervention_service = InterventionWorkflowService::new(db.db());
         let material_service = MaterialService::new(db.db());
         let audit_service = AuditService::new(db.db());
-        
+
         audit_service.init()?;
-        
+
         let failure_simulator = Arc::new(Mutex::new(FailureSimulator::new()));
-        
+
         Ok(NetworkResilienceTestFixture {
             db,
             client_service,
@@ -104,69 +106,89 @@ impl NetworkResilienceTestFixture {
         let start_time = Instant::now();
         let mut successful_operations = 0;
         let mut failed_operations = 0;
-        
+
         // Simulate connection failures
         {
             let mut simulator = self.failure_simulator.lock().unwrap();
             simulator.simulate_connection_failure = true;
             simulator.failure_rate = 0.3; // 30% failure rate
         }
-        
+
         println!("Testing with simulated connection failures...");
-        
+
         // Try to create clients with failures
         for i in 0..10 {
-            match self.create_test_client_with_resilience(
-                &format!("Resilience Client {}", i),
-                Some(format!("resilience{}@test.com", i))
-            ).await {
+            match self
+                .create_test_client_with_resilience(
+                    &format!("Resilience Client {}", i),
+                    Some(format!("resilience{}@test.com", i)),
+                )
+                .await
+            {
                 Ok(_) => successful_operations += 1,
                 Err(_) => failed_operations += 1,
             }
         }
-        
+
         // Clear the failure simulation
         {
             let mut simulator = self.failure_simulator.lock().unwrap();
             simulator.simulate_connection_failure = false;
             simulator.failure_rate = 0.0;
         }
-        
+
         // Test recovery - operations should succeed now
         println!("Testing recovery after connection restoration...");
         for i in 0..5 {
-            match self.create_test_client_with_resilience(
-                &format!("Recovery Client {}", i),
-                Some(format!("recovery{}@test.com", i))
-            ).await {
+            match self
+                .create_test_client_with_resilience(
+                    &format!("Recovery Client {}", i),
+                    Some(format!("recovery{}@test.com", i)),
+                )
+                .await
+            {
                 Ok(_) => successful_operations += 1,
                 Err(_) => failed_operations += 1,
             }
         }
-        
+
         let duration = start_time.elapsed();
-        
-        println!("Connection failure recovery: {} successful, {} failed in {:?}", 
-                successful_operations, failed_operations, duration);
-        
+
+        println!(
+            "Connection failure recovery: {} successful, {} failed in {:?}",
+            successful_operations, failed_operations, duration
+        );
+
         // At least some operations should have succeeded, and recovery should work
-        assert!(successful_operations > 0, "No operations succeeded during connection failure test");
-        assert!(successful_operations >= 5, "Recovery failed - insufficient successful operations");
-        
+        assert!(
+            successful_operations > 0,
+            "No operations succeeded during connection failure test"
+        );
+        assert!(
+            successful_operations >= 5,
+            "Recovery failed - insufficient successful operations"
+        );
+
         Ok((successful_operations, duration))
     }
 
     /// Create a test client with failure simulation
-    pub async fn create_test_client_with_resilience(&self, name: &str, email: Option<&str>) -> AppResult<Client> {
+    pub async fn create_test_client_with_resilience(
+        &self,
+        name: &str,
+        email: Option<&str>,
+    ) -> AppResult<Client> {
         let simulator = self.failure_simulator.lock().unwrap();
         simulator.apply_delay().await;
-        
+
         if simulator.should_fail() {
-            return Err(crate::commands::AppError::DatabaseError("Simulated connection failure".to_string()));
+            return Err(crate::commands::AppError::DatabaseError(
+                "Simulated connection failure".to_string(),
+            ));
         }
-        
+
         drop(simulator);
-        
+
         let client_request = test_client!(
             name: name.to_string(),
             email: email.map(|e| e.to_string()),
@@ -180,20 +202,30 @@ impl NetworkResilienceTestFixture {
             notes: Some("Resilience test client".to_string()),
             tags: Some("resilience,test".to_string())
         );
-        
-        self.client_service.create_client_async(client_request, "resilience_test_user").await
+
+        self.client_service
+            .create_client_async(client_request, "resilience_test_user")
+            .await
     }
 }
 
 /// Test database connection failure and recovery
 pub async fn test_connection_failure_and_recovery() -> AppResult<()> {
     let fixture = NetworkResilienceTestFixture::new()?;
-    
+
     let (successful_ops, duration) = fixture.test_connection_failure_recovery().await?;
-    
-    assert!(successful_ops >= 5, "Insufficient successful operations: {}", successful_ops);
-    assert!(duration < Duration::from_secs(30), "Connection recovery too slow: {:?}", duration);
-    
+
+    assert!(
+        successful_ops >= 5,
+        "Insufficient successful operations: {}",
+        successful_ops
+    );
+    assert!(
+        duration < Duration::from_secs(30),
+        "Connection recovery too slow: {:?}",
+        duration
+    );
+
     Ok(())
 }
 

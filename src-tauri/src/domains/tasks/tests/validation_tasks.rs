@@ -1,2 +1,1 @@
-﻿//! Tasks domain validation test migration target.
-
+//! Tasks domain validation test migration target.

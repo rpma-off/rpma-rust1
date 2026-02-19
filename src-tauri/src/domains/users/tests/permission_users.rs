@@ -1,2 +1,1 @@
-﻿//! Users domain permission test migration target.
-
+//! Users domain permission test migration target.

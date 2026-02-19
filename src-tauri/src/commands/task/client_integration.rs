@@ -39,8 +39,7 @@ pub async fn get_tasks_with_client_details(
     request: TasksWithClientsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<TaskWithClientDetails>>, AppError> {
-    let correlation_id =
-        crate::commands::init_correlation_context(&request.correlation_id, None);
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     debug!("Getting tasks with detailed client information");
 
     // Authenticate user
@@ -248,8 +247,7 @@ pub async fn get_client_task_summary(
     state: &AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<crate::services::client::ClientStat>, AppError> {
-    let correlation_id =
-        crate::commands::init_correlation_context(&correlation_id, None);
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     debug!("Getting task summary for client {}", client_id);
 
     // Authenticate user

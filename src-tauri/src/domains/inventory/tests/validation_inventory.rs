@@ -1,2 +1,1 @@
-﻿//! Inventory domain validation test migration target.
-
+//! Inventory domain validation test migration target.

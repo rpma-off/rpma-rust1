@@ -1,7 +1,7 @@
-use tracing;
 use crate::commands::{ApiError, AppState};
 use crate::models::status::{StatusDistribution, StatusTransitionRequest};
 use crate::models::task::Task;
+use tracing;
 
 /// Transition a task to a new status with validation
 #[tracing::instrument(skip_all)]

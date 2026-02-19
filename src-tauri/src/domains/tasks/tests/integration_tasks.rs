@@ -1,2 +1,1 @@
-﻿//! Tasks domain integration test migration target.
-
+//! Tasks domain integration test migration target.
