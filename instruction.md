@@ -1,115 +1,83 @@
-﻿﻿You are working inside the RPMA v2 repo (Tauri + Rust backend + Next.js frontend).
-Goal: make the Inventory page stable and functional by fixing repeated IPC failures and the underlying backend errors.
+﻿﻿You are working inside the RPMA v2 repository (Tauri + Rust backend + Next.js frontend + SQLite WAL).
+Goal: Determine if the bounded-contexts migration + cleanup is COMPLETE and ENFORCED.
+If anything is missing or still “half-migrated”, FIX it in patch mode and keep the build green.
 
-Context (symptoms)
-Frontend logs show repeated IPC failures (often amplified by React StrictMode double-invocation / effects):
+Hard rules:
+- Do NOT rename any existing IPC command names used by the frontend (backward compatible).
+- Do NOT introduce online services/payments/sync beyond what already exists (offline-first).
+- End state must pass: `npm run quality:check` and `cargo test`.
 
-inventory_get_stats → {"Internal":"An internal error occurred. Please try again."}
-material_get_inventory_movement_summary → same internal
-material_list_categories → same internal Stack mentions safeInvoke and hooks useInventoryStats.ts, useInventory.ts, and components like InventoryReports.tsx, InventorySettings.tsx.
-The project uses the layered architecture + IPC pattern described in docs. :contentReference[oaicite:0]{index=0} :contentReference[oaicite:1]{index=1}
+## 0) Run the guardrails first (baseline truth)
+1) `npm run quality:check`
+   - Capture any failures from: validate:bounded-contexts, architecture:check, lint, typecheck, clippy, fmt.
+2) `cd src-tauri && cargo test`
 
-Hard constraints
-Patch only what is needed to fix these Inventory IPC errors.
-Keep existing UX/pages, don’t redesign.
-Maintain RPMA architecture: Frontend → IPC Command → Service → Repo → SQLite. :contentReference[oaicite:2]{index=2}
-Use typed IPC client (ipcClient) + safeInvoke patterns. :contentReference[oaicite:3]{index=3}
-No breaking API changes unless absolutely required; if you must, update both Rust command + TS client types together.
-Phase 1 — Reproduce + pinpoint the real backend failure
-Find Inventory entry points:
-frontend/src/app/inventory/**
-Hooks: frontend/src/hooks/useInventory*.ts
-Components: frontend/src/components/**/inventory* (or similar)
-Locate the IPC calls:
-inventory_get_stats
-material_get_inventory_movement_summary
-material_list_categories Identify where arguments are built (session token? filters? dates?).
-In Rust, locate the corresponding Tauri commands:
-Search in src-tauri/src/commands/** for those command names.
-Verify they are registered in tauri::generate_handler![...] exactly (name must match). :contentReference[oaicite:4]{index=4}
-Add/confirm backend logs that include:
-correlation_id
-user_id
-operation name
-full error chain (including DB errors) Ensure errors are not being swallowed into a generic “Internal” without actionable logs.
-Deliverable: a short “root cause” note in-code as comments near the fix (not a separate doc).
+If any step fails → patch until green.
 
-Phase 2 — Fix backend causes (most likely)
-For each failing command, do ALL of the following:
+## 1) Backend structure completeness (per-domain)
+For EACH domain under `src-tauri/src/domains/<domain>/`, verify it contains:
+- `mod.rs` (single public facade export)
+- optional `facade.rs`
+- `application/`, `domain/`, `infrastructure/`, `ipc/`, `tests/`
 
-A) Validate auth + RBAC properly
-Ensure commands use the expected auth/session validation (e.g., authenticate! macro / middleware patterns used elsewhere).
-If Inventory is role-restricted, return a clear auth/forbidden error (not Internal), and ensure frontend handles it gracefully.
-Confirm the frontend is passing sessionToken to protected commands. :contentReference[oaicite:5]{index=5}
-B) Validate request payloads
-If a command takes date ranges, pagination, optional filters, or ids:
-add defensive validation and sane defaults
-return a typed validation error (not Internal)
-If the command expects garage_id / org_id but frontend is not providing it, fix the contract.
-C) Fix repository queries + edge cases
-Common SQLite/Rusqlite failure modes to check and patch:
+Patch if missing:
+- Create missing folders/files.
+- Move code into the right layer (no business logic in ipc, no SQL in application/domain).
 
-Missing tables/columns due to migrations not applied (verify migrations for inventory/material).
-NULL handling: SUM/COUNT returning NULL → map to 0.
-Date parsing / timezone assumptions.
-Empty result sets causing unwrap() panic.
-Bad joins / filters that assume rows exist.
-Concurrency / locked DB: ensure busy_timeout/WAL is set (project mentions it). :contentReference[oaicite:6]{index=6}
-Patch requirements:
+## 2) Shims cleanup (commands/services/repositories)
+Verify the “legacy” folders are ONLY compatibility shims:
+- `src-tauri/src/commands/*` should re-export canonical handlers from `domains/*/ipc/*`
+- `src-tauri/src/services/*` and `src-tauri/src/repositories/*` should re-export canonical modules
+- Exception: true shared infra (event bus / cache / etc.) can remain outside domains
 
-Replace any unwrap() / expect() in these call paths with proper error handling.
-When computing stats, ensure default outputs:
-counts = 0
-totals = 0
-arrays = []
-Return ApiResponse<T> with a specific error type when possible.
-D) Add targeted tests (backend)
-Add unit/integration tests for:
-inventory_get_stats with empty DB
-material_list_categories with no categories
-material_get_inventory_movement_summary with no movements
-Tests should assert:
-command/service returns success with defaults
-no panic
-correct shape of response
-Phase 3 — Fix frontend call pattern to stop request storms
-Even if backend is fixed, the logs show many repeated calls. Do:
+Patch:
+- Replace real implementations accidentally left in shims with `pub use ...` re-exports.
+- Ensure canonical implementations live under the correct domain path.
 
-A) Ensure hooks do not refetch in a loop
-In useInventoryStats.ts and useInventory.ts:
+## 3) Boundary enforcement (no cross-domain imports)
+Audit imports:
+- Inside any domain, forbid importing another domain’s internals (e.g., `crate::domains::other_domain::...`).
+- Cross-domain coordination must happen via event bus / shared contracts only.
 
-Use React Query properly (or the project’s standard), with:
-stable queryKey
-enabled: !!sessionToken and any other required IDs
-retry configured to avoid hammering on deterministic failures (e.g., 0–1 retries max for Internal)
-refetchOnWindowFocus: false unless explicitly desired
-Guard effect dependencies: no inline object literals in deps, memoize params.
-B) Ensure StrictMode double-invoke doesn’t duplicate side effects
-If you use useEffect to call IPC manually:
-add an idempotency guard (e.g., useRef “didFetch”)
-or migrate to React Query useQuery which is designed for this.
-Ensure Inventory page mount does one fetch per dataset.
-C) Improve UX on failure
-When safeInvoke returns Internal:
-show a single toast/banner (not repeated)
-set an error state + “Retry” button
-do not console.error spam in a loop
-If unauthorized: redirect to login or show “session expired”.
-Phase 4 — Contract + types sanity
-Confirm TS types match Rust response models (don’t edit auto-generated frontend/src/lib/backend.ts manually). :contentReference[oaicite:7]{index=7}
-If you change a Rust model/response:
-regenerate types using the project scripts (e.g., npm run types:sync, then validate). :contentReference[oaicite:8]{index=8}
-Ensure IPC domain module exists/used:
-frontend/src/lib/ipc/domains/inventory.ts (or equivalent) should expose typed functions.
-Acceptance criteria (must pass)
-Opening /inventory no longer spams logs.
-inventory_get_stats, material_list_categories, material_get_inventory_movement_summary succeed on an empty DB (returning default values).
-If DB/migration is missing, error message is specific in backend logs and surfaced as a friendly UI error (no infinite retries).
-Automated tests added and passing (backend + any minimal frontend tests if present).
-Output format
-Apply patches directly in the repo.
-Keep changes minimal and localized.
-Provide a final summary:
-root cause(s)
-files changed
-how to verify manually (exact steps + what to expect)
+Patch:
+- Remove illegal imports.
+- Introduce/route through shared events if needed (publish/handle after commit).
+
+## 4) Transaction boundaries & SQL locality
+Rules to verify:
+- Transactions start/commit only in `domains/*/application/*` (or the approved transaction helper entrypoint).
+- Repositories accept a `&Transaction` where needed and do only data access.
+- No `rusqlite`, raw SQL strings, or DB calls in domain/application layers.
+
+Patch:
+- Move transaction orchestration up to application layer.
+- Move SQL + rusqlite usage down into infrastructure repositories.
+
+## 5) IPC layer thinness + auth/RBAC consistency
+Verify:
+- IPC handlers authenticate + validate + delegate; no business logic, no SQL.
+- Protected commands require session_token; public commands are explicitly public.
+- Correlation id propagation is consistent (if your project uses it).
+
+Patch:
+- Refactor IPC handlers to call application services.
+- Centralize error mapping to AppError patterns.
+
+## 6) Frontend alignment (no drifting contracts)
+Verify frontend calls:
+- Frontend uses `frontend/src/lib/ipc/client.ts` / domain IPC modules, not random `invoke()` calls scattered everywhere.
+- `frontend/src/lib/backend.ts` is not manually edited; types are generated.
+- Run: `npm run types:drift-check` (and fix drift properly; regenerate if needed).
+
+Patch:
+- Route direct invokes into ipcClient modules.
+- Fix type drift via Rust model fixes + `npm run types:sync`.
+
+## 7) Migration/cleanup “done” criteria (final output)
+At the end, output:
+- ✅ PASS if: all checks green + no boundary violations + shims are shims only + structure complete
+- ❌ FAIL if: you cannot make it pass; list blocking files/violations
+
+Before finishing:
+- Re-run `npm run quality:check`
+- Re-run `cd src-tauri && cargo test`
