@@ -1,168 +1,151 @@
-// TODO: This route references integration_configs table which doesn't exist in the database schema
-// Uncomment when the integration_configs table is added to the database
-/*
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { Database } from '@/types/database.types';
 import { getAuthenticatedUser } from '@/lib/api-auth';
+import type { Json } from '@/types/database.types';
 
-type IntegrationConfig = Database['public']['Tables']['integration_configs']['Row'];
-type IntegrationConfigUpdate = Database['public']['Tables']['integration_configs']['Update'];
-type User = Database['public']['Tables']['users']['Row'];
-*/
+interface PostgrestLikeError {
+  code?: string;
+  message?: string;
+  details?: string;
+}
 
+function asPostgrestError(error: unknown): PostgrestLikeError | null {
+  if (typeof error !== 'object' || error === null) return null;
+  return error as PostgrestLikeError;
+}
 
-/*
+function isNotFoundError(error: unknown): boolean {
+  return asPostgrestError(error)?.code === 'PGRST116';
+}
+
+function isMissingTableError(error: unknown): boolean {
+  const parsed = asPostgrestError(error);
+  if (!parsed) return false;
+  const message = `${parsed.message || ''} ${parsed.details || ''}`.toLowerCase();
+  return parsed.code === '42P01' || (message.includes('relation') && message.includes('integration_configs'));
+}
+
+function authFailure(status: number, message: string) {
+  return NextResponse.json({ error: message }, { status });
+}
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{id: string}> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { user, error: authError } = await getAuthenticatedUser(request);
-    if (authError || !user) {
-      return NextResponse.json({ error: authError || 'Unauthorized' }, { status: 401 });
-    }
-
-    const supabase = await createClient();
-    const { data: profile } = await supabase
-      .from('users')
-      .select<'role', User>('role')
-      .eq('id', user.id)
-      .single();
-
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    const { user, error } = await getAuthenticatedUser(request);
+    if (error || !user) return authFailure(401, error || 'Unauthorized');
+    if (user.role !== 'admin') return authFailure(403, 'Forbidden');
 
     const { id } = await params;
-    const { data: integration, error } = await supabase
+    const supabase = await createClient();
+    const { data: integration, error: queryError } = await supabase
       .from('integration_configs')
-      .select<'*', IntegrationConfig>('*')
+      .select('*')
       .eq('id', id)
       .single();
 
-    if (error) {
-      console.error('Error fetching integration:', error);
-      return NextResponse.json({ error: 'Integration not found' }, { status: 404 });
+    if (queryError) {
+      if (isNotFoundError(queryError)) {
+        return NextResponse.json({ error: 'Integration not found' }, { status: 404 });
+      }
+      if (isMissingTableError(queryError)) {
+        return NextResponse.json(
+          { error: 'Integration configuration is unavailable in this environment' },
+          { status: 503 }
+        );
+      }
+      return NextResponse.json({ error: 'Failed to fetch integration' }, { status: 500 });
     }
 
     return NextResponse.json(integration);
-  } catch (error) {
-    console.error('Error in integration GET:', error);
+  } catch (caughtError) {
+    console.error('Error in integration GET:', caughtError);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-*/
 
-/*
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{id: string}> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { user, error: authError } = await getAuthenticatedUser(request);
-    if (authError || !user) {
-      return NextResponse.json({ error: authError || 'Unauthorized' }, { status: 401 });
-    }
-
-    const supabase = await createClient();
-    const { data: profile } = await supabase
-      .from('users')
-      .select<'role', User>('role')
-      .eq('id', user.id)
-      .single();
-
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-
+    const { user, error } = await getAuthenticatedUser(request);
+    if (error || !user) return authFailure(401, error || 'Unauthorized');
+    if (user.role !== 'admin') return authFailure(403, 'Forbidden');
 
     const body = await request.json();
-    const updateData: IntegrationConfigUpdate = {};
+    const updates: Record<string, Json | string | boolean> = {};
 
-    // Only update provided fields
-    if (body.name !== undefined) updateData.name = body.name;
-    if (body.type !== undefined) updateData.type = body.type;
-    if (body.provider !== undefined) updateData.provider = body.provider;
-    if (body.settings !== undefined) updateData.settings = body.settings;
-    if (body.credentials !== undefined) updateData.credentials = body.credentials;
-    if (body.isActive !== undefined) updateData.is_active = body.isActive;
+    if (body.name !== undefined) updates.name = body.name;
+    if (body.type !== undefined) updates.type = body.type;
+    if (body.provider !== undefined) updates.provider = body.provider;
+    if (body.settings !== undefined) updates.settings = body.settings as Json;
+    if (body.credentials !== undefined) updates.credentials = body.credentials as Json;
+    if (body.status !== undefined) updates.status = body.status;
+    if (body.isActive !== undefined) updates.is_active = Boolean(body.isActive);
+    updates.updated_at = new Date().toISOString();
 
-    // Always update timestamp
-    updateData.updated_at = new Date().toISOString();
+    if (Object.keys(updates).length === 1) {
+      return NextResponse.json({ error: 'No valid update fields provided' }, { status: 400 });
+    }
 
     const { id } = await params;
-    const { data: integration, error } = await supabase
+    const supabase = await createClient();
+    const { data: integration, error: updateError } = await supabase
       .from('integration_configs')
-      .update(updateData)
+      .update(updates)
       .eq('id', id)
       .select('*')
       .single();
 
-    if (error) {
-      console.error('Error updating integration:', error);
+    if (updateError) {
+      if (isNotFoundError(updateError)) {
+        return NextResponse.json({ error: 'Integration not found' }, { status: 404 });
+      }
+      if (isMissingTableError(updateError)) {
+        return NextResponse.json(
+          { error: 'Integration configuration is unavailable in this environment' },
+          { status: 503 }
+        );
+      }
       return NextResponse.json({ error: 'Failed to update integration' }, { status: 500 });
     }
 
     return NextResponse.json(integration);
-  } catch (error) {
-    console.error('Error in integration PUT:', error);
+  } catch (caughtError) {
+    console.error('Error in integration PUT:', caughtError);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-*/
 
-/*
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{id: string}> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { user, error: authError } = await getAuthenticatedUser(request);
-    if (authError || !user) {
-      return NextResponse.json({ error: authError || 'Unauthorized' }, { status: 401 });
-    }
-
-    const supabase = await createClient();
-    const { data: profile } = await supabase
-      .from('users')
-      .select<'role', User>('role')
-      .eq('id', user.id)
-      .single();
-
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    const { user, error } = await getAuthenticatedUser(request);
+    if (error || !user) return authFailure(401, error || 'Unauthorized');
+    if (user.role !== 'admin') return authFailure(403, 'Forbidden');
 
     const { id } = await params;
-    const { error } = await supabase
-      .from('integration_configs')
-      .delete()
-      .eq('id', id);
+    const supabase = await createClient();
+    const { error: deleteError } = await supabase.from('integration_configs').delete().eq('id', id);
 
-    if (error) {
-      console.error('Error deleting integration:', error);
+    if (deleteError) {
+      if (isMissingTableError(deleteError)) {
+        return NextResponse.json(
+          { error: 'Integration configuration is unavailable in this environment' },
+          { status: 503 }
+        );
+      }
       return NextResponse.json({ error: 'Failed to delete integration' }, { status: 500 });
     }
 
     return NextResponse.json({ message: 'Integration deleted successfully' });
-  } catch (error) {
-    console.error('Error in integration DELETE:', error);
+  } catch (caughtError) {
+    console.error('Error in integration DELETE:', caughtError);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
-*/
-
-// Export placeholder functions to avoid import errors
-export async function GET() {
-  return Response.json({ error: 'Not implemented' }, { status: 501 });
-}
-
-export async function PUT() {
-  return Response.json({ error: 'Not implemented' }, { status: 501 });
-}
-
-export async function DELETE() {
-  return Response.json({ error: 'Not implemented' }, { status: 501 });
 }

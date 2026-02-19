@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 import { ipcClient } from '@/lib/ipc/client';
-import { DashboardStats } from '@/dashboard/types';
+import { DashboardStats } from '@/components/dashboard/types';
 
 export function useDashboardStats(timeRange?: 'day' | 'week' | 'month' | 'year') {
   const [stats, setStats] = useState<DashboardStats>({
