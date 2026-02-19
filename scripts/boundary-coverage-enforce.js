@@ -5,6 +5,10 @@ const path = require('path');
 const { collectViolations } = require('./boundary-coverage-report');
 
 const ALLOWLIST_PATH = path.resolve(__dirname, 'boundary-coverage-allowlist.json');
+const strictMode =
+  process.env.BOUNDED_CONTEXT_STRICT === '1' ||
+  process.env.BOUNDED_CONTEXT_STRICT === 'true' ||
+  process.argv.includes('--strict');
 
 function keyOf(entry) {
   return `${entry.rule}::${entry.file}::${entry.spec}`;
@@ -22,16 +26,19 @@ function readAllowlist() {
 
 function main() {
   const violations = collectViolations();
-  const allowlist = readAllowlist();
+  const allowlist = strictMode ? [] : readAllowlist();
 
   const allowSet = new Set(allowlist.map(keyOf));
   const violationSet = new Set(violations.map(keyOf));
 
-  const unexpected = violations.filter((entry) => !allowSet.has(keyOf(entry)));
-  const stale = allowlist.filter((entry) => !violationSet.has(keyOf(entry)));
+  const unexpected = strictMode
+    ? violations
+    : violations.filter((entry) => !allowSet.has(keyOf(entry)));
+  const stale = strictMode ? [] : allowlist.filter((entry) => !violationSet.has(keyOf(entry)));
 
   console.log('\nBoundary Coverage Enforcement');
   console.log('=============================');
+  console.log(`Mode: ${strictMode ? 'strict' : 'progressive'}`);
   console.log(`Current violations: ${violations.length}`);
   console.log(`Allowlisted entries: ${allowlist.length}`);
   console.log(`Unexpected violations: ${unexpected.length}`);
@@ -55,4 +62,3 @@ function main() {
 }
 
 main();
-

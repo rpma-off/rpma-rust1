@@ -37,6 +37,9 @@ pub mod user;
 pub mod websocket;
 pub mod websocket_commands;
 
+pub use crate::models::auth::UserRole;
+pub use crate::shared::app_state::{AppState, AppStateType};
+pub use crate::shared::ipc::response::{ApiError, ApiResponse, CompressedApiResponse};
 pub use correlation_helpers::*;
 pub use error_utils::*;
 pub use errors::{AppError, AppResult};
@@ -101,25 +104,14 @@ pub use system::{
 // Re-export analytics commands
 pub use analytics::analytics_get_summary;
 
-use crate::db::Database;
-use crate::logging::correlation::generate_correlation_id;
-use crate::models::auth::UserRole;
 use crate::models::client::ClientWithTasks;
 use crate::models::task::*;
 
-use crate::domains::inventory::InventoryFacade;
 use crate::models::Client;
-use crate::services::{ClientService, SettingsService, TaskService};
-use base64::{engine::general_purpose, Engine as _};
 use serde::{Deserialize, Serialize};
-use std::sync::{Arc, Mutex, OnceLock};
-use tauri::State;
 use tracing::{debug, error, info, instrument, warn};
 // Conditional import removed
 use ts_rs::TS;
-
-// Import authentication macros
-use crate::authenticate;
 
 // Import client types from models
 use crate::models::client::{
@@ -280,52 +272,6 @@ pub enum UserResponse {
     UserUnbanned,
 }
 
-/// App state containing database and services
-pub struct AppStateType {
-    pub db: Arc<Database>,
-    pub async_db: Arc<crate::db::AsyncDatabase>,
-    pub repositories: Arc<crate::repositories::Repositories>,
-    pub task_service: Arc<TaskService>,
-    pub client_service: Arc<ClientService>,
-    pub task_import_service: Arc<crate::services::task_import::TaskImportService>,
-    pub dashboard_service: Arc<crate::services::DashboardService>,
-    pub intervention_service: Arc<crate::services::InterventionService>,
-    pub material_service: Arc<crate::services::MaterialService>,
-    pub inventory_service: Arc<InventoryFacade>,
-    pub message_service: Arc<crate::services::MessageService>,
-    pub photo_service: Arc<crate::services::PhotoService>,
-    pub quote_service: Arc<crate::services::QuoteService>,
-    pub analytics_service: Arc<crate::services::AnalyticsService>,
-    pub auth_service: Arc<crate::services::auth::AuthService>,
-    pub session_service: Arc<crate::services::session::SessionService>,
-    pub two_factor_service: Arc<crate::services::two_factor::TwoFactorService>,
-    pub settings_service: Arc<SettingsService>,
-    pub cache_service: Arc<crate::services::cache::CacheService>,
-    pub report_job_service: OnceLock<Arc<crate::services::report_jobs::ReportJobService>>,
-    pub performance_monitor_service:
-        Arc<crate::services::performance_monitor::PerformanceMonitorService>,
-    pub command_performance_tracker:
-        Arc<crate::services::performance_monitor::CommandPerformanceTracker>,
-    pub prediction_service: Arc<crate::services::prediction::PredictionService>,
-    pub sync_queue: std::sync::Arc<crate::sync::SyncQueue>,
-    pub background_sync: std::sync::Arc<Mutex<crate::sync::BackgroundSyncService>>,
-    pub event_bus: std::sync::Arc<crate::services::event_bus::InMemoryEventBus>,
-    pub app_data_dir: std::path::PathBuf,
-}
-
-pub type AppState<'a> = State<'a, AppStateType>;
-
-impl AppStateType {
-    pub fn report_job_service(&self) -> &Arc<crate::services::report_jobs::ReportJobService> {
-        self.report_job_service.get_or_init(|| {
-            Arc::new(crate::services::report_jobs::ReportJobService::new(
-                self.db.clone(),
-                self.cache_service.clone(),
-            ))
-        })
-    }
-}
-
 /// Helper function to create a tracked command handler with automatic performance monitoring
 #[macro_export]
 macro_rules! tracked_command {
@@ -358,189 +304,6 @@ macro_rules! tracked_command {
             $handler(state, request).await
         }
     };
-}
-
-/// Standard API response format
-#[derive(TS, Debug, Serialize, Deserialize)]
-pub struct ApiError {
-    pub message: String,
-    pub code: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[ts(type = "JsonValue | null")]
-    pub details: Option<serde_json::Value>,
-}
-
-/// Compressed API response for large payloads
-#[derive(TS, Debug, Serialize, Deserialize)]
-pub struct CompressedApiResponse {
-    pub success: bool,
-    pub compressed: bool,
-    pub data: Option<String>, // base64 encoded compressed data
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub error: Option<ApiError>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub correlation_id: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ApiResponse<T> {
-    pub success: bool,
-    pub data: Option<T>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub error: Option<ApiError>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub correlation_id: Option<String>,
-}
-
-impl<T> ApiResponse<T> {
-    pub fn success(data: T) -> Self {
-        Self {
-            success: true,
-            data: Some(data),
-            error: None,
-            correlation_id: Some(generate_correlation_id()),
-        }
-    }
-
-    pub fn error(error: AppError) -> Self {
-        Self {
-            success: false,
-            data: None,
-            error: Some(ApiError {
-                message: error.to_string(),
-                code: error.code().to_string(),
-                details: None,
-            }),
-            correlation_id: Some(generate_correlation_id()),
-        }
-    }
-
-    pub fn error_message(message: &str) -> Self {
-        Self {
-            success: false,
-            data: None,
-            error: Some(ApiError {
-                message: message.to_string(),
-                code: "UNKNOWN".to_string(),
-                details: None,
-            }),
-            correlation_id: Some(generate_correlation_id()),
-        }
-    }
-
-    /// Set the correlation ID on this response for end-to-end tracing
-    pub fn with_correlation_id(mut self, correlation_id: Option<String>) -> Self {
-        self.correlation_id = correlation_id.or_else(|| Some(generate_correlation_id()));
-        self
-    }
-
-    /// Convert to compressed response if data is large
-    pub fn to_compressed_if_large(self) -> Result<CompressedApiResponse, AppError>
-    where
-        T: Serialize,
-    {
-        // Check if data should be compressed (simple heuristic: if JSON > 1KB)
-        let json_size = serde_json::to_string(&self.data)
-            .map(|s| s.len())
-            .unwrap_or(0);
-
-        if json_size > 1024 {
-            // Compress the data
-            let data_json = serde_json::to_vec(&self.data)
-                .map_err(|e| AppError::Internal(format!("Serialization error: {}", e)))?;
-
-            use flate2::write::GzEncoder;
-            use flate2::Compression;
-            use std::io::Write;
-
-            let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
-            encoder
-                .write_all(&data_json)
-                .map_err(|e| AppError::Internal(format!("Compression error: {}", e)))?;
-            let compressed = encoder
-                .finish()
-                .map_err(|e| AppError::Internal(format!("Compression finish error: {}", e)))?;
-
-            let compressed_b64 = general_purpose::STANDARD.encode(&compressed);
-
-            Ok(CompressedApiResponse {
-                success: self.success,
-                compressed: true,
-                data: Some(compressed_b64),
-                error: self.error,
-                correlation_id: self.correlation_id,
-            })
-        } else {
-            // Return uncompressed response
-            Ok(CompressedApiResponse {
-                success: self.success,
-                compressed: false,
-                data: self
-                    .data
-                    .map(|d| serde_json::to_string(&d).unwrap_or_default()),
-                error: self.error,
-                correlation_id: self.correlation_id,
-            })
-        }
-    }
-
-    /// Serialize to MessagePack format
-    pub fn to_msgpack(&self) -> Result<Vec<u8>, AppError>
-    where
-        T: Serialize,
-    {
-        rmp_serde::to_vec(self)
-            .map_err(|e| AppError::Internal(format!("MessagePack serialization error: {}", e)))
-    }
-}
-
-impl CompressedApiResponse {
-    /// Deserialize compressed data back to the original type
-    pub fn decompress_data<T>(&self) -> Result<Option<T>, AppError>
-    where
-        T: for<'de> Deserialize<'de>,
-    {
-        match (&self.data, self.compressed) {
-            (Some(data), true) => {
-                // Decompress base64 encoded gzipped data
-                let compressed = general_purpose::STANDARD
-                    .decode(data)
-                    .map_err(|e| AppError::Internal(format!("Base64 decode error: {}", e)))?;
-
-                use flate2::read::GzDecoder;
-                use std::io::Read;
-
-                let mut decoder = GzDecoder::new(&compressed[..]);
-                let mut decompressed = Vec::new();
-                decoder
-                    .read_to_end(&mut decompressed)
-                    .map_err(|e| AppError::Internal(format!("Decompression error: {}", e)))?;
-
-                let value: T = serde_json::from_slice(&decompressed).map_err(|e| {
-                    AppError::Internal(format!("JSON deserialization error: {}", e))
-                })?;
-
-                Ok(Some(value))
-            }
-            (Some(data), false) => {
-                // Uncompressed JSON data
-                let value: T = serde_json::from_str(data).map_err(|e| {
-                    AppError::Internal(format!("JSON deserialization error: {}", e))
-                })?;
-                Ok(Some(value))
-            }
-            _ => Ok(None),
-        }
-    }
-}
-
-impl<T> From<AppResult<T>> for ApiResponse<T> {
-    fn from(result: AppResult<T>) -> Self {
-        match result {
-            Ok(data) => Self::success(data),
-            Err(error) => Self::error(error),
-        }
-    }
 }
 
 /// Internal user CRUD handler

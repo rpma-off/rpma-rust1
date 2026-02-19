@@ -5,6 +5,10 @@ const path = require('path');
 
 const REPO_ROOT = path.resolve(__dirname, '..');
 const FRONTEND_SRC = path.join(REPO_ROOT, 'frontend', 'src');
+const strictMode =
+  process.env.BOUNDED_CONTEXT_STRICT === '1' ||
+  process.env.BOUNDED_CONTEXT_STRICT === 'true' ||
+  process.argv.includes('--strict');
 
 const SCAN_ROOTS = ['app', 'components', 'hooks', 'shared', 'domains'].map((segment) =>
   path.join(FRONTEND_SRC, segment)
@@ -12,12 +16,14 @@ const SCAN_ROOTS = ['app', 'components', 'hooks', 'shared', 'domains'].map((segm
 
 const ALLOWED_EXTENSIONS = new Set(['.ts', '.tsx']);
 
-const EXCLUDE_PATTERNS = [
+const BASE_EXCLUDE_PATTERNS = [
   /[\\/]__tests__[\\/]/,
   /\.test\.[tj]sx?$/,
   /\.spec\.[tj]sx?$/,
-  /(^|[\\/])domains[\\/][^\\/]+[\\/]server[\\/]/,
 ];
+const EXCLUDE_PATTERNS = strictMode
+  ? BASE_EXCLUDE_PATTERNS
+  : [...BASE_EXCLUDE_PATTERNS, /(^|[\\/])domains[\\/][^\\/]+[\\/]server[\\/]/];
 
 const SHARED_DOMAIN_FEATURE_WRAPPER_PATTERN =
   /^shared\/ui\/(analytics|dashboard|messages|settings|users|PhotoUpload|calendar|SignatureCapture)(\/|$)/;
@@ -78,7 +84,9 @@ function detectViolations(relativePath, specifier) {
   if (isLegacyServiceImport) {
     violations.push({
       rule: 'legacy-services-import',
-      message: 'Do not import from @/lib/services or @/lib/ipc/domains outside sanctioned server facades.',
+      message: strictMode
+        ? 'Strict mode: no imports from @/lib/services or @/lib/ipc/domains are allowed.'
+        : 'Do not import from @/lib/services or @/lib/ipc/domains outside sanctioned server facades.',
     });
   }
 
@@ -172,6 +180,7 @@ function printReport(violations) {
 
   console.log('\nBoundary Coverage Report');
   console.log('========================');
+  console.log(`Mode: ${strictMode ? 'strict' : 'progressive'}`);
   console.log(`Total violations: ${violations.length}`);
 
   if (violations.length === 0) {

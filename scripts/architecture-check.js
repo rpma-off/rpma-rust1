@@ -11,6 +11,10 @@ const commandMaterialPath = path.join(srcRoot, 'commands', 'material.rs');
 const serviceBuilderPath = path.join(srcRoot, 'service_builder.rs');
 const enforcedTouchpoints = [commandMaterialPath, serviceBuilderPath];
 const LEGACY_ALLOWLIST_PATH = path.join(__dirname, 'legacy-domain-allowlist.json');
+const strictMode =
+  process.env.BOUNDED_CONTEXT_STRICT === '1' ||
+  process.env.BOUNDED_CONTEXT_STRICT === 'true' ||
+  process.argv.includes('--strict');
 
 const placeholderMarkers = [
   'Placeholder module for bounded-context migration.',
@@ -18,6 +22,7 @@ const placeholderMarkers = [
   'domain placeholder',
   'will be migrated into this domain',
 ];
+const strictScaffoldMarkers = ['Domain layer module index.'];
 
 const legacyServiceRealAllowlist = new Set([
   'services/mod.rs',
@@ -295,7 +300,7 @@ function checkLegacyShimEnforcement() {
  * domains/ causes a failure, enforcing that all new domain code goes into the
  * proper bounded context directory.
  */
-function checkDomainCodeLocation() {
+function checkDomainCodeLocation(strict = false) {
   const domainNames = fs.readdirSync(domainsRoot, { withFileTypes: true })
     .filter((e) => e.isDirectory())
     .map((e) => e.name);
@@ -396,6 +401,10 @@ function checkDomainCodeLocation() {
     }
   }
 
+  if (strict) {
+    return detected;
+  }
+
   // Load allowlist
   let allowed = [];
   if (fs.existsSync(LEGACY_ALLOWLIST_PATH)) {
@@ -405,6 +414,59 @@ function checkDomainCodeLocation() {
   const allowSet = new Set(allowed);
 
   const violations = detected.filter((f) => !allowSet.has(f));
+  return violations;
+}
+
+function isTrivialFacade(contents) {
+  const stripped = stripRustComments(contents).replace(/\s+/g, ' ').trim();
+  const hasUnitStruct = /pub\s+struct\s+[A-Za-z0-9_]+\s*;/.test(stripped);
+  const hasNewOnly =
+    /impl\s+[A-Za-z0-9_]+\s*\{\s*pub\s+fn\s+new\s*\([^)]*\)\s*->\s*Self\s*\{\s*Self\s*\}\s*\}/.test(
+      stripped
+    );
+  return hasUnitStruct && hasNewOnly;
+}
+
+function checkStrictScaffoldModules() {
+  const files = listFiles(domainsRoot).filter((file) => file.endsWith('.rs'));
+  const violations = [];
+  for (const file of files) {
+    const contents = fs.readFileSync(file, 'utf8');
+    if (strictScaffoldMarkers.some((marker) => contents.includes(marker))) {
+      violations.push(file);
+    }
+  }
+  return violations;
+}
+
+function checkStrictTrivialFacades() {
+  const entries = fs.readdirSync(domainsRoot, { withFileTypes: true });
+  const violations = [];
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const facadePath = path.join(domainsRoot, entry.name, 'facade.rs');
+    if (!fs.existsSync(facadePath)) continue;
+    const contents = fs.readFileSync(facadePath, 'utf8');
+    if (isTrivialFacade(contents)) {
+      violations.push(facadePath);
+    }
+  }
+
+  return violations;
+}
+
+function checkStrictTrivialFacadeTests() {
+  const files = listFiles(domainsRoot).filter(
+    (file) => file.endsWith('.rs') && file.includes(`${path.sep}tests${path.sep}`)
+  );
+  const violations = [];
+  for (const file of files) {
+    const contents = fs.readFileSync(file, 'utf8');
+    if (/facade_constructs\s*\(/.test(contents)) {
+      violations.push(file);
+    }
+  }
   return violations;
 }
 
@@ -419,9 +481,12 @@ function main() {
   const apiViolations = checkDomainPublicApi();
   const structureViolations = checkDomainDirectoryStructure();
   const ipcLogicViolations = checkCommandBusinessLogic();
-  const domainLocationViolations = checkDomainCodeLocation();
+  const domainLocationViolations = checkDomainCodeLocation(strictMode);
   const placeholderViolations = checkPlaceholderMarkers();
   const legacyShimViolations = checkLegacyShimEnforcement();
+  const strictScaffoldViolations = checkStrictScaffoldModules();
+  const strictTrivialFacadeViolations = checkStrictTrivialFacades();
+  const strictTrivialTestViolations = checkStrictTrivialFacadeTests();
 
   const violations = [
     ...sqlViolations.map((file) => `SQL usage outside infrastructure: ${file}`),
@@ -429,10 +494,28 @@ function main() {
     ...apiViolations.map((msg) => `Public API rule: ${msg}`),
     ...structureViolations.map((msg) => `Domain structure rule: ${msg}`),
     ...ipcLogicViolations.map((msg) => `IPC business logic rule: ${msg}`),
-    ...domainLocationViolations.map((file) => `Domain code outside domains/: ${file} â€” move to domains/<context>/`),
+    ...domainLocationViolations.map((file) => `Domain code outside domains/: ${file} - move to domains/<context>/`),
     ...placeholderViolations.map((file) => `Placeholder marker found in domains/: ${file}`),
     ...legacyShimViolations.map((file) => `Legacy module must be domain shim only: ${file}`),
   ];
+
+  const strictViolations = [
+    ...strictScaffoldViolations.map((file) => `Scaffold module marker found: ${file}`),
+    ...strictTrivialFacadeViolations.map((file) => `Trivial facade found (new-only): ${file}`),
+    ...strictTrivialTestViolations.map(
+      (file) => `Trivial facade construction test found: ${file}`
+    ),
+  ];
+
+  if (strictMode) {
+    violations.push(...strictViolations);
+  } else if (strictViolations.length > 0) {
+    console.warn('Architecture check strict-mode findings (non-blocking in progressive mode):');
+    for (const warning of strictViolations) {
+      console.warn(`- ${warning}`);
+    }
+    console.warn('Enable strict mode with BOUNDED_CONTEXT_STRICT=1 or --strict to enforce.');
+  }
 
   if (violations.length > 0) {
     console.error('Architecture check failed:');
@@ -442,7 +525,7 @@ function main() {
     process.exit(1);
   }
 
-  console.log('Architecture check passed.');
+  console.log(`Architecture check passed${strictMode ? ' (strict mode)' : ''}.`);
 }
 
 main();

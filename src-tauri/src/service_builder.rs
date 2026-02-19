@@ -30,7 +30,6 @@
 //! - **EventBus**: Self-contained (in-memory pub/sub)
 //! - **WebSocketEventHandler**: EventBus
 
-use crate::commands::AppStateType;
 use crate::db::Database;
 use crate::models::settings::StorageSettings;
 use crate::repositories::Repositories;
@@ -38,6 +37,7 @@ use crate::services::audit_log_handler::AuditLogHandler;
 use crate::services::audit_service::AuditService;
 use crate::services::event_bus::InMemoryEventBus;
 use crate::services::websocket_event_handler::WebSocketEventHandler;
+use crate::shared::app_state::AppStateType;
 use crate::shared::event_bus::{register_handler, set_global_event_bus};
 use std::sync::{Arc, Mutex, OnceLock};
 
