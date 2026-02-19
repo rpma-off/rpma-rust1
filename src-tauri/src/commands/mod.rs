@@ -107,36 +107,18 @@ pub use analytics::analytics_get_summary;
 use crate::models::client::ClientWithTasks;
 use crate::models::task::*;
 
+pub use crate::domains::users::application::{
+    CreateUserRequest, UpdateUserRequest, UserAction, UserListResponse, UserResponse,
+};
 use crate::models::Client;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, error, info, instrument, warn};
-// Conditional import removed
-use ts_rs::TS;
 
 // Import client types from models
 use crate::models::client::{
     ClientListResponse, ClientQuery, CreateClientRequest, UpdateClientRequest,
 };
 use crate::services::client::ClientStats;
-
-// User request types
-#[derive(TS, Deserialize, Debug)]
-pub struct CreateUserRequest {
-    pub email: String,
-    pub first_name: String,
-    pub last_name: String,
-    pub role: String,
-    pub password: String,
-}
-
-#[derive(TS, Deserialize, Debug)]
-pub struct UpdateUserRequest {
-    pub email: Option<String>,
-    pub first_name: Option<String>,
-    pub last_name: Option<String>,
-    pub role: Option<String>,
-    pub is_active: Option<bool>,
-}
 
 /// Task action types for CRUD operations
 #[derive(Deserialize, Debug)]
@@ -211,65 +193,6 @@ pub enum ClientResponse {
     ListWithTasks(Vec<ClientWithTasks>),
     SearchResults(Vec<Client>),
     Stats(ClientStats),
-}
-
-/// User action types for CRUD operations
-#[derive(TS, Deserialize, Debug)]
-#[serde(tag = "action")]
-pub enum UserAction {
-    Create {
-        data: CreateUserRequest,
-    },
-    Get {
-        id: String,
-    },
-    Update {
-        id: String,
-        data: UpdateUserRequest,
-    },
-    Delete {
-        id: String,
-    },
-    List {
-        limit: Option<i32>,
-        offset: Option<i32>,
-    },
-    ChangePassword {
-        id: String,
-        new_password: String,
-    },
-    ChangeRole {
-        id: String,
-        new_role: crate::models::auth::UserRole,
-    },
-    Ban {
-        id: String,
-    },
-    Unban {
-        id: String,
-    },
-}
-
-/// User list response
-#[derive(Serialize, TS)]
-pub struct UserListResponse {
-    pub data: Vec<crate::models::auth::UserAccount>,
-}
-
-/// User response types
-#[derive(Serialize)]
-#[serde(tag = "type")]
-pub enum UserResponse {
-    Created(crate::models::auth::UserAccount),
-    Found(crate::models::auth::UserAccount),
-    Updated(crate::models::auth::UserAccount),
-    Deleted,
-    NotFound,
-    List(UserListResponse),
-    PasswordChanged,
-    RoleChanged,
-    UserBanned,
-    UserUnbanned,
 }
 
 /// Helper function to create a tracked command handler with automatic performance monitoring

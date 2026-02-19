@@ -1,26 +1,18 @@
 //! Authentication commands for Tauri IPC
 
-use crate::commands::{ApiResponse, AppError, AppState};
-use crate::services::validation::ValidationService;
+use crate::domains::auth::AuthFacade;
+use crate::shared::app_state::AppState;
+use crate::shared::ipc::{ApiResponse, AppError};
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use tracing::{debug, error, info, instrument, warn};
+
+pub use crate::domains::auth::application::SignupRequest;
 
 #[derive(Deserialize, Debug)]
 pub struct LoginRequest {
     pub email: String,
     pub password: String,
-    #[serde(default)]
-    pub correlation_id: Option<String>,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct SignupRequest {
-    pub email: String,
-    pub first_name: String,
-    pub last_name: String,
-    pub password: String,
-    pub role: Option<String>,
     #[serde(default)]
     pub correlation_id: Option<String>,
 }
@@ -38,25 +30,19 @@ pub async fn auth_login(
     // Initialize correlation context at command start
     let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
 
-    // Validate input data
-    let validator = ValidationService::new();
-    let validated_email = validator
-        .validate_email_secure(&request.email)
-        .map_err(|e| AppError::Validation(format!("Email validation failed: {}", e)))?;
-    let validated_password = validator
-        .sanitize_text_input(&request.password, "password", 128)
-        .map_err(|e| AppError::Validation(format!("Password validation failed: {}", e)))?;
-
     // Use consistent authentication pattern - clone to avoid lock issues
     let auth_service = state.auth_service.clone();
+    let auth_facade = AuthFacade::new();
 
     debug!(
         correlation_id = %correlation_id,
         "Auth service acquired, attempting authentication"
     );
-    let session_result =
+    let (validated_email, validated_password) =
+        auth_facade.validate_login_input(&request.email, &request.password)?;
+    let auth_result =
         auth_service.authenticate(&validated_email, &validated_password, ip_address.as_deref());
-    let session = match session_result {
+    let session = match auth_facade.map_authentication_result(auth_result) {
         Ok(session) => {
             debug!(
                 correlation_id = %correlation_id,
@@ -67,17 +53,8 @@ pub async fn auth_login(
             crate::commands::update_correlation_context_user(&session.user_id);
             session
         }
-        Err(e) => {
-            // Return user-friendly error message
-            let error_msg = if e.contains("Invalid email or password") {
-                "Email ou mot de passe incorrect".to_string()
-            } else if e.contains("Account temporarily locked") {
-                e
-            } else {
-                "Erreur d'authentification. Veuillez réessayer.".to_string()
-            };
-            return Ok(ApiResponse::error(AppError::Authentication(error_msg))
-                .with_correlation_id(Some(correlation_id)));
+        Err(error) => {
+            return Ok(ApiResponse::error(error).with_correlation_id(Some(correlation_id)));
         }
     };
 
@@ -94,6 +71,7 @@ pub async fn auth_create_account(
 ) -> Result<ApiResponse<crate::models::auth::UserSession>, AppError> {
     // Initialize correlation context at command start
     let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let auth_facade = AuthFacade::new();
 
     info!(
         correlation_id = %correlation_id,
@@ -101,47 +79,17 @@ pub async fn auth_create_account(
         "Account creation attempt"
     );
 
-    // Validate input data
-    let validator = ValidationService::new();
-    let validated_email = validator
-        .validate_email_secure(&request.email)
-        .map_err(|e| AppError::Validation(format!("Email validation failed: {}", e)))?;
-    let validated_first_name = validator
-        .sanitize_text_input(&request.first_name, "first_name", 100)
-        .map_err(|e| AppError::Validation(format!("First name validation failed: {}", e)))?;
-    let validated_last_name = validator
-        .sanitize_text_input(&request.last_name, "last_name", 100)
-        .map_err(|e| AppError::Validation(format!("Last name validation failed: {}", e)))?;
-    let validated_password = validator
-        .validate_password_enhanced(&request.password)
-        .map_err(|e| AppError::Validation(format!("Password validation failed: {}", e)))?;
+    let validated_request = auth_facade.validate_signup_input(&request)?;
+    let validated_email = validated_request.email.clone();
+    let validated_password = validated_request.password.clone();
 
     let auth_service = state.auth_service.clone();
-
-    // Create validated request for service call
-    let validated_request = SignupRequest {
-        email: validated_email.clone(),
-        first_name: validated_first_name.clone(),
-        last_name: validated_last_name.clone(),
-        password: validated_password.clone(),
-        role: request.role.clone(),
-        correlation_id: request.correlation_id.clone(),
-    };
 
     let account = auth_service
         .create_account_from_signup(&validated_request)
         .map_err(|e| {
             error!("Account creation failed for {}: {}", validated_email, e);
-            match e.as_str() {
-                "Email is required"
-                | "First name is required"
-                | "Last name is required"
-                | "Password is required" => AppError::Validation(e),
-                "An account with this email already exists" | "Username is already taken" => {
-                    AppError::Validation(e)
-                }
-                _ => AppError::db_sanitized("create_account", &e),
-            }
+            auth_facade.map_signup_error(&e)
         })?;
 
     info!(

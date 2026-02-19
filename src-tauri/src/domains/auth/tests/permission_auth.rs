@@ -1,9 +1,18 @@
-﻿use crate::domains::auth::AuthFacade;
+use crate::domains::auth::AuthFacade;
+use crate::shared::ipc::errors::AppError;
 
 #[test]
-fn permission_auth_facade_constructs() {
+fn ensure_session_token_rejects_empty_values() {
     let facade = AuthFacade::new();
-    let clone = facade.clone();
 
-    assert_eq!(format!("{:?}", facade), format!("{:?}", clone));
+    let err = facade.ensure_session_token("").unwrap_err();
+    assert!(matches!(err, AppError::Authentication(_)));
+}
+
+#[test]
+fn ensure_session_token_rejects_whitespace_values() {
+    let facade = AuthFacade::new();
+
+    let err = facade.ensure_session_token("   ").unwrap_err();
+    assert!(matches!(err, AppError::Authentication(_)));
 }
