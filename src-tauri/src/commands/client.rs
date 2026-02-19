@@ -136,7 +136,7 @@ pub async fn client_crud(
     let rate_limit_key = format!("client_ops:{}", current_user.user_id);
     if !rate_limiter
         .check_and_record(&rate_limit_key, 100, 60)
-        .map_err(|e| AppError::Internal(format!("Rate limit check failed: {}", e)))?
+        .map_err(|e| AppError::internal_sanitized("rate_limit_check", &e))?
     {
         return Err(AppError::Validation(
             "Rate limit exceeded. Please try again later.".to_string(),
@@ -265,7 +265,7 @@ async fn handle_client_creation(
         .await
         .map_err(|e| {
             error!("Failed to create client: {}", e);
-            AppError::Database(format!("Client creation failed: {}", e))
+            AppError::db_sanitized("create_client", &e)
         })?;
     info!("Client created successfully with ID: {}", client.id);
 
@@ -285,7 +285,7 @@ async fn handle_client_retrieval(
     debug!("Retrieving client with ID: {}", id);
     let client = client_service.get_client_async(id).await.map_err(|e| {
         error!("Failed to retrieve client {}: {}", id, e);
-        AppError::Database(format!("Client retrieval failed: {}", e))
+        AppError::db_sanitized("get_client", &e)
     })?;
 
     match client {
@@ -317,7 +317,7 @@ async fn handle_client_with_tasks_retrieval(
     debug!("Retrieving client with tasks for ID: {}", id);
     let client = client_service.get_client_async(id).await.map_err(|e| {
         error!("Failed to retrieve client {}: {}", id, e);
-        AppError::Database(format!("Client retrieval failed: {}", e))
+        AppError::db_sanitized("get_client", &e)
     })?;
 
     match client {
@@ -342,7 +342,7 @@ async fn handle_client_with_tasks_retrieval(
                 .await
                 .map_err(|e| {
                     error!("Failed to retrieve tasks for client {}: {}", id, e);
-                    AppError::Database(format!("Task retrieval failed: {}", e))
+                    AppError::db_sanitized("get_tasks", &e)
                 })?;
 
             let tasks: Vec<Task> = tasks_response.data.into_iter().map(|t| t.task).collect();
@@ -410,7 +410,7 @@ async fn handle_client_update(
         .await
         .map_err(|e| {
             error!("Failed to update client {}: {}", id, e);
-            AppError::Database(format!("Client update failed: {}", e))
+            AppError::db_sanitized("update_client", &e)
         })?;
     info!("Client {} updated successfully", id);
 
@@ -434,7 +434,7 @@ async fn handle_client_deletion(
         .await
         .map_err(|e| {
             error!("Failed to delete client {}: {}", id, e);
-            AppError::Database(format!("Client deletion failed: {}", e))
+            AppError::db_sanitized("delete_client", &e)
         })?;
     info!("Client {} deleted successfully", id);
     Ok(ApiResponse::success(serde_json::json!({
@@ -455,7 +455,7 @@ async fn handle_client_listing(
         .await
         .map_err(|e| {
             error!("Failed to list clients: {}", e);
-            AppError::Database(format!("Client listing failed: {}", e))
+            AppError::db_sanitized("list_clients", &e)
         })?;
     debug!("Retrieved {} clients", clients.data.len());
     Ok(ApiResponse::success(serde_json::json!({
@@ -482,7 +482,7 @@ async fn handle_client_listing_with_tasks(
         .await
         .map_err(|e| {
             error!("Failed to list clients: {}", e);
-            AppError::Database(format!("Client listing failed: {}", e))
+            AppError::db_sanitized("list_clients", &e)
         })?;
     debug!("Retrieved {} clients", clients.data.len());
 
@@ -510,7 +510,7 @@ async fn handle_client_listing_with_tasks(
             .await
             .map_err(|e| {
                 error!("Failed to retrieve tasks for client {}: {}", client.id, e);
-                AppError::Database(format!("Task retrieval failed: {}", e))
+                AppError::db_sanitized("get_tasks", &e)
             })?;
 
         let tasks: Vec<Task> = tasks_response.data.into_iter().map(|t| t.task).collect();
@@ -569,7 +569,7 @@ async fn handle_client_search(
         .await
         .map_err(|e| {
             error!("Failed to search clients: {}", e);
-            AppError::Database(format!("Client search failed: {}", e))
+            AppError::db_sanitized("search_clients", &e)
         })?;
     debug!("Found {} clients matching query", clients.len());
     Ok(ApiResponse::success(serde_json::json!({
@@ -587,7 +587,7 @@ async fn handle_client_statistics(
     debug!("Retrieving client statistics");
     let stats = client_service.get_client_stats_async().await.map_err(|e| {
         error!("Failed to retrieve client statistics: {}", e);
-        AppError::Database(format!("Statistics retrieval failed: {}", e))
+        AppError::db_sanitized("get_client_stats", &e)
     })?;
     debug!("Client statistics retrieved: {:?}", stats);
     Ok(ApiResponse::success(serde_json::json!({

@@ -1,7 +1,9 @@
+use tracing;
 use crate::commands::{ApiError, AppState};
 use crate::models::message::*;
 
 /// Send a new message
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn message_send(
     request: SendMessageRequest,
@@ -34,6 +36,7 @@ pub async fn message_send(
 }
 
 /// Get messages with filtering and pagination
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn message_get_list(
     query: MessageQuery,
@@ -66,6 +69,7 @@ pub async fn message_get_list(
 }
 
 /// Mark message as read
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn message_mark_read(
     message_id: String,
@@ -98,6 +102,7 @@ pub async fn message_mark_read(
 }
 
 /// Get message templates
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn message_get_templates(
     category: Option<String>,
@@ -131,6 +136,7 @@ pub async fn message_get_templates(
 }
 
 /// Get user notification preferences
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn message_get_preferences(
     user_id: String,
@@ -163,6 +169,7 @@ pub async fn message_get_preferences(
 }
 
 /// Update user notification preferences
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn message_update_preferences(
     user_id: String,

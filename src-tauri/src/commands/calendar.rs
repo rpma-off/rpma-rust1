@@ -125,7 +125,7 @@ pub async fn calendar_get_tasks(
     let rate_limit_key = format!("calendar_ops:{}", current_user.user_id);
     if !rate_limiter
         .check_and_record(&rate_limit_key, 200, 60)
-        .map_err(|e| AppError::Internal(format!("Rate limit check failed: {}", e)))?
+        .map_err(|e| AppError::internal_sanitized("rate_limit_check", &e))?
     {
         return Err(AppError::Validation(
             "Rate limit exceeded. Please try again later.".to_string(),
@@ -144,10 +144,7 @@ pub async fn calendar_get_tasks(
         }
         Err(e) => {
             error!("Failed to get calendar tasks: {}", e);
-            Err(AppError::Internal(format!(
-                "Failed to retrieve calendar tasks: {}",
-                e
-            )))
+            Err(AppError::internal_sanitized("get_calendar_tasks", &e))
         }
     }
 }
@@ -179,7 +176,7 @@ pub async fn get_event_by_id(
     let rate_limit_key = format!("calendar_ops:{}", current_user.user_id);
     if !rate_limiter
         .check_and_record(&rate_limit_key, 200, 60)
-        .map_err(|e| AppError::Internal(format!("Rate limit check failed: {}", e)))?
+        .map_err(|e| AppError::internal_sanitized("rate_limit_check", &e))?
     {
         return Err(AppError::Validation(
             "Rate limit exceeded. Please try again later.".to_string(),
@@ -199,10 +196,7 @@ pub async fn get_event_by_id(
         }
         Err(e) => {
             error!("Failed to get calendar event by ID: {}", e);
-            Err(AppError::Internal(format!(
-                "Failed to retrieve calendar event: {}",
-                e
-            )))
+            Err(AppError::internal_sanitized("get_calendar_event", &e))
         }
     }
 }
@@ -234,7 +228,7 @@ pub async fn create_event(
     let rate_limit_key = format!("calendar_ops:{}", current_user.user_id);
     if !rate_limiter
         .check_and_record(&rate_limit_key, 200, 60)
-        .map_err(|e| AppError::Internal(format!("Rate limit check failed: {}", e)))?
+        .map_err(|e| AppError::internal_sanitized("rate_limit_check", &e))?
     {
         return Err(AppError::Validation(
             "Rate limit exceeded. Please try again later.".to_string(),
@@ -285,7 +279,7 @@ pub async fn update_event(
     let rate_limit_key = format!("calendar_ops:{}", current_user.user_id);
     if !rate_limiter
         .check_and_record(&rate_limit_key, 200, 60)
-        .map_err(|e| AppError::Internal(format!("Rate limit check failed: {}", e)))?
+        .map_err(|e| AppError::internal_sanitized("rate_limit_check", &e))?
     {
         return Err(AppError::Validation(
             "Rate limit exceeded. Please try again later.".to_string(),
@@ -340,7 +334,7 @@ pub async fn delete_event(
     let rate_limit_key = format!("calendar_ops:{}", current_user.user_id);
     if !rate_limiter
         .check_and_record(&rate_limit_key, 200, 60)
-        .map_err(|e| AppError::Internal(format!("Rate limit check failed: {}", e)))?
+        .map_err(|e| AppError::internal_sanitized("rate_limit_check", &e))?
     {
         return Err(AppError::Validation(
             "Rate limit exceeded. Please try again later.".to_string(),
@@ -360,10 +354,7 @@ pub async fn delete_event(
         }
         Err(e) => {
             error!("Failed to delete calendar event: {}", e);
-            Err(AppError::Internal(format!(
-                "Failed to delete calendar event: {}",
-                e
-            )))
+            Err(AppError::internal_sanitized("delete_calendar_event", &e))
         }
     }
 }
@@ -395,7 +386,7 @@ pub async fn get_events_for_technician(
     let rate_limit_key = format!("calendar_ops:{}", current_user.user_id);
     if !rate_limiter
         .check_and_record(&rate_limit_key, 200, 60)
-        .map_err(|e| AppError::Internal(format!("Rate limit check failed: {}", e)))?
+        .map_err(|e| AppError::internal_sanitized("rate_limit_check", &e))?
     {
         return Err(AppError::Validation(
             "Rate limit exceeded. Please try again later.".to_string(),
@@ -417,10 +408,7 @@ pub async fn get_events_for_technician(
         }
         Err(e) => {
             error!("Failed to get events for technician: {}", e);
-            Err(AppError::Internal(format!(
-                "Failed to retrieve technician events: {}",
-                e
-            )))
+            Err(AppError::internal_sanitized("get_technician_events", &e))
         }
     }
 }
@@ -452,7 +440,7 @@ pub async fn get_events_for_task(
     let rate_limit_key = format!("calendar_ops:{}", current_user.user_id);
     if !rate_limiter
         .check_and_record(&rate_limit_key, 200, 60)
-        .map_err(|e| AppError::Internal(format!("Rate limit check failed: {}", e)))?
+        .map_err(|e| AppError::internal_sanitized("rate_limit_check", &e))?
     {
         return Err(AppError::Validation(
             "Rate limit exceeded. Please try again later.".to_string(),
@@ -468,10 +456,7 @@ pub async fn get_events_for_task(
         }
         Err(e) => {
             error!("Failed to get events for task: {}", e);
-            Err(AppError::Internal(format!(
-                "Failed to retrieve task events: {}",
-                e
-            )))
+            Err(AppError::internal_sanitized("get_task_events", &e))
         }
     }
 }
@@ -505,7 +490,7 @@ pub async fn get_events(
     let rate_limit_key = format!("calendar_ops:{}", current_user.user_id);
     if !rate_limiter
         .check_and_record(&rate_limit_key, 200, 60)
-        .map_err(|e| AppError::Internal(format!("Rate limit check failed: {}", e)))?
+        .map_err(|e| AppError::internal_sanitized("rate_limit_check", &e))?
     {
         return Err(AppError::Validation(
             "Rate limit exceeded. Please try again later.".to_string(),
@@ -525,10 +510,7 @@ pub async fn get_events(
         }
         Err(e) => {
             error!("Failed to get events: {}", e);
-            Err(AppError::Internal(format!(
-                "Failed to retrieve events: {}",
-                e
-            )))
+            Err(AppError::internal_sanitized("get_events", &e))
         }
     }
 }
@@ -560,7 +542,7 @@ pub async fn calendar_check_conflicts(
     let rate_limit_key = format!("calendar_ops:{}", current_user.user_id);
     if !rate_limiter
         .check_and_record(&rate_limit_key, 200, 60)
-        .map_err(|e| AppError::Internal(format!("Rate limit check failed: {}", e)))?
+        .map_err(|e| AppError::internal_sanitized("rate_limit_check", &e))?
     {
         return Err(AppError::Validation(
             "Rate limit exceeded. Please try again later.".to_string(),
@@ -584,10 +566,7 @@ pub async fn calendar_check_conflicts(
         }
         Err(e) => {
             error!("Failed to check conflicts: {}", e);
-            Err(AppError::Internal(format!(
-                "Failed to check scheduling conflicts: {}",
-                e
-            )))
+            Err(AppError::internal_sanitized("check_scheduling_conflicts", &e))
         }
     }
 }
@@ -619,7 +598,7 @@ pub async fn calendar_schedule_task(
     let rate_limit_key = format!("calendar_ops:{}", current_user.user_id);
     if !rate_limiter
         .check_and_record(&rate_limit_key, 200, 60)
-        .map_err(|e| AppError::Internal(format!("Rate limit check failed: {}", e)))?
+        .map_err(|e| AppError::internal_sanitized("rate_limit_check", &e))?
     {
         return Err(AppError::Validation(
             "Rate limit exceeded. Please try again later.".to_string(),
@@ -654,10 +633,7 @@ pub async fn calendar_schedule_task(
             }
             Err(e) => {
                 error!("Failed to schedule task: {}", e);
-                Err(AppError::Internal(format!(
-                    "Failed to schedule task: {}",
-                    e
-                )))
+                Err(AppError::internal_sanitized("schedule_task", &e))
             }
         }
     } else {
@@ -682,10 +658,7 @@ pub async fn calendar_schedule_task(
             }
             Err(e) => {
                 error!("Failed to schedule task: {}", e);
-                Err(AppError::Internal(format!(
-                    "Failed to schedule task: {}",
-                    e
-                )))
+                Err(AppError::internal_sanitized("schedule_task", &e))
             }
         }
     }

@@ -31,6 +31,7 @@ pub struct UpdateUserAccessibilityRequest {
 }
 
 /// Update user accessibility settings
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 
 pub async fn update_user_accessibility(

@@ -140,7 +140,7 @@ pub async fn auth_create_account(
                 "An account with this email already exists" | "Username is already taken" => {
                     AppError::Validation(e)
                 }
-                _ => AppError::Database(format!("Account creation failed: {}", e)),
+                _ => AppError::db_sanitized("create_account", &e),
             }
         })?;
 
