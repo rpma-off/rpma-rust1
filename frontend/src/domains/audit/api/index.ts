@@ -9,3 +9,5 @@ export { useRecordChanges, useTableChanges } from '../hooks/useChangeTracking';
 export { changeLogService } from '../server';
 
 export type { ChangeLogWithUser, UseAuditLogResult } from './types';
+
+export { AuditLogViewer } from '../components/AuditLogViewer';
