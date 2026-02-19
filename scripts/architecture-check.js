@@ -4,11 +4,13 @@ const fs = require('fs');
 const path = require('path');
 
 const repoRoot = path.resolve(__dirname, '..');
-const domainsRoot = path.join(repoRoot, 'src-tauri', 'src', 'domains');
-const sharedRoot = path.join(repoRoot, 'src-tauri', 'src', 'shared');
-const commandMaterialPath = path.join(repoRoot, 'src-tauri', 'src', 'commands', 'material.rs');
-const serviceBuilderPath = path.join(repoRoot, 'src-tauri', 'src', 'service_builder.rs');
+const srcRoot = path.join(repoRoot, 'src-tauri', 'src');
+const domainsRoot = path.join(srcRoot, 'domains');
+const sharedRoot = path.join(srcRoot, 'shared');
+const commandMaterialPath = path.join(srcRoot, 'commands', 'material.rs');
+const serviceBuilderPath = path.join(srcRoot, 'service_builder.rs');
 const enforcedTouchpoints = [commandMaterialPath, serviceBuilderPath];
+const LEGACY_ALLOWLIST_PATH = path.join(__dirname, 'legacy-domain-allowlist.json');
 
 const sqlPattern = /(\bSELECT\b|\bINSERT\b|\bUPDATE\s+\w+\s+SET\b|\bDELETE\s+FROM\b|CREATE\s+TABLE|ALTER\s+TABLE|DROP\s+TABLE|rusqlite::params!)/;
 
@@ -226,6 +228,128 @@ function checkCommandBusinessLogic() {
   return violations;
 }
 
+/**
+ * Rule 6: Domain code must live under src-tauri/src/domains/.
+ *
+ * Scans the legacy directories (commands/, models/, repositories/, services/)
+ * for files that belong to a bounded context. Known legacy files are tracked
+ * in legacy-domain-allowlist.json. Any NEW domain-specific file added outside
+ * domains/ causes a failure, enforcing that all new domain code goes into the
+ * proper bounded context directory.
+ */
+function checkDomainCodeLocation() {
+  const domainNames = fs.readdirSync(domainsRoot, { withFileTypes: true })
+    .filter((e) => e.isDirectory())
+    .map((e) => e.name);
+
+  // Directories that are named after a domain are entirely domain-specific
+  const domainDirNames = new Set(domainNames);
+
+  // Singular-to-domain mapping for file-name heuristic matching
+  const filePrefixToDomain = {
+    auth: 'auth',
+    auth_middleware: 'auth',
+    consent: 'auth',
+    session: 'auth',
+    token: 'auth',
+    two_factor: 'auth',
+    user: 'users',
+    task: 'tasks',
+    intervention: 'interventions',
+    workflow: 'interventions',
+    step: 'interventions',
+    client: 'clients',
+    material: 'inventory',
+    quote: 'quotes',
+    calendar: 'calendar',
+    report: 'reports',
+    pdf_report: 'reports',
+    pdf_generation: 'reports',
+    dashboard: 'reports',
+    notification: 'settings',
+    settings: 'settings',
+    audit: 'audit',
+    security_monitor: 'audit',
+    message: 'documents',
+    photo: 'documents',
+    document: 'documents',
+    sync: 'sync',
+  };
+
+  const legacyDirs = ['commands', 'models', 'repositories', 'services'];
+  const detected = [];
+
+  for (const dir of legacyDirs) {
+    const dirPath = path.join(srcRoot, dir);
+    if (!fs.existsSync(dirPath)) continue;
+
+    const files = listFiles(dirPath).filter((f) => f.endsWith('.rs'));
+    for (const file of files) {
+      const relativePath = path.relative(srcRoot, file).replace(/\\/g, '/');
+
+      // Check if the file is inside a subdirectory named after a domain
+      const parts = relativePath.split('/');
+      const subDir = parts.length > 2 ? parts[1] : null;
+      if (subDir && domainDirNames.has(subDir)) {
+        detected.push(relativePath);
+        continue;
+      }
+
+      const baseName = path.basename(file, '.rs');
+
+      // Skip infrastructure / cross-cutting files
+      if (['mod', 'base', 'cache', 'factory', 'errors', 'error_utils', 'common',
+           'status', 'status_tests', 'material_ts', 'compression',
+           'correlation_helpers', 'ipc_optimization', 'analytics', 'performance',
+           'queue', 'log', 'security', 'streaming', 'websocket',
+           'websocket_commands', 'system', 'ui', 'navigation', 'alerting',
+           'domain_event', 'event_bus', 'event_system', 'websocket_event_handler',
+           'performance_monitor', 'rate_limiter', 'validation', 'repository',
+           'worker_pool', 'operational_intelligence', 'prediction',
+           'core', 'core_service', 'export_service', 'generation_service',
+           'overview_orchestrator', 'search_service', 'types',
+           'data_export', 'file_operations', 'entity_counts',
+           'background_jobs', 'facade', 'queries', 'statistics',
+           'data_access', 'relationships', 'accessibility',
+           'preferences', 'profile', 'notifications', 'metadata',
+           'processing', 'storage', 'upload',
+           'geographic_report', 'intelligence_report', 'quality_report',
+           'seasonal_report', 'technician_report',
+          ].includes(baseName)) {
+        continue;
+      }
+
+      // Direct match
+      let domain = filePrefixToDomain[baseName];
+
+      // Prefix match (e.g. task_crud -> tasks)
+      if (!domain) {
+        for (const [prefix, d] of Object.entries(filePrefixToDomain)) {
+          if (baseName.startsWith(prefix + '_')) {
+            domain = d;
+            break;
+          }
+        }
+      }
+
+      if (domain) {
+        detected.push(relativePath);
+      }
+    }
+  }
+
+  // Load allowlist
+  let allowed = [];
+  if (fs.existsSync(LEGACY_ALLOWLIST_PATH)) {
+    const raw = JSON.parse(fs.readFileSync(LEGACY_ALLOWLIST_PATH, 'utf8'));
+    allowed = Array.isArray(raw.allowed) ? raw.allowed : [];
+  }
+  const allowSet = new Set(allowed);
+
+  const violations = detected.filter((f) => !allowSet.has(f));
+  return violations;
+}
+
 function main() {
   if (!fs.existsSync(domainsRoot)) {
     console.error('Domains directory not found.');
@@ -237,6 +361,7 @@ function main() {
   const apiViolations = checkDomainPublicApi();
   const structureViolations = checkDomainDirectoryStructure();
   const ipcLogicViolations = checkCommandBusinessLogic();
+  const domainLocationViolations = checkDomainCodeLocation();
 
   const violations = [
     ...sqlViolations.map((file) => `SQL usage outside infrastructure: ${file}`),
@@ -244,6 +369,7 @@ function main() {
     ...apiViolations.map((msg) => `Public API rule: ${msg}`),
     ...structureViolations.map((msg) => `Domain structure rule: ${msg}`),
     ...ipcLogicViolations.map((msg) => `IPC business logic rule: ${msg}`),
+    ...domainLocationViolations.map((file) => `Domain code outside domains/: ${file} — move to domains/<context>/`),
   ];
 
   if (violations.length > 0) {
