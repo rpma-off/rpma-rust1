@@ -1,6 +1,8 @@
-﻿# reports Domain
+# Reports Domain
 
-Bounded-context domain scaffold.
+Frontend bounded context for report pages, export workflows, and report-specific components.
 
-- pi/: UI/public API surface
-- server/: route/server facade surface
+## Public Surface
+- `api/`: provider, report hooks, components, and typed report contracts.
+- `components/`: report tabs, content, filters, and exports.
+- `server/`: route-layer reporting facade exports.

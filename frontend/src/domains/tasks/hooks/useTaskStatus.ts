@@ -33,7 +33,7 @@ export function useTaskStatus() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [sessionToken]);
 
   const fetchDistribution = useCallback(async () => {
     try {
@@ -49,7 +49,7 @@ export function useTaskStatus() {
       setError(message);
       toast.error(message);
     }
-  }, []);
+  }, [sessionToken]);
 
   const transitionStatus = useCallback(async (
     taskId: string,

@@ -1,10 +1,10 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import ReportsPage from '../../../app/reports/page';
-import { reportsService } from '@/domains/reports/server';
+import { reportsService } from '@/domains/reports';
 
 // Mock the reports service to verify it's being called
-jest.mock('@/domains/reports/server', () => ({
+jest.mock('@/domains/reports', () => ({
   reportsService: {
     getOverviewReport: jest.fn(),
   },

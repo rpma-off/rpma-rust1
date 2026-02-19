@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
 import { withMethod } from '@/lib/api-route-wrapper';
 import { handleApiError } from '@/lib/api-error';

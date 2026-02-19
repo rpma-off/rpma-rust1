@@ -1,4 +1,4 @@
-Ôªøimport React, { memo, useState } from 'react';
+import React, { memo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Play,
@@ -30,7 +30,7 @@ import { interventionKeys } from '@/lib/query-keys';
 import { useAuth } from '@/domains/auth';
 import { taskService } from '../../services/task.service';
 import { ipcClient } from '@/lib/ipc';
-import { InterventionWorkflowService } from '@/domains/interventions/server';
+import { InterventionWorkflowService } from '@/domains/interventions';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import EditTaskModal from './EditTaskModal';
 import SendMessageModal from './SendMessageModal';
@@ -224,43 +224,43 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
 
   const updateStatusMutation = useMutation({
     mutationFn: async (newStatus: TaskStatus) => {
-      if (!user?.token) throw new Error('Utilisateur non authentifi√©');
+      if (!user?.token) throw new Error('Utilisateur non authentifiÈ');
       return await taskService.updateTask(task.id, createStatusUpdate(newStatus));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      toast.success('Statut mis √É¬† jour avec succ√®s');
+      toast.success('Statut mis √† jour avec succËs');
       setShowStatusDialog(false);
     },
     onError: error => {
-      toast.error('Erreur lors de la mise √É¬† jour du statut');
+      toast.error('Erreur lors de la mise √† jour du statut');
       console.error('Status update error:', error);
     }
   });
 
   const updatePriorityMutation = useMutation({
     mutationFn: async (newPriority: TaskPriority) => {
-      if (!user?.token) throw new Error('Utilisateur non authentifi√©');
+      if (!user?.token) throw new Error('Utilisateur non authentifiÈ');
       return await taskService.updateTask(task.id, createPriorityUpdate(newPriority));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      toast.success('Priorit√© mise √É¬† jour avec succ√®s');
+      toast.success('PrioritÈ mise √† jour avec succËs');
     },
     onError: error => {
-      toast.error('Erreur lors de la mise √É¬† jour de la priorit√©');
+      toast.error('Erreur lors de la mise √† jour de la prioritÈ');
       console.error('Priority update error:', error);
     }
   });
 
   const assignToMeMutation = useMutation({
     mutationFn: async () => {
-      if (!user?.token) throw new Error('Utilisateur non authentifi√©');
+      if (!user?.token) throw new Error('Utilisateur non authentifiÈ');
       return await taskService.updateTask(task.id, createTechnicianUpdate(user.id));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      toast.success('T√¢che assign√©e avec succ√®s');
+      toast.success('T‚che assignÈe avec succËs');
       setShowAssignmentDialog(false);
     },
     onError: error => {
@@ -271,23 +271,23 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
 
   const updateNotesMutation = useMutation({
     mutationFn: async (newNotes: string) => {
-      if (!user?.token) throw new Error('Utilisateur non authentifi√©');
+      if (!user?.token) throw new Error('Utilisateur non authentifiÈ');
       return await taskService.updateTask(task.id, createNotesUpdate(newNotes));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      toast.success('Notes mises √É¬† jour avec succ√®s');
+      toast.success('Notes mises √† jour avec succËs');
       setShowNotesDialog(false);
     },
     onError: error => {
-      toast.error('Erreur lors de la mise √É¬† jour des notes');
+      toast.error('Erreur lors de la mise √† jour des notes');
       console.error('Notes update error:', error);
     }
   });
 
   const startInterventionMutation = useMutation({
     mutationFn: async () => {
-      if (!user?.token) throw new Error('Utilisateur non authentifi√©');
+      if (!user?.token) throw new Error('Utilisateur non authentifiÈ');
 
       const interventionData = {
         task_id: task.id,
@@ -317,7 +317,7 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
 
       const response = await InterventionWorkflowService.startIntervention(task.id, interventionData, user.token);
       if (!response.success) {
-        throw new Error(response.error?.message || 'Impossible de d√©marrer l\'intervention');
+        throw new Error(response.error?.message || 'Impossible de dÈmarrer l\'intervention');
       }
       return response.data;
     },
@@ -327,12 +327,12 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
         queryClient.invalidateQueries({ queryKey: interventionKeys.ppfIntervention(task.id) });
         queryClient.invalidateQueries({ queryKey: ['interventions', task.id, 'photos'] });
       }, 100);
-      toast.success('Intervention d√©marr√©e avec succ√®s');
+      toast.success('Intervention dÈmarrÈe avec succËs');
       router.push(`/tasks/${task.id}/workflow/ppf`);
     },
     onError: error => {
-      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue lors du d√©marrage de l\'intervention';
-      toast.error(`Erreur au d√©marrage de l'intervention : ${errorMessage}`);
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue lors du dÈmarrage de l\'intervention';
+      toast.error(`Erreur au dÈmarrage de l'intervention : ${errorMessage}`);
       console.error('Start intervention error:', error);
     }
   });
@@ -397,12 +397,12 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
         try {
           const phoneNumber = task?.client?.phone;
           if (!phoneNumber) {
-            toast.error('Aucun num√©ro de t√©l√©phone disponible pour ce client');
+            toast.error('Aucun numÈro de tÈlÈphone disponible pour ce client');
             return;
           }
 
           await ipcClient.ui.initiateCustomerCall(phoneNumber);
-          toast.success(`Appel lanc√© vers ${phoneNumber}`);
+          toast.success(`Appel lancÈ vers ${phoneNumber}`);
         } catch (error) {
           console.error('Failed to initiate call:', error);
           toast.error('Erreur lors de l\'appel client');
@@ -426,7 +426,7 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
     },
     {
       id: 'assign',
-      label: 'M\'assigner la t√¢che',
+      label: 'M\'assigner la t‚che',
       icon: User,
       onClick: () => setShowAssignmentDialog(true),
       disabled: isAssignedToCurrentUser
@@ -439,28 +439,28 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
     },
     {
       id: 'edit',
-      label: 'Modifier la t√¢che',
+      label: 'Modifier la t‚che',
       icon: Edit,
       onClick: () => setShowEditModal(true)
     },
     {
       id: 'delay',
-      label: 'Reporter la t√¢che',
+      label: 'Reporter la t‚che',
       icon: Clock,
       onClick: () => setShowDelayTaskModal(true)
     },
     {
       id: 'report',
-      label: 'Signaler un probl√®me',
+      label: 'Signaler un problËme',
       icon: AlertCircle,
       onClick: () => setShowReportIssueModal(true)
     }
   ];
 
   const primaryDisabledReason = !isAvailable && !isAssignedToCurrentUser
-    ? 'Intervention indisponible : cette t√¢che est d√©j√É¬† prise par un autre technicien.'
+    ? 'Intervention indisponible : cette t‚che est dÈj√† prise par un autre technicien.'
     : shouldShowDisabledReason
-      ? `Cette t√¢che est au statut √Ç¬´ ${task.status} √Ç¬ª et ne peut pas √™tre d√©marr√©e.`
+      ? `Cette t‚che est au statut ¬´ ${task.status} ¬ª et ne peut pas Ítre dÈmarrÈe.`
       : null;
 
   const dockedQuickActions = [...executionActions.filter(action => action.id !== 'workflow').slice(0, 2), communicationActions[1]];
@@ -521,7 +521,7 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
           ) : (
             <>
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-border-light">Ex√©cution</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-border-light">ExÈcution</p>
                 <SecondaryActionsGrid actions={executionActions} onActionClick={handleActionClick} columns={3} />
               </div>
 
@@ -560,7 +560,7 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
         <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Changer le statut de la t√¢che</DialogTitle>
+              <DialogTitle>Changer le statut de la t‚che</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -592,15 +592,15 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="pending">En attente</SelectItem>
-                    <SelectItem value="scheduled">Planifi√©e</SelectItem>
+                    <SelectItem value="scheduled">PlanifiÈe</SelectItem>
                     <SelectItem value="in_progress">En cours</SelectItem>
-                    <SelectItem value="completed">Termin√©e</SelectItem>
-                    <SelectItem value="cancelled">Annul√©e</SelectItem>
+                    <SelectItem value="completed">TerminÈe</SelectItem>
+                    <SelectItem value="cancelled">AnnulÈe</SelectItem>
                     <SelectItem value="on_hold">En pause</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              {updateStatusMutation.isPending && <p className="text-sm text-muted-foreground">Mise √É¬† jour en cours...</p>}
+              {updateStatusMutation.isPending && <p className="text-sm text-muted-foreground">Mise √† jour en cours...</p>}
             </div>
           </DialogContent>
         </Dialog>
@@ -608,10 +608,10 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
         <Dialog open={showAssignmentDialog} onOpenChange={setShowAssignmentDialog}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Assigner la t√¢che</DialogTitle>
+              <DialogTitle>Assigner la t‚che</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <p>Voulez-vous vous assigner cette t√¢che ?</p>
+              <p>Voulez-vous vous assigner cette t‚che ?</p>
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setShowAssignmentDialog(false)} disabled={assignToMeMutation.isPending}>
                   Annuler
@@ -636,7 +636,7 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
                   id="notes-textarea"
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
-                  placeholder="Ajoutez des notes pour cette t√¢che..."
+                  placeholder="Ajoutez des notes pour cette t‚che..."
                   rows={4}
                 />
               </div>
@@ -718,7 +718,7 @@ const PrimaryActionButton: React.FC<PrimaryActionButtonProps> = ({
       )}
     >
       <Play className="h-5 w-5 mr-2" />
-      {isPending ? 'D√©marrage...' : "D√©marrer l'intervention"}
+      {isPending ? 'DÈmarrage...' : "DÈmarrer l'intervention"}
     </Button>
   );
 };
@@ -843,7 +843,7 @@ const StatusWarnings: React.FC<StatusWarningsProps> = ({
       <div className="p-3 bg-amber-500/5 border border-amber-500/20 rounded-lg">
         <div className="flex items-start">
           <AlertCircle className="h-4 w-4 text-amber-500 mr-2 mt-0.5 flex-shrink-0" />
-          <p className="text-xs text-foreground/85">Cette t√¢che est d√©j√É¬† assign√©e √É¬† un autre technicien.</p>
+          <p className="text-xs text-foreground/85">Cette t‚che est dÈj√† assignÈe √† un autre technicien.</p>
         </div>
       </div>
     )}
@@ -853,7 +853,7 @@ const StatusWarnings: React.FC<StatusWarningsProps> = ({
         <div className="flex items-start">
           <AlertCircle className="h-4 w-4 text-orange-500 mr-2 mt-0.5 flex-shrink-0" />
           <p className="text-xs text-foreground/85">
-            Statut incompatible avec le d√©marrage d&apos;intervention : {taskStatus}
+            Statut incompatible avec le dÈmarrage d&apos;intervention : {taskStatus}
           </p>
         </div>
       </div>
@@ -870,7 +870,7 @@ interface PrioritySelectorProps {
 const PrioritySelector: React.FC<PrioritySelectorProps> = ({ value, onChange, isPending }) => (
   <div className="pt-4 border-t border-border">
     <div className="flex items-center justify-between">
-      <span className="text-sm font-medium text-foreground">Priorit√©</span>
+      <span className="text-sm font-medium text-foreground">PrioritÈ</span>
       <Select
         value={value}
         onValueChange={(value: string) => {

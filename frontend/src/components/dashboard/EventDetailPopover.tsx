@@ -1,4 +1,4 @@
-ï»¿'use client';
+'use client';
 
 import React from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -41,12 +41,12 @@ export function EventDetailPopover({ isOpen, onClose, event }: EventDetailPopove
   };
 
   const handleDelete = async () => {
-    if (!confirm('ÃŠtes-vous sÃƒÂ»r de vouloir supprimer cette tÃ¢che ?')) {
+    if (!confirm('Êtes-vous sÃ»r de vouloir supprimer cette tâche ?')) {
       return;
     }
 
     try {
-      const { taskService } = await import('@/domains/tasks/server');
+      const { taskService } = await import('@/domains/tasks');
       await taskService.deleteTask(event.id);
       onClose();
       router.push('/dashboard');
@@ -73,10 +73,10 @@ export function EventDetailPopover({ isOpen, onClose, event }: EventDetailPopove
               style={{ backgroundColor: getStatusColor(event.status) }}
             >
               {event.status === 'draft' && 'Brouillon'}
-              {event.status === 'scheduled' && 'PlanifiÃ©'}
+              {event.status === 'scheduled' && 'Planifié'}
               {event.status === 'in_progress' && 'En cours'}
-              {event.status === 'completed' && 'TerminÃ©'}
-              {event.status === 'cancelled' && 'AnnulÃ©'}
+              {event.status === 'completed' && 'Terminé'}
+              {event.status === 'cancelled' && 'Annulé'}
             </div>
             <div
               className="px-2 py-1 rounded text-xs font-medium text-white"
@@ -119,7 +119,7 @@ export function EventDetailPopover({ isOpen, onClose, event }: EventDetailPopove
               className="flex-1"
               onClick={() => router.push(`/tasks/${event.id}`)}
             >
-              Voir dÃ©tails
+              Voir détails
             </Button>
             <Button
               size="sm"

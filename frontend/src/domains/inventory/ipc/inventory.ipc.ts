@@ -1,4 +1,9 @@
-﻿import { materialOperations, stockOperations, consumptionOperations, reportingOperations } from '@/domains/inventory/server';
+import {
+  materialOperations,
+  stockOperations,
+  consumptionOperations,
+  reportingOperations,
+} from '../server';
 import { safeInvoke } from '@/lib/ipc/core';
 import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import type { JsonObject } from '@/types/json';

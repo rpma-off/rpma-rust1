@@ -25,27 +25,27 @@ import { PageHeader } from '@/shared/ui/ui/page-header';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 
 // Lazy load tab components to reduce initial bundle size
-const ProfileSettingsTab = dynamic(() => import('@/shared/ui/settings/ProfileSettingsTab').then(mod => ({ default: mod.ProfileSettingsTab })), {
+const ProfileSettingsTab = dynamic(() => import('@/domains/settings').then(mod => ({ default: mod.ProfileSettingsTab })), {
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
 });
 
-const PreferencesTab = dynamic(() => import('@/shared/ui/settings/PreferencesTab').then(mod => ({ default: mod.PreferencesTab })), {
+const PreferencesTab = dynamic(() => import('@/domains/settings').then(mod => ({ default: mod.PreferencesTab })), {
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
 });
 
-const SecurityTab = dynamic(() => import('@/shared/ui/settings/SecurityTab').then(mod => ({ default: mod.SecurityTab })), {
+const SecurityTab = dynamic(() => import('@/domains/settings').then(mod => ({ default: mod.SecurityTab })), {
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
 });
 
-const PerformanceTab = dynamic(() => import('@/shared/ui/settings/PerformanceTab').then(mod => ({ default: mod.PerformanceTab })), {
+const PerformanceTab = dynamic(() => import('@/domains/settings').then(mod => ({ default: mod.PerformanceTab })), {
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
 });
 
-const AccessibilityTab = dynamic(() => import('@/shared/ui/settings/AccessibilityTab').then(mod => ({ default: mod.AccessibilityTab })), {
+const AccessibilityTab = dynamic(() => import('@/domains/settings').then(mod => ({ default: mod.AccessibilityTab })), {
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
 });
 
-const NotificationsTab = dynamic(() => import('@/shared/ui/settings/NotificationsTab').then(mod => ({ default: mod.NotificationsTab })), {
+const NotificationsTab = dynamic(() => import('@/domains/settings').then(mod => ({ default: mod.NotificationsTab })), {
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
 });
 
@@ -313,37 +313,37 @@ export default function SettingsPage() {
                <div className="mt-4 md:mt-6">
                  <TabsContent value="profile" className="mt-0">
                    <Suspense fallback={<LoadingState message="Chargement du profil..." />}>
-                     <ProfileSettingsTab user={user || undefined} profile={profile || undefined} />
+                     <ProfileSettingsTab />
                    </Suspense>
                  </TabsContent>
 
                  <TabsContent value="preferences" className="mt-0">
                    <Suspense fallback={<LoadingState message="Chargement des préférences..." />}>
-                     <PreferencesTab user={user || undefined} profile={profile || undefined} />
+                     <PreferencesTab />
                    </Suspense>
                  </TabsContent>
 
                  <TabsContent value="security" className="mt-0">
                    <Suspense fallback={<LoadingState message="Chargement de la sécurité..." />}>
-                     <SecurityTab user={user || undefined} profile={profile || undefined} />
+                     <SecurityTab />
                    </Suspense>
                  </TabsContent>
 
                  <TabsContent value="performance" className="mt-0">
                    <Suspense fallback={<LoadingState message="Chargement des performances..." />}>
-                     <PerformanceTab user={user || undefined} profile={profile || undefined} />
+                     <PerformanceTab />
                    </Suspense>
                  </TabsContent>
 
                  <TabsContent value="accessibility" className="mt-0">
                    <Suspense fallback={<LoadingState message="Chargement de l'accessibilité..." />}>
-                     <AccessibilityTab user={user || undefined} profile={profile || undefined} />
+                     <AccessibilityTab />
                    </Suspense>
                  </TabsContent>
 
                  <TabsContent value="notifications" className="mt-0">
                    <Suspense fallback={<LoadingState message="Chargement des notifications..." />}>
-                     <NotificationsTab user={user || undefined} profile={profile || undefined} />
+                     <NotificationsTab />
                    </Suspense>
                  </TabsContent>
                </div>

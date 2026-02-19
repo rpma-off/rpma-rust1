@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { UserList } from '@/shared/ui/users/UserList';
-import { UserForm } from '@/shared/ui/users/UserForm';
+import { UserList } from '@/domains/users';
+import { UserForm } from '@/domains/users';
 import { UserAccount } from '@/shared/types';
 import { convertTimestamps } from '@/shared/utils';
 import { useAuth } from '@/domains/auth';

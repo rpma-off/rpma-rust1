@@ -5,6 +5,7 @@
 export { TaskProvider } from './TaskProvider';
 export { useTasks } from './useTasks';
 export { useTaskActions } from './useTaskActions';
+export { taskService, taskApiService, taskPhotoService } from '../server';
 
 export { KanbanBoard } from '../components/KanbanBoard';
 export { TaskAttachments } from '../components/TaskAttachments';
@@ -48,3 +49,4 @@ export type {
   TaskQuery,
   TaskListResponse,
 } from './types';
+export type { UpdateTaskData, TaskPhotoQueryParams } from '../server';

@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { withMethod } from '@/lib/api-route-wrapper';
 import { handleApiError } from '@/lib/api-error';
 import { taskWorkflowSyncService } from '@/domains/workflow/server';

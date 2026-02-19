@@ -1,10 +1,10 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
-import { DateRangePicker } from './components/DateRangePicker';
-import { ReportTabs } from './components/ReportTabs';
-import { ReportContent } from './components/ReportContent';
-import { ExportControls } from './components/ExportControls';
+import { DateRangePicker } from '@/domains/reports';
+import { ReportTabs } from '@/domains/reports';
+import { ReportContent } from '@/domains/reports';
+import { ExportControls } from '@/domains/reports';
 import { reportsService } from '@/domains/reports';
 import { PageShell } from '@/shared/ui/layout/PageShell';
 import { enhancedToast } from '@/shared/utils';

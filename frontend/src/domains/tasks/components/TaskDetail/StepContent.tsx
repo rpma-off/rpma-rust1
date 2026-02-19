@@ -15,7 +15,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { TaskWithDetails, ChecklistItem } from '@/types/task.types';
-import PhotoUploadZone from '@/PhotoUpload/PhotoUploadZone';
+import { PhotoUploadZone } from '@/domains/workflow';
 import { Photo, PhotoType, TaskPhoto } from '@/lib/backend';
 import { ChecklistView } from '../TaskInfo/ChecklistView';
 
@@ -64,7 +64,7 @@ function _convertTaskPhotoToPhoto(taskPhoto: TaskPhoto): Photo {
   };
 }
 import { SOPViewer } from '../TaskInfo/SOPViewer';
-import { SignatureCapture } from '@/components/SignatureCapture';
+import { SignatureCapture } from '@/domains/workflow';
 
 interface WorkflowStep {
   id: string;
@@ -157,10 +157,8 @@ export function StepContent({
             </Alert>
 
             <PhotoUploadZone
-              type="before"
-              existingPhotos={task.photos_before || []}
-              onUpload={(file) => onPhotoUpload(file, 'before')}
-              maxPhotos={6}
+              onFilesSelected={(files) => files.forEach((file) => onPhotoUpload(file, 'before'))}
+              maxFiles={6}
             />
 
             <SOPViewer stepNumber={1} taskId={task.id} />
@@ -203,11 +201,8 @@ export function StepContent({
                 </CardHeader>
                 <CardContent>
                   <PhotoUploadZone
-                    type="during"
-                    existingPhotos={[]}
-                    onUpload={(file) => onPhotoUpload(file, 'during')}
-                    maxPhotos={4}
-
+                    onFilesSelected={(files) => files.forEach((file) => onPhotoUpload(file, 'during'))}
+                    maxFiles={4}
                   />
                 </CardContent>
               </Card>
@@ -243,10 +238,8 @@ export function StepContent({
             </Alert>
 
             <PhotoUploadZone
-              type="after"
-              existingPhotos={task.photos_after || []}
-              onUpload={(file) => onPhotoUpload(file, 'after')}
-              maxPhotos={6}
+              onFilesSelected={(files) => files.forEach((file) => onPhotoUpload(file, 'after'))}
+              maxFiles={6}
             />
 
             <SOPViewer stepNumber={4} taskId={task.id} />
@@ -264,7 +257,7 @@ export function StepContent({
             </Alert>
 
             <SignatureCapture
-              onSignatureCapture={() => {
+              onSignatureCapture={(_signature: string) => {
                 // Signature handling will trigger completion
                 handleComplete();
               }}

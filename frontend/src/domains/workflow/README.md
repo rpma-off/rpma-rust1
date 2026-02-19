@@ -1,6 +1,8 @@
-﻿# workflow Domain
+# Workflow Domain
 
-Bounded-context domain scaffold.
+Frontend bounded context for workflow execution, templates, calendar workflow views, and step utilities.
 
-- pi/: UI/public API surface
-- server/: route/server facade surface
+## Public Surface
+- `api/`: provider, workflow hooks, components, and typed exports.
+- `components/`: workflow execution and calendar UI modules.
+- `server/`: route-layer workflow service exports.

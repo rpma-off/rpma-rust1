@@ -1,9 +1,9 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { taskApiService } from '@/domains/tasks/server';
-import { taskPhotoService } from '@/domains/tasks/server';
+import { taskApiService } from '@/domains/tasks';
+import { taskPhotoService } from '@/domains/tasks';
 
-import { UpdateTaskData } from '@/domains/tasks/server';
+import { UpdateTaskData } from '@/domains/tasks';
 import { TaskWithDetails } from '@/types/task.types';
 
 type UpdateTaskPayload = {

@@ -1,21 +1,39 @@
-﻿{
-  "extends": ["next/core-web-vitals", "next/typescript"],
-  "plugins": ["import"],
+{
+  "extends": [
+    "next/core-web-vitals",
+    "next/typescript"
+  ],
+  "plugins": [
+    "import"
+  ],
   "rules": {
-    "@typescript-eslint/no-unused-vars": ["warn", {
-      "argsIgnorePattern": "^_",
-      "varsIgnorePattern": "^_",
-      "destructuredArrayIgnorePattern": "^_",
-      "caughtErrorsIgnorePattern": "^_"
-    }],
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "destructuredArrayIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ],
     "@typescript-eslint/no-explicit-any": "warn",
     "@typescript-eslint/no-require-imports": "off",
-    "import/no-cycle": ["error", { "ignoreExternal": true, "maxDepth": 2 }]
+    "import/no-cycle": [
+      "error",
+      {
+        "ignoreExternal": true,
+        "maxDepth": 2
+      }
+    ]
   },
   "overrides": [
     {
-      "files": ["src/app/**/*.{ts,tsx}"],
-      "excludedFiles": ["src/app/api/**"],
+      "files": [
+        "src/app/**/*.{ts,tsx}"
+      ],
+      "excludedFiles": [
+        "src/app/api/**"
+      ],
       "rules": {
         "no-restricted-imports": [
           "error",
@@ -23,17 +41,32 @@
             "paths": [
               {
                 "name": "@/shared/utils",
-                "importNames": ["safeInvoke", "IPC_COMMANDS"],
+                "importNames": [
+                  "safeInvoke",
+                  "IPC_COMMANDS"
+                ],
                 "message": "Do not use raw IPC (safeInvoke/IPC_COMMANDS) in app pages. Use a domain hook or shared hook instead."
               }
             ],
             "patterns": [
               {
-                "group": ["@/components/**", "@/lib/**", "@/hooks/**", "@/contexts/**", "@/types/**"],
+                "group": [
+                  "@/components/**",
+                  "@/lib/**",
+                  "@/hooks/**",
+                  "@/contexts/**",
+                  "@/types/**"
+                ],
                 "message": "App layer may only import from domain public APIs (e.g. `@/domains/<domain>`) or `@/shared/**`."
               },
               {
-                "group": ["@/domains/*/components/**", "@/domains/*/hooks/**", "@/domains/*/services/**", "@/domains/*/ipc/**", "@/domains/*/server/**"],
+                "group": [
+                  "@/domains/*/components/**",
+                  "@/domains/*/hooks/**",
+                  "@/domains/*/services/**",
+                  "@/domains/*/ipc/**",
+                  "@/domains/*/server/**"
+                ],
                 "message": "App layer must import domain public APIs only (use `@/domains/<domain>` or `@/domains/<domain>/api`)."
               }
             ]
@@ -42,18 +75,30 @@
       }
     },
     {
-      "files": ["src/app/api/**/*.{ts,tsx}"],
+      "files": [
+        "src/app/api/**/*.{ts,tsx}"
+      ],
       "rules": {
         "no-restricted-imports": [
           "error",
           {
             "patterns": [
               {
-                "group": ["@/lib/services/**", "@/lib/ipc/domains/**"],
+                "group": [
+                  "@/lib/services/**",
+                  "@/lib/ipc/domains/**"
+                ],
                 "message": "Do not import legacy service or raw IPC modules directly in API routes. Use `@/domains/<domain>/server`."
               },
               {
-                "group": ["@/domains/*/api", "@/domains/*/api/**", "@/domains/*/components/**", "@/domains/*/hooks/**", "@/domains/*/services/**", "@/domains/*/ipc/**"],
+                "group": [
+                  "@/domains/*/api",
+                  "@/domains/*/api/**",
+                  "@/domains/*/components/**",
+                  "@/domains/*/hooks/**",
+                  "@/domains/*/services/**",
+                  "@/domains/*/ipc/**"
+                ],
                 "message": "API routes must import domain modules through `@/domains/<domain>/server` only."
               }
             ]
@@ -62,18 +107,30 @@
       }
     },
     {
-      "files": ["src/hooks/**/*.{ts,tsx}", "src/components/**/*.{ts,tsx}", "src/shared/**/*.{ts,tsx}"],
+      "files": [
+        "src/hooks/**/*.{ts,tsx}",
+        "src/components/**/*.{ts,tsx}",
+        "src/shared/**/*.{ts,tsx}"
+      ],
       "rules": {
         "no-restricted-imports": [
           "error",
           {
             "patterns": [
               {
-                "group": ["@/lib/services/**", "@/lib/ipc/domains/**"],
+                "group": [
+                  "@/lib/services/**",
+                  "@/lib/ipc/domains/**"
+                ],
                 "message": "Use domain APIs or domain server facades instead of legacy service/IPC module paths."
               },
               {
-                "group": ["@/domains/*/components/**", "@/domains/*/hooks/**", "@/domains/*/services/**", "@/domains/*/ipc/**"],
+                "group": [
+                  "@/domains/*/components/**",
+                  "@/domains/*/hooks/**",
+                  "@/domains/*/services/**",
+                  "@/domains/*/ipc/**"
+                ],
                 "message": "Non-domain layers must not import deep domain internals. Use `@/domains/<domain>`."
               }
             ]
@@ -82,7 +139,9 @@
       }
     },
     {
-      "files": ["src/domains/auth/**/*.{ts,tsx}"],
+      "files": [
+        "src/shared/**/*.{ts,tsx}"
+      ],
       "rules": {
         "no-restricted-imports": [
           "error",
@@ -90,87 +149,1066 @@
             "patterns": [
               {
                 "group": [
-                  "@/domains/tasks/components/**", "@/domains/tasks/hooks/**", "@/domains/tasks/services/**", "@/domains/tasks/ipc/**",
-                  "@/domains/inventory/components/**", "@/domains/inventory/hooks/**", "@/domains/inventory/services/**", "@/domains/inventory/ipc/**",
-                  "@/domains/interventions/components/**", "@/domains/interventions/hooks/**", "@/domains/interventions/services/**", "@/domains/interventions/ipc/**"
+                  "@/domains/**"
                 ],
-                "message": "Domains may only import other domains via their public API (e.g. `@/domains/<domain>`)."
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "files": ["src/domains/tasks/**/*.{ts,tsx}"],
-      "rules": {
-        "no-restricted-imports": [
-          "error",
-          {
-            "patterns": [
-              {
-                "group": [
-                  "@/domains/auth/components/**", "@/domains/auth/hooks/**", "@/domains/auth/services/**", "@/domains/auth/ipc/**",
-                  "@/domains/inventory/components/**", "@/domains/inventory/hooks/**", "@/domains/inventory/services/**", "@/domains/inventory/ipc/**",
-                  "@/domains/interventions/components/**", "@/domains/interventions/hooks/**", "@/domains/interventions/services/**", "@/domains/interventions/ipc/**"
-                ],
-                "message": "Domains may only import other domains via their public API (e.g. `@/domains/<domain>`)."
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "files": ["src/domains/inventory/**/*.{ts,tsx}"],
-      "rules": {
-        "no-restricted-imports": [
-          "error",
-          {
-            "patterns": [
-              {
-                "group": [
-                  "@/domains/auth/components/**", "@/domains/auth/hooks/**", "@/domains/auth/services/**", "@/domains/auth/ipc/**",
-                  "@/domains/tasks/components/**", "@/domains/tasks/hooks/**", "@/domains/tasks/services/**", "@/domains/tasks/ipc/**",
-                  "@/domains/interventions/components/**", "@/domains/interventions/hooks/**", "@/domains/interventions/services/**", "@/domains/interventions/ipc/**"
-                ],
-                "message": "Domains may only import other domains via their public API (e.g. `@/domains/<domain>`)."
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "files": ["src/domains/interventions/**/*.{ts,tsx}"],
-      "rules": {
-        "no-restricted-imports": [
-          "error",
-          {
-            "patterns": [
-              {
-                "group": [
-                  "@/domains/auth/components/**", "@/domains/auth/hooks/**", "@/domains/auth/services/**", "@/domains/auth/ipc/**",
-                  "@/domains/tasks/components/**", "@/domains/tasks/hooks/**", "@/domains/tasks/services/**", "@/domains/tasks/ipc/**",
-                  "@/domains/inventory/components/**", "@/domains/inventory/hooks/**", "@/domains/inventory/services/**", "@/domains/inventory/ipc/**"
-                ],
-                "message": "Domains may only import other domains via their public API (e.g. `@/domains/<domain>`)."
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "files": ["src/shared/**/*.{ts,tsx}"],
-      "rules": {
-        "no-restricted-imports": [
-          "error",
-          {
-            "patterns": [
-              {
-                "group": ["@/domains/**"],
                 "message": "Shared layer must not import from domains."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/**/*.{ts,tsx}"
+      ],
+      "excludedFiles": [
+        "src/app/api/**",
+        "src/domains/*/server/**",
+        "src/**/__tests__/**",
+        "src/**/*.test.ts",
+        "src/**/*.test.tsx",
+        "src/**/*.spec.ts",
+        "src/**/*.spec.tsx"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/domains/*/server",
+                  "@/domains/*/server/**"
+                ],
+                "message": "Only src/app/api and domain server implementations may import @/domains/<domain>/server."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/domains/admin/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/domains/analytics/components/**",
+                  "@/domains/analytics/hooks/**",
+                  "@/domains/analytics/services/**",
+                  "@/domains/analytics/ipc/**",
+                  "@/domains/analytics/server/**",
+                  "@/domains/audit/components/**",
+                  "@/domains/audit/hooks/**",
+                  "@/domains/audit/services/**",
+                  "@/domains/audit/ipc/**",
+                  "@/domains/audit/server/**",
+                  "@/domains/auth/components/**",
+                  "@/domains/auth/hooks/**",
+                  "@/domains/auth/services/**",
+                  "@/domains/auth/ipc/**",
+                  "@/domains/auth/server/**",
+                  "@/domains/clients/components/**",
+                  "@/domains/clients/hooks/**",
+                  "@/domains/clients/services/**",
+                  "@/domains/clients/ipc/**",
+                  "@/domains/clients/server/**",
+                  "@/domains/interventions/components/**",
+                  "@/domains/interventions/hooks/**",
+                  "@/domains/interventions/services/**",
+                  "@/domains/interventions/ipc/**",
+                  "@/domains/interventions/server/**",
+                  "@/domains/inventory/components/**",
+                  "@/domains/inventory/hooks/**",
+                  "@/domains/inventory/services/**",
+                  "@/domains/inventory/ipc/**",
+                  "@/domains/inventory/server/**",
+                  "@/domains/notifications/components/**",
+                  "@/domains/notifications/hooks/**",
+                  "@/domains/notifications/services/**",
+                  "@/domains/notifications/ipc/**",
+                  "@/domains/notifications/server/**",
+                  "@/domains/reports/components/**",
+                  "@/domains/reports/hooks/**",
+                  "@/domains/reports/services/**",
+                  "@/domains/reports/ipc/**",
+                  "@/domains/reports/server/**",
+                  "@/domains/settings/components/**",
+                  "@/domains/settings/hooks/**",
+                  "@/domains/settings/services/**",
+                  "@/domains/settings/ipc/**",
+                  "@/domains/settings/server/**",
+                  "@/domains/tasks/components/**",
+                  "@/domains/tasks/hooks/**",
+                  "@/domains/tasks/services/**",
+                  "@/domains/tasks/ipc/**",
+                  "@/domains/tasks/server/**",
+                  "@/domains/users/components/**",
+                  "@/domains/users/hooks/**",
+                  "@/domains/users/services/**",
+                  "@/domains/users/ipc/**",
+                  "@/domains/users/server/**",
+                  "@/domains/workflow/components/**",
+                  "@/domains/workflow/hooks/**",
+                  "@/domains/workflow/services/**",
+                  "@/domains/workflow/ipc/**",
+                  "@/domains/workflow/server/**"
+                ],
+                "message": "Domains may import other domains only through public APIs (use @/domains/<domain>)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/domains/analytics/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/domains/admin/components/**",
+                  "@/domains/admin/hooks/**",
+                  "@/domains/admin/services/**",
+                  "@/domains/admin/ipc/**",
+                  "@/domains/admin/server/**",
+                  "@/domains/audit/components/**",
+                  "@/domains/audit/hooks/**",
+                  "@/domains/audit/services/**",
+                  "@/domains/audit/ipc/**",
+                  "@/domains/audit/server/**",
+                  "@/domains/auth/components/**",
+                  "@/domains/auth/hooks/**",
+                  "@/domains/auth/services/**",
+                  "@/domains/auth/ipc/**",
+                  "@/domains/auth/server/**",
+                  "@/domains/clients/components/**",
+                  "@/domains/clients/hooks/**",
+                  "@/domains/clients/services/**",
+                  "@/domains/clients/ipc/**",
+                  "@/domains/clients/server/**",
+                  "@/domains/interventions/components/**",
+                  "@/domains/interventions/hooks/**",
+                  "@/domains/interventions/services/**",
+                  "@/domains/interventions/ipc/**",
+                  "@/domains/interventions/server/**",
+                  "@/domains/inventory/components/**",
+                  "@/domains/inventory/hooks/**",
+                  "@/domains/inventory/services/**",
+                  "@/domains/inventory/ipc/**",
+                  "@/domains/inventory/server/**",
+                  "@/domains/notifications/components/**",
+                  "@/domains/notifications/hooks/**",
+                  "@/domains/notifications/services/**",
+                  "@/domains/notifications/ipc/**",
+                  "@/domains/notifications/server/**",
+                  "@/domains/reports/components/**",
+                  "@/domains/reports/hooks/**",
+                  "@/domains/reports/services/**",
+                  "@/domains/reports/ipc/**",
+                  "@/domains/reports/server/**",
+                  "@/domains/settings/components/**",
+                  "@/domains/settings/hooks/**",
+                  "@/domains/settings/services/**",
+                  "@/domains/settings/ipc/**",
+                  "@/domains/settings/server/**",
+                  "@/domains/tasks/components/**",
+                  "@/domains/tasks/hooks/**",
+                  "@/domains/tasks/services/**",
+                  "@/domains/tasks/ipc/**",
+                  "@/domains/tasks/server/**",
+                  "@/domains/users/components/**",
+                  "@/domains/users/hooks/**",
+                  "@/domains/users/services/**",
+                  "@/domains/users/ipc/**",
+                  "@/domains/users/server/**",
+                  "@/domains/workflow/components/**",
+                  "@/domains/workflow/hooks/**",
+                  "@/domains/workflow/services/**",
+                  "@/domains/workflow/ipc/**",
+                  "@/domains/workflow/server/**"
+                ],
+                "message": "Domains may import other domains only through public APIs (use @/domains/<domain>)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/domains/audit/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/domains/admin/components/**",
+                  "@/domains/admin/hooks/**",
+                  "@/domains/admin/services/**",
+                  "@/domains/admin/ipc/**",
+                  "@/domains/admin/server/**",
+                  "@/domains/analytics/components/**",
+                  "@/domains/analytics/hooks/**",
+                  "@/domains/analytics/services/**",
+                  "@/domains/analytics/ipc/**",
+                  "@/domains/analytics/server/**",
+                  "@/domains/auth/components/**",
+                  "@/domains/auth/hooks/**",
+                  "@/domains/auth/services/**",
+                  "@/domains/auth/ipc/**",
+                  "@/domains/auth/server/**",
+                  "@/domains/clients/components/**",
+                  "@/domains/clients/hooks/**",
+                  "@/domains/clients/services/**",
+                  "@/domains/clients/ipc/**",
+                  "@/domains/clients/server/**",
+                  "@/domains/interventions/components/**",
+                  "@/domains/interventions/hooks/**",
+                  "@/domains/interventions/services/**",
+                  "@/domains/interventions/ipc/**",
+                  "@/domains/interventions/server/**",
+                  "@/domains/inventory/components/**",
+                  "@/domains/inventory/hooks/**",
+                  "@/domains/inventory/services/**",
+                  "@/domains/inventory/ipc/**",
+                  "@/domains/inventory/server/**",
+                  "@/domains/notifications/components/**",
+                  "@/domains/notifications/hooks/**",
+                  "@/domains/notifications/services/**",
+                  "@/domains/notifications/ipc/**",
+                  "@/domains/notifications/server/**",
+                  "@/domains/reports/components/**",
+                  "@/domains/reports/hooks/**",
+                  "@/domains/reports/services/**",
+                  "@/domains/reports/ipc/**",
+                  "@/domains/reports/server/**",
+                  "@/domains/settings/components/**",
+                  "@/domains/settings/hooks/**",
+                  "@/domains/settings/services/**",
+                  "@/domains/settings/ipc/**",
+                  "@/domains/settings/server/**",
+                  "@/domains/tasks/components/**",
+                  "@/domains/tasks/hooks/**",
+                  "@/domains/tasks/services/**",
+                  "@/domains/tasks/ipc/**",
+                  "@/domains/tasks/server/**",
+                  "@/domains/users/components/**",
+                  "@/domains/users/hooks/**",
+                  "@/domains/users/services/**",
+                  "@/domains/users/ipc/**",
+                  "@/domains/users/server/**",
+                  "@/domains/workflow/components/**",
+                  "@/domains/workflow/hooks/**",
+                  "@/domains/workflow/services/**",
+                  "@/domains/workflow/ipc/**",
+                  "@/domains/workflow/server/**"
+                ],
+                "message": "Domains may import other domains only through public APIs (use @/domains/<domain>)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/domains/auth/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/domains/admin/components/**",
+                  "@/domains/admin/hooks/**",
+                  "@/domains/admin/services/**",
+                  "@/domains/admin/ipc/**",
+                  "@/domains/admin/server/**",
+                  "@/domains/analytics/components/**",
+                  "@/domains/analytics/hooks/**",
+                  "@/domains/analytics/services/**",
+                  "@/domains/analytics/ipc/**",
+                  "@/domains/analytics/server/**",
+                  "@/domains/audit/components/**",
+                  "@/domains/audit/hooks/**",
+                  "@/domains/audit/services/**",
+                  "@/domains/audit/ipc/**",
+                  "@/domains/audit/server/**",
+                  "@/domains/clients/components/**",
+                  "@/domains/clients/hooks/**",
+                  "@/domains/clients/services/**",
+                  "@/domains/clients/ipc/**",
+                  "@/domains/clients/server/**",
+                  "@/domains/interventions/components/**",
+                  "@/domains/interventions/hooks/**",
+                  "@/domains/interventions/services/**",
+                  "@/domains/interventions/ipc/**",
+                  "@/domains/interventions/server/**",
+                  "@/domains/inventory/components/**",
+                  "@/domains/inventory/hooks/**",
+                  "@/domains/inventory/services/**",
+                  "@/domains/inventory/ipc/**",
+                  "@/domains/inventory/server/**",
+                  "@/domains/notifications/components/**",
+                  "@/domains/notifications/hooks/**",
+                  "@/domains/notifications/services/**",
+                  "@/domains/notifications/ipc/**",
+                  "@/domains/notifications/server/**",
+                  "@/domains/reports/components/**",
+                  "@/domains/reports/hooks/**",
+                  "@/domains/reports/services/**",
+                  "@/domains/reports/ipc/**",
+                  "@/domains/reports/server/**",
+                  "@/domains/settings/components/**",
+                  "@/domains/settings/hooks/**",
+                  "@/domains/settings/services/**",
+                  "@/domains/settings/ipc/**",
+                  "@/domains/settings/server/**",
+                  "@/domains/tasks/components/**",
+                  "@/domains/tasks/hooks/**",
+                  "@/domains/tasks/services/**",
+                  "@/domains/tasks/ipc/**",
+                  "@/domains/tasks/server/**",
+                  "@/domains/users/components/**",
+                  "@/domains/users/hooks/**",
+                  "@/domains/users/services/**",
+                  "@/domains/users/ipc/**",
+                  "@/domains/users/server/**",
+                  "@/domains/workflow/components/**",
+                  "@/domains/workflow/hooks/**",
+                  "@/domains/workflow/services/**",
+                  "@/domains/workflow/ipc/**",
+                  "@/domains/workflow/server/**"
+                ],
+                "message": "Domains may import other domains only through public APIs (use @/domains/<domain>)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/domains/clients/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/domains/admin/components/**",
+                  "@/domains/admin/hooks/**",
+                  "@/domains/admin/services/**",
+                  "@/domains/admin/ipc/**",
+                  "@/domains/admin/server/**",
+                  "@/domains/analytics/components/**",
+                  "@/domains/analytics/hooks/**",
+                  "@/domains/analytics/services/**",
+                  "@/domains/analytics/ipc/**",
+                  "@/domains/analytics/server/**",
+                  "@/domains/audit/components/**",
+                  "@/domains/audit/hooks/**",
+                  "@/domains/audit/services/**",
+                  "@/domains/audit/ipc/**",
+                  "@/domains/audit/server/**",
+                  "@/domains/auth/components/**",
+                  "@/domains/auth/hooks/**",
+                  "@/domains/auth/services/**",
+                  "@/domains/auth/ipc/**",
+                  "@/domains/auth/server/**",
+                  "@/domains/interventions/components/**",
+                  "@/domains/interventions/hooks/**",
+                  "@/domains/interventions/services/**",
+                  "@/domains/interventions/ipc/**",
+                  "@/domains/interventions/server/**",
+                  "@/domains/inventory/components/**",
+                  "@/domains/inventory/hooks/**",
+                  "@/domains/inventory/services/**",
+                  "@/domains/inventory/ipc/**",
+                  "@/domains/inventory/server/**",
+                  "@/domains/notifications/components/**",
+                  "@/domains/notifications/hooks/**",
+                  "@/domains/notifications/services/**",
+                  "@/domains/notifications/ipc/**",
+                  "@/domains/notifications/server/**",
+                  "@/domains/reports/components/**",
+                  "@/domains/reports/hooks/**",
+                  "@/domains/reports/services/**",
+                  "@/domains/reports/ipc/**",
+                  "@/domains/reports/server/**",
+                  "@/domains/settings/components/**",
+                  "@/domains/settings/hooks/**",
+                  "@/domains/settings/services/**",
+                  "@/domains/settings/ipc/**",
+                  "@/domains/settings/server/**",
+                  "@/domains/tasks/components/**",
+                  "@/domains/tasks/hooks/**",
+                  "@/domains/tasks/services/**",
+                  "@/domains/tasks/ipc/**",
+                  "@/domains/tasks/server/**",
+                  "@/domains/users/components/**",
+                  "@/domains/users/hooks/**",
+                  "@/domains/users/services/**",
+                  "@/domains/users/ipc/**",
+                  "@/domains/users/server/**",
+                  "@/domains/workflow/components/**",
+                  "@/domains/workflow/hooks/**",
+                  "@/domains/workflow/services/**",
+                  "@/domains/workflow/ipc/**",
+                  "@/domains/workflow/server/**"
+                ],
+                "message": "Domains may import other domains only through public APIs (use @/domains/<domain>)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/domains/interventions/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/domains/admin/components/**",
+                  "@/domains/admin/hooks/**",
+                  "@/domains/admin/services/**",
+                  "@/domains/admin/ipc/**",
+                  "@/domains/admin/server/**",
+                  "@/domains/analytics/components/**",
+                  "@/domains/analytics/hooks/**",
+                  "@/domains/analytics/services/**",
+                  "@/domains/analytics/ipc/**",
+                  "@/domains/analytics/server/**",
+                  "@/domains/audit/components/**",
+                  "@/domains/audit/hooks/**",
+                  "@/domains/audit/services/**",
+                  "@/domains/audit/ipc/**",
+                  "@/domains/audit/server/**",
+                  "@/domains/auth/components/**",
+                  "@/domains/auth/hooks/**",
+                  "@/domains/auth/services/**",
+                  "@/domains/auth/ipc/**",
+                  "@/domains/auth/server/**",
+                  "@/domains/clients/components/**",
+                  "@/domains/clients/hooks/**",
+                  "@/domains/clients/services/**",
+                  "@/domains/clients/ipc/**",
+                  "@/domains/clients/server/**",
+                  "@/domains/inventory/components/**",
+                  "@/domains/inventory/hooks/**",
+                  "@/domains/inventory/services/**",
+                  "@/domains/inventory/ipc/**",
+                  "@/domains/inventory/server/**",
+                  "@/domains/notifications/components/**",
+                  "@/domains/notifications/hooks/**",
+                  "@/domains/notifications/services/**",
+                  "@/domains/notifications/ipc/**",
+                  "@/domains/notifications/server/**",
+                  "@/domains/reports/components/**",
+                  "@/domains/reports/hooks/**",
+                  "@/domains/reports/services/**",
+                  "@/domains/reports/ipc/**",
+                  "@/domains/reports/server/**",
+                  "@/domains/settings/components/**",
+                  "@/domains/settings/hooks/**",
+                  "@/domains/settings/services/**",
+                  "@/domains/settings/ipc/**",
+                  "@/domains/settings/server/**",
+                  "@/domains/tasks/components/**",
+                  "@/domains/tasks/hooks/**",
+                  "@/domains/tasks/services/**",
+                  "@/domains/tasks/ipc/**",
+                  "@/domains/tasks/server/**",
+                  "@/domains/users/components/**",
+                  "@/domains/users/hooks/**",
+                  "@/domains/users/services/**",
+                  "@/domains/users/ipc/**",
+                  "@/domains/users/server/**",
+                  "@/domains/workflow/components/**",
+                  "@/domains/workflow/hooks/**",
+                  "@/domains/workflow/services/**",
+                  "@/domains/workflow/ipc/**",
+                  "@/domains/workflow/server/**"
+                ],
+                "message": "Domains may import other domains only through public APIs (use @/domains/<domain>)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/domains/inventory/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/domains/admin/components/**",
+                  "@/domains/admin/hooks/**",
+                  "@/domains/admin/services/**",
+                  "@/domains/admin/ipc/**",
+                  "@/domains/admin/server/**",
+                  "@/domains/analytics/components/**",
+                  "@/domains/analytics/hooks/**",
+                  "@/domains/analytics/services/**",
+                  "@/domains/analytics/ipc/**",
+                  "@/domains/analytics/server/**",
+                  "@/domains/audit/components/**",
+                  "@/domains/audit/hooks/**",
+                  "@/domains/audit/services/**",
+                  "@/domains/audit/ipc/**",
+                  "@/domains/audit/server/**",
+                  "@/domains/auth/components/**",
+                  "@/domains/auth/hooks/**",
+                  "@/domains/auth/services/**",
+                  "@/domains/auth/ipc/**",
+                  "@/domains/auth/server/**",
+                  "@/domains/clients/components/**",
+                  "@/domains/clients/hooks/**",
+                  "@/domains/clients/services/**",
+                  "@/domains/clients/ipc/**",
+                  "@/domains/clients/server/**",
+                  "@/domains/interventions/components/**",
+                  "@/domains/interventions/hooks/**",
+                  "@/domains/interventions/services/**",
+                  "@/domains/interventions/ipc/**",
+                  "@/domains/interventions/server/**",
+                  "@/domains/notifications/components/**",
+                  "@/domains/notifications/hooks/**",
+                  "@/domains/notifications/services/**",
+                  "@/domains/notifications/ipc/**",
+                  "@/domains/notifications/server/**",
+                  "@/domains/reports/components/**",
+                  "@/domains/reports/hooks/**",
+                  "@/domains/reports/services/**",
+                  "@/domains/reports/ipc/**",
+                  "@/domains/reports/server/**",
+                  "@/domains/settings/components/**",
+                  "@/domains/settings/hooks/**",
+                  "@/domains/settings/services/**",
+                  "@/domains/settings/ipc/**",
+                  "@/domains/settings/server/**",
+                  "@/domains/tasks/components/**",
+                  "@/domains/tasks/hooks/**",
+                  "@/domains/tasks/services/**",
+                  "@/domains/tasks/ipc/**",
+                  "@/domains/tasks/server/**",
+                  "@/domains/users/components/**",
+                  "@/domains/users/hooks/**",
+                  "@/domains/users/services/**",
+                  "@/domains/users/ipc/**",
+                  "@/domains/users/server/**",
+                  "@/domains/workflow/components/**",
+                  "@/domains/workflow/hooks/**",
+                  "@/domains/workflow/services/**",
+                  "@/domains/workflow/ipc/**",
+                  "@/domains/workflow/server/**"
+                ],
+                "message": "Domains may import other domains only through public APIs (use @/domains/<domain>)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/domains/notifications/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/domains/admin/components/**",
+                  "@/domains/admin/hooks/**",
+                  "@/domains/admin/services/**",
+                  "@/domains/admin/ipc/**",
+                  "@/domains/admin/server/**",
+                  "@/domains/analytics/components/**",
+                  "@/domains/analytics/hooks/**",
+                  "@/domains/analytics/services/**",
+                  "@/domains/analytics/ipc/**",
+                  "@/domains/analytics/server/**",
+                  "@/domains/audit/components/**",
+                  "@/domains/audit/hooks/**",
+                  "@/domains/audit/services/**",
+                  "@/domains/audit/ipc/**",
+                  "@/domains/audit/server/**",
+                  "@/domains/auth/components/**",
+                  "@/domains/auth/hooks/**",
+                  "@/domains/auth/services/**",
+                  "@/domains/auth/ipc/**",
+                  "@/domains/auth/server/**",
+                  "@/domains/clients/components/**",
+                  "@/domains/clients/hooks/**",
+                  "@/domains/clients/services/**",
+                  "@/domains/clients/ipc/**",
+                  "@/domains/clients/server/**",
+                  "@/domains/interventions/components/**",
+                  "@/domains/interventions/hooks/**",
+                  "@/domains/interventions/services/**",
+                  "@/domains/interventions/ipc/**",
+                  "@/domains/interventions/server/**",
+                  "@/domains/inventory/components/**",
+                  "@/domains/inventory/hooks/**",
+                  "@/domains/inventory/services/**",
+                  "@/domains/inventory/ipc/**",
+                  "@/domains/inventory/server/**",
+                  "@/domains/reports/components/**",
+                  "@/domains/reports/hooks/**",
+                  "@/domains/reports/services/**",
+                  "@/domains/reports/ipc/**",
+                  "@/domains/reports/server/**",
+                  "@/domains/settings/components/**",
+                  "@/domains/settings/hooks/**",
+                  "@/domains/settings/services/**",
+                  "@/domains/settings/ipc/**",
+                  "@/domains/settings/server/**",
+                  "@/domains/tasks/components/**",
+                  "@/domains/tasks/hooks/**",
+                  "@/domains/tasks/services/**",
+                  "@/domains/tasks/ipc/**",
+                  "@/domains/tasks/server/**",
+                  "@/domains/users/components/**",
+                  "@/domains/users/hooks/**",
+                  "@/domains/users/services/**",
+                  "@/domains/users/ipc/**",
+                  "@/domains/users/server/**",
+                  "@/domains/workflow/components/**",
+                  "@/domains/workflow/hooks/**",
+                  "@/domains/workflow/services/**",
+                  "@/domains/workflow/ipc/**",
+                  "@/domains/workflow/server/**"
+                ],
+                "message": "Domains may import other domains only through public APIs (use @/domains/<domain>)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/domains/reports/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/domains/admin/components/**",
+                  "@/domains/admin/hooks/**",
+                  "@/domains/admin/services/**",
+                  "@/domains/admin/ipc/**",
+                  "@/domains/admin/server/**",
+                  "@/domains/analytics/components/**",
+                  "@/domains/analytics/hooks/**",
+                  "@/domains/analytics/services/**",
+                  "@/domains/analytics/ipc/**",
+                  "@/domains/analytics/server/**",
+                  "@/domains/audit/components/**",
+                  "@/domains/audit/hooks/**",
+                  "@/domains/audit/services/**",
+                  "@/domains/audit/ipc/**",
+                  "@/domains/audit/server/**",
+                  "@/domains/auth/components/**",
+                  "@/domains/auth/hooks/**",
+                  "@/domains/auth/services/**",
+                  "@/domains/auth/ipc/**",
+                  "@/domains/auth/server/**",
+                  "@/domains/clients/components/**",
+                  "@/domains/clients/hooks/**",
+                  "@/domains/clients/services/**",
+                  "@/domains/clients/ipc/**",
+                  "@/domains/clients/server/**",
+                  "@/domains/interventions/components/**",
+                  "@/domains/interventions/hooks/**",
+                  "@/domains/interventions/services/**",
+                  "@/domains/interventions/ipc/**",
+                  "@/domains/interventions/server/**",
+                  "@/domains/inventory/components/**",
+                  "@/domains/inventory/hooks/**",
+                  "@/domains/inventory/services/**",
+                  "@/domains/inventory/ipc/**",
+                  "@/domains/inventory/server/**",
+                  "@/domains/notifications/components/**",
+                  "@/domains/notifications/hooks/**",
+                  "@/domains/notifications/services/**",
+                  "@/domains/notifications/ipc/**",
+                  "@/domains/notifications/server/**",
+                  "@/domains/settings/components/**",
+                  "@/domains/settings/hooks/**",
+                  "@/domains/settings/services/**",
+                  "@/domains/settings/ipc/**",
+                  "@/domains/settings/server/**",
+                  "@/domains/tasks/components/**",
+                  "@/domains/tasks/hooks/**",
+                  "@/domains/tasks/services/**",
+                  "@/domains/tasks/ipc/**",
+                  "@/domains/tasks/server/**",
+                  "@/domains/users/components/**",
+                  "@/domains/users/hooks/**",
+                  "@/domains/users/services/**",
+                  "@/domains/users/ipc/**",
+                  "@/domains/users/server/**",
+                  "@/domains/workflow/components/**",
+                  "@/domains/workflow/hooks/**",
+                  "@/domains/workflow/services/**",
+                  "@/domains/workflow/ipc/**",
+                  "@/domains/workflow/server/**"
+                ],
+                "message": "Domains may import other domains only through public APIs (use @/domains/<domain>)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/domains/settings/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/domains/admin/components/**",
+                  "@/domains/admin/hooks/**",
+                  "@/domains/admin/services/**",
+                  "@/domains/admin/ipc/**",
+                  "@/domains/admin/server/**",
+                  "@/domains/analytics/components/**",
+                  "@/domains/analytics/hooks/**",
+                  "@/domains/analytics/services/**",
+                  "@/domains/analytics/ipc/**",
+                  "@/domains/analytics/server/**",
+                  "@/domains/audit/components/**",
+                  "@/domains/audit/hooks/**",
+                  "@/domains/audit/services/**",
+                  "@/domains/audit/ipc/**",
+                  "@/domains/audit/server/**",
+                  "@/domains/auth/components/**",
+                  "@/domains/auth/hooks/**",
+                  "@/domains/auth/services/**",
+                  "@/domains/auth/ipc/**",
+                  "@/domains/auth/server/**",
+                  "@/domains/clients/components/**",
+                  "@/domains/clients/hooks/**",
+                  "@/domains/clients/services/**",
+                  "@/domains/clients/ipc/**",
+                  "@/domains/clients/server/**",
+                  "@/domains/interventions/components/**",
+                  "@/domains/interventions/hooks/**",
+                  "@/domains/interventions/services/**",
+                  "@/domains/interventions/ipc/**",
+                  "@/domains/interventions/server/**",
+                  "@/domains/inventory/components/**",
+                  "@/domains/inventory/hooks/**",
+                  "@/domains/inventory/services/**",
+                  "@/domains/inventory/ipc/**",
+                  "@/domains/inventory/server/**",
+                  "@/domains/notifications/components/**",
+                  "@/domains/notifications/hooks/**",
+                  "@/domains/notifications/services/**",
+                  "@/domains/notifications/ipc/**",
+                  "@/domains/notifications/server/**",
+                  "@/domains/reports/components/**",
+                  "@/domains/reports/hooks/**",
+                  "@/domains/reports/services/**",
+                  "@/domains/reports/ipc/**",
+                  "@/domains/reports/server/**",
+                  "@/domains/tasks/components/**",
+                  "@/domains/tasks/hooks/**",
+                  "@/domains/tasks/services/**",
+                  "@/domains/tasks/ipc/**",
+                  "@/domains/tasks/server/**",
+                  "@/domains/users/components/**",
+                  "@/domains/users/hooks/**",
+                  "@/domains/users/services/**",
+                  "@/domains/users/ipc/**",
+                  "@/domains/users/server/**",
+                  "@/domains/workflow/components/**",
+                  "@/domains/workflow/hooks/**",
+                  "@/domains/workflow/services/**",
+                  "@/domains/workflow/ipc/**",
+                  "@/domains/workflow/server/**"
+                ],
+                "message": "Domains may import other domains only through public APIs (use @/domains/<domain>)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/domains/tasks/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/domains/admin/components/**",
+                  "@/domains/admin/hooks/**",
+                  "@/domains/admin/services/**",
+                  "@/domains/admin/ipc/**",
+                  "@/domains/admin/server/**",
+                  "@/domains/analytics/components/**",
+                  "@/domains/analytics/hooks/**",
+                  "@/domains/analytics/services/**",
+                  "@/domains/analytics/ipc/**",
+                  "@/domains/analytics/server/**",
+                  "@/domains/audit/components/**",
+                  "@/domains/audit/hooks/**",
+                  "@/domains/audit/services/**",
+                  "@/domains/audit/ipc/**",
+                  "@/domains/audit/server/**",
+                  "@/domains/auth/components/**",
+                  "@/domains/auth/hooks/**",
+                  "@/domains/auth/services/**",
+                  "@/domains/auth/ipc/**",
+                  "@/domains/auth/server/**",
+                  "@/domains/clients/components/**",
+                  "@/domains/clients/hooks/**",
+                  "@/domains/clients/services/**",
+                  "@/domains/clients/ipc/**",
+                  "@/domains/clients/server/**",
+                  "@/domains/interventions/components/**",
+                  "@/domains/interventions/hooks/**",
+                  "@/domains/interventions/services/**",
+                  "@/domains/interventions/ipc/**",
+                  "@/domains/interventions/server/**",
+                  "@/domains/inventory/components/**",
+                  "@/domains/inventory/hooks/**",
+                  "@/domains/inventory/services/**",
+                  "@/domains/inventory/ipc/**",
+                  "@/domains/inventory/server/**",
+                  "@/domains/notifications/components/**",
+                  "@/domains/notifications/hooks/**",
+                  "@/domains/notifications/services/**",
+                  "@/domains/notifications/ipc/**",
+                  "@/domains/notifications/server/**",
+                  "@/domains/reports/components/**",
+                  "@/domains/reports/hooks/**",
+                  "@/domains/reports/services/**",
+                  "@/domains/reports/ipc/**",
+                  "@/domains/reports/server/**",
+                  "@/domains/settings/components/**",
+                  "@/domains/settings/hooks/**",
+                  "@/domains/settings/services/**",
+                  "@/domains/settings/ipc/**",
+                  "@/domains/settings/server/**",
+                  "@/domains/users/components/**",
+                  "@/domains/users/hooks/**",
+                  "@/domains/users/services/**",
+                  "@/domains/users/ipc/**",
+                  "@/domains/users/server/**",
+                  "@/domains/workflow/components/**",
+                  "@/domains/workflow/hooks/**",
+                  "@/domains/workflow/services/**",
+                  "@/domains/workflow/ipc/**",
+                  "@/domains/workflow/server/**"
+                ],
+                "message": "Domains may import other domains only through public APIs (use @/domains/<domain>)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/domains/users/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/domains/admin/components/**",
+                  "@/domains/admin/hooks/**",
+                  "@/domains/admin/services/**",
+                  "@/domains/admin/ipc/**",
+                  "@/domains/admin/server/**",
+                  "@/domains/analytics/components/**",
+                  "@/domains/analytics/hooks/**",
+                  "@/domains/analytics/services/**",
+                  "@/domains/analytics/ipc/**",
+                  "@/domains/analytics/server/**",
+                  "@/domains/audit/components/**",
+                  "@/domains/audit/hooks/**",
+                  "@/domains/audit/services/**",
+                  "@/domains/audit/ipc/**",
+                  "@/domains/audit/server/**",
+                  "@/domains/auth/components/**",
+                  "@/domains/auth/hooks/**",
+                  "@/domains/auth/services/**",
+                  "@/domains/auth/ipc/**",
+                  "@/domains/auth/server/**",
+                  "@/domains/clients/components/**",
+                  "@/domains/clients/hooks/**",
+                  "@/domains/clients/services/**",
+                  "@/domains/clients/ipc/**",
+                  "@/domains/clients/server/**",
+                  "@/domains/interventions/components/**",
+                  "@/domains/interventions/hooks/**",
+                  "@/domains/interventions/services/**",
+                  "@/domains/interventions/ipc/**",
+                  "@/domains/interventions/server/**",
+                  "@/domains/inventory/components/**",
+                  "@/domains/inventory/hooks/**",
+                  "@/domains/inventory/services/**",
+                  "@/domains/inventory/ipc/**",
+                  "@/domains/inventory/server/**",
+                  "@/domains/notifications/components/**",
+                  "@/domains/notifications/hooks/**",
+                  "@/domains/notifications/services/**",
+                  "@/domains/notifications/ipc/**",
+                  "@/domains/notifications/server/**",
+                  "@/domains/reports/components/**",
+                  "@/domains/reports/hooks/**",
+                  "@/domains/reports/services/**",
+                  "@/domains/reports/ipc/**",
+                  "@/domains/reports/server/**",
+                  "@/domains/settings/components/**",
+                  "@/domains/settings/hooks/**",
+                  "@/domains/settings/services/**",
+                  "@/domains/settings/ipc/**",
+                  "@/domains/settings/server/**",
+                  "@/domains/tasks/components/**",
+                  "@/domains/tasks/hooks/**",
+                  "@/domains/tasks/services/**",
+                  "@/domains/tasks/ipc/**",
+                  "@/domains/tasks/server/**",
+                  "@/domains/workflow/components/**",
+                  "@/domains/workflow/hooks/**",
+                  "@/domains/workflow/services/**",
+                  "@/domains/workflow/ipc/**",
+                  "@/domains/workflow/server/**"
+                ],
+                "message": "Domains may import other domains only through public APIs (use @/domains/<domain>)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/domains/workflow/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/domains/admin/components/**",
+                  "@/domains/admin/hooks/**",
+                  "@/domains/admin/services/**",
+                  "@/domains/admin/ipc/**",
+                  "@/domains/admin/server/**",
+                  "@/domains/analytics/components/**",
+                  "@/domains/analytics/hooks/**",
+                  "@/domains/analytics/services/**",
+                  "@/domains/analytics/ipc/**",
+                  "@/domains/analytics/server/**",
+                  "@/domains/audit/components/**",
+                  "@/domains/audit/hooks/**",
+                  "@/domains/audit/services/**",
+                  "@/domains/audit/ipc/**",
+                  "@/domains/audit/server/**",
+                  "@/domains/auth/components/**",
+                  "@/domains/auth/hooks/**",
+                  "@/domains/auth/services/**",
+                  "@/domains/auth/ipc/**",
+                  "@/domains/auth/server/**",
+                  "@/domains/clients/components/**",
+                  "@/domains/clients/hooks/**",
+                  "@/domains/clients/services/**",
+                  "@/domains/clients/ipc/**",
+                  "@/domains/clients/server/**",
+                  "@/domains/interventions/components/**",
+                  "@/domains/interventions/hooks/**",
+                  "@/domains/interventions/services/**",
+                  "@/domains/interventions/ipc/**",
+                  "@/domains/interventions/server/**",
+                  "@/domains/inventory/components/**",
+                  "@/domains/inventory/hooks/**",
+                  "@/domains/inventory/services/**",
+                  "@/domains/inventory/ipc/**",
+                  "@/domains/inventory/server/**",
+                  "@/domains/notifications/components/**",
+                  "@/domains/notifications/hooks/**",
+                  "@/domains/notifications/services/**",
+                  "@/domains/notifications/ipc/**",
+                  "@/domains/notifications/server/**",
+                  "@/domains/reports/components/**",
+                  "@/domains/reports/hooks/**",
+                  "@/domains/reports/services/**",
+                  "@/domains/reports/ipc/**",
+                  "@/domains/reports/server/**",
+                  "@/domains/settings/components/**",
+                  "@/domains/settings/hooks/**",
+                  "@/domains/settings/services/**",
+                  "@/domains/settings/ipc/**",
+                  "@/domains/settings/server/**",
+                  "@/domains/tasks/components/**",
+                  "@/domains/tasks/hooks/**",
+                  "@/domains/tasks/services/**",
+                  "@/domains/tasks/ipc/**",
+                  "@/domains/tasks/server/**",
+                  "@/domains/users/components/**",
+                  "@/domains/users/hooks/**",
+                  "@/domains/users/services/**",
+                  "@/domains/users/ipc/**",
+                  "@/domains/users/server/**"
+                ],
+                "message": "Domains may import other domains only through public APIs (use @/domains/<domain>)."
               }
             ]
           }

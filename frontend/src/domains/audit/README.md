@@ -1,6 +1,8 @@
-﻿# audit Domain
+# Audit Domain
 
-Bounded-context domain scaffold.
+Frontend bounded context for change logs, audit history, and change-tracking hooks.
 
-- pi/: UI/public API surface
-- server/: route/server facade surface
+## Public Surface
+- `api/`: provider, audit hooks, and type exports.
+- `hooks/`: domain hooks for audit log retrieval.
+- `server/`: route-layer audit service exports.

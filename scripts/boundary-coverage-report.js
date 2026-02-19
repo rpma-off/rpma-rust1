@@ -19,6 +19,9 @@ const EXCLUDE_PATTERNS = [
   /(^|[\\/])domains[\\/][^\\/]+[\\/]server[\\/]/,
 ];
 
+const SHARED_DOMAIN_FEATURE_WRAPPER_PATTERN =
+  /^shared\/ui\/(analytics|dashboard|messages|settings|users|PhotoUpload|calendar|SignatureCapture)(\/|$)/;
+
 function walkFiles(dir) {
   if (!fs.existsSync(dir)) return [];
   const out = [];
@@ -83,6 +86,8 @@ function detectViolations(relativePath, specifier) {
   const isAppUiFile = relativePath.startsWith('app/') && !isAppApiFile;
   const isDomainImport = specifier.startsWith('@/domains/');
   const isDomainServerImport = /^@\/domains\/[^/]+\/server(?:\/.*)?$/.test(specifier);
+  const isDomainServerConsumer =
+    isAppApiFile || /^domains\/[^/]+\/server(?:\/|$)/.test(relativePath);
 
   if (isAppApiFile && isDomainImport && !isDomainServerImport) {
     violations.push({
@@ -98,12 +103,28 @@ function detectViolations(relativePath, specifier) {
     });
   }
 
+  if (isDomainServerImport && !isDomainServerConsumer) {
+    violations.push({
+      rule: 'server-facade-outside-route-layer',
+      message:
+        'Only src/app/api and domain server facades may import @/domains/<domain>/server.',
+    });
+  }
+
   const isDomainFile = relativePath.startsWith('domains/');
   const isNonDomainDeepImport = /^@\/domains\/[^/]+\/(services|ipc|hooks|components)\b/.test(specifier);
   if (!isDomainFile && isNonDomainDeepImport) {
     violations.push({
       rule: 'non-domain-deep-import',
       message: 'Non-domain layers must not import deep domain internals (services/ipc/hooks/components).',
+    });
+  }
+
+  if (SHARED_DOMAIN_FEATURE_WRAPPER_PATTERN.test(relativePath) && specifier.startsWith('@/components/')) {
+    violations.push({
+      rule: 'shared-domain-feature-wrapper',
+      message:
+        'Shared layer must not wrap domain/feature modules from src/components. Import domain APIs directly.',
     });
   }
 

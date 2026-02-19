@@ -1,6 +1,6 @@
-﻿ /**
+ /**
  * API Route: GET /api/interventions/[id]
- * Récupère les détails complets d'une intervention PPF
+ * R�cup�re les d�tails complets d'une intervention PPF
  * @version 2.0
  * @date 2025-01-20
  */
@@ -39,7 +39,7 @@ interface InterventionPermissions {
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    // 1. Validation des paramètres de route
+    // 1. Validation des param�tres de route
     const interventionId = (await params).id;
     if (!interventionId) {
       return NextResponse.json(
@@ -68,16 +68,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
     const sessionToken = authHeader.replace('Bearer ', '');
 
-    // 3. Récupération des paramètres de requête
+    // 3. R�cup�ration des param�tres de requ�te
     const url = new URL(request.url);
     const includeSteps = url.searchParams.get('include_steps') === 'true';
     const includePhotos = url.searchParams.get('include_photos') === 'true';
     const includeMetrics = url.searchParams.get('include_metrics') === 'true';
 
-    // 4. Appel du service métier
+    // 4. Appel du service m�tier
     const workflowService = interventionWorkflowService;
 
-    // Récupération de l'intervention de base
+    // R�cup�ration de l'intervention de base
     const interventionResult = await workflowService.getInterventionById(interventionId, sessionToken);
     
     if (!interventionResult.success) {
@@ -92,7 +92,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
     const intervention = interventionResult.data!;
 
-    // 5. Enrichissement conditionnel des données
+    // 5. Enrichissement conditionnel des donn�es
     const interventionData: PPFInterventionData = {
       ...intervention,
       currentStep: intervention.currentStep ?? 0,
@@ -109,7 +109,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       intervention: interventionData
     };
 
-    // Récupération des étapes si demandées
+    // R�cup�ration des �tapes si demand�es
     if (includeSteps) {
       const stepsResult = await workflowService.getInterventionSteps(interventionId, sessionToken);
       if (stepsResult.success) {
@@ -117,15 +117,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       }
     }
 
-    // Récupération des photos si demandées
+    // R�cup�ration des photos si demand�es
     if (includePhotos) {
-      // TODO: Appel au service photo pour récupérer toutes les photos
+      // TODO: Appel au service photo pour r�cup�rer toutes les photos
       responseData.photos = [];
     }
 
-    // Récupération des métriques si demandées
+    // R�cup�ration des m�triques si demand�es
     if (includeMetrics) {
-      // TODO: Appel au service métriques
+      // TODO: Appel au service m�triques
       responseData.metrics = null;
     }
 
@@ -136,7 +136,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     });
     responseData.permissions = permissions;
 
-    // 7. Retour de la réponse
+    // 7. Retour de la r�ponse
     return NextResponse.json(
       {
         success: true,
@@ -210,7 +210,7 @@ async function calculateInterventionPermissions(intervention: { status: string; 
   return permissions;
 }
 
-// Gestion des autres méthodes HTTP
+// Gestion des autres m�thodes HTTP
 export async function POST() {
   return NextResponse.json(
     { error: 'Method not allowed. Use /start to create interventions.' },

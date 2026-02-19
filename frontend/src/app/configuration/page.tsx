@@ -24,26 +24,26 @@ import { LogDomain } from '@/shared/utils';
 import { PageShell } from '@/shared/ui/layout/PageShell';
 import { LoadingState } from '@/shared/ui/layout/LoadingState';
 import { PageHeader } from '@/shared/ui/ui/page-header';
-import { useSystemHealth } from '@/shared/hooks';
+import { useSystemHealth } from '@/domains/admin';
 
 // Lazy load tab components to reduce initial bundle size
-const SystemSettingsTab = dynamic(() => import('./components/SystemSettingsTab').then(mod => ({ default: mod.SystemSettingsTab })), {
+const SystemSettingsTab = dynamic(() => import('@/domains/admin').then(mod => ({ default: mod.SystemSettingsTab })), {
   loading: () => <LoadingState />
 });
 
-const BusinessRulesTab = dynamic(() => import('./components/BusinessRulesTab').then(mod => ({ default: mod.BusinessRulesTab })), {
+const BusinessRulesTab = dynamic(() => import('@/domains/admin').then(mod => ({ default: mod.BusinessRulesTab })), {
   loading: () => <LoadingState />
 });
 
-const SecurityPoliciesTab = dynamic(() => import('./components/SecurityPoliciesTab').then(mod => ({ default: mod.SecurityPoliciesTab })), {
+const SecurityPoliciesTab = dynamic(() => import('@/domains/admin').then(mod => ({ default: mod.SecurityPoliciesTab })), {
   loading: () => <LoadingState />
 });
 
-const IntegrationsTab = dynamic(() => import('./components/IntegrationsTab').then(mod => ({ default: mod.IntegrationsTab })), {
+const IntegrationsTab = dynamic(() => import('@/domains/admin').then(mod => ({ default: mod.IntegrationsTab })), {
   loading: () => <LoadingState />
 });
-import { PerformanceTab } from './components/PerformanceTab';
-import { MonitoringTab } from './components/MonitoringTab';
+import { PerformanceTab } from '@/domains/admin';
+import { MonitoringTab } from '@/domains/admin';
 
 // Tab configuration
 const tabConfig = [

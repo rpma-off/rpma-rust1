@@ -11,8 +11,8 @@ import { Checkbox } from '@/shared/ui/ui/checkbox';
 import { CheckCircle, PenTool, User, Award, Camera, MessageSquare, Trophy, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePPFWorkflow } from '@/domains/interventions';
-import { SignatureCapture } from '@/shared/ui/SignatureCapture';
-import { PhotoUpload } from '@/shared/ui/PhotoUpload/PhotoUpload';
+import { SignatureCapture } from '@/domains/workflow';
+import { PhotoUpload } from '@/domains/workflow';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 
 interface QCItem {
@@ -34,8 +34,8 @@ type FinalizationCollectedData = {
 const defaultQCChecklist: QCItem[] = [
   {
     id: 'edges_sealed',
-    label: 'Bords scellés',
-    description: 'Vérifier que tous les bords du film sont correctement scellés',
+    label: 'Bords scellï¿½s',
+    description: 'Vï¿½rifier que tous les bords du film sont correctement scellï¿½s',
     completed: false
   },
   {
@@ -53,19 +53,19 @@ const defaultQCChecklist: QCItem[] = [
   {
     id: 'alignment_correct',
     label: 'Alignement correct',
-    description: 'Le film est correctement aligné avec les contours du véhicule',
+    description: 'Le film est correctement alignï¿½ avec les contours du vï¿½hicule',
     completed: false
   },
   {
     id: 'no_dust',
-    label: 'Pas de poussière',
-    description: 'Aucune poussière ou particule visible sous le film',
+    label: 'Pas de poussiï¿½re',
+    description: 'Aucune poussiï¿½re ou particule visible sous le film',
     completed: false
   },
   {
     id: 'cure_time_respected',
-    label: 'Temps de polymérisation respecté',
-    description: 'Le film a eu suffisamment de temps pour polymériser',
+    label: 'Temps de polymï¿½risation respectï¿½',
+    description: 'Le film a eu suffisamment de temps pour polymï¿½riser',
     completed: false
   }
 ];
@@ -149,7 +149,7 @@ export default function FinalizationStepPage() {
           customer_comments: customerComments
         },
         quality_score: 95, // Default quality score
-        final_observations: ['Intervention PPF terminée avec succès']
+        final_observations: ['Intervention PPF terminï¿½e avec succï¿½s']
       };
 
       // Finalize the intervention with collected data and photos
@@ -164,7 +164,7 @@ export default function FinalizationStepPage() {
       const incompleteMatch = errorMessage.match(/mandatory steps incomplete:\s*(.+)/i);
       if (incompleteMatch) {
         const stepNames = incompleteMatch[1];
-        toast.error(`Étapes obligatoires incomplètes : ${stepNames}`, { duration: 8000 });
+        toast.error(`ï¿½tapes obligatoires incomplï¿½tes : ${stepNames}`, { duration: 8000 });
       } else if (errorMessage.includes('mandatory steps') || errorMessage.includes('incomplete')) {
         toast.error(t('errors.validationError'));
       } else {
@@ -223,7 +223,7 @@ export default function FinalizationStepPage() {
           Finalisation
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          Contrôle qualité final et validation client pour une intervention réussie
+          Contrï¿½le qualitï¿½ final et validation client pour une intervention rï¿½ussie
         </p>
       </motion.div>
 
@@ -262,10 +262,10 @@ export default function FinalizationStepPage() {
                   </div>
                   <div>
                     <CardTitle className="text-xl text-foreground group-hover:text-emerald-400 transition-colors">
-                      Contrôle Qualité
+                      Contrï¿½le Qualitï¿½
                     </CardTitle>
                     <CardDescription className="text-muted-foreground">
-                      Vérifications finales avant validation
+                      Vï¿½rifications finales avant validation
                     </CardDescription>
                   </div>
                 </div>
@@ -350,7 +350,7 @@ export default function FinalizationStepPage() {
                 {signatureValid && (
                   <div className="flex items-center space-x-2 bg-green-500/10 px-3 py-1 rounded-full">
                     <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="text-sm font-medium text-green-400">Signé</span>
+                    <span className="text-sm font-medium text-green-400">Signï¿½</span>
                   </div>
                 )}
               </div>
@@ -412,7 +412,7 @@ export default function FinalizationStepPage() {
                       transition={{ duration: 0.3 }}
                     >
                       <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span className="text-sm text-green-400 font-medium">Signature capturée</span>
+                      <span className="text-sm text-green-400 font-medium">Signature capturï¿½e</span>
                     </motion.div>
                   )}
                 </div>
@@ -435,7 +435,7 @@ export default function FinalizationStepPage() {
                       Photos de finalisation
                     </CardTitle>
                     <CardDescription className="text-muted-foreground">
-                      Documentation du résultat final (optionnel)
+                      Documentation du rï¿½sultat final (optionnel)
                     </CardDescription>
                   </div>
                 </div>
@@ -456,7 +456,7 @@ export default function FinalizationStepPage() {
                 type="before"
                 maxFiles={8}
                 minPhotos={0}
-                onUploadComplete={(urls) => setUploadedPhotos(urls)}
+                onUploadComplete={(urls: string[]) => setUploadedPhotos(urls)}
                 title="Photos de finalisation"
                 uploadButtonText="Ajouter des photos"
               />
@@ -478,7 +478,7 @@ export default function FinalizationStepPage() {
                 <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5 flex-shrink-0" />
                 <div>
                   <h4 className="text-sm font-medium text-yellow-400 mb-2">
-                    Étapes précédentes incomplètes
+                    ï¿½tapes prï¿½cï¿½dentes incomplï¿½tes
                   </h4>
                   <ul className="space-y-1">
                     {incompletePriorSteps.map(s => (
@@ -518,20 +518,20 @@ export default function FinalizationStepPage() {
                 </motion.div>
                 <div>
                   <h3 className="text-2xl font-bold text-foreground mb-2">
-                    Intervention terminée avec succès !
+                    Intervention terminï¿½e avec succï¿½s !
                   </h3>
                   <p className="text-muted-foreground text-lg">
-                    Toutes les vérifications qualité sont validées et la signature client est capturée.
+                    Toutes les vï¿½rifications qualitï¿½ sont validï¿½es et la signature client est capturï¿½e.
                   </p>
                 </div>
                 <div className="flex items-center justify-center space-x-6 text-sm">
                   <div className="flex items-center space-x-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="text-green-400">Contrôle qualité: {qcChecklist.filter(item => item.completed).length}/{qcChecklist.length}</span>
+                    <span className="text-green-400">Contrï¿½le qualitï¿½: {qcChecklist.filter(item => item.completed).length}/{qcChecklist.length}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="text-green-400">Signature client: Validée</span>
+                    <span className="text-green-400">Signature client: Validï¿½e</span>
                   </div>
                 </div>
               </div>
@@ -555,12 +555,12 @@ export default function FinalizationStepPage() {
             <p className={`text-sm font-medium ${
               canComplete ? 'text-green-400' : 'text-yellow-400'
             }`}>
-              {canComplete ? 'Prêt pour finalisation' : incompletePriorSteps.length > 0 ? 'Étapes précédentes incomplètes' : 'Complétez les vérifications requises'}
+              {canComplete ? 'Prï¿½t pour finalisation' : incompletePriorSteps.length > 0 ? 'ï¿½tapes prï¿½cï¿½dentes incomplï¿½tes' : 'Complï¿½tez les vï¿½rifications requises'}
             </p>
           </div>
           <p className="text-muted-foreground text-sm">
-            QC: {qcChecklist.filter(item => item.completed).length}/{qcChecklist.length} •
-            Signature: {signatureValid ? 'Validée' : 'Requise'}
+            QC: {qcChecklist.filter(item => item.completed).length}/{qcChecklist.length} ï¿½
+            Signature: {signatureValid ? 'Validï¿½e' : 'Requise'}
           </p>
         </div>
         <Button

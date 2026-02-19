@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { withMethod } from '@/lib/api-route-wrapper';
 import { handleApiError } from '@/lib/api-error';
 import { createClient } from '@/lib/supabase/server';
@@ -36,7 +36,7 @@ async function handlePost(request: NextRequest, context?: unknown) {
     // Perform bulk sync
     const results = await taskWorkflowSyncService.syncAllTasksWithWorkflows();
 
-    const syncedCount = results.filter(r => r.isSynced).length;
+    const syncedCount = results.filter((r: { isSynced?: boolean }) => r.isSynced).length;
     const errorCount = results.length - syncedCount;
 
     return NextResponse.json({

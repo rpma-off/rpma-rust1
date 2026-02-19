@@ -1,6 +1,6 @@
-﻿ /**
+ /**
  * API Route: GET /api/interventions/[id]/steps
- * Récupère les étapes d'une intervention PPF
+ * R�cup�re les �tapes d'une intervention PPF
  * @version 2.0
  * @date 2025-01-20
  */
@@ -14,7 +14,7 @@ import { interventionWorkflowService } from '@/domains/interventions/server';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    // 1. Validation des paramètres de route
+    // 1. Validation des param�tres de route
     const interventionId = (await params).id;
     if (!interventionId) {
       return NextResponse.json(
@@ -23,13 +23,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       );
     }
 
-    // 2. Validation de l'autorisation (optionnelle pour contourner les problèmes de cookies)
+    // 2. Validation de l'autorisation (optionnelle pour contourner les probl�mes de cookies)
     const authHeader = request.headers.get('authorization');
     console.log('[API] interventions/[id]/steps - Auth check:', { hasAuthHeader: !!authHeader });
 
     const sessionToken = authHeader ? authHeader.replace('Bearer ', '') : '';
 
-    // 3. Appel du service métier pour récupérer les étapes
+    // 3. Appel du service m�tier pour r�cup�rer les �tapes
     const result = await interventionWorkflowService.getInterventionSteps(interventionId, sessionToken);
 
     if (!result.success) {
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       );
     }
 
-    // 4. Retour de la réponse de succès
+    // 4. Retour de la r�ponse de succ�s
     return NextResponse.json(
       {
         success: true,
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-// Gestion des autres méthodes HTTP
+// Gestion des autres m�thodes HTTP
 export async function POST() {
   return NextResponse.json(
     { error: 'Method not allowed' },

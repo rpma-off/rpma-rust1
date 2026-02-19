@@ -1,6 +1,8 @@
-﻿# settings Domain
+# Settings Domain
 
-Bounded-context domain scaffold.
+Frontend bounded context for user settings, preferences, security, and accessibility configuration.
 
-- pi/: UI/public API surface
-- server/: route/server facade surface
+## Public Surface
+- `api/`: provider, settings hooks/actions, components, and typed exports.
+- `components/`: settings tab UIs.
+- `server/`: route-layer settings service exports.

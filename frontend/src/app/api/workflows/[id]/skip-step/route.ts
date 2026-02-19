@@ -1,4 +1,4 @@
-﻿// API Endpoint: Skip Workflow Step
+// API Endpoint: Skip Workflow Step
 // POST /api/workflows/[id]/skip-step
 
 import { NextRequest, NextResponse } from 'next/server';

@@ -1,6 +1,8 @@
-﻿# clients Domain
+# Clients Domain
 
-Bounded-context domain scaffold.
+Frontend bounded context for client management, client list/detail views, and related hooks.
 
-- pi/: UI/public API surface
-- server/: route/server facade surface
+## Public Surface
+- `api/`: provider, hooks, client components, and typed exports.
+- `components/`: client UI modules.
+- `server/`: route-layer client service exports.

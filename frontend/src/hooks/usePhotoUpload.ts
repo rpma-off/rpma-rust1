@@ -1,6 +1,6 @@
-﻿import { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { taskPhotoService } from '@/domains/tasks/server';
+import { taskPhotoService } from '@/domains/tasks';
 import { useOfflineSync } from './useOfflineSync';
 
 import { PhotoUploadProps as PhotoUploadOptions, UploadItem as PhotoUploadProgress } from '@/types/photo.types';

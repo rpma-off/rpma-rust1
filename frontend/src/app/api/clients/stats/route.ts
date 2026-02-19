@@ -1,4 +1,4 @@
-﻿ import { NextResponse } from 'next/server';
+ import { NextResponse } from 'next/server';
  import { clientService } from '@/domains/clients/server';
  import { getErrorMessage } from '@/types/api';
 

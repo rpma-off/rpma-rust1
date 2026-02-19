@@ -3,7 +3,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/domains/auth';
-import { CalendarDashboard } from '@/shared/ui/dashboard/CalendarDashboard';
+import { CalendarDashboard } from '@/domains/workflow';
 import { ErrorBoundary } from '@/shared/ui/ui/error-boundary';
 import { PageShell } from '@/shared/ui/layout/PageShell';
 import { LoadingState } from '@/shared/ui/layout/LoadingState';

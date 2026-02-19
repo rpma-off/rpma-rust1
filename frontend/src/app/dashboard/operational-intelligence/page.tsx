@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -13,7 +13,7 @@ import {
 import { Button } from '@/shared/ui/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/ui/card';
 import { Badge } from '@/shared/ui/ui/badge';
-import { DateRangePicker } from '@/app/reports/components/DateRangePicker';
+import { DateRangePicker } from '@/domains/reports';
 import { reportsService } from '@/domains/reports';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { PageShell } from '@/shared/ui/layout/PageShell';

@@ -1,4 +1,4 @@
-﻿ import { NextRequest, NextResponse } from 'next/server';
+ import { NextRequest, NextResponse } from 'next/server';
  import { TechnicianService, Technician } from '@/domains/clients/server';
 
  export const dynamic = 'force-dynamic';

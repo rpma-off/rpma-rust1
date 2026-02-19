@@ -1,4 +1,4 @@
-﻿// API Endpoint: Pause Workflow Execution
+// API Endpoint: Pause Workflow Execution
 // POST /api/workflows/[id]/pause
 
 import { NextRequest, NextResponse } from 'next/server';

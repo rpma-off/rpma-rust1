@@ -1,6 +1,8 @@
-﻿# notifications Domain
+# Notifications Domain
 
-Bounded-context domain scaffold.
+Frontend bounded context for messages, inbox, templates, and notification preferences.
 
-- pi/: UI/public API surface
-- server/: route/server facade surface
+## Public Surface
+- `api/`: provider, messaging hooks, components, and types.
+- `components/`: composer, inbox, and preference UI.
+- `server/`: route-layer notification service exports.

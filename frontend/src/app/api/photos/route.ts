@@ -1,4 +1,4 @@
-﻿ import { NextResponse } from 'next/server';
+ import { NextResponse } from 'next/server';
  import { taskPhotoService, TaskPhotoQueryParams } from '@/domains/tasks/server';
  import { getErrorMessage } from '@/types/api';
 

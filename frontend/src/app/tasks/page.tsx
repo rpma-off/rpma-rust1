@@ -1,10 +1,10 @@
-Ôªø"use client";
+"use client";
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Calendar, Car, User, Shield, Eye, Edit, Trash2, RefreshCw, Download, Upload, Grid, List, AlertCircle, Filter, ChevronRight, SearchX } from 'lucide-react';
-import { CalendarView } from '@/shared/ui/calendar/CalendarView';
+import { CalendarView } from '@/domains/workflow';
 import { KanbanBoard, taskGateway, TaskWithDetails, TaskStatus, useTasks } from '@/domains/tasks';
 import { Card, CardContent } from '@/shared/ui/ui/card';
 import { Button } from '@/shared/ui/ui/button';
@@ -67,7 +67,7 @@ const TaskCard = React.memo(({
   }, []);
 
   const formatDate = useCallback((dateString: string | null) => {
-    if (!dateString) return 'Non planifi√©e';
+    if (!dateString) return 'Non planifiÈe';
     return new Date(dateString).toLocaleDateString('fr-FR', {
       year: 'numeric',
       month: 'short',
@@ -104,12 +104,12 @@ const TaskCard = React.memo(({
                 <Car className="h-4 w-4 text-muted-foreground shrink-0" />
                 <div className="min-w-0 flex-1">
                   <span className="text-foreground font-medium text-sm block truncate">
-                    {task.vehicle_plate || 'Plaque non d√©finie'}
+                    {task.vehicle_plate || 'Plaque non dÈfinie'}
                   </span>
                   <span className="text-muted-foreground text-xs truncate block">
                     {task.vehicle_make && task.vehicle_model ?
                       `${task.vehicle_make} ${task.vehicle_model}` :
-                      'V√©hicule non sp√©cifi√©'
+                      'VÈhicule non spÈcifiÈ'
                     }
                   </span>
                 </div>
@@ -118,14 +118,14 @@ const TaskCard = React.memo(({
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-muted-foreground shrink-0" />
                 <span className="text-foreground text-sm truncate">
-                  {task.customer_name || 'Client non sp√©cifi√©'}
+                  {task.customer_name || 'Client non spÈcifiÈ'}
                 </span>
               </div>
 
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
                 <span className="text-foreground text-sm">
-                  {task.scheduled_date ? formatDate(task.scheduled_date) : 'Non planifi√©e'}
+                  {task.scheduled_date ? formatDate(task.scheduled_date) : 'Non planifiÈe'}
                 </span>
               </div>
 
@@ -171,7 +171,7 @@ const TaskCard = React.memo(({
                 size="sm"
                 onClick={() => onView(task)}
                 className="h-8 w-8 p-0 hover:bg-muted/10 text-muted-foreground hover:text-foreground"
-                title="Voir les d√©tails"
+                title="Voir les dÈtails"
               >
                 <Eye className="h-4 w-4" />
               </Button>
@@ -199,8 +199,8 @@ const TaskCard = React.memo(({
                   <AlertDialogHeader>
                     <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
                     <AlertDialogDescription>
-                      √ätes-vous s√É¬ªr de vouloir supprimer la t√¢che &ldquo;{task.title || `T√¢che #${task.id.slice(0, 8)}`}&rdquo; ?
-                      Cette action est irr√©versible.
+                       tes-vous s√ªr de vouloir supprimer la t‚che &ldquo;{task.title || `T‚che #${task.id.slice(0, 8)}`}&rdquo; ?
+                      Cette action est irrÈversible.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -267,7 +267,7 @@ const TaskTable = React.memo(({
   const columns = [
     {
       key: 'title',
-      header: 'T√¢che',
+      header: 'T‚che',
       width: 200,
       sortable: true,
       render: (_value: unknown, task: TaskWithDetails) => (
@@ -276,7 +276,7 @@ const TaskTable = React.memo(({
             {getTaskDisplayTitle(task)}
           </div>
           <div className="text-xs text-muted-foreground md:hidden">
-            {task.vehicle_plate && `${task.vehicle_plate} √¢‚Ç¨¬¢ `}
+            {task.vehicle_plate && `${task.vehicle_plate} ‚Ä¢ `}
             {formatDate(task.scheduled_date)}
           </div>
         </div>
@@ -284,7 +284,7 @@ const TaskTable = React.memo(({
     },
     {
       key: 'vehicle',
-      header: 'V√©hicule',
+      header: 'VÈhicule',
       width: 150,
       sortable: true,
       className: 'hidden sm:table-cell',
@@ -375,7 +375,7 @@ const TaskTable = React.memo(({
               onView(task);
             }}
             className="h-8 w-8 p-0 touch-manipulation"
-            title="Voir les d√©tails"
+            title="Voir les dÈtails"
           >
             <Eye className="h-3 w-3" />
           </Button>
@@ -407,8 +407,8 @@ const TaskTable = React.memo(({
                 <AlertDialogHeader>
                   <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
                   <AlertDialogDescription>
-                    √ätes-vous s√É¬ªr de vouloir supprimer la t√¢che &ldquo;{task.title || `T√¢che #${task.id.slice(0, 8)}`}&rdquo; ?
-                    Cette action est irr√©versible.
+                     tes-vous s√ªr de vouloir supprimer la t‚che &ldquo;{task.title || `T‚che #${task.id.slice(0, 8)}`}&rdquo; ?
+                    Cette action est irrÈversible.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -496,7 +496,7 @@ const debouncedSearchTerm = useDebounce(searchTerm, 300);
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Rechercher t√¢ches, v√©hicules, clients..."
+              placeholder="Rechercher t‚ches, vÈhicules, clients..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 h-9 rounded-full bg-muted/30 border-border"
@@ -563,11 +563,11 @@ const debouncedSearchTerm = useDebounce(searchTerm, 300);
           >
             <option value="all">Tous les statuts</option>
             <option value="draft">Devis</option>
-            <option value="scheduled">Planifi√©</option>
+            <option value="scheduled">PlanifiÈ</option>
             <option value="in_progress">En cours</option>
-            <option value="completed">Termin√©</option>
-            <option value="cancelled">Annul√©</option>
-            <option value="archived">Archiv√©</option>
+            <option value="completed">TerminÈ</option>
+            <option value="cancelled">AnnulÈ</option>
+            <option value="archived">ArchivÈ</option>
           </select>
 
           <select
@@ -616,7 +616,7 @@ const debouncedSearchTerm = useDebounce(searchTerm, 300);
               }}
               className="text-muted-foreground"
             >
-              R√©initialiser
+              RÈinitialiser
             </Button>
           )}
 
@@ -734,7 +734,7 @@ export default function TasksPage() {
   ]), [tasks, t]);
 
   const formatTaskDate = (task: TaskWithDetails) => {
-    if (!task.scheduled_date) return 'Date √É¬† d√©finir';
+    if (!task.scheduled_date) return 'Date √† dÈfinir';
     const date = new Date(task.scheduled_date);
     const dateText = date.toLocaleDateString('fr-FR', { month: 'numeric', day: 'numeric', year: '2-digit' });
     const timeText = task.start_time || task.heure_rdv;
@@ -800,11 +800,11 @@ export default function TasksPage() {
         return;
       }
       await taskGateway.editTask(taskId, { status: newStatus }, user.token);
-      enhancedToast.success('Statut mis √É¬† jour avec succ√®s');
+      enhancedToast.success('Statut mis √† jour avec succËs');
       await refetch();
     } catch (err) {
       logger.error('Failed to update task status', { taskId, newStatus, error: err });
-      enhancedToast.error('Erreur lors de la mise √É¬† jour du statut');
+      enhancedToast.error('Erreur lors de la mise √† jour du statut');
     }
    }, [user?.token, refetch]);
 
@@ -841,7 +841,7 @@ export default function TasksPage() {
         taskId: task.id,
         component: 'TasksPage'
       });
-      enhancedToast.success('T√¢che supprim√©e avec succ√®s', {
+      enhancedToast.success('T‚che supprimÈe avec succËs', {
         action: {
           label: 'Actualiser',
           onClick: () => {
@@ -857,24 +857,24 @@ export default function TasksPage() {
       });
 
       // Extract meaningful error message for user
-      let userErrorMessage = 'Erreur lors de la suppression de la t√¢che';
+      let userErrorMessage = 'Erreur lors de la suppression de la t‚che';
       if (err instanceof Error) {
         if (err.message.includes('Network')) {
-          userErrorMessage = 'Erreur de r√©seau - v√©rifiez votre connexion';
+          userErrorMessage = 'Erreur de rÈseau - vÈrifiez votre connexion';
         } else if (err.message.includes('401')) {
-          userErrorMessage = 'Non autoris√© - veuillez vous reconnecter';
+          userErrorMessage = 'Non autorisÈ - veuillez vous reconnecter';
         } else if (err.message.includes('403')) {
-          userErrorMessage = 'Acc√®s interdit - permissions insuffisantes';
+          userErrorMessage = 'AccËs interdit - permissions insuffisantes';
         } else if (err.message.includes('404')) {
-          userErrorMessage = 'T√¢che introuvable - elle a peut-√™tre d√©j√É¬† √©t√© supprim√©e';
+          userErrorMessage = 'T‚che introuvable - elle a peut-Ítre dÈj√† ÈtÈ supprimÈe';
         } else if (err.message.includes('500')) {
-          userErrorMessage = 'Erreur serveur - veuillez r√©essayer plus tard';
+          userErrorMessage = 'Erreur serveur - veuillez rÈessayer plus tard';
         }
       }
 
       enhancedToast.error(userErrorMessage, {
         action: {
-          label: 'R√©essayer',
+          label: 'RÈessayer',
           onClick: () => handleDeleteTask(task)
         }
       });
@@ -895,7 +895,7 @@ export default function TasksPage() {
   const handleExport = useCallback(async () => {
     try {
       if (!user?.token) {
-        enhancedToast.error('Session expir√©e, veuillez vous reconnecter');
+        enhancedToast.error('Session expirÈe, veuillez vous reconnecter');
         return;
       }
 
@@ -918,7 +918,7 @@ export default function TasksPage() {
       link.click();
       document.body.removeChild(link);
 
-      enhancedToast.success('Export termin√© avec succ√®s');
+      enhancedToast.success('Export terminÈ avec succËs');
     } catch (error) {
       console.error('Export failed:', error);
       enhancedToast.error('Erreur lors de l\'export');
@@ -928,7 +928,7 @@ export default function TasksPage() {
   const handleImport = useCallback(async () => {
     try {
       if (!user?.token) {
-        enhancedToast.error('Session expir√©e, veuillez vous reconnecter');
+        enhancedToast.error('Session expirÈe, veuillez vous reconnecter');
         return;
       }
 
@@ -955,7 +955,7 @@ export default function TasksPage() {
             update_existing: false
           }, user.token);
 
-          enhancedToast.success(`${result.successful} t√¢ches import√©es avec succ√®s`);
+          enhancedToast.success(`${result.successful} t‚ches importÈes avec succËs`);
           refetch(); // Refresh the task list
         } catch (error) {
           console.error('Import failed:', error);
@@ -981,8 +981,8 @@ export default function TasksPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-foreground mb-4">Acc√®s non autoris√©</h1>
-          <p className="text-muted-foreground">Veuillez vous connecter pour acc√©der √É¬† cette page.</p>
+          <h1 className="text-2xl font-bold text-foreground mb-4">AccËs non autorisÈ</h1>
+          <p className="text-muted-foreground">Veuillez vous connecter pour accÈder √† cette page.</p>
         </div>
       </div>
     );
@@ -1142,7 +1142,7 @@ export default function TasksPage() {
                         </div>
                         {secondary.length > 0 && (
                           <div className="text-xs text-muted-foreground">
-                            {secondary.join(' √¢‚Ç¨¬¢ ')}
+                            {secondary.join(' ‚Ä¢ ')}
                           </div>
                         )}
                       </div>
@@ -1184,7 +1184,7 @@ export default function TasksPage() {
 
         {filteredTasks.length > 0 && filteredTasks.length !== tasks.length && (
           <div className="mt-3 text-center text-xs text-muted-foreground">
-            {filteredTasks.length} sur {tasks.length} t√¢ches
+            {filteredTasks.length} sur {tasks.length} t‚ches
           </div>
         )}
 
@@ -1203,7 +1203,7 @@ export default function TasksPage() {
           actions={[
             {
               icon: <Plus className="w-4 h-4" />,
-              label: 'Nouvelle t√¢che',
+              label: 'Nouvelle t‚che',
               onClick: () => router.push('/tasks/new')
             },
             {

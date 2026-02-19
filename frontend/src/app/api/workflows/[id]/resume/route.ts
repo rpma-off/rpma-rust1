@@ -1,4 +1,4 @@
-﻿// API Endpoint: Resume Workflow Execution
+// API Endpoint: Resume Workflow Execution
 // POST /api/workflows/[id]/resume
 
 import { NextRequest, NextResponse } from 'next/server';

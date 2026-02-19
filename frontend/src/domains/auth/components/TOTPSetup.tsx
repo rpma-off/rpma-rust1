@@ -1,9 +1,9 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
-import { mfaService } from '@/domains/auth/server';
+import { mfaService } from '../server';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 
 interface TOTPSetupProps {

@@ -1,7 +1,7 @@
 import { render, RenderOptions, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
-import { AuthProvider } from '../contexts/AuthContext';
+import { AuthProvider } from '@/domains/auth';
 import { ThemeProvider } from '@/components/theme-provider';
 import { mockIPC } from '@tauri-apps/api/mocks';
 

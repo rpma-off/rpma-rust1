@@ -1,6 +1,8 @@
-﻿# analytics Domain
+# Analytics Domain
 
-Bounded-context domain scaffold.
+Frontend bounded context for analytics dashboards, KPIs, and reporting-oriented data hooks.
 
-- pi/: UI/public API surface
-- server/: route/server facade surface
+## Public Surface
+- `api/`: provider, hooks, components, and typed analytics contracts.
+- `components/`: analytics pages, charts, and dashboards.
+- `server/`: route-layer analytics service exports.

@@ -1,6 +1,6 @@
-﻿// Task Workflow Sync Service
+// Task Workflow Sync Service
 import { ipcClient } from '@/lib/ipc/client';
-import { taskService } from '@/domains/tasks/server';
+import { taskService } from '@/domains/tasks';
 import type { Intervention } from '@/lib/backend';
 import type { TaskWithDetails } from '@/types/task.types';
 

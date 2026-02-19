@@ -1,6 +1,6 @@
-﻿import { renderHook, act, waitFor } from '@testing-library/react'
+import { renderHook, act, waitFor } from '@testing-library/react'
 import { useAutoSave, useWorkflowStepAutoSave, useBeforeUnloadSave } from './useAutoSave'
-import { taskService } from '@/domains/tasks/server'
+import { taskService } from '@/domains/tasks'
 
 // Mock sonner
 jest.mock('sonner', () => ({
@@ -10,7 +10,7 @@ jest.mock('sonner', () => ({
   }
 }))
 
-jest.mock('@/domains/tasks/server', () => ({
+jest.mock('@/domains/tasks', () => ({
   taskService: {
     updateTaskStepData: jest.fn()
   }
@@ -392,7 +392,7 @@ describe('useWorkflowStepAutoSave', () => {
       await result.current.forceSave()
     })
 
-    expect(result.current.error).toContain('Erreur sauvegarde étape')
+    expect(result.current.error).toContain('Erreur sauvegarde �tape')
   })
 })
 describe('useBeforeUnloadSave', () => {

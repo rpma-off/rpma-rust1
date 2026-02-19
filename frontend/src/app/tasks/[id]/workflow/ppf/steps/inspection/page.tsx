@@ -1,11 +1,12 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, PhotoUpload } from '@/shared/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui';
 import { ArrowRight, Camera, MapPin, Search, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { usePPFWorkflow, getNextPPFStepId, getPPFStepPath, VehicleDiagram } from '@/domains/interventions';
+import { PhotoUpload } from '@/domains/workflow';
 import type { Defect } from '@/domains/interventions';
 import { useTranslation } from '@/shared/hooks';
 
@@ -226,7 +227,7 @@ export default function InspectionStepPage() {
                 type="before"
                 maxFiles={6}
                 minPhotos={0}
-                onUploadComplete={(urls) => setUploadedPhotos(urls)}
+                onUploadComplete={(urls: string[]) => setUploadedPhotos(urls)}
                 title="Photos d'inspection"
                 uploadButtonText="Ajouter des photos"
               />

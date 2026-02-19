@@ -3,7 +3,7 @@
 import { TaskWithDetails, TaskDisplay, ChecklistItem, TaskStatus, JsonValue } from '@/shared/types';
 import type { UpdateTaskRequest } from '@/lib/backend';
 import { useInterventionData } from '@/domains/interventions';
-import { InterventionWorkflowService } from '@/domains/interventions/server';
+import { InterventionWorkflowService } from '@/domains/interventions';
 
 import { convertTimestamps, cn, convertNullsToUndefined } from '@/shared/utils';
 import { Suspense } from 'react';
@@ -19,7 +19,7 @@ import { taskService } from '../../services/task.service';
 import { toast } from 'sonner';
 import { useAuth } from '@/domains/auth';
 import { taskIpc } from '../../ipc/task.ipc';
-import { ChecklistProgress } from '../legacy/TaskInfo/ChecklistProgress';
+import { ChecklistProgress } from '../TaskInfo/ChecklistProgress';
 
 // Subcomponents
 import { WorkflowStatusCard } from './WorkflowStatusCard';
@@ -572,6 +572,7 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
 };
 
 export default memo(PoseDetail);
+
 
 
 

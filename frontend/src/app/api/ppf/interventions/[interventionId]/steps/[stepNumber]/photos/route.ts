@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { PPFPhotoService } from '@/domains/interventions/server';
 import { PPFPhotoAngle, PPFPhotoCategory } from '@/types/enums';
 import { createServerClient } from '@supabase/ssr';
