@@ -1,6 +1,18 @@
 /**
- * Types unifiés pour RPMA V2
- * Ces interfaces remplacent les types incohérents et utilisent les énums standardisés
+ * @file unified.ts
+ * @description Domain entity types for RPMA V2.
+ *
+ * This file contains **business-domain interfaces and DTOs** used across the application:
+ * core entities (Task, Client, Technician), workflow execution types (TaskExecution,
+ * TaskStepProgress), photo types (TaskPhoto, PhotoMetadata), audit types (AuditEvent,
+ * AuditConfiguration), and domain-level statistics (TaskStatistics, WorkflowStatistics).
+ *
+ * **Use this file when** you need to work with business objects or data-transfer objects
+ * that represent real-world entities (tasks, clients, technicians, etc.).
+ *
+ * @see unified.types.ts for service-layer infrastructure types (ServiceResponse, ApiError,
+ * ValidationResult, etc.).
+ *
  * @version 2.0
  * @date 2025-01-20
  */
