@@ -1,6 +1,19 @@
 /**
- * Unified types shared across the RPMA-v2 application
- * Contains common interfaces, DTOs, and utility types used by multiple services
+ * @file unified.types.ts
+ * @description Service-layer infrastructure types for RPMA V2.
+ *
+ * This file contains **utility and infrastructure interfaces** shared across all services:
+ * response wrappers (ServiceResponse, ApiResponse), error handling (ApiError),
+ * service configuration (RetryOptions, CacheConfig, AuditOptions), pagination helpers
+ * (PaginationOptions, SearchOptions), validation types (ValidationResult, ValidationError),
+ * utility primitives (EntityId, Timestamp, OperationStatus), and type guards
+ * (isServiceResponse, isApiError, isValidationResult).
+ *
+ * **Use this file when** you need types for service communication, error handling,
+ * API response wrapping, or generic utility primitives — not for business entities.
+ *
+ * @see unified.ts for business-domain entity types (Task, Client, Technician, etc.).
+ *
  * @version 1.0
  * @date 2025-01-20
  */
