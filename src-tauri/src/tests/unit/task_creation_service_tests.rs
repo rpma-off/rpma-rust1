@@ -6,8 +6,8 @@
 //! - Client existence validation
 //! - Assignment and scheduling validation
 
+use crate::domains::tasks::infrastructure::task_creation::TaskCreationService;
 use crate::models::task::{Task, TaskStatus};
-use crate::services::task_creation::TaskCreationService;
 use crate::test_utils::TestDataFactory;
 use crate::{test_client, test_db, test_intervention, test_task};
 

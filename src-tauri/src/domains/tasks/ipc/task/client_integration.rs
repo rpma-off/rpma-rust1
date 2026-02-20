@@ -2,8 +2,8 @@
 //!
 //! This module handles operations that involve task and client interactions.
 
-use crate::commands::task_types::TaskFilter;
 use crate::commands::{ApiResponse, AppError, AppState};
+use crate::domains::tasks::ipc::task_types::TaskFilter;
 use crate::models::task::Task;
 
 use crate::authenticate;

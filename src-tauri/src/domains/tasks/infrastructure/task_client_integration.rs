@@ -5,11 +5,11 @@
 use crate::commands::AppError;
 use crate::commands::AppResult;
 use crate::db::Database;
-use crate::models::task::*;
-use crate::services::task_constants::{
+use crate::domains::tasks::infrastructure::task_constants::{
     apply_query_filters, calculate_offset, calculate_pagination, DEFAULT_PAGE_SIZE,
     TASK_QUERY_COLUMNS_ALIASED,
 };
+use crate::models::task::*;
 
 use serde::Serialize;
 use std::sync::Arc;

@@ -319,7 +319,7 @@ pub async fn get_active_sessions(
 ) -> Result<ApiResponse<Vec<crate::models::auth::UserSession>>, AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     // Authenticate the user
-    let current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
+    let current_user = crate::shared::auth_middleware::AuthMiddleware::authenticate(
         &session_token,
         &state,
         None, // Any authenticated user can view their own sessions
@@ -351,7 +351,7 @@ pub async fn revoke_session(
 ) -> Result<ApiResponse<String>, AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     // Authenticate the user
-    let current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
+    let current_user = crate::shared::auth_middleware::AuthMiddleware::authenticate(
         &session_token,
         &state,
         None, // Any authenticated user can revoke their own sessions
@@ -398,7 +398,7 @@ pub async fn revoke_all_sessions_except_current(
 ) -> Result<ApiResponse<u32>, AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     // Authenticate the user
-    let current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
+    let current_user = crate::shared::auth_middleware::AuthMiddleware::authenticate(
         &session_token,
         &state,
         None, // Any authenticated user can revoke their own sessions
@@ -438,7 +438,7 @@ pub async fn update_session_timeout(
 ) -> Result<ApiResponse<String>, AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     // Check if user is admin
-    let _current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
+    let _current_user = crate::shared::auth_middleware::AuthMiddleware::authenticate(
         &session_token,
         &state,
         Some(UserRole::Admin),
@@ -484,12 +484,9 @@ pub async fn get_session_timeout_config(
 ) -> Result<ApiResponse<crate::models::auth::SessionTimeoutConfig>, AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     // Authenticate the user (any authenticated user can view config)
-    let _current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
-        &session_token,
-        &state,
-        None,
-    )
-    .await?;
+    let _current_user =
+        crate::shared::auth_middleware::AuthMiddleware::authenticate(&session_token, &state, None)
+            .await?;
     crate::commands::update_correlation_context_user(&_current_user.user_id);
 
     let config = state.session_service.get_session_timeout_config().await;

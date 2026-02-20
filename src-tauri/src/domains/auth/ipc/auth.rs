@@ -222,7 +222,7 @@ pub async fn enable_2fa(
     let correlation_id =
         correlation_id.or_else(|| Some(crate::logging::correlation::generate_correlation_id()));
     // Authenticate the user
-    let current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
+    let current_user = crate::shared::auth_middleware::AuthMiddleware::authenticate(
         &session_token,
         &state,
         None, // Any authenticated user can enable 2FA
@@ -256,12 +256,9 @@ pub async fn verify_2fa_setup(
     let correlation_id =
         correlation_id.or_else(|| Some(crate::logging::correlation::generate_correlation_id()));
     // Authenticate the user
-    let current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
-        &session_token,
-        &state,
-        None,
-    )
-    .await?;
+    let current_user =
+        crate::shared::auth_middleware::AuthMiddleware::authenticate(&session_token, &state, None)
+            .await?;
 
     // Enable 2FA for the user
     state
@@ -292,12 +289,9 @@ pub async fn disable_2fa(
     let correlation_id =
         correlation_id.or_else(|| Some(crate::logging::correlation::generate_correlation_id()));
     // Authenticate the user
-    let current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
-        &session_token,
-        &state,
-        None,
-    )
-    .await?;
+    let current_user =
+        crate::shared::auth_middleware::AuthMiddleware::authenticate(&session_token, &state, None)
+            .await?;
 
     // Verify password before disabling 2FA
     let is_valid_password = state
@@ -340,12 +334,9 @@ pub async fn regenerate_backup_codes(
     let correlation_id =
         correlation_id.or_else(|| Some(crate::logging::correlation::generate_correlation_id()));
     // Authenticate the user
-    let current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
-        &session_token,
-        &state,
-        None,
-    )
-    .await?;
+    let current_user =
+        crate::shared::auth_middleware::AuthMiddleware::authenticate(&session_token, &state, None)
+            .await?;
 
     // Regenerate backup codes
     let backup_codes = state
@@ -373,12 +364,9 @@ pub async fn verify_2fa_code(
     let correlation_id =
         correlation_id.or_else(|| Some(crate::logging::correlation::generate_correlation_id()));
     // Authenticate the user
-    let current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
-        &session_token,
-        &state,
-        None,
-    )
-    .await?;
+    let current_user =
+        crate::shared::auth_middleware::AuthMiddleware::authenticate(&session_token, &state, None)
+            .await?;
 
     // Verify the 2FA code
     let is_valid = state
@@ -410,12 +398,9 @@ pub async fn is_2fa_enabled(
     let correlation_id =
         correlation_id.or_else(|| Some(crate::logging::correlation::generate_correlation_id()));
     // Authenticate the user
-    let current_user = crate::commands::auth_middleware::AuthMiddleware::authenticate(
-        &session_token,
-        &state,
-        None,
-    )
-    .await?;
+    let current_user =
+        crate::shared::auth_middleware::AuthMiddleware::authenticate(&session_token, &state, None)
+            .await?;
 
     // Check if 2FA is enabled
     let is_enabled = state

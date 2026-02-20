@@ -9,7 +9,7 @@ This tracker is the execution baseline for the strict bounded-context completion
 ## Wave Status
 - [x] Wave 0 - Foundation and strictness scaffolding
 - [ ] Wave 1 - Auth + Users (in progress)
-- [ ] Wave 2 - Tasks + Clients
+- [ ] Wave 2 - Tasks + Clients (in progress)
 - [ ] Wave 3 - Interventions + Inventory + Documents
 - [ ] Wave 4 - Reports + Analytics + Quotes
 - [ ] Wave 5 - Settings + Calendar + Notifications + Sync + Audit
@@ -29,7 +29,15 @@ This tracker is the execution baseline for the strict bounded-context completion
 - [x] Moved user IPC contracts to `domains/users/application/contracts.rs`
 - [x] Replaced trivial `auth/users` facade tests with behavior-focused tests
 - [x] Frontend `domains/auth/server` and `domains/users/server` now use domain-owned `server/services/*`
-- [ ] Remove auth/user legacy command shims from `src-tauri/src/commands/*` (deferred to strict global cleanup wave)
+- [x] Moved authentication middleware to shared cross-domain module: `src-tauri/src/shared/auth_middleware.rs`
+- [x] Removed auth/user legacy command shims from `src-tauri/src/commands/*`
+
+## Wave 2 Progress (Tasks + Clients)
+- [x] Removed legacy `commands/task/**`, `commands/client.rs`, `commands/task_types.rs`, and `commands/status.rs` shim files
+- [x] Updated invoke registrations to domain IPC handlers for tasks/clients/status commands
+- [x] Repointed remaining task/client type references from `crate::commands::*` to `domains::tasks::ipc::*`
+- [x] Removed `services/task*.rs`, `services/client*.rs`, `repositories/task*.rs`, and `repositories/client_repository.rs` shim files
+- [x] Updated task/client call sites to bounded-context paths while keeping architecture checks green
 
 ## Migration Counters
 Run:

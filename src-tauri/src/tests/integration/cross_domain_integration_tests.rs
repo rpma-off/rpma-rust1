@@ -7,6 +7,9 @@
 //! - User permissions across multiple domains
 
 use crate::commands::AppResult;
+use crate::domains::clients::infrastructure::client::ClientService;
+use crate::domains::clients::infrastructure::client_statistics::ClientStatisticsService;
+use crate::domains::tasks::infrastructure::task_crud::TaskCrudService;
 use crate::models::client::{Client, CustomerType};
 use crate::models::intervention::Intervention;
 use crate::models::material::{Material, MaterialType, UnitOfMeasure};
@@ -14,8 +17,6 @@ use crate::models::task::{Task, TaskPriority, TaskStatus};
 use crate::models::user::{User, UserRole};
 use crate::services::audit_service::{AuditEvent, AuditService};
 use crate::services::auth::AuthService;
-use crate::services::client::ClientService;
-use crate::services::client_statistics::ClientStatisticsService;
 use crate::services::intervention_types::{
     AdvanceStepRequest, FinalizeInterventionRequest, StartInterventionRequest,
 };
@@ -23,7 +24,6 @@ use crate::services::intervention_workflow::InterventionWorkflowService;
 use crate::services::material::{
     CreateMaterialRequest, MaterialService, RecordConsumptionRequest, UpdateStockRequest,
 };
-use crate::services::task_crud::TaskCrudService;
 use crate::test_utils::TestDatabase;
 use crate::{test_client, test_task};
 use chrono::Utc;

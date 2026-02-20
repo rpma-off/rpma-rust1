@@ -4,8 +4,8 @@
 //! focusing on validation, sync queue insertion, and business rules.
 
 use crate::commands::AppError;
+use crate::domains::tasks::infrastructure::task_creation::TaskCreationService;
 use crate::models::task::{CreateTaskRequest, TaskPriority, TaskStatus};
-use crate::services::task_creation::TaskCreationService;
 use crate::test_utils::{TestDataFactory, TestDatabase};
 use crate::{test_client, test_db, test_intervention, test_task};
 

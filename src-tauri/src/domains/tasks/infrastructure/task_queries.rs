@@ -4,11 +4,11 @@
 
 use crate::commands::{AppError, AppResult};
 use crate::db::Database;
-use crate::models::task::*;
-use crate::services::task_constants::{
+use crate::domains::tasks::infrastructure::task_constants::{
     apply_query_filters, calculate_offset, calculate_pagination, DEFAULT_PAGE_SIZE,
     SINGLE_TASK_TIMEOUT_SECS, TASK_LIST_TIMEOUT_SECS, TASK_QUERY_COLUMNS,
 };
+use crate::models::task::*;
 use rusqlite::params;
 use std::sync::Arc;
 

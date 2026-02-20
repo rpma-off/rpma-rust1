@@ -3,6 +3,7 @@
 //! This module contains comprehensive integration tests for material workflow,
 //! testing end-to-end material operations and their integration with other domains.
 
+use crate::domains::tasks::infrastructure::task_creation::TaskCreationService;
 use crate::models::intervention::InterventionStatus;
 use crate::models::material::{InventoryTransactionType, MaterialType, UnitOfMeasure};
 use crate::models::task::{CreateTaskRequest, TaskPriority, TaskStatus};
@@ -11,7 +12,6 @@ use crate::services::material::{
     CreateInventoryTransactionRequest, CreateMaterialRequest, MaterialService,
     RecordConsumptionRequest, UpdateStockRequest,
 };
-use crate::services::task_creation::TaskCreationService;
 use crate::test_utils::TestDatabase;
 use chrono::{DateTime, TimeZone, Utc};
 use std::collections::HashMap;

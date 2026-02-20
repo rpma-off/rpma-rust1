@@ -10,11 +10,11 @@
 
 use crate::commands::AppError;
 use crate::db::Database;
+use crate::domains::tasks::infrastructure::task_creation::TaskCreationService;
+use crate::domains::tasks::infrastructure::task_deletion::TaskDeletionService;
+use crate::domains::tasks::infrastructure::task_update::TaskUpdateService;
+use crate::domains::tasks::infrastructure::task_validation::TaskValidationService;
 use crate::models::task::{CreateTaskRequest, TaskPriority, TaskStatus, UpdateTaskRequest};
-use crate::services::task_creation::TaskCreationService;
-use crate::services::task_deletion::TaskDeletionService;
-use crate::services::task_update::TaskUpdateService;
-use crate::services::task_validation::TaskValidationService;
 use chrono::Utc;
 use rusqlite::params;
 use std::sync::Arc;

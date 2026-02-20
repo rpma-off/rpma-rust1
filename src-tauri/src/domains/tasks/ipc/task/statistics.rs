@@ -3,8 +3,8 @@
 //! This module handles task analytics and reporting operations.
 
 use crate::authenticate;
-use crate::commands::task_types::TaskFilter;
 use crate::commands::{ApiResponse, AppError, AppState};
+use crate::domains::tasks::ipc::task_types::TaskFilter;
 use crate::services::task_statistics::TaskStatistics;
 use serde::Deserialize;
 use tracing::{debug, info};

@@ -4,10 +4,7 @@
 //! between the frontend and backend.
 
 pub mod analytics;
-pub mod auth;
-pub mod auth_middleware;
 pub mod calendar;
-pub mod client;
 pub mod compression;
 pub mod correlation_helpers;
 pub mod error_utils;
@@ -26,14 +23,10 @@ pub mod quote;
 pub mod reports;
 pub mod security;
 pub mod settings;
-pub mod status;
 pub mod streaming;
 pub mod sync;
 pub mod system;
-pub mod task;
-pub mod task_types;
 pub mod ui;
-pub mod user;
 pub mod websocket;
 pub mod websocket_commands;
 
@@ -115,10 +108,10 @@ use serde::{Deserialize, Serialize};
 use tracing::{debug, error, info, instrument, warn};
 
 // Import client types from models
+use crate::domains::clients::infrastructure::client::ClientStats;
 use crate::models::client::{
     ClientListResponse, ClientQuery, CreateClientRequest, UpdateClientRequest,
 };
-use crate::services::client::ClientStats;
 
 /// Task action types for CRUD operations
 #[derive(Deserialize, Debug)]
@@ -142,7 +135,7 @@ pub enum TaskResponse {
     Deleted,
     NotFound,
     List(TaskListResponse),
-    Statistics(crate::commands::task_types::TaskStatistics),
+    Statistics(crate::domains::tasks::ipc::task_types::TaskStatistics),
 }
 
 /// Client action types for CRUD operations
@@ -235,13 +228,13 @@ pub async fn user_crud(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<UserResponse, AppError> {
-    let request = crate::commands::user::UserCrudRequest {
+    let request = crate::domains::users::ipc::user::UserCrudRequest {
         action,
         session_token,
         correlation_id: None,
     };
 
-    let response = crate::commands::user::user_crud(request, state).await?;
+    let response = crate::domains::users::ipc::user::user_crud(request, state).await?;
     response
         .data
         .ok_or_else(|| AppError::Internal("Missing user_crud response payload".to_string()))
@@ -365,7 +358,8 @@ pub async fn get_users(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<serde_json::Value, String> {
-    crate::commands::user::get_users(page, page_size, search, role, session_token, state).await
+    crate::domains::users::ipc::user::get_users(page, page_size, search, role, session_token, state)
+        .await
 }
 
 /// Create user
@@ -375,7 +369,7 @@ pub async fn create_user(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<serde_json::Value, String> {
-    crate::commands::user::create_user(user_data, session_token, state).await
+    crate::domains::users::ipc::user::create_user(user_data, session_token, state).await
 }
 
 /// Update user
@@ -386,7 +380,7 @@ pub async fn update_user(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<serde_json::Value, String> {
-    crate::commands::user::update_user(user_id, user_data, session_token, state).await
+    crate::domains::users::ipc::user::update_user(user_id, user_data, session_token, state).await
 }
 
 /// Update user status
@@ -397,7 +391,8 @@ pub async fn update_user_status(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<(), String> {
-    crate::commands::user::update_user_status(user_id, is_active, session_token, state).await
+    crate::domains::users::ipc::user::update_user_status(user_id, is_active, session_token, state)
+        .await
 }
 
 /// Delete user
@@ -407,7 +402,7 @@ pub async fn delete_user(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<(), String> {
-    crate::commands::user::delete_user(user_id, session_token, state).await
+    crate::domains::users::ipc::user::delete_user(user_id, session_token, state).await
 }
 
 #[cfg(test)]

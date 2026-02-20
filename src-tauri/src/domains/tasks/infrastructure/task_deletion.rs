@@ -4,8 +4,10 @@
 
 use crate::commands::AppError;
 use crate::db::Database;
+use crate::domains::tasks::infrastructure::task_constants::{
+    SINGLE_TASK_TIMEOUT_SECS, TASK_QUERY_COLUMNS,
+};
 use crate::models::task::Task;
-use crate::services::task_constants::{SINGLE_TASK_TIMEOUT_SECS, TASK_QUERY_COLUMNS};
 use rusqlite::params;
 use std::sync::Arc;
 use tokio::time::timeout;

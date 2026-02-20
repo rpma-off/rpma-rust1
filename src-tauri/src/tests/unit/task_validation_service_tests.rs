@@ -1,6 +1,6 @@
 //! Unit tests for TaskValidationService
 
-use crate::services::task_validation::TaskValidationService;
+use crate::domains::tasks::infrastructure::task_validation::TaskValidationService;
 use crate::test_db;
 use chrono::Utc;
 use rusqlite::params;

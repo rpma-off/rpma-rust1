@@ -13,7 +13,8 @@ pub struct AppStateType {
     pub repositories: Arc<crate::repositories::Repositories>,
     pub task_service: Arc<TaskService>,
     pub client_service: Arc<ClientService>,
-    pub task_import_service: Arc<crate::services::task_import::TaskImportService>,
+    pub task_import_service:
+        Arc<crate::domains::tasks::infrastructure::task_import::TaskImportService>,
     pub dashboard_service: Arc<crate::services::DashboardService>,
     pub intervention_service: Arc<crate::services::InterventionService>,
     pub material_service: Arc<crate::services::MaterialService>,

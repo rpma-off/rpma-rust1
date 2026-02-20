@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 // Conditional import removed
 use ts_rs::TS;
 
+use crate::domains::tasks::infrastructure::task_validation::validate_status_transition;
 pub use crate::models::task::TaskStatus;
-use crate::services::task_validation::validate_status_transition;
 
 impl TaskStatus {
     pub fn can_transition_to(&self, new_status: &TaskStatus) -> bool {

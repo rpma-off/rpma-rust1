@@ -1270,19 +1270,15 @@ mod tests {
     }
 
     fn create_test_user(auth_service: &AuthService) -> crate::models::auth::UserAccount {
-        // Note: Using create_account_from_signup which handles first_name/last_name properly
-        use crate::commands::auth::SignupRequest;
-        let signup_request = SignupRequest {
-            email: "settings.test@example.com".to_string(),
-            first_name: "Settings".to_string(),
-            last_name: "Tester".to_string(),
-            password: "CurrentPass1!".to_string(),
-            role: None,
-            correlation_id: None,
-        };
-
         auth_service
-            .create_account_from_signup(&signup_request)
+            .create_account(
+                "settings.test@example.com",
+                "settings.test@example.com",
+                "Settings",
+                "Tester",
+                crate::models::auth::UserRole::Technician,
+                "CurrentPass1!",
+            )
             .expect("failed to create test user")
     }
 
