@@ -1,3 +1,4 @@
+use std::fmt;
 use std::sync::Arc;
 
 use crate::domains::audit::infrastructure::audit_service::AuditService;
@@ -9,6 +10,12 @@ use crate::shared::ipc::errors::AppError;
 /// with input validation and error mapping.
 pub struct AuditFacade {
     audit_service: Arc<AuditService>,
+}
+
+impl fmt::Debug for AuditFacade {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("AuditFacade").finish()
+    }
 }
 
 impl AuditFacade {

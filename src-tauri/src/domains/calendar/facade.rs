@@ -1,3 +1,4 @@
+use std::fmt;
 use std::sync::Arc;
 
 use crate::domains::calendar::infrastructure::calendar::CalendarService;
@@ -9,6 +10,12 @@ use crate::shared::ipc::errors::AppError;
 /// with input validation and error mapping.
 pub struct CalendarFacade {
     calendar_service: Arc<CalendarService>,
+}
+
+impl fmt::Debug for CalendarFacade {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("CalendarFacade").finish()
+    }
 }
 
 impl CalendarFacade {

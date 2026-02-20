@@ -1,3 +1,4 @@
+use std::fmt;
 use std::sync::Arc;
 
 use crate::domains::notifications::infrastructure::message::MessageService;
@@ -9,6 +10,12 @@ use crate::shared::ipc::errors::AppError;
 /// handling with input validation and error mapping.
 pub struct NotificationsFacade {
     message_service: Arc<MessageService>,
+}
+
+impl fmt::Debug for NotificationsFacade {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("NotificationsFacade").finish()
+    }
 }
 
 impl NotificationsFacade {
