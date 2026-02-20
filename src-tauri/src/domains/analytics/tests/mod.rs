@@ -1,1 +1,1 @@
-// Domain module.
+// Tests for the Analytics bounded context.
