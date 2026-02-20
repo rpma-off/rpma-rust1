@@ -145,7 +145,7 @@ pub async fn client_crud(
 
     // Check specific permission if provided
     if let Some(permission) = required_permission {
-        if !crate::commands::auth_middleware::AuthMiddleware::can_perform_client_operation(
+        if !crate::shared::auth_middleware::AuthMiddleware::can_perform_client_operation(
             &current_user.role,
             permission,
         ) {

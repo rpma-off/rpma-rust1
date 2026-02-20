@@ -4,8 +4,9 @@
 //! functionality for all Tauri IPC commands to ensure consistent
 //! security patterns across the application.
 
-use crate::commands::{AppError, AppResult, AppState};
 use crate::models::auth::{UserRole, UserSession};
+use crate::shared::app_state::AppState;
+use crate::shared::ipc::{AppError, AppResult};
 use sha2::{Digest, Sha256};
 use tracing::{debug, instrument, warn};
 
@@ -181,15 +182,11 @@ impl AuthMiddleware {
 #[macro_export]
 macro_rules! authenticate {
     ($session_token:expr, $state:expr) => {
-        $crate::commands::auth_middleware::AuthMiddleware::authenticate(
-            $session_token,
-            $state,
-            None,
-        )
-        .await?
+        $crate::shared::auth_middleware::AuthMiddleware::authenticate($session_token, $state, None)
+            .await?
     };
     ($session_token:expr, $state:expr, $required_role:expr) => {
-        $crate::commands::auth_middleware::AuthMiddleware::authenticate(
+        $crate::shared::auth_middleware::AuthMiddleware::authenticate(
             $session_token,
             $state,
             Some($required_role),
@@ -211,11 +208,11 @@ macro_rules! authenticated_command {
 
         // Check specific permission if provided
         if let Some(permission) = $required_permission {
-            if !$crate::commands::auth_middleware::AuthMiddleware::can_perform_task_operation(
+            if !$crate::shared::auth_middleware::AuthMiddleware::can_perform_task_operation(
                 &current_user.role,
                 permission,
             ) {
-                return Err($crate::commands::AppError::Authorization(format!(
+                return Err($crate::shared::ipc::AppError::Authorization(format!(
                     "Insufficient permissions to {} tasks",
                     permission
                 )));
@@ -230,10 +227,10 @@ macro_rules! authenticated_command {
 #[macro_export]
 macro_rules! check_task_permission {
     ($user_role:expr, $operation:expr) => {
-        if !$crate::commands::auth_middleware::AuthMiddleware::can_perform_task_operation(
+        if !$crate::shared::auth_middleware::AuthMiddleware::can_perform_task_operation(
             $user_role, $operation,
         ) {
-            return Err($crate::commands::AppError::Authorization(format!(
+            return Err($crate::shared::ipc::AppError::Authorization(format!(
                 "Insufficient permissions to {} tasks",
                 $operation
             )));
@@ -245,10 +242,10 @@ macro_rules! check_task_permission {
 #[macro_export]
 macro_rules! check_client_permission {
     ($user_role:expr, $operation:expr) => {
-        if !$crate::commands::auth_middleware::AuthMiddleware::can_perform_client_operation(
+        if !$crate::shared::auth_middleware::AuthMiddleware::can_perform_client_operation(
             $user_role, $operation,
         ) {
-            return Err($crate::commands::AppError::Authorization(format!(
+            return Err($crate::shared::ipc::AppError::Authorization(format!(
                 "Insufficient permissions to {} clients",
                 $operation
             )));
@@ -260,13 +257,13 @@ macro_rules! check_client_permission {
 #[macro_export]
 macro_rules! check_user_permission {
     ($user_role:expr, $operation:expr, $target_user_id:expr, $current_user_id:expr) => {
-        if !$crate::commands::auth_middleware::AuthMiddleware::can_perform_user_operation(
+        if !$crate::shared::auth_middleware::AuthMiddleware::can_perform_user_operation(
             $user_role,
             $operation,
             $target_user_id,
             $current_user_id,
         ) {
-            return Err($crate::commands::AppError::Authorization(format!(
+            return Err($crate::shared::ipc::AppError::Authorization(format!(
                 "Insufficient permissions to {} user",
                 $operation
             )));

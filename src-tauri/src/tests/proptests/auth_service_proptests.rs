@@ -3,7 +3,7 @@
 //! Property-based tests for authentication flows using proptest to generate
 //! a wide range of valid and invalid inputs to ensure robustness.
 
-use crate::commands::auth::SignupRequest;
+use crate::domains::auth::application::SignupRequest;
 use crate::models::auth::{UserAccount, UserRole};
 use crate::services::auth::AuthService;
 use crate::test_utils::TestDataFactory;

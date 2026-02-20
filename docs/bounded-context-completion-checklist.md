@@ -29,7 +29,8 @@ This tracker is the execution baseline for the strict bounded-context completion
 - [x] Moved user IPC contracts to `domains/users/application/contracts.rs`
 - [x] Replaced trivial `auth/users` facade tests with behavior-focused tests
 - [x] Frontend `domains/auth/server` and `domains/users/server` now use domain-owned `server/services/*`
-- [ ] Remove auth/user legacy command shims from `src-tauri/src/commands/*` (deferred to strict global cleanup wave)
+- [x] Moved authentication middleware to shared cross-domain module: `src-tauri/src/shared/auth_middleware.rs`
+- [x] Removed auth/user legacy command shims from `src-tauri/src/commands/*`
 
 ## Migration Counters
 Run:

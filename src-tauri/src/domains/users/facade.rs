@@ -28,7 +28,7 @@ impl UsersFacade {
         let target_user_id = self.target_user_id(action);
 
         let can_perform =
-            crate::commands::auth_middleware::AuthMiddleware::can_perform_user_operation(
+            crate::shared::auth_middleware::AuthMiddleware::can_perform_user_operation(
                 &current_user.role,
                 permission,
                 target_user_id,
