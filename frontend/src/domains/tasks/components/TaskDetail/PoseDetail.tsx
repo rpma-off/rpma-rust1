@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useCallback, memo, useRef, useState, useEffect } from 'react';
+﻿import React, { useMemo, useCallback, memo, useState, useEffect } from 'react';
 // Removed pose dependency - now works independently
 import { TaskWithDetails, TaskDisplay, ChecklistItem, TaskStatus, JsonValue } from '@/shared/types';
 import type { UpdateTaskRequest } from '@/lib/backend';
@@ -12,7 +12,7 @@ import { Skeleton, Button, ErrorFallback } from '@/shared/ui';
 
 import { AlertCircle } from 'lucide-react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { useInView } from '@/shared/hooks';
+import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 // import { useVirtualizer } from '@tanstack/react-virtual'; // Uncomment when needed for virtual scrolling
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { taskService } from '../../services/task.service';
@@ -57,8 +57,7 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
    const currentStatus = (propStatus || task?.status || 'pending') as TaskStatus;
 
   // Performance optimizations
-  const containerRef = useRef<HTMLDivElement>(null);
-  const isInView = useInView(containerRef, { threshold: 0.1 });
+  const { ref: containerRef, isVisible: isInView } = useIntersectionObserver({ threshold: 0.1 });
   const [isExpanded, setIsExpanded] = useState(false);
   const debouncedIsExpanded = useDebounce(isExpanded, 300);
 
@@ -467,7 +466,7 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => window.location.reload()}>
       <div
-        ref={containerRef}
+        ref={containerRef as React.RefObject<HTMLDivElement>}
         className={cn(
           "bg-muted/50 rounded-xl border border-border/20 overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-black/5 hover:border-[hsl(var(--rpma-teal))]/30 max-w-6xl mx-auto w-full shadow-lg backdrop-blur-sm",
           {

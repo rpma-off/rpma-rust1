@@ -4,4 +4,3 @@ export { useMenuEvents } from '@/hooks/useMenuEvents';
 export { useDebounce } from '@/hooks/useDebounce';
 export { useEntityCounts } from '@/hooks/useEntityCounts';
 export { useSearchRecords } from '@/hooks/useSearchRecords';
-export { useInView } from '@/hooks/useInView';
