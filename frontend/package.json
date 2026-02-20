@@ -8,7 +8,7 @@
     "dev:next": "next dev",
     "predev": "npm run types:sync",
     "build": "next build",
-    "prebuild": "npm run types:sync",
+    "prebuild": "node -e \"if(process.env.CI !== 'true') require('child_process').execSync('npm run types:sync', {stdio:'inherit'})\"",
     "build:analyze": "ANALYZE=true next build",
     "start": "next start",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 10000",
@@ -29,12 +29,14 @@
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:codegen": "playwright codegen",
     "test:e2e:client-lifecycle": "playwright test client-lifecycle.spec.ts",
-    "analyze": "npm run build && npx @next/bundle-analyzer"
+    "analyze": "npm run build && npx @next/bundle-analyzer",
+    "tauri": "tauri"
   },
   "devDependencies": {
     "@commitlint/cli": "^18.4.3",
     "@commitlint/config-conventional": "^18.4.3",
     "@playwright/test": "^1.40.0",
+    "@tauri-apps/cli": "^2.0.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
