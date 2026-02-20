@@ -6,7 +6,7 @@
 ![Next.js](https://img.shields.io/badge/Next.js-14.2-black.svg)
 ![Rust](https://img.shields.io/badge/Rust-1.85.0-orange.svg)
 
-**RPMA v2** (Repair Management Application version 2) est une application de bureau **offline-first** pour la gestion des interventions de pelliculage PPF (Paint Protection Film) dans les ateliers automobiles. Elle permet de gérer le cycle complet des interventions, de la création de tâches à la documentation, en passant par le suivi du workflow et la gestion des stocks.
+**RPMA v2** (Repair Management Application version 2) est une application de bureau **offline-first** pour la gestion des interventions de PPF (Paint Protection Film) dans les ateliers automobiles. Elle permet de gérer le cycle complet des interventions, de la création de tâches à la documentation, en passant par le suivi du workflow et la gestion des stocks.
 
 ---
 
