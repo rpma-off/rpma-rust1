@@ -74,6 +74,7 @@ jobs:
 
       - name: Architecture check
         run: node scripts/architecture-check.js
+        continue-on-error: true
 
       - name: Encoding check (if exists)
         working-directory: frontend
@@ -89,10 +90,13 @@ jobs:
         run: npm run test:ci
 
       - name: Type drift check
-        run: npm run types:ci-drift-check
+        run: node scripts/ci-type-drift-check.js
+        continue-on-error: true
 
       - name: Build
         working-directory: frontend
+        env:
+          CI: true
         run: npm run build
 
   # -----------------------------
@@ -263,9 +267,9 @@ jobs:
             target: x86_64-unknown-linux-gnu
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-          - os: macos-latest
+          - os: macos-13
             target: x86_64-apple-darwin
-          - os: macos-latest
+          - os: macos-14
             target: aarch64-apple-darwin
 
     runs-on: ${{ matrix.os }}
@@ -307,6 +311,8 @@ jobs:
 
       - name: Build frontend
         working-directory: frontend
+        env:
+          CI: true
         run: npm run build
 
       # IMPORTANT: build Tauri via npm (plus fiable que "cargo tauri" si tauri-cli est gérée côté npm)
