@@ -194,13 +194,13 @@ impl TestDataFactory {
         intervention.completion_percentage = 0.0;
         intervention.ppf_zones_config = Some(vec!["full".to_string()]);
         intervention.ppf_zones_extended = None;
-        intervention.film_type = Some(crate::models::common::FilmType::Premium);
+        intervention.film_type = Some(crate::shared::contracts::common::FilmType::Premium);
         intervention.film_brand = Some("TestFilm".to_string());
         intervention.film_model = Some("Premium-100".to_string());
-        intervention.scheduled_at = crate::models::common::TimestampString::now();
-        intervention.started_at = crate::models::common::TimestampString::new(None);
-        intervention.completed_at = crate::models::common::TimestampString::new(None);
-        intervention.paused_at = crate::models::common::TimestampString::new(None);
+        intervention.scheduled_at = crate::shared::contracts::common::TimestampString::now();
+        intervention.started_at = crate::shared::contracts::common::TimestampString::new(None);
+        intervention.completed_at = crate::shared::contracts::common::TimestampString::new(None);
+        intervention.paused_at = crate::shared::contracts::common::TimestampString::new(None);
         intervention.estimated_duration = Some(180);
         intervention.actual_duration = None;
         intervention.weather_condition = None;
@@ -227,8 +227,8 @@ impl TestDataFactory {
         intervention.synced = false;
         intervention.last_synced_at = None;
         intervention.sync_error = None;
-        intervention.created_at = crate::models::common::now();
-        intervention.updated_at = crate::models::common::now();
+        intervention.created_at = crate::shared::contracts::common::now();
+        intervention.updated_at = crate::shared::contracts::common::now();
         intervention.created_by = Some("test_user".to_string());
         intervention.updated_by = Some("test_user".to_string());
 

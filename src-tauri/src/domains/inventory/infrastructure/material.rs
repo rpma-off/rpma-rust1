@@ -290,9 +290,9 @@ impl MaterialService {
             WHERE id = ?
             "#,
             params![
-                crate::models::common::now(),
+                crate::shared::contracts::common::now(),
                 Some(deleted_by.clone()),
-                crate::models::common::now(),
+                crate::shared::contracts::common::now(),
                 Some(deleted_by),
                 id
             ],
@@ -417,7 +417,7 @@ impl MaterialService {
         material.storage_location = updates.storage_location;
         material.warehouse_id = updates.warehouse_id;
         material.updated_by = Some(updated_by);
-        material.updated_at = crate::models::common::now();
+        material.updated_at = crate::shared::contracts::common::now();
 
         self.save_material(&material)?;
         Ok(material)
@@ -459,7 +459,7 @@ impl MaterialService {
         }
 
         material.current_stock = new_stock;
-        material.updated_at = crate::models::common::now();
+        material.updated_at = crate::shared::contracts::common::now();
         material.updated_by = Some(recorded_by);
 
         self.save_material(&material)?;
@@ -534,7 +534,7 @@ impl MaterialService {
         let new_stock = material.current_stock - total_needed;
         let material_id_for_update = material_id.clone();
         let recorded_by_for_update = recorded_by.clone();
-        let now = crate::models::common::now();
+        let now = crate::shared::contracts::common::now();
         let total_used = total_needed;
         let transaction = InventoryTransaction {
             id: Uuid::new_v4().to_string(),
@@ -761,7 +761,7 @@ impl MaterialService {
               AND expiry_date IS NOT NULL
               AND expiry_date <= ?
             "#,
-            params![crate::models::common::now()],
+            params![crate::shared::contracts::common::now()],
         )?;
 
         // Calculate total value
@@ -823,7 +823,7 @@ impl MaterialService {
 
         Ok(self
             .db
-            .query_as::<Material>(sql, params![crate::models::common::now()])?)
+            .query_as::<Material>(sql, params![crate::shared::contracts::common::now()])?)
     }
 
     // Private helper methods
@@ -1154,8 +1154,8 @@ impl MaterialService {
             description: request.description,
             color: request.color,
             is_active: true,
-            created_at: crate::models::common::now(),
-            updated_at: crate::models::common::now(),
+            created_at: crate::shared::contracts::common::now(),
+            updated_at: crate::shared::contracts::common::now(),
             created_by,
             updated_by: None,
             synced: false,
@@ -1235,7 +1235,7 @@ impl MaterialService {
         category.level = request.level.unwrap_or(category.level);
         category.description = request.description;
         category.color = request.color;
-        category.updated_at = crate::models::common::now();
+        category.updated_at = crate::shared::contracts::common::now();
         category.updated_by = updated_by;
 
         self.save_material_category(&category)?;
@@ -1278,8 +1278,8 @@ impl MaterialService {
             on_time_delivery_rate: request.on_time_delivery_rate,
             notes: request.notes,
             special_instructions: request.special_instructions,
-            created_at: crate::models::common::now(),
-            updated_at: crate::models::common::now(),
+            created_at: crate::shared::contracts::common::now(),
+            updated_at: crate::shared::contracts::common::now(),
             created_by,
             updated_by: None,
             synced: false,
@@ -1365,7 +1365,7 @@ impl MaterialService {
         supplier.on_time_delivery_rate = request.on_time_delivery_rate;
         supplier.notes = request.notes;
         supplier.special_instructions = request.special_instructions;
-        supplier.updated_at = crate::models::common::now();
+        supplier.updated_at = crate::shared::contracts::common::now();
         supplier.updated_by = updated_by;
 
         self.save_supplier(&supplier)?;
@@ -1475,16 +1475,16 @@ impl MaterialService {
             intervention_id: request.intervention_id.clone(),
             step_id: request.step_id.clone(),
             performed_by: user_id.to_string(),
-            performed_at: crate::models::common::now(),
-            created_at: crate::models::common::now(),
-            updated_at: crate::models::common::now(),
+            performed_at: crate::shared::contracts::common::now(),
+            created_at: crate::shared::contracts::common::now(),
+            updated_at: crate::shared::contracts::common::now(),
             synced: false,
             last_synced_at: None,
         };
 
         let material_id_for_update = request.material_id.clone();
         let updated_by = user_id.to_string();
-        let now = crate::models::common::now();
+        let now = crate::shared::contracts::common::now();
         self.db
             .with_transaction(|tx| {
                 tx.execute(
@@ -1616,7 +1616,7 @@ impl MaterialService {
                 WHERE is_active = 1 AND expiry_date IS NOT NULL
                   AND expiry_date <= ?
                 "#,
-                params![crate::models::common::now()],
+                params![crate::shared::contracts::common::now()],
             )
             .unwrap_or(0);
 
@@ -1632,7 +1632,7 @@ impl MaterialService {
             )
             .unwrap_or(0.0);
 
-        // Get materials by category — fix: GROUP BY must match the COALESCE in SELECT.
+        // Get materials by category Ã¢â‚¬â€ fix: GROUP BY must match the COALESCE in SELECT.
         // Also handles missing material_categories table gracefully (returns empty map).
         let materials_by_category: HashMap<String, i32> = match self.db.get_connection() {
             Ok(conn) => {
@@ -1661,7 +1661,7 @@ impl MaterialService {
             Err(_) => HashMap::new(),
         };
 
-        // Get recent transactions — return empty vec on error instead of propagating
+        // Get recent transactions Ã¢â‚¬â€ return empty vec on error instead of propagating
         let recent_transactions = self
             .list_recent_inventory_transactions(10)
             .unwrap_or_default();
@@ -1686,7 +1686,7 @@ impl MaterialService {
     ///
     /// Root cause fix: Date filter conditions (it.performed_at) were placed in WHERE,
     /// which converted the LEFT JOIN into an INNER JOIN for materials with no
-    /// transactions — causing them to disappear. Fixed by moving date conditions
+    /// transactions Ã¢â‚¬â€ causing them to disappear. Fixed by moving date conditions
     /// into the JOIN ON clause so materials without transactions still appear
     /// with zero totals.
     pub fn get_inventory_movement_summary(
@@ -2026,7 +2026,7 @@ impl MaterialService {
     fn update_material_stock(&self, material_id: &str, new_stock: f64) -> MaterialResult<()> {
         self.db.execute(
             "UPDATE materials SET current_stock = ?, updated_at = ? WHERE id = ?",
-            params![new_stock, crate::models::common::now(), material_id],
+            params![new_stock, crate::shared::contracts::common::now(), material_id],
         )?;
         Ok(())
     }

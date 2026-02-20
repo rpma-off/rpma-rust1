@@ -58,7 +58,7 @@ mod tests {
         let first_step = &response.steps[0];
         assert_eq!(first_step.step_status, StepStatus::Pending);
 
-        // Start the step (no completion data ⇒ stays InProgress)
+        // Start the step (no completion data Ã¢â€¡â€™ stays InProgress)
         let advance_request = AdvanceStepRequest {
             intervention_id: response.intervention.id.clone(),
             step_id: first_step.id.clone(),
@@ -96,7 +96,7 @@ mod tests {
         let first_step = &response.steps[0];
 
         // Advancing a Pending step with completion data should succeed
-        // (transition Pending → InProgress → Completed in a single call)
+        // (transition Pending Ã¢â€ â€™ InProgress Ã¢â€ â€™ Completed in a single call)
         let complete_request = AdvanceStepRequest {
             intervention_id: response.intervention.id.clone(),
             step_id: first_step.id.clone(),
@@ -174,7 +174,7 @@ mod tests {
         let response =
             workflow_service.start_intervention(request, "test_user", "test-correlation-id")?;
 
-        // Complete all steps (supply completion data to advance Pending → Completed)
+        // Complete all steps (supply completion data to advance Pending Ã¢â€ â€™ Completed)
         for step in &response.steps {
             let complete_request = AdvanceStepRequest {
                 intervention_id: response.intervention.id.clone(),
@@ -241,7 +241,7 @@ mod tests {
             .start_intervention(request, "test_user", "test-correlation-id")
             .unwrap();
 
-        // Do NOT complete any steps – try to finalize immediately
+        // Do NOT complete any steps Ã¢â‚¬â€œ try to finalize immediately
         let finalize_request = FinalizeInterventionRequest {
             intervention_id: response.intervention.id.clone(),
             collected_data: Some(json!({"duration": 120})),
@@ -277,7 +277,7 @@ mod tests {
             .start_intervention(request, "test_user", "test-correlation-id")
             .unwrap();
 
-        // Do NOT complete any steps – try to finalize
+        // Do NOT complete any steps Ã¢â‚¬â€œ try to finalize
         let finalize_request = FinalizeInterventionRequest {
             intervention_id: response.intervention.id.clone(),
             collected_data: None,

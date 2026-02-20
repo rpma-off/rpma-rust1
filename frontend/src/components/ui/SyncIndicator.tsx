@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Wifi, WifiOff, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
-import { useSyncStatus } from '@/hooks/useSyncStatus';
+import { useSyncStatus } from '@/domains/sync';
 import { ipcClient } from '@/lib/ipc';
 
 export function SyncIndicator() {

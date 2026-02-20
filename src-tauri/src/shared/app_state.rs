@@ -34,8 +34,9 @@ pub struct AppStateType {
     pub command_performance_tracker:
         Arc<crate::services::performance_monitor::CommandPerformanceTracker>,
     pub prediction_service: Arc<crate::services::prediction::PredictionService>,
-    pub sync_queue: Arc<crate::sync::SyncQueue>,
-    pub background_sync: Arc<Mutex<crate::sync::BackgroundSyncService>>,
+    pub sync_queue: Arc<crate::domains::sync::infrastructure::sync::SyncQueue>,
+    pub background_sync:
+        Arc<Mutex<crate::domains::sync::infrastructure::sync::BackgroundSyncService>>,
     pub event_bus: Arc<crate::services::event_bus::InMemoryEventBus>,
     pub app_data_dir: std::path::PathBuf,
 }

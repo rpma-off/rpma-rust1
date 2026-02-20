@@ -1,7 +1,7 @@
-﻿use crate::domains::reports::ReportsFacade;
+use crate::domains::reports::ReportsFacade;
 
 #[test]
-fn unit_reports_facade_constructs() {
+fn unit_reports_facade_smoke() {
     let facade = ReportsFacade::new();
     let clone = facade.clone();
 

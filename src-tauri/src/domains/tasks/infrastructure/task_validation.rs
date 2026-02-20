@@ -17,14 +17,14 @@ use std::sync::Arc;
 ///
 /// # Valid Transitions
 ///
-/// - **Draft** → Pending, Scheduled, Cancelled
-/// - **Pending** → InProgress, Scheduled, OnHold, Cancelled, Assigned
-/// - **Scheduled** → InProgress, OnHold, Cancelled, Assigned
-/// - **Assigned** → InProgress, OnHold, Cancelled
-/// - **InProgress** → Completed, OnHold, Paused, Cancelled
-/// - **Paused** → InProgress, Cancelled
-/// - **OnHold** → Pending, Scheduled, InProgress, Cancelled
-/// - **Completed** → Archived
+/// - **Draft** Ã¢â€ â€™ Pending, Scheduled, Cancelled
+/// - **Pending** Ã¢â€ â€™ InProgress, Scheduled, OnHold, Cancelled, Assigned
+/// - **Scheduled** Ã¢â€ â€™ InProgress, OnHold, Cancelled, Assigned
+/// - **Assigned** Ã¢â€ â€™ InProgress, OnHold, Cancelled
+/// - **InProgress** Ã¢â€ â€™ Completed, OnHold, Paused, Cancelled
+/// - **Paused** Ã¢â€ â€™ InProgress, Cancelled
+/// - **OnHold** Ã¢â€ â€™ Pending, Scheduled, InProgress, Cancelled
+/// - **Completed** Ã¢â€ â€™ Archived
 ///
 /// # Terminal States
 ///
@@ -115,10 +115,10 @@ pub fn allowed_transitions(current: &TaskStatus) -> Vec<TaskStatus> {
             TaskStatus::Cancelled,
         ],
         TaskStatus::Completed => vec![TaskStatus::Archived],
-        // Terminal states – no transitions allowed
+        // Terminal states Ã¢â‚¬â€œ no transitions allowed
         TaskStatus::Cancelled => vec![],
         TaskStatus::Archived => vec![],
-        // Operational/system statuses – can only be cancelled
+        // Operational/system statuses Ã¢â‚¬â€œ can only be cancelled
         TaskStatus::Failed => vec![TaskStatus::Cancelled],
         TaskStatus::Overdue => vec![TaskStatus::InProgress, TaskStatus::Cancelled],
         TaskStatus::Invalid => vec![TaskStatus::Cancelled],
@@ -600,7 +600,7 @@ mod tests {
     use super::*;
     use crate::models::task::TaskStatus;
 
-    // ── Status transition: happy-path tests ──────────────────────────
+    // Ã¢â€â‚¬Ã¢â€â‚¬ Status transition: happy-path tests Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
     #[test]
     fn test_valid_transitions_from_draft() {
@@ -666,7 +666,7 @@ mod tests {
         assert!(validate_status_transition(&TaskStatus::Completed, &TaskStatus::Archived).is_ok());
     }
 
-    // ── Status transition: invalid transitions ──────────────────────
+    // Ã¢â€â‚¬Ã¢â€â‚¬ Status transition: invalid transitions Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
     #[test]
     fn test_invalid_transition_same_status() {
@@ -701,7 +701,7 @@ mod tests {
         );
     }
 
-    // ── Terminal states: no further transitions ─────────────────────
+    // Ã¢â€â‚¬Ã¢â€â‚¬ Terminal states: no further transitions Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
     #[test]
     fn test_cancelled_is_terminal() {
@@ -724,7 +724,7 @@ mod tests {
         assert!(validate_status_transition(&TaskStatus::Archived, &TaskStatus::Draft).is_err());
     }
 
-    // ── Operational/system statuses ─────────────────────────────────
+    // Ã¢â€â‚¬Ã¢â€â‚¬ Operational/system statuses Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
     #[test]
     fn test_failed_can_only_cancel() {
@@ -746,21 +746,21 @@ mod tests {
         assert!(validate_status_transition(&TaskStatus::Invalid, &TaskStatus::Pending).is_err());
     }
 
-    // ── Full lifecycle: create → assign → in_progress → completed → archived ──
+    // Ã¢â€â‚¬Ã¢â€â‚¬ Full lifecycle: create Ã¢â€ â€™ assign Ã¢â€ â€™ in_progress Ã¢â€ â€™ completed Ã¢â€ â€™ archived Ã¢â€â‚¬Ã¢â€â‚¬
 
     #[test]
     fn test_full_lifecycle_happy_path() {
-        // Draft → Pending
+        // Draft Ã¢â€ â€™ Pending
         assert!(validate_status_transition(&TaskStatus::Draft, &TaskStatus::Pending).is_ok());
-        // Pending → Assigned
+        // Pending Ã¢â€ â€™ Assigned
         assert!(validate_status_transition(&TaskStatus::Pending, &TaskStatus::Assigned).is_ok());
-        // Assigned → InProgress
+        // Assigned Ã¢â€ â€™ InProgress
         assert!(validate_status_transition(&TaskStatus::Assigned, &TaskStatus::InProgress).is_ok());
-        // InProgress → Completed
+        // InProgress Ã¢â€ â€™ Completed
         assert!(
             validate_status_transition(&TaskStatus::InProgress, &TaskStatus::Completed).is_ok()
         );
-        // Completed → Archived
+        // Completed Ã¢â€ â€™ Archived
         assert!(validate_status_transition(&TaskStatus::Completed, &TaskStatus::Archived).is_ok());
     }
 
@@ -779,7 +779,7 @@ mod tests {
         assert!(validate_status_transition(&TaskStatus::Completed, &TaskStatus::Archived).is_ok());
     }
 
-    // ── allowed_transitions exhaustiveness ──────────────────────────
+    // Ã¢â€â‚¬Ã¢â€â‚¬ allowed_transitions exhaustiveness Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
     #[test]
     fn test_allowed_transitions_returns_correct_lists() {

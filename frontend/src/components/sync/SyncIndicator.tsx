@@ -1,6 +1,6 @@
 // src/components/sync/SyncIndicator.tsx
 import React from 'react';
-import { useSyncStatus } from '@/hooks/useSyncStatus';
+import { useSyncStatus } from '@/domains/sync';
 import { cn } from '@/lib/utils';
 import { ipcClient } from '@/lib/ipc';
 import { useTranslation } from '@/hooks/useTranslation';

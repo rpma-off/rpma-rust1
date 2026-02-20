@@ -29,7 +29,7 @@ impl QuoteService {
         req.validate()?;
         if !self.client_exists(&req.client_id)? {
             return Err(
-                "Client introuvable. Veuillez sélectionner un client existant.".to_string(),
+                "Client introuvable. Veuillez sÃƒÂ©lectionner un client existant.".to_string(),
             );
         }
 
@@ -112,7 +112,7 @@ impl QuoteService {
     fn map_create_repo_error(error: RepoError) -> String {
         match error {
             RepoError::Database(message) if message.contains("FOREIGN KEY constraint failed") => {
-                "Référence invalide: client ou tâche introuvable.".to_string()
+                "RÃƒÂ©fÃƒÂ©rence invalide: client ou tÃƒÂ¢che introuvable.".to_string()
             }
             other => other.to_string(),
         }
@@ -420,7 +420,7 @@ impl QuoteService {
                 rusqlite::params![
                     task_id,
                     task_number,
-                    format!("Tâche issue du devis {}", quote.quote_number),
+                    format!("TÃƒÂ¢che issue du devis {}", quote.quote_number),
                     quote.vehicle_plate,
                     quote.vehicle_model,
                     quote.vehicle_make,

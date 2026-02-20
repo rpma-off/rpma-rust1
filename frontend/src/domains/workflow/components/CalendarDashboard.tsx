@@ -9,7 +9,7 @@ import { WeekView } from '@/components/calendar/WeekView';
 import { DayView } from '@/components/calendar/DayView';
 import { AgendaView } from '@/components/calendar/AgendaView';
 import { useCalendarStore } from '@/lib/stores/calendarStore';
-import { useCalendar } from '@/hooks/useCalendar';
+import { useCalendar } from '@/domains/calendar';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { QuickAddDialog } from '@/components/dashboard/QuickAddDialog';

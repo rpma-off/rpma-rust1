@@ -5,7 +5,7 @@ use crate::domains::inventory::InventoryFacade;
 use crate::services::material::MaterialService;
 
 #[tokio::test]
-async fn integration_inventory_facade_constructs() {
+async fn integration_inventory_facade_smoke() {
     let db = Arc::new(
         Database::new_in_memory()
             .await

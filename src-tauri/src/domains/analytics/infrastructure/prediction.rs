@@ -5,20 +5,9 @@
 
 use crate::commands::AppError;
 use crate::db::Database;
+pub use crate::shared::contracts::prediction::CompletionTimePrediction;
 use chrono::{Duration, Utc};
 use serde::{Deserialize, Serialize};
-// Conditional import removed
-use ts_rs::TS;
-
-/// Completion time prediction result
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-pub struct CompletionTimePrediction {
-    pub predicted_duration_minutes: f64,
-    pub confidence_interval: (f64, f64), // (lower_bound, upper_bound)
-    pub factors_influencing: Vec<String>,
-    pub historical_average: f64,
-    pub prediction_accuracy: f64, // percentage
-}
 
 /// Demand forecasting result
 #[derive(Debug, Clone, Serialize, Deserialize)]

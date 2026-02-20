@@ -145,10 +145,14 @@ impl ServiceBuilder {
         ));
 
         // Initialize Sync Services
-        let sync_queue = Arc::new(crate::sync::SyncQueue::new(db_instance.clone()));
-        let background_sync = Arc::new(Mutex::new(crate::sync::BackgroundSyncService::new(
-            sync_queue.clone(),
-        )));
+        let sync_queue = Arc::new(crate::domains::sync::infrastructure::sync::SyncQueue::new(
+            db_instance.clone(),
+        ));
+        let background_sync = Arc::new(Mutex::new(
+            crate::domains::sync::infrastructure::sync::BackgroundSyncService::new(
+                sync_queue.clone(),
+            ),
+        ));
 
         // Create async database wrapper
         let async_db = Arc::new(self.db.as_async());

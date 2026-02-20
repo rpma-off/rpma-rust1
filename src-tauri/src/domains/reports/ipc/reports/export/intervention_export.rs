@@ -11,7 +11,7 @@ use tracing::{debug, error, info, instrument};
 
 use super::{auth, file_operations, validation};
 
-/// Re-export for backward compatibility — delegates to service layer.
+/// Re-export for backward compatibility Ã¢â‚¬â€ delegates to service layer.
 pub use crate::services::reports::export_service::ExportReportService;
 
 /// Get complete intervention data with all related information.

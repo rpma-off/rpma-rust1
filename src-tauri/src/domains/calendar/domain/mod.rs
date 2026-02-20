@@ -1,1 +1,1 @@
-// Domain layer module index.
+pub(crate) mod models;

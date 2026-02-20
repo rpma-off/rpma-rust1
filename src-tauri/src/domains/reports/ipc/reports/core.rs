@@ -40,7 +40,7 @@ pub async fn get_task_completion_report(
     }
 
     // Generate report using generation service
-    crate::commands::reports::generation::report_commands::get_task_completion_report(
+    crate::domains::reports::ipc::reports::generation::report_commands::get_task_completion_report(
         date_range, filters, state,
     )
     .await
@@ -76,7 +76,7 @@ pub async fn get_technician_performance_report(
     }
 
     // Generate report using generation service
-    crate::commands::reports::generation::report_commands::get_technician_performance_report(
+    crate::domains::reports::ipc::reports::generation::report_commands::get_technician_performance_report(
         date_range,
         technician_id,
         state,
@@ -109,7 +109,7 @@ pub async fn get_client_analytics_report(
     }
 
     // Generate report using generation service
-    crate::commands::reports::generation::report_commands::get_client_analytics_report(
+    crate::domains::reports::ipc::reports::generation::report_commands::get_client_analytics_report(
         date_range, filters, state,
     )
     .await
@@ -140,7 +140,7 @@ pub async fn get_quality_compliance_report(
     }
 
     // Generate report using generation service
-    crate::commands::reports::generation::report_commands::get_quality_compliance_report(
+    crate::domains::reports::ipc::reports::generation::report_commands::get_quality_compliance_report(
         date_range, filters, state,
     )
     .await
@@ -171,7 +171,7 @@ pub async fn get_geographic_report(
     }
 
     // Generate report using generation service
-    crate::commands::reports::generation::report_commands::get_geographic_report(
+    crate::domains::reports::ipc::reports::generation::report_commands::get_geographic_report(
         date_range, filters, state,
     )
     .await
@@ -202,7 +202,7 @@ pub async fn get_material_usage_report(
     }
 
     // Generate report using generation service
-    crate::commands::reports::generation::report_commands::get_material_usage_report(
+    crate::domains::reports::ipc::reports::generation::report_commands::get_material_usage_report(
         date_range, filters, state,
     )
     .await
@@ -233,7 +233,7 @@ pub async fn get_overview_report(
     }
 
     // Generate overview report using generation service
-    crate::commands::reports::generation::report_commands::get_overview_report(
+    crate::domains::reports::ipc::reports::generation::report_commands::get_overview_report(
         date_range, filters, state,
     )
     .await
@@ -302,7 +302,7 @@ pub async fn get_seasonal_report(
     }
 
     // Generate seasonal report using generation service
-    crate::commands::reports::generation::report_commands::get_seasonal_report(
+    crate::domains::reports::ipc::reports::generation::report_commands::get_seasonal_report(
         date_range.start.year(),
         state,
     )
@@ -334,7 +334,7 @@ pub async fn get_operational_intelligence_report(
     }
 
     // Generate operational intelligence report using generation service
-    crate::commands::reports::generation::report_commands::get_operational_intelligence_report(
+    crate::domains::reports::ipc::reports::generation::report_commands::get_operational_intelligence_report(
         date_range, state,
     )
     .await

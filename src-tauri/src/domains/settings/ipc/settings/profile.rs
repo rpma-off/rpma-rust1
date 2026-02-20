@@ -3,8 +3,8 @@
 //! This module handles user profile CRUD operations including
 //! profile updates, password changes, data export, and account deletion.
 
-use crate::commands::settings::core::handle_settings_error;
 use crate::commands::{ApiResponse, AppError, AppState};
+use crate::domains::settings::ipc::settings::core::handle_settings_error;
 
 use base64::{engine::general_purpose, Engine as _};
 use serde::Deserialize;

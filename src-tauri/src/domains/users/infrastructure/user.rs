@@ -73,7 +73,7 @@ impl UserService {
 
     /// Parse a role string into a UserRole enum.
     ///
-    /// Centralises the role-string → enum conversion so that IPC command
+    /// Centralises the role-string Ã¢â€ â€™ enum conversion so that IPC command
     /// handlers do not contain this business logic.
     pub fn parse_user_role(role_str: &str) -> Result<UserRole, AppError> {
         match role_str {

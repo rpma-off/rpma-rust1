@@ -237,7 +237,7 @@ impl ClientValidationService {
     /// Validate business-specific rules
     fn validate_business_rules(&self, req: &CreateClientRequest) -> Result<(), String> {
         match req.customer_type {
-            crate::models::CustomerType::Business => {
+            crate::models::client::CustomerType::Business => {
                 // Business clients require company name
                 if req
                     .company_name
@@ -265,7 +265,7 @@ impl ClientValidationService {
                     return Err("Tax ID is recommended for business clients".to_string());
                 }
             }
-            crate::models::CustomerType::Individual => {
+            crate::models::client::CustomerType::Individual => {
                 // Individual clients don't need company name or contact person
                 // But if provided, they should be reasonable
                 if req

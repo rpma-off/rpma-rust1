@@ -113,9 +113,12 @@ mod tests {
             warehouse_id: None,
         };
 
-        let result =
-            crate::commands::material::material_create(state, request, "test_user".to_string())
-                .await;
+        let result = crate::domains::inventory::ipc::material::material_create(
+            state,
+            request,
+            "test_user".to_string(),
+        )
+        .await;
 
         assert!(result.is_ok());
         let response = result.unwrap();
@@ -166,9 +169,12 @@ mod tests {
             warehouse_id: None,
         };
 
-        let result =
-            crate::commands::material::material_create(state, request, "test_user".to_string())
-                .await;
+        let result = crate::domains::inventory::ipc::material::material_create(
+            state,
+            request,
+            "test_user".to_string(),
+        )
+        .await;
 
         assert!(result.is_err());
 
@@ -180,7 +186,8 @@ mod tests {
     async fn test_material_get_command_success() {
         let (state, material_id) = create_test_state_with_material();
 
-        let result = crate::commands::material::material_get(state, material_id).await;
+        let result =
+            crate::domains::inventory::ipc::material::material_get(state, material_id).await;
 
         assert!(result.is_ok());
         let response = result.unwrap();
@@ -197,8 +204,11 @@ mod tests {
     async fn test_material_get_command_not_found() {
         let state = create_test_state();
 
-        let result =
-            crate::commands::material::material_get(state, "non-existent-id".to_string()).await;
+        let result = crate::domains::inventory::ipc::material::material_get(
+            state,
+            "non-existent-id".to_string(),
+        )
+        .await;
 
         assert!(result.is_ok());
         let response = result.unwrap();
@@ -210,8 +220,11 @@ mod tests {
     async fn test_material_get_by_sku_command_success() {
         let (state, _) = create_test_state_with_material();
 
-        let result =
-            crate::commands::material::material_get_by_sku(state, "TEST-MAT-001".to_string()).await;
+        let result = crate::domains::inventory::ipc::material::material_get_by_sku(
+            state,
+            "TEST-MAT-001".to_string(),
+        )
+        .await;
 
         assert!(result.is_ok());
         let response = result.unwrap();
@@ -227,9 +240,11 @@ mod tests {
     async fn test_material_get_by_sku_command_not_found() {
         let state = create_test_state();
 
-        let result =
-            crate::commands::material::material_get_by_sku(state, "NON-EXISTENT-SKU".to_string())
-                .await;
+        let result = crate::domains::inventory::ipc::material::material_get_by_sku(
+            state,
+            "NON-EXISTENT-SKU".to_string(),
+        )
+        .await;
 
         assert!(result.is_ok());
         let response = result.unwrap();
@@ -275,7 +290,7 @@ mod tests {
                 warehouse_id: None,
             };
 
-            crate::commands::material::material_create(
+            crate::domains::inventory::ipc::material::material_create(
                 state.clone(),
                 request,
                 "test_user".to_string(),
@@ -285,7 +300,7 @@ mod tests {
         }
 
         // List all materials
-        let result = crate::commands::material::material_list(
+        let result = crate::domains::inventory::ipc::material::material_list(
             state.clone(),
             None,       // material_type
             None,       // category
@@ -344,7 +359,7 @@ mod tests {
                 warehouse_id: None,
             };
 
-            crate::commands::material::material_create(
+            crate::domains::inventory::ipc::material::material_create(
                 state.clone(),
                 request,
                 "test_user".to_string(),
@@ -354,7 +369,7 @@ mod tests {
         }
 
         // List only PPF films
-        let result = crate::commands::material::material_list(
+        let result = crate::domains::inventory::ipc::material::material_list(
             state.clone(),
             Some("ppf_film".to_string()), // material_type
             None,                         // category
@@ -408,7 +423,7 @@ mod tests {
             warehouse_id: None,
         };
 
-        let result = crate::commands::material::material_update(
+        let result = crate::domains::inventory::ipc::material::material_update(
             state,
             material_id.clone(),
             request,
@@ -464,7 +479,7 @@ mod tests {
             warehouse_id: None,
         };
 
-        let result = crate::commands::material::material_update(
+        let result = crate::domains::inventory::ipc::material::material_update(
             state,
             "non-existent-id".to_string(),
             request,
@@ -490,8 +505,11 @@ mod tests {
             recorded_by: Some("test_user".to_string()),
         };
 
-        let result =
-            crate::commands::material::material_update_stock(state.clone(), initial_update).await;
+        let result = crate::domains::inventory::ipc::material::material_update_stock(
+            state.clone(),
+            initial_update,
+        )
+        .await;
 
         assert!(result.is_ok());
         let response = result.unwrap();
@@ -510,8 +528,11 @@ mod tests {
             recorded_by: Some("test_user".to_string()),
         };
 
-        let result =
-            crate::commands::material::material_update_stock(state.clone(), second_update).await;
+        let result = crate::domains::inventory::ipc::material::material_update_stock(
+            state.clone(),
+            second_update,
+        )
+        .await;
 
         assert!(result.is_ok());
         let response = result.unwrap();
@@ -529,7 +550,9 @@ mod tests {
             recorded_by: Some("test_user".to_string()),
         };
 
-        let result = crate::commands::material::material_update_stock(state, third_update).await;
+        let result =
+            crate::domains::inventory::ipc::material::material_update_stock(state, third_update)
+                .await;
 
         assert!(result.is_ok());
         let response = result.unwrap();
@@ -552,9 +575,12 @@ mod tests {
             recorded_by: Some("test_user".to_string()),
         };
 
-        crate::commands::material::material_update_stock(state.clone(), initial_update)
-            .await
-            .unwrap();
+        crate::domains::inventory::ipc::material::material_update_stock(
+            state.clone(),
+            initial_update,
+        )
+        .await
+        .unwrap();
 
         // Try to reduce more than available
         let excessive_update = UpdateStockRequest {
@@ -564,8 +590,11 @@ mod tests {
             recorded_by: Some("test_user".to_string()),
         };
 
-        let result =
-            crate::commands::material::material_update_stock(state, excessive_update).await;
+        let result = crate::domains::inventory::ipc::material::material_update_stock(
+            state,
+            excessive_update,
+        )
+        .await;
 
         assert!(result.is_err());
 
@@ -585,9 +614,12 @@ mod tests {
             recorded_by: Some("test_user".to_string()),
         };
 
-        crate::commands::material::material_update_stock(state.clone(), stock_update)
-            .await
-            .unwrap();
+        crate::domains::inventory::ipc::material::material_update_stock(
+            state.clone(),
+            stock_update,
+        )
+        .await
+        .unwrap();
 
         // Record consumption
         let consumption_request = RecordConsumptionRequest {
@@ -603,7 +635,7 @@ mod tests {
             recorded_by: Some("test_user".to_string()),
         };
 
-        let result = crate::commands::material::material_record_consumption(
+        let result = crate::domains::inventory::ipc::material::material_record_consumption(
             state.clone(),
             consumption_request,
         )
@@ -622,7 +654,8 @@ mod tests {
         assert_eq!(consumption.batch_used.unwrap(), "BATCH-001");
 
         // Verify material stock was updated
-        let get_result = crate::commands::material::material_get(state, material_id).await;
+        let get_result =
+            crate::domains::inventory::ipc::material::material_get(state, material_id).await;
         assert!(get_result.is_ok());
         let get_response = get_result.unwrap();
         assert!(get_response.success);
@@ -648,9 +681,11 @@ mod tests {
             recorded_by: Some("test_user".to_string()),
         };
 
-        let result =
-            crate::commands::material::material_record_consumption(state, consumption_request)
-                .await;
+        let result = crate::domains::inventory::ipc::material::material_record_consumption(
+            state,
+            consumption_request,
+        )
+        .await;
 
         assert!(result.is_err());
 
@@ -670,9 +705,12 @@ mod tests {
             recorded_by: Some("test_user".to_string()),
         };
 
-        crate::commands::material::material_update_stock(state.clone(), stock_update)
-            .await
-            .unwrap();
+        crate::domains::inventory::ipc::material::material_update_stock(
+            state.clone(),
+            stock_update,
+        )
+        .await
+        .unwrap();
 
         // Record consumption
         let consumption_request = RecordConsumptionRequest {
@@ -688,16 +726,20 @@ mod tests {
             recorded_by: Some("test_user".to_string()),
         };
 
-        crate::commands::material::material_record_consumption(state.clone(), consumption_request)
-            .await
-            .unwrap();
+        crate::domains::inventory::ipc::material::material_record_consumption(
+            state.clone(),
+            consumption_request,
+        )
+        .await
+        .unwrap();
 
         // Get intervention consumption
-        let result = crate::commands::material::material_get_intervention_consumption(
-            state,
-            "INT-001".to_string(),
-        )
-        .await;
+        let result =
+            crate::domains::inventory::ipc::material::material_get_intervention_consumption(
+                state,
+                "INT-001".to_string(),
+            )
+            .await;
 
         assert!(result.is_ok());
         let response = result.unwrap();
@@ -716,11 +758,12 @@ mod tests {
         let state = create_test_state();
 
         // Get consumption for non-existent intervention
-        let result = crate::commands::material::material_get_intervention_consumption(
-            state,
-            "NON-EXISTENT-INT".to_string(),
-        )
-        .await;
+        let result =
+            crate::domains::inventory::ipc::material::material_get_intervention_consumption(
+                state,
+                "NON-EXISTENT-INT".to_string(),
+            )
+            .await;
 
         assert!(result.is_ok());
         let response = result.unwrap();
@@ -769,7 +812,7 @@ mod tests {
                 warehouse_id: None,
             };
 
-            crate::commands::material::material_create(
+            crate::domains::inventory::ipc::material::material_create(
                 state.clone(),
                 request,
                 "test_user".to_string(),
@@ -779,7 +822,7 @@ mod tests {
         }
 
         // Get material stats
-        let result = crate::commands::material::material_get_stats(state).await;
+        let result = crate::domains::inventory::ipc::material::material_get_stats(state).await;
 
         assert!(result.is_ok());
         let response = result.unwrap();
@@ -826,7 +869,7 @@ mod tests {
             warehouse_id: None,
         };
 
-        let normal_material = crate::commands::material::material_create(
+        let normal_material = crate::domains::inventory::ipc::material::material_create(
             state.clone(),
             normal_request,
             "test_user".to_string(),
@@ -842,9 +885,12 @@ mod tests {
             reason: "Normal stock".to_string(),
             recorded_by: Some("test_user".to_string()),
         };
-        crate::commands::material::material_update_stock(state.clone(), normal_stock_update)
-            .await
-            .unwrap();
+        crate::domains::inventory::ipc::material::material_update_stock(
+            state.clone(),
+            normal_stock_update,
+        )
+        .await
+        .unwrap();
 
         // Create low stock material
         let low_stock_request = CreateMaterialRequest {
@@ -875,7 +921,7 @@ mod tests {
             warehouse_id: None,
         };
 
-        let low_stock_material = crate::commands::material::material_create(
+        let low_stock_material = crate::domains::inventory::ipc::material::material_create(
             state.clone(),
             low_stock_request,
             "test_user".to_string(),
@@ -891,12 +937,12 @@ mod tests {
             reason: "Low stock".to_string(),
             recorded_by: Some("test_user".to_string()),
         };
-        crate::commands::material::material_update_stock(state, low_stock_update)
+        crate::domains::inventory::ipc::material::material_update_stock(state, low_stock_update)
             .await
             .unwrap();
 
         // Get low stock materials
-        let result = crate::commands::material::material_get_low_stock(state).await;
+        let result = crate::domains::inventory::ipc::material::material_get_low_stock(state).await;
 
         assert!(result.is_ok());
         let response = result.unwrap();
@@ -941,7 +987,7 @@ mod tests {
             warehouse_id: None,
         };
 
-        crate::commands::material::material_create(
+        crate::domains::inventory::ipc::material::material_create(
             state.clone(),
             normal_request,
             "test_user".to_string(),
@@ -978,12 +1024,16 @@ mod tests {
             warehouse_id: None,
         };
 
-        crate::commands::material::material_create(state, expired_request, "test_user".to_string())
-            .await
-            .unwrap();
+        crate::domains::inventory::ipc::material::material_create(
+            state,
+            expired_request,
+            "test_user".to_string(),
+        )
+        .await
+        .unwrap();
 
         // Get expired materials
-        let result = crate::commands::material::material_get_expired(state).await;
+        let result = crate::domains::inventory::ipc::material::material_get_expired(state).await;
 
         assert!(result.is_ok());
         let response = result.unwrap();
@@ -1017,12 +1067,13 @@ mod tests {
             step_id: None,
         };
 
-        let result = crate::commands::material::material_create_inventory_transaction(
-            state,
-            request,
-            "test_user".to_string(),
-        )
-        .await;
+        let result =
+            crate::domains::inventory::ipc::material::material_create_inventory_transaction(
+                state,
+                request,
+                "test_user".to_string(),
+            )
+            .await;
 
         assert!(result.is_ok());
         let response = result.unwrap();
@@ -1062,12 +1113,13 @@ mod tests {
             step_id: None,
         };
 
-        let result = crate::commands::material::material_create_inventory_transaction(
-            state,
-            request,
-            "test_user".to_string(),
-        )
-        .await;
+        let result =
+            crate::domains::inventory::ipc::material::material_create_inventory_transaction(
+                state,
+                request,
+                "test_user".to_string(),
+            )
+            .await;
 
         assert!(result.is_err());
 
@@ -1097,12 +1149,13 @@ mod tests {
             step_id: None,
         };
 
-        let result = crate::commands::material::material_create_inventory_transaction(
-            state,
-            request,
-            "test_user".to_string(),
-        )
-        .await;
+        let result =
+            crate::domains::inventory::ipc::material::material_create_inventory_transaction(
+                state,
+                request,
+                "test_user".to_string(),
+            )
+            .await;
 
         assert!(result.is_err());
 
@@ -1114,7 +1167,7 @@ mod tests {
     async fn test_material_delete_command_success() {
         let (state, material_id) = create_test_state_with_material();
 
-        let result = crate::commands::material::material_delete(
+        let result = crate::domains::inventory::ipc::material::material_delete(
             state,
             material_id.clone(),
             "test_user".to_string(),
@@ -1126,7 +1179,8 @@ mod tests {
         assert!(response.success);
 
         // Verify material is soft deleted
-        let get_result = crate::commands::material::material_get(state, material_id).await;
+        let get_result =
+            crate::domains::inventory::ipc::material::material_get(state, material_id).await;
         assert!(get_result.is_ok());
         let get_response = get_result.unwrap();
         assert!(get_response.success);
@@ -1141,7 +1195,7 @@ mod tests {
     async fn test_material_delete_command_not_found() {
         let state = create_test_state();
 
-        let result = crate::commands::material::material_delete(
+        let result = crate::domains::inventory::ipc::material::material_delete(
             state,
             "non-existent-id".to_string(),
             "test_user".to_string(),
@@ -1167,7 +1221,7 @@ mod tests {
             color: Some("#FF0000".to_string()),
         };
 
-        let result = crate::commands::material::material_create_category(
+        let result = crate::domains::inventory::ipc::material::material_create_category(
             state,
             request,
             "test_user".to_string(),
@@ -1200,7 +1254,7 @@ mod tests {
             color: Some("#FF0000".to_string()),
         };
 
-        let result = crate::commands::material::material_create_category(
+        let result = crate::domains::inventory::ipc::material::material_create_category(
             state,
             request,
             "test_user".to_string(),
@@ -1241,7 +1295,7 @@ mod tests {
             special_instructions: Some("Special instructions".to_string()),
         };
 
-        let result = crate::commands::material::material_create_supplier(
+        let result = crate::domains::inventory::ipc::material::material_create_supplier(
             state,
             request,
             "test_user".to_string(),
@@ -1290,7 +1344,7 @@ mod tests {
             special_instructions: Some("Special instructions".to_string()),
         };
 
-        let result = crate::commands::material::material_create_supplier(
+        let result = crate::domains::inventory::ipc::material::material_create_supplier(
             state,
             request,
             "test_user".to_string(),

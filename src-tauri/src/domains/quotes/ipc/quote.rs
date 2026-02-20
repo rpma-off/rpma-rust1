@@ -480,7 +480,7 @@ fn generate_quote_pdf(
     content.push_str(&format!("Client: {}\n", quote.client_id));
 
     if let Some(ref plate) = quote.vehicle_plate {
-        content.push_str(&format!("Véhicule: {}", plate));
+        content.push_str(&format!("VÃƒÂ©hicule: {}", plate));
         if let Some(ref make) = quote.vehicle_make {
             content.push_str(&format!(" {} ", make));
         }
@@ -494,7 +494,7 @@ fn generate_quote_pdf(
     for item in &quote.items {
         let line_total = (item.qty * item.unit_price as f64) as i64;
         content.push_str(&format!(
-            "{}: {} x {:.2}€ = {:.2}€\n",
+            "{}: {} x {:.2}Ã¢â€šÂ¬ = {:.2}Ã¢â€šÂ¬\n",
             item.label,
             item.qty,
             item.unit_price as f64 / 100.0,
@@ -503,11 +503,11 @@ fn generate_quote_pdf(
     }
 
     content.push_str(&format!(
-        "\nSous-total: {:.2}€\n",
+        "\nSous-total: {:.2}Ã¢â€šÂ¬\n",
         quote.subtotal as f64 / 100.0
     ));
-    content.push_str(&format!("TVA: {:.2}€\n", quote.tax_total as f64 / 100.0));
-    content.push_str(&format!("Total: {:.2}€\n", quote.total as f64 / 100.0));
+    content.push_str(&format!("TVA: {:.2}Ã¢â€šÂ¬\n", quote.tax_total as f64 / 100.0));
+    content.push_str(&format!("Total: {:.2}Ã¢â€šÂ¬\n", quote.total as f64 / 100.0));
 
     if let Some(ref terms) = quote.terms {
         content.push_str(&format!("\nConditions:\n{}\n", terms));

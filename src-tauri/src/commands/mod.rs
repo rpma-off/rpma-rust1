@@ -3,28 +3,16 @@
 //! This module contains all Tauri commands for IPC communication
 //! between the frontend and backend.
 
-pub mod analytics;
-pub mod calendar;
 pub mod compression;
 pub mod correlation_helpers;
 pub mod error_utils;
 pub mod errors;
-pub mod intervention;
 pub mod ipc_optimization;
 pub mod log;
-pub mod material;
 pub mod navigation;
-pub mod notification;
 pub mod performance;
 // pub mod photo; // Temporarily disabled - no photo.rs or photo/ directory
-pub mod message;
-pub mod queue;
-pub mod quote;
-pub mod reports;
-pub mod security;
-pub mod settings;
 pub mod streaming;
-pub mod sync;
 pub mod system;
 pub mod ui;
 pub mod websocket;
@@ -37,31 +25,6 @@ pub use correlation_helpers::*;
 pub use error_utils::*;
 pub use errors::{AppError, AppResult};
 
-// Re-export intervention commands
-#[allow(unused_imports)]
-pub use intervention::{
-    intervention_advance_step, intervention_finalize, intervention_get,
-    intervention_get_active_by_task, intervention_get_latest_by_task, intervention_get_progress,
-    intervention_get_step, intervention_management, intervention_progress,
-    intervention_save_step_progress, intervention_start, intervention_update,
-    intervention_workflow,
-};
-
-// Re-export reports commands
-#[allow(unused_imports)]
-pub use reports::{
-    cancel_report, export_intervention_report, export_report_data, get_client_analytics_report,
-    get_material_usage_report, get_overview_report, get_quality_compliance_report,
-    get_report_status, get_task_completion_report, get_technician_performance_report,
-};
-
-// Re-export notification commands
-#[allow(unused_imports)]
-pub use notification::{
-    get_notification_status, initialize_notification_service, send_notification,
-    test_notification_config,
-};
-
 // Re-export performance commands
 #[allow(unused_imports)]
 pub use performance::{
@@ -71,22 +34,6 @@ pub use performance::{
 
 // Re-export task validation commands
 
-// Re-export calendar commands
-#[allow(unused_imports)]
-pub use calendar::{calendar_check_conflicts, calendar_get_tasks, calendar_schedule_task};
-
-// Re-export material commands
-pub use material::{
-    inventory_get_stats, material_adjust_stock, material_create, material_create_category,
-    material_create_inventory_transaction, material_create_supplier, material_delete, material_get,
-    material_get_by_sku, material_get_consumption_history, material_get_expired,
-    material_get_expired_materials, material_get_intervention_consumption,
-    material_get_intervention_summary, material_get_inventory_movement_summary,
-    material_get_low_stock, material_get_low_stock_materials, material_get_stats,
-    material_get_transaction_history, material_list, material_list_categories,
-    material_list_suppliers, material_record_consumption, material_update, material_update_stock,
-};
-
 // Re-export system commands
 #[allow(unused_imports)]
 pub use system::{
@@ -94,16 +41,13 @@ pub use system::{
     health_check,
 };
 
-// Re-export analytics commands
-pub use analytics::analytics_get_summary;
-
 use crate::models::client::ClientWithTasks;
 use crate::models::task::*;
 
 pub use crate::domains::users::application::{
     CreateUserRequest, UpdateUserRequest, UserAction, UserListResponse, UserResponse,
 };
-use crate::models::Client;
+use crate::models::client::Client;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, error, info, instrument, warn};
 

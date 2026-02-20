@@ -3,8 +3,8 @@
 //! This module handles accessibility features and settings
 //! including screen reader support, keyboard navigation, and visual aids.
 
-use crate::commands::settings::core::handle_settings_error;
 use crate::commands::{ApiResponse, AppError, AppState};
+use crate::domains::settings::ipc::settings::core::handle_settings_error;
 use crate::models::settings::UserAccessibilitySettings;
 
 use serde::Deserialize;

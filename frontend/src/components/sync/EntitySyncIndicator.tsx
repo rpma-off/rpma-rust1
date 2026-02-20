@@ -1,5 +1,5 @@
 import React from 'react';
-import { useEntitySyncStatus } from '@/hooks/useEntitySyncStatus';
+import { useEntitySyncStatus } from '@/domains/sync';
 import { EntityType } from '@/lib/backend';
 import { cn } from '@/lib/utils';
 

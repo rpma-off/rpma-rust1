@@ -1,7 +1,7 @@
-﻿use crate::domains::interventions::InterventionsFacade;
+use crate::domains::interventions::InterventionsFacade;
 
 #[test]
-fn validation_interventions_facade_constructs() {
+fn validation_interventions_facade_smoke() {
     let facade = InterventionsFacade::new();
     let clone = facade.clone();
 

@@ -128,7 +128,7 @@ pub async fn generate_geographic_report(
         0.0
     };
 
-    let coverage_area_km2 = service_areas.len() as f64 * 314.16; // Rough estimate: π * r² * area_factor
+    let coverage_area_km2 = service_areas.len() as f64 * 314.16; // Rough estimate: Ãâ‚¬ * rÃ‚Â² * area_factor
 
     let geographic_stats = GeographicStats {
         total_points,

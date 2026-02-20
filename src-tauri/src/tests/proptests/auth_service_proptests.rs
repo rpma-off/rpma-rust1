@@ -32,8 +32,8 @@ mod tests {
 
         #[test]
         fn test_username_generation_normalization(
-            first_name in prop::string::string_regex(r"[a-zA-Zàèéìòù]{2,20}"),
-            last_name in prop::string::string_regex(r"[a-zA-Zàèéìòù]{2,20}")
+            first_name in prop::string::string_regex(r"[a-zA-ZÃƒÂ ÃƒÂ¨ÃƒÂ©ÃƒÂ¬ÃƒÂ²ÃƒÂ¹]{2,20}"),
+            last_name in prop::string::string_regex(r"[a-zA-ZÃƒÂ ÃƒÂ¨ÃƒÂ©ÃƒÂ¬ÃƒÂ²ÃƒÂ¹]{2,20}")
         ) {
             let auth_service = create_auth_service();
 
@@ -222,7 +222,7 @@ mod tests {
                 "VeryLongFirstNameThatExceeds",
                 "VeryLongLastNameThatExceeds",
             ), // Long names
-            ("Émilie", "François"), // Accented characters
+            ("Ãƒâ€°milie", "FranÃƒÂ§ois"), // Accented characters
             ("John", ""), // Empty last name
             ("", "Doe"), // Empty first name
             ("John123", "Doe456"), // Numbers in names

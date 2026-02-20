@@ -1,8 +1,8 @@
 //! Cross-Domain Integration Tests
 //!
 //! This module tests comprehensive integration scenarios across multiple domains:
-//! - Task → Intervention → Material consumption workflow
-//! - Client → Task → Intervention → Reporting workflow  
+//! - Task Ã¢â€ â€™ Intervention Ã¢â€ â€™ Material consumption workflow
+//! - Client Ã¢â€ â€™ Task Ã¢â€ â€™ Intervention Ã¢â€ â€™ Reporting workflow  
 //! - Inventory changes affecting task availability
 //! - User permissions across multiple domains
 
