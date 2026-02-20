@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { useDropzone } from 'react-dropzone';
-import { usePhotoUpload } from '@/hooks/usePhotoUpload';
+import { usePhotoUpload } from '@/domains/documents';
 
 import { PhotoUploadProps, UploadItem, Photo } from '@/types/photo.types';
 

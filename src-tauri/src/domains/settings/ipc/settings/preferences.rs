@@ -3,10 +3,10 @@
 //! This module handles user interface and behavior preferences
 //! including appearance, general settings, and performance preferences.
 
-use crate::commands::settings::core::{
+use crate::commands::{ApiResponse, AppError, AppState};
+use crate::domains::settings::ipc::settings::core::{
     handle_settings_error, load_app_settings, update_app_settings,
 };
-use crate::commands::{ApiResponse, AppError, AppState};
 use crate::models::settings::UserPreferences;
 
 use serde::Deserialize;

@@ -35,7 +35,7 @@ fn test_strategy_factory_standard_workflow() {
     let steps = strategy.get_workflow_steps(&context);
     assert_eq!(steps.len(), 4); // Standard has 4 steps
     assert_eq!(steps[0].name, "Inspection");
-    assert_eq!(steps[1].name, "Préparation");
+    assert_eq!(steps[1].name, "PrÃƒÂ©paration");
     assert_eq!(steps[2].name, "Installation");
     assert_eq!(steps[3].name, "Finalisation");
 }

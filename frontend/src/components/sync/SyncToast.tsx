@@ -1,7 +1,7 @@
 // src/components/sync/SyncToast.tsx
 import { useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { useSyncStatus } from '@/hooks/useSyncStatus';
+import { useSyncStatus } from '@/domains/sync';
 
 export function SyncToast() {
   const { status } = useSyncStatus(2000); // Poll more frequently for toasts

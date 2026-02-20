@@ -579,9 +579,9 @@ mod tests {
     async fn test_create_task_edge_case_characters() {
         let task_service = create_task_creation_service();
         let task_request = test_task!(
-            title: Some("Task with émojis 🔧 and accents é".to_string()),
+            title: Some("Task with ÃƒÂ©mojis Ã°Å¸â€Â§ and accents ÃƒÂ©".to_string()),
             vehicle_plate: Some("PLATE-123".to_string()),
-            customer_name: Some("José García".to_string()),
+            customer_name: Some("JosÃƒÂ© GarcÃƒÂ­a".to_string()),
             notes: Some("Special characters: @#$%^&*()".to_string())
         );
 
@@ -592,8 +592,8 @@ mod tests {
             "Task creation should handle special characters and emojis"
         );
         let task = result.unwrap();
-        assert_eq!(task.title, "Task with émojis 🔧 and accents é");
-        assert_eq!(task.customer_name, Some("José García".to_string()));
+        assert_eq!(task.title, "Task with ÃƒÂ©mojis Ã°Å¸â€Â§ and accents ÃƒÂ©");
+        assert_eq!(task.customer_name, Some("JosÃƒÂ© GarcÃƒÂ­a".to_string()));
         assert_eq!(
             task.notes,
             Some("Special characters: @#$%^&*()".to_string())

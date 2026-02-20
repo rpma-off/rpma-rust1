@@ -1,7 +1,7 @@
-﻿use crate::domains::documents::DocumentsFacade;
+use crate::domains::documents::DocumentsFacade;
 
 #[test]
-fn permission_documents_facade_constructs() {
+fn permission_documents_facade_smoke() {
     let facade = DocumentsFacade::new();
     let clone = facade.clone();
 

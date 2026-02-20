@@ -3,10 +3,10 @@
 //! This module handles user notification preferences including
 //! email, push, and SMS notification settings.
 
-use crate::commands::settings::core::{
+use crate::commands::{ApiResponse, AppError, AppState};
+use crate::domains::settings::ipc::settings::core::{
     handle_settings_error, load_app_settings, update_app_settings,
 };
-use crate::commands::{ApiResponse, AppError, AppState};
 use crate::models::settings::UserNotificationSettings;
 
 use serde::Deserialize;

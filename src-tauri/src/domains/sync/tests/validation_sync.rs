@@ -1,7 +1,7 @@
-﻿use crate::domains::sync::SyncFacade;
+use crate::domains::sync::SyncFacade;
 
 #[test]
-fn validation_sync_facade_constructs() {
+fn validation_sync_facade_smoke() {
     let facade = SyncFacade::new();
     let clone = facade.clone();
 

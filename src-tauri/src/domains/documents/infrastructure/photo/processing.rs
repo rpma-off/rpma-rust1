@@ -50,24 +50,23 @@ impl PhotoProcessingService {
     pub async fn compress_image_if_needed(
         &self,
         data: Vec<u8>,
-    ) -> crate::services::photo::PhotoResult<Vec<u8>> {
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<Vec<u8>> {
         // Skip compression if already under size limit
         if data.len() <= self.max_file_size {
             return Ok(data);
         }
 
         // Acquire semaphore permit to limit concurrent processing
-        let _permit = self
-            .processing_semaphore
-            .clone()
-            .acquire_owned()
-            .await
-            .map_err(|e| {
-                crate::services::photo::PhotoError::Processing(format!(
-                    "Failed to acquire processing permit: {}",
-                    e
-                ))
-            })?;
+        let _permit =
+            self.processing_semaphore
+                .clone()
+                .acquire_owned()
+                .await
+                .map_err(|e| {
+                    crate::domains::documents::infrastructure::photo::PhotoError::Processing(
+                        format!("Failed to acquire processing permit: {}", e),
+                    )
+                })?;
 
         // Offload CPU-intensive compression to blocking task
         let jpeg_quality = self.jpeg_quality;
@@ -78,7 +77,7 @@ impl PhotoProcessingService {
         })
         .await
         .map_err(|e| {
-            crate::services::photo::PhotoError::Processing(format!(
+            crate::domains::documents::infrastructure::photo::PhotoError::Processing(format!(
                 "Image compression task failed: {}",
                 e
             ))
@@ -92,10 +91,13 @@ impl PhotoProcessingService {
         data: &[u8],
         jpeg_quality: u8,
         max_file_size: usize,
-    ) -> crate::services::photo::PhotoResult<Vec<u8>> {
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<Vec<u8>> {
         // Load image from memory
         let img = image::load_from_memory(data).map_err(|e| {
-            crate::services::photo::PhotoError::Processing(format!("Failed to load image: {}", e))
+            crate::domains::documents::infrastructure::photo::PhotoError::Processing(format!(
+                "Failed to load image: {}",
+                e
+            ))
         })?;
 
         // Try compression at target quality first
@@ -112,7 +114,7 @@ impl PhotoProcessingService {
                 img.color().into(),
             )
             .map_err(|e| {
-                crate::services::photo::PhotoError::Processing(format!(
+                crate::domains::documents::infrastructure::photo::PhotoError::Processing(format!(
                     "JPEG encoding failed: {}",
                     e
                 ))
@@ -151,24 +153,23 @@ impl PhotoProcessingService {
     pub async fn compress_to_webp(
         &self,
         data: Vec<u8>,
-    ) -> crate::services::photo::PhotoResult<Vec<u8>> {
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<Vec<u8>> {
         // Skip if already under size limit
         if data.len() <= self.max_file_size {
             return Ok(data);
         }
 
         // Acquire semaphore permit
-        let _permit = self
-            .processing_semaphore
-            .clone()
-            .acquire_owned()
-            .await
-            .map_err(|e| {
-                crate::services::photo::PhotoError::Processing(format!(
-                    "Failed to acquire processing permit: {}",
-                    e
-                ))
-            })?;
+        let _permit =
+            self.processing_semaphore
+                .clone()
+                .acquire_owned()
+                .await
+                .map_err(|e| {
+                    crate::domains::documents::infrastructure::photo::PhotoError::Processing(
+                        format!("Failed to acquire processing permit: {}", e),
+                    )
+                })?;
 
         let jpeg_quality = self.jpeg_quality;
 
@@ -177,7 +178,7 @@ impl PhotoProcessingService {
         })
         .await
         .map_err(|e| {
-            crate::services::photo::PhotoError::Processing(format!(
+            crate::domains::documents::infrastructure::photo::PhotoError::Processing(format!(
                 "WebP compression task failed: {}",
                 e
             ))
@@ -190,17 +191,23 @@ impl PhotoProcessingService {
     fn compress_to_webp_blocking(
         data: &[u8],
         _quality: u8,
-    ) -> crate::services::photo::PhotoResult<Vec<u8>> {
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<Vec<u8>> {
         // Load image
         let img = image::load_from_memory(data).map_err(|e| {
-            crate::services::photo::PhotoError::Processing(format!("Failed to load image: {}", e))
+            crate::domains::documents::infrastructure::photo::PhotoError::Processing(format!(
+                "Failed to load image: {}",
+                e
+            ))
         })?;
 
         // Encode as WebP
         let mut output = Cursor::new(Vec::new());
 
         img.write_to(&mut output, ImageFormat::WebP).map_err(|e| {
-            crate::services::photo::PhotoError::Processing(format!("WebP encoding failed: {}", e))
+            crate::domains::documents::infrastructure::photo::PhotoError::Processing(format!(
+                "WebP encoding failed: {}",
+                e
+            ))
         })?;
 
         let compressed_data = output.into_inner();
@@ -218,7 +225,8 @@ impl PhotoProcessingService {
     pub fn extract_image_dimensions(
         &self,
         image_data: &[u8],
-    ) -> crate::services::photo::PhotoResult<(Option<i32>, Option<i32>)> {
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<(Option<i32>, Option<i32>)>
+    {
         match image::load_from_memory(image_data) {
             Ok(img) => {
                 let (width, height) = img.dimensions();
@@ -235,8 +243,12 @@ impl PhotoProcessingService {
     pub fn calculate_photo_quality_scores(
         &self,
         image_data: &[u8],
-    ) -> crate::services::photo::PhotoResult<(Option<i32>, Option<i32>, Option<i32>, Option<i32>)>
-    {
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<(
+        Option<i32>,
+        Option<i32>,
+        Option<i32>,
+        Option<i32>,
+    )> {
         match image::load_from_memory(image_data) {
             Ok(img) => {
                 let gray = img.to_luma8();
@@ -391,7 +403,7 @@ impl PhotoProcessingService {
         &self,
         image_data: &[u8],
         original_path: &std::path::Path,
-    ) -> crate::services::photo::PhotoResult<std::path::PathBuf> {
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<std::path::PathBuf> {
         let data = image_data.to_vec();
         let thumb_path = Self::thumbnail_path(original_path);
 
@@ -399,7 +411,7 @@ impl PhotoProcessingService {
         tokio::task::spawn_blocking(move || Self::generate_thumbnail_blocking(&data, &target_path))
             .await
             .map_err(|e| {
-                crate::services::photo::PhotoError::Processing(format!(
+                crate::domains::documents::infrastructure::photo::PhotoError::Processing(format!(
                     "Thumbnail generation task failed: {}",
                     e
                 ))
@@ -426,9 +438,9 @@ impl PhotoProcessingService {
     fn generate_thumbnail_blocking(
         data: &[u8],
         output_path: &std::path::Path,
-    ) -> crate::services::photo::PhotoResult<()> {
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<()> {
         let img = image::load_from_memory(data).map_err(|e| {
-            crate::services::photo::PhotoError::Processing(format!(
+            crate::domains::documents::infrastructure::photo::PhotoError::Processing(format!(
                 "Failed to load image for thumbnail: {}",
                 e
             ))
@@ -447,7 +459,7 @@ impl PhotoProcessingService {
         thumbnail
             .save_with_format(&tmp_path, output_format)
             .map_err(|e| {
-                crate::services::photo::PhotoError::Processing(format!(
+                crate::domains::documents::infrastructure::photo::PhotoError::Processing(format!(
                     "Failed to save thumbnail: {}",
                     e
                 ))
@@ -459,7 +471,7 @@ impl PhotoProcessingService {
 
         std::fs::rename(&tmp_path, output_path).map_err(|e| {
             let _ = std::fs::remove_file(&tmp_path);
-            crate::services::photo::PhotoError::Processing(format!(
+            crate::domains::documents::infrastructure::photo::PhotoError::Processing(format!(
                 "Failed to finalize thumbnail: {}",
                 e
             ))

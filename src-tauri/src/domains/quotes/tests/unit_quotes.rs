@@ -1,7 +1,7 @@
-﻿use crate::domains::quotes::QuotesFacade;
+use crate::domains::quotes::QuotesFacade;
 
 #[test]
-fn unit_quotes_facade_constructs() {
+fn unit_quotes_facade_smoke() {
     let facade = QuotesFacade::new();
     let clone = facade.clone();
 

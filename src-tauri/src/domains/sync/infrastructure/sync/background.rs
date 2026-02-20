@@ -3,8 +3,8 @@
 //! Provides automatic bidirectional synchronization between local SQLite
 //! and remote Supabase with background processing and error handling.
 
+use crate::domains::sync::infrastructure::sync::queue::SyncQueue;
 use crate::models::sync::*;
-use crate::sync::queue::SyncQueue;
 use chrono::{DateTime, Utc};
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -49,7 +49,7 @@ pub enum BackgroundSyncError {
     #[error("No network connectivity")]
     NoNetwork,
     #[error("Queue error: {0}")]
-    QueueError(#[from] crate::sync::queue::SyncQueueError),
+    QueueError(#[from] crate::domains::sync::infrastructure::sync::queue::SyncQueueError),
     #[error("Sync operation error: {0}")]
     SyncOperationError(String),
 }

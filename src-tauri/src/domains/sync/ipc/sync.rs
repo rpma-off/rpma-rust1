@@ -1,8 +1,16 @@
 //! Tauri commands for background sync service - PRD-08
 
 use crate::commands::AppState;
-use crate::sync::background::SyncResult;
 use tracing::{error, info, instrument};
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SyncResult {
+    pub processed_operations: usize,
+    pub successful_operations: usize,
+    pub failed_operations: usize,
+    pub duration_ms: u64,
+    pub errors: Vec<String>,
+}
 
 /// Start the background sync service
 #[tauri::command]
@@ -109,7 +117,13 @@ pub async fn sync_now(
     })?;
 
     info!("Immediate sync completed");
-    Ok(result)
+    Ok(SyncResult {
+        processed_operations: result.processed_operations,
+        successful_operations: result.successful_operations,
+        failed_operations: result.failed_operations,
+        duration_ms: result.duration_ms,
+        errors: result.errors,
+    })
 }
 
 /// Get current sync status
@@ -167,7 +181,7 @@ pub fn sync_get_operations_for_entity(
     entity_type: String,
     session_token: String,
     state: AppState<'_>,
-) -> Result<Vec<crate::models::SyncOperation>, String> {
+) -> Result<Vec<crate::models::sync::SyncOperation>, String> {
     let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let current_user = state
         .auth_service

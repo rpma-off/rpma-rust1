@@ -1,7 +1,7 @@
-﻿use crate::domains::tasks::TasksFacade;
+use crate::domains::tasks::TasksFacade;
 
 #[test]
-fn validation_tasks_facade_constructs() {
+fn validation_tasks_facade_smoke() {
     let facade = TasksFacade::new();
     let clone = facade.clone();
 

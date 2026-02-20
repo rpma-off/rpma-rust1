@@ -6,7 +6,7 @@ import { MonthView } from '@/components/calendar/MonthView';
 import { WeekView } from '@/components/calendar/WeekView';
 import { DayView } from '@/components/calendar/DayView';
 import { AgendaView } from '@/components/calendar/AgendaView';
-import { useCalendar } from '@/hooks/useCalendar';
+import { useCalendar } from '@/domains/calendar';
 import type { CalendarTask } from '@/lib/backend';
 import { useTranslation } from '@/hooks/useTranslation';
 

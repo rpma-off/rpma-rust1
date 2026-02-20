@@ -3,9 +3,11 @@
 //! This module contains comprehensive unit tests for material repository functionality,
 //! focusing on repository layer, caching, and database operations.
 
+use crate::domains::inventory::infrastructure::material_repository::{
+    MaterialQuery, MaterialRepository,
+};
 use crate::models::material::{Material, MaterialType, UnitOfMeasure};
 use crate::repositories::base::Repository;
-use crate::repositories::material_repository::{MaterialQuery, MaterialRepository};
 use crate::test_utils::TestDatabase;
 use std::collections::HashMap;
 

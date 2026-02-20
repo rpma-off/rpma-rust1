@@ -10,7 +10,6 @@ pub mod models;
 pub mod repositories;
 pub mod services;
 pub mod shared;
-pub mod sync;
 pub mod worker_pool;
 
 #[cfg(test)]
@@ -23,4 +22,4 @@ pub mod tests;
 mod smoke_tests;
 
 // Type generation for frontend
-pub use models::material_ts::*;
+pub use domains::inventory::domain::models::material_ts::*;

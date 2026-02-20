@@ -70,7 +70,7 @@ mod tests {
         let service = TaskCreationService::new(test_db.db());
 
         let request = CreateTaskRequest {
-            title: "Nouvelle tâche".to_string(), // Will be ignored as it's the default placeholder
+            title: "Nouvelle tÃƒÂ¢che".to_string(), // Will be ignored as it's the default placeholder
             description: None,
             vehicle_plate: "XYZ-789".to_string(),
             vehicle_model: "Model Y".to_string(),

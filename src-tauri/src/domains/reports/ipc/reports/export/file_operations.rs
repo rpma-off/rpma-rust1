@@ -100,7 +100,8 @@ pub async fn save_pdf_to_path(
     app_data_dir: &Path,
 ) -> AppResult<String> {
     // CRASH PROTECTION: Estimate memory requirements and check system resources
-    let estimated_size = crate::commands::reports::utils::estimate_pdf_data_size(intervention_data);
+    let estimated_size =
+        crate::domains::reports::ipc::reports::utils::estimate_pdf_data_size(intervention_data);
     let estimated_mb = estimated_size / (1024 * 1024);
 
     info!(

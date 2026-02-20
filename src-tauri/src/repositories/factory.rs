@@ -18,12 +18,12 @@ pub use crate::repositories::session_repository::SessionRepository;
 
 // Import new repositories
 pub use crate::domains::clients::infrastructure::client_repository::ClientRepository;
+pub use crate::domains::documents::infrastructure::photo_repository::PhotoRepository;
+pub use crate::domains::inventory::infrastructure::material_repository::MaterialRepository;
 pub use crate::domains::tasks::infrastructure::task_history_repository::TaskHistoryRepository;
-pub use crate::repositories::material_repository::MaterialRepository;
 pub use crate::repositories::message_repository::MessageRepository;
 pub use crate::repositories::notification_preferences_repository::NotificationPreferencesRepository;
 pub use crate::repositories::notification_repository::NotificationTemplateRepository;
-pub use crate::repositories::photo_repository::PhotoRepository;
 pub use crate::repositories::quote_repository::QuoteRepository;
 pub use crate::repositories::user_repository::UserRepository;
 

@@ -38,7 +38,8 @@ impl PhotoMetadataService {
     pub fn get_photos(
         &self,
         request: super::GetPhotosRequest,
-    ) -> crate::services::photo::PhotoResult<super::GetPhotosResponse> {
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<super::GetPhotosResponse>
+    {
         let mut conditions = Vec::new();
         let mut params_vec = Vec::new();
 
@@ -100,17 +101,26 @@ impl PhotoMetadataService {
     }
 
     /// Get photo by ID
-    pub fn get_photo(&self, id: &str) -> crate::services::photo::PhotoResult<Option<Photo>> {
+    pub fn get_photo(
+        &self,
+        id: &str,
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<Option<Photo>> {
         Ok(self
             .db
             .query_single_as::<Photo>("SELECT * FROM photos WHERE id = ?", params![id])?)
     }
 
     /// Delete photo
-    pub fn delete_photo(&self, id: &str) -> crate::services::photo::PhotoResult<()> {
+    pub fn delete_photo(
+        &self,
+        id: &str,
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<()> {
         // Get photo record first
         let photo = self.get_photo(id)?.ok_or_else(|| {
-            crate::services::photo::PhotoError::NotFound(format!("Photo {} not found", id))
+            crate::domains::documents::infrastructure::photo::PhotoError::NotFound(format!(
+                "Photo {} not found",
+                id
+            ))
         })?;
 
         // Delete file
@@ -130,10 +140,13 @@ impl PhotoMetadataService {
         &self,
         id: &str,
         updates: PhotoMetadataUpdate,
-    ) -> crate::services::photo::PhotoResult<Photo> {
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<Photo> {
         // Get current photo
         let mut photo = self.get_photo(id)?.ok_or_else(|| {
-            crate::services::photo::PhotoError::NotFound(format!("Photo {} not found", id))
+            crate::domains::documents::infrastructure::photo::PhotoError::NotFound(format!(
+                "Photo {} not found",
+                id
+            ))
         })?;
 
         // Apply updates
@@ -156,7 +169,7 @@ impl PhotoMetadataService {
             photo.rejection_reason = rejection_reason;
         }
 
-        photo.updated_at = crate::models::common::now();
+        photo.updated_at = crate::shared::contracts::common::now();
 
         // Save updates
         self.save_photo(&photo)?;
@@ -165,7 +178,10 @@ impl PhotoMetadataService {
     }
 
     /// Save photo record to database
-    fn save_photo(&self, photo: &Photo) -> crate::services::photo::PhotoResult<()> {
+    fn save_photo(
+        &self,
+        photo: &Photo,
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<()> {
         // Check if photo exists
         let exists: i32 = self.db.query_single_value(
             "SELECT COUNT(*) FROM photos WHERE id = ?",

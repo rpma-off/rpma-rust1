@@ -13,7 +13,7 @@ import {
   useQuoteItems,
   useQuoteStatus,
   useQuoteExportPdf,
-} from '@/shared/hooks/useQuotes';
+} from '@/domains/quotes';
 import { PageShell } from '@/shared/ui/layout/PageShell';
 import type { QuoteStatus, CreateQuoteItemRequest, QuoteItemKind } from '@/shared/types';
 

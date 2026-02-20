@@ -381,19 +381,19 @@ impl NotificationService {
             "Task Assignment Email".to_string(),
             NotificationType::TaskAssignment,
             NotificationChannel::Email,
-            "Nouvelle tâche assignée: {{task_title}}".to_string(),
+            "Nouvelle tÃƒÂ¢che assignÃƒÂ©e: {{task_title}}".to_string(),
             r#"
             <h2>Bonjour {{user_name}},</h2>
-            <p>Une nouvelle tâche vous a été assignée:</p>
+            <p>Une nouvelle tÃƒÂ¢che vous a ÃƒÂ©tÃƒÂ© assignÃƒÂ©e:</p>
             <ul>
-                <li><strong>Tâche:</strong> {{task_title}}</li>
+                <li><strong>TÃƒÂ¢che:</strong> {{task_title}}</li>
                 <li><strong>ID:</strong> {{task_id}}</li>
                 <li><strong>Client:</strong> {{client_name}}</li>
-                <li><strong>Échéance:</strong> {{due_date}}</li>
-                <li><strong>Priorité:</strong> {{priority}}</li>
+                <li><strong>Ãƒâ€°chÃƒÂ©ance:</strong> {{due_date}}</li>
+                <li><strong>PrioritÃƒÂ©:</strong> {{priority}}</li>
             </ul>
-            <p>Veuillez vous connecter à l'application pour consulter les détails.</p>
-            <p>Cordialement,<br>L'équipe RPMA</p>
+            <p>Veuillez vous connecter ÃƒÂ  l'application pour consulter les dÃƒÂ©tails.</p>
+            <p>Cordialement,<br>L'ÃƒÂ©quipe RPMA</p>
             "#
             .to_string(),
             vec![
@@ -414,7 +414,7 @@ impl NotificationService {
             NotificationType::TaskAssignment,
             NotificationChannel::Sms,
             "".to_string(),
-            "Nouvelle tâche: {{task_title}} - Échéance: {{due_date}}".to_string(),
+            "Nouvelle tÃƒÂ¢che: {{task_title}} - Ãƒâ€°chÃƒÂ©ance: {{due_date}}".to_string(),
             vec!["task_title".to_string(), "due_date".to_string()],
         );
         templates.insert(task_assignment_sms.id.clone(), task_assignment_sms);

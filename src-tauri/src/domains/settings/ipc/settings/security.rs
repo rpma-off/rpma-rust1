@@ -3,10 +3,10 @@
 //! This module handles security-related settings including
 //! authentication configuration, password policies, and security preferences.
 
-use crate::commands::settings::core::{
+use crate::commands::{ApiResponse, AppError, AppState};
+use crate::domains::settings::ipc::settings::core::{
     handle_settings_error, load_app_settings, update_app_settings,
 };
-use crate::commands::{ApiResponse, AppError, AppState};
 use crate::models::settings::UserSecuritySettings;
 
 use serde::Deserialize;

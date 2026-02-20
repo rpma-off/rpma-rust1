@@ -1,7 +1,7 @@
-﻿use crate::domains::audit::AuditFacade;
+use crate::domains::audit::AuditFacade;
 
 #[test]
-fn integration_audit_facade_constructs() {
+fn integration_audit_facade_smoke() {
     let facade = AuditFacade::new();
     let clone = facade.clone();
 

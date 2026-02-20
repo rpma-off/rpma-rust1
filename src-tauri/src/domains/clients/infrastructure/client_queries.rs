@@ -48,8 +48,8 @@ impl ClientQueriesService {
         if let Some(customer_type) = &query.customer_type {
             sql.push_str(" AND customer_type = ?");
             params_vec.push(match customer_type {
-                crate::models::CustomerType::Individual => "individual".to_string(),
-                crate::models::CustomerType::Business => "business".to_string(),
+                crate::models::client::CustomerType::Individual => "individual".to_string(),
+                crate::models::client::CustomerType::Business => "business".to_string(),
             });
         }
 
@@ -124,8 +124,8 @@ impl ClientQueriesService {
         if let Some(customer_type) = &query.customer_type {
             count_sql.push_str(" AND customer_type = ?");
             count_params.push(match customer_type {
-                crate::models::CustomerType::Individual => "individual".to_string(),
-                crate::models::CustomerType::Business => "business".to_string(),
+                crate::models::client::CustomerType::Individual => "individual".to_string(),
+                crate::models::client::CustomerType::Business => "business".to_string(),
             });
         }
 
@@ -194,7 +194,7 @@ impl ClientQueriesService {
     /// Get clients by customer type
     pub fn get_clients_by_type(
         &self,
-        customer_type: crate::models::CustomerType,
+        customer_type: crate::models::client::CustomerType,
     ) -> Result<Vec<Client>, String> {
         let sql = r#"
             SELECT
@@ -209,8 +209,8 @@ impl ClientQueriesService {
         "#;
 
         let customer_type_str = match customer_type {
-            crate::models::CustomerType::Individual => "individual",
-            crate::models::CustomerType::Business => "business",
+            crate::models::client::CustomerType::Individual => "individual",
+            crate::models::client::CustomerType::Business => "business",
         };
 
         self.db

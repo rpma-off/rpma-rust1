@@ -1,6 +1,6 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight, Calendar, List, Grid3X3, Clock } from 'lucide-react';
-import type { CalendarViewMode } from '../../hooks/useCalendar';
+import type { CalendarViewMode } from '@/domains/calendar';
 
 interface CalendarHeaderProps {
   currentDate: Date;

@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { useState, useCallback, useMemo, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/domains/auth';
-import { clientService } from '@/domains/clients';
+import { clientService, useClients } from '@/domains/clients';
 import { Plus, Search, SearchX, User, Building, ChevronDown, ArrowUpDown, AlertCircle, Users, FileText } from 'lucide-react';
 import Link from 'next/link';
 import type { Client, ClientWithTasks } from '@/shared/types';
-import type { ClientFilters } from '@/shared/types';
 import { ClientCard } from '@/domains/clients';
 import { ClientCardSkeleton } from '@/shared/ui/ui/skeleton';
 import { PullToRefresh, FloatingActionButton } from '@/shared/ui/ui/mobile-components';
@@ -18,21 +17,22 @@ import { useTranslation } from '@/shared/hooks/useTranslation';
 
 const MemoizedClientCard = memo(ClientCard);
 
+const INITIAL_SORT_FILTERS = { sort_by: 'name', sort_order: 'asc' as const };
 
 export default function ClientsPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const { user } = useAuth();
-  const [clients, setClients] = useState<ClientWithTasks[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<ClientFilters>({
-    page: 1,
-    page_size: 20,
-    sort_by: 'name',
-    sort_order: 'asc'
-  });
   const [searchQuery, setSearchQuery] = useState('');
+  const [uiFilters, setUiFilters] = useState<{ customer_type: string; sort_by: string; sort_order: string }>({ customer_type: '', ...INITIAL_SORT_FILTERS });
+  const [operationError, setOperationError] = useState<string | null>(null);
+
+  const { clients, loading, error: fetchError, refetch, updateFilters } = useClients({
+    filters: INITIAL_SORT_FILTERS,
+    autoFetch: true,
+  });
+
+  const error = operationError ?? fetchError?.message ?? null;
 
   // Client filters are handled centrally in AppNavigation component
 
@@ -57,57 +57,21 @@ export default function ClientsPage() {
     });
   }, [clients]);
 
-  // Load clients
-  const loadClients = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await clientService.getClientsWithTasks(user?.token, {
-        page: filters.page || 1,
-        limit: filters.page_size || 20,
-        sort_by: filters.sort_by || 'name',
-        sort_order: filters.sort_order || 'asc',
-        search: searchQuery || undefined,
-        customer_type: filters.customer_type,
-        has_tasks: filters.has_tasks,
-        created_after: filters.created_after,
-        created_before: filters.created_before
-      }, 5);
-
-      if (response.error) {
-        setError(typeof response.error === 'string' ? response.error : response.error.message || t('errors.loadFailed'));
-        return;
-      }
-
-      if (response.data?.data) {
-        setClients(response.data.data);
-      }
-    } catch (err) {
-      setError(t('errors.unexpected'));
-      console.error('Error loading clients:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [filters, searchQuery, user?.token, t]);
-
-  // Load clients when component mounts or filters change
-  useEffect(() => {
-    if (user) {
-      loadClients();
-    }
-  }, [user, loadClients]);
-
   // Handle search
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
-    setFilters(prev => ({ ...prev, page: 1 })); // Reset to first page
-  }, []);
+    updateFilters({ search: query || undefined });
+  }, [updateFilters]);
 
   // Handle filter changes
-  const handleFilterChange = useCallback((newFilters: Partial<ClientFilters>) => {
-    setFilters(prev => ({ ...prev, ...newFilters, page: 1 }));
-  }, []);
+  const handleFilterChange = useCallback((newFilters: { customer_type?: string; sort_by?: string; sort_order?: string }) => {
+    setUiFilters(prev => ({ ...prev, ...newFilters }));
+    updateFilters({
+      customer_type: (newFilters.customer_type || undefined) as 'individual' | 'business' | undefined,
+      sort_by: newFilters.sort_by,
+      sort_order: newFilters.sort_order as 'asc' | 'desc' | undefined,
+    });
+  }, [updateFilters]);
 
   // Handle client actions
   const handleClientSelect = useCallback((client: Client | ClientWithTasks) => {
@@ -125,23 +89,23 @@ export default function ClientsPage() {
 
     try {
       if (!user?.id) {
-        setError(t('errors.authRequired'));
+        setOperationError(t('errors.authRequired'));
         return;
       }
 
       const response = await clientService.deleteClient(client.id, user.token);
       if (response.error) {
-        setError(response.error || t('errors.deleteFailed'));
+        setOperationError(response.error || t('errors.deleteFailed'));
         return;
       }
 
       // Reload clients
-      loadClients();
+      refetch();
     } catch (err) {
-      setError(t('errors.unexpected'));
+      setOperationError(t('errors.unexpected'));
       console.error('Error deleting client:', err);
     }
-  }, [loadClients, user?.id, user?.token, t]);
+  }, [refetch, user?.id, user?.token, t]);
 
   const handleClientCreateTask = useCallback((client: Client | ClientWithTasks) => {
     router.push(`/tasks/new?clientId=${client.id}`);
@@ -149,8 +113,8 @@ export default function ClientsPage() {
 
   // Handle pull to refresh
   const handleRefresh = useCallback(async () => {
-    await loadClients();
-  }, [loadClients]);
+    await refetch();
+  }, [refetch]);
 
 
 
@@ -225,9 +189,9 @@ export default function ClientsPage() {
               <div className="relative">
                 <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <select
-                  value={filters.customer_type || ''}
+                  value={uiFilters.customer_type}
                   onChange={(e) => handleFilterChange({
-                    customer_type: e.target.value as 'individual' | 'business' | undefined
+                    customer_type: e.target.value
                   })}
                   className="pl-10 pr-8 py-2.5 rpma-shell text-foreground text-sm focus:outline-none focus:border-[hsl(var(--rpma-teal))] transition-all duration-200 appearance-none cursor-pointer hover:bg-muted/10"
                 >
@@ -240,12 +204,12 @@ export default function ClientsPage() {
               <div className="relative">
                 <ArrowUpDown className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <select
-                  value={filters.sort_by + '_' + filters.sort_order}
+                  value={uiFilters.sort_by + '_' + uiFilters.sort_order}
                   onChange={(e) => {
                     const [sortBy, sortOrder] = e.target.value.split('_');
                     handleFilterChange({
-                      sort_by: sortBy as 'name' | 'email' | 'created_at' | 'total_tasks',
-                      sort_order: sortOrder as 'asc' | 'desc'
+                      sort_by: sortBy,
+                      sort_order: sortOrder,
                     });
                   }}
                   className="pl-10 pr-8 py-2.5 rpma-shell text-foreground text-sm focus:outline-none focus:border-[hsl(var(--rpma-teal))] transition-all duration-200 appearance-none cursor-pointer hover:bg-muted/10"

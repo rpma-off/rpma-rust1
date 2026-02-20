@@ -10,7 +10,6 @@ const sharedRoot = path.join(srcRoot, 'shared');
 const commandMaterialPath = path.join(srcRoot, 'commands', 'material.rs');
 const serviceBuilderPath = path.join(srcRoot, 'service_builder.rs');
 const enforcedTouchpoints = [commandMaterialPath, serviceBuilderPath];
-const LEGACY_ALLOWLIST_PATH = path.join(__dirname, 'legacy-domain-allowlist.json');
 const strictMode =
   process.env.BOUNDED_CONTEXT_STRICT === '1' ||
   process.env.BOUNDED_CONTEXT_STRICT === 'true' ||
@@ -294,13 +293,11 @@ function checkLegacyShimEnforcement() {
 /**
  * Rule 6: Domain code must live under src-tauri/src/domains/.
  *
- * Scans the legacy directories (commands/, models/, repositories/, services/)
- * for files that belong to a bounded context. Known legacy files are tracked
- * in legacy-domain-allowlist.json. Any NEW domain-specific file added outside
- * domains/ causes a failure, enforcing that all new domain code goes into the
- * proper bounded context directory.
+ * Scans legacy directories (commands/, models/, repositories/, services/)
+ * for domain-specific files. Any domain-specific file outside domains/
+ * is a violation.
  */
-function checkDomainCodeLocation(strict = false) {
+function checkDomainCodeLocation() {
   const domainNames = fs.readdirSync(domainsRoot, { withFileTypes: true })
     .filter((e) => e.isDirectory())
     .map((e) => e.name);
@@ -401,20 +398,7 @@ function checkDomainCodeLocation(strict = false) {
     }
   }
 
-  if (strict) {
-    return detected;
-  }
-
-  // Load allowlist
-  let allowed = [];
-  if (fs.existsSync(LEGACY_ALLOWLIST_PATH)) {
-    const raw = JSON.parse(fs.readFileSync(LEGACY_ALLOWLIST_PATH, 'utf8'));
-    allowed = Array.isArray(raw.allowed) ? raw.allowed : [];
-  }
-  const allowSet = new Set(allowed);
-
-  const violations = detected.filter((f) => !allowSet.has(f));
-  return violations;
+  return detected;
 }
 
 function isTrivialFacade(contents) {
@@ -481,7 +465,7 @@ function main() {
   const apiViolations = checkDomainPublicApi();
   const structureViolations = checkDomainDirectoryStructure();
   const ipcLogicViolations = checkCommandBusinessLogic();
-  const domainLocationViolations = checkDomainCodeLocation(strictMode);
+  const domainLocationViolations = checkDomainCodeLocation();
   const placeholderViolations = checkPlaceholderMarkers();
   const legacyShimViolations = checkLegacyShimEnforcement();
   const strictScaffoldViolations = checkStrictScaffoldModules();
@@ -529,4 +513,3 @@ function main() {
 }
 
 main();
-

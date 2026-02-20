@@ -1,7 +1,7 @@
-﻿use crate::domains::clients::ClientsFacade;
+use crate::domains::clients::ClientsFacade;
 
 #[test]
-fn permission_clients_facade_constructs() {
+fn permission_clients_facade_smoke() {
     let facade = ClientsFacade::new();
     let clone = facade.clone();
 

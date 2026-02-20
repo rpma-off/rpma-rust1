@@ -2,7 +2,7 @@
 //!
 //! This service handles file export operations and format conversions.
 //! Business logic for intervention data aggregation, PDF generation,
-//! and fallback report generation lives here — not in IPC command handlers.
+//! and fallback report generation lives here Ã¢â‚¬â€ not in IPC command handlers.
 
 use crate::commands::{AppError, AppResult, AppState};
 use crate::db::Database;
@@ -40,7 +40,7 @@ impl ExportReportService {
     /// Get complete intervention data with all related information.
     ///
     /// Aggregates intervention, workflow steps, photos, and client data
-    /// via the service layer — no direct repository access.
+    /// via the service layer Ã¢â‚¬â€ no direct repository access.
     pub async fn get_intervention_with_details(
         intervention_id: &str,
         db: &Database,
@@ -191,7 +191,7 @@ impl ExportReportService {
         Ok(data)
     }
 
-    /// Generate an intervention report with automatic PDF→text fallback.
+    /// Generate an intervention report with automatic PDFÃ¢â€ â€™text fallback.
     ///
     /// Tries PDF generation first; if that fails, falls back to a plain-text
     /// report so the user always gets *something*.
@@ -332,8 +332,8 @@ impl ExportReportService {
                 crate::models::intervention::InterventionStatus::Pending => "En attente",
                 crate::models::intervention::InterventionStatus::InProgress => "En cours",
                 crate::models::intervention::InterventionStatus::Paused => "En pause",
-                crate::models::intervention::InterventionStatus::Completed => "Terminée",
-                crate::models::intervention::InterventionStatus::Cancelled => "Annulée",
+                crate::models::intervention::InterventionStatus::Completed => "TerminÃƒÂ©e",
+                crate::models::intervention::InterventionStatus::Cancelled => "AnnulÃƒÂ©e",
             }
         ));
         content.push_str(&format!(
@@ -349,7 +349,7 @@ impl ExportReportService {
             intervention_data.intervention.completion_percentage
         ));
         content.push_str(&format!(
-            "Étapes de workflow: {}\n",
+            "Ãƒâ€°tapes de workflow: {}\n",
             intervention_data.workflow_steps.len()
         ));
         content.push_str(&format!("Photos: {}\n", intervention_data.photos.len()));
@@ -364,7 +364,7 @@ impl ExportReportService {
         }
 
         content.push_str(&format!(
-            "\nGénéré le: {}\n",
+            "\nGÃƒÂ©nÃƒÂ©rÃƒÂ© le: {}\n",
             Utc::now().format("%Y-%m-%d %H:%M:%S")
         ));
 
@@ -411,8 +411,6 @@ impl ExportReportService {
         let json_value = serde_json::to_value(&report.daily_breakdown)
             .map_err(|e| AppError::Internal(format!("Failed to serialize report data: {}", e)))?;
 
-        Ok(crate::commands::reports::utils::format_report_data_for_csv(
-            &json_value,
-        ))
+        Ok(crate::domains::reports::ipc::reports::utils::format_report_data_for_csv(&json_value))
     }
 }

@@ -442,8 +442,8 @@ impl PdfGenerationService {
                     crate::models::intervention::InterventionStatus::Pending => "En attente",
                     crate::models::intervention::InterventionStatus::InProgress => "En cours",
                     crate::models::intervention::InterventionStatus::Paused => "En pause",
-                    crate::models::intervention::InterventionStatus::Completed => "Terminée",
-                    crate::models::intervention::InterventionStatus::Cancelled => "Annulée",
+                    crate::models::intervention::InterventionStatus::Completed => "TerminÃƒÂ©e",
+                    crate::models::intervention::InterventionStatus::Cancelled => "AnnulÃƒÂ©e",
                 }
             ),
             format!(
@@ -457,15 +457,15 @@ impl PdfGenerationService {
 
         // Add timing information
         if let Some(duration) = intervention.actual_duration {
-            details.push(format!("Durée réelle: {} minutes", duration));
+            details.push(format!("DurÃƒÂ©e rÃƒÂ©elle: {} minutes", duration));
         }
         if let Some(est_duration) = intervention.estimated_duration {
-            details.push(format!("Durée estimée: {} minutes", est_duration));
+            details.push(format!("DurÃƒÂ©e estimÃƒÂ©e: {} minutes", est_duration));
         }
 
         // Add quality score
         if let Some(quality_score) = intervention.quality_score {
-            details.push(format!("Score qualité: {}/100", quality_score));
+            details.push(format!("Score qualitÃƒÂ©: {}/100", quality_score));
         }
 
         // Add progress
@@ -504,14 +504,14 @@ impl PdfGenerationService {
         // Weather condition
         if let Some(weather) = &intervention.weather_condition {
             env_info.push(format!(
-                "Météo: {}",
+                "MÃƒÂ©tÃƒÂ©o: {}",
                 match weather {
-                    crate::models::common::WeatherCondition::Sunny => "Ensoleillé",
-                    crate::models::common::WeatherCondition::Cloudy => "Nuageux",
-                    crate::models::common::WeatherCondition::Rainy => "Pluvieux",
-                    crate::models::common::WeatherCondition::Windy => "Venteux",
-                    crate::models::common::WeatherCondition::Foggy => "Brumeux",
-                    crate::models::common::WeatherCondition::Other => "Autre",
+                    crate::shared::contracts::common::WeatherCondition::Sunny => "EnsoleillÃƒÂ©",
+                    crate::shared::contracts::common::WeatherCondition::Cloudy => "Nuageux",
+                    crate::shared::contracts::common::WeatherCondition::Rainy => "Pluvieux",
+                    crate::shared::contracts::common::WeatherCondition::Windy => "Venteux",
+                    crate::shared::contracts::common::WeatherCondition::Foggy => "Brumeux",
+                    crate::shared::contracts::common::WeatherCondition::Other => "Autre",
                 }
             ));
         }
@@ -519,21 +519,21 @@ impl PdfGenerationService {
         // Lighting condition
         if let Some(lighting) = &intervention.lighting_condition {
             env_info.push(format!(
-                "Éclairage: {}",
+                "Ãƒâ€°clairage: {}",
                 match lighting {
-                    crate::models::common::LightingCondition::Natural => "Naturel",
-                    crate::models::common::LightingCondition::Artificial => "Artificiel",
-                    crate::models::common::LightingCondition::Mixed => "Mixte",
+                    crate::shared::contracts::common::LightingCondition::Natural => "Naturel",
+                    crate::shared::contracts::common::LightingCondition::Artificial => "Artificiel",
+                    crate::shared::contracts::common::LightingCondition::Mixed => "Mixte",
                 }
             ));
         }
 
         // Temperature and humidity
         if let Some(temp) = intervention.temperature_celsius {
-            env_info.push(format!("Température: {:.1}°C", temp));
+            env_info.push(format!("TempÃƒÂ©rature: {:.1}Ã‚Â°C", temp));
         }
         if let Some(humidity) = intervention.humidity_percentage {
-            env_info.push(format!("Humidité: {:.1}%", humidity));
+            env_info.push(format!("HumiditÃƒÂ©: {:.1}%", humidity));
         }
 
         // GPS locations
@@ -541,7 +541,7 @@ impl PdfGenerationService {
             intervention.start_location_lat,
             intervention.start_location_lon,
         ) {
-            env_info.push(format!("Position départ: {:.6}, {:.6}", lat, lon));
+            env_info.push(format!("Position dÃƒÂ©part: {:.6}, {:.6}", lat, lon));
         }
         if let (Some(lat), Some(lon)) =
             (intervention.end_location_lat, intervention.end_location_lon)
@@ -554,9 +554,9 @@ impl PdfGenerationService {
             env_info.push(format!(
                 "Lieu de travail: {}",
                 match location {
-                    crate::models::common::WorkLocation::Indoor => "Intérieur",
-                    crate::models::common::WorkLocation::Outdoor => "Extérieur",
-                    crate::models::common::WorkLocation::SemiCovered => "Semi-couvert",
+                    crate::shared::contracts::common::WorkLocation::Indoor => "IntÃƒÂ©rieur",
+                    crate::shared::contracts::common::WorkLocation::Outdoor => "ExtÃƒÂ©rieur",
+                    crate::shared::contracts::common::WorkLocation::SemiCovered => "Semi-couvert",
                 }
             ));
         }
@@ -589,7 +589,7 @@ impl PdfGenerationService {
     ) -> AppResult<()> {
         // Materials section header
         current_layer.use_text(
-            "MATÉRIAUX UTILISÉS",
+            "MATÃƒâ€°RIAUX UTILISÃƒâ€°S",
             14.0,
             Mm(20.0),
             Mm(*y_position as f32),
@@ -604,10 +604,10 @@ impl PdfGenerationService {
             materials_info.push(format!(
                 "Type de film: {}",
                 match film_type {
-                    crate::models::common::FilmType::Standard => "Standard",
-                    crate::models::common::FilmType::Premium => "Premium",
-                    crate::models::common::FilmType::Matte => "Mat",
-                    crate::models::common::FilmType::Colored => "Coloré",
+                    crate::shared::contracts::common::FilmType::Standard => "Standard",
+                    crate::shared::contracts::common::FilmType::Premium => "Premium",
+                    crate::shared::contracts::common::FilmType::Matte => "Mat",
+                    crate::shared::contracts::common::FilmType::Colored => "ColorÃƒÂ©",
                 }
             ));
         }
@@ -617,19 +617,19 @@ impl PdfGenerationService {
         }
 
         if let Some(model) = &intervention.film_model {
-            materials_info.push(format!("Modèle: {}", model));
+            materials_info.push(format!("ModÃƒÂ¨le: {}", model));
         }
 
         // PPF zones configuration
         if let Some(zones) = &intervention.ppf_zones_config {
             if !zones.is_empty() {
-                materials_info.push(format!("Zones traitées: {}", zones.join(", ")));
+                materials_info.push(format!("Zones traitÃƒÂ©es: {}", zones.join(", ")));
             }
         }
 
         if materials_info.is_empty() {
             current_layer.use_text(
-                "Aucune information sur les matériaux disponible",
+                "Aucune information sur les matÃƒÂ©riaux disponible",
                 11.0,
                 Mm(25.0),
                 Mm(*y_position as f32),
@@ -670,7 +670,7 @@ impl PdfGenerationService {
                 client.email.as_ref().unwrap_or(&"N/A".to_string())
             ),
             format!(
-                "Téléphone: {}",
+                "TÃƒÂ©lÃƒÂ©phone: {}",
                 client.phone.as_ref().unwrap_or(&"N/A".to_string())
             ),
         ];
@@ -692,7 +692,7 @@ impl PdfGenerationService {
     ) -> AppResult<()> {
         // Vehicle section header
         current_layer.use_text(
-            "INFORMATIONS VÉHICULE",
+            "INFORMATIONS VÃƒâ€°HICULE",
             14.0,
             Mm(20.0),
             Mm(*y_position as f32),
@@ -703,14 +703,14 @@ impl PdfGenerationService {
         let vehicle_info = vec![
             format!("Plaque: {}", intervention.vehicle_plate),
             format!(
-                "Modèle: {}",
+                "ModÃƒÂ¨le: {}",
                 intervention
                     .vehicle_model
                     .as_ref()
                     .unwrap_or(&"N/A".to_string())
             ),
             format!(
-                "Année: {}",
+                "AnnÃƒÂ©e: {}",
                 intervention
                     .vehicle_year
                     .map_or("N/A".to_string(), |y| y.to_string())
@@ -741,7 +741,7 @@ impl PdfGenerationService {
     ) -> AppResult<()> {
         // Detailed workflow section header
         current_layer.use_text(
-            "DÉTAIL DES ÉTAPES DE TRAVAIL",
+            "DÃƒâ€°TAIL DES Ãƒâ€°TAPES DE TRAVAIL",
             14.0,
             Mm(20.0),
             Mm(*y_position as f32),
@@ -751,7 +751,7 @@ impl PdfGenerationService {
 
         if workflow_steps.is_empty() {
             current_layer.use_text(
-                "Aucune étape de workflow disponible",
+                "Aucune ÃƒÂ©tape de workflow disponible",
                 11.0,
                 Mm(25.0),
                 Mm(*y_position as f32),
@@ -763,7 +763,7 @@ impl PdfGenerationService {
                 if *y_position < 50.0 {
                     // If we run out of space, add a note and break
                     current_layer.use_text(
-                        "... (suite des étapes non affichée - espace insuffisant)",
+                        "... (suite des ÃƒÂ©tapes non affichÃƒÂ©e - espace insuffisant)",
                         10.0,
                         Mm(25.0),
                         Mm(*y_position as f32),
@@ -775,17 +775,17 @@ impl PdfGenerationService {
 
                 // Step header
                 let step_header = format!(
-                    "Étape {}: {} - {}",
+                    "Ãƒâ€°tape {}: {} - {}",
                     step.step_number,
                     step.step_name,
                     match step.step_status {
-                        crate::models::step::StepStatus::Completed => "✓ Terminé",
-                        crate::models::step::StepStatus::InProgress => "⟳ En cours",
-                        crate::models::step::StepStatus::Pending => "○ En attente",
-                        crate::models::step::StepStatus::Paused => "⏸️ En pause",
-                        crate::models::step::StepStatus::Failed => "✗ Échec",
-                        crate::models::step::StepStatus::Skipped => "⊘ Ignoré",
-                        crate::models::step::StepStatus::Rework => "↺ Retravail",
+                        crate::models::step::StepStatus::Completed => "Ã¢Å“â€œ TerminÃƒÂ©",
+                        crate::models::step::StepStatus::InProgress => "Ã¢Å¸Â³ En cours",
+                        crate::models::step::StepStatus::Pending => "Ã¢â€”â€¹ En attente",
+                        crate::models::step::StepStatus::Paused => "Ã¢ÂÂ¸Ã¯Â¸Â En pause",
+                        crate::models::step::StepStatus::Failed => "Ã¢Å“â€” Ãƒâ€°chec",
+                        crate::models::step::StepStatus::Skipped => "Ã¢Å Ëœ IgnorÃƒÂ©",
+                        crate::models::step::StepStatus::Rework => "Ã¢â€ Âº Retravail",
                     }
                 );
                 current_layer.use_text(&step_header, 12.0, Mm(25.0), Mm(*y_position as f32), font);
@@ -796,7 +796,7 @@ impl PdfGenerationService {
 
                 // Duration
                 if let Some(duration) = step.duration_seconds {
-                    step_details.push(format!("Durée: {} secondes", duration));
+                    step_details.push(format!("DurÃƒÂ©e: {} secondes", duration));
                 }
 
                 // Timing information
@@ -805,7 +805,7 @@ impl PdfGenerationService {
                         let dt = chrono::DateTime::from_timestamp(start_time, 0);
                         if let Some(datetime) = dt {
                             step_details
-                                .push(format!("Début: {}", datetime.format("%d/%m/%Y %H:%M")));
+                                .push(format!("DÃƒÂ©but: {}", datetime.format("%d/%m/%Y %H:%M")));
                         }
                     }
                 }
@@ -833,7 +833,7 @@ impl PdfGenerationService {
                 if step.requires_supervisor_approval {
                     if step.approved_by.is_some() {
                         step_details.push(format!(
-                            "Approuvé par: {}",
+                            "ApprouvÃƒÂ© par: {}",
                             step.approved_by.as_ref().unwrap()
                         ));
                     } else {
@@ -878,7 +878,7 @@ impl PdfGenerationService {
     ) -> AppResult<()> {
         // Quality metrics section header
         current_layer.use_text(
-            "MÉTRIQUES QUALITÉ",
+            "MÃƒâ€°TRIQUES QUALITÃƒâ€°",
             14.0,
             Mm(20.0),
             Mm(*y_position as f32),
@@ -890,7 +890,7 @@ impl PdfGenerationService {
 
         // Overall quality score
         if let Some(score) = intervention.quality_score {
-            quality_info.push(format!("Score qualité global: {}/100", score));
+            quality_info.push(format!("Score qualitÃƒÂ© global: {}/100", score));
         }
 
         // Customer satisfaction
@@ -906,7 +906,7 @@ impl PdfGenerationService {
 
         if !steps_with_scores.is_empty() {
             quality_info.push(format!(
-                "Étapes avec validation: {}",
+                "Ãƒâ€°tapes avec validation: {}",
                 steps_with_scores.len()
             ));
 
@@ -939,7 +939,7 @@ impl PdfGenerationService {
 
         if quality_info.is_empty() {
             current_layer.use_text(
-                "Aucune métrique qualité disponible",
+                "Aucune mÃƒÂ©trique qualitÃƒÂ© disponible",
                 11.0,
                 Mm(25.0),
                 Mm(*y_position as f32),
@@ -984,7 +984,7 @@ impl PdfGenerationService {
                     .photo_category
                     .as_ref()
                     .map(|c| format!("{:?}", c))
-                    .unwrap_or_else(|| "Non catégorisée".to_string());
+                    .unwrap_or_else(|| "Non catÃƒÂ©gorisÃƒÂ©e".to_string());
                 *category_counts.entry(category).or_insert(0) += 1;
             }
 
@@ -1001,7 +1001,7 @@ impl PdfGenerationService {
                     .map(|s| s as f64)
                     .sum::<f64>()
                     / with_quality_score as f64;
-                photo_info.push(format!("Qualité moyenne: {:.1}/100", avg_quality));
+                photo_info.push(format!("QualitÃƒÂ© moyenne: {:.1}/100", avg_quality));
             }
 
             // Approval status
@@ -1010,7 +1010,7 @@ impl PdfGenerationService {
                 .iter()
                 .filter(|p| !p.is_approved && p.rejection_reason.is_some())
                 .count();
-            photo_info.push(format!("Approuvées: {}, Rejetées: {}", approved, rejected));
+            photo_info.push(format!("ApprouvÃƒÂ©es: {}, RejetÃƒÂ©es: {}", approved, rejected));
 
             // GPS data
             let with_gps = photos
@@ -1018,7 +1018,7 @@ impl PdfGenerationService {
                 .filter(|p| p.gps_location_lat.is_some())
                 .count();
             if with_gps > 0 {
-                photo_info.push(format!("Photos avec géolocalisation: {}", with_gps));
+                photo_info.push(format!("Photos avec gÃƒÂ©olocalisation: {}", with_gps));
             }
         }
 
@@ -1030,7 +1030,7 @@ impl PdfGenerationService {
         // Show detailed photo information if space allows
         if *y_position > 100.0 && !photos.is_empty() {
             current_layer.use_text(
-                "DÉTAIL DES PHOTOS:",
+                "DÃƒâ€°TAIL DES PHOTOS:",
                 10.0,
                 Mm(25.0),
                 Mm(*y_position as f32),
@@ -1041,7 +1041,7 @@ impl PdfGenerationService {
             for (i, photo) in photos.iter().enumerate() {
                 if *y_position < 80.0 {
                     current_layer.use_text(
-                        "...(suite des photos non affichée)",
+                        "...(suite des photos non affichÃƒÂ©e)",
                         9.0,
                         Mm(30.0),
                         Mm(*y_position as f32),
@@ -1053,20 +1053,20 @@ impl PdfGenerationService {
 
                 let photo_type_str = match &photo.photo_type {
                     Some(photo_type) => format!("{:?}", photo_type),
-                    None => "Non catégorisé".to_string(),
+                    None => "Non catÃƒÂ©gorisÃƒÂ©".to_string(),
                 };
                 let mut photo_detail = format!("Photo {}: {}", i + 1, photo_type_str);
 
                 // Add quality score if available
                 if let Some(quality) = photo.quality_score {
-                    photo_detail.push_str(&format!(" (Qualité: {}/100)", quality));
+                    photo_detail.push_str(&format!(" (QualitÃƒÂ©: {}/100)", quality));
                 }
 
                 // Add approval status
                 if photo.is_approved {
-                    photo_detail.push_str(" ✓ Approuvé");
+                    photo_detail.push_str(" Ã¢Å“â€œ ApprouvÃƒÂ©");
                 } else if photo.rejection_reason.is_some() {
-                    photo_detail.push_str(" ✗ Rejeté");
+                    photo_detail.push_str(" Ã¢Å“â€” RejetÃƒÂ©");
                 }
 
                 current_layer.use_text(&photo_detail, 9.0, Mm(30.0), Mm(*y_position as f32), font);
@@ -1116,7 +1116,7 @@ impl PdfGenerationService {
 
         // Special instructions
         if let Some(instructions) = &intervention.special_instructions {
-            feedback_info.push(format!("Instructions spéciales: {}", instructions));
+            feedback_info.push(format!("Instructions spÃƒÂ©ciales: {}", instructions));
         }
 
         // Notes
@@ -1159,7 +1159,7 @@ impl PdfGenerationService {
     ) -> AppResult<()> {
         // Workflow section header
         current_layer.use_text(
-            "ÉTAPES DU WORKFLOW",
+            "Ãƒâ€°TAPES DU WORKFLOW",
             14.0,
             Mm(20.0),
             Mm(*y_position as f32),
@@ -1169,17 +1169,17 @@ impl PdfGenerationService {
 
         for step in workflow_steps {
             let status_text = match step.step_status {
-                crate::models::step::StepStatus::Completed => "✓ Terminé",
-                crate::models::step::StepStatus::InProgress => "⟳ En cours",
-                crate::models::step::StepStatus::Pending => "○ En attente",
-                crate::models::step::StepStatus::Paused => "⏸️ En pause",
-                crate::models::step::StepStatus::Failed => "✗ Échec",
-                crate::models::step::StepStatus::Skipped => "⊘ Ignoré",
-                crate::models::step::StepStatus::Rework => "↺ Retravail",
+                crate::models::step::StepStatus::Completed => "Ã¢Å“â€œ TerminÃƒÂ©",
+                crate::models::step::StepStatus::InProgress => "Ã¢Å¸Â³ En cours",
+                crate::models::step::StepStatus::Pending => "Ã¢â€”â€¹ En attente",
+                crate::models::step::StepStatus::Paused => "Ã¢ÂÂ¸Ã¯Â¸Â En pause",
+                crate::models::step::StepStatus::Failed => "Ã¢Å“â€” Ãƒâ€°chec",
+                crate::models::step::StepStatus::Skipped => "Ã¢Å Ëœ IgnorÃƒÂ©",
+                crate::models::step::StepStatus::Rework => "Ã¢â€ Âº Retravail",
             };
 
             let step_line = format!(
-                "Étape {}: {} - {}",
+                "Ãƒâ€°tape {}: {} - {}",
                 step.step_number, step.step_name, status_text
             );
 
@@ -1200,7 +1200,7 @@ impl PdfGenerationService {
     ) -> AppResult<()> {
         // Quality section header
         current_layer.use_text(
-            "CONTRÔLES QUALITÉ",
+            "CONTRÃƒâ€LES QUALITÃƒâ€°",
             14.0,
             Mm(20.0),
             Mm(*y_position as f32),
@@ -1209,7 +1209,7 @@ impl PdfGenerationService {
         *y_position -= 15.0;
 
         // For now, just show basic quality info
-        let quality_text = "Contrôles qualité effectués selon les normes PPF";
+        let quality_text = "ContrÃƒÂ´les qualitÃƒÂ© effectuÃƒÂ©s selon les normes PPF";
         current_layer.use_text(quality_text, 11.0, Mm(25.0), Mm(*y_position as f32), font);
         *y_position -= 10.0;
 
@@ -1244,7 +1244,7 @@ impl PdfGenerationService {
     ) -> AppResult<()> {
         *y_position = 20.0; // Bottom of page
         let timestamp = format!(
-            "Rapport généré le: {}",
+            "Rapport gÃƒÂ©nÃƒÂ©rÃƒÂ© le: {}",
             Utc::now().format("%d/%m/%Y %H:%M:%S")
         );
         current_layer.use_text(&timestamp, 10.0, Mm(20.0), Mm(*y_position as f32), font);

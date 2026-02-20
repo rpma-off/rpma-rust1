@@ -282,7 +282,7 @@ impl PhotoService {
 
         if !std::path::Path::new(&photo.file_path).exists() {
             return Err(PhotoError::NotFound(
-                "Le fichier photo est introuvable sur le disque. Il a peut-être été déplacé ou supprimé.".to_string(),
+                "Le fichier photo est introuvable sur le disque. Il a peut-ÃƒÂªtre ÃƒÂ©tÃƒÂ© dÃƒÂ©placÃƒÂ© ou supprimÃƒÂ©.".to_string(),
             ));
         }
 
@@ -345,7 +345,7 @@ impl PhotoService {
                 .collect::<Vec<_>>()
                 .join(", ");
             return Err(PhotoError::InvalidMimeType(format!(
-                "Le type de fichier '{}' n'est pas pris en charge. Formats acceptés : {}.",
+                "Le type de fichier '{}' n'est pas pris en charge. Formats acceptÃƒÂ©s : {}.",
                 request.mime_type, allowed
             )));
         }
@@ -365,7 +365,7 @@ impl PhotoService {
             let size_mb = data.len() as f64 / (1024.0 * 1024.0);
             let max_mb = Self::MAX_UPLOAD_SIZE as f64 / (1024.0 * 1024.0);
             return Err(PhotoError::FileTooLarge(format!(
-                "Le fichier ({:.1} Mo) dépasse la taille maximale autorisée ({:.0} Mo).",
+                "Le fichier ({:.1} Mo) dÃƒÂ©passe la taille maximale autorisÃƒÂ©e ({:.0} Mo).",
                 size_mb, max_mb
             )));
         }

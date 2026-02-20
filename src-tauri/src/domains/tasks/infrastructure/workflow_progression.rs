@@ -6,7 +6,7 @@
 use crate::db::Database;
 use crate::db::{InterventionError, InterventionResult};
 use crate::logging::RPMARequestLogger;
-use crate::models::common::TimestampString;
+use crate::shared::contracts::common::TimestampString;
 use crate::models::intervention::Intervention;
 use crate::models::step::{InterventionStep, StepStatus};
 use crate::services::intervention_data::InterventionDataService;

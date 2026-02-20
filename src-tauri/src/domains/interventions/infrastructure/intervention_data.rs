@@ -8,7 +8,7 @@
 
 use crate::db::Database;
 use crate::db::{InterventionError, InterventionResult};
-use crate::models::common::*;
+use crate::shared::contracts::common::*;
 use crate::models::intervention::{Intervention, InterventionStatus, InterventionType};
 use crate::models::step::{InterventionStep, StepType};
 use crate::repositories::InterventionRepository;
@@ -578,7 +578,7 @@ impl InterventionDataService {
     pub fn get_ppf_workflow_steps(&self) -> Vec<(String, StepType)> {
         vec![
             ("Inspection".to_string(), StepType::Inspection),
-            ("Préparation".to_string(), StepType::Preparation),
+            ("PrÃƒÂ©paration".to_string(), StepType::Preparation),
             ("Installation".to_string(), StepType::Installation),
             ("Finalisation".to_string(), StepType::Finalization),
         ]

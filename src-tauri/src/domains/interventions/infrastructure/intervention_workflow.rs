@@ -9,7 +9,7 @@
 use crate::db::Database;
 use crate::db::{InterventionError, InterventionResult};
 use crate::logging::{LogDomain, RPMARequestLogger};
-use crate::models::common::TimestampString;
+use crate::shared::contracts::common::TimestampString;
 use crate::models::intervention::{Intervention, InterventionStatus};
 use crate::models::step::{InterventionStep, StepStatus};
 use crate::services::intervention_data::InterventionDataService;
@@ -362,7 +362,7 @@ impl InterventionWorkflowService {
             .update_step_with_data(&mut current_step, &request)?;
 
         // Set step to in-progress if not already set
-        // This allows a single call to transition Pending → InProgress → Completed
+        // This allows a single call to transition Pending Ã¢â€ â€™ InProgress Ã¢â€ â€™ Completed
         if current_step.step_status == StepStatus::Pending {
             current_step.step_status = StepStatus::InProgress;
             current_step.started_at = TimestampString::now();
@@ -741,9 +741,9 @@ impl InterventionWorkflowService {
             }
 
             step.step_status = StepStatus::Completed;
-            step.completed_at = TimestampString(Some(crate::models::common::now()));
+            step.completed_at = TimestampString(Some(crate::shared::contracts::common::now()));
             if step.started_at.inner().is_none() {
-                step.started_at = TimestampString(Some(crate::models::common::now()));
+                step.started_at = TimestampString(Some(crate::shared::contracts::common::now()));
             }
             step
         });
@@ -755,8 +755,8 @@ impl InterventionWorkflowService {
         intervention.customer_signature = request.customer_signature;
         intervention.customer_comments = request.customer_comments;
         intervention.status = InterventionStatus::Completed;
-        intervention.completed_at = TimestampString(Some(crate::models::common::now()));
-        intervention.updated_at = crate::models::common::now();
+        intervention.completed_at = TimestampString(Some(crate::shared::contracts::common::now()));
+        intervention.updated_at = crate::shared::contracts::common::now();
 
         // Calculate actual duration
         if let (Some(start), Some(end)) = (
@@ -783,7 +783,7 @@ impl InterventionWorkflowService {
                     .map_err(|e| e.to_string())?;
 
                 // Update associated task status to completed
-                let now = crate::models::common::now();
+                let now = crate::shared::contracts::common::now();
                 tx.execute(
                     "UPDATE tasks SET status = 'completed', completed_at = ?, updated_at = ? WHERE id = ?",
                     rusqlite::params![now, now, task_id],
@@ -797,7 +797,7 @@ impl InterventionWorkflowService {
         let completed_at_ms = intervention
             .completed_at
             .inner()
-            .unwrap_or_else(crate::models::common::now);
+            .unwrap_or_else(crate::shared::contracts::common::now);
         let technician_id = user_id
             .map(|id| id.to_string())
             .or_else(|| intervention.technician_id.clone())

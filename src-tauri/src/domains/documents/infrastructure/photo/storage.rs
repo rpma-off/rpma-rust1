@@ -53,7 +53,7 @@ impl PhotoStorageService {
     pub fn new(
         db: Database,
         storage_settings: &crate::models::settings::StorageSettings,
-    ) -> crate::services::photo::PhotoResult<Self> {
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<Self> {
         let storage_provider = Self::create_storage_provider(storage_settings)?;
         let local_storage_path = Self::get_local_storage_path(storage_settings)?;
 
@@ -67,18 +67,18 @@ impl PhotoStorageService {
     /// Create storage provider from settings
     fn create_storage_provider(
         settings: &crate::models::settings::StorageSettings,
-    ) -> crate::services::photo::PhotoResult<StorageProvider> {
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<StorageProvider> {
         match settings.photo_storage_type.as_str() {
             "local" => Ok(StorageProvider::Local),
             "cloud" => {
                 let provider = Self::parse_cloud_provider(settings)?;
                 let bucket = settings.cloud_bucket.clone().ok_or_else(|| {
-                    crate::services::photo::PhotoError::Validation(
+                    crate::domains::documents::infrastructure::photo::PhotoError::Validation(
                         "Cloud bucket not configured".to_string(),
                     )
                 })?;
                 let region = settings.cloud_region.clone().ok_or_else(|| {
-                    crate::services::photo::PhotoError::Validation(
+                    crate::domains::documents::infrastructure::photo::PhotoError::Validation(
                         "Cloud region not configured".to_string(),
                     )
                 })?;
@@ -92,12 +92,12 @@ impl PhotoStorageService {
                 let local_path = Self::get_local_storage_path(settings)?;
                 let provider = Self::parse_cloud_provider(settings)?;
                 let bucket = settings.cloud_bucket.clone().ok_or_else(|| {
-                    crate::services::photo::PhotoError::Validation(
+                    crate::domains::documents::infrastructure::photo::PhotoError::Validation(
                         "Cloud bucket not configured".to_string(),
                     )
                 })?;
                 let region = settings.cloud_region.clone().ok_or_else(|| {
-                    crate::services::photo::PhotoError::Validation(
+                    crate::domains::documents::infrastructure::photo::PhotoError::Validation(
                         "Cloud region not configured".to_string(),
                     )
                 })?;
@@ -108,41 +108,47 @@ impl PhotoStorageService {
                     region,
                 })
             }
-            _ => Err(crate::services::photo::PhotoError::Validation(format!(
-                "Unknown storage type: {}",
-                settings.photo_storage_type
-            ))),
+            _ => Err(
+                crate::domains::documents::infrastructure::photo::PhotoError::Validation(format!(
+                    "Unknown storage type: {}",
+                    settings.photo_storage_type
+                )),
+            ),
         }
     }
 
     /// Parse cloud provider from settings
     fn parse_cloud_provider(
         settings: &crate::models::settings::StorageSettings,
-    ) -> crate::services::photo::PhotoResult<CloudProvider> {
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<CloudProvider> {
         match settings.cloud_provider.as_deref() {
             Some("aws_s3") => Ok(CloudProvider::AwsS3),
             Some("gcp_storage") => Ok(CloudProvider::GcpStorage),
             Some("azure_blob") => Ok(CloudProvider::AzureBlob),
-            Some(provider) => Err(crate::services::photo::PhotoError::Validation(format!(
-                "Unknown cloud provider: {}",
-                provider
-            ))),
-            None => Err(crate::services::photo::PhotoError::Validation(
-                "Cloud provider not configured".to_string(),
-            )),
+            Some(provider) => Err(
+                crate::domains::documents::infrastructure::photo::PhotoError::Validation(format!(
+                    "Unknown cloud provider: {}",
+                    provider
+                )),
+            ),
+            None => Err(
+                crate::domains::documents::infrastructure::photo::PhotoError::Validation(
+                    "Cloud provider not configured".to_string(),
+                ),
+            ),
         }
     }
 
     /// Get local storage path from settings
     fn get_local_storage_path(
         settings: &crate::models::settings::StorageSettings,
-    ) -> crate::services::photo::PhotoResult<PathBuf> {
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<PathBuf> {
         match &settings.local_storage_path {
             Some(path) => Ok(PathBuf::from(path)),
             None => {
                 // Default to current directory + photos
                 let mut path = std::env::current_dir().map_err(|e| {
-                    crate::services::photo::PhotoError::Storage(format!(
+                    crate::domains::documents::infrastructure::photo::PhotoError::Storage(format!(
                         "Could not determine current directory: {}",
                         e
                     ))
@@ -159,13 +165,13 @@ impl PhotoStorageService {
         intervention_id: &str,
         file_name: &str,
         data: &[u8],
-    ) -> crate::services::photo::PhotoResult<PathBuf> {
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<PathBuf> {
         let file_path = self.generate_file_path(intervention_id, file_name);
 
         // Ensure directory exists
         if let Some(parent) = file_path.parent() {
             fs::create_dir_all(parent).await.map_err(|e| {
-                crate::services::photo::PhotoError::Storage(format!(
+                crate::domains::documents::infrastructure::photo::PhotoError::Storage(format!(
                     "Failed to create directory: {}",
                     e
                 ))
@@ -175,12 +181,18 @@ impl PhotoStorageService {
         // Atomic write: write to temp file first, then rename
         let tmp_path = file_path.with_extension("tmp");
         fs::write(&tmp_path, data).await.map_err(|e| {
-            crate::services::photo::PhotoError::Storage(format!("Failed to write file: {}", e))
+            crate::domains::documents::infrastructure::photo::PhotoError::Storage(format!(
+                "Failed to write file: {}",
+                e
+            ))
         })?;
         fs::rename(&tmp_path, &file_path).await.map_err(|e| {
             // Clean up temp file on rename failure
             let _ = std::fs::remove_file(&tmp_path);
-            crate::services::photo::PhotoError::Storage(format!("Failed to finalize file: {}", e))
+            crate::domains::documents::infrastructure::photo::PhotoError::Storage(format!(
+                "Failed to finalize file: {}",
+                e
+            ))
         })?;
 
         Ok(file_path)
@@ -193,7 +205,7 @@ impl PhotoStorageService {
         intervention_id: &str,
         file_name: &str,
         data: &[u8],
-    ) -> crate::services::photo::PhotoResult<PathBuf> {
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<PathBuf> {
         let file_path = base_path
             .join(intervention_id)
             .join("photos")
@@ -202,7 +214,7 @@ impl PhotoStorageService {
         // Ensure directory exists
         if let Some(parent) = file_path.parent() {
             fs::create_dir_all(parent).await.map_err(|e| {
-                crate::services::photo::PhotoError::Storage(format!(
+                crate::domains::documents::infrastructure::photo::PhotoError::Storage(format!(
                     "Failed to create directory: {}",
                     e
                 ))
@@ -212,11 +224,17 @@ impl PhotoStorageService {
         // Atomic write: write to temp file first, then rename
         let tmp_path = file_path.with_extension("tmp");
         fs::write(&tmp_path, data).await.map_err(|e| {
-            crate::services::photo::PhotoError::Storage(format!("Failed to write file: {}", e))
+            crate::domains::documents::infrastructure::photo::PhotoError::Storage(format!(
+                "Failed to write file: {}",
+                e
+            ))
         })?;
         fs::rename(&tmp_path, &file_path).await.map_err(|e| {
             let _ = std::fs::remove_file(&tmp_path);
-            crate::services::photo::PhotoError::Storage(format!("Failed to finalize file: {}", e))
+            crate::domains::documents::infrastructure::photo::PhotoError::Storage(format!(
+                "Failed to finalize file: {}",
+                e
+            ))
         })?;
 
         Ok(file_path)
@@ -227,11 +245,14 @@ impl PhotoStorageService {
         &self,
         intervention_id: &str,
         file_name: &str,
-    ) -> crate::services::photo::PhotoResult<Vec<u8>> {
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<Vec<u8>> {
         let file_path = self.generate_file_path(intervention_id, file_name);
 
         let data = fs::read(&file_path).await.map_err(|e| {
-            crate::services::photo::PhotoError::Storage(format!("Failed to read file: {}", e))
+            crate::domains::documents::infrastructure::photo::PhotoError::Storage(format!(
+                "Failed to read file: {}",
+                e
+            ))
         })?;
 
         Ok(data)
@@ -241,9 +262,12 @@ impl PhotoStorageService {
     pub async fn read_photo_file_with_path(
         &self,
         file_path: &Path,
-    ) -> crate::services::photo::PhotoResult<Vec<u8>> {
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<Vec<u8>> {
         let data = fs::read(file_path).await.map_err(|e| {
-            crate::services::photo::PhotoError::Storage(format!("Failed to read file: {}", e))
+            crate::domains::documents::infrastructure::photo::PhotoError::Storage(format!(
+                "Failed to read file: {}",
+                e
+            ))
         })?;
 
         Ok(data)
@@ -254,12 +278,15 @@ impl PhotoStorageService {
         &self,
         intervention_id: &str,
         file_name: &str,
-    ) -> crate::services::photo::PhotoResult<()> {
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<()> {
         let file_path = self.generate_file_path(intervention_id, file_name);
 
         if file_path.exists() {
             fs::remove_file(&file_path).await.map_err(|e| {
-                crate::services::photo::PhotoError::Storage(format!("Failed to delete file: {}", e))
+                crate::domains::documents::infrastructure::photo::PhotoError::Storage(format!(
+                    "Failed to delete file: {}",
+                    e
+                ))
             })?;
         }
 
@@ -275,7 +302,7 @@ impl PhotoStorageService {
         intervention_id: &str,
         file_name: &str,
         data: &[u8],
-    ) -> crate::services::photo::PhotoResult<String> {
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<String> {
         match provider {
             CloudProvider::AwsS3 => {
                 self.store_in_s3(bucket, region, intervention_id, file_name, data)
@@ -300,7 +327,7 @@ impl PhotoStorageService {
         intervention_id: &str,
         file_name: &str,
         data: &[u8],
-    ) -> crate::services::photo::PhotoResult<String> {
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<String> {
         // TODO: Implement actual S3 upload using rusoto_s3 or aws-sdk-rust
         // For now, store locally and return a local file URL
         match self.store_locally(intervention_id, file_name, data).await {
@@ -329,7 +356,7 @@ impl PhotoStorageService {
         intervention_id: &str,
         file_name: &str,
         data: &[u8],
-    ) -> crate::services::photo::PhotoResult<String> {
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<String> {
         // TODO: Implement actual GCP upload
         // For now, store locally and return a local file URL
         match self.store_locally(intervention_id, file_name, data).await {
@@ -358,7 +385,7 @@ impl PhotoStorageService {
         intervention_id: &str,
         file_name: &str,
         data: &[u8],
-    ) -> crate::services::photo::PhotoResult<String> {
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<String> {
         // TODO: Implement actual Azure upload
         // For now, store locally and return a local file URL
         match self.store_locally(intervention_id, file_name, data).await {
@@ -397,7 +424,10 @@ impl PhotoStorageService {
     }
 
     /// Save photo record to database
-    pub fn save_photo(&self, photo: &Photo) -> crate::services::photo::PhotoResult<()> {
+    pub fn save_photo(
+        &self,
+        photo: &Photo,
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<()> {
         // Check if photo exists
         let exists: i32 = self.db.query_single_value(
             "SELECT COUNT(*) FROM photos WHERE id = ?",

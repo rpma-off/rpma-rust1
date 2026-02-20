@@ -1,1 +1,1 @@
-// Domain layer module index.
+// Domain module.

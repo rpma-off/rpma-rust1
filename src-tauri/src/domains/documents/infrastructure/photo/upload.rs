@@ -6,7 +6,7 @@
 //! - Upload failure handling and recovery
 
 use crate::db::Database;
-use crate::models::common::now;
+use crate::shared::contracts::common::now;
 use crate::models::photo::Photo;
 use rusqlite::params;
 
@@ -27,9 +27,12 @@ impl PhotoUploadService {
         &self,
         photo_id: &str,
         max_retries: u32,
-    ) -> crate::services::photo::PhotoResult<()> {
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<()> {
         let mut photo = self.get_photo(photo_id)?.ok_or_else(|| {
-            crate::services::photo::PhotoError::NotFound(format!("Photo {} not found", photo_id))
+            crate::domains::documents::infrastructure::photo::PhotoError::NotFound(format!(
+                "Photo {} not found",
+                photo_id
+            ))
         })?;
 
         if photo.synced {
@@ -66,18 +69,20 @@ impl PhotoUploadService {
             }
         }
 
-        Err(crate::services::photo::PhotoError::Storage(format!(
-            "Failed to upload photo after {} retries. Last error: {}",
-            max_retries,
-            last_error.unwrap_or_else(|| "Unknown error".to_string())
-        )))
+        Err(
+            crate::domains::documents::infrastructure::photo::PhotoError::Storage(format!(
+                "Failed to upload photo after {} retries. Last error: {}",
+                max_retries,
+                last_error.unwrap_or_else(|| "Unknown error".to_string())
+            )),
+        )
     }
 
     /// Attempt to upload a single photo through the configured upload strategy.
     async fn attempt_photo_upload(
         &self,
         _photo: &Photo,
-    ) -> crate::services::photo::PhotoResult<()> {
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<()> {
         // The default offline strategy simulates transient upload failures so retry
         // logic and backoff behavior can be exercised deterministically in tests.
 
@@ -88,21 +93,29 @@ impl PhotoUploadService {
         if rng.gen::<f64>() < success_rate {
             Ok(())
         } else {
-            Err(crate::services::photo::PhotoError::Storage(
-                "Simulated upload failure".to_string(),
-            ))
+            Err(
+                crate::domains::documents::infrastructure::photo::PhotoError::Storage(
+                    "Simulated upload failure".to_string(),
+                ),
+            )
         }
     }
 
     /// Get photo from database
-    fn get_photo(&self, id: &str) -> crate::services::photo::PhotoResult<Option<Photo>> {
+    fn get_photo(
+        &self,
+        id: &str,
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<Option<Photo>> {
         Ok(self
             .db
             .query_single_as::<Photo>("SELECT * FROM photos WHERE id = ?", params![id])?)
     }
 
     /// Save photo record to database
-    fn save_photo(&self, photo: &Photo) -> crate::services::photo::PhotoResult<()> {
+    fn save_photo(
+        &self,
+        photo: &Photo,
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<()> {
         use rusqlite::params;
 
         // Check if photo exists

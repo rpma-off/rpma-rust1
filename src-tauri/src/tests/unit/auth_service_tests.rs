@@ -84,13 +84,13 @@ mod tests {
 
         // Test with accented characters
         let username = auth_service
-            .generate_username_from_names("José", "García")
+            .generate_username_from_names("JosÃƒÂ©", "GarcÃƒÂ­a")
             .expect("Failed to generate username");
         assert_eq!(username, "jose_garcia");
 
         // Test with various special characters
         let username = auth_service
-            .generate_username_from_names("François", "Müller")
+            .generate_username_from_names("FranÃƒÂ§ois", "MÃƒÂ¼ller")
             .expect("Failed to generate username");
         assert_eq!(username, "francois_muller");
     }

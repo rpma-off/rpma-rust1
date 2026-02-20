@@ -117,7 +117,7 @@ impl TaskCreationService {
             title: req
                 .title
                 .clone()
-                .filter(|t| !t.trim().is_empty() && t != "Nouvelle tâche")
+                .filter(|t| !t.trim().is_empty() && t != "Nouvelle tÃƒÂ¢che")
                 .unwrap_or_else(|| {
                     // Generate meaningful title based on available data
                     if let Some(make) = &req.vehicle_make {

@@ -119,17 +119,8 @@ impl AuthService {
         name.to_lowercase()
             .chars()
             .map(|c| match c {
-                'á' | 'à' | 'â' | 'ä' | 'ã' | 'å' => 'a',
-                'é' | 'è' | 'ê' | 'ë' => 'e',
-                'í' | 'ì' | 'î' | 'ï' => 'i',
-                'ó' | 'ò' | 'ô' | 'ö' | 'õ' | 'ø' => 'o',
-                'ú' | 'ù' | 'û' | 'ü' => 'u',
-                'ý' | 'ÿ' => 'y',
-                'ç' => 'c',
-                'ñ' => 'n',
-                'ß' => 's',
                 ' ' | '-' | '\'' => '_',
-                c if c.is_alphanumeric() => c,
+                c if c.is_ascii_alphanumeric() => c,
                 _ => '_',
             })
             .collect::<String>()

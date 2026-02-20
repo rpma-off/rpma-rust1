@@ -97,9 +97,11 @@ use rpma_ppf_intervention::services::prediction::CompletionTimePrediction;
 
 // Import command request types
 use rpma_ppf_intervention::commands::{
-    notification::{SendNotificationRequest, UpdateNotificationConfigRequest},
     ApiError, CompressedApiResponse, CreateUserRequest, UpdateUserRequest, UserAction,
     UserListResponse,
+};
+use rpma_ppf_intervention::domains::notifications::{
+    SendNotificationRequest, UpdateNotificationConfigRequest,
 };
 
 fn main() {

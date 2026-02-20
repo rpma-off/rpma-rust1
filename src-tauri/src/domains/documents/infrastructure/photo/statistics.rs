@@ -50,7 +50,9 @@ impl PhotoStatisticsService {
     }
 
     /// Get photo statistics
-    pub fn get_stats(&self) -> crate::services::photo::PhotoResult<PhotoStats> {
+    pub fn get_stats(
+        &self,
+    ) -> crate::domains::documents::infrastructure::photo::PhotoResult<PhotoStats> {
         // Get total photos and size
         let total_photos: i32 = self
             .db

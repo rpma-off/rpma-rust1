@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { useCreateQuote } from '@/shared/hooks/useQuotes';
+import { useCreateQuote } from '@/domains/quotes';
 import { PageShell } from '@/shared/ui/layout/PageShell';
 import type { CreateQuoteRequest, CreateQuoteItemRequest, QuoteItemKind } from '@/shared/types';
 

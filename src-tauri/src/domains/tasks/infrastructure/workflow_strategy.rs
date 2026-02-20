@@ -122,7 +122,7 @@ pub trait WorkflowStrategy: Send + Sync {
             // Check temperature constraints
             if let Some(temp) = conditions.temperature_celsius {
                 if temp < 10.0 || temp > 35.0 {
-                    errors.push("Temperature outside optimal range (10-35°C)".to_string());
+                    errors.push("Temperature outside optimal range (10-35Ã‚Â°C)".to_string());
                 }
             }
 
@@ -194,7 +194,7 @@ impl WorkflowStrategy for StandardPPFStrategy {
                 ]),
             },
             WorkflowStepConfig {
-                name: "Préparation".to_string(),
+                name: "PrÃƒÂ©paration".to_string(),
                 step_type: StepType::Preparation,
                 requires_photos: true,
                 min_photos_required: 2,
@@ -395,7 +395,7 @@ impl WorkflowStrategyFactory {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::common::*;
+    use crate::shared::contracts::common::*;
     use crate::models::intervention::{InterventionStatus, InterventionType};
 
     fn create_test_intervention() -> Intervention {

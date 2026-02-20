@@ -6,3 +6,5 @@ pub(crate) mod infrastructure;
 pub(crate) mod ipc;
 #[cfg(test)]
 pub(crate) mod tests;
+
+pub use ipc::notification::{SendNotificationRequest, UpdateNotificationConfigRequest};
