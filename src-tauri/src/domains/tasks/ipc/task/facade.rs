@@ -361,7 +361,7 @@ pub use super::validation::check_task_assignment;
 pub use super::validation::check_task_availability;
 
 // Explicit import for TaskFilter
-use crate::commands::task_types::TaskFilter;
+use crate::domains::tasks::ipc::task_types::TaskFilter;
 
 /// Export tasks to CSV command
 #[tracing::instrument(skip(state))]
@@ -938,11 +938,11 @@ pub async fn task_crud(
         }
         crate::commands::TaskAction::List { filters } => {
             // Use the proper task listing implementation
-            let request = crate::commands::task::queries::GetTasksWithClientsRequest {
+            let request = crate::domains::tasks::ipc::task::queries::GetTasksWithClientsRequest {
                 session_token: session_token.clone(),
                 page: None,
                 limit: None,
-                filter: Some(crate::commands::task_types::TaskFilter {
+                filter: Some(crate::domains::tasks::ipc::task_types::TaskFilter {
                     assigned_to: filters.technician_id,
                     client_id: filters.client_id,
                     status: filters.status.map(|s| s.to_string()),
@@ -971,17 +971,18 @@ pub async fn task_crud(
         }
         crate::commands::TaskAction::GetStatistics => {
             // Call the actual statistics implementation
-            let stats_request = crate::commands::task::queries::GetTaskStatisticsRequest {
-                session_token: session_token.clone(),
-                filter: None, // Get all statistics for the user's role
-                correlation_id: Some(correlation_id.clone()),
-            };
+            let stats_request =
+                crate::domains::tasks::ipc::task::queries::GetTaskStatisticsRequest {
+                    session_token: session_token.clone(),
+                    filter: None, // Get all statistics for the user's role
+                    correlation_id: Some(correlation_id.clone()),
+                };
 
             let stats_response = get_task_statistics(stats_request, state).await?;
             match stats_response.data {
                 Some(stats) => {
                     // Convert from service TaskStatistics to response TaskStatistics
-                    let response_stats = crate::commands::task_types::TaskStatistics {
+                    let response_stats = crate::domains::tasks::ipc::task_types::TaskStatistics {
                         total: stats.total_tasks,
                         completed: stats.completed_tasks,
                         pending: stats.pending_tasks,

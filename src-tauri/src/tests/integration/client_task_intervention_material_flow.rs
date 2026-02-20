@@ -5,12 +5,13 @@
 //! consuming materials during interventions, and updating client statistics.
 
 use crate::commands::AppResult;
+use crate::domains::clients::infrastructure::client::ClientService;
+use crate::domains::clients::infrastructure::client_statistics::ClientStatisticsService;
+use crate::domains::tasks::infrastructure::task_crud::TaskCrudService;
 use crate::models::client::{Client, CustomerType};
 use crate::models::material::{Material, MaterialType, UnitOfMeasure};
 use crate::models::task::TaskStatus;
 use crate::services::audit_service::{AuditEvent, AuditService};
-use crate::services::client::ClientService;
-use crate::services::client_statistics::ClientStatisticsService;
 use crate::services::intervention_types::{
     AdvanceStepRequest, FinalizeInterventionRequest, StartInterventionRequest,
 };
@@ -18,7 +19,6 @@ use crate::services::intervention_workflow::InterventionWorkflowService;
 use crate::services::material::{
     CreateMaterialRequest, MaterialService, RecordConsumptionRequest, UpdateStockRequest,
 };
-use crate::services::task_crud::TaskCrudService;
 use crate::test_utils::TestDatabase;
 use crate::{test_client, test_task};
 use chrono::Utc;
@@ -347,7 +347,8 @@ impl ClientTaskInterventionMaterialFlowTestFixture {
     pub fn get_client_statistics(
         &self,
         client_id: &str,
-    ) -> AppResult<crate::services::client_statistics::ClientActivityMetrics> {
+    ) -> AppResult<crate::domains::clients::infrastructure::client_statistics::ClientActivityMetrics>
+    {
         self.client_stats_service
             .get_client_activity_metrics(client_id)
     }

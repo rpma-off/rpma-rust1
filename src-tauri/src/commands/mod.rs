@@ -5,7 +5,6 @@
 
 pub mod analytics;
 pub mod calendar;
-pub mod client;
 pub mod compression;
 pub mod correlation_helpers;
 pub mod error_utils;
@@ -24,12 +23,9 @@ pub mod quote;
 pub mod reports;
 pub mod security;
 pub mod settings;
-pub mod status;
 pub mod streaming;
 pub mod sync;
 pub mod system;
-pub mod task;
-pub mod task_types;
 pub mod ui;
 pub mod websocket;
 pub mod websocket_commands;
@@ -112,10 +108,10 @@ use serde::{Deserialize, Serialize};
 use tracing::{debug, error, info, instrument, warn};
 
 // Import client types from models
+use crate::domains::clients::infrastructure::client::ClientStats;
 use crate::models::client::{
     ClientListResponse, ClientQuery, CreateClientRequest, UpdateClientRequest,
 };
-use crate::services::client::ClientStats;
 
 /// Task action types for CRUD operations
 #[derive(Deserialize, Debug)]
@@ -139,7 +135,7 @@ pub enum TaskResponse {
     Deleted,
     NotFound,
     List(TaskListResponse),
-    Statistics(crate::commands::task_types::TaskStatistics),
+    Statistics(crate::domains::tasks::ipc::task_types::TaskStatistics),
 }
 
 /// Client action types for CRUD operations

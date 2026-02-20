@@ -4,6 +4,7 @@
 //! and batch/expiry information during PPF installation processes.
 
 use crate::commands::AppResult;
+use crate::domains::tasks::infrastructure::task_crud::TaskCrudService;
 use crate::models::material::{InventoryTransactionType, Material, MaterialType, UnitOfMeasure};
 use crate::services::intervention_types::{
     AdvanceStepRequest, FinalizeInterventionRequest, StartInterventionRequest,
@@ -13,7 +14,6 @@ use crate::services::material::{
     CreateInventoryTransactionRequest, CreateMaterialRequest, MaterialService,
     RecordConsumptionRequest, UpdateStockRequest,
 };
-use crate::services::task_crud::TaskCrudService;
 use crate::test_task;
 use crate::test_utils::TestDatabase;
 use chrono::{DateTime, TimeZone, Utc};

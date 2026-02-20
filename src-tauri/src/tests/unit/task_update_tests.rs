@@ -4,9 +4,9 @@
 //! focusing on status transition validation, auto-timestamps, and business rules.
 
 use crate::commands::AppError;
+use crate::domains::tasks::infrastructure::task_creation::TaskCreationService;
+use crate::domains::tasks::infrastructure::task_update::TaskUpdateService;
 use crate::models::task::{CreateTaskRequest, TaskPriority, TaskStatus, UpdateTaskRequest};
-use crate::services::task_creation::TaskCreationService;
-use crate::services::task_update::TaskUpdateService;
 use crate::test_utils::{TestDataFactory, TestDatabase};
 use crate::{test_client, test_db, test_intervention, test_task};
 use chrono::Utc;

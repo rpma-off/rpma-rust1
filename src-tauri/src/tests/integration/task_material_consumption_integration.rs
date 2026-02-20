@@ -4,6 +4,7 @@
 //! ensuring proper stock updates, consumption records, and rollback behavior.
 
 use crate::commands::AppResult;
+use crate::domains::tasks::infrastructure::task_crud::TaskCrudService;
 use crate::models::material::InventoryTransactionType;
 use crate::models::material::{Material, MaterialConsumption, MaterialType, UnitOfMeasure};
 use crate::models::task::{CreateTaskRequest, TaskPriority, TaskStatus};
@@ -16,7 +17,6 @@ use crate::services::material::{
     CreateInventoryTransactionRequest, CreateMaterialRequest, MaterialService,
     RecordConsumptionRequest, UpdateStockRequest,
 };
-use crate::services::task_crud::TaskCrudService;
 use crate::test_utils::{TestDataFactory, TestDatabase};
 use crate::{test_client, test_db, test_intervention, test_task};
 use chrono::Utc;

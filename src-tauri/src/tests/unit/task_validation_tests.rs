@@ -1,7 +1,7 @@
 //! Unit tests for task validation helpers
 
+use crate::domains::tasks::infrastructure::task_validation::validate_status_transition;
 use crate::models::task::{CreateTaskRequest, TaskStatus};
-use crate::services::task_validation::validate_status_transition;
 use crate::test_utils::TestDataFactory;
 
 #[cfg(test)]

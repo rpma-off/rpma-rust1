@@ -3,7 +3,7 @@
 //! This module tests client CRUD operations, validation, and business rules.
 
 use crate::commands::AppResult;
-use crate::services::client::ClientService;
+use crate::domains::clients::infrastructure::client::ClientService;
 use crate::test_utils::{TestDataFactory, TestDatabase};
 use crate::{test_client, test_db, test_intervention, test_task};
 
@@ -490,7 +490,8 @@ mod tests {
             .unwrap();
 
         // Create a task associated with this client
-        let task_service = crate::services::task_crud::TaskCrudService::new(test_db.db());
+        let task_service =
+            crate::domains::tasks::infrastructure::task_crud::TaskCrudService::new(test_db.db());
         let task_request = test_task!(
             title: "Task for Client".to_string(),
             client_id: Some(created_client.id.clone())
@@ -517,7 +518,8 @@ mod tests {
     async fn test_client_statistics() -> AppResult<()> {
         let test_db = test_db!();
         let service = ClientService::new(test_db.db());
-        let task_service = crate::services::task_crud::TaskCrudService::new(test_db.db());
+        let task_service =
+            crate::domains::tasks::infrastructure::task_crud::TaskCrudService::new(test_db.db());
 
         // Create clients
         let client1_request = test_client!(name: "Active Client".to_string());

@@ -5,8 +5,8 @@
 
 use crate::commands::AppError;
 use crate::db::Database;
+use crate::domains::tasks::infrastructure::task_client_integration::TaskClientIntegrationService;
 use crate::models::task::{CreateTaskRequest, Task, TaskPriority, TaskQuery, TaskStatus};
-use crate::services::task_client_integration::TaskClientIntegrationService;
 use std::sync::Arc;
 use tracing::{debug, info};
 

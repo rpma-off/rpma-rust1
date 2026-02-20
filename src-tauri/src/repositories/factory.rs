@@ -11,20 +11,20 @@ pub use cache::Cache;
 // Export only what's used publicly
 
 // Import existing repositories
+pub use crate::domains::tasks::infrastructure::task_repository::TaskRepository;
 pub use crate::repositories::calendar_event_repository::CalendarEventRepository;
 pub use crate::repositories::intervention_repository::InterventionRepository;
 pub use crate::repositories::session_repository::SessionRepository;
-pub use crate::repositories::task_repository::TaskRepository;
 
 // Import new repositories
-pub use crate::repositories::client_repository::ClientRepository;
+pub use crate::domains::clients::infrastructure::client_repository::ClientRepository;
+pub use crate::domains::tasks::infrastructure::task_history_repository::TaskHistoryRepository;
 pub use crate::repositories::material_repository::MaterialRepository;
 pub use crate::repositories::message_repository::MessageRepository;
 pub use crate::repositories::notification_preferences_repository::NotificationPreferencesRepository;
 pub use crate::repositories::notification_repository::NotificationTemplateRepository;
 pub use crate::repositories::photo_repository::PhotoRepository;
 pub use crate::repositories::quote_repository::QuoteRepository;
-pub use crate::repositories::task_history_repository::TaskHistoryRepository;
 pub use crate::repositories::user_repository::UserRepository;
 
 /// Repository container holding all repository instances

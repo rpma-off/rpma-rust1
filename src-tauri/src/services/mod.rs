@@ -11,9 +11,6 @@ pub mod auth;
 pub mod cache;
 pub mod calendar;
 pub mod calendar_event_service;
-pub mod client;
-pub mod client_statistics;
-pub mod client_validation;
 pub mod consent;
 pub mod dashboard;
 pub mod document_storage;
@@ -44,17 +41,6 @@ pub mod security_monitor;
 pub mod session;
 pub mod settings;
 pub mod system;
-pub mod task;
-pub mod task_client_integration;
-pub mod task_constants;
-pub mod task_creation;
-pub mod task_crud;
-pub mod task_deletion;
-pub mod task_import;
-pub mod task_queries;
-pub mod task_statistics;
-pub mod task_update;
-pub mod task_validation;
 pub mod token;
 pub mod two_factor;
 pub mod user;
@@ -66,11 +52,30 @@ pub mod workflow_progression;
 pub mod workflow_strategy;
 pub mod workflow_validation;
 
+// Domain service aliases kept in-module to avoid legacy file shims while
+// preserving existing call sites during migration waves.
+pub mod client {
+    pub use crate::domains::clients::infrastructure::client::*;
+}
+
+pub mod task_client_integration {
+    pub use crate::domains::tasks::infrastructure::task_client_integration::*;
+}
+
+pub mod task_statistics {
+    pub use crate::domains::tasks::infrastructure::task_statistics::*;
+}
+
+pub mod task_validation {
+    pub use crate::domains::tasks::infrastructure::task_validation::*;
+}
+
 // Re-export main services
+pub use crate::domains::clients::infrastructure::client::ClientService;
+pub use crate::domains::clients::infrastructure::client_statistics::ClientStatisticsService;
+pub use crate::domains::tasks::infrastructure::task::TaskService;
 pub use analytics::AnalyticsService;
 
-pub use client::ClientService;
-pub use client_statistics::ClientStatisticsService;
 pub use dashboard::DashboardService;
 
 pub use intervention::InterventionService;
@@ -79,5 +84,4 @@ pub use message::MessageService;
 pub use photo::PhotoService;
 pub use quote::QuoteService;
 pub use settings::SettingsService;
-pub use task::TaskService;
 pub use user::UserService;

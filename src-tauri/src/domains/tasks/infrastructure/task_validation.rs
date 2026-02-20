@@ -4,9 +4,9 @@
 //! and conflict detection to ensure proper task management and resource allocation.
 
 use crate::db::{Database, FromSqlRow};
+use crate::domains::tasks::infrastructure::task_constants::TASK_QUERY_COLUMNS;
 use crate::models::task::{Task, TaskPriority, TaskStatus};
 use crate::services::settings::SettingsService;
-use crate::services::task_constants::TASK_QUERY_COLUMNS;
 use rusqlite::params;
 use std::sync::Arc;
 

@@ -92,9 +92,11 @@ impl ServiceBuilder {
         let intervention_service =
             Arc::new(crate::services::InterventionService::new(self.db.clone()));
         let settings_service = Arc::new(crate::services::SettingsService::new(self.db.clone()));
-        let task_import_service = Arc::new(crate::services::task_import::TaskImportService::new(
-            self.db.clone(),
-        ));
+        let task_import_service = Arc::new(
+            crate::domains::tasks::infrastructure::task_import::TaskImportService::new(
+                self.db.clone(),
+            ),
+        );
 
         // Initialize Auth Service (needs initialization)
         let auth_service = crate::services::auth::AuthService::new(db_instance.clone())?;

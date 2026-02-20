@@ -72,7 +72,7 @@ impl ExportReportService {
             None => {
                 #[allow(deprecated)]
                 {
-                    owned_client_service = crate::services::client::ClientService::new_with_db(
+                    owned_client_service = crate::services::ClientService::new_with_db(
                         std::sync::Arc::new(db.clone()),
                     );
                 }

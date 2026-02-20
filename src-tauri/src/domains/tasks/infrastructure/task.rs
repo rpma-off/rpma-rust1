@@ -15,7 +15,7 @@
 //! ## Usage
 //!
 //! ```ignore
-//! use crate::services::task::TaskService;
+//! use crate::domains::tasks::infrastructure::task::TaskService;
 //!
 //! let task_service = TaskService::new(database_connection);
 //!
@@ -36,20 +36,22 @@
 
 use crate::commands::AppResult;
 use crate::db::Database;
+use crate::domains::tasks::infrastructure::task_client_integration::TaskClientIntegrationService;
+use crate::domains::tasks::infrastructure::task_constants::convert_to_app_error;
+use crate::domains::tasks::infrastructure::task_creation::TaskCreationService;
+use crate::domains::tasks::infrastructure::task_crud::TaskCrudService;
+use crate::domains::tasks::infrastructure::task_queries::TaskQueriesService;
+use crate::domains::tasks::infrastructure::task_statistics::TaskStatisticsService;
+use crate::domains::tasks::infrastructure::task_validation::{
+    validate_status_transition, TaskValidationService,
+};
 use crate::models::task::*;
-use crate::services::task_client_integration::TaskClientIntegrationService;
-use crate::services::task_constants::convert_to_app_error;
-use crate::services::task_creation::TaskCreationService;
-use crate::services::task_crud::TaskCrudService;
-use crate::services::task_queries::TaskQueriesService;
-use crate::services::task_statistics::TaskStatisticsService;
-use crate::services::task_validation::{validate_status_transition, TaskValidationService};
 
 use std::sync::Arc;
 
 /// Re-export types from specialized modules for backward compatibility
-pub use crate::services::task_client_integration::TaskWithClientListResponse;
-pub use crate::services::task_statistics::TaskStatistics;
+pub use crate::domains::tasks::infrastructure::task_client_integration::TaskWithClientListResponse;
+pub use crate::domains::tasks::infrastructure::task_statistics::TaskStatistics;
 
 /// Main task service that orchestrates all task operations
 ///
@@ -89,7 +91,7 @@ impl TaskService {
     /// ```ignore
     /// use std::sync::Arc;
     /// use crate::db::Database;
-    /// use crate::services::task::TaskService;
+    /// use crate::domains::tasks::infrastructure::task::TaskService;
     ///
     /// let database = Arc::new(Database::new(connection_pool));
     /// let task_service = TaskService::new(database);
@@ -473,7 +475,7 @@ impl TaskService {
         reason: Option<&str>,
     ) -> AppResult<Task> {
         use crate::commands::AppError;
-        use crate::repositories::task_repository::TaskRepository;
+        use crate::domains::tasks::infrastructure::task_repository::TaskRepository;
 
         let repo = TaskRepository::new(self.crud.db.clone());
 
@@ -505,8 +507,8 @@ impl TaskService {
     /// quote, scheduled, in_progress, paused, completed, cancelled
     pub fn get_status_distribution(&self) -> AppResult<crate::models::status::StatusDistribution> {
         use crate::commands::AppError;
+        use crate::domains::tasks::infrastructure::task_repository::TaskRepository;
         use crate::models::status::StatusDistribution;
-        use crate::repositories::task_repository::TaskRepository;
 
         let repo = TaskRepository::new(self.crud.db.clone());
 
@@ -548,7 +550,7 @@ impl TaskService {
     /// Apply role-based filters to task query
     pub fn apply_role_based_filters(
         &self,
-        filter: &mut crate::commands::task_types::TaskFilter,
+        filter: &mut crate::domains::tasks::ipc::task_types::TaskFilter,
         session: &crate::models::auth::UserSession,
     ) {
         use crate::models::auth::UserRole;
@@ -578,8 +580,11 @@ impl TaskService {
         csv_data: &str,
         user_id: &str,
         update_existing: bool,
-    ) -> Result<crate::services::task_import::ImportResult, crate::commands::AppError> {
-        use crate::services::task_import::TaskImportService;
+    ) -> Result<
+        crate::domains::tasks::infrastructure::task_import::ImportResult,
+        crate::commands::AppError,
+    > {
+        use crate::domains::tasks::infrastructure::task_import::TaskImportService;
         let import_service = TaskImportService::new(self.crud.db.clone());
         import_service
             .import_from_csv(csv_data, user_id, update_existing)
@@ -589,10 +594,10 @@ impl TaskService {
     /// Export tasks to CSV
     pub fn export_to_csv(
         &self,
-        tasks: &[crate::services::task_import::TaskWithClientInfo],
+        tasks: &[crate::domains::tasks::infrastructure::task_import::TaskWithClientInfo],
         include_client_data: bool,
     ) -> Result<String, crate::commands::AppError> {
-        use crate::services::task_import::TaskImportService;
+        use crate::domains::tasks::infrastructure::task_import::TaskImportService;
         let import_service = TaskImportService::new(self.crud.db.clone());
         import_service.export_to_csv(tasks, include_client_data)
     }
@@ -601,9 +606,11 @@ impl TaskService {
     pub fn get_tasks_for_export(
         &self,
         query: TaskQuery,
-    ) -> Result<Vec<crate::services::task_import::TaskWithClientInfo>, crate::commands::AppError>
-    {
-        use crate::services::task_import::TaskImportService;
+    ) -> Result<
+        Vec<crate::domains::tasks::infrastructure::task_import::TaskWithClientInfo>,
+        crate::commands::AppError,
+    > {
+        use crate::domains::tasks::infrastructure::task_import::TaskImportService;
         let import_service = TaskImportService::new(self.crud.db.clone());
         import_service.get_tasks_for_export(query)
     }
