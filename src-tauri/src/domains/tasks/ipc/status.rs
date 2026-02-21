@@ -66,7 +66,7 @@ pub async fn task_get_status_distribution(
     state
         .task_service
         .get_status_distribution()
-        .map_err(|e| ApiError {
+        .map_err(|e: crate::shared::ipc::errors::AppError| ApiError {
             message: e.to_string(),
             code: "QUERY_ERROR".to_string(),
             details: None,
