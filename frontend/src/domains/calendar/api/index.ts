@@ -11,3 +11,6 @@ export type {
 } from '../hooks/useCalendar';
 
 export type { CalendarDomainContextValue } from './types';
+
+// Components
+export * from '../components';
