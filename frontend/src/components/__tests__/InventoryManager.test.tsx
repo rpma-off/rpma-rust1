@@ -1,7 +1,7 @@
 ﻿import React from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { InventoryManager } from '../InventoryManager';
+import { InventoryManager } from '@/domains/inventory/components/InventoryManager';
 import { useInventory, useInventoryStats } from '@/domains/inventory';
 import { Material, MaterialType, UnitOfMeasure, InventoryStats } from '@/shared/types';
 
@@ -28,7 +28,7 @@ jest.mock('lucide-react', () => ({
   Upload: () => <div data-testid="upload-icon" />,
 }));
 
-jest.mock('../StockLevelIndicator', () => ({
+jest.mock('@/domains/inventory/components/StockLevelIndicator', () => ({
   StockLevelIndicator: () => <div data-testid="stock-level-indicator" />,
 }));
 

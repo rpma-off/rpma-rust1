@@ -9,7 +9,6 @@
 use crate::db::Database;
 use crate::db::{InterventionError, InterventionResult};
 use crate::logging::{LogDomain, RPMARequestLogger};
-use crate::shared::contracts::common::TimestampString;
 use crate::models::intervention::{Intervention, InterventionStatus};
 use crate::models::step::{InterventionStep, StepStatus};
 use crate::services::intervention_data::InterventionDataService;
@@ -18,6 +17,7 @@ use crate::services::workflow_strategy::{
     EnvironmentConditions, WorkflowContext, WorkflowStrategyFactory,
 };
 use crate::services::workflow_validation::WorkflowValidationService;
+use crate::shared::contracts::common::TimestampString;
 use crate::shared::event_bus::{publish_event, InterventionFinalized};
 use serde_json::json;
 

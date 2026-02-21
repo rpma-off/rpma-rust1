@@ -6,8 +6,8 @@
 //! - Upload failure handling and recovery
 
 use crate::db::Database;
-use crate::shared::contracts::common::now;
 use crate::models::photo::Photo;
+use crate::shared::contracts::common::now;
 use rusqlite::params;
 
 /// Photo upload service with retry logic

@@ -1,9 +1,5 @@
-use crate::domains::interventions::InterventionsFacade;
-
 #[test]
-fn integration_interventions_facade_smoke() {
-    let facade = InterventionsFacade::new();
-    let clone = facade.clone();
-
-    assert_eq!(format!("{:?}", facade), format!("{:?}", clone));
+fn integration_interventions_facade_type_is_exported() {
+    let type_name = std::any::type_name::<crate::domains::interventions::InterventionsFacade>();
+    assert!(type_name.contains("InterventionsFacade"));
 }

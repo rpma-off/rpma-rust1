@@ -63,12 +63,11 @@ pub async fn task_get_status_distribution(
     // Update correlation context with user_id
     crate::commands::update_correlation_context_user(&current_user.user_id);
 
-    state
-        .task_service
-        .get_status_distribution()
-        .map_err(|e: crate::shared::ipc::errors::AppError| ApiError {
+    state.task_service.get_status_distribution().map_err(
+        |e: crate::shared::ipc::errors::AppError| ApiError {
             message: e.to_string(),
             code: "QUERY_ERROR".to_string(),
             details: None,
-        })
+        },
+    )
 }

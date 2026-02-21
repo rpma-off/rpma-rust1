@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { ExportControls } from '../../../app/reports/components/ExportControls';
+import { ExportControls } from '@/domains/reports/components/ExportControls';
 import { ReportType } from '@/lib/backend';
 
 // Mock console.log to avoid console output during tests

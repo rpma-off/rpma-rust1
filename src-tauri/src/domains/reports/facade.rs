@@ -29,8 +29,15 @@ impl ReportsFacade {
     /// Validate a report type parameter.
     pub fn validate_report_type(&self, report_type: &str) -> Result<(), AppError> {
         let valid_types = [
-            "task", "client", "technician", "material", "geographic",
-            "quality", "seasonal", "intelligence", "overview",
+            "task",
+            "client",
+            "technician",
+            "material",
+            "geographic",
+            "quality",
+            "seasonal",
+            "intelligence",
+            "overview",
         ];
         if !valid_types.contains(&report_type) {
             return Err(AppError::Validation(format!(

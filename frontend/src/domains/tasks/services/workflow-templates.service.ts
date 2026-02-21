@@ -92,7 +92,7 @@ const DEFAULT_WORKFLOW_TEMPLATE: WorkflowTemplate = {
       stepNumber: 1,
       title: 'Inspection',
       description: 'Inspection initiale du véhicule et de la surface.',
-      instructions: 'Vérifier l'état global et documenter les défauts.',
+      instructions: "Vérifier l'état global et documenter les défauts.",
       estimatedDuration: 30,
       requiredPhotos: 4,
       qualityCheckpoints: ['surface_clean', 'defects_logged'],

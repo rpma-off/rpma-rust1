@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { StockLevelIndicator } from '../../StockLevelIndicator';
+import { StockLevelIndicator } from '../StockLevelIndicator';
 import { Material, MaterialType, UnitOfMeasure } from '@/shared/types';
 
 const createMaterial = (overrides: Partial<Material> = {}): Material => ({

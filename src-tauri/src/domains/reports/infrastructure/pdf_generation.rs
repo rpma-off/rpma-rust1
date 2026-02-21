@@ -1010,7 +1010,10 @@ impl PdfGenerationService {
                 .iter()
                 .filter(|p| !p.is_approved && p.rejection_reason.is_some())
                 .count();
-            photo_info.push(format!("ApprouvÃƒÂ©es: {}, RejetÃƒÂ©es: {}", approved, rejected));
+            photo_info.push(format!(
+                "ApprouvÃƒÂ©es: {}, RejetÃƒÂ©es: {}",
+                approved, rejected
+            ));
 
             // GPS data
             let with_gps = photos

@@ -1,8 +1,8 @@
 use std::sync::Arc;
 use std::sync::Mutex;
 
-use crate::domains::sync::infrastructure::sync::queue::SyncQueue;
 use crate::domains::sync::infrastructure::sync::background::BackgroundSyncService;
+use crate::domains::sync::infrastructure::sync::queue::SyncQueue;
 
 /// Facade for the Sync bounded context.
 ///

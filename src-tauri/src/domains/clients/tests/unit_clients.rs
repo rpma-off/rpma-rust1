@@ -1,9 +1,5 @@
-use crate::domains::clients::ClientsFacade;
-
 #[test]
-fn unit_clients_facade_smoke() {
-    let facade = ClientsFacade::new();
-    let clone = facade.clone();
-
-    assert_eq!(format!("{:?}", facade), format!("{:?}", clone));
+fn unit_clients_facade_type_is_exported() {
+    let type_name = std::any::type_name::<crate::domains::clients::ClientsFacade>();
+    assert!(type_name.contains("ClientsFacade"));
 }

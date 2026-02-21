@@ -2026,7 +2026,11 @@ impl MaterialService {
     fn update_material_stock(&self, material_id: &str, new_stock: f64) -> MaterialResult<()> {
         self.db.execute(
             "UPDATE materials SET current_stock = ?, updated_at = ? WHERE id = ?",
-            params![new_stock, crate::shared::contracts::common::now(), material_id],
+            params![
+                new_stock,
+                crate::shared::contracts::common::now(),
+                material_id
+            ],
         )?;
         Ok(())
     }

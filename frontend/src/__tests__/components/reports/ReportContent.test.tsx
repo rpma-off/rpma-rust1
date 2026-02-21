@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { ReportContent } from '../../../app/reports/components/ReportContent';
+import { ReportContent } from '@/domains/reports/components/ReportContent';
 
 // Mock the reports service
 jest.mock('@/domains/reports', () => ({

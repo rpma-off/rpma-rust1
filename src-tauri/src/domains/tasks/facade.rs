@@ -43,9 +43,8 @@ impl TasksFacade {
     /// Validate and parse a status string, returning a domain-level error on
     /// invalid input.
     pub fn parse_status(&self, status: &str) -> Result<TaskStatus, AppError> {
-        TaskStatus::from_str(status).ok_or_else(|| {
-            AppError::Validation(format!("Invalid task status: {}", status))
-        })
+        TaskStatus::from_str(status)
+            .ok_or_else(|| AppError::Validation(format!("Invalid task status: {}", status)))
     }
 
     /// Validate that a task note is non-empty and within acceptable length.
@@ -67,9 +66,7 @@ impl TasksFacade {
     /// Validate that a task ID is present and well-formed.
     pub fn validate_task_id(&self, task_id: &str) -> Result<(), AppError> {
         if task_id.trim().is_empty() {
-            return Err(AppError::Validation(
-                "task_id is required".to_string(),
-            ));
+            return Err(AppError::Validation("task_id is required".to_string()));
         }
         Ok(())
     }

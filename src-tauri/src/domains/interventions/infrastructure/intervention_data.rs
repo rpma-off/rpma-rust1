@@ -8,12 +8,12 @@
 
 use crate::db::Database;
 use crate::db::{InterventionError, InterventionResult};
-use crate::shared::contracts::common::*;
 use crate::models::intervention::{Intervention, InterventionStatus, InterventionType};
 use crate::models::step::{InterventionStep, StepType};
 use crate::repositories::InterventionRepository;
 use crate::services::intervention_calculation::InterventionCalculationService;
 use crate::services::intervention_types::{AdvanceStepRequest, StartInterventionRequest};
+use crate::shared::contracts::common::*;
 use rusqlite::{params, OptionalExtension, Transaction};
 use std::str::FromStr;
 
