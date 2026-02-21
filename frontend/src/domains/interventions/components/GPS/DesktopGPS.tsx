@@ -1,4 +1,4 @@
-// src/components/GPS/DesktopGPS.tsx
+// src/domains/interventions/components/GPS/DesktopGPS.tsx
 import { useState, useEffect } from 'react';
 import { MapPin, Navigation, Crosshair, RefreshCw } from 'lucide-react';
 import { ipcClient } from '@/lib/ipc';
