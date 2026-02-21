@@ -15,10 +15,6 @@ pub mod worker_pool;
 
 // Domain service aliases kept in-module to avoid legacy file shims while
 // preserving existing call sites during migration waves.
-pub mod alerting {
-    pub use crate::domains::audit::infrastructure::alerting::*;
-}
-
 pub mod analytics {
     pub use crate::domains::analytics::infrastructure::analytics::*;
 }
@@ -53,10 +49,6 @@ pub mod dashboard {
 
 pub mod client {
     pub use crate::domains::clients::infrastructure::client::*;
-}
-
-pub mod geo {
-    pub use crate::domains::reports::infrastructure::geo::*;
 }
 
 pub mod message {
@@ -96,22 +88,12 @@ pub mod report_jobs {
 }
 
 pub mod reports {
-    pub use crate::domains::reports::infrastructure::reports::*;
-
     pub mod client_report {
         pub use crate::domains::reports::infrastructure::reports::client_report::*;
     }
 
-    pub mod core_service {
-        pub use crate::domains::reports::infrastructure::reports::core_service::*;
-    }
-
     pub mod export_service {
         pub use crate::domains::reports::infrastructure::reports::export_service::*;
-    }
-
-    pub mod generation_service {
-        pub use crate::domains::reports::infrastructure::reports::generation_service::*;
     }
 
     pub mod geographic_report {
@@ -148,10 +130,6 @@ pub mod reports {
 
     pub mod technician_report {
         pub use crate::domains::reports::infrastructure::reports::technician_report::*;
-    }
-
-    pub mod types {
-        pub use crate::domains::reports::infrastructure::reports::types::*;
     }
 
     pub mod validation {
@@ -195,14 +173,6 @@ pub mod user {
     pub use crate::domains::users::infrastructure::user::*;
 }
 
-pub mod workflow_cleanup {
-    pub use crate::domains::tasks::infrastructure::workflow_cleanup::*;
-}
-
-pub mod workflow_progression {
-    pub use crate::domains::tasks::infrastructure::workflow_progression::*;
-}
-
 pub mod workflow_strategy {
     pub use crate::domains::tasks::infrastructure::workflow_strategy::*;
 }
@@ -231,10 +201,6 @@ pub mod intervention_types {
     pub use crate::domains::interventions::infrastructure::intervention_types::*;
 }
 
-pub mod intervention_validation {
-    pub use crate::domains::interventions::infrastructure::intervention_validation::*;
-}
-
 pub mod intervention_workflow {
     pub use crate::domains::interventions::infrastructure::intervention_workflow::*;
 }
@@ -243,13 +209,8 @@ pub mod material {
     pub use crate::domains::inventory::infrastructure::material::*;
 }
 
-pub mod photo {
-    pub use crate::domains::documents::infrastructure::photo::*;
-}
-
 // Re-export main services
 pub use crate::domains::clients::infrastructure::client::ClientService;
-pub use crate::domains::clients::infrastructure::client_statistics::ClientStatisticsService;
 pub use crate::domains::tasks::infrastructure::task::TaskService;
 pub use analytics::AnalyticsService;
 
