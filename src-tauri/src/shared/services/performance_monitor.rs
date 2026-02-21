@@ -1,6 +1,7 @@
 //! Performance monitoring and metrics collection service
 
 use crate::db::Database;
+use crate::shared::db::performance_repository::PerformanceRepository;
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -54,42 +55,8 @@ impl PerformanceMonitorService {
 
     /// Initialize performance monitoring tables
     pub fn init(&self) -> Result<(), String> {
-        let conn = self.db.get_connection()?;
-
-        // Create performance metrics table
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS performance_metrics (
-                id TEXT PRIMARY KEY,
-                command TEXT NOT NULL,
-                duration_ms REAL NOT NULL,
-                success INTEGER NOT NULL,
-                timestamp TEXT NOT NULL,
-                user_id TEXT,
-                error_message TEXT,
-                metadata TEXT,
-                created_at TEXT NOT NULL
-            )",
-            [],
-        )
-        .map_err(|e| format!("Failed to create performance_metrics table: {}", e))?;
-
-        // Create indexes
-        conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_performance_timestamp ON performance_metrics(timestamp)",
-            [],
-        ).map_err(|e| format!("Failed to create timestamp index: {}", e))?;
-        conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_performance_command ON performance_metrics(command)",
-            [],
-        )
-        .map_err(|e| format!("Failed to create command index: {}", e))?;
-        conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_performance_success ON performance_metrics(success)",
-            [],
-        )
-        .map_err(|e| format!("Failed to create success index: {}", e))?;
-
-        Ok(())
+        let repo = PerformanceRepository::new(&self.db);
+        repo.init_schema()
     }
 
     /// Record a performance metric
@@ -108,7 +75,6 @@ impl PerformanceMonitorService {
         *self.stats_cache.lock().unwrap() = None;
 
         // Store in database
-        let conn = self.db.get_connection()?;
         let metadata_json = metric
             .metadata
             .as_ref()
@@ -117,24 +83,18 @@ impl PerformanceMonitorService {
             .map_err(|e| format!("Failed to serialize metadata: {}", e))?
             .unwrap_or_else(|| "{}".to_string());
 
-        conn.execute(
-            "INSERT INTO performance_metrics
-             (id, command, duration_ms, success, timestamp, user_id, error_message, metadata, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            rusqlite::params![
-                metric.id,
-                metric.command,
-                metric.duration_ms,
-                metric.success as i32,
-                metric.timestamp.to_rfc3339(),
-                metric.user_id,
-                metric.error_message,
-                metadata_json,
-                Utc::now().to_rfc3339(),
-            ],
-        ).map_err(|e| format!("Failed to insert performance metric: {}", e))?;
-
-        Ok(())
+        let repo = PerformanceRepository::new(&self.db);
+        repo.insert_metric(
+            &metric.id,
+            &metric.command,
+            metric.duration_ms,
+            metric.success,
+            &metric.timestamp.to_rfc3339(),
+            metric.user_id.as_deref(),
+            metric.error_message.as_deref(),
+            &metadata_json,
+            &Utc::now().to_rfc3339(),
+        )
     }
 
     /// Get performance statistics
@@ -152,24 +112,15 @@ impl PerformanceMonitorService {
         }
 
         // Calculate fresh stats
-        let conn = self.db.get_connection()?;
         let one_hour_ago = Utc::now() - Duration::hours(1);
 
-        // Get all metrics from the last hour
-        let mut stmt = conn
-            .prepare(
-                "SELECT command, duration_ms, success FROM performance_metrics
-             WHERE timestamp > ? ORDER BY timestamp DESC",
-            )
-            .map_err(|e| format!("Failed to prepare stats query: {}", e))?;
+        let repo = PerformanceRepository::new(&self.db);
+        let rows = repo.query_metrics_since(&one_hour_ago)?;
 
-        let metrics: Vec<(String, f64, bool)> = stmt
-            .query_map([one_hour_ago.to_rfc3339()], |row| {
-                Ok((row.get(0)?, row.get(1)?, row.get::<_, i32>(2)? != 0))
-            })
-            .map_err(|e| format!("Failed to query metrics: {}", e))?
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| format!("Failed to collect metrics: {}", e))?;
+        let metrics: Vec<(String, f64, bool)> = rows
+            .into_iter()
+            .map(|r| (r.command, r.duration_ms, r.success))
+            .collect();
 
         if metrics.is_empty() {
             return Ok(PerformanceStats {
@@ -268,21 +219,9 @@ impl PerformanceMonitorService {
 
     /// Clean up old performance metrics (keep last 7 days)
     pub fn cleanup_old_metrics(&self) -> Result<(), String> {
-        let conn = self.db.get_connection()?;
         let seven_days_ago = Utc::now() - Duration::days(7);
-
-        let deleted: usize = conn
-            .execute(
-                "DELETE FROM performance_metrics WHERE timestamp < ?",
-                [seven_days_ago.to_rfc3339()],
-            )
-            .map_err(|e| format!("Failed to cleanup old metrics: {}", e))?;
-
-        if deleted > 0 {
-            // Cleanup completed
-        }
-
-        Ok(())
+        let repo = PerformanceRepository::new(&self.db);
+        repo.delete_metrics_before(&seven_days_ago)
     }
 
     /// Start timing an operation
