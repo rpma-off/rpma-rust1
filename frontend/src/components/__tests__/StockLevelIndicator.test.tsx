@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { StockLevelIndicator } from '../StockLevelIndicator';
+import { StockLevelIndicator } from '@/domains/inventory/components/StockLevelIndicator';
 import { Material, MaterialType, UnitOfMeasure } from '@/shared/types';
 
 jest.mock('lucide-react', () => ({

@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { RecordDetailPanel } from '../../../app/reports/components/data-explorer/RecordDetailPanel';
+import { RecordDetailPanel } from '@/domains/reports/components/data-explorer/RecordDetailPanel';
 
 describe('RecordDetailPanel', () => {
   const mockOnClose = jest.fn();

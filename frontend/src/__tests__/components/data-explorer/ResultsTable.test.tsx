@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { ResultsTable } from '../../../app/reports/components/data-explorer/ResultsTable';
+import { ResultsTable } from '@/domains/reports/components/data-explorer/ResultsTable';
 
 describe('ResultsTable', () => {
   const mockOnRecordSelect = jest.fn();

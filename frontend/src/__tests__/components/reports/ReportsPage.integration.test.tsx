@@ -36,19 +36,19 @@ jest.mock('@/components/ui/switch', () => ({
   Switch: () => <input type="checkbox" />,
 }));
 
-jest.mock('../../../app/reports/components/DateRangePicker', () => ({
+jest.mock('@/domains/reports/components/DateRangePicker', () => ({
   DateRangePicker: () => <div data-testid="date-range-picker">Date Range Picker</div>,
 }));
 
-jest.mock('../../../app/reports/components/ReportTabs', () => ({
+jest.mock('@/domains/reports/components/ReportTabs', () => ({
   ReportTabs: () => <div data-testid="report-tabs">Report Tabs</div>,
 }));
 
-jest.mock('../../../app/reports/components/ReportContent', () => ({
+jest.mock('@/domains/reports/components/ReportContent', () => ({
   ReportContent: () => <div data-testid="report-content">Report Content</div>,
 }));
 
-jest.mock('../../../app/reports/components/ExportControls', () => ({
+jest.mock('@/domains/reports/components/ExportControls', () => ({
   ExportControls: () => <div data-testid="export-controls">Export Controls</div>,
 }));
 

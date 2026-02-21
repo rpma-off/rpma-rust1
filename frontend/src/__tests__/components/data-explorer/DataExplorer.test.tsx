@@ -1,10 +1,10 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { DataExplorer } from '../../../app/reports/components/data-explorer/DataExplorer';
-import { useSearchRecords } from '../../../hooks/useSearchRecords';
+import { DataExplorer } from '@/domains/reports/components/data-explorer/DataExplorer';
+import { useSearchRecords } from '@/hooks/useSearchRecords';
 
 // Mock the hook
-jest.mock('../../../hooks/useSearchRecords');
+jest.mock('@/hooks/useSearchRecords');
 const mockUseSearchRecords = useSearchRecords as jest.MockedFunction<typeof useSearchRecords>;
 
 describe('DataExplorer', () => {

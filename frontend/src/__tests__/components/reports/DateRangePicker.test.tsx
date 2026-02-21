@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { DateRangePicker } from '../../../app/reports/components/DateRangePicker';
+import { DateRangePicker } from '@/domains/reports/components/DateRangePicker';
 
 describe('DateRangePicker', () => {
   const mockOnDateRangeChange = jest.fn();

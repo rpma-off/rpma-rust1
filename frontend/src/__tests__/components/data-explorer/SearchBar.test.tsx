@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { SearchBar } from '../../../app/reports/components/data-explorer/SearchBar';
+import { SearchBar } from '@/domains/reports/components/data-explorer/SearchBar';
 
 describe('SearchBar', () => {
   const mockOnChange = jest.fn();
