@@ -48,22 +48,9 @@ pub mod intervention_repository {
     pub use crate::domains::interventions::infrastructure::intervention_repository::*;
 }
 
-pub mod material_repository {
-    pub use crate::domains::inventory::infrastructure::material_repository::*;
-}
-
-pub mod photo_repository {
-    pub use crate::domains::documents::infrastructure::photo_repository::*;
-}
-
 // Re-exports - only what's actually used
 pub use crate::domains::clients::infrastructure::client_repository::ClientRepository;
-pub use crate::domains::documents::infrastructure::photo_repository::PhotoRepository;
 pub use crate::domains::interventions::infrastructure::intervention_repository::InterventionRepository;
-pub use crate::domains::inventory::infrastructure::material_repository::MaterialRepository;
-pub use crate::domains::tasks::infrastructure::task_history_repository::TaskHistoryRepository;
-pub use crate::domains::tasks::infrastructure::task_repository::TaskRepository;
-pub use audit_repository::AuditRepository;
 pub use base::Repository;
 pub use cache::Cache;
 pub use calendar_event_repository::CalendarEventRepository;
