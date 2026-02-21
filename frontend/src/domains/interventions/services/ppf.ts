@@ -3,6 +3,7 @@ import type { PPFInterventionStep } from '@/types/ppf-intervention';
 import { ApiError } from '@/types/api';
 import { ipcClient } from '@/lib/ipc';
 import { AuthSecureStorage } from '@/lib/secureStorage';
+import type { JsonValue } from '@/lib/backend';
 
 export interface PPFStep {
   id: string;
@@ -82,7 +83,13 @@ export class PPFService {
     }
   }
 
-  static async advanceIntervention(id: string): Promise<PPFIntervention> {
+  static async advanceIntervention(id: string, options?: {
+    collected_data?: unknown;
+    photos?: string[] | null;
+    notes?: string | null;
+    quality_check_passed?: boolean;
+    issues?: string[] | null;
+  }): Promise<PPFIntervention> {
     try {
       const token = await this.getSessionToken();
 
@@ -98,11 +105,11 @@ export class PPFService {
       await ipcClient.interventions.advanceStep({
         intervention_id: id,
         step_id: String(nextStep.id),
-        collected_data: null,
-        photos: null,
-        notes: null,
-        quality_check_passed: true,
-        issues: null,
+        collected_data: (options?.collected_data ?? null) as JsonValue,
+        photos: options?.photos ?? null,
+        notes: options?.notes ?? null,
+        quality_check_passed: options?.quality_check_passed ?? true,
+        issues: options?.issues ?? null,
       }, token);
 
       const intervention = await this.getIntervention(id);
@@ -114,19 +121,27 @@ export class PPFService {
     }
   }
 
-  static async finalizeIntervention(id: string): Promise<PPFIntervention> {
+  static async finalizeIntervention(id: string, options?: {
+    collected_data?: unknown;
+    photos?: string[] | null;
+    customer_satisfaction?: number | null;
+    quality_score?: number | null;
+    final_observations?: string[] | null;
+    customer_signature?: string | null;
+    customer_comments?: string | null;
+  }): Promise<PPFIntervention> {
     try {
       const token = await this.getSessionToken();
 
       await ipcClient.interventions.finalize({
         intervention_id: id,
-        collected_data: null,
-        photos: null,
-        customer_satisfaction: null,
-        quality_score: null,
-        final_observations: null,
-        customer_signature: null,
-        customer_comments: null,
+        collected_data: (options?.collected_data ?? null) as JsonValue,
+        photos: options?.photos ?? null,
+        customer_satisfaction: options?.customer_satisfaction ?? null,
+        quality_score: options?.quality_score ?? null,
+        final_observations: options?.final_observations ?? null,
+        customer_signature: options?.customer_signature ?? null,
+        customer_comments: options?.customer_comments ?? null,
       }, token);
 
       const intervention = await this.getIntervention(id);

@@ -14,7 +14,7 @@ export interface Technician {
 
 export class TechnicianService {
   static getInstance(): TechnicianService {
-    return TechnicianService as unknown as TechnicianService;
+    return new TechnicianService();
   }
 
   private static async getSessionToken(): Promise<string> {

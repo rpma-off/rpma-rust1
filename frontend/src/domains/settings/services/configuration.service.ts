@@ -27,6 +27,8 @@ export interface BusinessRule {
   updated_by?: string;
 }
 
+const BUSINESS_RULE_PREFIX = 'business_rule_';
+
 export class ConfigurationService {
   private static async getSessionToken(): Promise<string> {
     const session = await AuthSecureStorage.getSession();
@@ -105,7 +107,7 @@ export class ConfigurationService {
     try {
       const token = await this.getSessionToken();
       await ipcClient.settings.updateUserPreferences(
-        { [`business_rule_${id}`]: { ...updates, updated_at: new Date().toISOString() } },
+        { [`${BUSINESS_RULE_PREFIX}${id}`]: { ...updates, updated_at: new Date().toISOString() } },
         token
       );
 
@@ -140,7 +142,7 @@ export class ConfigurationService {
     try {
       const token = await this.getSessionToken();
       await ipcClient.settings.updateUserPreferences(
-        { [`business_rule_${id}`]: null },
+        { [`${BUSINESS_RULE_PREFIX}${id}`]: null },
         token
       );
 
@@ -214,11 +216,11 @@ export class ConfigurationService {
 
       const raw = settings as Record<string, unknown>;
       const rules: BusinessRule[] = Object.entries(raw)
-        .filter(([key]) => key.startsWith('business_rule_'))
+        .filter(([key]) => key.startsWith(BUSINESS_RULE_PREFIX))
         .map(([key, value]) => {
           const rule = value as Record<string, unknown>;
           return {
-            id: key.replace('business_rule_', ''),
+            id: key.replace(BUSINESS_RULE_PREFIX, ''),
             name: String(rule.name || ''),
             description: rule.description ? String(rule.description) : undefined,
             category: String(rule.category || ''),
@@ -260,7 +262,7 @@ export class ConfigurationService {
 
       const token = await this.getSessionToken();
       await ipcClient.settings.updateUserPreferences(
-        { [`business_rule_${id}`]: newRule as unknown as JsonValue },
+        { [`${BUSINESS_RULE_PREFIX}${id}`]: newRule as unknown as JsonValue },
         token
       );
 
@@ -289,7 +291,7 @@ export class ConfigurationService {
 
       const raw = settings as Record<string, unknown>;
       const configs: Configuration[] = Object.entries(raw)
-        .filter(([key]) => !key.startsWith('business_rule_'))
+        .filter(([key]) => !key.startsWith(BUSINESS_RULE_PREFIX))
         .map(([key, value]) => ({
           id: key,
           key,

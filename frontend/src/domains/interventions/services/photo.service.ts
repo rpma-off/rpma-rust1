@@ -35,7 +35,7 @@ export interface RealTimeValidationResult {
 
 export class PPFPhotoService {
   static getInstance() {
-    return PPFPhotoService;
+    return new PPFPhotoService();
   }
 
   private static async getSessionToken(): Promise<string> {

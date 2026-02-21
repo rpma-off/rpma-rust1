@@ -81,7 +81,7 @@ export class TaskHistoryService {
         if (task) {
           const raw = task as unknown as Record<string, unknown>;
           history = [{
-            id: `history-${filters.taskId}`,
+            id: `fallback-history-${filters.taskId}`,
             taskId: filters.taskId,
             action: 'created',
             userId: String(raw.created_by || raw.technician_id || ''),

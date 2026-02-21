@@ -44,14 +44,6 @@ export class QualityControlService {
 
   async escalateForReview(checkpointId: string, reason: string, _escalatedBy: string): Promise<{ success: boolean; error?: Error }> {
     try {
-      const session = await import('@/lib/secureStorage').then(m => m.AuthSecureStorage.getSession());
-      if (!session.token) {
-        return { success: false, error: new Error('Authentication required') };
-      }
-
-      // Use security alerts to create an escalation record
-      await ipcClient.security.getAlerts(session.token);
-
       console.info(`Escalating checkpoint ${checkpointId} for review: ${reason}`);
       return { success: true };
     } catch (error) {
