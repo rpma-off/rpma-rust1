@@ -1,2 +1,2 @@
-export { changeLogService } from '@/lib/services/change-log.service';
-export type { ChangeLogWithUser } from '@/lib/services/change-log.service';
+export { changeLogService } from '@/domains/audit/services';
+export type { ChangeLogWithUser } from '@/domains/audit/services';

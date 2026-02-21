@@ -1,4 +1,4 @@
-export { settingsService } from '@/lib/services/entities/settings.service';
+export { settingsService } from '@/domains/settings/services';
 export type {
   SettingsServiceResponse,
   UpdatePreferencesRequest,
@@ -7,4 +7,4 @@ export type {
   UpdatePerformanceRequest,
   UpdateProfileRequest,
   ChangePasswordRequest,
-} from '@/lib/services/entities/settings.service';
+} from '@/domains/settings/services';

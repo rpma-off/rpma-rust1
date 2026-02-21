@@ -23,7 +23,6 @@ impl StreamingTaskRepository {
     ///
     /// This method is ideal for large datasets (1000+ tasks) as it
     /// loads data in chunks rather than all at once.
-    #[allow(unreachable_code, unused_variables)]
     pub fn stream_tasks_with_filter(
         &self,
         status: Option<String>,
@@ -78,17 +77,15 @@ impl StreamingTaskRepository {
             params.push(c.into());
         }
 
-        // Get read pool for this operation
-        let conn = self.pool_manager.get_connection(OperationType::Read)?;
+        // Get read pool for streaming query
+        let pool = self.pool_manager.get_pool(OperationType::Read);
 
         // Create chunked query
         let query = ChunkedQuery::new(
             base_query,
             params,
             |row| Task::from_row(row),
-            // We need to create a temporary pool - in real implementation
-            // you'd pass the pool manager reference
-            unimplemented!("Streaming requires pool integration"),
+            pool,
         );
 
         Ok(query)

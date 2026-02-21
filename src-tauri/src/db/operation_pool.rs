@@ -184,6 +184,20 @@ impl OperationPoolManager {
         debug!("WAL checkpoint completed on all pools");
         Ok(())
     }
+
+    /// Get a clone of the underlying pool for the given operation type
+    ///
+    /// Used for streaming queries that need to manage their own connections.
+    pub fn get_pool(
+        &self,
+        operation_type: OperationType,
+    ) -> Pool<SqliteConnectionManager> {
+        match operation_type {
+            OperationType::Read => self.read_pool.clone(),
+            OperationType::Write => self.write_pool.clone(),
+            OperationType::Report => self.report_pool.clone(),
+        }
+    }
 }
 
 /// Pool statistics for monitoring

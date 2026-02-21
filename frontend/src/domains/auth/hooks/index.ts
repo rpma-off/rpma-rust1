@@ -1,4 +1,5 @@
 // Auth domain hooks
-// Domain-specific hooks are currently in api/ (useAuth, useAuthActions)
-// New auth-specific hooks should be added here
-export {};
+// Primary auth hooks (useAuth, useAuthActions) live in api/ as they are tightly coupled
+// with the AuthProvider context. Re-export them here for domain hook access.
+export { useAuth } from '../api/useAuth';
+export { useAuthActions } from '../api/useAuthActions';
