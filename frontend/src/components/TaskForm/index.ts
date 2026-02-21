@@ -1,15 +1,4 @@
-// Task Form Components
-export { default as TaskForm } from './TaskForm';
-export { default as TaskFormWizard } from './TaskFormWizard';
-export { useTaskForm } from './useTaskForm';
-export { useTaskFormSteps } from './TaskFormSteps';
-export { useTaskFormSubmission } from './TaskFormSubmission';
-
-// Form Steps
-export { VehicleStep } from './steps/VehicleStep';
-export { CustomerStep } from './steps/CustomerStep';
-export { PPFStep } from './steps/PPFStep';
-export { ScheduleStep } from './steps/ScheduleStep';
-
-// Types and Constants
-export * from './types';
+/**
+ * @deprecated Import from @/domains/tasks/components/TaskForm instead
+ */
+export * from '@/domains/tasks/components/TaskForm';
