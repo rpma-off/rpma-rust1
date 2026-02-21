@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Signature Capture Component
  */
 
