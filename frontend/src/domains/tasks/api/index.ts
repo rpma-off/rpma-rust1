@@ -35,6 +35,7 @@ export { useTaskStatus } from '../hooks/useTaskStatus';
 export { useTaskState } from '../hooks/useTaskState';
 export { useTaskFilters } from '../hooks/useTaskFilters';
 export { useTaskFiltering } from '../hooks/useTaskFiltering';
+export { useWorkflowStepAutoSave } from '../hooks/useWorkflowStepAutoSave';
 export { taskGateway } from './taskGateway';
 
 export type {
@@ -50,3 +51,22 @@ export type {
   TaskListResponse,
 } from './types';
 export type { UpdateTaskData, TaskPhotoQueryParams } from '../server';
+
+export {
+  WorkflowService,
+  workflowService,
+  WorkflowTemplatesService,
+  workflowTemplatesService,
+  TaskWorkflowSyncService,
+  taskWorkflowSyncService,
+} from '../services';
+export type {
+  WorkflowExecution,
+  WorkflowExecutionStep,
+  CreateWorkflowExecutionDTO,
+  StartTimingDTO,
+  SignatureDTO,
+  WorkflowTemplate,
+  WorkflowStepTemplate,
+  SOPInstruction,
+} from '../services';

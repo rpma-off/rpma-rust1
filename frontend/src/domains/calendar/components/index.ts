@@ -20,6 +20,7 @@ export {
   getEventDuration,
 } from './calendar-utils';
 export { CalendarView } from './calendar-view';
+export { CalendarView as WorkflowCalendarView } from './CalendarView';
 export { CalendarWeekHeader } from './calendar-week-header';
 export { CreateEventDialog } from './create-event-dialog';
 export { CurrentTimeIndicator } from './current-time-indicator';

@@ -1,6 +1,6 @@
 import React from 'react';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
-import { CalendarView } from '@/domains/workflow';
+import { CalendarView } from './CalendarView';
 import type { CalendarTask } from '@/lib/backend';
 
 interface DragDropCalendarProps {

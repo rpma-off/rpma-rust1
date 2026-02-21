@@ -7,7 +7,7 @@ export { useSearchRecords } from './useSearchRecords';
 export { useAdvancedFiltering, useTaskFiltering, useSOPFiltering } from './useAdvancedFiltering';
 export { useAccessibility, useKeyboardNavigation as useAccessibilityKeyboardNavigation, useFocusTrap, useScreenReaderAnnouncement, useHapticFeedback, useTouchFriendly } from './useAccessibility';
 export { useKeyboardNavigation, useFocusableList, useRovingTabIndex } from './useKeyboardNavigation';
-export { useAutoSave, useWorkflowStepAutoSave, useBeforeUnloadSave } from './useAutoSave';
+export { useAutoSave, useBeforeUnloadSave } from './useAutoSave';
 export { useIntersectionObserver, useLazyImage, useLazyComponent, useInfiniteScroll, useScrollAnimation } from './useIntersectionObserver';
 export { useKeyboardShortcuts, useAppKeyboardShortcuts } from './useKeyboardShortcuts';
 export { useDesktopNavigation } from './useDesktopNavigation';
