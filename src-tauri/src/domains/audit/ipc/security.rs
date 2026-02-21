@@ -2,55 +2,13 @@
 
 use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
+use crate::domains::audit::application::{
+    AcknowledgeSecurityAlertRequest, CleanupSecurityEventsRequest, GetSecurityAlertsRequest,
+    GetSecurityEventsRequest, GetSecurityMetricsRequest, ResolveSecurityAlertRequest,
+    SecurityAlertResponse, SecurityEventResponse, SecurityMetricsResponse,
+};
 use crate::models::auth::UserRole;
-use serde::{Deserialize, Serialize};
 use tracing::{error, info, instrument};
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct SecurityMetricsResponse {
-    pub total_events_today: u64,
-    pub critical_alerts_today: u64,
-    pub active_brute_force_attempts: u64,
-    pub blocked_ips: u64,
-    pub failed_auth_attempts_last_hour: u64,
-    pub suspicious_activities_detected: u64,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct SecurityEventResponse {
-    pub id: String,
-    pub event_type: String,
-    pub severity: String,
-    pub timestamp: String,
-    pub user_id: Option<String>,
-    pub ip_address: Option<String>,
-    pub details: serde_json::Value,
-    pub source: String,
-    pub mitigated: bool,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct SecurityAlertResponse {
-    pub id: String,
-    pub event_id: String,
-    pub title: String,
-    pub description: String,
-    pub severity: String,
-    pub timestamp: String,
-    pub acknowledged: bool,
-    pub acknowledged_by: Option<String>,
-    pub acknowledged_at: Option<String>,
-    pub resolved: bool,
-    pub resolved_at: Option<String>,
-    pub actions_taken: Vec<String>,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct GetSecurityMetricsRequest {
-    pub session_token: String,
-    #[serde(default)]
-    pub correlation_id: Option<String>,
-}
 
 /// Get security metrics
 #[tauri::command]
@@ -83,14 +41,6 @@ pub async fn get_security_metrics(
     };
 
     Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone())))
-}
-
-#[derive(Deserialize, Debug)]
-pub struct GetSecurityEventsRequest {
-    pub session_token: String,
-    pub limit: Option<usize>,
-    #[serde(default)]
-    pub correlation_id: Option<String>,
 }
 
 /// Get recent security events
@@ -132,13 +82,6 @@ pub async fn get_security_events(
         .collect();
 
     Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone())))
-}
-
-#[derive(Deserialize, Debug)]
-pub struct GetSecurityAlertsRequest {
-    pub session_token: String,
-    #[serde(default)]
-    pub correlation_id: Option<String>,
 }
 
 /// Get active security alerts
@@ -183,14 +126,6 @@ pub async fn get_security_alerts(
     Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone())))
 }
 
-#[derive(Deserialize, Debug)]
-pub struct AcknowledgeSecurityAlertRequest {
-    pub session_token: String,
-    pub alert_id: String,
-    #[serde(default)]
-    pub correlation_id: Option<String>,
-}
-
 /// Acknowledge a security alert
 #[tauri::command]
 #[instrument(skip(state, request), fields(alert_id = %request.alert_id))]
@@ -225,15 +160,6 @@ pub async fn acknowledge_security_alert(
     )
 }
 
-#[derive(Deserialize, Debug)]
-pub struct ResolveSecurityAlertRequest {
-    pub session_token: String,
-    pub alert_id: String,
-    pub actions_taken: Vec<String>,
-    #[serde(default)]
-    pub correlation_id: Option<String>,
-}
-
 /// Resolve a security alert
 #[tauri::command]
 #[instrument(skip(state, request), fields(alert_id = %request.alert_id))]
@@ -266,13 +192,6 @@ pub async fn resolve_security_alert(
         ApiResponse::success("Alert resolved successfully".to_string())
             .with_correlation_id(Some(correlation_id.clone())),
     )
-}
-
-#[derive(Deserialize, Debug)]
-pub struct CleanupSecurityEventsRequest {
-    pub session_token: String,
-    #[serde(default)]
-    pub correlation_id: Option<String>,
 }
 
 /// Clean up old security events (admin only)

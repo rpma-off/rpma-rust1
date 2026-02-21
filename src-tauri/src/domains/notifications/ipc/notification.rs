@@ -7,43 +7,15 @@ use crate::models::notification::{
 };
 use crate::services::notification::NotificationService;
 use lazy_static::lazy_static;
-use serde::{Deserialize, Serialize};
+use crate::domains::notifications::application::{SendNotificationRequest, UpdateNotificationConfigRequest};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 // Conditional import removed
 use tracing::{error, info, instrument};
-use ts_rs::TS;
 
 lazy_static! {
     static ref NOTIFICATION_SERVICE: Arc<Mutex<Option<NotificationService>>> =
         Arc::new(Mutex::new(None));
-}
-
-#[derive(Debug, Serialize, Deserialize, TS)]
-pub struct SendNotificationRequest {
-    pub user_id: String,
-    pub notification_type: NotificationType,
-    pub recipient: String, // email or phone
-    pub variables: TemplateVariables,
-    #[serde(default)]
-    pub correlation_id: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize, TS)]
-pub struct UpdateNotificationConfigRequest {
-    pub email_provider: Option<String>,
-    pub email_api_key: Option<String>,
-    pub email_from_email: Option<String>,
-    pub email_from_name: Option<String>,
-    pub sms_provider: Option<String>,
-    pub sms_api_key: Option<String>,
-    pub sms_from_number: Option<String>,
-    pub push_enabled: Option<bool>,
-    pub quiet_hours_start: Option<String>,
-    pub quiet_hours_end: Option<String>,
-    pub timezone: Option<String>,
-    #[serde(default)]
-    pub correlation_id: Option<String>,
 }
 
 /// Initialize the notification service with configuration
