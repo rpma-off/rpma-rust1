@@ -1,16 +1,8 @@
 //! Tauri commands for background sync service - PRD-08
 
 use crate::commands::AppState;
+use crate::domains::sync::application::SyncResult;
 use tracing::{error, info, instrument};
-
-#[derive(Debug, Clone, serde::Serialize)]
-pub struct SyncResult {
-    pub processed_operations: usize,
-    pub successful_operations: usize,
-    pub failed_operations: usize,
-    pub duration_ms: u64,
-    pub errors: Vec<String>,
-}
 
 /// Start the background sync service
 #[tauri::command]
