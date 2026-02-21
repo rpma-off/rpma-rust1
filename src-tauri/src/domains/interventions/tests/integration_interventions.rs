@@ -1,5 +1,22 @@
-#[test]
-fn integration_interventions_facade_type_is_exported() {
-    let type_name = std::any::type_name::<crate::domains::interventions::InterventionsFacade>();
-    assert!(type_name.contains("InterventionsFacade"));
+use std::sync::Arc;
+use crate::db::Database;
+use crate::domains::interventions::infrastructure::intervention::InterventionService;
+use crate::domains::interventions::InterventionsFacade;
+use crate::shared::ipc::errors::AppError;
+
+#[tokio::test]
+async fn validate_intervention_id_rejects_whitespace() {
+    let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
+    let service = Arc::new(InterventionService::new(db));
+    let facade = InterventionsFacade::new(service);
+    let err = facade.validate_intervention_id("   ").unwrap_err();
+    assert!(matches!(err, AppError::Validation(_)));
+}
+
+#[tokio::test]
+async fn validate_task_id_accepts_valid_id() {
+    let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
+    let service = Arc::new(InterventionService::new(db));
+    let facade = InterventionsFacade::new(service);
+    assert!(facade.validate_task_id("task-123").is_ok());
 }
