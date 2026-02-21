@@ -1,8 +1,8 @@
-export { analyticsService } from '@/lib/services/entities/analytics.service';
-export { dashboardApiService } from '@/lib/services/dashboard/dashboard-api.service';
-export { userService } from '@/lib/services/entities/user.service';
+export { analyticsService } from '@/domains/analytics/services';
+export { dashboardApiService } from '@/domains/analytics/services';
+export { userService } from '@/domains/users/services';
 export type {
   DashboardFilters,
   DashboardData,
   TechnicianSummary,
-} from '@/lib/services/dashboard/dashboard-api.service';
+} from '@/domains/analytics/services';

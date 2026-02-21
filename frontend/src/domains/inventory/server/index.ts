@@ -1,1 +1,1 @@
-﻿export * from '@/platform/domain-server/inventory';
+export * from '@/lib/ipc/domains/inventory';

@@ -1,1 +1,2 @@
-﻿export * from '@/platform/domain-server/audit';
+export { changeLogService } from '../services';
+export type { ChangeLogWithUser } from '../services';

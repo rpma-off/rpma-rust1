@@ -1,16 +1,16 @@
-export { workflowService } from '@/lib/services';
-export { WorkflowService } from '@/lib/services/workflow.service';
-export { workflowTemplatesService } from '@/lib/services/workflow-templates.service';
-export { taskWorkflowSyncService } from '@/lib/services/sync/task-workflow-sync.service';
+export { workflowService } from '@/domains/tasks/services';
+export { WorkflowService } from '@/domains/tasks/services';
+export { workflowTemplatesService } from '@/domains/tasks/services';
+export { taskWorkflowSyncService } from '@/domains/tasks/services';
 export type {
   WorkflowExecution,
   WorkflowExecutionStep,
   CreateWorkflowExecutionDTO,
   StartTimingDTO,
   SignatureDTO,
-} from '@/lib/services/workflow.service';
+} from '@/domains/tasks/services';
 export type {
   WorkflowTemplate,
   WorkflowStepTemplate,
   SOPInstruction,
-} from '@/lib/services/workflow-templates.service';
+} from '@/domains/tasks/services';

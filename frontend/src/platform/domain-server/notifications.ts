@@ -1,8 +1,8 @@
 export {
   notificationService,
   NotificationService,
-} from '@/lib/services/notifications.service';
+} from '@/domains/notifications/services';
 export type {
   NotificationConfig,
   SendNotificationRequest,
-} from '@/lib/services/notifications.service';
+} from '@/domains/notifications/services';

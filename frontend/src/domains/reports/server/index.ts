@@ -1,1 +1,2 @@
-﻿export * from '@/platform/domain-server/reports';
+export { reportOperations } from '@/lib/ipc/domains/reports';
+export { reportsService } from '../services';

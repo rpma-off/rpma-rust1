@@ -1,1 +1,10 @@
-﻿export * from '@/platform/domain-server/settings';
+export { settingsService } from '../services';
+export type {
+  SettingsServiceResponse,
+  UpdatePreferencesRequest,
+  UpdateNotificationsRequest,
+  UpdateAccessibilityRequest,
+  UpdatePerformanceRequest,
+  UpdateProfileRequest,
+  ChangePasswordRequest,
+} from '../services';

@@ -1,1 +1,2 @@
-export * from '@/platform/domain-server/documents';
+export { taskPhotoService } from '../services';
+export type { TaskPhotoQueryParams } from '../services';

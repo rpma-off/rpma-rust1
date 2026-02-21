@@ -1,8 +1,8 @@
-export { configurationService } from '@/lib/services/entities/configuration.service';
+export { configurationService } from '@/domains/settings/services';
 export type {
   Configuration,
   BusinessRule,
-} from '@/lib/services/entities/configuration.service';
+} from '@/domains/settings/services';
 export type {
   BusinessRuleFiltersData,
   ConfigurationFiltersData,
