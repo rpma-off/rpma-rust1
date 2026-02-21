@@ -9,9 +9,9 @@ export * from '@/components/ui/mobile-components';
 export { FadeIn } from './animations/FadeIn';
 export { UILoader } from './animations/UILoader';
 
-export { Providers } from '@/components/providers';
-export { ThemeProvider } from '@/components/theme-provider';
-export { default as AppNavigation } from '@/components/AppNavigation';
+export { Providers } from './providers';
+export { ThemeProvider } from './theme-provider';
+export { default as AppNavigation } from './AppNavigation';
 
 export { SkipLink } from '@/lib/accessibility';
 
