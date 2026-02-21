@@ -1,4 +1,3 @@
-import { BaseService } from '@/lib/services/core/base.service';
 import { ipcClient } from '@/lib/ipc';
 import { AuthSecureStorage } from '@/lib/secureStorage';
 
@@ -43,7 +42,7 @@ export interface TaskPhotoUploadResult {
   error?: string;
 }
 
-export class TaskPhotoService extends BaseService {
+export class TaskPhotoService {
   private static async getSessionToken(): Promise<string> {
     const session = await AuthSecureStorage.getSession();
     if (!session.token) {

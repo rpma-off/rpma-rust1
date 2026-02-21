@@ -13,7 +13,7 @@ export { PerformanceTab } from '../components/PerformanceTab';
 export { AccessibilityTab } from '../components/AccessibilityTab';
 export { NotificationsTab } from '../components/NotificationsTab';
 
-export { settingsService } from '../server';
+export { settingsService, configurationService } from '../server';
 
 export type {
   UserSettings,
@@ -26,3 +26,5 @@ export type {
   UseSettingsResult,
   UseSettingsActionsResult,
 } from './types';
+
+export type { Configuration, BusinessRule } from '../services';

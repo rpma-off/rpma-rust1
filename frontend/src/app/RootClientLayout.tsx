@@ -1,9 +1,9 @@
 'use client';
 
-import { Providers } from '@/shared/ui/providers';
+import { Providers } from '@/app/providers';
 import localFont from "next/font/local";
 import "./globals.css";
-import AppNavigation from '@/shared/ui/AppNavigation';
+import AppNavigation from '@/app/AppNavigation';
 import { GlobalErrorBoundary, SkipLink } from '@/shared/ui';
 import { useAuth } from '@/domains/auth';
 import { usePathname, useRouter } from 'next/navigation';

@@ -10,7 +10,7 @@ export { UserList } from '../components/UserList';
 export { UserForm } from '../components/UserForm';
 export { ChangeRoleDialog } from '../components/ChangeRoleDialog';
 
-export { userService, AuthService, authService } from '../server';
+export { userService, AuthService, authService, TechnicianService } from '../server';
 
 export type {
   UserAccount,
@@ -18,3 +18,5 @@ export type {
   UseUsersResult,
   UseUserActionsResult,
 } from './types';
+
+export type { Technician } from '../services';

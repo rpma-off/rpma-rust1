@@ -1,2 +1,2 @@
-export { reportOperations } from '@/lib/ipc/domains/reports';
+export { reportOperations } from './report-operations';
 export { reportsService } from '../services';

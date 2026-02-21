@@ -14,7 +14,6 @@ import {
   WorkflowExecutionStatus
 } from '@/types/workflow.types';
 import { PPFInterventionData, VehicleInfo as _VehicleInfo } from '@/types/ppf-intervention';
-import { WorkflowService } from '@/domains/workflow';
 import type {
   JsonRecord,
   UnknownRecord,
@@ -25,6 +24,7 @@ import {
   safeString,
   isNonNullObject
 } from '@/types/type-utils';
+import { getWorkflowServiceInstance } from '../services/workflow-service-adapter';
 
 // Interface for step data updates
 interface StepData {
@@ -116,7 +116,13 @@ export function WorkflowProvider({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<{ message: string; code?: string } | null>(null);
 
-  const workflowService = WorkflowService.getInstance();
+  // Use lazy import to avoid circular dependency between interventions and tasks domains
+  const workflowServiceRef = useRef<ReturnType<typeof getWorkflowServiceInstance> | null>(null);
+
+  if (!workflowServiceRef.current) {
+    workflowServiceRef.current = getWorkflowServiceInstance();
+  }
+  const workflowService = workflowServiceRef.current;
   // Prevent duplicate loads in StrictMode/dev due to double-invoked effects
   const loadInProgressRef = useRef<string | null>(null);
   const lastLoadedTaskRef = useRef<string | null>(null);
