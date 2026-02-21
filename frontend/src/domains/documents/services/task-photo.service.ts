@@ -1,4 +1,6 @@
 import { BaseService } from '@/lib/services/core/base.service';
+import { ipcClient } from '@/lib/ipc';
+import { AuthSecureStorage } from '@/lib/secureStorage';
 
 export interface TaskPhoto {
   id: string;
@@ -42,11 +44,46 @@ export interface TaskPhotoUploadResult {
 }
 
 export class TaskPhotoService extends BaseService {
-  static async getPhotos(_params: TaskPhotoQueryParams): Promise<{ data: TaskPhoto[]; error: null } | { data: null; error: Error }> {
+  private static async getSessionToken(): Promise<string> {
+    const session = await AuthSecureStorage.getSession();
+    if (!session.token) {
+      throw new Error('Authentication required');
+    }
+    return session.token;
+  }
+
+  private static mapPhotoResponse(raw: Record<string, unknown>): TaskPhoto {
+    return {
+      id: String(raw.id || ''),
+      task_id: String(raw.task_id || raw.intervention_id || ''),
+      photo_type: (raw.photo_type as TaskPhoto['photo_type']) || 'during',
+      step_id: raw.step_id ? String(raw.step_id) : undefined,
+      file_path: String(raw.file_path || raw.file_name || ''),
+      file_size: typeof raw.file_size === 'number' ? raw.file_size : 0,
+      mime_type: String(raw.mime_type || 'image/jpeg'),
+      url: String(raw.file_path || raw.url || ''),
+      description: raw.description ? String(raw.description) : undefined,
+      taken_at: raw.taken_at ? String(raw.taken_at) : undefined,
+      created_at: String(raw.created_at || new Date().toISOString()),
+      updated_at: String(raw.updated_at || new Date().toISOString()),
+    };
+  }
+
+  static async getPhotos(params: TaskPhotoQueryParams): Promise<{ data: TaskPhoto[]; error: null } | { data: null; error: Error }> {
     try {
-      // Mock implementation - in real app this would query the database
+      if (!params.task_id) {
+        return { data: [], error: null };
+      }
+
+      const token = await this.getSessionToken();
+      const photos = await ipcClient.photos.list(params.task_id, token);
+
+      const mapped = (photos as unknown as Array<Record<string, unknown>>).map(p =>
+        this.mapPhotoResponse(p)
+      );
+
       return {
-        data: [],
+        data: mapped,
         error: null
       };
     } catch (error) {
@@ -59,20 +96,16 @@ export class TaskPhotoService extends BaseService {
 
   static async createTaskPhoto(data: CreateTaskPhotoData): Promise<{ data: TaskPhoto; error: null } | { data: null; error: Error }> {
     try {
-      // Mock implementation - in real app this would save to database and upload file
-      const photo: TaskPhoto = {
-        id: 'photo-' + Date.now(),
-        task_id: data.task_id,
-        photo_type: data.photo_type,
-        step_id: data.step_id,
-        file_path: `photos/${data.task_id}/${Date.now()}-${data.file.name}`,
-        file_size: data.file.size,
-        mime_type: data.file.type,
-        url: `https://example.com/photos/${data.task_id}/${Date.now()}-${data.file.name}`,
-        description: data.description,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
+      const token = await this.getSessionToken();
+      const result = await ipcClient.photos.upload(
+        data.task_id,
+        data.file.name,
+        data.photo_type,
+        token
+      );
+
+      const raw = result as unknown as Record<string, unknown>;
+      const photo = this.mapPhotoResponse({ ...raw, task_id: data.task_id, step_id: data.step_id, description: data.description });
 
       return {
         data: photo,
