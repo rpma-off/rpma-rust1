@@ -1,23 +1,14 @@
 //! Client CRUD commands for Tauri IPC
 
 use crate::commands::{ApiResponse, AppError, AppState, ClientAction};
+use crate::domains::clients::application::ClientCrudRequest;
 use crate::models::client::ClientWithTasks;
 use crate::models::task::Task;
 use crate::services::validation::ValidationService;
-use serde::Deserialize;
 use tracing::{debug, error, info, instrument, warn};
 
 // Import authentication macros
 use crate::authenticate;
-
-/// Client request structure
-#[derive(Deserialize, Debug)]
-pub struct ClientCrudRequest {
-    pub action: ClientAction,
-    pub session_token: String,
-    #[serde(default)]
-    pub correlation_id: Option<String>,
-}
 
 /// Client CRUD operations
 #[tauri::command]
