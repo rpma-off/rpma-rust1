@@ -2,7 +2,7 @@ use std::sync::{Arc, OnceLock};
 
 use async_trait::async_trait;
 
-use crate::services::event_bus::{EventHandler, InMemoryEventBus};
+use crate::shared::services::event_bus::{EventHandler, InMemoryEventBus};
 
 use super::events::DomainEvent;
 

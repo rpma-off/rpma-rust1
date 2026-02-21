@@ -8,3 +8,5 @@ pub mod error;
 pub mod event_bus;
 pub mod ipc;
 pub mod logging;
+pub mod repositories;
+pub mod services;

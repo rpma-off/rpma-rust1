@@ -2,7 +2,7 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-pub use crate::services::event_system::DomainEvent;
+pub use crate::shared::services::event_system::DomainEvent;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InterventionFinalized {
