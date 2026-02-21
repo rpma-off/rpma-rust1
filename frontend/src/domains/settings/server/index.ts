@@ -1,4 +1,4 @@
-export { settingsService } from '../services';
+export { settingsService, configurationService } from '../services';
 export type {
   SettingsServiceResponse,
   UpdatePreferencesRequest,

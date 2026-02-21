@@ -8,7 +8,7 @@ interface AuditLogProps {
 }
 
 export function AuditLog({ tableName, recordId }: AuditLogProps) {
-  const { changeLogService } = useAuditContext();
+  const { changeLogService: _changeLogService } = useAuditContext();
 
   return (
     <div data-testid="audit-log" data-table={tableName} data-record={recordId}>
