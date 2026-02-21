@@ -1,5 +1,4 @@
 mod facade;
-pub(crate) use facade::ClientsFacade;
 pub(crate) mod application;
 pub(crate) mod domain;
 pub(crate) mod infrastructure;
