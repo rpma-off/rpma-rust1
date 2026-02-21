@@ -19,6 +19,11 @@ export { KpiCard } from '../components/KpiCard';
 export { KpiDashboard } from '../components/KpiDashboard';
 export { TrendAnalysis } from '../components/TrendAnalysis';
 
+// Dashboard components
+export { CalendarHeader } from '../components/dashboard/CalendarHeader';
+export { QuickAddDialog } from '../components/dashboard/QuickAddDialog';
+export { FilterDrawer } from '../components/dashboard/FilterDrawer';
+
 export { analyticsService, dashboardApiService, userService } from '../server';
 
 export type {
@@ -28,3 +33,7 @@ export type {
   AnalyticsSummary,
   UseAnalyticsResult,
 } from './types';
+
+// Dashboard types
+export type { DashboardTask, DashboardStats, DashboardProps, ViewMode, Priority, FilterOption, Technician, RawTaskData, DashboardHeaderProps, DashboardSectionProps, DashboardWidgetProps, TaskCardListProps, DashboardTaskFiltersProps, StatsGridProps, PerformanceMetricsProps } from '../components/dashboard/types';
+export { transformTask, mapStatus } from '../components/dashboard/types';

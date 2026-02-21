@@ -3,7 +3,7 @@
 import React, { useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { DragDropContext } from '@hello-pangea/dnd';
-import { CalendarHeader } from '@/domains/analytics/components/dashboard/CalendarHeader';
+import { CalendarHeader, QuickAddDialog, FilterDrawer } from '@/domains/analytics';
 import { MonthView } from '@/components/calendar/MonthView';
 import { WeekView } from '@/components/calendar/WeekView';
 import { DayView } from '@/components/calendar/DayView';
@@ -12,8 +12,6 @@ import { useCalendarStore } from '@/lib/stores/calendarStore';
 import { useCalendar } from '@/domains/calendar';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { QuickAddDialog } from '@/domains/analytics/components/dashboard/QuickAddDialog';
-import { FilterDrawer } from '@/domains/analytics/components/dashboard/FilterDrawer';
 
 export function CalendarDashboard() {
   const router = useRouter();
