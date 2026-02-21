@@ -18,8 +18,8 @@ export class QualityControlService {
       const now = new Date();
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
       const dateRange = {
-        start_date: thirtyDaysAgo.toISOString().split('T')[0],
-        end_date: now.toISOString().split('T')[0],
+        start: thirtyDaysAgo.toISOString().split('T')[0],
+        end: now.toISOString().split('T')[0],
       };
 
       const report = await ipcClient.reports.getQualityComplianceReport(dateRange);

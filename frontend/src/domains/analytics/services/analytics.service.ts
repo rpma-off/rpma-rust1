@@ -1,6 +1,7 @@
 // Analytics service
 import { ipcClient } from '@/lib/ipc';
 import { ServiceResponse } from '@/types/unified.types';
+import type { ReportFilters } from '@/lib/backend';
 
 export interface AnalyticsData {
   totalTasks: number;
@@ -17,20 +18,20 @@ export class AnalyticsService {
     try {
       const [dashboardStats, healthStatus] = await Promise.all([
         ipcClient.dashboard.getStats().catch(() => null),
-        ipcClient.system.getHealthStatus().catch(() => null),
+        ipcClient.system.healthCheck().catch(() => null),
       ]);
 
       const tasks = dashboardStats?.tasks;
-      const health = healthStatus as Record<string, unknown> | null;
+      const healthStr = typeof healthStatus === 'string' ? healthStatus : null;
 
       const data: AnalyticsData = {
         totalTasks: tasks?.total ?? 0,
         completedTasks: tasks?.completed ?? 0,
         pendingTasks: tasks?.pending ?? 0,
-        systemHealth: health?.status === 'error' ? 'error' : health?.status === 'warning' ? 'warning' : 'good',
-        uptime: typeof health?.uptime === 'number' ? health.uptime : 0,
-        memoryUsage: typeof health?.memory_usage === 'number' ? health.memory_usage : 0,
-        cpuUsage: typeof health?.cpu_usage === 'number' ? health.cpu_usage : 0,
+        systemHealth: healthStr === 'error' ? 'error' : healthStr === 'warning' ? 'warning' : 'good',
+        uptime: 0,
+        memoryUsage: 0,
+        cpuUsage: 0,
       };
       return {
         success: true,
@@ -119,10 +120,17 @@ export class AnalyticsService {
       const now = new Date();
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
       const dateRange = {
-        start_date: thirtyDaysAgo.toISOString().split('T')[0],
-        end_date: now.toISOString().split('T')[0],
+        start: thirtyDaysAgo.toISOString().split('T')[0],
+        end: now.toISOString().split('T')[0],
       };
-      const filters = technicianId ? { technician_id: technicianId } : {};
+      const filters: ReportFilters = {
+        technician_ids: technicianId ? [technicianId] : null,
+        client_ids: null,
+        statuses: null,
+        priorities: null,
+        ppf_zones: null,
+        vehicle_models: null,
+      };
 
       const report = await ipcClient.reports.getTechnicianPerformanceReport(dateRange, filters);
       return {
@@ -144,8 +152,8 @@ export class AnalyticsService {
       const now = new Date();
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
       const dateRange = {
-        start_date: thirtyDaysAgo.toISOString().split('T')[0],
-        end_date: now.toISOString().split('T')[0],
+        start: thirtyDaysAgo.toISOString().split('T')[0],
+        end: now.toISOString().split('T')[0],
       };
 
       const report = await ipcClient.reports.getTaskCompletionReport(dateRange);

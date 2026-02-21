@@ -2,6 +2,7 @@
 import { ipcClient } from '@/lib/ipc';
 import { AuthSecureStorage } from '@/lib/secureStorage';
 import { ServiceResponse } from '@/types/unified.types';
+import type { JsonValue } from '@/types/json';
 
 export interface Configuration {
   id: string;
@@ -61,7 +62,7 @@ export class ConfigurationService {
   static async setConfiguration(key: string, value: unknown, category: string = 'general'): Promise<Configuration> {
     try {
       const token = await this.getSessionToken();
-      await ipcClient.settings.updateGeneralSettings({ [key]: value }, token);
+      await ipcClient.settings.updateUserPreferences({ [key]: value as JsonValue }, token);
 
       return {
         id: key,
@@ -103,7 +104,7 @@ export class ConfigurationService {
   static async updateBusinessRule(id: string, updates: Partial<BusinessRule>): Promise<ServiceResponse<BusinessRule>> {
     try {
       const token = await this.getSessionToken();
-      await ipcClient.settings.updateGeneralSettings(
+      await ipcClient.settings.updateUserPreferences(
         { [`business_rule_${id}`]: { ...updates, updated_at: new Date().toISOString() } },
         token
       );
@@ -138,7 +139,7 @@ export class ConfigurationService {
   static async deleteBusinessRule(id: string): Promise<ServiceResponse<void>> {
     try {
       const token = await this.getSessionToken();
-      await ipcClient.settings.updateGeneralSettings(
+      await ipcClient.settings.updateUserPreferences(
         { [`business_rule_${id}`]: null },
         token
       );
@@ -161,7 +162,7 @@ export class ConfigurationService {
     try {
       const key = updates.key || id;
       const token = await this.getSessionToken();
-      await ipcClient.settings.updateGeneralSettings({ [key]: updates.value }, token);
+      await ipcClient.settings.updateUserPreferences({ [key]: updates.value as JsonValue }, token);
 
       const updatedConfig: Configuration = {
         id,
@@ -186,7 +187,7 @@ export class ConfigurationService {
   static async deleteConfiguration(id: string): Promise<ServiceResponse<void>> {
     try {
       const token = await this.getSessionToken();
-      await ipcClient.settings.updateGeneralSettings({ [id]: null }, token);
+      await ipcClient.settings.updateUserPreferences({ [id]: null }, token);
 
       return {
         success: true,
@@ -258,8 +259,8 @@ export class ConfigurationService {
       };
 
       const token = await this.getSessionToken();
-      await ipcClient.settings.updateGeneralSettings(
-        { [`business_rule_${id}`]: newRule },
+      await ipcClient.settings.updateUserPreferences(
+        { [`business_rule_${id}`]: newRule as unknown as JsonValue },
         token
       );
 
@@ -313,7 +314,7 @@ export class ConfigurationService {
   static async createSystemConfiguration(config: Omit<Configuration, 'id'>): Promise<ServiceResponse<Configuration>> {
     try {
       const token = await this.getSessionToken();
-      await ipcClient.settings.updateGeneralSettings({ [config.key]: config.value }, token);
+      await ipcClient.settings.updateUserPreferences({ [config.key]: config.value as JsonValue }, token);
 
       const newConfig: Configuration = {
         id: config.key,
@@ -378,8 +379,8 @@ export class ConfigurationService {
   static async updateBusinessHoursConfig(config: Partial<Configuration>): Promise<ServiceResponse<Configuration>> {
     try {
       const token = await this.getSessionToken();
-      await ipcClient.settings.updateGeneralSettings(
-        { business_hours: config.value },
+      await ipcClient.settings.updateUserPreferences(
+        { business_hours: config.value as JsonValue },
         token
       );
 
@@ -434,13 +435,12 @@ export class ConfigurationService {
 
   static async getSystemStatus(): Promise<ServiceResponse<{ status: string; timestamp: string }>> {
     try {
-      const healthResult = await ipcClient.system.getHealthStatus();
-      const raw = healthResult as Record<string, unknown> | null;
+      const healthResult = await ipcClient.system.healthCheck();
 
       return {
         success: true,
         data: {
-          status: raw?.status ? String(raw.status) : 'healthy',
+          status: typeof healthResult === 'string' && healthResult ? healthResult : 'healthy',
           timestamp: new Date().toISOString()
         },
         status: 200

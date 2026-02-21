@@ -98,6 +98,11 @@ export class PPFService {
       await ipcClient.interventions.advanceStep({
         intervention_id: id,
         step_id: String(nextStep.id),
+        collected_data: null,
+        photos: null,
+        notes: null,
+        quality_check_passed: true,
+        issues: null,
       }, token);
 
       const intervention = await this.getIntervention(id);
@@ -115,6 +120,13 @@ export class PPFService {
 
       await ipcClient.interventions.finalize({
         intervention_id: id,
+        collected_data: null,
+        photos: null,
+        customer_satisfaction: null,
+        quality_score: null,
+        final_observations: null,
+        customer_signature: null,
+        customer_comments: null,
       }, token);
 
       const intervention = await this.getIntervention(id);
