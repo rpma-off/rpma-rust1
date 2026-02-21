@@ -1,4 +1,6 @@
 // PPF Photo service
+import { ipcClient } from '@/lib/ipc';
+import { AuthSecureStorage } from '@/lib/secureStorage';
 
 export interface PPFPhoto {
   id: string;
@@ -33,38 +35,56 @@ export interface RealTimeValidationResult {
 
 export class PPFPhotoService {
   static getInstance() {
-    return PPFPhotoService;
+    return new PPFPhotoService();
   }
 
-  static async uploadPhoto(interventionId: string, stepNumber: number, file: File): Promise<PPFPhoto> {
+  private static async getSessionToken(): Promise<string> {
+    const session = await AuthSecureStorage.getSession();
+    if (!session.token) {
+      throw new Error('Authentication required');
+    }
+    return session.token;
+  }
+
+  private static mapPhotoResponse(photo: Record<string, unknown>, interventionId: string): PPFPhoto {
+    return {
+      id: String(photo.id || ''),
+      interventionId: String(photo.intervention_id || interventionId),
+      stepId: String(photo.step_id || ''),
+      url: String(photo.file_path || photo.url || ''),
+      filename: String(photo.file_name || photo.filename || ''),
+      uploadedAt: photo.created_at ? new Date(String(photo.created_at)) : new Date(),
+      angle: photo.angle ? String(photo.angle) : undefined,
+      gpsCoordinates: photo.gps_coordinates as PPFPhoto['gpsCoordinates'],
+      qualityScore: typeof photo.quality_score === 'number' ? photo.quality_score : undefined,
+    };
+  }
+
+  static async uploadPhoto(interventionId: string, _stepNumber: number, file: File): Promise<PPFPhoto> {
     try {
-      // Mock implementation
-      return {
-        id: 'photo-' + Date.now(),
+      const token = await this.getSessionToken();
+      const result = await ipcClient.photos.upload(
         interventionId,
-        stepId: `step-${stepNumber}`,
-        url: 'mock-url',
-        filename: file.name,
-        uploadedAt: new Date(),
-      };
+        file.name,
+        'intervention',
+        token
+      );
+
+      const raw = result as unknown as Record<string, unknown>;
+      return this.mapPhotoResponse(raw, interventionId);
     } catch (error) {
       throw new Error(error instanceof Error ? error.message : 'Failed to upload photo');
     }
   }
 
-  static async getPhotos(interventionId: string, stepNumber?: number): Promise<PPFPhoto[]> {
+  static async getPhotos(interventionId: string, _stepNumber?: number): Promise<PPFPhoto[]> {
     try {
-      // Mock implementation
-      return [
-        {
-          id: 'photo-1',
-          interventionId,
-          stepId: stepNumber ? `step-${stepNumber}` : 'step-1',
-          url: 'mock-url-1',
-          filename: 'photo1.jpg',
-          uploadedAt: new Date(),
-        },
-      ];
+      const token = await this.getSessionToken();
+      const photos = await ipcClient.photos.list(interventionId, token);
+
+      return (photos as unknown as Array<Record<string, unknown>>).map(photo =>
+        this.mapPhotoResponse(photo, interventionId)
+      );
     } catch (error) {
       throw new Error(error instanceof Error ? error.message : 'Failed to get photos');
     }
@@ -72,24 +92,18 @@ export class PPFPhotoService {
 
   static async deletePhoto(photoId: string): Promise<void> {
     try {
-      // Mock implementation
-      console.log('Deleting photo', photoId);
+      const token = await this.getSessionToken();
+      await ipcClient.photos.delete(photoId, token);
     } catch (error) {
       throw new Error(error instanceof Error ? error.message : 'Failed to delete photo');
     }
   }
 
   static async getInterventionPhotosWithMetadata(interventionId: string): Promise<PPFPhoto[]> {
-    try {
-      // Mock implementation
-      return await this.getPhotos(interventionId);
-    } catch (error) {
-      throw new Error(error instanceof Error ? error.message : 'Failed to get intervention photos with metadata');
-    }
+    return this.getPhotos(interventionId);
   }
 
   static async getPhotosForIntervention(interventionId: string): Promise<PPFPhoto[]> {
-    // Implementation
     return this.getPhotos(interventionId);
   }
 }

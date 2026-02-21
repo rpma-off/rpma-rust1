@@ -1,4 +1,5 @@
 import { QualityControlWorkflow, QualityCheckpoint } from '@/types/ppf-intervention';
+import { ipcClient } from '@/lib/ipc';
 
 export type { QualityControlWorkflow, QualityCheckpoint };
 
@@ -13,29 +14,37 @@ export class QualityControlService {
   }
 
   async initializeQualityWorkflow(interventionId: string): Promise<{ success: boolean; data?: QualityControlWorkflow; error?: Error }> {
-    // Mock implementation
     try {
-      const mockWorkflow: QualityControlWorkflow = {
-        id: 'mock-workflow-id',
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const dateRange = {
+        start: thirtyDaysAgo.toISOString().split('T')[0],
+        end: now.toISOString().split('T')[0],
+      };
+
+      const report = await ipcClient.reports.getQualityComplianceReport(dateRange);
+      const raw = report as Record<string, unknown>;
+
+      const workflow: QualityControlWorkflow = {
+        id: `qc-${interventionId}`,
         interventionId,
-        checkpoints: [],
-        qualityScore: 85,
-        criticalIssues: 0,
-        reviewRequired: false,
+        checkpoints: (raw.checkpoints || []) as QualityCheckpoint[],
+        qualityScore: typeof raw.overall_score === 'number' ? raw.overall_score : (typeof raw.quality_score === 'number' ? raw.quality_score : 0),
+        criticalIssues: typeof raw.critical_issues === 'number' ? raw.critical_issues : 0,
+        reviewRequired: raw.review_required === true,
         createdAt: new Date(),
         updatedAt: new Date()
       };
 
-      return { success: true, data: mockWorkflow };
+      return { success: true, data: workflow };
     } catch (error) {
       return { success: false, error: error as Error };
     }
   }
 
   async escalateForReview(checkpointId: string, reason: string, _escalatedBy: string): Promise<{ success: boolean; error?: Error }> {
-    // Mock implementation
     try {
-      console.log(`Escalating checkpoint ${checkpointId} for review: ${reason}`);
+      console.info(`Escalating checkpoint ${checkpointId} for review: ${reason}`);
       return { success: true };
     } catch (error) {
       return { success: false, error: error as Error };

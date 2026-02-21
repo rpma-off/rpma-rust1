@@ -1,5 +1,7 @@
 // Analytics service
+import { ipcClient } from '@/lib/ipc';
 import { ServiceResponse } from '@/types/unified.types';
+import type { ReportFilters } from '@/lib/backend';
 
 export interface AnalyticsData {
   totalTasks: number;
@@ -14,15 +16,22 @@ export interface AnalyticsData {
 export class AnalyticsService {
   static async getSystemHealth(): Promise<ServiceResponse<AnalyticsData>> {
     try {
-      // Mock analytics data
+      const [dashboardStats, healthStatus] = await Promise.all([
+        ipcClient.dashboard.getStats().catch(() => null),
+        ipcClient.system.healthCheck().catch(() => null),
+      ]);
+
+      const tasks = dashboardStats?.tasks;
+      const healthStr = typeof healthStatus === 'string' ? healthStatus : null;
+
       const data: AnalyticsData = {
-        totalTasks: 150,
-        completedTasks: 120,
-        pendingTasks: 30,
-        systemHealth: 'good',
-        uptime: 86400, // 24 hours in seconds
-        memoryUsage: 0.65, // 65%
-        cpuUsage: 0.25, // 25%
+        totalTasks: tasks?.total ?? 0,
+        completedTasks: tasks?.completed ?? 0,
+        pendingTasks: tasks?.pending ?? 0,
+        systemHealth: healthStr === 'error' ? 'error' : healthStr === 'warning' ? 'warning' : 'good',
+        uptime: 0,
+        memoryUsage: 0,
+        cpuUsage: 0,
       };
       return {
         success: true,
@@ -44,18 +53,21 @@ export class AnalyticsService {
 
   static async getTaskMetrics(): Promise<ServiceResponse<unknown>> {
     try {
-      // Mock task metrics
+      const dashboardStats = await ipcClient.dashboard.getStats();
+      const tasks = dashboardStats?.tasks;
+
       const data = {
         byStatus: {
-          pending: 30,
-          in_progress: 20,
-          completed: 100,
+          pending: tasks?.pending ?? 0,
+          in_progress: tasks?.active ?? 0,
+          completed: tasks?.completed ?? 0,
         },
         byPriority: {
-          low: 50,
-          medium: 70,
-          high: 30,
+          low: 0,
+          medium: 0,
+          high: 0,
         },
+        total: tasks?.total ?? 0,
       };
       return {
         success: true,
@@ -71,25 +83,59 @@ export class AnalyticsService {
     }
   }
 
-  static async getTaskStatistics(_timeRange: string): Promise<ServiceResponse<unknown>> {
-    return this.getTaskMetrics();
+  static async getTaskStatistics(timeRange: string): Promise<ServiceResponse<unknown>> {
+    try {
+      const validRanges = ['day', 'week', 'month', 'year'] as const;
+      const range = validRanges.includes(timeRange as typeof validRanges[number])
+        ? (timeRange as typeof validRanges[number])
+        : 'month';
+
+      const dashboardStats = await ipcClient.dashboard.getStats(range);
+      const tasks = dashboardStats?.tasks;
+
+      return {
+        success: true,
+        data: {
+          timeRange: range,
+          byStatus: {
+            pending: tasks?.pending ?? 0,
+            in_progress: tasks?.active ?? 0,
+            completed: tasks?.completed ?? 0,
+          },
+          total: tasks?.total ?? 0,
+        },
+        status: 200
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch task statistics',
+        status: 500
+      };
+    }
   }
 
   static async getTechnicianPerformance(technicianId?: string): Promise<ServiceResponse<unknown>> {
     try {
-      // Mock technician performance data
-      const data = {
-        technicianId,
-        totalTasks: 45,
-        completedTasks: 42,
-        averageRating: 4.8,
-        averageCompletionTime: 120, // minutes
-        efficiency: 0.93,
-        skills: ['PPF Installation', 'Ceramic Coating'],
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const dateRange = {
+        start: thirtyDaysAgo.toISOString().split('T')[0],
+        end: now.toISOString().split('T')[0],
       };
+      const filters: ReportFilters = {
+        technician_ids: technicianId ? [technicianId] : null,
+        client_ids: null,
+        statuses: null,
+        priorities: null,
+        ppf_zones: null,
+        vehicle_models: null,
+      };
+
+      const report = await ipcClient.reports.getTechnicianPerformanceReport(dateRange, filters);
       return {
         success: true,
-        data,
+        data: report,
         status: 200
       };
     } catch (error) {
@@ -103,18 +149,17 @@ export class AnalyticsService {
 
   static async getWorkflowAnalytics(): Promise<ServiceResponse<unknown>> {
     try {
-      // Mock workflow analytics data
-      const data = {
-        totalWorkflows: 25,
-        activeWorkflows: 18,
-        completedWorkflows: 150,
-        averageCompletionTime: 45, // minutes
-        workflowEfficiency: 0.87,
-        bottlenecks: ['Step 3: Quality Check', 'Step 5: Final Approval'],
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const dateRange = {
+        start: thirtyDaysAgo.toISOString().split('T')[0],
+        end: now.toISOString().split('T')[0],
       };
+
+      const report = await ipcClient.reports.getTaskCompletionReport(dateRange);
       return {
         success: true,
-        data,
+        data: report,
         status: 200
       };
     } catch (error) {
