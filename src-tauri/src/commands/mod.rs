@@ -184,7 +184,6 @@ pub async fn user_crud(
         .ok_or_else(|| AppError::Internal("Missing user_crud response payload".to_string()))
 }
 
-/// Health check command
 /// Get database status
 #[tauri::command]
 #[instrument(skip(state))]
@@ -290,63 +289,6 @@ pub fn vacuum_database(state: AppState) -> Result<ApiResponse<()>, AppError> {
 pub struct ClientCrudRequest {
     pub action: ClientAction,
     pub session_token: String,
-}
-
-/// Get users list
-#[tauri::command]
-pub async fn get_users(
-    page: i32,
-    page_size: i32,
-    search: Option<String>,
-    role: Option<String>,
-    session_token: String,
-    state: AppState<'_>,
-) -> Result<serde_json::Value, String> {
-    crate::domains::users::ipc::user::get_users(page, page_size, search, role, session_token, state)
-        .await
-}
-
-/// Create user
-#[tauri::command]
-pub async fn create_user(
-    user_data: CreateUserRequest,
-    session_token: String,
-    state: AppState<'_>,
-) -> Result<serde_json::Value, String> {
-    crate::domains::users::ipc::user::create_user(user_data, session_token, state).await
-}
-
-/// Update user
-#[tauri::command]
-pub async fn update_user(
-    user_id: String,
-    user_data: UpdateUserRequest,
-    session_token: String,
-    state: AppState<'_>,
-) -> Result<serde_json::Value, String> {
-    crate::domains::users::ipc::user::update_user(user_id, user_data, session_token, state).await
-}
-
-/// Update user status
-#[tauri::command]
-pub async fn update_user_status(
-    user_id: String,
-    is_active: bool,
-    session_token: String,
-    state: AppState<'_>,
-) -> Result<(), String> {
-    crate::domains::users::ipc::user::update_user_status(user_id, is_active, session_token, state)
-        .await
-}
-
-/// Delete user
-#[tauri::command]
-pub async fn delete_user(
-    user_id: String,
-    session_token: String,
-    state: AppState<'_>,
-) -> Result<(), String> {
-    crate::domains::users::ipc::user::delete_user(user_id, session_token, state).await
 }
 
 #[cfg(test)]
