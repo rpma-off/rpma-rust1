@@ -1,4 +1,5 @@
 mod facade;
+pub(crate) use facade::AnalyticsFacade;
 pub(crate) mod application;
 pub(crate) mod domain;
 pub(crate) mod infrastructure;
