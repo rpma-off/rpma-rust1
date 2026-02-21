@@ -1,5 +1,5 @@
 import { Task } from '@/lib/backend';
-import { DashboardTask } from '@/components/dashboard/types';
+import { DashboardTask } from '@/domains/analytics/components/dashboard/types';
 
 /**
  * Centralized utilities for consistent task display across the application
