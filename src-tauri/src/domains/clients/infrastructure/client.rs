@@ -3,10 +3,10 @@
 //! This service handles all CRUD operations for clients with validation,
 //! business rules, FTS search, and repository interactions.
 
+use crate::models::client::Client;
 use crate::models::client::{
     ClientListResponse, ClientQuery, CreateClientRequest, UpdateClientRequest,
 };
-use crate::models::client::Client;
 use crate::repositories::{ClientRepository, Repository};
 use chrono::{Datelike, Utc};
 use serde::{Deserialize, Serialize};
@@ -457,11 +457,21 @@ impl ClientService {
         let total_clients = all_clients.len() as i32;
         let individual_clients = all_clients
             .iter()
-            .filter(|c| matches!(c.customer_type, crate::models::client::CustomerType::Individual))
+            .filter(|c| {
+                matches!(
+                    c.customer_type,
+                    crate::models::client::CustomerType::Individual
+                )
+            })
             .count() as i32;
         let business_clients = all_clients
             .iter()
-            .filter(|c| matches!(c.customer_type, crate::models::client::CustomerType::Business))
+            .filter(|c| {
+                matches!(
+                    c.customer_type,
+                    crate::models::client::CustomerType::Business
+                )
+            })
             .count() as i32;
         let clients_with_tasks = all_clients.iter().filter(|c| c.total_tasks > 0).count() as i32;
 

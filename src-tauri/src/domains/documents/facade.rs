@@ -29,11 +29,7 @@ impl DocumentsFacade {
     /// Validate a photo file extension before upload.
     pub fn validate_photo_extension(&self, filename: &str) -> Result<(), AppError> {
         let valid_extensions = ["jpg", "jpeg", "png", "webp", "heic"];
-        let extension = filename
-            .rsplit('.')
-            .next()
-            .unwrap_or("")
-            .to_lowercase();
+        let extension = filename.rsplit('.').next().unwrap_or("").to_lowercase();
         if !valid_extensions.contains(&extension.as_str()) {
             return Err(AppError::Validation(format!(
                 "Invalid photo extension: {}. Valid extensions: {}",

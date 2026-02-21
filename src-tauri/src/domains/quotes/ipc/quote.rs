@@ -506,8 +506,14 @@ fn generate_quote_pdf(
         "\nSous-total: {:.2}Ã¢â€šÂ¬\n",
         quote.subtotal as f64 / 100.0
     ));
-    content.push_str(&format!("TVA: {:.2}Ã¢â€šÂ¬\n", quote.tax_total as f64 / 100.0));
-    content.push_str(&format!("Total: {:.2}Ã¢â€šÂ¬\n", quote.total as f64 / 100.0));
+    content.push_str(&format!(
+        "TVA: {:.2}Ã¢â€šÂ¬\n",
+        quote.tax_total as f64 / 100.0
+    ));
+    content.push_str(&format!(
+        "Total: {:.2}Ã¢â€šÂ¬\n",
+        quote.total as f64 / 100.0
+    ));
 
     if let Some(ref terms) = quote.terms {
         content.push_str(&format!("\nConditions:\n{}\n", terms));

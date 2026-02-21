@@ -5,11 +5,11 @@
 
 use crate::commands::AppResult;
 use crate::models::client::Client;
-use crate::shared::contracts::common::*;
 use crate::models::intervention::InterventionStatus;
 use crate::models::photo::Photo;
 use crate::models::step::InterventionStep;
 use crate::models::step::StepStatus;
+use crate::shared::contracts::common::*;
 
 use chrono::Utc;
 use genpdf::{elements, fonts, style, Alignment, Document, Element, SimplePageDecorator};
@@ -243,7 +243,10 @@ impl InterventionPdfReport {
             }
 
             if let Some(phone) = &client.phone {
-                doc.push(elements::Paragraph::new(&format!("TÃƒÂ©lÃƒÂ©phone: {}", phone)));
+                doc.push(elements::Paragraph::new(&format!(
+                    "TÃƒÂ©lÃƒÂ©phone: {}",
+                    phone
+                )));
             }
 
             doc.push(elements::Break::new(1.0));
@@ -568,7 +571,9 @@ impl InterventionPdfReport {
         }
 
         if self.intervention.customer_signature.is_some() {
-            doc.push(elements::Paragraph::new("Ã¢Å“â€¦ SignÃƒÂ©e ÃƒÂ©lectroniquement"));
+            doc.push(elements::Paragraph::new(
+                "Ã¢Å“â€¦ SignÃƒÂ©e ÃƒÂ©lectroniquement",
+            ));
         }
 
         doc.push(elements::Break::new(1.0));

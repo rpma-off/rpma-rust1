@@ -33,11 +33,7 @@ impl CalendarFacade {
     }
 
     /// Validate date range parameters for calendar queries.
-    pub fn validate_date_range(
-        &self,
-        start_date: &str,
-        end_date: &str,
-    ) -> Result<(), AppError> {
+    pub fn validate_date_range(&self, start_date: &str, end_date: &str) -> Result<(), AppError> {
         if start_date.trim().is_empty() || end_date.trim().is_empty() {
             return Err(AppError::Validation(
                 "Both start_date and end_date are required".to_string(),

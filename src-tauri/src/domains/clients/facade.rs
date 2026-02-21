@@ -29,9 +29,7 @@ impl ClientsFacade {
     /// Validate that a client ID is present.
     pub fn validate_client_id(&self, client_id: &str) -> Result<(), AppError> {
         if client_id.trim().is_empty() {
-            return Err(AppError::Validation(
-                "client_id is required".to_string(),
-            ));
+            return Err(AppError::Validation("client_id is required".to_string()));
         }
         Ok(())
     }
