@@ -464,7 +464,7 @@ pub async fn import_tasks_bulk(
     // Check permissions - only supervisors and admins can bulk import
     if !matches!(
         session.role,
-        crate::domains::auth::domain::models::auth::UserRole::Admin | crate::domains::auth::domain::models::auth::UserRole::Supervisor
+        crate::shared::contracts::auth::UserRole::Admin | crate::shared::contracts::auth::UserRole::Supervisor
     ) {
         return Err(AppError::Authorization(
             "Only supervisors and admins can perform bulk imports".to_string(),
@@ -622,7 +622,7 @@ pub async fn edit_task(
     check_task_permissions(&session, &task, "edit")?;
 
     // Enforce field restrictions for Technician role
-    if session.role == crate::domains::auth::domain::models::auth::UserRole::Technician {
+    if session.role == crate::shared::contracts::auth::UserRole::Technician {
         enforce_technician_field_restrictions(&request.data)?;
     }
 
@@ -686,14 +686,14 @@ pub fn validate_status_change(
 
 /// Check permissions for task operations
 pub fn check_task_permissions(
-    session: &crate::domains::auth::domain::models::auth::UserSession,
+    session: &crate::shared::contracts::auth::UserSession,
     task: &Task,
     operation: &str,
 ) -> Result<(), AppError> {
     match session.role {
-        crate::domains::auth::domain::models::auth::UserRole::Admin => Ok(()),
-        crate::domains::auth::domain::models::auth::UserRole::Supervisor => Ok(()),
-        crate::domains::auth::domain::models::auth::UserRole::Technician => {
+        crate::shared::contracts::auth::UserRole::Admin => Ok(()),
+        crate::shared::contracts::auth::UserRole::Supervisor => Ok(()),
+        crate::shared::contracts::auth::UserRole::Technician => {
             // Technician can only operate on their assigned tasks
             if task.technician_id.as_ref() == Some(&session.user_id) {
                 Ok(())
@@ -703,7 +703,7 @@ pub fn check_task_permissions(
                 ))
             }
         }
-        crate::domains::auth::domain::models::auth::UserRole::Viewer => {
+        crate::shared::contracts::auth::UserRole::Viewer => {
             // Viewer can only view tasks
             match operation {
                 "view" => Ok(()),
@@ -1007,7 +1007,7 @@ pub async fn task_crud(
 mod tests {
     use super::*;
     use crate::commands::AppError;
-    use crate::domains::auth::domain::models::auth::{UserRole, UserSession};
+    use crate::shared::contracts::auth::{UserRole, UserSession};
     use crate::domains::tasks::domain::models::task::{Task, TaskPriority, TaskStatus, UpdateTaskRequest};
 
     fn make_task(technician_id: Option<&str>, status: TaskStatus) -> Task {

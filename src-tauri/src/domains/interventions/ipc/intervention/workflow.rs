@@ -12,7 +12,7 @@ use crate::domains::interventions::application::{
     FinalizeInterventionRequest, InterventionWorkflowAction, InterventionWorkflowResponse,
     StartInterventionRequest,
 };
-use crate::domains::auth::domain::models::auth::{UserRole, UserSession};
+use crate::shared::contracts::auth::{UserRole, UserSession};
 use chrono::Utc;
 
 use tracing::{debug, error, info, instrument, warn};
@@ -211,7 +211,7 @@ pub async fn intervention_delete(
     if intervention.technician_id.as_ref() != Some(&session.user_id)
         && !matches!(
             session.role,
-            crate::domains::auth::domain::models::auth::UserRole::Admin | crate::domains::auth::domain::models::auth::UserRole::Supervisor
+            crate::shared::contracts::auth::UserRole::Admin | crate::shared::contracts::auth::UserRole::Supervisor
         )
     {
         return Err(AppError::Authorization(

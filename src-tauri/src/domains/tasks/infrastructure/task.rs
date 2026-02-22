@@ -551,9 +551,9 @@ impl TaskService {
     pub fn apply_role_based_filters(
         &self,
         filter: &mut crate::domains::tasks::ipc::task_types::TaskFilter,
-        session: &crate::domains::auth::domain::models::auth::UserSession,
+        session: &crate::shared::contracts::auth::UserSession,
     ) {
-        use crate::domains::auth::domain::models::auth::UserRole;
+        use crate::shared::contracts::auth::UserRole;
 
         match session.role {
             UserRole::Admin => {

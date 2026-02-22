@@ -1,7 +1,7 @@
 //! User service for user management operations
 
 use crate::commands::AppError;
-use crate::domains::auth::domain::models::auth::{UserAccount, UserRole};
+use crate::shared::contracts::auth::{UserAccount, UserRole};
 use crate::domains::users::domain::models::user::User as RepoUser; // Import as RepoUser to distinguish
 use crate::repositories::base::RepoError;
 use crate::repositories::Repository;

@@ -117,22 +117,22 @@ impl InterventionValidationService {
         let user_role: String = self
             .db
             .query_single_value("SELECT role FROM users WHERE id = ?", [user_id])?;
-        let user_role = crate::domains::auth::domain::models::auth::UserRole::from_str(&user_role)
+        let user_role = crate::shared::contracts::auth::UserRole::from_str(&user_role)
             .map_err(|_| InterventionError::Validation("Invalid user role".to_string()))?;
 
         // Permission check: Admin/Supervisor can assign any technician, Technician can only assign themselves
         match user_role {
-            crate::domains::auth::domain::models::auth::UserRole::Admin | crate::domains::auth::domain::models::auth::UserRole::Supervisor => {
+            crate::shared::contracts::auth::UserRole::Admin | crate::shared::contracts::auth::UserRole::Supervisor => {
                 // Can assign any technician
             }
-            crate::domains::auth::domain::models::auth::UserRole::Technician => {
+            crate::shared::contracts::auth::UserRole::Technician => {
                 if user_id != technician_id {
                     return Err(InterventionError::BusinessRule(
                         "Technicians can only start interventions for themselves".to_string(),
                     ));
                 }
             }
-            crate::domains::auth::domain::models::auth::UserRole::Viewer => {
+            crate::shared::contracts::auth::UserRole::Viewer => {
                 return Err(InterventionError::BusinessRule(
                     "Viewers cannot start interventions".to_string(),
                 ));

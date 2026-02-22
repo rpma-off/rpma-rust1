@@ -24,11 +24,11 @@ fn default_quality_check_passed() -> bool {
 /// while technicians can only access interventions assigned to their user ID.
 fn can_access_intervention(
     technician_id: Option<&str>,
-    session: &crate::domains::auth::domain::models::auth::UserSession,
+    session: &crate::shared::contracts::auth::UserSession,
 ) -> bool {
     let is_privileged = matches!(
         session.role,
-        crate::domains::auth::domain::models::auth::UserRole::Admin | crate::domains::auth::domain::models::auth::UserRole::Supervisor
+        crate::shared::contracts::auth::UserRole::Admin | crate::shared::contracts::auth::UserRole::Supervisor
     );
     is_privileged || technician_id.is_some_and(|id| id == session.user_id.as_str())
 }
@@ -40,7 +40,7 @@ fn can_access_intervention(
 fn ensure_intervention_access(
     state: &AppState<'_>,
     intervention_id: &str,
-    session: &crate::domains::auth::domain::models::auth::UserSession,
+    session: &crate::shared::contracts::auth::UserSession,
     unauthorized_message: &str,
 ) -> Result<(), AppError> {
     let intervention = state
@@ -456,7 +456,7 @@ pub async fn intervention_progress(
 #[cfg(test)]
 mod tests {
     use super::can_access_intervention;
-    use crate::domains::auth::domain::models::auth::{UserRole, UserSession};
+    use crate::shared::contracts::auth::{UserRole, UserSession};
 
     fn session_with_role(role: UserRole, user_id: &str) -> UserSession {
         UserSession::new(

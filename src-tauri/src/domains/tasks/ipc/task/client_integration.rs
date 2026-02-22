@@ -50,21 +50,21 @@ pub async fn get_tasks_with_client_details(
     let mut filter = request.filter.unwrap_or_default();
 
     match session.role {
-        crate::domains::auth::domain::models::auth::UserRole::Admin => {
+        crate::shared::contracts::auth::UserRole::Admin => {
             // Admin can see all tasks
         }
-        crate::domains::auth::domain::models::auth::UserRole::Supervisor => {
+        crate::shared::contracts::auth::UserRole::Supervisor => {
             // Supervisor can see tasks in their regions
             // TODO: Add region filtering when UserSession has region field
             // if let Some(region) = &session.region {
             //     filter.region = Some(region.clone());
             // }
         }
-        crate::domains::auth::domain::models::auth::UserRole::Technician => {
+        crate::shared::contracts::auth::UserRole::Technician => {
             // Technician can only see their assigned tasks
             filter.assigned_to = Some(session.user_id.clone());
         }
-        crate::domains::auth::domain::models::auth::UserRole::Viewer => {
+        crate::shared::contracts::auth::UserRole::Viewer => {
             // Viewer can only see their assigned tasks (read-only access)
             filter.assigned_to = Some(session.user_id.clone());
         }
@@ -258,7 +258,7 @@ pub async fn get_client_task_summary(
     // (Technician and Viewer have restricted access)
     let can_view_client_data = matches!(
         session.role,
-        crate::domains::auth::domain::models::auth::UserRole::Admin | crate::domains::auth::domain::models::auth::UserRole::Supervisor
+        crate::shared::contracts::auth::UserRole::Admin | crate::shared::contracts::auth::UserRole::Supervisor
     );
 
     if !can_view_client_data {

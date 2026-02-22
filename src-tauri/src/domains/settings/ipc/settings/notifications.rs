@@ -68,7 +68,7 @@ pub async fn update_notification_settings(
     crate::commands::update_correlation_context_user(&user.user_id);
 
     // Only admins can update system notification settings
-    if !matches!(user.role, crate::domains::auth::domain::models::auth::UserRole::Admin) {
+    if !matches!(user.role, crate::shared::contracts::auth::UserRole::Admin) {
         return Err(AppError::Authorization(
             "Only administrators can update notification settings".to_string(),
         ));

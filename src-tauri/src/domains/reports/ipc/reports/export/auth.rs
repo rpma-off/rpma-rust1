@@ -5,13 +5,13 @@
 
 use crate::authenticate;
 use crate::commands::{AppResult, AppState};
-use crate::domains::auth::domain::models::auth::UserRole;
+use crate::shared::contracts::auth::UserRole;
 use crate::domains::reports::domain::models::reports::ReportType;
 
 /// Check if user has permission to export a specific report type
 pub fn check_export_permissions(
     report_type: &ReportType,
-    current_user: &crate::domains::auth::domain::models::auth::UserSession,
+    current_user: &crate::shared::contracts::auth::UserSession,
 ) -> AppResult<()> {
     match report_type {
         ReportType::Tasks => {
@@ -46,7 +46,7 @@ pub fn check_export_permissions(
 /// Check if user can access a specific intervention for export
 pub fn check_intervention_export_permissions(
     intervention_technician_id: Option<String>,
-    current_user: &crate::domains::auth::domain::models::auth::UserSession,
+    current_user: &crate::shared::contracts::auth::UserSession,
 ) -> AppResult<()> {
     // Check permissions (technician can only access their own interventions)
     if !matches!(current_user.role, UserRole::Admin | UserRole::Supervisor)
@@ -63,7 +63,7 @@ pub fn check_intervention_export_permissions(
 pub async fn authenticate_for_export(
     session_token: &str,
     state: &AppState<'_>,
-) -> AppResult<crate::domains::auth::domain::models::auth::UserSession> {
+) -> AppResult<crate::shared::contracts::auth::UserSession> {
     let current_user = authenticate!(session_token, state);
     Ok(current_user)
 }

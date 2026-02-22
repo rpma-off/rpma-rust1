@@ -70,7 +70,7 @@ pub async fn check_task_assignment(
     // Check if user is authorized to assign tasks
     if !matches!(
         session.role,
-        crate::domains::auth::domain::models::auth::UserRole::Admin | crate::domains::auth::domain::models::auth::UserRole::Supervisor
+        crate::shared::contracts::auth::UserRole::Admin | crate::shared::contracts::auth::UserRole::Supervisor
     ) {
         return Err(AppError::Authorization(
             "User not authorized to assign tasks".to_string(),
@@ -331,7 +331,7 @@ pub async fn validate_task_assignment_change(
     // Validate user has permission to change assignments
     if !matches!(
         session.role,
-        crate::domains::auth::domain::models::auth::UserRole::Admin | crate::domains::auth::domain::models::auth::UserRole::Supervisor
+        crate::shared::contracts::auth::UserRole::Admin | crate::shared::contracts::auth::UserRole::Supervisor
     ) {
         return Err(AppError::Authorization(
             "User not authorized to change task assignments".to_string(),

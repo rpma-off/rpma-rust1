@@ -9,7 +9,7 @@ pub mod status;
 
 /// Re-exports from auth domain models.
 pub mod auth {
-    pub use crate::domains::auth::domain::models::auth::*;
+    pub use crate::shared::contracts::auth::*;
 }
 
 /// Re-exports from calendar domain models.

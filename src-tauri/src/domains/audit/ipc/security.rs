@@ -7,7 +7,7 @@ use crate::domains::audit::application::{
     GetSecurityEventsRequest, GetSecurityMetricsRequest, ResolveSecurityAlertRequest,
     SecurityAlertResponse, SecurityEventResponse, SecurityMetricsResponse,
 };
-use crate::domains::auth::domain::models::auth::UserRole;
+use crate::shared::contracts::auth::UserRole;
 use tracing::{error, info, instrument};
 
 /// Get security metrics
@@ -23,7 +23,7 @@ pub async fn get_security_metrics(
     let _current_user = authenticate!(
         &request.session_token,
         &state,
-        crate::domains::auth::domain::models::auth::UserRole::Admin
+        crate::shared::contracts::auth::UserRole::Admin
     );
     crate::commands::update_correlation_context_user(&_current_user.user_id);
 
@@ -56,7 +56,7 @@ pub async fn get_security_events(
     let _current_user = authenticate!(
         &request.session_token,
         &state,
-        crate::domains::auth::domain::models::auth::UserRole::Admin
+        crate::shared::contracts::auth::UserRole::Admin
     );
     crate::commands::update_correlation_context_user(&_current_user.user_id);
 
@@ -97,7 +97,7 @@ pub async fn get_security_alerts(
     let _current_user = authenticate!(
         &request.session_token,
         &state,
-        crate::domains::auth::domain::models::auth::UserRole::Admin
+        crate::shared::contracts::auth::UserRole::Admin
     );
     crate::commands::update_correlation_context_user(&_current_user.user_id);
 
@@ -139,7 +139,7 @@ pub async fn acknowledge_security_alert(
     let current_user = authenticate!(
         &request.session_token,
         &state,
-        crate::domains::auth::domain::models::auth::UserRole::Admin
+        crate::shared::contracts::auth::UserRole::Admin
     );
     crate::commands::update_correlation_context_user(&current_user.user_id);
 
@@ -173,7 +173,7 @@ pub async fn resolve_security_alert(
     let _current_user = authenticate!(
         &request.session_token,
         &state,
-        crate::domains::auth::domain::models::auth::UserRole::Admin
+        crate::shared::contracts::auth::UserRole::Admin
     );
     crate::commands::update_correlation_context_user(&_current_user.user_id);
 
@@ -207,7 +207,7 @@ pub async fn cleanup_security_events(
     let _current_user = authenticate!(
         &request.session_token,
         &state,
-        crate::domains::auth::domain::models::auth::UserRole::Admin
+        crate::shared::contracts::auth::UserRole::Admin
     );
     crate::commands::update_correlation_context_user(&_current_user.user_id);
 
@@ -235,7 +235,7 @@ pub async fn get_active_sessions(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<ApiResponse<Vec<crate::domains::auth::domain::models::auth::UserSession>>, AppError> {
+) -> Result<ApiResponse<Vec<crate::shared::contracts::auth::UserSession>>, AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     // Authenticate the user
     let current_user = crate::shared::auth_middleware::AuthMiddleware::authenticate(
@@ -400,7 +400,7 @@ pub async fn get_session_timeout_config(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<ApiResponse<crate::domains::auth::domain::models::auth::SessionTimeoutConfig>, AppError> {
+) -> Result<ApiResponse<crate::shared::contracts::auth::SessionTimeoutConfig>, AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     // Authenticate the user (any authenticated user can view config)
     let _current_user =

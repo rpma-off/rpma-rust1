@@ -107,7 +107,7 @@ pub async fn intervention_management(
             let query_status_clone = query.status.clone();
             let filter_status = query_status_clone.as_deref();
             let _filter = crate::domains::interventions::domain::models::intervention::InterventionFilter {
-                technician_id: if session.role == crate::domains::auth::domain::models::auth::UserRole::Technician {
+                technician_id: if session.role == crate::shared::contracts::auth::UserRole::Technician {
                     Some(session.user_id.clone())
                 } else {
                     query.technician_id.clone()
@@ -153,8 +153,8 @@ pub async fn intervention_management(
             let target_technician_id = technician_id.unwrap_or(session.user_id.clone());
 
             if target_technician_id != session.user_id
-                && session.role != crate::domains::auth::domain::models::auth::UserRole::Admin
-                && session.role != crate::domains::auth::domain::models::auth::UserRole::Supervisor
+                && session.role != crate::shared::contracts::auth::UserRole::Admin
+                && session.role != crate::shared::contracts::auth::UserRole::Supervisor
             {
                 return Err(AppError::Authorization(
                     "Not authorized to view these statistics".to_string(),
@@ -215,8 +215,8 @@ pub async fn intervention_management(
             if !task_access
                 && !matches!(
                     session.role,
-                    crate::domains::auth::domain::models::auth::UserRole::Admin
-                        | crate::domains::auth::domain::models::auth::UserRole::Supervisor
+                    crate::shared::contracts::auth::UserRole::Admin
+                        | crate::shared::contracts::auth::UserRole::Supervisor
                 )
             {
                 return Err(AppError::Authorization(
@@ -258,8 +258,8 @@ pub async fn intervention_management(
             updates,
         } => {
             // Only admins and supervisors can do bulk updates
-            if session.role != crate::domains::auth::domain::models::auth::UserRole::Admin
-                && session.role != crate::domains::auth::domain::models::auth::UserRole::Supervisor
+            if session.role != crate::shared::contracts::auth::UserRole::Admin
+                && session.role != crate::shared::contracts::auth::UserRole::Supervisor
             {
                 return Err(AppError::Authorization(
                     "Not authorized to perform bulk updates".to_string(),

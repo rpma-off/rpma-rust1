@@ -4,7 +4,7 @@
 //! functionality for all Tauri IPC commands to ensure consistent
 //! security patterns across the application.
 
-use crate::domains::auth::domain::models::auth::{UserRole, UserSession};
+use crate::shared::contracts::auth::{UserRole, UserSession};
 use crate::shared::app_state::AppState;
 use crate::shared::ipc::{AppError, AppResult};
 use sha2::{Digest, Sha256};
