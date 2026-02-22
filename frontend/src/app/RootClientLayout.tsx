@@ -82,8 +82,9 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const isAuthPending = authLoading || isAuthenticating;
   const shouldShowLoading = !isPublicRoute && (isAuthPending || !user);
   const isUnauthenticatedProtectedRoute = !isAuthPending && !user && !isPublicRoute;
+  const redirectLoadingClassName = 'min-h-screen bg-background px-4 sm:px-6 lg:px-8 py-6';
   const loadingClassName = isUnauthenticatedProtectedRoute
-    ? 'min-h-screen bg-background px-4 sm:px-6 lg:px-8 py-6'
+    ? redirectLoadingClassName
     : undefined;
   const content = shouldShowLoading ? (
     <AuthLoadingShell className={loadingClassName} />
