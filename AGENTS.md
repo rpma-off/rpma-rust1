@@ -23,4 +23,4 @@
 
 6. **Required verification before finishing**
    - Run: `npm run quality:check`
-   - Run: `cargo test`
+   - Run from repo root: `cargo test`
