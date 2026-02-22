@@ -25,6 +25,8 @@ export {
 export { QualityControlService } from '../services/quality-control.service';
 export { ppfService, type PPFStep } from '../services/ppf';
 
+export { DesktopGPS } from '../components/GPS/DesktopGPS';
+
 export { PPFWorkflowHeader } from '../components/workflow/ppf/PPFWorkflowHeader';
 export { PPFStepProgress } from '../components/workflow/ppf/PPFStepProgress';
 export { VehicleDiagram } from '../components/workflow/ppf/VehicleDiagram';

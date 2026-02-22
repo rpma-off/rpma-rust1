@@ -1,9 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  generateUniqueTaskNumber,
-  generateFallbackTaskNumber,
-  isValidTaskNumberFormat,
-} from '@/domains/tasks/server';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('TaskNumberAPI');
