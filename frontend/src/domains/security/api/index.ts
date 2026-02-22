@@ -1,3 +1,3 @@
 export { securityProvider } from './securityProvider';
-export { usesecurity } from './usesecurity';
+export { useSecurity } from './usesecurity';
 export type { SecurityContext } from './types';

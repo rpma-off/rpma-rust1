@@ -1,3 +1,3 @@
 export { photosProvider } from './photosProvider';
-export { usephotos } from './usephotos';
+export { usePhotos } from './usephotos';
 export type { PhotosContext } from './types';

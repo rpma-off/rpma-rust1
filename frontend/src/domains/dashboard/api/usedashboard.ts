@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import { dashboardContext } from './dashboardProvider';
 
-export function usedashboard() {
+export function useDashboard() {
   return useContext(dashboardContext);
 }

@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import { systemContext } from './systemProvider';
 
-export function usesystem() {
+export function useSystem() {
   return useContext(systemContext);
 }

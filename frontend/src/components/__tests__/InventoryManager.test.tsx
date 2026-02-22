@@ -1,7 +1,7 @@
 ﻿import React from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { InventoryManager } from '@/domains/inventory/components/InventoryManager';
+import { InventoryManager } from '@/domains/inventory';
 import { useInventory, useInventoryStats } from '@/domains/inventory';
 import { Material, MaterialType, UnitOfMeasure, InventoryStats } from '@/shared/types';
 

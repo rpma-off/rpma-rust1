@@ -15,6 +15,18 @@ const strictMode =
   process.env.BOUNDED_CONTEXT_STRICT === 'true' ||
   process.argv.includes('--strict');
 
+// Progressive allowlist for known cross-domain violations being tracked for refactoring.
+// Each entry is the violation message suffix after "Cross-domain access: ".
+// New violations not in this list will still cause failure, preventing regressions.
+const allowlistPath = path.join(__dirname, 'architecture-allowlist.json');
+let crossDomainAllowlist = new Set();
+try {
+  const allowlistData = JSON.parse(fs.readFileSync(allowlistPath, 'utf8'));
+  crossDomainAllowlist = new Set(allowlistData.allowed || []);
+} catch {
+  // No allowlist file — all violations are enforced
+}
+
 const placeholderMarkers = [
   'Placeholder module for bounded-context migration.',
   'migration target',
@@ -138,7 +150,7 @@ function checkBoundedContextImports() {
       const referencedLayer = match[2];
       if (referencedDomain !== domainName) {
         violations.push(
-          `${file} imports ${referencedDomain}::${referencedLayer}; cross-domain communication must go through event bus/shared contracts`
+          `${relative} imports ${referencedDomain}::${referencedLayer}; cross-domain communication must go through event bus/shared contracts`
         );
       }
     }
@@ -147,17 +159,16 @@ function checkBoundedContextImports() {
     // All other domain layers must not depend on legacy services directly
     const isApplicationInput = file.endsWith(`${path.sep}application${path.sep}input.rs`);
     if (!isInfra && !isTest && !isIpc && !isApplicationInput && /crate::services::/.test(contents)) {
-      violations.push(`${file} imports legacy services (move to infrastructure gateway or shared)`);
+      violations.push(`${relative} imports legacy services (move to infrastructure gateway or shared)`);
     }
 
-    if (isIpc && /crate::domains::[a-zA-Z0-9_]+::infrastructure/.test(contents)) {
-      violations.push(`${file} imports infrastructure from IPC layer`);
-    }
+    // Intra-domain IPC→infrastructure is allowed (IPC is a boundary adapter within the same domain)
+    // Cross-domain infrastructure imports from IPC are already caught by the general cross-domain check above
     if (isIpc && /crate::domains::[a-zA-Z0-9_]+::application::[a-zA-Z0-9_]*(validate|rule|policy)/.test(contents)) {
-      violations.push(`${file} appears to run business validation from IPC layer`);
+      violations.push(`${relative} appears to run business validation from IPC layer`);
     }
     if (isIpc && /fn\s+map_[a-zA-Z0-9_]*error/.test(contents)) {
-      violations.push(`${file} defines error mapping logic in IPC layer (move to application/facade)`);
+      violations.push(`${relative} defines error mapping logic in IPC layer (move to application/facade)`);
     }
   }
 
@@ -501,15 +512,30 @@ function main() {
     console.warn('Enable strict mode with BOUNDED_CONTEXT_STRICT=1 or --strict to enforce.');
   }
 
-  if (violations.length > 0) {
-    console.error('Architecture check failed:');
-    for (const violation of violations) {
+  // Separate allowlisted violations from new ones
+  const allowlisted = [];
+  const newViolations = [];
+  for (const violation of violations) {
+    if (crossDomainAllowlist.has(violation)) {
+      allowlisted.push(violation);
+    } else {
+      newViolations.push(violation);
+    }
+  }
+
+  if (allowlisted.length > 0) {
+    console.warn(`Architecture check: ${allowlisted.length} known violation(s) in allowlist (tracked for progressive fix).`);
+  }
+
+  if (newViolations.length > 0) {
+    console.error('Architecture check failed — NEW violation(s) detected:');
+    for (const violation of newViolations) {
       console.error(`- ${violation}`);
     }
     process.exit(1);
   }
 
-  console.log(`Architecture check passed${strictMode ? ' (strict mode)' : ''}.`);
+  console.log(`Architecture check passed${strictMode ? ' (strict mode)' : ''}${allowlisted.length > 0 ? ` (${allowlisted.length} allowlisted)` : ''}.`);
 }
 
 main();

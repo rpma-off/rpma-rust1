@@ -1,3 +1,3 @@
 export { bootstrapProvider } from './bootstrapProvider';
-export { usebootstrap } from './usebootstrap';
+export { useBootstrap } from './usebootstrap';
 export type { BootstrapContext } from './types';

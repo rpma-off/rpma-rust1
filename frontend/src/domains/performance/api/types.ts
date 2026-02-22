@@ -1,1 +1,1 @@
-export type PerformanceContext = {};
+export type PerformanceContext = Record<string, never>;

@@ -1,6 +1,5 @@
 import { safeInvoke } from '@/lib/ipc/core';
 import { IPC_COMMANDS } from '@/lib/ipc/commands';
-import type { JsonValue } from '@/types/json';
 
 export const dashboardIpc = {
   getStats: (timeRange?: 'day' | 'week' | 'month' | 'year'): Promise<{

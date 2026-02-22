@@ -1,7 +1,6 @@
-import { safeInvoke, extractAndValidate, cachedInvoke, invalidatePattern } from '@/lib/ipc/core';
+import { safeInvoke, extractAndValidate } from '@/lib/ipc/core';
 import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import type { CreateUserRequest, UpdateUserRequest, UserListResponse } from '@/lib/ipc/types/index';
-import type { UserAccount } from '@/lib/backend';
 import type { JsonValue } from '@/types/json';
 
 export const userIpc = {

@@ -1,1 +1,1 @@
-export type UiContext = {};
+export type UiContext = Record<string, never>;
