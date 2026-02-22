@@ -48,7 +48,7 @@ export const enhancedToast = {
   },
 
   // Update existing loading toast
-  update: (toastId: string, message: string, type: 'success' | 'error' | 'loading') => {
+  update: (toastId: string | number, message: string, type: 'success' | 'error' | 'loading') => {
     const icons = {
       success: React.createElement(CheckCircle, { className: "w-5 h-5 text-emerald-400" }),
       error: React.createElement(XCircle, { className: "w-5 h-5 text-red-400" }),
