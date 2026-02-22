@@ -4,7 +4,7 @@ import { AuthProvider } from '../api/AuthProvider';
 import { useAuth } from '../api/useAuth';
 import { authIpc } from '../ipc/auth.ipc';
 import { AuthSecureStorage, SecureStorage } from '@/lib/secureStorage';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 jest.mock('../ipc/auth.ipc', () => ({
   authIpc: {
@@ -50,9 +50,9 @@ jest.mock('@/lib/logger', () => ({
   },
 }));
 
-jest.mock('react-hot-toast', () => ({
+jest.mock('sonner', () => ({
   __esModule: true,
-  default: {
+  toast: {
     error: jest.fn(),
     success: jest.fn(),
   },

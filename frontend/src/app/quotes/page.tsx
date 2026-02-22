@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Search, FileText, Send, CheckCircle, XCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { useQuotesList } from '@/domains/quotes';
 import { PageShell } from '@/shared/ui/layout/PageShell';
 import type { QuoteStatus } from '@/shared/types';

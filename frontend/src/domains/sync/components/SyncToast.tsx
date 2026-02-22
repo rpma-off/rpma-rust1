@@ -1,6 +1,6 @@
 // src/domains/sync/components/SyncToast.tsx
 import { useEffect, useRef } from 'react';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { useSyncStatus } from '..';
 
 export function SyncToast() {

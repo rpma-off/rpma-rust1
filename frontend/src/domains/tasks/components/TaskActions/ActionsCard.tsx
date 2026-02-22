@@ -25,7 +25,7 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { TaskStatus, TaskPriority, UpdateTaskRequest } from '@/lib/backend';
 import { TaskWithDetails } from '@/types/task.types';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { interventionKeys } from '@/lib/query-keys';
 import { useAuth } from '@/domains/auth';
 import { taskService } from '../../services/task.service';

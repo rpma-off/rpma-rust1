@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Shield, AlertTriangle, Users, CheckCircle, XCircle } from 'lucide-react';
 import { useAuth } from '@/domains/auth';
 import { ipcClient } from '@/lib/ipc';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 interface SecurityMetrics {
   total_events_today: number;

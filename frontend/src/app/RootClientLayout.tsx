@@ -6,10 +6,12 @@ import "./globals.css";
 import AppNavigation from '@/app/AppNavigation';
 import { GlobalErrorBoundary, SkipLink } from '@/shared/ui';
 import { useAuth } from '@/domains/auth';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import { structuredLogger as logger, CorrelationContext, LogDomain } from '@/shared/utils';
 import { useMenuEvents } from '@/shared/hooks/useMenuEvents';
+import { useAuthRedirect } from '@/shared/hooks/useAuthRedirect';
+import { useAdminBootstrapCheck } from '@/shared/hooks/useAdminBootstrapCheck';
 import { ThemeProvider } from '@/shared/ui/theme-provider';
 
 const geistSans = localFont({
@@ -30,7 +32,6 @@ const PUBLIC_ROUTES = ['/login', '/signup', '/unauthorized', '/bootstrap-admin']
 function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading, isAuthenticating } = useAuth();
   const pathname = usePathname();
-  const router = useRouter();
 
   // Initialize menu event listeners for authenticated users
   useMenuEvents();
@@ -57,78 +58,10 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
-  // Show navigation only if user is authenticated and not on public routes
-  const shouldShowNavigation = user && !PUBLIC_ROUTES.includes(pathname);
+  const { shouldShowNavigation } = useAuthRedirect(user, authLoading, isAuthenticating);
+  useAdminBootstrapCheck(user, authLoading, isAuthenticating);
 
-  // Redirect to login if not authenticated and not on public routes
-  useEffect(() => {
-    if (!authLoading && !isAuthenticating && !user && !PUBLIC_ROUTES.includes(pathname)) {
-      router.push('/login');
-    }
-  }, [user, authLoading, isAuthenticating, pathname, router]);
-
-  // Check admin status for authenticated users and redirect appropriately
-   useEffect(() => {
-     const checkAdminRedirect = async () => {
-       if (!authLoading && !isAuthenticating && user) {
-         logger.debug(LogDomain.AUTH, 'Admin redirect check started', {
-            pathname,
-            user_id: user.user_id
-          });
-         try {
-           const { ipcClient } = await import('@/shared/utils');
-           const hasAdmins = await ipcClient.bootstrap.hasAdmins();
-           logger.debug(LogDomain.AUTH, 'Admin check result', {
-             has_admins: hasAdmins,
-                pathname,
-                user_id: user.user_id
-              });
-
-           if (!hasAdmins && pathname !== '/bootstrap-admin') {
-             // No admins exist and not already on bootstrap page, redirect to bootstrap-admin
-             logger.info(LogDomain.AUTH, 'Redirecting to /bootstrap-admin', {
-                pathname,
-                user_id: user.user_id
-              });
-             router.push('/bootstrap-admin');
-           } else if ((pathname === '/login' || pathname === '/signup') && hasAdmins) {
-             // User is authenticated, on login/signup page, and admins exist, redirect to dashboard
-             logger.info(LogDomain.AUTH, 'Redirecting to /dashboard from login/signup', {
-                pathname,
-                user_id: user.user_id
-              });
-             router.push('/dashboard');
-           } else if ((pathname === '/login' || pathname === '/signup') && !hasAdmins) {
-             // User is authenticated, on login/signup page, and no admins exist, redirect to bootstrap-admin
-             logger.info(LogDomain.AUTH, 'Redirecting to /bootstrap-admin from login/signup', {
-               pathname,
-               user_id: user.id
-             });
-             router.push('/bootstrap-admin');
-           } else {
-             logger.debug(LogDomain.AUTH, 'No redirect needed', {
-                has_admins: hasAdmins,
-                pathname,
-                user_id: user.user_id
-              });
-           }
-         } catch (error) {
-           logger.error(LogDomain.AUTH, 'Failed to check admin status', error, {
-              pathname,
-              user_id: user.user_id
-            });
-           // Default to dashboard on error
-           if (pathname === '/login' || pathname === '/signup') {
-             router.push('/dashboard');
-           }
-         }
-       }
-     };
-
-     checkAdminRedirect();
-   }, [user, authLoading, isAuthenticating, pathname, router]);
-
-   // Show loading screen during authentication check or redirect
+  // Show loading screen during authentication check or redirect
   if (authLoading || isAuthenticating || (!user && !PUBLIC_ROUTES.includes(pathname))) {
     return (
       <div className="fixed inset-0 bg-background text-foreground z-50 flex items-center justify-center">
@@ -140,15 +73,15 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-return shouldShowNavigation ? (
-     <AppNavigation>
-       {children}
-     </AppNavigation>
-   ) : (
-      <div className="min-h-screen bg-background">
-        {children}
-      </div>
-    );
+  return shouldShowNavigation ? (
+    <AppNavigation>
+      {children}
+    </AppNavigation>
+  ) : (
+    <div className="min-h-screen bg-background">
+      {children}
+    </div>
+  );
 }
 
 export default function RootClientLayout({

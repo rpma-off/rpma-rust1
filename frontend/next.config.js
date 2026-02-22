@@ -10,21 +10,6 @@ const nextConfig = {
   },
   productionBrowserSourceMaps: false, // Disable source maps in production to reduce bundle size
 
-  // Bundle analysis
-  ...(process.env.ANALYZE === 'true' && {
-    webpack: (config) => {
-      const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
-      config.plugins.push(
-        new BundleAnalyzerPlugin({
-          analyzerMode: 'static',
-          openAnalyzer: false,
-          reportFilename: './bundle-analyzer-report.html'
-        })
-      );
-      return config;
-    }
-  }),
-
   // Enable linting and type checking for production
   eslint: {
     ignoreDuringBuilds: false  // Enable ESLint during builds
@@ -33,7 +18,20 @@ const nextConfig = {
     ignoreBuildErrors: false   // Enable TypeScript error checking during builds
   },
 
+  // Bundle analysis + optimization
   webpack: (config, { dev, isServer }) => {
+    // Bundle analyzer (conditionnel)
+    if (process.env.ANALYZE === 'true') {
+      const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
+      config.plugins.push(
+        new BundleAnalyzerPlugin({
+          analyzerMode: 'static',
+          openAnalyzer: false,
+          reportFilename: './bundle-analyzer-report.html',
+        })
+      );
+    }
+
     if (dev && !isServer) {
       // Enable filesystem cache in development for better performance
       config.cache = {
