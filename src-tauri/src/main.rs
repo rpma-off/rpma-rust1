@@ -363,15 +363,6 @@ fn main() {
             });
             let repositories = Arc::new(repositories);
 
-            // Test database health check
-            match db_instance.health_check() {
-                Ok(_) => info!("Database health check passed"),
-                Err(e) => {
-                    error!("Database health check failed: {}", e);
-                    return Err(e.into());
-                }
-            }
-
             match db_instance.is_initialized() {
                 Ok(true) => {
                     info!("Database already initialized, checking for migrations");
@@ -398,13 +389,25 @@ fn main() {
                     }
                 }
                 Ok(false) => {
-                    info!("Initializing database schema from schema.sql (version 25)");
+                    info!("Initializing database schema from schema.sql");
                     if let Err(e) = db_instance.init() {
                         error!("Failed to initialize database schema: {}", e);
                         return Err(e.into());
                     }
-                    // schema.sql initializes schema_version to 25, so no migrations needed
-                    info!("Database schema initialized at version 25");
+                    info!("Database schema initialized");
+
+                    let latest_version = db::Database::get_latest_migration_version();
+                    let current_version = db_instance.get_version()?;
+                    if current_version < latest_version {
+                        if let Err(e) = db_instance.migrate(latest_version) {
+                            error!("Failed to apply post-init migrations: {}", e);
+                            return Err(e.into());
+                        }
+                        info!(
+                            "Post-init migrations applied successfully ({} -> {})",
+                            current_version, latest_version
+                        );
+                    }
 
                     if let Err(e) = db_instance.ensure_required_views() {
                         error!("Failed to ensure required views: {}", e);
@@ -417,10 +420,35 @@ fn main() {
                 }
             }
 
+            // Verify database health after initialization/migrations
+            match db_instance.health_check() {
+                Ok(_) => info!("Database health check passed"),
+                Err(e) => {
+                    error!("Database health check failed: {}", e);
+                    return Err(e.into());
+                }
+            }
+
+            if let Ok(conn) = db_instance.get_connection() {
+                match conn.query_row("PRAGMA quick_check(1);", [], |row| row.get::<_, String>(0)) {
+                    Ok(result) if result == "ok" => info!("Database quick_check passed"),
+                    Ok(result) => {
+                        error!("Database quick_check failed: {}", result);
+                        return Err("Database quick_check failed".into());
+                    }
+                    Err(e) => {
+                        error!("Failed to run database quick_check: {}", e);
+                        return Err(e.into());
+                    }
+                }
+            }
+
             // Run initial WAL checkpoint
             if let Ok(conn) = db_instance.get_connection() {
                 info!("Running initial WAL checkpoint...");
-                if let Err(e) = conn.execute_batch("PRAGMA wal_checkpoint(TRUNCATE);") {
+                if let Err(e) =
+                    conn.execute_batch("PRAGMA wal_checkpoint(PASSIVE); PRAGMA optimize;")
+                {
                     error!("Failed to checkpoint WAL: {}", e);
                 }
             }

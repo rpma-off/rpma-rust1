@@ -375,11 +375,19 @@ impl Database {
         let tx = conn
             .transaction()
             .map_err(|e| format!("Failed to start transaction: {}", e))?;
+        let started_at = Instant::now();
 
         match f(&tx) {
             Ok(result) => {
                 tx.commit()
                     .map_err(|e| format!("Failed to commit transaction: {}", e))?;
+                let duration = started_at.elapsed();
+                if duration > Duration::from_millis(250) {
+                    warn!(
+                        duration_ms = duration.as_millis(),
+                        "Long-running database transaction detected"
+                    );
+                }
                 Ok(result)
             }
             Err(e) => {
@@ -581,11 +589,19 @@ impl AsyncDatabase {
             let tx = conn
                 .transaction()
                 .map_err(|e| format!("Failed to start transaction: {}", e))?;
+            let started_at = std::time::Instant::now();
 
             match operation(&tx) {
                 Ok(result) => {
                     tx.commit()
                         .map_err(|e| format!("Failed to commit transaction: {}", e))?;
+                    let duration = started_at.elapsed();
+                    if duration > std::time::Duration::from_millis(250) {
+                        tracing::warn!(
+                            duration_ms = duration.as_millis(),
+                            "Long-running async database transaction detected"
+                        );
+                    }
                     Ok(result)
                 }
                 Err(e) => {
@@ -630,7 +646,7 @@ impl AsyncDatabase {
     /// Checkpoint WAL asynchronously
     pub async fn checkpoint_wal_async(&self) -> DbResult<()> {
         self.execute_async(|conn| {
-            conn.execute_batch("PRAGMA wal_checkpoint(TRUNCATE);")
+            conn.execute_batch("PRAGMA wal_checkpoint(PASSIVE); PRAGMA optimize;")
                 .map_err(|e| format!("Failed to checkpoint WAL: {}", e))?;
             Ok(())
         })
@@ -737,5 +753,10 @@ mod tests {
             .query_row("PRAGMA foreign_keys", [], |row| row.get(0))
             .expect("Failed to query foreign_keys");
         assert_eq!(fk_enabled, 1);
+
+        let wal_autocheckpoint: i32 = conn
+            .query_row("PRAGMA wal_autocheckpoint", [], |row| row.get(0))
+            .expect("Failed to query wal_autocheckpoint");
+        assert_eq!(wal_autocheckpoint, 1000);
     }
 }
