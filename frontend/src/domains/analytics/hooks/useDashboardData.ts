@@ -13,7 +13,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/domains/auth';
 import { dashboardApiService, DashboardFilters, DashboardData, TechnicianSummary } from '../server';
 import { TaskWithDetails } from '@/types/task.types';
-import { DashboardTask, transformTask, RawTaskData } from '@/components/dashboard/types';
+import { DashboardTask, transformTask, RawTaskData } from '@/domains/analytics/components/dashboard/types';
 import { handleFetchError, FetchError } from '@/lib/utils/fetch-error-handler';
 import { useLogger } from '@/shared/hooks/useLogger';
 import { LogDomain } from '@/lib/logging/types';

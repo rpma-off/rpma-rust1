@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { dashboardApiService, DashboardFilters } from '../server';
 import { TaskWithDetails } from '@/types/task.types';
-import { DashboardTask, RawTaskData, transformTask } from '@/components/dashboard/types';
+import { DashboardTask, RawTaskData, transformTask } from '@/domains/analytics/components/dashboard/types';
 import { FetchError } from '@/lib/utils/fetch-error-handler';
 import { useLogger } from '@/shared/hooks/useLogger';
 import { LogDomain } from '@/lib/logging/types';

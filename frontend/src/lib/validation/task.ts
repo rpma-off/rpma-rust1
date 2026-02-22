@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // Import TaskFormData from the components
-export type { TaskFormData } from '@/components/TaskForm/types';
+export type { TaskFormData } from '@/domains/tasks/components/TaskForm/types';
 
 // Zod schemas for Tauri command inputs - matching Rust structs
 

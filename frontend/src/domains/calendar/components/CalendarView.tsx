@@ -48,7 +48,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     const { draggableId: taskId, destination } = result;
     const droppableId = destination.droppableId;
 
-    // Parse the drop location
     let newDate: string;
     let newStartTime: string | undefined;
 
@@ -60,10 +59,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           newStartTime = parts[3];
         }
       } else {
-        return; // Invalid drop location
+        return;
       }
     } else {
-      return; // Unknown drop location format
+      return;
     }
 
     try {
@@ -81,7 +80,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const renderCalendarContent = () => {
     if (isLoading) {
       return (
-        <div className="flex items-center justify-center h-96">
+        <div className="flex items-center justify-center h-full">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
       );
@@ -89,7 +88,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
     if (error) {
       return (
-        <div className="flex items-center justify-center h-96">
+        <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <div className="text-red-500 mb-2">{t('errors.loadFailed')}</div>
             <div className="text-gray-600 text-sm">{error}</div>
@@ -106,11 +105,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
     switch (viewMode) {
       case 'month':
-        return <MonthView {...commonProps} />;
+        return <MonthView {...commonProps} className="h-full" />;
       case 'week':
         return (
           <WeekView
             {...commonProps}
+            className="h-full"
             onTaskDrop={onTaskReschedule ? handleTaskDrop : undefined}
           />
         );
@@ -118,18 +118,19 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         return (
           <DayView
             {...commonProps}
+            className="h-full"
             onTaskDrop={onTaskReschedule ? handleTaskDrop : undefined}
           />
         );
       case 'agenda':
-        return <AgendaView {...commonProps} />;
+        return <AgendaView {...commonProps} className="h-full" />;
       default:
-        return <MonthView {...commonProps} />;
+        return <MonthView {...commonProps} className="h-full" />;
     }
   };
 
   return (
-    <div className={`flex flex-col h-full bg-gray-50 ${className}`}>
+    <div className={`flex flex-col bg-gray-50 ${className}`} style={{ height: '100%', minHeight: 0 }}>
       <CalendarHeader
         currentDate={currentDate}
         viewMode={viewMode}
@@ -138,7 +139,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         onTodayClick={handleTodayClick}
       />
 
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden" style={{ minHeight: 0 }}>
         {viewMode === 'week' || viewMode === 'day' ? (
           <DragDropContext onDragEnd={handleTaskDrop}>
             {renderCalendarContent()}
