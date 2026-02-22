@@ -161,6 +161,13 @@ fn main() {
             domains::sync::ipc::sync::sync_now,
             domains::sync::ipc::sync::sync_get_status,
             domains::sync::ipc::sync::sync_get_operations_for_entity,
+            // Documents commands
+            domains::documents::ipc::document::document_store_photo,
+            domains::documents::ipc::document::document_get_photos,
+            domains::documents::ipc::document::document_get_photo,
+            domains::documents::ipc::document::document_delete_photo,
+            domains::documents::ipc::document::document_get_photo_data,
+            domains::documents::ipc::document::document_update_photo_metadata,
             commands::ui::ui_window_minimize,
             commands::ui::ui_window_maximize,
             commands::ui::ui_window_close,
