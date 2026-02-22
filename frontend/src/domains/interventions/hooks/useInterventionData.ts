@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/domains/auth';
 import { interventionsIpc } from '../ipc/interventions.ipc';
+import type { JsonValue } from '@/types/json';
 
 interface InterventionStep {
   id: string;
@@ -41,13 +42,13 @@ export function useInterventionData(taskId: string) {
 
       try {
         // First try to get active intervention
-        let result = await interventionsIpc.getActiveByTask(taskId, session.token);
+        const activeResult = await interventionsIpc.getActiveByTask(taskId, session.token);
 
         let intervention = null;
 
         // Check if we got an active intervention
-        if (result && typeof result === 'object' && 'type' in result) {
-          const typedResult = result as { type: string; intervention?: Record<string, unknown> };
+        if (activeResult && typeof activeResult === 'object' && 'type' in activeResult) {
+          const typedResult = activeResult as { type: string; intervention?: Record<string, unknown> };
 
           if ((typedResult.type === 'ActiveRetrieved' || typedResult.type === 'ActiveByTask') && typedResult.intervention) {
             intervention = typedResult.intervention;
@@ -56,10 +57,10 @@ export function useInterventionData(taskId: string) {
 
         // If no active intervention, try to get the latest (including completed)
         if (!intervention) {
-          result = await interventionsIpc.getLatestByTask(taskId, session.token);
+          const latestResult = await interventionsIpc.getLatestByTask(taskId, session.token);
 
-          if (result && typeof result === 'object' && 'intervention' in result) {
-            const typedResult = result as { intervention?: Record<string, unknown> };
+          if (latestResult && typeof latestResult === 'object' && 'intervention' in latestResult) {
+            const typedResult = latestResult as { intervention?: Record<string, unknown> };
             if (typedResult.intervention) {
               intervention = typedResult.intervention;
             }

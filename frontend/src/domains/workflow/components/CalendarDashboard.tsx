@@ -3,7 +3,8 @@
 import React, { useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { DragDropContext } from '@hello-pangea/dnd';
-import { CalendarHeader, QuickAddDialog, FilterDrawer } from '@/domains/analytics';
+import { CalendarHeader } from '@/domains/calendar';
+import { QuickAddDialog, FilterDrawer } from '@/domains/tasks';
 import { MonthView } from '@/components/calendar/MonthView';
 import { WeekView } from '@/components/calendar/WeekView';
 import { DayView } from '@/components/calendar/DayView';
@@ -22,6 +23,9 @@ export function CalendarDashboard() {
     isQuickAddOpen,
     toggleFilterDrawer,
     toggleQuickAdd,
+    setCurrentView,
+    setCurrentDate,
+    goToToday,
   } = useCalendarStore();
 
   const { tasks, isLoading } = useCalendar(currentDate, currentView);
@@ -97,7 +101,13 @@ export function CalendarDashboard() {
   return (
     <div className="flex flex-col h-[calc(100vh-56px)]">
       <div className="mb-4">
-        <CalendarHeader />
+        <CalendarHeader
+          currentDate={currentDate}
+          viewMode={currentView}
+          onDateChange={setCurrentDate}
+          onViewModeChange={setCurrentView}
+          onTodayClick={goToToday}
+        />
       </div>
 
       <div className="flex-1 overflow-auto">

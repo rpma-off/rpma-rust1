@@ -260,9 +260,9 @@ export class InterventionWorkflowService {
           intervention: result.intervention,
           completionSummary: result.metrics ? {
             totalTime: result.metrics.total_duration_minutes || 0,
-            efficiencyRating: result.metrics.efficiency_score || 0,
+            efficiencyRating: result.metrics.completion_rate || 0,
             qualityScore: result.metrics.quality_score || 0,
-            certificatesGenerated: result.metrics.certificates_generated || false,
+            certificatesGenerated: false,
           } : undefined,
         },
         error: undefined

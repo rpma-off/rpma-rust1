@@ -27,25 +27,18 @@ export async function POST(
 
     const { id: workflowId } = await params;
 
-    // Use sanitized body from auth validation (body was already read there)
-    const body = authResult.sanitizedBody as Record<string, unknown>;
-
-    if (!body) {
+    // Get session token for IPC
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
-        { error: 'Request body is required' },
-        { status: 400 }
+        { error: 'No session token provided' },
+        { status: 401 }
       );
     }
-
-    const { reason, notes } = body as { reason?: string; notes?: string };
+    const sessionToken = authHeader.substring(7);
 
     try {
-      const updatedWorkflow = await workflowService.pauseWorkflow(
-        workflowId,
-        authResult.userId!,
-        reason,
-        notes
-      );
+      const updatedWorkflow = await workflowService.pauseWorkflow(workflowId, sessionToken);
 
       return NextResponse.json({
         data: updatedWorkflow,

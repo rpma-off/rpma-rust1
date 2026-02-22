@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { DashboardTask } from '@/domains/analytics';
+import { DashboardTask } from '@/shared/types';
 
 export const useTaskFiltering = (
   tasks: DashboardTask[],

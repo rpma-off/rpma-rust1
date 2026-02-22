@@ -16,6 +16,8 @@ export { TaskOverview } from '../components/TaskOverview';
 export { TaskTimeline } from '../components/TaskTimeline';
 export { WorkflowProgressCard } from '../components/WorkflowProgressCard';
 export { ActionsCard, ActionButtons } from '../components/TaskActions';
+export { QuickAddDialog } from '../components/QuickAddDialog';
+export { FilterDrawer } from '../components/FilterDrawer';
 
 export * from '../components/TaskForm';
 

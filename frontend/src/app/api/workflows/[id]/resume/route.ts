@@ -19,12 +19,18 @@ export async function POST(
     const body = await request.json();
     const { notes } = body;
 
-    try {
-      const updatedWorkflow = await workflowService.resumeWorkflow(
-        workflowId,
-        user.id,
-        notes
+    // Get session token for IPC
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'No session token provided' },
+        { status: 401 }
       );
+    }
+    const sessionToken = authHeader.substring(7);
+
+    try {
+      const updatedWorkflow = await workflowService.resumeWorkflow(workflowId, sessionToken);
 
       return NextResponse.json({
         data: updatedWorkflow,

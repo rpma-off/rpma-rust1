@@ -1,4 +1,4 @@
-import { safeInvoke } from '@/lib/ipc/utils';
+import { safeInvoke } from '@/lib/ipc/core';
 import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import type {
   CalendarTask,
@@ -6,6 +6,8 @@ import type {
   ConflictDetection,
   CalendarDateRange,
 } from '@/lib/backend';
+import type { CreateEventInput, UpdateEventInput } from '@/lib/ipc/types/index';
+import type { JsonValue } from '@/types/json';
 
 // Calendar IPC command functions
 
@@ -106,3 +108,55 @@ export function createCalendarFilter(
     statuses: statuses || null,
   };
 }
+
+export const calendarEvents = {
+  getEvents: (
+    startDate: string,
+    endDate: string,
+    technicianId: string | undefined,
+    sessionToken: string
+  ): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_EVENTS, {
+      start_date: startDate,
+      end_date: endDate,
+      technician_id: technicianId,
+      session_token: sessionToken
+    }),
+
+  getEventById: (id: string, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_EVENT_BY_ID, {
+      id,
+      session_token: sessionToken
+    }),
+
+  createEvent: (eventData: CreateEventInput, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.CREATE_EVENT, {
+      event_data: eventData,
+      session_token: sessionToken
+    }),
+
+  updateEvent: (id: string, eventData: UpdateEventInput, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.UPDATE_EVENT, {
+      id,
+      event_data: eventData,
+      session_token: sessionToken
+    }),
+
+  deleteEvent: (id: string, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.DELETE_EVENT, {
+      id,
+      session_token: sessionToken
+    }),
+
+  getEventsForTechnician: (technicianId: string, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_EVENTS_FOR_TECHNICIAN, {
+      technician_id: technicianId,
+      session_token: sessionToken
+    }),
+
+  getEventsForTask: (taskId: string, sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_EVENTS_FOR_TASK, {
+      task_id: taskId,
+      session_token: sessionToken
+    }),
+};
