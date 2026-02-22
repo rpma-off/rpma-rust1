@@ -67,6 +67,10 @@ impl InventoryFacade {
     pub fn intervention_finalized_handler(&self) -> Arc<dyn DomainEventHandler> {
         Arc::new(InterventionFinalizedHandler::new(self.service.clone()))
     }
+
+    pub fn is_ready(&self) -> bool {
+        true
+    }
 }
 
 fn map_inventory_error(context: &str, error: InventoryError) -> AppError {

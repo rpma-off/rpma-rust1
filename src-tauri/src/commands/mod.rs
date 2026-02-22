@@ -17,6 +17,11 @@ pub mod system;
 pub mod ui;
 pub mod websocket;
 pub mod websocket_commands;
+pub mod user {
+    pub use crate::domains::users::ipc::user::{
+        bootstrap_first_admin, has_admins, user_crud, BootstrapFirstAdminRequest, UserCrudRequest,
+    };
+}
 
 pub use crate::shared::contracts::auth::UserRole;
 pub use crate::shared::app_state::{AppState, AppStateType};
