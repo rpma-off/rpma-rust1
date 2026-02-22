@@ -6,7 +6,7 @@ import { fr } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, ChevronDown, Filter, List, X, Calendar as CalendarIcon, Grid3X3, Clock, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useCalendarStore } from '@/lib/stores/calendarStore';
+import { useCalendarStore } from '@/domains/calendar/stores/calendarStore';
 
 export function CalendarHeader() {
   const {

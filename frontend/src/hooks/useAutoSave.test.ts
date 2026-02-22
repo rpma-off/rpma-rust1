@@ -1,5 +1,5 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
-import { useAutoSave, useWorkflowStepAutoSave, useBeforeUnloadSave } from './useAutoSave'
+import { useAutoSave, useWorkflowStepAutoSave, useBeforeUnloadSave } from '@/shared/hooks/useAutoSave'
 import { taskService } from '@/domains/tasks'
 
 // Mock sonner

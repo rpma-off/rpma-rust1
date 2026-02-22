@@ -10,7 +10,7 @@ import {
   Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useCalendarStore } from "@/lib/stores/calendarStore";
+import { useCalendarStore } from "@/domains/calendar/stores/calendarStore";
 
 import { ThemeToggle } from "@/components/theme-toggle";
 import {

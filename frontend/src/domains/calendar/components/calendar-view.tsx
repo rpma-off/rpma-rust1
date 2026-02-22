@@ -1,7 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
-import { useCalendarStore } from "@/lib/stores/calendarStore";
+import { useCalendarStore } from "@/domains/calendar/stores/calendarStore";
 import type { CalendarEvent } from "@/types/calendar";
 import { useEffect, useRef, useState } from "react";
 import { EventSheet } from "./event-sheet";

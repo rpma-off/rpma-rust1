@@ -8,7 +8,7 @@ import { DayView } from './DayView';
 import { AgendaView } from './AgendaView';
 import { useCalendar } from '../hooks/useCalendar';
 import type { CalendarTask } from '@/lib/backend';
-import { useTranslation } from '@/hooks/useTranslation';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 
 interface CalendarViewProps {
   initialDate?: Date;

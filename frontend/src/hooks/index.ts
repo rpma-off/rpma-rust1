@@ -10,10 +10,9 @@ export { useIntersectionObserver, useLazyImage, useLazyComponent, useInfiniteScr
 // Sprint 3: Advanced Dashboard Features (migrated to domains)
 export { useRealTimeUpdates, useDashboardRealTime, useTaskRealTime, useSOPRealTime } from '@/domains/sync/hooks/useRealTimeUpdates';
 export { useAdvancedAnalytics, useDashboardAnalytics, useTaskAnalytics, useSOPAnalytics, useUserAnalytics } from '@/domains/analytics/hooks/useAdvancedAnalytics';
-// Dashboard customization feature removed - using unified layout system
 export { useAdvancedFiltering, useTaskFiltering as useAdvancedTaskFiltering, useSOPFiltering as useAdvancedSOPFiltering } from '@/shared/hooks/useAdvancedFiltering';
 
 // Existing hooks
 export { useChangeTracking } from '@/domains/audit';
 export * from '@/domains/sync/hooks/useConnectionStatus';
-export * from './useDebounce';
+export { useDebounce } from '@/shared/hooks/useDebounce';

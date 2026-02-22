@@ -8,7 +8,7 @@ import { bigintToNumber } from '@/lib/utils/timestamp-conversion';
 import { ipcClient } from '@/lib/ipc';
 import { ChangeRoleDialog } from './ChangeRoleDialog';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { useTranslation } from '@/hooks/useTranslation';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 
 interface UserListProps {
   users: UserAccount[];
