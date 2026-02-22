@@ -5,22 +5,45 @@ use crate::domains::tasks::infrastructure::task_import::TaskImportService;
 use crate::domains::tasks::TasksFacade;
 
 #[tokio::test]
-async fn tasks_facade_debug_output() {
+async fn parse_status_accepts_valid_status() {
     let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let task_svc = Arc::new(TaskService::new(db.clone()));
     let import_svc = Arc::new(TaskImportService::new(db));
     let facade = TasksFacade::new(task_svc, import_svc);
-    let debug = format!("{:?}", facade);
-    assert!(debug.contains("TasksFacade"));
+
+    let result = facade.parse_status("pending");
+    assert!(result.is_ok());
 }
 
 #[tokio::test]
-async fn tasks_facade_service_is_shared_reference() {
+async fn parse_status_rejects_invalid_status() {
     let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let task_svc = Arc::new(TaskService::new(db.clone()));
     let import_svc = Arc::new(TaskImportService::new(db));
     let facade = TasksFacade::new(task_svc, import_svc);
-    let svc1 = facade.task_service();
-    let svc2 = facade.task_service();
-    assert!(Arc::ptr_eq(svc1, svc2));
+
+    let result = facade.parse_status("nonexistent_status");
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn validate_task_id_rejects_empty_id() {
+    let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
+    let task_svc = Arc::new(TaskService::new(db.clone()));
+    let import_svc = Arc::new(TaskImportService::new(db));
+    let facade = TasksFacade::new(task_svc, import_svc);
+
+    let result = facade.validate_task_id("");
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn validate_note_rejects_empty_note() {
+    let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
+    let task_svc = Arc::new(TaskService::new(db.clone()));
+    let import_svc = Arc::new(TaskImportService::new(db));
+    let facade = TasksFacade::new(task_svc, import_svc);
+
+    let result = facade.validate_note("");
+    assert!(result.is_err());
 }

@@ -4,20 +4,31 @@ use crate::domains::interventions::infrastructure::intervention::InterventionSer
 use crate::domains::interventions::InterventionsFacade;
 
 #[tokio::test]
-async fn interventions_facade_debug_output() {
+async fn validate_intervention_id_rejects_empty_id() {
     let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let service = Arc::new(InterventionService::new(db));
     let facade = InterventionsFacade::new(service);
-    let debug = format!("{:?}", facade);
-    assert!(debug.contains("InterventionsFacade"));
+
+    let result = facade.validate_intervention_id("");
+    assert!(result.is_err());
 }
 
 #[tokio::test]
-async fn interventions_facade_service_is_shared_reference() {
+async fn validate_intervention_id_accepts_valid_id() {
     let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let service = Arc::new(InterventionService::new(db));
     let facade = InterventionsFacade::new(service);
-    let svc1 = facade.intervention_service();
-    let svc2 = facade.intervention_service();
-    assert!(Arc::ptr_eq(svc1, svc2));
+
+    let result = facade.validate_intervention_id("intervention-123");
+    assert!(result.is_ok());
+}
+
+#[tokio::test]
+async fn validate_task_id_rejects_empty_id() {
+    let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
+    let service = Arc::new(InterventionService::new(db));
+    let facade = InterventionsFacade::new(service);
+
+    let result = facade.validate_task_id("");
+    assert!(result.is_err());
 }
