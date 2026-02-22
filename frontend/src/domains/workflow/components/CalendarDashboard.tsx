@@ -63,6 +63,7 @@ export function CalendarDashboard() {
             tasks={tasks}
             currentDate={currentDate}
             onTaskClick={handleTaskClick}
+            className="h-full"
           />
         );
       case 'week':
@@ -72,6 +73,7 @@ export function CalendarDashboard() {
               tasks={tasks}
               currentDate={currentDate}
               onTaskClick={handleTaskClick}
+              className="h-full"
             />
           </DragDropContext>
         );
@@ -82,6 +84,7 @@ export function CalendarDashboard() {
               tasks={tasks}
               currentDate={currentDate}
               onTaskClick={handleTaskClick}
+              className="h-full"
             />
           </DragDropContext>
         );
@@ -91,6 +94,7 @@ export function CalendarDashboard() {
             tasks={tasks}
             currentDate={currentDate}
             onTaskClick={handleTaskClick}
+            className="h-full"
           />
         );
       default:
@@ -99,8 +103,8 @@ export function CalendarDashboard() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-56px)]">
-      <div className="mb-4">
+    <div className="flex flex-col h-full" style={{ minHeight: 0 }}>
+      <div className="flex-shrink-0 mb-4">
         <CalendarHeader
           currentDate={currentDate}
           viewMode={currentView}
@@ -110,9 +114,9 @@ export function CalendarDashboard() {
         />
       </div>
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-hidden" style={{ minHeight: 0 }}>
         {isLoading ? (
-          <div className="flex items-center justify-center h-64" role="status" aria-live="polite">
+          <div className="flex items-center justify-center h-full" role="status" aria-live="polite">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--rpma-teal))]" />
           </div>
         ) : (
