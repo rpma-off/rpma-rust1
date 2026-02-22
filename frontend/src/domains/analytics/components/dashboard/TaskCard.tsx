@@ -1,7 +1,7 @@
 import React from 'react';
 import { Car, UserCircle, Calendar } from 'lucide-react';
 import { DashboardTask } from './types';
-import { getDashboardTaskDisplayTitle, getTaskDisplayStatus } from '@/lib/utils/task-display';
+import { getDashboardTaskDisplayTitle, getTaskDisplayStatus } from '@/domains/tasks/utils/display';
 import { TaskStatus } from '@/lib/backend';
 
 interface TaskCardProps {

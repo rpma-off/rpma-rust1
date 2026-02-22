@@ -1,5 +1,5 @@
 import type { InterventionStep } from '@/lib/backend';
-import { buildPPFStepsFromData, DEFAULT_PPF_STEP_ORDER, getCurrentPPFStepId } from '@/lib/ppf-workflow';
+import { buildPPFStepsFromData, DEFAULT_PPF_STEP_ORDER, getCurrentPPFStepId } from '../ppf-workflow';
 
 const createStep = (overrides: Partial<InterventionStep>): InterventionStep => ({
   id: overrides.id ?? `step-${overrides.step_type ?? 'inspection'}`,

@@ -38,7 +38,7 @@ export {
   getPPFStepDescription,
   buildPPFStepsFromData,
   getCurrentPPFStepId,
-} from '@/lib/ppf-workflow';
+} from '../utils/ppf-workflow';
 
 export type {
   PPFInterventionData,

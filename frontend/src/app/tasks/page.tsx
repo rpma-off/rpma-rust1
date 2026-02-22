@@ -14,7 +14,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { TaskCardSkeleton } from '@/shared/ui/ui/skeleton';
 import { VirtualizedTable } from '@/shared/ui/ui/virtualized-table';
 import { FloatingActionButton, PullToRefresh } from '@/shared/ui/ui/mobile-components';
-import { cn, enhancedToast, getTaskDisplayTitle, getTaskDisplayStatus, getUserFullName, logger } from '@/shared/utils';
+import { cn, enhancedToast, getUserFullName, logger } from '@/shared/utils';
+import { getTaskDisplayTitle, getTaskDisplayStatus } from '@/domains/tasks/utils/display';
 
 import { useAuth } from '@/domains/auth';
 import { useDebounce, useTranslation } from '@/shared/hooks';

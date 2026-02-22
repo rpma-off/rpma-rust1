@@ -8,7 +8,7 @@ import { useAuth } from '@/domains/auth';
 import { interventionKeys } from '@/lib/query-keys';
 import type { Intervention, InterventionStep, Task } from '@/lib/backend';
 import type { StepType } from '@/lib/StepType';
-import { buildPPFStepsFromData, getCurrentPPFStepId } from '@/lib/ppf-workflow';
+import { buildPPFStepsFromData, getCurrentPPFStepId } from '../utils/ppf-workflow';
 import { interventionsIpc } from '../ipc/interventions.ipc';
 
 
