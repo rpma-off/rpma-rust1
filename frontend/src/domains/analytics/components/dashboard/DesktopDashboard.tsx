@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { DesktopTable } from '@/components/ui/DesktopTable';
-import { DesktopGPS } from '@/components/GPS/DesktopGPS';
+import { DesktopGPS } from '@/domains/interventions/components/GPS/DesktopGPS';
 import { Task } from '@/lib/backend';
 import {
   BarChart3,
