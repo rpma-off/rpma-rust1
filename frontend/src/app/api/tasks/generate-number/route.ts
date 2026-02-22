@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateUniqueTaskNumber, generateFallbackTaskNumber } from '@/domains/tasks/utils/number-generator';
+import {
+  generateUniqueTaskNumber,
+  generateFallbackTaskNumber,
+  isValidTaskNumberFormat,
+} from '@/domains/tasks/server';
 import { createLogger } from '@/lib/logger';
 import { createClient } from '@/lib/supabase/server';
 
@@ -97,7 +101,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }, { status: 400 });
     }
 
-    const { isValidTaskNumberFormat } = await import('@/domains/tasks/utils/number-generator');
     const isValid = isValidTaskNumberFormat(task_number);
 
     logger.debug('Task number validation requested', {
