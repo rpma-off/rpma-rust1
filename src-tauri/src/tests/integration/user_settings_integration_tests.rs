@@ -4,8 +4,8 @@
 
 use crate::db::Database;
 use crate::models::settings::*;
-use crate::services::auth::AuthService;
-use crate::services::settings::SettingsService;
+use crate::domains::auth::infrastructure::auth::AuthService;
+use crate::domains::settings::infrastructure::settings::SettingsService;
 use chrono::{DateTime, Utc};
 use rusqlite::params;
 use std::sync::Arc;

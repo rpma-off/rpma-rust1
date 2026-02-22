@@ -3,7 +3,7 @@
 use crate::commands::AppError;
 use crate::db::Database;
 use crate::models::auth::UserSession;
-use crate::services::token;
+use crate::domains::auth::infrastructure::token;
 use chrono::Utc;
 use rusqlite::{params, OptionalExtension, Row};
 use std::collections::HashMap;

@@ -4,7 +4,7 @@
 
 use crate::db::Database;
 use crate::models::settings::*;
-use crate::services::settings::SettingsService;
+use crate::domains::settings::infrastructure::settings::SettingsService;
 use rusqlite::params;
 use uuid::Uuid;
 

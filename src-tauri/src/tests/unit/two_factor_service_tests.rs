@@ -1,6 +1,6 @@
 //! Unit tests for two-factor authentication service
 
-use crate::services::two_factor::TwoFactorService;
+use crate::domains::auth::infrastructure::two_factor::TwoFactorService;
 use crate::test_db;
 use base64::{engine::general_purpose, Engine as _};
 use chrono::Utc;

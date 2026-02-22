@@ -13,9 +13,9 @@ use crate::repositories::{
     intervention_repository::InterventionRepository, task_repository::TaskRepository,
     user_repository::UserRepository,
 };
-use crate::services::{
-    audit_service::AuditService, intervention::InterventionService, task::TaskService,
-};
+use crate::domains::audit::infrastructure::audit_service::AuditService;
+use crate::domains::interventions::infrastructure::intervention::InterventionService;
+use crate::domains::tasks::infrastructure::task::TaskService;
 use crate::test_utils::{TestDataFactory, TestDatabase};
 use chrono::Utc;
 use futures;

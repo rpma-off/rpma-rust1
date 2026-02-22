@@ -13,10 +13,10 @@ use crate::models::client::{Client, CustomerType};
 use crate::models::intervention::Intervention;
 use crate::models::material::{Material, MaterialType, UnitOfMeasure};
 use crate::models::task::{Task, TaskPriority, TaskStatus};
-use crate::services::audit_service::AuditService;
-use crate::services::intervention_types::{FinalizeInterventionRequest, StartInterventionRequest};
-use crate::services::intervention_workflow::InterventionWorkflowService;
-use crate::services::material::{
+use crate::domains::audit::infrastructure::audit_service::AuditService;
+use crate::domains::interventions::infrastructure::intervention_types::{FinalizeInterventionRequest, StartInterventionRequest};
+use crate::domains::interventions::infrastructure::intervention_workflow::InterventionWorkflowService;
+use crate::domains::inventory::infrastructure::material::{
     CreateMaterialRequest, MaterialService, RecordConsumptionRequest, UpdateStockRequest,
 };
 use crate::test_utils::TestDatabase;

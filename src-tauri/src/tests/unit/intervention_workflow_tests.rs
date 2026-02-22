@@ -7,10 +7,10 @@ use crate::commands::AppResult;
 use crate::db::InterventionError;
 use crate::models::intervention::InterventionStatus;
 use crate::models::step::StepStatus;
-use crate::services::intervention_types::{
+use crate::domains::interventions::infrastructure::intervention_types::{
     AdvanceStepRequest, FinalizeInterventionRequest, StartInterventionRequest,
 };
-use crate::services::intervention_workflow::InterventionWorkflowService;
+use crate::domains::interventions::infrastructure::intervention_workflow::InterventionWorkflowService;
 use crate::{test_db, test_task};
 use serde_json::json;
 

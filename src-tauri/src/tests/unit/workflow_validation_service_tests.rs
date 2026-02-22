@@ -9,7 +9,7 @@
 use crate::logging::{LogDomain, RPMARequestLogger};
 use crate::models::intervention::{Intervention, InterventionStatus};
 use crate::models::step::{InterventionStep, StepStatus, StepType};
-use crate::services::workflow_validation::WorkflowValidationService;
+use crate::domains::tasks::infrastructure::workflow_validation::WorkflowValidationService;
 use crate::test_utils::TestDataFactory;
 use crate::{test_client, test_db, test_intervention, test_task};
 use std::sync::Arc;

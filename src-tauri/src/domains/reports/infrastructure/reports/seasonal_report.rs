@@ -5,7 +5,7 @@
 use crate::commands::AppResult;
 use crate::db::Database;
 use crate::models::reports::*;
-use crate::services::reports::validation::validate_year;
+use crate::domains::reports::infrastructure::reports::validation::validate_year;
 use chrono::{DateTime, Datelike, Utc};
 use tracing::info;
 
@@ -209,7 +209,7 @@ pub async fn generate_seasonal_report(year: i32, db: &Database) -> AppResult<Sea
     // Completion predictions (simplified)
     let mut completion_predictions = Vec::new();
     for pattern in &seasonal_patterns {
-        completion_predictions.push(crate::services::prediction::CompletionTimePrediction {
+        completion_predictions.push(crate::domains::analytics::infrastructure::prediction::CompletionTimePrediction {
             predicted_duration_minutes: pattern.average_duration_minutes,
             confidence_interval: (
                 pattern.average_duration_minutes * 0.8,

@@ -12,14 +12,14 @@ use crate::db::Database;
 use crate::db::{InterventionError, InterventionResult};
 use crate::models::intervention::Intervention;
 use crate::models::step::InterventionStep;
-use crate::services::intervention_calculation::InterventionCalculationService;
-use crate::services::intervention_data::InterventionDataService;
-use crate::services::intervention_workflow::InterventionWorkflowService;
+use crate::domains::interventions::infrastructure::intervention_calculation::InterventionCalculationService;
+use crate::domains::interventions::infrastructure::intervention_data::InterventionDataService;
+use crate::domains::interventions::infrastructure::intervention_workflow::InterventionWorkflowService;
 
 use std::sync::Arc;
 
 /// Re-export types from specialized modules and types for backward compatibility
-pub use crate::services::intervention_types::*;
+pub use crate::domains::interventions::infrastructure::intervention_types::*;
 
 /// Main intervention service that orchestrates all intervention operations
 ///

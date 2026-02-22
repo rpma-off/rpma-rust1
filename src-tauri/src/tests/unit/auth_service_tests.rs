@@ -8,13 +8,13 @@
 
 use crate::domains::auth::application::SignupRequest;
 use crate::models::auth::{UserAccount, UserRole, UserSession};
-use crate::services::auth::AuthService;
-use crate::services::performance_monitor::PerformanceMonitorService;
-use crate::services::rate_limiter::RateLimiterService;
-use crate::services::security_monitor::SecurityMonitorService;
-use crate::services::token;
-use crate::services::token::TokenService;
-use crate::services::validation::ValidationService;
+use crate::domains::auth::infrastructure::auth::AuthService;
+use crate::shared::services::performance_monitor::PerformanceMonitorService;
+use crate::domains::auth::infrastructure::rate_limiter::RateLimiterService;
+use crate::domains::audit::infrastructure::security_monitor::SecurityMonitorService;
+use crate::domains::auth::infrastructure::token;
+use crate::domains::auth::infrastructure::token::TokenService;
+use crate::shared::services::validation::ValidationService;
 use crate::test_utils::TestDataFactory;
 use crate::{test_client, test_db, test_intervention, test_task};
 

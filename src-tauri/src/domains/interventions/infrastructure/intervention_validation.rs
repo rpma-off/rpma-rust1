@@ -10,7 +10,7 @@ use crate::db::Database;
 use crate::db::{InterventionError, InterventionResult};
 use crate::models::intervention::{Intervention, InterventionStatus};
 use crate::models::step::{InterventionStep, StepStatus};
-use crate::services::intervention_types::StartInterventionRequest;
+use crate::domains::interventions::infrastructure::intervention_types::StartInterventionRequest;
 
 use std::str::FromStr;
 use std::sync::Arc;

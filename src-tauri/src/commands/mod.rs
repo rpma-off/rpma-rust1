@@ -192,7 +192,7 @@ pub fn get_database_status(state: AppState) -> Result<ApiResponse<serde_json::Va
     debug!("Database status requested");
 
     let status =
-        crate::services::system::SystemService::get_database_status(&state.db).map_err(|e| {
+        crate::shared::services::system::SystemService::get_database_status(&state.db).map_err(|e| {
             error!("Failed to get database status: {}", e);
             AppError::Database(e)
         })?;

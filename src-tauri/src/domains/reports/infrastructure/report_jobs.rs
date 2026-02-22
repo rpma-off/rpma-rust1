@@ -6,7 +6,7 @@
 use crate::commands::AppError;
 use crate::db::Database;
 use crate::models::reports::*;
-use crate::services::cache::CacheService;
+use crate::shared::services::cache::CacheService;
 use chrono::{Datelike, Utc};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -82,7 +82,7 @@ impl ReportJobService {
         // Store job in cache for status tracking
         let cache_key = format!("report_job:{}", job_id);
         self.cache.set(
-            crate::services::cache::CacheType::ApiResponse,
+            crate::shared::services::cache::CacheType::ApiResponse,
             &cache_key,
             &job,
             Some(Duration::from_secs(24 * 3600)),
@@ -112,7 +112,7 @@ impl ReportJobService {
     pub async fn get_job_status(&self, job_id: &str) -> Result<Option<ReportJob>, AppError> {
         let cache_key = format!("report_job:{}", job_id);
         self.cache
-            .get::<ReportJob>(crate::services::cache::CacheType::ApiResponse, &cache_key)
+            .get::<ReportJob>(crate::shared::services::cache::CacheType::ApiResponse, &cache_key)
     }
 
     /// Cancel a job
@@ -127,13 +127,13 @@ impl ReportJobService {
             let cache_key = format!("report_job:{}", job_id);
             if let Ok(Some(mut job)) = self
                 .cache
-                .get::<ReportJob>(crate::services::cache::CacheType::ApiResponse, &cache_key)
+                .get::<ReportJob>(crate::shared::services::cache::CacheType::ApiResponse, &cache_key)
             {
                 job.status = ReportJobStatus::Failed;
                 job.error_message = Some("Job cancelled by user".to_string());
                 job.completed_at = Some(Utc::now());
                 let _ = self.cache.set(
-                    crate::services::cache::CacheType::ApiResponse,
+                    crate::shared::services::cache::CacheType::ApiResponse,
                     &cache_key,
                     &job,
                     Some(Duration::from_secs(24 * 3600)),
@@ -247,14 +247,14 @@ impl ReportJobService {
         job_id: &str,
     ) -> Result<(), AppError> {
         // Import the function from services
-        use crate::services::reports::task_report::generate_task_completion_report;
+        use crate::domains::reports::infrastructure::reports::task_report::generate_task_completion_report;
 
         let report = generate_task_completion_report(&date_range, &filters, db).await?;
 
         // Cache the result
         let report_cache_key = format!("report:task_completion:{}", job_id);
         cache.set(
-            crate::services::cache::CacheType::ComputedAnalytics,
+            crate::shared::services::cache::CacheType::ComputedAnalytics,
             &report_cache_key,
             &report,
             None,
@@ -269,13 +269,13 @@ impl ReportJobService {
         cache: &CacheService,
         job_id: &str,
     ) -> Result<(), AppError> {
-        use crate::services::reports::technician_report::generate_technician_performance_report;
+        use crate::domains::reports::infrastructure::reports::technician_report::generate_technician_performance_report;
 
         let report = generate_technician_performance_report(&date_range, None, db).await?;
 
         let report_cache_key = format!("report:technician_performance:{}", job_id);
         cache.set(
-            crate::services::cache::CacheType::ComputedAnalytics,
+            crate::shared::services::cache::CacheType::ComputedAnalytics,
             &report_cache_key,
             &report,
             None,
@@ -291,13 +291,13 @@ impl ReportJobService {
         cache: &CacheService,
         job_id: &str,
     ) -> Result<(), AppError> {
-        use crate::services::reports::client_report::generate_client_analytics_report;
+        use crate::domains::reports::infrastructure::reports::client_report::generate_client_analytics_report;
 
         let report = generate_client_analytics_report(&date_range, &filters, db).await?;
 
         let report_cache_key = format!("report:client_analytics:{}", job_id);
         cache.set(
-            crate::services::cache::CacheType::ComputedAnalytics,
+            crate::shared::services::cache::CacheType::ComputedAnalytics,
             &report_cache_key,
             &report,
             None,
@@ -313,13 +313,13 @@ impl ReportJobService {
         cache: &CacheService,
         job_id: &str,
     ) -> Result<(), AppError> {
-        use crate::services::reports::quality_report::generate_quality_compliance_report;
+        use crate::domains::reports::infrastructure::reports::quality_report::generate_quality_compliance_report;
 
         let report = generate_quality_compliance_report(&date_range, &filters, db).await?;
 
         let report_cache_key = format!("report:quality_compliance:{}", job_id);
         cache.set(
-            crate::services::cache::CacheType::ComputedAnalytics,
+            crate::shared::services::cache::CacheType::ComputedAnalytics,
             &report_cache_key,
             &report,
             None,
@@ -335,13 +335,13 @@ impl ReportJobService {
         cache: &CacheService,
         job_id: &str,
     ) -> Result<(), AppError> {
-        use crate::services::reports::material_report::generate_material_usage_report;
+        use crate::domains::reports::infrastructure::reports::material_report::generate_material_usage_report;
 
         let report = generate_material_usage_report(&date_range, &filters, db).await?;
 
         let report_cache_key = format!("report:material_usage:{}", job_id);
         cache.set(
-            crate::services::cache::CacheType::ComputedAnalytics,
+            crate::shared::services::cache::CacheType::ComputedAnalytics,
             &report_cache_key,
             &report,
             None,
@@ -357,13 +357,13 @@ impl ReportJobService {
         cache: &CacheService,
         job_id: &str,
     ) -> Result<(), AppError> {
-        use crate::services::reports::geographic_report::generate_geographic_report;
+        use crate::domains::reports::infrastructure::reports::geographic_report::generate_geographic_report;
 
         let report = generate_geographic_report(&date_range, &filters, db).await?;
 
         let report_cache_key = format!("report:geographic:{}", job_id);
         cache.set(
-            crate::services::cache::CacheType::ComputedAnalytics,
+            crate::shared::services::cache::CacheType::ComputedAnalytics,
             &report_cache_key,
             &report,
             None,
@@ -379,14 +379,14 @@ impl ReportJobService {
         cache: &CacheService,
         job_id: &str,
     ) -> Result<(), AppError> {
-        use crate::services::reports::seasonal_report::generate_seasonal_report;
+        use crate::domains::reports::infrastructure::reports::seasonal_report::generate_seasonal_report;
 
         let year = date_range.start.year() as i32;
         let report = generate_seasonal_report(year, db).await?;
 
         let report_cache_key = format!("report:seasonal:{}", job_id);
         cache.set(
-            crate::services::cache::CacheType::ComputedAnalytics,
+            crate::shared::services::cache::CacheType::ComputedAnalytics,
             &report_cache_key,
             &report,
             None,
@@ -452,14 +452,14 @@ impl ReportJobService {
         cache: &CacheService,
         job_id: &str,
     ) -> Result<(), AppError> {
-        use crate::services::operational_intelligence::OperationalIntelligenceService;
+        use crate::domains::reports::infrastructure::operational_intelligence::OperationalIntelligenceService;
 
         let service = OperationalIntelligenceService::new(db.clone().into());
         let report = service.generate_operational_report(&date_range, &filters)?;
 
         let report_cache_key = format!("report:operational_intelligence:{}", job_id);
         cache.set(
-            crate::services::cache::CacheType::ComputedAnalytics,
+            crate::shared::services::cache::CacheType::ComputedAnalytics,
             &report_cache_key,
             &report,
             None,

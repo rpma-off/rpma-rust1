@@ -7,7 +7,7 @@
 //! - Data retention policies
 
 use crate::repositories::audit_repository::AuditRepository;
-use crate::services::audit_service::{AuditEvent, AuditEventType};
+use crate::domains::audit::infrastructure::audit_service::{AuditEvent, AuditEventType};
 use crate::test_db;
 use chrono::Utc;
 

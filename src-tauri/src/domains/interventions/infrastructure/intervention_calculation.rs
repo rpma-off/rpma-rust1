@@ -9,7 +9,7 @@
 use crate::db::InterventionResult;
 use crate::models::intervention::Intervention;
 use crate::models::step::{InterventionStep, StepStatus, StepType};
-use crate::services::intervention_types::{InterventionMetrics, StepRequirement};
+use crate::domains::interventions::infrastructure::intervention_types::{InterventionMetrics, StepRequirement};
 
 /// Service for calculating intervention metrics and requirements
 pub struct InterventionCalculationService;

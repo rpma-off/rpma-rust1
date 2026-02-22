@@ -4,7 +4,7 @@
 //! and GDPR-compliant data operations.
 
 use crate::commands::{ApiResponse, AppError, AppState};
-use crate::services::consent::ConsentService;
+use crate::domains::settings::infrastructure::consent::ConsentService;
 
 use serde::Deserialize;
 use std::sync::Arc;

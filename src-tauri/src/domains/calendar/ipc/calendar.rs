@@ -9,8 +9,8 @@ use crate::domains::calendar::application::{
     GetEventByIdRequest, GetEventsForTaskRequest, GetEventsForTechnicianRequest,
     ScheduleTaskRequest, UpdateEventRequest,
 };
-use crate::services::calendar::CalendarService;
-use crate::services::calendar_event_service::CalendarEventService;
+use crate::domains::calendar::infrastructure::calendar::CalendarService;
+use crate::domains::calendar::infrastructure::calendar_event_service::CalendarEventService;
 use tracing::{error, info, instrument};
 
 // Import authentication macros
@@ -416,7 +416,7 @@ pub async fn get_events(
     }
 
     let calendar_service =
-        crate::services::calendar_event_service::CalendarEventService::new(state.db.clone());
+        crate::domains::calendar::infrastructure::calendar_event_service::CalendarEventService::new(state.db.clone());
 
     match calendar_service
         .get_events_in_range(start_date, end_date, technician_id)

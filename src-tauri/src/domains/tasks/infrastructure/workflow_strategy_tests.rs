@@ -1,7 +1,7 @@
 //! Simple test to verify the workflow strategy pattern works correctly
 
 use crate::models::intervention::InterventionType;
-use crate::services::workflow_strategy::{
+use crate::domains::tasks::infrastructure::workflow_strategy::{
     EnvironmentConditions, ExpressPPFStrategy, StandardPPFStrategy, WorkflowContext,
     WorkflowStrategy, WorkflowStrategyFactory,
 };

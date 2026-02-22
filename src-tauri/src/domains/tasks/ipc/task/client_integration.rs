@@ -162,7 +162,7 @@ pub async fn get_tasks_with_client_details(
 
 /// Determine the relationship status between task and client
 fn determine_client_relationship_status(
-    task_with_client: &crate::services::task_client_integration::TaskWithClient,
+    task_with_client: &crate::domains::tasks::infrastructure::task_client_integration::TaskWithClient,
     _client_details: &Option<crate::models::client::Client>,
 ) -> String {
     // Check task status first
@@ -246,7 +246,7 @@ pub async fn get_client_task_summary(
     client_id: &str,
     state: &AppState<'_>,
     correlation_id: Option<String>,
-) -> Result<ApiResponse<crate::services::client::ClientStat>, AppError> {
+) -> Result<ApiResponse<crate::domains::clients::infrastructure::client::ClientStat>, AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     debug!("Getting task summary for client {}", client_id);
 

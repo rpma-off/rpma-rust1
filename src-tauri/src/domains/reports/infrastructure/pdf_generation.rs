@@ -7,8 +7,8 @@
 
 use crate::commands::{AppError, AppResult};
 use crate::models::reports::CompleteInterventionData;
-use crate::services::document_storage::DocumentStorageService;
-use crate::services::worker_pool::{WorkerPool, WorkerTask};
+use crate::domains::documents::infrastructure::document_storage::DocumentStorageService;
+use crate::shared::services::worker_pool::{WorkerPool, WorkerTask};
 use chrono::Utc;
 use printpdf::*;
 use std::path::{Path, PathBuf};

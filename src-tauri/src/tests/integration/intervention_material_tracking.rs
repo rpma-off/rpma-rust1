@@ -6,11 +6,11 @@
 use crate::commands::AppResult;
 use crate::domains::tasks::infrastructure::task_crud::TaskCrudService;
 use crate::models::material::{InventoryTransactionType, Material, MaterialType, UnitOfMeasure};
-use crate::services::intervention_types::{
+use crate::domains::interventions::infrastructure::intervention_types::{
     AdvanceStepRequest, FinalizeInterventionRequest, StartInterventionRequest,
 };
-use crate::services::intervention_workflow::InterventionWorkflowService;
-use crate::services::material::{
+use crate::domains::interventions::infrastructure::intervention_workflow::InterventionWorkflowService;
+use crate::domains::inventory::infrastructure::material::{
     CreateInventoryTransactionRequest, CreateMaterialRequest, MaterialService,
     RecordConsumptionRequest, UpdateStockRequest,
 };

@@ -5,7 +5,7 @@
 use crate::commands::AppResult;
 use crate::db::Database;
 use crate::models::reports::*;
-use crate::services::reports::validation::{validate_date_range, validate_filters};
+use crate::domains::reports::infrastructure::reports::validation::{validate_date_range, validate_filters};
 use tracing::info;
 
 // Import all individual report generators

@@ -1,6 +1,6 @@
 use crate::models::material::MaterialType;
 
-pub use crate::services::material::{RecordConsumptionRequest, UpdateStockRequest};
+pub use crate::domains::inventory::infrastructure::material::{RecordConsumptionRequest, UpdateStockRequest};
 
 pub fn parse_material_type(material_type: Option<&str>) -> Option<MaterialType> {
     material_type.and_then(|value| match value {

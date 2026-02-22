@@ -33,10 +33,10 @@
 use crate::db::Database;
 use crate::models::settings::StorageSettings;
 use crate::repositories::Repositories;
-use crate::services::audit_log_handler::AuditLogHandler;
-use crate::services::audit_service::AuditService;
-use crate::services::event_bus::InMemoryEventBus;
-use crate::services::websocket_event_handler::WebSocketEventHandler;
+use crate::domains::audit::infrastructure::audit_log_handler::AuditLogHandler;
+use crate::domains::audit::infrastructure::audit_service::AuditService;
+use crate::shared::services::event_bus::InMemoryEventBus;
+use crate::shared::services::websocket_event_handler::WebSocketEventHandler;
 use crate::shared::app_state::AppStateType;
 use crate::shared::event_bus::{register_handler, set_global_event_bus};
 use std::sync::{Arc, Mutex, OnceLock};
@@ -81,17 +81,17 @@ impl ServiceBuilder {
         let db_instance = (*self.db).clone();
 
         // Initialize core services (no dependencies or only DB)
-        let task_service = Arc::new(crate::services::TaskService::new(self.db.clone()));
-        let client_service = Arc::new(crate::services::ClientService::new(
+        let task_service = Arc::new(crate::domains::tasks::infrastructure::task::TaskService::new(self.db.clone()));
+        let client_service = Arc::new(crate::domains::clients::infrastructure::client::ClientService::new(
             self.repositories.client.clone(),
         ));
         let dashboard_repo = Arc::new(crate::repositories::DashboardRepository::new(Arc::new(
             db_instance.clone(),
         )));
-        let dashboard_service = Arc::new(crate::services::DashboardService::new(dashboard_repo));
+        let dashboard_service = Arc::new(crate::domains::analytics::infrastructure::dashboard::DashboardService::new(dashboard_repo));
         let intervention_service =
-            Arc::new(crate::services::InterventionService::new(self.db.clone()));
-        let settings_service = Arc::new(crate::services::SettingsService::new(self.db.clone()));
+            Arc::new(crate::domains::interventions::infrastructure::intervention::InterventionService::new(self.db.clone()));
+        let settings_service = Arc::new(crate::domains::settings::infrastructure::settings::SettingsService::new(self.db.clone()));
         let task_import_service = Arc::new(
             crate::domains::tasks::infrastructure::task_import::TaskImportService::new(
                 self.db.clone(),
@@ -99,32 +99,32 @@ impl ServiceBuilder {
         );
 
         // Initialize Auth Service (needs initialization)
-        let auth_service = crate::services::auth::AuthService::new(db_instance.clone())?;
+        let auth_service = crate::domains::auth::infrastructure::auth::AuthService::new(db_instance.clone())?;
         auth_service.init()?;
         let auth_service = Arc::new(auth_service);
 
         // Initialize Cache Service (self-contained)
-        let cache_service = Arc::new(crate::services::cache::CacheService::default()?);
+        let cache_service = Arc::new(crate::shared::services::cache::CacheService::default()?);
 
         // Initialize Session Service (depends on DB)
-        let session_service = Arc::new(crate::services::session::SessionService::new(
+        let session_service = Arc::new(crate::domains::auth::infrastructure::session::SessionService::new(
             self.db.clone(),
         ));
 
         // Initialize Two Factor Service (depends on DB)
-        let two_factor_service = Arc::new(crate::services::two_factor::TwoFactorService::new(
+        let two_factor_service = Arc::new(crate::domains::auth::infrastructure::two_factor::TwoFactorService::new(
             self.db.clone(),
         ));
 
         // Initialize Photo Service (depends on DB and StorageSettings)
         let default_storage_settings = StorageSettings::default();
-        let photo_service = Arc::new(crate::services::PhotoService::new(
+        let photo_service = Arc::new(crate::domains::documents::infrastructure::photo::PhotoService::new(
             db_instance.clone(),
             &default_storage_settings,
         )?);
 
         // Initialize Material Service (depends on DB)
-        let material_service = Arc::new(crate::services::MaterialService::new(db_instance.clone()));
+        let material_service = Arc::new(crate::domains::inventory::infrastructure::material::MaterialService::new(db_instance.clone()));
 
         // Initialize Inventory Service (bounded context facade)
         let inventory_service = Arc::new(crate::domains::inventory::InventoryFacade::new(
@@ -133,13 +133,13 @@ impl ServiceBuilder {
         ));
 
         // Initialize Quote Service (depends on QuoteRepository and DB)
-        let quote_service = Arc::new(crate::services::QuoteService::new(
+        let quote_service = Arc::new(crate::domains::quotes::infrastructure::quote::QuoteService::new(
             self.repositories.quote.clone(),
             self.db.clone(),
         ));
 
         // Initialize Message Service (depends on MessageRepository and DB)
-        let message_service = Arc::new(crate::services::MessageService::new(
+        let message_service = Arc::new(crate::domains::notifications::infrastructure::message::MessageService::new(
             self.repositories.message.clone(),
             self.db.clone(),
         ));
@@ -159,24 +159,24 @@ impl ServiceBuilder {
 
         // Initialize Analytics Service (depends on DB)
         let analytics_service =
-            Arc::new(crate::services::AnalyticsService::new(db_instance.clone()));
+            Arc::new(crate::domains::analytics::infrastructure::analytics::AnalyticsService::new(db_instance.clone()));
 
         // Initialize Performance Monitor Service (depends on DB)
         let performance_monitor_service = Arc::new(
-            crate::services::performance_monitor::PerformanceMonitorService::new(
+            crate::shared::services::performance_monitor::PerformanceMonitorService::new(
                 db_instance.clone(),
             ),
         );
 
         // Initialize Command Performance Tracker (depends on PerformanceMonitorService)
         let command_performance_tracker = Arc::new(
-            crate::services::performance_monitor::CommandPerformanceTracker::new(
+            crate::shared::services::performance_monitor::CommandPerformanceTracker::new(
                 performance_monitor_service.clone(),
             ),
         );
 
         // Initialize Prediction Service (depends on DB)
-        let prediction_service = Arc::new(crate::services::prediction::PredictionService::new(
+        let prediction_service = Arc::new(crate::domains::analytics::infrastructure::prediction::PredictionService::new(
             db_instance.clone(),
         ));
 

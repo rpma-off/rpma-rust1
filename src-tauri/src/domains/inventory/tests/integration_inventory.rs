@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::db::Database;
 use crate::domains::inventory::InventoryFacade;
-use crate::services::material::MaterialService;
+use crate::domains::inventory::infrastructure::material::MaterialService;
 
 #[tokio::test]
 async fn integration_inventory_facade_smoke() {

@@ -5,7 +5,7 @@
 
 use crate::domains::auth::application::SignupRequest;
 use crate::models::auth::{UserAccount, UserRole};
-use crate::services::auth::AuthService;
+use crate::domains::auth::infrastructure::auth::AuthService;
 use crate::test_utils::TestDataFactory;
 use crate::{test_client, test_db, test_intervention, test_task};
 use chrono::Utc;

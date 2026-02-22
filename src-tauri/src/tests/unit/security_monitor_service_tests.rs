@@ -2,7 +2,7 @@
 //!
 //! Focuses on event logging, metrics, IP blocking, and alert lifecycle.
 
-use crate::services::security_monitor::{
+use crate::domains::audit::infrastructure::security_monitor::{
     AlertSeverity, SecurityEvent, SecurityEventType, SecurityMonitorService,
 };
 use crate::test_db;

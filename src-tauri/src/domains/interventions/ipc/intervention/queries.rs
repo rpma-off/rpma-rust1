@@ -196,7 +196,7 @@ pub async fn intervention_advance_step(
         "Not authorized to advance this intervention",
     )?;
 
-    let advance_request = crate::services::intervention_types::AdvanceStepRequest {
+    let advance_request = crate::domains::interventions::infrastructure::intervention_types::AdvanceStepRequest {
         intervention_id: intervention_id.clone(),
         step_id: step_id.clone(),
         collected_data: serde_json::Value::Null,
@@ -253,7 +253,7 @@ pub async fn intervention_save_step_progress(
         "Not authorized to save progress for this intervention",
     )?;
 
-    let progress_request = crate::services::intervention_types::SaveStepProgressRequest {
+    let progress_request = crate::domains::interventions::infrastructure::intervention_types::SaveStepProgressRequest {
         step_id: step_id.clone(),
         collected_data: progress_data,
         notes: None,
@@ -360,7 +360,7 @@ pub async fn intervention_progress(
                 "Advance step request received"
             );
 
-            let advance_request = crate::services::intervention_types::AdvanceStepRequest {
+            let advance_request = crate::domains::interventions::infrastructure::intervention_types::AdvanceStepRequest {
                 intervention_id: intervention_id.clone(),
                 step_id: step_id.clone(),
                 collected_data,
@@ -423,7 +423,7 @@ pub async fn intervention_progress(
                 "Not authorized to save progress for this intervention",
             )?;
 
-            let progress_request = crate::services::intervention_types::SaveStepProgressRequest {
+            let progress_request = crate::domains::interventions::infrastructure::intervention_types::SaveStepProgressRequest {
                 step_id,
                 collected_data,
                 notes,

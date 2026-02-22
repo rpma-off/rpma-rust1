@@ -11,12 +11,12 @@ use crate::domains::tasks::infrastructure::task_crud::TaskCrudService;
 use crate::models::client::{Client, CustomerType};
 use crate::models::material::{Material, MaterialType, UnitOfMeasure};
 use crate::models::task::TaskStatus;
-use crate::services::audit_service::{AuditEvent, AuditService};
-use crate::services::intervention_types::{
+use crate::domains::audit::infrastructure::audit_service::{AuditEvent, AuditService};
+use crate::domains::interventions::infrastructure::intervention_types::{
     AdvanceStepRequest, FinalizeInterventionRequest, StartInterventionRequest,
 };
-use crate::services::intervention_workflow::InterventionWorkflowService;
-use crate::services::material::{
+use crate::domains::interventions::infrastructure::intervention_workflow::InterventionWorkflowService;
+use crate::domains::inventory::infrastructure::material::{
     CreateMaterialRequest, MaterialService, RecordConsumptionRequest, UpdateStockRequest,
 };
 use crate::test_utils::TestDatabase;

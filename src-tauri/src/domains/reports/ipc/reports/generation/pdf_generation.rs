@@ -71,7 +71,7 @@ pub async fn generate_intervention_pdf_report(
 
     // Create PDF report instance
     tracing::info!("Creating PDF report instance");
-    let pdf_report = crate::services::pdf_report::InterventionPdfReport::new(
+    let pdf_report = crate::domains::reports::infrastructure::pdf_report::InterventionPdfReport::new(
         intervention_data.intervention.clone(),
         intervention_data.workflow_steps.clone(),
         intervention_data.photos.clone(),
@@ -132,7 +132,7 @@ pub async fn test_pdf_generation(
     let output_path = std::path::PathBuf::from(output_path);
 
     let result =
-        crate::services::pdf_report::InterventionPdfReport::test_generate_minimal(&output_path)
+        crate::domains::reports::infrastructure::pdf_report::InterventionPdfReport::test_generate_minimal(&output_path)
             .await;
 
     match result {

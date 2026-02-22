@@ -4,7 +4,7 @@
 
 use crate::db::Database;
 use crate::models::reports::*;
-use crate::services::analytics::AnalyticsService;
+use crate::domains::analytics::infrastructure::analytics::AnalyticsService;
 use chrono::{DateTime, Duration, Utc};
 use proptest::prelude::*;
 use rusqlite::params;

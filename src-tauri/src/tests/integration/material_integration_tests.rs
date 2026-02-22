@@ -7,8 +7,8 @@ use crate::domains::tasks::infrastructure::task_creation::TaskCreationService;
 use crate::models::intervention::InterventionStatus;
 use crate::models::material::{InventoryTransactionType, MaterialType, UnitOfMeasure};
 use crate::models::task::{CreateTaskRequest, TaskPriority, TaskStatus};
-use crate::services::intervention_workflow::InterventionWorkflowService;
-use crate::services::material::{
+use crate::domains::interventions::infrastructure::intervention_workflow::InterventionWorkflowService;
+use crate::domains::inventory::infrastructure::material::{
     CreateInventoryTransactionRequest, CreateMaterialRequest, MaterialService,
     RecordConsumptionRequest, UpdateStockRequest,
 };

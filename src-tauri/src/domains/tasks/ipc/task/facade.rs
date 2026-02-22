@@ -7,7 +7,7 @@ use crate::authenticate;
 use crate::check_task_permission;
 use crate::commands::{ApiResponse, AppError, AppState, TaskAction};
 use crate::models::task::Task;
-use crate::services::validation::ValidationService;
+use crate::shared::services::validation::ValidationService;
 use serde::Deserialize;
 use std::fmt::Debug;
 use tracing::{debug, error, info, warn};
@@ -539,7 +539,7 @@ pub async fn delay_task(
     check_task_permissions(&session, &task, "edit")?;
 
     // Use CalendarService.schedule_task to update both task and calendar_events atomically
-    let calendar_service = crate::services::calendar::CalendarService::new(state.db.clone());
+    let calendar_service = crate::domains::calendar::infrastructure::calendar::CalendarService::new(state.db.clone());
     calendar_service
         .schedule_task(
             request.task_id.clone(),
@@ -680,7 +680,7 @@ pub fn validate_status_change(
     current: &crate::models::task::TaskStatus,
     new: &crate::models::task::TaskStatus,
 ) -> Result<(), AppError> {
-    crate::services::task_validation::validate_status_transition(current, new)
+    crate::domains::tasks::infrastructure::task_validation::validate_status_transition(current, new)
         .map_err(AppError::TaskInvalidTransition)
 }
 

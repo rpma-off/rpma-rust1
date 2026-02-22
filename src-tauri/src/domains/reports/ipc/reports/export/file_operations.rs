@@ -6,8 +6,8 @@
 use crate::commands::AppResult;
 use crate::memory_management_helpers;
 use crate::models::reports::CompleteInterventionData;
-use crate::services::document_storage::DocumentStorageService;
-use crate::services::pdf_generation::PdfGenerationService;
+use crate::domains::documents::infrastructure::document_storage::DocumentStorageService;
+use crate::domains::reports::infrastructure::pdf_generation::PdfGenerationService;
 use std::path::Path;
 use tracing::{error, info, warn};
 

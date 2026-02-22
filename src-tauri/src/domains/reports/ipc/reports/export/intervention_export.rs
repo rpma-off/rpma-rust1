@@ -12,7 +12,7 @@ use tracing::{debug, error, info, instrument};
 use super::{auth, file_operations, validation};
 
 /// Re-export for backward compatibility Ã¢â‚¬â€ delegates to service layer.
-pub use crate::services::reports::export_service::ExportReportService;
+pub use crate::domains::reports::infrastructure::reports::export_service::ExportReportService;
 
 /// Get complete intervention data with all related information.
 ///
@@ -20,8 +20,8 @@ pub use crate::services::reports::export_service::ExportReportService;
 pub async fn get_intervention_with_details(
     intervention_id: &str,
     db: &crate::db::Database,
-    intervention_service: Option<&crate::services::intervention::InterventionService>,
-    client_service: Option<&crate::services::ClientService>,
+    intervention_service: Option<&crate::domains::interventions::infrastructure::intervention::InterventionService>,
+    client_service: Option<&crate::domains::clients::infrastructure::client::ClientService>,
 ) -> AppResult<CompleteInterventionData> {
     ExportReportService::get_intervention_with_details(
         intervention_id,

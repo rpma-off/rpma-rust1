@@ -8,7 +8,7 @@ use crate::db::Database;
 use crate::models::reports::*;
 
 // Import specialized report generators
-use crate::services::reports::{
+use crate::domains::reports::infrastructure::reports::{
     client_report, geographic_report, intelligence_report, material_report,
     overview_orchestrator::{
         generate_overview_report, get_entity_counts as get_entity_counts_fn,

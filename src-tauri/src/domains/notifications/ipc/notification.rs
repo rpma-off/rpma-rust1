@@ -5,7 +5,7 @@ use crate::models::notification::{
     EmailConfig, EmailProvider, NotificationChannel, NotificationConfig, NotificationType,
     SmsConfig, SmsProvider, TemplateVariables,
 };
-use crate::services::notification::NotificationService;
+use crate::domains::notifications::infrastructure::notification::NotificationService;
 use lazy_static::lazy_static;
 use crate::domains::notifications::application::{SendNotificationRequest, UpdateNotificationConfigRequest};
 use std::sync::Arc;

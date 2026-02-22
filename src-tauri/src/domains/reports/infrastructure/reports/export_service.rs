@@ -7,9 +7,9 @@
 use crate::commands::{AppError, AppResult, AppState};
 use crate::db::Database;
 use crate::models::reports::*;
-use crate::services::document_storage::DocumentStorageService;
-use crate::services::pdf_generation::PdfGenerationService;
-use crate::services::reports::validation::{validate_date_range, validate_filters};
+use crate::domains::documents::infrastructure::document_storage::DocumentStorageService;
+use crate::domains::reports::infrastructure::pdf_generation::PdfGenerationService;
+use crate::domains::reports::infrastructure::reports::validation::{validate_date_range, validate_filters};
 use chrono::Utc;
 use std::path::Path;
 use tracing::{debug, error, info, warn};
@@ -44,8 +44,8 @@ impl ExportReportService {
     pub async fn get_intervention_with_details(
         intervention_id: &str,
         db: &Database,
-        intervention_service: Option<&crate::services::intervention::InterventionService>,
-        client_service: Option<&crate::services::ClientService>,
+        intervention_service: Option<&crate::domains::interventions::infrastructure::intervention::InterventionService>,
+        client_service: Option<&crate::domains::clients::infrastructure::client::ClientService>,
     ) -> AppResult<CompleteInterventionData> {
         debug!(
             "get_intervention_with_details: Starting for intervention_id: {}",
@@ -58,7 +58,7 @@ impl ExportReportService {
             Some(svc) => svc,
             None => {
                 owned_intervention_service =
-                    crate::services::intervention::InterventionService::new(std::sync::Arc::new(
+                    crate::domains::interventions::infrastructure::intervention::InterventionService::new(std::sync::Arc::new(
                         db.clone(),
                     ));
                 &owned_intervention_service
@@ -72,7 +72,7 @@ impl ExportReportService {
             None => {
                 #[allow(deprecated)]
                 {
-                    owned_client_service = crate::services::ClientService::new_with_db(
+                    owned_client_service = crate::domains::clients::infrastructure::client::ClientService::new_with_db(
                         std::sync::Arc::new(db.clone()),
                     );
                 }
@@ -403,7 +403,7 @@ impl ExportReportService {
         validate_date_range(date_range).map_err(AppError::from)?;
         validate_filters(filters).map_err(AppError::from)?;
 
-        let report = crate::services::reports::task_report::generate_task_completion_report(
+        let report = crate::domains::reports::infrastructure::reports::task_report::generate_task_completion_report(
             date_range, filters, db,
         )
         .await?;

@@ -4,7 +4,7 @@
 
 use crate::authenticate;
 use crate::commands::{ApiResponse, AppState};
-use crate::services::material::{
+use crate::domains::inventory::infrastructure::material::{
     CreateInventoryTransactionRequest, CreateMaterialCategoryRequest, CreateMaterialRequest,
     CreateSupplierRequest, RecordConsumptionRequest, UpdateStockRequest,
 };

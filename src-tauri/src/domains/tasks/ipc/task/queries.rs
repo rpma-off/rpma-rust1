@@ -6,7 +6,7 @@ use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::tasks::ipc::task_types::TaskFilter;
 use crate::models::task::{Task, TaskListResponse};
-use crate::services::task_statistics::TaskStatistics;
+use crate::domains::tasks::infrastructure::task_statistics::TaskStatistics;
 use serde::Deserialize;
 use tracing::{debug, info};
 

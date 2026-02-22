@@ -2,7 +2,7 @@
 
 use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
-use crate::services::cache::{CacheManager, CacheType};
+use crate::shared::services::cache::{CacheManager, CacheType};
 use serde::{Deserialize, Serialize};
 use tracing::{info, instrument};
 

@@ -180,7 +180,7 @@ pub async fn diagnose_database(
     let pool = state.db.pool().clone();
 
     tokio::task::spawn_blocking(move || {
-        crate::services::system::SystemService::diagnose_database(&pool)
+        crate::shared::services::system::SystemService::diagnose_database(&pool)
     })
     .await
     .map_err(|e| format!("Task join error: {}", e))?
@@ -196,7 +196,7 @@ pub async fn force_wal_checkpoint(
     let pool = state.db.pool().clone();
 
     tokio::task::spawn_blocking(move || {
-        crate::services::system::SystemService::force_wal_checkpoint(&pool)
+        crate::shared::services::system::SystemService::force_wal_checkpoint(&pool)
     })
     .await
     .map_err(|e| format!("Task join error: {}", e))?
@@ -212,7 +212,7 @@ pub async fn health_check(
     let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let pool = state.db.pool().clone();
 
-    tokio::task::spawn_blocking(move || crate::services::system::SystemService::health_check(&pool))
+    tokio::task::spawn_blocking(move || crate::shared::services::system::SystemService::health_check(&pool))
         .await
         .map_err(|e| format!("Task join error: {}", e))?
 }
@@ -228,7 +228,7 @@ pub async fn get_database_stats(
     let pool = state.db.pool().clone();
 
     tokio::task::spawn_blocking(move || {
-        crate::services::system::SystemService::get_database_stats(&pool)
+        crate::shared::services::system::SystemService::get_database_stats(&pool)
     })
     .await
     .map_err(|e| format!("Task join error: {}", e))?

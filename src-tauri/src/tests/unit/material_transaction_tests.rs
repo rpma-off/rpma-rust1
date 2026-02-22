@@ -6,7 +6,7 @@
 use crate::models::material::{
     InventoryTransaction, InventoryTransactionType, Material, MaterialType, UnitOfMeasure,
 };
-use crate::services::material::{
+use crate::domains::inventory::infrastructure::material::{
     CreateInventoryTransactionRequest, MaterialError, MaterialService,
 };
 use crate::test_utils::TestDatabase;
@@ -18,7 +18,7 @@ mod tests {
 
     /// Helper function to create a basic material
     fn create_test_material(service: &MaterialService, sku: &str, initial_stock: f64) -> Material {
-        let request = crate::services::material::CreateMaterialRequest {
+        let request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
             sku: sku.to_string(),
             name: format!("Test Material {}", sku),
             description: Some("Test material for transactions".to_string()),
@@ -51,7 +51,7 @@ mod tests {
             .unwrap();
 
         if initial_stock > 0.0 {
-            let update_request = crate::services::material::UpdateStockRequest {
+            let update_request = crate::domains::inventory::infrastructure::material::UpdateStockRequest {
                 material_id: material.id.clone().unwrap(),
                 quantity_change: initial_stock,
                 reason: "Initial stock".to_string(),
@@ -553,7 +553,7 @@ mod tests {
         let low_stock_material = create_test_material(&service, "STATS-002", 5.0);
 
         // Create an expired material
-        let mut expired_request = crate::services::material::CreateMaterialRequest {
+        let mut expired_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
             sku: "STATS-003".to_string(),
             name: "Expired Material".to_string(),
             description: Some("Test expired material".to_string()),
