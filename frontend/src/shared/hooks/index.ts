@@ -1,4 +1,4 @@
-﻿export { useTranslation } from './useTranslation';
+export { useTranslation } from './useTranslation';
 export { useLogger, useFormLogger, useApiLogger } from './useLogger';
 export { useMenuEvents } from './useMenuEvents';
 export { useDebounce } from './useDebounce';
@@ -13,3 +13,5 @@ export { useKeyboardShortcuts, useAppKeyboardShortcuts } from './useKeyboardShor
 export { useDesktopNavigation } from './useDesktopNavigation';
 export { useVirtualScrolling, useTaskVirtualScrolling, useSOPVirtualScrolling, useUserVirtualScrolling } from './useVirtualScrolling';
 export { useIsMobile } from './use-mobile';
+export { useAuthRedirect } from './useAuthRedirect';
+export { useAdminBootstrapCheck } from './useAdminBootstrapCheck';

@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from '@/shared/ui/ui/alert';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { structuredLogger as logger, LogDomain } from '@/shared/utils';
 import { useEffect } from 'react';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 export default function BootstrapAdminPage() {
   const { t } = useTranslation();

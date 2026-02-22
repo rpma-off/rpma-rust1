@@ -1,7 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { taskService } from '@/domains/tasks/server';
+
+async function getSupabaseClient() {
+  const cookieStore = await cookies();
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll(); },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+}
 
 export async function PATCH(
   request: NextRequest,
@@ -13,7 +31,7 @@ export async function PATCH(
     const { step_data, updated_at } = body;
 
     // Create Supabase client
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = await getSupabaseClient();
 
     // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -88,7 +106,7 @@ export async function GET(
     const { id: taskId, stepId  } = await params;
 
     // Create Supabase client
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = await getSupabaseClient();
 
     // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();

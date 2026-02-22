@@ -1,6 +1,6 @@
 // API authentication utilities
 
-import jwt from 'jsonwebtoken';
+import { jwtVerify } from 'jose';
 import type { JsonObject, JsonValue } from '@/types/json';
 
 export interface AuthenticatedRequest {
@@ -46,21 +46,18 @@ export const authenticateRequest = async (request: Request): Promise<Authenticat
       return null;
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtClaims;
-    console.log('JWT decoded successfully:', { sub: decoded.sub, email: decoded.email, role: decoded.role });
-
-    // Check if token is expired
-    const now = Math.floor(Date.now() / 1000);
-    if (decoded.exp < now) {
-      console.log('Token expired');
-      return null;
-    }
+    const { payload: decoded } = await jwtVerify(
+      token,
+      new TextEncoder().encode(JWT_SECRET)
+    );
+    const claims = decoded as unknown as JwtClaims;
+    console.log('JWT decoded successfully:', { sub: claims.sub, email: claims.email, role: claims.role });
 
     return {
-      id: decoded.sub,
-      email: decoded.email,
-      role: decoded.role,
-      username: decoded.username,
+      id: claims.sub,
+      email: claims.email,
+      role: claims.role,
+      username: claims.username,
     };
   } catch (error) {
     console.error('JWT validation error:', error);

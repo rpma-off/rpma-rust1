@@ -5,7 +5,7 @@ import { AuthSecureStorage, SecureStorage } from '@/lib/secureStorage';
 import { clearCache } from '@/lib/ipc/cache';
 import { convertTimestamps } from '@/lib/types';
 import { logger, LogContext } from '@/lib/logger';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { authIpc } from '../ipc/auth.ipc';
 import type { AuthContextType, AuthState, AuthResponse, UserAccount, UserSession } from './types';
 
