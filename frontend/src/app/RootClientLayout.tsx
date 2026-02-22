@@ -31,7 +31,7 @@ const geistMono = localFont({
 // Routes that should not show the sidebar (public/auth pages)
 const PUBLIC_ROUTES = ['/login', '/signup', '/unauthorized', '/bootstrap-admin'];
 
-function AuthLoadingShell({ className }: { className?: string }) {
+function AuthLoadingSkeleton({ className }: { className?: string }) {
   return (
     <div className={cn('space-y-6', className)}>
       <div className="flex items-center justify-between">
@@ -87,7 +87,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     ? redirectLoadingClassName
     : undefined;
   const content = shouldShowLoading ? (
-    <AuthLoadingShell className={loadingClassName} />
+    <AuthLoadingSkeleton className={loadingClassName} />
   ) : (
     children
   );
