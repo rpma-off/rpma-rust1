@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { safeInvoke } from '@/lib/ipc/utils';
 

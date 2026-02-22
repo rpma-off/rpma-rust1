@@ -1,3 +1,5 @@
+'use client';
+
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -8,7 +10,7 @@ import { FetchError } from '@/lib/utils/fetch-error-handler';
 import { useLogger } from '@/shared/hooks/useLogger';
 import { LogDomain } from '@/lib/logging/types';
 import { useAuth } from '@/domains/auth';
-import { taskService } from '@/domains/tasks';
+import { taskService } from '@/domains/tasks/services';
 
 
 // ==================== DASHBOARD QUERY KEYS ====================
