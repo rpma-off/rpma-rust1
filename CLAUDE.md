@@ -1,229 +1,408 @@
-# CLAUDE.md
+# CLAUDE.md — Agent Instructions for RPMA v2
 
-## Project Overview
+> **READ THIS FIRST.** This file is the authoritative guide for any AI agent (Claude, Copilot, etc.) working on this codebase. Follow every rule strictly. When in doubt, read this file again before acting.
 
-RPMA v2 is an **offline-first desktop application** for managing Paint Protection Film (PPF) interventions. The application handles tasks, interventions, workflow steps, photo management, inventory tracking, reporting, and user management with role-based access control.
+---
+
+## 🗂️ What Is This Project?
+
+**RPMA v2** is an **offline-first desktop application** for managing **Paint Protection Film (PPF)** interventions. It is built as a **Tauri v2** app with:
+
+- A **Next.js 14 (App Router)** frontend in TypeScript/React
+- A **Rust** backend with SQLite (WAL mode) via `sqlx`
+- Type-safe IPC bridge using `ts-rs` (Rust → TypeScript type generation)
+- Role-based access control (RBAC), session token authentication
+- Full offline support — no network dependency at runtime
+
+The app manages: **interventions, tasks, inventory, quotes, documents, users, photos, and reporting.**
+
+---
 
 ## 📁 Project Structure
 
 ```
-rpma-rust/
-├── frontend/                 # Next.js 14 application
+rpma-rust1/
+├── frontend/                    # Next.js 14 App
 │   ├── src/
-│   │   ├── app/             # App Router pages (38 pages)
-│   │   ├── components/      # Shared React components (179+)
-│   │   ├── domains/         # Feature domains (auth, interventions, inventory, tasks)
-│   │   ├── hooks/           # Shared custom hooks (63+)
-│   │   ├── lib/             # Utilities and IPC client (20 domain modules)
-│   │   ├── shared/          # Shared utilities, types, and UI components
-│   │   └── types/           # TypeScript types (auto-generated — DO NOT EDIT)
+│   │   ├── app/                 # App Router pages (~38 pages)
+│   │   ├── components/          # Shared React components (179+)
+│   │   ├── domains/             # Feature domains (auth, interventions, inventory, tasks)
+│   │   │   └── [domain]/
+│   │   │       ├── api/         # Public API surface for the domain
+│   │   │       ├── components/  # Domain-specific components
+│   │   │       ├── hooks/       # Domain-specific hooks
+│   │   │       ├── ipc/         # IPC call wrappers
+│   │   │       └── services/    # Frontend business logic
+│   │   ├── hooks/               # Shared custom hooks (63+)
+│   │   ├── lib/                 # Utilities and IPC client (20 domain modules)
+│   │   ├── shared/              # Shared utils, types, UI primitives
+│   │   └── types/               # ⚠️ AUTO-GENERATED — DO NOT EDIT MANUALLY
 │   └── package.json
-├── src-tauri/               # Rust/Tauri backend
+│
+├── src-tauri/                   # Rust/Tauri backend
 │   ├── src/
-│   │   ├── commands/        # 65 IPC command files
-│   │   ├── domains/         # Bounded contexts (documents, interventions, inventory, quotes, tasks, users)
-│   │   ├── models/          # 21 data models with ts-rs exports
-│   │   ├── repositories/    # 20 repository files
-│   │   ├── services/        # 88 service files
-│   │   ├── shared/          # Shared backend utilities
-│   │   └── db/              # Database management
+│   │   ├── commands/            # 65 IPC command handlers
+│   │   ├── domains/             # Bounded contexts (DDD)
+│   │   │   └── [domain]/
+│   │   │       ├── application/ # Use cases / application services
+│   │   │       ├── domain/      # Domain models, value objects, rules
+│   │   │       ├── infrastructure/ # SQL repositories, external adapters
+│   │   │       ├── ipc/         # Tauri command entry points
+│   │   │       └── tests/       # Domain tests
+│   │   ├── models/              # 21 data models (ts-rs exports)
+│   │   ├── repositories/        # 20 repository files
+│   │   ├── services/            # 88 service files
+│   │   ├── shared/              # Shared backend utilities, errors
+│   │   └── db/                  # Database init, pool, migrations
+│   ├── migrations/              # Embedded SQLite migrations
+│   ├── benches/                 # Criterion benchmarks
+│   ├── tests/                   # Integration test suites
+│   │   ├── auth_commands_test.rs
+│   │   ├── client_commands_test.rs
+│   │   ├── intervention_commands_test.rs
+│   │   ├── task_commands_test.rs
+│   │   └── user_commands_test.rs
 │   └── Cargo.toml
-├── migrations/              # SQLite migrations (6 SQL files)
-├── scripts/                 # Build and validation scripts
-└── docs/                    # Project documentation
+│
+├── migrations/                  # Root-level SQL migration files (6 files)
+├── migration-tests/             # Migration validation tests
+├── scripts/                     # Build, validation, and utility scripts
+├── docs/                        # Project documentation
+│   ├── adr/                     # Architectural Decision Records
+│   └── agent-pack/              # Agent documentation pack
+├── Makefile                     # Shorthand commands (see below)
+├── package.json                 # Root package.json (npm workspaces)
+├── Cargo.toml                   # Workspace root
+├── deny.toml                    # cargo-deny security config
+├── commitlint.config.js         # Conventional commit rules
+└── tsconfig.json
 ```
 
-## 🏗️ Architecture
+---
 
-### Four-Layer Architecture
+## 🏗️ Architecture — The 4-Layer Rule
+
+**This is the most important rule. Never break it.**
+
 ```
-Frontend (Next.js/React/TypeScript)
-    ↓ IPC calls
-Tauri Commands (Rust)
-    ↓
-Services (Business Logic - Rust)
-    ↓
-Repositories (Data Access - Rust)
-    ↓
-SQLite Database (WAL mode)
+┌─────────────────────────────────────────┐
+│  Frontend (Next.js / React / TypeScript) │
+│  Pages → Domain Hooks → IPC wrappers    │
+└───────────────┬─────────────────────────┘
+                │ invoke() — Tauri IPC
+┌───────────────▼─────────────────────────┐
+│  IPC Commands  (src-tauri/src/commands) │
+│  Thin handlers — validate input only   │
+└───────────────┬─────────────────────────┘
+                │
+┌───────────────▼─────────────────────────┐
+│  Services / Application Layer           │
+│  Business logic, use cases, RBAC        │
+└───────────────┬─────────────────────────┘
+                │
+┌───────────────▼─────────────────────────┐
+│  Repositories (infrastructure/)         │
+│  All SQL queries live here — nowhere else│
+└───────────────┬─────────────────────────┘
+                │
+┌───────────────▼─────────────────────────┐
+│  SQLite (WAL mode, via sqlx)            │
+└─────────────────────────────────────────┘
 ```
 
-### Bounded Context Architecture
-The backend uses Domain-Driven Design with bounded contexts under `src-tauri/src/domains/`:
-- **documents** — Document storage and management
-- **interventions** — PPF intervention lifecycle
-- **inventory** — Material and stock tracking
-- **quotes** — Quote creation and management
-- **tasks** — Task and work order management
-- **users** — User management and authentication
+### Bounded Contexts (DDD)
 
-Each domain follows the structure: `application/` | `domain/` | `infrastructure/` | `ipc/` | `tests/`
+Each domain under `src-tauri/src/domains/` is a **self-contained bounded context**:
 
-The frontend mirrors this with feature domains under `frontend/src/domains/`:
-- **auth** | **interventions** | **inventory** | **tasks**
+| Domain | Responsibility |
+|---|---|
+| `documents` | Document storage and retrieval |
+| `interventions` | PPF intervention lifecycle |
+| `inventory` | Materials, stock, tracking |
+| `quotes` | Quote creation and management |
+| `tasks` | Task and work order management |
+| `users` | Auth, sessions, RBAC |
 
-Each frontend domain follows the structure: `api/` | `components/` | `hooks/` | `ipc/` | `services/`
+Cross-domain access is **forbidden** except via the public `api/index.ts` (frontend) or a dedicated application service (backend).
 
-## 📋 Essential Commands
+---
+
+## ⚡ Essential Commands
+
+### Development
 
 ```bash
-# Development
-npm run dev                    # Start both frontend and backend
-npm run frontend:dev           # Frontend only (Next.js)
+npm run dev                    # Start full app (frontend + backend)
+npm run frontend:dev           # Frontend only (Next.js on localhost:3000)
+```
 
-# Building
-npm run build                  # Production build
-npm run frontend:build         # Build frontend only
-npm run backend:build          # Build backend only (Cargo)
-npm run backend:build:release  # Build backend release version
+### Build
 
-# Quality check (REQUIRED before every commit)
-npm run quality:check          # Run all quality checks
+```bash
+npm run build                  # Full production build
+npm run frontend:build         # Build Next.js frontend
+npm run backend:build          # cargo build (debug)
+npm run backend:build:release  # cargo build --release
+```
 
-# Linting/Type-checking
+### Quality Gate — Run before EVERY commit
+
+```bash
+npm run quality:check          # Runs ALL checks below in sequence
+```
+
+Individual checks:
+
+```bash
+# Frontend
 npm run frontend:lint          # ESLint
-npm run frontend:type-check    # TypeScript checking
-npm run backend:check          # Cargo check
-npm run backend:clippy         # Rust linting
-npm run backend:fmt            # Rust formatting
+npm run frontend:type-check    # tsc --noEmit
 
-# Architecture validation
-npm run validate:bounded-contexts  # Validate domain boundaries
-npm run architecture:check         # Check architecture rules
+# Backend
+npm run backend:check          # cargo check
+npm run backend:clippy         # cargo clippy -- -D warnings
+npm run backend:fmt            # cargo fmt --check
 
-# Type Management
-npm run types:sync             # Regenerate TS types from Rust
-npm run types:validate         # Validate type consistency
-npm run types:drift-check      # Check for type drift
+# Architecture
+npm run validate:bounded-contexts   # Validate DDD boundaries
+npm run architecture:check          # Architecture rules check
 
-# Testing
-cd frontend && npm test        # Run frontend tests
-cd frontend && npm run test:e2e # Run E2E tests with Playwright
-cd frontend && npm run test:coverage # Run tests with coverage
+# Types (Rust → TypeScript)
+npm run types:sync             # Regenerate TS types from Rust models
+npm run types:validate         # Validate generated types
+npm run types:drift-check      # Detect type drift
 
-# Security & Validation
-npm run security:audit         # Security vulnerability scan
-node scripts/validate-migration-system.js  # Migration validation
+# Security
+npm run security:audit         # cargo-deny + npm audit
 ```
 
-## ✅ Test Gates
-
-Run these tests before submitting code:
+### Tests
 
 ```bash
-# All backend tests (Rust)
-cd src-tauri && cargo test --lib
+# All tests (recommended)
+npm run quality:check
 
-# Database migration tests
-cd src-tauri && cargo test migration
+# Backend (Rust)
+cd src-tauri && cargo test --lib           # Unit tests
+cd src-tauri && cargo test migration       # Migration tests
+cd src-tauri && cargo test performance     # Perf tests
 
-# Performance tests
-cd src-tauri && cargo test performance
+# By domain (via Makefile)
+make test-auth-commands
+make test-client-commands
+make test-user-commands
+make test-intervention-cmds
+make test-task-commands
 
-# Frontend tests (TypeScript/React)
-cd frontend && npm test
+# Frontend
+cd frontend && npm test                  # Unit + component tests
+cd frontend && npm run test:e2e          # Playwright E2E tests
+cd frontend && npm run test:coverage     # With coverage report
 
-# E2E tests with Playwright
-cd frontend && npm run test:e2e
-
-# Code coverage
-cd frontend && npm run test:coverage
+# Migration validation
+node scripts/validate-migration-system.js
 ```
 
-### Frontend
+### Benchmarks
+
 ```bash
-npm run frontend:lint          # Must pass
-npm run frontend:type-check    # Must pass
+cd src-tauri && cargo bench              # Run Criterion benchmarks
 ```
 
-### Backend
-```bash
-npm run backend:check          # Must pass
-npm run backend:clippy         # Must pass
-npm run backend:fmt            # Must pass
-```
+---
 
-### Types
-```bash
-npm run types:sync             # Regenerate
-npm run types:validate         # Must pass
-npm run types:drift-check      # Must pass
-```
+## 🔴 Strict Rules — Never Violate
+
+### Architecture
+
+- ✅ Always follow the 4-layer architecture
+- ❌ Never skip layers (e.g., no direct DB from application layer)
+- ❌ Never put business logic in IPC command handlers (commands = thin wrappers)
+- ❌ Never import across domain boundaries — use the domain's public API only
+- ❌ Never write SQL outside `infrastructure/` files
+- ✅ Always place new backend features inside the correct bounded context under `src-tauri/src/domains/`
+- ✅ Always run `npm run validate:bounded-contexts` after any structural change
+
+### Type Safety
+
+- ❌ **NEVER** manually edit any file under `frontend/src/types/` — they are **auto-generated by ts-rs**
+- ✅ Always run `npm run types:sync` after modifying any Rust model with `#[derive(TS)]`
+- ✅ Always run `npm run types:drift-check` before committing
 
 ### Security
+
+- ✅ Always validate `session_token` in every protected IPC command
+- ✅ Always enforce RBAC before executing protected operations
+- ❌ Never commit secrets, tokens, or credentials — use `.env.local` (gitignored)
+- ❌ Never bypass auth or authorization checks
+- ✅ Always run `npm run security:audit` before submitting
+
+### Database
+
+- ✅ Always use numbered migration files (e.g., `0007_add_column.sql`)
+- ✅ Always make migrations idempotent: use `IF NOT EXISTS`, `IF EXISTS`
+- ❌ Never modify schema outside of migration files
+- ✅ Always validate: `node scripts/validate-migration-system.js`
+- **Migration order**: add migration → run `types:sync` → run all tests
+
+### Code Quality
+
+- ✅ Always run `npm run quality:check` before every commit
+- ✅ Use UTF-8 encoding for all source files
+- ✅ Use conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, `perf:`, `security:`
+- ❌ Never push directly to `main` (enforced by Husky `git:guard-main` hook)
+- ❌ Never disable linting, type-checking, or architecture validation
+
+### Testing
+
+- ✅ Always write a regression test for every bug fix
+- ✅ Always test new features: success path + validation failure + permission failure
+- ❌ Never write flaky or time-dependent tests
+- ❌ Never delete or weaken existing tests to make a build pass
+
+---
+
+## 🧠 Agent Workflow — How to Work on This Codebase
+
+Follow this workflow for **every** task:
+
+### 1. Understand Before Acting
+- Read the relevant domain docs in `docs/agent-pack/` and `docs/adr/`
+- Identify which bounded context(s) the change belongs to
+- Check if a migration is needed
+
+### 2. Plan the Change
+- Map the change to the 4 layers: what changes in commands / services / repositories / frontend?
+- If crossing domains, define the integration point explicitly
+
+### 3. Implement
+- Backend first (Rust): domain model → repository → service → IPC command
+- Run `npm run types:sync` if any Rust model changed
+- Frontend: IPC wrapper → domain service → hook → component/page
+- **Never** mix layers in a single file
+
+### 4. Verify
 ```bash
-npm run security:audit         # Must pass
+npm run quality:check          # Must pass fully
+node scripts/validate-migration-system.js  # If migrations changed
 ```
 
-## 🚨 Strict Rules
+### 5. Test
+```bash
+cd src-tauri && cargo test --lib
+cd frontend && npm test
+```
 
-### Architecture — MUST follow at all times
-- ✅ **ALWAYS** follow the 4-layer architecture: Frontend → Commands → Services → Repositories → DB
-- ❌ **NEVER** skip layers (e.g., no direct DB access from services — use repositories)
-- ❌ **NEVER** put business logic in IPC command handlers
-- ❌ **NEVER** import across domain boundaries internally (use each domain's public `api/index.ts`)
-- ❌ **NEVER** write SQL outside of `infrastructure/` files in domain modules
-- ✅ **ALWAYS** place new backend features inside the appropriate bounded context under `src-tauri/src/domains/`
-- ✅ **ALWAYS** validate bounded contexts pass: `npm run validate:bounded-contexts`
+### 6. Commit
+```bash
+git add .
+git commit -m "feat(interventions): add step photo upload command"
+# Format: type(scope): description
+# Scopes: interventions, inventory, tasks, users, quotes, documents, auth, db, ui
+```
 
-### Type Safety — MUST follow at all times
-- ❌ **NEVER** manually edit any file under `frontend/src/types/` — these are auto-generated
-- ✅ **ALWAYS** run `npm run types:sync` after modifying any Rust model that derives `ts-rs::TS`
-- ✅ **ALWAYS** run `npm run types:drift-check` before committing
+---
 
-### Security — MUST follow at all times
-- ✅ **ALWAYS** validate `session_token` in every protected IPC command
-- ✅ **ALWAYS** enforce RBAC permissions before executing protected operations
-- ❌ **NEVER** commit secrets, tokens, or credentials to Git
-- ❌ **NEVER** bypass authentication or authorization checks
-- ✅ **ALWAYS** run `npm run security:audit` before submitting code
+## 🛠️ Technology Stack Reference
 
-### Database — MUST follow at all times
-- ✅ **ALWAYS** use numbered migration files for schema changes
-- ✅ **ALWAYS** make migrations idempotent (`IF NOT EXISTS`, `IF EXISTS`)
-- ❌ **NEVER** modify the database schema outside of migration files
-- ✅ **ALWAYS** validate migrations: `node scripts/validate-migration-system.js`
+| Layer | Technology | Version |
+|---|---|---|
+| Desktop framework | Tauri | v2 |
+| Frontend framework | Next.js | 14 (App Router) |
+| Frontend language | TypeScript | strict mode |
+| Component library | React | 18 |
+| Backend language | Rust | edition 2021, MSRV 1.85 |
+| Database | SQLite | WAL mode |
+| DB access | sqlx | async, compile-time checked |
+| Type bridge | ts-rs | Rust → TS codegen |
+| IPC | Tauri invoke() | typed commands |
+| Linting (Rust) | clippy | -D warnings |
+| Linting (TS) | ESLint | strict |
+| Commit rules | commitlint | conventional commits |
+| Git hooks | Husky | pre-commit, commit-msg |
+| Security scan | cargo-deny | deny.toml configured |
+| E2E tests | Playwright | |
+| Benchmarks | Criterion | |
 
-### Code Quality — MUST follow at all times
-- ✅ **ALWAYS** run `npm run quality:check` before every commit
-- ✅ **ALWAYS** use UTF-8 encoding for all source files
-- ✅ **ALWAYS** use conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, `perf:`, `security:`
-- ❌ **NEVER** push directly to `main` (enforced by `git:guard-main` hook)
-- ❌ **NEVER** disable or skip linting, type-checking, or architecture validation
+---
 
-### Testing — MUST follow at all times
-- ✅ **ALWAYS** write a regression test for every bug fix
-- ✅ **ALWAYS** write tests for new features (success path, validation failure, permission failure)
-- ❌ **NEVER** write flaky or time-dependent tests
-- ❌ **NEVER** delete or weaken existing tests to make a build pass
+## 📐 Key Patterns and Conventions
 
-## 🧪 Testing Requirements
+### Rust IPC Command Pattern
+```rust
+// src-tauri/src/domains/[domain]/ipc/[command].rs
+#[tauri::command]
+pub async fn my_command(
+    state: tauri::State<'_, AppState>,
+    session_token: String,           // Always validate first
+    payload: MyInputDto,
+) -> Result<MyOutputDto, AppError> {
+    // 1. Validate session
+    let user = state.auth_service.validate_session(&session_token).await?;
+    // 2. Check RBAC
+    state.auth_service.check_permission(&user, Permission::MyPermission)?;
+    // 3. Delegate to service — NO business logic here
+    state.my_service.execute(payload).await
+}
+```
 
-### When to Add Tests
-- **Always** when adding new features
-- **Always** when fixing bugs (regression tests)
-- **Always** when changing business logic
+### Frontend IPC Call Pattern
+```typescript
+// frontend/src/domains/[domain]/ipc/[command].ts
+import { invoke } from "@tauri-apps/api/core";
+import type { MyOutputDto } from "@/types"; // auto-generated
 
-### Test Types
-- **Unit tests**: For services and repositories (backend), hooks (frontend)
-- **Integration tests**: For IPC commands and critical workflows
-- **Component tests**: For UI components with complex logic
-- **E2E tests**: For critical user flows
+export async function myCommand(payload: MyInputDto): Promise<MyOutputDto> {
+  return invoke("my_command", { sessionToken: getToken(), ...payload });
+}
+```
 
-### Test Quality Standards
-- No flaky tests — tests must be deterministic
-- Use stable fixtures, avoid time-based dependencies
-- Keep tests fast, focused, and readable
-- Test success path AND error conditions
+### Rust Model with ts-rs
+```rust
+// src-tauri/src/models/my_model.rs
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
-### Minimum Coverage
-- Every bug fix requires a regression test
-- Every new feature requires tests for:
-  - ✅ Success path
-  - ❌ Validation failures
-  - 🔒 Permission failures (for protected features)
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct MyModel {
+    pub id: i64,
+    pub name: String,
+}
+// After editing: run `npm run types:sync`
+```
 
-## 📚 Additional Resources
+### SQLite Migration File
+```sql
+-- migrations/0007_my_change.sql
+-- Always idempotent
+CREATE TABLE IF NOT EXISTS my_table (
+    id    INTEGER PRIMARY KEY AUTOINCREMENT,
+    name  TEXT    NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
 
-- **DOCUMENTATION**: See `docs/agent-pack/README.md` for detailed documentation about our project
-- **ADR**: See `docs/adr/` for architectural decision records
+---
+
+## 🚨 Common Mistakes to Avoid
+
+| Mistake | Correct Approach |
+|---|---|
+| Editing `frontend/src/types/*.ts` | Run `npm run types:sync` instead |
+| SQL in a service file | Move SQL to `infrastructure/` repository |
+| Business logic in an IPC command | Delegate to service layer |
+| Importing directly from another domain's internals | Use `domains/[name]/api/index.ts` |
+| Committing directly to `main` | Always use a feature branch + PR |
+| Writing a migration without idempotency | Always use `IF NOT EXISTS` / `IF EXISTS` |
+| Skipping `quality:check` before commit | It is mandatory — Husky enforces it |
+| Hardcoding session tokens or credentials | Use `AppState` injection + env vars |
+
+---
+
+## 📚 Documentation
+
+- **Full docs**: `docs/agent-pack/README.md`
+- **Architecture decisions**: `docs/adr/`
+- **Migration validation**: `node scripts/validate-migration-system.js`
+- **Existing AGENTS.md**: Mirror of this file for Codex/other agents
