@@ -4,8 +4,8 @@
 
 use crate::authenticate;
 use crate::commands::{AppResult, AppState};
-use crate::domains::reports::domain::models::reports::*;
 use crate::shared::contracts::auth::UserRole;
+use crate::domains::reports::domain::models::reports::*;
 use tracing::{info, instrument};
 
 use super::validation;

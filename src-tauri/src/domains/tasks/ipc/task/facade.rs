@@ -326,21 +326,20 @@ pub async fn report_task_issue(
         .map_err(|e| AppError::Database(format!("Failed to report task issue: {}", e)))?;
 
     if matches!(severity.as_str(), "high" | "critical") {
-        let escalation =
-            crate::domains::notifications::domain::models::message::SendMessageRequest {
-                message_type: "in_app".to_string(),
-                recipient_id: task.technician_id.clone(),
-                recipient_email: None,
-                recipient_phone: None,
-                subject: Some(format!("Task {} issue escalation", task.task_number)),
-                body: format!("{} (severity: {})", description, severity),
-                template_id: None,
-                task_id: Some(task.id.clone()),
-                client_id: task.client_id.clone(),
-                priority: Some("high".to_string()),
-                scheduled_at: None,
-                correlation_id: request.correlation_id.clone(),
-            };
+        let escalation = crate::domains::notifications::domain::models::message::SendMessageRequest {
+            message_type: "in_app".to_string(),
+            recipient_id: task.technician_id.clone(),
+            recipient_email: None,
+            recipient_phone: None,
+            subject: Some(format!("Task {} issue escalation", task.task_number)),
+            body: format!("{} (severity: {})", description, severity),
+            template_id: None,
+            task_id: Some(task.id.clone()),
+            client_id: task.client_id.clone(),
+            priority: Some("high".to_string()),
+            scheduled_at: None,
+            correlation_id: request.correlation_id.clone(),
+        };
 
         if let Err(err) = state.message_service.send_message(&escalation).await {
             warn!(
@@ -390,15 +389,9 @@ pub async fn export_tasks_csv(
             .and_then(|f| f.status.as_ref())
             .and_then(|s| match s.as_str() {
                 "pending" => Some(crate::domains::tasks::domain::models::task::TaskStatus::Pending),
-                "in_progress" => {
-                    Some(crate::domains::tasks::domain::models::task::TaskStatus::InProgress)
-                }
-                "completed" => {
-                    Some(crate::domains::tasks::domain::models::task::TaskStatus::Completed)
-                }
-                "cancelled" => {
-                    Some(crate::domains::tasks::domain::models::task::TaskStatus::Cancelled)
-                }
+                "in_progress" => Some(crate::domains::tasks::domain::models::task::TaskStatus::InProgress),
+                "completed" => Some(crate::domains::tasks::domain::models::task::TaskStatus::Completed),
+                "cancelled" => Some(crate::domains::tasks::domain::models::task::TaskStatus::Cancelled),
                 _ => None,
             }),
         technician_id: request.filter.as_ref().and_then(|f| f.assigned_to.clone()),
@@ -471,8 +464,7 @@ pub async fn import_tasks_bulk(
     // Check permissions - only supervisors and admins can bulk import
     if !matches!(
         session.role,
-        crate::shared::contracts::auth::UserRole::Admin
-            | crate::shared::contracts::auth::UserRole::Supervisor
+        crate::shared::contracts::auth::UserRole::Admin | crate::shared::contracts::auth::UserRole::Supervisor
     ) {
         return Err(AppError::Authorization(
             "Only supervisors and admins can perform bulk imports".to_string(),
@@ -547,8 +539,7 @@ pub async fn delay_task(
     check_task_permissions(&session, &task, "edit")?;
 
     // Use CalendarService.schedule_task to update both task and calendar_events atomically
-    let calendar_service =
-        crate::domains::calendar::infrastructure::calendar::CalendarService::new(state.db.clone());
+    let calendar_service = crate::domains::calendar::infrastructure::calendar::CalendarService::new(state.db.clone());
     calendar_service
         .schedule_task(
             request.task_id.clone(),
@@ -1016,10 +1007,8 @@ pub async fn task_crud(
 mod tests {
     use super::*;
     use crate::commands::AppError;
-    use crate::domains::tasks::domain::models::task::{
-        Task, TaskPriority, TaskStatus, UpdateTaskRequest,
-    };
     use crate::shared::contracts::auth::{UserRole, UserSession};
+    use crate::domains::tasks::domain::models::task::{Task, TaskPriority, TaskStatus, UpdateTaskRequest};
 
     fn make_task(technician_id: Option<&str>, status: TaskStatus) -> Task {
         Task {

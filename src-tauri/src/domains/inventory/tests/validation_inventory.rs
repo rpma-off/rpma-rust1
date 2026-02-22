@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use crate::db::Database;
-use crate::domains::inventory::infrastructure::material::MaterialService;
 use crate::domains::inventory::InventoryFacade;
+use crate::domains::inventory::infrastructure::material::MaterialService;
 
 #[tokio::test]
 async fn list_materials_with_invalid_type_filter_returns_ok() {
@@ -14,7 +14,13 @@ async fn list_materials_with_invalid_type_filter_returns_ok() {
     let material_service = Arc::new(MaterialService::new((*db).clone()));
     let facade = InventoryFacade::new(db, material_service);
 
-    let result = facade.list_materials(Some("invalid_type".to_string()), None, false, None, None);
+    let result = facade.list_materials(
+        Some("invalid_type".to_string()),
+        None,
+        false,
+        None,
+        None,
+    );
     assert!(result.is_ok());
 }
 

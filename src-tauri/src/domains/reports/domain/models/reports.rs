@@ -1163,7 +1163,6 @@ pub struct EntityCounts {
 pub struct SearchResults {
     pub tasks: Vec<crate::domains::tasks::domain::models::task::Task>,
     pub clients: Vec<crate::domains::clients::domain::models::client::Client>,
-    pub interventions:
-        Vec<crate::domains::interventions::domain::models::intervention::Intervention>,
+    pub interventions: Vec<crate::domains::interventions::domain::models::intervention::Intervention>,
     pub total_results: i32,
 }

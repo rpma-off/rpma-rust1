@@ -1,7 +1,7 @@
+use std::sync::Arc;
 use crate::db::Database;
 use crate::domains::documents::infrastructure::photo::PhotoService;
 use crate::domains::documents::DocumentsFacade;
-use std::sync::Arc;
 
 #[tokio::test]
 async fn validate_photo_extension_accepts_all_valid_types() {
@@ -14,11 +14,7 @@ async fn validate_photo_extension_accepts_all_valid_types() {
     let facade = DocumentsFacade::new(service);
     for ext in &["jpg", "jpeg", "png", "webp", "heic"] {
         let filename = format!("photo.{}", ext);
-        assert!(
-            facade.validate_photo_extension(&filename).is_ok(),
-            "Expected {} to be valid",
-            ext
-        );
+        assert!(facade.validate_photo_extension(&filename).is_ok(), "Expected {} to be valid", ext);
     }
 }
 

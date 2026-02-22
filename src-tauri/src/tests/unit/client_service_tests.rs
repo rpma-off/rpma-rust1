@@ -351,12 +351,11 @@ mod tests {
         }
 
         // Deactivate one client
-        let deactivate_request =
-            crate::domains::clients::domain::models::client::UpdateClientRequest {
-                id: client_ids[1].clone(),
-                is_active: Some(false),
-                ..Default::default()
-            };
+        let deactivate_request = crate::domains::clients::domain::models::client::UpdateClientRequest {
+            id: client_ids[1].clone(),
+            is_active: Some(false),
+            ..Default::default()
+        };
         service
             .update_client_async(deactivate_request, "test_user")
             .await?;
@@ -561,12 +560,11 @@ mod tests {
         assert_eq!(stats.total_tasks, 4);
 
         // Deactivate second client
-        let deactivate_request =
-            crate::domains::clients::domain::models::client::UpdateClientRequest {
-                id: client2.id,
-                is_active: Some(false),
-                ..Default::default()
-            };
+        let deactivate_request = crate::domains::clients::domain::models::client::UpdateClientRequest {
+            id: client2.id,
+            is_active: Some(false),
+            ..Default::default()
+        };
         service
             .update_client_async(deactivate_request, "test_user")
             .await?;

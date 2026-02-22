@@ -8,6 +8,6 @@ mod upload;
 // Re-export main service and types for backward compatibility
 // Re-export main service and types for backward compatibility
 pub use facade::{
-    GetPhotosRequest, GetPhotosResponse, PhotoError, PhotoMetadataUpdate, PhotoResult,
-    PhotoService, StorePhotoRequest, StorePhotoResponse,
+    GetPhotosRequest, GetPhotosResponse, PhotoError, PhotoMetadataUpdate, PhotoResult, PhotoService,
+    StorePhotoRequest, StorePhotoResponse,
 };

@@ -18,10 +18,7 @@ pub async fn intervention_get(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<
-    ApiResponse<crate::domains::interventions::domain::models::intervention::Intervention>,
-    AppError,
-> {
+) -> Result<ApiResponse<crate::domains::interventions::domain::models::intervention::Intervention>, AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let session = authenticate!(&session_token, &state);
     crate::commands::update_correlation_context_user(&session.user_id);
@@ -43,8 +40,7 @@ pub async fn intervention_get(
     if intervention.technician_id.as_ref() != Some(&session.user_id)
         && !matches!(
             session.role,
-            crate::shared::contracts::auth::UserRole::Admin
-                | crate::shared::contracts::auth::UserRole::Supervisor
+            crate::shared::contracts::auth::UserRole::Admin | crate::shared::contracts::auth::UserRole::Supervisor
         )
     {
         return Err(AppError::Authorization(
@@ -63,10 +59,7 @@ pub async fn intervention_get_active_by_task(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<
-    ApiResponse<Vec<crate::domains::interventions::domain::models::intervention::Intervention>>,
-    AppError,
-> {
+) -> Result<ApiResponse<Vec<crate::domains::interventions::domain::models::intervention::Intervention>>, AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let session = authenticate!(&session_token, &state);
     crate::commands::update_correlation_context_user(&session.user_id);
@@ -83,8 +76,7 @@ pub async fn intervention_get_active_by_task(
     if !task_access
         && !matches!(
             session.role,
-            crate::shared::contracts::auth::UserRole::Admin
-                | crate::shared::contracts::auth::UserRole::Supervisor
+            crate::shared::contracts::auth::UserRole::Admin | crate::shared::contracts::auth::UserRole::Supervisor
         )
     {
         return Err(AppError::Authorization(
@@ -118,10 +110,7 @@ pub async fn intervention_get_latest_by_task(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<
-    ApiResponse<Option<crate::domains::interventions::domain::models::intervention::Intervention>>,
-    AppError,
-> {
+) -> Result<ApiResponse<Option<crate::domains::interventions::domain::models::intervention::Intervention>>, AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let session = authenticate!(&session_token, &state);
     crate::commands::update_correlation_context_user(&session.user_id);
@@ -138,8 +127,7 @@ pub async fn intervention_get_latest_by_task(
     if !task_access
         && !matches!(
             session.role,
-            crate::shared::contracts::auth::UserRole::Admin
-                | crate::shared::contracts::auth::UserRole::Supervisor
+            crate::shared::contracts::auth::UserRole::Admin | crate::shared::contracts::auth::UserRole::Supervisor
         )
     {
         return Err(AppError::Authorization(
@@ -166,10 +154,7 @@ pub async fn intervention_get_step(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<
-    ApiResponse<crate::domains::interventions::domain::models::step::InterventionStep>,
-    AppError,
-> {
+) -> Result<ApiResponse<crate::domains::interventions::domain::models::step::InterventionStep>, AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let session = authenticate!(&session_token, &state);
     crate::commands::update_correlation_context_user(&session.user_id);
@@ -190,8 +175,7 @@ pub async fn intervention_get_step(
     if intervention.technician_id.as_ref() != Some(&session.user_id)
         && !matches!(
             session.role,
-            crate::shared::contracts::auth::UserRole::Admin
-                | crate::shared::contracts::auth::UserRole::Supervisor
+            crate::shared::contracts::auth::UserRole::Admin | crate::shared::contracts::auth::UserRole::Supervisor
         )
     {
         return Err(AppError::Authorization(

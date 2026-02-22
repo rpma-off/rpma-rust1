@@ -1,6 +1,6 @@
 use crate::commands::{ApiError, AppState};
-use crate::domains::tasks::domain::models::task::Task;
 use crate::models::status::{StatusDistribution, StatusTransitionRequest};
+use crate::domains::tasks::domain::models::task::Task;
 use tracing;
 
 /// Transition a task to a new status with validation

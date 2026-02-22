@@ -10,9 +10,7 @@ use std::sync::Arc;
 use crate::domains::inventory::application::InventoryService;
 use crate::domains::inventory::domain::material::validate_stock_change;
 use crate::domains::inventory::domain::models::material::{MaterialType, UnitOfMeasure};
-use crate::domains::inventory::infrastructure::material::{
-    CreateMaterialRequest, MaterialService, UpdateStockRequest,
-};
+use crate::domains::inventory::infrastructure::material::{CreateMaterialRequest, MaterialService, UpdateStockRequest};
 use crate::test_utils::TestDatabase;
 
 #[test]

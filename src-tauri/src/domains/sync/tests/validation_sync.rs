@@ -1,8 +1,8 @@
+use std::sync::{Arc, Mutex};
 use crate::db::Database;
 use crate::domains::sync::infrastructure::sync::background::BackgroundSyncService;
 use crate::domains::sync::infrastructure::sync::queue::SyncQueue;
 use crate::domains::sync::SyncFacade;
-use std::sync::{Arc, Mutex};
 
 #[tokio::test]
 async fn sync_facade_debug_output() {

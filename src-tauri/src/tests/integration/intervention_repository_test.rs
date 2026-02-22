@@ -6,9 +6,7 @@
 //! - Transaction rollback scenarios
 //! - Complex data relationships
 
-use crate::domains::interventions::domain::models::intervention::{
-    Intervention, InterventionStatus, InterventionType,
-};
+use crate::domains::interventions::domain::models::intervention::{Intervention, InterventionStatus, InterventionType};
 use crate::domains::interventions::domain::models::step::{InterventionStep, StepStatus, StepType};
 use crate::domains::interventions::infrastructure::intervention_repository::InterventionRepository;
 use crate::test_utils::TestDataFactory;

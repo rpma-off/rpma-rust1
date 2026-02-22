@@ -4,10 +4,8 @@
 
 use crate::commands::AppError;
 use crate::db::Database;
-use crate::domains::tasks::domain::models::task::{
-    CreateTaskRequest, Task, TaskPriority, TaskStatus,
-};
 use crate::domains::tasks::infrastructure::task_validation::TaskValidationService;
+use crate::domains::tasks::domain::models::task::{CreateTaskRequest, Task, TaskPriority, TaskStatus};
 use crate::shared::services::validation::ValidationService;
 use chrono::Utc;
 use rusqlite::params;

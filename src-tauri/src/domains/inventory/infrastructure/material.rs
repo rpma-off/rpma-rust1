@@ -4,12 +4,12 @@
 //! and integration with PPF intervention workflows.
 
 use crate::db::Database;
+use crate::shared::contracts::auth::UserRole;
 use crate::domains::inventory::domain::models::material::{
     InterventionMaterialSummary, InventoryMovementSummary, InventoryStats, InventoryTransaction,
     InventoryTransactionType, Material, MaterialCategory, MaterialConsumption,
     MaterialConsumptionSummary, MaterialStats, MaterialType, Supplier, UnitOfMeasure,
 };
-use crate::shared::contracts::auth::UserRole;
 use rusqlite::params;
 use std::collections::HashMap;
 use uuid::Uuid;

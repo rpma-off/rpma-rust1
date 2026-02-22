@@ -1,7 +1,7 @@
 //! Smoke tests for core services and migrations.
 
-use crate::domains::auth::infrastructure::two_factor::TwoFactorService;
 use crate::domains::tasks::infrastructure::task_validation::TaskValidationService;
+use crate::domains::auth::infrastructure::two_factor::TwoFactorService;
 use crate::test_utils::TestDatabase;
 use base64::{engine::general_purpose, Engine as _};
 use chrono::Utc;

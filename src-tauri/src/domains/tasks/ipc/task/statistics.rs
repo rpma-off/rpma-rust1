@@ -4,8 +4,8 @@
 
 use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
-use crate::domains::tasks::infrastructure::task_statistics::TaskStatistics;
 use crate::domains::tasks::ipc::task_types::TaskFilter;
+use crate::domains::tasks::infrastructure::task_statistics::TaskStatistics;
 use serde::Deserialize;
 use tracing::{debug, info};
 
@@ -88,8 +88,5 @@ pub fn calculate_productivity_trends(
     current_stats: &TaskStatistics,
     previous_stats: Option<&TaskStatistics>,
 ) -> std::collections::HashMap<String, f64> {
-    crate::domains::tasks::infrastructure::task_statistics::calculate_productivity_trends(
-        current_stats,
-        previous_stats,
-    )
+    crate::domains::tasks::infrastructure::task_statistics::calculate_productivity_trends(current_stats, previous_stats)
 }

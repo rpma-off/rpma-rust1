@@ -51,13 +51,12 @@ mod tests {
             .unwrap();
 
         if initial_stock > 0.0 {
-            let update_request =
-                crate::domains::inventory::infrastructure::material::UpdateStockRequest {
-                    material_id: material.id.clone().unwrap(),
-                    quantity_change: initial_stock,
-                    reason: "Initial stock".to_string(),
-                    recorded_by: Some("test_user".to_string()),
-                };
+            let update_request = crate::domains::inventory::infrastructure::material::UpdateStockRequest {
+                material_id: material.id.clone().unwrap(),
+                quantity_change: initial_stock,
+                reason: "Initial stock".to_string(),
+                recorded_by: Some("test_user".to_string()),
+            };
             service.update_stock(update_request).unwrap();
         }
 
@@ -554,34 +553,33 @@ mod tests {
         let low_stock_material = create_test_material(&service, "STATS-002", 5.0);
 
         // Create an expired material
-        let mut expired_request =
-            crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
-                sku: "STATS-003".to_string(),
-                name: "Expired Material".to_string(),
-                description: Some("Test expired material".to_string()),
-                material_type: MaterialType::PpfFilm,
-                category: Some("Films".to_string()),
-                subcategory: None,
-                category_id: None,
-                brand: None,
-                model: None,
-                specifications: None,
-                unit_of_measure: UnitOfMeasure::Meter,
-                minimum_stock: Some(10.0),
-                maximum_stock: Some(1000.0),
-                reorder_point: Some(20.0),
-                unit_cost: Some(15.50),
-                currency: Some("EUR".to_string()),
-                supplier_id: None,
-                supplier_name: None,
-                supplier_sku: None,
-                quality_grade: None,
-                certification: None,
-                expiry_date: Some(Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0).unwrap()),
-                batch_number: None,
-                storage_location: None,
-                warehouse_id: None,
-            };
+        let mut expired_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
+            sku: "STATS-003".to_string(),
+            name: "Expired Material".to_string(),
+            description: Some("Test expired material".to_string()),
+            material_type: MaterialType::PpfFilm,
+            category: Some("Films".to_string()),
+            subcategory: None,
+            category_id: None,
+            brand: None,
+            model: None,
+            specifications: None,
+            unit_of_measure: UnitOfMeasure::Meter,
+            minimum_stock: Some(10.0),
+            maximum_stock: Some(1000.0),
+            reorder_point: Some(20.0),
+            unit_cost: Some(15.50),
+            currency: Some("EUR".to_string()),
+            supplier_id: None,
+            supplier_name: None,
+            supplier_sku: None,
+            quality_grade: None,
+            certification: None,
+            expiry_date: Some(Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0).unwrap()),
+            batch_number: None,
+            storage_location: None,
+            warehouse_id: None,
+        };
         let expired_material = service
             .create_material(expired_request, Some("test_user".to_string()))
             .unwrap();

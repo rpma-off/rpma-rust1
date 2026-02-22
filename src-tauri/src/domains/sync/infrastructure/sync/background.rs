@@ -3,8 +3,8 @@
 //! Provides automatic bidirectional synchronization between local SQLite
 //! and remote Supabase with background processing and error handling.
 
-use crate::domains::sync::domain::models::sync::*;
 use crate::domains::sync::infrastructure::sync::queue::SyncQueue;
+use crate::domains::sync::domain::models::sync::*;
 use chrono::{DateTime, Utc};
 use std::sync::Arc;
 use tokio::sync::Mutex;

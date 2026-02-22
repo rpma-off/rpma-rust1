@@ -3,9 +3,7 @@
 //! This module uses Proptest to verify audit logging properties
 //! across a wide range of inputs to ensure robust audit functionality.
 
-use crate::domains::audit::infrastructure::audit_service::{
-    ActionResult, AuditEvent, AuditEventType, AuditService,
-};
+use crate::domains::audit::infrastructure::audit_service::{ActionResult, AuditEvent, AuditEventType, AuditService};
 use crate::test_utils::TestDatabase;
 use crate::{test_client, test_db, test_intervention, test_task};
 use chrono::{DateTime, Duration, Utc};

@@ -5,8 +5,8 @@
 
 use crate::authenticate;
 use crate::commands::{AppResult, AppState};
-use crate::domains::reports::domain::models::reports::ReportType;
 use crate::shared::contracts::auth::UserRole;
+use crate::domains::reports::domain::models::reports::ReportType;
 
 /// Check if user has permission to export a specific report type
 pub fn check_export_permissions(

@@ -4,8 +4,8 @@
 //! calculation, and task creation on acceptance.
 
 use crate::domains::quotes::domain::models::quote::*;
-use crate::domains::quotes::infrastructure::quote_repository::QuoteRepository;
 use crate::repositories::base::RepoError;
+use crate::domains::quotes::infrastructure::quote_repository::QuoteRepository;
 use chrono::Utc;
 use rusqlite::params;
 use std::sync::Arc;
@@ -445,8 +445,8 @@ impl QuoteService {
 mod tests {
     use super::*;
     use crate::db::Database;
-    use crate::domains::quotes::infrastructure::quote_repository::QuoteRepository;
     use crate::repositories::cache::Cache;
+    use crate::domains::quotes::infrastructure::quote_repository::QuoteRepository;
 
     fn setup_service() -> (QuoteService, Arc<Database>) {
         let db = Arc::new(crate::test_utils::setup_test_db_sync());

@@ -29,8 +29,7 @@ pub enum InterventionWorkflowResponse {
         intervention: crate::domains::interventions::domain::models::intervention::Intervention,
     },
     ActiveByTask {
-        interventions:
-            Vec<crate::domains::interventions::domain::models::intervention::Intervention>,
+        interventions: Vec<crate::domains::interventions::domain::models::intervention::Intervention>,
     },
     Updated {
         id: String,

@@ -35,8 +35,7 @@ pub enum InterventionManagementAction {
 #[serde(tag = "type")]
 pub enum InterventionManagementResponse {
     List {
-        interventions:
-            Vec<crate::domains::interventions::domain::models::intervention::Intervention>,
+        interventions: Vec<crate::domains::interventions::domain::models::intervention::Intervention>,
         total: u64,
         page: u32,
         limit: u32,
@@ -45,8 +44,7 @@ pub enum InterventionManagementResponse {
         stats: InterventionStats,
     },
     ByTask {
-        interventions:
-            Vec<crate::domains::interventions::domain::models::intervention::Intervention>,
+        interventions: Vec<crate::domains::interventions::domain::models::intervention::Intervention>,
     },
     BulkUpdated {
         updated_count: usize,
@@ -108,23 +106,20 @@ pub async fn intervention_management(
             // Build filter based on user role and permissions
             let query_status_clone = query.status.clone();
             let filter_status = query_status_clone.as_deref();
-            let _filter =
-                crate::domains::interventions::domain::models::intervention::InterventionFilter {
-                    technician_id: if session.role
-                        == crate::shared::contracts::auth::UserRole::Technician
-                    {
-                        Some(session.user_id.clone())
-                    } else {
-                        query.technician_id.clone()
-                    },
-                    task_id: query.task_id,
-                    client_id: query.client_id,
-                    status: query.status,
-                    priority: query.priority,
-                    intervention_type: query.intervention_type,
-                    from_date: query.from_date,
-                    to_date: query.to_date,
-                };
+            let _filter = crate::domains::interventions::domain::models::intervention::InterventionFilter {
+                technician_id: if session.role == crate::shared::contracts::auth::UserRole::Technician {
+                    Some(session.user_id.clone())
+                } else {
+                    query.technician_id.clone()
+                },
+                task_id: query.task_id,
+                client_id: query.client_id,
+                status: query.status,
+                priority: query.priority,
+                intervention_type: query.intervention_type,
+                from_date: query.from_date,
+                to_date: query.to_date,
+            };
 
             let page = query.page.unwrap_or(1);
             let limit = query.limit.unwrap_or(50).min(200);

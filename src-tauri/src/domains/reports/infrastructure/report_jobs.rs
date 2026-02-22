@@ -111,10 +111,8 @@ impl ReportJobService {
     /// Get job status
     pub async fn get_job_status(&self, job_id: &str) -> Result<Option<ReportJob>, AppError> {
         let cache_key = format!("report_job:{}", job_id);
-        self.cache.get::<ReportJob>(
-            crate::shared::services::cache::CacheType::ApiResponse,
-            &cache_key,
-        )
+        self.cache
+            .get::<ReportJob>(crate::shared::services::cache::CacheType::ApiResponse, &cache_key)
     }
 
     /// Cancel a job
@@ -127,10 +125,10 @@ impl ReportJobService {
 
             // Update job status in cache
             let cache_key = format!("report_job:{}", job_id);
-            if let Ok(Some(mut job)) = self.cache.get::<ReportJob>(
-                crate::shared::services::cache::CacheType::ApiResponse,
-                &cache_key,
-            ) {
+            if let Ok(Some(mut job)) = self
+                .cache
+                .get::<ReportJob>(crate::shared::services::cache::CacheType::ApiResponse, &cache_key)
+            {
                 job.status = ReportJobStatus::Failed;
                 job.error_message = Some("Job cancelled by user".to_string());
                 job.completed_at = Some(Utc::now());

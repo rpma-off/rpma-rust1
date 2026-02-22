@@ -71,14 +71,13 @@ pub async fn generate_intervention_pdf_report(
 
     // Create PDF report instance
     tracing::info!("Creating PDF report instance");
-    let pdf_report =
-        crate::domains::reports::infrastructure::pdf_report::InterventionPdfReport::new(
-            intervention_data.intervention.clone(),
-            intervention_data.workflow_steps.clone(),
-            intervention_data.photos.clone(),
-            Vec::new(), // TODO: Get materials data
-            intervention_data.client.clone(),
-        );
+    let pdf_report = crate::domains::reports::infrastructure::pdf_report::InterventionPdfReport::new(
+        intervention_data.intervention.clone(),
+        intervention_data.workflow_steps.clone(),
+        intervention_data.photos.clone(),
+        Vec::new(), // TODO: Get materials data
+        intervention_data.client.clone(),
+    );
 
     // Generate the PDF
     tracing::info!("Starting PDF generation to path: {:?}", output_path);
@@ -99,17 +98,15 @@ pub async fn generate_intervention_pdf_report(
             let download_url = format!("file://{}", output_path.display());
 
             tracing::info!("Returning successful PDF generation result");
-            Ok(
-                crate::domains::reports::domain::models::reports::InterventionReportResult {
-                    success: true,
-                    download_url: Some(download_url),
-                    file_path: Some(output_path.to_string_lossy().to_string()),
-                    file_name: Some(format!("intervention-report-{}.pdf", intervention_id)),
-                    format: "pdf".to_string(),
-                    file_size,
-                    generated_at: chrono::Utc::now(),
-                },
-            )
+            Ok(crate::domains::reports::domain::models::reports::InterventionReportResult {
+                success: true,
+                download_url: Some(download_url),
+                file_path: Some(output_path.to_string_lossy().to_string()),
+                file_name: Some(format!("intervention-report-{}.pdf", intervention_id)),
+                format: "pdf".to_string(),
+                file_size,
+                generated_at: chrono::Utc::now(),
+            })
         }
         Err(e) => {
             tracing::error!("Failed to generate PDF report: {}", e);

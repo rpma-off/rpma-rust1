@@ -212,11 +212,9 @@ pub async fn health_check(
     let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let pool = state.db.pool().clone();
 
-    tokio::task::spawn_blocking(move || {
-        crate::shared::services::system::SystemService::health_check(&pool)
-    })
-    .await
-    .map_err(|e| format!("Task join error: {}", e))?
+    tokio::task::spawn_blocking(move || crate::shared::services::system::SystemService::health_check(&pool))
+        .await
+        .map_err(|e| format!("Task join error: {}", e))?
 }
 
 /// Get database statistics

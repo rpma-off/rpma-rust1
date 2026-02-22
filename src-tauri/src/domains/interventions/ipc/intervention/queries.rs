@@ -28,8 +28,7 @@ fn can_access_intervention(
 ) -> bool {
     let is_privileged = matches!(
         session.role,
-        crate::shared::contracts::auth::UserRole::Admin
-            | crate::shared::contracts::auth::UserRole::Supervisor
+        crate::shared::contracts::auth::UserRole::Admin | crate::shared::contracts::auth::UserRole::Supervisor
     );
     is_privileged || technician_id.is_some_and(|id| id == session.user_id.as_str())
 }
@@ -130,10 +129,7 @@ pub async fn intervention_get_progress(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<
-    ApiResponse<crate::domains::interventions::domain::models::intervention::InterventionProgress>,
-    AppError,
-> {
+) -> Result<ApiResponse<crate::domains::interventions::domain::models::intervention::InterventionProgress>, AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let session = authenticate!(&session_token, &state);
     crate::commands::update_correlation_context_user(&session.user_id);
@@ -177,10 +173,7 @@ pub async fn intervention_advance_step(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<
-    ApiResponse<crate::domains::interventions::domain::models::step::InterventionStep>,
-    AppError,
-> {
+) -> Result<ApiResponse<crate::domains::interventions::domain::models::step::InterventionStep>, AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let session = authenticate!(&session_token, &state);
     crate::commands::update_correlation_context_user(&session.user_id);
@@ -203,16 +196,15 @@ pub async fn intervention_advance_step(
         "Not authorized to advance this intervention",
     )?;
 
-    let advance_request =
-        crate::domains::interventions::infrastructure::intervention_types::AdvanceStepRequest {
-            intervention_id: intervention_id.clone(),
-            step_id: step_id.clone(),
-            collected_data: serde_json::Value::Null,
-            photos: None,
-            notes,
-            quality_check_passed: true,
-            issues: None,
-        };
+    let advance_request = crate::domains::interventions::infrastructure::intervention_types::AdvanceStepRequest {
+        intervention_id: intervention_id.clone(),
+        step_id: step_id.clone(),
+        collected_data: serde_json::Value::Null,
+        photos: None,
+        notes,
+        quality_check_passed: true,
+        issues: None,
+    };
 
     state
         .intervention_service

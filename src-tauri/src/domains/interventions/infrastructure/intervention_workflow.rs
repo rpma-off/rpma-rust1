@@ -8,9 +8,8 @@
 
 use crate::db::Database;
 use crate::db::{InterventionError, InterventionResult};
-use crate::domains::interventions::domain::models::intervention::{
-    Intervention, InterventionStatus,
-};
+use crate::logging::{LogDomain, RPMARequestLogger};
+use crate::domains::interventions::domain::models::intervention::{Intervention, InterventionStatus};
 use crate::domains::interventions::domain::models::step::{InterventionStep, StepStatus};
 use crate::domains::interventions::infrastructure::intervention_data::InterventionDataService;
 use crate::domains::interventions::infrastructure::intervention_types::*;
@@ -18,7 +17,6 @@ use crate::domains::tasks::infrastructure::workflow_strategy::{
     EnvironmentConditions, WorkflowContext, WorkflowStrategyFactory,
 };
 use crate::domains::tasks::infrastructure::workflow_validation::WorkflowValidationService;
-use crate::logging::{LogDomain, RPMARequestLogger};
 use crate::shared::contracts::common::TimestampString;
 use crate::shared::event_bus::{publish_event, InterventionFinalized};
 use serde_json::json;
@@ -729,10 +727,7 @@ impl InterventionWorkflowService {
         let steps = self.data.get_intervention_steps(&intervention.id)?;
         let finalization_step = steps
             .iter()
-            .find(|s| {
-                s.step_type
-                    == crate::domains::interventions::domain::models::step::StepType::Finalization
-            })
+            .find(|s| s.step_type == crate::domains::interventions::domain::models::step::StepType::Finalization)
             .cloned();
 
         let updated_step = finalization_step.map(|mut step| {

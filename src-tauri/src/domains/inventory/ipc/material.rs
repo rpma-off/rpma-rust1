@@ -18,10 +18,7 @@ pub async fn material_create(
     session_token: String,
     request: CreateMaterialRequest,
     correlation_id: Option<String>,
-) -> Result<
-    ApiResponse<crate::domains::inventory::domain::models::material::Material>,
-    crate::commands::AppError,
-> {
+) -> Result<ApiResponse<crate::domains::inventory::domain::models::material::Material>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
@@ -51,10 +48,7 @@ pub async fn material_get(
     session_token: String,
     id: String,
     correlation_id: Option<String>,
-) -> Result<
-    ApiResponse<Option<crate::domains::inventory::domain::models::material::Material>>,
-    crate::commands::AppError,
-> {
+) -> Result<ApiResponse<Option<crate::domains::inventory::domain::models::material::Material>>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
@@ -83,10 +77,7 @@ pub async fn material_get_by_sku(
     session_token: String,
     sku: String,
     correlation_id: Option<String>,
-) -> Result<
-    ApiResponse<Option<crate::domains::inventory::domain::models::material::Material>>,
-    crate::commands::AppError,
-> {
+) -> Result<ApiResponse<Option<crate::domains::inventory::domain::models::material::Material>>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
@@ -119,10 +110,7 @@ pub async fn material_list(
     limit: Option<i32>,
     offset: Option<i32>,
     correlation_id: Option<String>,
-) -> Result<
-    ApiResponse<Vec<crate::domains::inventory::domain::models::material::Material>>,
-    crate::commands::AppError,
-> {
+) -> Result<ApiResponse<Vec<crate::domains::inventory::domain::models::material::Material>>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
@@ -155,10 +143,7 @@ pub async fn material_update(
     id: String,
     request: CreateMaterialRequest,
     correlation_id: Option<String>,
-) -> Result<
-    ApiResponse<crate::domains::inventory::domain::models::material::Material>,
-    crate::commands::AppError,
-> {
+) -> Result<ApiResponse<crate::domains::inventory::domain::models::material::Material>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
@@ -188,10 +173,7 @@ pub async fn material_update_stock(
     session_token: String,
     request: UpdateStockRequest,
     correlation_id: Option<String>,
-) -> Result<
-    ApiResponse<crate::domains::inventory::domain::models::material::Material>,
-    crate::commands::AppError,
-> {
+) -> Result<ApiResponse<crate::domains::inventory::domain::models::material::Material>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
@@ -218,10 +200,7 @@ pub async fn material_record_consumption(
     session_token: String,
     request: RecordConsumptionRequest,
     correlation_id: Option<String>,
-) -> Result<
-    ApiResponse<crate::domains::inventory::domain::models::material::MaterialConsumption>,
-    crate::commands::AppError,
-> {
+) -> Result<ApiResponse<crate::domains::inventory::domain::models::material::MaterialConsumption>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
@@ -248,10 +227,8 @@ pub async fn material_get_intervention_consumption(
     session_token: String,
     intervention_id: String,
     correlation_id: Option<String>,
-) -> Result<
-    ApiResponse<Vec<crate::domains::inventory::domain::models::material::MaterialConsumption>>,
-    crate::commands::AppError,
-> {
+) -> Result<ApiResponse<Vec<crate::domains::inventory::domain::models::material::MaterialConsumption>>, crate::commands::AppError>
+{
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
@@ -311,10 +288,7 @@ pub async fn material_get_stats(
     state: AppState<'_>,
     session_token: String,
     correlation_id: Option<String>,
-) -> Result<
-    ApiResponse<crate::domains::inventory::domain::models::material::MaterialStats>,
-    crate::commands::AppError,
-> {
+) -> Result<ApiResponse<crate::domains::inventory::domain::models::material::MaterialStats>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
@@ -339,10 +313,7 @@ pub async fn material_get_low_stock(
     state: AppState<'_>,
     session_token: String,
     correlation_id: Option<String>,
-) -> Result<
-    ApiResponse<Vec<crate::domains::inventory::domain::models::material::Material>>,
-    crate::commands::AppError,
-> {
+) -> Result<ApiResponse<Vec<crate::domains::inventory::domain::models::material::Material>>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
@@ -370,10 +341,7 @@ pub async fn material_get_expired(
     state: AppState<'_>,
     session_token: String,
     correlation_id: Option<String>,
-) -> Result<
-    ApiResponse<Vec<crate::domains::inventory::domain::models::material::Material>>,
-    crate::commands::AppError,
-> {
+) -> Result<ApiResponse<Vec<crate::domains::inventory::domain::models::material::Material>>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
@@ -401,10 +369,7 @@ pub async fn inventory_get_stats(
     state: AppState<'_>,
     session_token: String,
     correlation_id: Option<String>,
-) -> Result<
-    ApiResponse<crate::domains::inventory::domain::models::material::InventoryStats>,
-    crate::commands::AppError,
-> {
+) -> Result<ApiResponse<crate::domains::inventory::domain::models::material::InventoryStats>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
@@ -460,10 +425,7 @@ pub async fn material_adjust_stock(
     session_token: String,
     request: UpdateStockRequest,
     correlation_id: Option<String>,
-) -> Result<
-    ApiResponse<crate::domains::inventory::domain::models::material::Material>,
-    crate::commands::AppError,
-> {
+) -> Result<ApiResponse<crate::domains::inventory::domain::models::material::Material>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
@@ -500,10 +462,8 @@ pub async fn material_get_consumption_history(
     limit: Option<i32>,
     offset: Option<i32>,
     correlation_id: Option<String>,
-) -> Result<
-    ApiResponse<Vec<crate::domains::inventory::domain::models::material::MaterialConsumption>>,
-    crate::commands::AppError,
-> {
+) -> Result<ApiResponse<Vec<crate::domains::inventory::domain::models::material::MaterialConsumption>>, crate::commands::AppError>
+{
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
@@ -532,10 +492,7 @@ pub async fn material_create_inventory_transaction(
     session_token: String,
     request: CreateInventoryTransactionRequest,
     correlation_id: Option<String>,
-) -> Result<
-    ApiResponse<crate::domains::inventory::domain::models::material::InventoryTransaction>,
-    crate::commands::AppError,
-> {
+) -> Result<ApiResponse<crate::domains::inventory::domain::models::material::InventoryTransaction>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
@@ -599,10 +556,7 @@ pub async fn material_create_category(
     session_token: String,
     request: CreateMaterialCategoryRequest,
     correlation_id: Option<String>,
-) -> Result<
-    ApiResponse<crate::domains::inventory::domain::models::material::MaterialCategory>,
-    crate::commands::AppError,
-> {
+) -> Result<ApiResponse<crate::domains::inventory::domain::models::material::MaterialCategory>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
@@ -634,10 +588,8 @@ pub async fn material_list_categories(
     limit: Option<i32>,
     offset: Option<i32>,
     correlation_id: Option<String>,
-) -> Result<
-    ApiResponse<Vec<crate::domains::inventory::domain::models::material::MaterialCategory>>,
-    crate::commands::AppError,
-> {
+) -> Result<ApiResponse<Vec<crate::domains::inventory::domain::models::material::MaterialCategory>>, crate::commands::AppError>
+{
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
@@ -666,10 +618,7 @@ pub async fn material_create_supplier(
     session_token: String,
     request: CreateSupplierRequest,
     correlation_id: Option<String>,
-) -> Result<
-    ApiResponse<crate::domains::inventory::domain::models::material::Supplier>,
-    crate::commands::AppError,
-> {
+) -> Result<ApiResponse<crate::domains::inventory::domain::models::material::Supplier>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
@@ -702,10 +651,7 @@ pub async fn material_list_suppliers(
     limit: Option<i32>,
     offset: Option<i32>,
     correlation_id: Option<String>,
-) -> Result<
-    ApiResponse<Vec<crate::domains::inventory::domain::models::material::Supplier>>,
-    crate::commands::AppError,
-> {
+) -> Result<ApiResponse<Vec<crate::domains::inventory::domain::models::material::Supplier>>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
@@ -733,10 +679,7 @@ pub async fn material_get_low_stock_materials(
     state: AppState<'_>,
     session_token: String,
     correlation_id: Option<String>,
-) -> Result<
-    ApiResponse<Vec<crate::domains::inventory::domain::models::material::Material>>,
-    crate::commands::AppError,
-> {
+) -> Result<ApiResponse<Vec<crate::domains::inventory::domain::models::material::Material>>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
@@ -764,10 +707,7 @@ pub async fn material_get_expired_materials(
     state: AppState<'_>,
     session_token: String,
     correlation_id: Option<String>,
-) -> Result<
-    ApiResponse<Vec<crate::domains::inventory::domain::models::material::Material>>,
-    crate::commands::AppError,
-> {
+) -> Result<ApiResponse<Vec<crate::domains::inventory::domain::models::material::Material>>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let current_user = authenticate!(&session_token, &state);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());

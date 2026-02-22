@@ -4,9 +4,7 @@
 //! Registered on the event bus so every published domain event automatically
 //! produces an audit trail record.
 
-use crate::domains::audit::infrastructure::audit_service::{
-    ActionResult, AuditEvent, AuditEventType, AuditService,
-};
+use crate::domains::audit::infrastructure::audit_service::{ActionResult, AuditEvent, AuditEventType, AuditService};
 use crate::shared::services::domain_event::DomainEvent;
 use crate::shared::services::event_bus::EventHandler;
 use async_trait::async_trait;

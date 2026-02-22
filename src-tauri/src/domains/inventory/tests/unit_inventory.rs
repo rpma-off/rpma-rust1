@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use crate::db::Database;
-use crate::domains::inventory::infrastructure::material::MaterialService;
 use crate::domains::inventory::InventoryFacade;
+use crate::domains::inventory::infrastructure::material::MaterialService;
 
 #[tokio::test]
 async fn facade_is_ready_after_creation() {

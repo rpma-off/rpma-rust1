@@ -230,12 +230,8 @@ impl SessionRepository {
                 let role_str: String = row.get(4)?;
                 match role_str.as_str() {
                     "admin" => crate::domains::auth::domain::models::auth::UserRole::Admin,
-                    "technician" => {
-                        crate::domains::auth::domain::models::auth::UserRole::Technician
-                    }
-                    "supervisor" => {
-                        crate::domains::auth::domain::models::auth::UserRole::Supervisor
-                    }
+                    "technician" => crate::domains::auth::domain::models::auth::UserRole::Technician,
+                    "supervisor" => crate::domains::auth::domain::models::auth::UserRole::Supervisor,
                     "viewer" => crate::domains::auth::domain::models::auth::UserRole::Viewer,
                     _ => crate::domains::auth::domain::models::auth::UserRole::Viewer,
                 }

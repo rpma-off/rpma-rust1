@@ -619,8 +619,7 @@ mod tests {
             brand: None,
             model: None,
             specifications: None,
-            unit_of_measure:
-                crate::domains::inventory::domain::models::material::UnitOfMeasure::Roll,
+            unit_of_measure: crate::domains::inventory::domain::models::material::UnitOfMeasure::Roll,
             current_stock: 10.0,
             minimum_stock: Some(5.0),
             maximum_stock: Some(20.0),
@@ -674,8 +673,7 @@ mod tests {
             brand: None,
             model: None,
             specifications: None,
-            unit_of_measure:
-                crate::domains::inventory::domain::models::material::UnitOfMeasure::Roll,
+            unit_of_measure: crate::domains::inventory::domain::models::material::UnitOfMeasure::Roll,
             current_stock: 15.0,
             minimum_stock: Some(5.0),
             maximum_stock: Some(20.0),
@@ -729,8 +727,7 @@ mod tests {
             brand: None,
             model: None,
             specifications: None,
-            unit_of_measure:
-                crate::domains::inventory::domain::models::material::UnitOfMeasure::Roll,
+            unit_of_measure: crate::domains::inventory::domain::models::material::UnitOfMeasure::Roll,
             current_stock: 3.0,
             minimum_stock: Some(5.0),
             maximum_stock: Some(20.0),
@@ -783,8 +780,7 @@ mod tests {
                 brand: None,
                 model: None,
                 specifications: None,
-                unit_of_measure:
-                    crate::domains::inventory::domain::models::material::UnitOfMeasure::Piece,
+                unit_of_measure: crate::domains::inventory::domain::models::material::UnitOfMeasure::Piece,
                 current_stock: 10.0,
                 minimum_stock: Some(5.0),
                 maximum_stock: Some(20.0),
@@ -837,8 +833,7 @@ mod tests {
             brand: None,
             model: None,
             specifications: None,
-            unit_of_measure:
-                crate::domains::inventory::domain::models::material::UnitOfMeasure::Roll,
+            unit_of_measure: crate::domains::inventory::domain::models::material::UnitOfMeasure::Roll,
             current_stock: 10.0,
             minimum_stock: Some(5.0),
             maximum_stock: Some(20.0),
@@ -895,8 +890,7 @@ mod tests {
                 brand: None,
                 model: None,
                 specifications: None,
-                unit_of_measure:
-                    crate::domains::inventory::domain::models::material::UnitOfMeasure::Piece,
+                unit_of_measure: crate::domains::inventory::domain::models::material::UnitOfMeasure::Piece,
                 current_stock: 10.0,
                 minimum_stock: Some(5.0),
                 maximum_stock: Some(20.0),
@@ -954,8 +948,7 @@ mod tests {
             brand: None,
             model: None,
             specifications: None,
-            unit_of_measure:
-                crate::domains::inventory::domain::models::material::UnitOfMeasure::Roll,
+            unit_of_measure: crate::domains::inventory::domain::models::material::UnitOfMeasure::Roll,
             current_stock: 10.0,
             minimum_stock: Some(5.0),
             maximum_stock: Some(20.0),

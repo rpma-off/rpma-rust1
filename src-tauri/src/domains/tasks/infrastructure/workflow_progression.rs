@@ -5,12 +5,12 @@
 
 use crate::db::Database;
 use crate::db::{InterventionError, InterventionResult};
+use crate::logging::RPMARequestLogger;
 use crate::domains::interventions::domain::models::intervention::Intervention;
 use crate::domains::interventions::domain::models::step::{InterventionStep, StepStatus};
 use crate::domains::interventions::infrastructure::intervention_data::InterventionDataService;
 use crate::domains::interventions::infrastructure::intervention_types::AdvanceStepRequest;
 use crate::domains::interventions::infrastructure::intervention_types::AdvanceStepResponse;
-use crate::logging::RPMARequestLogger;
 use crate::shared::contracts::common::TimestampString;
 
 use std::sync::Arc;

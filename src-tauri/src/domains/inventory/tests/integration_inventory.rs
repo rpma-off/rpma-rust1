@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
 use crate::db::Database;
-use crate::domains::inventory::domain::models::material::{MaterialType, UnitOfMeasure};
+use crate::domains::inventory::InventoryFacade;
 use crate::domains::inventory::infrastructure::material::{
     CreateMaterialRequest, MaterialService, UpdateStockRequest,
 };
-use crate::domains::inventory::InventoryFacade;
+use crate::domains::inventory::domain::models::material::{MaterialType, UnitOfMeasure};
 
 #[tokio::test]
 async fn create_and_list_materials_round_trip() {

@@ -5,8 +5,8 @@
 
 use crate::commands::AppResult;
 use crate::domains::clients::domain::models::client::Client;
-use crate::domains::documents::domain::models::photo::Photo;
 use crate::domains::interventions::domain::models::intervention::InterventionStatus;
+use crate::domains::documents::domain::models::photo::Photo;
 use crate::domains::interventions::domain::models::step::InterventionStep;
 use crate::domains::interventions::domain::models::step::StepStatus;
 use crate::shared::contracts::common::*;

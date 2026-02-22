@@ -286,34 +286,33 @@ async fn test_inventory_end_to_end_workflow() {
     create_test_user(&service.db, user_id, "test1@example.com");
 
     // Create a material
-    let material_request =
-        crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
-            sku: "MAT-WORKFLOW".to_string(),
-            name: "Test Workflow Material".to_string(),
-            description: Some("Material for workflow testing".to_string()),
-            material_type: MaterialType::Film,
-            category: Some("PPF Films".to_string()),
-            subcategory: None,
-            category_id: Some("cat_ppf_films".to_string()),
-            brand: Some("Test Brand".to_string()),
-            model: Some("Test Model".to_string()),
-            specifications: Some(serde_json::json!({"property": "value"})),
-            unit_of_measure: UnitOfMeasure::Meter,
-            minimum_stock: Some(20.0),
-            maximum_stock: Some(200.0),
-            reorder_point: Some(50.0),
-            unit_cost: Some(75.0),
-            currency: Some("EUR".to_string()),
-            supplier_id: None,
-            supplier_name: None,
-            supplier_sku: None,
-            quality_grade: Some("A".to_string()),
-            certification: Some("ISO-9001".to_string()),
-            expiry_date: None,
-            batch_number: None,
-            storage_location: Some("Warehouse A".to_string()),
-            warehouse_id: Some("WH-01".to_string()),
-        };
+    let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
+        sku: "MAT-WORKFLOW".to_string(),
+        name: "Test Workflow Material".to_string(),
+        description: Some("Material for workflow testing".to_string()),
+        material_type: MaterialType::Film,
+        category: Some("PPF Films".to_string()),
+        subcategory: None,
+        category_id: Some("cat_ppf_films".to_string()),
+        brand: Some("Test Brand".to_string()),
+        model: Some("Test Model".to_string()),
+        specifications: Some(serde_json::json!({"property": "value"})),
+        unit_of_measure: UnitOfMeasure::Meter,
+        minimum_stock: Some(20.0),
+        maximum_stock: Some(200.0),
+        reorder_point: Some(50.0),
+        unit_cost: Some(75.0),
+        currency: Some("EUR".to_string()),
+        supplier_id: None,
+        supplier_name: None,
+        supplier_sku: None,
+        quality_grade: Some("A".to_string()),
+        certification: Some("ISO-9001".to_string()),
+        expiry_date: None,
+        batch_number: None,
+        storage_location: Some("Warehouse A".to_string()),
+        warehouse_id: Some("WH-01".to_string()),
+    };
 
     let material = service
         .create_material(material_request, Some(user_id.to_string()))
@@ -321,24 +320,23 @@ async fn test_inventory_end_to_end_workflow() {
     assert_eq!(material.current_stock, 0.0);
 
     // Stock in
-    let stock_in_request =
-        crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
-            material_id: material.id.clone(),
-            transaction_type: InventoryTransactionType::StockIn,
-            quantity: 100.0,
-            reference_number: Some("PO-WORKFLOW".to_string()),
-            reference_type: Some("purchase_order".to_string()),
-            notes: Some("Initial stock for workflow".to_string()),
-            unit_cost: Some(75.0),
-            warehouse_id: Some("WH-01".to_string()),
-            location_from: None,
-            location_to: Some("Rack A1".to_string()),
-            batch_number: Some("BATCH-WF-001".to_string()),
-            expiry_date: None,
-            quality_status: Some("approved".to_string()),
-            intervention_id: None,
-            step_id: None,
-        };
+    let stock_in_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
+        material_id: material.id.clone(),
+        transaction_type: InventoryTransactionType::StockIn,
+        quantity: 100.0,
+        reference_number: Some("PO-WORKFLOW".to_string()),
+        reference_type: Some("purchase_order".to_string()),
+        notes: Some("Initial stock for workflow".to_string()),
+        unit_cost: Some(75.0),
+        warehouse_id: Some("WH-01".to_string()),
+        location_from: None,
+        location_to: Some("Rack A1".to_string()),
+        batch_number: Some("BATCH-WF-001".to_string()),
+        expiry_date: None,
+        quality_status: Some("approved".to_string()),
+        intervention_id: None,
+        step_id: None,
+    };
 
     let stock_in_tx = service
         .create_inventory_transaction(stock_in_request, user_id.to_string())
@@ -358,19 +356,18 @@ async fn test_inventory_end_to_end_workflow() {
     create_test_intervention_step(&service.db, step_id, intervention_id, "Test Step");
 
     // Record material consumption
-    let consumption_request =
-        crate::domains::inventory::infrastructure::material::RecordConsumptionRequest {
-            intervention_id: intervention_id.to_string(),
-            material_id: material.id.clone(),
-            step_id: Some(step_id.to_string()),
-            step_number: Some(1),
-            quantity_used: 25.0,
-            waste_quantity: Some(2.0),
-            waste_reason: Some("Trim waste".to_string()),
-            batch_used: Some("BATCH-WF-001".to_string()),
-            quality_notes: Some("Good quality".to_string()),
-            recorded_by: Some(user_id.to_string()),
-        };
+    let consumption_request = crate::domains::inventory::infrastructure::material::RecordConsumptionRequest {
+        intervention_id: intervention_id.to_string(),
+        material_id: material.id.clone(),
+        step_id: Some(step_id.to_string()),
+        step_number: Some(1),
+        quantity_used: 25.0,
+        waste_quantity: Some(2.0),
+        waste_reason: Some("Trim waste".to_string()),
+        batch_used: Some("BATCH-WF-001".to_string()),
+        quality_notes: Some("Good quality".to_string()),
+        recorded_by: Some(user_id.to_string()),
+    };
 
     service
         .record_material_consumption(consumption_request)
@@ -412,58 +409,56 @@ async fn test_reorder_point_and_stock_levels() {
     create_test_user(&service.db, user_id, "test2@example.com");
 
     // Create a material with reorder point
-    let material_request =
-        crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
-            sku: "MAT-REORDER".to_string(),
-            name: "Test Reorder Material".to_string(),
-            description: None,
-            material_type: MaterialType::Film,
-            category: None,
-            subcategory: None,
-            category_id: None,
-            brand: None,
-            model: None,
-            specifications: None,
-            unit_of_measure: UnitOfMeasure::Meter,
-            minimum_stock: Some(10.0),
-            maximum_stock: Some(100.0),
-            reorder_point: Some(25.0),
-            unit_cost: Some(50.0),
-            currency: None,
-            supplier_id: None,
-            supplier_name: None,
-            supplier_sku: None,
-            quality_grade: None,
-            certification: None,
-            expiry_date: None,
-            batch_number: None,
-            storage_location: None,
-            warehouse_id: None,
-        };
+    let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
+        sku: "MAT-REORDER".to_string(),
+        name: "Test Reorder Material".to_string(),
+        description: None,
+        material_type: MaterialType::Film,
+        category: None,
+        subcategory: None,
+        category_id: None,
+        brand: None,
+        model: None,
+        specifications: None,
+        unit_of_measure: UnitOfMeasure::Meter,
+        minimum_stock: Some(10.0),
+        maximum_stock: Some(100.0),
+        reorder_point: Some(25.0),
+        unit_cost: Some(50.0),
+        currency: None,
+        supplier_id: None,
+        supplier_name: None,
+        supplier_sku: None,
+        quality_grade: None,
+        certification: None,
+        expiry_date: None,
+        batch_number: None,
+        storage_location: None,
+        warehouse_id: None,
+    };
 
     let material = service
         .create_material(material_request, Some(user_id.to_string()))
         .unwrap();
 
     // Stock in
-    let stock_in_request =
-        crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
-            material_id: material.id.clone(),
-            transaction_type: InventoryTransactionType::StockIn,
-            quantity: 30.0,
-            reference_number: Some("PO-REORDER".to_string()),
-            reference_type: Some("purchase_order".to_string()),
-            notes: None,
-            unit_cost: Some(50.0),
-            warehouse_id: None,
-            location_from: None,
-            location_to: None,
-            batch_number: None,
-            expiry_date: None,
-            quality_status: None,
-            intervention_id: None,
-            step_id: None,
-        };
+    let stock_in_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
+        material_id: material.id.clone(),
+        transaction_type: InventoryTransactionType::StockIn,
+        quantity: 30.0,
+        reference_number: Some("PO-REORDER".to_string()),
+        reference_type: Some("purchase_order".to_string()),
+        notes: None,
+        unit_cost: Some(50.0),
+        warehouse_id: None,
+        location_from: None,
+        location_to: None,
+        batch_number: None,
+        expiry_date: None,
+        quality_status: None,
+        intervention_id: None,
+        step_id: None,
+    };
 
     service
         .create_inventory_transaction(stock_in_request, user_id.to_string())
@@ -474,19 +469,18 @@ async fn test_reorder_point_and_stock_levels() {
     assert!(!needs_reorder, "Should not need reorder yet");
 
     // Consume material down to reorder point
-    let consumption_request =
-        crate::domains::inventory::infrastructure::material::RecordConsumptionRequest {
-            intervention_id: "int_reorder_1".to_string(),
-            material_id: material.id.clone(),
-            step_id: None,
-            step_number: None,
-            quantity_used: 5.5, // 30 - 5.5 = 24.5, below reorder point
-            waste_quantity: None,
-            waste_reason: None,
-            batch_used: None,
-            quality_notes: None,
-            recorded_by: Some(user_id.to_string()),
-        };
+    let consumption_request = crate::domains::inventory::infrastructure::material::RecordConsumptionRequest {
+        intervention_id: "int_reorder_1".to_string(),
+        material_id: material.id.clone(),
+        step_id: None,
+        step_number: None,
+        quantity_used: 5.5, // 30 - 5.5 = 24.5, below reorder point
+        waste_quantity: None,
+        waste_reason: None,
+        batch_used: None,
+        quality_notes: None,
+        recorded_by: Some(user_id.to_string()),
+    };
 
     service
         .record_material_consumption(consumption_request)
@@ -516,34 +510,33 @@ async fn test_batch_number_tracking() {
     create_test_user(&service.db, user_id, "test3@example.com");
 
     // Create a material
-    let material_request =
-        crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
-            sku: "MAT-BATCH".to_string(),
-            name: "Test Batch Material".to_string(),
-            description: None,
-            material_type: MaterialType::Film,
-            category: None,
-            subcategory: None,
-            category_id: None,
-            brand: None,
-            model: None,
-            specifications: None,
-            unit_of_measure: UnitOfMeasure::Meter,
-            minimum_stock: None,
-            maximum_stock: None,
-            reorder_point: None,
-            unit_cost: None,
-            currency: None,
-            supplier_id: None,
-            supplier_name: None,
-            supplier_sku: None,
-            quality_grade: None,
-            certification: None,
-            expiry_date: None,
-            batch_number: None,
-            storage_location: None,
-            warehouse_id: None,
-        };
+    let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
+        sku: "MAT-BATCH".to_string(),
+        name: "Test Batch Material".to_string(),
+        description: None,
+        material_type: MaterialType::Film,
+        category: None,
+        subcategory: None,
+        category_id: None,
+        brand: None,
+        model: None,
+        specifications: None,
+        unit_of_measure: UnitOfMeasure::Meter,
+        minimum_stock: None,
+        maximum_stock: None,
+        reorder_point: None,
+        unit_cost: None,
+        currency: None,
+        supplier_id: None,
+        supplier_name: None,
+        supplier_sku: None,
+        quality_grade: None,
+        certification: None,
+        expiry_date: None,
+        batch_number: None,
+        storage_location: None,
+        warehouse_id: None,
+    };
 
     let material = service
         .create_material(material_request, Some(user_id.to_string()))
@@ -551,24 +544,23 @@ async fn test_batch_number_tracking() {
 
     // Stock in with batch number
     let batch_number = "BATCH-2023-001";
-    let stock_in_request =
-        crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
-            material_id: material.id.clone(),
-            transaction_type: InventoryTransactionType::StockIn,
-            quantity: 50.0,
-            reference_number: Some("PO-BATCH".to_string()),
-            reference_type: Some("purchase_order".to_string()),
-            notes: None,
-            unit_cost: Some(60.0),
-            warehouse_id: None,
-            location_from: None,
-            location_to: None,
-            batch_number: Some(batch_number.to_string()),
-            expiry_date: Some((Utc::now() + chrono::Duration::days(365)).timestamp_millis()),
-            quality_status: Some("approved".to_string()),
-            intervention_id: None,
-            step_id: None,
-        };
+    let stock_in_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
+        material_id: material.id.clone(),
+        transaction_type: InventoryTransactionType::StockIn,
+        quantity: 50.0,
+        reference_number: Some("PO-BATCH".to_string()),
+        reference_type: Some("purchase_order".to_string()),
+        notes: None,
+        unit_cost: Some(60.0),
+        warehouse_id: None,
+        location_from: None,
+        location_to: None,
+        batch_number: Some(batch_number.to_string()),
+        expiry_date: Some((Utc::now() + chrono::Duration::days(365)).timestamp_millis()),
+        quality_status: Some("approved".to_string()),
+        intervention_id: None,
+        step_id: None,
+    };
 
     service
         .create_inventory_transaction(stock_in_request, user_id.to_string())
@@ -586,19 +578,18 @@ async fn test_batch_number_tracking() {
     assert_eq!(transaction.quality_status, Some("approved".to_string()));
 
     // Consume from this batch
-    let consumption_request =
-        crate::domains::inventory::infrastructure::material::RecordConsumptionRequest {
-            intervention_id: "int_batch_1".to_string(),
-            material_id: material.id.clone(),
-            step_id: None,
-            step_number: None,
-            quantity_used: 10.0,
-            waste_quantity: None,
-            waste_reason: None,
-            batch_used: Some(batch_number.to_string()),
-            quality_notes: Some("Batch quality is good".to_string()),
-            recorded_by: Some(user_id.to_string()),
-        };
+    let consumption_request = crate::domains::inventory::infrastructure::material::RecordConsumptionRequest {
+        intervention_id: "int_batch_1".to_string(),
+        material_id: material.id.clone(),
+        step_id: None,
+        step_number: None,
+        quantity_used: 10.0,
+        waste_quantity: None,
+        waste_reason: None,
+        batch_used: Some(batch_number.to_string()),
+        quality_notes: Some("Batch quality is good".to_string()),
+        recorded_by: Some(user_id.to_string()),
+    };
 
     service
         .record_material_consumption(consumption_request)
@@ -625,82 +616,79 @@ async fn test_material_location_tracking() {
     create_test_user(&service.db, user_id, "test4@example.com");
 
     // Create a material
-    let material_request =
-        crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
-            sku: "MAT-LOCATION".to_string(),
-            name: "Test Location Material".to_string(),
-            description: None,
-            material_type: MaterialType::Tool,
-            category: None,
-            subcategory: None,
-            category_id: Some("cat_tools".to_string()),
-            brand: None,
-            model: None,
-            specifications: None,
-            unit_of_measure: UnitOfMeasure::Piece,
-            minimum_stock: None,
-            maximum_stock: None,
-            reorder_point: None,
-            unit_cost: Some(150.0),
-            currency: None,
-            supplier_id: None,
-            supplier_name: None,
-            supplier_sku: None,
-            quality_grade: None,
-            certification: None,
-            expiry_date: None,
-            batch_number: None,
-            storage_location: None,
-            warehouse_id: None,
-        };
+    let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
+        sku: "MAT-LOCATION".to_string(),
+        name: "Test Location Material".to_string(),
+        description: None,
+        material_type: MaterialType::Tool,
+        category: None,
+        subcategory: None,
+        category_id: Some("cat_tools".to_string()),
+        brand: None,
+        model: None,
+        specifications: None,
+        unit_of_measure: UnitOfMeasure::Piece,
+        minimum_stock: None,
+        maximum_stock: None,
+        reorder_point: None,
+        unit_cost: Some(150.0),
+        currency: None,
+        supplier_id: None,
+        supplier_name: None,
+        supplier_sku: None,
+        quality_grade: None,
+        certification: None,
+        expiry_date: None,
+        batch_number: None,
+        storage_location: None,
+        warehouse_id: None,
+    };
 
     let material = service
         .create_material(material_request, Some(user_id.to_string()))
         .unwrap();
 
     // Stock in to warehouse A, location 1
-    let stock_in_request =
-        crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
-            material_id: material.id.clone(),
-            transaction_type: InventoryTransactionType::StockIn,
-            quantity: 5.0,
-            reference_number: Some("PO-LOC-A".to_string()),
-            reference_type: Some("purchase_order".to_string()),
-            notes: None,
-            unit_cost: Some(150.0),
-            warehouse_id: Some("WH-A".to_string()),
-            location_from: None,
-            location_to: Some("Location A1".to_string()),
-            batch_number: None,
-            expiry_date: None,
-            quality_status: None,
-            intervention_id: None,
-            step_id: None,
-        };
+    let stock_in_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
+        material_id: material.id.clone(),
+        transaction_type: InventoryTransactionType::StockIn,
+        quantity: 5.0,
+        reference_number: Some("PO-LOC-A".to_string()),
+        reference_type: Some("purchase_order".to_string()),
+        notes: None,
+        unit_cost: Some(150.0),
+        warehouse_id: Some("WH-A".to_string()),
+        location_from: None,
+        location_to: Some("Location A1".to_string()),
+        batch_number: None,
+        expiry_date: None,
+        quality_status: None,
+        intervention_id: None,
+        step_id: None,
+    };
 
     service
         .create_inventory_transaction(stock_in_request, user_id.to_string())
         .unwrap();
 
     // Transfer to warehouse B, location 2
-    let transfer_request =
-        crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
-            material_id: material.id.clone(),
-            transaction_type: InventoryTransactionType::Transfer,
-            quantity: 2.0,
-            reference_number: Some("TRF-A-B".to_string()),
-            reference_type: Some("location_transfer".to_string()),
-            notes: Some("Transfer to mobile unit".to_string()),
-            unit_cost: Some(150.0),
-            warehouse_id: Some("WH-B".to_string()),
-            location_from: Some("Location A1".to_string()),
-            location_to: Some("Location B2".to_string()),
-            batch_number: None,
-            expiry_date: None,
-            quality_status: None,
-            intervention_id: None,
-            step_id: None,
-        };
+    let transfer_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
+        material_id: material.id.clone(),
+        transaction_type: InventoryTransactionType::Transfer,
+        quantity: 2.0,
+        reference_number: Some("TRF-A-B".to_string()),
+        reference_type: Some("location_transfer".to_string()),
+        notes: Some("Transfer to mobile unit".to_string()),
+        unit_cost: Some(150.0),
+        warehouse_id: Some("WH-B".to_string()),
+        location_from: Some("Location A1".to_string()),
+        location_to: Some("Location B2".to_string()),
+        batch_number: None,
+        expiry_date: None,
+        quality_status: None,
+        intervention_id: None,
+        step_id: None,
+    };
 
     service
         .create_inventory_transaction(transfer_request, user_id.to_string())
@@ -748,34 +736,33 @@ async fn test_inventory_cost_tracking() {
     create_test_user(&service.db, user_id, "test5@example.com");
 
     // Create a material
-    let material_request =
-        crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
-            sku: "MAT-COST".to_string(),
-            name: "Test Cost Material".to_string(),
-            description: None,
-            material_type: MaterialType::Liquid,
-            category: None,
-            subcategory: None,
-            category_id: Some("cat_cleaning".to_string()),
-            brand: None,
-            model: None,
-            specifications: None,
-            unit_of_measure: UnitOfMeasure::Liter,
-            minimum_stock: None,
-            maximum_stock: None,
-            reorder_point: None,
-            unit_cost: None,
-            currency: Some("EUR".to_string()),
-            supplier_id: None,
-            supplier_name: None,
-            supplier_sku: None,
-            quality_grade: None,
-            certification: None,
-            expiry_date: None,
-            batch_number: None,
-            storage_location: None,
-            warehouse_id: None,
-        };
+    let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
+        sku: "MAT-COST".to_string(),
+        name: "Test Cost Material".to_string(),
+        description: None,
+        material_type: MaterialType::Liquid,
+        category: None,
+        subcategory: None,
+        category_id: Some("cat_cleaning".to_string()),
+        brand: None,
+        model: None,
+        specifications: None,
+        unit_of_measure: UnitOfMeasure::Liter,
+        minimum_stock: None,
+        maximum_stock: None,
+        reorder_point: None,
+        unit_cost: None,
+        currency: Some("EUR".to_string()),
+        supplier_id: None,
+        supplier_name: None,
+        supplier_sku: None,
+        quality_grade: None,
+        certification: None,
+        expiry_date: None,
+        batch_number: None,
+        storage_location: None,
+        warehouse_id: None,
+    };
 
     let material = service
         .create_material(material_request, Some(user_id.to_string()))
@@ -783,24 +770,23 @@ async fn test_inventory_cost_tracking() {
 
     // Stock in with unit cost
     let unit_cost = 25.50;
-    let stock_in_request =
-        crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
-            material_id: material.id.clone(),
-            transaction_type: InventoryTransactionType::StockIn,
-            quantity: 20.0,
-            reference_number: Some("PO-COST".to_string()),
-            reference_type: Some("purchase_order".to_string()),
-            notes: None,
-            unit_cost: Some(unit_cost),
-            warehouse_id: None,
-            location_from: None,
-            location_to: None,
-            batch_number: None,
-            expiry_date: None,
-            quality_status: None,
-            intervention_id: None,
-            step_id: None,
-        };
+    let stock_in_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
+        material_id: material.id.clone(),
+        transaction_type: InventoryTransactionType::StockIn,
+        quantity: 20.0,
+        reference_number: Some("PO-COST".to_string()),
+        reference_type: Some("purchase_order".to_string()),
+        notes: None,
+        unit_cost: Some(unit_cost),
+        warehouse_id: None,
+        location_from: None,
+        location_to: None,
+        batch_number: None,
+        expiry_date: None,
+        quality_status: None,
+        intervention_id: None,
+        step_id: None,
+    };
 
     service
         .create_inventory_transaction(stock_in_request, user_id.to_string())
@@ -820,19 +806,18 @@ async fn test_inventory_cost_tracking() {
     assert_eq!(transaction.total_cost, Some(expected_total_cost));
 
     // Consume material
-    let consumption_request =
-        crate::domains::inventory::infrastructure::material::RecordConsumptionRequest {
-            intervention_id: "int_cost_1".to_string(),
-            material_id: material.id.clone(),
-            step_id: None,
-            step_number: None,
-            quantity_used: 5.0,
-            waste_quantity: Some(0.5),
-            waste_reason: Some("Spillage".to_string()),
-            batch_used: None,
-            quality_notes: None,
-            recorded_by: Some(user_id.to_string()),
-        };
+    let consumption_request = crate::domains::inventory::infrastructure::material::RecordConsumptionRequest {
+        intervention_id: "int_cost_1".to_string(),
+        material_id: material.id.clone(),
+        step_id: None,
+        step_number: None,
+        quantity_used: 5.0,
+        waste_quantity: Some(0.5),
+        waste_reason: Some("Spillage".to_string()),
+        batch_used: None,
+        quality_notes: None,
+        recorded_by: Some(user_id.to_string()),
+    };
 
     service
         .record_material_consumption(consumption_request)
@@ -864,34 +849,33 @@ async fn test_material_expiry_tracking() {
     create_test_user(&service.db, user_id, "test6@example.com");
 
     // Create a material
-    let material_request =
-        crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
-            sku: "MAT-EXPIRY".to_string(),
-            name: "Test Expiry Material".to_string(),
-            description: None,
-            material_type: MaterialType::Liquid,
-            category: None,
-            subcategory: None,
-            category_id: Some("cat_cleaning".to_string()),
-            brand: None,
-            model: None,
-            specifications: None,
-            unit_of_measure: UnitOfMeasure::Liter,
-            minimum_stock: None,
-            maximum_stock: None,
-            reorder_point: None,
-            unit_cost: None,
-            currency: None,
-            supplier_id: None,
-            supplier_name: None,
-            supplier_sku: None,
-            quality_grade: None,
-            certification: None,
-            expiry_date: None,
-            batch_number: None,
-            storage_location: None,
-            warehouse_id: None,
-        };
+    let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
+        sku: "MAT-EXPIRY".to_string(),
+        name: "Test Expiry Material".to_string(),
+        description: None,
+        material_type: MaterialType::Liquid,
+        category: None,
+        subcategory: None,
+        category_id: Some("cat_cleaning".to_string()),
+        brand: None,
+        model: None,
+        specifications: None,
+        unit_of_measure: UnitOfMeasure::Liter,
+        minimum_stock: None,
+        maximum_stock: None,
+        reorder_point: None,
+        unit_cost: None,
+        currency: None,
+        supplier_id: None,
+        supplier_name: None,
+        supplier_sku: None,
+        quality_grade: None,
+        certification: None,
+        expiry_date: None,
+        batch_number: None,
+        storage_location: None,
+        warehouse_id: None,
+    };
 
     let material = service
         .create_material(material_request, Some(user_id.to_string()))
@@ -899,24 +883,23 @@ async fn test_material_expiry_tracking() {
 
     // Stock in with expiry date
     let expiry_date = (Utc::now() + chrono::Duration::days(30)).timestamp_millis();
-    let stock_in_request =
-        crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
-            material_id: material.id.clone(),
-            transaction_type: InventoryTransactionType::StockIn,
-            quantity: 10.0,
-            reference_number: Some("PO-EXPIRY".to_string()),
-            reference_type: Some("purchase_order".to_string()),
-            notes: Some("Material with expiry date".to_string()),
-            unit_cost: Some(15.0),
-            warehouse_id: None,
-            location_from: None,
-            location_to: None,
-            batch_number: Some("BATCH-EXPIRY".to_string()),
-            expiry_date: Some(expiry_date),
-            quality_status: Some("approved".to_string()),
-            intervention_id: None,
-            step_id: None,
-        };
+    let stock_in_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
+        material_id: material.id.clone(),
+        transaction_type: InventoryTransactionType::StockIn,
+        quantity: 10.0,
+        reference_number: Some("PO-EXPIRY".to_string()),
+        reference_type: Some("purchase_order".to_string()),
+        notes: Some("Material with expiry date".to_string()),
+        unit_cost: Some(15.0),
+        warehouse_id: None,
+        location_from: None,
+        location_to: None,
+        batch_number: Some("BATCH-EXPIRY".to_string()),
+        expiry_date: Some(expiry_date),
+        quality_status: Some("approved".to_string()),
+        intervention_id: None,
+        step_id: None,
+    };
 
     service
         .create_inventory_transaction(stock_in_request, user_id.to_string())
@@ -953,58 +936,56 @@ async fn test_material_quality_tracking() {
     create_test_user(&service.db, user_id, "test7@example.com");
 
     // Create a material
-    let material_request =
-        crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
-            sku: "MAT-QUALITY".to_string(),
-            name: "Test Quality Material".to_string(),
-            description: None,
-            material_type: MaterialType::Film,
-            category: None,
-            subcategory: None,
-            category_id: Some("cat_ppf_films".to_string()),
-            brand: None,
-            model: None,
-            specifications: None,
-            unit_of_measure: UnitOfMeasure::Meter,
-            minimum_stock: None,
-            maximum_stock: None,
-            reorder_point: None,
-            unit_cost: Some(80.0),
-            currency: None,
-            supplier_id: None,
-            supplier_name: None,
-            supplier_sku: None,
-            quality_grade: Some("A".to_string()),
-            certification: Some("ISO-9001".to_string()),
-            expiry_date: None,
-            batch_number: None,
-            storage_location: None,
-            warehouse_id: None,
-        };
+    let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
+        sku: "MAT-QUALITY".to_string(),
+        name: "Test Quality Material".to_string(),
+        description: None,
+        material_type: MaterialType::Film,
+        category: None,
+        subcategory: None,
+        category_id: Some("cat_ppf_films".to_string()),
+        brand: None,
+        model: None,
+        specifications: None,
+        unit_of_measure: UnitOfMeasure::Meter,
+        minimum_stock: None,
+        maximum_stock: None,
+        reorder_point: None,
+        unit_cost: Some(80.0),
+        currency: None,
+        supplier_id: None,
+        supplier_name: None,
+        supplier_sku: None,
+        quality_grade: Some("A".to_string()),
+        certification: Some("ISO-9001".to_string()),
+        expiry_date: None,
+        batch_number: None,
+        storage_location: None,
+        warehouse_id: None,
+    };
 
     let material = service
         .create_material(material_request, Some(user_id.to_string()))
         .unwrap();
 
     // Stock in with quality grade
-    let stock_in_request =
-        crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
-            material_id: material.id.clone(),
-            transaction_type: InventoryTransactionType::StockIn,
-            quantity: 25.0,
-            reference_number: Some("PO-QUALITY".to_string()),
-            reference_type: Some("purchase_order".to_string()),
-            notes: Some("High quality batch".to_string()),
-            unit_cost: Some(80.0),
-            warehouse_id: None,
-            location_from: None,
-            location_to: None,
-            batch_number: Some("BATCH-QUALITY-A".to_string()),
-            expiry_date: None,
-            quality_status: Some("premium".to_string()),
-            intervention_id: None,
-            step_id: None,
-        };
+    let stock_in_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
+        material_id: material.id.clone(),
+        transaction_type: InventoryTransactionType::StockIn,
+        quantity: 25.0,
+        reference_number: Some("PO-QUALITY".to_string()),
+        reference_type: Some("purchase_order".to_string()),
+        notes: Some("High quality batch".to_string()),
+        unit_cost: Some(80.0),
+        warehouse_id: None,
+        location_from: None,
+        location_to: None,
+        batch_number: Some("BATCH-QUALITY-A".to_string()),
+        expiry_date: None,
+        quality_status: Some("premium".to_string()),
+        intervention_id: None,
+        step_id: None,
+    };
 
     service
         .create_inventory_transaction(stock_in_request, user_id.to_string())
@@ -1019,24 +1000,23 @@ async fn test_material_quality_tracking() {
     assert_eq!(quality_stats.rejected_batches, 0);
 
     // Stock in another batch with lower quality
-    let stock_in_request_2 =
-        crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
-            material_id: material.id.clone(),
-            transaction_type: InventoryTransactionType::StockIn,
-            quantity: 25.0,
-            reference_number: Some("PO-QUALITY-2".to_string()),
-            reference_type: Some("purchase_order".to_string()),
-            notes: Some("Standard quality batch".to_string()),
-            unit_cost: Some(70.0),
-            warehouse_id: None,
-            location_from: None,
-            location_to: None,
-            batch_number: Some("BATCH-QUALITY-B".to_string()),
-            expiry_date: None,
-            quality_status: Some("standard".to_string()),
-            intervention_id: None,
-            step_id: None,
-        };
+    let stock_in_request_2 = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
+        material_id: material.id.clone(),
+        transaction_type: InventoryTransactionType::StockIn,
+        quantity: 25.0,
+        reference_number: Some("PO-QUALITY-2".to_string()),
+        reference_type: Some("purchase_order".to_string()),
+        notes: Some("Standard quality batch".to_string()),
+        unit_cost: Some(70.0),
+        warehouse_id: None,
+        location_from: None,
+        location_to: None,
+        batch_number: Some("BATCH-QUALITY-B".to_string()),
+        expiry_date: None,
+        quality_status: Some("standard".to_string()),
+        intervention_id: None,
+        step_id: None,
+    };
 
     service
         .create_inventory_transaction(stock_in_request_2, user_id.to_string())
@@ -1067,34 +1047,33 @@ async fn test_inventory_performance_with_large_dataset() {
     let start = std::time::Instant::now();
 
     for i in 1..=material_count {
-        let material_request =
-            crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
-                sku: format!("MAT-PERF-{:03}", i),
-                name: format!("Performance Test Material {}", i),
-                description: None,
-                material_type: MaterialType::Film,
-                category: None,
-                subcategory: None,
-                category_id: Some("cat_ppf_films".to_string()),
-                brand: None,
-                model: None,
-                specifications: None,
-                unit_of_measure: UnitOfMeasure::Meter,
-                minimum_stock: Some(10.0),
-                maximum_stock: Some(100.0),
-                reorder_point: Some(25.0),
-                unit_cost: Some(50.0),
-                currency: None,
-                supplier_id: None,
-                supplier_name: None,
-                supplier_sku: None,
-                quality_grade: None,
-                certification: None,
-                expiry_date: None,
-                batch_number: None,
-                storage_location: None,
-                warehouse_id: None,
-            };
+        let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
+            sku: format!("MAT-PERF-{:03}", i),
+            name: format!("Performance Test Material {}", i),
+            description: None,
+            material_type: MaterialType::Film,
+            category: None,
+            subcategory: None,
+            category_id: Some("cat_ppf_films".to_string()),
+            brand: None,
+            model: None,
+            specifications: None,
+            unit_of_measure: UnitOfMeasure::Meter,
+            minimum_stock: Some(10.0),
+            maximum_stock: Some(100.0),
+            reorder_point: Some(25.0),
+            unit_cost: Some(50.0),
+            currency: None,
+            supplier_id: None,
+            supplier_name: None,
+            supplier_sku: None,
+            quality_grade: None,
+            certification: None,
+            expiry_date: None,
+            batch_number: None,
+            storage_location: None,
+            warehouse_id: None,
+        };
 
         let material = service
             .create_material(material_request, Some(user_id.to_string()))
@@ -1190,34 +1169,33 @@ async fn test_inventory_concurrent_access() {
     create_test_user(&service.db, user_id, "test_concurrent@example.com");
 
     // Create a material
-    let material_request =
-        crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
-            sku: "MAT-CONCURRENT".to_string(),
-            name: "Concurrent Test Material".to_string(),
-            description: None,
-            material_type: MaterialType::Film,
-            category: None,
-            subcategory: None,
-            category_id: None,
-            brand: None,
-            model: None,
-            specifications: None,
-            unit_of_measure: UnitOfMeasure::Meter,
-            minimum_stock: None,
-            maximum_stock: None,
-            reorder_point: None,
-            unit_cost: None,
-            currency: None,
-            supplier_id: None,
-            supplier_name: None,
-            supplier_sku: None,
-            quality_grade: None,
-            certification: None,
-            expiry_date: None,
-            batch_number: None,
-            storage_location: None,
-            warehouse_id: None,
-        };
+    let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
+        sku: "MAT-CONCURRENT".to_string(),
+        name: "Concurrent Test Material".to_string(),
+        description: None,
+        material_type: MaterialType::Film,
+        category: None,
+        subcategory: None,
+        category_id: None,
+        brand: None,
+        model: None,
+        specifications: None,
+        unit_of_measure: UnitOfMeasure::Meter,
+        minimum_stock: None,
+        maximum_stock: None,
+        reorder_point: None,
+        unit_cost: None,
+        currency: None,
+        supplier_id: None,
+        supplier_name: None,
+        supplier_sku: None,
+        quality_grade: None,
+        certification: None,
+        expiry_date: None,
+        batch_number: None,
+        storage_location: None,
+        warehouse_id: None,
+    };
 
     let material = service
         .create_material(material_request, Some(user_id.to_string()))

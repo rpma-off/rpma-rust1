@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use crate::db::Database;
-use crate::domains::inventory::infrastructure::material::{MaterialService, UpdateStockRequest};
 use crate::domains::inventory::InventoryFacade;
+use crate::domains::inventory::infrastructure::material::{MaterialService, UpdateStockRequest};
 
 #[tokio::test]
 async fn update_stock_with_nonexistent_material_returns_error() {

@@ -3,8 +3,8 @@
 //! This module uses Proptest to verify task validation properties
 //! across a wide range of inputs to ensure robust validation logic.
 
-use crate::domains::tasks::domain::models::task::CreateTaskRequest;
 use crate::domains::tasks::infrastructure::task_validation::TaskValidationService;
+use crate::domains::tasks::domain::models::task::CreateTaskRequest;
 use crate::test_utils::TestDatabase;
 use crate::{test_client, test_db, test_intervention, test_task};
 use proptest::prelude::*;

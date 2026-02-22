@@ -422,10 +422,7 @@ impl OperationalIntelligenceService {
         &self,
         technician_id: &str,
         date_range: &DateRange,
-    ) -> Result<
-        Vec<crate::domains::reports::domain::models::reports::WorkloadPeriod>,
-        rusqlite::Error,
-    > {
+    ) -> Result<Vec<crate::domains::reports::domain::models::reports::WorkloadPeriod>, rusqlite::Error> {
         let conn = self
             .db
             .get_connection()
@@ -460,13 +457,11 @@ impl OperationalIntelligenceService {
                 date_range.end.timestamp()
             ],
             |row| {
-                Ok(
-                    crate::domains::reports::domain::models::reports::WorkloadPeriod {
-                        period: row.get(0)?,
-                        interventions_count: row.get(1)?,
-                        average_duration_hours: row.get(2)?,
-                    },
-                )
+                Ok(crate::domains::reports::domain::models::reports::WorkloadPeriod {
+                    period: row.get(0)?,
+                    interventions_count: row.get(1)?,
+                    average_duration_hours: row.get(2)?,
+                })
             },
         )?;
 

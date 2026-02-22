@@ -1,8 +1,8 @@
+use std::sync::Arc;
 use crate::db::Database;
 use crate::domains::clients::infrastructure::client::ClientService;
 use crate::domains::clients::ClientsFacade;
 use crate::shared::ipc::errors::AppError;
-use std::sync::Arc;
 
 #[tokio::test]
 async fn validate_client_id_rejects_empty_string() {

@@ -4,9 +4,9 @@
 
 use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
+use crate::domains::tasks::ipc::task_types::TaskFilter;
 use crate::domains::tasks::domain::models::task::{Task, TaskListResponse};
 use crate::domains::tasks::infrastructure::task_statistics::TaskStatistics;
-use crate::domains::tasks::ipc::task_types::TaskFilter;
 use serde::Deserialize;
 use tracing::{debug, info};
 
@@ -103,9 +103,7 @@ pub async fn get_tasks_with_clients(
         limit: Some(limit as i32),
         status: filter.status.as_ref().and_then(|s| match s.as_str() {
             "pending" => Some(crate::domains::tasks::domain::models::task::TaskStatus::Pending),
-            "in_progress" => {
-                Some(crate::domains::tasks::domain::models::task::TaskStatus::InProgress)
-            }
+            "in_progress" => Some(crate::domains::tasks::domain::models::task::TaskStatus::InProgress),
             "completed" => Some(crate::domains::tasks::domain::models::task::TaskStatus::Completed),
             "cancelled" => Some(crate::domains::tasks::domain::models::task::TaskStatus::Cancelled),
             _ => None,
@@ -168,8 +166,7 @@ pub async fn get_user_assigned_tasks(
     if target_user_id != session.user_id
         && !matches!(
             session.role,
-            crate::shared::contracts::auth::UserRole::Admin
-                | crate::shared::contracts::auth::UserRole::Supervisor
+            crate::shared::contracts::auth::UserRole::Admin | crate::shared::contracts::auth::UserRole::Supervisor
         )
     {
         return Err(AppError::Authorization(

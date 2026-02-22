@@ -4,21 +4,19 @@
 //! ensuring proper stock updates, consumption records, and rollback behavior.
 
 use crate::commands::AppResult;
+use crate::domains::tasks::infrastructure::task_crud::TaskCrudService;
+use crate::domains::inventory::domain::models::material::InventoryTransactionType;
+use crate::domains::inventory::domain::models::material::{Material, MaterialConsumption, MaterialType, UnitOfMeasure};
+use crate::domains::tasks::domain::models::task::{CreateTaskRequest, TaskPriority, TaskStatus};
 use crate::domains::audit::infrastructure::audit_service::AuditService;
 use crate::domains::interventions::infrastructure::intervention_types::{
     AdvanceStepRequest, FinalizeInterventionRequest, StartInterventionRequest,
 };
 use crate::domains::interventions::infrastructure::intervention_workflow::InterventionWorkflowService;
-use crate::domains::inventory::domain::models::material::InventoryTransactionType;
-use crate::domains::inventory::domain::models::material::{
-    Material, MaterialConsumption, MaterialType, UnitOfMeasure,
-};
 use crate::domains::inventory::infrastructure::material::{
     CreateInventoryTransactionRequest, CreateMaterialRequest, MaterialService,
     RecordConsumptionRequest, UpdateStockRequest,
 };
-use crate::domains::tasks::domain::models::task::{CreateTaskRequest, TaskPriority, TaskStatus};
-use crate::domains::tasks::infrastructure::task_crud::TaskCrudService;
 use crate::test_utils::{TestDataFactory, TestDatabase};
 use crate::{test_client, test_db, test_intervention, test_task};
 use chrono::Utc;
@@ -113,10 +111,7 @@ impl TaskMaterialTestFixture {
     pub fn create_test_task_with_materials(
         &self,
         title: &str,
-    ) -> AppResult<(
-        crate::domains::tasks::domain::models::task::Task,
-        Vec<Material>,
-    )> {
+    ) -> AppResult<(crate::domains::tasks::domain::models::task::Task, Vec<Material>)> {
         // Create materials for the task
         let hood_film =
             self.create_test_material_with_stock("HOOD-FILM-001", "Hood PPF Film", 20.0)?;

@@ -1,8 +1,6 @@
 //! Request contracts for the Notifications bounded context.
 
-use crate::domains::notifications::domain::models::notification::{
-    NotificationType, TemplateVariables,
-};
+use crate::domains::notifications::domain::models::notification::{NotificationType, TemplateVariables};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 

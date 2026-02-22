@@ -1,7 +1,7 @@
+use std::sync::Arc;
 use crate::db::Database;
 use crate::domains::calendar::infrastructure::calendar::CalendarService;
 use crate::domains::calendar::CalendarFacade;
-use std::sync::Arc;
 
 #[tokio::test]
 async fn calendar_facade_is_ready() {

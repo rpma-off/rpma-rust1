@@ -8,9 +8,7 @@
 
 use crate::db::Database;
 use crate::db::{InterventionError, InterventionResult};
-use crate::domains::interventions::domain::models::intervention::{
-    Intervention, InterventionStatus,
-};
+use crate::domains::interventions::domain::models::intervention::{Intervention, InterventionStatus};
 use crate::domains::interventions::domain::models::step::{InterventionStep, StepStatus};
 use crate::domains::interventions::infrastructure::intervention_types::StartInterventionRequest;
 
@@ -124,8 +122,7 @@ impl InterventionValidationService {
 
         // Permission check: Admin/Supervisor can assign any technician, Technician can only assign themselves
         match user_role {
-            crate::shared::contracts::auth::UserRole::Admin
-            | crate::shared::contracts::auth::UserRole::Supervisor => {
+            crate::shared::contracts::auth::UserRole::Admin | crate::shared::contracts::auth::UserRole::Supervisor => {
                 // Can assign any technician
             }
             crate::shared::contracts::auth::UserRole::Technician => {

@@ -5,20 +5,20 @@
 //! consuming materials during interventions, and updating client statistics.
 
 use crate::commands::AppResult;
-use crate::domains::audit::infrastructure::audit_service::{AuditEvent, AuditService};
-use crate::domains::clients::domain::models::client::{Client, CustomerType};
 use crate::domains::clients::infrastructure::client::ClientService;
 use crate::domains::clients::infrastructure::client_statistics::ClientStatisticsService;
+use crate::domains::tasks::infrastructure::task_crud::TaskCrudService;
+use crate::domains::clients::domain::models::client::{Client, CustomerType};
+use crate::domains::inventory::domain::models::material::{Material, MaterialType, UnitOfMeasure};
+use crate::domains::tasks::domain::models::task::TaskStatus;
+use crate::domains::audit::infrastructure::audit_service::{AuditEvent, AuditService};
 use crate::domains::interventions::infrastructure::intervention_types::{
     AdvanceStepRequest, FinalizeInterventionRequest, StartInterventionRequest,
 };
 use crate::domains::interventions::infrastructure::intervention_workflow::InterventionWorkflowService;
-use crate::domains::inventory::domain::models::material::{Material, MaterialType, UnitOfMeasure};
 use crate::domains::inventory::infrastructure::material::{
     CreateMaterialRequest, MaterialService, RecordConsumptionRequest, UpdateStockRequest,
 };
-use crate::domains::tasks::domain::models::task::TaskStatus;
-use crate::domains::tasks::infrastructure::task_crud::TaskCrudService;
 use crate::test_utils::TestDatabase;
 use crate::{test_client, test_task};
 use chrono::Utc;

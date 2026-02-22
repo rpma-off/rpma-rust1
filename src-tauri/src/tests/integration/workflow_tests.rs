@@ -4,14 +4,14 @@
 //! between tasks and interventions to ensure proper synchronization.
 
 use crate::commands::AppResult;
-use crate::domains::audit::infrastructure::audit_service::AuditService;
+use crate::domains::tasks::infrastructure::task_crud::TaskCrudService;
 use crate::domains::interventions::domain::models::intervention::InterventionStatus;
 use crate::domains::interventions::domain::models::step::{StepStatus, StepType};
+use crate::domains::audit::infrastructure::audit_service::AuditService;
 use crate::domains::interventions::infrastructure::intervention_types::{
     AdvanceStepRequest, FinalizeInterventionRequest, StartInterventionRequest,
 };
 use crate::domains::interventions::infrastructure::intervention_workflow::InterventionWorkflowService;
-use crate::domains::tasks::infrastructure::task_crud::TaskCrudService;
 use crate::test_utils::{TestDataFactory, TestDatabase};
 use crate::{test_client, test_db, test_intervention, test_task};
 use chrono::Utc;

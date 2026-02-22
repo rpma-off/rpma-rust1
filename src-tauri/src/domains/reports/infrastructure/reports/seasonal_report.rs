@@ -209,21 +209,19 @@ pub async fn generate_seasonal_report(year: i32, db: &Database) -> AppResult<Sea
     // Completion predictions (simplified)
     let mut completion_predictions = Vec::new();
     for pattern in &seasonal_patterns {
-        completion_predictions.push(
-            crate::domains::analytics::infrastructure::prediction::CompletionTimePrediction {
-                predicted_duration_minutes: pattern.average_duration_minutes,
-                confidence_interval: (
-                    pattern.average_duration_minutes * 0.8,
-                    pattern.average_duration_minutes * 1.2,
-                ),
-                factors_influencing: vec![
-                    "historical_data".to_string(),
-                    "seasonal_pattern".to_string(),
-                ],
-                historical_average: pattern.average_duration_minutes,
-                prediction_accuracy: 0.85,
-            },
-        );
+        completion_predictions.push(crate::domains::analytics::infrastructure::prediction::CompletionTimePrediction {
+            predicted_duration_minutes: pattern.average_duration_minutes,
+            confidence_interval: (
+                pattern.average_duration_minutes * 0.8,
+                pattern.average_duration_minutes * 1.2,
+            ),
+            factors_influencing: vec![
+                "historical_data".to_string(),
+                "seasonal_pattern".to_string(),
+            ],
+            historical_average: pattern.average_duration_minutes,
+            prediction_accuracy: 0.85,
+        });
     }
 
     let metadata = ReportMetadata {
