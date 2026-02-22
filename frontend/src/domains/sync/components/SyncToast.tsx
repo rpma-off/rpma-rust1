@@ -1,10 +1,11 @@
 // src/domains/sync/components/SyncToast.tsx
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { useSyncStatus } from '..';
 
 export function SyncToast() {
   const { status } = useSyncStatus(2000); // Poll more frequently for toasts
+  const lastErrorMessageRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!status) return;
@@ -31,9 +32,13 @@ export function SyncToast() {
 
     // Show error toast
     if (errors.length > 0) {
-      toast.error(`Sync failed: ${errors[0]}`, {
-        duration: 5000,
-      });
+      const firstError = errors[0] || 'Unknown sync error';
+      if (lastErrorMessageRef.current !== firstError) {
+        lastErrorMessageRef.current = firstError;
+        toast.error(`Sync failed: ${firstError}`, {
+          duration: 5000,
+        });
+      }
     }
   }, [status]);
 

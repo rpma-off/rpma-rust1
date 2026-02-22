@@ -11,6 +11,16 @@ import type { AuthContextType, AuthState, AuthResponse, UserAccount, UserSession
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === 'string' && error) return error;
+  if (error && typeof error === 'object') {
+    if ('message' in error && typeof error.message === 'string' && error.message) return error.message;
+    if ('error' in error && typeof error.error === 'string' && error.error) return error.error;
+  }
+  return fallback;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>({
     user: null,
@@ -218,7 +228,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: true, data: userSession };
     } catch (error) {
       logger.error(LogContext.AUTH, 'Login failed', { email, error });
-      toast.error('Erreur de connexion. Verifiez vos identifiants.');
+      toast.error(getErrorMessage(error, 'Erreur de connexion. Vérifiez vos identifiants.'));
       setState(prev => ({ ...prev, isAuthenticating: false }));
       return { success: false, error: error instanceof Error ? error.message : 'Login failed' };
     }
@@ -258,7 +268,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: true, data: userSession } as AuthResponse<UserSession>;
     } catch (error) {
       logger.error(LogContext.AUTH, 'Signup failed', { email, error });
-      toast.error('Erreur lors de la creation du compte.');
+      toast.error(getErrorMessage(error, 'Erreur lors de la creation du compte.'));
       setState(prev => ({ ...prev, isAuthenticating: false }));
       return { success: false, error: error instanceof Error ? error.message : 'Account creation failed' } as AuthResponse<UserSession>;
     }
