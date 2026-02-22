@@ -530,7 +530,9 @@ impl SyncQueue {
 mod tests {
     use super::*;
     use crate::db::Database;
-    use crate::domains::sync::domain::models::sync::{EntityType, OperationType, SyncOperation, SyncStatus};
+    use crate::domains::sync::domain::models::sync::{
+        EntityType, OperationType, SyncOperation, SyncStatus,
+    };
     use chrono::Utc;
 
     fn build_operation(entity_id: &str, dependencies: Vec<String>) -> SyncOperation {

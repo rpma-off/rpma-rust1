@@ -207,7 +207,9 @@ impl InterventionService {
     pub fn get_progress(
         &self,
         intervention_id: &str,
-    ) -> InterventionResult<crate::domains::interventions::domain::models::intervention::InterventionProgress> {
+    ) -> InterventionResult<
+        crate::domains::interventions::domain::models::intervention::InterventionProgress,
+    > {
         let intervention = self.get_intervention(intervention_id)?.ok_or_else(|| {
             InterventionError::NotFound(format!("Intervention {} not found", intervention_id))
         })?;
@@ -228,14 +230,16 @@ impl InterventionService {
             0.0
         };
 
-        Ok(crate::domains::interventions::domain::models::intervention::InterventionProgress {
-            intervention_id: intervention_id.to_string(),
-            current_step,
-            total_steps,
-            completed_steps,
-            completion_percentage,
-            estimated_time_remaining: None,
-            status: intervention.status,
-        })
+        Ok(
+            crate::domains::interventions::domain::models::intervention::InterventionProgress {
+                intervention_id: intervention_id.to_string(),
+                current_step,
+                total_steps,
+                completed_steps,
+                completion_percentage,
+                estimated_time_remaining: None,
+                status: intervention.status,
+            },
+        )
     }
 }

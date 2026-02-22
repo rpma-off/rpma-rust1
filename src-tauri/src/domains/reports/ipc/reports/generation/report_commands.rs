@@ -144,7 +144,10 @@ pub async fn get_seasonal_report(year: i32, state: AppState<'_>) -> AppResult<Se
     validation::validate_year(year)?;
 
     // Generate report using service layer
-    crate::domains::reports::infrastructure::reports::seasonal_report::generate_seasonal_report(year, &state.db).await
+    crate::domains::reports::infrastructure::reports::seasonal_report::generate_seasonal_report(
+        year, &state.db,
+    )
+    .await
 }
 
 /// Generate operational intelligence report

@@ -175,7 +175,9 @@ pub async fn user_crud(
             facade.ensure_not_self_action(&current_user.user_id, &id, "change your own role")?;
 
             // Use UserService to change role
-            let user_service = crate::domains::users::infrastructure::user::UserService::new(state.repositories.user.clone());
+            let user_service = crate::domains::users::infrastructure::user::UserService::new(
+                state.repositories.user.clone(),
+            );
             user_service
                 .change_role(&id, new_role, &current_user.user_id)
                 .await?;
@@ -191,7 +193,9 @@ pub async fn user_crud(
             facade.ensure_not_self_action(&current_user.user_id, &id, "ban yourself")?;
 
             // Use UserService to ban user
-            let user_service = crate::domains::users::infrastructure::user::UserService::new(state.repositories.user.clone());
+            let user_service = crate::domains::users::infrastructure::user::UserService::new(
+                state.repositories.user.clone(),
+            );
             user_service.ban_user(&id, &current_user.user_id).await?;
 
             info!("User {} banned successfully", id);
@@ -202,7 +206,9 @@ pub async fn user_crud(
             info!("Unbanning user ID: {}", id);
 
             // Use UserService to unban user
-            let user_service = crate::domains::users::infrastructure::user::UserService::new(state.repositories.user.clone());
+            let user_service = crate::domains::users::infrastructure::user::UserService::new(
+                state.repositories.user.clone(),
+            );
             user_service.unban_user(&id, &current_user.user_id).await?;
 
             info!("User {} unbanned successfully", id);
@@ -238,7 +244,9 @@ pub async fn bootstrap_first_admin(
         return Err(error);
     }
 
-    let user_service = crate::domains::users::infrastructure::user::UserService::new(state.repositories.user.clone());
+    let user_service = crate::domains::users::infrastructure::user::UserService::new(
+        state.repositories.user.clone(),
+    );
     let message = user_service.bootstrap_first_admin(&user_id).await?;
     info!("Bootstrap completed for user: {}", user_id);
 
@@ -255,7 +263,9 @@ pub async fn has_admins(
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     debug!("Checking if admin users exist");
 
-    let user_service = crate::domains::users::infrastructure::user::UserService::new(state.repositories.user.clone());
+    let user_service = crate::domains::users::infrastructure::user::UserService::new(
+        state.repositories.user.clone(),
+    );
     let has_admin = user_service.has_admins().await?;
 
     debug!("Admin check completed: has_admins={}", has_admin);

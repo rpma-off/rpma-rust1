@@ -1,11 +1,11 @@
 //! User service for user management operations
 
 use crate::commands::AppError;
-use crate::shared::contracts::auth::{UserAccount, UserRole};
 use crate::domains::users::domain::models::user::User as RepoUser; // Import as RepoUser to distinguish
+use crate::domains::users::infrastructure::user_repository::UserRepository;
 use crate::repositories::base::RepoError;
 use crate::repositories::Repository;
-use crate::domains::users::infrastructure::user_repository::UserRepository;
+use crate::shared::contracts::auth::{UserAccount, UserRole};
 use std::sync::Arc;
 use tracing::{debug, error, info, warn};
 
@@ -25,8 +25,12 @@ fn repo_user_to_auth_user(repo_user: &RepoUser) -> UserAccount {
         last_name: String::new(),          // Empty for now
         role: match repo_user.role {
             crate::domains::users::domain::models::user::UserRole::Admin => UserRole::Admin,
-            crate::domains::users::domain::models::user::UserRole::Technician => UserRole::Technician,
-            crate::domains::users::domain::models::user::UserRole::Supervisor => UserRole::Supervisor,
+            crate::domains::users::domain::models::user::UserRole::Technician => {
+                UserRole::Technician
+            }
+            crate::domains::users::domain::models::user::UserRole::Supervisor => {
+                UserRole::Supervisor
+            }
             crate::domains::users::domain::models::user::UserRole::Viewer => UserRole::Viewer,
         },
         password_hash: repo_user.password_hash.clone(),
@@ -48,7 +52,9 @@ fn repo_user_to_auth_user(repo_user: &RepoUser) -> UserAccount {
 }
 
 /// Convert between auth UserRole and repo UserRole
-fn auth_role_to_repo_role(auth_role: UserRole) -> crate::domains::users::domain::models::user::UserRole {
+fn auth_role_to_repo_role(
+    auth_role: UserRole,
+) -> crate::domains::users::domain::models::user::UserRole {
     match auth_role {
         UserRole::Admin => crate::domains::users::domain::models::user::UserRole::Admin,
         UserRole::Technician => crate::domains::users::domain::models::user::UserRole::Technician,

@@ -4,10 +4,10 @@
 //! including appearance, general settings, and performance preferences.
 
 use crate::commands::{ApiResponse, AppError, AppState};
+use crate::domains::settings::domain::models::settings::UserPreferences;
 use crate::domains::settings::ipc::settings::core::{
     handle_settings_error, load_app_settings, update_app_settings,
 };
-use crate::domains::settings::domain::models::settings::UserPreferences;
 
 use serde::Deserialize;
 use tracing::info;

@@ -1,6 +1,6 @@
 use crate::domains::auth::application::SignupRequest;
-use crate::domains::auth::domain::AuthErrorPolicy;
 use crate::domains::auth::domain::models::auth::UserSession;
+use crate::domains::auth::domain::AuthErrorPolicy;
 use crate::shared::ipc::errors::AppError;
 use regex::Regex;
 

@@ -1,7 +1,7 @@
-use std::sync::Arc;
 use crate::db::Database;
 use crate::domains::interventions::infrastructure::intervention::InterventionService;
 use crate::domains::interventions::InterventionsFacade;
+use std::sync::Arc;
 
 #[tokio::test]
 async fn validate_intervention_id_rejects_empty_id() {

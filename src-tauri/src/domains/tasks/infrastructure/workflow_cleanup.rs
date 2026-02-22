@@ -5,8 +5,8 @@
 //! Delegates all database operations to InterventionRepository.
 
 use crate::db::InterventionResult;
-use crate::logging::RPMARequestLogger;
 use crate::domains::interventions::infrastructure::intervention_repository::InterventionRepository;
+use crate::logging::RPMARequestLogger;
 use std::sync::Arc;
 
 /// Service for cleaning up workflow artifacts and failed operations

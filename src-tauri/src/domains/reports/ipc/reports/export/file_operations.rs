@@ -4,10 +4,10 @@
 //! including path validation, disk space checks, and atomic file operations.
 
 use crate::commands::AppResult;
-use crate::memory_management_helpers;
-use crate::domains::reports::domain::models::reports::CompleteInterventionData;
 use crate::domains::documents::infrastructure::document_storage::DocumentStorageService;
+use crate::domains::reports::domain::models::reports::CompleteInterventionData;
 use crate::domains::reports::infrastructure::pdf_generation::PdfGenerationService;
+use crate::memory_management_helpers;
 use std::path::Path;
 use tracing::{error, info, warn};
 
@@ -393,13 +393,15 @@ async fn generate_pdf_with_timeout(
     // Create file URL for Tauri
     let download_url = format!("file://{}", output_path.display());
 
-    Ok(crate::domains::reports::domain::models::reports::InterventionReportResult {
-        success: true,
-        download_url: Some(download_url),
-        file_path: Some(output_path.to_string_lossy().to_string()),
-        file_name: Some(file_name),
-        format: "pdf".to_string(),
-        file_size: Some(file_size),
-        generated_at: chrono::Utc::now(),
-    })
+    Ok(
+        crate::domains::reports::domain::models::reports::InterventionReportResult {
+            success: true,
+            download_url: Some(download_url),
+            file_path: Some(output_path.to_string_lossy().to_string()),
+            file_name: Some(file_name),
+            format: "pdf".to_string(),
+            file_size: Some(file_size),
+            generated_at: chrono::Utc::now(),
+        },
+    )
 }

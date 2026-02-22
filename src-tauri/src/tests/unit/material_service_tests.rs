@@ -3,7 +3,9 @@
 //! This module contains comprehensive unit tests for material management functionality,
 //! focusing on CRUD operations, validation, stock management, and business rules.
 
-use crate::domains::inventory::domain::models::material::{InventoryTransactionType, Material, MaterialType, UnitOfMeasure};
+use crate::domains::inventory::domain::models::material::{
+    InventoryTransactionType, Material, MaterialType, UnitOfMeasure,
+};
 use crate::domains::inventory::infrastructure::material::{
     CreateInventoryTransactionRequest, CreateMaterialCategoryRequest, CreateMaterialRequest,
     CreateSupplierRequest, MaterialError, MaterialService, RecordConsumptionRequest,

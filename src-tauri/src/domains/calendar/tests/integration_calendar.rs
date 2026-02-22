@@ -1,7 +1,7 @@
-use std::sync::Arc;
 use crate::db::Database;
 use crate::domains::calendar::infrastructure::calendar::CalendarService;
 use crate::domains::calendar::CalendarFacade;
+use std::sync::Arc;
 
 #[tokio::test]
 async fn validate_date_range_accepts_same_start_and_end() {

@@ -1,7 +1,7 @@
-use std::sync::Arc;
 use crate::db::Database;
 use crate::domains::documents::infrastructure::photo::PhotoService;
 use crate::domains::documents::DocumentsFacade;
+use std::sync::Arc;
 
 #[tokio::test]
 async fn documents_facade_debug_output() {

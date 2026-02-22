@@ -73,7 +73,9 @@ impl CalendarService {
                     priority: row
                         .get::<_, String>(4)?
                         .parse::<crate::domains::tasks::domain::models::task::TaskPriority>()
-                        .unwrap_or(crate::domains::tasks::domain::models::task::TaskPriority::Medium),
+                        .unwrap_or(
+                            crate::domains::tasks::domain::models::task::TaskPriority::Medium,
+                        ),
                     scheduled_date: row.get(5)?,
                     start_time: row.get(6)?,
                     end_time: row.get(7)?,

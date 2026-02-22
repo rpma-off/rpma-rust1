@@ -3,11 +3,11 @@ use std::sync::Arc;
 use tracing::instrument;
 use uuid::Uuid;
 
-use crate::domains::inventory::infrastructure::MaterialService;
 use crate::domains::inventory::domain::models::material::{
     InventoryStats, InventoryTransaction, InventoryTransactionType, Material, MaterialConsumption,
     MaterialStats, MaterialType,
 };
+use crate::domains::inventory::infrastructure::MaterialService;
 use crate::shared::db::Database;
 use crate::shared::event_bus::InterventionFinalized;
 

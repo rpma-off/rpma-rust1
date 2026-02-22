@@ -4,6 +4,7 @@
 
 use crate::commands::AppError;
 use crate::db::Database;
+use crate::domains::tasks::domain::models::task::{Task, UpdateTaskRequest};
 use crate::domains::tasks::infrastructure::task_constants::{
     MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH, MAX_VEHICLE_YEAR, MIN_VEHICLE_YEAR,
     SINGLE_TASK_TIMEOUT_SECS, TASK_QUERY_COLUMNS,
@@ -11,7 +12,6 @@ use crate::domains::tasks::infrastructure::task_constants::{
 use crate::domains::tasks::infrastructure::task_validation::{
     validate_status_transition, TaskValidationService,
 };
-use crate::domains::tasks::domain::models::task::{Task, UpdateTaskRequest};
 use chrono::Utc;
 use rusqlite::params;
 use std::sync::Arc;

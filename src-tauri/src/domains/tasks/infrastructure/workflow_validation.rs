@@ -4,11 +4,13 @@
 //! logic for workflow operations in a focused, single-responsibility service.
 
 use crate::db::{InterventionError, InterventionResult};
-use crate::logging::RPMARequestLogger;
-use crate::domains::interventions::domain::models::intervention::{Intervention, InterventionStatus};
+use crate::domains::interventions::domain::models::intervention::{
+    Intervention, InterventionStatus,
+};
 use crate::domains::interventions::domain::models::step::{InterventionStep, StepStatus};
 use crate::domains::interventions::infrastructure::intervention_calculation::InterventionCalculationService;
 use crate::domains::interventions::infrastructure::intervention_data::InterventionDataService;
+use crate::logging::RPMARequestLogger;
 
 use crate::db::Database;
 use std::sync::Arc;
