@@ -1,5 +1,5 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { useSystemHealth } from '@/domains/admin/hooks/useSystemHealth';
+import { useSystemHealth } from '@/domains/admin';
 
 const mockSafeInvoke = jest.fn();
 

@@ -1,1 +1,1 @@
-export type BootstrapContext = {};
+export type BootstrapContext = Record<string, never>;

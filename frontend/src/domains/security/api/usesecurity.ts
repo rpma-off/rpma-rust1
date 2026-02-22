@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import { securityContext } from './securityProvider';
 
-export function usesecurity() {
+export function useSecurity() {
   return useContext(securityContext);
 }

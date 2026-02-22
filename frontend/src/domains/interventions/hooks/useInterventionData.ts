@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/domains/auth';
 import { interventionsIpc } from '../ipc/interventions.ipc';
-import type { JsonValue } from '@/types/json';
 
 interface InterventionStep {
   id: string;

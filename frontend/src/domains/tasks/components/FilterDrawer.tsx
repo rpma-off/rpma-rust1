@@ -18,7 +18,7 @@ import {
   CollapsibleTrigger,
   CollapsibleContent,
 } from '@/components/ui/collapsible';
-import { useCalendarStore } from '@/lib/stores/calendarStore';
+import { useCalendarStore } from '@/domains/calendar/stores/calendarStore';
 import { designTokens } from '@/lib/design-tokens';
 import type { TaskStatus, TaskPriority } from '@/lib/backend';
 
@@ -47,21 +47,21 @@ export function FilterDrawer({ isOpen, onClose }: FilterDrawerProps) {
 
   const handleStatusChange = (status: TaskStatus) => {
     const newStatuses = filters.statuses.includes(status)
-      ? filters.statuses.filter(s => s !== status)
+      ? filters.statuses.filter((s: TaskStatus) => s !== status)
       : [...filters.statuses, status];
     setFilters({ statuses: newStatuses });
   };
 
   const handlePriorityChange = (priority: TaskPriority) => {
     const newPriorities = filters.priorities.includes(priority)
-      ? filters.priorities.filter(p => p !== priority)
+      ? filters.priorities.filter((p: TaskPriority) => p !== priority)
       : [...filters.priorities, priority];
     setFilters({ priorities: newPriorities });
   };
 
   const handleInterventionTypeChange = (type: string) => {
     const newTypes = filters.interventionTypes.includes(type)
-      ? filters.interventionTypes.filter(t => t !== type)
+      ? filters.interventionTypes.filter((t: string) => t !== type)
       : [...filters.interventionTypes, type];
     setFilters({ interventionTypes: newTypes });
   };

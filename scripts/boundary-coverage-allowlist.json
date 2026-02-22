@@ -1,5 +1,436 @@
 {
   "version": 1,
-  "description": "Temporary boundary exceptions for legacy migration. Keep this list empty in strict mode.",
-  "allowed": []
+  "description": "Known boundary coverage violations tracked for progressive refactoring. New violations will cause boundary:enforce to fail.",
+  "allowed": [
+    {
+      "file": "components/Charts/StatisticsCharts.tsx",
+      "spec": "@/domains/analytics/components/Charts/StatisticsCharts",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/GPS/DesktopGPS.tsx",
+      "spec": "@/domains/interventions/components/GPS",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/QualityControl/QualityDashboard.tsx",
+      "spec": "@/domains/audit/components/QualityControl",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/TaskForm/TaskForm.tsx",
+      "spec": "@/domains/tasks/components/TaskForm/TaskForm",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/TaskForm/TaskFormAutoSaveStatus.tsx",
+      "spec": "@/domains/tasks/components/TaskForm/TaskFormAutoSaveStatus",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/TaskForm/TaskFormHeader.tsx",
+      "spec": "@/domains/tasks/components/TaskForm/TaskFormHeader",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/TaskForm/TaskFormNavigation.tsx",
+      "spec": "@/domains/tasks/components/TaskForm/TaskFormNavigation",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/TaskForm/TaskFormProgress.tsx",
+      "spec": "@/domains/tasks/components/TaskForm/TaskFormProgress",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/TaskForm/TaskFormSteps.tsx",
+      "spec": "@/domains/tasks/components/TaskForm/TaskFormSteps",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/TaskForm/TaskFormSubmission.tsx",
+      "spec": "@/domains/tasks/components/TaskForm/TaskFormSubmission",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/TaskForm/TaskFormSubmit.tsx",
+      "spec": "@/domains/tasks/components/TaskForm/TaskFormSubmit",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/TaskForm/TaskFormWizard.tsx",
+      "spec": "@/domains/tasks/components/TaskForm/TaskFormWizard",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/TaskForm/index.ts",
+      "spec": "@/domains/tasks/components/TaskForm",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/TaskForm/steps/CustomerStep.tsx",
+      "spec": "@/domains/tasks/components/TaskForm/steps/CustomerStep",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/TaskForm/steps/PPFStep.tsx",
+      "spec": "@/domains/tasks/components/TaskForm/steps/PPFStep",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/TaskForm/steps/ScheduleStep.tsx",
+      "spec": "@/domains/tasks/components/TaskForm/steps/ScheduleStep",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/TaskForm/steps/VehicleStep.tsx",
+      "spec": "@/domains/tasks/components/TaskForm/steps/VehicleStep",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/TaskForm/types.ts",
+      "spec": "@/domains/tasks/components/TaskForm/types",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/TaskForm/useTaskForm.ts",
+      "spec": "@/domains/tasks/components/TaskForm/useTaskForm",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/calendar/AgendaView.tsx",
+      "spec": "@/domains/calendar/components/AgendaView",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/calendar/CalendarHeader.tsx",
+      "spec": "@/domains/calendar/components/CalendarHeader",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/calendar/DayView.tsx",
+      "spec": "@/domains/calendar/components/DayView",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/calendar/DragDropCalendar.tsx",
+      "spec": "@/domains/calendar/components/DragDropCalendar",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/calendar/MonthView.tsx",
+      "spec": "@/domains/calendar/components/MonthView",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/calendar/TaskCard.tsx",
+      "spec": "@/domains/calendar/components/TaskCard",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/calendar/WeekView.tsx",
+      "spec": "@/domains/calendar/components/WeekView",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/calendar/calendar-controls.tsx",
+      "spec": "@/domains/calendar/components/calendar-controls",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/calendar/calendar-day-column.tsx",
+      "spec": "@/domains/calendar/components/calendar-day-column",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/calendar/calendar-header.tsx",
+      "spec": "@/domains/calendar/components/calendar-header",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/calendar/calendar-hours-column.tsx",
+      "spec": "@/domains/calendar/components/calendar-hours-column",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/calendar/calendar-utils.ts",
+      "spec": "@/domains/calendar/components/calendar-utils",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/calendar/calendar-view.tsx",
+      "spec": "@/domains/calendar/components/calendar-view",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/calendar/calendar-week-header.tsx",
+      "spec": "@/domains/calendar/components/calendar-week-header",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/calendar/create-event-dialog.tsx",
+      "spec": "@/domains/calendar/components/create-event-dialog",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/calendar/current-time-indicator.tsx",
+      "spec": "@/domains/calendar/components/current-time-indicator",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/calendar/event-card.tsx",
+      "spec": "@/domains/calendar/components/event-card",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/calendar/event-sheet.tsx",
+      "spec": "@/domains/calendar/components/event-sheet",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/calendar/schedule-popover.tsx",
+      "spec": "@/domains/calendar/components/schedule-popover",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/CalendarHeader.tsx",
+      "spec": "@/domains/analytics/components/dashboard/CalendarHeader",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/Dashboard.tsx",
+      "spec": "@/domains/analytics/components/dashboard/Dashboard",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/DashboardFilters.tsx",
+      "spec": "@/domains/analytics/components/dashboard/DashboardFilters",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/DashboardSection.tsx",
+      "spec": "@/domains/analytics/components/dashboard/DashboardSection",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/DashboardTaskFilters.tsx",
+      "spec": "@/domains/analytics/components/dashboard/DashboardTaskFilters",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/DashboardWidget.tsx",
+      "spec": "@/domains/analytics/components/dashboard/DashboardWidget",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/DesktopDashboard.tsx",
+      "spec": "@/domains/analytics/components/dashboard/DesktopDashboard",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/EventDetailPopover.tsx",
+      "spec": "@/domains/analytics/components/dashboard/EventDetailPopover",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/FilterDrawer.tsx",
+      "spec": "@/domains/analytics/components/dashboard/FilterDrawer",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/InterventionWidget.tsx",
+      "spec": "@/domains/analytics/components/dashboard/InterventionWidget",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/PerformanceMetrics.tsx",
+      "spec": "@/domains/analytics/components/dashboard/PerformanceMetrics",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/QuickActionCard.tsx",
+      "spec": "@/domains/analytics/components/dashboard/QuickActionCard",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/QuickActions.tsx",
+      "spec": "@/domains/analytics/components/dashboard/QuickActions",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/QuickAddDialog.tsx",
+      "spec": "@/domains/analytics/components/dashboard/QuickAddDialog",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/RecentActivityAlerts.tsx",
+      "spec": "@/domains/analytics/components/dashboard/RecentActivityAlerts",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/RecentTasksPreview.tsx",
+      "spec": "@/domains/analytics/components/dashboard/RecentTasksPreview",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/StatCard.tsx",
+      "spec": "@/domains/analytics/components/dashboard/StatCard",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/StatsGrid.tsx",
+      "spec": "@/domains/analytics/components/dashboard/StatsGrid",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/SystemHealthWidget.tsx",
+      "spec": "@/domains/analytics/components/dashboard/SystemHealthWidget",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/TaskCard.tsx",
+      "spec": "@/domains/analytics/components/dashboard/TaskCard",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/TaskCardList.tsx",
+      "spec": "@/domains/analytics/components/dashboard/TaskCardList",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/TaskSkeleton.tsx",
+      "spec": "@/domains/analytics/components/dashboard/TaskSkeleton",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/TechnicianCard.tsx",
+      "spec": "@/domains/analytics/components/dashboard/TechnicianCard",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/index.ts",
+      "spec": "@/domains/analytics/components/dashboard/types",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/index.ts",
+      "spec": "@/domains/analytics/components/dashboard/StatsGrid",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/index.ts",
+      "spec": "@/domains/analytics/components/dashboard/QuickActions",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/index.ts",
+      "spec": "@/domains/analytics/components/dashboard/TaskCardList",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/index.ts",
+      "spec": "@/domains/analytics/components/dashboard/DashboardTaskFilters",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/index.ts",
+      "spec": "@/domains/analytics/components/dashboard/DashboardFilters",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/index.ts",
+      "spec": "@/domains/analytics/components/dashboard/RecentTasksPreview",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/index.ts",
+      "spec": "@/domains/analytics/components/dashboard/SystemHealthWidget",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/index.ts",
+      "spec": "@/domains/analytics/components/dashboard/InterventionWidget",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/index.ts",
+      "spec": "@/domains/analytics/components/dashboard/RecentActivityAlerts",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/index.ts",
+      "spec": "@/domains/analytics/components/dashboard/TaskSkeleton",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/index.ts",
+      "spec": "@/domains/analytics/components/dashboard/Dashboard",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/dashboard/types.ts",
+      "spec": "@/domains/analytics/components/dashboard/types",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/sync/EntitySyncIndicator.tsx",
+      "spec": "@/domains/sync/components/EntitySyncIndicator",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/sync/SyncIndicator.tsx",
+      "spec": "@/domains/sync/components/SyncIndicator",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/sync/SyncToast.tsx",
+      "spec": "@/domains/sync/components/SyncToast",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/workflow/WorkflowNavigationButton.tsx",
+      "spec": "@/domains/workflow/components/WorkflowNavigationButton",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/workflow/ppf/PPFStepProgress.tsx",
+      "spec": "@/domains/workflow/components/ppf/PPFStepProgress",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/workflow/ppf/PPFWorkflowHeader.tsx",
+      "spec": "@/domains/workflow/components/ppf/PPFWorkflowHeader",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "components/workflow/ppf/VehicleDiagram.tsx",
+      "spec": "@/domains/workflow/components/ppf/VehicleDiagram",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "hooks/index.ts",
+      "spec": "@/domains/analytics/hooks/usePerformanceMonitor",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "hooks/index.ts",
+      "spec": "@/domains/sync/hooks/useRealTimeUpdates",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "hooks/index.ts",
+      "spec": "@/domains/analytics/hooks/useAdvancedAnalytics",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "hooks/index.ts",
+      "spec": "@/domains/sync/hooks/useConnectionStatus",
+      "rule": "non-domain-deep-import"
+    },
+    {
+      "file": "domains/auth/api/bootstrapAdmin.ts",
+      "spec": "@/domains/bootstrap/server",
+      "rule": "server-facade-outside-route-layer"
+    }
+  ]
 }

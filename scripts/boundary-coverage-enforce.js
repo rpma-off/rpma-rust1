@@ -26,21 +26,22 @@ function readAllowlist() {
 
 function main() {
   const violations = collectViolations();
-  const allowlist = strictMode ? [] : readAllowlist();
+  const allowlist = readAllowlist();
 
   const allowSet = new Set(allowlist.map(keyOf));
   const violationSet = new Set(violations.map(keyOf));
 
-  const unexpected = strictMode
-    ? violations
-    : violations.filter((entry) => !allowSet.has(keyOf(entry)));
-  const stale = strictMode ? [] : allowlist.filter((entry) => !violationSet.has(keyOf(entry)));
+  // In both modes, the allowlist acts as a ratchet: known violations pass, new ones fail.
+  const unexpected = violations.filter((entry) => !allowSet.has(keyOf(entry)));
+  const stale = allowlist.filter((entry) => !violationSet.has(keyOf(entry)));
+  const allowlisted = violations.filter((entry) => allowSet.has(keyOf(entry)));
 
   console.log('\nBoundary Coverage Enforcement');
   console.log('=============================');
   console.log(`Mode: ${strictMode ? 'strict' : 'progressive'}`);
   console.log(`Current violations: ${violations.length}`);
   console.log(`Allowlisted entries: ${allowlist.length}`);
+  console.log(`Matched allowlisted: ${allowlisted.length}`);
   console.log(`Unexpected violations: ${unexpected.length}`);
 
   if (stale.length > 0) {

@@ -1,1 +1,1 @@
-export type PhotosContext = {};
+export type PhotosContext = Record<string, never>;
