@@ -67,12 +67,6 @@ const nextConfig = {
               chunks: 'all',
               priority: 20,
             },
-            'react-big-calendar': {
-              test: /[\\/]node_modules[\\/]react-big-calendar[\\/]/,
-              name: 'react-big-calendar',
-              chunks: 'all',
-              priority: 20,
-            },
           },
         },
       };

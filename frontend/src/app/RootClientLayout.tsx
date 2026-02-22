@@ -13,7 +13,8 @@ import { useMenuEvents } from '@/shared/hooks/useMenuEvents';
 import { useAuthRedirect } from '@/shared/hooks/useAuthRedirect';
 import { useAdminBootstrapCheck } from '@/shared/hooks/useAdminBootstrapCheck';
 import { ThemeProvider } from '@/shared/ui/theme-provider';
-import { PageSkeleton } from './PageSkeleton';
+import { Skeleton, SkeletonList } from '@/shared/ui/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -29,6 +30,21 @@ const geistMono = localFont({
 
 // Routes that should not show the sidebar (public/auth pages)
 const PUBLIC_ROUTES = ['/login', '/signup', '/unauthorized', '/bootstrap-admin'];
+
+function AuthLoadingSkeleton({ className }: { className?: string }) {
+  return (
+    <div className={cn('space-y-6', className)}>
+      <div className="flex items-center justify-between">
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        <Skeleton className="h-9 w-28" />
+      </div>
+      <SkeletonList count={3} />
+    </div>
+  );
+}
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading, isAuthenticating } = useAuth();
@@ -59,26 +75,27 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
-  const { shouldShowNavigation } = useAuthRedirect(user, authLoading, isAuthenticating);
+  useAuthRedirect(user, authLoading, isAuthenticating);
   useAdminBootstrapCheck(user, authLoading, isAuthenticating);
 
-  // Keep protected routes stable while auth redirect settles
-  if (authLoading || isAuthenticating || (!user && !PUBLIC_ROUTES.includes(pathname))) {
-    return <PageSkeleton />;
-  }
+  const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
+  const isAuthPending = authLoading || isAuthenticating;
+  const shouldShowLoading = !isPublicRoute && (isAuthPending || !user);
+  const isUnauthenticatedProtectedRoute = !isAuthPending && !user && !isPublicRoute;
+  const redirectLoadingClassName = 'min-h-screen bg-background px-4 sm:px-6 lg:px-8 py-6';
+  const loadingClassName = isUnauthenticatedProtectedRoute
+    ? redirectLoadingClassName
+    : undefined;
+  const content = shouldShowLoading ? (
+    <AuthLoadingSkeleton className={loadingClassName} />
+  ) : (
+    children
+  );
 
   return (
-    <Suspense fallback={<PageSkeleton />}>
-      {shouldShowNavigation ? (
-        <AppNavigation>
-          {children}
-        </AppNavigation>
-      ) : (
-        <div className="min-h-screen bg-background">
-          {children}
-        </div>
-      )}
-    </Suspense>
+    <AppNavigation showNavigationWhileLoading={isAuthPending && !isPublicRoute}>
+      {content}
+    </AppNavigation>
   );
 }
 
