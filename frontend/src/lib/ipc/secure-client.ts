@@ -41,8 +41,12 @@ import {
 
 interface BackendResponse<T = JsonValue> {
   type: string;
+  success?: boolean;
+  message?: string;
+  error_code?: string;
   data?: T;
   error?: string | ApiError;
+  correlation_id?: string;
 }
 
 /**

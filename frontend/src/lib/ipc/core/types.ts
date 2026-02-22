@@ -10,7 +10,10 @@ export interface BackendResponse<T = unknown> {
   type?: string;
   // For ApiResponse wrappers
   success?: boolean;
+  message?: string;
+  error_code?: string;
   data?: T;
+  payload?: T;
   error?: string | ApiError;
   // Correlation ID for end-to-end tracing
   correlation_id?: string;

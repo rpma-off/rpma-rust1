@@ -39,6 +39,8 @@ export interface ListResponse<T> {
 
 export interface ApiResponse<T> {
    success: boolean;
+   message?: string;
+   error_code?: string;
    data?: T extends unknown[] ? ListResponse<T[number]> : T;
    // The error field must accommodate the custom error object or a simple string
    error?: CustomError | ApiError;
