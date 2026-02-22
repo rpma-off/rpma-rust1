@@ -6,10 +6,10 @@ import { RPMALayout } from '@/components/RPMALayout';
 
 export default function AppNavigation({
   children,
-  forceNavigation = false,
+  showNavigationWhileLoading = false,
 }: {
   children: React.ReactNode;
-  forceNavigation?: boolean;
+  showNavigationWhileLoading?: boolean;
 }) {
   const { user } = useAuth();
   const pathname = usePathname();
@@ -17,7 +17,7 @@ export default function AppNavigation({
   // Don't render navigation for unauthenticated users or on public routes
   const PUBLIC_ROUTES = ['/login', '/signup', '/unauthorized', '/bootstrap-admin'];
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
-  const shouldShowNavigation = !isPublicRoute && (forceNavigation || !!user);
+  const shouldShowNavigation = !isPublicRoute && (showNavigationWhileLoading || !!user);
 
   if (!shouldShowNavigation) {
     return <div className="min-h-screen bg-background">{children}</div>;

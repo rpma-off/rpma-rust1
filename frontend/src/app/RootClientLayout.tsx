@@ -82,7 +82,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const isAuthPending = authLoading || isAuthenticating;
   const shouldShowLoading = !isPublicRoute && (isAuthPending || !user);
   const loadingClassName = isAuthPending
-    ? ''
+    ? undefined
     : 'min-h-screen bg-background px-4 sm:px-6 lg:px-8 py-6';
   const content = shouldShowLoading ? (
     <AuthLoadingShell className={loadingClassName} />
@@ -91,7 +91,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <AppNavigation forceNavigation={isAuthPending && !isPublicRoute}>
+    <AppNavigation showNavigationWhileLoading={isAuthPending && !isPublicRoute}>
       {content}
     </AppNavigation>
   );
