@@ -35,6 +35,7 @@ use crate::domains::settings::domain::models::settings::StorageSettings;
 use crate::repositories::Repositories;
 use crate::domains::audit::infrastructure::audit_log_handler::AuditLogHandler;
 use crate::domains::audit::infrastructure::audit_service::AuditService;
+use crate::domains::users::infrastructure::user::UserService;
 use crate::shared::services::event_bus::InMemoryEventBus;
 use crate::shared::services::websocket_event_handler::WebSocketEventHandler;
 use crate::shared::app_state::AppStateType;
@@ -102,6 +103,9 @@ impl ServiceBuilder {
         let auth_service = crate::domains::auth::infrastructure::auth::AuthService::new(db_instance.clone())?;
         auth_service.init()?;
         let auth_service = Arc::new(auth_service);
+
+        // Initialize User Service (depends on user repository)
+        let user_service = Arc::new(UserService::new(self.repositories.user.clone()));
 
         // Initialize Cache Service (self-contained)
         let cache_service = Arc::new(crate::shared::services::cache::CacheService::default()?);
@@ -223,6 +227,7 @@ impl ServiceBuilder {
             session_service,
             two_factor_service,
             settings_service,
+            user_service,
             cache_service,
             report_job_service: OnceLock::new(),
             performance_monitor_service,

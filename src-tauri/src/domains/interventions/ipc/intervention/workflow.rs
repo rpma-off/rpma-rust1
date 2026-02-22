@@ -248,12 +248,11 @@ pub async fn intervention_finalize(
     let session = authenticate!(&session_token, &state);
     crate::commands::update_correlation_context_user(&session.user_id);
     tracing::Span::current().record("user_id", &session.user_id.as_str());
-    let correlation_id = crate::logging::correlation::generate_correlation_id();
-    tracing::Span::current().record("correlation_id", &correlation_id.as_str());
+    tracing::Span::current().record("correlation_id", &req_correlation_id.as_str());
     super::ensure_intervention_permission(&session)?;
 
     debug!(
-        correlation_id = %correlation_id,
+        correlation_id = %req_correlation_id,
         intervention_id = %request.intervention_id,
         "Finalizing intervention via command"
     );
@@ -271,7 +270,7 @@ pub async fn intervention_finalize(
 
     state
         .intervention_service
-        .finalize_intervention(finalize_data, &correlation_id, Some(&session.user_id))
+        .finalize_intervention(finalize_data, &req_correlation_id, Some(&session.user_id))
         .map(|v| ApiResponse::success(v).with_correlation_id(Some(req_correlation_id.clone())))
         .map_err(|e| {
             error!(error = %e, intervention_id = %request.intervention_id, "Failed to finalize intervention");
