@@ -7,12 +7,13 @@ import AppNavigation from '@/app/AppNavigation';
 import { GlobalErrorBoundary, SkipLink } from '@/shared/ui';
 import { useAuth } from '@/domains/auth';
 import { usePathname } from 'next/navigation';
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { structuredLogger as logger, CorrelationContext, LogDomain } from '@/shared/utils';
 import { useMenuEvents } from '@/shared/hooks/useMenuEvents';
 import { useAuthRedirect } from '@/shared/hooks/useAuthRedirect';
 import { useAdminBootstrapCheck } from '@/shared/hooks/useAdminBootstrapCheck';
 import { ThemeProvider } from '@/shared/ui/theme-provider';
+import { PageSkeleton } from './PageSkeleton';
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -61,26 +62,23 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const { shouldShowNavigation } = useAuthRedirect(user, authLoading, isAuthenticating);
   useAdminBootstrapCheck(user, authLoading, isAuthenticating);
 
-  // Show loading screen during authentication check or redirect
+  // Keep protected routes stable while auth redirect settles
   if (authLoading || isAuthenticating || (!user && !PUBLIC_ROUTES.includes(pathname))) {
-    return (
-      <div className="fixed inset-0 bg-background text-foreground z-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[hsl(var(--rpma-teal))] mx-auto mb-4"></div>
-          <p className="text-muted-foreground">{authLoading || isAuthenticating ? 'Chargement...' : 'Redirection vers la connexion...'}</p>
-        </div>
-      </div>
-    );
+    return <PageSkeleton />;
   }
 
-  return shouldShowNavigation ? (
-    <AppNavigation>
-      {children}
-    </AppNavigation>
-  ) : (
-    <div className="min-h-screen bg-background">
-      {children}
-    </div>
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      {shouldShowNavigation ? (
+        <AppNavigation>
+          {children}
+        </AppNavigation>
+      ) : (
+        <div className="min-h-screen bg-background">
+          {children}
+        </div>
+      )}
+    </Suspense>
   );
 }
 
@@ -113,4 +111,3 @@ export default function RootClientLayout({
     </div>
   );
 }
-
