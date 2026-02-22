@@ -92,12 +92,9 @@
               },
               {
                 "group": [
-                  "@/domains/*/api",
-                  "@/domains/*/api/**",
-                  "@/domains/*/components/**",
-                  "@/domains/*/hooks/**",
-                  "@/domains/*/services/**",
-                  "@/domains/*/ipc/**"
+                  "@/domains/*/**",
+                  "!@/domains/*/server",
+                  "!@/domains/*/server/**"
                 ],
                 "message": "API routes must import domain modules through `@/domains/<domain>/server` only."
               }
