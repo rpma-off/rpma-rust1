@@ -166,7 +166,7 @@ pub async fn get_user_assigned_tasks(
     if target_user_id != session.user_id
         && !matches!(
             session.role,
-            crate::domains::auth::domain::models::auth::UserRole::Admin | crate::domains::auth::domain::models::auth::UserRole::Supervisor
+            crate::shared::contracts::auth::UserRole::Admin | crate::shared::contracts::auth::UserRole::Supervisor
         )
     {
         return Err(AppError::Authorization(
@@ -227,21 +227,21 @@ pub async fn get_task_statistics(
     let mut filter = request.filter.unwrap_or_default();
 
     match session.role {
-        crate::domains::auth::domain::models::auth::UserRole::Admin => {
+        crate::shared::contracts::auth::UserRole::Admin => {
             // Admin can see all statistics
         }
-        crate::domains::auth::domain::models::auth::UserRole::Supervisor => {
+        crate::shared::contracts::auth::UserRole::Supervisor => {
             // Supervisor can see statistics for their region/department
             // TODO: Add region-based filtering when user.region field is available
             // if let Some(region) = &user.region {
             //     filter.region = Some(region.clone());
             // }
         }
-        crate::domains::auth::domain::models::auth::UserRole::Technician => {
+        crate::shared::contracts::auth::UserRole::Technician => {
             // Technician can only see their own statistics
             filter.assigned_to = Some(session.user_id.clone());
         }
-        crate::domains::auth::domain::models::auth::UserRole::Viewer => {
+        crate::shared::contracts::auth::UserRole::Viewer => {
             // Viewer has limited access to statistics
             filter.assigned_to = Some(session.user_id.clone());
         }
@@ -275,17 +275,17 @@ pub async fn get_completion_rate(
     let mut filter = request.filter.unwrap_or_default();
 
     match session.role {
-        crate::domains::auth::domain::models::auth::UserRole::Admin => {}
-        crate::domains::auth::domain::models::auth::UserRole::Supervisor => {
+        crate::shared::contracts::auth::UserRole::Admin => {}
+        crate::shared::contracts::auth::UserRole::Supervisor => {
             // TODO: Add region filtering when UserSession has region field
             // if let Some(region) = &session.region {
             //     filter.region = Some(region.clone());
             // }
         }
-        crate::domains::auth::domain::models::auth::UserRole::Technician => {
+        crate::shared::contracts::auth::UserRole::Technician => {
             filter.assigned_to = Some(session.user_id.clone());
         }
-        crate::domains::auth::domain::models::auth::UserRole::Viewer => {
+        crate::shared::contracts::auth::UserRole::Viewer => {
             filter.assigned_to = Some(session.user_id.clone());
         }
     }
@@ -324,17 +324,17 @@ pub async fn get_average_duration_by_status(
     let mut filter = request.filter.unwrap_or_default();
 
     match session.role {
-        crate::domains::auth::domain::models::auth::UserRole::Admin => {}
-        crate::domains::auth::domain::models::auth::UserRole::Supervisor => {
+        crate::shared::contracts::auth::UserRole::Admin => {}
+        crate::shared::contracts::auth::UserRole::Supervisor => {
             // TODO: Add region filtering when UserSession has region field
             // if let Some(region) = &session.region {
             //     filter.region = Some(region.clone());
             // }
         }
-        crate::domains::auth::domain::models::auth::UserRole::Technician => {
+        crate::shared::contracts::auth::UserRole::Technician => {
             filter.assigned_to = Some(session.user_id.clone());
         }
-        crate::domains::auth::domain::models::auth::UserRole::Viewer => {
+        crate::shared::contracts::auth::UserRole::Viewer => {
             filter.assigned_to = Some(session.user_id.clone());
         }
     }
@@ -377,17 +377,17 @@ pub async fn get_priority_distribution(
     let mut filter = request.filter.unwrap_or_default();
 
     match session.role {
-        crate::domains::auth::domain::models::auth::UserRole::Admin => {}
-        crate::domains::auth::domain::models::auth::UserRole::Supervisor => {
+        crate::shared::contracts::auth::UserRole::Admin => {}
+        crate::shared::contracts::auth::UserRole::Supervisor => {
             // TODO: Add region filtering when UserSession has region field
             // if let Some(region) = &session.region {
             //     filter.region = Some(region.clone());
             // }
         }
-        crate::domains::auth::domain::models::auth::UserRole::Technician => {
+        crate::shared::contracts::auth::UserRole::Technician => {
             filter.assigned_to = Some(session.user_id.clone());
         }
-        crate::domains::auth::domain::models::auth::UserRole::Viewer => {
+        crate::shared::contracts::auth::UserRole::Viewer => {
             filter.assigned_to = Some(session.user_id.clone());
         }
     }

@@ -18,7 +18,7 @@ pub mod ui;
 pub mod websocket;
 pub mod websocket_commands;
 
-pub use crate::domains::auth::domain::models::auth::UserRole;
+pub use crate::shared::contracts::auth::UserRole;
 pub use crate::shared::app_state::{AppState, AppStateType};
 pub use crate::shared::ipc::response::{ApiError, ApiResponse, CompressedApiResponse};
 pub use correlation_helpers::*;

@@ -45,7 +45,7 @@ pub enum UserAction {
     },
     ChangeRole {
         id: String,
-        new_role: crate::domains::auth::domain::models::auth::UserRole,
+        new_role: crate::shared::contracts::auth::UserRole,
     },
     Ban {
         id: String,
@@ -57,15 +57,15 @@ pub enum UserAction {
 
 #[derive(Serialize, TS)]
 pub struct UserListResponse {
-    pub data: Vec<crate::domains::auth::domain::models::auth::UserAccount>,
+    pub data: Vec<crate::shared::contracts::auth::UserAccount>,
 }
 
 #[derive(Serialize)]
 #[serde(tag = "type")]
 pub enum UserResponse {
-    Created(crate::domains::auth::domain::models::auth::UserAccount),
-    Found(crate::domains::auth::domain::models::auth::UserAccount),
-    Updated(crate::domains::auth::domain::models::auth::UserAccount),
+    Created(crate::shared::contracts::auth::UserAccount),
+    Found(crate::shared::contracts::auth::UserAccount),
+    Updated(crate::shared::contracts::auth::UserAccount),
     Deleted,
     NotFound,
     List(UserListResponse),

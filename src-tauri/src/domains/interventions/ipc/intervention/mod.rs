@@ -9,7 +9,7 @@ pub mod relationships;
 pub mod workflow;
 
 use crate::commands::AppError;
-use crate::domains::auth::domain::models::auth::{UserRole, UserSession};
+use crate::shared::contracts::auth::{UserRole, UserSession};
 use crate::shared::auth_middleware::AuthMiddleware;
 
 /// Ensure the session has at least Technician permissions for intervention workflows.

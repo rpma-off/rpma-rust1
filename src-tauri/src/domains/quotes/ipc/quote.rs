@@ -1,7 +1,7 @@
 //! Quote (Devis) CRUD commands for Tauri IPC
 
 use crate::commands::{ApiResponse, AppError, AppState};
-use crate::domains::auth::domain::models::auth::UserRole;
+use crate::shared::contracts::auth::UserRole;
 use crate::domains::quotes::domain::models::quote::*;
 use tracing::{debug, error, info, instrument, Span};
 

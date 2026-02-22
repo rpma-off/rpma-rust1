@@ -5,7 +5,7 @@
 
 use crate::authenticate;
 use crate::commands::{AppResult, AppState};
-use crate::domains::auth::domain::models::auth::UserRole;
+use crate::shared::contracts::auth::UserRole;
 use tracing::{error, info, instrument};
 
 /// Generate comprehensive intervention PDF report
