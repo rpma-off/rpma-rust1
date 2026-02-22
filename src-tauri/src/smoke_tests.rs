@@ -269,10 +269,16 @@ fn smoke_migration_harness_full() {
         "users",
         "user_sessions",
         "user_settings",
+        "cache_metadata",
+        "cache_statistics",
         "sync_queue",
         "suppliers",
+        "material_categories",
         "materials",
         "material_consumption",
+        "inventory_transactions",
+        "quotes",
+        "quote_items",
         "audit_events",
         "schema_version",
     ];
@@ -319,6 +325,15 @@ fn smoke_migration_harness_full() {
         "idx_tasks_deleted_task_number",
         // Interventions task lookup
         "idx_interventions_task_created",
+        // FK indexes
+        "idx_tasks_workflow_id",
+        "idx_tasks_current_workflow_step_id",
+        "idx_materials_category_id",
+        "idx_material_consumption_recorded_by",
+        "idx_inventory_transactions_step_id",
+        "idx_inventory_transactions_performed_by",
+        "idx_quote_items_material_id",
+        "idx_events_parent_event",
     ];
     let mut idx_stmt = conn
         .prepare("SELECT name FROM sqlite_master WHERE type='index'")

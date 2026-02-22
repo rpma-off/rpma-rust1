@@ -15,4 +15,4 @@ CREATE INDEX IF NOT EXISTS idx_settings_audit_user_timestamp ON settings_audit_l
 CREATE INDEX IF NOT EXISTS idx_settings_audit_type_timestamp ON settings_audit_log(setting_type, timestamp DESC);
 
 -- Add updated_at column to user_settings if it doesn't exist
-ALTER TABLE user_settings ADD COLUMN updated_at INTEGER DEFAULT 0;
+ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS updated_at INTEGER DEFAULT 0;

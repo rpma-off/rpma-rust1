@@ -105,7 +105,7 @@ CREATE INDEX IF NOT EXISTS idx_inventory_transactions_reference ON inventory_tra
 CREATE INDEX IF NOT EXISTS idx_inventory_transactions_intervention ON inventory_transactions(intervention_id);
 
 -- Update materials table to include category reference
-ALTER TABLE materials ADD COLUMN category_id TEXT REFERENCES material_categories(id) ON DELETE SET NULL;
+ALTER TABLE materials ADD COLUMN IF NOT EXISTS category_id TEXT REFERENCES material_categories(id) ON DELETE SET NULL;
 
 -- Update existing suppliers table to include material categories if not already present
 -- (This would be handled in a separate migration if needed)
