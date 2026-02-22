@@ -19,7 +19,9 @@ desktop.ini
 
 # Backup files
 *.backup
+*.bak
 *.patch
+*.windows
 
 # CI/test artifacts
 type-drift-ci-report.json

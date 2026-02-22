@@ -4,26 +4,40 @@ use crate::domains::quotes::infrastructure::quote::QuoteService;
 use crate::domains::quotes::infrastructure::quote_repository::QuoteRepository;
 use crate::domains::quotes::QuotesFacade;
 use crate::repositories::Cache;
+use crate::shared::ipc::errors::AppError;
 
 #[tokio::test]
-async fn quotes_facade_debug_output() {
+async fn map_quote_error_returns_internal_error() {
     let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let cache = Arc::new(Cache::new(100));
     let repo = Arc::new(QuoteRepository::new(db.clone(), cache));
     let service = Arc::new(QuoteService::new(repo, db));
     let facade = QuotesFacade::new(service);
-    let debug = format!("{:?}", facade);
-    assert!(debug.contains("QuotesFacade"));
+
+    let err = facade.map_quote_error("create", "database connection failed");
+    assert!(matches!(err, AppError::Internal(_)));
 }
 
 #[tokio::test]
-async fn quotes_facade_service_is_shared_reference() {
+async fn map_quote_error_includes_context() {
     let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let cache = Arc::new(Cache::new(100));
     let repo = Arc::new(QuoteRepository::new(db.clone(), cache));
     let service = Arc::new(QuoteService::new(repo, db));
     let facade = QuotesFacade::new(service);
-    let svc1 = facade.quote_service();
-    let svc2 = facade.quote_service();
-    assert!(Arc::ptr_eq(svc1, svc2));
+
+    let err = facade.map_quote_error("update", "timeout");
+    let err_msg = format!("{:?}", err);
+    assert!(err_msg.contains("update") || err_msg.contains("timeout"));
+}
+
+#[tokio::test]
+async fn facade_is_ready_after_creation() {
+    let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
+    let cache = Arc::new(Cache::new(100));
+    let repo = Arc::new(QuoteRepository::new(db.clone(), cache));
+    let service = Arc::new(QuoteService::new(repo, db));
+    let facade = QuotesFacade::new(service);
+
+    assert!(facade.is_ready());
 }
