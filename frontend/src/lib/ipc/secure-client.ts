@@ -40,7 +40,7 @@ import {
 } from '@/lib/validation/backend-type-guards';
 
 interface BackendResponse<T = JsonValue> {
-  type?: string;
+  type: string;
   success?: boolean;
   message?: string;
   error_code?: string;

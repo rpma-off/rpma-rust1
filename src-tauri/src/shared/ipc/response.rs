@@ -51,7 +51,7 @@ impl<T> ApiResponse<T> {
     pub fn success(data: T) -> Self {
         Self {
             success: true,
-            message: Some("OK".to_string()),
+            message: None,
             error_code: None,
             data: Some(data),
             error: None,
@@ -219,7 +219,7 @@ mod tests {
     fn api_response_success_includes_message_and_no_error_code() {
         let response = ApiResponse::success("ok");
         assert!(response.success);
-        assert_eq!(response.message.as_deref(), Some("OK"));
+        assert_eq!(response.message, None);
         assert_eq!(response.error_code, None);
     }
 }

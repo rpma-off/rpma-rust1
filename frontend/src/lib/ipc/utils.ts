@@ -153,7 +153,7 @@ export async function safeInvoke<T>(
         const error: EnhancedError = new Error(userFriendlyMessage);
         error.code = errorCode;
         error.originalMessage = errorMsg;
-        error.details = apiResult.error?.details ?? null;
+        error.details = apiResult.error?.details;
         error.correlationId = backendCorrelationId;
         error.alreadyLogged = true;
         throw error;
