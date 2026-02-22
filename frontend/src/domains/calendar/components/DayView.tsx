@@ -26,8 +26,8 @@ export const DayView: React.FC<DayViewProps> = ({
 
   const timeSlots = useMemo(() => {
     const slots = [];
-    for (let hour = 8; hour <= 18; hour++) { // 8 AM to 6 PM
-      for (let minute = 0; minute < 60; minute += 30) { // 30-minute intervals
+    for (let hour = 8; hour <= 18; hour++) {
+      for (let minute = 0; minute < 60; minute += 30) {
         const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
         slots.push(timeString);
       }
@@ -45,10 +45,13 @@ export const DayView: React.FC<DayViewProps> = ({
   };
 
   return (
-    <div className={`bg-white ${className}`}>
-      {/* Day header */}
+    <div
+      className={`bg-white flex flex-col overflow-hidden ${className}`}
+      style={{ minHeight: 0 }}
+    >
+      {/* En-tête du jour */}
       <div
-        className="p-4 border-b"
+        className="p-4 border-b flex-shrink-0"
         style={{ borderColor: designTokens.colors.border }}
       >
         <h2
@@ -59,8 +62,9 @@ export const DayView: React.FC<DayViewProps> = ({
         </h2>
       </div>
 
-      <div className="flex">
-        {/* Time slots */}
+      {/* Zone scrollable */}
+      <div className="flex flex-1 overflow-y-auto" style={{ minHeight: 0 }}>
+        {/* Colonne heures */}
         <div className="w-20 flex-shrink-0">
           {timeSlots.map((timeSlot) => (
             <div
@@ -69,7 +73,7 @@ export const DayView: React.FC<DayViewProps> = ({
               style={{
                 borderColor: designTokens.colors.borderLight,
                 color: designTokens.colors.textSecondary,
-                backgroundColor: designTokens.colors.surface
+                backgroundColor: designTokens.colors.surface,
               }}
             >
               {timeSlot}
@@ -77,7 +81,7 @@ export const DayView: React.FC<DayViewProps> = ({
           ))}
         </div>
 
-        {/* Tasks column */}
+        {/* Colonne tâches */}
         <div className="flex-1">
           {timeSlots.map((timeSlot) => (
             <Droppable
@@ -89,12 +93,10 @@ export const DayView: React.FC<DayViewProps> = ({
                 <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
-                  className={`
-                    h-16 border-b p-1 transition-colors duration-200
-                  `}
+                  className="h-16 border-b p-1 transition-colors duration-200"
                   style={{
                     borderColor: designTokens.colors.borderLight,
-                    backgroundColor: snapshot.isDraggingOver ? designTokens.colors.surface : ''
+                    backgroundColor: snapshot.isDraggingOver ? designTokens.colors.surface : '',
                   }}
                 >
                   {dayTasks
@@ -131,9 +133,9 @@ export const DayView: React.FC<DayViewProps> = ({
         </div>
       </div>
 
-      {/* Unscheduled tasks */}
+      {/* Tâches non planifiées */}
       <div
-        className="border-t p-4"
+        className="border-t p-4 flex-shrink-0"
         style={{ borderColor: designTokens.colors.border }}
       >
         <h3
@@ -142,19 +144,14 @@ export const DayView: React.FC<DayViewProps> = ({
         >
           Tâches non planifiées
         </h3>
-        <Droppable
-          droppableId="day-unscheduled"
-          isDropDisabled={!onTaskDrop}
-        >
+        <Droppable droppableId="day-unscheduled" isDropDisabled={!onTaskDrop}>
           {(provided, snapshot) => (
             <div
               ref={provided.innerRef}
               {...provided.droppableProps}
-              className={`
-                min-h-[100px] space-y-2
-              `}
+              className="min-h-[100px] space-y-2"
               style={{
-                backgroundColor: snapshot.isDraggingOver ? designTokens.colors.surface : ''
+                backgroundColor: snapshot.isDraggingOver ? designTokens.colors.surface : '',
               }}
             >
               {dayTasks

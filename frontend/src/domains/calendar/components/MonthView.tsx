@@ -19,18 +19,13 @@ export const MonthView: React.FC<MonthViewProps> = ({
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
 
-    // Get first day of the month and last day of the month
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
-
-    // Get the day of the week for the first day (0 = Sunday, 6 = Saturday)
     const firstDayOfWeek = firstDay.getDay();
 
-    // Calculate days to show (including previous month days to fill the grid)
-    const totalDays = 42; // 6 weeks * 7 days
+    const totalDays = 42;
     const days = [];
 
-    // Add days from previous month to fill the first week
     const prevMonth = new Date(year, month, 0);
     const prevMonthDays = prevMonth.getDate();
     for (let i = firstDayOfWeek - 1; i >= 0; i--) {
@@ -41,12 +36,10 @@ export const MonthView: React.FC<MonthViewProps> = ({
       });
     }
 
-    // Add days from current month
     for (let day = 1; day <= lastDay.getDate(); day++) {
       const date = new Date(year, month, day);
       const dateString = date.toISOString().split('T')[0];
       const dayTasks = tasks.filter(task => task.scheduled_date === dateString);
-
       days.push({
         date,
         isCurrentMonth: true,
@@ -54,7 +47,6 @@ export const MonthView: React.FC<MonthViewProps> = ({
       });
     }
 
-    // Add days from next month to fill the last week
     const remainingDays = totalDays - days.length;
     for (let day = 1; day <= remainingDays; day++) {
       days.push({
@@ -71,8 +63,12 @@ export const MonthView: React.FC<MonthViewProps> = ({
   const today = new Date();
 
   return (
-    <div className={`bg-white border border-[hsl(var(--rpma-border))] rounded-[10px] overflow-hidden ${className}`}>
-      <div className="grid grid-cols-7 border-b border-[hsl(var(--rpma-border))] bg-white">
+    <div
+      className={`bg-white border border-[hsl(var(--rpma-border))] rounded-[10px] overflow-hidden flex flex-col ${className}`}
+      style={{ minHeight: 0 }}
+    >
+      {/* En-tête jours de la semaine */}
+      <div className="grid grid-cols-7 border-b border-[hsl(var(--rpma-border))] bg-white flex-shrink-0">
         {weekDays.map((day) => (
           <div
             key={day}
@@ -83,7 +79,8 @@ export const MonthView: React.FC<MonthViewProps> = ({
         ))}
       </div>
 
-      <div className="grid grid-cols-7">
+      {/* Grille des jours — s'étire pour remplir l'espace disponible */}
+      <div className="grid grid-cols-7 flex-1" style={{ gridAutoRows: '1fr', minHeight: 0 }}>
         {monthData.map((day, index) => {
           const isToday = day.date.toDateString() === today.toDateString();
           const isMuted = !day.isCurrentMonth;
@@ -91,9 +88,9 @@ export const MonthView: React.FC<MonthViewProps> = ({
           return (
             <div
               key={index}
-              className="min-h-[120px] border-r border-b last:border-r-0 border-[hsl(var(--rpma-border))] p-2 bg-white"
+              className="border-r border-b last:border-r-0 border-[hsl(var(--rpma-border))] p-2 bg-white overflow-hidden"
             >
-              <div className="flex items-center justify-start mb-2">
+              <div className="flex items-center justify-start mb-1">
                 <div
                   className={`
                     text-xs font-semibold h-6 w-6 flex items-center justify-center rounded-full

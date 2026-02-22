@@ -30,8 +30,13 @@ export default function DashboardPage() {
 
   return (
     <ErrorBoundary>
-      <CalendarDashboard />
+      {/* Hauteur = 100vh moins la navbar (64px) pour éviter le scroll de page */}
+      <div
+        className="flex flex-col"
+        style={{ height: 'calc(100vh - 64px)', minHeight: 0 }}
+      >
+        <CalendarDashboard />
+      </div>
     </ErrorBoundary>
   );
 }
-
