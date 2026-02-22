@@ -7,7 +7,8 @@ use crate::domains::clients::domain::models::client::Client;
 use crate::domains::clients::domain::models::client::{
     ClientListResponse, ClientQuery, CreateClientRequest, UpdateClientRequest,
 };
-use crate::repositories::{ClientRepository, Repository};
+use crate::domains::clients::infrastructure::client_repository::ClientRepository;
+use crate::repositories::Repository;
 use chrono::{Datelike, Utc};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;

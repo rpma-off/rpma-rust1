@@ -8,7 +8,7 @@ use crate::domains::notifications::domain::models::message::{
     MessageTemplateRequest, MessageType, NotificationPreferences, SendMessageRequest,
     UpdateNotificationPreferencesRequest,
 };
-use crate::repositories::message::MessageRepository;
+use crate::domains::notifications::infrastructure::message_repository::MessageRepository;
 use rusqlite::params;
 use std::sync::Arc;
 use uuid::Uuid;

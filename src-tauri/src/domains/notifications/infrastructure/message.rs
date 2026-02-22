@@ -2,7 +2,7 @@
 
 use crate::commands::AppError;
 use crate::domains::notifications::domain::models::message::*;
-use crate::repositories::message_repository::{self as repo, MessageRepository};
+use crate::domains::notifications::infrastructure::message_repository::{self as repo, MessageRepository};
 use crate::repositories::Repository;
 use rusqlite::params;
 use std::sync::Arc;

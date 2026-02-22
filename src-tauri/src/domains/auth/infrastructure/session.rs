@@ -3,7 +3,7 @@
 use crate::commands::AppError;
 use crate::db::Database;
 use crate::domains::auth::domain::models::auth::{DeviceInfo, SessionTimeoutConfig, UserSession};
-use crate::repositories::session_repository::SessionRepository;
+use crate::domains::auth::infrastructure::session_repository::SessionRepository;
 use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 use std::sync::Arc;

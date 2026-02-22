@@ -1,6 +1,6 @@
 //! Dashboard service for aggregating statistics and metrics
 
-use crate::repositories::DashboardRepository;
+use crate::domains::analytics::infrastructure::dashboard_repository::DashboardRepository;
 use serde_json::{Map, Value};
 use std::sync::Arc;
 use tracing::debug;

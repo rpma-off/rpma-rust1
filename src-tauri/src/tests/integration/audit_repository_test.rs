@@ -6,7 +6,7 @@
 //! - Event filtering and pagination
 //! - Data retention policies
 
-use crate::repositories::audit_repository::AuditRepository;
+use crate::domains::audit::infrastructure::audit_repository::AuditRepository;
 use crate::domains::audit::infrastructure::audit_service::{AuditEvent, AuditEventType};
 use crate::test_db;
 use chrono::Utc;

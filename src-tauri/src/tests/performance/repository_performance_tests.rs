@@ -8,11 +8,11 @@ use crate::domains::clients::domain::models::client::Client;
 use crate::domains::interventions::domain::models::intervention::{Intervention, InterventionStatus, InterventionType};
 use crate::domains::tasks::domain::models::task::{SortOrder, Task, TaskPriority, TaskQuery, TaskStatus};
 use crate::domains::users::domain::models::user::{User, UserRole};
-use crate::repositories::{
-    base::Repository, client_repository::ClientRepository,
-    intervention_repository::InterventionRepository, task_repository::TaskRepository,
-    user_repository::UserRepository,
-};
+use crate::repositories::base::Repository;
+use crate::domains::clients::infrastructure::client_repository::ClientRepository;
+use crate::domains::interventions::infrastructure::intervention_repository::InterventionRepository;
+use crate::domains::tasks::infrastructure::task_repository::TaskRepository;
+use crate::domains::users::infrastructure::user_repository::UserRepository;
 use crate::domains::audit::infrastructure::audit_service::AuditService;
 use crate::domains::interventions::infrastructure::intervention::InterventionService;
 use crate::domains::tasks::infrastructure::task::TaskService;

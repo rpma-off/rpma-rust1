@@ -8,7 +8,7 @@
 
 use crate::domains::interventions::domain::models::intervention::{Intervention, InterventionStatus, InterventionType};
 use crate::domains::interventions::domain::models::step::{InterventionStep, StepStatus, StepType};
-use crate::repositories::intervention_repository::InterventionRepository;
+use crate::domains::interventions::infrastructure::intervention_repository::InterventionRepository;
 use crate::test_utils::TestDataFactory;
 use crate::{test_client, test_db, test_intervention, test_task};
 use chrono::Utc;

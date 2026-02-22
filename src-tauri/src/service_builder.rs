@@ -85,7 +85,7 @@ impl ServiceBuilder {
         let client_service = Arc::new(crate::domains::clients::infrastructure::client::ClientService::new(
             self.repositories.client.clone(),
         ));
-        let dashboard_repo = Arc::new(crate::repositories::DashboardRepository::new(Arc::new(
+        let dashboard_repo = Arc::new(crate::domains::analytics::infrastructure::dashboard_repository::DashboardRepository::new(Arc::new(
             db_instance.clone(),
         )));
         let dashboard_service = Arc::new(crate::domains::analytics::infrastructure::dashboard::DashboardService::new(dashboard_repo));

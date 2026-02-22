@@ -10,7 +10,7 @@ use crate::db::Database;
 use crate::db::{InterventionError, InterventionResult};
 use crate::domains::interventions::domain::models::intervention::{Intervention, InterventionStatus, InterventionType};
 use crate::domains::interventions::domain::models::step::{InterventionStep, StepType};
-use crate::repositories::InterventionRepository;
+use crate::domains::interventions::infrastructure::intervention_repository::InterventionRepository;
 use crate::domains::interventions::infrastructure::intervention_calculation::InterventionCalculationService;
 use crate::domains::interventions::infrastructure::intervention_types::{AdvanceStepRequest, StartInterventionRequest};
 use crate::shared::contracts::common::*;

@@ -7,7 +7,7 @@
 //! - Performance under load
 
 use crate::domains::auth::domain::models::auth::{UserRole, UserSession};
-use crate::repositories::session_repository::SessionRepository;
+use crate::domains::auth::infrastructure::session_repository::SessionRepository;
 use crate::{test_client, test_db, test_intervention, test_task};
 use chrono::Utc;
 
