@@ -88,6 +88,7 @@ export function usePhotos(options: UsePhotosOptions = {}) {
       const interval = setInterval(fetchPhotos, refreshInterval);
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [fetchPhotos, autoRefresh, refreshInterval]);
 
   return {

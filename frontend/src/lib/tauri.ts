@@ -19,7 +19,8 @@ import type {
   TaskStatistics
 } from '@/types';
 import type { CreateTaskRequest, UpdateTaskRequest, UserAccount } from '@/lib/backend';
-import { windowManager, desktopNavigation, shellOps, gps } from './utils/desktop';
+import { windowManager, desktopNavigation, shellOps } from './utils/desktop';
+import { gps } from './utils/gps';
 import type { Coordinates } from './utils/gps';
 
 /**

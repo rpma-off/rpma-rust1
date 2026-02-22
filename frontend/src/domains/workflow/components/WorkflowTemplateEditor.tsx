@@ -121,7 +121,7 @@ export function WorkflowTemplateEditor({ template, onSave, onCancel }: WorkflowT
 
           {steps.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-md">
-              Aucune étape définie. Cliquez sur "Ajouter une étape" pour commencer.
+              Aucune étape définie. Cliquez sur &quot;Ajouter une étape&quot; pour commencer.
             </div>
           ) : (
             <div className="space-y-3">

@@ -1,10 +1,13 @@
-import { interventionsIpc } from '@/domains/interventions/ipc';
+import { interventionsIpc } from '@/domains/interventions';
 import type {
+  Intervention,
+  InterventionStep,
   StartInterventionRequest,
   AdvanceStepRequest,
   SaveStepProgressRequest,
   FinalizeInterventionRequest,
   JsonValue,
+  JsonObject,
 } from '@/lib/backend';
 
 export interface WorkflowStartOptions {
@@ -24,7 +27,7 @@ export interface WorkflowStartOptions {
   assistant_ids: Array<string> | null;
   scheduled_start: string;
   estimated_duration: number;
-  gps_coordinates: { latitude: number; longitude: number } | null;
+  gps_coordinates: { latitude: number; longitude: number; accuracy?: number | null } | null;
   address: string | null;
   notes: string | null;
   customer_requirements: Array<string> | null;
@@ -78,7 +81,9 @@ export const workflowIpc = {
       assistant_ids: options.assistant_ids,
       scheduled_start: options.scheduled_start,
       estimated_duration: options.estimated_duration,
-      gps_coordinates: options.gps_coordinates,
+      gps_coordinates: options.gps_coordinates
+        ? { ...options.gps_coordinates, accuracy: options.gps_coordinates.accuracy ?? null }
+        : null,
       address: options.address,
       notes: options.notes,
       customer_requirements: options.customer_requirements,
@@ -88,8 +93,8 @@ export const workflowIpc = {
     const result = await interventionsIpc.start(startRequest, sessionToken);
 
     return {
-      intervention: result.intervention,
-      steps: result.steps,
+      intervention: result.intervention as unknown as Intervention,
+      steps: result.steps as unknown as InterventionStep[],
       message: 'Workflow started successfully'
     };
   },
@@ -120,8 +125,8 @@ export const workflowIpc = {
     const result = await interventionsIpc.advanceStep(advanceRequest, sessionToken);
 
     return {
-      step: result.step,
-      nextStep: result.next_step,
+      step: result.step as unknown as InterventionStep,
+      nextStep: result.next_step as unknown as InterventionStep | null,
       progressPercentage: result.progress_percentage,
       message: 'Step advanced successfully'
     };
@@ -177,19 +182,25 @@ export const workflowIpc = {
 
   getWorkflowForTask: async (taskId: string, sessionToken: string) => {
     const result = await interventionsIpc.getActiveByTask(taskId, sessionToken);
+    const intervention = result && typeof result === 'object' && 'intervention' in result
+      ? (result as { intervention: Intervention | null }).intervention
+      : null;
 
     return {
-      intervention: result.intervention,
-      isActive: result.intervention !== null
+      intervention,
+      isActive: intervention !== null
     };
   },
 
   getLatestWorkflowForTask: async (taskId: string, sessionToken: string) => {
     const result = await interventionsIpc.getLatestByTask(taskId, sessionToken);
+    const intervention = result && typeof result === 'object' && 'intervention' in result
+      ? (result as { intervention: Intervention | null }).intervention
+      : null;
 
     return {
-      intervention: result.intervention,
-      hasWorkflow: result.intervention !== null
+      intervention,
+      hasWorkflow: intervention !== null
     };
   },
 
@@ -235,7 +246,7 @@ export const workflowIpc = {
     };
   },
 
-  updateWorkflow: async (interventionId: string, data: JsonValue, sessionToken: string) => {
+  updateWorkflow: async (interventionId: string, data: JsonObject, sessionToken: string) => {
     const intervention = await interventionsIpc.updateWorkflow(interventionId, data, sessionToken);
 
     return {

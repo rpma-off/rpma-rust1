@@ -1,6 +1,7 @@
 import { safeInvoke, cachedInvoke, invalidatePattern } from '@/lib/ipc/core';
 import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import type { AnalyticsSummary } from '@/lib/backend';
+import type { JsonValue } from '@/types/json';
 
 const ANALYTICS_CACHE_KEY = 'analytics';
 const ANALYTICS_CACHE_TTL = 300000; // 5 minutes

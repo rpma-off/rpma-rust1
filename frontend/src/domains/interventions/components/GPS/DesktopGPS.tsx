@@ -5,12 +5,6 @@ import { gps } from '@/lib/utils/gps';
 import { shellOps } from '@/lib/utils/desktop';
 import type { Coordinates } from '@/lib/utils/gps';
 
-interface Coordinates {
-  latitude: number;
-  longitude: number;
-  accuracy?: number;
-}
-
 export function DesktopGPS() {
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
   const [isLoading, setIsLoading] = useState(false);

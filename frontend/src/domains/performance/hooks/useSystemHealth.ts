@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/domains/auth';
 import { performanceIpc } from '../ipc';
 import type { SystemHealth, PerformanceStats } from '../api/types';
@@ -17,7 +17,7 @@ export function useSystemHealth(options: UseSystemHealthOptions = {}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     if (!user?.token) {
       setLoading(false);
       return;
@@ -26,23 +26,24 @@ export function useSystemHealth(options: UseSystemHealthOptions = {}) {
     try {
       setError(null);
       const result = await performanceIpc.getStats(user.token);
-      setStats(result as PerformanceStats);
+      setStats(result as unknown as PerformanceStats);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch performance stats');
     }
-  };
+  }, [user?.token]);
 
-  const fetchSystemHealth = async () => {
+  const fetchSystemHealth = useCallback(async () => {
+    if (!user?.token) return;
     try {
       setError(null);
-      const healthStatus = await performanceIpc.getStats(user?.token || '');
+      const healthStatus = await performanceIpc.getStats(user.token);
       setSystemHealth(healthStatus as unknown as SystemHealth);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch system health');
     }
-  };
+  }, [user?.token]);
 
-  const fetchAll = async () => {
+  const fetchAll = useCallback(async () => {
     if (!user?.token) {
       setLoading(false);
       return;
@@ -55,7 +56,7 @@ export function useSystemHealth(options: UseSystemHealthOptions = {}) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchStats, fetchSystemHealth, user?.token]);
 
   useEffect(() => {
     fetchAll();
@@ -64,7 +65,8 @@ export function useSystemHealth(options: UseSystemHealthOptions = {}) {
       const interval = setInterval(fetchAll, refreshInterval);
       return () => clearInterval(interval);
     }
-  }, [autoRefresh, refreshInterval, user?.token]);
+    return undefined;
+  }, [fetchAll, autoRefresh, refreshInterval]);
 
   return {
     stats,

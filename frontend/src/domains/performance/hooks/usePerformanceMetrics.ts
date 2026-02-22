@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { performanceIpc } from '../ipc';
 import { useAuth } from '@/domains/auth';
 import type { PerformanceMetrics } from '../api/types';
@@ -17,7 +17,7 @@ export function usePerformanceMetrics(options: UsePerformanceMetricsOptions = {}
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchMetrics = async () => {
+  const fetchMetrics = useCallback(async () => {
     if (!user?.token) {
       setLoading(false);
       return;
@@ -27,13 +27,13 @@ export function usePerformanceMetrics(options: UsePerformanceMetricsOptions = {}
       setLoading(true);
       setError(null);
       const result = await performanceIpc.getMetrics(limit, user.token);
-      setMetrics(result as PerformanceMetrics[]);
+      setMetrics(result as unknown as PerformanceMetrics[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch metrics');
     } finally {
       setLoading(false);
     }
-  };
+  }, [limit, user?.token]);
 
   useEffect(() => {
     fetchMetrics();
@@ -42,7 +42,8 @@ export function usePerformanceMetrics(options: UsePerformanceMetricsOptions = {}
       const interval = setInterval(fetchMetrics, refreshInterval);
       return () => clearInterval(interval);
     }
-  }, [limit, autoRefresh, refreshInterval, user?.token]);
+    return undefined;
+  }, [fetchMetrics, autoRefresh, refreshInterval]);
 
   return {
     metrics,

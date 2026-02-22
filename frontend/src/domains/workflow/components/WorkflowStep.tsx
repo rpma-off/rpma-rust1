@@ -2,11 +2,11 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Check, Clock, Play, Pause, SkipForward } from 'lucide-react';
-import type { WorkflowStep } from '@/lib/backend';
+import { Check, Clock, Play, SkipForward } from 'lucide-react';
+import type { InterventionStep } from '@/lib/backend';
 
 export interface WorkflowStepProps {
-  step: WorkflowStep;
+  step: InterventionStep;
   status: 'pending' | 'in_progress' | 'completed' | 'skipped';
   isActive?: boolean;
   onActivate?: () => void;
@@ -48,7 +48,7 @@ export function WorkflowStep({ step, status, isActive, onActivate, onComplete, o
           <div className="flex items-start gap-3 flex-1">
             {getStatusIcon()}
             <div className="flex-1">
-              <CardTitle className="text-lg">{step.name}</CardTitle>
+              <CardTitle className="text-lg">{step.step_name}</CardTitle>
               {step.description && (
                 <p className="text-sm text-muted-foreground mt-1">{step.description}</p>
               )}
@@ -57,15 +57,9 @@ export function WorkflowStep({ step, status, isActive, onActivate, onComplete, o
           {getStatusBadge()}
         </div>
       </CardHeader>
-      {isActive && step.data && (
+      {isActive && (
         <CardContent>
           <div className="space-y-3">
-            {step.data.notes && (
-              <div>
-                <h4 className="text-sm font-medium mb-1">Notes</h4>
-                <p className="text-sm text-muted-foreground">{step.data.notes as string}</p>
-              </div>
-            )}
             <div className="flex gap-2">
               {status === 'pending' && onActivate && (
                 <button

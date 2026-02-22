@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useMemo, useState, useCallback, type ReactNode } from 'react';
 import { dashboardService } from '../services/dashboard.service';
-import type { DashboardContextValue, DashboardFilter, DashboardWidget } from './types';
+import type { DashboardContextValue, DashboardFilter, DashboardWidget, RecentActivity } from './types';
 
 const DashboardContext = createContext<DashboardContextValue | null>(null);
 
@@ -44,10 +44,15 @@ export function DashboardProvider({ children, initialFilters }: DashboardProvide
     try {
       setLoading(true);
       setError(null);
-      const data = await dashboardService.getStats(filters.timeRange);
+      const mappedTimeRange = filters.timeRange === 'today'
+        ? 'day'
+        : filters.timeRange === 'quarter' || filters.timeRange === 'all'
+          ? 'month'
+          : filters.timeRange;
+      const data = await dashboardService.getStats(mappedTimeRange);
       setStats(data);
-      const activity = await dashboardService.getRecentActivity(10);
-      setRecentActivity(activity as RecentActivity[]);
+      const activity: RecentActivity[] = await dashboardService.getRecentActivity(10);
+      setRecentActivity(activity);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
     } finally {
