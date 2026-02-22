@@ -3,11 +3,11 @@
 //! Tests end-to-end message workflows with template processing and notification delivery
 
 use crate::db::Database;
-use crate::models::message::{
+use crate::domains::notifications::domain::models::message::{
     Message, MessagePriority, MessageStatus, MessageTemplate, MessageTemplateRequest, MessageType,
     NotificationPreferences, SendMessageRequest, UpdateNotificationPreferencesRequest,
 };
-use crate::repositories::message::MessageRepository;
+use crate::domains::notifications::infrastructure::message_repository::MessageRepository;
 use chrono::{DateTime, Utc};
 use std::sync::Arc;
 use uuid::Uuid;

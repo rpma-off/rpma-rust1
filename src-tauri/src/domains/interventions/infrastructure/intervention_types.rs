@@ -36,8 +36,8 @@ pub struct StartInterventionRequest {
 /// Response for starting an intervention
 #[derive(Debug, Serialize, TS)]
 pub struct StartInterventionResponse {
-    pub intervention: crate::models::intervention::Intervention,
-    pub steps: Vec<crate::models::step::InterventionStep>,
+    pub intervention: crate::domains::interventions::domain::models::intervention::Intervention,
+    pub steps: Vec<crate::domains::interventions::domain::models::step::InterventionStep>,
     pub initial_requirements: Vec<StepRequirement>,
 }
 
@@ -57,8 +57,8 @@ pub struct AdvanceStepRequest {
 /// Response for advancing a step
 #[derive(Debug, Serialize, TS)]
 pub struct AdvanceStepResponse {
-    pub step: crate::models::step::InterventionStep,
-    pub next_step: Option<crate::models::step::InterventionStep>,
+    pub step: crate::domains::interventions::domain::models::step::InterventionStep,
+    pub next_step: Option<crate::domains::interventions::domain::models::step::InterventionStep>,
     pub progress_percentage: f32,
     pub requirements_completed: Vec<String>,
 }
@@ -76,7 +76,7 @@ pub struct SaveStepProgressRequest {
 /// Response for saving step progress
 #[derive(Debug, Serialize, TS)]
 pub struct SaveStepProgressResponse {
-    pub step: crate::models::step::InterventionStep,
+    pub step: crate::domains::interventions::domain::models::step::InterventionStep,
 }
 
 /// Request to finalize an intervention
@@ -96,7 +96,7 @@ pub struct FinalizeInterventionRequest {
 /// Response for finalizing an intervention
 #[derive(Debug, Serialize, TS)]
 pub struct FinalizeInterventionResponse {
-    pub intervention: crate::models::intervention::Intervention,
+    pub intervention: crate::domains::interventions::domain::models::intervention::Intervention,
     pub metrics: InterventionMetrics,
 }
 
@@ -133,13 +133,13 @@ pub struct GpsCoordinates {
 /// Intervention step with associated photos
 #[derive(Debug, Serialize, TS)]
 pub struct InterventionStepWithPhotos {
-    pub step: crate::models::step::InterventionStep,
-    pub photos: Vec<crate::models::photo::Photo>,
+    pub step: crate::domains::interventions::domain::models::step::InterventionStep,
+    pub photos: Vec<crate::domains::documents::domain::models::photo::Photo>,
 }
 
 /// Intervention with all related data
 #[derive(Debug, Serialize, TS)]
 pub struct InterventionWithDetails {
-    pub intervention: crate::models::intervention::Intervention,
+    pub intervention: crate::domains::interventions::domain::models::intervention::Intervention,
     pub steps: Vec<InterventionStepWithPhotos>,
 }

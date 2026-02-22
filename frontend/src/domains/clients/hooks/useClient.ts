@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/domains/auth';
 import { ipcClient } from '@/lib/ipc';
 import type { Client } from '@/lib/backend';
-import { useLogger } from '@/hooks/useLogger';
+import { useLogger } from '@/shared/hooks/useLogger';
 import { LogDomain } from '@/lib/logging/types';
 import { normalizeError } from '@/types/utility.types';
 

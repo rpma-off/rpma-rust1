@@ -3,11 +3,11 @@
 //! Tests inventory operations with material service integration and business logic
 
 use crate::db::Database;
-use crate::models::material::{
+use crate::domains::inventory::domain::models::material::{
     InventoryTransaction, InventoryTransactionType, Material, MaterialCategory, MaterialType,
     UnitOfMeasure,
 };
-use crate::services::material::MaterialService;
+use crate::domains::inventory::infrastructure::material::MaterialService;
 use chrono::{DateTime, Utc};
 use rusqlite::params;
 use std::sync::Arc;
@@ -286,7 +286,7 @@ async fn test_inventory_end_to_end_workflow() {
     create_test_user(&service.db, user_id, "test1@example.com");
 
     // Create a material
-    let material_request = crate::services::material::CreateMaterialRequest {
+    let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
         sku: "MAT-WORKFLOW".to_string(),
         name: "Test Workflow Material".to_string(),
         description: Some("Material for workflow testing".to_string()),
@@ -320,7 +320,7 @@ async fn test_inventory_end_to_end_workflow() {
     assert_eq!(material.current_stock, 0.0);
 
     // Stock in
-    let stock_in_request = crate::services::material::CreateInventoryTransactionRequest {
+    let stock_in_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
         transaction_type: InventoryTransactionType::StockIn,
         quantity: 100.0,
@@ -356,7 +356,7 @@ async fn test_inventory_end_to_end_workflow() {
     create_test_intervention_step(&service.db, step_id, intervention_id, "Test Step");
 
     // Record material consumption
-    let consumption_request = crate::services::material::RecordConsumptionRequest {
+    let consumption_request = crate::domains::inventory::infrastructure::material::RecordConsumptionRequest {
         intervention_id: intervention_id.to_string(),
         material_id: material.id.clone(),
         step_id: Some(step_id.to_string()),
@@ -409,7 +409,7 @@ async fn test_reorder_point_and_stock_levels() {
     create_test_user(&service.db, user_id, "test2@example.com");
 
     // Create a material with reorder point
-    let material_request = crate::services::material::CreateMaterialRequest {
+    let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
         sku: "MAT-REORDER".to_string(),
         name: "Test Reorder Material".to_string(),
         description: None,
@@ -442,7 +442,7 @@ async fn test_reorder_point_and_stock_levels() {
         .unwrap();
 
     // Stock in
-    let stock_in_request = crate::services::material::CreateInventoryTransactionRequest {
+    let stock_in_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
         transaction_type: InventoryTransactionType::StockIn,
         quantity: 30.0,
@@ -469,7 +469,7 @@ async fn test_reorder_point_and_stock_levels() {
     assert!(!needs_reorder, "Should not need reorder yet");
 
     // Consume material down to reorder point
-    let consumption_request = crate::services::material::RecordConsumptionRequest {
+    let consumption_request = crate::domains::inventory::infrastructure::material::RecordConsumptionRequest {
         intervention_id: "int_reorder_1".to_string(),
         material_id: material.id.clone(),
         step_id: None,
@@ -510,7 +510,7 @@ async fn test_batch_number_tracking() {
     create_test_user(&service.db, user_id, "test3@example.com");
 
     // Create a material
-    let material_request = crate::services::material::CreateMaterialRequest {
+    let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
         sku: "MAT-BATCH".to_string(),
         name: "Test Batch Material".to_string(),
         description: None,
@@ -544,7 +544,7 @@ async fn test_batch_number_tracking() {
 
     // Stock in with batch number
     let batch_number = "BATCH-2023-001";
-    let stock_in_request = crate::services::material::CreateInventoryTransactionRequest {
+    let stock_in_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
         transaction_type: InventoryTransactionType::StockIn,
         quantity: 50.0,
@@ -578,7 +578,7 @@ async fn test_batch_number_tracking() {
     assert_eq!(transaction.quality_status, Some("approved".to_string()));
 
     // Consume from this batch
-    let consumption_request = crate::services::material::RecordConsumptionRequest {
+    let consumption_request = crate::domains::inventory::infrastructure::material::RecordConsumptionRequest {
         intervention_id: "int_batch_1".to_string(),
         material_id: material.id.clone(),
         step_id: None,
@@ -616,7 +616,7 @@ async fn test_material_location_tracking() {
     create_test_user(&service.db, user_id, "test4@example.com");
 
     // Create a material
-    let material_request = crate::services::material::CreateMaterialRequest {
+    let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
         sku: "MAT-LOCATION".to_string(),
         name: "Test Location Material".to_string(),
         description: None,
@@ -649,7 +649,7 @@ async fn test_material_location_tracking() {
         .unwrap();
 
     // Stock in to warehouse A, location 1
-    let stock_in_request = crate::services::material::CreateInventoryTransactionRequest {
+    let stock_in_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
         transaction_type: InventoryTransactionType::StockIn,
         quantity: 5.0,
@@ -672,7 +672,7 @@ async fn test_material_location_tracking() {
         .unwrap();
 
     // Transfer to warehouse B, location 2
-    let transfer_request = crate::services::material::CreateInventoryTransactionRequest {
+    let transfer_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
         transaction_type: InventoryTransactionType::Transfer,
         quantity: 2.0,
@@ -736,7 +736,7 @@ async fn test_inventory_cost_tracking() {
     create_test_user(&service.db, user_id, "test5@example.com");
 
     // Create a material
-    let material_request = crate::services::material::CreateMaterialRequest {
+    let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
         sku: "MAT-COST".to_string(),
         name: "Test Cost Material".to_string(),
         description: None,
@@ -770,7 +770,7 @@ async fn test_inventory_cost_tracking() {
 
     // Stock in with unit cost
     let unit_cost = 25.50;
-    let stock_in_request = crate::services::material::CreateInventoryTransactionRequest {
+    let stock_in_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
         transaction_type: InventoryTransactionType::StockIn,
         quantity: 20.0,
@@ -806,7 +806,7 @@ async fn test_inventory_cost_tracking() {
     assert_eq!(transaction.total_cost, Some(expected_total_cost));
 
     // Consume material
-    let consumption_request = crate::services::material::RecordConsumptionRequest {
+    let consumption_request = crate::domains::inventory::infrastructure::material::RecordConsumptionRequest {
         intervention_id: "int_cost_1".to_string(),
         material_id: material.id.clone(),
         step_id: None,
@@ -849,7 +849,7 @@ async fn test_material_expiry_tracking() {
     create_test_user(&service.db, user_id, "test6@example.com");
 
     // Create a material
-    let material_request = crate::services::material::CreateMaterialRequest {
+    let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
         sku: "MAT-EXPIRY".to_string(),
         name: "Test Expiry Material".to_string(),
         description: None,
@@ -883,7 +883,7 @@ async fn test_material_expiry_tracking() {
 
     // Stock in with expiry date
     let expiry_date = (Utc::now() + chrono::Duration::days(30)).timestamp_millis();
-    let stock_in_request = crate::services::material::CreateInventoryTransactionRequest {
+    let stock_in_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
         transaction_type: InventoryTransactionType::StockIn,
         quantity: 10.0,
@@ -936,7 +936,7 @@ async fn test_material_quality_tracking() {
     create_test_user(&service.db, user_id, "test7@example.com");
 
     // Create a material
-    let material_request = crate::services::material::CreateMaterialRequest {
+    let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
         sku: "MAT-QUALITY".to_string(),
         name: "Test Quality Material".to_string(),
         description: None,
@@ -969,7 +969,7 @@ async fn test_material_quality_tracking() {
         .unwrap();
 
     // Stock in with quality grade
-    let stock_in_request = crate::services::material::CreateInventoryTransactionRequest {
+    let stock_in_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
         transaction_type: InventoryTransactionType::StockIn,
         quantity: 25.0,
@@ -1000,7 +1000,7 @@ async fn test_material_quality_tracking() {
     assert_eq!(quality_stats.rejected_batches, 0);
 
     // Stock in another batch with lower quality
-    let stock_in_request_2 = crate::services::material::CreateInventoryTransactionRequest {
+    let stock_in_request_2 = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
         transaction_type: InventoryTransactionType::StockIn,
         quantity: 25.0,
@@ -1047,7 +1047,7 @@ async fn test_inventory_performance_with_large_dataset() {
     let start = std::time::Instant::now();
 
     for i in 1..=material_count {
-        let material_request = crate::services::material::CreateMaterialRequest {
+        let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
             sku: format!("MAT-PERF-{:03}", i),
             name: format!("Performance Test Material {}", i),
             description: None,
@@ -1091,7 +1091,7 @@ async fn test_inventory_performance_with_large_dataset() {
     let start = std::time::Instant::now();
 
     for material_id in &material_ids {
-        let stock_in_request = crate::services::material::CreateInventoryTransactionRequest {
+        let stock_in_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
             material_id: material_id.clone(),
             transaction_type: InventoryTransactionType::StockIn,
             quantity: 50.0,
@@ -1169,7 +1169,7 @@ async fn test_inventory_concurrent_access() {
     create_test_user(&service.db, user_id, "test_concurrent@example.com");
 
     // Create a material
-    let material_request = crate::services::material::CreateMaterialRequest {
+    let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
         sku: "MAT-CONCURRENT".to_string(),
         name: "Concurrent Test Material".to_string(),
         description: None,
@@ -1210,7 +1210,7 @@ async fn test_inventory_concurrent_access() {
         let user_id_clone = user_id.to_string();
 
         let handle = tokio::spawn(async move {
-            let stock_in_request = crate::services::material::CreateInventoryTransactionRequest {
+            let stock_in_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
                 material_id: material_id_clone,
                 transaction_type: InventoryTransactionType::StockIn,
                 quantity: 10.0,

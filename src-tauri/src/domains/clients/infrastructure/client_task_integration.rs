@@ -8,8 +8,8 @@
 //! - Cascade operations for client deletion
 
 use crate::db::Database;
-use crate::models::client::Client;
-use crate::models::task::Task;
+use crate::domains::clients::domain::models::client::Client;
+use crate::domains::tasks::domain::models::task::Task;
 use rusqlite::params;
 use std::sync::Arc;
 

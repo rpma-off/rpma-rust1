@@ -4,11 +4,11 @@
 //! using genpdf library for automatic pagination and better layout management.
 
 use crate::commands::AppResult;
-use crate::models::client::Client;
-use crate::models::intervention::InterventionStatus;
-use crate::models::photo::Photo;
-use crate::models::step::InterventionStep;
-use crate::models::step::StepStatus;
+use crate::domains::clients::domain::models::client::Client;
+use crate::domains::interventions::domain::models::intervention::InterventionStatus;
+use crate::domains::documents::domain::models::photo::Photo;
+use crate::domains::interventions::domain::models::step::InterventionStep;
+use crate::domains::interventions::domain::models::step::StepStatus;
 use crate::shared::contracts::common::*;
 
 use chrono::Utc;
@@ -17,20 +17,20 @@ use std::path::Path;
 
 /// Comprehensive PDF report generator for PPF interventions
 pub struct InterventionPdfReport {
-    intervention: crate::models::intervention::Intervention,
+    intervention: crate::domains::interventions::domain::models::intervention::Intervention,
     steps: Vec<InterventionStep>,
     photos: Vec<Photo>,
-    materials: Vec<crate::models::material::MaterialConsumption>,
+    materials: Vec<crate::domains::inventory::domain::models::material::MaterialConsumption>,
     client: Option<Client>,
 }
 
 impl InterventionPdfReport {
     /// Create a new PDF report instance
     pub fn new(
-        intervention: crate::models::intervention::Intervention,
+        intervention: crate::domains::interventions::domain::models::intervention::Intervention,
         steps: Vec<InterventionStep>,
         photos: Vec<Photo>,
-        materials: Vec<crate::models::material::MaterialConsumption>,
+        materials: Vec<crate::domains::inventory::domain::models::material::MaterialConsumption>,
         client: Option<Client>,
     ) -> Self {
         Self {

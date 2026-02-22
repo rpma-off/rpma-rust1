@@ -15,7 +15,7 @@ import { dashboardApiService, DashboardFilters, DashboardData, TechnicianSummary
 import { TaskWithDetails } from '@/types/task.types';
 import { DashboardTask, transformTask, RawTaskData } from '@/components/dashboard/types';
 import { handleFetchError, FetchError } from '@/lib/utils/fetch-error-handler';
-import { useLogger } from '@/hooks/useLogger';
+import { useLogger } from '@/shared/hooks/useLogger';
 import { LogDomain } from '@/lib/logging/types';
 import { normalizeError } from '@/types/utility.types';
 import { ipcClient } from '@/lib/ipc';

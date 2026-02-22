@@ -4,7 +4,7 @@
 //! comprehensive test cases for status transitions and validation rules.
 
 use crate::domains::tasks::infrastructure::task_validation::TaskValidationService;
-use crate::models::task::{Task, TaskPriority, TaskStatus};
+use crate::domains::tasks::domain::models::task::{Task, TaskPriority, TaskStatus};
 use crate::{test_client, test_db, test_intervention, test_task};
 use chrono::Utc;
 

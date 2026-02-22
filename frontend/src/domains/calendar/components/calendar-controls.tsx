@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useCalendarStore } from "@/lib/stores/calendarStore";
+import { useCalendarStore } from "@/domains/calendar/stores/calendarStore";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import {

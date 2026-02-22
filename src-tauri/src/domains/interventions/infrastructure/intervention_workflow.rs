@@ -9,14 +9,14 @@
 use crate::db::Database;
 use crate::db::{InterventionError, InterventionResult};
 use crate::logging::{LogDomain, RPMARequestLogger};
-use crate::models::intervention::{Intervention, InterventionStatus};
-use crate::models::step::{InterventionStep, StepStatus};
-use crate::services::intervention_data::InterventionDataService;
-use crate::services::intervention_types::*;
-use crate::services::workflow_strategy::{
+use crate::domains::interventions::domain::models::intervention::{Intervention, InterventionStatus};
+use crate::domains::interventions::domain::models::step::{InterventionStep, StepStatus};
+use crate::domains::interventions::infrastructure::intervention_data::InterventionDataService;
+use crate::domains::interventions::infrastructure::intervention_types::*;
+use crate::domains::tasks::infrastructure::workflow_strategy::{
     EnvironmentConditions, WorkflowContext, WorkflowStrategyFactory,
 };
-use crate::services::workflow_validation::WorkflowValidationService;
+use crate::domains::tasks::infrastructure::workflow_validation::WorkflowValidationService;
 use crate::shared::contracts::common::TimestampString;
 use crate::shared::event_bus::{publish_event, InterventionFinalized};
 use serde_json::json;
@@ -727,7 +727,7 @@ impl InterventionWorkflowService {
         let steps = self.data.get_intervention_steps(&intervention.id)?;
         let finalization_step = steps
             .iter()
-            .find(|s| s.step_type == crate::models::step::StepType::Finalization)
+            .find(|s| s.step_type == crate::domains::interventions::domain::models::step::StepType::Finalization)
             .cloned();
 
         let updated_step = finalization_step.map(|mut step| {
@@ -817,7 +817,7 @@ impl InterventionWorkflowService {
         }
 
         // Calculate basic metrics
-        let metrics = crate::services::intervention_types::InterventionMetrics {
+        let metrics = crate::domains::interventions::infrastructure::intervention_types::InterventionMetrics {
             total_duration_minutes: intervention.actual_duration.unwrap_or(0),
             completion_rate: 100.0, // Fully completed
             quality_score: intervention.quality_score,
@@ -921,7 +921,7 @@ impl InterventionWorkflowService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::step::StepType;
+    use crate::domains::interventions::domain::models::step::StepType;
     use crate::test_utils::TestDatabase;
 
     fn test_logger() -> RPMARequestLogger {

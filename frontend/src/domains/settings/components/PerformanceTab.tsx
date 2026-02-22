@@ -26,7 +26,7 @@ import {
   Save,
 } from 'lucide-react';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useLogger } from '@/hooks/useLogger';
+import { useLogger } from '@/shared/hooks/useLogger';
 import { LogDomain } from '@/lib/logging/types';
 import { ipcClient } from '@/lib/ipc';
 import { UserSession, UserPerformanceSettings } from '@/lib/backend';

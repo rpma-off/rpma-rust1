@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useCalendarStore } from '@/lib/stores/calendarStore';
+import { useCalendarStore } from '@/domains/calendar/stores/calendarStore';
 import { useAuth } from '@/domains/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

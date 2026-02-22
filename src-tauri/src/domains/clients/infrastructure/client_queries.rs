@@ -7,7 +7,7 @@
 //! - Sorting and ordering capabilities
 
 use crate::db::Database;
-use crate::models::client::{Client, ClientListResponse, ClientQuery};
+use crate::domains::clients::domain::models::client::{Client, ClientListResponse, ClientQuery};
 use rusqlite::params;
 use std::sync::Arc;
 
@@ -48,8 +48,8 @@ impl ClientQueriesService {
         if let Some(customer_type) = &query.customer_type {
             sql.push_str(" AND customer_type = ?");
             params_vec.push(match customer_type {
-                crate::models::client::CustomerType::Individual => "individual".to_string(),
-                crate::models::client::CustomerType::Business => "business".to_string(),
+                crate::domains::clients::domain::models::client::CustomerType::Individual => "individual".to_string(),
+                crate::domains::clients::domain::models::client::CustomerType::Business => "business".to_string(),
             });
         }
 
@@ -82,10 +82,10 @@ impl ClientQueriesService {
 
         let sort_order = match query
             .sort_order
-            .unwrap_or(crate::models::task::SortOrder::Desc)
+            .unwrap_or(crate::domains::tasks::domain::models::task::SortOrder::Desc)
         {
-            crate::models::task::SortOrder::Asc => "ASC",
-            crate::models::task::SortOrder::Desc => "DESC",
+            crate::domains::tasks::domain::models::task::SortOrder::Asc => "ASC",
+            crate::domains::tasks::domain::models::task::SortOrder::Desc => "DESC",
         };
 
         sql.push_str(&format!(" ORDER BY {} {}", sort_by_validated, sort_order));
@@ -124,8 +124,8 @@ impl ClientQueriesService {
         if let Some(customer_type) = &query.customer_type {
             count_sql.push_str(" AND customer_type = ?");
             count_params.push(match customer_type {
-                crate::models::client::CustomerType::Individual => "individual".to_string(),
-                crate::models::client::CustomerType::Business => "business".to_string(),
+                crate::domains::clients::domain::models::client::CustomerType::Individual => "individual".to_string(),
+                crate::domains::clients::domain::models::client::CustomerType::Business => "business".to_string(),
             });
         }
 
@@ -149,7 +149,7 @@ impl ClientQueriesService {
             .map_err(|e| format!("Failed to count clients: {}", e))?;
 
         let total_pages = ((total as f64) / (limit as f64)).ceil() as i32;
-        let pagination = crate::models::task::PaginationInfo {
+        let pagination = crate::domains::tasks::domain::models::task::PaginationInfo {
             page,
             limit,
             total,
@@ -194,7 +194,7 @@ impl ClientQueriesService {
     /// Get clients by customer type
     pub fn get_clients_by_type(
         &self,
-        customer_type: crate::models::client::CustomerType,
+        customer_type: crate::domains::clients::domain::models::client::CustomerType,
     ) -> Result<Vec<Client>, String> {
         let sql = r#"
             SELECT
@@ -209,8 +209,8 @@ impl ClientQueriesService {
         "#;
 
         let customer_type_str = match customer_type {
-            crate::models::client::CustomerType::Individual => "individual",
-            crate::models::client::CustomerType::Business => "business",
+            crate::domains::clients::domain::models::client::CustomerType::Individual => "individual",
+            crate::domains::clients::domain::models::client::CustomerType::Business => "business",
         };
 
         self.db

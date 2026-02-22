@@ -1,8 +1,8 @@
 //! Message service for messaging operations
 
 use crate::commands::AppError;
-use crate::models::message::*;
-use crate::repositories::message_repository::{self as repo, MessageRepository};
+use crate::domains::notifications::domain::models::message::*;
+use crate::domains::notifications::infrastructure::message_repository::{self as repo, MessageRepository};
 use crate::repositories::Repository;
 use rusqlite::params;
 use std::sync::Arc;
@@ -62,7 +62,7 @@ impl MessageService {
     /// Get messages with filtering and pagination
     pub async fn get_messages(
         &self,
-        query: &crate::models::message::MessageQuery,
+        query: &crate::domains::notifications::domain::models::message::MessageQuery,
     ) -> Result<MessageListResponse, AppError> {
         let repo_query = repo::MessageQuery {
             search: None,

@@ -4,7 +4,7 @@
 //! including shared utilities, authentication helpers, and common patterns.
 
 use crate::commands::{ApiResponse, AppError, AppState};
-use crate::models::settings::{AppSettings, SystemConfiguration};
+use crate::domains::settings::domain::models::settings::{AppSettings, SystemConfiguration};
 
 use std::sync::Mutex;
 
@@ -58,7 +58,7 @@ pub async fn get_app_settings(
     crate::commands::update_correlation_context_user(&user.user_id);
 
     // Only admins can view app settings
-    if !matches!(user.role, crate::models::auth::UserRole::Admin) {
+    if !matches!(user.role, crate::domains::auth::domain::models::auth::UserRole::Admin) {
         return Err(AppError::Authorization(
             "Only administrators can access application settings".to_string(),
         ));
@@ -97,7 +97,7 @@ pub fn update_system_config(new_config: SystemConfiguration) -> Result<(), Strin
 pub fn authenticate_user(
     session_token: &str,
     state: &AppState,
-) -> Result<crate::models::auth::UserSession, AppError> {
+) -> Result<crate::domains::auth::domain::models::auth::UserSession, AppError> {
     state
         .auth_service
         .validate_session(session_token)
@@ -106,10 +106,10 @@ pub fn authenticate_user(
 
 /// Validate settings update permissions
 pub fn validate_settings_permissions(
-    user: &crate::models::auth::UserSession,
-    required_role: crate::models::auth::UserRole,
+    user: &crate::domains::auth::domain::models::auth::UserSession,
+    required_role: crate::domains::auth::domain::models::auth::UserRole,
 ) -> Result<(), AppError> {
-    if !matches!(user.role, crate::models::auth::UserRole::Admin) && user.role != required_role {
+    if !matches!(user.role, crate::domains::auth::domain::models::auth::UserRole::Admin) && user.role != required_role {
         return Err(AppError::Authorization(
             "Insufficient permissions to modify settings".to_string(),
         ));

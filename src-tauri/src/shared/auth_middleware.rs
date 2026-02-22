@@ -4,7 +4,7 @@
 //! functionality for all Tauri IPC commands to ensure consistent
 //! security patterns across the application.
 
-use crate::models::auth::{UserRole, UserSession};
+use crate::domains::auth::domain::models::auth::{UserRole, UserSession};
 use crate::shared::app_state::AppState;
 use crate::shared::ipc::{AppError, AppResult};
 use sha2::{Digest, Sha256};
@@ -303,7 +303,7 @@ macro_rules! set_correlation_context {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::auth::UserRole::*;
+    use crate::domains::auth::domain::models::auth::UserRole::*;
 
     #[test]
     fn test_has_permission() {

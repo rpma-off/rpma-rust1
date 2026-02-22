@@ -4,7 +4,7 @@
 //! particularly date ranges and other constraints.
 
 use crate::commands::{AppError, AppResult};
-use crate::models::reports::DateRange;
+use crate::domains::reports::domain::models::reports::DateRange;
 use chrono::{Datelike, Duration, Utc};
 
 /// Validate date range parameters to prevent invalid queries

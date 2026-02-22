@@ -6,7 +6,7 @@
 use crate::domains::inventory::infrastructure::material_repository::{
     MaterialQuery, MaterialRepository,
 };
-use crate::models::material::{Material, MaterialType, UnitOfMeasure};
+use crate::domains::inventory::domain::models::material::{Material, MaterialType, UnitOfMeasure};
 use crate::repositories::base::Repository;
 use crate::test_utils::TestDatabase;
 use std::collections::HashMap;

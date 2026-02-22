@@ -6,7 +6,7 @@
 use crate::models::material::{
     InventoryTransaction, InventoryTransactionType, Material, MaterialType, UnitOfMeasure,
 };
-use crate::services::material::{
+use crate::domains::inventory::infrastructure::material::{
     CreateInventoryTransactionRequest, MaterialError, MaterialService,
 };
 use crate::test_utils::TestDatabase;
@@ -18,7 +18,7 @@ mod tests {
 
     /// Helper function to create a basic material
     fn create_test_material(service: &MaterialService, sku: &str, initial_stock: f64) -> Material {
-        let request = crate::services::material::CreateMaterialRequest {
+        let request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
             sku: skuString::from(""),
             name: format!("Test Material {}", sku),
             description: Some("Test material for transactions"String::from("")),
@@ -51,7 +51,7 @@ mod tests {
             .unwrap();
 
         if initial_stock > 0.0 {
-            let update_request = crate::services::material::UpdateStockRequest {
+            let update_request = crate::domains::inventory::infrastructure::material::UpdateStockRequest {
                 material_id: material.id.clone().unwrap(),
                 quantity_change: initial_stock,
                 reason: "Initial stock"String::from(""),

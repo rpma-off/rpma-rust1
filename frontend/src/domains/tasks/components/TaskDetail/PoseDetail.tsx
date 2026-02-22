@@ -12,7 +12,7 @@ import { Skeleton, Button, ErrorFallback } from '@/shared/ui';
 
 import { AlertCircle } from 'lucide-react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
+import { useIntersectionObserver } from '@/shared/hooks/useIntersectionObserver';
 // import { useVirtualizer } from '@tanstack/react-virtual'; // Uncomment when needed for virtual scrolling
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { taskService } from '../../services/task.service';

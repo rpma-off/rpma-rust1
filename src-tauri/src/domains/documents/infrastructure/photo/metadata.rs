@@ -6,7 +6,7 @@
 //! - Metadata updates and approval workflow
 
 use crate::db::Database;
-use crate::models::photo::Photo;
+use crate::domains::documents::domain::models::photo::Photo;
 use rusqlite::params;
 use std::fs;
 use std::path::Path;

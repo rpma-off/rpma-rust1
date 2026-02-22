@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::models::material::{InventoryStats, Material, MaterialConsumption, MaterialStats};
+use crate::domains::inventory::domain::models::material::{InventoryStats, Material, MaterialConsumption, MaterialStats};
 use crate::shared::db::Database;
 use crate::shared::error::AppError;
 use crate::shared::event_bus::DomainEventHandler;

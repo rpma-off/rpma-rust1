@@ -3,7 +3,7 @@
 //! Provides consistent database access patterns for Message entities.
 
 use crate::db::Database;
-use crate::models::message::{Message, MessageStatus, MessageType};
+use crate::domains::notifications::domain::models::message::{Message, MessageStatus, MessageType};
 use crate::repositories::base::{RepoError, RepoResult, Repository};
 use crate::repositories::cache::{ttl, Cache, CacheKeyBuilder};
 use async_trait::async_trait;

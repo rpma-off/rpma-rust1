@@ -3,7 +3,7 @@
 //! Provides consistent database access patterns for CalendarEvent entities.
 
 use crate::db::Database;
-use crate::models::calendar_event::{
+use crate::domains::calendar::domain::models::calendar_event::{
     CalendarEvent, CreateEventInput, EventStatus, EventType, UpdateEventInput,
 };
 use crate::repositories::base::{RepoError, RepoResult, Repository};

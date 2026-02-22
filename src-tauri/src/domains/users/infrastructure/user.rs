@@ -1,10 +1,11 @@
 //! User service for user management operations
 
 use crate::commands::AppError;
-use crate::models::auth::{UserAccount, UserRole};
-use crate::models::user::User as RepoUser; // Import as RepoUser to distinguish
+use crate::domains::auth::domain::models::auth::{UserAccount, UserRole};
+use crate::domains::users::domain::models::user::User as RepoUser; // Import as RepoUser to distinguish
 use crate::repositories::base::RepoError;
-use crate::repositories::{Repository, UserRepository};
+use crate::repositories::Repository;
+use crate::domains::users::infrastructure::user_repository::UserRepository;
 use std::sync::Arc;
 use tracing::{debug, error, info, warn};
 
@@ -23,10 +24,10 @@ fn repo_user_to_auth_user(repo_user: &RepoUser) -> UserAccount {
         first_name: repo_user.full_name.clone(), // Splitting full_name might be needed
         last_name: String::new(),          // Empty for now
         role: match repo_user.role {
-            crate::models::user::UserRole::Admin => UserRole::Admin,
-            crate::models::user::UserRole::Technician => UserRole::Technician,
-            crate::models::user::UserRole::Supervisor => UserRole::Supervisor,
-            crate::models::user::UserRole::Viewer => UserRole::Viewer,
+            crate::domains::users::domain::models::user::UserRole::Admin => UserRole::Admin,
+            crate::domains::users::domain::models::user::UserRole::Technician => UserRole::Technician,
+            crate::domains::users::domain::models::user::UserRole::Supervisor => UserRole::Supervisor,
+            crate::domains::users::domain::models::user::UserRole::Viewer => UserRole::Viewer,
         },
         password_hash: repo_user.password_hash.clone(),
         salt: None, // Not in repo user model
@@ -47,12 +48,12 @@ fn repo_user_to_auth_user(repo_user: &RepoUser) -> UserAccount {
 }
 
 /// Convert between auth UserRole and repo UserRole
-fn auth_role_to_repo_role(auth_role: UserRole) -> crate::models::user::UserRole {
+fn auth_role_to_repo_role(auth_role: UserRole) -> crate::domains::users::domain::models::user::UserRole {
     match auth_role {
-        UserRole::Admin => crate::models::user::UserRole::Admin,
-        UserRole::Technician => crate::models::user::UserRole::Technician,
-        UserRole::Supervisor => crate::models::user::UserRole::Supervisor,
-        UserRole::Viewer => crate::models::user::UserRole::Viewer,
+        UserRole::Admin => crate::domains::users::domain::models::user::UserRole::Admin,
+        UserRole::Technician => crate::domains::users::domain::models::user::UserRole::Technician,
+        UserRole::Supervisor => crate::domains::users::domain::models::user::UserRole::Supervisor,
+        UserRole::Viewer => crate::domains::users::domain::models::user::UserRole::Viewer,
     }
 }
 
@@ -278,7 +279,7 @@ impl UserService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::user::{User as RepoUser, UserRole as RepoUserRole};
+    use crate::domains::users::domain::models::user::{User as RepoUser, UserRole as RepoUserRole};
     use crate::repositories::cache::Cache;
     use crate::test_utils::setup_test_db;
     use std::sync::Arc;

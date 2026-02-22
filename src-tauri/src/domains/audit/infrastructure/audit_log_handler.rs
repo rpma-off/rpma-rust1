@@ -4,9 +4,9 @@
 //! Registered on the event bus so every published domain event automatically
 //! produces an audit trail record.
 
-use crate::services::audit_service::{ActionResult, AuditEvent, AuditEventType, AuditService};
-use crate::services::domain_event::DomainEvent;
-use crate::services::event_bus::EventHandler;
+use crate::domains::audit::infrastructure::audit_service::{ActionResult, AuditEvent, AuditEventType, AuditService};
+use crate::shared::services::domain_event::DomainEvent;
+use crate::shared::services::event_bus::EventHandler;
 use async_trait::async_trait;
 use std::sync::Arc;
 
@@ -260,7 +260,7 @@ impl EventHandler for AuditLogHandler {
 mod tests {
     use super::*;
     use crate::db::Database;
-    use crate::services::event_bus::{event_factory, InMemoryEventBus};
+    use crate::shared::services::event_bus::{event_factory, InMemoryEventBus};
     use std::sync::atomic::{AtomicUsize, Ordering};
 
     async fn setup_audit_handler() -> (InMemoryEventBus, Arc<AuditService>) {

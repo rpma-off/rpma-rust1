@@ -5,7 +5,7 @@
 
 use crate::authenticate;
 use crate::commands::{AppResult, AppState};
-use crate::models::auth::UserRole;
+use crate::domains::auth::domain::models::auth::UserRole;
 use tracing::{error, info, instrument};
 
 /// Generate comprehensive intervention PDF report
@@ -17,7 +17,7 @@ pub async fn generate_intervention_pdf_report(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> AppResult<crate::models::reports::InterventionReportResult> {
+) -> AppResult<crate::domains::reports::domain::models::reports::InterventionReportResult> {
     let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!(
         "Generating comprehensive intervention PDF report for: {}",
@@ -71,7 +71,7 @@ pub async fn generate_intervention_pdf_report(
 
     // Create PDF report instance
     tracing::info!("Creating PDF report instance");
-    let pdf_report = crate::services::pdf_report::InterventionPdfReport::new(
+    let pdf_report = crate::domains::reports::infrastructure::pdf_report::InterventionPdfReport::new(
         intervention_data.intervention.clone(),
         intervention_data.workflow_steps.clone(),
         intervention_data.photos.clone(),
@@ -98,7 +98,7 @@ pub async fn generate_intervention_pdf_report(
             let download_url = format!("file://{}", output_path.display());
 
             tracing::info!("Returning successful PDF generation result");
-            Ok(crate::models::reports::InterventionReportResult {
+            Ok(crate::domains::reports::domain::models::reports::InterventionReportResult {
                 success: true,
                 download_url: Some(download_url),
                 file_path: Some(output_path.to_string_lossy().to_string()),
@@ -132,7 +132,7 @@ pub async fn test_pdf_generation(
     let output_path = std::path::PathBuf::from(output_path);
 
     let result =
-        crate::services::pdf_report::InterventionPdfReport::test_generate_minimal(&output_path)
+        crate::domains::reports::infrastructure::pdf_report::InterventionPdfReport::test_generate_minimal(&output_path)
             .await;
 
     match result {

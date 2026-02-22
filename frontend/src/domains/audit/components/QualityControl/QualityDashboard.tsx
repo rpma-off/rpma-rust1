@@ -29,7 +29,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { QualityControlService } from '@/domains/interventions';
 import type { QualityCheckpoint, QualityControlWorkflow } from '@/shared/types';
 import { QualityIssue, CorrectiveAction } from '@/types/ppf-intervention';
-import { useTranslation } from '@/hooks/useTranslation';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 
 interface QualityDashboardProps {
   interventionId: string;

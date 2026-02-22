@@ -4,7 +4,7 @@
 
 use crate::commands::AppError;
 use crate::db::Database;
-use crate::models::task::*;
+use crate::domains::tasks::domain::models::task::*;
 use std::sync::Arc;
 
 /// Core CRUD operations for tasks

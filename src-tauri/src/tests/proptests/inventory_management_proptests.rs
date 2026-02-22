@@ -3,8 +3,8 @@
 //! Uses proptest to test inventory operations with random inputs
 
 use crate::db::Database;
-use crate::models::material::{InventoryTransactionType, Material, MaterialType, UnitOfMeasure};
-use crate::services::material::MaterialService;
+use crate::domains::inventory::domain::models::material::{InventoryTransactionType, Material, MaterialType, UnitOfMeasure};
+use crate::domains::inventory::infrastructure::material::MaterialService;
 use proptest::prelude::*;
 use rusqlite::params;
 use uuid::Uuid;
@@ -224,7 +224,7 @@ proptest! {
             let reorder = reorder_point.min(max_stock);
 
             // Create material with random valid data
-            let request = crate::services::material::CreateMaterialRequest {
+            let request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
                 sku: sku.clone(),
                 name: name.clone(),
                 description: description.clone(),
@@ -285,7 +285,7 @@ proptest! {
             let service = MaterialService::new(db);
 
             // Create a material first
-            let material_request = crate::services::material::CreateMaterialRequest {
+            let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
                 sku: "MAT-PROPTEST".to_string(),
                 name: "Property Test Material".to_string(),
                 description: None,
@@ -316,7 +316,7 @@ proptest! {
             let material = service.create_material(material_request, Some("user_test".to_string())).unwrap();
 
             // Create inventory transaction with random valid data
-            let transaction_request = crate::services::material::CreateInventoryTransactionRequest {
+            let transaction_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
                 material_id: material.id.clone(),
                 transaction_type: transaction_type.clone(),
                 quantity: quantity.clone(),
@@ -383,7 +383,7 @@ proptest! {
             let service = MaterialService::new(db);
 
             // Create a material
-            let material_request = crate::services::material::CreateMaterialRequest {
+            let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
                 sku: "MAT-ROUNDTRIP".to_string(),
                 name: "Roundtrip Test Material".to_string(),
                 description: None,
@@ -426,7 +426,7 @@ proptest! {
                     InventoryTransactionType::StockOut
                 };
 
-                let transaction_request = crate::services::material::CreateInventoryTransactionRequest {
+                let transaction_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
                     material_id: material.id.clone(),
                     transaction_type,
                     quantity,
@@ -496,7 +496,7 @@ proptest! {
                 let name = format!("Material {} {}", i, "TestItem");
                 material_names.push(name);
 
-                let material_request = crate::services::material::CreateMaterialRequest {
+                let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
                     sku: format!("MAT-SEARCH-{}", i),
                     name: material_names[i].clone(),
                     description: None,
@@ -574,7 +574,7 @@ proptest! {
             let service = MaterialService::new(db);
 
             // Create a material
-            let material_request = crate::services::material::CreateMaterialRequest {
+            let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
                 sku: "MAT-BOUNDARY".to_string(),
                 name: "Boundary Test Material".to_string(),
                 description: None,
@@ -606,7 +606,7 @@ proptest! {
 
             // Stock in initial amount
             if initial_stock > 0.0 {
-                let stock_in_request = crate::services::material::CreateInventoryTransactionRequest {
+                let stock_in_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
                     material_id: material.id.clone(),
                     transaction_type: InventoryTransactionType::StockIn,
                     quantity: initial_stock,
@@ -628,7 +628,7 @@ proptest! {
             }
 
             // Stock out transaction (could be larger than available stock)
-            let stock_out_request = crate::services::material::CreateInventoryTransactionRequest {
+            let stock_out_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
                 material_id: material.id.clone(),
                 transaction_type: InventoryTransactionType::StockOut,
                 quantity: transaction_quantity,
@@ -683,7 +683,7 @@ proptest! {
             let service = MaterialService::new(db);
 
             // Create a material
-            let material_request = crate::services::material::CreateMaterialRequest {
+            let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
                 sku: "MAT-COST".to_string(),
                 name: "Cost Test Material".to_string(),
                 description: None,
@@ -714,7 +714,7 @@ proptest! {
             let material = service.create_material(material_request, Some("user_test".to_string())).unwrap();
 
             // Create transaction with cost
-            let transaction_request = crate::services::material::CreateInventoryTransactionRequest {
+            let transaction_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
                 material_id: material.id.clone(),
                 transaction_type: InventoryTransactionType::StockIn,
                 quantity: quantity.clone(),

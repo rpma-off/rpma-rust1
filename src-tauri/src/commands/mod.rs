@@ -18,7 +18,7 @@ pub mod ui;
 pub mod websocket;
 pub mod websocket_commands;
 
-pub use crate::models::auth::UserRole;
+pub use crate::domains::auth::domain::models::auth::UserRole;
 pub use crate::shared::app_state::{AppState, AppStateType};
 pub use crate::shared::ipc::response::{ApiError, ApiResponse, CompressedApiResponse};
 pub use correlation_helpers::*;
@@ -41,19 +41,19 @@ pub use system::{
     health_check,
 };
 
-use crate::models::client::ClientWithTasks;
-use crate::models::task::*;
+use crate::domains::clients::domain::models::client::ClientWithTasks;
+use crate::domains::tasks::domain::models::task::*;
 
 pub use crate::domains::users::application::{
     CreateUserRequest, UpdateUserRequest, UserAction, UserListResponse, UserResponse,
 };
-use crate::models::client::Client;
+use crate::domains::clients::domain::models::client::Client;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, error, info, instrument, warn};
 
 // Import client types from models
 use crate::domains::clients::infrastructure::client::ClientStats;
-use crate::models::client::{
+use crate::domains::clients::domain::models::client::{
     ClientListResponse, ClientQuery, CreateClientRequest, UpdateClientRequest,
 };
 
@@ -191,7 +191,7 @@ pub fn get_database_status(state: AppState) -> Result<ApiResponse<serde_json::Va
     debug!("Database status requested");
 
     let status =
-        crate::services::system::SystemService::get_database_status(&state.db).map_err(|e| {
+        crate::shared::services::system::SystemService::get_database_status(&state.db).map_err(|e| {
             error!("Failed to get database status: {}", e);
             AppError::Database(e)
         })?;

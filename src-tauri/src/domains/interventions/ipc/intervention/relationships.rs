@@ -35,7 +35,7 @@ pub enum InterventionManagementAction {
 #[serde(tag = "type")]
 pub enum InterventionManagementResponse {
     List {
-        interventions: Vec<crate::models::intervention::Intervention>,
+        interventions: Vec<crate::domains::interventions::domain::models::intervention::Intervention>,
         total: u64,
         page: u32,
         limit: u32,
@@ -44,7 +44,7 @@ pub enum InterventionManagementResponse {
         stats: InterventionStats,
     },
     ByTask {
-        interventions: Vec<crate::models::intervention::Intervention>,
+        interventions: Vec<crate::domains::interventions::domain::models::intervention::Intervention>,
     },
     BulkUpdated {
         updated_count: usize,
@@ -106,8 +106,8 @@ pub async fn intervention_management(
             // Build filter based on user role and permissions
             let query_status_clone = query.status.clone();
             let filter_status = query_status_clone.as_deref();
-            let _filter = crate::models::intervention::InterventionFilter {
-                technician_id: if session.role == crate::models::auth::UserRole::Technician {
+            let _filter = crate::domains::interventions::domain::models::intervention::InterventionFilter {
+                technician_id: if session.role == crate::domains::auth::domain::models::auth::UserRole::Technician {
                     Some(session.user_id.clone())
                 } else {
                     query.technician_id.clone()
@@ -153,8 +153,8 @@ pub async fn intervention_management(
             let target_technician_id = technician_id.unwrap_or(session.user_id.clone());
 
             if target_technician_id != session.user_id
-                && session.role != crate::models::auth::UserRole::Admin
-                && session.role != crate::models::auth::UserRole::Supervisor
+                && session.role != crate::domains::auth::domain::models::auth::UserRole::Admin
+                && session.role != crate::domains::auth::domain::models::auth::UserRole::Supervisor
             {
                 return Err(AppError::Authorization(
                     "Not authorized to view these statistics".to_string(),
@@ -174,7 +174,7 @@ pub async fn intervention_management(
                 .filter(|i| {
                     matches!(
                         i.status,
-                        crate::models::intervention::InterventionStatus::Completed
+                        crate::domains::interventions::domain::models::intervention::InterventionStatus::Completed
                     )
                 })
                 .count() as u64;
@@ -183,7 +183,7 @@ pub async fn intervention_management(
                 .filter(|i| {
                     matches!(
                         i.status,
-                        crate::models::intervention::InterventionStatus::InProgress
+                        crate::domains::interventions::domain::models::intervention::InterventionStatus::InProgress
                     )
                 })
                 .count() as u64;
@@ -215,8 +215,8 @@ pub async fn intervention_management(
             if !task_access
                 && !matches!(
                     session.role,
-                    crate::models::auth::UserRole::Admin
-                        | crate::models::auth::UserRole::Supervisor
+                    crate::domains::auth::domain::models::auth::UserRole::Admin
+                        | crate::domains::auth::domain::models::auth::UserRole::Supervisor
                 )
             {
                 return Err(AppError::Authorization(
@@ -258,8 +258,8 @@ pub async fn intervention_management(
             updates,
         } => {
             // Only admins and supervisors can do bulk updates
-            if session.role != crate::models::auth::UserRole::Admin
-                && session.role != crate::models::auth::UserRole::Supervisor
+            if session.role != crate::domains::auth::domain::models::auth::UserRole::Admin
+                && session.role != crate::domains::auth::domain::models::auth::UserRole::Supervisor
             {
                 return Err(AppError::Authorization(
                     "Not authorized to perform bulk updates".to_string(),
@@ -267,7 +267,7 @@ pub async fn intervention_management(
             }
 
             // Parse updates
-            let update_request: crate::models::intervention::BulkUpdateInterventionRequest =
+            let update_request: crate::domains::interventions::domain::models::intervention::BulkUpdateInterventionRequest =
                 serde_json::from_value(updates).map_err(|e| {
                     AppError::Validation(format!("Invalid bulk update data: {}", e))
                 })?;

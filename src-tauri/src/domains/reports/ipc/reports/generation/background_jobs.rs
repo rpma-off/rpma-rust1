@@ -4,8 +4,8 @@
 
 use crate::authenticate;
 use crate::commands::{AppResult, AppState};
-use crate::models::auth::UserRole;
-use crate::models::reports::*;
+use crate::domains::auth::domain::models::auth::UserRole;
+use crate::domains::reports::domain::models::reports::*;
 use tracing::{info, instrument};
 
 use super::validation;
@@ -110,7 +110,7 @@ pub async fn get_report_job_status(
     job_id: String,
     session_token: String,
     state: AppState<'_>,
-) -> AppResult<Option<crate::services::report_jobs::ReportJob>> {
+) -> AppResult<Option<crate::domains::reports::infrastructure::report_jobs::ReportJob>> {
     info!("Getting report job status for job: {}", job_id);
 
     let _current_user = authenticate!(&session_token, &state);
@@ -153,7 +153,7 @@ pub async fn get_report_job_result(
     match job_status {
         Some(job) => {
             match job.status {
-                crate::services::report_jobs::ReportJobStatus::Completed => {
+                crate::domains::reports::infrastructure::report_jobs::ReportJobStatus::Completed => {
                     // Get the report data from cache using the same key format as ReportJobService
                     let cache_key = match job.report_type {
                         ReportType::Tasks => format!("report:task_completion:{}", job_id),
@@ -179,7 +179,7 @@ pub async fn get_report_job_result(
                     state
                         .cache_service
                         .get(
-                            crate::services::cache::CacheType::ComputedAnalytics,
+                            crate::shared::services::cache::CacheType::ComputedAnalytics,
                             &cache_key,
                         )?
                         .ok_or_else(|| {
@@ -188,16 +188,16 @@ pub async fn get_report_job_result(
                             )
                         })
                 }
-                crate::services::report_jobs::ReportJobStatus::Failed => {
+                crate::domains::reports::infrastructure::report_jobs::ReportJobStatus::Failed => {
                     Err(crate::commands::AppError::Internal(
                         job.error_message
                             .unwrap_or_else(|| "Report generation failed".to_string()),
                     ))
                 }
-                crate::services::report_jobs::ReportJobStatus::Processing => Err(
+                crate::domains::reports::infrastructure::report_jobs::ReportJobStatus::Processing => Err(
                     crate::commands::AppError::Validation("Report is still processing".to_string()),
                 ),
-                crate::services::report_jobs::ReportJobStatus::Pending => {
+                crate::domains::reports::infrastructure::report_jobs::ReportJobStatus::Pending => {
                     Err(crate::commands::AppError::Validation(
                         "Report is queued for processing".to_string(),
                     ))

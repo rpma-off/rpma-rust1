@@ -3,7 +3,7 @@
 //! This module contains shared constants and utilities used across task-related services.
 
 use crate::commands::AppError;
-use crate::models::task::{PaginationInfo, TaskQuery};
+use crate::domains::tasks::domain::models::task::{PaginationInfo, TaskQuery};
 
 /// Timeout duration for single task operations (in seconds)
 pub const SINGLE_TASK_TIMEOUT_SECS: u64 = 5;

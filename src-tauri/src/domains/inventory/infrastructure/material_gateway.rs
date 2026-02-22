@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
-use crate::models::material::{
+use crate::domains::inventory::domain::models::material::{
     InventoryStats, Material, MaterialConsumption, MaterialStats, MaterialType,
 };
-pub use crate::services::material::{MaterialError, MaterialResult, MaterialService};
-use crate::services::material::{RecordConsumptionRequest, UpdateStockRequest};
+pub use crate::domains::inventory::infrastructure::material::{MaterialError, MaterialResult, MaterialService};
+use crate::domains::inventory::infrastructure::material::{RecordConsumptionRequest, UpdateStockRequest};
 
 #[derive(Debug)]
 pub struct MaterialGateway {

@@ -1,6 +1,6 @@
 //! Secure JWT token management service
 
-use crate::models::auth::UserRole;
+use crate::domains::auth::domain::models::auth::UserRole;
 use base64::{engine::general_purpose, Engine as _};
 use chrono::{DateTime, Duration, TimeZone, Utc};
 use hmac::{Hmac, Mac};
@@ -200,7 +200,7 @@ pub fn hash_token_with_env(token: &str) -> Result<String, TokenError> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::auth::UserRole;
+    use crate::domains::auth::domain::models::auth::UserRole;
 
     #[test]
     fn test_token_generation_and_validation() {

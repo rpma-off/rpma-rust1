@@ -4,8 +4,8 @@
 
 use crate::commands::{AppError, AppResult, AppState};
 use crate::db::Database;
-use crate::models::reports::*;
-use crate::models::sync::EntityType;
+use crate::domains::reports::domain::models::reports::*;
+use crate::domains::sync::domain::models::sync::EntityType;
 use rusqlite::types::Value;
 use std::collections::HashMap;
 
@@ -398,7 +398,7 @@ impl SearchReportService {
                 .any(|t| t.eq_ignore_ascii_case("interventions"));
 
         let tasks = if include_tasks {
-            _db.query_as::<crate::models::task::Task>(
+            _db.query_as::<crate::domains::tasks::domain::models::task::Task>(
                 "SELECT * FROM tasks WHERE deleted_at IS NULL AND (title LIKE ? OR task_number LIKE ? OR COALESCE(customer_name, '') LIKE ?) ORDER BY updated_at DESC LIMIT ?",
                 rusqlite::params![
                     format!("%{}%", _query),
@@ -413,7 +413,7 @@ impl SearchReportService {
         };
 
         let clients = if include_clients {
-            _db.query_as::<crate::models::client::Client>(
+            _db.query_as::<crate::domains::clients::domain::models::client::Client>(
                 "SELECT * FROM clients WHERE deleted_at IS NULL AND (name LIKE ? OR COALESCE(email, '') LIKE ? OR COALESCE(phone, '') LIKE ?) ORDER BY updated_at DESC LIMIT ?",
                 rusqlite::params![
                     format!("%{}%", _query),
@@ -428,7 +428,7 @@ impl SearchReportService {
         };
 
         let interventions = if include_interventions {
-            let repo = crate::repositories::intervention_repository::InterventionRepository::new(
+            let repo = crate::domains::interventions::infrastructure::intervention_repository::InterventionRepository::new(
                 std::sync::Arc::new(_db.clone()),
             );
 

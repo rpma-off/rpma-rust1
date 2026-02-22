@@ -1,4 +1,4 @@
-use crate::models::material::UnitOfMeasure;
+use crate::domains::inventory::domain::models::material::UnitOfMeasure;
 
 use super::errors::{InventoryDomainError, InventoryDomainResult};
 

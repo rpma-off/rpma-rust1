@@ -14,7 +14,7 @@ use crate::domains::tasks::infrastructure::task_creation::TaskCreationService;
 use crate::domains::tasks::infrastructure::task_deletion::TaskDeletionService;
 use crate::domains::tasks::infrastructure::task_update::TaskUpdateService;
 use crate::domains::tasks::infrastructure::task_validation::TaskValidationService;
-use crate::models::task::{CreateTaskRequest, TaskPriority, TaskStatus, UpdateTaskRequest};
+use crate::domains::tasks::domain::models::task::{CreateTaskRequest, TaskPriority, TaskStatus, UpdateTaskRequest};
 use chrono::Utc;
 use rusqlite::params;
 use std::sync::Arc;

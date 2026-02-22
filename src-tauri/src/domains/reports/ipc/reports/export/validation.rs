@@ -3,7 +3,7 @@
 //! This module provides validation functions to ensure data integrity
 //! before processing reports, preventing crashes from corrupted data.
 
-use crate::models::reports::CompleteInterventionData;
+use crate::domains::reports::domain::models::reports::CompleteInterventionData;
 
 /// CRASH PROTECTION: Validate intervention data integrity before processing
 /// This prevents crashes from corrupted or invalid data

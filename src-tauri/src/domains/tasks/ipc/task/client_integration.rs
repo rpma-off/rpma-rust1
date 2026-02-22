@@ -4,7 +4,7 @@
 
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::tasks::ipc::task_types::TaskFilter;
-use crate::models::task::Task;
+use crate::domains::tasks::domain::models::task::Task;
 
 use crate::authenticate;
 use serde::Deserialize;
@@ -50,21 +50,21 @@ pub async fn get_tasks_with_client_details(
     let mut filter = request.filter.unwrap_or_default();
 
     match session.role {
-        crate::models::auth::UserRole::Admin => {
+        crate::domains::auth::domain::models::auth::UserRole::Admin => {
             // Admin can see all tasks
         }
-        crate::models::auth::UserRole::Supervisor => {
+        crate::domains::auth::domain::models::auth::UserRole::Supervisor => {
             // Supervisor can see tasks in their regions
             // TODO: Add region filtering when UserSession has region field
             // if let Some(region) = &session.region {
             //     filter.region = Some(region.clone());
             // }
         }
-        crate::models::auth::UserRole::Technician => {
+        crate::domains::auth::domain::models::auth::UserRole::Technician => {
             // Technician can only see their assigned tasks
             filter.assigned_to = Some(session.user_id.clone());
         }
-        crate::models::auth::UserRole::Viewer => {
+        crate::domains::auth::domain::models::auth::UserRole::Viewer => {
             // Viewer can only see their assigned tasks (read-only access)
             filter.assigned_to = Some(session.user_id.clone());
         }
@@ -76,29 +76,29 @@ pub async fn get_tasks_with_client_details(
     let offset = (page - 1) * limit;
 
     // Get tasks with client information
-    let query = crate::models::task::TaskQuery {
+    let query = crate::domains::tasks::domain::models::task::TaskQuery {
         page: Some(((offset / limit) + 1) as i32),
         limit: Some(limit as i32),
         status: filter.status.as_ref().and_then(|s| match s.as_str() {
-            "pending" => Some(crate::models::task::TaskStatus::Pending),
-            "in_progress" => Some(crate::models::task::TaskStatus::InProgress),
-            "completed" => Some(crate::models::task::TaskStatus::Completed),
+            "pending" => Some(crate::domains::tasks::domain::models::task::TaskStatus::Pending),
+            "in_progress" => Some(crate::domains::tasks::domain::models::task::TaskStatus::InProgress),
+            "completed" => Some(crate::domains::tasks::domain::models::task::TaskStatus::Completed),
             _ => None,
         }),
         technician_id: filter.assigned_to.clone(),
         client_id: filter.client_id.clone(),
         priority: filter.priority.as_ref().and_then(|p| match p.as_str() {
-            "low" => Some(crate::models::task::TaskPriority::Low),
-            "medium" => Some(crate::models::task::TaskPriority::Medium),
-            "high" => Some(crate::models::task::TaskPriority::High),
-            "urgent" => Some(crate::models::task::TaskPriority::Urgent),
+            "low" => Some(crate::domains::tasks::domain::models::task::TaskPriority::Low),
+            "medium" => Some(crate::domains::tasks::domain::models::task::TaskPriority::Medium),
+            "high" => Some(crate::domains::tasks::domain::models::task::TaskPriority::High),
+            "urgent" => Some(crate::domains::tasks::domain::models::task::TaskPriority::Urgent),
             _ => None,
         }),
         search: None,
         from_date: filter.date_from.map(|dt| dt.to_rfc3339()),
         to_date: filter.date_to.map(|dt| dt.to_rfc3339()),
         sort_by: "created_at".to_string(),
-        sort_order: crate::models::task::SortOrder::Desc,
+        sort_order: crate::domains::tasks::domain::models::task::SortOrder::Desc,
     };
 
     let tasks_with_clients = state
@@ -162,34 +162,34 @@ pub async fn get_tasks_with_client_details(
 
 /// Determine the relationship status between task and client
 fn determine_client_relationship_status(
-    task_with_client: &crate::services::task_client_integration::TaskWithClient,
-    _client_details: &Option<crate::models::client::Client>,
+    task_with_client: &crate::domains::tasks::infrastructure::task_client_integration::TaskWithClient,
+    _client_details: &Option<crate::domains::clients::domain::models::client::Client>,
 ) -> String {
     // Check task status first
     match task_with_client.task.status {
-        crate::models::task::TaskStatus::Completed => {
+        crate::domains::tasks::domain::models::task::TaskStatus::Completed => {
             // Note: customer_satisfaction field doesn't exist in Task model
             // For now, just mark as completed
             "completed".to_string()
         }
-        crate::models::task::TaskStatus::Cancelled => "cancelled".to_string(),
-        crate::models::task::TaskStatus::InProgress => {
+        crate::domains::tasks::domain::models::task::TaskStatus::Cancelled => "cancelled".to_string(),
+        crate::domains::tasks::domain::models::task::TaskStatus::InProgress => {
             // TODO: Implement schedule tracking logic
             "in_progress".to_string()
         }
-        crate::models::task::TaskStatus::Pending => {
+        crate::domains::tasks::domain::models::task::TaskStatus::Pending => {
             // Simplified status - could be enhanced with actual client status
             "pending".to_string()
         }
-        crate::models::task::TaskStatus::OnHold => "on_hold".to_string(),
-        crate::models::task::TaskStatus::Draft => "draft".to_string(),
-        crate::models::task::TaskStatus::Scheduled => "scheduled".to_string(),
-        crate::models::task::TaskStatus::Invalid => "invalid".to_string(),
-        crate::models::task::TaskStatus::Archived => "archived".to_string(),
-        crate::models::task::TaskStatus::Failed => "failed".to_string(),
-        crate::models::task::TaskStatus::Overdue => "overdue".to_string(),
-        crate::models::task::TaskStatus::Assigned => "assigned".to_string(),
-        crate::models::task::TaskStatus::Paused => "paused".to_string(),
+        crate::domains::tasks::domain::models::task::TaskStatus::OnHold => "on_hold".to_string(),
+        crate::domains::tasks::domain::models::task::TaskStatus::Draft => "draft".to_string(),
+        crate::domains::tasks::domain::models::task::TaskStatus::Scheduled => "scheduled".to_string(),
+        crate::domains::tasks::domain::models::task::TaskStatus::Invalid => "invalid".to_string(),
+        crate::domains::tasks::domain::models::task::TaskStatus::Archived => "archived".to_string(),
+        crate::domains::tasks::domain::models::task::TaskStatus::Failed => "failed".to_string(),
+        crate::domains::tasks::domain::models::task::TaskStatus::Overdue => "overdue".to_string(),
+        crate::domains::tasks::domain::models::task::TaskStatus::Assigned => "assigned".to_string(),
+        crate::domains::tasks::domain::models::task::TaskStatus::Paused => "paused".to_string(),
     }
 }
 
@@ -246,7 +246,7 @@ pub async fn get_client_task_summary(
     client_id: &str,
     state: &AppState<'_>,
     correlation_id: Option<String>,
-) -> Result<ApiResponse<crate::services::client::ClientStat>, AppError> {
+) -> Result<ApiResponse<crate::domains::clients::infrastructure::client::ClientStat>, AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     debug!("Getting task summary for client {}", client_id);
 
@@ -258,7 +258,7 @@ pub async fn get_client_task_summary(
     // (Technician and Viewer have restricted access)
     let can_view_client_data = matches!(
         session.role,
-        crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+        crate::domains::auth::domain::models::auth::UserRole::Admin | crate::domains::auth::domain::models::auth::UserRole::Supervisor
     );
 
     if !can_view_client_data {

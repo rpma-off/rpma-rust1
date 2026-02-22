@@ -1,12 +1,12 @@
 //! Settings service for user settings management
 
 use crate::commands::AppError;
-use crate::models::settings::{
+use crate::domains::settings::domain::models::settings::{
     UserAccessibilitySettings, UserNotificationSettings, UserPerformanceSettings, UserPreferences,
     UserProfileSettings, UserSecuritySettings, UserSettings,
 };
-use crate::services::token;
-use crate::services::validation::ValidationService;
+use crate::domains::auth::infrastructure::token;
+use crate::shared::services::validation::ValidationService;
 use rusqlite::{params, types::Value, OptionalExtension};
 use std::collections::HashSet;
 use std::sync::Arc;
@@ -882,7 +882,7 @@ impl SettingsService {
         current_password: &str,
         new_password: &str,
         current_session_token: &str,
-        auth_service: &crate::services::auth::AuthService,
+        auth_service: &crate::domains::auth::infrastructure::auth::AuthService,
     ) -> Result<(), AppError> {
         let conn = self.db.get_connection().map_err(|e| {
             error!("Failed to get database connection: {}", e);
@@ -1221,8 +1221,8 @@ impl SettingsService {
 #[cfg(test)]
 mod tests {
     use super::SettingsService;
-    use crate::models::auth::{UserAccount, UserRole};
-    use crate::services::auth::AuthService;
+    use crate::domains::auth::domain::models::auth::{UserAccount, UserRole};
+    use crate::domains::auth::infrastructure::auth::AuthService;
     use chrono::Utc;
     use rusqlite::params;
     use std::sync::Arc;
@@ -1269,25 +1269,25 @@ mod tests {
         (test_db, settings_service, auth_service)
     }
 
-    fn create_test_user(auth_service: &AuthService) -> crate::models::auth::UserAccount {
+    fn create_test_user(auth_service: &AuthService) -> crate::domains::auth::domain::models::auth::UserAccount {
         auth_service
             .create_account(
                 "settings.test@example.com",
                 "settings.test@example.com",
                 "Settings",
                 "Tester",
-                crate::models::auth::UserRole::Technician,
+                crate::domains::auth::domain::models::auth::UserRole::Technician,
                 "CurrentPass1!",
             )
             .expect("failed to create test user")
     }
 
-    fn insert_session(test_db: &LocalTestDb, user: &crate::models::auth::UserAccount, token: &str) {
+    fn insert_session(test_db: &LocalTestDb, user: &crate::domains::auth::domain::models::auth::UserAccount, token: &str) {
         let conn = test_db
             .db
             .get_connection()
             .expect("failed to get connection");
-        let token_hash = crate::services::token::hash_token_with_env(token)
+        let token_hash = crate::domains::auth::infrastructure::token::hash_token_with_env(token)
             .expect("failed to hash test session token");
         conn.execute(
             "INSERT INTO user_sessions (id, user_id, username, email, role, token, refresh_token, expires_at, last_activity, created_at)
@@ -1513,7 +1513,7 @@ mod tests {
                 |row| row.get(0),
             )
             .expect("failed to count sessions");
-        let current_token_hash = crate::services::token::hash_token_with_env("current-token")
+        let current_token_hash = crate::domains::auth::infrastructure::token::hash_token_with_env("current-token")
             .expect("failed to hash token");
         let current_exists: i64 = conn
             .query_row(

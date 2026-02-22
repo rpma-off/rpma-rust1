@@ -11,7 +11,7 @@ use crate::domains::tasks::infrastructure::task_constants::{
 use crate::domains::tasks::infrastructure::task_validation::{
     validate_status_transition, TaskValidationService,
 };
-use crate::models::task::{Task, UpdateTaskRequest};
+use crate::domains::tasks::domain::models::task::{Task, UpdateTaskRequest};
 use chrono::Utc;
 use rusqlite::params;
 use std::sync::Arc;
@@ -141,21 +141,21 @@ impl TaskUpdateService {
 
             match (&old_status, new_status) {
                 (
-                    crate::models::task::TaskStatus::Pending
-                    | crate::models::task::TaskStatus::Scheduled
-                    | crate::models::task::TaskStatus::Assigned,
-                    crate::models::task::TaskStatus::InProgress,
+                    crate::domains::tasks::domain::models::task::TaskStatus::Pending
+                    | crate::domains::tasks::domain::models::task::TaskStatus::Scheduled
+                    | crate::domains::tasks::domain::models::task::TaskStatus::Assigned,
+                    crate::domains::tasks::domain::models::task::TaskStatus::InProgress,
                 ) => {
                     if task.started_at.is_none() {
                         task.started_at = Some(Utc::now().timestamp_millis());
                     }
                 }
-                (_, crate::models::task::TaskStatus::Completed) => {
+                (_, crate::domains::tasks::domain::models::task::TaskStatus::Completed) => {
                     if task.completed_at.is_none() {
                         task.completed_at = Some(Utc::now().timestamp_millis());
                     }
                 }
-                (crate::models::task::TaskStatus::Completed, _) => {
+                (crate::domains::tasks::domain::models::task::TaskStatus::Completed, _) => {
                     task.completed_at = None;
                 }
                 _ => {}

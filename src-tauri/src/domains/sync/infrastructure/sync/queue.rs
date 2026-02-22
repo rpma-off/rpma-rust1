@@ -3,7 +3,7 @@
 //! Provides persistent queue for offline CRUD operations with retry logic
 //! and dependency management.
 
-use crate::models::sync::*;
+use crate::domains::sync::domain::models::sync::*;
 use rusqlite::params;
 
 use chrono::{DateTime, Utc};
@@ -530,7 +530,7 @@ impl SyncQueue {
 mod tests {
     use super::*;
     use crate::db::Database;
-    use crate::models::sync::{EntityType, OperationType, SyncOperation, SyncStatus};
+    use crate::domains::sync::domain::models::sync::{EntityType, OperationType, SyncOperation, SyncStatus};
     use chrono::Utc;
 
     fn build_operation(entity_id: &str, dependencies: Vec<String>) -> SyncOperation {

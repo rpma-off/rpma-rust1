@@ -6,7 +6,7 @@
 //! - Upload failure handling and recovery
 
 use crate::db::Database;
-use crate::models::photo::Photo;
+use crate::domains::documents::domain::models::photo::Photo;
 use crate::shared::contracts::common::now;
 use rusqlite::params;
 

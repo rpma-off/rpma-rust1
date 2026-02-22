@@ -23,14 +23,14 @@ pub async fn get_entity_counts(
 #[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn export_report_data(
-    report_type: crate::models::reports::ReportType,
-    format: crate::models::reports::ExportFormat,
-    date_range: crate::models::reports::DateRange,
-    filters: crate::models::reports::ReportFilters,
+    report_type: crate::domains::reports::domain::models::reports::ReportType,
+    format: crate::domains::reports::domain::models::reports::ExportFormat,
+    date_range: crate::domains::reports::domain::models::reports::DateRange,
+    filters: crate::domains::reports::domain::models::reports::ReportFilters,
     session_token: String,
     correlation_id: Option<String>,
     state: crate::commands::AppState<'_>,
-) -> crate::commands::AppResult<crate::models::reports::ExportResult> {
+) -> crate::commands::AppResult<crate::domains::reports::domain::models::reports::ExportResult> {
     let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     export::data_export::export_report_data(
         report_type,
@@ -50,7 +50,7 @@ pub async fn export_intervention_report(
     session_token: String,
     correlation_id: Option<String>,
     state: crate::commands::AppState<'_>,
-) -> crate::commands::AppResult<crate::models::reports::InterventionReportResult> {
+) -> crate::commands::AppResult<crate::domains::reports::domain::models::reports::InterventionReportResult> {
     let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     export::intervention_export::export_intervention_report(intervention_id, session_token, state)
         .await
@@ -82,7 +82,7 @@ pub async fn get_report_status(
     session_token: String,
     correlation_id: Option<String>,
     state: crate::commands::AppState<'_>,
-) -> crate::commands::AppResult<Option<crate::services::report_jobs::ReportJob>> {
+) -> crate::commands::AppResult<Option<crate::domains::reports::infrastructure::report_jobs::ReportJob>> {
     let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     generation::background_jobs::get_report_job_status(job_id, session_token, state).await
 }

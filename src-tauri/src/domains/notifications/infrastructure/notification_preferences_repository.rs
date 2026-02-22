@@ -3,7 +3,7 @@
 //! Provides consistent database access patterns for NotificationPreferences entities.
 
 use crate::db::Database;
-use crate::models::notification::NotificationPreferences;
+use crate::domains::notifications::domain::models::notification::NotificationPreferences;
 use crate::repositories::base::{RepoError, RepoResult, Repository};
 use crate::repositories::cache::{ttl, Cache, CacheKeyBuilder};
 use async_trait::async_trait;

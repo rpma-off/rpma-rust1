@@ -5,9 +5,9 @@
 
 use crate::commands::AppResult;
 use crate::memory_management_helpers;
-use crate::models::reports::CompleteInterventionData;
-use crate::services::document_storage::DocumentStorageService;
-use crate::services::pdf_generation::PdfGenerationService;
+use crate::domains::reports::domain::models::reports::CompleteInterventionData;
+use crate::domains::documents::infrastructure::document_storage::DocumentStorageService;
+use crate::domains::reports::infrastructure::pdf_generation::PdfGenerationService;
 use std::path::Path;
 use tracing::{error, info, warn};
 
@@ -363,7 +363,7 @@ async fn generate_pdf_with_timeout(
     intervention_data: &CompleteInterventionData,
     _db: &crate::db::Database,
     base_dir: &Path,
-) -> AppResult<crate::models::reports::InterventionReportResult> {
+) -> AppResult<crate::domains::reports::domain::models::reports::InterventionReportResult> {
     // Create unique filename
     let file_name = DocumentStorageService::generate_filename(
         &format!(
@@ -393,7 +393,7 @@ async fn generate_pdf_with_timeout(
     // Create file URL for Tauri
     let download_url = format!("file://{}", output_path.display());
 
-    Ok(crate::models::reports::InterventionReportResult {
+    Ok(crate::domains::reports::domain::models::reports::InterventionReportResult {
         success: true,
         download_url: Some(download_url),
         file_path: Some(output_path.to_string_lossy().to_string()),

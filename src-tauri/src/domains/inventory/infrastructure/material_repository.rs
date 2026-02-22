@@ -3,7 +3,7 @@
 //! Provides consistent database access patterns for Material entities.
 
 use crate::db::Database;
-use crate::models::material::{Material, MaterialType};
+use crate::domains::inventory::domain::models::material::{Material, MaterialType};
 use crate::repositories::base::{RepoError, RepoResult, Repository};
 use crate::repositories::cache::{ttl, Cache, CacheKeyBuilder};
 use async_trait::async_trait;
@@ -619,7 +619,7 @@ mod tests {
             brand: None,
             model: None,
             specifications: None,
-            unit_of_measure: crate::models::material::UnitOfMeasure::Roll,
+            unit_of_measure: crate::domains::inventory::domain::models::material::UnitOfMeasure::Roll,
             current_stock: 10.0,
             minimum_stock: Some(5.0),
             maximum_stock: Some(20.0),
@@ -673,7 +673,7 @@ mod tests {
             brand: None,
             model: None,
             specifications: None,
-            unit_of_measure: crate::models::material::UnitOfMeasure::Roll,
+            unit_of_measure: crate::domains::inventory::domain::models::material::UnitOfMeasure::Roll,
             current_stock: 15.0,
             minimum_stock: Some(5.0),
             maximum_stock: Some(20.0),
@@ -727,7 +727,7 @@ mod tests {
             brand: None,
             model: None,
             specifications: None,
-            unit_of_measure: crate::models::material::UnitOfMeasure::Roll,
+            unit_of_measure: crate::domains::inventory::domain::models::material::UnitOfMeasure::Roll,
             current_stock: 3.0,
             minimum_stock: Some(5.0),
             maximum_stock: Some(20.0),
@@ -780,7 +780,7 @@ mod tests {
                 brand: None,
                 model: None,
                 specifications: None,
-                unit_of_measure: crate::models::material::UnitOfMeasure::Piece,
+                unit_of_measure: crate::domains::inventory::domain::models::material::UnitOfMeasure::Piece,
                 current_stock: 10.0,
                 minimum_stock: Some(5.0),
                 maximum_stock: Some(20.0),
@@ -833,7 +833,7 @@ mod tests {
             brand: None,
             model: None,
             specifications: None,
-            unit_of_measure: crate::models::material::UnitOfMeasure::Roll,
+            unit_of_measure: crate::domains::inventory::domain::models::material::UnitOfMeasure::Roll,
             current_stock: 10.0,
             minimum_stock: Some(5.0),
             maximum_stock: Some(20.0),
@@ -890,7 +890,7 @@ mod tests {
                 brand: None,
                 model: None,
                 specifications: None,
-                unit_of_measure: crate::models::material::UnitOfMeasure::Piece,
+                unit_of_measure: crate::domains::inventory::domain::models::material::UnitOfMeasure::Piece,
                 current_stock: 10.0,
                 minimum_stock: Some(5.0),
                 maximum_stock: Some(20.0),
@@ -948,7 +948,7 @@ mod tests {
             brand: None,
             model: None,
             specifications: None,
-            unit_of_measure: crate::models::material::UnitOfMeasure::Roll,
+            unit_of_measure: crate::domains::inventory::domain::models::material::UnitOfMeasure::Roll,
             current_stock: 10.0,
             minimum_stock: Some(5.0),
             maximum_stock: Some(20.0),

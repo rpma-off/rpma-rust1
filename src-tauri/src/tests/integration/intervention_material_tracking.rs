@@ -5,12 +5,12 @@
 
 use crate::commands::AppResult;
 use crate::domains::tasks::infrastructure::task_crud::TaskCrudService;
-use crate::models::material::{InventoryTransactionType, Material, MaterialType, UnitOfMeasure};
-use crate::services::intervention_types::{
+use crate::domains::inventory::domain::models::material::{InventoryTransactionType, Material, MaterialType, UnitOfMeasure};
+use crate::domains::interventions::infrastructure::intervention_types::{
     AdvanceStepRequest, FinalizeInterventionRequest, StartInterventionRequest,
 };
-use crate::services::intervention_workflow::InterventionWorkflowService;
-use crate::services::material::{
+use crate::domains::interventions::infrastructure::intervention_workflow::InterventionWorkflowService;
+use crate::domains::inventory::infrastructure::material::{
     CreateInventoryTransactionRequest, CreateMaterialRequest, MaterialService,
     RecordConsumptionRequest, UpdateStockRequest,
 };
@@ -161,7 +161,7 @@ impl InterventionMaterialTrackingTestFixture {
     }
 
     /// Create a task for material tracking testing
-    pub fn create_tracking_test_task(&self, title: &str) -> AppResult<crate::models::task::Task> {
+    pub fn create_tracking_test_task(&self, title: &str) -> AppResult<crate::domains::tasks::domain::models::task::Task> {
         let task_request = test_task!(
             title: title.to_string(),
             vehicle_plate: Some("TRACK001".to_string()),
@@ -177,8 +177,8 @@ impl InterventionMaterialTrackingTestFixture {
     /// Start an intervention for material tracking
     pub fn start_tracking_intervention(
         &self,
-        task: &crate::models::task::Task,
-    ) -> AppResult<crate::models::intervention::Intervention> {
+        task: &crate::domains::tasks::domain::models::task::Task,
+    ) -> AppResult<crate::domains::interventions::domain::models::intervention::Intervention> {
         let intervention_request = StartInterventionRequest {
             task_id: task.id.clone(),
             intervention_number: None,
@@ -220,7 +220,7 @@ impl InterventionMaterialTrackingTestFixture {
     /// Record material usage during intervention steps with photos
     pub async fn record_material_usage_with_photos(
         &self,
-        intervention: &crate::models::intervention::Intervention,
+        intervention: &crate::domains::interventions::domain::models::intervention::Intervention,
         film: &Material,
         adhesive: &Material,
         cleaner: &Material,
@@ -400,7 +400,7 @@ impl InterventionMaterialTrackingTestFixture {
     pub fn get_consumption_history(
         &self,
         intervention_id: &str,
-    ) -> AppResult<Vec<crate::models::material::MaterialConsumption>> {
+    ) -> AppResult<Vec<crate::domains::inventory::domain::models::material::MaterialConsumption>> {
         Ok(self
             .material_service
             .get_intervention_consumption(intervention_id)?)
@@ -410,7 +410,7 @@ impl InterventionMaterialTrackingTestFixture {
     pub fn get_consumption_summary(
         &self,
         intervention_id: &str,
-    ) -> AppResult<crate::models::material::InterventionMaterialSummary> {
+    ) -> AppResult<crate::domains::inventory::domain::models::material::InterventionMaterialSummary> {
         Ok(self
             .material_service
             .get_intervention_material_summary(intervention_id)?)

@@ -5,8 +5,8 @@
 
 use crate::authenticate;
 use crate::commands::{AppError, AppResult, AppState};
-use crate::models::reports::*;
-use crate::services::reports::search_service::SearchReportService;
+use crate::domains::reports::domain::models::reports::*;
+use crate::domains::reports::infrastructure::reports::search_service::SearchReportService;
 use tracing::{info, instrument};
 
 /// Search tasks

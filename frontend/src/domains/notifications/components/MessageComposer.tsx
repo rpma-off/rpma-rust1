@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMessages, useMessageTemplates } from '../api/useMessages';
-import { useTranslation } from '@/hooks/useTranslation';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import type { SendMessageRequest, MessageTemplate } from '@/lib/backend';
 import { toast } from 'sonner';
 import { Send, FileText, Users, Mail, MessageSquare } from 'lucide-react';

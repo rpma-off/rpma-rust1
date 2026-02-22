@@ -3,7 +3,7 @@
 //! Provides consistent database access patterns for User entities.
 
 use crate::db::Database;
-use crate::models::user::{User, UserRole};
+use crate::domains::users::domain::models::user::{User, UserRole};
 use crate::repositories::base::{RepoError, RepoResult, Repository};
 use crate::repositories::cache::{ttl, Cache, CacheKeyBuilder};
 use async_trait::async_trait;

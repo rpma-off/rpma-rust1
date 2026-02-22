@@ -84,7 +84,7 @@ pub struct TaskStatistics {
 /// Task with client information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TaskWithClient {
-    pub task: crate::models::task::Task,
+    pub task: crate::domains::tasks::domain::models::task::Task,
     pub client_name: String,
     pub client_id: String,
 }

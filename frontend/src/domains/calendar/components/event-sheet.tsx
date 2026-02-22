@@ -28,7 +28,7 @@ import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import type { CalendarEvent } from "@/types/calendar";
 import { useState } from "react";
 import { Kbd } from "@/components/ui/kbd";
-import { useTranslation } from "@/hooks/useTranslation";
+import { useTranslation } from "@/shared/hooks/useTranslation";
 
 interface EventSheetProps {
   event: CalendarEvent | null;

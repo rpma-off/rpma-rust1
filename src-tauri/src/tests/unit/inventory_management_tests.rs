@@ -3,11 +3,11 @@
 //! Tests material categories, inventory transactions, and stock management
 
 use crate::db::Database;
-use crate::models::material::{
+use crate::domains::inventory::domain::models::material::{
     InventoryTransaction, InventoryTransactionType, Material, MaterialCategory, MaterialType,
     Supplier, UnitOfMeasure,
 };
-use crate::services::material::MaterialService;
+use crate::domains::inventory::infrastructure::material::MaterialService;
 use chrono::{DateTime, Utc};
 use rusqlite::params;
 use uuid::Uuid;
@@ -219,7 +219,7 @@ async fn test_create_material_category() {
     let service = MaterialService::new(db);
 
     // Create a new category
-    let request = crate::services::material::CreateMaterialCategoryRequest {
+    let request = crate::domains::inventory::infrastructure::material::CreateMaterialCategoryRequest {
         name: "Test Category".to_string(),
         code: Some("TEST".to_string()),
         parent_id: None,
@@ -251,7 +251,7 @@ async fn test_create_material_category_with_parent() {
     let service = MaterialService::new(db);
 
     // Create parent category first
-    let parent_request = crate::services::material::CreateMaterialCategoryRequest {
+    let parent_request = crate::domains::inventory::infrastructure::material::CreateMaterialCategoryRequest {
         name: "Parent Category".to_string(),
         code: Some("PARENT".to_string()),
         parent_id: None,
@@ -265,7 +265,7 @@ async fn test_create_material_category_with_parent() {
         .unwrap();
 
     // Create child category
-    let child_request = crate::services::material::CreateMaterialCategoryRequest {
+    let child_request = crate::domains::inventory::infrastructure::material::CreateMaterialCategoryRequest {
         name: "Child Category".to_string(),
         code: Some("CHILD".to_string()),
         parent_id: Some(parent.id.clone()),
@@ -292,7 +292,7 @@ async fn test_create_material() {
     let supplier_id = create_test_supplier(&service.db, "Test Supplier");
 
     // Create material request
-    let request = crate::services::material::CreateMaterialRequest {
+    let request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
         sku: "MAT-001".to_string(),
         name: "Test Material".to_string(),
         description: Some("Test material description".to_string()),
@@ -352,7 +352,7 @@ async fn test_create_inventory_transaction() {
     let service = MaterialService::new(db);
 
     // Create a material first
-    let material_request = crate::services::material::CreateMaterialRequest {
+    let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
         sku: "MAT-002".to_string(),
         name: "Test Material for Transaction".to_string(),
         description: None,
@@ -385,7 +385,7 @@ async fn test_create_inventory_transaction() {
         .unwrap();
 
     // Create inventory transaction request
-    let transaction_request = crate::services::material::CreateInventoryTransactionRequest {
+    let transaction_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
         transaction_type: InventoryTransactionType::StockIn,
         quantity: 50.0,
@@ -439,7 +439,7 @@ async fn test_stock_out_transaction() {
     let service = MaterialService::new(db);
 
     // Create a material
-    let material_request = crate::services::material::CreateMaterialRequest {
+    let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
         sku: "MAT-003".to_string(),
         name: "Test Material for Stock Out".to_string(),
         description: None,
@@ -472,7 +472,7 @@ async fn test_stock_out_transaction() {
         .unwrap();
 
     // Stock in first
-    let stock_in_request = crate::services::material::CreateInventoryTransactionRequest {
+    let stock_in_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
         transaction_type: InventoryTransactionType::StockIn,
         quantity: 100.0,
@@ -495,7 +495,7 @@ async fn test_stock_out_transaction() {
         .unwrap();
 
     // Stock out
-    let stock_out_request = crate::services::material::CreateInventoryTransactionRequest {
+    let stock_out_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
         transaction_type: InventoryTransactionType::StockOut,
         quantity: 25.0,
@@ -543,7 +543,7 @@ async fn test_adjustment_transaction() {
     let service = MaterialService::new(db);
 
     // Create a material
-    let material_request = crate::services::material::CreateMaterialRequest {
+    let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
         sku: "MAT-004".to_string(),
         name: "Test Material for Adjustment".to_string(),
         description: None,
@@ -576,7 +576,7 @@ async fn test_adjustment_transaction() {
         .unwrap();
 
     // Stock in first
-    let stock_in_request = crate::services::material::CreateInventoryTransactionRequest {
+    let stock_in_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
         transaction_type: InventoryTransactionType::StockIn,
         quantity: 20.0,
@@ -599,7 +599,7 @@ async fn test_adjustment_transaction() {
         .unwrap();
 
     // Adjustment (positive)
-    let adjustment_request = crate::services::material::CreateInventoryTransactionRequest {
+    let adjustment_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
         transaction_type: InventoryTransactionType::Adjustment,
         quantity: 5.0,
@@ -647,7 +647,7 @@ async fn test_transfer_transaction() {
     let service = MaterialService::new(db);
 
     // Create a material
-    let material_request = crate::services::material::CreateMaterialRequest {
+    let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
         sku: "MAT-005".to_string(),
         name: "Test Material for Transfer".to_string(),
         description: None,
@@ -680,7 +680,7 @@ async fn test_transfer_transaction() {
         .unwrap();
 
     // Stock in first
-    let stock_in_request = crate::services::material::CreateInventoryTransactionRequest {
+    let stock_in_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
         transaction_type: InventoryTransactionType::StockIn,
         quantity: 10.0,
@@ -703,7 +703,7 @@ async fn test_transfer_transaction() {
         .unwrap();
 
     // Transfer to another location
-    let transfer_request = crate::services::material::CreateInventoryTransactionRequest {
+    let transfer_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
         transaction_type: InventoryTransactionType::Transfer,
         quantity: 3.0,
@@ -753,7 +753,7 @@ async fn test_waste_transaction() {
     let service = MaterialService::new(db);
 
     // Create a material
-    let material_request = crate::services::material::CreateMaterialRequest {
+    let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
         sku: "MAT-006".to_string(),
         name: "Test Material for Waste".to_string(),
         description: None,
@@ -786,7 +786,7 @@ async fn test_waste_transaction() {
         .unwrap();
 
     // Stock in first
-    let stock_in_request = crate::services::material::CreateInventoryTransactionRequest {
+    let stock_in_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
         transaction_type: InventoryTransactionType::StockIn,
         quantity: 30.0,
@@ -809,7 +809,7 @@ async fn test_waste_transaction() {
         .unwrap();
 
     // Waste transaction
-    let waste_request = crate::services::material::CreateInventoryTransactionRequest {
+    let waste_request = crate::domains::inventory::infrastructure::material::CreateInventoryTransactionRequest {
         material_id: material.id.clone(),
         transaction_type: InventoryTransactionType::Waste,
         quantity: 5.0,
@@ -858,7 +858,7 @@ async fn test_get_material_by_id() {
     let service = MaterialService::new(db);
 
     // Create a material
-    let material_request = crate::services::material::CreateMaterialRequest {
+    let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
         sku: "MAT-007".to_string(),
         name: "Test Material for Get".to_string(),
         description: None,
@@ -909,7 +909,7 @@ async fn test_get_material_by_sku() {
     let service = MaterialService::new(db);
 
     // Create a material
-    let material_request = crate::services::material::CreateMaterialRequest {
+    let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
         sku: "MAT-008".to_string(),
         name: "Test Material for SKU".to_string(),
         description: None,
@@ -959,7 +959,7 @@ async fn test_list_materials() {
 
     // Create multiple materials
     for i in 1..=5 {
-        let material_request = crate::services::material::CreateMaterialRequest {
+        let material_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
             sku: format!("MAT-LIST-{}", i),
             name: format!("Test Material List {}", i),
             description: None,
@@ -1010,7 +1010,7 @@ async fn test_list_materials_with_filters() {
     let service = MaterialService::new(db);
 
     // Create materials with different types
-    let film_request = crate::services::material::CreateMaterialRequest {
+    let film_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
         sku: "MAT-FILM".to_string(),
         name: "Film Material".to_string(),
         description: None,
@@ -1038,7 +1038,7 @@ async fn test_list_materials_with_filters() {
         warehouse_id: None,
     };
 
-    let liquid_request = crate::services::material::CreateMaterialRequest {
+    let liquid_request = crate::domains::inventory::infrastructure::material::CreateMaterialRequest {
         sku: "MAT-LIQUID".to_string(),
         name: "Liquid Material".to_string(),
         description: None,
@@ -1115,7 +1115,7 @@ async fn test_list_material_categories() {
     let service = MaterialService::new(db);
 
     // Create additional categories
-    let category_request_1 = crate::services::material::CreateMaterialCategoryRequest {
+    let category_request_1 = crate::domains::inventory::infrastructure::material::CreateMaterialCategoryRequest {
         name: "Custom Category 1".to_string(),
         code: Some("CUST1".to_string()),
         parent_id: None,
@@ -1124,7 +1124,7 @@ async fn test_list_material_categories() {
         color: None,
     };
 
-    let category_request_2 = crate::services::material::CreateMaterialCategoryRequest {
+    let category_request_2 = crate::domains::inventory::infrastructure::material::CreateMaterialCategoryRequest {
         name: "Custom Category 2".to_string(),
         code: Some("CUST2".to_string()),
         parent_id: None,
@@ -1164,7 +1164,7 @@ async fn test_list_material_categories_with_parent() {
     let service = MaterialService::new(db);
 
     // Create parent category
-    let parent_request = crate::services::material::CreateMaterialCategoryRequest {
+    let parent_request = crate::domains::inventory::infrastructure::material::CreateMaterialCategoryRequest {
         name: "Parent Category".to_string(),
         code: Some("PARENT".to_string()),
         parent_id: None,
@@ -1179,7 +1179,7 @@ async fn test_list_material_categories_with_parent() {
 
     // Create child categories
     for i in 1..=3 {
-        let child_request = crate::services::material::CreateMaterialCategoryRequest {
+        let child_request = crate::domains::inventory::infrastructure::material::CreateMaterialCategoryRequest {
             name: format!("Child Category {}", i),
             code: Some(format!("CHILD{}", i)),
             parent_id: Some(parent.id.clone()),

@@ -10,18 +10,18 @@ use crate::commands::AppResult;
 use crate::domains::clients::infrastructure::client::ClientService;
 use crate::domains::clients::infrastructure::client_statistics::ClientStatisticsService;
 use crate::domains::tasks::infrastructure::task_crud::TaskCrudService;
-use crate::models::client::{Client, CustomerType};
-use crate::models::intervention::Intervention;
-use crate::models::material::{Material, MaterialType, UnitOfMeasure};
-use crate::models::task::{Task, TaskPriority, TaskStatus};
-use crate::models::user::{User, UserRole};
-use crate::services::audit_service::{AuditEvent, AuditService};
-use crate::services::auth::AuthService;
-use crate::services::intervention_types::{
+use crate::domains::clients::domain::models::client::{Client, CustomerType};
+use crate::domains::interventions::domain::models::intervention::Intervention;
+use crate::domains::inventory::domain::models::material::{Material, MaterialType, UnitOfMeasure};
+use crate::domains::tasks::domain::models::task::{Task, TaskPriority, TaskStatus};
+use crate::domains::users::domain::models::user::{User, UserRole};
+use crate::domains::audit::infrastructure::audit_service::{AuditEvent, AuditService};
+use crate::domains::auth::infrastructure::auth::AuthService;
+use crate::domains::interventions::infrastructure::intervention_types::{
     AdvanceStepRequest, FinalizeInterventionRequest, StartInterventionRequest,
 };
-use crate::services::intervention_workflow::InterventionWorkflowService;
-use crate::services::material::{
+use crate::domains::interventions::infrastructure::intervention_workflow::InterventionWorkflowService;
+use crate::domains::inventory::infrastructure::material::{
     CreateMaterialRequest, MaterialService, RecordConsumptionRequest, UpdateStockRequest,
 };
 use crate::test_utils::TestDatabase;
@@ -206,7 +206,7 @@ impl CrossDomainTestFixture {
             vehicle_year: Some("2023".to_string()),
             ppf_zones: ppf_zones,
             status: "pending".to_string(),
-            priority: Some(crate::models::task::TaskPriority::Medium),
+            priority: Some(crate::domains::tasks::domain::models::task::TaskPriority::Medium),
             client_id: Some(client.id.clone()),
             customer_name: Some(client.name.clone()),
             customer_email: client.email.clone(),
@@ -688,7 +688,7 @@ mod tests {
                 .get_intervention_by_id(&intervention.id)?;
             assert_eq!(
                 updated_intervention.status,
-                crate::models::intervention::InterventionStatus::Completed
+                crate::domains::interventions::domain::models::intervention::InterventionStatus::Completed
             );
 
             // Verify material consumption

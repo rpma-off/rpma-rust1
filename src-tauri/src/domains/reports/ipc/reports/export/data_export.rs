@@ -3,7 +3,7 @@
 //! This module handles the main export operations and data generation.
 
 use crate::commands::{AppResult, AppState};
-use crate::models::reports::*;
+use crate::domains::reports::domain::models::reports::*;
 use chrono::{Duration, Utc};
 use std::path::Path;
 use tracing::{debug, error, info, instrument};

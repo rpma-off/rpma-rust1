@@ -24,11 +24,11 @@ fn default_quality_check_passed() -> bool {
 /// while technicians can only access interventions assigned to their user ID.
 fn can_access_intervention(
     technician_id: Option<&str>,
-    session: &crate::models::auth::UserSession,
+    session: &crate::domains::auth::domain::models::auth::UserSession,
 ) -> bool {
     let is_privileged = matches!(
         session.role,
-        crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+        crate::domains::auth::domain::models::auth::UserRole::Admin | crate::domains::auth::domain::models::auth::UserRole::Supervisor
     );
     is_privileged || technician_id.is_some_and(|id| id == session.user_id.as_str())
 }
@@ -40,7 +40,7 @@ fn can_access_intervention(
 fn ensure_intervention_access(
     state: &AppState<'_>,
     intervention_id: &str,
-    session: &crate::models::auth::UserSession,
+    session: &crate::domains::auth::domain::models::auth::UserSession,
     unauthorized_message: &str,
 ) -> Result<(), AppError> {
     let intervention = state
@@ -107,17 +107,17 @@ pub enum InterventionProgressAction {
 #[serde(tag = "type")]
 pub enum InterventionProgressResponse {
     Retrieved {
-        progress: crate::models::intervention::InterventionProgress,
-        steps: Vec<crate::models::step::InterventionStep>,
+        progress: crate::domains::interventions::domain::models::intervention::InterventionProgress,
+        steps: Vec<crate::domains::interventions::domain::models::step::InterventionStep>,
     },
     StepAdvanced {
-        step: Box<crate::models::step::InterventionStep>,
-        next_step: Option<crate::models::step::InterventionStep>,
+        step: Box<crate::domains::interventions::domain::models::step::InterventionStep>,
+        next_step: Option<crate::domains::interventions::domain::models::step::InterventionStep>,
         progress_percentage: f32,
         requirements_completed: Vec<String>,
     },
     StepProgressSaved {
-        step: Box<crate::models::step::InterventionStep>,
+        step: Box<crate::domains::interventions::domain::models::step::InterventionStep>,
     },
 }
 
@@ -129,7 +129,7 @@ pub async fn intervention_get_progress(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<ApiResponse<crate::models::intervention::InterventionProgress>, AppError> {
+) -> Result<ApiResponse<crate::domains::interventions::domain::models::intervention::InterventionProgress>, AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let session = authenticate!(&session_token, &state);
     crate::commands::update_correlation_context_user(&session.user_id);
@@ -173,7 +173,7 @@ pub async fn intervention_advance_step(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<ApiResponse<crate::models::step::InterventionStep>, AppError> {
+) -> Result<ApiResponse<crate::domains::interventions::domain::models::step::InterventionStep>, AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let session = authenticate!(&session_token, &state);
     crate::commands::update_correlation_context_user(&session.user_id);
@@ -196,7 +196,7 @@ pub async fn intervention_advance_step(
         "Not authorized to advance this intervention",
     )?;
 
-    let advance_request = crate::services::intervention_types::AdvanceStepRequest {
+    let advance_request = crate::domains::interventions::infrastructure::intervention_types::AdvanceStepRequest {
         intervention_id: intervention_id.clone(),
         step_id: step_id.clone(),
         collected_data: serde_json::Value::Null,
@@ -253,7 +253,7 @@ pub async fn intervention_save_step_progress(
         "Not authorized to save progress for this intervention",
     )?;
 
-    let progress_request = crate::services::intervention_types::SaveStepProgressRequest {
+    let progress_request = crate::domains::interventions::infrastructure::intervention_types::SaveStepProgressRequest {
         step_id: step_id.clone(),
         collected_data: progress_data,
         notes: None,
@@ -360,7 +360,7 @@ pub async fn intervention_progress(
                 "Advance step request received"
             );
 
-            let advance_request = crate::services::intervention_types::AdvanceStepRequest {
+            let advance_request = crate::domains::interventions::infrastructure::intervention_types::AdvanceStepRequest {
                 intervention_id: intervention_id.clone(),
                 step_id: step_id.clone(),
                 collected_data,
@@ -423,7 +423,7 @@ pub async fn intervention_progress(
                 "Not authorized to save progress for this intervention",
             )?;
 
-            let progress_request = crate::services::intervention_types::SaveStepProgressRequest {
+            let progress_request = crate::domains::interventions::infrastructure::intervention_types::SaveStepProgressRequest {
                 step_id,
                 collected_data,
                 notes,
@@ -456,7 +456,7 @@ pub async fn intervention_progress(
 #[cfg(test)]
 mod tests {
     use super::can_access_intervention;
-    use crate::models::auth::{UserRole, UserSession};
+    use crate::domains::auth::domain::models::auth::{UserRole, UserSession};
 
     fn session_with_role(role: UserRole, user_id: &str) -> UserSession {
         UserSession::new(

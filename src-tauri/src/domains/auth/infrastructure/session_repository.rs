@@ -2,8 +2,8 @@
 
 use crate::commands::AppError;
 use crate::db::Database;
-use crate::models::auth::UserSession;
-use crate::services::token;
+use crate::domains::auth::domain::models::auth::UserSession;
+use crate::domains::auth::infrastructure::token;
 use chrono::Utc;
 use rusqlite::{params, OptionalExtension, Row};
 use std::collections::HashMap;
@@ -229,11 +229,11 @@ impl SessionRepository {
             role: {
                 let role_str: String = row.get(4)?;
                 match role_str.as_str() {
-                    "admin" => crate::models::auth::UserRole::Admin,
-                    "technician" => crate::models::auth::UserRole::Technician,
-                    "supervisor" => crate::models::auth::UserRole::Supervisor,
-                    "viewer" => crate::models::auth::UserRole::Viewer,
-                    _ => crate::models::auth::UserRole::Viewer,
+                    "admin" => crate::domains::auth::domain::models::auth::UserRole::Admin,
+                    "technician" => crate::domains::auth::domain::models::auth::UserRole::Technician,
+                    "supervisor" => crate::domains::auth::domain::models::auth::UserRole::Supervisor,
+                    "viewer" => crate::domains::auth::domain::models::auth::UserRole::Viewer,
+                    _ => crate::domains::auth::domain::models::auth::UserRole::Viewer,
                 }
             },
             token: row.get(5)?,
@@ -254,7 +254,7 @@ impl SessionRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::auth::UserRole;
+    use crate::domains::auth::domain::models::auth::UserRole;
 
     #[tokio::test]
     async fn test_create_session_hashes_tokens() {

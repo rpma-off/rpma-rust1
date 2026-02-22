@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { UserAccount, UserRole } from '@/types';
 import { useAuth } from '@/domains/auth';
 import { ipcClient } from '@/lib/ipc';
-import { useTranslation } from '@/hooks/useTranslation';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 
 interface UserFormProps {
   user?: UserAccount | null;

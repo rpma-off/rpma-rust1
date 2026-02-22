@@ -1,6 +1,6 @@
 //! Application-layer contracts (DTOs) for the Quotes bounded context.
 
-use crate::models::quote::*;
+use crate::domains::quotes::domain::models::quote::*;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]

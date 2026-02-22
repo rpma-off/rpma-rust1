@@ -4,7 +4,7 @@ use regex::Regex;
 use thiserror::Error;
 
 use crate::commands::TaskAction;
-use crate::models::task::CreateTaskRequest;
+use crate::domains::tasks::domain::models::task::CreateTaskRequest;
 
 #[derive(Error, Debug)]
 pub enum ValidationError {

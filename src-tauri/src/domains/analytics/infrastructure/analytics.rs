@@ -4,7 +4,7 @@
 //! analytics metrics collection, and dashboard data aggregation.
 
 use crate::db::Database;
-use crate::models::reports::*;
+use crate::domains::reports::domain::models::reports::*;
 use chrono::{DateTime, Duration, Utc};
 use rusqlite::params;
 

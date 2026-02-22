@@ -4,8 +4,8 @@
 //! It allows for flexible workflow definitions that can be selected at runtime based on the intervention type.
 
 use crate::db::InterventionResult;
-use crate::models::intervention::Intervention;
-use crate::models::step::{InterventionStep, StepType};
+use crate::domains::interventions::domain::models::intervention::Intervention;
+use crate::domains::interventions::domain::models::step::{InterventionStep, StepType};
 use async_trait::async_trait;
 
 /// Configuration for a single workflow step
@@ -395,7 +395,7 @@ impl WorkflowStrategyFactory {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::intervention::{InterventionStatus, InterventionType};
+    use crate::domains::interventions::domain::models::intervention::{InterventionStatus, InterventionType};
     use crate::shared::contracts::common::*;
 
     fn create_test_intervention() -> Intervention {

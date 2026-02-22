@@ -8,11 +8,11 @@
 
 use crate::db::Database;
 use crate::db::{InterventionError, InterventionResult};
-use crate::models::intervention::{Intervention, InterventionStatus, InterventionType};
-use crate::models::step::{InterventionStep, StepType};
-use crate::repositories::InterventionRepository;
-use crate::services::intervention_calculation::InterventionCalculationService;
-use crate::services::intervention_types::{AdvanceStepRequest, StartInterventionRequest};
+use crate::domains::interventions::domain::models::intervention::{Intervention, InterventionStatus, InterventionType};
+use crate::domains::interventions::domain::models::step::{InterventionStep, StepType};
+use crate::domains::interventions::infrastructure::intervention_repository::InterventionRepository;
+use crate::domains::interventions::infrastructure::intervention_calculation::InterventionCalculationService;
+use crate::domains::interventions::infrastructure::intervention_types::{AdvanceStepRequest, StartInterventionRequest};
 use crate::shared::contracts::common::*;
 use rusqlite::{params, OptionalExtension, Transaction};
 use std::str::FromStr;
@@ -133,7 +133,7 @@ impl InterventionDataService {
         intervention: &Intervention,
     ) -> InterventionResult<Vec<InterventionStep>> {
         // Use synchronous version of workflow strategy to avoid runtime creation
-        use crate::services::workflow_strategy::{WorkflowContext, WorkflowStrategyFactory};
+        use crate::domains::tasks::infrastructure::workflow_strategy::{WorkflowContext, WorkflowStrategyFactory};
 
         let workflow_context = WorkflowContext {
             intervention: intervention.clone(),
@@ -374,8 +374,8 @@ impl InterventionDataService {
     pub fn get_intervention_photos(
         &self,
         intervention_id: &str,
-    ) -> InterventionResult<Vec<crate::models::photo::Photo>> {
-        let photos = self.db.query_as::<crate::models::photo::Photo>(
+    ) -> InterventionResult<Vec<crate::domains::documents::domain::models::photo::Photo>> {
+        let photos = self.db.query_as::<crate::domains::documents::domain::models::photo::Photo>(
             "SELECT * FROM photos WHERE intervention_id = ? ORDER BY step_number, captured_at",
             params![intervention_id],
         )?;

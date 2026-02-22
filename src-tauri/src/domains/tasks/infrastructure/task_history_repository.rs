@@ -3,7 +3,7 @@
 //! Provides consistent database access patterns for TaskHistory entities.
 
 use crate::db::Database;
-use crate::models::task::TaskHistory;
+use crate::domains::tasks::domain::models::task::TaskHistory;
 use crate::repositories::base::{RepoError, RepoResult, Repository};
 use crate::repositories::cache::{ttl, Cache, CacheKeyBuilder};
 use async_trait::async_trait;

@@ -7,9 +7,9 @@
 //! - Step completion tracking
 
 use crate::db::InterventionResult;
-use crate::models::intervention::Intervention;
-use crate::models::step::{InterventionStep, StepStatus, StepType};
-use crate::services::intervention_types::{InterventionMetrics, StepRequirement};
+use crate::domains::interventions::domain::models::intervention::Intervention;
+use crate::domains::interventions::domain::models::step::{InterventionStep, StepStatus, StepType};
+use crate::domains::interventions::infrastructure::intervention_types::{InterventionMetrics, StepRequirement};
 
 /// Service for calculating intervention metrics and requirements
 pub struct InterventionCalculationService;
@@ -87,7 +87,7 @@ impl InterventionCalculationService {
 
         for step in steps {
             match step.step_type {
-                crate::models::step::StepType::Inspection => {
+                crate::domains::interventions::domain::models::step::StepType::Inspection => {
                     requirements.push(StepRequirement {
                         step_id: step.id.clone(),
                         requirement_type: "photos".to_string(),
@@ -106,7 +106,7 @@ impl InterventionCalculationService {
                         is_completed: false,
                     });
                 }
-                crate::models::step::StepType::Preparation => {
+                crate::domains::interventions::domain::models::step::StepType::Preparation => {
                     requirements.push(StepRequirement {
                         step_id: step.id.clone(),
                         requirement_type: "photos".to_string(),
@@ -125,7 +125,7 @@ impl InterventionCalculationService {
                         is_completed: false,
                     });
                 }
-                crate::models::step::StepType::Installation => {
+                crate::domains::interventions::domain::models::step::StepType::Installation => {
                     let zone_count = intervention
                         .ppf_zones_config
                         .as_ref()
@@ -150,7 +150,7 @@ impl InterventionCalculationService {
                         is_completed: false,
                     });
                 }
-                crate::models::step::StepType::Finalization => {
+                crate::domains::interventions::domain::models::step::StepType::Finalization => {
                     requirements.push(StepRequirement {
                         step_id: step.id.clone(),
                         requirement_type: "photos".to_string(),
@@ -233,7 +233,7 @@ impl InterventionCalculationService {
 
         let total_steps = 4; // Based on our 4-step workflow
         let steps_completed =
-            if intervention.status == crate::models::intervention::InterventionStatus::Completed {
+            if intervention.status == crate::domains::interventions::domain::models::intervention::InterventionStatus::Completed {
                 total_steps
             } else {
                 0

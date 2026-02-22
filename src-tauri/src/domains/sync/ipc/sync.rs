@@ -173,7 +173,7 @@ pub fn sync_get_operations_for_entity(
     entity_type: String,
     session_token: String,
     state: AppState<'_>,
-) -> Result<Vec<crate::models::sync::SyncOperation>, String> {
+) -> Result<Vec<crate::domains::sync::domain::models::sync::SyncOperation>, String> {
     let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let current_user = state
         .auth_service

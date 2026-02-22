@@ -5,7 +5,7 @@
 use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::tasks::ipc::task_types::TaskFilter;
-use crate::services::task_statistics::TaskStatistics;
+use crate::domains::tasks::infrastructure::task_statistics::TaskStatistics;
 use serde::Deserialize;
 use tracing::{debug, info};
 
@@ -35,21 +35,21 @@ pub async fn get_task_statistics(
     let mut filter = request.filter.unwrap_or_default();
 
     match session.role {
-        crate::models::auth::UserRole::Admin => {
+        crate::domains::auth::domain::models::auth::UserRole::Admin => {
             // Admin can see all statistics
         }
-        crate::models::auth::UserRole::Supervisor => {
+        crate::domains::auth::domain::models::auth::UserRole::Supervisor => {
             // Supervisor can see statistics for their region/department
             // TODO: Add region filtering when UserSession has region field
             // if let Some(region) = &session.region {
             //     filter.region = Some(region.clone());
             // }
         }
-        crate::models::auth::UserRole::Technician => {
+        crate::domains::auth::domain::models::auth::UserRole::Technician => {
             // Technician can only see their own statistics
             filter.assigned_to = Some(session.user_id.clone());
         }
-        crate::models::auth::UserRole::Viewer => {
+        crate::domains::auth::domain::models::auth::UserRole::Viewer => {
             // Viewer has limited access to statistics
             filter.assigned_to = Some(session.user_id.clone());
         }
@@ -68,19 +68,19 @@ pub async fn get_task_statistics(
 
 /// Calculate task completion rate
 pub fn calculate_completion_rate(stats: &TaskStatistics) -> f64 {
-    crate::services::task_statistics::calculate_completion_rate(stats)
+    crate::domains::tasks::infrastructure::task_statistics::calculate_completion_rate(stats)
 }
 
 /// Calculate task efficiency metrics
 pub fn calculate_efficiency_metrics(
     stats: &TaskStatistics,
 ) -> std::collections::HashMap<String, f64> {
-    crate::services::task_statistics::calculate_efficiency_metrics(stats)
+    crate::domains::tasks::infrastructure::task_statistics::calculate_efficiency_metrics(stats)
 }
 
 /// Generate task performance insights
 pub fn generate_performance_insights(stats: &TaskStatistics) -> Vec<String> {
-    crate::services::task_statistics::generate_performance_insights(stats)
+    crate::domains::tasks::infrastructure::task_statistics::generate_performance_insights(stats)
 }
 
 /// Calculate productivity trends
@@ -88,5 +88,5 @@ pub fn calculate_productivity_trends(
     current_stats: &TaskStatistics,
     previous_stats: Option<&TaskStatistics>,
 ) -> std::collections::HashMap<String, f64> {
-    crate::services::task_statistics::calculate_productivity_trends(current_stats, previous_stats)
+    crate::domains::tasks::infrastructure::task_statistics::calculate_productivity_trends(current_stats, previous_stats)
 }

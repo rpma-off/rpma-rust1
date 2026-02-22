@@ -4,7 +4,7 @@ use tracing::instrument;
 use uuid::Uuid;
 
 use crate::domains::inventory::infrastructure::MaterialService;
-use crate::models::material::{
+use crate::domains::inventory::domain::models::material::{
     InventoryStats, InventoryTransaction, InventoryTransactionType, Material, MaterialConsumption,
     MaterialStats, MaterialType,
 };

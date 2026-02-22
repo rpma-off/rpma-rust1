@@ -1,12 +1,12 @@
 //! Local authentication service for secure session management
 
 use crate::domains::auth::application::SignupRequest;
-use crate::models::auth::{UserAccount, UserRole, UserSession};
-use crate::services::performance_monitor::PerformanceMonitorService;
-use crate::services::rate_limiter::RateLimiterService;
-use crate::services::security_monitor::SecurityMonitorService;
-use crate::services::token::TokenService;
-use crate::services::validation::ValidationService;
+use crate::domains::auth::domain::models::auth::{UserAccount, UserRole, UserSession};
+use crate::shared::services::performance_monitor::PerformanceMonitorService;
+use crate::domains::auth::infrastructure::rate_limiter::RateLimiterService;
+use crate::domains::audit::infrastructure::security_monitor::SecurityMonitorService;
+use crate::domains::auth::infrastructure::token::TokenService;
+use crate::shared::services::validation::ValidationService;
 use rusqlite::params;
 
 use argon2::password_hash::{rand_core::OsRng, PasswordHasher, SaltString};
@@ -34,7 +34,7 @@ impl AuthService {
     }
 
     pub fn new(db: crate::db::Database) -> Result<Self, String> {
-        let jwt_secret = crate::services::token::load_jwt_secret().map_err(|e| {
+        let jwt_secret = crate::domains::auth::infrastructure::token::load_jwt_secret().map_err(|e| {
             error!("JWT secret configuration error: {}", e);
             e.to_string()
         })?;

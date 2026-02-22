@@ -5,7 +5,7 @@
 
 use crate::db::connection::ChunkedQuery;
 use crate::db::operation_pool::{OperationPoolManager, OperationType};
-use crate::models::task::Task;
+use crate::domains::tasks::domain::models::task::Task;
 use std::sync::Arc;
 
 /// Streaming task repository for handling large result sets

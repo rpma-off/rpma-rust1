@@ -5,7 +5,7 @@ import { dashboardApiService, DashboardFilters } from '../server';
 import { TaskWithDetails } from '@/types/task.types';
 import { DashboardTask, RawTaskData, transformTask } from '@/components/dashboard/types';
 import { FetchError } from '@/lib/utils/fetch-error-handler';
-import { useLogger } from '@/hooks/useLogger';
+import { useLogger } from '@/shared/hooks/useLogger';
 import { LogDomain } from '@/lib/logging/types';
 import { useAuth } from '@/domains/auth';
 import { taskService } from '@/domains/tasks';

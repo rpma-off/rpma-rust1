@@ -3,11 +3,11 @@
 //! Uses proptest to test message operations with random inputs
 
 use crate::db::Database;
-use crate::models::message::{
+use crate::domains::notifications::domain::models::message::{
     Message, MessagePriority, MessageStatus, MessageTemplate, MessageTemplateRequest, MessageType,
     NotificationPreferences, SendMessageRequest,
 };
-use crate::repositories::message::MessageRepository;
+use crate::domains::notifications::infrastructure::message_repository::MessageRepository;
 use proptest::prelude::*;
 use rusqlite::params;
 use std::sync::Arc;

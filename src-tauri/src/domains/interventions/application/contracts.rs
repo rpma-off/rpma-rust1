@@ -22,14 +22,14 @@ pub enum InterventionWorkflowAction {
 #[serde(tag = "type")]
 pub enum InterventionWorkflowResponse {
     Started {
-        intervention: crate::models::intervention::Intervention,
-        steps: Vec<crate::models::step::InterventionStep>,
+        intervention: crate::domains::interventions::domain::models::intervention::Intervention,
+        steps: Vec<crate::domains::interventions::domain::models::step::InterventionStep>,
     },
     Retrieved {
-        intervention: crate::models::intervention::Intervention,
+        intervention: crate::domains::interventions::domain::models::intervention::Intervention,
     },
     ActiveByTask {
-        interventions: Vec<crate::models::intervention::Intervention>,
+        interventions: Vec<crate::domains::interventions::domain::models::intervention::Intervention>,
     },
     Updated {
         id: String,
@@ -40,7 +40,7 @@ pub enum InterventionWorkflowResponse {
         message: String,
     },
     Finalized {
-        intervention: crate::models::intervention::Intervention,
+        intervention: crate::domains::interventions::domain::models::intervention::Intervention,
     },
 }
 

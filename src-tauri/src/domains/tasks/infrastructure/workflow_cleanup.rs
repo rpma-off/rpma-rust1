@@ -6,7 +6,7 @@
 
 use crate::db::InterventionResult;
 use crate::logging::RPMARequestLogger;
-use crate::repositories::intervention_repository::InterventionRepository;
+use crate::domains::interventions::infrastructure::intervention_repository::InterventionRepository;
 use std::sync::Arc;
 
 /// Service for cleaning up workflow artifacts and failed operations

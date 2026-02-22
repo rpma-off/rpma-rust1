@@ -5,7 +5,7 @@
 
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::settings::ipc::settings::core::handle_settings_error;
-use crate::models::settings::UserAccessibilitySettings;
+use crate::domains::settings::domain::models::settings::UserAccessibilitySettings;
 
 use serde::Deserialize;
 use tracing::info;

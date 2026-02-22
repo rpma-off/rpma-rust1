@@ -2,8 +2,8 @@
 
 use crate::commands::AppError;
 use crate::db::Database;
-use crate::models::auth::{DeviceInfo, SessionTimeoutConfig, UserSession};
-use crate::repositories::session_repository::SessionRepository;
+use crate::domains::auth::domain::models::auth::{DeviceInfo, SessionTimeoutConfig, UserSession};
+use crate::domains::auth::infrastructure::session_repository::SessionRepository;
 use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -75,7 +75,7 @@ impl SessionService {
         user_id: String,
         username: String,
         email: String,
-        role: crate::models::auth::UserRole,
+        role: crate::domains::auth::domain::models::auth::UserRole,
         device_info: Option<DeviceInfo>,
         ip_address: Option<String>,
         user_agent: Option<String>,
