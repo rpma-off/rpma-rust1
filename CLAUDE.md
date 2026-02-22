@@ -1,8 +1,4 @@
-# CLAUDE.md — Agent Instructions for RPMA v2
-
-> **READ THIS FIRST.** This file is the authoritative guide for any AI agent (Claude, Copilot, etc.) working on this codebase. Follow every rule strictly. When in doubt, read this file again before acting.
-
----
+# CLAUDE.md 
 
 ## 🗂️ What Is This Project?
 
@@ -299,30 +295,6 @@ git add .
 git commit -m "feat(interventions): add step photo upload command"
 # Format: type(scope): description
 # Scopes: interventions, inventory, tasks, users, quotes, documents, auth, db, ui
-```
-
----
-
-## 🛠️ Technology Stack Reference
-
-| Layer | Technology | Version |
-|---|---|---|
-| Desktop framework | Tauri | v2 |
-| Frontend framework | Next.js | 14 (App Router) |
-| Frontend language | TypeScript | strict mode |
-| Component library | React | 18 |
-| Backend language | Rust | edition 2021, MSRV 1.85 |
-| Database | SQLite | WAL mode |
-| DB access | sqlx | async, compile-time checked |
-| Type bridge | ts-rs | Rust → TS codegen |
-| IPC | Tauri invoke() | typed commands |
-| Linting (Rust) | clippy | -D warnings |
-| Linting (TS) | ESLint | strict |
-| Commit rules | commitlint | conventional commits |
-| Git hooks | Husky | pre-commit, commit-msg |
-| Security scan | cargo-deny | deny.toml configured |
-| E2E tests | Playwright | |
-| Benchmarks | Criterion | |
 
 ---
 
@@ -405,4 +377,3 @@ CREATE TABLE IF NOT EXISTS my_table (
 - **Full docs**: `docs/agent-pack/README.md`
 - **Architecture decisions**: `docs/adr/`
 - **Migration validation**: `node scripts/validate-migration-system.js`
-- **Existing AGENTS.md**: Mirror of this file for Codex/other agents
