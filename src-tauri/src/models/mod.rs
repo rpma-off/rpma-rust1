@@ -5,10 +5,6 @@
 //! `src-tauri/src/shared/contracts`.
 //! This module preserves existing `crate::models::*` import paths.
 
-pub mod common {
-    pub use crate::shared::contracts::common::*;
-}
-
 pub mod auth {
     pub use crate::domains::auth::domain::models::auth::*;
 }
@@ -75,7 +71,3 @@ pub mod user {
 
 pub mod material_ts;
 pub mod status;
-
-// Re-export main types for existing import compatibility.
-pub use client::{Client, CustomerType};
-pub use sync::SyncOperation;
