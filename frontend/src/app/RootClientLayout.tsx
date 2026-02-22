@@ -13,6 +13,7 @@ import { useMenuEvents } from '@/shared/hooks/useMenuEvents';
 import { useAuthRedirect } from '@/shared/hooks/useAuthRedirect';
 import { useAdminBootstrapCheck } from '@/shared/hooks/useAdminBootstrapCheck';
 import { ThemeProvider } from '@/shared/ui/theme-provider';
+import { Skeleton, SkeletonList } from '@/shared/ui/ui/skeleton';
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -28,6 +29,21 @@ const geistMono = localFont({
 
 // Routes that should not show the sidebar (public/auth pages)
 const PUBLIC_ROUTES = ['/login', '/signup', '/unauthorized', '/bootstrap-admin'];
+
+function AuthLoadingShell({ className = '' }: { className?: string }) {
+  return (
+    <div className={`space-y-6 ${className}`.trim()}>
+      <div className="flex items-center justify-between">
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        <Skeleton className="h-9 w-28" />
+      </div>
+      <SkeletonList count={3} />
+    </div>
+  );
+}
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading, isAuthenticating } = useAuth();
@@ -58,29 +74,25 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
-  const { shouldShowNavigation } = useAuthRedirect(user, authLoading, isAuthenticating);
+  useAuthRedirect(user, authLoading, isAuthenticating);
   useAdminBootstrapCheck(user, authLoading, isAuthenticating);
 
-  // Show loading screen during authentication check or redirect
-  if (authLoading || isAuthenticating || (!user && !PUBLIC_ROUTES.includes(pathname))) {
-    return (
-      <div className="fixed inset-0 bg-background text-foreground z-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[hsl(var(--rpma-teal))] mx-auto mb-4"></div>
-          <p className="text-muted-foreground">{authLoading || isAuthenticating ? 'Chargement...' : 'Redirection vers la connexion...'}</p>
-        </div>
-      </div>
-    );
-  }
-
-  return shouldShowNavigation ? (
-    <AppNavigation>
-      {children}
-    </AppNavigation>
+  const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
+  const isAuthPending = authLoading || isAuthenticating;
+  const shouldShowLoading = !isPublicRoute && (isAuthPending || !user);
+  const loadingClassName = isAuthPending
+    ? ''
+    : 'min-h-screen bg-background px-4 sm:px-6 lg:px-8 py-6';
+  const content = shouldShowLoading ? (
+    <AuthLoadingShell className={loadingClassName} />
   ) : (
-    <div className="min-h-screen bg-background">
-      {children}
-    </div>
+    children
+  );
+
+  return (
+    <AppNavigation forceNavigation={isAuthPending && !isPublicRoute}>
+      {content}
+    </AppNavigation>
   );
 }
 
@@ -113,4 +125,3 @@ export default function RootClientLayout({
     </div>
   );
 }
-
