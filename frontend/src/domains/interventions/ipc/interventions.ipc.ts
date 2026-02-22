@@ -17,6 +17,15 @@ import type {
   FinalizeInterventionRequest
 } from '@/lib/backend';
 
+interface SaveStepProgressAction {
+  intervention_id: unknown;
+  step_id: unknown;
+  progress_percentage: unknown;
+  current_phase: unknown;
+  notes: unknown;
+  temporary_data: unknown;
+}
+
 export const interventionsIpc = {
   start: async (data: StartInterventionRequest, sessionToken: string) => {
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_WORKFLOW, {
@@ -24,7 +33,10 @@ export const interventionsIpc = {
       sessionToken: sessionToken
     });
 
-    if (result && typeof result === 'object' && 'type' in result) {
+    if (result === null || typeof result !== 'object') {
+      return result;
+    }
+    if ('type' in result) {
       const workflowResponse = result as unknown as { type: string; intervention: Intervention; steps: InterventionStep[] };
       if (workflowResponse.type === 'Started') {
         return validateStartInterventionResponse(workflowResponse);
@@ -39,7 +51,10 @@ export const interventionsIpc = {
       sessionToken: sessionToken
     });
 
-    if (result && typeof result === 'object' && 'type' in result) {
+    if (result === null || typeof result !== 'object') {
+      return result;
+    }
+    if ('type' in result) {
       const workflowResponse = result as unknown as { type: string; intervention: Intervention };
       if (workflowResponse.type === 'Retrieved') {
         return validateIntervention(workflowResponse.intervention);
@@ -99,7 +114,10 @@ export const interventionsIpc = {
       sessionToken: sessionToken
     });
 
-    if (result && typeof result === 'object' && 'type' in result) {
+    if (result === null || typeof result !== 'object') {
+      return result;
+    }
+    if ('type' in result) {
       const progressResponse = result as unknown as {
         type: string;
         step: InterventionStep;
@@ -119,7 +137,10 @@ export const interventionsIpc = {
       sessionToken: sessionToken
     });
 
-    if (result && typeof result === 'object' && 'type' in result) {
+    if (result === null || typeof result !== 'object') {
+      return result;
+    }
+    if ('type' in result) {
       const progressResponse = result as unknown as { type: string; step: InterventionStep };
       if (progressResponse.type === 'StepRetrieved') {
         return validateInterventionStep(progressResponse.step);
@@ -134,7 +155,10 @@ export const interventionsIpc = {
       sessionToken: sessionToken
     });
 
-    if (result && typeof result === 'object' && 'type' in result) {
+    if (result === null || typeof result !== 'object') {
+      return result;
+    }
+    if ('type' in result) {
       const progressResponse = result as unknown as {
         type: string;
         progress: InterventionProgress;
@@ -152,12 +176,24 @@ export const interventionsIpc = {
   },
 
   saveStepProgress: async (stepData: SaveStepProgressRequest, sessionToken: string) => {
+    const data = stepData as unknown as SaveStepProgressAction;
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_PROGRESS, {
-      action: { action: 'SaveStepProgress', ...stepData },
+      action: {
+        action: 'SaveStepProgress',
+        intervention_id: data.intervention_id,
+        step_id: data.step_id,
+        progress_percentage: data.progress_percentage,
+        current_phase: data.current_phase,
+        notes: data.notes,
+        temporary_data: data.temporary_data,
+      },
       sessionToken: sessionToken
     });
 
-    if (result && typeof result === 'object' && 'type' in result) {
+    if (result === null || typeof result !== 'object') {
+      return result;
+    }
+    if ('type' in result) {
       const progressResponse = result as unknown as { type: string; step: InterventionStep };
       if (progressResponse.type === 'StepProgressSaved') {
         return validateInterventionStep(progressResponse.step);
@@ -172,7 +208,10 @@ export const interventionsIpc = {
       sessionToken: sessionToken
     });
 
-    if (result && typeof result === 'object' && 'type' in result) {
+    if (result === null || typeof result !== 'object') {
+      return result;
+    }
+    if ('type' in result) {
       const workflowResponse = result as unknown as { type: string; intervention: Intervention };
       if (workflowResponse.type === 'Updated') {
         return validateIntervention(workflowResponse.intervention);
@@ -187,7 +226,10 @@ export const interventionsIpc = {
       sessionToken: sessionToken
     });
 
-    if (result && typeof result === 'object' && 'type' in result) {
+    if (result === null || typeof result !== 'object') {
+      return result;
+    }
+    if ('type' in result) {
       const workflowResponse = result as unknown as {
         type: string;
         intervention: Intervention;
@@ -217,7 +259,10 @@ export const interventionsIpc = {
       session_token: sessionToken
     });
 
-    if (result && typeof result === 'object' && 'type' in result) {
+    if (result === null || typeof result !== 'object') {
+      return result;
+    }
+    if ('type' in result) {
       const managementResponse = result as unknown as { type: string; interventions: Intervention[]; total: number };
       if (managementResponse.type === 'List') {
         return {
