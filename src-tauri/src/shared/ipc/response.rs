@@ -20,6 +20,10 @@ pub struct ApiError {
 #[derive(TS, Debug, Serialize, Deserialize)]
 pub struct CompressedApiResponse {
     pub success: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error_code: Option<String>,
     pub compressed: bool,
     pub data: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -32,6 +36,10 @@ pub struct CompressedApiResponse {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ApiResponse<T> {
     pub success: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error_code: Option<String>,
     pub data: Option<T>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<ApiError>,
@@ -43,6 +51,8 @@ impl<T> ApiResponse<T> {
     pub fn success(data: T) -> Self {
         Self {
             success: true,
+            message: Some("OK".to_string()),
+            error_code: None,
             data: Some(data),
             error: None,
             correlation_id: Some(generate_correlation_id()),
@@ -52,6 +62,8 @@ impl<T> ApiResponse<T> {
     pub fn error(error: AppError) -> Self {
         Self {
             success: false,
+            message: Some(error.to_string()),
+            error_code: Some(error.code().to_string()),
             data: None,
             error: Some(ApiError {
                 message: error.to_string(),
@@ -65,6 +77,8 @@ impl<T> ApiResponse<T> {
     pub fn error_message(message: &str) -> Self {
         Self {
             success: false,
+            message: Some(message.to_string()),
+            error_code: Some("UNKNOWN".to_string()),
             data: None,
             error: Some(ApiError {
                 message: message.to_string(),
@@ -108,6 +122,8 @@ impl<T> ApiResponse<T> {
 
             Ok(CompressedApiResponse {
                 success: self.success,
+                message: self.message,
+                error_code: self.error_code,
                 compressed: true,
                 data: Some(compressed_b64),
                 error: self.error,
@@ -116,6 +132,8 @@ impl<T> ApiResponse<T> {
         } else {
             Ok(CompressedApiResponse {
                 success: self.success,
+                message: self.message,
+                error_code: self.error_code,
                 compressed: false,
                 data: self
                     .data
@@ -178,5 +196,30 @@ impl<T> From<AppResult<T>> for ApiResponse<T> {
             Ok(data) => Self::success(data),
             Err(error) => Self::error(error),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn api_response_error_includes_flat_envelope_fields() {
+        let response: ApiResponse<()> =
+            ApiResponse::error(AppError::Validation("invalid".to_string()));
+        assert!(!response.success);
+        assert_eq!(
+            response.message.as_deref(),
+            Some("Validation error: invalid")
+        );
+        assert_eq!(response.error_code.as_deref(), Some("VALIDATION_ERROR"));
+    }
+
+    #[test]
+    fn api_response_success_includes_message_and_no_error_code() {
+        let response = ApiResponse::success("ok");
+        assert!(response.success);
+        assert_eq!(response.message.as_deref(), Some("OK"));
+        assert_eq!(response.error_code, None);
     }
 }

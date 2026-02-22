@@ -61,6 +61,10 @@ interface LocalApiError {
 
 interface BackendResponse<T = JsonValue> {
   type: string;
+  success?: boolean;
+  message?: string;
+  error_code?: string;
+  data?: T;
   payload?: T;
   error?: LocalApiError;
   correlation_id?: string;
@@ -133,8 +137,8 @@ export async function safeInvoke<T>(
       effectiveCorrelationId = backendCorrelationId;
 
       if (!apiResult.success) {
-        const errorMsg = apiResult.error?.message || 'Unknown error';
-        const errorCode = apiResult.error?.code || 'UNKNOWN';
+        const errorMsg = apiResult.error?.message || apiResult.message || 'Unknown error';
+        const errorCode = apiResult.error?.code || apiResult.error_code || 'UNKNOWN';
 
         logger.error(LogDomain.API, `IPC call failed: ${command}`, {
           command,
@@ -149,7 +153,7 @@ export async function safeInvoke<T>(
         const error: EnhancedError = new Error(userFriendlyMessage);
         error.code = errorCode;
         error.originalMessage = errorMsg;
-        error.details = apiResult.error?.details;
+        error.details = apiResult.error?.details ?? null;
         error.correlationId = backendCorrelationId;
         error.alreadyLogged = true;
         throw error;
