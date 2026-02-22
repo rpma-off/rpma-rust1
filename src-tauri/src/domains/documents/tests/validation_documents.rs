@@ -1,8 +1,8 @@
-use std::sync::Arc;
 use crate::db::Database;
 use crate::domains::documents::infrastructure::photo::PhotoService;
 use crate::domains::documents::DocumentsFacade;
 use crate::shared::ipc::errors::AppError;
+use std::sync::Arc;
 
 #[tokio::test]
 async fn validate_photo_extension_rejects_invalid_extension() {

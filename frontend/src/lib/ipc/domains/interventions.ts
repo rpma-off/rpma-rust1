@@ -1,1 +1,1 @@
-export { interventionsIpc } from '@/domains/interventions/ipc';
+export { interventionsIpc, interventionsIpc as interventionOperations } from '@/domains/interventions/ipc';

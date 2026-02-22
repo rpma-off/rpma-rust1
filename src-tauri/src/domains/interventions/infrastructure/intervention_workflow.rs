@@ -8,8 +8,9 @@
 
 use crate::db::Database;
 use crate::db::{InterventionError, InterventionResult};
-use crate::logging::{LogDomain, RPMARequestLogger};
-use crate::domains::interventions::domain::models::intervention::{Intervention, InterventionStatus};
+use crate::domains::interventions::domain::models::intervention::{
+    Intervention, InterventionStatus,
+};
 use crate::domains::interventions::domain::models::step::{InterventionStep, StepStatus};
 use crate::domains::interventions::infrastructure::intervention_data::InterventionDataService;
 use crate::domains::interventions::infrastructure::intervention_types::*;
@@ -727,7 +728,10 @@ impl InterventionWorkflowService {
         let steps = self.data.get_intervention_steps(&intervention.id)?;
         let finalization_step = steps
             .iter()
-            .find(|s| s.step_type == crate::domains::interventions::domain::models::step::StepType::Finalization)
+            .find(|s| {
+                s.step_type
+                    == crate::domains::interventions::domain::models::step::StepType::Finalization
+            })
             .cloned();
 
         let updated_step = finalization_step.map(|mut step| {

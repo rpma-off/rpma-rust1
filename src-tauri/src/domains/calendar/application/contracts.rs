@@ -1,7 +1,9 @@
 //! Request contracts for the Calendar bounded context IPC commands.
 
 use crate::domains::calendar::domain::models::calendar::CalendarDateRange;
-use crate::domains::calendar::domain::models::calendar_event::{CreateEventInput, UpdateEventInput};
+use crate::domains::calendar::domain::models::calendar_event::{
+    CreateEventInput, UpdateEventInput,
+};
 use serde::Deserialize;
 
 /// Get calendar tasks request

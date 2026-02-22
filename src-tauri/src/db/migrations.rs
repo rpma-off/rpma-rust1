@@ -2602,10 +2602,8 @@ mod tests {
         // Drop the table in case it appeared in the base schema in the future
         {
             let conn = db.get_connection().expect("Failed to get connection");
-            conn.execute_batch(
-                "DROP TABLE IF EXISTS inventory_transactions;",
-            )
-            .expect("Failed to drop inventory_transactions");
+            conn.execute_batch("DROP TABLE IF EXISTS inventory_transactions;")
+                .expect("Failed to drop inventory_transactions");
         }
 
         // Pretend migrations 1-37 have already been applied
@@ -2626,7 +2624,8 @@ mod tests {
         }
 
         // Applying migration 38 must not panic or return an error
-        db.migrate(38).expect("Migration 038 must succeed even when inventory_transactions was absent");
+        db.migrate(38)
+            .expect("Migration 038 must succeed even when inventory_transactions was absent");
 
         // Verify the table and the new composite index now exist
         let conn = db.get_connection().expect("Failed to get connection");
@@ -2638,7 +2637,10 @@ mod tests {
                 |row| row.get(0),
             )
             .expect("Failed to query sqlite_master for table");
-        assert_eq!(table_exists, 1, "inventory_transactions table must exist after migration 038");
+        assert_eq!(
+            table_exists, 1,
+            "inventory_transactions table must exist after migration 038"
+        );
 
         let index_exists: i64 = conn
             .query_row(
@@ -2647,7 +2649,10 @@ mod tests {
                 |row| row.get(0),
             )
             .expect("Failed to query sqlite_master for index");
-        assert_eq!(index_exists, 1, "composite index must exist after migration 038");
+        assert_eq!(
+            index_exists, 1,
+            "composite index must exist after migration 038"
+        );
     }
 
     /// Idempotency test: running migration 038 twice must not error.
@@ -2660,9 +2665,11 @@ mod tests {
 
         // First run: apply all migrations up to 38
         let latest = Database::get_latest_migration_version();
-        db.migrate(latest).expect("First migration run must succeed");
+        db.migrate(latest)
+            .expect("First migration run must succeed");
 
         // Second run: migrate(38) again must be a no-op (current_version >= 38)
-        db.migrate(38).expect("Second migration 038 run must be idempotent");
+        db.migrate(38)
+            .expect("Second migration 038 run must be idempotent");
     }
 }

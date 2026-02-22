@@ -101,7 +101,8 @@ pub async fn get_user_settings(
     session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,
-) -> Result<ApiResponse<crate::domains::settings::domain::models::settings::UserSettings>, AppError> {
+) -> Result<ApiResponse<crate::domains::settings::domain::models::settings::UserSettings>, AppError>
+{
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Getting user settings");
 
@@ -122,7 +123,10 @@ pub async fn get_user_settings(
 pub async fn update_user_profile(
     request: UpdateUserProfileRequest,
     state: AppState<'_>,
-) -> Result<ApiResponse<crate::domains::settings::domain::models::settings::UserProfileSettings>, AppError> {
+) -> Result<
+    ApiResponse<crate::domains::settings::domain::models::settings::UserProfileSettings>,
+    AppError,
+> {
     let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("Updating user profile");
 

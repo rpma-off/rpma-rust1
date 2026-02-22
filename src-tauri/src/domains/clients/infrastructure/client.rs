@@ -203,13 +203,16 @@ impl ClientService {
         let total_pages = ((total as f64) / (limit as f64)).ceil() as i32;
 
         let stats = self.get_client_stats().await.ok();
-        let statistics = stats.map(|s| crate::domains::clients::domain::models::client::ClientStatistics {
-            total_clients: s.total_clients as i64,
-            individual_clients: s.individual_clients as i64,
-            business_clients: s.business_clients as i64,
-            clients_with_tasks: s.clients_with_tasks as i64,
-            new_clients_this_month: s.new_clients_this_month as i64,
-        });
+        let statistics =
+            stats.map(
+                |s| crate::domains::clients::domain::models::client::ClientStatistics {
+                    total_clients: s.total_clients as i64,
+                    individual_clients: s.individual_clients as i64,
+                    business_clients: s.business_clients as i64,
+                    clients_with_tasks: s.clients_with_tasks as i64,
+                    new_clients_this_month: s.new_clients_this_month as i64,
+                },
+            );
 
         Ok(ClientListResponse {
             data: paginated_clients,

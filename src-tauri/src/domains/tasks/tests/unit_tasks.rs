@@ -1,8 +1,8 @@
-use std::sync::Arc;
 use crate::db::Database;
 use crate::domains::tasks::infrastructure::task::TaskService;
 use crate::domains::tasks::infrastructure::task_import::TaskImportService;
 use crate::domains::tasks::TasksFacade;
+use std::sync::Arc;
 
 #[tokio::test]
 async fn tasks_facade_is_ready() {

@@ -50,7 +50,9 @@ pub async fn export_intervention_report(
     session_token: String,
     correlation_id: Option<String>,
     state: crate::commands::AppState<'_>,
-) -> crate::commands::AppResult<crate::domains::reports::domain::models::reports::InterventionReportResult> {
+) -> crate::commands::AppResult<
+    crate::domains::reports::domain::models::reports::InterventionReportResult,
+> {
     let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     export::intervention_export::export_intervention_report(intervention_id, session_token, state)
         .await
@@ -82,7 +84,9 @@ pub async fn get_report_status(
     session_token: String,
     correlation_id: Option<String>,
     state: crate::commands::AppState<'_>,
-) -> crate::commands::AppResult<Option<crate::domains::reports::infrastructure::report_jobs::ReportJob>> {
+) -> crate::commands::AppResult<
+    Option<crate::domains::reports::infrastructure::report_jobs::ReportJob>,
+> {
     let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     generation::background_jobs::get_report_job_status(job_id, session_token, state).await
 }

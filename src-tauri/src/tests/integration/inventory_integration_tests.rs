@@ -4,7 +4,9 @@
 //! focusing on end-to-end flows, authentication, validation, and error handling.
 
 use crate::commands::AppState;
-use crate::domains::inventory::domain::models::material::{InventoryTransactionType, MaterialType, UnitOfMeasure};
+use crate::domains::inventory::domain::models::material::{
+    InventoryTransactionType, MaterialType, UnitOfMeasure,
+};
 use crate::domains::inventory::infrastructure::material::{
     CreateInventoryTransactionRequest, CreateMaterialCategoryRequest, CreateMaterialRequest,
     CreateSupplierRequest, RecordConsumptionRequest, UpdateStockRequest,
@@ -24,7 +26,9 @@ mod tests {
         let state = AppState {
             db: Box::leak(Box::new(db)),
             material_service: std::sync::Arc::new(tokio::sync::Mutex::new(
-                crate::domains::inventory::infrastructure::material::MaterialService::new(test_db.db()),
+                crate::domains::inventory::infrastructure::material::MaterialService::new(
+                    test_db.db(),
+                ),
             )),
             // Add other fields as needed for AppState
         };
@@ -75,7 +79,9 @@ mod tests {
         AppState {
             db: Box::leak(Box::new(db)),
             material_service: std::sync::Arc::new(tokio::sync::Mutex::new(
-                crate::domains::inventory::infrastructure::material::MaterialService::new(test_db.db()),
+                crate::domains::inventory::infrastructure::material::MaterialService::new(
+                    test_db.db(),
+                ),
             )),
             // Add other fields as needed for AppState
         }

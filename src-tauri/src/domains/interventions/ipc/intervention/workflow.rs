@@ -66,7 +66,10 @@ pub async fn intervention_start(
     request: StartInterventionRequest,
     session_token: String,
     state: AppState<'_>,
-) -> Result<ApiResponse<crate::domains::interventions::domain::models::intervention::Intervention>, AppError> {
+) -> Result<
+    ApiResponse<crate::domains::interventions::domain::models::intervention::Intervention>,
+    AppError,
+> {
     let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("Starting intervention for task: {}", request.task_id);
 
@@ -148,7 +151,10 @@ pub async fn intervention_update(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<ApiResponse<crate::domains::interventions::domain::models::intervention::Intervention>, AppError> {
+) -> Result<
+    ApiResponse<crate::domains::interventions::domain::models::intervention::Intervention>,
+    AppError,
+> {
     info!("Updating intervention: {}", id);
 
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
@@ -211,7 +217,8 @@ pub async fn intervention_delete(
     if intervention.technician_id.as_ref() != Some(&session.user_id)
         && !matches!(
             session.role,
-            crate::shared::contracts::auth::UserRole::Admin | crate::shared::contracts::auth::UserRole::Supervisor
+            crate::shared::contracts::auth::UserRole::Admin
+                | crate::shared::contracts::auth::UserRole::Supervisor
         )
     {
         return Err(AppError::Authorization(

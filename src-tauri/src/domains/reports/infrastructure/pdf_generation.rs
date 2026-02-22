@@ -6,8 +6,8 @@
 //! to separate threads, maintaining UI responsiveness.
 
 use crate::commands::{AppError, AppResult};
-use crate::domains::reports::domain::models::reports::CompleteInterventionData;
 use crate::domains::documents::infrastructure::document_storage::DocumentStorageService;
+use crate::domains::reports::domain::models::reports::CompleteInterventionData;
 use crate::shared::services::worker_pool::{WorkerPool, WorkerTask};
 use chrono::Utc;
 use printpdf::*;
@@ -1172,13 +1172,27 @@ impl PdfGenerationService {
 
         for step in workflow_steps {
             let status_text = match step.step_status {
-                crate::domains::interventions::domain::models::step::StepStatus::Completed => "Ã¢Å“â€œ TerminÃƒÂ©",
-                crate::domains::interventions::domain::models::step::StepStatus::InProgress => "Ã¢Å¸Â³ En cours",
-                crate::domains::interventions::domain::models::step::StepStatus::Pending => "Ã¢â€”â€¹ En attente",
-                crate::domains::interventions::domain::models::step::StepStatus::Paused => "Ã¢ÂÂ¸Ã¯Â¸Â En pause",
-                crate::domains::interventions::domain::models::step::StepStatus::Failed => "Ã¢Å“â€” Ãƒâ€°chec",
-                crate::domains::interventions::domain::models::step::StepStatus::Skipped => "Ã¢Å Ëœ IgnorÃƒÂ©",
-                crate::domains::interventions::domain::models::step::StepStatus::Rework => "Ã¢â€ Âº Retravail",
+                crate::domains::interventions::domain::models::step::StepStatus::Completed => {
+                    "Ã¢Å“â€œ TerminÃƒÂ©"
+                }
+                crate::domains::interventions::domain::models::step::StepStatus::InProgress => {
+                    "Ã¢Å¸Â³ En cours"
+                }
+                crate::domains::interventions::domain::models::step::StepStatus::Pending => {
+                    "Ã¢â€”â€¹ En attente"
+                }
+                crate::domains::interventions::domain::models::step::StepStatus::Paused => {
+                    "Ã¢ÂÂ¸Ã¯Â¸Â En pause"
+                }
+                crate::domains::interventions::domain::models::step::StepStatus::Failed => {
+                    "Ã¢Å“â€” Ãƒâ€°chec"
+                }
+                crate::domains::interventions::domain::models::step::StepStatus::Skipped => {
+                    "Ã¢Å Ëœ IgnorÃƒÂ©"
+                }
+                crate::domains::interventions::domain::models::step::StepStatus::Rework => {
+                    "Ã¢â€ Âº Retravail"
+                }
             };
 
             let step_line = format!(
