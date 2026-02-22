@@ -97,6 +97,7 @@ pub fn initialize_pool_with_config(
                 "PRAGMA journal_mode = WAL;
                  PRAGMA synchronous = NORMAL;
                  PRAGMA busy_timeout = 5000;
+                 PRAGMA wal_autocheckpoint = 1000;
                  PRAGMA cache_size = 10000;
                  PRAGMA temp_store = MEMORY;
                  PRAGMA foreign_keys = ON;
@@ -145,7 +146,7 @@ pub fn get_connection_with_timeout(
 pub fn checkpoint_wal(pool: &Pool<SqliteConnectionManager>) -> Result<(), String> {
     let conn = pool.get().map_err(|e| e.to_string())?;
 
-    conn.execute_batch("PRAGMA wal_checkpoint(TRUNCATE);")
+    conn.execute_batch("PRAGMA wal_checkpoint(PASSIVE); PRAGMA optimize;")
         .map_err(|e| format!("WAL checkpoint failed: {}", e))?;
 
     Ok(())

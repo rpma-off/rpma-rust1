@@ -25,6 +25,7 @@ mod test_033_task_workflow_fks;
 mod test_034_session_activity_index;
 mod test_035_tasks_deleted_at_index;
 mod test_037_quotes;
+mod test_038_inventory_transaction_lookup_index;
 
 // Re-export test macros
 pub use test_framework::*;
