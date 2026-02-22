@@ -81,7 +81,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
   const isAuthPending = authLoading || isAuthenticating;
   const shouldShowLoading = !isPublicRoute && (isAuthPending || !user);
-  const loadingClassName = !isAuthPending && !user && !isPublicRoute
+  const isUnauthenticatedProtectedRoute = !isAuthPending && !user && !isPublicRoute;
+  const loadingClassName = isUnauthenticatedProtectedRoute
     ? 'min-h-screen bg-background px-4 sm:px-6 lg:px-8 py-6'
     : undefined;
   const content = shouldShowLoading ? (

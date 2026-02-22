@@ -41,6 +41,7 @@ export function middleware() {
 
 export const config = {
   matcher: [
+    // Exclude Next.js static assets, images, and common file types from header injection.
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|css|js|map|woff|woff2)$).*)',
   ],
 };
