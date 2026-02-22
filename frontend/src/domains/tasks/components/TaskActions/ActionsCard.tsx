@@ -36,6 +36,7 @@ import EditTaskModal from './EditTaskModal';
 import SendMessageModal from './SendMessageModal';
 import DelayTaskModal from './DelayTaskModal';
 import ReportIssueModal from './ReportIssueModal';
+import { phone } from '@/lib/utils/desktop';
 
 interface ActionsCardProps {
   task: TaskWithDetails;
@@ -401,7 +402,7 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
             return;
           }
 
-          await ipcClient.ui.initiateCustomerCall(phoneNumber);
+          await phone.initiateCustomerCall(phoneNumber);
           toast.success(`Appel lancé vers ${phoneNumber}`);
         } catch (error) {
           console.error('Failed to initiate call:', error);

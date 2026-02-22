@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import { ipcClient } from '@/lib/ipc';
+import { shortcuts } from '@/lib/utils/desktop';
 import type { JsonObject } from '@/types/json';
 
 interface ShortcutAction {
@@ -46,7 +46,7 @@ export function useKeyboardShortcuts(shortcuts: ShortcutAction[]) {
 
   // Register shortcuts with Tauri for menu integration
   useEffect(() => {
-    ipcClient.ui.registerShortcuts(shortcuts as unknown as JsonObject).catch(console.error);
+    shortcuts.register(shortcuts as unknown as JsonObject).catch(console.error);
   }, [shortcuts]);
 }
 

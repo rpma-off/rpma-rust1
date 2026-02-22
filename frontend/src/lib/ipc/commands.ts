@@ -110,6 +110,9 @@ export const IPC_COMMANDS = {
   GET_DATA_CONSENT: 'get_data_consent',
   UPDATE_DATA_CONSENT: 'update_data_consent',
 
+  // Analytics commands
+  ANALYTICS_GET_SUMMARY: 'analytics_get_summary',
+
   // Dashboard commands
   DASHBOARD_GET_STATS: 'dashboard_get_stats',
 

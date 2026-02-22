@@ -18,7 +18,7 @@ export class AnalyticsService {
     try {
       const [dashboardStats, healthStatus] = await Promise.all([
         ipcClient.dashboard.getStats().catch(() => null),
-        ipcClient.system.healthCheck().catch(() => null),
+        ipcClient.admin.healthCheck().catch(() => null),
       ]);
 
       const tasks = dashboardStats?.tasks;

@@ -1396,8 +1396,35 @@ export const ipcClient = {
       safeInvoke<JsonValue>('configure_cache_settings', { request, session_token: sessionToken }),
   },
 
-  // Security operations
-  security: {
+  // Admin operations
+  admin: {
+    healthCheck: () =>
+      safeInvoke<string>('health_check'),
+
+    getHealthStatus: () =>
+      safeInvoke<JsonValue>('get_health_status'),
+
+    getApplicationMetrics: () =>
+      safeInvoke<JsonValue>('get_application_metrics'),
+
+    getDatabaseStatus: () =>
+      safeInvoke<JsonValue>('diagnose_database'),
+
+    getDatabaseStats: () =>
+      safeInvoke<JsonValue>('get_database_stats'),
+
+    getDatabasePoolHealth: () =>
+      safeInvoke<JsonValue>('get_database_pool_health'),
+
+    getAppInfo: () =>
+      safeInvoke<JsonValue>('get_app_info'),
+
+    getDeviceInfo: () =>
+      safeInvoke<JsonValue>('get_device_info'),
+  },
+
+  // Audit operations
+  audit: {
     getMetrics: (sessionToken: string) =>
       safeInvoke<JsonValue>('get_security_metrics', { session_token: sessionToken }),
 
@@ -1415,82 +1442,6 @@ export const ipcClient = {
 
     cleanupEvents: (sessionToken: string) =>
       safeInvoke<JsonValue>('cleanup_security_events', { session_token: sessionToken }),
-
-    // Session management
-    getActiveSessions: (sessionToken: string) =>
-      safeInvoke<JsonValue[]>('get_active_sessions', { sessionToken }),
-
-    revokeSession: (sessionId: string, sessionToken: string) =>
-      safeInvoke<JsonValue>('revoke_session', { sessionId, sessionToken }),
-
-    revokeAllSessionsExceptCurrent: (sessionToken: string) =>
-      safeInvoke<JsonValue>('revoke_all_sessions_except_current', { sessionToken }),
-
-    updateSessionTimeout: (timeoutMinutes: number, sessionToken: string) =>
-      safeInvoke<JsonValue>('update_session_timeout', { timeoutMinutes, sessionToken }),
-
-    getSessionTimeoutConfig: (sessionToken: string) =>
-      safeInvoke<JsonValue>('get_session_timeout_config', { sessionToken }),
-  },
-
-  // System operations
-  system: {
-      healthCheck: () =>
-        safeInvoke<string>('health_check'),
-
-      getDatabaseStatus: () =>
-        safeInvoke<JsonValue>('diagnose_database'),
-
-      getDatabaseStats: () =>
-        safeInvoke<JsonValue>('get_database_stats'),
-
-      getDatabasePoolStats: () =>
-        safeInvoke<JsonValue>('get_database_pool_stats'),
-
-      getAppInfo: () =>
-        safeInvoke<JsonValue>('get_app_info'),
-
-      vacuumDatabase: () =>
-        safeInvoke<void>('vacuum_database'),
-  },
-
-  // UI operations
-  ui: {
-    windowMinimize: () =>
-      safeInvoke<void>('ui_window_minimize'),
-
-    windowMaximize: () =>
-      safeInvoke<void>('ui_window_maximize'),
-
-    windowClose: () =>
-      safeInvoke<void>('ui_window_close'),
-
-    navigate: (path: string, options?: JsonObject) =>
-      safeInvoke<void>('navigation_update', { path, options: options || {} }),
-
-    goBack: () =>
-      safeInvoke<string>('navigation_go_back'),
-
-    goForward: () =>
-      safeInvoke<string>('navigation_go_forward'),
-
-    getCurrent: () =>
-      safeInvoke<JsonValue>('navigation_get_current'),
-
-    addToHistory: (path: string) =>
-      safeInvoke<void>('navigation_add_to_history', { path }),
-
-    registerShortcuts: (shortcuts: JsonObject) =>
-      safeInvoke<void>('shortcuts_register', { shortcuts }),
-
-    shellOpen: (url: string) =>
-      safeInvoke<void>('ui_shell_open_url', { url }),
-
-    gpsGetCurrentPosition: () =>
-      safeInvoke<{ latitude: number; longitude: number; accuracy?: number }>('ui_gps_get_current_position'),
-
-    initiateCustomerCall: (phoneNumber: string) =>
-      safeInvoke<void>('ui_initiate_customer_call', { phone_number: phoneNumber }),
   },
 
   // Calendar operations

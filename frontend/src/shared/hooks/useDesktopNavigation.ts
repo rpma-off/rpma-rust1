@@ -1,6 +1,6 @@
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect } from 'react';
-import { ipcClient } from '@/lib/ipc';
+import { desktopNavigation } from '@/lib/utils/desktop';
 import type { JsonObject } from '@/types/json';
 
 interface NavigationOptions {
@@ -21,7 +21,7 @@ export function useDesktopNavigation() {
 
     // Notify Tauri of navigation for window management and history
     try {
-      await ipcClient.ui.navigate(path, options as JsonObject);
+      await desktopNavigation.navigate(path, options as JsonObject);
     } catch (error) {
       console.warn('Failed to update Tauri navigation:', error);
     }
@@ -29,7 +29,7 @@ export function useDesktopNavigation() {
 
   const goBack = useCallback(async () => {
     try {
-      const previousPath = await ipcClient.ui.goBack();
+      const previousPath = await desktopNavigation.goBack();
       if (previousPath) {
         router.push(previousPath);
         return;
@@ -44,7 +44,7 @@ export function useDesktopNavigation() {
 
   const goForward = useCallback(async () => {
     try {
-      const nextPath = await ipcClient.ui.goForward();
+      const nextPath = await desktopNavigation.goForward();
       if (nextPath) {
         router.push(nextPath);
         return;

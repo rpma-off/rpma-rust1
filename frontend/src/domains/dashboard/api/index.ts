@@ -1,3 +1,2 @@
-export { dashboardProvider } from './dashboardProvider';
-export { useDashboard } from './usedashboard';
-export type { DashboardContext } from './types';
+export { DashboardProvider, useDashboard } from './dashboardProvider';
+export type { DashboardContextValue, DashboardContext, DashboardStats, RecentActivity, DashboardWidget, DashboardFilter } from './types';

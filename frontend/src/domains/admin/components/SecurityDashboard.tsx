@@ -62,9 +62,9 @@ export function SecurityDashboard({ onRefresh: _onRefresh }: SecurityDashboardPr
       setError(null);
 
       const [metricsData, alertsData, sessionsData] = await Promise.all([
-        ipcClient.security.getMetrics(user.token),
-        ipcClient.security.getAlerts(user.token),
-        ipcClient.security.getActiveSessions(user.token),
+        ipcClient.audit.getMetrics(user.token),
+        ipcClient.audit.getAlerts(user.token),
+        ipcClient.settings.getActiveSessions(user.token),
       ]);
 
       setMetrics(metricsData as unknown as SecurityMetrics);
@@ -87,7 +87,7 @@ export function SecurityDashboard({ onRefresh: _onRefresh }: SecurityDashboardPr
     if (!user?.token) return;
 
     try {
-      await ipcClient.security.acknowledgeAlert(alertId, user.token);
+      await ipcClient.audit.acknowledgeAlert(alertId, user.token);
       toast.success('Alerte acquittée');
       loadSecurityData(); // Refresh data
     } catch (err) {
@@ -100,7 +100,7 @@ export function SecurityDashboard({ onRefresh: _onRefresh }: SecurityDashboardPr
     if (!user?.token) return;
 
     try {
-      await ipcClient.security.revokeSession(sessionId, user.token);
+      await ipcClient.settings.revokeSession(sessionId, user.token);
       toast.success('Session révoquée');
       loadSecurityData(); // Refresh data
     } catch (err) {
