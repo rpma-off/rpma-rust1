@@ -1,385 +1,73 @@
 # 02 - Architecture and Data Flows
 
-## Layered Architecture Overview
+## Layered runtime architecture
 
-RPMA v2 follows a strict **four-layer architecture** that separates concerns and ensures maintainability.
-
-```
-┌───────────────────────────────────────────────────────────┐
-│                    FRONTEND LAYER                         │
-│   Next.js 14 (App Router) + React + TypeScript           │
-│   - UI Components (shadcn/ui + Tailwind)                 │
-│   - State Management (React Query + Zustand)             │
-│   - IPC Client (frontend/src/lib/ipc/client.ts)          │
-└───────────────────────────────────────────────────────────┘
-                          │
-                          │ Tauri IPC (invoke)
-                          ↓
-┌───────────────────────────────────────────────────────────┐
-│                    COMMAND LAYER                          │
-│   Domain IPC (src-tauri/src/domains/*/ipc/)               │
-│   (invoked via compatibility shims in commands/)          │
-│   - Request validation                                    │
-│   - Authorization checks (AuthMiddleware)                 │
-│   - Session token validation (authenticate! macro)        │
-│   - Response serialization (ApiResponse<T>)               │
-└───────────────────────────────────────────────────────────┘
-                          │
-                          │ Function calls
-                          ↓
-┌───────────────────────────────────────────────────────────┐
-│                    SERVICE LAYER                          │
-│   Domain Logic (src-tauri/src/domains/*/{application,     │
-│   domain,infrastructure})                                 │
-│   - Domain validation                                     │
-│   - Workflow orchestration                                │
-│   - Business rule enforcement                             │
-│   - Event publishing (InMemoryEventBus)                   │
-└───────────────────────────────────────────────────────────┘
-                          │
-                          │ Repository calls
-                          ↓
-┌───────────────────────────────────────────────────────────┐
-│                  REPOSITORY LAYER                         │
-│   Domain Infrastructure Repositories                      │
-│   (src-tauri/src/domains/*/infrastructure/)               │
-│   - SQL query construction                                │
-│   - Transaction management                                │
-│   - CRUD operations                                       │
-└───────────────────────────────────────────────────────────┘
-                          │
-                          │ SQLite driver (rusqlite + r2d2 pool)
-                          ↓
-┌───────────────────────────────────────────────────────────┐
-│                   DATABASE LAYER                          │
-│   SQLite (WAL mode)                                       │
-│   - Persistent storage                                    │
-│   - ACID transactions                                     │
-│   - Indexes for performance                               │
-└───────────────────────────────────────────────────────────┘
+```text
+Frontend (Next.js app routes/components/hooks)
+  -> IPC wrapper (safeInvoke / domain ipc)
+    -> Tauri command handlers (domains/*/ipc)
+      -> Domain services/application + repositories (domains/*/infrastructure)
+        -> SQLite (db/schema + migrations, WAL)
 ```
 
-### Layer Responsibilities
+Key pointers:
+- Frontend entry: `frontend/src/app/layout.tsx`, `frontend/src/app/RootClientLayout.tsx`
+- IPC wrapper: `frontend/src/lib/ipc/utils.ts`, `frontend/src/lib/ipc/client.ts`
+- Command registration: `src-tauri/src/main.rs`
+- Command implementations: `src-tauri/src/domains/*/ipc/**/*.rs`
+- DB init/migrate: `src-tauri/src/main.rs`, `src-tauri/src/db/migrations.rs`
 
-| Layer | Purpose | Examples | Never Do |
-|-------|---------|----------|----------|
-| **Frontend** | User interaction & display | Render forms, call IPC via `ipcClient` | Direct database access, business logic |
-| **Command** | IPC entry point, auth | `authenticate!` macro, check permissions | Complex business logic, direct DB queries |
-| **Service** | Business logic | Enforce workflow rules, publish events | Direct SQL, UI concerns |
-| **Repository** | Data access | CRUD operations, queries | Business rules, authorization |
-| **Database** | Persistence | Store data, enforce FK constraints | Application logic |
+## Flow: task creation
 
----
-
-## Data Flow Diagrams
-
-### Flow 1: Task Creation
-
-```
-┌─────────────┐
-│   Frontend  │  User fills out "Create Task" form
-└──────┬──────┘
-       │ IPC: task_crud { action: Create { data } }
-       ↓
-┌──────────────────────────────────────────┐
-│  Command: task_crud                       │  1. authenticate!(session_token, state)
-│  (src-tauri/src/domains/tasks/ipc/task/facade.rs) │  2. Match action → TaskAction::Create
-└──────┬───────────────────────────────────┘
-       │ task_service.create_task(data)
-       ↓
-┌────────────────────────────────────────────┐
-│  Service: TaskCreationService::create_task │  1. Validate business rules
-│  (src-tauri/src/domains/tasks/infrastructure/task_creation.rs) │  2. Generate task_number
-└──────┬─────────────────────────────────────┘  3. Set timestamps
-       │ task_repo.create(task)                 4. Publish TaskCreated event
-       ↓
-┌──────────────────────────────────────────────┐
-│  Repository: TaskRepository::create          │  1. Build INSERT query
-│  (src-tauri/src/domains/tasks/infrastructure/task_repository.rs)│  2. Execute in transaction
-└──────┬───────────────────────────────────────┘  3. Return created task
-       │ INSERT INTO tasks ...
-       ↓
-┌─────────────┐
-│   SQLite    │  Task row inserted
-└─────────────┘
+```text
+/tasks/new page (frontend/src/app/tasks/new/page.tsx)
+  -> frontend task IPC (frontend/src/domains/tasks/ipc/task.ipc.ts)
+    -> task_crud command (src-tauri/src/domains/tasks/ipc/task/facade.rs)
+      -> task service/repo (src-tauri/src/domains/tasks/infrastructure/*)
+        -> INSERT into tasks (schema/migrations)
 ```
 
-**Key Validations**:
-- Command layer: Session valid, user has `Admin` or `Supervisor` role
-- Service layer: `title` not empty, valid status transition
-- Repository layer: Unique constraint on `task_number`
+Checks performed across layers:
+- session/token validation
+- role/operation permission checks
+- domain validation + DB constraints
 
----
+## Flow: intervention step advance / complete
 
-### Flow 2: Start Intervention Workflow
-
-```
-┌─────────────┐
-│  Frontend   │  Technician clicks "Start Intervention"
-└──────┬──────┘
-       │ IPC: intervention_start { task_id, request }
-       ↓
-┌───────────────────────────────────────────┐
-│  Command: intervention_start               │  1. authenticate!(session_token, state)
-│  (src-tauri/src/domains/interventions/ipc/intervention/workflow.rs) │  2. Verify user assigned to task
-│   workflow.rs)                             │
-└──────┬────────────────────────────────────┘
-       │ intervention_service.start_intervention(...)
-       ↓
-┌─────────────────────────────────────────────────────────┐
-│  Service: InterventionWorkflowService::start_intervention│  1. Check: no active intervention
-│  (src-tauri/src/domains/interventions/infrastructure/intervention_workflow.rs) │  2. Load task details
-└──────┬───────────────────────────────────────────────────┘  3. Create intervention
-       │                                                        4. Create workflow steps
-       │ with_transaction:                                     5. Set task.status = "in_progress"
-       │   intervention_repo.create(intervention)             6. Publish InterventionStarted
-       │   step_repo.create_batch(steps)
-       │   task_repo.update_status(task_id, "in_progress")
-       ↓
-┌──────────────────────────────────────────────┐
-│  Repository: InterventionRepository::create  │  BEGIN TRANSACTION
-└──────┬───────────────────────────────────────┘    INSERT INTO interventions ...
-       │                                            INSERT INTO intervention_steps ...
-       │                                            UPDATE tasks SET status = 'in_progress'
-       │                                          COMMIT
-       ↓
-┌─────────────┐
-│   SQLite    │  Intervention + Steps created, Task updated
-└─────────────┘
+```text
+intervention/workflow UI (frontend/src/domains/interventions/*)
+  -> interventions IPC wrapper (frontend/src/domains/interventions/ipc/interventions.ipc.ts)
+    -> intervention_advance_step / intervention_finalize
+       (src-tauri/src/domains/interventions/ipc/intervention/queries.rs + workflow.rs)
+      -> intervention workflow services/repos
+        -> update intervention_steps/interventions + optional photo/doc updates
 ```
 
-**Business Rules Enforced**:
-- Task must be in `assigned` or `draft` status
-- User must be the assigned technician OR have `Supervisor`/`Admin` role
-- No other intervention can be `in_progress` for this task
+## Flow: calendar updates
 
----
-
-### Flow 3: Advance Intervention Step
-
-```
-┌─────────────┐
-│  Frontend   │  Technician marks step as "Complete"
-└──────┬──────┘
-       │ IPC: intervention_advance_step { intervention_id, step_id, data }
-       ↓
-┌────────────────────────────────────────┐
-│  Command: intervention_advance_step     │  1. authenticate!(session_token, state)
-│  (src-tauri/src/domains/interventions/ipc/intervention/workflow.rs)  │  2. Validate step ownership
-│   workflow.rs)                          │
-└──────┬─────────────────────────────────┘
-       │ intervention_service.advance_step(...)
-       ↓
-┌──────────────────────────────────────────────────────┐
-│  Service: InterventionWorkflow::advance_step         │  1. Load intervention + step
-│  (src-tauri/src/domains/interventions/infrastructure/intervention_workflow.rs)   │  2. Validate step order
-└──────┬───────────────────────────────────────────────┘  3. Save photo (if any)
-       │                                                    4. Mark step as "completed"
-       │ with_transaction:                                 5. Check if all steps done
-       │   photo_service.save_photo(file_data, ...)       6. If done → finalize intervention
-       │   step_repo.update_status(step_id, "completed")
-       │   if all_steps_done: intervention_repo.mark_complete(id)
-       ↓
-┌─────────────┐
-│   SQLite    │  Photo + Step updated, possibly Intervention completed
-└─────────────┘
+```text
+schedule page (frontend/src/app/schedule/page.tsx)
+  -> calendar IPC wrapper (frontend/src/domains/calendar/ipc/calendar.ts)
+    -> create_event / update_event / calendar_schedule_task
+       (src-tauri/src/domains/calendar/ipc/calendar.rs)
+      -> calendar infra services/repos
+        -> calendar_events + related task scheduling updates
 ```
 
----
+## Offline-first: sync queue + event bus
 
-### Flow 4: Calendar Scheduling with Conflict Detection
+### Sync queue
+- IPC: `src-tauri/src/domains/sync/ipc/queue.rs`, `src-tauri/src/domains/sync/ipc/sync.rs`
+- Domain model/infra: `src-tauri/src/domains/sync/domain/models/sync.rs`, `src-tauri/src/domains/sync/infrastructure/sync/*`
+- Storage: `sync_queue` table (`src-tauri/src/db/schema.sql`)
 
-```
-┌─────────────┐
-│  Frontend   │  User schedules task for date/time, assigns technician
-└──────┬──────┘
-       │ IPC: calendar_schedule_task { task_id, start, end, technician_id }
-       ↓
-┌────────────────────────────────────────┐
-│  Command: calendar_schedule_task       │  1. authenticate!(session_token, state)
-│  (src-tauri/src/domains/calendar/ipc/calendar.rs)  │  2. Check RBAC (Supervisor/Admin)
-└──────┬─────────────────────────────────┘
-       │ calendar_service.schedule_task(...)
-       ↓
-┌──────────────────────────────────────────────────────────┐
-│  Service: CalendarService::schedule_task                 │  1. Check conflicts
-│  (src-tauri/src/domains/calendar/infrastructure/calendar.rs)                    │  2. If conflict: return error
-└──────┬───────────────────────────────────────────────────┘  3. Create calendar event
-       │                                                        4. Update task scheduled_date
-       │ calendar_repo.check_conflicts(tech_id, start, end)
-       │ if conflicts.is_empty():
-       │   with_transaction:
-       │     calendar_repo.create_event(event)
-       │     task_repo.update_scheduled_date(task_id, start)
-       ↓
-┌─────────────┐
-│   SQLite    │  Event and Task updated
-└─────────────┘
-```
+### Event bus
+- Shared bus contracts: `src-tauri/src/shared/event_bus/*`
+- App-level event bus service in state: `src-tauri/src/shared/app_state.rs` (`event_bus`)
+- Startup wiring via service builder: `src-tauri/src/service_builder.rs`
 
-**Conflict Query**:
-```sql
-SELECT * FROM calendar_tasks 
-WHERE technician_id = ? 
-  AND (start_datetime < ? AND end_datetime > ?)
-```
+## Correlation and tracing in dataflow
 
----
-
-## Offline-First + Sync Queue Architecture
-
-### Current Implementation
-
-RPMA v2 is **fully offline** with sync queue for future server synchronization.
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  Service Layer (any mutation operation)                     │
-│  - Sets entity.synced = false                               │
-│  - Sets entity.last_synced_at = None                        │
-└──────────────────────────┬──────────────────────────────────┘
-                           │ After successful DB write
-                           ↓
-┌─────────────────────────────────────────────────────────────┐
-│  Sync Queue Service (src-tauri/src/domains/sync/infrastructure/sync/queue.rs)           │
-│  - enqueue(operation): Add to sync_queue table              │
-│  - dequeue_batch(limit): Get pending operations             │
-│  - mark_completed(id) / mark_failed(id, error)              │
-└──────────────────────────┬──────────────────────────────────┘
-                           │ Background worker (30s interval)
-                           ↓
-┌─────────────────────────────────────────────────────────────┐
-│  Background Sync Service (src-tauri/src/domains/sync/infrastructure/sync/background.rs) │
-│  - Check network connectivity                               │
-│  - Process pending operations                               │
-│  - Handle conflicts (LastWriteWins, ClientWins, ServerWins) │
-│  - Update entity.synced = true on success                   │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**Frontend Offline Hooks**:
-- `useOfflineSync` - Main offline/online detection and queue management (`frontend/src/hooks/useOfflineSync.ts`)
-- `useOfflineQueue` - Full-featured offline queue with localStorage persistence (`frontend/src/hooks/useOfflineQueue.ts`)
-- `useSyncStatus` - Backend sync status polling (5s interval) (`frontend/src/hooks/useSyncStatus.ts`)
-- `useEntitySyncStatus` - Check sync status for specific entity (`frontend/src/hooks/useEntitySyncStatus.ts`)
-- `useConnectionStatus` - Simple online/offline detection (`frontend/src/hooks/useConnectionStatus.ts`)
-
-**Sync Queue Table** (`sync_queue`):
-- `operation_type`: Create, Update, Delete
-- `entity_type`: Task, Client, Intervention, Step, Photo, User
-- `status`: Pending, Processing, Completed, Failed, Abandoned
-- `dependencies`: JSON array for dependency-aware processing
-
----
-
-## Event Bus for Side Effects
-
-RPMA v2 uses an **in-memory event bus** to decouple domain events from their side effects.
-
-**Location**: `src-tauri/src/services/event_bus.rs` (shared infrastructure, outside domain contexts by design)
-
-```
-┌──────────────────────────────┐
-│  Service Layer               │  InterventionService::start_intervention()
-└──────────────┬───────────────┘
-               │ 1. Execute business logic
-               │ 2. Persist to DB
-               │ 3. event_bus.publish(InterventionStarted { ... })
-               ↓
-┌──────────────────────────────────────────────────────────┐
-│  Event Bus (InMemoryEventBus)                            │
-│  - handlers: HashMap<event_type, Vec<EventHandler>>      │
-│  - register_handler(handler)                             │
-│  - publish(event) → dispatches to all handlers           │
-└───────────────────────────────────────────────────────────┘
-               │
-               ├─→ [Notification Handler] → Create notification
-               ├─→ [Cache Handler] → Invalidate cache
-               ├─→ [Audit Handler] → Log to audit_events
-               └─→ [Sync Handler] → Add to sync_queue
-```
-
-**Domain Event Types** (`src-tauri/src/services/event_system.rs`):
-- Task: `TaskCreated`, `TaskUpdated`, `TaskAssigned`, `TaskStatusChanged`, `TaskCompleted`
-- Intervention: `InterventionStarted`, `InterventionStepStarted`, `InterventionStepCompleted`, `InterventionCompleted`
-- Auth: `AuthenticationSuccess`, `AuthenticationFailed`
-- Material: `MaterialConsumed`
-
----
-
-## Transaction Boundaries
-
-### When to Use Transactions
-
-✅ **Always use transactions for**:
-- Multi-table updates (e.g., creating intervention + steps)
-- Ensuring consistency (e.g., decrement stock + record consumption)
-- Complex workflows with rollback needs
-
-### Transaction Helpers
-
-```rust
-// Sync API
-db.with_transaction(|tx| {
-    tx.execute("INSERT INTO ...", params)?;
-    tx.execute("UPDATE ...", params)?;
-    Ok(result)
-})?;
-
-// Async API
-async_db.with_transaction_async(move |tx| {
-    Ok(result)
-}).await?;
-```
-
----
-
-## Performance Optimizations
-
-### Connection Pooling
-- **Pool**: r2d2 with max 10 connections, min 2 idle (`src-tauri/src/db/connection.rs:42-52`)
-- **WAL mode**: Allows concurrent reads while writing (`connection.rs:96-103`)
-- **DynamicPoolManager**: Adjusts pool size based on load (`src-tauri/src/db/mod.rs`)
-- **Busy timeout**: 5 seconds for lock contention
-- **Cache size**: 10,000 pages (~10MB)
-- **Connection lifecycle**: 3600s max lifetime, 600s idle timeout
-
-### 2. Query Performance Monitoring
-- `QueryPerformanceMonitor` tracks slow queries (>100ms) (`src-tauri/src/db/connection.rs`)
-- `PreparedStatementCache` tracks statement usage and cache hits (`src-tauri/src/db/mod.rs`)
-- Metrics collection for connection pool statistics
-
-### 3. Streaming Large Result Sets
-- `ChunkedQuery` in `src-tauri/src/db/connection.rs` for paginated queries
-- `StreamingTaskRepository` for large task lists (`src-tauri/src/domains/tasks/infrastructure/task_repository_streaming.rs`)
-- Configurable chunk_size (default 1000 rows)
-
-### 4. Caching
-- `CacheService` with TTL support (`src-tauri/src/services/cache.rs`)
-
----
-
-## Bounded-Context Migration Notes
-
-- Domain business code is no longer authored in `src-tauri/src/services/*` or
-  `src-tauri/src/repositories/*`; those legacy paths are **compatibility shims** that
-  re-export from `src-tauri/src/domains/*/infrastructure/`.
-- **Exception**: `event_bus.rs`, `event_system.rs`, `cache.rs`, and `domain_event.rs`
-  remain in `src-tauri/src/services/` as true shared infrastructure (not shims).
-- Domain command files in `src-tauri/src/commands/*` are **compatibility shims**;
-  actual command handlers live in `src-tauri/src/domains/*/ipc/*`.
-- `src-tauri/src/commands/auth_middleware.rs` is a 1-line shim:
-  `pub use crate::domains::auth::ipc::auth_middleware::*;`
-  The `authenticate!` macro is defined in `src-tauri/src/domains/auth/ipc/auth_middleware.rs`.
-- New backend domains included in the migration: `analytics` and `notifications`.
-- IPC response caching via `cachedInvoke` in `frontend/src/lib/ipc/cache.ts`
-- `cache_metadata` table for persistent cache (key-value with expiration)
-- `invalidatePattern` for cache invalidation patterns
-
----
-
-## Next Steps
-
-- **Frontend patterns**: [03_FRONTEND_GUIDE.md](./03_FRONTEND_GUIDE.md)
-- **Backend patterns**: [04_BACKEND_GUIDE.md](./04_BACKEND_GUIDE.md)
-- **IPC API reference**: [05_IPC_API_AND_CONTRACTS.md](./05_IPC_API_AND_CONTRACTS.md)
+- Frontend injects `correlation_id` in `safeInvoke` by default (`frontend/src/lib/ipc/utils.ts`).
+- Backend command helpers initialize/update correlation context (`src-tauri/src/shared/ipc/correlation.rs`).
+- Response envelopes can carry `correlation_id` (`src-tauri/src/shared/ipc/response.rs`).

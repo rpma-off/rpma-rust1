@@ -1,354 +1,66 @@
 # 06 - Security and RBAC
 
-## Authentication Flow
-
-### 1. Login Process
-
-```
-┌─────────────┐
-│  Frontend   │  User enters email + password
-└──────┬──────┘
-       │ IPC: auth_login { email, password }
-       ↓
-┌────────────────────────────────────────┐
-│  Command: auth_login                    │  1. No session required (public)
-│  Canonical: `src-tauri/src/domains/auth/ipc/auth.rs`   │  2. Rate limiting applied
-│  (shim: `src-tauri/src/commands/auth.rs:31`)            │
-└──────┬─────────────────────────────────┘
-       │ auth_service.authenticate(email, password)
-       ↓
-┌─────────────────────────────────────────────────┐
-│  Service: AuthService::authenticate              │  1. Lookup user by email
-│  Canonical: `src-tauri/src/domains/auth/infrastructure/auth.rs` │  2. Check rate limit/lockout
-│  (shim: `src-tauri/src/services/auth.rs`)        │  3. Verify password (Argon2)
-└──────┬──────────────────────────────────────────┘  3. Verify password (Argon2)
-       │                                            4. Generate JWT token
-       │ user_repo.get_by_email()                   5. Create session in DB
-       │ verify_password(password, hash)            6. Update last_login
-       │ session_repo.create()
-       ↓
-┌──────────────────────────────────────────┐
-│  Return UserSession { token, user, ... } │
-└──────────────────────────────────────────┘
-```
-
-**Security Features**:
-- Password hashing: **Argon2** with random salt per password (canonical: `domains/auth/infrastructure/auth.rs`)
-- JWT access tokens: **2 hours** expiration (canonical: `domains/auth/infrastructure/token.rs`)
-- Refresh tokens: **7 days** expiration (canonical: `domains/auth/infrastructure/token.rs`)
-- Token storage: **SHA256 hash** in database, not plain text (`user_sessions` table)
-- Rate limiting: Applied before authentication attempt (canonical: `domains/auth/infrastructure/rate_limiter.rs`)
-
----
-
-### 2. Session Validation
-
-All protected IPC commands use the `authenticate!` macro:
-
-**Canonical location**: `src-tauri/src/domains/auth/ipc/auth_middleware.rs`
-(1-line shim at `src-tauri/src/commands/auth_middleware.rs`: `pub use crate::domains::auth::ipc::auth_middleware::*;`)
-
-```rust
-#[tauri::command]
-pub async fn protected_command(
-    session_token: String,
-    state: State<'_, AppState>,
-) -> Result<ApiResponse<Data>, AppError> {
-    let session = authenticate!(&session_token, &state);
-    // session contains: user_id, email, role, is_active
-}
-```
-
-**Session Fields** (`models/auth.rs`):
-- `token`: JWT string
-- `refresh_token`: For session extension
-- `expires_at`: Unix timestamp
-- `last_activity`: For timeout tracking
-- `two_factor_verified`: Boolean
-
----
-
-### 3. Logout Process
-
-**Command**: `auth_logout` (`commands/auth.rs:153`)
-
-**Flow**:
-1. Validate session token
-2. Delete session from `user_sessions` table
-3. Frontend clears token from storage
-
----
-
-### 4. Two-Factor Authentication (2FA)
-
-**Status**: **Fully Implemented**
-
-**Service**: `src-tauri/src/domains/auth/infrastructure/two_factor.rs` (shim: `src-tauri/src/services/two_factor.rs`)
-
-| Command | Purpose | Backend | Frontend |
-|---------|---------|---------|----------|
-| `enable_2fa` | Generate TOTP setup (QR code + backup codes) | canonical: `domains/auth/ipc/auth.rs` | `lib/ipc/domains/auth.ts` |
-| `verify_2fa_setup` | Verify and enable 2FA | canonical: `domains/auth/ipc/auth.rs` | `lib/ipc/domains/auth.ts` |
-| `disable_2fa` | Disable 2FA (requires password) | canonical: `domains/auth/ipc/auth.rs` | `lib/ipc/domains/auth.ts` |
-| `verify_2fa_code` | Verify TOTP code during login | canonical: `domains/auth/ipc/auth.rs` | `lib/ipc/domains/auth.ts` |
-| `regenerate_backup_codes` | Generate new backup codes | canonical: `domains/auth/ipc/auth.rs` | `lib/ipc/domains/auth.ts` |
-
-**Configuration**:
-- Algorithm: TOTP (RFC 6238) with SHA-1
-- Code length: 6 digits
-- Time window: 30 seconds
-- Clock skew tolerance: ±1 window (90 seconds total)
-- Backup codes: 10 codes × 6 digits (stored hashed in DB)
-- Issuer: "RPMA"
-- Secret encryption: Base64 encoded (TODO: production hardening with proper key management)
-
-**Database Fields** (`users` table):
-- `two_factor_enabled`: BOOLEAN
-- `two_factor_secret`: TEXT (encrypted TOTP secret)
-- `backup_codes`: TEXT (JSON array of hashed codes)
-- `verified_at`: INTEGER (timestamp)
-
----
-
-## Role-Based Access Control (RBAC)
-
-### User Roles
-
-**Location**: `src-tauri/src/models/auth.rs`
-
-```rust
-pub enum UserRole {
-    Admin,       // Full system access
-    Supervisor,  // Manage operations, limited config
-    Technician,  // Execute tasks, view assigned data
-    Viewer,      // Read-only access
-}
-```
-
-**Hierarchy** (`auth_middleware.rs:76-95`):
-```
-Admin > Supervisor > Technician > Viewer
-```
-
----
-
-### RBAC Permission Matrix
-
-| Action | Admin | Supervisor | Technician | Viewer |
-|--------|-------|------------|------------|--------|
-| **Users** | | | | |
-| Create user | ✅ | ✅ | ❌ | ❌ |
-| Edit user (any) | ✅ | ✅ (non-Admin) | ❌ | ❌ |
-| Delete user | ✅ | ❌ | ❌ | ❌ |
-| Change role | ✅ | ❌ | ❌ | ❌ |
-| **Tasks** | | | | |
-| Create task | ✅ | ✅ | ❌ | ❌ |
-| Edit task (any) | ✅ | ✅ | ❌ | ❌ |
-| Edit assigned task | ✅ | ✅ | ✅ | ❌ |
-| Delete task | ✅ | ❌ | ❌ | ❌ |
-| View all tasks | ✅ | ✅ | ❌ | ❌ |
-| View assigned tasks | ✅ | ✅ | ✅ | ✅ |
-| **Interventions** | | | | |
-| Start intervention | ✅ | ✅ | ✅ (assigned) | ❌ |
-| Execute steps | ✅ | ✅ | ✅ (assigned) | ❌ |
-| Finalize | ✅ | ✅ | ✅ (assigned) | ❌ |
-| **Reports** | | | | |
-| Generate all reports | ✅ | ✅ | ❌ | ❌ |
-| View own data | ✅ | ✅ | ✅ | ✅ |
-
----
-
-### Enforcement in Code
-
-**Location**: `src-tauri/src/domains/auth/ipc/auth_middleware.rs`
-
-**Pattern 1: Role Check**
-```rust
-if !matches!(current_user.role, UserRole::Admin | UserRole::Supervisor) {
-    return Err(AppError::Authorization("Insufficient permissions".into()));
-}
-```
+## Auth flow
 
-**Pattern 2: Ownership Check**
-```rust
-if !matches!(user_role, UserRole::Admin | UserRole::Supervisor) {
-    if task.technician_id.as_ref() != Some(&user_id) {
-        return Err(AppError::Authorization("Access denied".into()));
-    }
-}
-```
+Entry commands (`src-tauri/src/domains/auth/ipc/auth.rs`):
+- `auth_login`
+- `auth_create_account`
+- `auth_validate_session`
+- `auth_refresh_token`
+- `auth_logout`
+- 2FA commands (`enable_2fa`, `verify_2fa_setup`, `disable_2fa`, `verify_2fa_code`, `is_2fa_enabled`, `regenerate_backup_codes`)
 
-**Pattern 3: Macros**
-```rust
-authenticate!(&session_token, &state)                    // Basic auth
-authenticate!(&session_token, &state, UserRole::Admin)   // With role
-check_task_permission!(&user.role, "delete")             // Task operation
-```
+Frontend auth orchestrator:
+- `frontend/src/domains/auth/api/AuthProvider.tsx`
+- Stores session in secure storage abstraction and refreshes token periodically.
 
----
+## Session and token enforcement
 
-## Rate Limiting
+- Protected commands validate `session_token` using auth services.
+- Shared middleware helpers: `src-tauri/src/shared/auth_middleware.rs`.
+- Correlation/user context update helpers: `src-tauri/src/shared/ipc/correlation.rs`.
 
-**Service**: `src-tauri/src/domains/auth/infrastructure/rate_limiter.rs` (shim: `src-tauri/src/services/rate_limiter.rs`)
+## RBAC roles and hierarchy
 
-| Setting | Value | Location |
-|---------|-------|----------|
-| Max failed attempts | 5 | `rate_limiter.rs:32` |
-| Lockout duration | 15 minutes | `rate_limiter.rs:33` |
-| Window duration | 15 minutes | `rate_limiter.rs:34` |
-| Tracking | Email + IP address | `rate_limiter.rs:40-50` |
+Role enum:
+- `admin`
+- `supervisor`
+- `technician`
+- `viewer`
 
-**Features**:
-- Dual tracking: Email-based AND IP-based rate limiting
-- In-memory cache (HashMap with RwLock) for frequent access
-- Database persistence (`login_attempts` table) for lockout state
-- Auto-cleanup of expired lockouts
+Source: `src-tauri/src/domains/auth/domain/models/auth.rs`.
 
----
+Hierarchy logic source: `src-tauri/src/shared/auth_middleware.rs` (`has_permission`).
 
-## Security Monitoring
+## RBAC matrix (from middleware + command patterns)
 
-**Service**: `src-tauri/src/domains/audit/infrastructure/security_monitor.rs` (shim: `src-tauri/src/services/security_monitor.rs`)
+| Operation family | Admin | Supervisor | Technician | Viewer | Enforcement pointers |
+|---|---:|---:|---:|---:|---|
+| Global admin/system | ✅ | limited | ❌ | ❌ | command handlers + role checks |
+| Task read | ✅ | ✅ | ✅ (often scoped) | ✅ (read only) | `can_perform_task_operation` |
+| Task create/update | ✅ | ✅ | ✅ (no assign/delete) | ❌ | `can_perform_task_operation` |
+| Task assign | ✅ | ✅ | ❌ | ❌ | `can_perform_task_operation` |
+| Task delete | ✅ | ❌ | ❌ | ❌ | `can_perform_task_operation` |
+| User management | ✅ | limited | own profile only | own profile only | `can_perform_user_operation` |
 
-**Event Types Tracked**:
-- Authentication failures (wrong password, invalid token)
-- Authorization failures (insufficient permissions)
-- Rate limit exceeded events
-- Brute force attempts detection
-- SQL injection attempts (input validation)
-- XSS attempts (input sanitization)
-- Session anomalies (concurrent sessions, IP changes)
-
-**Alert Severities**: Low, Medium, High, Critical
+## 2FA and session security
 
-**Auto-IP Blocking**: Triggers after 10 failed attempts per hour from same IP
-
-**Integration**: Works with `AuditService` to log events to `audit_events` table
+- 2FA types/models: `src-tauri/src/domains/auth/domain/models/auth.rs`
+- 2FA service implementation: `src-tauri/src/domains/auth/infrastructure/two_factor.rs`
+- Session service implementation: `src-tauri/src/domains/auth/infrastructure/session.rs`
 
----
+## Local DB and secret handling
 
-## Data Protection
+- DB path resolved from Tauri app data directory (`src-tauri/src/main.rs`).
+- DB starts in WAL mode and uses connection pool config in db module.
+- Optional env key for DB encryption wiring: `RPMA_DB_KEY` (read in `main.rs`).
+- `.env` loading via `dotenvy::dotenv()` at startup.
 
-### Local Database Security
+## Security monitoring and audit surfaces
 
-**SQLite Configuration** (`src-tauri/src/db/connection.rs:96-103`):
-```sql
-PRAGMA journal_mode = WAL;
-PRAGMA foreign_keys = ON;
-PRAGMA synchronous = NORMAL;
-```
-
-**Database Location**: `<app_data_dir>/rpma.db`
-
----
-
-### Secrets & Environment Variables
-
-**Required Environment Variables**:
-- `JWT_SECRET`: Token signing key (HMAC-SHA256)
-
-**Development** (see `package.json:7`):
-```bash
-# Windows
-set JWT_SECRET=dfc3d7f5c295d19b42e9b3d7eaa9602e45f91a9e5e95cbaa3230fc17e631c74b
-npm run dev
-
-# Linux/Mac
-export JWT_SECRET=dfc3d7f5c295d19b42e9b3d7eaa9602e45f91a9e5e95cbaa3230fc17e631c74b
-npm run dev
-```
-
-**Production**: Use environment-specific secure key management (not hardcoded)
-
----
-
-## Audit Logging
-
-### Tables
-
-| Table | Purpose |
-|-------|---------|
-| `audit_logs` | General audit trail |
-| `audit_events` | Security audit events |
-| `settings_audit_log` | Settings changes |
-
-### Audit Service
-
-**Location**: `src-tauri/src/domains/audit/infrastructure/audit_service.rs` (shim: `src-tauri/src/services/audit_service.rs`)
-
-**What Gets Logged**:
-- User creation, deletion, role changes
-- Task creation, deletion, status changes
-- Login attempts (success/failure)
-- Sensitive data access
-- System settings changes
-
----
-
-## Security Validation Scripts
-
-| Script | Purpose | Command |
-|--------|---------|---------|
-| `security-audit.js` | Comprehensive security scan | `npm run security:audit` |
-| `ipc-authorization-audit.js` | Check IPC auth | `node scripts/ipc-authorization-audit.js` |
-| `validate-session-security.js` | Session validation | `node scripts/validate-session-security.js` |
-
----
-
-## Common Security Vulnerabilities to Avoid
-
-### 1. Privilege Escalation
-```rust
-// ❌ BAD: User can change own role
-// ✅ GOOD: Prevent self role change
-if current_user.user_id == user_id && new_role.is_some() {
-    return Err(AppError::Validation("Cannot change your own role".into()));
-}
-```
-
-### 2. Insecure Direct Object Reference (IDOR)
-```rust
-// ❌ BAD: No ownership check
-// ✅ GOOD: Check user can access this task
-if task.technician_id.as_ref() != Some(user_id) && !is_admin {
-    return Err(AppError::Authorization("Access denied".into()));
-}
-```
-
-### 3. SQL Injection
-```rust
-// ❌ BAD: Direct interpolation
-let query = format!("SELECT * WHERE id = '{}'", user_input);
-
-// ✅ GOOD: Parameterized queries
-conn.execute("SELECT * WHERE id = ?", params![user_input])?;
-```
-
----
-
-## Security Best Practices
-
-### ✅ Do
-- Always validate session tokens in protected commands
-- Use Argon2 for password hashing
-- Implement rate limiting on auth endpoints
-- Log security-relevant actions
-- Use RBAC checks for sensitive operations
-- Validate and sanitize all inputs
-- Run security audits regularly
-
-### ❌ Don't
-- Store passwords in plain text
-- Log sensitive data (passwords, tokens)
-- Trust client-side validation alone
-- Expose internal error details
-- Allow privilege escalation
-- Commit secrets to version control
-
----
-
-## Next Steps
-
-- **Database & migrations**: [07_DATABASE_AND_MIGRATIONS.md](./07_DATABASE_AND_MIGRATIONS.md)
-- **Dev workflows**: [08_DEV_WORKFLOWS_AND_TOOLING.md](./08_DEV_WORKFLOWS_AND_TOOLING.md)
-- **User flows**: [09_USER_FLOWS_AND_UX.md](./09_USER_FLOWS_AND_UX.md)
+- Security IPC commands: `src-tauri/src/domains/audit/ipc/security.rs` (metrics/events/alerts/sessions)
+- Session management commands include `get_active_sessions`, `revoke_session`, `revoke_all_sessions_except_current`.
+
+## DOC vs CODE mismatch
+
+- ADR text still references `Manager`; runtime code uses `Supervisor`.
