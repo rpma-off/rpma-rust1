@@ -29,13 +29,13 @@ import toast from 'react-hot-toast';
 import { interventionKeys } from '@/lib/query-keys';
 import { useAuth } from '@/domains/auth';
 import { taskService } from '../../services/task.service';
-import { ipcClient } from '@/lib/ipc';
 import { InterventionWorkflowService } from '@/domains/interventions';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import EditTaskModal from './EditTaskModal';
 import SendMessageModal from './SendMessageModal';
 import DelayTaskModal from './DelayTaskModal';
 import ReportIssueModal from './ReportIssueModal';
+import { phone } from '@/lib/utils/phone';
 
 interface ActionsCardProps {
   task: TaskWithDetails;
@@ -401,7 +401,7 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
             return;
           }
 
-          await ipcClient.ui.initiateCustomerCall(phoneNumber);
+          await phone.initiateCustomerCall(phoneNumber);
           toast.success(`Appel lancé vers ${phoneNumber}`);
         } catch (error) {
           console.error('Failed to initiate call:', error);
@@ -892,7 +892,6 @@ const PrioritySelector: React.FC<PrioritySelectorProps> = ({ value, onChange, is
     </div>
   </div>
 );
-
 
 
 

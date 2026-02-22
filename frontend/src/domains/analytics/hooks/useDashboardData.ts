@@ -178,7 +178,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): [Dashbo
       setState(prev => ({ ...prev, connectionStatus: 'checking' }));
 
       // Use IPC health check instead of HTTP API
-      const healthResult = await ipcClient.system.healthCheck();
+      const healthResult = await ipcClient.admin.healthCheck();
       const isOnline = !!healthResult;
       setState(prev => ({
         ...prev,

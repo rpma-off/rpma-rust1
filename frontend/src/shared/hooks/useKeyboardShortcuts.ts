@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import { ipcClient } from '@/lib/ipc';
+import { shortcuts } from '@/lib/utils/desktop';
 import type { JsonObject } from '@/types/json';
 
 interface ShortcutAction {
@@ -12,7 +12,7 @@ interface ShortcutAction {
   description: string;
 }
 
-export function useKeyboardShortcuts(shortcuts: ShortcutAction[]) {
+export function useKeyboardShortcuts(shortcutList: ShortcutAction[]) {
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     // Ignore if user is typing in an input
@@ -25,7 +25,7 @@ export function useKeyboardShortcuts(shortcuts: ShortcutAction[]) {
       return;
     }
 
-    const matchingShortcut = shortcuts.find(shortcut =>
+    const matchingShortcut = shortcutList.find(shortcut =>
       shortcut.key.toLowerCase() === event.key.toLowerCase() &&
       !!shortcut.ctrlKey === event.ctrlKey &&
       !!shortcut.altKey === event.altKey &&
@@ -37,7 +37,7 @@ export function useKeyboardShortcuts(shortcuts: ShortcutAction[]) {
       event.preventDefault();
       matchingShortcut.action();
     }
-  }, [shortcuts]);
+  }, [shortcutList]);
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
@@ -46,8 +46,8 @@ export function useKeyboardShortcuts(shortcuts: ShortcutAction[]) {
 
   // Register shortcuts with Tauri for menu integration
   useEffect(() => {
-    ipcClient.ui.registerShortcuts(shortcuts as unknown as JsonObject).catch(console.error);
-  }, [shortcuts]);
+    shortcuts.register({ shortcuts: shortcutList as unknown as JsonObject }).catch(console.error);
+  }, [shortcutList]);
 }
 
 // Predefined shortcuts for the app

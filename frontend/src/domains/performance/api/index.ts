@@ -1,3 +1,2 @@
-export { performanceProvider } from './performanceProvider';
-export { usePerformance } from './useperformance';
-export type { PerformanceContext } from './types';
+export { PerformanceProvider, usePerformance } from './performanceProvider';
+export type { PerformanceContextValue, PerformanceContext, PerformanceMetrics, PerformanceStats, CacheStatistics, CacheEntry, CacheSettings, SystemHealth } from './types';

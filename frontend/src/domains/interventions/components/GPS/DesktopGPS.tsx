@@ -1,13 +1,9 @@
 // src/domains/interventions/components/GPS/DesktopGPS.tsx
 import { useState, useEffect } from 'react';
 import { MapPin, Navigation, Crosshair, RefreshCw } from 'lucide-react';
-import { ipcClient } from '@/lib/ipc';
-
-interface Coordinates {
-  latitude: number;
-  longitude: number;
-  accuracy?: number;
-}
+import { gps } from '@/lib/utils/gps';
+import { shellOps } from '@/lib/utils/desktop';
+import type { Coordinates } from '@/lib/utils/gps';
 
 export function DesktopGPS() {
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
@@ -19,7 +15,7 @@ export function DesktopGPS() {
     setError(null);
 
     try {
-      const position: Coordinates = await ipcClient.ui.gpsGetCurrentPosition();
+      const position: Coordinates = await gps.getCurrentPosition();
       setCoordinates(position);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur GPS');
@@ -33,7 +29,7 @@ export function DesktopGPS() {
 
     try {
       const url = `https://www.google.com/maps?q=${coordinates.latitude},${coordinates.longitude}`;
-      await ipcClient.ui.shellOpen(url);
+      await shellOps.open(url);
     } catch (err) {
       console.error('Failed to open maps:', err);
     }

@@ -19,6 +19,9 @@ import type {
   TaskStatistics
 } from '@/types';
 import type { CreateTaskRequest, UpdateTaskRequest, UserAccount } from '@/lib/backend';
+import { windowManager, desktopNavigation, shellOps } from './utils/desktop';
+import { gps } from './utils/gps';
+import type { Coordinates } from './utils/gps';
 
 /**
  * Utility function to convert Unix timestamp (seconds) to ISO string, or return ISO string as-is
@@ -57,7 +60,7 @@ export class TestService {
   static async healthCheck(): Promise<string> {
     try {
       logger.debug(LogContext.SYSTEM, 'Calling health_check command');
-      const result = await ipcClient.system.healthCheck() as string;
+      const result = await ipcClient.admin.healthCheck() as string;
       logger.info(LogContext.SYSTEM, 'Health check result', { result });
       return result;
     } catch (error) {
@@ -491,21 +494,21 @@ export class UIService {
    * Minimize window
    */
   static async minimizeWindow(): Promise<void> {
-    await ipcClient.ui.windowMinimize();
+    await windowManager.minimize();
   }
 
   /**
-    * Maximize window
-    */
+   * Maximize window
+   */
   static async maximizeWindow(): Promise<void> {
-    await ipcClient.ui.windowMaximize();
+    await windowManager.maximize();
   }
 
   /**
-    * Close window
-    */
+   * Close window
+   */
   static async closeWindow(): Promise<void> {
-    await ipcClient.ui.windowClose();
+    await windowManager.close();
   }
 
   /**
@@ -513,7 +516,7 @@ export class UIService {
    */
   static async getCurrentPosition(): Promise<ApiResponse<{ lat: number; lon: number; accuracy: number }>> {
     try {
-      const position = await ipcClient.ui.gpsGetCurrentPosition() as { latitude: number; longitude: number; accuracy?: number };
+      const position: Coordinates = await gps.getCurrentPosition();
       return {
         success: true,
         data: {
@@ -534,7 +537,7 @@ export class UIService {
    * Open URL in external browser
    */
   static async openUrl(url: string): Promise<void> {
-    await ipcClient.ui.shellOpen(url);
+    await shellOps.open(url);
   }
 }
 
@@ -597,28 +600,28 @@ export class NavigationService {
    * Update current navigation state
    */
   static async updateNavigation(path: string, title?: string): Promise<void> {
-    await ipcClient.ui.navigate(path, { title });
+    await desktopNavigation.navigate(path, { title });
   }
 
   /**
-    * Add to navigation history
-    */
+   * Add to navigation history
+   */
   static async addToHistory(path: string): Promise<void> {
-    await ipcClient.ui.addToHistory(path);
+    await desktopNavigation.addToHistory(path);
   }
 
   /**
-    * Go back in navigation
-    */
+   * Go back in navigation
+   */
   static async goBack(): Promise<void> {
-    await ipcClient.ui.goBack();
+    await desktopNavigation.goBack();
   }
 
   /**
-    * Go forward in navigation
-    */
+   * Go forward in navigation
+   */
   static async goForward(): Promise<void> {
-    await ipcClient.ui.goForward();
+    await desktopNavigation.goForward();
   }
 
   /**
@@ -626,7 +629,7 @@ export class NavigationService {
    */
   static async getCurrent(): Promise<ApiResponse<{ path: string; title?: string }>> {
     try {
-      const current = await ipcClient.ui.getCurrent() as { path: string; title?: string };
+      const current = await desktopNavigation.getCurrent() as { path: string; title?: string };
       return { success: true, data: current };
     } catch (error) {
       return {

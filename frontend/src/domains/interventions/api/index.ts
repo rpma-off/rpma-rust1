@@ -10,6 +10,7 @@ export {
   InterventionWorkflowService,
   interventionWorkflowService,
 } from '../services/intervention-workflow.service';
+export { interventionsIpc } from '../ipc/interventions.ipc';
 export {
   PPFPhotoService,
   ppfPhotoService as PPFPhotoServiceInstance,

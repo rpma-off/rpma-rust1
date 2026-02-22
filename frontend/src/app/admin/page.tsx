@@ -101,10 +101,10 @@ export default function AdminPage() {
         const dashboardStats = await ipcClient.dashboard.getStats();
 
          // Get real system information
-         const [healthCheck, dbStats] = await Promise.all([
-           ipcClient.system.healthCheck().catch(() => 'unknown'),
-           ipcClient.system.getDatabaseStats().catch(() => ({ size_bytes: 0 }))
-         ]);
+          const [healthCheck, dbStats] = await Promise.all([
+            ipcClient.admin.healthCheck().catch(() => 'unknown'),
+            ipcClient.admin.getDatabaseStats().catch(() => ({ size_bytes: 0 }))
+          ]);
 
         // Store raw dashboard stats for dashboard components
         setDashboardStats(dashboardStats);

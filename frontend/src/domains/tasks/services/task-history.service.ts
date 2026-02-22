@@ -56,7 +56,7 @@ export class TaskHistoryService {
       const token = await TaskHistoryService.getSessionToken();
 
       // Use security events as audit trail for task history
-      const events = await ipcClient.security.getEvents(100, token);
+      const events = await ipcClient.audit.getEvents(100, token);
       const allEvents = (Array.isArray(events) ? events : []) as Array<Record<string, unknown>>;
 
       let history = allEvents
