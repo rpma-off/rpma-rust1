@@ -22,10 +22,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loadProfile = useCallback(async (user: UserSession) => {
     try {
       const profile = await authIpc.getUserProfile(user.user_id, user.token);
-      if (profile && Object.keys(profile).length > 0) {
+      if (profile && typeof profile === 'object' && Object.keys(profile).length > 0) {
         setState(prev => ({
           ...prev,
-          profile: convertTimestamps(profile) as UserAccount,
+          profile: convertTimestamps(profile as object) as UserAccount,
         }));
         logger.debug(LogContext.AUTH, 'Profile loaded successfully', { userId: user.user_id });
       } else {

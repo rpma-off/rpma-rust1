@@ -1,9 +1,9 @@
-    import { NextRequest, NextResponse } from 'next/server';
-    import { withMethod } from '@/lib/api-route-wrapper';
-    import { validateApiAuth } from '@/lib/api-auth';
-    import { validateCSRFRequest } from '@/lib/auth/csrf';
-    import { ipcClient } from '@/lib/ipc';
-    import type { UpdateTaskRequest } from '@/lib/backend';
+import { NextRequest, NextResponse } from 'next/server';
+import { withMethod } from '@/lib/api-route-wrapper';
+import { validateApiAuth } from '@/lib/api-auth';
+import { validateCSRFRequest } from '@/lib/auth/csrf';
+import { taskIpc } from '@/domains/tasks/server';
+import type { UpdateTaskRequest } from '@/lib/backend';
 
 async function handleGet(request: NextRequest, context?: unknown) {
   try {
@@ -26,7 +26,7 @@ async function handleGet(request: NextRequest, context?: unknown) {
     }
 
     // Use IPC to get task
-    const result = await ipcClient.tasks.get(id, sessionToken);
+    const result = await taskIpc.get(id, sessionToken);
 
     if (result === null) {
       return NextResponse.json(
@@ -100,7 +100,7 @@ async function handlePut(request: NextRequest, context?: unknown) {
     }
 
     // Use IPC to update task
-    const result = await ipcClient.tasks.update(id, updateData as UpdateTaskRequest, sessionToken);
+    const result = await taskIpc.update(id, updateData as UpdateTaskRequest, sessionToken);
 
     return NextResponse.json(
       { success: true, data: result },

@@ -5,4 +5,5 @@ export {
   rescheduleTask,
   createDateRange,
   createCalendarFilter,
+  calendarEvents,
 } from './calendar';

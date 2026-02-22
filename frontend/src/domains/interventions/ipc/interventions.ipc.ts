@@ -1,39 +1,231 @@
-import { ipcClient } from '@/lib/ipc';
+import { safeInvoke } from '@/lib/ipc/core';
+import { IPC_COMMANDS } from '@/lib/ipc/commands';
+import {
+  validateIntervention,
+  validateInterventionStep,
+  validateStartInterventionResponse
+} from '@/lib/validation/backend-type-guards';
+import type { JsonObject, JsonValue } from '@/types/json';
 import type {
-  AdvanceStepRequest,
-  FinalizeInterventionRequest,
-  SaveStepProgressRequest,
+  Intervention,
+  InterventionStep,
+  InterventionProgress,
+  InterventionMetrics,
   StartInterventionRequest,
+  AdvanceStepRequest,
+  SaveStepProgressRequest,
+  FinalizeInterventionRequest
 } from '@/lib/backend';
 
 export const interventionsIpc = {
-  start: (data: StartInterventionRequest, sessionToken: string) =>
-    ipcClient.interventions.start(data, sessionToken),
+  start: async (data: StartInterventionRequest, sessionToken: string) => {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_WORKFLOW, {
+      action: { action: 'Start', data },
+      sessionToken: sessionToken
+    });
 
-  get: (id: string, sessionToken: string) =>
-    ipcClient.interventions.get(id, sessionToken),
+    if (result && typeof result === 'object' && 'type' in result) {
+      const workflowResponse = result as unknown as { type: string; intervention: Intervention; steps: InterventionStep[] };
+      if (workflowResponse.type === 'Started') {
+        return validateStartInterventionResponse(workflowResponse);
+      }
+    }
+    throw new Error('Invalid response format for intervention start');
+  },
 
-  list: (filters: Record<string, unknown>, sessionToken: string) =>
-    ipcClient.interventions.list(filters, sessionToken),
+  get: async (id: string, sessionToken: string) => {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_WORKFLOW, {
+      action: { action: 'Get', id },
+      sessionToken: sessionToken
+    });
 
-  getActiveByTask: (taskId: string, sessionToken: string) =>
-    ipcClient.interventions.getActiveByTask(taskId, sessionToken),
+    if (result && typeof result === 'object' && 'type' in result) {
+      const workflowResponse = result as unknown as { type: string; intervention: Intervention };
+      if (workflowResponse.type === 'Retrieved') {
+        return validateIntervention(workflowResponse.intervention);
+      }
+    }
+    throw new Error('Invalid response format for intervention get');
+  },
 
-  getLatestByTask: (taskId: string, sessionToken: string) =>
-    ipcClient.interventions.getLatestByTask(taskId, sessionToken),
+  getActiveByTask: async (taskId: string, sessionToken: string) => {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_WORKFLOW, {
+      action: { action: 'GetActiveByTask', task_id: taskId },
+      sessionToken: sessionToken
+    });
 
-  getProgress: (interventionId: string, sessionToken: string) =>
-    ipcClient.interventions.getProgress(interventionId, sessionToken),
+    if (result && typeof result === 'object' && 'type' in result) {
+      const workflowResponse = result as unknown as { type: string; interventions: Intervention[] };
+      if (workflowResponse.type === 'ActiveByTask') {
+        return {
+          intervention: workflowResponse.interventions?.[0] || null
+        };
+      }
+    }
 
-  getStep: (stepId: string, sessionToken: string) =>
-    ipcClient.interventions.getStep(stepId, sessionToken),
+    console.warn('[IPC] getActiveByTask unexpected structure, returning as-is:', result);
+    return result;
+  },
 
-  advanceStep: (data: AdvanceStepRequest, sessionToken: string) =>
-    ipcClient.interventions.advanceStep(data, sessionToken),
+  getLatestByTask: async (taskId: string, sessionToken: string) => {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_GET_LATEST_BY_TASK, {
+      taskId: taskId,
+      sessionToken: sessionToken
+    });
 
-  saveStepProgress: (data: SaveStepProgressRequest, sessionToken: string) =>
-    ipcClient.interventions.saveStepProgress(data, sessionToken),
+    if (result && typeof result === 'object' && 'data' in result) {
+      const apiResponse = result as unknown as { data: Intervention | null };
+      return {
+        intervention: apiResponse.data || null
+      };
+    }
 
-  finalize: (data: FinalizeInterventionRequest, sessionToken: string) =>
-    ipcClient.interventions.finalize(data, sessionToken),
+    console.warn('[IPC] getLatestByTask unexpected structure, returning as-is:', result);
+    return result;
+  },
+
+  advanceStep: async (stepData: AdvanceStepRequest, sessionToken: string) => {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_PROGRESS, {
+      action: {
+        action: 'AdvanceStep',
+        intervention_id: stepData.intervention_id,
+        step_id: stepData.step_id,
+        collected_data: stepData.collected_data,
+        notes: stepData.notes,
+        photos: stepData.photos,
+        quality_check_passed: stepData.quality_check_passed,
+        issues: stepData.issues
+      },
+      sessionToken: sessionToken
+    });
+
+    if (result && typeof result === 'object' && 'type' in result) {
+      const progressResponse = result as unknown as {
+        type: string;
+        step: InterventionStep;
+        next_step: InterventionStep | null;
+        progress_percentage: number
+      };
+      if (progressResponse.type === 'StepAdvanced') {
+        return progressResponse;
+      }
+    }
+    throw new Error('Invalid response format for advance step');
+  },
+
+  getStep: async (stepId: string, sessionToken: string) => {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_PROGRESS, {
+      action: { action: 'GetStep', step_id: stepId },
+      sessionToken: sessionToken
+    });
+
+    if (result && typeof result === 'object' && 'type' in result) {
+      const progressResponse = result as unknown as { type: string; step: InterventionStep };
+      if (progressResponse.type === 'StepRetrieved') {
+        return validateInterventionStep(progressResponse.step);
+      }
+    }
+    throw new Error('Invalid response format for get step');
+  },
+
+  getProgress: async (interventionId: string, sessionToken: string) => {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_PROGRESS, {
+      action: { action: 'Get', intervention_id: interventionId },
+      sessionToken: sessionToken
+    });
+
+    if (result && typeof result === 'object' && 'type' in result) {
+      const progressResponse = result as unknown as {
+        type: string;
+        progress: InterventionProgress;
+        steps: InterventionStep[]
+      };
+      if (progressResponse.type === 'Retrieved') {
+        const progress = progressResponse.progress;
+        return {
+          steps: progressResponse.steps || [],
+          progress_percentage: progress.completion_percentage || 0
+        };
+      }
+    }
+    throw new Error('Invalid response format for get progress');
+  },
+
+  saveStepProgress: async (stepData: SaveStepProgressRequest, sessionToken: string) => {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_PROGRESS, {
+      action: { action: 'SaveStepProgress', ...stepData },
+      sessionToken: sessionToken
+    });
+
+    if (result && typeof result === 'object' && 'type' in result) {
+      const progressResponse = result as unknown as { type: string; step: InterventionStep };
+      if (progressResponse.type === 'StepProgressSaved') {
+        return validateInterventionStep(progressResponse.step);
+      }
+    }
+    throw new Error('Invalid response format for save step progress');
+  },
+
+  updateWorkflow: async (id: string, data: JsonObject, sessionToken: string) => {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_WORKFLOW, {
+      action: { action: 'Update', id, data },
+      sessionToken: sessionToken
+    });
+
+    if (result && typeof result === 'object' && 'type' in result) {
+      const workflowResponse = result as unknown as { type: string; intervention: Intervention };
+      if (workflowResponse.type === 'Updated') {
+        return validateIntervention(workflowResponse.intervention);
+      }
+    }
+    throw new Error('Invalid response format for update workflow');
+  },
+
+  finalize: async (data: FinalizeInterventionRequest, sessionToken: string) => {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_WORKFLOW, {
+      action: { action: 'Finalize', data },
+      sessionToken: sessionToken
+    });
+
+    if (result && typeof result === 'object' && 'type' in result) {
+      const workflowResponse = result as unknown as {
+        type: string;
+        intervention: Intervention;
+        metrics: InterventionMetrics
+      };
+      if (workflowResponse.type === 'Finalized') {
+        return workflowResponse;
+      }
+    }
+    throw new Error('Invalid response format for finalize intervention');
+  },
+
+  list: async (filters: {
+    status?: string;
+    technician_id?: string;
+    limit?: number;
+    offset?: number
+  }, sessionToken: string) => {
+    const query: Record<string, string | number> = {};
+    if (filters.status) query.status = filters.status;
+    if (filters.technician_id) query.technician_id = filters.technician_id;
+    if (filters.limit !== undefined) query.limit = filters.limit;
+    if (filters.offset !== undefined) query.page = Math.floor(filters.offset / (filters.limit || 50)) + 1;
+
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_MANAGEMENT, {
+      action: { action: 'List', query },
+      session_token: sessionToken
+    });
+
+    if (result && typeof result === 'object' && 'type' in result) {
+      const managementResponse = result as unknown as { type: string; interventions: Intervention[]; total: number };
+      if (managementResponse.type === 'List') {
+        return {
+          interventions: managementResponse.interventions,
+          total: managementResponse.total
+        };
+      }
+    }
+    throw new Error('Invalid response format for intervention list');
+  },
 };

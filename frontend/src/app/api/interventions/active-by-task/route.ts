@@ -1,6 +1,7 @@
  import { NextRequest, NextResponse } from 'next/server';
   import { z } from 'zod';
-  import { ipcClient } from '@/lib/ipc';
+  import { taskIpc } from '@/domains/tasks/server';
+  import { interventionsIpc } from '@/domains/interventions/server';
   import { validateApiAuth } from '@/lib/api-auth';
   import type { Intervention } from '@/lib/backend';
 
@@ -49,7 +50,7 @@
     }
 
     // First get the full task details to ensure we have the correct UUID
-    const taskResult = await ipcClient.tasks.get(taskId, sessionToken);
+    const taskResult = await taskIpc.get(taskId, sessionToken);
     if (!taskResult) {
       return NextResponse.json(
         { error: 'Task not found' },
@@ -58,7 +59,7 @@
     }
 
     // Use the task's UUID for intervention lookup
-    const result = await ipcClient.interventions.getActiveByTask(taskResult.id, sessionToken) as { type: string; intervention?: Intervention | null };
+    const result = await interventionsIpc.getActiveByTask(taskResult.id, sessionToken) as { type: string; intervention?: Intervention | null };
 
     // The response should be { type: 'ActiveRetrieved', intervention: ... }
     if (result.type === 'ActiveRetrieved') {

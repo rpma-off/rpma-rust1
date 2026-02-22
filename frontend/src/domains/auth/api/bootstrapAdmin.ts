@@ -1,7 +1,7 @@
-import { authIpc } from '../ipc/auth.ipc';
+import { bootstrapIpc } from '@/domains/bootstrap/server';
 
 export const authBootstrap = {
-  hasAdmins: () => authIpc.hasAdmins(),
+  hasAdmins: () => bootstrapIpc.hasAdmins(),
   bootstrapFirstAdmin: (userId: string, sessionToken: string) =>
-    authIpc.bootstrapFirstAdmin(userId, sessionToken),
+    bootstrapIpc.firstAdmin(userId, sessionToken),
 };

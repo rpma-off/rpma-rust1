@@ -98,6 +98,11 @@ export type {
 } from '@/types/json';
 
 export type {
+  Priority,
+  DashboardTask,
+} from './dashboard.types';
+
+export type {
   MaterialType,
   UnitOfMeasure,
   InventoryTransactionType,

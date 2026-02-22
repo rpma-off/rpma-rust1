@@ -7,7 +7,7 @@ import { handleApiError } from '@/lib/api-error';
 import { validateApiAuth } from '@/lib/api-auth';
 import { TaskQuerySchema, CreateTaskSchema } from '@/lib/validation/api-schemas';
 import { CreateTaskRequest } from '@/lib/backend';
-import { ipcClient } from '@/lib/ipc';
+import { taskIpc } from '@/domains/tasks/server';
 
 
 /**
@@ -80,7 +80,7 @@ async function handleGet(request: NextRequest, context?: unknown) {
     };
 
     // Use IPC to list tasks
-    const result = await ipcClient.tasks.list(taskQuery, sessionToken);
+    const result = await taskIpc.list(taskQuery, sessionToken);
 
     return NextResponse.json(
       { success: true, data: (result as { data?: unknown })?.data, pagination: (result as { pagination?: unknown })?.pagination },
@@ -178,7 +178,7 @@ async function handlePost(request: NextRequest, context?: unknown) {
     };
 
     // Create task using IPC
-    const result = await ipcClient.tasks.create(createTaskData, sessionToken);
+    const result = await taskIpc.create(createTaskData, sessionToken);
 
     return NextResponse.json(
       { success: true, data: result },

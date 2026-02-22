@@ -3,7 +3,7 @@
  export const dynamic = 'force-dynamic';
 
 import { z } from 'zod';
-import { ipcClient } from '@/lib/ipc';
+import { taskIpc } from '@/domains/tasks/server';
 import { CreateTaskRequest, UpdateTaskRequest, TaskStatus } from '@/lib/backend';
 import { ApiError } from '@/lib/api-error';
  import { withMethod } from '@/lib/api-route-wrapper';
@@ -237,7 +237,7 @@ async function handleGet(request: NextRequest, context?: unknown) {
     const pageSize = validatedParams.limit || 20;
     const page = Math.floor((validatedParams.offset || 0) / pageSize) + 1;
 
-    const result = await ipcClient.tasks.list({
+    const result = await taskIpc.list({
       page,
       limit: pageSize,
       sort_by: 'created_at', // Default sort
@@ -416,7 +416,7 @@ async function handlePost(request: NextRequest, context?: unknown) {
     };
 
     // Create task using IPC
-    const task = await ipcClient.tasks.create(createTaskData, sessionToken);
+    const task = await taskIpc.create(createTaskData, sessionToken);
     const validatedResponse = validateApiResponse(TaskApiResponseSchema, {
       data: task,
       error: null,
@@ -555,7 +555,7 @@ async function handlePut(request: NextRequest, context?: unknown) {
     };
 
     // Update task using service
-    const result = await ipcClient.tasks.update(taskId, updateData, sessionToken);
+    const result = await taskIpc.update(taskId, updateData, sessionToken);
 
     // Validate response
     const validatedResponse = validateApiResponse(TaskApiResponseSchema, {
