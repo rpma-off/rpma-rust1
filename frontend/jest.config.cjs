@@ -45,13 +45,16 @@ const config = {
   ],
   
   // Transform configurations
-  transform: {},
-  
+  transform: {
+    '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { presets: ['next/babel'] }],
+  },
+
   // Module file extensions
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   
   // Module name mapping
   moduleNameMapper: {
+    '^uuid$': '<rootDir>/src/__tests__/mocks/uuidMock.ts',
     '^@/(.*)$': '<rootDir>/src/$1',
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
     '\\.(png|jpg|jpeg|gif|webp|avif|svg|ico|bmp)$': '<rootDir>/src/__tests__/mocks/fileMock.ts',
