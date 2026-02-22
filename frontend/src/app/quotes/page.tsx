@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Search, FileText, Send, CheckCircle, XCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 import { useQuotesList } from '@/domains/quotes';
 import { PageShell } from '@/shared/ui/layout/PageShell';
 import type { QuoteStatus } from '@/shared/types';
@@ -65,6 +66,12 @@ export default function QuotesPage() {
       accepted: quotes.filter(q => q.status === 'accepted').length,
     };
   }, [quotes, total]);
+
+  useEffect(() => {
+    if (error?.message) {
+      toast.error(error.message);
+    }
+  }, [error]);
 
   return (
     <PageShell>
@@ -147,7 +154,7 @@ export default function QuotesPage() {
         )}
 
         {/* Quote list */}
-        {!loading && quotes.length === 0 && (
+        {!loading && !error && quotes.length === 0 && (
           <div className="text-center py-12">
             <FileText className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-4 text-lg font-medium text-gray-900">Aucun devis</h3>
@@ -164,7 +171,7 @@ export default function QuotesPage() {
           </div>
         )}
 
-        {!loading && quotes.length > 0 && (
+        {!loading && !error && quotes.length > 0 && (
           <div className="overflow-hidden rounded-lg border bg-white">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -228,4 +235,3 @@ export default function QuotesPage() {
     </PageShell>
   );
 }
-

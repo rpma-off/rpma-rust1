@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@/shared/ui/ui/alert';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { structuredLogger as logger, LogDomain } from '@/shared/utils';
 import { useEffect } from 'react';
+import toast from 'react-hot-toast';
 
 export default function BootstrapAdminPage() {
   const { t } = useTranslation();
@@ -34,12 +35,15 @@ export default function BootstrapAdminPage() {
     mutationFn: ({ userId, sessionToken }: { userId: string; sessionToken: string }) =>
       authBootstrap.bootstrapFirstAdmin(userId, sessionToken),
     onSuccess: () => {
+      toast.success('Administrateur créé avec succès. Redirection en cours...');
       logger.info(LogDomain.AUTH, 'Bootstrap admin succeeded', {
         user_id: user?.user_id
       });
       setTimeout(() => router.push('/dashboard'), 3000);
     },
     onError: (error) => {
+      const message = error instanceof Error ? error.message : 'Échec de la création de l\'admin.';
+      toast.error(message);
       logger.error(LogDomain.AUTH, 'Bootstrap admin failed', error, {
         user_id: user?.user_id
       });
@@ -149,5 +153,4 @@ export default function BootstrapAdminPage() {
     </div>
   );
 }
-
 

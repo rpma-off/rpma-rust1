@@ -1,8 +1,10 @@
 ﻿import React from 'react';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { AuthProvider, useAuth } from '../api';
+import { AuthProvider } from '../api/AuthProvider';
+import { useAuth } from '../api/useAuth';
 import { authIpc } from '../ipc/auth.ipc';
 import { AuthSecureStorage, SecureStorage } from '@/lib/secureStorage';
+import toast from 'react-hot-toast';
 
 jest.mock('../ipc/auth.ipc', () => ({
   authIpc: {
@@ -123,5 +125,18 @@ describe('AuthProvider / useAuth', () => {
     expect(signInResult).toEqual({ success: true, data: mockSession });
     expect(AuthSecureStorage.storeSession).toHaveBeenCalled();
     expect(result.current.user).toEqual(mockSession);
+  });
+
+  it('signIn surfaces backend error message in toast', async () => {
+    (authIpc.login as jest.Mock).mockRejectedValue(new Error('Session invalide'));
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.signIn('test@example.com', 'wrong');
+    });
+
+    expect(toast.error).toHaveBeenCalledWith('Session invalide');
   });
 });
