@@ -2580,3 +2580,89 @@ impl Database {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rusqlite::params;
+    use tempfile::NamedTempFile;
+
+    /// Regression test: migration 038 must succeed even when inventory_transactions is absent.
+    ///
+    /// Simulates a DB that has schema_version at 37 but is missing the
+    /// inventory_transactions table (e.g. due to a partial earlier migration run).
+    #[test]
+    fn test_migration_038_succeeds_without_inventory_transactions() {
+        let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+        let db = Database::new(temp_file.path(), "").expect("Failed to create database");
+
+        // Initialise base schema (does NOT include inventory_transactions)
+        db.init().expect("Failed to init schema");
+
+        // Drop the table in case it appeared in the base schema in the future
+        {
+            let conn = db.get_connection().expect("Failed to get connection");
+            conn.execute_batch(
+                "DROP TABLE IF EXISTS inventory_transactions;",
+            )
+            .expect("Failed to drop inventory_transactions");
+        }
+
+        // Pretend migrations 1-37 have already been applied
+        {
+            let conn = db.get_connection().expect("Failed to get connection");
+            conn.execute(
+                "CREATE TABLE IF NOT EXISTS schema_version (version INTEGER PRIMARY KEY, applied_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000))",
+                [],
+            )
+            .expect("Failed to create schema_version");
+            for v in 1..=37_i32 {
+                conn.execute(
+                    "INSERT OR IGNORE INTO schema_version (version) VALUES (?1)",
+                    params![v],
+                )
+                .expect("Failed to insert schema_version");
+            }
+        }
+
+        // Applying migration 38 must not panic or return an error
+        db.migrate(38).expect("Migration 038 must succeed even when inventory_transactions was absent");
+
+        // Verify the table and the new composite index now exist
+        let conn = db.get_connection().expect("Failed to get connection");
+
+        let table_exists: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='inventory_transactions'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("Failed to query sqlite_master for table");
+        assert_eq!(table_exists, 1, "inventory_transactions table must exist after migration 038");
+
+        let index_exists: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='index' AND name='idx_inventory_transactions_material_performed_at'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("Failed to query sqlite_master for index");
+        assert_eq!(index_exists, 1, "composite index must exist after migration 038");
+    }
+
+    /// Idempotency test: running migration 038 twice must not error.
+    #[test]
+    fn test_migration_038_is_idempotent() {
+        let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+        let db = Database::new(temp_file.path(), "").expect("Failed to create database");
+
+        db.init().expect("Failed to init schema");
+
+        // First run: apply all migrations up to 38
+        let latest = Database::get_latest_migration_version();
+        db.migrate(latest).expect("First migration run must succeed");
+
+        // Second run: migrate(38) again must be a no-op (current_version >= 38)
+        db.migrate(38).expect("Second migration 038 run must be idempotent");
+    }
+}
