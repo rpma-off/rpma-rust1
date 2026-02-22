@@ -3,7 +3,7 @@
 //! Tests inventory operations with material service integration and business logic
 
 use crate::db::Database;
-use crate::models::material::{
+use crate::domains::inventory::domain::models::material::{
     InventoryTransaction, InventoryTransactionType, Material, MaterialCategory, MaterialType,
     UnitOfMeasure,
 };

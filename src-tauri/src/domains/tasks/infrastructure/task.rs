@@ -45,7 +45,7 @@ use crate::domains::tasks::infrastructure::task_statistics::TaskStatisticsServic
 use crate::domains::tasks::infrastructure::task_validation::{
     validate_status_transition, TaskValidationService,
 };
-use crate::models::task::*;
+use crate::domains::tasks::domain::models::task::*;
 
 use std::sync::Arc;
 
@@ -240,8 +240,8 @@ impl TaskService {
         &self,
         query: TaskQuery,
     ) -> AppResult<(
-        Vec<crate::models::task::TaskWithDetails>,
-        crate::models::task::PaginationInfo,
+        Vec<crate::domains::tasks::domain::models::task::TaskWithDetails>,
+        crate::domains::tasks::domain::models::task::PaginationInfo,
     )> {
         use crate::logging::{LogDomain, ServiceLogger};
         use std::collections::HashMap;
@@ -252,7 +252,7 @@ impl TaskService {
 
         let result = self.client_integration.get_tasks_with_clients(query)?;
 
-        let tasks: Vec<crate::models::task::TaskWithDetails> = result
+        let tasks: Vec<crate::domains::tasks::domain::models::task::TaskWithDetails> = result
             .data
             .into_iter()
             .map(|task_with_client| {
@@ -273,7 +273,7 @@ impl TaskService {
                     }
                 }
 
-                crate::models::task::TaskWithDetails { task }
+                crate::domains::tasks::domain::models::task::TaskWithDetails { task }
             })
             .collect();
 
@@ -551,9 +551,9 @@ impl TaskService {
     pub fn apply_role_based_filters(
         &self,
         filter: &mut crate::domains::tasks::ipc::task_types::TaskFilter,
-        session: &crate::models::auth::UserSession,
+        session: &crate::domains::auth::domain::models::auth::UserSession,
     ) {
-        use crate::models::auth::UserRole;
+        use crate::domains::auth::domain::models::auth::UserRole;
 
         match session.role {
             UserRole::Admin => {

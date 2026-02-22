@@ -3,7 +3,7 @@
 //! Tests KPI calculations, dashboard data aggregation, and analytics queries
 
 use crate::db::Database;
-use crate::models::reports::*;
+use crate::domains::reports::domain::models::reports::*;
 use crate::domains::analytics::infrastructure::analytics::AnalyticsService;
 use chrono::{DateTime, Duration, Utc};
 use rusqlite::params;

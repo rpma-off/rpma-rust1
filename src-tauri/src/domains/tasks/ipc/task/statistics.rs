@@ -35,21 +35,21 @@ pub async fn get_task_statistics(
     let mut filter = request.filter.unwrap_or_default();
 
     match session.role {
-        crate::models::auth::UserRole::Admin => {
+        crate::domains::auth::domain::models::auth::UserRole::Admin => {
             // Admin can see all statistics
         }
-        crate::models::auth::UserRole::Supervisor => {
+        crate::domains::auth::domain::models::auth::UserRole::Supervisor => {
             // Supervisor can see statistics for their region/department
             // TODO: Add region filtering when UserSession has region field
             // if let Some(region) = &session.region {
             //     filter.region = Some(region.clone());
             // }
         }
-        crate::models::auth::UserRole::Technician => {
+        crate::domains::auth::domain::models::auth::UserRole::Technician => {
             // Technician can only see their own statistics
             filter.assigned_to = Some(session.user_id.clone());
         }
-        crate::models::auth::UserRole::Viewer => {
+        crate::domains::auth::domain::models::auth::UserRole::Viewer => {
             // Viewer has limited access to statistics
             filter.assigned_to = Some(session.user_id.clone());
         }

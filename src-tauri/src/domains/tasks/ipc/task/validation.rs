@@ -4,7 +4,7 @@
 
 use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
-use crate::models::task::{
+use crate::domains::tasks::domain::models::task::{
     AssignmentCheckResponse, AssignmentStatus, AvailabilityCheckResponse, AvailabilityStatus,
     ValidationResult,
 };
@@ -70,7 +70,7 @@ pub async fn check_task_assignment(
     // Check if user is authorized to assign tasks
     if !matches!(
         session.role,
-        crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+        crate::domains::auth::domain::models::auth::UserRole::Admin | crate::domains::auth::domain::models::auth::UserRole::Supervisor
     ) {
         return Err(AppError::Authorization(
             "User not authorized to assign tasks".to_string(),
@@ -238,26 +238,26 @@ pub async fn check_task_availability(
 
     // Check if task is available for assignment
     let is_available = match task.status {
-        crate::models::task::TaskStatus::Pending => true,
-        crate::models::task::TaskStatus::Draft => true,
-        crate::models::task::TaskStatus::Scheduled => true,
-        crate::models::task::TaskStatus::InProgress => false, // Task already in progress
-        crate::models::task::TaskStatus::Completed => false,  // Task already completed
-        crate::models::task::TaskStatus::Cancelled => false,  // Task cancelled
-        crate::models::task::TaskStatus::OnHold => true,      // Can be reassigned
-        crate::models::task::TaskStatus::Invalid => false,    // Invalid tasks can't be assigned
-        crate::models::task::TaskStatus::Archived => false,   // Archived tasks are read-only
-        crate::models::task::TaskStatus::Failed => false,     // Failed tasks need review
-        crate::models::task::TaskStatus::Overdue => true,     // Can still be assigned
-        crate::models::task::TaskStatus::Assigned => false,   // Already assigned
-        crate::models::task::TaskStatus::Paused => true,      // Can be reassigned
+        crate::domains::tasks::domain::models::task::TaskStatus::Pending => true,
+        crate::domains::tasks::domain::models::task::TaskStatus::Draft => true,
+        crate::domains::tasks::domain::models::task::TaskStatus::Scheduled => true,
+        crate::domains::tasks::domain::models::task::TaskStatus::InProgress => false, // Task already in progress
+        crate::domains::tasks::domain::models::task::TaskStatus::Completed => false,  // Task already completed
+        crate::domains::tasks::domain::models::task::TaskStatus::Cancelled => false,  // Task cancelled
+        crate::domains::tasks::domain::models::task::TaskStatus::OnHold => true,      // Can be reassigned
+        crate::domains::tasks::domain::models::task::TaskStatus::Invalid => false,    // Invalid tasks can't be assigned
+        crate::domains::tasks::domain::models::task::TaskStatus::Archived => false,   // Archived tasks are read-only
+        crate::domains::tasks::domain::models::task::TaskStatus::Failed => false,     // Failed tasks need review
+        crate::domains::tasks::domain::models::task::TaskStatus::Overdue => true,     // Can still be assigned
+        crate::domains::tasks::domain::models::task::TaskStatus::Assigned => false,   // Already assigned
+        crate::domains::tasks::domain::models::task::TaskStatus::Paused => true,      // Can be reassigned
     };
 
     // Check if task has expired
     let now = chrono::Utc::now();
     let has_expired = if let Some(scheduled_date_str) = &task.scheduled_date {
         if let Ok(scheduled_date) = chrono::DateTime::parse_from_rfc3339(scheduled_date_str) {
-            scheduled_date < now && task.status != crate::models::task::TaskStatus::Completed
+            scheduled_date < now && task.status != crate::domains::tasks::domain::models::task::TaskStatus::Completed
         } else {
             false // Invalid date format, assume not expired
         }
@@ -331,7 +331,7 @@ pub async fn validate_task_assignment_change(
     // Validate user has permission to change assignments
     if !matches!(
         session.role,
-        crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+        crate::domains::auth::domain::models::auth::UserRole::Admin | crate::domains::auth::domain::models::auth::UserRole::Supervisor
     ) {
         return Err(AppError::Authorization(
             "User not authorized to change task assignments".to_string(),
@@ -362,8 +362,8 @@ pub async fn validate_task_assignment_change(
 
     // Check if task is in a changeable state
     let changeable_states = [
-        crate::models::task::TaskStatus::Pending,
-        crate::models::task::TaskStatus::OnHold,
+        crate::domains::tasks::domain::models::task::TaskStatus::Pending,
+        crate::domains::tasks::domain::models::task::TaskStatus::OnHold,
     ];
 
     if !changeable_states.contains(&task.status) {

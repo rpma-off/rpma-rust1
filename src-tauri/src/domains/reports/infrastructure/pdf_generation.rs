@@ -6,7 +6,7 @@
 //! to separate threads, maintaining UI responsiveness.
 
 use crate::commands::{AppError, AppResult};
-use crate::models::reports::CompleteInterventionData;
+use crate::domains::reports::domain::models::reports::CompleteInterventionData;
 use crate::domains::documents::infrastructure::document_storage::DocumentStorageService;
 use crate::shared::services::worker_pool::{WorkerPool, WorkerTask};
 use chrono::Utc;
@@ -418,7 +418,7 @@ impl PdfGenerationService {
     }
 
     fn add_intervention_header_pdf(
-        intervention: &crate::models::intervention::Intervention,
+        intervention: &crate::domains::interventions::domain::models::intervention::Intervention,
         current_layer: &PdfLayerReference,
         font: &IndirectFontRef,
         y_position: &mut f64,
@@ -439,11 +439,11 @@ impl PdfGenerationService {
             format!(
                 "Statut: {}",
                 match intervention.status {
-                    crate::models::intervention::InterventionStatus::Pending => "En attente",
-                    crate::models::intervention::InterventionStatus::InProgress => "En cours",
-                    crate::models::intervention::InterventionStatus::Paused => "En pause",
-                    crate::models::intervention::InterventionStatus::Completed => "TerminÃƒÂ©e",
-                    crate::models::intervention::InterventionStatus::Cancelled => "AnnulÃƒÂ©e",
+                    crate::domains::interventions::domain::models::intervention::InterventionStatus::Pending => "En attente",
+                    crate::domains::interventions::domain::models::intervention::InterventionStatus::InProgress => "En cours",
+                    crate::domains::interventions::domain::models::intervention::InterventionStatus::Paused => "En pause",
+                    crate::domains::interventions::domain::models::intervention::InterventionStatus::Completed => "TerminÃƒÂ©e",
+                    crate::domains::interventions::domain::models::intervention::InterventionStatus::Cancelled => "AnnulÃƒÂ©e",
                 }
             ),
             format!(
@@ -484,7 +484,7 @@ impl PdfGenerationService {
     }
 
     fn add_environmental_section_pdf(
-        intervention: &crate::models::intervention::Intervention,
+        intervention: &crate::domains::interventions::domain::models::intervention::Intervention,
         current_layer: &PdfLayerReference,
         font: &IndirectFontRef,
         y_position: &mut f64,
@@ -582,7 +582,7 @@ impl PdfGenerationService {
     }
 
     fn add_materials_section_pdf(
-        intervention: &crate::models::intervention::Intervention,
+        intervention: &crate::domains::interventions::domain::models::intervention::Intervention,
         current_layer: &PdfLayerReference,
         font: &IndirectFontRef,
         y_position: &mut f64,
@@ -648,7 +648,7 @@ impl PdfGenerationService {
     }
 
     fn add_client_section_pdf(
-        client: &crate::models::client::Client,
+        client: &crate::domains::clients::domain::models::client::Client,
         current_layer: &PdfLayerReference,
         font: &IndirectFontRef,
         y_position: &mut f64,
@@ -685,7 +685,7 @@ impl PdfGenerationService {
     }
 
     fn add_vehicle_section_pdf(
-        intervention: &crate::models::intervention::Intervention,
+        intervention: &crate::domains::interventions::domain::models::intervention::Intervention,
         current_layer: &PdfLayerReference,
         font: &IndirectFontRef,
         y_position: &mut f64,
@@ -734,7 +734,7 @@ impl PdfGenerationService {
     }
 
     fn add_detailed_workflow_pdf(
-        workflow_steps: &[crate::models::step::InterventionStep],
+        workflow_steps: &[crate::domains::interventions::domain::models::step::InterventionStep],
         current_layer: &PdfLayerReference,
         font: &IndirectFontRef,
         y_position: &mut f64,
@@ -779,13 +779,13 @@ impl PdfGenerationService {
                     step.step_number,
                     step.step_name,
                     match step.step_status {
-                        crate::models::step::StepStatus::Completed => "Ã¢Å“â€œ TerminÃƒÂ©",
-                        crate::models::step::StepStatus::InProgress => "Ã¢Å¸Â³ En cours",
-                        crate::models::step::StepStatus::Pending => "Ã¢â€”â€¹ En attente",
-                        crate::models::step::StepStatus::Paused => "Ã¢ÂÂ¸Ã¯Â¸Â En pause",
-                        crate::models::step::StepStatus::Failed => "Ã¢Å“â€” Ãƒâ€°chec",
-                        crate::models::step::StepStatus::Skipped => "Ã¢Å Ëœ IgnorÃƒÂ©",
-                        crate::models::step::StepStatus::Rework => "Ã¢â€ Âº Retravail",
+                        crate::domains::interventions::domain::models::step::StepStatus::Completed => "Ã¢Å“â€œ TerminÃƒÂ©",
+                        crate::domains::interventions::domain::models::step::StepStatus::InProgress => "Ã¢Å¸Â³ En cours",
+                        crate::domains::interventions::domain::models::step::StepStatus::Pending => "Ã¢â€”â€¹ En attente",
+                        crate::domains::interventions::domain::models::step::StepStatus::Paused => "Ã¢ÂÂ¸Ã¯Â¸Â En pause",
+                        crate::domains::interventions::domain::models::step::StepStatus::Failed => "Ã¢Å“â€” Ãƒâ€°chec",
+                        crate::domains::interventions::domain::models::step::StepStatus::Skipped => "Ã¢Å Ëœ IgnorÃƒÂ©",
+                        crate::domains::interventions::domain::models::step::StepStatus::Rework => "Ã¢â€ Âº Retravail",
                     }
                 );
                 current_layer.use_text(&step_header, 12.0, Mm(25.0), Mm(*y_position as f32), font);
@@ -870,8 +870,8 @@ impl PdfGenerationService {
     }
 
     fn add_quality_metrics_pdf(
-        intervention: &crate::models::intervention::Intervention,
-        workflow_steps: &[crate::models::step::InterventionStep],
+        intervention: &crate::domains::interventions::domain::models::intervention::Intervention,
+        workflow_steps: &[crate::domains::interventions::domain::models::step::InterventionStep],
         current_layer: &PdfLayerReference,
         font: &IndirectFontRef,
         y_position: &mut f64,
@@ -958,7 +958,7 @@ impl PdfGenerationService {
     }
 
     fn add_detailed_photos_pdf(
-        photos: &[crate::models::photo::Photo],
+        photos: &[crate::domains::documents::domain::models::photo::Photo],
         current_layer: &PdfLayerReference,
         font: &IndirectFontRef,
         y_position: &mut f64,
@@ -1082,7 +1082,7 @@ impl PdfGenerationService {
     }
 
     fn add_customer_feedback_pdf(
-        intervention: &crate::models::intervention::Intervention,
+        intervention: &crate::domains::interventions::domain::models::intervention::Intervention,
         current_layer: &PdfLayerReference,
         font: &IndirectFontRef,
         y_position: &mut f64,
@@ -1155,7 +1155,7 @@ impl PdfGenerationService {
 
     #[allow(dead_code)]
     fn add_workflow_summary_pdf(
-        workflow_steps: &[crate::models::step::InterventionStep],
+        workflow_steps: &[crate::domains::interventions::domain::models::step::InterventionStep],
         current_layer: &PdfLayerReference,
         font: &IndirectFontRef,
         y_position: &mut f64,
@@ -1172,13 +1172,13 @@ impl PdfGenerationService {
 
         for step in workflow_steps {
             let status_text = match step.step_status {
-                crate::models::step::StepStatus::Completed => "Ã¢Å“â€œ TerminÃƒÂ©",
-                crate::models::step::StepStatus::InProgress => "Ã¢Å¸Â³ En cours",
-                crate::models::step::StepStatus::Pending => "Ã¢â€”â€¹ En attente",
-                crate::models::step::StepStatus::Paused => "Ã¢ÂÂ¸Ã¯Â¸Â En pause",
-                crate::models::step::StepStatus::Failed => "Ã¢Å“â€” Ãƒâ€°chec",
-                crate::models::step::StepStatus::Skipped => "Ã¢Å Ëœ IgnorÃƒÂ©",
-                crate::models::step::StepStatus::Rework => "Ã¢â€ Âº Retravail",
+                crate::domains::interventions::domain::models::step::StepStatus::Completed => "Ã¢Å“â€œ TerminÃƒÂ©",
+                crate::domains::interventions::domain::models::step::StepStatus::InProgress => "Ã¢Å¸Â³ En cours",
+                crate::domains::interventions::domain::models::step::StepStatus::Pending => "Ã¢â€”â€¹ En attente",
+                crate::domains::interventions::domain::models::step::StepStatus::Paused => "Ã¢ÂÂ¸Ã¯Â¸Â En pause",
+                crate::domains::interventions::domain::models::step::StepStatus::Failed => "Ã¢Å“â€” Ãƒâ€°chec",
+                crate::domains::interventions::domain::models::step::StepStatus::Skipped => "Ã¢Å Ëœ IgnorÃƒÂ©",
+                crate::domains::interventions::domain::models::step::StepStatus::Rework => "Ã¢â€ Âº Retravail",
             };
 
             let step_line = format!(
@@ -1196,7 +1196,7 @@ impl PdfGenerationService {
 
     #[allow(dead_code)]
     fn add_quality_section_pdf(
-        _workflow_steps: &[crate::models::step::InterventionStep],
+        _workflow_steps: &[crate::domains::interventions::domain::models::step::InterventionStep],
         current_layer: &PdfLayerReference,
         font: &IndirectFontRef,
         y_position: &mut f64,
@@ -1222,7 +1222,7 @@ impl PdfGenerationService {
 
     #[allow(dead_code)]
     fn add_photos_section_pdf(
-        photos: &[crate::models::photo::Photo],
+        photos: &[crate::domains::documents::domain::models::photo::Photo],
         current_layer: &PdfLayerReference,
         font: &IndirectFontRef,
         y_position: &mut f64,

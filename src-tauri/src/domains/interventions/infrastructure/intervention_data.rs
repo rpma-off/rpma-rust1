@@ -8,8 +8,8 @@
 
 use crate::db::Database;
 use crate::db::{InterventionError, InterventionResult};
-use crate::models::intervention::{Intervention, InterventionStatus, InterventionType};
-use crate::models::step::{InterventionStep, StepType};
+use crate::domains::interventions::domain::models::intervention::{Intervention, InterventionStatus, InterventionType};
+use crate::domains::interventions::domain::models::step::{InterventionStep, StepType};
 use crate::repositories::InterventionRepository;
 use crate::domains::interventions::infrastructure::intervention_calculation::InterventionCalculationService;
 use crate::domains::interventions::infrastructure::intervention_types::{AdvanceStepRequest, StartInterventionRequest};
@@ -374,8 +374,8 @@ impl InterventionDataService {
     pub fn get_intervention_photos(
         &self,
         intervention_id: &str,
-    ) -> InterventionResult<Vec<crate::models::photo::Photo>> {
-        let photos = self.db.query_as::<crate::models::photo::Photo>(
+    ) -> InterventionResult<Vec<crate::domains::documents::domain::models::photo::Photo>> {
+        let photos = self.db.query_as::<crate::domains::documents::domain::models::photo::Photo>(
             "SELECT * FROM photos WHERE intervention_id = ? ORDER BY step_number, captured_at",
             params![intervention_id],
         )?;

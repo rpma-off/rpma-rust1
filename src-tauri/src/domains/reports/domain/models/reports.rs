@@ -83,7 +83,7 @@ pub enum EntityType {
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct SearchResult {
     pub id: String,
-    pub entity_type: crate::models::sync::EntityType,
+    pub entity_type: crate::domains::sync::domain::models::sync::EntityType,
     pub title: String,
     pub subtitle: String,
     pub status: Option<String>,
@@ -476,10 +476,10 @@ pub struct InterventionReportResult {
 /// Complete intervention data for report generation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompleteInterventionData {
-    pub intervention: crate::models::intervention::Intervention,
-    pub workflow_steps: Vec<crate::models::step::InterventionStep>,
-    pub photos: Vec<crate::models::photo::Photo>,
-    pub client: Option<crate::models::client::Client>,
+    pub intervention: crate::domains::interventions::domain::models::intervention::Intervention,
+    pub workflow_steps: Vec<crate::domains::interventions::domain::models::step::InterventionStep>,
+    pub photos: Vec<crate::domains::documents::domain::models::photo::Photo>,
+    pub client: Option<crate::domains::clients::domain::models::client::Client>,
 }
 
 /// Step bottleneck analysis
@@ -1161,8 +1161,8 @@ pub struct EntityCounts {
 /// Search results across multiple entities
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct SearchResults {
-    pub tasks: Vec<crate::models::task::Task>,
-    pub clients: Vec<crate::models::client::Client>,
-    pub interventions: Vec<crate::models::intervention::Intervention>,
+    pub tasks: Vec<crate::domains::tasks::domain::models::task::Task>,
+    pub clients: Vec<crate::domains::clients::domain::models::client::Client>,
+    pub interventions: Vec<crate::domains::interventions::domain::models::intervention::Intervention>,
     pub total_results: i32,
 }

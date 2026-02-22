@@ -3,7 +3,7 @@
 //! Uses proptest to test analytics calculations with random inputs
 
 use crate::db::Database;
-use crate::models::reports::*;
+use crate::domains::reports::domain::models::reports::*;
 use crate::domains::analytics::infrastructure::analytics::AnalyticsService;
 use chrono::{DateTime, Duration, Utc};
 use proptest::prelude::*;

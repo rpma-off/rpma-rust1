@@ -26,7 +26,7 @@ pub async fn auth_login(
     // Note: In a real web application, you'd get IP from request headers
     // For desktop app, IP is optional and may come from network configuration.
     ip_address: Option<String>,
-) -> Result<ApiResponse<crate::models::auth::UserSession>, AppError> {
+) -> Result<ApiResponse<crate::domains::auth::domain::models::auth::UserSession>, AppError> {
     // Initialize correlation context at command start
     let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
 
@@ -68,7 +68,7 @@ pub async fn auth_login(
 pub async fn auth_create_account(
     request: SignupRequest,
     state: AppState<'_>,
-) -> Result<ApiResponse<crate::models::auth::UserSession>, AppError> {
+) -> Result<ApiResponse<crate::domains::auth::domain::models::auth::UserSession>, AppError> {
     // Initialize correlation context at command start
     let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     let auth_facade = AuthFacade::new();
@@ -170,7 +170,7 @@ pub async fn auth_validate_session(
     token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<ApiResponse<crate::models::auth::UserSession>, AppError> {
+) -> Result<ApiResponse<crate::domains::auth::domain::models::auth::UserSession>, AppError> {
     debug!("Session validation request");
     let correlation_id =
         correlation_id.or_else(|| Some(crate::logging::correlation::generate_correlation_id()));
@@ -194,7 +194,7 @@ pub async fn auth_refresh_token(
     refresh_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<ApiResponse<crate::models::auth::UserSession>, AppError> {
+) -> Result<ApiResponse<crate::domains::auth::domain::models::auth::UserSession>, AppError> {
     info!("Token refresh request");
     let correlation_id =
         correlation_id.or_else(|| Some(crate::logging::correlation::generate_correlation_id()));
@@ -218,7 +218,7 @@ pub async fn enable_2fa(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<ApiResponse<crate::models::auth::TwoFactorSetup>, AppError> {
+) -> Result<ApiResponse<crate::domains::auth::domain::models::auth::TwoFactorSetup>, AppError> {
     let correlation_id =
         correlation_id.or_else(|| Some(crate::logging::correlation::generate_correlation_id()));
     // Authenticate the user

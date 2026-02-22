@@ -3,7 +3,7 @@
 //! Tests user settings management with database operations and user interactions
 
 use crate::db::Database;
-use crate::models::settings::*;
+use crate::domains::settings::domain::models::settings::*;
 use crate::domains::auth::infrastructure::auth::AuthService;
 use crate::domains::settings::infrastructure::settings::SettingsService;
 use chrono::{DateTime, Utc};

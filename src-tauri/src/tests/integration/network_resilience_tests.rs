@@ -9,10 +9,10 @@
 use crate::commands::AppResult;
 use crate::domains::clients::infrastructure::client::ClientService;
 use crate::domains::tasks::infrastructure::task_crud::TaskCrudService;
-use crate::models::client::{Client, CustomerType};
-use crate::models::intervention::Intervention;
-use crate::models::material::{Material, MaterialType, UnitOfMeasure};
-use crate::models::task::{Task, TaskPriority, TaskStatus};
+use crate::domains::clients::domain::models::client::{Client, CustomerType};
+use crate::domains::interventions::domain::models::intervention::Intervention;
+use crate::domains::inventory::domain::models::material::{Material, MaterialType, UnitOfMeasure};
+use crate::domains::tasks::domain::models::task::{Task, TaskPriority, TaskStatus};
 use crate::domains::audit::infrastructure::audit_service::AuditService;
 use crate::domains::interventions::infrastructure::intervention_types::{
     AdvanceStepRequest, FinalizeInterventionRequest, StartInterventionRequest,

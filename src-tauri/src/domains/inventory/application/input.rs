@@ -1,4 +1,4 @@
-use crate::models::material::MaterialType;
+use crate::domains::inventory::domain::models::material::MaterialType;
 
 pub use crate::domains::inventory::infrastructure::material::{RecordConsumptionRequest, UpdateStockRequest};
 

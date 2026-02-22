@@ -6,7 +6,7 @@ use crate::domains::documents::DocumentsFacade;
 #[tokio::test]
 async fn documents_facade_debug_output() {
     let db = Database::new_in_memory().await.expect("in-memory database");
-    let settings = crate::models::settings::StorageSettings {
+    let settings = crate::domains::settings::domain::models::settings::StorageSettings {
         local_storage_path: Some("/tmp/test-photos".to_string()),
         ..Default::default()
     };
@@ -19,7 +19,7 @@ async fn documents_facade_debug_output() {
 #[tokio::test]
 async fn documents_facade_service_is_shared_reference() {
     let db = Database::new_in_memory().await.expect("in-memory database");
-    let settings = crate::models::settings::StorageSettings {
+    let settings = crate::domains::settings::domain::models::settings::StorageSettings {
         local_storage_path: Some("/tmp/test-photos".to_string()),
         ..Default::default()
     };

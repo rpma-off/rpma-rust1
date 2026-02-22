@@ -3,7 +3,7 @@
 //! Tests material categories, inventory transactions, and stock management
 
 use crate::db::Database;
-use crate::models::material::{
+use crate::domains::inventory::domain::models::material::{
     InventoryTransaction, InventoryTransactionType, Material, MaterialCategory, MaterialType,
     Supplier, UnitOfMeasure,
 };

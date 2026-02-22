@@ -3,7 +3,7 @@
 //! This service handles CRUD operations, status transitions, totals
 //! calculation, and task creation on acceptance.
 
-use crate::models::quote::*;
+use crate::domains::quotes::domain::models::quote::*;
 use crate::repositories::{base::RepoError, QuoteRepository};
 use chrono::Utc;
 use rusqlite::params;

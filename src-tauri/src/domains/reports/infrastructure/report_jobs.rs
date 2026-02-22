@@ -5,7 +5,7 @@
 
 use crate::commands::AppError;
 use crate::db::Database;
-use crate::models::reports::*;
+use crate::domains::reports::domain::models::reports::*;
 use crate::shared::services::cache::CacheService;
 use chrono::{Datelike, Utc};
 use std::collections::HashMap;

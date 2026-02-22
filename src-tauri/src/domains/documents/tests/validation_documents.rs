@@ -7,7 +7,7 @@ use crate::shared::ipc::errors::AppError;
 #[tokio::test]
 async fn validate_photo_extension_rejects_invalid_extension() {
     let db = Database::new_in_memory().await.expect("in-memory database");
-    let settings = crate::models::settings::StorageSettings {
+    let settings = crate::domains::settings::domain::models::settings::StorageSettings {
         local_storage_path: Some("/tmp/test-photos".to_string()),
         ..Default::default()
     };
@@ -20,7 +20,7 @@ async fn validate_photo_extension_rejects_invalid_extension() {
 #[tokio::test]
 async fn validate_photo_extension_rejects_no_extension() {
     let db = Database::new_in_memory().await.expect("in-memory database");
-    let settings = crate::models::settings::StorageSettings {
+    let settings = crate::domains::settings::domain::models::settings::StorageSettings {
         local_storage_path: Some("/tmp/test-photos".to_string()),
         ..Default::default()
     };

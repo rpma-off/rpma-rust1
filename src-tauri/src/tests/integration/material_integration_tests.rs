@@ -4,9 +4,9 @@
 //! testing end-to-end material operations and their integration with other domains.
 
 use crate::domains::tasks::infrastructure::task_creation::TaskCreationService;
-use crate::models::intervention::InterventionStatus;
-use crate::models::material::{InventoryTransactionType, MaterialType, UnitOfMeasure};
-use crate::models::task::{CreateTaskRequest, TaskPriority, TaskStatus};
+use crate::domains::interventions::domain::models::intervention::InterventionStatus;
+use crate::domains::inventory::domain::models::material::{InventoryTransactionType, MaterialType, UnitOfMeasure};
+use crate::domains::tasks::domain::models::task::{CreateTaskRequest, TaskPriority, TaskStatus};
 use crate::domains::interventions::infrastructure::intervention_workflow::InterventionWorkflowService;
 use crate::domains::inventory::infrastructure::material::{
     CreateInventoryTransactionRequest, CreateMaterialRequest, MaterialService,
@@ -26,7 +26,7 @@ mod tests {
         sku: &str,
         name: &str,
         stock: f64,
-    ) -> crate::models::material::Material {
+    ) -> crate::domains::inventory::domain::models::material::Material {
         let request = CreateMaterialRequest {
             sku: sku.to_string(),
             name: name.to_string(),
@@ -76,7 +76,7 @@ mod tests {
     fn create_test_task(
         task_service: &TaskCreationService,
         title: &str,
-    ) -> crate::models::task::Task {
+    ) -> crate::domains::tasks::domain::models::task::Task {
         let request = CreateTaskRequest {
             title: Some(title.to_string()),
             description: Some("Test task for integration".to_string()),
@@ -117,10 +117,10 @@ mod tests {
     fn create_test_intervention(
         _intervention_service: &InterventionWorkflowService,
         task_id: &str,
-    ) -> crate::models::intervention::Intervention {
+    ) -> crate::domains::interventions::domain::models::intervention::Intervention {
         // For now, just return a dummy intervention with the task_id
         // In a real implementation, you would create the intervention through the service
-        crate::models::intervention::Intervention {
+        crate::domains::interventions::domain::models::intervention::Intervention {
             id: Some("test-intervention-001".to_string()),
             task_id: task_id.to_string(),
             workflow_id: "default-ppf-workflow".to_string(),

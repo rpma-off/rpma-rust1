@@ -5,8 +5,8 @@
 
 use crate::commands::AppResult;
 use crate::domains::tasks::infrastructure::task_crud::TaskCrudService;
-use crate::models::intervention::InterventionStatus;
-use crate::models::step::{StepStatus, StepType};
+use crate::domains::interventions::domain::models::intervention::InterventionStatus;
+use crate::domains::interventions::domain::models::step::{StepStatus, StepType};
 use crate::domains::audit::infrastructure::audit_service::AuditService;
 use crate::domains::interventions::infrastructure::intervention_types::{
     AdvanceStepRequest, FinalizeInterventionRequest, StartInterventionRequest,
@@ -83,7 +83,7 @@ mod tests {
         assert_eq!(intervention.task_id, created_task.id);
         assert_eq!(
             intervention.status,
-            crate::models::intervention::InterventionStatus::Pending
+            crate::domains::interventions::domain::models::intervention::InterventionStatus::Pending
         );
         assert!(!intervention.steps.is_empty());
 

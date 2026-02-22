@@ -4,7 +4,7 @@
 //! focusing on end-to-end flows, authentication, validation, and error handling.
 
 use crate::commands::AppState;
-use crate::models::material::{InventoryTransactionType, MaterialType, UnitOfMeasure};
+use crate::domains::inventory::domain::models::material::{InventoryTransactionType, MaterialType, UnitOfMeasure};
 use crate::domains::inventory::infrastructure::material::{
     CreateInventoryTransactionRequest, CreateMaterialCategoryRequest, CreateMaterialRequest,
     CreateSupplierRequest, RecordConsumptionRequest, UpdateStockRequest,

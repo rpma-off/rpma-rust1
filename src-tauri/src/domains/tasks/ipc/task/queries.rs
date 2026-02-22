@@ -5,7 +5,7 @@
 use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::tasks::ipc::task_types::TaskFilter;
-use crate::models::task::{Task, TaskListResponse};
+use crate::domains::tasks::domain::models::task::{Task, TaskListResponse};
 use crate::domains::tasks::infrastructure::task_statistics::TaskStatistics;
 use serde::Deserialize;
 use tracing::{debug, info};
@@ -98,30 +98,30 @@ pub async fn get_tasks_with_clients(
     let _offset = (page - 1) * limit;
 
     // Construct TaskQuery from filter and pagination
-    let query = crate::models::task::TaskQuery {
+    let query = crate::domains::tasks::domain::models::task::TaskQuery {
         page: Some(page as i32),
         limit: Some(limit as i32),
         status: filter.status.as_ref().and_then(|s| match s.as_str() {
-            "pending" => Some(crate::models::task::TaskStatus::Pending),
-            "in_progress" => Some(crate::models::task::TaskStatus::InProgress),
-            "completed" => Some(crate::models::task::TaskStatus::Completed),
-            "cancelled" => Some(crate::models::task::TaskStatus::Cancelled),
+            "pending" => Some(crate::domains::tasks::domain::models::task::TaskStatus::Pending),
+            "in_progress" => Some(crate::domains::tasks::domain::models::task::TaskStatus::InProgress),
+            "completed" => Some(crate::domains::tasks::domain::models::task::TaskStatus::Completed),
+            "cancelled" => Some(crate::domains::tasks::domain::models::task::TaskStatus::Cancelled),
             _ => None,
         }),
         technician_id: filter.assigned_to.clone(),
         client_id: filter.client_id.clone(),
         priority: filter.priority.as_ref().and_then(|p| match p.as_str() {
-            "low" => Some(crate::models::task::TaskPriority::Low),
-            "medium" => Some(crate::models::task::TaskPriority::Medium),
-            "high" => Some(crate::models::task::TaskPriority::High),
-            "urgent" => Some(crate::models::task::TaskPriority::Urgent),
+            "low" => Some(crate::domains::tasks::domain::models::task::TaskPriority::Low),
+            "medium" => Some(crate::domains::tasks::domain::models::task::TaskPriority::Medium),
+            "high" => Some(crate::domains::tasks::domain::models::task::TaskPriority::High),
+            "urgent" => Some(crate::domains::tasks::domain::models::task::TaskPriority::Urgent),
             _ => None,
         }),
         search: None,
         from_date: filter.date_from.map(|d| d.to_rfc3339()),
         to_date: filter.date_to.map(|d| d.to_rfc3339()),
         sort_by: "created_at".to_string(),
-        sort_order: crate::models::task::SortOrder::Desc,
+        sort_order: crate::domains::tasks::domain::models::task::SortOrder::Desc,
     };
 
     // Delegate client data merging to the service layer
@@ -166,7 +166,7 @@ pub async fn get_user_assigned_tasks(
     if target_user_id != session.user_id
         && !matches!(
             session.role,
-            crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+            crate::domains::auth::domain::models::auth::UserRole::Admin | crate::domains::auth::domain::models::auth::UserRole::Supervisor
         )
     {
         return Err(AppError::Authorization(
@@ -181,10 +181,10 @@ pub async fn get_user_assigned_tasks(
 
     // Get tasks
     let status_filter = filter.status.as_ref().and_then(|s| match s.as_str() {
-        "pending" => Some(crate::models::task::TaskStatus::Pending),
-        "in_progress" => Some(crate::models::task::TaskStatus::InProgress),
-        "completed" => Some(crate::models::task::TaskStatus::Completed),
-        "cancelled" => Some(crate::models::task::TaskStatus::Cancelled),
+        "pending" => Some(crate::domains::tasks::domain::models::task::TaskStatus::Pending),
+        "in_progress" => Some(crate::domains::tasks::domain::models::task::TaskStatus::InProgress),
+        "completed" => Some(crate::domains::tasks::domain::models::task::TaskStatus::Completed),
+        "cancelled" => Some(crate::domains::tasks::domain::models::task::TaskStatus::Cancelled),
         _ => None,
     });
 
@@ -227,21 +227,21 @@ pub async fn get_task_statistics(
     let mut filter = request.filter.unwrap_or_default();
 
     match session.role {
-        crate::models::auth::UserRole::Admin => {
+        crate::domains::auth::domain::models::auth::UserRole::Admin => {
             // Admin can see all statistics
         }
-        crate::models::auth::UserRole::Supervisor => {
+        crate::domains::auth::domain::models::auth::UserRole::Supervisor => {
             // Supervisor can see statistics for their region/department
             // TODO: Add region-based filtering when user.region field is available
             // if let Some(region) = &user.region {
             //     filter.region = Some(region.clone());
             // }
         }
-        crate::models::auth::UserRole::Technician => {
+        crate::domains::auth::domain::models::auth::UserRole::Technician => {
             // Technician can only see their own statistics
             filter.assigned_to = Some(session.user_id.clone());
         }
-        crate::models::auth::UserRole::Viewer => {
+        crate::domains::auth::domain::models::auth::UserRole::Viewer => {
             // Viewer has limited access to statistics
             filter.assigned_to = Some(session.user_id.clone());
         }
@@ -275,17 +275,17 @@ pub async fn get_completion_rate(
     let mut filter = request.filter.unwrap_or_default();
 
     match session.role {
-        crate::models::auth::UserRole::Admin => {}
-        crate::models::auth::UserRole::Supervisor => {
+        crate::domains::auth::domain::models::auth::UserRole::Admin => {}
+        crate::domains::auth::domain::models::auth::UserRole::Supervisor => {
             // TODO: Add region filtering when UserSession has region field
             // if let Some(region) = &session.region {
             //     filter.region = Some(region.clone());
             // }
         }
-        crate::models::auth::UserRole::Technician => {
+        crate::domains::auth::domain::models::auth::UserRole::Technician => {
             filter.assigned_to = Some(session.user_id.clone());
         }
-        crate::models::auth::UserRole::Viewer => {
+        crate::domains::auth::domain::models::auth::UserRole::Viewer => {
             filter.assigned_to = Some(session.user_id.clone());
         }
     }
@@ -324,17 +324,17 @@ pub async fn get_average_duration_by_status(
     let mut filter = request.filter.unwrap_or_default();
 
     match session.role {
-        crate::models::auth::UserRole::Admin => {}
-        crate::models::auth::UserRole::Supervisor => {
+        crate::domains::auth::domain::models::auth::UserRole::Admin => {}
+        crate::domains::auth::domain::models::auth::UserRole::Supervisor => {
             // TODO: Add region filtering when UserSession has region field
             // if let Some(region) = &session.region {
             //     filter.region = Some(region.clone());
             // }
         }
-        crate::models::auth::UserRole::Technician => {
+        crate::domains::auth::domain::models::auth::UserRole::Technician => {
             filter.assigned_to = Some(session.user_id.clone());
         }
-        crate::models::auth::UserRole::Viewer => {
+        crate::domains::auth::domain::models::auth::UserRole::Viewer => {
             filter.assigned_to = Some(session.user_id.clone());
         }
     }
@@ -377,17 +377,17 @@ pub async fn get_priority_distribution(
     let mut filter = request.filter.unwrap_or_default();
 
     match session.role {
-        crate::models::auth::UserRole::Admin => {}
-        crate::models::auth::UserRole::Supervisor => {
+        crate::domains::auth::domain::models::auth::UserRole::Admin => {}
+        crate::domains::auth::domain::models::auth::UserRole::Supervisor => {
             // TODO: Add region filtering when UserSession has region field
             // if let Some(region) = &session.region {
             //     filter.region = Some(region.clone());
             // }
         }
-        crate::models::auth::UserRole::Technician => {
+        crate::domains::auth::domain::models::auth::UserRole::Technician => {
             filter.assigned_to = Some(session.user_id.clone());
         }
-        crate::models::auth::UserRole::Viewer => {
+        crate::domains::auth::domain::models::auth::UserRole::Viewer => {
             filter.assigned_to = Some(session.user_id.clone());
         }
     }

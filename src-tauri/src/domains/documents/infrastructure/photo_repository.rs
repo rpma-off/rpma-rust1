@@ -3,7 +3,7 @@
 //! Provides consistent database access patterns for Photo entities.
 
 use crate::db::Database;
-use crate::models::photo::{Photo, PhotoCategory, PhotoType};
+use crate::domains::documents::domain::models::photo::{Photo, PhotoCategory, PhotoType};
 use crate::repositories::base::{RepoError, RepoResult, Repository};
 use crate::repositories::cache::{ttl, Cache, CacheKeyBuilder};
 use async_trait::async_trait;

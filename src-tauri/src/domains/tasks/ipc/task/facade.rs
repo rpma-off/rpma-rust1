@@ -6,7 +6,7 @@
 use crate::authenticate;
 use crate::check_task_permission;
 use crate::commands::{ApiResponse, AppError, AppState, TaskAction};
-use crate::models::task::Task;
+use crate::domains::tasks::domain::models::task::Task;
 use crate::shared::services::validation::ValidationService;
 use serde::Deserialize;
 use std::fmt::Debug;
@@ -33,7 +33,7 @@ pub struct TaskCrudRequest {
 pub struct EditTaskRequest {
     pub session_token: String,
     pub task_id: String,
-    pub data: crate::models::task::UpdateTaskRequest,
+    pub data: crate::domains::tasks::domain::models::task::UpdateTaskRequest,
     #[serde(default)]
     pub correlation_id: Option<String>,
 }
@@ -162,7 +162,7 @@ pub async fn add_task_note(
     );
     let updated_notes = append_note(task.notes.as_deref(), &note_entry);
 
-    let update_request = crate::models::task::UpdateTaskRequest {
+    let update_request = crate::domains::tasks::domain::models::task::UpdateTaskRequest {
         id: Some(task.id.clone()),
         notes: Some(updated_notes),
         ..Default::default()
@@ -240,7 +240,7 @@ pub async fn send_task_message(
         ));
     }
 
-    let send_request = crate::models::message::SendMessageRequest {
+    let send_request = crate::domains::notifications::domain::models::message::SendMessageRequest {
         message_type,
         recipient_id: task.client_id.clone().or(task.technician_id.clone()),
         recipient_email,
@@ -313,7 +313,7 @@ pub async fn report_task_issue(
     );
     let updated_notes = append_note(task.notes.as_deref(), &issue_entry);
 
-    let update_request = crate::models::task::UpdateTaskRequest {
+    let update_request = crate::domains::tasks::domain::models::task::UpdateTaskRequest {
         id: Some(task.id.clone()),
         notes: Some(updated_notes),
         ..Default::default()
@@ -326,7 +326,7 @@ pub async fn report_task_issue(
         .map_err(|e| AppError::Database(format!("Failed to report task issue: {}", e)))?;
 
     if matches!(severity.as_str(), "high" | "critical") {
-        let escalation = crate::models::message::SendMessageRequest {
+        let escalation = crate::domains::notifications::domain::models::message::SendMessageRequest {
             message_type: "in_app".to_string(),
             recipient_id: task.technician_id.clone(),
             recipient_email: None,
@@ -380,7 +380,7 @@ pub async fn export_tasks_csv(
     crate::commands::update_correlation_context_user(&_session.user_id);
 
     // Build query for export
-    let query = crate::models::task::TaskQuery {
+    let query = crate::domains::tasks::domain::models::task::TaskQuery {
         page: Some(1),
         limit: Some(10000), // Large limit for export
         status: request
@@ -388,10 +388,10 @@ pub async fn export_tasks_csv(
             .as_ref()
             .and_then(|f| f.status.as_ref())
             .and_then(|s| match s.as_str() {
-                "pending" => Some(crate::models::task::TaskStatus::Pending),
-                "in_progress" => Some(crate::models::task::TaskStatus::InProgress),
-                "completed" => Some(crate::models::task::TaskStatus::Completed),
-                "cancelled" => Some(crate::models::task::TaskStatus::Cancelled),
+                "pending" => Some(crate::domains::tasks::domain::models::task::TaskStatus::Pending),
+                "in_progress" => Some(crate::domains::tasks::domain::models::task::TaskStatus::InProgress),
+                "completed" => Some(crate::domains::tasks::domain::models::task::TaskStatus::Completed),
+                "cancelled" => Some(crate::domains::tasks::domain::models::task::TaskStatus::Cancelled),
                 _ => None,
             }),
         technician_id: request.filter.as_ref().and_then(|f| f.assigned_to.clone()),
@@ -401,10 +401,10 @@ pub async fn export_tasks_csv(
             .as_ref()
             .and_then(|f| f.priority.as_ref())
             .and_then(|p| match p.as_str() {
-                "low" => Some(crate::models::task::TaskPriority::Low),
-                "medium" => Some(crate::models::task::TaskPriority::Medium),
-                "high" => Some(crate::models::task::TaskPriority::High),
-                "urgent" => Some(crate::models::task::TaskPriority::Urgent),
+                "low" => Some(crate::domains::tasks::domain::models::task::TaskPriority::Low),
+                "medium" => Some(crate::domains::tasks::domain::models::task::TaskPriority::Medium),
+                "high" => Some(crate::domains::tasks::domain::models::task::TaskPriority::High),
+                "urgent" => Some(crate::domains::tasks::domain::models::task::TaskPriority::Urgent),
                 _ => None,
             }),
         search: None,
@@ -417,7 +417,7 @@ pub async fn export_tasks_csv(
             .as_ref()
             .and_then(|f| f.date_to.map(|d| d.to_rfc3339())),
         sort_by: "created_at".to_string(),
-        sort_order: crate::models::task::SortOrder::Desc,
+        sort_order: crate::domains::tasks::domain::models::task::SortOrder::Desc,
     };
 
     // Get tasks with client information through import service
@@ -464,7 +464,7 @@ pub async fn import_tasks_bulk(
     // Check permissions - only supervisors and admins can bulk import
     if !matches!(
         session.role,
-        crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+        crate::domains::auth::domain::models::auth::UserRole::Admin | crate::domains::auth::domain::models::auth::UserRole::Supervisor
     ) {
         return Err(AppError::Authorization(
             "Only supervisors and admins can perform bulk imports".to_string(),
@@ -556,7 +556,7 @@ pub async fn delay_task(
 
     // Update notes if provided
     if request.additional_notes.is_some() {
-        let update_request = crate::models::task::UpdateTaskRequest {
+        let update_request = crate::domains::tasks::domain::models::task::UpdateTaskRequest {
             id: Some(request.task_id.clone()),
             notes: request.additional_notes.clone(),
             ..Default::default()
@@ -622,12 +622,12 @@ pub async fn edit_task(
     check_task_permissions(&session, &task, "edit")?;
 
     // Enforce field restrictions for Technician role
-    if session.role == crate::models::auth::UserRole::Technician {
+    if session.role == crate::domains::auth::domain::models::auth::UserRole::Technician {
         enforce_technician_field_restrictions(&request.data)?;
     }
 
     // Create UpdateTaskRequest from the incoming data
-    let update_request = crate::models::task::UpdateTaskRequest {
+    let update_request = crate::domains::tasks::domain::models::task::UpdateTaskRequest {
         id: Some(request.task_id.clone()),
         title: request.data.title.clone(),
         description: request.data.description.clone(),
@@ -677,8 +677,8 @@ pub async fn edit_task(
 
 /// Validate status change
 pub fn validate_status_change(
-    current: &crate::models::task::TaskStatus,
-    new: &crate::models::task::TaskStatus,
+    current: &crate::domains::tasks::domain::models::task::TaskStatus,
+    new: &crate::domains::tasks::domain::models::task::TaskStatus,
 ) -> Result<(), AppError> {
     crate::domains::tasks::infrastructure::task_validation::validate_status_transition(current, new)
         .map_err(AppError::TaskInvalidTransition)
@@ -686,14 +686,14 @@ pub fn validate_status_change(
 
 /// Check permissions for task operations
 pub fn check_task_permissions(
-    session: &crate::models::auth::UserSession,
+    session: &crate::domains::auth::domain::models::auth::UserSession,
     task: &Task,
     operation: &str,
 ) -> Result<(), AppError> {
     match session.role {
-        crate::models::auth::UserRole::Admin => Ok(()),
-        crate::models::auth::UserRole::Supervisor => Ok(()),
-        crate::models::auth::UserRole::Technician => {
+        crate::domains::auth::domain::models::auth::UserRole::Admin => Ok(()),
+        crate::domains::auth::domain::models::auth::UserRole::Supervisor => Ok(()),
+        crate::domains::auth::domain::models::auth::UserRole::Technician => {
             // Technician can only operate on their assigned tasks
             if task.technician_id.as_ref() == Some(&session.user_id) {
                 Ok(())
@@ -703,7 +703,7 @@ pub fn check_task_permissions(
                 ))
             }
         }
-        crate::models::auth::UserRole::Viewer => {
+        crate::domains::auth::domain::models::auth::UserRole::Viewer => {
             // Viewer can only view tasks
             match operation {
                 "view" => Ok(()),
@@ -728,7 +728,7 @@ const TECHNICIAN_ALLOWED_FIELDS: &[&str] = &[
 ///
 /// Returns an error listing any forbidden fields that the request tries to modify.
 pub fn enforce_technician_field_restrictions(
-    req: &crate::models::task::UpdateTaskRequest,
+    req: &crate::domains::tasks::domain::models::task::UpdateTaskRequest,
 ) -> Result<(), AppError> {
     let mut forbidden: Vec<&str> = Vec::new();
 
@@ -1007,8 +1007,8 @@ pub async fn task_crud(
 mod tests {
     use super::*;
     use crate::commands::AppError;
-    use crate::models::auth::{UserRole, UserSession};
-    use crate::models::task::{Task, TaskPriority, TaskStatus, UpdateTaskRequest};
+    use crate::domains::auth::domain::models::auth::{UserRole, UserSession};
+    use crate::domains::tasks::domain::models::task::{Task, TaskPriority, TaskStatus, UpdateTaskRequest};
 
     fn make_task(technician_id: Option<&str>, status: TaskStatus) -> Task {
         Task {

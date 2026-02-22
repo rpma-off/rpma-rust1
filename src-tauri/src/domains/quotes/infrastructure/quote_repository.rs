@@ -3,7 +3,7 @@
 //! Provides database access patterns for Quote and QuoteItem entities.
 
 use crate::db::Database;
-use crate::models::quote::{Quote, QuoteItem, QuoteQuery, QuoteStatus};
+use crate::domains::quotes::domain::models::quote::{Quote, QuoteItem, QuoteQuery, QuoteStatus};
 use crate::repositories::base::{RepoError, RepoResult};
 use crate::repositories::cache::{ttl, Cache, CacheKeyBuilder};
 use rusqlite::params;
@@ -173,7 +173,7 @@ impl QuoteRepository {
     pub fn update(
         &self,
         id: &str,
-        req: &crate::models::quote::UpdateQuoteRequest,
+        req: &crate::domains::quotes::domain::models::quote::UpdateQuoteRequest,
     ) -> RepoResult<()> {
         // Build dynamic SET clause
         let mut sets = Vec::new();
@@ -359,7 +359,7 @@ impl QuoteRepository {
         &self,
         item_id: &str,
         quote_id: &str,
-        req: &crate::models::quote::UpdateQuoteItemRequest,
+        req: &crate::domains::quotes::domain::models::quote::UpdateQuoteItemRequest,
     ) -> RepoResult<()> {
         let mut sets = Vec::new();
         let mut params_vec: Vec<rusqlite::types::Value> = Vec::new();
@@ -493,7 +493,7 @@ impl QuoteRepository {
 mod tests {
     use super::*;
     use crate::db::Database;
-    use crate::models::quote::*;
+    use crate::domains::quotes::domain::models::quote::*;
 
     async fn setup_test_db() -> Database {
         crate::test_utils::setup_test_db().await

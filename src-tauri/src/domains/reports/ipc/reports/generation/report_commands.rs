@@ -3,7 +3,7 @@
 //! This module contains Tauri commands for generating specific types of reports.
 
 use crate::commands::{AppResult, AppState};
-use crate::models::reports::*;
+use crate::domains::reports::domain::models::reports::*;
 use chrono::Datelike;
 use tracing::{info, instrument};
 

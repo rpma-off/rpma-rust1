@@ -1,6 +1,6 @@
 //! Notification service for sending emails, SMS, and push notifications
 
-use crate::models::notification::{
+use crate::domains::notifications::domain::models::notification::{
     EmailConfig, EmailProvider, NotificationChannel, NotificationConfig, NotificationMessage,
     NotificationPriority, NotificationTemplate, NotificationType, SmsConfig, SmsProvider,
     TemplateVariables,

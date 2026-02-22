@@ -5,10 +5,10 @@
 
 use crate::commands::AppResult;
 use crate::db::Database;
-use crate::models::client::*;
-use crate::models::intervention::*;
-use crate::models::step::*;
-use crate::models::task::*;
+use crate::domains::clients::domain::models::client::*;
+use crate::domains::interventions::domain::models::intervention::*;
+use crate::domains::interventions::domain::models::step::*;
+use crate::domains::tasks::domain::models::task::*;
 
 use chrono::Utc;
 use rusqlite::params;

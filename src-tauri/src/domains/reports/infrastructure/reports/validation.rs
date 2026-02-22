@@ -2,7 +2,7 @@
 //!
 //! This module handles input validation for report generation.
 
-use crate::models::reports::{DateRange, ReportFilters};
+use crate::domains::reports::domain::models::reports::{DateRange, ReportFilters};
 use chrono::{DateTime, Datelike, Duration, Utc};
 
 /// Custom error type for validation operations
@@ -204,7 +204,7 @@ pub fn sanitize_string(input: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::reports::{DateRange, ReportFilters};
+    use crate::domains::reports::domain::models::reports::{DateRange, ReportFilters};
     use chrono::{Duration, Utc};
 
     // -- Date range validation tests --

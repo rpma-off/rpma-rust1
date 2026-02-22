@@ -3,7 +3,7 @@
 //! This module contains comprehensive unit tests for inventory transaction functionality,
 //! focusing on stock movements, adjustments, and reporting.
 
-use crate::models::material::{
+use crate::domains::inventory::domain::models::material::{
     InventoryTransaction, InventoryTransactionType, Material, MaterialType, UnitOfMeasure,
 };
 use crate::domains::inventory::infrastructure::material::{

@@ -138,7 +138,7 @@ mod tests {
             .await?;
 
         // Update client
-        let update_request = crate::models::client::UpdateClientRequest {
+        let update_request = crate::domains::clients::domain::models::client::UpdateClientRequest {
             id: created_client.id,
             name: Some("Updated Client".to_string()),
             email: Some("updated@company.com".to_string()),
@@ -173,7 +173,7 @@ mod tests {
         let test_db = test_db!();
         let service = ClientService::new(test_db.db());
 
-        let update_request = crate::models::client::UpdateClientRequest {
+        let update_request = crate::domains::clients::domain::models::client::UpdateClientRequest {
             id: "nonexistent-id".to_string(),
             name: Some("Updated".to_string()),
             ..Default::default()
@@ -198,7 +198,7 @@ mod tests {
             .await?;
 
         // Deactivate client
-        let update_request = crate::models::client::UpdateClientRequest {
+        let update_request = crate::domains::clients::domain::models::client::UpdateClientRequest {
             id: created_client.id,
             is_active: Some(false),
             ..Default::default()
@@ -351,7 +351,7 @@ mod tests {
         }
 
         // Deactivate one client
-        let deactivate_request = crate::models::client::UpdateClientRequest {
+        let deactivate_request = crate::domains::clients::domain::models::client::UpdateClientRequest {
             id: client_ids[1].clone(),
             is_active: Some(false),
             ..Default::default()
@@ -560,7 +560,7 @@ mod tests {
         assert_eq!(stats.total_tasks, 4);
 
         // Deactivate second client
-        let deactivate_request = crate::models::client::UpdateClientRequest {
+        let deactivate_request = crate::domains::clients::domain::models::client::UpdateClientRequest {
             id: client2.id,
             is_active: Some(false),
             ..Default::default()

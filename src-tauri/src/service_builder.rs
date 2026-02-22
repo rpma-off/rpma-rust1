@@ -31,7 +31,7 @@
 //! - **WebSocketEventHandler**: EventBus
 
 use crate::db::Database;
-use crate::models::settings::StorageSettings;
+use crate::domains::settings::domain::models::settings::StorageSettings;
 use crate::repositories::Repositories;
 use crate::domains::audit::infrastructure::audit_log_handler::AuditLogHandler;
 use crate::domains::audit::infrastructure::audit_service::AuditService;

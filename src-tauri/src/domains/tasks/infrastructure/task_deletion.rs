@@ -7,7 +7,7 @@ use crate::db::Database;
 use crate::domains::tasks::infrastructure::task_constants::{
     SINGLE_TASK_TIMEOUT_SECS, TASK_QUERY_COLUMNS,
 };
-use crate::models::task::Task;
+use crate::domains::tasks::domain::models::task::Task;
 use rusqlite::params;
 use std::sync::Arc;
 use tokio::time::timeout;

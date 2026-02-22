@@ -5,8 +5,8 @@
 
 use crate::commands::AppResult;
 use crate::db::InterventionError;
-use crate::models::intervention::InterventionStatus;
-use crate::models::step::StepStatus;
+use crate::domains::interventions::domain::models::intervention::InterventionStatus;
+use crate::domains::interventions::domain::models::step::StepStatus;
 use crate::domains::interventions::infrastructure::intervention_types::{
     AdvanceStepRequest, FinalizeInterventionRequest, StartInterventionRequest,
 };
@@ -303,7 +303,7 @@ mod tests {
             .steps
             .iter()
             .filter(|s| {
-                s.is_mandatory && s.step_type != crate::models::step::StepType::Finalization
+                s.is_mandatory && s.step_type != crate::domains::interventions::domain::models::step::StepType::Finalization
             })
             .collect();
 

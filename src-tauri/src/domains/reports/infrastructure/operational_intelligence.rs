@@ -5,7 +5,7 @@
 
 use crate::db::Database;
 use crate::db::InterventionResult;
-use crate::models::reports::{
+use crate::domains::reports::domain::models::reports::{
     DateRange, InterventionBottleneck, OperationalIntelligenceReport, ProcessEfficiencyMetrics,
     ReportFilters, ReportMetadata, ResourceUtilization, StepBottleneck, WorkflowRecommendation,
 };
@@ -422,7 +422,7 @@ impl OperationalIntelligenceService {
         &self,
         technician_id: &str,
         date_range: &DateRange,
-    ) -> Result<Vec<crate::models::reports::WorkloadPeriod>, rusqlite::Error> {
+    ) -> Result<Vec<crate::domains::reports::domain::models::reports::WorkloadPeriod>, rusqlite::Error> {
         let conn = self
             .db
             .get_connection()
@@ -457,7 +457,7 @@ impl OperationalIntelligenceService {
                 date_range.end.timestamp()
             ],
             |row| {
-                Ok(crate::models::reports::WorkloadPeriod {
+                Ok(crate::domains::reports::domain::models::reports::WorkloadPeriod {
                     period: row.get(0)?,
                     interventions_count: row.get(1)?,
                     average_duration_hours: row.get(2)?,

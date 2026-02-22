@@ -3,7 +3,7 @@
 //! Provides consistent database access patterns for Task entities.
 
 use crate::db::{Database, FromSqlRow, QueryBuilder};
-use crate::models::task::{
+use crate::domains::tasks::domain::models::task::{
     PaginationInfo, SortOrder, Task, TaskListResponse, TaskQuery, TaskWithDetails,
 };
 use crate::repositories::base::{RepoError, RepoResult, Repository};

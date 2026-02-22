@@ -1,6 +1,6 @@
 use crate::commands::AppError;
 use crate::db::{Database, FromSqlRow};
-use crate::models::calendar::*;
+use crate::domains::calendar::domain::models::calendar::*;
 use rusqlite::params;
 use std::sync::Arc;
 
@@ -68,12 +68,12 @@ impl CalendarService {
                     title: row.get(2)?,
                     status: row
                         .get::<_, String>(3)?
-                        .parse::<crate::models::task::TaskStatus>()
-                        .unwrap_or(crate::models::task::TaskStatus::Draft),
+                        .parse::<crate::domains::tasks::domain::models::task::TaskStatus>()
+                        .unwrap_or(crate::domains::tasks::domain::models::task::TaskStatus::Draft),
                     priority: row
                         .get::<_, String>(4)?
-                        .parse::<crate::models::task::TaskPriority>()
-                        .unwrap_or(crate::models::task::TaskPriority::Medium),
+                        .parse::<crate::domains::tasks::domain::models::task::TaskPriority>()
+                        .unwrap_or(crate::domains::tasks::domain::models::task::TaskPriority::Medium),
                     scheduled_date: row.get(5)?,
                     start_time: row.get(6)?,
                     end_time: row.get(7)?,

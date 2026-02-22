@@ -3,7 +3,7 @@
 //! Provides consistent database access patterns for Client entities.
 
 use crate::db::Database;
-use crate::models::client::{Client, CustomerType};
+use crate::domains::clients::domain::models::client::{Client, CustomerType};
 use crate::repositories::base::{RepoError, RepoResult, Repository};
 use crate::repositories::cache::{ttl, Cache, CacheKeyBuilder};
 use async_trait::async_trait;

@@ -2,8 +2,8 @@
 
 use crate::commands::{ApiResponse, AppError, AppState, ClientAction};
 use crate::domains::clients::application::ClientCrudRequest;
-use crate::models::client::ClientWithTasks;
-use crate::models::task::Task;
+use crate::domains::clients::domain::models::client::ClientWithTasks;
+use crate::domains::tasks::domain::models::task::Task;
 use crate::shared::services::validation::ValidationService;
 use tracing::{debug, error, info, instrument, warn};
 
@@ -95,7 +95,7 @@ pub async fn client_crud(
             };
 
             ClientAction::Create {
-                data: crate::models::client::CreateClientRequest {
+                data: crate::domains::clients::domain::models::client::CreateClientRequest {
                     name: validated_name,
                     email: validated_email,
                     phone: validated_phone,
@@ -245,7 +245,7 @@ pub async fn client_crud(
 /// Handle client creation
 async fn handle_client_creation(
     client_service: std::sync::Arc<crate::domains::clients::infrastructure::client::ClientService>,
-    data: crate::models::client::CreateClientRequest,
+    data: crate::domains::clients::domain::models::client::CreateClientRequest,
     user_id: &str,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
@@ -314,7 +314,7 @@ async fn handle_client_with_tasks_retrieval(
     match client {
         Some(client) => {
             // Get tasks for this client
-            let task_query = crate::models::task::TaskQuery {
+            let task_query = crate::domains::tasks::domain::models::task::TaskQuery {
                 client_id: Some(id.to_string()),
                 page: Some(1),
                 limit: Some(1000), // Get all tasks for this client
@@ -325,7 +325,7 @@ async fn handle_client_with_tasks_retrieval(
                 from_date: None,
                 to_date: None,
                 sort_by: "created_at".to_string(),
-                sort_order: crate::models::task::SortOrder::Desc,
+                sort_order: crate::domains::tasks::domain::models::task::SortOrder::Desc,
             };
 
             let tasks_response = task_service
@@ -391,7 +391,7 @@ async fn handle_client_with_tasks_retrieval(
 async fn handle_client_update(
     client_service: std::sync::Arc<crate::domains::clients::infrastructure::client::ClientService>,
     id: &str,
-    data: crate::models::client::UpdateClientRequest,
+    data: crate::domains::clients::domain::models::client::UpdateClientRequest,
     user_id: &str,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
@@ -437,7 +437,7 @@ async fn handle_client_deletion(
 /// Handle client listing
 async fn handle_client_listing(
     client_service: std::sync::Arc<crate::domains::clients::infrastructure::client::ClientService>,
-    filters: crate::models::client::ClientQuery,
+    filters: crate::domains::clients::domain::models::client::ClientQuery,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
     debug!("Listing clients with filters: {:?}", filters);
@@ -460,7 +460,7 @@ async fn handle_client_listing(
 async fn handle_client_listing_with_tasks(
     client_service: std::sync::Arc<crate::domains::clients::infrastructure::client::ClientService>,
     task_service: std::sync::Arc<crate::domains::tasks::infrastructure::task::TaskService>,
-    filters: crate::models::client::ClientQuery,
+    filters: crate::domains::clients::domain::models::client::ClientQuery,
     limit_tasks: Option<i32>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
@@ -482,7 +482,7 @@ async fn handle_client_listing_with_tasks(
 
     for client in clients.data {
         // Get tasks for this client
-        let task_query = crate::models::task::TaskQuery {
+        let task_query = crate::domains::tasks::domain::models::task::TaskQuery {
             client_id: Some(client.id.clone()),
             page: Some(1),
             limit: Some(task_limit),
@@ -493,7 +493,7 @@ async fn handle_client_listing_with_tasks(
             from_date: None,
             to_date: None,
             sort_by: "created_at".to_string(),
-            sort_order: crate::models::task::SortOrder::Desc,
+            sort_order: crate::domains::tasks::domain::models::task::SortOrder::Desc,
         };
 
         let tasks_response = task_service

@@ -4,8 +4,8 @@
 //! and integration with PPF intervention workflows.
 
 use crate::db::Database;
-use crate::models::auth::UserRole;
-use crate::models::material::{
+use crate::domains::auth::domain::models::auth::UserRole;
+use crate::domains::inventory::domain::models::material::{
     InterventionMaterialSummary, InventoryMovementSummary, InventoryStats, InventoryTransaction,
     InventoryTransactionType, Material, MaterialCategory, MaterialConsumption,
     MaterialConsumptionSummary, MaterialStats, MaterialType, Supplier, UnitOfMeasure,

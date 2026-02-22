@@ -7,7 +7,7 @@
 //! - Security monitoring integration
 
 use crate::domains::auth::application::SignupRequest;
-use crate::models::auth::{UserAccount, UserRole, UserSession};
+use crate::domains::auth::domain::models::auth::{UserAccount, UserRole, UserSession};
 use crate::domains::auth::infrastructure::auth::AuthService;
 use crate::shared::services::performance_monitor::PerformanceMonitorService;
 use crate::domains::auth::infrastructure::rate_limiter::RateLimiterService;

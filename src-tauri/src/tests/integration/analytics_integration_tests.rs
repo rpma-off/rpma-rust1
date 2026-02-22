@@ -3,7 +3,7 @@
 //! Tests analytics functionality with database operations and interactions with other services
 
 use crate::db::Database;
-use crate::models::reports::*;
+use crate::domains::reports::domain::models::reports::*;
 use crate::domains::analytics::infrastructure::analytics::AnalyticsService;
 use chrono::{DateTime, Duration, Utc};
 use rusqlite::params;

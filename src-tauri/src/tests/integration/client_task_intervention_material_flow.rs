@@ -8,9 +8,9 @@ use crate::commands::AppResult;
 use crate::domains::clients::infrastructure::client::ClientService;
 use crate::domains::clients::infrastructure::client_statistics::ClientStatisticsService;
 use crate::domains::tasks::infrastructure::task_crud::TaskCrudService;
-use crate::models::client::{Client, CustomerType};
-use crate::models::material::{Material, MaterialType, UnitOfMeasure};
-use crate::models::task::TaskStatus;
+use crate::domains::clients::domain::models::client::{Client, CustomerType};
+use crate::domains::inventory::domain::models::material::{Material, MaterialType, UnitOfMeasure};
+use crate::domains::tasks::domain::models::task::TaskStatus;
 use crate::domains::audit::infrastructure::audit_service::{AuditEvent, AuditService};
 use crate::domains::interventions::infrastructure::intervention_types::{
     AdvanceStepRequest, FinalizeInterventionRequest, StartInterventionRequest,
@@ -176,7 +176,7 @@ impl ClientTaskInterventionMaterialFlowTestFixture {
         client: &Client,
         title: &str,
         ppf_zones: Vec<String>,
-    ) -> AppResult<crate::models::task::Task> {
+    ) -> AppResult<crate::domains::tasks::domain::models::task::Task> {
         let task_request = test_task!(
             title: Some(title.to_string()),
             description: Some(format!("Task for {} - {}", client.name, title)),
@@ -186,7 +186,7 @@ impl ClientTaskInterventionMaterialFlowTestFixture {
             vehicle_year: Some("2023".to_string()),
             ppf_zones: ppf_zones,
             status: Some(TaskStatus::Pending),
-            priority: Some(crate::models::task::TaskPriority::Medium),
+            priority: Some(crate::domains::tasks::domain::models::task::TaskPriority::Medium),
             client_id: Some(client.id.clone()),
             customer_name: Some(client.name.clone()),
             customer_email: client.email.clone(),
@@ -209,10 +209,10 @@ impl ClientTaskInterventionMaterialFlowTestFixture {
     /// Convert a task to an intervention
     pub async fn convert_task_to_intervention(
         &self,
-        task: &crate::models::task::Task,
+        task: &crate::domains::tasks::domain::models::task::Task,
         ppf_zones: Vec<String>,
         custom_zones: Option<Vec<String>>,
-    ) -> AppResult<crate::models::intervention::Intervention> {
+    ) -> AppResult<crate::domains::interventions::domain::models::intervention::Intervention> {
         let intervention_request = StartInterventionRequest {
             task_id: task.id.clone(),
             intervention_number: None,
@@ -253,7 +253,7 @@ impl ClientTaskInterventionMaterialFlowTestFixture {
     /// Consume materials during intervention steps
     pub async fn consume_materials_during_intervention(
         &self,
-        intervention: &crate::models::intervention::Intervention,
+        intervention: &crate::domains::interventions::domain::models::intervention::Intervention,
         materials: &[Material],
     ) -> AppResult<()> {
         for (i, step) in intervention.steps.iter().enumerate() {
@@ -317,7 +317,7 @@ impl ClientTaskInterventionMaterialFlowTestFixture {
     /// Finalize an intervention
     pub async fn finalize_intervention(
         &self,
-        intervention: &crate::models::intervention::Intervention,
+        intervention: &crate::domains::interventions::domain::models::intervention::Intervention,
         customer_satisfaction: Option<i32>,
         quality_score: Option<i32>,
     ) -> AppResult<()> {
@@ -712,7 +712,7 @@ mod tests {
             .get_intervention_by_id(&intervention.id)?;
         assert_eq!(
             updated_intervention.status,
-            crate::models::intervention::InterventionStatus::Completed
+            crate::domains::interventions::domain::models::intervention::InterventionStatus::Completed
         );
 
         // Verify client statistics were updated
@@ -896,7 +896,7 @@ mod tests {
             .get_intervention_by_id(&intervention.id)?;
         assert_eq!(
             updated_intervention.status,
-            crate::models::intervention::InterventionStatus::Completed
+            crate::domains::interventions::domain::models::intervention::InterventionStatus::Completed
         );
         assert_eq!(updated_intervention.customer_satisfaction, Some(10));
         assert_eq!(updated_intervention.quality_score, Some(98));

@@ -1,7 +1,7 @@
 use crate::db::InterventionResult;
 use crate::db::{Database, InterventionError};
-use crate::models::intervention::Intervention;
-use crate::models::step::InterventionStep;
+use crate::domains::interventions::domain::models::intervention::Intervention;
+use crate::domains::interventions::domain::models::step::InterventionStep;
 use rusqlite::{params, OptionalExtension, Transaction};
 use std::sync::Arc;
 use tracing::debug;

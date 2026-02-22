@@ -1,6 +1,6 @@
 use crate::domains::users::application::UserAction;
 use crate::domains::users::domain::UserAccessPolicy;
-use crate::models::auth::{UserRole, UserSession};
+use crate::domains::auth::domain::models::auth::{UserRole, UserSession};
 use crate::shared::ipc::errors::AppError;
 
 #[derive(Debug, Default, Clone)]

@@ -3,7 +3,7 @@
 //! Tests message creation, delivery, status tracking, and notification preferences
 
 use crate::db::Database;
-use crate::models::message::{
+use crate::domains::notifications::domain::models::message::{
     Message, MessageListResponse, MessagePriority, MessageQuery, MessageStatus, MessageTemplate,
     MessageTemplateRequest, MessageType, NotificationPreferences, SendMessageRequest,
     UpdateNotificationPreferencesRequest,

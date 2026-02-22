@@ -1,7 +1,7 @@
 //! Tauri commands for sync queue management - PRD-07
 
 use crate::commands::AppState;
-use crate::models::sync::{SyncOperation, SyncQueueMetrics};
+use crate::domains::sync::domain::models::sync::{SyncOperation, SyncQueueMetrics};
 use tracing::{error, info, instrument};
 
 /// Enqueue a sync operation

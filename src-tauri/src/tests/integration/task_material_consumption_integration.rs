@@ -5,9 +5,9 @@
 
 use crate::commands::AppResult;
 use crate::domains::tasks::infrastructure::task_crud::TaskCrudService;
-use crate::models::material::InventoryTransactionType;
-use crate::models::material::{Material, MaterialConsumption, MaterialType, UnitOfMeasure};
-use crate::models::task::{CreateTaskRequest, TaskPriority, TaskStatus};
+use crate::domains::inventory::domain::models::material::InventoryTransactionType;
+use crate::domains::inventory::domain::models::material::{Material, MaterialConsumption, MaterialType, UnitOfMeasure};
+use crate::domains::tasks::domain::models::task::{CreateTaskRequest, TaskPriority, TaskStatus};
 use crate::domains::audit::infrastructure::audit_service::AuditService;
 use crate::domains::interventions::infrastructure::intervention_types::{
     AdvanceStepRequest, FinalizeInterventionRequest, StartInterventionRequest,
@@ -111,7 +111,7 @@ impl TaskMaterialTestFixture {
     pub fn create_test_task_with_materials(
         &self,
         title: &str,
-    ) -> AppResult<(crate::models::task::Task, Vec<Material>)> {
+    ) -> AppResult<(crate::domains::tasks::domain::models::task::Task, Vec<Material>)> {
         // Create materials for the task
         let hood_film =
             self.create_test_material_with_stock("HOOD-FILM-001", "Hood PPF Film", 20.0)?;
@@ -141,9 +141,9 @@ impl TaskMaterialTestFixture {
     /// Start an intervention for the task
     pub fn start_intervention_for_task(
         &self,
-        task: &crate::models::task::Task,
+        task: &crate::domains::tasks::domain::models::task::Task,
         ppf_zones: Vec<String>,
-    ) -> AppResult<crate::models::intervention::Intervention> {
+    ) -> AppResult<crate::domains::interventions::domain::models::intervention::Intervention> {
         let intervention_request = StartInterventionRequest {
             task_id: task.id.clone(),
             intervention_number: None,
@@ -181,7 +181,7 @@ impl TaskMaterialTestFixture {
     /// Complete all steps of an intervention
     pub async fn complete_intervention_steps(
         &self,
-        intervention: &crate::models::intervention::Intervention,
+        intervention: &crate::domains::interventions::domain::models::intervention::Intervention,
         materials: &[Material],
     ) -> AppResult<()> {
         for (i, step) in intervention.steps.iter().enumerate() {
@@ -241,7 +241,7 @@ impl TaskMaterialTestFixture {
     /// Finalize the intervention
     pub async fn finalize_intervention(
         &self,
-        intervention: &crate::models::intervention::Intervention,
+        intervention: &crate::domains::interventions::domain::models::intervention::Intervention,
     ) -> AppResult<()> {
         let finalize_request = FinalizeInterventionRequest {
             intervention_id: intervention.id.clone(),

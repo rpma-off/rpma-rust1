@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use rusqlite::params;
 
-use crate::models::material::InventoryTransaction;
+use crate::domains::inventory::domain::models::material::InventoryTransaction;
 use crate::shared::db::Database;
 
 #[allow(dead_code)]

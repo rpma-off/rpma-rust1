@@ -3,7 +3,7 @@
 //! Uses proptest to test settings validation and persistence with random inputs
 
 use crate::db::Database;
-use crate::models::settings::*;
+use crate::domains::settings::domain::models::settings::*;
 use crate::domains::settings::infrastructure::settings::SettingsService;
 use proptest::prelude::*;
 use rusqlite::params;

@@ -1,7 +1,7 @@
 //! Notification commands for Tauri
 
 use crate::commands::AppState;
-use crate::models::notification::{
+use crate::domains::notifications::domain::models::notification::{
     EmailConfig, EmailProvider, NotificationChannel, NotificationConfig, NotificationType,
     SmsConfig, SmsProvider, TemplateVariables,
 };

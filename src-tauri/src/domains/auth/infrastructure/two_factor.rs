@@ -2,7 +2,7 @@
 
 use crate::commands::AppError;
 use crate::db::Database;
-use crate::models::auth::{TwoFactorConfig, TwoFactorSetup};
+use crate::domains::auth::domain::models::auth::{TwoFactorConfig, TwoFactorSetup};
 use base64::{engine::general_purpose, Engine as _};
 use chrono::Utc;
 use rand::Rng;

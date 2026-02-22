@@ -5,7 +5,7 @@
 
 use crate::db::{Database, FromSqlRow};
 use crate::domains::tasks::infrastructure::task_constants::TASK_QUERY_COLUMNS;
-use crate::models::task::{Task, TaskPriority, TaskStatus};
+use crate::domains::tasks::domain::models::task::{Task, TaskPriority, TaskStatus};
 use crate::domains::settings::infrastructure::settings::SettingsService;
 use rusqlite::params;
 use std::sync::Arc;
@@ -45,7 +45,7 @@ use std::sync::Arc;
 /// # Examples
 ///
 /// ```ignore
-/// use crate::models::task::TaskStatus;
+/// use crate::domains::tasks::domain::models::task::TaskStatus;
 ///
 /// assert!(validate_status_transition(&TaskStatus::Draft, &TaskStatus::Pending).is_ok());
 /// assert!(validate_status_transition(&TaskStatus::Completed, &TaskStatus::Pending).is_err());
@@ -598,7 +598,7 @@ impl TaskValidationService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::task::TaskStatus;
+    use crate::domains::tasks::domain::models::task::TaskStatus;
 
     // Ã¢â€â‚¬Ã¢â€â‚¬ Status transition: happy-path tests Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 

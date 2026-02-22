@@ -1,5 +1,5 @@
 use crate::db::FromSqlRow;
-use crate::models::task::{TaskPriority, TaskStatus};
+use crate::domains::tasks::domain::models::task::{TaskPriority, TaskStatus};
 use serde::{Deserialize, Serialize};
 // Conditional import removed
 use ts_rs::TS;

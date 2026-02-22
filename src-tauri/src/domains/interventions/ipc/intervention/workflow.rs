@@ -12,7 +12,7 @@ use crate::domains::interventions::application::{
     FinalizeInterventionRequest, InterventionWorkflowAction, InterventionWorkflowResponse,
     StartInterventionRequest,
 };
-use crate::models::auth::{UserRole, UserSession};
+use crate::domains::auth::domain::models::auth::{UserRole, UserSession};
 use chrono::Utc;
 
 use tracing::{debug, error, info, instrument, warn};
@@ -66,7 +66,7 @@ pub async fn intervention_start(
     request: StartInterventionRequest,
     session_token: String,
     state: AppState<'_>,
-) -> Result<ApiResponse<crate::models::intervention::Intervention>, AppError> {
+) -> Result<ApiResponse<crate::domains::interventions::domain::models::intervention::Intervention>, AppError> {
     let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("Starting intervention for task: {}", request.task_id);
 
@@ -148,7 +148,7 @@ pub async fn intervention_update(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<ApiResponse<crate::models::intervention::Intervention>, AppError> {
+) -> Result<ApiResponse<crate::domains::interventions::domain::models::intervention::Intervention>, AppError> {
     info!("Updating intervention: {}", id);
 
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
@@ -211,7 +211,7 @@ pub async fn intervention_delete(
     if intervention.technician_id.as_ref() != Some(&session.user_id)
         && !matches!(
             session.role,
-            crate::models::auth::UserRole::Admin | crate::models::auth::UserRole::Supervisor
+            crate::domains::auth::domain::models::auth::UserRole::Admin | crate::domains::auth::domain::models::auth::UserRole::Supervisor
         )
     {
         return Err(AppError::Authorization(

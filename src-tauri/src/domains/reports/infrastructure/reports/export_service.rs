@@ -6,7 +6,7 @@
 
 use crate::commands::{AppError, AppResult, AppState};
 use crate::db::Database;
-use crate::models::reports::*;
+use crate::domains::reports::domain::models::reports::*;
 use crate::domains::documents::infrastructure::document_storage::DocumentStorageService;
 use crate::domains::reports::infrastructure::pdf_generation::PdfGenerationService;
 use crate::domains::reports::infrastructure::reports::validation::{validate_date_range, validate_filters};
@@ -329,11 +329,11 @@ impl ExportReportService {
         content.push_str(&format!(
             "Statut: {}\n",
             match intervention_data.intervention.status {
-                crate::models::intervention::InterventionStatus::Pending => "En attente",
-                crate::models::intervention::InterventionStatus::InProgress => "En cours",
-                crate::models::intervention::InterventionStatus::Paused => "En pause",
-                crate::models::intervention::InterventionStatus::Completed => "TerminÃƒÂ©e",
-                crate::models::intervention::InterventionStatus::Cancelled => "AnnulÃƒÂ©e",
+                crate::domains::interventions::domain::models::intervention::InterventionStatus::Pending => "En attente",
+                crate::domains::interventions::domain::models::intervention::InterventionStatus::InProgress => "En cours",
+                crate::domains::interventions::domain::models::intervention::InterventionStatus::Paused => "En pause",
+                crate::domains::interventions::domain::models::intervention::InterventionStatus::Completed => "TerminÃƒÂ©e",
+                crate::domains::interventions::domain::models::intervention::InterventionStatus::Cancelled => "AnnulÃƒÂ©e",
             }
         ));
         content.push_str(&format!(

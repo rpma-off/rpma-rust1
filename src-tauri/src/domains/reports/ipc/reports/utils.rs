@@ -3,7 +3,7 @@
 //! This module contains shared utility functions used across
 //! different report operations.
 
-use crate::models::reports::CompleteInterventionData;
+use crate::domains::reports::domain::models::reports::CompleteInterventionData;
 use std::io::Read;
 use std::path::Path;
 

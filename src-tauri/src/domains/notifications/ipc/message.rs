@@ -1,5 +1,5 @@
 use crate::commands::{ApiError, AppState};
-use crate::models::message::*;
+use crate::domains::notifications::domain::models::message::*;
 use tracing;
 
 /// Send a new message

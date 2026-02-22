@@ -1,7 +1,7 @@
 //! Settings service for user settings management
 
 use crate::commands::AppError;
-use crate::models::settings::{
+use crate::domains::settings::domain::models::settings::{
     UserAccessibilitySettings, UserNotificationSettings, UserPerformanceSettings, UserPreferences,
     UserProfileSettings, UserSecuritySettings, UserSettings,
 };
@@ -1221,7 +1221,7 @@ impl SettingsService {
 #[cfg(test)]
 mod tests {
     use super::SettingsService;
-    use crate::models::auth::{UserAccount, UserRole};
+    use crate::domains::auth::domain::models::auth::{UserAccount, UserRole};
     use crate::domains::auth::infrastructure::auth::AuthService;
     use chrono::Utc;
     use rusqlite::params;
@@ -1269,20 +1269,20 @@ mod tests {
         (test_db, settings_service, auth_service)
     }
 
-    fn create_test_user(auth_service: &AuthService) -> crate::models::auth::UserAccount {
+    fn create_test_user(auth_service: &AuthService) -> crate::domains::auth::domain::models::auth::UserAccount {
         auth_service
             .create_account(
                 "settings.test@example.com",
                 "settings.test@example.com",
                 "Settings",
                 "Tester",
-                crate::models::auth::UserRole::Technician,
+                crate::domains::auth::domain::models::auth::UserRole::Technician,
                 "CurrentPass1!",
             )
             .expect("failed to create test user")
     }
 
-    fn insert_session(test_db: &LocalTestDb, user: &crate::models::auth::UserAccount, token: &str) {
+    fn insert_session(test_db: &LocalTestDb, user: &crate::domains::auth::domain::models::auth::UserAccount, token: &str) {
         let conn = test_db
             .db
             .get_connection()

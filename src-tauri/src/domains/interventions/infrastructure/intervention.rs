@@ -10,8 +10,8 @@
 
 use crate::db::Database;
 use crate::db::{InterventionError, InterventionResult};
-use crate::models::intervention::Intervention;
-use crate::models::step::InterventionStep;
+use crate::domains::interventions::domain::models::intervention::Intervention;
+use crate::domains::interventions::domain::models::step::InterventionStep;
 use crate::domains::interventions::infrastructure::intervention_calculation::InterventionCalculationService;
 use crate::domains::interventions::infrastructure::intervention_data::InterventionDataService;
 use crate::domains::interventions::infrastructure::intervention_workflow::InterventionWorkflowService;
@@ -128,7 +128,7 @@ impl InterventionService {
     pub fn get_intervention_photos(
         &self,
         intervention_id: &str,
-    ) -> InterventionResult<Vec<crate::models::photo::Photo>> {
+    ) -> InterventionResult<Vec<crate::domains::documents::domain::models::photo::Photo>> {
         self.data.get_intervention_photos(intervention_id)
     }
 
@@ -207,7 +207,7 @@ impl InterventionService {
     pub fn get_progress(
         &self,
         intervention_id: &str,
-    ) -> InterventionResult<crate::models::intervention::InterventionProgress> {
+    ) -> InterventionResult<crate::domains::interventions::domain::models::intervention::InterventionProgress> {
         let intervention = self.get_intervention(intervention_id)?.ok_or_else(|| {
             InterventionError::NotFound(format!("Intervention {} not found", intervention_id))
         })?;
@@ -228,7 +228,7 @@ impl InterventionService {
             0.0
         };
 
-        Ok(crate::models::intervention::InterventionProgress {
+        Ok(crate::domains::interventions::domain::models::intervention::InterventionProgress {
             intervention_id: intervention_id.to_string(),
             current_step,
             total_steps,

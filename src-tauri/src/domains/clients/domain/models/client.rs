@@ -136,7 +136,7 @@ pub struct ClientWithTasks {
     pub last_synced_at: Option<i64>,
 
     // Associated tasks
-    pub tasks: Option<Vec<crate::models::task::Task>>,
+    pub tasks: Option<Vec<crate::domains::tasks::domain::models::task::Task>>,
 }
 
 /// Conversion implementations for database operations
@@ -148,7 +148,7 @@ pub struct ClientQuery {
     pub search: Option<String>,
     pub customer_type: Option<CustomerType>,
     pub sort_by: Option<String>,
-    pub sort_order: Option<crate::models::task::SortOrder>,
+    pub sort_order: Option<crate::domains::tasks::domain::models::task::SortOrder>,
 }
 
 impl Default for ClientQuery {
@@ -159,7 +159,7 @@ impl Default for ClientQuery {
             search: None,
             customer_type: None,
             sort_by: Some("created_at".to_string()),
-            sort_order: Some(crate::models::task::SortOrder::Desc),
+            sort_order: Some(crate::domains::tasks::domain::models::task::SortOrder::Desc),
         }
     }
 }
@@ -168,7 +168,7 @@ impl Default for ClientQuery {
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ClientListResponse {
     pub data: Vec<Client>,
-    pub pagination: crate::models::task::PaginationInfo,
+    pub pagination: crate::domains::tasks::domain::models::task::PaginationInfo,
     pub statistics: Option<ClientStatistics>,
 }
 

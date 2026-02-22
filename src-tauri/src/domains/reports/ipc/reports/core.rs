@@ -5,8 +5,8 @@
 
 use crate::authenticate;
 use crate::commands::{AppResult, AppState};
-use crate::models::auth::UserRole;
-use crate::models::reports::*;
+use crate::domains::auth::domain::models::auth::UserRole;
+use crate::domains::reports::domain::models::reports::*;
 use chrono::Datelike;
 use tracing::{info, instrument};
 

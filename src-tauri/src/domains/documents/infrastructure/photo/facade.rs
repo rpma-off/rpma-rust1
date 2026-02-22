@@ -10,7 +10,7 @@ pub use super::storage::{PhotoStorageService, StorageProvider};
 pub use super::upload::PhotoUploadService;
 
 use crate::db::Database;
-use crate::models::photo::Photo;
+use crate::domains::documents::domain::models::photo::Photo;
 
 /// Request to store a new photo
 #[derive(Debug, serde::Deserialize)]
@@ -98,7 +98,7 @@ impl PhotoService {
     /// Create new photo service with storage configuration
     pub fn new(
         db: Database,
-        storage_settings: &crate::models::settings::StorageSettings,
+        storage_settings: &crate::domains::settings::domain::models::settings::StorageSettings,
     ) -> PhotoResult<Self> {
         let storage = PhotoStorageService::new(db.clone(), storage_settings)?;
         let processing = PhotoProcessingService::new();

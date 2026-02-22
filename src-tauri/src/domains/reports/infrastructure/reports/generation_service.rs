@@ -5,7 +5,7 @@
 
 use crate::commands::AppResult;
 use crate::db::Database;
-use crate::models::reports::*;
+use crate::domains::reports::domain::models::reports::*;
 
 /// Report generation service for processing and formatting reports
 pub struct GenerationReportService;

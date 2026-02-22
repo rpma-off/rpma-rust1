@@ -5,8 +5,8 @@
 
 use crate::db::{InterventionError, InterventionResult};
 use crate::logging::RPMARequestLogger;
-use crate::models::intervention::{Intervention, InterventionStatus};
-use crate::models::step::{InterventionStep, StepStatus};
+use crate::domains::interventions::domain::models::intervention::{Intervention, InterventionStatus};
+use crate::domains::interventions::domain::models::step::{InterventionStep, StepStatus};
 use crate::domains::interventions::infrastructure::intervention_calculation::InterventionCalculationService;
 use crate::domains::interventions::infrastructure::intervention_data::InterventionDataService;
 

@@ -1,6 +1,6 @@
 use crate::domains::reports::infrastructure::reports::overview_orchestrator::generate_overview_report;
 use crate::domains::reports::infrastructure::reports::task_report::generate_task_completion_report;
-use crate::models::reports::*;
+use crate::domains::reports::domain::models::reports::*;
 use chrono::Utc;
 
 #[tokio::test]

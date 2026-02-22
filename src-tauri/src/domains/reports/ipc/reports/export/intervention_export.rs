@@ -5,7 +5,7 @@
 //! Business logic is delegated to ExportReportService.
 
 use crate::commands::{AppResult, AppState};
-use crate::models::reports::*;
+use crate::domains::reports::domain::models::reports::*;
 
 use tracing::{debug, error, info, instrument};
 

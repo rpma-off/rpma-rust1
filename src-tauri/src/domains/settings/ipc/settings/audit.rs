@@ -14,7 +14,7 @@ use tracing::info;
 use crate::authenticate;
 
 // Re-export DataConsent from models for backward compatibility
-pub use crate::models::settings::DataConsent;
+pub use crate::domains::settings::domain::models::settings::DataConsent;
 
 #[derive(Deserialize)]
 pub struct UpdateDataConsentRequest {

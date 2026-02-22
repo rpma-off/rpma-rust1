@@ -3,8 +3,8 @@
 //! This service handles all CRUD operations for clients with validation,
 //! business rules, FTS search, and repository interactions.
 
-use crate::models::client::Client;
-use crate::models::client::{
+use crate::domains::clients::domain::models::client::Client;
+use crate::domains::clients::domain::models::client::{
     ClientListResponse, ClientQuery, CreateClientRequest, UpdateClientRequest,
 };
 use crate::repositories::{ClientRepository, Repository};
@@ -202,7 +202,7 @@ impl ClientService {
         let total_pages = ((total as f64) / (limit as f64)).ceil() as i32;
 
         let stats = self.get_client_stats().await.ok();
-        let statistics = stats.map(|s| crate::models::client::ClientStatistics {
+        let statistics = stats.map(|s| crate::domains::clients::domain::models::client::ClientStatistics {
             total_clients: s.total_clients as i64,
             individual_clients: s.individual_clients as i64,
             business_clients: s.business_clients as i64,
@@ -212,7 +212,7 @@ impl ClientService {
 
         Ok(ClientListResponse {
             data: paginated_clients,
-            pagination: crate::models::task::PaginationInfo {
+            pagination: crate::domains::tasks::domain::models::task::PaginationInfo {
                 page,
                 limit,
                 total,
@@ -460,7 +460,7 @@ impl ClientService {
             .filter(|c| {
                 matches!(
                     c.customer_type,
-                    crate::models::client::CustomerType::Individual
+                    crate::domains::clients::domain::models::client::CustomerType::Individual
                 )
             })
             .count() as i32;
@@ -469,7 +469,7 @@ impl ClientService {
             .filter(|c| {
                 matches!(
                     c.customer_type,
-                    crate::models::client::CustomerType::Business
+                    crate::domains::clients::domain::models::client::CustomerType::Business
                 )
             })
             .count() as i32;

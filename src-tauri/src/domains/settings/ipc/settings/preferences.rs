@@ -7,7 +7,7 @@ use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::settings::ipc::settings::core::{
     handle_settings_error, load_app_settings, update_app_settings,
 };
-use crate::models::settings::UserPreferences;
+use crate::domains::settings::domain::models::settings::UserPreferences;
 
 use serde::Deserialize;
 use tracing::info;
@@ -66,7 +66,7 @@ pub async fn update_general_settings(
     crate::commands::update_correlation_context_user(&user.user_id);
 
     // Only admins can update system-wide settings
-    if !matches!(user.role, crate::models::auth::UserRole::Admin) {
+    if !matches!(user.role, crate::domains::auth::domain::models::auth::UserRole::Admin) {
         return Err(AppError::Authorization(
             "Only administrators can update general settings".to_string(),
         ));
@@ -183,7 +183,7 @@ pub async fn update_user_preferences(
 #[tauri::command]
 
 pub async fn update_user_performance(
-    request: crate::models::settings::UserPerformanceSettings,
+    request: crate::domains::settings::domain::models::settings::UserPerformanceSettings,
     session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,

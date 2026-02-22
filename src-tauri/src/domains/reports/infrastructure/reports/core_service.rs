@@ -5,7 +5,7 @@
 
 use crate::commands::{AppError, AppResult};
 use crate::db::Database;
-use crate::models::reports::*;
+use crate::domains::reports::domain::models::reports::*;
 
 // Import specialized report generators
 use crate::domains::reports::infrastructure::reports::{

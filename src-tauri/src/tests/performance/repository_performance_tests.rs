@@ -4,10 +4,10 @@
 //! including large datasets, concurrent operations, and complex queries.
 
 use crate::db::Database;
-use crate::models::client::Client;
-use crate::models::intervention::{Intervention, InterventionStatus, InterventionType};
-use crate::models::task::{SortOrder, Task, TaskPriority, TaskQuery, TaskStatus};
-use crate::models::user::{User, UserRole};
+use crate::domains::clients::domain::models::client::Client;
+use crate::domains::interventions::domain::models::intervention::{Intervention, InterventionStatus, InterventionType};
+use crate::domains::tasks::domain::models::task::{SortOrder, Task, TaskPriority, TaskQuery, TaskStatus};
+use crate::domains::users::domain::models::user::{User, UserRole};
 use crate::repositories::{
     base::Repository, client_repository::ClientRepository,
     intervention_repository::InterventionRepository, task_repository::TaskRepository,
