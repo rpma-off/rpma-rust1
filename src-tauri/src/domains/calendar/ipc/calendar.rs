@@ -389,7 +389,10 @@ pub async fn get_events(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<ApiResponse<Vec<crate::domains::calendar::domain::models::calendar_event::CalendarEvent>>, AppError> {
+) -> Result<
+    ApiResponse<Vec<crate::domains::calendar::domain::models::calendar_event::CalendarEvent>>,
+    AppError,
+> {
     let correlation_id =
         correlation_id.unwrap_or_else(crate::logging::correlation::generate_correlation_id);
     crate::commands::init_correlation_context(&Some(correlation_id.clone()), None);
@@ -416,7 +419,9 @@ pub async fn get_events(
     }
 
     let calendar_service =
-        crate::domains::calendar::infrastructure::calendar_event_service::CalendarEventService::new(state.db.clone());
+        crate::domains::calendar::infrastructure::calendar_event_service::CalendarEventService::new(
+            state.db.clone(),
+        );
 
     match calendar_service
         .get_events_in_range(start_date, end_date, technician_id)
@@ -439,7 +444,10 @@ pub async fn get_events(
 pub async fn calendar_check_conflicts(
     request: CheckConflictsRequest,
     state: AppState<'_>,
-) -> Result<ApiResponse<crate::domains::calendar::domain::models::calendar::ConflictDetection>, AppError> {
+) -> Result<
+    ApiResponse<crate::domains::calendar::domain::models::calendar::ConflictDetection>,
+    AppError,
+> {
     let session_token = request.session_token;
     let correlation_id = request
         .correlation_id
@@ -498,7 +506,10 @@ pub async fn calendar_check_conflicts(
 pub async fn calendar_schedule_task(
     request: ScheduleTaskRequest,
     state: AppState<'_>,
-) -> Result<ApiResponse<crate::domains::calendar::domain::models::calendar::ConflictDetection>, AppError> {
+) -> Result<
+    ApiResponse<crate::domains::calendar::domain::models::calendar::ConflictDetection>,
+    AppError,
+> {
     let session_token = request.session_token;
     let correlation_id = request
         .correlation_id

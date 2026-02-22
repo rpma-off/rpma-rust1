@@ -1,7 +1,7 @@
-use std::sync::Arc;
 use crate::db::Database;
 use crate::domains::reports::ReportsFacade;
 use crate::shared::ipc::errors::AppError;
+use std::sync::Arc;
 
 #[tokio::test]
 async fn map_report_error_returns_internal() {

@@ -395,7 +395,9 @@ impl WorkflowStrategyFactory {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domains::interventions::domain::models::intervention::{InterventionStatus, InterventionType};
+    use crate::domains::interventions::domain::models::intervention::{
+        InterventionStatus, InterventionType,
+    };
     use crate::shared::contracts::common::*;
 
     fn create_test_intervention() -> Intervention {

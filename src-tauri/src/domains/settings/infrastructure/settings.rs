@@ -1,11 +1,11 @@
 //! Settings service for user settings management
 
 use crate::commands::AppError;
+use crate::domains::auth::infrastructure::token;
 use crate::domains::settings::domain::models::settings::{
     UserAccessibilitySettings, UserNotificationSettings, UserPerformanceSettings, UserPreferences,
     UserProfileSettings, UserSecuritySettings, UserSettings,
 };
-use crate::domains::auth::infrastructure::token;
 use crate::shared::services::validation::ValidationService;
 use rusqlite::{params, types::Value, OptionalExtension};
 use std::collections::HashSet;
@@ -1221,8 +1221,8 @@ impl SettingsService {
 #[cfg(test)]
 mod tests {
     use super::SettingsService;
-    use crate::shared::contracts::auth::{UserAccount, UserRole};
     use crate::domains::auth::infrastructure::auth::AuthService;
+    use crate::shared::contracts::auth::{UserAccount, UserRole};
     use chrono::Utc;
     use rusqlite::params;
     use std::sync::Arc;
@@ -1282,7 +1282,11 @@ mod tests {
             .expect("failed to create test user")
     }
 
-    fn insert_session(test_db: &LocalTestDb, user: &crate::shared::contracts::auth::UserAccount, token: &str) {
+    fn insert_session(
+        test_db: &LocalTestDb,
+        user: &crate::shared::contracts::auth::UserAccount,
+        token: &str,
+    ) {
         let conn = test_db
             .db
             .get_connection()
@@ -1513,8 +1517,9 @@ mod tests {
                 |row| row.get(0),
             )
             .expect("failed to count sessions");
-        let current_token_hash = crate::domains::auth::infrastructure::token::hash_token_with_env("current-token")
-            .expect("failed to hash token");
+        let current_token_hash =
+            crate::domains::auth::infrastructure::token::hash_token_with_env("current-token")
+                .expect("failed to hash token");
         let current_exists: i64 = conn
             .query_row(
                 "SELECT COUNT(*) FROM user_sessions WHERE user_id = ? AND token = ?",

@@ -3,8 +3,8 @@
 //! Uses proptest to test analytics calculations with random inputs
 
 use crate::db::Database;
-use crate::domains::reports::domain::models::reports::*;
 use crate::domains::analytics::infrastructure::analytics::AnalyticsService;
+use crate::domains::reports::domain::models::reports::*;
 use chrono::{DateTime, Duration, Utc};
 use proptest::prelude::*;
 use rusqlite::params;

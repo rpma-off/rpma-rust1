@@ -3,8 +3,8 @@
 //! This module handles operations that involve task and client interactions.
 
 use crate::commands::{ApiResponse, AppError, AppState};
-use crate::domains::tasks::ipc::task_types::TaskFilter;
 use crate::domains::tasks::domain::models::task::Task;
+use crate::domains::tasks::ipc::task_types::TaskFilter;
 
 use crate::authenticate;
 use serde::Deserialize;
@@ -81,7 +81,9 @@ pub async fn get_tasks_with_client_details(
         limit: Some(limit as i32),
         status: filter.status.as_ref().and_then(|s| match s.as_str() {
             "pending" => Some(crate::domains::tasks::domain::models::task::TaskStatus::Pending),
-            "in_progress" => Some(crate::domains::tasks::domain::models::task::TaskStatus::InProgress),
+            "in_progress" => {
+                Some(crate::domains::tasks::domain::models::task::TaskStatus::InProgress)
+            }
             "completed" => Some(crate::domains::tasks::domain::models::task::TaskStatus::Completed),
             _ => None,
         }),
@@ -172,7 +174,9 @@ fn determine_client_relationship_status(
             // For now, just mark as completed
             "completed".to_string()
         }
-        crate::domains::tasks::domain::models::task::TaskStatus::Cancelled => "cancelled".to_string(),
+        crate::domains::tasks::domain::models::task::TaskStatus::Cancelled => {
+            "cancelled".to_string()
+        }
         crate::domains::tasks::domain::models::task::TaskStatus::InProgress => {
             // TODO: Implement schedule tracking logic
             "in_progress".to_string()
@@ -183,7 +187,9 @@ fn determine_client_relationship_status(
         }
         crate::domains::tasks::domain::models::task::TaskStatus::OnHold => "on_hold".to_string(),
         crate::domains::tasks::domain::models::task::TaskStatus::Draft => "draft".to_string(),
-        crate::domains::tasks::domain::models::task::TaskStatus::Scheduled => "scheduled".to_string(),
+        crate::domains::tasks::domain::models::task::TaskStatus::Scheduled => {
+            "scheduled".to_string()
+        }
         crate::domains::tasks::domain::models::task::TaskStatus::Invalid => "invalid".to_string(),
         crate::domains::tasks::domain::models::task::TaskStatus::Archived => "archived".to_string(),
         crate::domains::tasks::domain::models::task::TaskStatus::Failed => "failed".to_string(),
@@ -258,7 +264,8 @@ pub async fn get_client_task_summary(
     // (Technician and Viewer have restricted access)
     let can_view_client_data = matches!(
         session.role,
-        crate::shared::contracts::auth::UserRole::Admin | crate::shared::contracts::auth::UserRole::Supervisor
+        crate::shared::contracts::auth::UserRole::Admin
+            | crate::shared::contracts::auth::UserRole::Supervisor
     );
 
     if !can_view_client_data {

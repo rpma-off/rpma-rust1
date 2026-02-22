@@ -109,7 +109,9 @@ pub fn validate_settings_permissions(
     user: &crate::shared::contracts::auth::UserSession,
     required_role: crate::shared::contracts::auth::UserRole,
 ) -> Result<(), AppError> {
-    if !matches!(user.role, crate::shared::contracts::auth::UserRole::Admin) && user.role != required_role {
+    if !matches!(user.role, crate::shared::contracts::auth::UserRole::Admin)
+        && user.role != required_role
+    {
         return Err(AppError::Authorization(
             "Insufficient permissions to modify settings".to_string(),
         ));

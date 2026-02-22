@@ -3,8 +3,8 @@
 //! Tests analytics functionality with database operations and interactions with other services
 
 use crate::db::Database;
-use crate::domains::reports::domain::models::reports::*;
 use crate::domains::analytics::infrastructure::analytics::AnalyticsService;
+use crate::domains::reports::domain::models::reports::*;
 use chrono::{DateTime, Duration, Utc};
 use rusqlite::params;
 use std::sync::Arc;

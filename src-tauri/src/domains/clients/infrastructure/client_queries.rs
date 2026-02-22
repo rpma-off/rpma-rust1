@@ -48,8 +48,12 @@ impl ClientQueriesService {
         if let Some(customer_type) = &query.customer_type {
             sql.push_str(" AND customer_type = ?");
             params_vec.push(match customer_type {
-                crate::domains::clients::domain::models::client::CustomerType::Individual => "individual".to_string(),
-                crate::domains::clients::domain::models::client::CustomerType::Business => "business".to_string(),
+                crate::domains::clients::domain::models::client::CustomerType::Individual => {
+                    "individual".to_string()
+                }
+                crate::domains::clients::domain::models::client::CustomerType::Business => {
+                    "business".to_string()
+                }
             });
         }
 
@@ -124,8 +128,12 @@ impl ClientQueriesService {
         if let Some(customer_type) = &query.customer_type {
             count_sql.push_str(" AND customer_type = ?");
             count_params.push(match customer_type {
-                crate::domains::clients::domain::models::client::CustomerType::Individual => "individual".to_string(),
-                crate::domains::clients::domain::models::client::CustomerType::Business => "business".to_string(),
+                crate::domains::clients::domain::models::client::CustomerType::Individual => {
+                    "individual".to_string()
+                }
+                crate::domains::clients::domain::models::client::CustomerType::Business => {
+                    "business".to_string()
+                }
             });
         }
 
@@ -209,7 +217,9 @@ impl ClientQueriesService {
         "#;
 
         let customer_type_str = match customer_type {
-            crate::domains::clients::domain::models::client::CustomerType::Individual => "individual",
+            crate::domains::clients::domain::models::client::CustomerType::Individual => {
+                "individual"
+            }
             crate::domains::clients::domain::models::client::CustomerType::Business => "business",
         };
 

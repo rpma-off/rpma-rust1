@@ -3,7 +3,9 @@
 //! Uses proptest to test inventory operations with random inputs
 
 use crate::db::Database;
-use crate::domains::inventory::domain::models::material::{InventoryTransactionType, Material, MaterialType, UnitOfMeasure};
+use crate::domains::inventory::domain::models::material::{
+    InventoryTransactionType, Material, MaterialType, UnitOfMeasure,
+};
 use crate::domains::inventory::infrastructure::material::MaterialService;
 use proptest::prelude::*;
 use rusqlite::params;

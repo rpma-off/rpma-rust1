@@ -1,8 +1,8 @@
-use std::sync::Arc;
 use crate::db::Database;
 use crate::domains::clients::infrastructure::client::ClientService;
 use crate::domains::clients::ClientsFacade;
 use crate::shared::ipc::errors::AppError;
+use std::sync::Arc;
 
 #[tokio::test]
 async fn map_service_error_returns_not_found_for_missing_entity() {
