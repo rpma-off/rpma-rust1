@@ -25,7 +25,7 @@ export type ApiError = { message: string, code: string, details: JsonValue | nul
 /**
  * Compressed API envelope for large payloads.
  */
-export type CompressedApiResponse = { success: boolean, compressed: boolean, data: string | null, error: ApiError | null, correlation_id: string | null, };
+export type CompressedApiResponse = { success: boolean, message: string | null, error_code: string | null, compressed: boolean, data: string | null, error: ApiError | null, correlation_id: string | null, };
 
 
 // Auth types

@@ -54,4 +54,4 @@ export { SafeLink } from './SafeLink';
 export { SyncIndicator } from './SyncIndicator';
 export { DesktopTable, type Column } from './DesktopTable';
 export { DesktopForm } from '../forms/DesktopForm';
-export { EntitySyncIndicator } from '../sync/EntitySyncIndicator';
+export { EntitySyncIndicator } from '../../domains/sync/components';
