@@ -9,9 +9,9 @@
 
 use crate::commands::AppError;
 use crate::db::Database;
+use crate::domains::tasks::domain::models::task::{CreateTaskRequest, TaskPriority, TaskStatus};
 use crate::domains::tasks::infrastructure::task_creation::TaskCreationService;
 use crate::domains::tasks::infrastructure::task_deletion::TaskDeletionService;
-use crate::domains::tasks::domain::models::task::{CreateTaskRequest, TaskPriority, TaskStatus};
 use crate::{test_client, test_db, test_intervention, test_task};
 use chrono::Utc;
 use rusqlite::params;

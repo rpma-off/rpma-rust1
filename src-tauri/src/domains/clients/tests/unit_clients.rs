@@ -1,7 +1,7 @@
-use std::sync::Arc;
 use crate::db::Database;
 use crate::domains::clients::infrastructure::client::ClientService;
 use crate::domains::clients::ClientsFacade;
+use std::sync::Arc;
 
 #[tokio::test]
 async fn clients_facade_is_ready() {

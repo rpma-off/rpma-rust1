@@ -1,11 +1,11 @@
 //! Local authentication service for secure session management
 
+use crate::domains::audit::infrastructure::security_monitor::SecurityMonitorService;
 use crate::domains::auth::application::SignupRequest;
 use crate::domains::auth::domain::models::auth::{UserAccount, UserRole, UserSession};
-use crate::shared::services::performance_monitor::PerformanceMonitorService;
 use crate::domains::auth::infrastructure::rate_limiter::RateLimiterService;
-use crate::domains::audit::infrastructure::security_monitor::SecurityMonitorService;
 use crate::domains::auth::infrastructure::token::TokenService;
+use crate::shared::services::performance_monitor::PerformanceMonitorService;
 use crate::shared::services::validation::ValidationService;
 use rusqlite::params;
 
@@ -34,10 +34,11 @@ impl AuthService {
     }
 
     pub fn new(db: crate::db::Database) -> Result<Self, String> {
-        let jwt_secret = crate::domains::auth::infrastructure::token::load_jwt_secret().map_err(|e| {
-            error!("JWT secret configuration error: {}", e);
-            e.to_string()
-        })?;
+        let jwt_secret =
+            crate::domains::auth::infrastructure::token::load_jwt_secret().map_err(|e| {
+                error!("JWT secret configuration error: {}", e);
+                e.to_string()
+            })?;
 
         let rate_limiter = Arc::new(RateLimiterService::new(db.clone()));
         let security_monitor = Arc::new(SecurityMonitorService::new(db.clone()));

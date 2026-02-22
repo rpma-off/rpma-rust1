@@ -81,12 +81,7 @@ impl StreamingTaskRepository {
         let pool = self.pool_manager.get_pool(OperationType::Read);
 
         // Create chunked query
-        let query = ChunkedQuery::new(
-            base_query,
-            params,
-            |row| Task::from_row(row),
-            pool,
-        );
+        let query = ChunkedQuery::new(base_query, params, |row| Task::from_row(row), pool);
 
         Ok(query)
     }

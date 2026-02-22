@@ -20,7 +20,9 @@ pub use crate::domains::reports::infrastructure::reports::export_service::Export
 pub async fn get_intervention_with_details(
     intervention_id: &str,
     db: &crate::db::Database,
-    intervention_service: Option<&crate::domains::interventions::infrastructure::intervention::InterventionService>,
+    intervention_service: Option<
+        &crate::domains::interventions::infrastructure::intervention::InterventionService,
+    >,
     client_service: Option<&crate::domains::clients::infrastructure::client::ClientService>,
 ) -> AppResult<CompleteInterventionData> {
     ExportReportService::get_intervention_with_details(

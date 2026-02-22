@@ -1,6 +1,6 @@
+use crate::domains::auth::domain::models::auth::{UserRole, UserSession};
 use crate::domains::users::application::UserAction;
 use crate::domains::users::UsersFacade;
-use crate::domains::auth::domain::models::auth::{UserRole, UserSession};
 use crate::shared::ipc::errors::AppError;
 
 fn build_session(user_id: &str, role: UserRole) -> UserSession {

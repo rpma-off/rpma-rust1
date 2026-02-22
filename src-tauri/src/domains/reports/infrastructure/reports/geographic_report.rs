@@ -5,7 +5,9 @@
 use crate::commands::AppResult;
 use crate::db::Database;
 use crate::domains::reports::domain::models::reports::*;
-use crate::domains::reports::infrastructure::reports::validation::{validate_date_range, validate_filters};
+use crate::domains::reports::infrastructure::reports::validation::{
+    validate_date_range, validate_filters,
+};
 use chrono::{DateTime, Utc};
 use tracing::info;
 

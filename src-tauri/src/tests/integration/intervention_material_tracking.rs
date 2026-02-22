@@ -4,16 +4,18 @@
 //! and batch/expiry information during PPF installation processes.
 
 use crate::commands::AppResult;
-use crate::domains::tasks::infrastructure::task_crud::TaskCrudService;
-use crate::domains::inventory::domain::models::material::{InventoryTransactionType, Material, MaterialType, UnitOfMeasure};
 use crate::domains::interventions::infrastructure::intervention_types::{
     AdvanceStepRequest, FinalizeInterventionRequest, StartInterventionRequest,
 };
 use crate::domains::interventions::infrastructure::intervention_workflow::InterventionWorkflowService;
+use crate::domains::inventory::domain::models::material::{
+    InventoryTransactionType, Material, MaterialType, UnitOfMeasure,
+};
 use crate::domains::inventory::infrastructure::material::{
     CreateInventoryTransactionRequest, CreateMaterialRequest, MaterialService,
     RecordConsumptionRequest, UpdateStockRequest,
 };
+use crate::domains::tasks::infrastructure::task_crud::TaskCrudService;
 use crate::test_task;
 use crate::test_utils::TestDatabase;
 use chrono::{DateTime, TimeZone, Utc};
@@ -161,7 +163,10 @@ impl InterventionMaterialTrackingTestFixture {
     }
 
     /// Create a task for material tracking testing
-    pub fn create_tracking_test_task(&self, title: &str) -> AppResult<crate::domains::tasks::domain::models::task::Task> {
+    pub fn create_tracking_test_task(
+        &self,
+        title: &str,
+    ) -> AppResult<crate::domains::tasks::domain::models::task::Task> {
         let task_request = test_task!(
             title: title.to_string(),
             vehicle_plate: Some("TRACK001".to_string()),
@@ -400,7 +405,8 @@ impl InterventionMaterialTrackingTestFixture {
     pub fn get_consumption_history(
         &self,
         intervention_id: &str,
-    ) -> AppResult<Vec<crate::domains::inventory::domain::models::material::MaterialConsumption>> {
+    ) -> AppResult<Vec<crate::domains::inventory::domain::models::material::MaterialConsumption>>
+    {
         Ok(self
             .material_service
             .get_intervention_consumption(intervention_id)?)
@@ -410,7 +416,8 @@ impl InterventionMaterialTrackingTestFixture {
     pub fn get_consumption_summary(
         &self,
         intervention_id: &str,
-    ) -> AppResult<crate::domains::inventory::domain::models::material::InterventionMaterialSummary> {
+    ) -> AppResult<crate::domains::inventory::domain::models::material::InterventionMaterialSummary>
+    {
         Ok(self
             .material_service
             .get_intervention_material_summary(intervention_id)?)

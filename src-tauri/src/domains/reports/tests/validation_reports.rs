@@ -1,7 +1,7 @@
-use std::sync::Arc;
 use crate::db::Database;
 use crate::domains::reports::ReportsFacade;
 use crate::shared::ipc::errors::AppError;
+use std::sync::Arc;
 
 #[tokio::test]
 async fn validate_report_type_rejects_invalid_type() {

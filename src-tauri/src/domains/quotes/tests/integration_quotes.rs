@@ -1,10 +1,10 @@
-use std::sync::Arc;
 use crate::db::Database;
 use crate::domains::quotes::infrastructure::quote::QuoteService;
 use crate::domains::quotes::infrastructure::quote_repository::QuoteRepository;
 use crate::domains::quotes::QuotesFacade;
 use crate::repositories::Cache;
 use crate::shared::ipc::errors::AppError;
+use std::sync::Arc;
 
 #[tokio::test]
 async fn map_quote_error_returns_validation_for_validation_keyword() {
