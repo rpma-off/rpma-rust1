@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { TaskCardListProps } from './types';
 import { DashboardTask } from './types';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { getDashboardTaskDisplayTitle, getTaskDisplayStatus, getTaskDisplayPriority } from '@/lib/utils/task-display';
+import { getDashboardTaskDisplayTitle, getTaskDisplayStatus, getTaskDisplayPriority } from '@/domains/tasks/utils/display';
 
 const getTechnicianName = (technician: DashboardTask['technician']) => {
   if (!technician) return 'Non assigné';

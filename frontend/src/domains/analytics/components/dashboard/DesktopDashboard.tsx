@@ -18,7 +18,7 @@ import {
 
 import { useAuth } from '@/domains/auth';
 import { ipcClient } from '@/lib/ipc';
-import { getTaskDisplayTitle, getTaskDisplayStatus, getTaskDisplayPriority } from '@/lib/utils/task-display';
+import { getTaskDisplayTitle, getTaskDisplayStatus, getTaskDisplayPriority } from '@/domains/tasks/utils/display';
 
 interface DashboardStats {
   totalTasks: number;

@@ -6,7 +6,7 @@ import { ipcClient } from '@/lib/ipc';
 import { handleError } from '@/lib/utils/error-handler';
 import { LogDomain } from '@/lib/logging/types';
 import { ClientCreationService } from '@/domains/clients';
-import { generateTaskTitle } from '@/lib/utils/task-display';
+import { generateTaskTitle } from '../../utils/display';
 
 import { FormStep, TaskFormData } from './types';
 

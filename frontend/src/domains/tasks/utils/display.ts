@@ -1,5 +1,4 @@
 import { Task } from '@/lib/backend';
-import { DashboardTask } from '@/domains/analytics/components/dashboard/types';
 
 /**
  * Centralized utilities for consistent task display across the application
@@ -54,7 +53,13 @@ export const getTaskDisplayTitle = (task: Task): string => {
  * Get a meaningful display title for a dashboard task
  * Falls back to generated title based on available data if title is generic
  */
-export const getDashboardTaskDisplayTitle = (task: DashboardTask): string => {
+export const getDashboardTaskDisplayTitle = (task: {
+  id: string;
+  title: string;
+  customer_name?: string | null;
+  vehicle: string;
+  vehicle_model?: string | null;
+}): string => {
   // If we have a meaningful title (not the generic "Nouvelle tâche")
   if (task.title && task.title.trim() !== '' && task.title !== 'Nouvelle tâche') {
     return task.title.trim();
