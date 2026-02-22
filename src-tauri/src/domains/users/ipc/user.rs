@@ -174,11 +174,7 @@ pub async fn user_crud(
             // Prevent changing own role
             facade.ensure_not_self_action(&current_user.user_id, &id, "change your own role")?;
 
-            // Use UserService to change role
-            let user_service = crate::domains::users::infrastructure::user::UserService::new(
-                state.repositories.user.clone(),
-            );
-            user_service
+            state.user_service
                 .change_role(&id, new_role, &current_user.user_id)
                 .await?;
 
@@ -192,11 +188,7 @@ pub async fn user_crud(
             // Prevent banning self
             facade.ensure_not_self_action(&current_user.user_id, &id, "ban yourself")?;
 
-            // Use UserService to ban user
-            let user_service = crate::domains::users::infrastructure::user::UserService::new(
-                state.repositories.user.clone(),
-            );
-            user_service.ban_user(&id, &current_user.user_id).await?;
+            state.user_service.ban_user(&id, &current_user.user_id).await?;
 
             info!("User {} banned successfully", id);
             Ok(ApiResponse::success(UserResponse::UserBanned)
@@ -205,11 +197,7 @@ pub async fn user_crud(
         UserAction::Unban { id } => {
             info!("Unbanning user ID: {}", id);
 
-            // Use UserService to unban user
-            let user_service = crate::domains::users::infrastructure::user::UserService::new(
-                state.repositories.user.clone(),
-            );
-            user_service.unban_user(&id, &current_user.user_id).await?;
+            state.user_service.unban_user(&id, &current_user.user_id).await?;
 
             info!("User {} unbanned successfully", id);
             Ok(ApiResponse::success(UserResponse::UserUnbanned)
@@ -244,10 +232,7 @@ pub async fn bootstrap_first_admin(
         return Err(error);
     }
 
-    let user_service = crate::domains::users::infrastructure::user::UserService::new(
-        state.repositories.user.clone(),
-    );
-    let message = user_service.bootstrap_first_admin(&user_id).await?;
+    let message = state.user_service.bootstrap_first_admin(&user_id).await?;
     info!("Bootstrap completed for user: {}", user_id);
 
     Ok(ApiResponse::success(message).with_correlation_id(Some(correlation_id.clone())))
@@ -263,10 +248,7 @@ pub async fn has_admins(
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     debug!("Checking if admin users exist");
 
-    let user_service = crate::domains::users::infrastructure::user::UserService::new(
-        state.repositories.user.clone(),
-    );
-    let has_admin = user_service.has_admins().await?;
+    let has_admin = state.user_service.has_admins().await?;
 
     debug!("Admin check completed: has_admins={}", has_admin);
     Ok(ApiResponse::success(has_admin).with_correlation_id(Some(correlation_id.clone())))
@@ -280,7 +262,7 @@ pub async fn get_users(
     _role: Option<String>,
     session_token: String,
     state: AppState<'_>,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, AppError> {
     let limit = Some(page_size);
     let offset = Some((page - 1) * page_size);
 
@@ -291,7 +273,7 @@ pub async fn get_users(
             "page": page,
             "page_size": page_size
         })),
-        _ => Err("Unexpected response".to_string()),
+        _ => Err(AppError::Internal("Unexpected response".to_string())),
     }
 }
 
@@ -300,10 +282,10 @@ pub async fn create_user(
     user_data: CreateUserRequest,
     session_token: String,
     state: AppState<'_>,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, AppError> {
     match execute_user_action(UserAction::Create { data: user_data }, session_token, state).await? {
         UserResponse::Created(user) => Ok(serde_json::json!(user)),
-        _ => Err("Failed to create user".to_string()),
+        _ => Err(AppError::Internal("Failed to create user".to_string())),
     }
 }
 
@@ -313,7 +295,7 @@ pub async fn update_user(
     user_data: UpdateUserRequest,
     session_token: String,
     state: AppState<'_>,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, AppError> {
     match execute_user_action(
         UserAction::Update {
             id: user_id,
@@ -325,7 +307,7 @@ pub async fn update_user(
     .await?
     {
         UserResponse::Updated(user) => Ok(serde_json::json!(user)),
-        _ => Err("Failed to update user".to_string()),
+        _ => Err(AppError::Internal("Failed to update user".to_string())),
     }
 }
 
@@ -335,7 +317,7 @@ pub async fn update_user_status(
     is_active: bool,
     session_token: String,
     state: AppState<'_>,
-) -> Result<(), String> {
+) -> Result<(), AppError> {
     let update_data = UpdateUserRequest {
         email: None,
         first_name: None,
@@ -355,7 +337,7 @@ pub async fn update_user_status(
     .await?
     {
         UserResponse::Updated(_) => Ok(()),
-        _ => Err("Failed to update user status".to_string()),
+        _ => Err(AppError::Internal("Failed to update user status".to_string())),
     }
 }
 
@@ -364,10 +346,10 @@ pub async fn delete_user(
     user_id: String,
     session_token: String,
     state: AppState<'_>,
-) -> Result<(), String> {
+) -> Result<(), AppError> {
     match execute_user_action(UserAction::Delete { id: user_id }, session_token, state).await? {
         UserResponse::Deleted => Ok(()),
-        _ => Err("Failed to delete user".to_string()),
+        _ => Err(AppError::Internal("Failed to delete user".to_string())),
     }
 }
 
@@ -375,15 +357,15 @@ async fn execute_user_action(
     action: UserAction,
     session_token: String,
     state: AppState<'_>,
-) -> Result<UserResponse, String> {
+) -> Result<UserResponse, AppError> {
     let request = UserCrudRequest {
         action,
         session_token,
         correlation_id: None,
     };
 
-    let response = user_crud(request, state).await.map_err(|e| e.to_string())?;
+    let response = user_crud(request, state).await?;
     response
         .data
-        .ok_or_else(|| "Missing user CRUD response payload".to_string())
+        .ok_or_else(|| AppError::Internal("Missing user CRUD response payload".to_string()))
 }

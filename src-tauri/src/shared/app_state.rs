@@ -5,6 +5,7 @@ use crate::domains::clients::infrastructure::client::ClientService;
 use crate::domains::inventory::InventoryFacade;
 use crate::domains::settings::infrastructure::settings::SettingsService;
 use crate::domains::tasks::infrastructure::task::TaskService;
+use crate::domains::users::infrastructure::user::UserService;
 use std::sync::{Arc, Mutex, OnceLock};
 use tauri::State;
 
@@ -33,6 +34,7 @@ pub struct AppStateType {
     pub session_service: Arc<crate::domains::auth::infrastructure::session::SessionService>,
     pub two_factor_service: Arc<crate::domains::auth::infrastructure::two_factor::TwoFactorService>,
     pub settings_service: Arc<SettingsService>,
+    pub user_service: Arc<UserService>,
     pub cache_service: Arc<crate::shared::services::cache::CacheService>,
     pub report_job_service:
         OnceLock<Arc<crate::domains::reports::infrastructure::report_jobs::ReportJobService>>,
