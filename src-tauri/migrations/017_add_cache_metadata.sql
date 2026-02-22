@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS cache_metadata (
     cache_type TEXT NOT NULL, -- 'query_result', 'image_thumbnail', 'computed_analytics', 'api_response'
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     last_accessed DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     access_count INTEGER DEFAULT 0,
     size_bytes INTEGER NOT NULL,
     ttl_seconds INTEGER, -- NULL means no expiration
@@ -37,6 +38,7 @@ CREATE TABLE IF NOT EXISTS cache_statistics (
 CREATE INDEX IF NOT EXISTS idx_cache_metadata_key ON cache_metadata(cache_key);
 CREATE INDEX IF NOT EXISTS idx_cache_metadata_type ON cache_metadata(cache_type);
 CREATE INDEX IF NOT EXISTS idx_cache_metadata_expires ON cache_metadata(expires_at);
+CREATE INDEX IF NOT EXISTS idx_cache_metadata_updated ON cache_metadata(updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_cache_statistics_timestamp ON cache_statistics(timestamp);
 CREATE INDEX IF NOT EXISTS idx_cache_statistics_type ON cache_statistics(cache_type);
 

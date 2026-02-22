@@ -77,7 +77,7 @@ INSERT INTO tasks_new
 SELECT * FROM tasks;
 
 -- Step 3: Drop the old tasks table
-DROP TABLE tasks;
+DROP TABLE IF EXISTS tasks;
 
 -- Step 4: Rename the new table to tasks
 ALTER TABLE tasks_new RENAME TO tasks;

@@ -47,11 +47,5 @@ WHERE us.user_id IS NULL
   AND u.deleted_at IS NULL;
 
 -- Log the migration
-INSERT INTO schema_version (version, applied_at, migration_hash, description, migration_time_ms)
-VALUES (
-    26,
-    strftime('%s', 'now') * 1000,
-    'fix_user_settings_baseline',
-    'Created missing user_settings records for existing users',
-    0
-);
+INSERT OR IGNORE INTO schema_version (version)
+VALUES (26);

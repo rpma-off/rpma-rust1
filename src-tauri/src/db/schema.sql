@@ -124,6 +124,15 @@ CREATE INDEX IF NOT EXISTS idx_interventions_scheduled ON interventions(schedule
 CREATE INDEX IF NOT EXISTS idx_interventions_created ON interventions(created_at);
 CREATE INDEX IF NOT EXISTS idx_interventions_task_number ON interventions(task_number);
 CREATE INDEX IF NOT EXISTS idx_interventions_vehicle_plate ON interventions(vehicle_plate);
+CREATE INDEX IF NOT EXISTS idx_interventions_task_created
+  ON interventions(task_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_interventions_status_created
+  ON interventions(status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_interventions_current_step_status
+  ON interventions(current_step, status);
+CREATE INDEX IF NOT EXISTS idx_interventions_incomplete
+  ON interventions(id, task_id, current_step, status)
+  WHERE status NOT IN ('completed', 'cancelled');
 
 -- Composite indexes for common query patterns
 CREATE INDEX IF NOT EXISTS idx_interventions_status_technician ON interventions(status, technician_id);
@@ -389,19 +398,48 @@ CREATE INDEX IF NOT EXISTS idx_tasks_client_id ON tasks(client_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_priority ON tasks(priority);
 CREATE INDEX IF NOT EXISTS idx_tasks_scheduled_date ON tasks(scheduled_date);
 CREATE INDEX IF NOT EXISTS idx_tasks_created_at ON tasks(created_at);
+CREATE INDEX IF NOT EXISTS idx_tasks_status_created ON tasks(status, created_at);
+CREATE INDEX IF NOT EXISTS idx_tasks_status_created_desc ON tasks(status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_tasks_status_created_at ON tasks(status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_tasks_synced ON tasks(synced) WHERE synced = 0;
 CREATE INDEX IF NOT EXISTS idx_tasks_task_number ON tasks(task_number);
+CREATE INDEX IF NOT EXISTS idx_tasks_workflow_id ON tasks(workflow_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_current_workflow_step_id ON tasks(current_workflow_step_id);
 
 -- Composite indexes for task query patterns
 CREATE INDEX IF NOT EXISTS idx_tasks_status_technician ON tasks(status, technician_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_technician_status ON tasks(technician_id, status);
 CREATE INDEX IF NOT EXISTS idx_tasks_status_priority ON tasks(status, priority);
 CREATE INDEX IF NOT EXISTS idx_tasks_client_status ON tasks(client_id, status);
 CREATE INDEX IF NOT EXISTS idx_tasks_technician_scheduled ON tasks(technician_id, scheduled_date);
 CREATE INDEX IF NOT EXISTS idx_tasks_status_scheduled ON tasks(status, scheduled_date);
 CREATE INDEX IF NOT EXISTS idx_tasks_sync_status ON tasks(synced, status) WHERE synced = 0;
+CREATE INDEX IF NOT EXISTS idx_tasks_status_priority_scheduled_date
+  ON tasks(status, priority DESC, scheduled_date ASC);
+CREATE INDEX IF NOT EXISTS idx_tasks_technician_status_priority
+  ON tasks(technician_id, status, priority DESC);
+CREATE INDEX IF NOT EXISTS idx_tasks_created_status_scheduled
+  ON tasks(created_at DESC, status, scheduled_date);
+CREATE INDEX IF NOT EXISTS idx_tasks_client_status_priority
+  ON tasks(client_id, status, priority DESC);
+CREATE INDEX IF NOT EXISTS idx_tasks_active_only
+  ON tasks(id, technician_id, priority, scheduled_date)
+  WHERE status IN ('pending', 'in_progress', 'assigned');
+CREATE INDEX IF NOT EXISTS idx_tasks_title_description
+  ON tasks(title, description)
+  WHERE title IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_tasks_title ON tasks(title);
+CREATE INDEX IF NOT EXISTS idx_tasks_vehicle_plate_lower
+  ON tasks(LOWER(vehicle_plate))
+  WHERE vehicle_plate IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_tasks_vehicle_plate ON tasks(vehicle_plate);
 CREATE INDEX IF NOT EXISTS idx_tasks_active
   ON tasks(status, created_at)
   WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_tasks_deleted_status_created
+  ON tasks(deleted_at, status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_tasks_deleted_task_number
+  ON tasks(deleted_at, task_number);
 
 -- Table 4.5: task_history
 -- Tracks task status transitions for auditing
@@ -422,6 +460,59 @@ CREATE INDEX IF NOT EXISTS idx_task_history_task_id ON task_history(task_id);
 CREATE INDEX IF NOT EXISTS idx_task_history_changed_at ON task_history(changed_at);
 CREATE INDEX IF NOT EXISTS idx_task_history_new_status ON task_history(new_status);
 CREATE INDEX IF NOT EXISTS idx_task_history_changed_by ON task_history(changed_by) WHERE changed_by IS NOT NULL;
+
+-- Table 4.6: quotes (PRD-09: Quotes)
+-- Implements the Devis (Quotes) feature for PPF interventions
+CREATE TABLE IF NOT EXISTS quotes (
+  id TEXT PRIMARY KEY NOT NULL,
+  quote_number TEXT NOT NULL UNIQUE,
+  client_id TEXT NOT NULL REFERENCES clients(id),
+  task_id TEXT REFERENCES tasks(id),
+  status TEXT NOT NULL DEFAULT 'draft'
+    CHECK(status IN ('draft', 'sent', 'accepted', 'rejected', 'expired')),
+  valid_until INTEGER,
+  notes TEXT,
+  terms TEXT,
+  subtotal INTEGER NOT NULL DEFAULT 0,
+  tax_total INTEGER NOT NULL DEFAULT 0,
+  total INTEGER NOT NULL DEFAULT 0,
+  vehicle_plate TEXT,
+  vehicle_make TEXT,
+  vehicle_model TEXT,
+  vehicle_year TEXT,
+  vehicle_vin TEXT,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  created_by TEXT
+);
+
+CREATE TABLE IF NOT EXISTS quote_items (
+  id TEXT PRIMARY KEY NOT NULL,
+  quote_id TEXT NOT NULL REFERENCES quotes(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL DEFAULT 'service'
+    CHECK(kind IN ('labor', 'material', 'service', 'discount')),
+  label TEXT NOT NULL,
+  description TEXT,
+  qty REAL NOT NULL DEFAULT 1,
+  unit_price INTEGER NOT NULL DEFAULT 0,
+  tax_rate REAL,
+  material_id TEXT REFERENCES materials(id),
+  position INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+);
+
+-- Indexes for quotes
+CREATE INDEX IF NOT EXISTS idx_quotes_quote_number ON quotes(quote_number);
+CREATE INDEX IF NOT EXISTS idx_quotes_client_id ON quotes(client_id);
+CREATE INDEX IF NOT EXISTS idx_quotes_status ON quotes(status);
+CREATE INDEX IF NOT EXISTS idx_quotes_created_at ON quotes(created_at);
+CREATE INDEX IF NOT EXISTS idx_quotes_task_id ON quotes(task_id);
+
+-- Indexes for quote_items
+CREATE INDEX IF NOT EXISTS idx_quote_items_quote_id ON quote_items(quote_id);
+CREATE INDEX IF NOT EXISTS idx_quote_items_position ON quote_items(quote_id, position);
+CREATE INDEX IF NOT EXISTS idx_quote_items_material_id ON quote_items(material_id);
 
 -- Table 5: clients
 CREATE TABLE IF NOT EXISTS clients (
@@ -479,6 +570,8 @@ CREATE INDEX IF NOT EXISTS idx_clients_email ON clients(email);
 CREATE INDEX IF NOT EXISTS idx_clients_customer_type ON clients(customer_type);
 CREATE INDEX IF NOT EXISTS idx_clients_created_at ON clients(created_at);
 CREATE INDEX IF NOT EXISTS idx_clients_synced ON clients(synced) WHERE synced = 0;
+CREATE INDEX IF NOT EXISTS idx_clients_name_type_active
+  ON clients(name, customer_type, deleted_at);
 
 -- Full-text search for clients
 CREATE VIRTUAL TABLE IF NOT EXISTS clients_fts USING fts5(
@@ -688,6 +781,7 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 CREATE INDEX IF NOT EXISTS idx_users_active ON users(is_active) WHERE is_active = 1;
+CREATE INDEX IF NOT EXISTS idx_users_role_active ON users(role, is_active);
 
 -- Table 7.5: user_sessions
 CREATE TABLE IF NOT EXISTS user_sessions (
@@ -876,8 +970,60 @@ CREATE TABLE IF NOT EXISTS settings_audit_log (
 
 CREATE INDEX IF NOT EXISTS idx_settings_audit_user_timestamp ON settings_audit_log(user_id, timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_settings_audit_type_timestamp ON settings_audit_log(setting_type, timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_log_timestamp_setting_type
+  ON settings_audit_log(timestamp DESC, setting_type);
 
--- Table 9.2: user_consent
+-- Table 9.2: cache_metadata
+-- Cache metadata table for tracking cache entries
+CREATE TABLE IF NOT EXISTS cache_metadata (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  cache_key TEXT NOT NULL UNIQUE,
+  cache_type TEXT NOT NULL, -- 'query_result', 'image_thumbnail', 'computed_analytics', 'api_response'
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  last_accessed DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  access_count INTEGER DEFAULT 0,
+  size_bytes INTEGER NOT NULL,
+  ttl_seconds INTEGER, -- NULL means no expiration
+  backend_type TEXT NOT NULL, -- 'memory', 'disk', 'redis'
+  expires_at DATETIME GENERATED ALWAYS AS (
+      CASE
+          WHEN ttl_seconds IS NOT NULL THEN datetime(created_at, '+' || ttl_seconds || ' seconds')
+          ELSE NULL
+      END
+  ) VIRTUAL
+);
+
+-- Cache statistics table for historical tracking
+CREATE TABLE IF NOT EXISTS cache_statistics (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+  cache_type TEXT NOT NULL,
+  total_keys INTEGER NOT NULL DEFAULT 0,
+  memory_used_bytes INTEGER NOT NULL DEFAULT 0,
+  hit_count INTEGER NOT NULL DEFAULT 0,
+  miss_count INTEGER NOT NULL DEFAULT 0,
+  avg_response_time_ms REAL,
+  eviction_count INTEGER DEFAULT 0
+);
+
+-- Indexes for cache tables
+CREATE INDEX IF NOT EXISTS idx_cache_metadata_key ON cache_metadata(cache_key);
+CREATE INDEX IF NOT EXISTS idx_cache_metadata_type ON cache_metadata(cache_type);
+CREATE INDEX IF NOT EXISTS idx_cache_metadata_expires ON cache_metadata(expires_at);
+CREATE INDEX IF NOT EXISTS idx_cache_metadata_updated ON cache_metadata(updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_cache_statistics_timestamp ON cache_statistics(timestamp);
+CREATE INDEX IF NOT EXISTS idx_cache_statistics_type ON cache_statistics(cache_type);
+
+-- Trigger to clean up expired cache entries
+CREATE TRIGGER IF NOT EXISTS cleanup_expired_cache
+  AFTER INSERT ON cache_metadata
+  WHEN NEW.expires_at IS NOT NULL AND NEW.expires_at < datetime('now')
+BEGIN
+  DELETE FROM cache_metadata WHERE id = NEW.id;
+END;
+
+-- Table 9.3: user_consent
 -- Stores user consent preferences for GDPR/compliance features.
 CREATE TABLE IF NOT EXISTS user_consent (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1028,6 +1174,59 @@ CREATE TABLE IF NOT EXISTS suppliers (
 CREATE INDEX IF NOT EXISTS idx_suppliers_code ON suppliers(code);
 CREATE INDEX IF NOT EXISTS idx_suppliers_active ON suppliers(is_active);
 CREATE INDEX IF NOT EXISTS idx_suppliers_preferred ON suppliers(is_preferred);
+CREATE INDEX IF NOT EXISTS idx_suppliers_created_by ON suppliers(created_by);
+CREATE INDEX IF NOT EXISTS idx_suppliers_updated_by ON suppliers(updated_by);
+
+-- Table 10.5: material_categories (PRD-08: Material Tracking)
+-- Hierarchical categorization system for materials
+CREATE TABLE IF NOT EXISTS material_categories (
+  -- Identifiers
+  id TEXT PRIMARY KEY NOT NULL,
+  name TEXT NOT NULL,
+  code TEXT UNIQUE,
+
+  -- Hierarchy
+  parent_id TEXT,
+  level INTEGER NOT NULL DEFAULT 1,
+
+  -- Description and metadata
+  description TEXT,
+  color TEXT, -- Hex color for UI display
+
+  -- Status
+  is_active INTEGER NOT NULL DEFAULT 1,
+
+  -- Audit
+  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  created_by TEXT,
+  updated_by TEXT,
+
+  -- Sync
+  synced INTEGER NOT NULL DEFAULT 0,
+  last_synced_at INTEGER,
+
+  -- Foreign Keys
+  FOREIGN KEY (parent_id) REFERENCES material_categories(id) ON DELETE CASCADE,
+  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Indexes for material_categories
+CREATE INDEX IF NOT EXISTS idx_material_categories_parent ON material_categories(parent_id);
+CREATE INDEX IF NOT EXISTS idx_material_categories_level ON material_categories(level);
+CREATE INDEX IF NOT EXISTS idx_material_categories_active ON material_categories(is_active);
+CREATE INDEX IF NOT EXISTS idx_material_categories_created_by ON material_categories(created_by);
+CREATE INDEX IF NOT EXISTS idx_material_categories_updated_by ON material_categories(updated_by);
+
+-- Seed default material categories
+INSERT OR IGNORE INTO material_categories (id, name, code, level, description, color, created_at, updated_at)
+VALUES
+  ('cat_ppf_films', 'PPF Films', 'PPF', 1, 'Paint Protection Films', '#3B82F6', unixepoch() * 1000, unixepoch() * 1000),
+  ('cat_adhesives', 'Adhesives', 'ADH', 1, 'Adhesive products', '#10B981', unixepoch() * 1000, unixepoch() * 1000),
+  ('cat_cleaning', 'Cleaning Solutions', 'CLN', 1, 'Cleaning and preparation products', '#F59E0B', unixepoch() * 1000, unixepoch() * 1000),
+  ('cat_tools', 'Tools & Equipment', 'TLS', 1, 'Tools and installation equipment', '#EF4444', unixepoch() * 1000, unixepoch() * 1000),
+  ('cat_consumables', 'Consumables', 'CON', 1, 'Consumable supplies', '#8B5CF6', unixepoch() * 1000, unixepoch() * 1000);
 
 -- Table 11: materials (PRD-08: Material Tracking)
 -- Inventory management for PPF materials and consumables
@@ -1097,6 +1296,7 @@ CREATE TABLE IF NOT EXISTS materials (
   last_synced_at INTEGER,
 
   -- Foreign Keys
+  FOREIGN KEY (category_id) REFERENCES material_categories(id) ON DELETE SET NULL,
   FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL,
   FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
   FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
@@ -1107,6 +1307,22 @@ CREATE INDEX IF NOT EXISTS idx_materials_sku ON materials(sku);
 CREATE INDEX IF NOT EXISTS idx_materials_type ON materials(material_type);
 CREATE INDEX IF NOT EXISTS idx_materials_supplier ON materials(supplier_id);
 CREATE INDEX IF NOT EXISTS idx_materials_active ON materials(is_active);
+CREATE INDEX IF NOT EXISTS idx_materials_category_id ON materials(category_id);
+CREATE INDEX IF NOT EXISTS idx_materials_created_by ON materials(created_by);
+CREATE INDEX IF NOT EXISTS idx_materials_updated_by ON materials(updated_by);
+CREATE INDEX IF NOT EXISTS idx_materials_active_discontinued
+  ON materials(is_active, is_discontinued)
+  WHERE is_active = 1 AND is_discontinued = 0;
+CREATE INDEX IF NOT EXISTS idx_materials_low_stock
+  ON materials(is_active, is_discontinued, current_stock)
+  WHERE is_active = 1 AND is_discontinued = 0;
+CREATE INDEX IF NOT EXISTS idx_materials_type_active
+  ON materials(material_type, is_active)
+  WHERE is_active = 1;
+CREATE INDEX IF NOT EXISTS idx_materials_name ON materials(name);
+CREATE INDEX IF NOT EXISTS idx_materials_sku_active
+  ON materials(sku, is_active)
+  WHERE is_active = 1;
 
 -- Table 12: material_consumption (PRD-08: Material Tracking)
 -- Tracks material usage per intervention for cost calculation and inventory management
@@ -1155,6 +1371,74 @@ CREATE TABLE IF NOT EXISTS material_consumption (
 CREATE INDEX IF NOT EXISTS idx_material_consumption_intervention ON material_consumption(intervention_id);
 CREATE INDEX IF NOT EXISTS idx_material_consumption_material ON material_consumption(material_id);
 CREATE INDEX IF NOT EXISTS idx_material_consumption_step ON material_consumption(step_id);
+CREATE INDEX IF NOT EXISTS idx_material_consumption_recorded_by ON material_consumption(recorded_by);
+
+-- Table 12.5: inventory_transactions (PRD-08: Inventory Tracking)
+-- Tracks all inventory movements (in/out/adjustments)
+CREATE TABLE IF NOT EXISTS inventory_transactions (
+  -- Identifiers
+  id TEXT PRIMARY KEY NOT NULL,
+  material_id TEXT NOT NULL,
+  transaction_type TEXT NOT NULL
+    CHECK(transaction_type IN ('stock_in', 'stock_out', 'adjustment', 'transfer', 'waste', 'return')),
+
+  -- Quantities
+  quantity REAL NOT NULL CHECK(quantity >= 0),
+  previous_stock REAL NOT NULL CHECK(previous_stock >= 0),
+  new_stock REAL NOT NULL CHECK(new_stock >= 0),
+
+  -- Transaction details
+  reference_number TEXT, -- PO number, intervention ID, etc.
+  reference_type TEXT, -- 'purchase_order', 'intervention', 'manual_adjustment', etc.
+  notes TEXT,
+
+  -- Cost tracking
+  unit_cost REAL,
+  total_cost REAL,
+
+  -- Location tracking
+  warehouse_id TEXT,
+  location_from TEXT,
+  location_to TEXT,
+
+  -- Quality and batch tracking
+  batch_number TEXT,
+  expiry_date INTEGER,
+  quality_status TEXT,
+
+  -- Workflow integration
+  intervention_id TEXT,
+  step_id TEXT,
+
+  -- User and audit
+  performed_by TEXT NOT NULL,
+  performed_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+
+  -- Audit
+  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+
+  -- Sync
+  synced INTEGER NOT NULL DEFAULT 0,
+  last_synced_at INTEGER,
+
+  -- Foreign Keys
+  FOREIGN KEY (material_id) REFERENCES materials(id) ON DELETE RESTRICT,
+  FOREIGN KEY (intervention_id) REFERENCES interventions(id) ON DELETE SET NULL,
+  FOREIGN KEY (step_id) REFERENCES intervention_steps(id) ON DELETE SET NULL,
+  FOREIGN KEY (performed_by) REFERENCES users(id) ON DELETE RESTRICT
+);
+
+-- Indexes for inventory_transactions
+CREATE INDEX IF NOT EXISTS idx_inventory_transactions_material ON inventory_transactions(material_id);
+CREATE INDEX IF NOT EXISTS idx_inventory_transactions_type ON inventory_transactions(transaction_type);
+CREATE INDEX IF NOT EXISTS idx_inventory_transactions_date ON inventory_transactions(performed_at);
+CREATE INDEX IF NOT EXISTS idx_inventory_transactions_reference ON inventory_transactions(reference_number);
+CREATE INDEX IF NOT EXISTS idx_inventory_transactions_intervention ON inventory_transactions(intervention_id);
+CREATE INDEX IF NOT EXISTS idx_inventory_transactions_step_id ON inventory_transactions(step_id);
+CREATE INDEX IF NOT EXISTS idx_inventory_transactions_performed_by ON inventory_transactions(performed_by);
+CREATE INDEX IF NOT EXISTS idx_inventory_transactions_material_performed_at
+  ON inventory_transactions(material_id, performed_at DESC);
 
 -- Table 13: calendar_events
 -- Calendar events for scheduling meetings, appointments, and task-related time blocks
@@ -1230,6 +1514,7 @@ CREATE TABLE IF NOT EXISTS calendar_events (
 CREATE INDEX IF NOT EXISTS idx_events_technician ON calendar_events(technician_id);
 CREATE INDEX IF NOT EXISTS idx_events_task ON calendar_events(task_id);
 CREATE INDEX IF NOT EXISTS idx_events_client ON calendar_events(client_id);
+CREATE INDEX IF NOT EXISTS idx_events_parent_event ON calendar_events(parent_event_id);
 CREATE INDEX IF NOT EXISTS idx_events_start_datetime ON calendar_events(start_datetime);
 CREATE INDEX IF NOT EXISTS idx_events_end_datetime ON calendar_events(end_datetime);
 CREATE INDEX IF NOT EXISTS idx_events_status ON calendar_events(status);
@@ -1284,19 +1569,19 @@ WHERE t.scheduled_date IS NOT NULL
 
 -- Schema Version Management
 -- This table tracks which database migrations have been applied
--- The current schema.sql represents version 25 of the database schema
+-- The current schema.sql represents version 39 of the database schema
 CREATE TABLE IF NOT EXISTS schema_version (
     version INTEGER PRIMARY KEY,
     applied_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
 );
 
--- Initialize baseline schema versions 1..25 to keep version history contiguous.
+-- Initialize baseline schema versions 1..39 to keep version history contiguous.
 WITH RECURSIVE baseline_versions(version) AS (
     SELECT 1
     UNION ALL
     SELECT version + 1
     FROM baseline_versions
-    WHERE version < 25
+    WHERE version < 39
 )
 INSERT OR IGNORE INTO schema_version (version)
 SELECT version FROM baseline_versions;

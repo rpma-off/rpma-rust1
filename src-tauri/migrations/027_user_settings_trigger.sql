@@ -52,11 +52,5 @@ BEGIN
 END;
 
 -- Log the migration
-INSERT INTO schema_version (version, applied_at, migration_hash, description, migration_time_ms)
-VALUES (
-    27,
-    strftime('%s', 'now') * 1000,
-    'user_settings_auto_create_trigger',
-    'Added trigger to auto-create user_settings on user insert',
-    0
-);
+INSERT OR IGNORE INTO schema_version (version)
+VALUES (27);
