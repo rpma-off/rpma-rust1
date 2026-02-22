@@ -1,18 +1,9 @@
 # GitHub Copilot Instructions for RPMA v2
 
-## 🗂️ What Is This Project?
+## Project Overview
 
-**RPMA v2** is an **offline-first desktop application** for managing **Paint Protection Film (PPF)** interventions. It is built as a **Tauri v2** app with:
+RPMA v2 is an **offline-first desktop application** built with Tauri (Rust + system webview) for managing Paint Protection Film (PPF) interventions. The application handles tasks, interventions, workflow steps, photo management, inventory tracking, reporting, and user management with role-based access control.
 
-- A **Next.js 14 (App Router)** frontend in TypeScript/React
-- A **Rust** backend with SQLite (WAL mode) via `sqlx`
-- Type-safe IPC bridge using `ts-rs` (Rust → TypeScript type generation)
-- Role-based access control (RBAC), session token authentication
-- Full offline support — no network dependency at runtime
-
-The app manages: **interventions, tasks, inventory, quotes, documents, users, photos, and reporting.**
-
----
 
 ## 📁 Project Structure
 
@@ -105,6 +96,16 @@ rpma-rust1/
 │  SQLite (WAL mode, via sqlx)            │
 └─────────────────────────────────────────┘
 ```
+## 🛠️ Tech Stack
+
+- **Frontend**: Next.js 14, React 18, TypeScript, Tailwind CSS
+- **UI Library**: shadcn/ui (Radix UI primitives)
+- **Backend**: Rust with Tauri framework
+- **Database**: SQLite with WAL mode
+- **State Management**: React hooks, Context API, Zustand
+- **Authentication**: JWT tokens with 2FA support
+- **Type Safety**: Automatic TypeScript generation from Rust models using `ts-rs`
+- **Testing**: Vitest (frontend), Rust built-in tests (backend)
 
 ### Bounded Contexts (DDD)
 
@@ -141,11 +142,7 @@ npm run backend:build          # cargo build (debug)
 npm run backend:build:release  # cargo build --release
 ```
 
-### Quality Gate — Run before EVERY commit
-
-```bash
-npm run quality:check          # Runs ALL checks below in sequence
-```
+### Quality Gate 
 
 Individual checks:
 
@@ -173,10 +170,6 @@ npm run security:audit         # cargo-deny + npm audit
 ```
 
 ### Tests
-
-```bash
-# All tests (recommended)
-npm run quality:check
 
 # Backend (Rust)
 cd src-tauri && cargo test --lib           # Unit tests
@@ -243,7 +236,6 @@ cd src-tauri && cargo bench              # Run Criterion benchmarks
 
 ### Code Quality
 
-- ✅ Always run `npm run quality:check` before every commit
 - ✅ Use UTF-8 encoding for all source files
 - ✅ Use conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, `perf:`, `security:`
 - ❌ Never push directly to `main` (enforced by Husky `git:guard-main` hook)
@@ -279,7 +271,6 @@ Follow this workflow for **every** task:
 
 ### 4. Verify
 ```bash
-npm run quality:check          # Must pass fully
 node scripts/validate-migration-system.js  # If migrations changed
 ```
 
