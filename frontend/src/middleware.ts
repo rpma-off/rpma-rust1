@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
 
 const buildContentSecurityPolicy = (isDev: boolean) => {
   const scriptSrc = ["'self'", isDev ? "'unsafe-eval'" : ''].filter(Boolean).join(' ');
@@ -24,7 +23,7 @@ const buildContentSecurityPolicy = (isDev: boolean) => {
   ].join('; ');
 };
 
-export function middleware(_request: NextRequest) {
+export function middleware() {
   const response = NextResponse.next();
   const isDev = process.env.NODE_ENV === 'development';
 

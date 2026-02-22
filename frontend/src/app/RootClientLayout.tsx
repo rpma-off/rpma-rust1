@@ -14,6 +14,7 @@ import { useAuthRedirect } from '@/shared/hooks/useAuthRedirect';
 import { useAdminBootstrapCheck } from '@/shared/hooks/useAdminBootstrapCheck';
 import { ThemeProvider } from '@/shared/ui/theme-provider';
 import { Skeleton, SkeletonList } from '@/shared/ui/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -30,9 +31,9 @@ const geistMono = localFont({
 // Routes that should not show the sidebar (public/auth pages)
 const PUBLIC_ROUTES = ['/login', '/signup', '/unauthorized', '/bootstrap-admin'];
 
-function AuthLoadingShell({ className = '' }: { className?: string }) {
+function AuthLoadingShell({ className }: { className?: string }) {
   return (
-    <div className={`space-y-6 ${className}`.trim()}>
+    <div className={cn('space-y-6', className)}>
       <div className="flex items-center justify-between">
         <div className="space-y-2">
           <Skeleton className="h-6 w-40" />
