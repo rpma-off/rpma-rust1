@@ -8,7 +8,7 @@ use crate::domains::documents::infrastructure::photo::{
     GetPhotosRequest, GetPhotosResponse, PhotoMetadataUpdate, PhotoResult, StorePhotoRequest,
     StorePhotoResponse,
 };
-use crate::models::photo::Photo;
+use crate::domains::documents::domain::models::photo::Photo;
 use tracing::{error, info, instrument};
 
 /// Store a new photo for an intervention step.
