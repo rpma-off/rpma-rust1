@@ -12,8 +12,7 @@ export { CalendarDashboard } from '../components/CalendarDashboard';
 export { CalendarView } from '../components/CalendarView';
 export { WorkflowExecutionDashboard } from '../components/WorkflowExecutionDashboard';
 export { PhotoUpload } from '../components/PhotoUpload';
-export { PhotoUploadZone } from '../components/PhotoUploadZone';
-export { SignatureCapture } from '../components/SignatureCapture';
+export { SignatureCapture } from '@/shared/ui/SignatureCapture';
 
 export {
   workflowService,

@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Upload, Image as ImageIcon } from 'lucide-react';
 import { usePhotoUpload } from '../hooks';
 
 interface PhotoUploadPanelProps {
@@ -13,7 +12,7 @@ interface PhotoUploadPanelProps {
 }
 
 export function PhotoUploadPanel({ interventionId, photoType = 'general', onComplete }: PhotoUploadPanelProps) {
-  const { uploadPhoto, uploads, clearCompleted } = usePhotoUpload();
+  const { uploadPhoto, uploads } = usePhotoUpload(interventionId);
   const currentUpload = uploads[uploads.length - 1];
   const progress = currentUpload?.progress || 0;
   const uploading = uploads.some(u => u.status === 'uploading');
@@ -29,7 +28,10 @@ export function PhotoUploadPanel({ interventionId, photoType = 'general', onComp
       return;
     }
 
-    await uploadPhoto(interventionId, file, { type: photoType as any });
+    const normalizedType = photoType === 'before' || photoType === 'after' || photoType === 'during'
+      ? photoType
+      : 'during';
+    await uploadPhoto(file, { type: normalizedType });
     if (onComplete) {
       onComplete();
     }

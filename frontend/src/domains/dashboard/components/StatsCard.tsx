@@ -1,13 +1,13 @@
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
-import { LucideIcon } from 'lucide-react';
+import type { ComponentType } from 'react';
 import type { DashboardStats } from '../api/types';
 
 interface StatsCardProps {
   title: string;
   value: string | number;
-  icon: LucideIcon;
+  icon: ComponentType<{ className?: string }>;
   description?: string;
   trend?: 'up' | 'down' | 'neutral';
   trendValue?: string;

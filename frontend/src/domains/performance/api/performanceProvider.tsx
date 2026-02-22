@@ -12,7 +12,7 @@ interface PerformanceProviderProps {
   refreshInterval?: number;
 }
 
-export function PerformanceProvider({ children, autoRefresh = false, refreshInterval = 30000 }: PerformanceProviderProps) {
+export function PerformanceProvider({ children, autoRefresh: _autoRefresh = false, refreshInterval: _refreshInterval = 30000 }: PerformanceProviderProps) {
   const [metrics, setMetrics] = useState<PerformanceContextValue['metrics']>([]);
   const [stats, setStats] = useState<PerformanceContextValue['stats']>(null);
   const [cacheStats, setCacheStats] = useState<PerformanceContextValue['cacheStats']>(null);
@@ -73,7 +73,7 @@ export function PerformanceProvider({ children, autoRefresh = false, refreshInte
     }
   }, [refreshCacheStats]);
 
-  const updateCacheSettings = useCallback(async (settings: PerformanceContextValue['updateCacheSettings'][0]) => {
+  const updateCacheSettings = useCallback(async (settings: Parameters<PerformanceContextValue['updateCacheSettings']>[0]) => {
     try {
       setError(null);
       await performanceService.configureCacheSettings(settings);

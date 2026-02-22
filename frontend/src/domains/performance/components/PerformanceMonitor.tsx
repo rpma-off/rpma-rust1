@@ -49,25 +49,25 @@ export function PerformanceMonitor() {
         <MetricsCard
           title="Opérations totales"
           value={stats?.total_operations?.toString() || '0'}
-          icon={<Activity className="w-5 h-5" />}
+          icon={Activity}
           description="Depuis le début"
         />
         <MetricsCard
           title="Durée moyenne"
           value={`${stats?.avg_duration_ms?.toFixed(2) || '0'} ms`}
-          icon={<Zap className="w-5 h-5" />}
+          icon={Zap}
           description="Par opération"
         />
         <MetricsCard
           title="Taux de succès"
           value={`${stats?.success_rate?.toFixed(1) || '0'}%`}
-          icon={<Activity className="w-5 h-5" />}
+          icon={Activity}
           description="Toutes opérations"
         />
         <MetricsCard
           title="Entrées cache"
           value={cacheStats?.total_entries?.toString() || '0'}
-          icon={<Database className="w-5 h-5" />}
+          icon={Database}
           description="En mémoire"
         />
       </div>

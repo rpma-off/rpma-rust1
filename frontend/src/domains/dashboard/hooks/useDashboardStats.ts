@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { dashboardIpc } from '../ipc';
 import type { DashboardStats } from '../api/types';
 
@@ -15,7 +15,7 @@ export function useDashboardStats(options: UseDashboardStatsOptions = {}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -64,7 +64,7 @@ export function useDashboardStats(options: UseDashboardStatsOptions = {}) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeRange]);
 
   useEffect(() => {
     fetchStats();
@@ -73,7 +73,8 @@ export function useDashboardStats(options: UseDashboardStatsOptions = {}) {
       const interval = setInterval(fetchStats, refreshInterval);
       return () => clearInterval(interval);
     }
-  }, [timeRange, autoRefresh, refreshInterval]);
+    return undefined;
+  }, [fetchStats, autoRefresh, refreshInterval]);
 
   return {
     stats,

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { RecentActivity } from '../api/types';
 
 export interface UseRecentActivityOptions {
@@ -14,7 +14,7 @@ export function useRecentActivity(options: UseRecentActivityOptions = {}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchActivities = async () => {
+  const fetchActivities = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -76,7 +76,7 @@ export function useRecentActivity(options: UseRecentActivityOptions = {}) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [limit]);
 
   useEffect(() => {
     fetchActivities();
@@ -85,7 +85,8 @@ export function useRecentActivity(options: UseRecentActivityOptions = {}) {
       const interval = setInterval(fetchActivities, refreshInterval);
       return () => clearInterval(interval);
     }
-  }, [limit, autoRefresh, refreshInterval]);
+    return undefined;
+  }, [fetchActivities, autoRefresh, refreshInterval]);
 
   return {
     activities,

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { performanceIpc } from '../ipc';
 import { useAuth } from '@/domains/auth';
 import type { CacheStatistics, CacheSettings } from '../api/types';
@@ -16,7 +16,7 @@ export function useCacheStatistics(options: UseCacheStatisticsOptions = {}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCacheStats = async () => {
+  const fetchCacheStats = useCallback(async () => {
     if (!user?.token) {
       setLoading(false);
       return;
@@ -26,13 +26,13 @@ export function useCacheStatistics(options: UseCacheStatisticsOptions = {}) {
       setLoading(true);
       setError(null);
       const result = await performanceIpc.getCacheStatistics(user.token);
-      setCacheStats(result as CacheStatistics);
+      setCacheStats(result as unknown as CacheStatistics);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch cache statistics');
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.token]);
 
   const clearCache = async (types?: string[]) => {
     if (!user?.token) return;
@@ -55,7 +55,7 @@ export function useCacheStatistics(options: UseCacheStatisticsOptions = {}) {
     try {
       setLoading(true);
       setError(null);
-      await performanceIpc.configureCacheSettings(settings as unknown as { cache_types?: string[] }, user.token);
+      await performanceIpc.configureCacheSettings(settings, user.token);
       await fetchCacheStats();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update cache settings');
@@ -71,7 +71,8 @@ export function useCacheStatistics(options: UseCacheStatisticsOptions = {}) {
       const interval = setInterval(fetchCacheStats, refreshInterval);
       return () => clearInterval(interval);
     }
-  }, [autoRefresh, refreshInterval, user?.token]);
+    return undefined;
+  }, [fetchCacheStats, autoRefresh, refreshInterval]);
 
   return {
     cacheStats,

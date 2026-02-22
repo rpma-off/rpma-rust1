@@ -1,12 +1,11 @@
 import { workflowIpc } from '../ipc';
 import type {
-  Intervention,
-  InterventionStep,
-  WorkflowStartOptions,
   WorkflowStepData,
   WorkflowStepSaveData,
-  WorkflowFinalizeData
+  WorkflowFinalizeData,
+  WorkflowStartOptions
 } from '../ipc/workflow.ipc';
+import type { Intervention, InterventionStep } from '@/lib/backend';
 
 export interface WorkflowState {
   intervention: Intervention | null;
@@ -119,7 +118,7 @@ export class WorkflowService {
       return null;
     }
 
-    const progress = 0;
+    const progress: number = 0;
     const currentStep = null;
 
     return {
@@ -128,7 +127,7 @@ export class WorkflowService {
       progress,
       isCompleted: result.intervention.status === 'completed',
       canAdvance: currentStep !== null && result.intervention.status !== 'completed',
-      canFinalize: progress === 100 && result.intervention.status !== 'completed'
+      canFinalize: progress >= 100 && result.intervention.status !== 'completed'
     };
   }
 
@@ -139,7 +138,7 @@ export class WorkflowService {
     const result = await workflowIpc.listActiveWorkflows(filters, sessionToken);
 
     const workflows = result.workflows.map(intervention => {
-      const progress = 0;
+      const progress: number = 0;
       const currentStep = null;
 
       return {
@@ -165,7 +164,7 @@ export class WorkflowService {
     const result = await workflowIpc.listCompletedWorkflows(filters, sessionToken);
 
     const workflows = result.workflows.map(intervention => {
-      const progress = 100;
+      const progress: number = 100;
       const currentStep = null;
 
       return {
@@ -229,8 +228,8 @@ export class WorkflowService {
     if (completedWorkflows.length === 0) return 0;
 
     const totalTime = completedWorkflows.reduce((sum, workflow) => {
-      const start = new Date(workflow.started_at!).getTime();
-      const end = new Date(workflow.completed_at!).getTime();
+      const start = new Date(Number(workflow.started_at!)).getTime();
+      const end = new Date(Number(workflow.completed_at!)).getTime();
       return sum + (end - start);
     }, 0);
 

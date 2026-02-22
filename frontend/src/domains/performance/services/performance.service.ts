@@ -1,6 +1,4 @@
 import { performanceIpc } from '../ipc';
-import { useAuth } from '@/domains/auth';
-import type { ServiceResponse } from '@/types/unified.types';
 import type {
   PerformanceMetrics,
   PerformanceStats,
@@ -25,7 +23,7 @@ export class PerformanceService {
       if (!token) throw new Error('No session token available');
 
       const result = await performanceIpc.getMetrics(limit, token);
-      return (result as PerformanceMetrics[]) || [];
+      return (result as unknown as PerformanceMetrics[]) || [];
     } catch (error) {
       throw new Error(`Failed to get metrics: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -37,7 +35,7 @@ export class PerformanceService {
       if (!token) throw new Error('No session token available');
 
       const result = await performanceIpc.getStats(token);
-      return (result as PerformanceStats) || {
+      return (result as unknown as PerformanceStats) || {
         total_operations: 0,
         avg_duration_ms: 0,
         success_rate: 0,
@@ -56,7 +54,7 @@ export class PerformanceService {
       if (!token) throw new Error('No session token available');
 
       const result = await performanceIpc.getCacheStatistics(token);
-      return (result as CacheStatistics) || {
+      return (result as unknown as CacheStatistics) || {
         total_entries: 0,
         total_size_bytes: 0,
         hit_rate: 0,
@@ -86,7 +84,7 @@ export class PerformanceService {
       const token = sessionToken || this.getSessionToken();
       if (!token) throw new Error('No session token available');
 
-      await performanceIpc.configureCacheSettings(settings as unknown as { cache_types?: string[] }, token);
+      await performanceIpc.configureCacheSettings(settings, token);
     } catch (error) {
       throw new Error(`Failed to configure cache settings: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -127,8 +125,11 @@ export class PerformanceService {
 
   private getSessionToken(): string | undefined {
     try {
-      const { user } = useAuth();
-      return user?.token;
+      if (typeof window === 'undefined') return undefined;
+      const rawAuthState = window.localStorage.getItem('auth-store');
+      if (!rawAuthState) return undefined;
+      const parsedAuthState = JSON.parse(rawAuthState) as { state?: { user?: { token?: string } } };
+      return parsedAuthState.state?.user?.token;
     } catch {
       return undefined;
     }
