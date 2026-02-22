@@ -1,7 +1,7 @@
 //! Shared IPC response envelopes and serialization helpers.
 
 use super::errors::{AppError, AppResult};
-use crate::logging::correlation::generate_correlation_id;
+use crate::shared::logging::correlation::generate_correlation_id;
 use base64::{engine::general_purpose, Engine as _};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;

@@ -3,9 +3,9 @@
 //! This module provides utilities to ensure consistent correlation_id propagation
 //! across all IPC commands, services, and repositories.
 
-use crate::logging::correlation::{self, CorrelationContext};
 use crate::shared::ipc::errors::AppError;
 use crate::shared::ipc::response::ApiResponse;
+use crate::shared::logging::correlation::{self, CorrelationContext};
 
 /// Initialize correlation context at the start of an IPC command
 ///

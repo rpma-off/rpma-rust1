@@ -4,8 +4,8 @@
 //! functionality for all Tauri IPC commands to ensure consistent
 //! security patterns across the application.
 
-use crate::shared::contracts::auth::{UserRole, UserSession};
 use crate::shared::app_state::AppState;
+use crate::shared::contracts::auth::{UserRole, UserSession};
 use crate::shared::ipc::{AppError, AppResult};
 use sha2::{Digest, Sha256};
 use tracing::{debug, instrument, warn};
@@ -280,22 +280,24 @@ macro_rules! set_correlation_context {
         let correlation_id = $correlation_id
             .as_ref()
             .map(|s| s.to_string())
-            .unwrap_or_else(|| $crate::logging::correlation::generate_correlation_id());
-        let context =
-            $crate::logging::correlation::CorrelationContext::new(correlation_id.clone(), None);
-        $crate::logging::correlation::set_correlation_context(context);
+            .unwrap_or_else(|| $crate::shared::logging::correlation::generate_correlation_id());
+        let context = $crate::shared::logging::correlation::CorrelationContext::new(
+            correlation_id.clone(),
+            None,
+        );
+        $crate::shared::logging::correlation::set_correlation_context(context);
         correlation_id
     }};
     ($correlation_id:expr, $user_id:expr) => {{
         let correlation_id = $correlation_id
             .as_ref()
             .map(|s| s.to_string())
-            .unwrap_or_else(|| $crate::logging::correlation::generate_correlation_id());
-        let context = $crate::logging::correlation::CorrelationContext::new(
+            .unwrap_or_else(|| $crate::shared::logging::correlation::generate_correlation_id());
+        let context = $crate::shared::logging::correlation::CorrelationContext::new(
             correlation_id.clone(),
             Some($user_id.to_string()),
         );
-        $crate::logging::correlation::set_correlation_context(context);
+        $crate::shared::logging::correlation::set_correlation_context(context);
         correlation_id
     }};
 }
