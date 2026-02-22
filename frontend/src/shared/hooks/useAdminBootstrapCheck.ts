@@ -14,6 +14,7 @@ export function useAdminBootstrapCheck(
     if (authLoading || isAuthenticating || !user) return;
 
     const check = async () => {
+      const isOnAuthPage = pathname === '/login' || pathname === '/signup';
       logger.debug(LogDomain.AUTH, 'Admin redirect check started', {
         pathname,
         user_id: user.user_id,
@@ -33,13 +34,13 @@ export function useAdminBootstrapCheck(
             user_id: user.user_id,
           });
           router.push('/bootstrap-admin');
-        } else if ((pathname === '/login' || pathname === '/signup') && hasAdmins) {
+        } else if (isOnAuthPage && hasAdmins) {
           logger.info(LogDomain.AUTH, 'Redirecting to /dashboard from login/signup', {
             pathname,
             user_id: user.user_id,
           });
           router.push('/dashboard');
-        } else if ((pathname === '/login' || pathname === '/signup') && !hasAdmins) {
+        } else if (isOnAuthPage && !hasAdmins) {
           logger.info(LogDomain.AUTH, 'Redirecting to /bootstrap-admin from login/signup', {
             pathname,
             user_id: user.user_id,
@@ -57,7 +58,7 @@ export function useAdminBootstrapCheck(
           pathname,
           user_id: user.user_id,
         });
-        if (pathname === '/login' || pathname === '/signup') {
+        if (isOnAuthPage) {
           router.push('/dashboard');
         }
       }

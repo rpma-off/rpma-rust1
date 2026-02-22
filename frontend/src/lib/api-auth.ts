@@ -16,6 +16,9 @@ type RequestWithAuth = Request & { auth: AuthenticatedRequest };
 // JWT secret - must match the one used in Rust backend
 const JWT_SECRET = process.env.JWT_SECRET;
 
+// Reuse a single TextEncoder instance for JWT verification
+const textEncoder = new TextEncoder();
+
 interface JwtClaims {
   sub: string;        // User ID
   email: string;      // User email
@@ -48,7 +51,7 @@ export const authenticateRequest = async (request: Request): Promise<Authenticat
 
     const { payload: decoded } = await jwtVerify(
       token,
-      new TextEncoder().encode(JWT_SECRET)
+      textEncoder.encode(JWT_SECRET)
     );
     const claims = decoded as unknown as JwtClaims;
     console.log('JWT decoded successfully:', { sub: claims.sub, email: claims.email, role: claims.role });

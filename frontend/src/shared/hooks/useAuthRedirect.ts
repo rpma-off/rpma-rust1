@@ -4,7 +4,7 @@ import { useRouter, usePathname } from 'next/navigation';
 const PUBLIC_ROUTES = ['/login', '/signup', '/unauthorized', '/bootstrap-admin'];
 
 export function useAuthRedirect(
-  user: unknown,
+  user: { user_id: string } | null | undefined,
   authLoading: boolean,
   isAuthenticating: boolean
 ) {
