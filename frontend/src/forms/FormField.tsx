@@ -1,6 +1,6 @@
 ﻿import React, { useId } from 'react';
 import { AlertCircle, Check, AlertTriangle } from 'lucide-react';
-import { FormAccessibility } from '@/lib/accessibility';
+import { FormAccessibility } from '@/lib/accessibility.ts';
 
 type FormFieldProps = {
   label: string;

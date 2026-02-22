@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useId, useCallback } from 'react';
-import { KeyboardNavigation } from '@/lib/accessibility';
+import { KeyboardNavigation } from '@/lib/accessibility.ts';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
