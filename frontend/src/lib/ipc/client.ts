@@ -1260,6 +1260,24 @@ export const ipcClient = {
       }),
   },
 
+  // Security session management operations
+  security: {
+    getActiveSessions: (sessionToken: string) =>
+      safeInvoke<JsonValue>('get_active_sessions', { sessionToken }),
+
+    revokeSession: (sessionId: string, sessionToken: string) =>
+      safeInvoke<void>('revoke_session', { sessionId, sessionToken }),
+
+    revokeAllSessionsExceptCurrent: (sessionToken: string) =>
+      safeInvoke<void>('revoke_all_sessions_except_current', { sessionToken }),
+
+    updateSessionTimeout: (timeoutMinutes: number, sessionToken: string) =>
+      safeInvoke<void>('update_session_timeout', { timeoutMinutes, sessionToken }),
+
+    getSessionTimeoutConfig: (sessionToken: string) =>
+      safeInvoke<JsonValue>('get_session_timeout_config', { sessionToken }),
+  },
+
   // Dashboard operations
   dashboard: {
     getStats: (timeRange?: 'day' | 'week' | 'month' | 'year') =>
