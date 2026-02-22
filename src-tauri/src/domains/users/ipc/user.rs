@@ -262,6 +262,7 @@ pub async fn has_admins(
     Ok(ApiResponse::success(has_admin).with_correlation_id(Some(correlation_id.clone())))
 }
 
+#[tauri::command]
 pub async fn get_users(
     page: i32,
     page_size: i32,
@@ -284,6 +285,7 @@ pub async fn get_users(
     }
 }
 
+#[tauri::command]
 pub async fn create_user(
     user_data: CreateUserRequest,
     session_token: String,
@@ -295,6 +297,7 @@ pub async fn create_user(
     }
 }
 
+#[tauri::command]
 pub async fn update_user(
     user_id: String,
     user_data: UpdateUserRequest,
@@ -316,6 +319,7 @@ pub async fn update_user(
     }
 }
 
+#[tauri::command]
 pub async fn update_user_status(
     user_id: String,
     is_active: bool,
@@ -345,6 +349,7 @@ pub async fn update_user_status(
     }
 }
 
+#[tauri::command]
 pub async fn delete_user(
     user_id: String,
     session_token: String,
