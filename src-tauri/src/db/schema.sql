@@ -803,6 +803,7 @@ CREATE TABLE IF NOT EXISTS user_sessions (
 CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_sessions_token ON user_sessions(token);
 CREATE INDEX IF NOT EXISTS idx_user_sessions_expires_at ON user_sessions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_last_activity_user ON user_sessions(last_activity DESC, user_id);
 CREATE INDEX IF NOT EXISTS idx_user_sessions_user_expires_activity
   ON user_sessions(user_id, expires_at, last_activity DESC);
 
@@ -1434,6 +1435,8 @@ CREATE INDEX IF NOT EXISTS idx_inventory_transactions_material ON inventory_tran
 CREATE INDEX IF NOT EXISTS idx_inventory_transactions_type ON inventory_transactions(transaction_type);
 CREATE INDEX IF NOT EXISTS idx_inventory_transactions_date ON inventory_transactions(performed_at);
 CREATE INDEX IF NOT EXISTS idx_inventory_transactions_reference ON inventory_transactions(reference_number);
+CREATE INDEX IF NOT EXISTS idx_inventory_transactions_reference_type_number
+  ON inventory_transactions(reference_type, reference_number);
 CREATE INDEX IF NOT EXISTS idx_inventory_transactions_intervention ON inventory_transactions(intervention_id);
 CREATE INDEX IF NOT EXISTS idx_inventory_transactions_step_id ON inventory_transactions(step_id);
 CREATE INDEX IF NOT EXISTS idx_inventory_transactions_performed_by ON inventory_transactions(performed_by);
