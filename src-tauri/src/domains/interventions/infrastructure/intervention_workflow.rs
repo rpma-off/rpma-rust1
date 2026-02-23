@@ -14,10 +14,10 @@ use crate::domains::interventions::domain::models::intervention::{
 use crate::domains::interventions::domain::models::step::{InterventionStep, StepStatus};
 use crate::domains::interventions::infrastructure::intervention_data::InterventionDataService;
 use crate::domains::interventions::infrastructure::intervention_types::*;
-use crate::shared::workflow::workflow_strategy::{
+use crate::domains::interventions::infrastructure::workflow_strategy::{
     EnvironmentConditions, WorkflowContext, WorkflowStrategyFactory,
 };
-use crate::shared::workflow::workflow_validation::WorkflowValidationService;
+use crate::domains::interventions::infrastructure::workflow_validation::WorkflowValidationService;
 use crate::shared::contracts::common::TimestampString;
 use crate::shared::event_bus::{publish_event, InterventionFinalized};
 use serde_json::json;

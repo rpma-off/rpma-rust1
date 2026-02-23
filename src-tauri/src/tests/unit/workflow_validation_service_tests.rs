@@ -10,7 +10,7 @@ use crate::domains::interventions::domain::models::intervention::{
     Intervention, InterventionStatus,
 };
 use crate::domains::interventions::domain::models::step::{InterventionStep, StepStatus, StepType};
-use crate::domains::tasks::infrastructure::workflow_validation::WorkflowValidationService;
+use crate::domains::interventions::infrastructure::workflow_validation::WorkflowValidationService;
 use crate::logging::{LogDomain, RPMARequestLogger};
 use crate::test_utils::TestDataFactory;
 use crate::{test_client, test_db, test_intervention, test_task};

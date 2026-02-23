@@ -5,3 +5,5 @@ pub(crate) mod intervention_repository;
 pub(crate) mod intervention_types;
 pub(crate) mod intervention_validation;
 pub(crate) mod intervention_workflow;
+pub(crate) mod workflow_strategy;
+pub(crate) mod workflow_validation;
