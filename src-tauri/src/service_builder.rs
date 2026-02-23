@@ -33,11 +33,11 @@
 use crate::db::Database;
 use crate::domains::audit::infrastructure::audit_log_handler::AuditLogHandler;
 use crate::domains::audit::infrastructure::audit_service::AuditService;
+use crate::domains::settings::domain::models::settings::StorageSettings;
 use crate::domains::users::infrastructure::user::UserService;
-use crate::shared::services::event_bus::InMemoryEventBus;
-use crate::shared::services::websocket_event_handler::WebSocketEventHandler;
 use crate::shared::app_state::AppStateType;
 use crate::shared::event_bus::{register_handler, set_global_event_bus};
+use crate::shared::repositories::Repositories;
 use crate::shared::services::event_bus::InMemoryEventBus;
 use crate::shared::services::websocket_event_handler::WebSocketEventHandler;
 use std::sync::{Arc, Mutex, OnceLock};

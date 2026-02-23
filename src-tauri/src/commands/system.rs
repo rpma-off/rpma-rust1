@@ -2,6 +2,7 @@
 
 use crate::commands::{AppState, UserRole};
 use crate::authenticate;
+use crate::shared::ipc::AppError;
 use serde::Serialize;
 use std::process::Command;
 use tracing;
@@ -193,8 +194,8 @@ pub async fn diagnose_database(
         crate::shared::services::system::SystemService::diagnose_database(&pool)
     })
     .await
-    .map_err(|e| AppError::Internal(format!("Task join error: {}", e)))?
-    .map_err(|e| AppError::Internal(e))
+    .map_err(|e| String::from(AppError::Internal(format!("Task join error: {}", e))))?
+    .map_err(|e| String::from(AppError::Internal(e)))
 }
 
 #[tracing::instrument(skip_all)]
@@ -213,8 +214,8 @@ pub async fn force_wal_checkpoint(
         crate::shared::services::system::SystemService::force_wal_checkpoint(&pool)
     })
     .await
-    .map_err(|e| AppError::Internal(format!("Task join error: {}", e)))?
-    .map_err(|e| AppError::Internal(e))
+    .map_err(|e| String::from(AppError::Internal(format!("Task join error: {}", e))))?
+    .map_err(|e| String::from(AppError::Internal(e)))
 }
 
 /// Health check command
@@ -254,8 +255,8 @@ pub async fn get_database_stats(
         crate::shared::services::system::SystemService::get_database_stats(&pool)
     })
     .await
-    .map_err(|e| AppError::Internal(format!("Task join error: {}", e)))?
-    .map_err(|e| AppError::Internal(e))
+    .map_err(|e| String::from(AppError::Internal(format!("Task join error: {}", e))))?
+    .map_err(|e| String::from(AppError::Internal(e)))
 }
 
 /// Get application information
