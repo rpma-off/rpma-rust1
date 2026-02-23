@@ -481,7 +481,7 @@ impl TaskService {
 
         // Get current task status from repository
         let current_status = repo.get_task_status(task_id).map_err(|e| match e {
-            crate::repositories::base::RepoError::NotFound(msg) => AppError::NotFound(msg),
+            crate::shared::repositories::base::RepoError::NotFound(msg) => AppError::NotFound(msg),
             other => AppError::Database(other.to_string()),
         })?;
 
@@ -505,10 +505,10 @@ impl TaskService {
     ///
     /// Returns counts grouped into high-level categories:
     /// quote, scheduled, in_progress, paused, completed, cancelled
-    pub fn get_status_distribution(&self) -> AppResult<crate::models::status::StatusDistribution> {
+    pub fn get_status_distribution(&self) -> AppResult<crate::domains::tasks::domain::models::status::StatusDistribution> {
         use crate::commands::AppError;
         use crate::domains::tasks::infrastructure::task_repository::TaskRepository;
-        use crate::models::status::StatusDistribution;
+        use crate::domains::tasks::domain::models::status::StatusDistribution;
 
         let repo = TaskRepository::new(self.crud.db.clone());
 

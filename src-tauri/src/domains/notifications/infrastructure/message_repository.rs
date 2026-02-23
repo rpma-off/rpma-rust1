@@ -4,8 +4,8 @@
 
 use crate::db::Database;
 use crate::domains::notifications::domain::models::message::{Message, MessageStatus, MessageType};
-use crate::repositories::base::{RepoError, RepoResult, Repository};
-use crate::repositories::cache::{ttl, Cache, CacheKeyBuilder};
+use crate::shared::repositories::base::{RepoError, RepoResult, Repository};
+use crate::shared::repositories::cache::{ttl, Cache, CacheKeyBuilder};
 use async_trait::async_trait;
 use rusqlite::params;
 use std::sync::Arc;
@@ -89,7 +89,7 @@ impl MessageQuery {
     }
 
     fn validate_sort_column(sort_by: &str) -> Result<String, RepoError> {
-        crate::repositories::base::validate_sort_column(
+        crate::shared::repositories::base::validate_sort_column(
             sort_by,
             &[
                 "created_at",

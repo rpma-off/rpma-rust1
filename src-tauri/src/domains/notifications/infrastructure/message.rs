@@ -5,7 +5,7 @@ use crate::domains::notifications::domain::models::message::*;
 use crate::domains::notifications::infrastructure::message_repository::{
     self as repo, MessageRepository,
 };
-use crate::repositories::Repository;
+use crate::shared::repositories::Repository;
 use rusqlite::params;
 use std::sync::Arc;
 use tracing::{error, info};

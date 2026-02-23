@@ -19,7 +19,7 @@ use crate::domains::tasks::infrastructure::task::TaskService;
 use crate::domains::tasks::infrastructure::task_repository::TaskRepository;
 use crate::domains::users::domain::models::user::{User, UserRole};
 use crate::domains::users::infrastructure::user_repository::UserRepository;
-use crate::repositories::base::Repository;
+use crate::shared::repositories::base::Repository;
 use crate::test_utils::{TestDataFactory, TestDatabase};
 use chrono::Utc;
 use futures;

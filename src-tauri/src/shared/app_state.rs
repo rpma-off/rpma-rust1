@@ -13,7 +13,7 @@ use tauri::State;
 pub struct AppStateType {
     pub db: Arc<Database>,
     pub async_db: Arc<crate::db::AsyncDatabase>,
-    pub repositories: Arc<crate::repositories::Repositories>,
+    pub repositories: Arc<crate::shared::repositories::Repositories>,
     pub task_service: Arc<TaskService>,
     pub client_service: Arc<ClientService>,
     pub task_import_service:

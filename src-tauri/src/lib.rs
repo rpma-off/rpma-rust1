@@ -6,9 +6,6 @@ pub mod ipc_serialization;
 pub mod logging;
 pub mod memory_management;
 pub mod memory_management_helpers;
-pub mod models;
-pub mod repositories;
-pub mod services;
 pub mod shared;
 pub mod worker_pool;
 

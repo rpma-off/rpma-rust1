@@ -4,8 +4,8 @@
 
 use crate::db::Database;
 use crate::domains::tasks::domain::models::task::TaskHistory;
-use crate::repositories::base::{RepoError, RepoResult, Repository};
-use crate::repositories::cache::{ttl, Cache, CacheKeyBuilder};
+use crate::shared::repositories::base::{RepoError, RepoResult, Repository};
+use crate::shared::repositories::cache::{ttl, Cache, CacheKeyBuilder};
 use async_trait::async_trait;
 use rusqlite::params;
 use std::sync::Arc;
@@ -52,7 +52,7 @@ impl TaskHistoryQuery {
     }
 
     fn validate_sort_column(sort_by: &str) -> Result<String, RepoError> {
-        crate::repositories::base::validate_sort_column(
+        crate::shared::repositories::base::validate_sort_column(
             sort_by,
             &["created_at", "changed_at", "new_status", "changed_by"],
         )

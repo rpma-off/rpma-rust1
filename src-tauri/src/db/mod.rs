@@ -30,11 +30,11 @@ pub trait FromSqlRow: Sized {
     fn from_row(row: &Row) -> SqliteResult<Self>;
 }
 
-/// NOTE: Repository trait has been moved to repositories::base::Repository
-/// Use `use crate::repositories::base::Repository` for repository operations
+/// NOTE: Repository trait lives in shared::repositories::base
+/// Use `use crate::shared::repositories::base::Repository` for repository operations
 /// This module retains legacy QueryBuilder for backward compatibility
-/// Backward compatibility: Re-export Repository from repositories::base
-pub use crate::repositories::base::Repository;
+/// Backward compatibility: Re-export Repository from shared::repositories::base
+pub use crate::shared::repositories::base::Repository;
 
 /// Query builder for complex queries
 pub struct QueryBuilder {
@@ -116,7 +116,7 @@ pub struct AsyncDatabase {
 pub type DbResult<T> = Result<T, String>;
 
 // Re-export RepoResult and RepoError for new code
-pub use crate::repositories::base::{RepoError, RepoResult};
+pub use crate::shared::repositories::base::{RepoError, RepoResult};
 
 /// Compatibility: Allow RepoError to be converted to String for legacy DbResult usage
 impl From<RepoError> for String {

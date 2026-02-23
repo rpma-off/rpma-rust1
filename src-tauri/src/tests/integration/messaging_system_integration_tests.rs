@@ -288,7 +288,7 @@ async fn test_task_assignment_notification_workflow() {
     let db = create_test_db().await;
     let repo = MessageRepository::new(
         Arc::new(db),
-        Arc::new(crate::repositories::cache::Cache::new(100)),
+        Arc::new(crate::shared::repositories::cache::Cache::new(100)),
     );
 
     // Create test users and context
@@ -387,7 +387,7 @@ async fn test_task_completion_notification_workflow() {
     let db = create_test_db().await;
     let repo = MessageRepository::new(
         Arc::new(db),
-        Arc::new(crate::repositories::cache::Cache::new(100)),
+        Arc::new(crate::shared::repositories::cache::Cache::new(100)),
     );
 
     // Create test users and context
@@ -474,7 +474,7 @@ async fn test_overdue_task_reminder_workflow() {
     let db = create_test_db().await;
     let repo = MessageRepository::new(
         Arc::new(db),
-        Arc::new(crate::repositories::cache::Cache::new(100)),
+        Arc::new(crate::shared::repositories::cache::Cache::new(100)),
     );
 
     // Create test users
@@ -619,7 +619,7 @@ async fn test_multi_channel_notification_preferences() {
     let db = create_test_db().await;
     let repo = MessageRepository::new(
         Arc::new(db),
-        Arc::new(crate::repositories::cache::Cache::new(100)),
+        Arc::new(crate::shared::repositories::cache::Cache::new(100)),
     );
 
     // Create test users
@@ -805,7 +805,7 @@ async fn test_quiet_hours_notification_filtering() {
     let db = create_test_db().await;
     let repo = MessageRepository::new(
         Arc::new(db),
-        Arc::new(crate::repositories::cache::Cache::new(100)),
+        Arc::new(crate::shared::repositories::cache::Cache::new(100)),
     );
 
     // Create test users
@@ -911,7 +911,7 @@ async fn test_message_delivery_with_retry_logic() {
     let db = create_test_db().await;
     let repo = MessageRepository::new(
         Arc::new(db),
-        Arc::new(crate::repositories::cache::Cache::new(100)),
+        Arc::new(crate::shared::repositories::cache::Cache::new(100)),
     );
 
     // Create test users
@@ -977,7 +977,7 @@ async fn test_message_performance_with_large_dataset() {
     let db = create_test_db().await;
     let repo = MessageRepository::new(
         Arc::new(db),
-        Arc::new(crate::repositories::cache::Cache::new(100)),
+        Arc::new(crate::shared::repositories::cache::Cache::new(100)),
     );
 
     // Create test users
@@ -1127,7 +1127,7 @@ async fn test_concurrent_message_operations() {
     let db = Arc::new(create_test_db().await);
     let repo = Arc::new(MessageRepository::new(
         (*db).clone(),
-        Arc::new(crate::repositories::cache::Cache::new(100)),
+        Arc::new(crate::shared::repositories::cache::Cache::new(100)),
     ));
 
     // Create test users
