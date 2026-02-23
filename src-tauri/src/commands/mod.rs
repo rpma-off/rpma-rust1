@@ -261,7 +261,7 @@ pub fn get_large_test_data(
     _state: AppState,
     correlation_id: Option<String>,
 ) -> Result<CompressedApiResponse, AppError> {
-    let _correlation_id = init_correlation_context(&correlation_id, None);
+    let correlation_id = init_correlation_context(&correlation_id, None);
     debug!("Large test data requested");
 
     // Generate a large dataset to test compression
@@ -272,7 +272,7 @@ pub fn get_large_test_data(
         data: vec![i as u8; 100], // 100 bytes per item
     }).collect();
 
-    let response = ApiResponse::success(large_data);
+    let response = ApiResponse::success(large_data).with_correlation_id(Some(correlation_id));
     response.to_compressed_if_large()
 }
 
