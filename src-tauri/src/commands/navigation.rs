@@ -1,9 +1,11 @@
 //! Navigation commands for desktop app routing and history management
 
 use lazy_static::lazy_static;
+use crate::authenticate;
 use std::collections::VecDeque;
 use std::sync::Mutex;
 use tracing::{debug, info, instrument};
+use crate::commands::{AppState, UserRole};
 
 #[derive(Clone, Debug)]
 struct NavigationHistory {
@@ -67,11 +69,15 @@ lazy_static! {
 /// Update current navigation path
 #[tauri::command]
 pub async fn navigation_update(
+    session_token: String,
+    state: AppState<'_>,
     path: String,
     _options: serde_json::Value,
     correlation_id: Option<String>,
 ) -> Result<(), String> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state, UserRole::Viewer);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
 
     let mut history = NAVIGATION_HISTORY.lock().map_err(|e| e.to_string())?;
     history.add(path);
@@ -81,10 +87,14 @@ pub async fn navigation_update(
 /// Add path to navigation history
 #[tauri::command]
 pub async fn navigation_add_to_history(
+    session_token: String,
+    state: AppState<'_>,
     path: String,
     correlation_id: Option<String>,
 ) -> Result<(), String> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state, UserRole::Viewer);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
 
     let mut history = NAVIGATION_HISTORY.lock().map_err(|e| e.to_string())?;
     history.add(path);
@@ -93,8 +103,14 @@ pub async fn navigation_add_to_history(
 
 /// Go back in navigation history
 #[tauri::command]
-pub async fn navigation_go_back(correlation_id: Option<String>) -> Result<Option<String>, String> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+pub async fn navigation_go_back(
+    session_token: String,
+    state: AppState<'_>,
+    correlation_id: Option<String>,
+) -> Result<Option<String>, String> {
+    let current_user = authenticate!(&session_token, &state, UserRole::Viewer);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
 
     let mut history = NAVIGATION_HISTORY.lock().map_err(|e| e.to_string())?;
     Ok(history.go_back().cloned())
@@ -103,9 +119,13 @@ pub async fn navigation_go_back(correlation_id: Option<String>) -> Result<Option
 /// Go forward in navigation history
 #[tauri::command]
 pub async fn navigation_go_forward(
+    session_token: String,
+    state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<Option<String>, String> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state, UserRole::Viewer);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
 
     let mut history = NAVIGATION_HISTORY.lock().map_err(|e| e.to_string())?;
     Ok(history.go_forward().cloned())
@@ -114,9 +134,13 @@ pub async fn navigation_go_forward(
 /// Get current navigation path
 #[tauri::command]
 pub async fn navigation_get_current(
+    session_token: String,
+    state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<Option<String>, String> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state, UserRole::Viewer);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
 
     let history = NAVIGATION_HISTORY.lock().map_err(|e| e.to_string())?;
     Ok(history.get_current().cloned())
@@ -124,8 +148,14 @@ pub async fn navigation_get_current(
 
 /// Refresh current view
 #[tauri::command]
-pub async fn navigation_refresh(correlation_id: Option<String>) -> Result<(), String> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+pub async fn navigation_refresh(
+    session_token: String,
+    state: AppState<'_>,
+    correlation_id: Option<String>,
+) -> Result<(), String> {
+    let current_user = authenticate!(&session_token, &state, UserRole::Viewer);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
 
     // This command triggers a refresh in the frontend
     // The actual refresh is handled by the frontend calling window.location.reload()
@@ -134,12 +164,16 @@ pub async fn navigation_refresh(correlation_id: Option<String>) -> Result<(), St
 
 /// Register keyboard shortcuts for menu integration
 #[tauri::command]
-#[instrument]
+#[instrument(skip_all)]
 pub async fn shortcuts_register(
+    session_token: String,
+    state: AppState<'_>,
     shortcuts: serde_json::Value,
     correlation_id: Option<String>,
 ) -> Result<(), String> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state, UserRole::Viewer);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
 
     debug!("Registering keyboard shortcuts");
 

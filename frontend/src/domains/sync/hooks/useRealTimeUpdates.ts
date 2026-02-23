@@ -6,6 +6,7 @@ import { logger, LogDomain } from '@/lib/logging';
 import { safeInvoke } from '@/lib/ipc/utils';
 import type { TaskStatus } from '@/lib/backend';
 import type { JsonObject } from '@/types/json';
+import { useAuth } from '@/domains/auth/api/useAuth';
 
 interface UseRealTimeUpdatesOptions {
   enableTaskUpdates?: boolean;
@@ -21,6 +22,7 @@ export function useRealTimeUpdates(options: UseRealTimeUpdatesOptions = {}) {
     enableClientUpdates = true,
     enableNotifications = true,
   } = options;
+  const { user } = useAuth();
 
   // Get access to existing hooks for state updates
   const { updateTask } = useTasks({
@@ -144,6 +146,7 @@ export function useRealTimeUpdates(options: UseRealTimeUpdatesOptions = {}) {
       try {
         // Initialize WebSocket server on backend
         await safeInvoke<void>('init_websocket_server', {
+          session_token: user?.token ?? '',
           port: 8080,
         });
 
@@ -154,7 +157,7 @@ export function useRealTimeUpdates(options: UseRealTimeUpdatesOptions = {}) {
     };
 
     initWSServer();
-  }, []);
+  }, [user?.token]);
 
   return {
     isConnected,
@@ -164,6 +167,7 @@ export function useRealTimeUpdates(options: UseRealTimeUpdatesOptions = {}) {
 
 // Hook for broadcasting real-time updates from the frontend
 export function useRealTimeBroadcast() {
+  const { user } = useAuth();
   const broadcastTaskUpdate = useCallback(async (
     taskId: string,
     updateType: string,
@@ -171,6 +175,7 @@ export function useRealTimeBroadcast() {
   ) => {
     try {
       await safeInvoke<void>('broadcast_task_update', {
+        session_token: user?.token ?? '',
         taskId,
         updateType,
         data: data as JsonObject,
@@ -178,7 +183,7 @@ export function useRealTimeBroadcast() {
       } catch (error) {
         logger.error(LogDomain.TASK, 'Failed to broadcast task update', error);
       }
-  }, []);
+  }, [user?.token]);
 
   const broadcastInterventionUpdate = useCallback(async (
     interventionId: string,
@@ -187,6 +192,7 @@ export function useRealTimeBroadcast() {
   ) => {
     try {
       await safeInvoke<void>('broadcast_intervention_update', {
+        session_token: user?.token ?? '',
         interventionId,
         updateType,
         data: data as JsonObject,
@@ -194,7 +200,7 @@ export function useRealTimeBroadcast() {
       } catch (error) {
         logger.error(LogDomain.TASK, 'Failed to broadcast intervention update', error);
       }
-  }, []);
+  }, [user?.token]);
 
   const broadcastClientUpdate = useCallback(async (
     clientId: string,
@@ -203,6 +209,7 @@ export function useRealTimeBroadcast() {
   ) => {
     try {
       await safeInvoke<void>('broadcast_client_update', {
+        session_token: user?.token ?? '',
         clientId,
         updateType,
         data: data as JsonObject,
@@ -210,7 +217,7 @@ export function useRealTimeBroadcast() {
       } catch (error) {
         logger.error(LogDomain.CLIENT, 'Failed to broadcast client update', error);
       }
-  }, []);
+  }, [user?.token]);
 
   const broadcastNotification = useCallback(async (
     title: string,
@@ -219,6 +226,7 @@ export function useRealTimeBroadcast() {
   ) => {
     try {
       await safeInvoke<void>('broadcast_system_notification', {
+        session_token: user?.token ?? '',
         title,
         message,
         level,
@@ -226,7 +234,7 @@ export function useRealTimeBroadcast() {
       } catch (error) {
         logger.error(LogDomain.SYSTEM, 'Failed to broadcast notification', error);
       }
-  }, []);
+  }, [user?.token]);
 
   return {
     broadcastTaskUpdate,

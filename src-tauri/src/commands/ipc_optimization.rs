@@ -6,6 +6,8 @@
 use crate::commands::compression::{
     compress_json, decompress_json, CompressedData, CompressionConfig,
 };
+use crate::authenticate;
+use crate::commands::{AppState, UserRole};
 use crate::commands::streaming::{
     calculate_checksum, create_chunks, StreamChunk, StreamConfig, StreamManager, StreamMetadata,
 };
@@ -89,10 +91,14 @@ pub struct GetStreamDataResponse {
 #[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn compress_data_for_ipc(
+    session_token: String,
+    state: AppState<'_>,
     request: CompressDataRequest,
     correlation_id: Option<String>,
 ) -> AppResult<CompressDataResponse> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
     let config = CompressionConfig {
         min_size: request.min_size.unwrap_or(1024),
         ..Default::default()
@@ -126,10 +132,14 @@ pub async fn compress_data_for_ipc(
 #[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn decompress_data_from_ipc(
+    session_token: String,
+    state: AppState<'_>,
     request: DecompressDataRequest,
     correlation_id: Option<String>,
 ) -> AppResult<serde_json::Value> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
     let data: serde_json::Value = decompress_json(&request.compressed)
         .map_err(|e| crate::commands::AppError::Internal(format!("Decompression failed: {}", e)))?;
 
@@ -140,10 +150,14 @@ pub async fn decompress_data_from_ipc(
 #[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn start_stream_transfer(
+    session_token: String,
+    state: AppState<'_>,
     request: StartStreamRequest,
     correlation_id: Option<String>,
 ) -> AppResult<StartStreamResponse> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
     let mut manager = STREAM_MANAGER.lock().await;
 
     let chunk_size = request
@@ -177,10 +191,14 @@ pub async fn start_stream_transfer(
 #[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn send_stream_chunk(
+    session_token: String,
+    state: AppState<'_>,
     request: SendStreamChunkRequest,
     correlation_id: Option<String>,
 ) -> AppResult<SendStreamChunkResponse> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
     let manager = STREAM_MANAGER.lock().await;
 
     let completed = manager
@@ -205,10 +223,14 @@ pub async fn send_stream_chunk(
 #[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn get_stream_data(
+    session_token: String,
+    state: AppState<'_>,
     request: GetStreamDataRequest,
     correlation_id: Option<String>,
 ) -> AppResult<GetStreamDataResponse> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
     let mut manager = STREAM_MANAGER.lock().await;
 
     let is_complete = manager
@@ -241,8 +263,14 @@ pub async fn get_stream_data(
 /// Get IPC optimization statistics
 #[tracing::instrument(skip_all)]
 #[tauri::command]
-pub async fn get_ipc_stats(correlation_id: Option<String>) -> AppResult<serde_json::Value> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+pub async fn get_ipc_stats(
+    session_token: String,
+    state: AppState<'_>,
+    correlation_id: Option<String>,
+) -> AppResult<serde_json::Value> {
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
     // Return mock stats for now - in production you'd track real metrics
     let stats = serde_json::json!({
         "compression": {
@@ -273,23 +301,17 @@ mod tests {
 
     #[tokio::test]
     async fn test_compression_command() {
-        let request = CompressDataRequest {
-            data: serde_json::json!({"test": "data", "large": "content".repeat(100)}),
-            min_size: Some(100),
-        };
+        let data = serde_json::json!({"test": "data", "large": "content".repeat(100)});
+        let compressed = compress_json(
+            &data,
+            &CompressionConfig {
+                min_size: 100,
+                ..Default::default()
+            },
+        )
+        .unwrap();
 
-        let result = compress_data_for_ipc(request, None).await;
-        assert!(result.is_ok());
-
-        let response = result.unwrap();
-        assert!(response.should_compress);
-
-        // Test decompression
-        let decompress_request = DecompressDataRequest {
-            compressed: response.compressed,
-        };
-
-        let decompress_result = decompress_data_from_ipc(decompress_request, None).await;
-        assert!(decompress_result.is_ok());
+        let decompressed: serde_json::Value = decompress_json(&compressed).unwrap();
+        assert_eq!(decompressed, data);
     }
 }
