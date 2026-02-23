@@ -1187,6 +1187,43 @@ impl SettingsService {
         }
     }
 
+    /// Validate and persist a base64-encoded avatar image for a user.
+    ///
+    /// All avatar business rules (size limit, allowed MIME types, encoding) are
+    /// enforced here rather than in the IPC handler.
+    pub fn upload_avatar(
+        &self,
+        user_id: &str,
+        avatar_data: &str,
+        mime_type: &str,
+    ) -> Result<String, AppError> {
+        use base64::{engine::general_purpose, Engine as _};
+
+        let decoded = general_purpose::STANDARD
+            .decode(avatar_data)
+            .map_err(|e| AppError::Validation(format!("Invalid base64 data: {}", e)))?;
+
+        if decoded.len() > 5 * 1024 * 1024 {
+            return Err(AppError::Validation(
+                "Avatar file too large (max 5MB)".to_string(),
+            ));
+        }
+
+        if !["image/jpeg", "image/png", "image/gif", "image/webp"].contains(&mime_type) {
+            return Err(AppError::Validation(
+                "Unsupported image format".to_string(),
+            ));
+        }
+
+        let data_url = format!("data:{};base64,{}", mime_type.trim(), avatar_data.trim());
+
+        let mut profile = self.get_user_settings(user_id)?.profile;
+        profile.avatar_url = Some(data_url.clone());
+        self.update_user_profile(user_id, &profile)?;
+
+        Ok(data_url)
+    }
+
     /// Get user consent data for export
     pub fn get_user_consent(&self, user_id: &str) -> Result<Option<serde_json::Value>, AppError> {
         let conn = self.db.get_connection().map_err(|e| {
