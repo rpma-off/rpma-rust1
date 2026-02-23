@@ -28,6 +28,7 @@ type-drift-ci-report.json
 test-results/
 docs/duplication-report.json
 migration-tests/results/
+maintainability-report.json
 
 start_dev.bat
 stop_dev.bat
