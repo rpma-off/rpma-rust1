@@ -62,13 +62,14 @@ impl<T> ApiResponse<T> {
     pub fn error(error: AppError) -> Self {
         let error_code = error.code().to_string();
         let sanitized = error.sanitize_for_frontend();
+        let message = sanitized.to_string();
         Self {
             success: false,
-            message: Some(sanitized.to_string()),
+            message: Some(message.clone()),
             error_code: Some(error_code.clone()),
             data: None,
             error: Some(ApiError {
-                message: sanitized.to_string(),
+                message,
                 code: error_code,
                 details: None,
             }),
