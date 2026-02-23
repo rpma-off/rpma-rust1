@@ -30,7 +30,7 @@ impl Database {
 
         let users: Vec<Value> = serde_json::from_str(&json_str).map_err(|e| e.to_string())?;
 
-        let mut conn = self.get_connection()?;
+        let conn = self.get_connection()?;
         let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
         let mut count = 0;
 
@@ -65,7 +65,7 @@ impl Database {
 
         let clients: Vec<Value> = serde_json::from_str(&json_str).map_err(|e| e.to_string())?;
 
-        let mut conn = self.get_connection()?;
+        let conn = self.get_connection()?;
         let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
         let mut count = 0;
 
@@ -125,7 +125,7 @@ impl Database {
             .filter_map(|ppf| ppf["task_id"].as_str().map(|id| (id.to_string(), ppf)))
             .collect();
 
-        let mut conn = self.get_connection()?;
+        let conn = self.get_connection()?;
         let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
         let mut count = 0;
 
@@ -171,7 +171,7 @@ impl Database {
 
         let steps: Vec<Value> = serde_json::from_str(&json_str).map_err(|e| e.to_string())?;
 
-        let mut conn = self.get_connection()?;
+        let conn = self.get_connection()?;
         let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
         let mut count = 0;
 
@@ -207,7 +207,7 @@ impl Database {
 
         let photos: Vec<Value> = serde_json::from_str(&json_str).map_err(|e| e.to_string())?;
 
-        let mut conn = self.get_connection()?;
+        let conn = self.get_connection()?;
         let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
         let mut count = 0;
 
