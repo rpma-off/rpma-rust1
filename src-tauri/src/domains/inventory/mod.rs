@@ -4,7 +4,7 @@ mod facade;
 pub(crate) use facade::InventoryFacade;
 
 pub(crate) mod application;
-pub(crate) mod domain;
+pub mod domain;
 pub(crate) mod infrastructure;
 pub(crate) mod ipc;
 
