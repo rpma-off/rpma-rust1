@@ -23,6 +23,7 @@ pub async fn document_store_photo(
 ) -> Result<ApiResponse<StorePhotoResponse>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let _current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&_current_user.user_id);
 
     match state.photo_service.store_photo(request, image_data).await {
         Ok(response) => {
@@ -47,6 +48,7 @@ pub async fn document_get_photos(
 ) -> Result<ApiResponse<GetPhotosResponse>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let _current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&_current_user.user_id);
 
     match state.photo_service.get_photos(request) {
         Ok(response) => {
@@ -70,6 +72,7 @@ pub async fn document_get_photo(
 ) -> Result<ApiResponse<Option<Photo>>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let _current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&_current_user.user_id);
 
     match state.photo_service.get_photo(&photo_id) {
         Ok(photo) => {
@@ -93,6 +96,7 @@ pub async fn document_delete_photo(
 ) -> Result<ApiResponse<()>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let _current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&_current_user.user_id);
 
     match state.photo_service.delete_photo(&photo_id) {
         Ok(()) => {
@@ -117,6 +121,7 @@ pub async fn document_get_photo_data(
 ) -> Result<ApiResponse<Vec<u8>>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let _current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&_current_user.user_id);
 
     match state.photo_service.read_photo_data(&photo_id) {
         Ok(data) => {
@@ -141,6 +146,7 @@ pub async fn document_update_photo_metadata(
 ) -> Result<ApiResponse<Photo>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     let _current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&_current_user.user_id);
 
     match state
         .photo_service
