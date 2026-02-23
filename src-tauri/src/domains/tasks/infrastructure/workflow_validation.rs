@@ -1,5 +1,5 @@
-//! Workflow validation service — re-exported from shared module.
+//! Workflow validation service — re-exported from interventions domain.
 //!
-//! The actual implementation lives in `crate::shared::workflow::workflow_validation`
-//! to avoid cross-domain imports between interventions and tasks.
-pub use crate::shared::workflow::workflow_validation::*;
+//! The canonical implementation lives in
+//! `crate::domains::interventions::infrastructure::workflow_validation`.
+pub use crate::domains::interventions::infrastructure::workflow_validation::*;
