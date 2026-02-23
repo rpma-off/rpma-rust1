@@ -68,13 +68,13 @@ impl CalendarService {
                     title: row.get(2)?,
                     status: row
                         .get::<_, String>(3)?
-                        .parse::<crate::domains::tasks::domain::models::task::TaskStatus>()
-                        .unwrap_or(crate::domains::tasks::domain::models::task::TaskStatus::Draft),
+                        .parse::<crate::domains::calendar::domain::models::calendar::CalendarTaskStatus>()
+                        .unwrap_or(crate::domains::calendar::domain::models::calendar::CalendarTaskStatus::Draft),
                     priority: row
                         .get::<_, String>(4)?
-                        .parse::<crate::domains::tasks::domain::models::task::TaskPriority>()
+                        .parse::<crate::domains::calendar::domain::models::calendar::CalendarTaskPriority>()
                         .unwrap_or(
-                            crate::domains::tasks::domain::models::task::TaskPriority::Medium,
+                            crate::domains::calendar::domain::models::calendar::CalendarTaskPriority::Medium,
                         ),
                     scheduled_date: row.get(5)?,
                     start_time: row.get(6)?,

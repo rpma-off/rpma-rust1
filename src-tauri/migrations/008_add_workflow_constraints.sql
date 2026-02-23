@@ -13,6 +13,7 @@ WHERE status IN ('pending', 'in_progress', 'paused');
 -- Create trigger to synchronize Task state when Intervention is created
 -- Note: workflow_id, status and started_at are set by application code in link_task_to_intervention
 -- This trigger serves as a defensive measure in case of race conditions
+DROP TRIGGER IF EXISTS sync_task_on_intervention_start;
 CREATE TRIGGER sync_task_on_intervention_start
     AFTER INSERT ON interventions
 BEGIN
@@ -23,6 +24,7 @@ BEGIN
 END;
 
 -- Create trigger to synchronize Task state when Intervention is updated
+DROP TRIGGER IF EXISTS sync_task_on_intervention_update;
 CREATE TRIGGER sync_task_on_intervention_update
     AFTER UPDATE ON interventions
 BEGIN
@@ -42,6 +44,7 @@ BEGIN
 END;
 
 -- Create trigger to clean up Task references when Intervention is deleted
+DROP TRIGGER IF EXISTS cleanup_task_on_intervention_delete;
 CREATE TRIGGER cleanup_task_on_intervention_delete
     AFTER DELETE ON interventions
 BEGIN
@@ -53,6 +56,7 @@ BEGIN
 END;
 
 -- Create trigger to synchronize Task current step when Intervention step is updated
+DROP TRIGGER IF EXISTS sync_task_current_step;
 CREATE TRIGGER sync_task_current_step
     AFTER UPDATE ON intervention_steps
 BEGIN

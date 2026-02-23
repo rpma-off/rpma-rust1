@@ -6,7 +6,6 @@
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::settings::ipc::settings::core::handle_settings_error;
 
-use base64::{engine::general_purpose, Engine as _};
 use serde::Deserialize;
 use serde_json::json;
 
@@ -311,41 +310,12 @@ pub async fn upload_user_avatar(
     let user = authenticate!(&request.session_token, &state);
     crate::commands::update_correlation_context_user(&user.id);
 
-    // Decode base64 avatar data
-    let avatar_data = general_purpose::STANDARD
-        .decode(&request.avatar_data)
-        .map_err(|e| AppError::Validation(format!("Invalid base64 data: {}", e)))?;
-
-    // Validate file size (max 5MB)
-    if avatar_data.len() > 5 * 1024 * 1024 {
-        return Err(AppError::Validation(
-            "Avatar file too large (max 5MB)".to_string(),
-        ));
-    }
-
-    // Validate MIME type
-    if !["image/jpeg", "image/png", "image/gif", "image/webp"].contains(&request.mime_type.as_str())
-    {
-        return Err(AppError::Validation("Unsupported image format".to_string()));
-    }
-
-    let data_url = format!(
-        "data:{};base64,{}",
-        request.mime_type.trim(),
-        request.avatar_data.trim()
-    );
-
-    let mut profile_settings = state
-        .settings_service
-        .get_user_settings(&user.id)
-        .map_err(|e| handle_settings_error(e, "Load profile before avatar update"))?
-        .profile;
-    profile_settings.avatar_url = Some(data_url.clone());
-
     state
         .settings_service
-        .update_user_profile(&user.id, &profile_settings)
-        .map(|_| ApiResponse::success(data_url).with_correlation_id(Some(correlation_id.clone())))
+        .upload_avatar(&user.id, &request.avatar_data, &request.mime_type)
+        .map(|data_url| {
+            ApiResponse::success(data_url).with_correlation_id(Some(correlation_id.clone()))
+        })
         .map_err(|e| handle_settings_error(e, "Upload user avatar"))
 }
 

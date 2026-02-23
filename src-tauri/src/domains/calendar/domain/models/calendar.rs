@@ -1,10 +1,79 @@
 use crate::db::FromSqlRow;
-use crate::domains::tasks::domain::models::task::{TaskPriority, TaskStatus};
 use serde::{Deserialize, Serialize};
-// Conditional import removed
 use ts_rs::TS;
 
 use rusqlite::Row;
+
+/// Task status values mirrored for calendar display.
+///
+/// These variants must remain in sync with `tasks::domain::models::task::TaskStatus`.
+/// A calendar view should not depend on the tasks bounded context directly.
+#[derive(Debug, Clone, Serialize, Deserialize, Default, TS)]
+#[serde(rename_all = "snake_case")]
+pub enum CalendarTaskStatus {
+    #[default]
+    Draft,
+    Scheduled,
+    InProgress,
+    Completed,
+    Cancelled,
+    OnHold,
+    Pending,
+    Invalid,
+    Archived,
+    Failed,
+    Overdue,
+    Assigned,
+    Paused,
+}
+
+impl std::str::FromStr for CalendarTaskStatus {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "draft" => Ok(Self::Draft),
+            "scheduled" => Ok(Self::Scheduled),
+            "in_progress" => Ok(Self::InProgress),
+            "completed" => Ok(Self::Completed),
+            "cancelled" => Ok(Self::Cancelled),
+            "on_hold" => Ok(Self::OnHold),
+            "pending" => Ok(Self::Pending),
+            "invalid" => Ok(Self::Invalid),
+            "archived" => Ok(Self::Archived),
+            "failed" => Ok(Self::Failed),
+            "overdue" => Ok(Self::Overdue),
+            "assigned" => Ok(Self::Assigned),
+            "paused" => Ok(Self::Paused),
+            _ => Err(format!("unknown status: {s}")),
+        }
+    }
+}
+
+/// Task priority values mirrored for calendar display.
+///
+/// These variants must remain in sync with `tasks::domain::models::task::TaskPriority`.
+#[derive(Debug, Clone, Serialize, Deserialize, Default, TS)]
+#[serde(rename_all = "snake_case")]
+pub enum CalendarTaskPriority {
+    Low,
+    #[default]
+    Medium,
+    High,
+    Urgent,
+}
+
+impl std::str::FromStr for CalendarTaskPriority {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "low" => Ok(Self::Low),
+            "medium" => Ok(Self::Medium),
+            "high" => Ok(Self::High),
+            "urgent" => Ok(Self::Urgent),
+            _ => Err(format!("unknown priority: {s}")),
+        }
+    }
+}
 
 /// CalendarTask represents a task with calendar-specific information
 /// Maps to the calendar_tasks SQL View
@@ -18,8 +87,8 @@ pub struct CalendarTask {
     pub title: String,
 
     // Status and priority
-    pub status: TaskStatus,
-    pub priority: TaskPriority,
+    pub status: CalendarTaskStatus,
+    pub priority: CalendarTaskPriority,
 
     // Scheduling
     pub scheduled_date: String,
@@ -76,12 +145,12 @@ impl FromSqlRow for CalendarTask {
             title: row.get(2)?,
             status: row
                 .get::<_, String>(3)?
-                .parse::<TaskStatus>()
-                .unwrap_or(TaskStatus::Draft),
+                .parse::<CalendarTaskStatus>()
+                .unwrap_or(CalendarTaskStatus::Draft),
             priority: row
                 .get::<_, String>(4)?
-                .parse::<TaskPriority>()
-                .unwrap_or(TaskPriority::Medium),
+                .parse::<CalendarTaskPriority>()
+                .unwrap_or(CalendarTaskPriority::Medium),
             scheduled_date: row.get(5)?,
             start_time: row.get(6)?,
             end_time: row.get(7)?,
