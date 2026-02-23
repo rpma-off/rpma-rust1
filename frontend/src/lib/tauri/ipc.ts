@@ -716,12 +716,12 @@ export class SystemIpcService extends IpcService {
     return this.invoke('health_check');
   }
 
-  static async getDatabaseStatus() {
-    return this.invoke('get_database_status');
+  static async getDatabaseStatus(sessionToken: string) {
+    return this.invoke('get_database_status', { session_token: sessionToken });
   }
 
-  static async getDatabaseStats() {
-    return this.invoke('get_database_stats');
+  static async getDatabaseStats(sessionToken: string) {
+    return this.invoke('get_database_stats', { session_token: sessionToken });
   }
 
   static async getAppInfo() {

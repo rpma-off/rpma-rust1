@@ -1429,11 +1429,11 @@ export const ipcClient = {
     getApplicationMetrics: () =>
       safeInvoke<JsonValue>('get_application_metrics'),
 
-    getDatabaseStatus: () =>
-      safeInvoke<JsonValue>('diagnose_database'),
+    getDatabaseStatus: (sessionToken: string) =>
+      safeInvoke<JsonValue>('diagnose_database', { session_token: sessionToken }),
 
-    getDatabaseStats: () =>
-      safeInvoke<JsonValue>('get_database_stats'),
+    getDatabaseStats: (sessionToken: string) =>
+      safeInvoke<JsonValue>('get_database_stats', { session_token: sessionToken }),
 
     getDatabasePoolHealth: () =>
       safeInvoke<JsonValue>('get_database_pool_health'),

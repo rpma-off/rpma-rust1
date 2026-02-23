@@ -276,25 +276,31 @@ function isDomainShim(contents) {
 function checkLegacyShimEnforcement() {
   const violations = [];
 
-  const legacyServiceFiles = listFiles(path.join(srcRoot, 'services'))
-    .filter((file) => file.endsWith('.rs'));
-  for (const file of legacyServiceFiles) {
-    const relative = path.relative(srcRoot, file).replace(/\\/g, '/');
-    if (legacyServiceRealAllowlist.has(relative)) continue;
-    const contents = fs.readFileSync(file, 'utf8');
-    if (!isDomainShim(contents)) {
-      violations.push(`services/${relative.replace(/^services\//, '')}`);
+  const servicesDir = path.join(srcRoot, 'services');
+  if (fs.existsSync(servicesDir)) {
+    const legacyServiceFiles = listFiles(servicesDir)
+      .filter((file) => file.endsWith('.rs'));
+    for (const file of legacyServiceFiles) {
+      const relative = path.relative(srcRoot, file).replace(/\\/g, '/');
+      if (legacyServiceRealAllowlist.has(relative)) continue;
+      const contents = fs.readFileSync(file, 'utf8');
+      if (!isDomainShim(contents)) {
+        violations.push(`services/${relative.replace(/^services\//, '')}`);
+      }
     }
   }
 
-  const legacyRepositoryFiles = listFiles(path.join(srcRoot, 'repositories'))
-    .filter((file) => file.endsWith('.rs'));
-  for (const file of legacyRepositoryFiles) {
-    const relative = path.relative(srcRoot, file).replace(/\\/g, '/');
-    if (legacyRepositoryRealAllowlist.has(relative)) continue;
-    const contents = fs.readFileSync(file, 'utf8');
-    if (!isDomainShim(contents)) {
-      violations.push(`repositories/${relative.replace(/^repositories\//, '')}`);
+  const repositoriesDir = path.join(srcRoot, 'repositories');
+  if (fs.existsSync(repositoriesDir)) {
+    const legacyRepositoryFiles = listFiles(repositoriesDir)
+      .filter((file) => file.endsWith('.rs'));
+    for (const file of legacyRepositoryFiles) {
+      const relative = path.relative(srcRoot, file).replace(/\\/g, '/');
+      if (legacyRepositoryRealAllowlist.has(relative)) continue;
+      const contents = fs.readFileSync(file, 'utf8');
+      if (!isDomainShim(contents)) {
+        violations.push(`repositories/${relative.replace(/^repositories\//, '')}`);
+      }
     }
   }
 

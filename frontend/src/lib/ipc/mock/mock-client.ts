@@ -323,8 +323,8 @@ export const ipcClient = {
   },
   system: {
     healthCheck: () => invoke('health_check'),
-    getDatabaseStatus: () => invoke('diagnose_database'),
-    getDatabaseStats: () => invoke('get_database_stats'),
+    getDatabaseStatus: (sessionToken: string) => invoke('diagnose_database', { session_token: sessionToken }),
+    getDatabaseStats: (sessionToken: string) => invoke('get_database_stats', { session_token: sessionToken }),
     getDatabasePoolStats: () => invoke('get_database_pool_stats'),
     getAppInfo: () => invoke('get_app_info'),
     vacuumDatabase: () => invoke('vacuum_database')

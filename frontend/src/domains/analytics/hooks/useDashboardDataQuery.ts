@@ -10,7 +10,7 @@ import { FetchError } from '@/lib/utils/fetch-error-handler';
 import { useLogger } from '@/shared/hooks/useLogger';
 import { LogDomain } from '@/lib/logging/types';
 import { useAuth } from '@/domains/auth';
-import { taskService } from '@/domains/tasks/services';
+import { taskService } from '@/domains/tasks';
 
 
 // ==================== DASHBOARD QUERY KEYS ====================
