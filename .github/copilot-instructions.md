@@ -1,8 +1,8 @@
-# GitHub Copilot Instructions for RPMA v2
+# copilot instructions
 
 ## Project Overview
 
-RPMA v2 is an **offline-first desktop application** built with Tauri (Rust + system webview) for managing Paint Protection Film (PPF) interventions. The application handles tasks, interventions, workflow steps, photo management, inventory tracking, reporting, and user management with role-based access control.
+RPMA v2 is an **offline-first desktop application for managing Paint Protection Film (PPF) interventions. The application handles tasks, interventions, workflow steps, photo management, inventory tracking, reporting, and user management with role-based access control.
 
 
 ## 📁 Project Structure
@@ -67,35 +67,6 @@ rpma-rust1/
 
 ---
 
-## 🏗️ Architecture — The 4-Layer Rule
-
-**This is the most important rule. Never break it.**
-
-```
-┌─────────────────────────────────────────┐
-│  Frontend (Next.js / React / TypeScript) │
-│  Pages → Domain Hooks → IPC wrappers    │
-└───────────────┬─────────────────────────┘
-                │ invoke() — Tauri IPC
-┌───────────────▼─────────────────────────┐
-│  IPC Commands  (src-tauri/src/commands) │
-│  Thin handlers — validate input only   │
-└───────────────┬─────────────────────────┘
-                │
-┌───────────────▼─────────────────────────┐
-│  Services / Application Layer           │
-│  Business logic, use cases, RBAC        │
-└───────────────┬─────────────────────────┘
-                │
-┌───────────────▼─────────────────────────┐
-│  Repositories (infrastructure/)         │
-│  All SQL queries live here — nowhere else│
-└───────────────┬─────────────────────────┘
-                │
-┌───────────────▼─────────────────────────┐
-│  SQLite (WAL mode, via sqlx)            │
-└─────────────────────────────────────────┘
-```
 ## 🛠️ Tech Stack
 
 - **Frontend**: Next.js 14, React 18, TypeScript, Tailwind CSS
@@ -247,119 +218,6 @@ cd src-tauri && cargo bench              # Run Criterion benchmarks
 - ✅ Always test new features: success path + validation failure + permission failure
 - ❌ Never write flaky or time-dependent tests
 - ❌ Never delete or weaken existing tests to make a build pass
-
----
-
-## 🧠 Agent Workflow — How to Work on This Codebase
-
-Follow this workflow for **every** task:
-
-### 1. Understand Before Acting
-- Read the relevant domain docs in `docs/agent-pack/` and `docs/adr/`
-- Identify which bounded context(s) the change belongs to
-- Check if a migration is needed
-
-### 2. Plan the Change
-- Map the change to the 4 layers: what changes in commands / services / repositories / frontend?
-- If crossing domains, define the integration point explicitly
-
-### 3. Implement
-- Backend first (Rust): domain model → repository → service → IPC command
-- Run `npm run types:sync` if any Rust model changed
-- Frontend: IPC wrapper → domain service → hook → component/page
-- **Never** mix layers in a single file
-
-### 4. Verify
-```bash
-node scripts/validate-migration-system.js  # If migrations changed
-```
-
-### 5. Test
-```bash
-cd src-tauri && cargo test --lib
-cd frontend && npm test
-```
-
-### 6. Commit
-```bash
-git add .
-git commit -m "feat(interventions): add step photo upload command"
-# Format: type(scope): description
-# Scopes: interventions, inventory, tasks, users, quotes, documents, auth, db, ui
-
----
-
-## 📐 Key Patterns and Conventions
-
-### Rust IPC Command Pattern
-```rust
-// src-tauri/src/domains/[domain]/ipc/[command].rs
-#[tauri::command]
-pub async fn my_command(
-    state: tauri::State<'_, AppState>,
-    session_token: String,           // Always validate first
-    payload: MyInputDto,
-) -> Result<MyOutputDto, AppError> {
-    // 1. Validate session
-    let user = state.auth_service.validate_session(&session_token).await?;
-    // 2. Check RBAC
-    state.auth_service.check_permission(&user, Permission::MyPermission)?;
-    // 3. Delegate to service — NO business logic here
-    state.my_service.execute(payload).await
-}
-```
-
-### Frontend IPC Call Pattern
-```typescript
-// frontend/src/domains/[domain]/ipc/[command].ts
-import { invoke } from "@tauri-apps/api/core";
-import type { MyOutputDto } from "@/types"; // auto-generated
-
-export async function myCommand(payload: MyInputDto): Promise<MyOutputDto> {
-  return invoke("my_command", { sessionToken: getToken(), ...payload });
-}
-```
-
-### Rust Model with ts-rs
-```rust
-// src-tauri/src/models/my_model.rs
-use serde::{Deserialize, Serialize};
-use ts_rs::TS;
-
-#[derive(Debug, Serialize, Deserialize, TS)]
-#[ts(export)]
-pub struct MyModel {
-    pub id: i64,
-    pub name: String,
-}
-// After editing: run `npm run types:sync`
-```
-
-### SQLite Migration File
-```sql
--- migrations/0007_my_change.sql
--- Always idempotent
-CREATE TABLE IF NOT EXISTS my_table (
-    id    INTEGER PRIMARY KEY AUTOINCREMENT,
-    name  TEXT    NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-```
-
----
-
-## 🚨 Common Mistakes to Avoid
-
-| Mistake | Correct Approach |
-|---|---|
-| Editing `frontend/src/types/*.ts` | Run `npm run types:sync` instead |
-| SQL in a service file | Move SQL to `infrastructure/` repository |
-| Business logic in an IPC command | Delegate to service layer |
-| Importing directly from another domain's internals | Use `domains/[name]/api/index.ts` |
-| Committing directly to `main` | Always use a feature branch + PR |
-| Writing a migration without idempotency | Always use `IF NOT EXISTS` / `IF EXISTS` |
-| Skipping `quality:check` before commit | It is mandatory — Husky enforces it |
-| Hardcoding session tokens or credentials | Use `AppState` injection + env vars |
 
 ---
 
