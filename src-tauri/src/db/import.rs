@@ -30,11 +30,12 @@ impl Database {
 
         let users: Vec<Value> = serde_json::from_str(&json_str).map_err(|e| e.to_string())?;
 
-        let conn = self.get_connection()?;
+        let mut conn = self.get_connection()?;
+        let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
         let mut count = 0;
 
         for user in users {
-            conn.execute(
+            tx.execute(
                 "INSERT OR REPLACE INTO users (
                     id, email, password_hash, full_name, role, phone,
                     is_active, created_at, updated_at
@@ -55,6 +56,7 @@ impl Database {
             count += 1;
         }
 
+        tx.commit().map_err(|e| e.to_string())?;
         Ok(count)
     }
 
@@ -63,11 +65,12 @@ impl Database {
 
         let clients: Vec<Value> = serde_json::from_str(&json_str).map_err(|e| e.to_string())?;
 
-        let conn = self.get_connection()?;
+        let mut conn = self.get_connection()?;
+        let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
         let mut count = 0;
 
         for client in clients {
-            conn.execute(
+            tx.execute(
                 "INSERT OR REPLACE INTO clients (
                     id, name, email, phone, address, city, postal_code,
                     country, company_name, created_at, updated_at
@@ -100,6 +103,7 @@ impl Database {
             count += 1;
         }
 
+        tx.commit().map_err(|e| e.to_string())?;
         Ok(count)
     }
 
@@ -121,14 +125,15 @@ impl Database {
             .filter_map(|ppf| ppf["task_id"].as_str().map(|id| (id.to_string(), ppf)))
             .collect();
 
-        let conn = self.get_connection()?;
+        let mut conn = self.get_connection()?;
+        let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
         let mut count = 0;
 
         for task in tasks {
             let task_id = task["id"].as_str().expect("Task ID should be a string");
             let ppf = ppf_map.get(task_id);
 
-            conn.execute(
+            tx.execute(
                 "INSERT OR REPLACE INTO interventions (
                     id, task_id, status, vehicle_plate, vehicle_model,
                     vehicle_make, vehicle_year, client_id, technician_id,
@@ -157,6 +162,7 @@ impl Database {
             count += 1;
         }
 
+        tx.commit().map_err(|e| e.to_string())?;
         Ok(count)
     }
 
@@ -165,11 +171,12 @@ impl Database {
 
         let steps: Vec<Value> = serde_json::from_str(&json_str).map_err(|e| e.to_string())?;
 
-        let conn = self.get_connection()?;
+        let mut conn = self.get_connection()?;
+        let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
         let mut count = 0;
 
         for step in steps {
-            conn.execute(
+            tx.execute(
                 "INSERT OR REPLACE INTO intervention_steps (
                     id, intervention_id, step_number, step_name, step_type,
                     step_status, started_at, completed_at, created_at, updated_at
@@ -191,6 +198,7 @@ impl Database {
             count += 1;
         }
 
+        tx.commit().map_err(|e| e.to_string())?;
         Ok(count)
     }
 
@@ -199,11 +207,12 @@ impl Database {
 
         let photos: Vec<Value> = serde_json::from_str(&json_str).map_err(|e| e.to_string())?;
 
-        let conn = self.get_connection()?;
+        let mut conn = self.get_connection()?;
+        let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
         let mut count = 0;
 
         for photo in photos {
-            conn.execute(
+            tx.execute(
                 "INSERT OR REPLACE INTO photos (
                     id, intervention_id, step_id, file_path, file_name,
                     photo_type, created_at, updated_at
@@ -223,6 +232,7 @@ impl Database {
             count += 1;
         }
 
+        tx.commit().map_err(|e| e.to_string())?;
         Ok(count)
     }
 }

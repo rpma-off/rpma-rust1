@@ -17,13 +17,16 @@ pub struct TaskRepository {
 }
 
 impl TaskRepository {
+    const DEFAULT_PAGE_SIZE: i32 = 20;
+    const MAX_PAGE_SIZE: i32 = 100;
+
     /// Create a new TaskRepository
     pub fn new(db: Arc<Database>) -> Self {
         Self { db }
     }
 
     /// Find tasks with complex filtering and pagination
-    pub async fn find_with_query(&self, query: TaskQuery) -> RepoResult<TaskListResponse> {
+    pub async fn find_with_query(&self, mut query: TaskQuery) -> RepoResult<TaskListResponse> {
         use crate::logging::RepositoryLogger;
         use std::collections::HashMap;
 
@@ -35,6 +38,12 @@ impl TaskRepository {
         log_context.insert("limit".to_string(), serde_json::json!(query.limit));
         logger.debug("Finding tasks with query", Some(log_context));
 
+        query.limit = Some(
+            query
+                .limit
+                .unwrap_or(Self::DEFAULT_PAGE_SIZE)
+                .clamp(1, Self::MAX_PAGE_SIZE),
+        );
         let (sql, params) = self.build_task_query_sql(&query);
 
         // Execute query
@@ -50,11 +59,13 @@ impl TaskRepository {
             .query_single_value(&count_sql, rusqlite::params_from_iter(count_params))
             .map_err(|e| RepoError::Database(format!("Failed to count tasks: {}", e)))?;
 
-        let total_pages = ((total_count as f64) / (query.limit.unwrap_or(20) as f64)).ceil() as i32;
+        let total_pages = ((total_count as f64)
+            / (query.limit.unwrap_or(Self::DEFAULT_PAGE_SIZE) as f64))
+            .ceil() as i32;
 
         let pagination = PaginationInfo {
             page: query.page.unwrap_or(1),
-            limit: query.limit.unwrap_or(20),
+            limit: query.limit.unwrap_or(Self::DEFAULT_PAGE_SIZE),
             total: total_count,
             total_pages,
         };
@@ -222,9 +233,7 @@ impl TaskRepository {
         qb = qb.order_by(sort_by, sort_order);
 
         // Apply pagination
-        if let Some(limit) = query.limit {
-            qb = qb.limit(limit as i64);
-        }
+        qb = qb.limit(query.limit.unwrap_or(Self::DEFAULT_PAGE_SIZE) as i64);
 
         if let Some(page) = query.page {
             let offset = (page - 1) * query.limit.unwrap_or(20);

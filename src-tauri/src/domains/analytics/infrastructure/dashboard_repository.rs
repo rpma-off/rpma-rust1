@@ -14,6 +14,8 @@ pub struct DashboardRepository {
 }
 
 impl DashboardRepository {
+    const MAX_ACTIVITY_LIMIT: usize = 100;
+
     pub fn new(db: Arc<Database>) -> Self {
         Self { db }
     }
@@ -54,6 +56,7 @@ impl DashboardRepository {
             .map_err(|e| format!("Failed to get connection: {}", e))?;
 
         let mut activities = Vec::new();
+        let safe_limit = limit.clamp(1, Self::MAX_ACTIVITY_LIMIT);
 
         if let Ok(mut stmt) = conn.prepare(
             "SELECT s.user_id, u.username, s.last_activity
@@ -62,7 +65,7 @@ impl DashboardRepository {
              ORDER BY s.last_activity DESC
              LIMIT ?1",
         ) {
-            if let Ok(session_iter) = stmt.query_map(params![limit as i64], |row| {
+            if let Ok(session_iter) = stmt.query_map(params![safe_limit as i64], |row| {
                 Ok(serde_json::json!({
                     "id": format!("session_{}", row.get::<_, String>(0)?),
                     "type": "user_login",
@@ -91,6 +94,7 @@ impl DashboardRepository {
             .map_err(|e| format!("Failed to get connection: {}", e))?;
 
         let mut activities = Vec::new();
+        let safe_limit = limit.clamp(1, Self::MAX_ACTIVITY_LIMIT);
 
         if let Ok(mut stmt) = conn.prepare(
             "SELECT t.id, t.title, t.created_at, u.username
@@ -99,7 +103,7 @@ impl DashboardRepository {
              ORDER BY t.created_at DESC
              LIMIT ?1",
         ) {
-            if let Ok(task_iter) = stmt.query_map(params![limit as i64], |row| {
+            if let Ok(task_iter) = stmt.query_map(params![safe_limit as i64], |row| {
                 let task_id: String = row.get(0)?;
                 let title: String = row.get(1)?;
                 let created_at: String = row.get(2)?;
