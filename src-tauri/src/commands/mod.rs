@@ -192,7 +192,11 @@ pub async fn user_crud(
 /// Get database status
 #[tauri::command]
 #[instrument(skip(state))]
-pub fn get_database_status(state: AppState) -> Result<ApiResponse<serde_json::Value>, AppError> {
+pub fn get_database_status(
+    state: AppState,
+    correlation_id: Option<String>,
+) -> Result<ApiResponse<serde_json::Value>, AppError> {
+    let correlation_id = init_correlation_context(&correlation_id, None);
     debug!("Database status requested");
 
     let status = crate::shared::services::system::SystemService::get_database_status(&state.db)
@@ -202,7 +206,7 @@ pub fn get_database_status(state: AppState) -> Result<ApiResponse<serde_json::Va
         })?;
 
     debug!("Database status retrieved successfully");
-    Ok(ApiResponse::success(status))
+    Ok(ApiResponse::success(status).with_correlation_id(Some(correlation_id)))
 }
 
 /// Get database connection pool statistics
@@ -210,7 +214,9 @@ pub fn get_database_status(state: AppState) -> Result<ApiResponse<serde_json::Va
 #[instrument(skip(state))]
 pub fn get_database_pool_stats(
     state: AppState,
+    correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
+    let correlation_id = init_correlation_context(&correlation_id, None);
     debug!("Database pool statistics requested");
 
     let db = &state.db;
@@ -221,7 +227,7 @@ pub fn get_database_pool_stats(
     db.log_pool_stats();
 
     debug!("Database pool statistics retrieved successfully");
-    Ok(ApiResponse::success(pool_stats))
+    Ok(ApiResponse::success(pool_stats).with_correlation_id(Some(correlation_id)))
 }
 
 /// Get database connection pool health metrics
@@ -229,7 +235,9 @@ pub fn get_database_pool_stats(
 #[instrument(skip(state))]
 pub fn get_database_pool_health(
     state: AppState,
+    correlation_id: Option<String>,
 ) -> Result<ApiResponse<crate::db::PoolHealth>, AppError> {
+    let correlation_id = init_correlation_context(&correlation_id, None);
     debug!("Database pool health requested");
 
     let health = state.db.get_pool_health();
@@ -243,13 +251,17 @@ pub fn get_database_pool_health(
     }
 
     debug!("Database pool health retrieved successfully");
-    Ok(ApiResponse::success(health))
+    Ok(ApiResponse::success(health).with_correlation_id(Some(correlation_id)))
 }
 
 /// Test command for compressed responses (returns large dataset)
 #[tauri::command]
 #[instrument(skip(_state))]
-pub fn get_large_test_data(_state: AppState) -> Result<CompressedApiResponse, AppError> {
+pub fn get_large_test_data(
+    _state: AppState,
+    correlation_id: Option<String>,
+) -> Result<CompressedApiResponse, AppError> {
+    let _correlation_id = init_correlation_context(&correlation_id, None);
     debug!("Large test data requested");
 
     // Generate a large dataset to test compression
@@ -276,7 +288,11 @@ pub struct TestItem {
 /// Vacuum database
 #[tauri::command]
 #[instrument(skip(state))]
-pub fn vacuum_database(state: AppState) -> Result<ApiResponse<()>, AppError> {
+pub fn vacuum_database(
+    state: AppState,
+    correlation_id: Option<String>,
+) -> Result<ApiResponse<()>, AppError> {
+    let correlation_id = init_correlation_context(&correlation_id, None);
     info!("Database vacuum operation requested");
 
     let db = &state.db;
@@ -286,7 +302,7 @@ pub fn vacuum_database(state: AppState) -> Result<ApiResponse<()>, AppError> {
     })?;
 
     info!("Database vacuum completed successfully");
-    Ok(ApiResponse::success(()))
+    Ok(ApiResponse::success(()).with_correlation_id(Some(correlation_id)))
 }
 
 /// Client request structure
