@@ -236,7 +236,7 @@ impl TaskRepository {
         qb = qb.limit(query.limit.unwrap_or(Self::DEFAULT_PAGE_SIZE) as i64);
 
         if let Some(page) = query.page {
-            let offset = (page - 1) * query.limit.unwrap_or(20);
+            let offset = (page - 1) * query.limit.unwrap_or(Self::DEFAULT_PAGE_SIZE);
             qb = qb.offset(offset as i64);
         }
 
