@@ -1,6 +1,8 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { useAutoSave, useBeforeUnloadSave } from '@/shared/hooks/useAutoSave'
+// eslint-disable-next-line no-restricted-imports -- test file needs direct mock access
 import { useWorkflowStepAutoSave } from '@/domains/tasks/hooks/useWorkflowStepAutoSave'
+// eslint-disable-next-line no-restricted-imports -- test file needs direct mock access
 import { taskService } from '@/domains/tasks/services/task.service'
 
 // Mock sonner
