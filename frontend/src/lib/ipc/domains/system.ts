@@ -12,11 +12,11 @@ export const systemOperations = {
   getApplicationMetrics: () =>
     safeInvoke<JsonValue>(IPC_COMMANDS.GET_APPLICATION_METRICS),
 
-  getDatabaseStatus: () =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.DIAGNOSE_DATABASE),
+  getDatabaseStatus: (sessionToken: string) =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.DIAGNOSE_DATABASE, { session_token: sessionToken }),
 
-  getDatabaseStats: () =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.GET_DATABASE_STATS),
+  getDatabaseStats: (sessionToken: string) =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_DATABASE_STATS, { session_token: sessionToken }),
 
   getDatabasePoolHealth: () =>
     safeInvoke<JsonValue>(IPC_COMMANDS.GET_DATABASE_POOL_HEALTH),

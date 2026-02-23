@@ -193,7 +193,8 @@ pub async fn diagnose_database(
         crate::shared::services::system::SystemService::diagnose_database(&pool)
     })
     .await
-    .map_err(|e| format!("Task join error: {}", e))?
+    .map_err(|e| AppError::Internal(format!("Task join error: {}", e)))?
+    .map_err(|e| AppError::Internal(e))
 }
 
 #[tracing::instrument(skip_all)]
@@ -212,7 +213,8 @@ pub async fn force_wal_checkpoint(
         crate::shared::services::system::SystemService::force_wal_checkpoint(&pool)
     })
     .await
-    .map_err(|e| format!("Task join error: {}", e))?
+    .map_err(|e| AppError::Internal(format!("Task join error: {}", e)))?
+    .map_err(|e| AppError::Internal(e))
 }
 
 /// Health check command
@@ -252,7 +254,8 @@ pub async fn get_database_stats(
         crate::shared::services::system::SystemService::get_database_stats(&pool)
     })
     .await
-    .map_err(|e| format!("Task join error: {}", e))?
+    .map_err(|e| AppError::Internal(format!("Task join error: {}", e)))?
+    .map_err(|e| AppError::Internal(e))
 }
 
 /// Get application information
