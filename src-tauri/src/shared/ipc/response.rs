@@ -60,14 +60,17 @@ impl<T> ApiResponse<T> {
     }
 
     pub fn error(error: AppError) -> Self {
+        let error_code = error.code().to_string();
+        let sanitized = error.sanitize_for_frontend();
+        let message = sanitized.to_string();
         Self {
             success: false,
-            message: Some(error.to_string()),
-            error_code: Some(error.code().to_string()),
+            message: Some(message.clone()),
+            error_code: Some(error_code.clone()),
             data: None,
             error: Some(ApiError {
-                message: error.to_string(),
-                code: error.code().to_string(),
+                message,
+                code: error_code,
                 details: None,
             }),
             correlation_id: Some(generate_correlation_id()),
@@ -221,5 +224,47 @@ mod tests {
         assert!(response.success);
         assert_eq!(response.message, None);
         assert_eq!(response.error_code, None);
+    }
+
+    #[test]
+    fn api_response_error_sanitizes_database_errors() {
+        let response: ApiResponse<()> =
+            ApiResponse::error(AppError::Database("SQLITE_BUSY: database is locked".to_string()));
+        assert!(!response.success);
+        let msg = response.message.as_deref().unwrap();
+        assert!(
+            !msg.contains("SQLITE_BUSY"),
+            "Database error leaked internals in response: {}",
+            msg
+        );
+        assert_eq!(response.error_code.as_deref(), Some("DATABASE_ERROR"));
+    }
+
+    #[test]
+    fn api_response_error_sanitizes_internal_errors() {
+        let response: ApiResponse<()> = ApiResponse::error(AppError::Internal(
+            "thread 'main' panicked at src/services/auth.rs:42".to_string(),
+        ));
+        assert!(!response.success);
+        let msg = response.message.as_deref().unwrap();
+        assert!(
+            !msg.contains("panicked"),
+            "Internal error leaked stack trace in response: {}",
+            msg
+        );
+        assert_eq!(response.error_code.as_deref(), Some("INTERNAL_ERROR"));
+    }
+
+    #[test]
+    fn api_response_error_preserves_client_errors() {
+        let response: ApiResponse<()> =
+            ApiResponse::error(AppError::NotFound("Task #42 not found".to_string()));
+        assert!(!response.success);
+        let msg = response.message.as_deref().unwrap();
+        assert!(
+            msg.contains("Task #42 not found"),
+            "Client error should preserve message: {}",
+            msg
+        );
     }
 }

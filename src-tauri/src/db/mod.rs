@@ -184,7 +184,7 @@ impl From<InterventionError> for crate::commands::AppError {
                 if msg.contains("timeout") || msg.contains("locked") {
                     crate::commands::AppError::InterventionTimeout(msg)
                 } else {
-                    crate::commands::AppError::Database(msg)
+                    crate::commands::AppError::db_sanitized("intervention", &msg)
                 }
             }
         }
