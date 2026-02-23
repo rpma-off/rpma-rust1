@@ -8,6 +8,8 @@ use tauri::command;
 use tracing::{debug, error, info, warn};
 
 use super::ApiResponse;
+use crate::authenticate;
+use crate::commands::{AppState, UserRole};
 
 /// Log level enum
 #[derive(Deserialize, Debug)]
@@ -24,17 +26,22 @@ pub struct LogMessage {
     pub level: LogLevel,
     pub message: String,
     pub context: Option<String>,
+    pub session_token: String,
     #[serde(default)]
     pub correlation_id: Option<String>,
 }
 
 /// Send a log message to frontend console
 #[command]
-#[tracing::instrument]
-pub async fn send_log_to_frontend(log_message: LogMessage) -> Result<(), String> {
+#[tracing::instrument(skip_all)]
+pub async fn send_log_to_frontend(
+    state: AppState<'_>,
+    log_message: LogMessage,
+) -> Result<(), String> {
+    let current_user = authenticate!(&log_message.session_token, &state, UserRole::Technician);
     // Initialize correlation context
     let _correlation_id =
-        crate::commands::init_correlation_context(&log_message.correlation_id, None);
+        crate::commands::init_correlation_context(&log_message.correlation_id, Some(&current_user.user_id));
 
     let level_str = match log_message.level {
         LogLevel::Debug => "DEBUG",
@@ -70,18 +77,24 @@ pub async fn send_log_to_frontend(log_message: LogMessage) -> Result<(), String>
 pub struct LogTaskCreationDebugRequest {
     pub task_data: serde_json::Value,
     pub step: String,
+    pub session_token: String,
     #[serde(default)]
     pub correlation_id: Option<String>,
 }
 
 /// Log task creation debug info
 #[command]
-#[tracing::instrument]
-pub fn log_task_creation_debug(
+#[tracing::instrument(skip_all)]
+pub async fn log_task_creation_debug(
+    state: AppState<'_>,
     request: LogTaskCreationDebugRequest,
 ) -> Result<ApiResponse<()>, String> {
+    let current_user = authenticate!(&request.session_token, &state, UserRole::Technician);
     // Initialize correlation context
-    let _correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let _correlation_id = crate::commands::init_correlation_context(
+        &request.correlation_id,
+        Some(&current_user.user_id),
+    );
 
     let correlation_id = request.correlation_id.clone();
     debug!(
@@ -102,18 +115,24 @@ pub fn log_task_creation_debug(
 pub struct LogClientCreationDebugRequest {
     pub client_data: serde_json::Value,
     pub step: String,
+    pub session_token: String,
     #[serde(default)]
     pub correlation_id: Option<String>,
 }
 
 /// Log client creation debug info
 #[command]
-#[tracing::instrument]
-pub fn log_client_creation_debug(
+#[tracing::instrument(skip_all)]
+pub async fn log_client_creation_debug(
+    state: AppState<'_>,
     request: LogClientCreationDebugRequest,
 ) -> Result<ApiResponse<()>, String> {
+    let current_user = authenticate!(&request.session_token, &state, UserRole::Technician);
     // Initialize correlation context
-    let _correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let _correlation_id = crate::commands::init_correlation_context(
+        &request.correlation_id,
+        Some(&current_user.user_id),
+    );
 
     let correlation_id = request.correlation_id.clone();
     debug!(

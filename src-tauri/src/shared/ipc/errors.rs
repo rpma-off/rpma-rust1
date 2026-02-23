@@ -109,6 +109,12 @@ impl fmt::Display for AppError {
 
 impl std::error::Error for AppError {}
 
+impl From<AppError> for String {
+    fn from(error: AppError) -> Self {
+        error.to_string()
+    }
+}
+
 impl AppError {
     /// Get error code for frontend handling
     pub fn code(&self) -> &'static str {

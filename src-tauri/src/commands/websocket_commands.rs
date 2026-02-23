@@ -3,7 +3,8 @@
 //! This module provides Tauri commands for managing WebSocket connections
 //! and real-time updates from the frontend.
 
-use crate::commands::{websocket::*, AppResult};
+use crate::commands::{websocket::*, AppResult, AppState, UserRole};
+use crate::authenticate;
 use serde::{Deserialize, Serialize};
 
 /// Request to initialize WebSocket server
@@ -36,10 +37,14 @@ pub struct SendWSMessageRequest {
 /// Initialize WebSocket server
 #[tauri::command]
 pub async fn init_websocket_server(
+    session_token: String,
+    state: AppState<'_>,
     request: InitWebSocketServerRequest,
     correlation_id: Option<String>,
 ) -> AppResult<InitWebSocketServerResponse> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state, UserRole::Admin);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
 
     let port = request.port.unwrap_or(8080);
 
@@ -60,10 +65,14 @@ pub async fn init_websocket_server(
 /// Broadcast message to all connected clients
 #[tauri::command]
 pub async fn broadcast_websocket_message(
+    session_token: String,
+    state: AppState<'_>,
     request: BroadcastWSMessageRequest,
     correlation_id: Option<String>,
 ) -> AppResult<()> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
 
     broadcast_ws_message(request.message).await
 }
@@ -71,26 +80,42 @@ pub async fn broadcast_websocket_message(
 /// Send message to specific client
 #[tauri::command]
 pub async fn send_websocket_message_to_client(
+    session_token: String,
+    state: AppState<'_>,
     request: SendWSMessageRequest,
     correlation_id: Option<String>,
 ) -> AppResult<()> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
 
     send_ws_message_to_client(&request.client_id, request.message).await
 }
 
 /// Get WebSocket server statistics
 #[tauri::command]
-pub async fn get_websocket_stats(correlation_id: Option<String>) -> AppResult<serde_json::Value> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+pub async fn get_websocket_stats(
+    session_token: String,
+    state: AppState<'_>,
+    correlation_id: Option<String>,
+) -> AppResult<serde_json::Value> {
+    let current_user = authenticate!(&session_token, &state, UserRole::Admin);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
 
     Ok(get_ws_stats().await)
 }
 
 /// Shutdown WebSocket server
 #[tauri::command]
-pub async fn shutdown_websocket_server(correlation_id: Option<String>) -> AppResult<()> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+pub async fn shutdown_websocket_server(
+    session_token: String,
+    state: AppState<'_>,
+    correlation_id: Option<String>,
+) -> AppResult<()> {
+    let current_user = authenticate!(&session_token, &state, UserRole::Admin);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
 
     shutdown_ws_server().await
 }
@@ -98,12 +123,16 @@ pub async fn shutdown_websocket_server(correlation_id: Option<String>) -> AppRes
 /// Broadcast task-related real-time updates
 #[tauri::command]
 pub async fn broadcast_task_update(
+    session_token: String,
+    state: AppState<'_>,
     task_id: String,
     update_type: String,
     data: serde_json::Value,
     correlation_id: Option<String>,
 ) -> AppResult<()> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
 
     let message = match update_type.as_str() {
         "created" => WSMessage::TaskCreated { task: data },
@@ -141,12 +170,16 @@ pub async fn broadcast_task_update(
 /// Broadcast intervention-related real-time updates
 #[tauri::command]
 pub async fn broadcast_intervention_update(
+    session_token: String,
+    state: AppState<'_>,
     intervention_id: String,
     update_type: String,
     data: serde_json::Value,
     correlation_id: Option<String>,
 ) -> AppResult<()> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
 
     let message = match update_type.as_str() {
         "started" => {
@@ -192,12 +225,16 @@ pub async fn broadcast_intervention_update(
 /// Broadcast client-related real-time updates
 #[tauri::command]
 pub async fn broadcast_client_update(
+    session_token: String,
+    state: AppState<'_>,
     client_id: String,
     update_type: String,
     data: serde_json::Value,
     correlation_id: Option<String>,
 ) -> AppResult<()> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
 
     let message = match update_type.as_str() {
         "created" => WSMessage::ClientCreated { client: data },
@@ -220,12 +257,16 @@ pub async fn broadcast_client_update(
 /// Broadcast system notification
 #[tauri::command]
 pub async fn broadcast_system_notification(
+    session_token: String,
+    state: AppState<'_>,
     title: String,
     message: String,
     level: String,
     correlation_id: Option<String>,
 ) -> AppResult<()> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
 
     let ws_message = WSMessage::Notification {
         title,

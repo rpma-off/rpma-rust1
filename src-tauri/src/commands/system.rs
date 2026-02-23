@@ -1,7 +1,7 @@
 //! System information commands
 
+use crate::commands::{AppState, UserRole};
 use crate::authenticate;
-use crate::commands::{AppError, AppState};
 use serde::Serialize;
 use std::process::Command;
 use tracing;
@@ -17,8 +17,14 @@ pub struct DeviceInfo {
 /// Get device information for fingerprinting
 #[tracing::instrument(skip_all)]
 #[tauri::command]
-pub async fn get_device_info(correlation_id: Option<String>) -> Result<DeviceInfo, String> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+pub async fn get_device_info(
+    session_token: String,
+    state: AppState<'_>,
+    correlation_id: Option<String>,
+) -> Result<DeviceInfo, String> {
+    let current_user = authenticate!(&session_token, &state, UserRole::Viewer);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
     use tokio::time::{timeout, Duration};
 
     // Add 3 second timeout
@@ -177,14 +183,10 @@ pub async fn diagnose_database(
     session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,
-) -> Result<serde_json::Value, AppError> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let _current_user = authenticate!(
-        &session_token,
-        &state,
-        crate::shared::contracts::auth::UserRole::Admin
-    );
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
+) -> Result<serde_json::Value, String> {
+    let current_user = authenticate!(&session_token, &state, UserRole::Admin);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
     let pool = state.db.pool().clone();
 
     tokio::task::spawn_blocking(move || {
@@ -201,14 +203,10 @@ pub async fn force_wal_checkpoint(
     session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,
-) -> Result<String, AppError> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let _current_user = authenticate!(
-        &session_token,
-        &state,
-        crate::shared::contracts::auth::UserRole::Admin
-    );
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
+) -> Result<String, String> {
+    let current_user = authenticate!(&session_token, &state, UserRole::Admin);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
     let pool = state.db.pool().clone();
 
     tokio::task::spawn_blocking(move || {
@@ -223,10 +221,13 @@ pub async fn force_wal_checkpoint(
 #[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn health_check(
+    session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<String, String> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state, UserRole::Viewer);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
     let pool = state.db.pool().clone();
 
     tokio::task::spawn_blocking(move || {
@@ -243,14 +244,10 @@ pub async fn get_database_stats(
     session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,
-) -> Result<serde_json::Value, AppError> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let _current_user = authenticate!(
-        &session_token,
-        &state,
-        crate::shared::contracts::auth::UserRole::Admin
-    );
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
+) -> Result<serde_json::Value, String> {
+    let current_user = authenticate!(&session_token, &state, UserRole::Supervisor);
+    let _correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
     let pool = state.db.pool().clone();
 
     tokio::task::spawn_blocking(move || {

@@ -2,6 +2,7 @@
 //!
 //! This module contains commands for window management and system integration.
 
+use crate::authenticate;
 use tauri::{command, Window};
 
 /// Minimize the application window
@@ -126,18 +127,8 @@ pub async fn get_recent_activities(
 
     let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
 
-    // Validate session
-    let auth_service = state.auth_service.clone();
-    let current_user = auth_service
-        .validate_session(&session_token)
-        .map_err(|e| format!("Authentication failed: {}", e))?;
-
+    let current_user = authenticate!(&session_token, &state, super::UserRole::Admin);
     crate::commands::update_correlation_context_user(&current_user.user_id);
-
-    // Check if user is admin
-    if current_user.role != super::UserRole::Admin {
-        return Err("Admin access required".to_string());
-    }
 
     debug!(
         "Retrieving recent activities for admin: {}",
