@@ -29,7 +29,8 @@ pub enum RepoError {
 
 impl From<rusqlite::Error> for RepoError {
     fn from(err: rusqlite::Error) -> Self {
-        RepoError::Database(err.to_string())
+        tracing::error!(error = %err, "Repository database error");
+        RepoError::Database("A database error occurred".to_string())
     }
 }
 
