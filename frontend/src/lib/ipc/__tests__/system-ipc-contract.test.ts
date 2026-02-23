@@ -28,15 +28,15 @@ describe('systemOperations IPC contract tests', () => {
   });
 
   it('calls safeInvoke with correct parameters for getDatabaseStatus', async () => {
-    await systemOperations.getDatabaseStatus();
+    await systemOperations.getDatabaseStatus('test-token');
 
-    expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.DIAGNOSE_DATABASE);
+    expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.DIAGNOSE_DATABASE, { session_token: 'test-token' });
   });
 
   it('calls safeInvoke with correct parameters for getDatabaseStats', async () => {
-    await systemOperations.getDatabaseStats();
+    await systemOperations.getDatabaseStats('test-token');
 
-    expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.GET_DATABASE_STATS);
+    expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.GET_DATABASE_STATS, { session_token: 'test-token' });
   });
 
   it('calls safeInvoke with correct parameters for getDatabasePoolHealth', async () => {

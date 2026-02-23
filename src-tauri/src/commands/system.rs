@@ -1,6 +1,7 @@
 //! System information commands
 
-use crate::commands::AppState;
+use crate::authenticate;
+use crate::commands::{AppError, AppState};
 use serde::Serialize;
 use std::process::Command;
 use tracing;
@@ -173,33 +174,49 @@ fn get_device_id() -> Result<String, String> {
 #[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn diagnose_database(
+    session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, AppError> {
     let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let _current_user = authenticate!(
+        &session_token,
+        &state,
+        crate::shared::contracts::auth::UserRole::Admin
+    );
+    crate::commands::update_correlation_context_user(&_current_user.user_id);
     let pool = state.db.pool().clone();
 
     tokio::task::spawn_blocking(move || {
         crate::shared::services::system::SystemService::diagnose_database(&pool)
     })
     .await
-    .map_err(|e| format!("Task join error: {}", e))?
+    .map_err(|e| AppError::Internal(format!("Task join error: {}", e)))?
+    .map_err(|e| AppError::Internal(e))
 }
 
 #[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn force_wal_checkpoint(
+    session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,
-) -> Result<String, String> {
+) -> Result<String, AppError> {
     let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let _current_user = authenticate!(
+        &session_token,
+        &state,
+        crate::shared::contracts::auth::UserRole::Admin
+    );
+    crate::commands::update_correlation_context_user(&_current_user.user_id);
     let pool = state.db.pool().clone();
 
     tokio::task::spawn_blocking(move || {
         crate::shared::services::system::SystemService::force_wal_checkpoint(&pool)
     })
     .await
-    .map_err(|e| format!("Task join error: {}", e))?
+    .map_err(|e| AppError::Internal(format!("Task join error: {}", e)))?
+    .map_err(|e| AppError::Internal(e))
 }
 
 /// Health check command
@@ -223,17 +240,25 @@ pub async fn health_check(
 #[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn get_database_stats(
+    session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, AppError> {
     let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let _current_user = authenticate!(
+        &session_token,
+        &state,
+        crate::shared::contracts::auth::UserRole::Admin
+    );
+    crate::commands::update_correlation_context_user(&_current_user.user_id);
     let pool = state.db.pool().clone();
 
     tokio::task::spawn_blocking(move || {
         crate::shared::services::system::SystemService::get_database_stats(&pool)
     })
     .await
-    .map_err(|e| format!("Task join error: {}", e))?
+    .map_err(|e| AppError::Internal(format!("Task join error: {}", e)))?
+    .map_err(|e| AppError::Internal(e))
 }
 
 /// Get application information

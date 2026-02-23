@@ -3,13 +3,8 @@
 import React, { useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { DragDropContext } from '@hello-pangea/dnd';
-import { CalendarHeader } from '@/domains/calendar';
+import { CalendarHeader, MonthView, WeekView, DayView, AgendaView, useCalendarStore } from '@/domains/calendar';
 import { QuickAddDialog, FilterDrawer } from '@/domains/tasks';
-import { MonthView } from '@/domains/calendar/components/MonthView';
-import { WeekView } from '@/domains/calendar/components/WeekView';
-import { DayView } from '@/domains/calendar/components/DayView';
-import { AgendaView } from '@/domains/calendar/components/AgendaView';
-import { useCalendarStore } from '@/domains/calendar/stores/calendarStore';
 import { useCalendar } from '@/domains/calendar';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';

@@ -1,6 +1,9 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
-import { useAutoSave, useWorkflowStepAutoSave, useBeforeUnloadSave } from '@/shared/hooks/useAutoSave'
-import { taskService } from '@/domains/tasks'
+import { useAutoSave, useBeforeUnloadSave } from '@/shared/hooks/useAutoSave'
+// eslint-disable-next-line no-restricted-imports -- test file needs direct mock access
+import { useWorkflowStepAutoSave } from '@/domains/tasks/hooks/useWorkflowStepAutoSave'
+// eslint-disable-next-line no-restricted-imports -- test file needs direct mock access
+import { taskService } from '@/domains/tasks/services/task.service'
 
 // Mock sonner
 jest.mock('sonner', () => ({
@@ -10,7 +13,7 @@ jest.mock('sonner', () => ({
   }
 }))
 
-jest.mock('@/domains/tasks', () => ({
+jest.mock('@/domains/tasks/services/task.service', () => ({
   taskService: {
     updateTaskStepData: jest.fn()
   }

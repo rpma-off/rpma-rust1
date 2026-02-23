@@ -12,11 +12,11 @@ export const adminIpc = {
   getApplicationMetrics: (): Promise<JsonValue> =>
     safeInvoke<JsonValue>(IPC_COMMANDS.GET_APPLICATION_METRICS),
 
-  getDatabaseStatus: (): Promise<JsonValue> =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.DIAGNOSE_DATABASE),
+  getDatabaseStatus: (sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.DIAGNOSE_DATABASE, { session_token: sessionToken }),
 
-  getDatabaseStats: (): Promise<JsonValue> =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.GET_DATABASE_STATS),
+  getDatabaseStats: (sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_DATABASE_STATS, { session_token: sessionToken }),
 
   getDatabasePoolHealth: (): Promise<JsonValue> =>
     safeInvoke<JsonValue>(IPC_COMMANDS.GET_DATABASE_POOL_HEALTH),
