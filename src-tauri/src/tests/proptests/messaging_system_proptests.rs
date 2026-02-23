@@ -262,7 +262,7 @@ proptest! {
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(async {
             let db = create_test_db().await;
-            let repo = MessageRepository::new(Arc::new(db), Arc::new(crate::repositories::cache::Cache::new(100)));
+            let repo = MessageRepository::new(Arc::new(db), Arc::new(crate::shared::repositories::cache::Cache::new(100)));
 
             // Create test users
             create_test_user(&repo.db.get_connection().unwrap(), "sender_random", "sender@example.com");
@@ -328,7 +328,7 @@ proptest! {
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(async {
             let db = create_test_db().await;
-            let repo = MessageRepository::new(Arc::new(db), Arc::new(crate::repositories::cache::Cache::new(100)));
+            let repo = MessageRepository::new(Arc::new(db), Arc::new(crate::shared::repositories::cache::Cache::new(100)));
 
             // Create test users
             create_test_user(&repo.db.get_connection().unwrap(), "sender_transition", "sender@example.com");
@@ -413,7 +413,7 @@ proptest! {
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(async {
             let db = create_test_db().await;
-            let cache = Arc::new(crate::repositories::cache::Cache::new(100));
+            let cache = Arc::new(crate::shared::repositories::cache::Cache::new(100));
 
             // Create test user
             create_test_user(&db, "user_template", "user@example.com");
@@ -569,7 +569,7 @@ proptest! {
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(async {
             let db = create_test_db().await;
-            let repo = MessageRepository::new(Arc::new(db), Arc::new(crate::repositories::cache::Cache::new(100)));
+            let repo = MessageRepository::new(Arc::new(db), Arc::new(crate::shared::repositories::cache::Cache::new(100)));
 
             // Create test users
             create_test_user(&repo.db.get_connection().unwrap(), "sender_search", "sender@example.com");
@@ -656,7 +656,7 @@ proptest! {
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(async {
             let db = create_test_db().await;
-            let repo = MessageRepository::new(Arc::new(db), Arc::new(crate::repositories::cache::Cache::new(100)));
+            let repo = MessageRepository::new(Arc::new(db), Arc::new(crate::shared::repositories::cache::Cache::new(100)));
 
             // Create test users
             create_test_user(&repo.db.get_connection().unwrap(), "sender_schedule", "sender@example.com");
@@ -713,7 +713,7 @@ proptest! {
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(async {
             let db = create_test_db().await;
-            let repo = MessageRepository::new(Arc::new(db), Arc::new(crate::repositories::cache::Cache::new(100)));
+            let repo = MessageRepository::new(Arc::new(db), Arc::new(crate::shared::repositories::cache::Cache::new(100)));
 
             // Create test users
             create_test_user(&repo.db.get_connection().unwrap(), "sender_priority", "sender@example.com");
@@ -806,7 +806,7 @@ proptest! {
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(async {
             let db = create_test_db().await;
-            let repo = MessageRepository::new(Arc::new(db), Arc::new(crate::repositories::cache::Cache::new(100)));
+            let repo = MessageRepository::new(Arc::new(db), Arc::new(crate::shared::repositories::cache::Cache::new(100)));
 
             // Create test users
             create_test_user(&repo.db.get_connection().unwrap(), "sender_metadata", "sender@example.com");

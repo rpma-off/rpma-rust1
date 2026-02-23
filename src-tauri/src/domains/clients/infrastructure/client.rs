@@ -8,7 +8,7 @@ use crate::domains::clients::domain::models::client::{
     ClientListResponse, ClientQuery, CreateClientRequest, UpdateClientRequest,
 };
 use crate::domains::clients::infrastructure::client_repository::ClientRepository;
-use crate::repositories::Repository;
+use crate::shared::repositories::Repository;
 use chrono::{Datelike, Utc};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -29,7 +29,7 @@ impl ClientService {
     /// Create a new ClientService instance with database (for backward compatibility)
     #[deprecated(note = "Use new(client_repo) instead")]
     pub fn new_with_db(db: Arc<crate::db::Database>) -> Self {
-        use crate::repositories::Cache;
+        use crate::shared::repositories::Cache;
         let cache = Arc::new(Cache::new(1000));
         Self {
             client_repo: Arc::new(ClientRepository::new(db, cache)),

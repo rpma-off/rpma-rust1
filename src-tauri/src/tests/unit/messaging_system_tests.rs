@@ -169,7 +169,7 @@ async fn test_message_repository_crud() {
     let db = create_test_db().await;
     let repo = MessageRepository::new(
         Arc::new(db),
-        Arc::new(crate::repositories::cache::Cache::new(100)),
+        Arc::new(crate::shared::repositories::cache::Cache::new(100)),
     );
 
     // Create test users
@@ -249,7 +249,7 @@ async fn test_message_type_filtering() {
     let db = create_test_db().await;
     let repo = MessageRepository::new(
         Arc::new(db),
-        Arc::new(crate::repositories::cache::Cache::new(100)),
+        Arc::new(crate::shared::repositories::cache::Cache::new(100)),
     );
 
     // Create test users
@@ -361,7 +361,7 @@ async fn test_message_status_transitions() {
     let db = create_test_db().await;
     let repo = MessageRepository::new(
         Arc::new(db),
-        Arc::new(crate::repositories::cache::Cache::new(100)),
+        Arc::new(crate::shared::repositories::cache::Cache::new(100)),
     );
 
     // Create test users
@@ -460,7 +460,7 @@ async fn test_message_priority_filtering() {
     let db = create_test_db().await;
     let repo = MessageRepository::new(
         Arc::new(db),
-        Arc::new(crate::repositories::cache::Cache::new(100)),
+        Arc::new(crate::shared::repositories::cache::Cache::new(100)),
     );
 
     // Create test users
@@ -526,7 +526,7 @@ async fn test_message_recipient_filtering() {
     let db = create_test_db().await;
     let repo = MessageRepository::new(
         Arc::new(db),
-        Arc::new(crate::repositories::cache::Cache::new(100)),
+        Arc::new(crate::shared::repositories::cache::Cache::new(100)),
     );
 
     // Create multiple test users
@@ -602,7 +602,7 @@ async fn test_unsent_messages_filter() {
     let db = create_test_db().await;
     let repo = MessageRepository::new(
         Arc::new(db),
-        Arc::new(crate::repositories::cache::Cache::new(100)),
+        Arc::new(crate::shared::repositories::cache::Cache::new(100)),
     );
 
     // Create test users
@@ -666,7 +666,7 @@ async fn test_unsent_messages_filter() {
 #[tokio::test]
 async fn test_message_date_filtering() {
     let db = create_test_db().await;
-    let repo = MessageRepository::new(Arc::new(db), Arc::new(crate::repositories::cache::new(100)));
+    let repo = MessageRepository::new(Arc::new(db), Arc::new(crate::shared::repositories::cache::new(100)));
 
     // Create test users
     create_test_user(
@@ -738,7 +738,7 @@ async fn test_message_date_filtering() {
 #[tokio::test]
 async fn test_message_template_crud() {
     let db = create_test_db().await;
-    let cache = Arc::new(crate::repositories::cache::Cache::new(100));
+    let cache = Arc::new(crate::shared::repositories::cache::Cache::new(100));
 
     // Create test user
     create_test_user(&db, "user_template", "user@example.com");
@@ -954,7 +954,7 @@ async fn test_message_scheduling() {
     let db = create_test_db().await;
     let repo = MessageRepository::new(
         Arc::new(db),
-        Arc::new(crate::repositories::cache::Cache::new(100)),
+        Arc::new(crate::shared::repositories::cache::Cache::new(100)),
     );
 
     // Create test users
@@ -1025,7 +1025,7 @@ async fn test_message_error_handling() {
     let db = create_test_db().await;
     let repo = MessageRepository::new(
         Arc::new(db),
-        Arc::new(crate::repositories::cache::Cache::new(100)),
+        Arc::new(crate::shared::repositories::cache::Cache::new(100)),
     );
 
     // Create test users

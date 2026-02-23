@@ -6,7 +6,7 @@ use crate::db::Database;
 use crate::domains::calendar::domain::models::calendar_event::{
     CalendarEvent, CreateEventInput, EventStatus, EventType, UpdateEventInput,
 };
-use crate::repositories::base::{RepoError, RepoResult, Repository};
+use crate::shared::repositories::base::{RepoError, RepoResult, Repository};
 use async_trait::async_trait;
 use rusqlite::params;
 use serde_json;

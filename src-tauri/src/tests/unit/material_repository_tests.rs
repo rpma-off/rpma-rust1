@@ -7,7 +7,7 @@ use crate::domains::inventory::domain::models::material::{Material, MaterialType
 use crate::domains::inventory::infrastructure::material_repository::{
     MaterialQuery, MaterialRepository,
 };
-use crate::repositories::base::Repository;
+use crate::shared::repositories::base::Repository;
 use crate::test_utils::TestDatabase;
 use std::collections::HashMap;
 
@@ -143,7 +143,7 @@ mod tests {
         assert!(result.is_err());
 
         match result.unwrap_err() {
-            crate::repositories::base::RepoError::NotFound(_) => {
+            crate::shared::repositories::base::RepoError::NotFound(_) => {
                 // Expected
             }
             _ => panic!("Expected NotFound error"),
@@ -180,7 +180,7 @@ mod tests {
         assert!(result.is_err());
 
         match result.unwrap_err() {
-            crate::repositories::base::RepoError::NotFound(_) => {
+            crate::shared::repositories::base::RepoError::NotFound(_) => {
                 // Expected
             }
             _ => panic!("Expected NotFound error"),
@@ -694,7 +694,7 @@ mod tests {
         assert!(result.is_err());
 
         match result.unwrap_err() {
-            crate::repositories::base::RepoError::Validation(msg) => {
+            crate::shared::repositories::base::RepoError::Validation(msg) => {
                 assert!(msg.contains("Invalid sort column"));
                 assert!(msg.contains("invalid_column"));
             }
@@ -923,7 +923,7 @@ mod tests {
         assert!(result.is_err());
 
         match result.unwrap_err() {
-            crate::repositories::base::RepoError::NotFound(_) => {
+            crate::shared::repositories::base::RepoError::NotFound(_) => {
                 // Expected
             }
             _ => panic!("Expected NotFound error"),
@@ -940,7 +940,7 @@ mod tests {
         assert!(result.is_err());
 
         match result.unwrap_err() {
-            crate::repositories::base::RepoError::NotFound(_) => {
+            crate::shared::repositories::base::RepoError::NotFound(_) => {
                 // Expected
             }
             _ => panic!("Expected NotFound error"),

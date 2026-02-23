@@ -5,7 +5,7 @@
 
 use crate::domains::quotes::domain::models::quote::*;
 use crate::domains::quotes::infrastructure::quote_repository::QuoteRepository;
-use crate::repositories::base::RepoError;
+use crate::shared::repositories::base::RepoError;
 use chrono::Utc;
 use rusqlite::params;
 use std::sync::Arc;
@@ -446,7 +446,7 @@ mod tests {
     use super::*;
     use crate::db::Database;
     use crate::domains::quotes::infrastructure::quote_repository::QuoteRepository;
-    use crate::repositories::cache::Cache;
+    use crate::shared::repositories::cache::Cache;
 
     fn setup_service() -> (QuoteService, Arc<Database>) {
         let db = Arc::new(crate::test_utils::setup_test_db_sync());

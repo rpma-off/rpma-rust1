@@ -3,8 +3,8 @@
 //! Provides consistent database access patterns for AuditLog entities.
 
 use crate::db::Database;
-use crate::repositories::base::{RepoError, RepoResult, Repository};
-use crate::repositories::cache::{ttl, Cache, CacheKeyBuilder};
+use crate::shared::repositories::base::{RepoError, RepoResult, Repository};
+use crate::shared::repositories::cache::{ttl, Cache, CacheKeyBuilder};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use rusqlite::params;

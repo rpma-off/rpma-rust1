@@ -6,7 +6,7 @@ use crate::db::{Database, FromSqlRow, QueryBuilder};
 use crate::domains::tasks::domain::models::task::{
     PaginationInfo, SortOrder, Task, TaskListResponse, TaskQuery, TaskWithDetails,
 };
-use crate::repositories::base::{RepoError, RepoResult, Repository};
+use crate::shared::repositories::base::{RepoError, RepoResult, Repository};
 use async_trait::async_trait;
 use rusqlite::params;
 use std::sync::Arc;

@@ -4,8 +4,8 @@
 
 use crate::db::Database;
 use crate::domains::quotes::domain::models::quote::{Quote, QuoteItem, QuoteQuery, QuoteStatus};
-use crate::repositories::base::{RepoError, RepoResult};
-use crate::repositories::cache::{ttl, Cache, CacheKeyBuilder};
+use crate::shared::repositories::base::{RepoError, RepoResult};
+use crate::shared::repositories::cache::{ttl, Cache, CacheKeyBuilder};
 use rusqlite::params;
 use std::sync::Arc;
 

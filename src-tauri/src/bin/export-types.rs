@@ -3,97 +3,110 @@
 // Note: serde_json::Value is handled via #[ts(type = "JsonValue")] attributes in the model definitions
 use ts_rs::TS;
 
-// Import your project's models
-// NOTE: You'll need to make your models public (e.g., `pub mod models;` in lib.rs)
-use rpma_ppf_intervention::models::{
-    auth::{DeviceInfo, UserAccount, UserRole, UserSession},
-    calendar::{CalendarDateRange, CalendarFilter, CalendarTask, ConflictDetection},
-    calendar_event::{
-        CalendarEvent, CreateEventInput, EventParticipant, EventStatus, EventType,
-        ParticipantStatus, UpdateEventInput,
-    },
-    client::{
-        Client, ClientListResponse, ClientQuery, ClientStatistics, ClientWithTasks,
-        CreateClientRequest, CustomerType, UpdateClientRequest,
-    },
-    common::{
-        FilmType, GpsLocation, LightingCondition, TimestampString, WeatherCondition, WorkLocation,
-    },
-    intervention::{BulkUpdateInterventionRequest, InterventionFilter},
-    intervention::{Intervention, InterventionProgress, InterventionStatus, InterventionType},
-    material::{
-        InterventionMaterialSummary, InventoryMovementSummary, InventoryStats,
-        InventoryTransaction, InventoryTransactionType, Material, MaterialCategory,
-        MaterialConsumption, MaterialConsumptionSummary, MaterialStats, MaterialType, Supplier,
-        UnitOfMeasure,
-    },
-    material_ts::{InventoryTransactionTS, MaterialConsumptionTS, MaterialTS},
-    message::{
-        Message, MessageListResponse, MessagePriority, MessageQuery, MessageStatus,
-        MessageTemplate, MessageTemplateRequest, MessageType, NotificationPreferences,
-        SendMessageRequest, UpdateNotificationPreferencesRequest,
-    },
-    notification::{
-        EmailConfig, EmailProvider, NotificationChannel, NotificationConfig, NotificationMessage,
-        NotificationPriority, NotificationStatus, NotificationTemplate, NotificationType,
-        SmsConfig, SmsProvider, TemplateVariables,
-    },
-    photo::{Photo, PhotoCategory, PhotoType},
-    quote::{
-        CreateQuoteItemRequest, CreateQuoteRequest, Quote, QuoteAcceptResponse,
-        QuoteExportResponse, QuoteItem, QuoteItemKind, QuoteListResponse, QuoteQuery, QuoteStatus,
-        TaskCreatedInfo, UpdateQuoteItemRequest, UpdateQuoteRequest,
-    },
-    reports::{
-        AnalyticsDashboard, AnalyticsDashboardData, AnalyticsKpi, AnalyticsMetric,
-        AnalyticsSummary, AnalyticsTimeSeries, CalculationPeriod, ChartConfig, ChartDataPoint,
-        ClientAnalyticsReport, ClientPerformance, ClientSummary, ComplianceMetrics, CostTrend,
-        DailyTaskData, DashboardType, DashboardWidget, DateRange, EntityCounts, ExportFormat,
-        ExportResult, GeographicReport, GeographicStats, HeatMapPoint, InterventionBottleneck,
-        InterventionReportResult, KpiCategory, MaterialCostAnalysis, MaterialEfficiency,
-        MaterialSummary, MaterialUsageReport, MetricValueType, OperationalIntelligenceReport,
-        OverviewReport, PeakPeriod, PerformanceBenchmarks, PerformanceTrend,
-        ProcessEfficiencyMetrics, QualityComplianceReport, QualityIssue, QualitySummary,
-        QualityTrend, ReportFilters, ReportMaterialConsumption, ReportMetadata, ReportRequest,
-        ReportResponse, ReportStatus, ReportType, ResourceUtilization, RetentionAnalysis,
-        RevenueAnalysis, SearchFilters, SearchResponse, SearchResult, SearchResults,
-        SeasonalPattern, SeasonalReport, ServiceArea, StatusCount, StepBottleneck,
-        SupplierPerformance, TaskCompletionReport, TaskCompletionSummary, TechnicianMetrics,
-        TechnicianPerformance, TechnicianPerformanceReport, TechnicianTaskData, TrendDirection,
-        WeatherCorrelation, WidgetPosition, WidgetSize, WidgetType, WorkflowRecommendation,
-        WorkloadPeriod,
-    },
-    settings::{
-        AppSettings, AppearanceSettings, BackupSettings, DataManagementSettings, DatabaseSettings,
-        DiagnosticSettings, GeneralSettings, IntegrationSettings, NotificationSettings,
-        PerformanceSettings, SecuritySettings, StorageSettings, SystemConfiguration,
-        UserAccessibilitySettings, UserNotificationSettings, UserPerformanceSettings,
-        UserPreferences, UserProfileSettings, UserSecuritySettings, UserSettings,
-    },
-    status::{StatusDistribution, StatusTransitionRequest},
-    step::{InterventionStep, StepStatus, StepType},
-    sync::{EntityType, OperationType, SyncOperation, SyncQueueMetrics, SyncStatus},
-    task::{
-        AssignmentCheckResponse, AssignmentStatus, AvailabilityCheckResponse, AvailabilityStatus,
-        CreateTaskRequest, DeleteTaskRequest, PaginationInfo, SortOrder, Task, TaskHistory,
-        TaskListResponse, TaskPhoto, TaskPriority, TaskQuery, TaskStatistics, TaskStatus,
-        TaskWithDetails, UpdateTaskRequest,
-    },
+// Import models from canonical domain paths
+use rpma_ppf_intervention::shared::contracts::auth::{
+    DeviceInfo, UserAccount, UserRole, UserSession,
+};
+use rpma_ppf_intervention::domains::calendar::domain::models::calendar::{
+    CalendarDateRange, CalendarFilter, CalendarTask, ConflictDetection,
+};
+use rpma_ppf_intervention::domains::calendar::domain::models::calendar_event::{
+    CalendarEvent, CreateEventInput, EventParticipant, EventStatus, EventType,
+    ParticipantStatus, UpdateEventInput,
+};
+use rpma_ppf_intervention::domains::clients::domain::models::client::{
+    Client, ClientListResponse, ClientQuery, ClientStatistics, ClientWithTasks,
+    CreateClientRequest, CustomerType, UpdateClientRequest,
+};
+use rpma_ppf_intervention::shared::contracts::common::{
+    FilmType, GpsLocation, LightingCondition, TimestampString, WeatherCondition, WorkLocation,
+};
+use rpma_ppf_intervention::domains::interventions::domain::models::intervention::{
+    BulkUpdateInterventionRequest, Intervention, InterventionFilter, InterventionProgress,
+    InterventionStatus, InterventionType,
+};
+use rpma_ppf_intervention::domains::inventory::domain::models::material::{
+    InterventionMaterialSummary, InventoryMovementSummary, InventoryStats,
+    InventoryTransaction, InventoryTransactionType, Material, MaterialCategory,
+    MaterialConsumption, MaterialConsumptionSummary, MaterialStats, MaterialType, Supplier,
+    UnitOfMeasure,
+};
+use rpma_ppf_intervention::domains::inventory::domain::models::material_ts::{
+    InventoryTransactionTS, MaterialConsumptionTS, MaterialTS,
+};
+use rpma_ppf_intervention::domains::notifications::domain::models::message::{
+    Message, MessageListResponse, MessagePriority, MessageQuery, MessageStatus,
+    MessageTemplate, MessageTemplateRequest, MessageType, NotificationPreferences,
+    SendMessageRequest, UpdateNotificationPreferencesRequest,
+};
+use rpma_ppf_intervention::domains::notifications::domain::models::notification::{
+    EmailConfig, EmailProvider, NotificationChannel, NotificationConfig, NotificationMessage,
+    NotificationPriority, NotificationStatus, NotificationTemplate, NotificationType,
+    SmsConfig, SmsProvider, TemplateVariables,
+};
+use rpma_ppf_intervention::domains::documents::domain::models::photo::{
+    Photo, PhotoCategory, PhotoType,
+};
+use rpma_ppf_intervention::domains::quotes::domain::models::quote::{
+    CreateQuoteItemRequest, CreateQuoteRequest, Quote, QuoteAcceptResponse,
+    QuoteExportResponse, QuoteItem, QuoteItemKind, QuoteListResponse, QuoteQuery, QuoteStatus,
+    TaskCreatedInfo, UpdateQuoteItemRequest, UpdateQuoteRequest,
+};
+use rpma_ppf_intervention::domains::reports::domain::models::reports::{
+    AnalyticsDashboard, AnalyticsDashboardData, AnalyticsKpi, AnalyticsMetric,
+    AnalyticsSummary, AnalyticsTimeSeries, CalculationPeriod, ChartConfig, ChartDataPoint,
+    ClientAnalyticsReport, ClientPerformance, ClientSummary, ComplianceMetrics, CostTrend,
+    DailyTaskData, DashboardType, DashboardWidget, DateRange, EntityCounts, ExportFormat,
+    ExportResult, GeographicReport, GeographicStats, HeatMapPoint, InterventionBottleneck,
+    InterventionReportResult, KpiCategory, MaterialCostAnalysis, MaterialEfficiency,
+    MaterialSummary, MaterialUsageReport, MetricValueType, OperationalIntelligenceReport,
+    OverviewReport, PeakPeriod, PerformanceBenchmarks, PerformanceTrend,
+    ProcessEfficiencyMetrics, QualityComplianceReport, QualityIssue, QualitySummary,
+    QualityTrend, ReportFilters, ReportMaterialConsumption, ReportMetadata, ReportRequest,
+    ReportResponse, ReportStatus, ReportType, ResourceUtilization, RetentionAnalysis,
+    RevenueAnalysis, SearchFilters, SearchResponse, SearchResult, SearchResults,
+    SeasonalPattern, SeasonalReport, ServiceArea, StatusCount, StepBottleneck,
+    SupplierPerformance, TaskCompletionReport, TaskCompletionSummary, TechnicianMetrics,
+    TechnicianPerformance, TechnicianPerformanceReport, TechnicianTaskData, TrendDirection,
+    WeatherCorrelation, WidgetPosition, WidgetSize, WidgetType, WorkflowRecommendation,
+    WorkloadPeriod,
+};
+use rpma_ppf_intervention::domains::settings::domain::models::settings::{
+    AppSettings, AppearanceSettings, BackupSettings, DataManagementSettings, DatabaseSettings,
+    DiagnosticSettings, GeneralSettings, IntegrationSettings, NotificationSettings,
+    PerformanceSettings, SecuritySettings, StorageSettings, SystemConfiguration,
+    UserAccessibilitySettings, UserNotificationSettings, UserPerformanceSettings,
+    UserPreferences, UserProfileSettings, UserSecuritySettings, UserSettings,
+};
+use rpma_ppf_intervention::domains::tasks::domain::models::status::{
+    StatusDistribution, StatusTransitionRequest,
+};
+use rpma_ppf_intervention::domains::interventions::domain::models::step::{
+    InterventionStep, StepStatus, StepType,
+};
+use rpma_ppf_intervention::domains::sync::domain::models::sync::{
+    EntityType, OperationType, SyncOperation, SyncQueueMetrics, SyncStatus,
+};
+use rpma_ppf_intervention::domains::tasks::domain::models::task::{
+    AssignmentCheckResponse, AssignmentStatus, AvailabilityCheckResponse, AvailabilityStatus,
+    CreateTaskRequest, DeleteTaskRequest, PaginationInfo, SortOrder, Task, TaskHistory,
+    TaskListResponse, TaskPhoto, TaskPriority, TaskQuery, TaskStatistics, TaskStatus,
+    TaskWithDetails, UpdateTaskRequest,
 };
 
-use rpma_ppf_intervention::repositories::{base::PaginatedResult, cache::CacheStats};
+use rpma_ppf_intervention::shared::repositories::{base::PaginatedResult, cache::CacheStats};
 
-// Import service request types
-use rpma_ppf_intervention::services::intervention::{
+// Import service request types from canonical domain paths
+use rpma_ppf_intervention::domains::interventions::infrastructure::intervention_types::{
     AdvanceStepRequest, FinalizeInterventionRequest, GpsCoordinates, SaveStepProgressRequest,
     StartInterventionRequest,
 };
-use rpma_ppf_intervention::services::intervention_types::{
+use rpma_ppf_intervention::domains::interventions::infrastructure::intervention_types::{
     AdvanceStepResponse, FinalizeInterventionResponse, InterventionMetrics,
     InterventionStepWithPhotos, InterventionWithDetails, SaveStepProgressResponse,
     StartInterventionResponse, StepRequirement,
 };
-use rpma_ppf_intervention::services::prediction::CompletionTimePrediction;
+use rpma_ppf_intervention::shared::contracts::prediction::CompletionTimePrediction;
 
 // Import command request types
 use rpma_ppf_intervention::commands::{
