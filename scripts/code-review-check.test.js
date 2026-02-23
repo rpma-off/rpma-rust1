@@ -7,7 +7,7 @@ test('flags edited generated backend.ts file', () => {
 index 1111111..2222222 100644
 --- a/frontend/src/lib/backend.ts
 +++ b/frontend/src/lib/backend.ts
-@@ -1,0 +1,1 @@
+@@ -1,1 +1,2 @@
 +export const x = 1;
 `;
 
@@ -20,7 +20,7 @@ test('flags direct tauri invoke without correlation propagation', () => {
 index 1111111..2222222 100644
 --- a/frontend/src/domains/tasks/ipc/tasks.ipc.ts
 +++ b/frontend/src/domains/tasks/ipc/tasks.ipc.ts
-@@ -10,0 +10,2 @@
+@@ -10,1 +10,3 @@
 +import { invoke } from '@tauri-apps/api/core';
 +const run = () => invoke('x');
 `;
