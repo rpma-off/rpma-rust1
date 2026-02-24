@@ -6,6 +6,8 @@
 pub mod auth_commands_simple_test;
 pub mod auth_commands_test;
 pub mod client_commands_test;
+pub mod golden_flows_test;
+pub mod ipc_contract_test;
 pub mod user_commands_test;
 
 // Legacy suites depend on pre-migration command/test harness APIs.

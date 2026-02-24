@@ -54,6 +54,14 @@ path = "tests/commands/intervention_commands_test.rs"
 name = "task_commands_test"
 path = "tests/commands/task_commands_test.rs"
 
+[[test]]
+name = "ipc_contract_test"
+path = "tests/commands/ipc_contract_test.rs"
+
+[[test]]
+name = "golden_flows_test"
+path = "tests/commands/golden_flows_test.rs"
+
 [build-dependencies]
 tauri-build = { version = "2.0", features = [] }
 
