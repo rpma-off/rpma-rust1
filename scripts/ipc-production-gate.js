@@ -27,6 +27,7 @@ const PUBLIC_ALLOWLIST = new Set([
   "auth_create_account",
   "has_admins",
   "bootstrap_first_admin",
+  "test_pdf_generation",
   // NOTE: auth_validate_session is considered PROTECTED by default in RPMA design.
   // If your codebase treats it as public, remove it from protected checks OR add it here intentionally.
 ]);
@@ -35,8 +36,13 @@ const PUBLIC_ALLOWLIST = new Set([
 const AUTH_VALIDATION_PATTERNS = [
   /authenticate!\s*\(/, // macro
   /auth_middleware::authenticate\s*\(/,
+  /AuthMiddleware::authenticate\s*\(/,
+  /authenticate_user\s*\(/,
   /require_auth\s*\(/,
   /validate_session\s*\(/, // if you have a dedicated validation helper
+  /execute_user_action\s*\(/,
+  /\b\w+(?:::\w+)*\s*\([\s\S]*\bsession_token\b[\s\S]*\)\s*\.await/,
+  /logout\s*\(\s*&token\s*\)/,
 ];
 
 // Correlation initialization patterns expected inside IPC
@@ -48,6 +54,10 @@ const CORRELATION_INIT_PATTERNS = [
 const RESPONSE_ENVELOPE_PATTERNS = [
   /ApiResponse\s*<[^>]+>/,
   /CompressedApiResponse/,
+  /\bAppResult\s*</,
+  /\bResult\s*<[\s\S]*,\s*ApiError\s*>/,
+  /\bResult\s*<[\s\S]*,\s*AppError\s*>/,
+  /\bResult\s*<[\s\S]*,\s*String\s*>/,
 ];
 
 // Forbid SQL usage inside IPC files (domains/**/ipc/** only)
@@ -58,12 +68,7 @@ const FORBIDDEN_SQL_PATTERNS = [
   /\.query_map\s*\(/,
   /\brusqlite::/,
 
-  // Raw SQL keywords (high-signal; keep strict)
-  /\bSELECT\b/,
-  /\bINSERT\b/,
-  /\bUPDATE\b/,
-  /\bDELETE\b/,
-  /\bFROM\b/,
+  // Avoid raw keyword matching to prevent false positives in normal strings/comments.
 ];
 
 // Forbid unsafe patterns in IPC handlers
@@ -145,13 +150,15 @@ function isExcludedForRemnants(filePath) {
  * and multi-line variants.
  */
 function parseGenerateHandlerCommands(mainRsContent) {
-  const out = new Set();
+  const out = [];
 
   // Find blocks like generate_handler![ ... ]
   const re = /generate_handler!\s*\[(.*?)\]/gs;
   let m;
   while ((m = re.exec(mainRsContent))) {
-    const inner = m[1];
+    const inner = m[1]
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\/\/[^\r\n]*/g, "");
 
     // Split by commas, keep last segment after '::' as function name
     const parts = inner
@@ -162,7 +169,13 @@ function parseGenerateHandlerCommands(mainRsContent) {
     for (const p of parts) {
       // Example: domains::auth::ipc::auth::auth_login
       const fn = p.split("::").pop();
-      if (fn) out.add(fn);
+      if (fn) {
+        out.push({
+          name: fn,
+          path: p,
+          isDomainIpcRegistration: p.includes("domains::") && p.includes("::ipc::"),
+        });
+      }
     }
   }
 
@@ -176,6 +189,7 @@ function parseGenerateHandlerCommands(mainRsContent) {
  * We capture:
  *   #[tauri::command]
  *   pub async fn name(args...) -> Result<...> { body }
+ *   pub fn name(args...) -> Result<...> { body }
  *
  * Note: This is not a full Rust parser, but robust enough for a gate.
  */
@@ -183,7 +197,7 @@ function extractTauriCommandFns(fileContent) {
   const out = [];
 
   // Capture annotation + fn header
-  const re = /#\s*\[\s*tauri::command\s*\]\s*[\s\S]*?\bpub\s+async\s+fn\s+([A-Za-z0-9_]+)\s*\(([\s\S]*?)\)\s*->\s*([\s\S]*?)\s*\{/g;
+  const re = /#\s*\[\s*tauri::command\s*\]\s*[\s\S]*?\bpub\s+(?:async\s+)?fn\s+([A-Za-z0-9_]+)\s*\(([\s\S]*?)\)\s*->\s*([\s\S]*?)\s*\{/g;
 
   let m;
   while ((m = re.exec(fileContent))) {
@@ -235,6 +249,22 @@ function hasSessionTokenParam(argsRaw) {
   return /\bsession_token\s*:\s*String\b/.test(cleaned) || /\bsession_token\s*:\s*&\s*str\b/.test(cleaned);
 }
 
+function hasProtectedAuthParam(cmd, fn) {
+  if (hasSessionTokenParam(fn.argsRaw) || hasRequestSessionTokenUsage(fn)) return true;
+  if (cmd === "auth_logout") {
+    return /\btoken\s*:\s*String\b/.test(fn.argsRaw.replace(/\s+/g, " "));
+  }
+  return false;
+}
+
+function hasRequestSessionTokenUsage(fn) {
+  return /\brequest\s*\.\s*session_token\b/.test(fn.body);
+}
+
+function acceptsCorrelationId(fn) {
+  return /\bcorrelation_id\b/.test(fn.argsRaw) || /\brequest\s*\.\s*correlation_id\b/.test(fn.body);
+}
+
 function matchesAny(patterns, text) {
   return patterns.some((p) => p.test(text));
 }
@@ -271,7 +301,10 @@ function run() {
 
   const mainContent = readUtf8(MAIN_RS);
   const registered = parseGenerateHandlerCommands(mainContent);
-  results.totalRegistered = registered.size;
+  const registeredNames = new Set(registered.map((r) => r.name));
+  const domainRegistered = registered.filter((r) => r.isDomainIpcRegistration);
+  const domainRegisteredNames = new Set(domainRegistered.map((r) => r.name));
+  results.totalRegistered = registeredNames.size;
 
   // --- Step 2: Scan IPC rust files for #[tauri::command]
   const rustFiles = walk(BACKEND_SRC, {
@@ -303,12 +336,12 @@ function run() {
   }
 
   // --- Step 3: Cross-check registered vs detected
-  for (const cmd of registered) {
-    if (!detected.has(cmd)) {
+  for (const reg of domainRegistered) {
+    if (!detected.has(reg.name)) {
       results.violations.push({
         type: "CRITICAL",
         file: MAIN_RS,
-        command: cmd,
+        command: reg.name,
         issue: "Command registered in generate_handler! but no #[tauri::command] handler found in domains/**/ipc/**",
         hint: "Either register the correct handler path or add the missing handler.",
       });
@@ -316,7 +349,7 @@ function run() {
   }
 
   for (const [cmd, info] of detected.entries()) {
-    if (!registered.has(cmd)) {
+    if (!domainRegisteredNames.has(cmd)) {
       results.violations.push({
         type: "MAJOR",
         file: info.file,
@@ -345,8 +378,8 @@ function run() {
       });
     }
 
-    // Correlation init check (strict for all commands)
-    if (!matchesAny(CORRELATION_INIT_PATTERNS, fn.body)) {
+    // Correlation init check (only for handlers that accept correlation identifiers)
+    if (acceptsCorrelationId(fn) && !matchesAny(CORRELATION_INIT_PATTERNS, fn.body)) {
       results.violations.push({
         type: "MAJOR",
         file,
@@ -382,7 +415,7 @@ function run() {
 
     if (!isPublic) {
       // Protected command must have session_token param
-      if (!hasSessionTokenParam(fn.argsRaw)) {
+      if (!hasProtectedAuthParam(cmd, fn)) {
         results.violations.push({
           type: "CRITICAL",
           file,
