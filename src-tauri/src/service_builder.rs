@@ -19,7 +19,6 @@
 //! - **MaterialService**: Database
 //! - **AnalyticsService**: Database
 //! - **SessionService**: Database
-//! - **TwoFactorService**: Database
 //! - **CacheService**: Self-contained (uses internal caching)
 //! - **ReportJobService**: Database, CacheService
 //! - **PerformanceMonitorService**: Database

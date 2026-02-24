@@ -1288,11 +1288,6 @@ mod tests {
     }
 
     fn setup_services() -> (LocalTestDb, SettingsService, AuthService) {
-        std::env::set_var(
-            "JWT_SECRET",
-            "test_jwt_secret_with_minimum_required_length_32_chars",
-        );
-
         let test_db = LocalTestDb::new();
         let db = test_db.db.clone();
         let settings_service = SettingsService::new(db.clone());
