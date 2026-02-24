@@ -440,11 +440,7 @@ impl AuthService {
         password: &str,
         ip_address: Option<&str>,
     ) -> Result<UserSession, String> {
-        debug!(
-            "Authentication attempt for user {} with password length {}",
-            email,
-            password.len()
-        );
+        debug!("Authentication attempt for user {}", email);
 
         // Validate input
         let (validated_email, validated_password) = self
