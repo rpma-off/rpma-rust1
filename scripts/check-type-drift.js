@@ -14,6 +14,7 @@ const path = require('path');
 const CONFIG = {
   rustSourceDir: 'src-tauri/src',
   generatedTypesFile: 'frontend/src/lib/backend.ts',
+  generatedTypesDir: 'frontend/src/lib/backend',
   manualTypesFiles: [
     'frontend/src/types/unified.types.ts',
     'frontend/src/types/api.ts'
@@ -74,16 +75,30 @@ function extractRustTypes() {
 function extractGeneratedTypes() {
   const generatedTypes = new Set();
 
-  if (!fs.existsSync(CONFIG.generatedTypesFile)) {
-    return generatedTypes;
+  // Check monolithic file (legacy)
+  if (fs.existsSync(CONFIG.generatedTypesFile)) {
+    const content = fs.readFileSync(CONFIG.generatedTypesFile, 'utf8');
+    // If the legacy file is a stub re-exporting from ./backend/index, scan domain files instead
+    if (!content.includes("export * from './backend/index'")) {
+      const matches = content.matchAll(/export\s+(?:type|interface)\s+(\w+)/g);
+      for (const match of matches) {
+        generatedTypes.add(match[1]);
+      }
+    }
   }
 
-  const content = fs.readFileSync(CONFIG.generatedTypesFile, 'utf8');
-
-  // Extract export type/interface declarations
-  const matches = content.matchAll(/export\s+(?:type|interface)\s+(\w+)/g);
-  for (const match of matches) {
-    generatedTypes.add(match[1]);
+  // Check domain-split directory
+  if (fs.existsSync(CONFIG.generatedTypesDir) && fs.statSync(CONFIG.generatedTypesDir).isDirectory()) {
+    const files = fs.readdirSync(CONFIG.generatedTypesDir);
+    for (const file of files) {
+      if (!file.endsWith('.ts')) continue;
+      const filePath = path.join(CONFIG.generatedTypesDir, file);
+      const content = fs.readFileSync(filePath, 'utf8');
+      const matches = content.matchAll(/export\s+(?:type|interface)\s+(\w+)/g);
+      for (const match of matches) {
+        generatedTypes.add(match[1]);
+      }
+    }
   }
 
   return generatedTypes;
