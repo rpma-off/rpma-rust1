@@ -1,16 +1,29 @@
 {
-  "timestamp": "2026-02-19T14:52:49.443Z",
-  "status": "PASS",
+  "timestamp": "2026-02-24T16:36:14.582Z",
+  "status": "ISSUES_FOUND",
   "summary": {
-    "rustTypes": 238,
+    "rustTypes": 240,
     "generatedTypes": 241,
     "manualTypes": 33,
-    "totalIssues": 0,
-    "highSeverity": 0,
+    "totalIssues": 2,
+    "highSeverity": 2,
     "mediumSeverity": 0,
     "lowSeverity": 0
   },
-  "issues": [],
+  "issues": [
+    {
+      "type": "missing_generated",
+      "severity": "high",
+      "message": "Rust type 'CalendarTaskStatus' has TS derive but is not in generated types",
+      "recommendation": "Check export-types.rs registration or build process"
+    },
+    {
+      "type": "missing_generated",
+      "severity": "high",
+      "message": "Rust type 'CalendarTaskPriority' has TS derive but is not in generated types",
+      "recommendation": "Check export-types.rs registration or build process"
+    }
+  ],
   "rustExports": [
     "AdvanceStepRequest",
     "AdvanceStepResponse",
@@ -35,6 +48,8 @@
     "CalendarEvent",
     "CalendarFilter",
     "CalendarTask",
+    "CalendarTaskPriority",
+    "CalendarTaskStatus",
     "ChartConfig",
     "ChartDataPoint",
     "Client",
