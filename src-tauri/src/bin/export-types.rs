@@ -139,11 +139,6 @@ fn main() {
     type_definitions.push_str("export type JsonObject = { [key: string]: JsonValue };\n");
     type_definitions.push_str("export type JsonArray = JsonValue[];\n\n");
 
-    // Export UserSession with ts-rs
-    type_definitions
-        .push_str(&UserSession::export_to_string().expect("Failed to export UserSession type"));
-    type_definitions.push_str("\n\n");
-
     // Error types (ts-rs exports)
     type_definitions.push_str("// Error types\n");
     type_definitions

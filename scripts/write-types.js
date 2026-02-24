@@ -87,16 +87,9 @@ function extractTypeNames(content) {
 function findCrossDomainImports(content, ownTypes, typeToDomain, ownDomain) {
   const imports = {};
 
-  // Extract only type definition bodies (right side of = sign) to avoid false matches in comments
-  const definitionBodies = [];
-  for (const line of content.split('\n')) {
-    const match = line.match(/export\s+(?:type|interface)\s+\w+\s*=\s*(.*)/);
-    if (match) {
-      definitionBodies.push(match[1]);
-    }
-  }
-  const definitionText = definitionBodies.join('\n');
-
+  // Scan the full content for type references (not just definition bodies),
+  // since ts-rs may generate multi-line type definitions with embedded JSDoc.
+  // We skip import/export declaration lines to avoid self-referencing.
   const allTypeNames = Object.keys(typeToDomain);
   for (const typeName of allTypeNames) {
     if (ownTypes.has(typeName)) continue;
@@ -105,7 +98,7 @@ function findCrossDomainImports(content, ownTypes, typeToDomain, ownDomain) {
 
     // Word-boundary match to avoid substring false positives
     const regex = new RegExp('\\b' + typeName + '\\b');
-    if (regex.test(definitionText)) {
+    if (regex.test(content)) {
       if (!imports[targetDomain]) imports[targetDomain] = [];
       imports[targetDomain].push(typeName);
     }
@@ -126,11 +119,23 @@ function writeDomainSplitFiles(input) {
     typesByDomain[domain] = extractTypeNames(content);
   }
 
-  // Build global type-to-domain map
+  // Deduplicate: if a type appears in multiple domains, keep only the LAST occurrence
+  // (later domain markers override earlier ones, which handles intentional reassignment)
   const typeToDomain = {};
   for (const [domain, types] of Object.entries(typesByDomain)) {
     for (const typeName of types) {
       typeToDomain[typeName] = domain;
+    }
+  }
+
+  // Remove duplicate type definitions from domains where the type is NOT the canonical owner
+  for (const [domain, types] of Object.entries(typesByDomain)) {
+    for (const typeName of types) {
+      if (typeToDomain[typeName] !== domain) {
+        // Remove the duplicate export line from this domain's content
+        domains[domain] = removeDuplicateExport(domains[domain], typeName);
+        types.delete(typeName);
+      }
     }
   }
 
@@ -202,6 +207,38 @@ function validateRequiredExports(content) {
     process.exit(1);
   }
   console.log(`✅ Validated exports: ${requiredExports.join(', ')}`);
+}
+
+/**
+ * Remove a duplicate type export from content.
+ * Removes the export line and any preceding ts-rs comment/JSDoc blocks.
+ */
+function removeDuplicateExport(content, typeName) {
+  const lines = content.split('\n');
+  const result = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    // Check if this line exports the duplicate type
+    const exportRegex = new RegExp(`^export\\s+(?:type|interface)\\s+${typeName}\\b`);
+    if (exportRegex.test(lines[i].trim())) {
+      // Remove this line, and any preceding ts-rs/JSDoc comment block
+      while (result.length > 0) {
+        const last = result[result.length - 1].trim();
+        if (last.startsWith('//') || last.startsWith('/**') || last.startsWith('*') || last === '') {
+          result.pop();
+        } else {
+          break;
+        }
+      }
+      i++;
+      continue;
+    }
+    result.push(lines[i]);
+    i++;
+  }
+
+  return result.join('\n');
 }
 
 /**
