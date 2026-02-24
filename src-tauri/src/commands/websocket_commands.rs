@@ -3,8 +3,8 @@
 //! This module provides Tauri commands for managing WebSocket connections
 //! and real-time updates from the frontend.
 
-use crate::commands::{websocket::*, AppResult, AppState, UserRole};
 use crate::authenticate;
+use crate::commands::{websocket::*, AppResult, AppState, UserRole};
 use serde::{Deserialize, Serialize};
 
 /// Request to initialize WebSocket server

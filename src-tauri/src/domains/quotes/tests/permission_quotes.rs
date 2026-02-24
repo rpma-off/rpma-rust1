@@ -2,8 +2,8 @@ use crate::db::Database;
 use crate::domains::quotes::infrastructure::quote::QuoteService;
 use crate::domains::quotes::infrastructure::quote_repository::QuoteRepository;
 use crate::domains::quotes::QuotesFacade;
-use crate::shared::repositories::Cache;
 use crate::shared::ipc::errors::AppError;
+use crate::shared::repositories::Cache;
 use std::sync::Arc;
 
 #[tokio::test]

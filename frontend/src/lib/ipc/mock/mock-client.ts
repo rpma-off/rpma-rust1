@@ -245,8 +245,8 @@ export const ipcClient = {
       invoke('get_events_for_task', { task_id: taskId, session_token: sessionToken })
   },
   dashboard: {
-    getStats: (timeRange?: string) =>
-      invoke('dashboard_get_stats', { timeRange })
+    getStats: (sessionToken: string, timeRange?: string) =>
+      invoke('dashboard_get_stats', { session_token: sessionToken, timeRange })
   },
   users: {
     create: (data: JsonObject, sessionToken: string) =>
@@ -327,7 +327,7 @@ export const ipcClient = {
     getDatabaseStats: (sessionToken: string) => invoke('get_database_stats', { session_token: sessionToken }),
     getDatabasePoolStats: () => invoke('get_database_pool_stats'),
     getAppInfo: () => invoke('get_app_info'),
-    vacuumDatabase: () => invoke('vacuum_database')
+    vacuumDatabase: (sessionToken: string) => invoke('vacuum_database', { session_token: sessionToken })
   },
   ui: {
     windowMinimize: () => invoke('ui_window_minimize'),

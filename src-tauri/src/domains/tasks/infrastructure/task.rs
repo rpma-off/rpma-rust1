@@ -505,10 +505,12 @@ impl TaskService {
     ///
     /// Returns counts grouped into high-level categories:
     /// quote, scheduled, in_progress, paused, completed, cancelled
-    pub fn get_status_distribution(&self) -> AppResult<crate::domains::tasks::domain::models::status::StatusDistribution> {
+    pub fn get_status_distribution(
+        &self,
+    ) -> AppResult<crate::domains::tasks::domain::models::status::StatusDistribution> {
         use crate::commands::AppError;
-        use crate::domains::tasks::infrastructure::task_repository::TaskRepository;
         use crate::domains::tasks::domain::models::status::StatusDistribution;
+        use crate::domains::tasks::infrastructure::task_repository::TaskRepository;
 
         let repo = TaskRepository::new(self.crud.db.clone());
 

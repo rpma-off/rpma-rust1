@@ -40,8 +40,10 @@ pub async fn send_log_to_frontend(
 ) -> Result<(), String> {
     let current_user = authenticate!(&log_message.session_token, &state, UserRole::Technician);
     // Initialize correlation context
-    let _correlation_id =
-        crate::commands::init_correlation_context(&log_message.correlation_id, Some(&current_user.user_id));
+    let _correlation_id = crate::commands::init_correlation_context(
+        &log_message.correlation_id,
+        Some(&current_user.user_id),
+    );
 
     let level_str = match log_message.level {
         LogLevel::Debug => "DEBUG",

@@ -28,7 +28,7 @@ async function handleGet(request: NextRequest, _context?: unknown) {
     const timeRange = url.searchParams.get('timeRange') as 'day' | 'week' | 'month' | 'year' || 'month';
 
     // Get task statistics
-    const result = await analyticsService.getTaskStatistics(timeRange);
+    const result = await analyticsService.getTaskStatistics('', timeRange);
 
     if (result.error) {
       return NextResponse.json(

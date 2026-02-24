@@ -228,8 +228,9 @@ mod tests {
 
     #[test]
     fn api_response_error_sanitizes_database_errors() {
-        let response: ApiResponse<()> =
-            ApiResponse::error(AppError::Database("SQLITE_BUSY: database is locked".to_string()));
+        let response: ApiResponse<()> = ApiResponse::error(AppError::Database(
+            "SQLITE_BUSY: database is locked".to_string(),
+        ));
         assert!(!response.success);
         let msg = response.message.as_deref().unwrap();
         assert!(

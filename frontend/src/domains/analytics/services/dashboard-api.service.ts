@@ -62,9 +62,20 @@ export class DashboardApiService {
     lastCleared: new Date().toISOString()
   };
 
-  static async getDashboardStats(): Promise<DashboardStats> {
+  static async getDashboardStats(sessionToken?: string): Promise<DashboardStats> {
     try {
-      const stats = await ipcClient.dashboard.getStats();
+      // Get session token for authentication
+      let token = sessionToken;
+      if (!token) {
+        const session = await AuthSecureStorage.getSession();
+        token = session.token || undefined;
+      }
+
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
+      const stats = await ipcClient.dashboard.getStats(token);
 
       // Transform from backend format to dashboard format
       return {
@@ -142,7 +153,7 @@ export class DashboardApiService {
       // Fetch tasks and stats in parallel
       const [taskListResponse, statsResponse] = await Promise.all([
         ipcClient.tasks.list(taskQuery, token),
-        ipcClient.dashboard.getStats()
+        ipcClient.dashboard.getStats(token)
       ]);
 
       // Transform the data

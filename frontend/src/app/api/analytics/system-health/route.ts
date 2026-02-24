@@ -22,7 +22,7 @@ async function handleGet(_request: NextRequest, _context?: unknown) {
     }
 
     // Get system health metrics
-    const result = await analyticsService.getSystemHealthMetrics();
+    const result = await analyticsService.getSystemHealthMetrics('');
 
     if (result.error) {
       return NextResponse.json(

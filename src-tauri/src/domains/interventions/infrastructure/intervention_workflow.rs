@@ -8,7 +8,6 @@
 
 use crate::db::Database;
 use crate::db::{InterventionError, InterventionResult};
-use crate::shared::logging::{LogDomain, RPMARequestLogger};
 use crate::domains::interventions::domain::models::intervention::{
     Intervention, InterventionStatus,
 };
@@ -21,6 +20,7 @@ use crate::domains::interventions::infrastructure::workflow_strategy::{
 use crate::domains::interventions::infrastructure::workflow_validation::WorkflowValidationService;
 use crate::shared::contracts::common::TimestampString;
 use crate::shared::event_bus::{publish_event, InterventionFinalized};
+use crate::shared::logging::{LogDomain, RPMARequestLogger};
 use serde_json::json;
 
 use std::sync::Arc;

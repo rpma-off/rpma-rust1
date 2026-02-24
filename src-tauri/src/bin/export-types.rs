@@ -4,94 +4,91 @@
 use ts_rs::TS;
 
 // Import models from canonical domain paths
-use rpma_ppf_intervention::shared::contracts::auth::{
-    DeviceInfo, UserAccount, UserRole, UserSession,
-};
 use rpma_ppf_intervention::domains::calendar::domain::models::calendar::{
     CalendarDateRange, CalendarFilter, CalendarTask, ConflictDetection,
 };
 use rpma_ppf_intervention::domains::calendar::domain::models::calendar_event::{
-    CalendarEvent, CreateEventInput, EventParticipant, EventStatus, EventType,
-    ParticipantStatus, UpdateEventInput,
+    CalendarEvent, CreateEventInput, EventParticipant, EventStatus, EventType, ParticipantStatus,
+    UpdateEventInput,
 };
 use rpma_ppf_intervention::domains::clients::domain::models::client::{
     Client, ClientListResponse, ClientQuery, ClientStatistics, ClientWithTasks,
     CreateClientRequest, CustomerType, UpdateClientRequest,
 };
-use rpma_ppf_intervention::shared::contracts::common::{
-    FilmType, GpsLocation, LightingCondition, TimestampString, WeatherCondition, WorkLocation,
+use rpma_ppf_intervention::domains::documents::domain::models::photo::{
+    Photo, PhotoCategory, PhotoType,
 };
 use rpma_ppf_intervention::domains::interventions::domain::models::intervention::{
     BulkUpdateInterventionRequest, Intervention, InterventionFilter, InterventionProgress,
     InterventionStatus, InterventionType,
 };
+use rpma_ppf_intervention::domains::interventions::domain::models::step::{
+    InterventionStep, StepStatus, StepType,
+};
 use rpma_ppf_intervention::domains::inventory::domain::models::material::{
-    InterventionMaterialSummary, InventoryMovementSummary, InventoryStats,
-    InventoryTransaction, InventoryTransactionType, Material, MaterialCategory,
-    MaterialConsumption, MaterialConsumptionSummary, MaterialStats, MaterialType, Supplier,
-    UnitOfMeasure,
+    InterventionMaterialSummary, InventoryMovementSummary, InventoryStats, InventoryTransaction,
+    InventoryTransactionType, Material, MaterialCategory, MaterialConsumption,
+    MaterialConsumptionSummary, MaterialStats, MaterialType, Supplier, UnitOfMeasure,
 };
 use rpma_ppf_intervention::domains::inventory::domain::models::material_ts::{
     InventoryTransactionTS, MaterialConsumptionTS, MaterialTS,
 };
 use rpma_ppf_intervention::domains::notifications::domain::models::message::{
-    Message, MessageListResponse, MessagePriority, MessageQuery, MessageStatus,
-    MessageTemplate, MessageTemplateRequest, MessageType, NotificationPreferences,
-    SendMessageRequest, UpdateNotificationPreferencesRequest,
+    Message, MessageListResponse, MessagePriority, MessageQuery, MessageStatus, MessageTemplate,
+    MessageTemplateRequest, MessageType, NotificationPreferences, SendMessageRequest,
+    UpdateNotificationPreferencesRequest,
 };
 use rpma_ppf_intervention::domains::notifications::domain::models::notification::{
     EmailConfig, EmailProvider, NotificationChannel, NotificationConfig, NotificationMessage,
-    NotificationPriority, NotificationStatus, NotificationTemplate, NotificationType,
-    SmsConfig, SmsProvider, TemplateVariables,
-};
-use rpma_ppf_intervention::domains::documents::domain::models::photo::{
-    Photo, PhotoCategory, PhotoType,
+    NotificationPriority, NotificationStatus, NotificationTemplate, NotificationType, SmsConfig,
+    SmsProvider, TemplateVariables,
 };
 use rpma_ppf_intervention::domains::quotes::domain::models::quote::{
-    CreateQuoteItemRequest, CreateQuoteRequest, Quote, QuoteAcceptResponse,
-    QuoteExportResponse, QuoteItem, QuoteItemKind, QuoteListResponse, QuoteQuery, QuoteStatus,
-    TaskCreatedInfo, UpdateQuoteItemRequest, UpdateQuoteRequest,
+    CreateQuoteItemRequest, CreateQuoteRequest, Quote, QuoteAcceptResponse, QuoteExportResponse,
+    QuoteItem, QuoteItemKind, QuoteListResponse, QuoteQuery, QuoteStatus, TaskCreatedInfo,
+    UpdateQuoteItemRequest, UpdateQuoteRequest,
 };
 use rpma_ppf_intervention::domains::reports::domain::models::reports::{
-    AnalyticsDashboard, AnalyticsDashboardData, AnalyticsKpi, AnalyticsMetric,
-    AnalyticsSummary, AnalyticsTimeSeries, CalculationPeriod, ChartConfig, ChartDataPoint,
-    ClientAnalyticsReport, ClientPerformance, ClientSummary, ComplianceMetrics, CostTrend,
-    DailyTaskData, DashboardType, DashboardWidget, DateRange, EntityCounts, ExportFormat,
-    ExportResult, GeographicReport, GeographicStats, HeatMapPoint, InterventionBottleneck,
-    InterventionReportResult, KpiCategory, MaterialCostAnalysis, MaterialEfficiency,
-    MaterialSummary, MaterialUsageReport, MetricValueType, OperationalIntelligenceReport,
-    OverviewReport, PeakPeriod, PerformanceBenchmarks, PerformanceTrend,
-    ProcessEfficiencyMetrics, QualityComplianceReport, QualityIssue, QualitySummary,
-    QualityTrend, ReportFilters, ReportMaterialConsumption, ReportMetadata, ReportRequest,
-    ReportResponse, ReportStatus, ReportType, ResourceUtilization, RetentionAnalysis,
-    RevenueAnalysis, SearchFilters, SearchResponse, SearchResult, SearchResults,
-    SeasonalPattern, SeasonalReport, ServiceArea, StatusCount, StepBottleneck,
-    SupplierPerformance, TaskCompletionReport, TaskCompletionSummary, TechnicianMetrics,
-    TechnicianPerformance, TechnicianPerformanceReport, TechnicianTaskData, TrendDirection,
-    WeatherCorrelation, WidgetPosition, WidgetSize, WidgetType, WorkflowRecommendation,
-    WorkloadPeriod,
+    AnalyticsDashboard, AnalyticsDashboardData, AnalyticsKpi, AnalyticsMetric, AnalyticsSummary,
+    AnalyticsTimeSeries, CalculationPeriod, ChartConfig, ChartDataPoint, ClientAnalyticsReport,
+    ClientPerformance, ClientSummary, ComplianceMetrics, CostTrend, DailyTaskData, DashboardType,
+    DashboardWidget, DateRange, EntityCounts, ExportFormat, ExportResult, GeographicReport,
+    GeographicStats, HeatMapPoint, InterventionBottleneck, InterventionReportResult, KpiCategory,
+    MaterialCostAnalysis, MaterialEfficiency, MaterialSummary, MaterialUsageReport,
+    MetricValueType, OperationalIntelligenceReport, OverviewReport, PeakPeriod,
+    PerformanceBenchmarks, PerformanceTrend, ProcessEfficiencyMetrics, QualityComplianceReport,
+    QualityIssue, QualitySummary, QualityTrend, ReportFilters, ReportMaterialConsumption,
+    ReportMetadata, ReportRequest, ReportResponse, ReportStatus, ReportType, ResourceUtilization,
+    RetentionAnalysis, RevenueAnalysis, SearchFilters, SearchResponse, SearchResult, SearchResults,
+    SeasonalPattern, SeasonalReport, ServiceArea, StatusCount, StepBottleneck, SupplierPerformance,
+    TaskCompletionReport, TaskCompletionSummary, TechnicianMetrics, TechnicianPerformance,
+    TechnicianPerformanceReport, TechnicianTaskData, TrendDirection, WeatherCorrelation,
+    WidgetPosition, WidgetSize, WidgetType, WorkflowRecommendation, WorkloadPeriod,
 };
 use rpma_ppf_intervention::domains::settings::domain::models::settings::{
     AppSettings, AppearanceSettings, BackupSettings, DataManagementSettings, DatabaseSettings,
     DiagnosticSettings, GeneralSettings, IntegrationSettings, NotificationSettings,
     PerformanceSettings, SecuritySettings, StorageSettings, SystemConfiguration,
-    UserAccessibilitySettings, UserNotificationSettings, UserPerformanceSettings,
-    UserPreferences, UserProfileSettings, UserSecuritySettings, UserSettings,
-};
-use rpma_ppf_intervention::domains::tasks::domain::models::status::{
-    StatusDistribution, StatusTransitionRequest,
-};
-use rpma_ppf_intervention::domains::interventions::domain::models::step::{
-    InterventionStep, StepStatus, StepType,
+    UserAccessibilitySettings, UserNotificationSettings, UserPerformanceSettings, UserPreferences,
+    UserProfileSettings, UserSecuritySettings, UserSettings,
 };
 use rpma_ppf_intervention::domains::sync::domain::models::sync::{
     EntityType, OperationType, SyncOperation, SyncQueueMetrics, SyncStatus,
+};
+use rpma_ppf_intervention::domains::tasks::domain::models::status::{
+    StatusDistribution, StatusTransitionRequest,
 };
 use rpma_ppf_intervention::domains::tasks::domain::models::task::{
     AssignmentCheckResponse, AssignmentStatus, AvailabilityCheckResponse, AvailabilityStatus,
     CreateTaskRequest, DeleteTaskRequest, PaginationInfo, SortOrder, Task, TaskHistory,
     TaskListResponse, TaskPhoto, TaskPriority, TaskQuery, TaskStatistics, TaskStatus,
     TaskWithDetails, UpdateTaskRequest,
+};
+use rpma_ppf_intervention::shared::contracts::auth::{
+    DeviceInfo, UserAccount, UserRole, UserSession,
+};
+use rpma_ppf_intervention::shared::contracts::common::{
+    FilmType, GpsLocation, LightingCondition, TimestampString, WeatherCondition, WorkLocation,
 };
 
 use rpma_ppf_intervention::shared::repositories::{base::PaginatedResult, cache::CacheStats};

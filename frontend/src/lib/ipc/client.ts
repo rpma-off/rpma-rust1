@@ -1280,8 +1280,8 @@ export const ipcClient = {
 
   // Dashboard operations
   dashboard: {
-    getStats: (timeRange?: 'day' | 'week' | 'month' | 'year') =>
-      safeInvoke<{ tasks?: { total?: number; completed?: number; pending?: number; active?: number }; clients?: { total?: number; active?: number }; users?: { total?: number; active?: number; admins?: number; technicians?: number }; sync?: { status?: string; pending_operations?: number; completed_operations?: number } }>('dashboard_get_stats', { timeRange }),
+    getStats: (sessionToken: string, timeRange?: 'day' | 'week' | 'month' | 'year') =>
+      safeInvoke<{ tasks?: { total?: number; completed?: number; pending?: number; active?: number }; clients?: { total?: number; active?: number }; users?: { total?: number; active?: number; admins?: number; technicians?: number }; sync?: { status?: string; pending_operations?: number; completed_operations?: number } }>('dashboard_get_stats', { session_token: sessionToken, timeRange }),
   },
 
   // User operations
@@ -1435,8 +1435,8 @@ export const ipcClient = {
     getDatabaseStats: (sessionToken: string) =>
       safeInvoke<JsonValue>('get_database_stats', { session_token: sessionToken }),
 
-    getDatabasePoolHealth: () =>
-      safeInvoke<JsonValue>('get_database_pool_health'),
+    getDatabasePoolHealth: (sessionToken: string) =>
+      safeInvoke<JsonValue>('get_database_pool_health', { session_token: sessionToken }),
 
     getAppInfo: () =>
       safeInvoke<JsonValue>('get_app_info'),
