@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 const buildContentSecurityPolicy = (isDev: boolean) => {
-  const scriptSrc = ["'self'", isDev ? "'unsafe-eval'" : ''].filter(Boolean).join(' ');
+  const scriptSrc = ["'self'", "'unsafe-inline'", isDev ? "'unsafe-eval'" : ''].filter(Boolean).join(' ');
   const connectSrc = [
     "'self'",
     'tauri:',
