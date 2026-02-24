@@ -21,7 +21,7 @@ Role enum source: `src-tauri/src/domains/auth/domain/models/auth.rs`.
 
 - Local SQLite database is the runtime source of truth.
 - Sync is optional and queued (`src-tauri/src/domains/sync/*`).
-- Domain events are in-process (`src-tauri/src/shared/event_bus/*`).
+- Domain events are in-process (`src-tauri/src/shared/services/event_bus.rs`).
 - App startup creates/opens `rpma.db` in Tauri app data directory and runs init/migrations (`src-tauri/src/main.rs`).
 
 ## Tech stack summary
@@ -53,7 +53,7 @@ Frontend feature domains under `frontend/src/domains/` mirror business areas and
 4. Add/update frontend domain IPC wrapper (`frontend/src/domains/<domain>/ipc/*.ts`) and consumer hooks/components.
 
 ### Find command handler and caller
-- Rust registration: `src-tauri/src/main.rs`
+- Rust registration: `src-tauri/src/main.rs` (135+ commands registered)
 - Rust implementation: `src-tauri/src/domains/*/ipc/**/*.rs`
 - Frontend caller(s): `frontend/src/domains/*/ipc/*.ts` and `frontend/src/lib/ipc/client.ts`
 

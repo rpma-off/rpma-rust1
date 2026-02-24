@@ -18,7 +18,7 @@ Connection/pool config source:
 ## Schema and migration sources
 
 - Base schema: `src-tauri/src/db/schema.sql`
-- Embedded migrations: `src-tauri/migrations/*.sql` (compiled via `include_dir!` in `src-tauri/src/db/migrations.rs`)
+- Embedded migrations: `src-tauri/migrations/*.sql` (currently 002-040, compiled via `include_dir!` in `src-tauri/src/db/migrations.rs`)
 - Root migration folder also exists: `migrations/*.sql` (used by repo scripts/audits)
 
 ## Migration apply mechanism
@@ -34,7 +34,7 @@ Flow:
 
 ## How to add a migration safely
 
-1. Add SQL file in `src-tauri/migrations/` with numeric prefix (e.g., `038_new_feature.sql`).
+1. Add SQL file in `src-tauri/migrations/` with numeric prefix (e.g., `041_new_feature.sql`).
 2. Make SQL idempotent where possible (`IF EXISTS` / `IF NOT EXISTS`).
 3. If schema affects exported types/contracts, run `npm run types:sync`.
 4. Run migration checks:

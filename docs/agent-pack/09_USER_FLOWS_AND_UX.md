@@ -10,7 +10,7 @@
 
 ## 2) Task management
 
-- Entry routes: `/tasks`, `/tasks/new`, `/tasks/[id]`
+- Entry routes: `/tasks`, `/tasks/new`, `/tasks/[id]`, `/tasks/edit/[id]`
 - UI modules: `frontend/src/domains/tasks/components/*`, hooks in `.../tasks/hooks/*`
 - Commands: `task_crud`, `edit_task`, `task_transition_status`, assignment validation commands
 - Backend handlers: `src-tauri/src/domains/tasks/ipc/task/facade.rs`, `.../tasks/ipc/status.rs`, `.../tasks/ipc/task/validation.rs`
@@ -18,7 +18,7 @@
 
 ## 3) Intervention execution workflow
 
-- Entry route: `/interventions` (+ workflow UI in interventions/workflow domains)
+- Entry routes: `/interventions`, `/tasks/[id]/workflow/*`
 - UI modules: `frontend/src/domains/interventions/*`, `frontend/src/domains/workflow/*`
 - Commands: `intervention_start`, `intervention_advance_step`, `intervention_save_step_progress`, `intervention_finalize`, read/progress commands
 - Backend handlers: `src-tauri/src/domains/interventions/ipc/intervention/*`
@@ -34,7 +34,7 @@
 
 ## 5) Clients
 
-- Entry routes: `/clients`, `/clients/new`, `/clients/[id]`
+- Entry routes: `/clients`, `/clients/new`, `/clients/[id]`, `/clients/[id]/edit`
 - UI modules: `frontend/src/domains/clients/components/*`
 - Commands: `client_crud`
 - Backend handler: `src-tauri/src/domains/clients/ipc/client.rs`
@@ -64,7 +64,7 @@
 
 ## 9) Admin, users, settings, security
 
-- Entry routes: `/admin`, `/users`, `/settings`, `/audit`
+- Entry routes: `/admin`, `/users`, `/settings`, `/audit`, `/configuration`
 - Commands: user CRUD/status commands, settings commands, audit/security session commands
 - Backend handlers:
   - `src-tauri/src/domains/users/ipc/user.rs`

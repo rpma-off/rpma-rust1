@@ -3,13 +3,24 @@
 ## Frontend entrypoints and route map
 
 Core app shell:
-- `frontend/src/app/layout.tsx`
-- `frontend/src/app/RootClientLayout.tsx`
-- `frontend/src/app/providers.tsx`
+- `frontend/src/app/layout.tsx` (server component root)
+- `frontend/src/app/RootClientLayout.tsx` (client wrapper with auth redirects)
+- `frontend/src/app/providers.tsx` (React Query + Auth + Toast)
 
 Primary routes (App Router):
 - Auth/public: `/login`, `/signup`, `/bootstrap-admin`, `/unauthorized`
-- Core: `/dashboard`, `/tasks`, `/tasks/new`, `/tasks/[id]`, `/clients`, `/clients/[id]`, `/interventions`, `/schedule`, `/inventory`, `/quotes`, `/reports`, `/settings`, `/users`, `/analytics`, `/admin`, `/audit`, `/messages`
+- Core: `/dashboard`, `/dashboard/interventions`, `/dashboard/operational-intelligence`, `/tasks`, `/tasks/new`, `/tasks/[id]`, `/tasks/edit/[id]`, `/tasks/[id]/completed`, `/tasks/[id]/workflow`, `/tasks/[id]/workflow/steps/[step]`, `/tasks/[id]/workflow/ppf`, `/tasks/[id]/workflow/ppf/steps/preparation`, `/tasks/[id]/workflow/ppf/steps/installation`, `/tasks/[id]/workflow/ppf/steps/inspection`, `/tasks/[id]/workflow/ppf/steps/finalization`
+- Clients: `/clients`, `/clients/new`, `/clients/[id]`, `/clients/[id]/edit`
+- Schedule: `/schedule`
+- Interventions: `/interventions`
+- Inventory: `/inventory`
+- Quotes: `/quotes`, `/quotes/new`, `/quotes/[id]`
+- Reports: `/reports`
+- Analytics: `/analytics`
+- Admin: `/admin`, `/settings`, `/configuration`
+- Users: `/users`
+- Audit: `/audit`
+- Messages: `/messages`
 - Root: `/` renders `CalendarDashboard` and redirects unauthenticated users to `/login`
 
 Route files are in `frontend/src/app/**/page.tsx`.

@@ -2,7 +2,7 @@
 
 ## Backend structure (current)
 
-- App entry and command registration: `src-tauri/src/main.rs`
+- App entry and command registration: `src-tauri/src/main.rs` (135+ commands)
 - Shared app state: `src-tauri/src/shared/app_state.rs`
 - DB infra: `src-tauri/src/db/*`
 - Bounded contexts: `src-tauri/src/domains/*`

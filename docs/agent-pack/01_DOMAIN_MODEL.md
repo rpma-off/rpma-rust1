@@ -83,7 +83,7 @@ Task statuses in code include:
 ## Storage map (where to verify)
 
 - Base schema: `src-tauri/src/db/schema.sql`
-- Incremental schema changes: `src-tauri/migrations/*.sql`
+- Incremental schema changes: `src-tauri/migrations/*.sql` (currently up to 040)
 - Root migration audit set: `migrations/*.sql`
 
 ## DOC vs CODE mismatch

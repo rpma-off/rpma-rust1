@@ -13,7 +13,7 @@ Frontend (Next.js app routes/components/hooks)
 Key pointers:
 - Frontend entry: `frontend/src/app/layout.tsx`, `frontend/src/app/RootClientLayout.tsx`
 - IPC wrapper: `frontend/src/lib/ipc/utils.ts`, `frontend/src/lib/ipc/client.ts`
-- Command registration: `src-tauri/src/main.rs`
+- Command registration: `src-tauri/src/main.rs` (135+ commands)
 - Command implementations: `src-tauri/src/domains/*/ipc/**/*.rs`
 - DB init/migrate: `src-tauri/src/main.rs`, `src-tauri/src/db/migrations.rs`
 
@@ -37,7 +37,7 @@ Checks performed across layers:
 ```text
 intervention/workflow UI (frontend/src/domains/interventions/*)
   -> interventions IPC wrapper (frontend/src/domains/interventions/ipc/interventions.ipc.ts)
-    -> intervention_advance_step / intervention_finalize
+    -> intervention_advance_step / intervention_save_step_progress / intervention_finalize
        (src-tauri/src/domains/interventions/ipc/intervention/queries.rs + workflow.rs)
       -> intervention workflow services/repos
         -> update intervention_steps/interventions + optional photo/doc updates
@@ -48,7 +48,7 @@ intervention/workflow UI (frontend/src/domains/interventions/*)
 ```text
 schedule page (frontend/src/app/schedule/page.tsx)
   -> calendar IPC wrapper (frontend/src/domains/calendar/ipc/calendar.ts)
-    -> create_event / update_event / calendar_schedule_task
+    -> get_events / create_event / update_event / calendar_schedule_task
        (src-tauri/src/domains/calendar/ipc/calendar.rs)
       -> calendar infra services/repos
         -> calendar_events + related task scheduling updates
@@ -62,7 +62,7 @@ schedule page (frontend/src/app/schedule/page.tsx)
 - Storage: `sync_queue` table (`src-tauri/src/db/schema.sql`)
 
 ### Event bus
-- Shared bus contracts: `src-tauri/src/shared/event_bus/*`
+- Shared bus implementation: `src-tauri/src/shared/services/event_bus.rs`
 - App-level event bus service in state: `src-tauri/src/shared/app_state.rs` (`event_bus`)
 - Startup wiring via service builder: `src-tauri/src/service_builder.rs`
 

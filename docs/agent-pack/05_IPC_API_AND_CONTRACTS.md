@@ -30,22 +30,21 @@ Code pointers:
 | `check_task_assignment` | Assignment validation | task/tech args | Authenticated | `.../tasks/ipc/task/validation.rs` | `.../tasks/ipc/task.ipc.ts` |
 | `check_task_availability` | Availability validation | date/time/tech args | Authenticated | `.../tasks/ipc/task/validation.rs` | `.../tasks/ipc/task.ipc.ts` |
 | `validate_task_assignment_change` | Assignment diff validation | change payload | Authenticated | `.../tasks/ipc/task/validation.rs` | `.../tasks/ipc/task.ipc.ts` |
-| `task_transition_status` | Status transition | transition payload | Authenticated + RBAC | `src-tauri/src/domains/tasks/ipc/status.rs` | `frontend/src/domains/tasks/ipc/task.ipc.ts` |
+| `task_transition_status` | Status transition | transition payload | Authenticated + RBAC | `src-tauri/src/domains/tasks/ipc/status.rs` | TODO (verify in code) |
 | `client_crud` | Client CRUD/list | `action`, `session_token` | Authenticated + role checks | `src-tauri/src/domains/clients/ipc/client.rs` | `frontend/src/domains/clients/ipc/client.ipc.ts` |
-| `intervention_start` | Start intervention | request + `session_token` | Authenticated + assignment checks | `src-tauri/src/domains/interventions/ipc/intervention/workflow.rs` | `frontend/src/domains/interventions/ipc/interventions.ipc.ts` |
-| `intervention_get` | Read intervention | ids + token | Authenticated | `.../interventions/ipc/intervention/data_access.rs` | `.../interventions/ipc/interventions.ipc.ts` |
-| `intervention_advance_step` | Advance step | step payload + token | Authenticated + workflow rules | `.../interventions/ipc/intervention/queries.rs` | `.../interventions/ipc/interventions.ipc.ts` |
-| `intervention_finalize` | Finalize intervention | finalize payload + token | Authenticated + workflow rules | `.../interventions/ipc/intervention/workflow.rs` | `.../interventions/ipc/interventions.ipc.ts` |
-| `intervention_get_progress` | Progress read | ids + token | Authenticated | `.../interventions/ipc/intervention/queries.rs` | `.../interventions/ipc/interventions.ipc.ts` |
+| `intervention_start` | Start intervention | request + `session_token` | Authenticated + assignment checks | `src-tauri/src/domains/interventions/ipc/intervention/workflow.rs` | TODO (verify in code) |
+| `intervention_get` | Read intervention | ids + token | Authenticated | `.../interventions/ipc/intervention/data_access.rs` | TODO (verify in code) |
+| `intervention_advance_step` | Advance step | step payload + token | Authenticated + workflow rules | `.../interventions/ipc/intervention/queries.rs` | TODO (verify in code) |
+| `intervention_finalize` | Finalize intervention | finalize payload + token | Authenticated + workflow rules | `.../interventions/ipc/intervention/workflow.rs` | TODO (verify in code) |
+| `intervention_get_progress` | Progress read | ids + token | Authenticated | `.../interventions/ipc/intervention/queries.rs` | `frontend/src/domains/interventions/ipc/interventions.ipc.ts` |
 | `material_create` | Create material | material payload + token | Authenticated | `src-tauri/src/domains/inventory/ipc/material.rs` | `frontend/src/domains/inventory/ipc/inventory.ipc.ts` |
 | `material_list` | List materials | pagination/filter + token | Authenticated | `.../inventory/ipc/material.rs` | `.../inventory/ipc/inventory.ipc.ts` |
 | `material_update_stock` | Update stock | stock payload + token | Authenticated | `.../inventory/ipc/material.rs` | `.../inventory/ipc/inventory.ipc.ts` |
 | `material_record_consumption` | Record consumption | consumption payload + token | Authenticated | `.../inventory/ipc/material.rs` | `.../inventory/ipc/inventory.ipc.ts` |
 | `quote_create` | Create quote | quote payload + token | Authenticated | `src-tauri/src/domains/quotes/ipc/quote.rs` | `frontend/src/domains/quotes/ipc/quotes.ipc.ts` |
 | `quote_list` | List quotes | filters + token | Authenticated | `.../quotes/ipc/quote.rs` | `.../quotes/ipc/quotes.ipc.ts` |
-| `calendar_get_tasks` | Task calendar feed | range/filter + token | Authenticated | `src-tauri/src/domains/calendar/ipc/calendar.rs` | `frontend/src/domains/calendar/ipc/calendar.ts` |
+| `get_events` | Read events | range/filter + token | Authenticated | `src-tauri/src/domains/calendar/ipc/calendar.rs` | `frontend/src/domains/calendar/ipc/calendar.ts` |
 | `calendar_schedule_task` | Create task schedule | scheduling payload + token | Authenticated + RBAC checks | `.../calendar/ipc/calendar.rs` | `.../calendar/ipc/calendar.ts` |
-| `get_events` | Read events | range/filter + token | Authenticated | `.../calendar/ipc/calendar.rs` | `.../calendar/ipc/calendar.ts` |
 | `sync_get_status` | Sync runtime status | `session_token` | Authenticated | `src-tauri/src/domains/sync/ipc/sync.rs` | `frontend/src/domains/sync/ipc/sync.ipc.ts` |
 
 ## Type sync mechanism
@@ -64,3 +63,4 @@ npm run types:drift-check
 ## DOC vs CODE mismatch
 
 - Older docs may mention `src-tauri/src/commands/*` as canonical command files; command registration in `main.rs` points mostly to `src-tauri/src/domains/*/ipc/*`.
+- Some backend commands registered in main.rs may not have frontend wrappers yet (e.g., `verify_2fa_code`, `task_transition_status`, `intervention_start`).
