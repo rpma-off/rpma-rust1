@@ -55,14 +55,15 @@ export function DesktopDashboard() {
 
   const loadDashboardData = useCallback(async () => {
     try {
-      // Load stats from Tauri backend
-      const dashboardStats = await ipcClient.dashboard.getStats() as DashboardStats;
-      setStats(dashboardStats);
-
-      // Load recent tasks
       if (!user?.token) {
         throw new Error('User not authenticated');
       }
+
+      // Load stats from Tauri backend
+      const dashboardStats = await ipcClient.dashboard.getStats(user.token) as DashboardStats;
+      setStats(dashboardStats);
+
+      // Load recent tasks
       const taskListResponse = await ipcClient.tasks.list({
         page: 1,
         limit: 5,

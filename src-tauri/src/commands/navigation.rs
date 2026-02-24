@@ -1,11 +1,11 @@
 //! Navigation commands for desktop app routing and history management
 
-use lazy_static::lazy_static;
 use crate::authenticate;
+use crate::commands::{AppState, UserRole};
+use lazy_static::lazy_static;
 use std::collections::VecDeque;
 use std::sync::Mutex;
 use tracing::{debug, info, instrument};
-use crate::commands::{AppState, UserRole};
 
 #[derive(Clone, Debug)]
 struct NavigationHistory {

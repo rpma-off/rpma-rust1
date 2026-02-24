@@ -23,12 +23,16 @@ async function handleGet(request: NextRequest, _context?: unknown) {
       );
     }
 
+    // Extract session token from Authorization header
+    const authHeader = request.headers.get('Authorization');
+    const sessionToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : '';
+
     // Get time range from query parameters
     const url = new URL(request.url);
     const timeRange = url.searchParams.get('timeRange') as 'day' | 'week' | 'month' | 'year' || 'month';
 
     // Get task statistics
-    const result = await analyticsService.getTaskStatistics(timeRange);
+    const result = await analyticsService.getTaskStatistics(sessionToken, timeRange);
 
     if (result.error) {
       return NextResponse.json(

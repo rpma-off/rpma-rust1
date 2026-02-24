@@ -3,9 +3,9 @@
 use crate::commands::AppError;
 use crate::domains::users::domain::models::user::User as RepoUser; // Import as RepoUser to distinguish
 use crate::domains::users::infrastructure::user_repository::UserRepository;
+use crate::shared::contracts::auth::{UserAccount, UserRole};
 use crate::shared::repositories::base::RepoError;
 use crate::shared::repositories::Repository;
-use crate::shared::contracts::auth::{UserAccount, UserRole};
 use std::sync::Arc;
 use tracing::{debug, error, info, warn};
 

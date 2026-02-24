@@ -98,7 +98,7 @@ export default function AdminPage() {
       if (!user?.token) return;
 
       try {
-        const dashboardStats = await ipcClient.dashboard.getStats();
+        const dashboardStats = await ipcClient.dashboard.getStats(user.token);
 
          // Get real system information
           const [healthCheck, dbStats] = await Promise.all([

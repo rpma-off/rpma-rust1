@@ -1,10 +1,17 @@
-pub fn dashboard_get_stats(
+pub async fn dashboard_get_stats(
+    session_token: String,
     state: crate::commands::AppState<'_>,
     time_range: Option<String>,
     correlation_id: Option<String>,
 ) -> Result<crate::commands::ApiResponse<serde_json::Value>, crate::commands::AppError> {
     use tracing::{debug, error, info};
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = crate::authenticate!(
+        &session_token,
+        &state,
+        crate::shared::contracts::auth::UserRole::Viewer
+    );
+    let correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
     debug!(
         "Retrieving dashboard statistics for time range: {:?}",
         time_range

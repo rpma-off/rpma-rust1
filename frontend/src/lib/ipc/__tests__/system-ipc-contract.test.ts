@@ -40,9 +40,9 @@ describe('systemOperations IPC contract tests', () => {
   });
 
   it('calls safeInvoke with correct parameters for getDatabasePoolHealth', async () => {
-    await systemOperations.getDatabasePoolHealth();
+    await systemOperations.getDatabasePoolHealth('test-token');
 
-    expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.GET_DATABASE_POOL_HEALTH);
+    expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.GET_DATABASE_POOL_HEALTH, { session_token: 'test-token' });
   });
 
   it('calls safeInvoke with correct parameters for getAppInfo', async () => {

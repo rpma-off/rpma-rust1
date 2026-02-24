@@ -1210,9 +1210,7 @@ impl SettingsService {
         }
 
         if !["image/jpeg", "image/png", "image/gif", "image/webp"].contains(&mime_type) {
-            return Err(AppError::Validation(
-                "Unsupported image format".to_string(),
-            ));
+            return Err(AppError::Validation("Unsupported image format".to_string()));
         }
 
         let data_url = format!("data:{};base64,{}", mime_type.trim(), avatar_data.trim());

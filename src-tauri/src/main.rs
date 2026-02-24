@@ -356,7 +356,8 @@ fn main() {
 
             // Since we're in a non-async context, we need to use tokio::block_on
             let repositories = tokio::runtime::Runtime::new().unwrap().block_on(async {
-                crate::shared::repositories::Repositories::new(Arc::new(db_instance.clone()), 1000).await
+                crate::shared::repositories::Repositories::new(Arc::new(db_instance.clone()), 1000)
+                    .await
             });
             let repositories = Arc::new(repositories);
 

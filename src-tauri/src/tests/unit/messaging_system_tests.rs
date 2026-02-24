@@ -666,7 +666,10 @@ async fn test_unsent_messages_filter() {
 #[tokio::test]
 async fn test_message_date_filtering() {
     let db = create_test_db().await;
-    let repo = MessageRepository::new(Arc::new(db), Arc::new(crate::shared::repositories::cache::new(100)));
+    let repo = MessageRepository::new(
+        Arc::new(db),
+        Arc::new(crate::shared::repositories::cache::new(100)),
+    );
 
     // Create test users
     create_test_user(

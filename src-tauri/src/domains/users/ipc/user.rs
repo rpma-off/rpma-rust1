@@ -174,7 +174,8 @@ pub async fn user_crud(
             // Prevent changing own role
             facade.ensure_not_self_action(&current_user.user_id, &id, "change your own role")?;
 
-            state.user_service
+            state
+                .user_service
                 .change_role(&id, new_role, &current_user.user_id)
                 .await?;
 
@@ -188,7 +189,10 @@ pub async fn user_crud(
             // Prevent banning self
             facade.ensure_not_self_action(&current_user.user_id, &id, "ban yourself")?;
 
-            state.user_service.ban_user(&id, &current_user.user_id).await?;
+            state
+                .user_service
+                .ban_user(&id, &current_user.user_id)
+                .await?;
 
             info!("User {} banned successfully", id);
             Ok(ApiResponse::success(UserResponse::UserBanned)
@@ -197,7 +201,10 @@ pub async fn user_crud(
         UserAction::Unban { id } => {
             info!("Unbanning user ID: {}", id);
 
-            state.user_service.unban_user(&id, &current_user.user_id).await?;
+            state
+                .user_service
+                .unban_user(&id, &current_user.user_id)
+                .await?;
 
             info!("User {} unbanned successfully", id);
             Ok(ApiResponse::success(UserResponse::UserUnbanned)
@@ -337,7 +344,9 @@ pub async fn update_user_status(
     .await?
     {
         UserResponse::Updated(_) => Ok(()),
-        _ => Err(AppError::Internal("Failed to update user status".to_string())),
+        _ => Err(AppError::Internal(
+            "Failed to update user status".to_string(),
+        )),
     }
 }
 

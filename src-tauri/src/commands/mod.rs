@@ -30,6 +30,8 @@ pub use correlation_helpers::*;
 pub use error_utils::*;
 pub use errors::{AppError, AppResult};
 
+use crate::authenticate;
+
 // Re-export performance commands
 #[allow(unused_imports)]
 pub use performance::{
@@ -233,11 +235,13 @@ pub fn get_database_pool_stats(
 /// Get database connection pool health metrics
 #[tauri::command]
 #[instrument(skip(state))]
-pub fn get_database_pool_health(
-    state: AppState,
+pub async fn get_database_pool_health(
+    session_token: String,
+    state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<crate::db::PoolHealth>, AppError> {
-    let correlation_id = init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state, UserRole::Viewer);
+    let correlation_id = init_correlation_context(&correlation_id, Some(&current_user.user_id));
     debug!("Database pool health requested");
 
     let health = state.db.get_pool_health();
@@ -256,12 +260,14 @@ pub fn get_database_pool_health(
 
 /// Test command for compressed responses (returns large dataset)
 #[tauri::command]
-#[instrument(skip(_state))]
-pub fn get_large_test_data(
-    _state: AppState,
+#[instrument(skip(state))]
+pub async fn get_large_test_data(
+    session_token: String,
+    state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<CompressedApiResponse, AppError> {
-    let correlation_id = init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state, UserRole::Viewer);
+    let correlation_id = init_correlation_context(&correlation_id, Some(&current_user.user_id));
     debug!("Large test data requested");
 
     // Generate a large dataset to test compression
@@ -288,11 +294,13 @@ pub struct TestItem {
 /// Vacuum database
 #[tauri::command]
 #[instrument(skip(state))]
-pub fn vacuum_database(
-    state: AppState,
+pub async fn vacuum_database(
+    session_token: String,
+    state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<()>, AppError> {
-    let correlation_id = init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state, UserRole::Admin);
+    let correlation_id = init_correlation_context(&correlation_id, Some(&current_user.user_id));
     info!("Database vacuum operation requested");
 
     let db = &state.db;

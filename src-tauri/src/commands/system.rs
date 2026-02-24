@@ -1,7 +1,7 @@
 //! System information commands
 
-use crate::commands::{AppState, UserRole};
 use crate::authenticate;
+use crate::commands::{AppState, UserRole};
 use crate::shared::ipc::AppError;
 use serde::Serialize;
 use std::process::Command;

@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react';
 
 import { ipcClient } from '@/lib/ipc/client';
+import { useAuth } from '@/domains/auth/api';
 import { DashboardStats } from '@/domains/analytics/components/dashboard/types';
 
 export function useDashboardStats(timeRange?: 'day' | 'week' | 'month' | 'year') {
+  const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     total: 0,
     completed: 0,
@@ -31,8 +33,13 @@ export function useDashboardStats(timeRange?: 'day' | 'week' | 'month' | 'year')
     const fetchStats = async () => {
       try {
         setLoading(true);
+
+        if (!user?.token) {
+          throw new Error('Authentication required');
+        }
+
         // Use actual dashboard stats fetching with time range
-        const dashboardStats = await ipcClient.dashboard.getStats(timeRange);
+        const dashboardStats = await ipcClient.dashboard.getStats(user.token, timeRange);
 
         // Transform from backend format to complex frontend format
         const totalTasks = dashboardStats.tasks?.total || 0;
@@ -66,7 +73,7 @@ export function useDashboardStats(timeRange?: 'day' | 'week' | 'month' | 'year')
     };
 
     fetchStats();
-  }, [timeRange]);
+  }, [timeRange, user?.token]);
 
   return { stats, loading, error };
 }

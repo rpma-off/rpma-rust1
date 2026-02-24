@@ -14,10 +14,10 @@ export interface AnalyticsData {
 }
 
 export class AnalyticsService {
-  static async getSystemHealth(): Promise<ServiceResponse<AnalyticsData>> {
+  static async getSystemHealth(sessionToken: string): Promise<ServiceResponse<AnalyticsData>> {
     try {
       const [dashboardStats, healthStatus] = await Promise.all([
-        ipcClient.dashboard.getStats().catch(() => null),
+        ipcClient.dashboard.getStats(sessionToken).catch(() => null),
         ipcClient.admin.healthCheck().catch(() => null),
       ]);
 
@@ -47,13 +47,13 @@ export class AnalyticsService {
     }
   }
 
-  static async getSystemHealthMetrics(): Promise<ServiceResponse<AnalyticsData>> {
-    return this.getSystemHealth();
+  static async getSystemHealthMetrics(sessionToken: string): Promise<ServiceResponse<AnalyticsData>> {
+    return this.getSystemHealth(sessionToken);
   }
 
-  static async getTaskMetrics(): Promise<ServiceResponse<unknown>> {
+  static async getTaskMetrics(sessionToken: string): Promise<ServiceResponse<unknown>> {
     try {
-      const dashboardStats = await ipcClient.dashboard.getStats();
+      const dashboardStats = await ipcClient.dashboard.getStats(sessionToken);
       const tasks = dashboardStats?.tasks;
 
       const data = {
@@ -83,14 +83,14 @@ export class AnalyticsService {
     }
   }
 
-  static async getTaskStatistics(timeRange: string): Promise<ServiceResponse<unknown>> {
+  static async getTaskStatistics(sessionToken: string, timeRange: string): Promise<ServiceResponse<unknown>> {
     try {
       const validRanges = ['day', 'week', 'month', 'year'] as const;
       const range = validRanges.includes(timeRange as typeof validRanges[number])
         ? (timeRange as typeof validRanges[number])
         : 'month';
 
-      const dashboardStats = await ipcClient.dashboard.getStats(range);
+      const dashboardStats = await ipcClient.dashboard.getStats(sessionToken, range);
       const tasks = dashboardStats?.tasks;
 
       return {

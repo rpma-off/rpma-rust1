@@ -3,15 +3,15 @@
 //! This module provides commands for optimized IPC communication
 //! including compression and streaming for large data transfers.
 
+use crate::authenticate;
 use crate::commands::compression::{
     compress_json, decompress_json, CompressedData, CompressionConfig,
 };
-use crate::authenticate;
-use crate::commands::{AppState, UserRole};
 use crate::commands::streaming::{
     calculate_checksum, create_chunks, StreamChunk, StreamConfig, StreamManager, StreamMetadata,
 };
 use crate::commands::AppResult;
+use crate::commands::{AppState, UserRole};
 use base64::{engine::general_purpose, Engine as _};
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};

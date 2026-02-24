@@ -18,8 +18,8 @@ export const adminIpc = {
   getDatabaseStats: (sessionToken: string): Promise<JsonValue> =>
     safeInvoke<JsonValue>(IPC_COMMANDS.GET_DATABASE_STATS, { session_token: sessionToken }),
 
-  getDatabasePoolHealth: (): Promise<JsonValue> =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.GET_DATABASE_POOL_HEALTH),
+  getDatabasePoolHealth: (sessionToken: string): Promise<JsonValue> =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_DATABASE_POOL_HEALTH, { session_token: sessionToken }),
 
   getAppInfo: (): Promise<JsonValue> =>
     safeInvoke<JsonValue>(IPC_COMMANDS.GET_APP_INFO),

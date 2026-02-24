@@ -137,7 +137,9 @@ impl InterventionDataService {
         intervention: &Intervention,
     ) -> InterventionResult<Vec<InterventionStep>> {
         // Use synchronous version of workflow strategy to avoid runtime creation
-        use crate::domains::interventions::infrastructure::workflow_strategy::{WorkflowContext, WorkflowStrategyFactory};
+        use crate::domains::interventions::infrastructure::workflow_strategy::{
+            WorkflowContext, WorkflowStrategyFactory,
+        };
 
         let workflow_context = WorkflowContext {
             intervention: intervention.clone(),

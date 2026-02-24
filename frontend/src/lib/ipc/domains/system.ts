@@ -18,8 +18,8 @@ export const systemOperations = {
   getDatabaseStats: (sessionToken: string) =>
     safeInvoke<JsonValue>(IPC_COMMANDS.GET_DATABASE_STATS, { session_token: sessionToken }),
 
-  getDatabasePoolHealth: () =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.GET_DATABASE_POOL_HEALTH),
+  getDatabasePoolHealth: (sessionToken: string) =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_DATABASE_POOL_HEALTH, { session_token: sessionToken }),
 
   getAppInfo: () =>
     safeInvoke<JsonValue>(IPC_COMMANDS.GET_APP_INFO),
