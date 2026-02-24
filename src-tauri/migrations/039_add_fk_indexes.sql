@@ -9,6 +9,29 @@ CREATE INDEX IF NOT EXISTS idx_tasks_current_workflow_step_id ON tasks(current_w
 CREATE INDEX IF NOT EXISTS idx_suppliers_created_by ON suppliers(created_by);
 CREATE INDEX IF NOT EXISTS idx_suppliers_updated_by ON suppliers(updated_by);
 
+-- Compensating: ensure material_categories exists before creating its indexes.
+-- This table is normally created by migration 024, but may be absent on databases
+-- that skipped or only partially applied that migration.
+CREATE TABLE IF NOT EXISTS material_categories (
+  id TEXT PRIMARY KEY NOT NULL,
+  name TEXT NOT NULL,
+  code TEXT UNIQUE,
+  parent_id TEXT,
+  level INTEGER NOT NULL DEFAULT 1,
+  description TEXT,
+  color TEXT,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  created_by TEXT,
+  updated_by TEXT,
+  synced INTEGER NOT NULL DEFAULT 0,
+  last_synced_at INTEGER,
+  FOREIGN KEY (parent_id) REFERENCES material_categories(id) ON DELETE CASCADE,
+  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
 -- Material categories
 CREATE INDEX IF NOT EXISTS idx_material_categories_created_by ON material_categories(created_by);
 CREATE INDEX IF NOT EXISTS idx_material_categories_updated_by ON material_categories(updated_by);
