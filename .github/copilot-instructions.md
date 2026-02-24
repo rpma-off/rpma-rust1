@@ -1,204 +1,224 @@
 # Copilot Coding Agent Instructions for RPMA v2
 
+
 ## Project Overview
 
-RPMA v2 is an **offline-first desktop application** for managing Paint Protection Film (PPF) interventions, built with **Tauri 2 (Rust backend) + Next.js 14 (React frontend) + SQLite**. It follows Domain-Driven Design with strict bounded contexts.
+RPMA v2 is an **offline-first desktop application for managing Paint Protection Film (PPF) interventions. The application handles tasks, interventions, workflow steps, photo management, inventory tracking, reporting, and user management with role-based access control.
 
-## Repository Layout
+
+## 📁 Project Structure
 
 ```
 rpma-rust1/
-├── frontend/                # Next.js 14 app (TypeScript, Tailwind, shadcn/ui)
-│   └── src/
-│       ├── app/             # App Router pages
-│       ├── components/      # Shared UI components
-│       ├── domains/         # Feature domains (auth, interventions, inventory, tasks, sync, …)
-│       ├── hooks/           # Shared React hooks
-│       ├── lib/             # Utilities and IPC client
-│       ├── shared/          # Shared utils, types, UI primitives
-│       └── types/           # ⚠️ AUTO-GENERATED from Rust — NEVER edit manually
-├── src-tauri/               # Rust/Tauri backend
+├── frontend/                    # Next.js 14 App
 │   ├── src/
-│   │   ├── commands/        # Legacy IPC handlers (prefer domains/*/ipc/)
-│   │   ├── domains/         # DDD bounded contexts (15 domains)
-│   │   │   └── <domain>/
-│   │   │       ├── application/     # Use cases / app services
-│   │   │       ├── domain/          # Models, value objects, business rules
-│   │   │       ├── infrastructure/  # SQL repositories, external adapters
-│   │   │       ├── ipc/             # Tauri command entry points
-│   │   │       └── tests/           # Domain-specific tests
-│   │   ├── models/          # Data models with ts-rs exports
-│   │   ├── repositories/    # Repository implementations
-│   │   ├── services/        # Service implementations
-│   │   ├── shared/          # Shared utilities, error types, event bus
-│   │   └── db/              # Database init, pool, migrations, schema
-│   ├── migrations/          # Embedded SQLite migration files
-│   └── tests/               # Integration tests
-│       └── commands/        # Command integration tests + test_utils.rs
-├── scripts/                 # 30+ validation, audit, and utility scripts
-├── docs/
-│   ├── adr/                 # 8 Architectural Decision Records
-│   └── agent-pack/          # 10 comprehensive developer guides
-├── Makefile                 # Backend build/test shortcuts
-└── package.json             # Root workspace with all npm scripts
+│   │   ├── app/                 # App Router pages (~38 pages)
+│   │   ├── components/          # Shared React components (179+)
+│   │   ├── domains/             # Feature domains (auth, interventions, inventory, tasks)
+│   │   │   └── [domain]/
+│   │   │       ├── api/         # Public API surface for the domain
+│   │   │       ├── components/  # Domain-specific components
+│   │   │       ├── hooks/       # Domain-specific hooks
+│   │   │       ├── ipc/         # IPC call wrappers
+│   │   │       └── services/    # Frontend business logic
+│   │   ├── hooks/               # Shared custom hooks (63+)
+│   │   ├── lib/                 # Utilities and IPC client (20 domain modules)
+│   │   ├── shared/              # Shared utils, types, UI primitives
+│   │   └── types/               # ⚠️ AUTO-GENERATED — DO NOT EDIT MANUALLY
+│   └── package.json
+│
+├── src-tauri/                   # Rust/Tauri backend
+│   ├── src/
+│   │   ├── commands/            # 65 IPC command handlers
+│   │   ├── domains/             # Bounded contexts (DDD)
+│   │   │   └── [domain]/
+│   │   │       ├── application/ # Use cases / application services
+│   │   │       ├── domain/      # Domain models, value objects, rules
+│   │   │       ├── infrastructure/ # SQL repositories, external adapters
+│   │   │       ├── ipc/         # Tauri command entry points
+│   │   │       └── tests/       # Domain tests
+│   │   ├── models/              # 21 data models (ts-rs exports)
+│   │   ├── repositories/        # 20 repository files
+│   │   ├── services/            # 88 service files
+│   │   ├── shared/              # Shared backend utilities, errors
+│   │   └── db/                  # Database init, pool, migrations
+│   ├── migrations/              # Embedded SQLite migrations
+│   ├── benches/                 # Criterion benchmarks
+│   ├── tests/                   # Integration test suites
+│   │   ├── auth_commands_test.rs
+│   │   ├── client_commands_test.rs
+│   │   ├── intervention_commands_test.rs
+│   │   ├── task_commands_test.rs
+│   │   └── user_commands_test.rs
+│   └── Cargo.toml
+│
+├── migrations/                  # Root-level SQL migration files (6 files)
+├── migration-tests/             # Migration validation tests
+├── scripts/                     # Build, validation, and utility scripts
+├── docs/                        # Project documentation
+│   ├── adr/                     # Architectural Decision Records
+│   └── agent-pack/              # Agent documentation pack
+├── Makefile                     # Shorthand commands (see below)
+├── package.json                 # Root package.json (npm workspaces)
+├── Cargo.toml                   # Workspace root
+├── deny.toml                    # cargo-deny security config
+├── commitlint.config.js         # Conventional commit rules
+└── tsconfig.json
 ```
 
-### Backend Domains (src-tauri/src/domains/)
+---
 
-analytics, audit, auth, calendar, clients, documents, interventions, inventory, notifications, quotes, reports, settings, sync, tasks, users
+## 🛠️ Tech Stack
 
-## Environment Setup
+- **Frontend**: Next.js 14, React 18, TypeScript, Tailwind CSS
+- **UI Library**: shadcn/ui (Radix UI primitives)
+- **Backend**: Rust with Tauri framework
+- **Database**: SQLite with WAL mode
+- **State Management**: React hooks, Context API, Zustand
+- **Authentication**: JWT tokens with 2FA support
+- **Type Safety**: Automatic TypeScript generation from Rust models using `ts-rs`
+- **Testing**: Vitest (frontend), Rust built-in tests (backend)
 
-The `copilot-setup-steps.yml` workflow handles environment setup:
-- **OS**: Ubuntu (Linux)
-- **Rust**: stable toolchain with rustfmt + clippy
-- **Node.js**: v20
-- **System libs**: libwebkit2gtk-4.1-dev, libssl-dev, libgtk-3-dev, libayatana-appindicator3-dev, librsvg2-dev
+### Bounded Contexts (DDD)
 
-Dependencies are installed via `npm ci` (root) and `npm ci` (frontend/).
+Each domain under `src-tauri/src/domains/` is a **self-contained bounded context**:
 
-## Build & Test Commands
-
-### Quick Reference
-
-| Task | Command |
-|------|---------|
-| Frontend lint | `npm run frontend:lint` |
-| Frontend type-check | `npm run frontend:type-check` |
-| Backend check (fast compile check) | `npm run backend:check` |
-| Backend clippy (linting) | `npm run backend:clippy` |
-| Backend format check | `cd src-tauri && cargo fmt --check` |
-| Backend unit tests | `cd src-tauri && cargo test --lib` |
-| Frontend tests | `cd frontend && npm test` |
-| Full quality gate | `npm run quality:check` |
-
-### Backend Tests by Domain
-
-```bash
-make test-auth-commands          # Auth domain
-make test-client-commands        # Client domain
-make test-user-commands          # User domain
-make test-intervention-cmds      # Intervention domain
-make test-task-commands          # Task domain
-cd src-tauri && cargo test --lib # All unit tests
-```
-
-### Frontend Tests
-
-```bash
-cd frontend && npm test              # Unit + component tests (Jest)
-cd frontend && npm run test:coverage # With coverage
-```
-
-### Validation Scripts (run after structural changes)
-
-```bash
-npm run validate:bounded-contexts   # DDD boundary validation
-npm run architecture:check          # Architecture rules
-npm run types:drift-check           # Type sync validation
-npm run migration:audit             # Migration health
-node scripts/validate-migration-system.js  # Migration system check
-```
-
-## Known Build Issues & Workarounds
-
-### 1. `frontend/.next` Directory Required for Backend Check
-
-The `backend:check` and `backend:clippy` commands require the `frontend/.next` directory to exist (Tauri build looks for it). The npm scripts handle this automatically by creating the directory:
-```bash
-node -e "require('fs').mkdirSync('frontend/.next', { recursive: true })"
-```
-If running `cargo check` or `cargo clippy` directly from `src-tauri/`, first ensure `frontend/.next/` exists.
-
-### 2. EntitySyncIndicator Import Error
-
-There is a known frontend build error: `frontend/src/components/ui/index.ts` line 57 imports from `'../sync/EntitySyncIndicator'` which does not exist at that relative path. The actual component is at `frontend/src/domains/sync/components/EntitySyncIndicator.tsx`. This causes `npm run frontend:build` (Next.js build) to fail with a module-not-found error. This is a pre-existing issue — do not attempt to fix it unless specifically asked, as it may have dependencies on other in-progress work.
-
-### 3. Frontend Build vs. Type-Check
-
-Use `npm run frontend:type-check` (runs `tsc --noEmit`) instead of `npm run frontend:build` for validating TypeScript. The Next.js build has the EntitySyncIndicator issue above, but type-checking works independently.
-
-## Architecture Rules (MUST Follow)
-
-### 4-Layer Architecture
-```
-Frontend → IPC Command Handlers → Application Services → Repositories/Infrastructure → SQLite
-```
-- **IPC handlers** (`domains/*/ipc/`): Thin wrappers only — authenticate, validate input, delegate to services, map errors. No business logic or SQL.
-- **Application services** (`domains/*/application/`): Business logic, orchestration, transaction boundaries.
-- **Repositories** (`domains/*/infrastructure/`): SQL queries, data access. All SQL lives here.
-- **Domain models** (`domains/*/domain/`): Pure domain logic, value objects, business rules.
-
-### Bounded Context Isolation
-- **No cross-domain imports.** Each domain is self-contained.
-- Frontend domains expose public API via `domains/<name>/api/index.ts`.
-- Backend cross-domain communication uses the event bus (`shared/event_bus/`).
-
-### Type Safety (Rust → TypeScript)
-- Files in `frontend/src/types/` are **auto-generated** by `ts-rs`. Never edit them manually.
-- After modifying any Rust model with `#[derive(TS)]`, run: `npm run types:sync`
-- Before committing type-related changes: `npm run types:drift-check`
-
-### Security & Auth
-- Every protected IPC command must validate `session_token`.
-- Use the `authenticate!` macro for auth checks.
-- Enforce RBAC roles: admin, supervisor, technician, viewer.
-- Role enum is defined in `src-tauri/src/domains/auth/domain/models/auth.rs`.
-- Never commit secrets — use `.env.local`.
-
-### Database Migrations
-- Migration files go in `src-tauri/migrations/` with numeric prefix (e.g., `038_feature.sql`).
-- Always make migrations **idempotent**: use `IF NOT EXISTS`, `IF EXISTS`.
-- Schema is in `src-tauri/src/db/schema.sql`; migrations run sequentially on top.
-- After adding a migration:
-  1. Run `npm run types:sync` (if schema affects exported types)
-  2. Run `node scripts/validate-migration-system.js`
-  3. Run `npm run migration:audit`
-  4. Test the affected domain
-
-### Error Handling
-- Domain-specific errors are mapped to `AppError` variants (see ADR-003).
-- Never leak internal error details to the frontend — use `internal_sanitized` helper.
-
-### Commits
-- Use conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, `perf:`, `security:`
-- Max 100 chars in header, no trailing period, lowercase.
-
-## What to Validate After Changes
-
-| You changed… | Must run… |
+| Domain | Responsibility |
 |---|---|
-| Rust models with `#[derive(TS)]` | `npm run types:sync && npm run types:drift-check` |
-| IPC command signatures | `npm run frontend:type-check` + domain tests |
-| SQL schema / migrations | `node scripts/validate-migration-system.js && npm run migration:audit` |
-| Domain boundaries / modules | `npm run validate:bounded-contexts && npm run architecture:check` |
-| Auth / RBAC / security | `npm run security:audit` + auth domain tests |
-| Frontend components | `npm run frontend:lint && npm run frontend:type-check` |
-| Backend Rust code | `npm run backend:clippy && cd src-tauri && cargo test --lib` |
+| `documents` | Document storage and retrieval |
+| `interventions` | PPF intervention lifecycle |
+| `inventory` | Materials, stock, tracking |
+| `quotes` | Quote creation and management |
+| `tasks` | Task and work order management |
+| `users` | Auth, sessions, RBAC |
 
-## Documentation & References
+Cross-domain access is **forbidden** except via the public `api/index.ts` (frontend) or a dedicated application service (backend).
 
-- **Architecture decisions**: `docs/adr/` (8 ADRs covering module boundaries, transactions, errors, events, IPC mapping, RBAC, logging, offline-first)
-- **Comprehensive guides**: `docs/agent-pack/` (10 guides covering project overview, domain model, architecture, frontend, backend, IPC contracts, security, database, dev workflows, UX flows)
-- **PR template**: `.github/PULL_REQUEST_TEMPLATE.md`
+---
 
-## Testing Patterns
+## ⚡ Essential Commands
 
-### Backend (Rust)
-- Integration tests use `#[tokio::test]` async macro.
-- Test utilities in `src-tauri/tests/commands/test_utils.rs` provide `TestContext` with a temporary database, pre-seeded test user, and initialized services.
-- Run targeted domain tests with Makefile commands (e.g., `make test-auth-commands`).
+### Development
 
-### Frontend (TypeScript)
-- Tests use Jest with Testing Library.
-- Test files are co-located or in `__tests__` directories.
-- E2E tests use Playwright (`npm run test:e2e` in frontend/).
+```bash
+npm run dev                    # Start full app (frontend + backend)
+npm run frontend:dev           # Frontend only (Next.js on localhost:3000)
+```
 
-## Tips for Efficient Development
+### Build
 
-1. **Start with `backend:check`** (fast compile check) before running full tests.
-2. **Use domain-specific test commands** (via Makefile) instead of running all tests.
-3. **Read the relevant ADR** before modifying architecture-sensitive code.
-4. **Check `docs/agent-pack/`** for detailed guides on any subsystem.
-5. **The `quality:check` script** runs all quality gates in sequence — use it before finalizing.
-6. **Rust edition is 2021** (set in workspace Cargo.toml) with MSRV 1.85.0.
+```bash
+npm run build                  # Full production build
+npm run frontend:build         # Build Next.js frontend
+npm run backend:build          # cargo build (debug)
+npm run backend:build:release  # cargo build --release
+```
+
+### Quality Gate 
+
+Individual checks:
+
+```bash
+# Frontend
+npm run frontend:lint          # ESLint
+npm run frontend:type-check    # tsc --noEmit
+
+# Backend
+npm run backend:check          # cargo check
+npm run backend:clippy         # cargo clippy -- -D warnings
+npm run backend:fmt            # cargo fmt --check
+
+# Architecture
+npm run validate:bounded-contexts   # Validate DDD boundaries
+npm run architecture:check          # Architecture rules check
+
+# Types (Rust → TypeScript)
+npm run types:sync             # Regenerate TS types from Rust models
+npm run types:validate         # Validate generated types
+npm run types:drift-check      # Detect type drift
+
+# Security
+npm run security:audit         # cargo-deny + npm audit
+```
+
+### Tests
+
+# Backend (Rust)
+cd src-tauri && cargo test --lib           # Unit tests
+cd src-tauri && cargo test migration       # Migration tests
+cd src-tauri && cargo test performance     # Perf tests
+
+# By domain (via Makefile)
+make test-auth-commands
+make test-client-commands
+make test-user-commands
+make test-intervention-cmds
+make test-task-commands
+
+# Frontend
+cd frontend && npm test                  # Unit + component tests
+cd frontend && npm run test:e2e          # Playwright E2E tests
+cd frontend && npm run test:coverage     # With coverage report
+
+# Migration validation
+node scripts/validate-migration-system.js
+```
+
+### Benchmarks
+
+```bash
+cd src-tauri && cargo bench              # Run Criterion benchmarks
+```
+
+---
+
+## 🔴 Strict Rules — Never Violate
+
+### Architecture
+
+- ✅ Always follow the 4-layer architecture
+- ❌ Never skip layers (e.g., no direct DB from application layer)
+- ❌ Never put business logic in IPC command handlers (commands = thin wrappers)
+- ❌ Never import across domain boundaries — use the domain's public API only
+- ❌ Never write SQL outside `infrastructure/` files
+- ✅ Always place new backend features inside the correct bounded context under `src-tauri/src/domains/`
+- ✅ Always run `npm run validate:bounded-contexts` after any structural change
+
+
+### Security
+
+- ✅ Always validate `session_token` in every protected IPC command
+- ✅ Always enforce RBAC before executing protected operations
+- ❌ Never commit secrets, tokens, or credentials — use `.env.local` (gitignored)
+- ❌ Never bypass auth or authorization checks
+- ✅ Always run `npm run security:audit` before submitting
+
+### Database
+
+- ✅ Always use numbered migration files (e.g., `0007_add_column.sql`)
+- ✅ Always make migrations idempotent: use `IF NOT EXISTS`, `IF EXISTS`
+- ❌ Never modify schema outside of migration files
+- ✅ Always validate: `node scripts/validate-migration-system.js`
+- **Migration order**: add migration → run `types:sync` → run all tests
+
+### Code Quality
+
+- ✅ Use UTF-8 encoding for all source files
+- ✅ Use conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, `perf:`, `security:`
+- ❌ Never push directly to `main` (enforced by Husky `git:guard-main` hook)
+- ❌ Never disable linting, type-checking, or architecture validation
+
+### Testing
+
+- ✅ Always write a regression test for every bug fix
+- ✅ Always test new features: success path + validation failure + permission failure
+- ❌ Never write flaky or time-dependent tests
+- ❌ Never delete or weaken existing tests to make a build pass
+
+---
+
+## 📚 Documentation
+
+- **Full docs**: `docs/agent-pack/README.md`
+- **Architecture decisions**: `docs/adr/`
+- **Migration validation**: `node scripts/validate-migration-system.js`
