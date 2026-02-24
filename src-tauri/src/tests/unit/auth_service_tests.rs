@@ -11,8 +11,6 @@ use crate::domains::auth::application::SignupRequest;
 use crate::domains::auth::domain::models::auth::{UserAccount, UserRole, UserSession};
 use crate::domains::auth::infrastructure::auth::AuthService;
 use crate::domains::auth::infrastructure::rate_limiter::RateLimiterService;
-use crate::domains::auth::infrastructure::token;
-use crate::domains::auth::infrastructure::token::TokenService;
 use crate::shared::services::performance_monitor::PerformanceMonitorService;
 use crate::shared::services::validation::ValidationService;
 use crate::test_utils::TestDataFactory;
@@ -22,17 +20,12 @@ use chrono::Utc;
 use std::sync::Arc;
 use tempfile::TempDir;
 
-// Set JWT_SECRET for tests
-fn setup_test_env() {
-    std::env::set_var("JWT_SECRET", "test_jwt_secret_32_bytes_long__ok");
-}
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
     fn create_test_auth_service() -> (AuthService, TempDir) {
-        setup_test_env();
         let test_db = test_db!();
         let auth_service = AuthService::new(test_db.db()).expect("Failed to create auth service");
         (auth_service, test_db.temp_dir)
@@ -181,7 +174,6 @@ mod tests {
 
     #[test]
     fn test_session_tokens_hashed_in_storage() {
-        setup_test_env();
         let test_db = test_db!();
         let auth_service = AuthService::new(test_db.db()).expect("Failed to create auth service");
 
@@ -199,26 +191,16 @@ mod tests {
             .db
             .get_connection()
             .expect("Failed to get connection");
-        let (stored_token, stored_refresh): (String, Option<String>) = conn
+        let stored_id: String = conn
             .query_row(
-                "SELECT token, refresh_token FROM user_sessions WHERE user_id = ?",
+                "SELECT id FROM sessions WHERE user_id = ?",
                 [created_user.id],
-                |row| Ok((row.get(0)?, row.get(1)?)),
+                |row| row.get(0),
             )
-            .expect("Failed to read stored tokens");
+            .expect("Failed to read stored session");
 
-        let expected_token_hash =
-            token::hash_token_with_env(&session.token).expect("Failed to hash token");
-        assert_eq!(stored_token, expected_token_hash);
-
-        if let Some(refresh_token) = session.refresh_token {
-            let expected_refresh_hash =
-                token::hash_token_with_env(&refresh_token).expect("Failed to hash refresh token");
-            assert_eq!(
-                stored_refresh.as_deref(),
-                Some(expected_refresh_hash.as_str())
-            );
-        }
+        // Token is stored directly as UUID (no hashing)
+        assert_eq!(stored_id, session.token);
     }
 
     #[test]
@@ -543,11 +525,9 @@ mod tests {
                     .db
                     .get_connection()
                     .expect("Failed to get connection");
-                let token_hash = token::hash_token_with_env(&session.token)
-                    .expect("Failed to hash session token");
                 conn.execute(
-                    "UPDATE user_sessions SET expires_at = ?1 WHERE token = ?2",
-                    [Utc::now().timestamp() - 3600, token_hash],
+                    "UPDATE sessions SET expires_at = ?1 WHERE id = ?2",
+                    [Utc::now().timestamp_millis() - 3_600_000, session.token.as_str()],
                 )
                 .expect("Failed to expire session");
             }

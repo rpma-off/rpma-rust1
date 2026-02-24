@@ -126,7 +126,6 @@ async-stream = "0.3"
 
 # Password hashing
 argon2 = { version = "0.5", features = ["std"] }
-jsonwebtoken = "9.3"
 hmac = "0.12"
 sha2 = "0.10"
 base64 = "0.22"
@@ -157,9 +156,6 @@ printpdf = "0.7"
 
 # Geospatial operations
 geo = "0.28"
-
-# Two-factor authentication
-totp-rs = { version = "5.5", features = ["qr"] }
 
 [features]
 default = ["custom-protocol"]

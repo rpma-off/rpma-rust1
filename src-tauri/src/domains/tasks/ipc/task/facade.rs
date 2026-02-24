@@ -1083,16 +1083,9 @@ mod tests {
             email: "test@example.com".to_string(),
             role,
             token: "tok".to_string(),
-            refresh_token: None,
             expires_at: "2099-01-01T00:00:00Z".to_string(),
             last_activity: "2025-01-01T00:00:00Z".to_string(),
             created_at: "2025-01-01T00:00:00Z".to_string(),
-            device_info: None,
-            ip_address: None,
-            user_agent: None,
-            location: None,
-            two_factor_verified: false,
-            session_timeout_minutes: None,
         }
     }
 

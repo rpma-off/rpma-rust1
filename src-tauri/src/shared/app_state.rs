@@ -32,7 +32,6 @@ pub struct AppStateType {
         Arc<crate::domains::analytics::infrastructure::analytics::AnalyticsService>,
     pub auth_service: Arc<crate::domains::auth::infrastructure::auth::AuthService>,
     pub session_service: Arc<crate::domains::auth::infrastructure::session::SessionService>,
-    pub two_factor_service: Arc<crate::domains::auth::infrastructure::two_factor::TwoFactorService>,
     pub settings_service: Arc<SettingsService>,
     pub user_service: Arc<UserService>,
     pub cache_service: Arc<crate::shared::services::cache::CacheService>,

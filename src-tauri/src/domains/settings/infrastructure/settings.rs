@@ -1,7 +1,6 @@
 //! Settings service for user settings management
 
 use crate::commands::AppError;
-use crate::domains::auth::infrastructure::token;
 use crate::domains::settings::domain::models::settings::{
     UserAccessibilitySettings, UserNotificationSettings, UserPerformanceSettings, UserPreferences,
     UserProfileSettings, UserSecuritySettings, UserSettings,
@@ -934,13 +933,12 @@ impl SettingsService {
                 AppError::Database(format!("Failed to update password: {}", e))
             })?;
 
-        let current_token_hash = token::hash_token_with_env(current_session_token)
-            .map_err(|e| AppError::Configuration(format!("Token hash failed: {}", e)))?;
+        let current_session_token = current_session_token.to_string();
 
-        // Legacy compatibility: keep current session if token is still stored in plain text.
+        // Invalidate all sessions for this user except the current one.
         conn.execute(
-            "DELETE FROM user_sessions WHERE user_id = ? AND token NOT IN (?, ?)",
-            params![user_id, current_token_hash, current_session_token],
+            "DELETE FROM sessions WHERE user_id = ? AND id != ?",
+            params![user_id, current_session_token],
         )
         .map_err(|e| {
             error!("Failed to revoke sessions for {}: {}", user_id, e);
@@ -979,7 +977,7 @@ impl SettingsService {
         }
 
         tx.execute(
-            "DELETE FROM user_sessions WHERE user_id = ?",
+            "DELETE FROM sessions WHERE user_id = ?",
             params![user_id],
         )
         .map_err(|e| {
@@ -1326,22 +1324,20 @@ mod tests {
             .db
             .get_connection()
             .expect("failed to get connection");
-        let token_hash = crate::domains::auth::infrastructure::token::hash_token_with_env(token)
-            .expect("failed to hash test session token");
+        let now_ms = Utc::now().timestamp_millis();
+        let expires_ms = (Utc::now() + chrono::Duration::hours(8)).timestamp_millis();
         conn.execute(
-            "INSERT INTO user_sessions (id, user_id, username, email, role, token, refresh_token, expires_at, last_activity, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO sessions (id, user_id, username, email, role, created_at, expires_at, last_activity)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             params![
-                Uuid::new_v4().to_string(),
+                token,
                 user.id,
                 user.username,
                 user.email,
                 user.role.to_string(),
-                token_hash,
-                Option::<String>::None,
-                (Utc::now() + chrono::Duration::hours(1)).to_rfc3339(),
-                Utc::now().to_rfc3339(),
-                Utc::now().to_rfc3339(),
+                now_ms,
+                expires_ms,
+                now_ms,
             ],
         )
         .expect("failed to insert session");
@@ -1547,18 +1543,15 @@ mod tests {
 
         let session_count: i64 = conn
             .query_row(
-                "SELECT COUNT(*) FROM user_sessions WHERE user_id = ?",
+                "SELECT COUNT(*) FROM sessions WHERE user_id = ?",
                 params![user.id],
                 |row| row.get(0),
             )
             .expect("failed to count sessions");
-        let current_token_hash =
-            crate::domains::auth::infrastructure::token::hash_token_with_env("current-token")
-                .expect("failed to hash token");
         let current_exists: i64 = conn
             .query_row(
-                "SELECT COUNT(*) FROM user_sessions WHERE user_id = ? AND token = ?",
-                params![user.id, current_token_hash],
+                "SELECT COUNT(*) FROM sessions WHERE user_id = ? AND id = ?",
+                params![user.id, "current-token"],
                 |row| row.get(0),
             )
             .expect("failed to check current session");
@@ -1629,7 +1622,7 @@ mod tests {
             .expect("failed to count consent rows");
         let session_count: i64 = conn
             .query_row(
-                "SELECT COUNT(*) FROM user_sessions WHERE user_id = ?",
+                "SELECT COUNT(*) FROM sessions WHERE user_id = ?",
                 params![user.id],
                 |row| row.get(0),
             )
