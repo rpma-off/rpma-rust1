@@ -18,13 +18,8 @@ mod tests {
     use super::*;
 
     fn create_auth_service() -> AuthService {
-        setup_test_env();
         let test_db = test_db!();
         AuthService::new(test_db.db()).expect("Failed to create auth service")
-    }
-
-    fn setup_test_env() {
-        std::env::set_var("JWT_SECRET", "test_jwt_secret_32_bytes_long__ok");
     }
 
     proptest! {

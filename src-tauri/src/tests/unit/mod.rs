@@ -19,6 +19,5 @@ pub mod task_deletion_tests;
 pub mod task_update_tests;
 pub mod task_validation_service_tests;
 pub mod task_validation_tests;
-pub mod two_factor_service_tests;
 pub mod user_settings_tests;
 pub mod workflow_validation_service_tests;

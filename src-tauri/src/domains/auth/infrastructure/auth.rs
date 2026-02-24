@@ -52,7 +52,7 @@ impl AuthService {
 
     /// Initialize auth services
     pub fn init(&self) -> Result<(), String> {
-        // Note: users and user_sessions tables are created by main schema.sql
+        // Note: users and sessions tables are created by migrations
 
         // Initialize rate limiter
         self.rate_limiter.init()?;
