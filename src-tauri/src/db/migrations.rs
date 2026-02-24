@@ -2694,8 +2694,8 @@ mod tests {
                 .expect("Failed to drop material_categories");
         }
 
-        // Reset schema_version to 1..38: schema.sql already inserted 1..39, so
-        // delete version 39 to force migrate(39) to run.
+        // Reset schema_version to exclude version 39: schema.sql pre-populates through version 39,
+        // so we delete it to force migrate(39) to execute.
         {
             let conn = db.get_connection().expect("Failed to get connection");
             conn.execute(
