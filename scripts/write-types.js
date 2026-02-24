@@ -225,7 +225,7 @@ function removeDuplicateExport(content, typeName) {
       // Remove this line, and any preceding ts-rs/JSDoc comment block
       while (result.length > 0) {
         const last = result[result.length - 1].trim();
-        if (last.startsWith('//') || last.startsWith('/**') || last.startsWith('*') || last === '') {
+        if (last.startsWith('//') || last.startsWith('/**') || last.startsWith(' *') || last === '') {
           result.pop();
         } else {
           break;
@@ -255,9 +255,8 @@ function writeFileWithRetry(filePath, content) {
       attempts++;
       if ((error.code === 'EPERM' || error.code === 'EACCES') && attempts < maxAttempts) {
         console.log(`⚠️  File access denied for ${filePath} (attempt ${attempts}/${maxAttempts}), retrying in 200ms...`);
-        // Synchronous sleep for retry
-        const start = Date.now();
-        while (Date.now() - start < 200) { /* busy wait */ }
+        const { execSync: sleepSync } = require('child_process');
+        try { sleepSync('sleep 0.2'); } catch { /* ignore */ }
         tryWrite();
         return;
       }

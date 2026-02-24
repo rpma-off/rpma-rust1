@@ -83,7 +83,7 @@ function pollDir(dir) {
           mtimes[fullPath] = fs.statSync(fullPath).mtimeMs;
         }
       }
-    } catch { /* ignore permission errors */ }
+    } catch (e) { /* ignore errors during scan (e.g. permission denied) */ }
   }
 
   // Initial scan
