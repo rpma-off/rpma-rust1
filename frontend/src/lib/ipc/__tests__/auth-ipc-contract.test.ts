@@ -1,4 +1,5 @@
 import { ipcClient } from '../client';
+import { SignupRequestSchema } from '@/lib/validation/ipc-schemas';
 
 jest.mock('../utils', () => ({
   safeInvoke: jest.fn(),
@@ -97,6 +98,44 @@ describe('ipcClient.auth IPC contract tests', () => {
         'auth_create_account',
         { request },
         expect.any(Function)
+      );
+    });
+
+    it('strips legacy fields from signup request schema', () => {
+      const payload = {
+        email: 'new@example.com',
+        password: 'StrongP@ss1',
+        first_name: 'Jean',
+        last_name: 'Dupont',
+        role: 'technician' as const,
+        refresh_token: 'legacy-refresh',
+        device_info: { device_type: 'desktop', os: 'windows', browser: null, device_name: null },
+        ip_address: '127.0.0.1',
+        user_agent: 'test-agent',
+        location: 'Paris',
+        two_factor_verified: false,
+        session_timeout_minutes: 30,
+      };
+
+      const parsed = SignupRequestSchema.parse(payload);
+
+      expect(parsed).toEqual({
+        email: 'new@example.com',
+        password: 'StrongP@ss1',
+        first_name: 'Jean',
+        last_name: 'Dupont',
+        role: 'technician',
+      });
+      expect(Object.keys(parsed)).not.toEqual(
+        expect.arrayContaining([
+          'refresh_token',
+          'device_info',
+          'ip_address',
+          'user_agent',
+          'location',
+          'two_factor_verified',
+          'session_timeout_minutes',
+        ])
       );
     });
   });
