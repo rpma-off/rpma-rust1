@@ -9,8 +9,8 @@ Runtime DB setup is in `src-tauri/src/main.rs`:
 - Startup health check, schema init, and migration application
 
 WAL behavior:
-- Initial checkpoint on startup
-- periodic checkpoint task (`PRAGMA wal_checkpoint(TRUNCATE)`) in background
+- Initial checkpoint on startup (`PRAGMA wal_checkpoint(PASSIVE); PRAGMA optimize;`)
+- Periodic checkpoint task in background (`src-tauri/src/db/connection.rs`, `src-tauri/src/main.rs`)
 
 Connection/pool config source:
 - `src-tauri/src/db/connection.rs`
@@ -18,28 +18,30 @@ Connection/pool config source:
 ## Schema and migration sources
 
 - Base schema: `src-tauri/src/db/schema.sql`
-- Embedded migrations: `src-tauri/migrations/*.sql` (currently 002-040, compiled via `include_dir!` in `src-tauri/src/db/migrations.rs`)
-- Root migration folder also exists: `migrations/*.sql` (used by repo scripts/audits)
+- Embedded migrations: `src-tauri/migrations/*.sql` (latest is 041, embedded via `include_dir!` in `src-tauri/src/db/migrations.rs`)
+- Root migration folder: `migrations/*.sql` (used by repo scripts/audits)
 
 ## Migration apply mechanism
 
 Main implementation: `src-tauri/src/db/migrations.rs`
 
 Flow:
-1. check initialization (`is_initialized`)
-2. if fresh DB: execute `schema.sql`
-3. determine current and latest migration versions (`schema_version` table + embedded files)
-4. apply sequential migrations with `migrate(target_version)`
-5. ensure required views (`client_statistics`, `calendar_tasks`)
+1. Check initialization (`is_initialized`).
+2. If fresh DB: execute `schema.sql`.
+3. Determine current and latest migration versions (`schema_version` table + embedded files).
+4. Apply sequential migrations with `migrate(target_version)`.
+5. Ensure required views (`client_statistics`, `calendar_tasks`).
+
+Note: `schema.sql` initializes schema_version up to 39; migrations 040+ are applied after init.
 
 ## How to add a migration safely
 
-1. Add SQL file in `src-tauri/migrations/` with numeric prefix (e.g., `041_new_feature.sql`).
+1. Add SQL file in `src-tauri/migrations/` with numeric prefix (e.g., `042_new_feature.sql`).
 2. Make SQL idempotent where possible (`IF EXISTS` / `IF NOT EXISTS`).
 3. If schema affects exported types/contracts, run `npm run types:sync`.
 4. Run migration checks:
-   - `node scripts/validate-migration-system.js`
-   - `npm run migration:audit`
+- `node scripts/validate-migration-system.js`
+- `npm run migration:audit`
 5. Run targeted tests for impacted domain.
 
 ## Validation and troubleshooting
@@ -51,18 +53,23 @@ Useful scripts:
 - `scripts/check_db_schema.js`
 
 Typical issues:
-- **Version drift**: compare `schema_version` to latest file prefix.
-- **Missing table/view on upgraded DB**: verify `ensure_required_views` and migration content.
-- **Lock contention**: inspect WAL/checkpoint behavior and long-running write operations.
+- Version drift: compare `schema_version` to the latest migration prefix.
+- Missing table/view on upgraded DB: verify `ensure_required_views` and migration content.
+- Lock contention: inspect WAL/checkpoint behavior and long-running write operations.
 
 ## Key tables (base schema pointers)
 
-- `interventions`, `intervention_steps`
-- `tasks`, `clients`, `users`, `user_sessions`
-- `sync_queue`, `messages`, `calendar_events`, `materials`
-
-All defined in `src-tauri/src/db/schema.sql` plus evolution in `src-tauri/migrations`.
+- `tasks`, `task_history`
+- `clients`, `client_statistics` (view)
+- `interventions`, `intervention_steps`, `photos`
+- `quotes`, `quote_items`
+- `materials`, `material_categories`, `suppliers`, `inventory_transactions`, `material_consumption`
+- `calendar_events`, `calendar_tasks` (view)
+- `messages`, `notification_preferences`
+- `sync_queue`
+- `audit_logs`, `audit_events`, `settings_audit_log`
+- `sessions` (added by migration 041; replaces `user_sessions`)
 
 ## DOC vs CODE mismatch
 
-- Some historical docs/scripts reference migration helper files that are no longer present; treat `src-tauri/src/db/migrations.rs` + `src-tauri/migrations/*.sql` as authoritative.
+- `schema.sql` still defines `user_sessions`; migration 041 replaces it with `sessions` and drops the old table at runtime.

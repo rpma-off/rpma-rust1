@@ -10,7 +10,15 @@ npm run frontend:dev
 npm run build
 ```
 
-Quality gates:
+Build-only targets:
+
+```bash
+npm run frontend:build
+npm run backend:build
+npm run backend:build:release
+```
+
+## Quality gates
 
 ```bash
 npm run quality:check
@@ -21,6 +29,7 @@ npm run backend:clippy
 npm run backend:fmt -- --check
 npm run validate:bounded-contexts
 npm run architecture:check
+npm run backend:boundaries:check
 npm run migration:audit
 ```
 
@@ -30,14 +39,17 @@ Frontend:
 ```bash
 cd frontend && npm test
 cd frontend && npm run test:e2e
+cd frontend && npm run test:coverage
 ```
 
 Backend:
 ```bash
 cd src-tauri && cargo test --lib
+cd src-tauri && cargo test migration
+cd src-tauri && cargo test performance
 ```
 
-Domain shortcuts are available in `Makefile` (`test-auth-commands`, `test-task-commands`, etc.).
+Domain shortcuts are available in `Makefile` (`make test-auth-commands`, `make test-task-commands`, etc.).
 
 ## Type and schema tooling
 
@@ -54,8 +66,8 @@ Key scripts:
 - `scripts/check-type-drift.js`
 - `scripts/validate-bounded-contexts.js`
 - `scripts/architecture-check.js`
-- `scripts/security-audit.js`
 - `scripts/bounded-context-migration-audit.js`
+- `scripts/security-audit.js`
 
 ## Security and audit tooling
 
@@ -69,12 +81,8 @@ Additional checks:
 
 ## If you change X, run Y
 
-- Rust models exported to TS changed -> `npm run types:sync && npm run types:drift-check`
-- IPC command signatures/handlers changed -> `npm run frontend:type-check` + relevant domain tests
-- SQL schema/migrations changed -> `node scripts/validate-migration-system.js` + `npm run migration:audit`
-- Domain boundary/module moves changed -> `npm run validate:bounded-contexts && npm run architecture:check`
-- Auth/RBAC/security logic changed -> `npm run security:audit` + targeted auth/audit tests
-
-## CI note
-
-Current CI pipeline failures may come from existing frontend test-suite issues unrelated to docs. Use workflow/job logs in GitHub Actions for exact failing suites.
+- Rust models exported to TS changed: `npm run types:sync` and `npm run types:drift-check`
+- IPC command signatures/handlers changed: `npm run frontend:type-check` + relevant domain tests
+- SQL schema/migrations changed: `node scripts/validate-migration-system.js` + `npm run migration:audit`
+- Domain boundary/module moves changed: `npm run validate:bounded-contexts` + `npm run architecture:check`
+- Auth/RBAC/security logic changed: `npm run security:audit` + targeted auth/audit tests
