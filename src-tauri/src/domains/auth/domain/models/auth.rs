@@ -4,28 +4,20 @@ use crate::shared::contracts::common::{now, serialize_optional_timestamp, serial
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::fmt;
-// Conditional import removed
 use ts_rs::TS;
 
+/// A simplified session stored as a UUID in SQLite (no JWT, no 2FA).
 #[derive(Clone, Serialize, Deserialize, Debug, TS)]
 pub struct UserSession {
-    pub id: String,
+    pub id: String,          // UUID — also the session token
     pub user_id: String,
     pub username: String,
     pub email: String,
     pub role: UserRole,
-    pub token: String,
-    pub refresh_token: Option<String>,
-    pub expires_at: String,    // ISO timestamp string
-    pub last_activity: String, // ISO timestamp string
-    pub created_at: String,    // ISO timestamp string
-    // Extended session metadata for management
-    pub device_info: Option<DeviceInfo>,
-    pub ip_address: Option<String>,
-    pub user_agent: Option<String>,
-    pub location: Option<String>,
-    pub two_factor_verified: bool,
-    pub session_timeout_minutes: Option<u32>,
+    pub token: String,       // alias of id
+    pub expires_at: String,    // RFC3339
+    pub last_activity: String, // RFC3339
+    pub created_at: String,    // RFC3339
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, TS)]
@@ -65,34 +57,22 @@ impl std::str::FromStr for UserRole {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug, TS)]
-pub struct DeviceInfo {
-    pub device_type: String, // "desktop", "mobile", "tablet"
-    pub os: String,          // "Windows", "macOS", "Linux", "iOS", "Android"
-    pub browser: Option<String>,
-    pub device_name: Option<String>,
-}
-
-#[derive(Clone, Serialize, Deserialize, Debug)]
-pub struct TwoFactorConfig {
-    pub enabled: bool,
-    pub secret: Option<String>,      // Encrypted TOTP secret
-    pub backup_codes: Vec<String>,   // Encrypted backup codes
-    pub verified_at: Option<String>, // ISO timestamp when 2FA was verified
-}
-
-#[derive(Clone, Serialize, Deserialize, Debug)]
-pub struct TwoFactorSetup {
-    pub secret: String,
-    pub qr_code_url: String,
-    pub backup_codes: Vec<String>,
-}
-
+/// Kept for backward-compatible IPC responses; session timeout is fixed at 8h.
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct SessionTimeoutConfig {
     pub default_timeout_minutes: u32,
     pub max_timeout_minutes: u32,
     pub enforce_timeout: bool,
+}
+
+impl Default for SessionTimeoutConfig {
+    fn default() -> Self {
+        Self {
+            default_timeout_minutes: 480,  // 8 hours
+            max_timeout_minutes: 1440,     // 24 hours
+            enforce_timeout: true,
+        }
+    }
 }
 
 impl UserSession {
@@ -102,7 +82,6 @@ impl UserSession {
         email: String,
         role: UserRole,
         token: String,
-        refresh_token: Option<String>,
         expires_in_seconds: i64,
     ) -> Self {
         let now = Utc::now();
@@ -114,80 +93,21 @@ impl UserSession {
             email,
             role,
             token,
-            refresh_token,
             expires_at: expires_at.to_rfc3339(),
             last_activity: now.to_rfc3339(),
             created_at: now.to_rfc3339(),
-            device_info: None,
-            ip_address: None,
-            user_agent: None,
-            location: None,
-            two_factor_verified: false,
-            session_timeout_minutes: None,
-        }
-    }
-
-    pub fn new_with_metadata(
-        user_id: String,
-        username: String,
-        email: String,
-        role: UserRole,
-        token: String,
-        refresh_token: Option<String>,
-        expires_in_seconds: i64,
-        device_info: Option<DeviceInfo>,
-        ip_address: Option<String>,
-        user_agent: Option<String>,
-        location: Option<String>,
-        two_factor_verified: bool,
-        session_timeout_minutes: Option<u32>,
-    ) -> Self {
-        let now = Utc::now();
-        let expires_at = now + chrono::Duration::seconds(expires_in_seconds);
-        Self {
-            id: token.clone(),
-            user_id,
-            username,
-            email,
-            role,
-            token,
-            refresh_token,
-            expires_at: expires_at.to_rfc3339(),
-            last_activity: now.to_rfc3339(),
-            created_at: now.to_rfc3339(),
-            device_info,
-            ip_address,
-            user_agent,
-            location,
-            two_factor_verified,
-            session_timeout_minutes,
         }
     }
 
     pub fn is_expired(&self) -> bool {
         match DateTime::parse_from_rfc3339(&self.expires_at) {
             Ok(expires_at) => Utc::now() > expires_at.with_timezone(&Utc),
-            Err(_) => true, // If we can't parse, consider expired
+            Err(_) => true,
         }
     }
 
     pub fn update_activity(&mut self) {
         self.last_activity = Utc::now().to_rfc3339();
-    }
-
-    pub fn extend_session(&mut self, additional_seconds: i64) {
-        match DateTime::parse_from_rfc3339(&self.expires_at) {
-            Ok(current_expires) => {
-                let new_expires = current_expires + chrono::Duration::seconds(additional_seconds);
-                self.expires_at = new_expires.to_rfc3339();
-            }
-            Err(_) => {
-                // Fallback: set to now + additional_seconds
-                let new_expires = Utc::now() + chrono::Duration::seconds(additional_seconds);
-                self.expires_at = new_expires.to_rfc3339();
-            }
-        }
-        self.update_activity();
     }
 }
 

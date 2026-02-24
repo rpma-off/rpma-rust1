@@ -1,12 +1,11 @@
-//! Session repository for managing user sessions in the database
+//! Session repository — CRUD operations against the `sessions` table.
+//! All timestamps are stored as epoch milliseconds (INTEGER) in SQLite.
 
 use crate::commands::AppError;
 use crate::db::Database;
-use crate::domains::auth::domain::models::auth::UserSession;
-use crate::domains::auth::infrastructure::token;
-use chrono::Utc;
-use rusqlite::{params, OptionalExtension, Row};
-use std::collections::HashMap;
+use crate::domains::auth::domain::models::auth::{UserRole, UserSession};
+use chrono::{DateTime, TimeZone, Utc};
+use rusqlite::{params, OptionalExtension};
 use std::sync::Arc;
 use tracing::{info, instrument};
 
@@ -20,328 +19,190 @@ impl SessionRepository {
         Self { db }
     }
 
-    /// Get all active sessions for a user
+    /// Insert a new session row.
     #[instrument(skip(self), err)]
-    pub async fn get_user_sessions(&self, user_id: &str) -> Result<Vec<UserSession>, AppError> {
+    pub fn insert_session(&self, session: &UserSession) -> Result<(), AppError> {
         let conn = self.db.get_connection()?;
-        let mut stmt = conn.prepare(
-            "SELECT id, user_id, username, email, role, token, refresh_token,
-                    expires_at, last_activity, created_at,
-                    device_info, ip_address, user_agent, location,
-                    two_factor_verified, session_timeout_minutes
-             FROM user_sessions
-             WHERE user_id = ? AND expires_at > datetime('now')
-             ORDER BY last_activity DESC",
-        )?;
-
-        let sessions = stmt
-            .query_map(params![user_id], |row| self.row_to_session(row))?
-            .collect::<Result<Vec<_>, _>>()?;
-
-        Ok(sessions)
-    }
-
-    /// Get a specific session by ID
-    #[instrument(skip(self), err)]
-    pub async fn get_session(&self, session_id: &str) -> Result<Option<UserSession>, AppError> {
-        let conn = self.db.get_connection()?;
-        let mut stmt = conn.prepare(
-            "SELECT id, user_id, username, email, role, token, refresh_token,
-                    expires_at, last_activity, created_at,
-                    device_info, ip_address, user_agent, location,
-                    two_factor_verified, session_timeout_minutes
-             FROM user_sessions
-             WHERE id = ?",
-        )?;
-
-        let session = stmt
-            .query_row(params![session_id], |row| self.row_to_session(row))
-            .optional()?;
-
-        Ok(session)
-    }
-
-    /// Create a new session
-    #[instrument(skip(self), err)]
-    pub async fn create_session(&self, session: &UserSession) -> Result<(), AppError> {
-        let conn = self.db.get_connection()?;
-        let token_hash = token::hash_token_with_env(&session.token)
-            .map_err(|e| AppError::Configuration(format!("Token hash failed: {}", e)))?;
-        let refresh_token_hash = session
-            .refresh_token
-            .as_deref()
-            .map(token::hash_token_with_env)
-            .transpose()
-            .map_err(|e| AppError::Configuration(format!("Refresh token hash failed: {}", e)))?;
+        let created_ms = rfc3339_to_ms(&session.created_at)?;
+        let expires_ms = rfc3339_to_ms(&session.expires_at)?;
+        let activity_ms = rfc3339_to_ms(&session.last_activity)?;
         conn.execute(
-            "INSERT INTO user_sessions (
-                id, user_id, username, email, role, token, refresh_token,
-                expires_at, last_activity, created_at,
-                device_info, ip_address, user_agent, location,
-                two_factor_verified, session_timeout_minutes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO sessions (id, user_id, username, email, role, created_at, expires_at, last_activity)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
             params![
                 session.id,
                 session.user_id,
                 session.username,
                 session.email,
                 session.role.to_string(),
-                token_hash,
-                refresh_token_hash,
-                session.expires_at,
-                session.last_activity,
-                session.created_at,
-                serde_json::to_string(&session.device_info).unwrap_or_default(),
-                session.ip_address,
-                session.user_agent,
-                session.location,
-                session.two_factor_verified,
-                session.session_timeout_minutes,
+                created_ms,
+                expires_ms,
+                activity_ms,
             ],
         )?;
-
-        info!("Created session for user: {}", session.username);
+        info!("Inserted session for user: {}", session.username);
         Ok(())
     }
 
-    /// Update session activity
+    /// Find a session by token that has not yet expired.
     #[instrument(skip(self), err)]
-    pub async fn update_session_activity(&self, session_id: &str) -> Result<(), AppError> {
+    pub fn find_valid_session(&self, token: &str, now_ms: i64) -> Result<Option<UserSession>, AppError> {
         let conn = self.db.get_connection()?;
-        let now = Utc::now().to_rfc3339();
+        let row = conn
+            .query_row(
+                "SELECT id, user_id, username, email, role, created_at, expires_at, last_activity
+                 FROM sessions WHERE id = ?1 AND expires_at > ?2",
+                params![token, now_ms],
+                |row| {
+                    let role_str: String = row.get(4)?;
+                    let role = parse_role(&role_str);
+                    Ok((
+                        row.get::<_, String>(0)?,
+                        row.get::<_, String>(1)?,
+                        row.get::<_, String>(2)?,
+                        row.get::<_, String>(3)?,
+                        role,
+                        row.get::<_, i64>(5)?,
+                        row.get::<_, i64>(6)?,
+                        row.get::<_, i64>(7)?,
+                    ))
+                },
+            )
+            .optional()?;
 
+        Ok(row.map(|(id, user_id, username, email, role, created_ms, expires_ms, activity_ms)| {
+            UserSession {
+                token: id.clone(),
+                id,
+                user_id,
+                username,
+                email,
+                role,
+                created_at: ms_to_rfc3339(created_ms),
+                expires_at: ms_to_rfc3339(expires_ms),
+                last_activity: ms_to_rfc3339(activity_ms),
+            }
+        }))
+    }
+
+    /// Update last_activity for a session.
+    #[instrument(skip(self), err)]
+    pub fn update_last_activity(&self, token: &str, now_ms: i64) -> Result<(), AppError> {
+        let conn = self.db.get_connection()?;
         conn.execute(
-            "UPDATE user_sessions SET last_activity = ? WHERE id = ?",
-            params![now, session_id],
+            "UPDATE sessions SET last_activity = ?1 WHERE id = ?2",
+            params![now_ms, token],
         )?;
-
         Ok(())
     }
 
-    /// Revoke a specific session
+    /// Delete a session by token.
     #[instrument(skip(self), err)]
-    pub async fn revoke_session(&self, session_id: &str) -> Result<(), AppError> {
+    pub fn delete_session(&self, token: &str) -> Result<(), AppError> {
         let conn = self.db.get_connection()?;
-        let rows_affected = conn.execute(
-            "DELETE FROM user_sessions WHERE id = ?",
-            params![session_id],
-        )?;
-
-        if rows_affected > 0 {
-            info!("Revoked session: {}", session_id);
+        let n = conn.execute("DELETE FROM sessions WHERE id = ?1", params![token])?;
+        if n > 0 {
+            info!("Deleted session: {}", token);
         }
-
         Ok(())
     }
 
-    /// Revoke all sessions for a user except the current one
+    /// Delete all sessions for a user.
     #[instrument(skip(self), err)]
-    pub async fn revoke_all_sessions_except_current(
-        &self,
-        user_id: &str,
-        current_session_id: &str,
-    ) -> Result<u32, AppError> {
+    pub fn delete_user_sessions(&self, user_id: &str) -> Result<usize, AppError> {
         let conn = self.db.get_connection()?;
-        let rows_affected = conn.execute(
-            "DELETE FROM user_sessions WHERE user_id = ? AND id != ?",
-            params![user_id, current_session_id],
-        )?;
-
-        info!("Revoked {} sessions for user: {}", rows_affected, user_id);
-        Ok(rows_affected as u32)
+        let n = conn.execute("DELETE FROM sessions WHERE user_id = ?1", params![user_id])?;
+        Ok(n)
     }
 
-    /// Revoke all sessions for a user
+    /// Delete all sessions for a user except one specific session (keep current).
     #[instrument(skip(self), err)]
-    pub async fn revoke_all_user_sessions(&self, user_id: &str) -> Result<u32, AppError> {
+    pub fn delete_user_sessions_except(&self, user_id: &str, keep_token: &str) -> Result<usize, AppError> {
         let conn = self.db.get_connection()?;
-        let rows_affected = conn.execute(
-            "DELETE FROM user_sessions WHERE user_id = ?",
-            params![user_id],
+        let n = conn.execute(
+            "DELETE FROM sessions WHERE user_id = ?1 AND id != ?2",
+            params![user_id, keep_token],
         )?;
-
-        info!(
-            "Revoked all {} sessions for user: {}",
-            rows_affected, user_id
-        );
-        Ok(rows_affected as u32)
+        Ok(n)
     }
 
-    /// Clean up expired sessions
+    /// Delete expired sessions and return count removed.
     #[instrument(skip(self), err)]
-    pub async fn cleanup_expired_sessions(&self) -> Result<u32, AppError> {
+    pub fn cleanup_expired(&self, now_ms: i64) -> Result<usize, AppError> {
         let conn = self.db.get_connection()?;
-        let rows_affected = conn.execute(
-            "DELETE FROM user_sessions WHERE expires_at <= datetime('now')",
-            [],
+        let n = conn.execute(
+            "DELETE FROM sessions WHERE expires_at <= ?1",
+            params![now_ms],
         )?;
-
-        if rows_affected > 0 {
-            info!("Cleaned up {} expired sessions", rows_affected);
+        if n > 0 {
+            info!("Cleaned up {} expired sessions", n);
         }
-
-        Ok(rows_affected as u32)
+        Ok(n)
     }
 
-    /// Get session statistics
+    /// List active sessions for a user.
     #[instrument(skip(self), err)]
-    pub async fn get_session_stats(&self) -> Result<HashMap<String, u32>, AppError> {
+    pub fn list_user_sessions(&self, user_id: &str, now_ms: i64) -> Result<Vec<UserSession>, AppError> {
         let conn = self.db.get_connection()?;
-
-        // Count active sessions
-        let active_sessions: u32 = conn.query_row(
-            "SELECT COUNT(*) FROM user_sessions WHERE expires_at > datetime('now')",
-            [],
-            |row| row.get(0),
+        let mut stmt = conn.prepare(
+            "SELECT id, user_id, username, email, role, created_at, expires_at, last_activity
+             FROM sessions WHERE user_id = ?1 AND expires_at > ?2
+             ORDER BY last_activity DESC",
         )?;
+        let rows = stmt.query_map(params![user_id, now_ms], |row| {
+            let role_str: String = row.get(4)?;
+            let role = parse_role(&role_str);
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, String>(3)?,
+                role,
+                row.get::<_, i64>(5)?,
+                row.get::<_, i64>(6)?,
+                row.get::<_, i64>(7)?,
+            ))
+        })?;
 
-        // Count total sessions
-        let total_sessions: u32 =
-            conn.query_row("SELECT COUNT(*) FROM user_sessions", [], |row| row.get(0))?;
-
-        // Count unique users with active sessions
-        let active_users: u32 = conn.query_row(
-            "SELECT COUNT(DISTINCT user_id) FROM user_sessions WHERE expires_at > datetime('now')",
-            [],
-            |row| row.get(0),
-        )?;
-
-        let mut stats = HashMap::new();
-        stats.insert("active_sessions".to_string(), active_sessions);
-        stats.insert("total_sessions".to_string(), total_sessions);
-        stats.insert("active_users".to_string(), active_users);
-
-        Ok(stats)
-    }
-
-    /// Helper method to convert database row to UserSession
-    fn row_to_session(&self, row: &Row) -> Result<UserSession, rusqlite::Error> {
-        let device_info_json: Option<String> = row.get(10)?;
-        let device_info = device_info_json
-            .and_then(|json| serde_json::from_str(&json).ok())
-            .unwrap_or(None);
-
-        Ok(UserSession {
-            id: row.get(0)?,
-            user_id: row.get(1)?,
-            username: row.get(2)?,
-            email: row.get(3)?,
-            role: {
-                let role_str: String = row.get(4)?;
-                match role_str.as_str() {
-                    "admin" => crate::domains::auth::domain::models::auth::UserRole::Admin,
-                    "technician" => {
-                        crate::domains::auth::domain::models::auth::UserRole::Technician
-                    }
-                    "supervisor" => {
-                        crate::domains::auth::domain::models::auth::UserRole::Supervisor
-                    }
-                    "viewer" => crate::domains::auth::domain::models::auth::UserRole::Viewer,
-                    _ => crate::domains::auth::domain::models::auth::UserRole::Viewer,
-                }
-            },
-            token: row.get(5)?,
-            refresh_token: row.get(6)?,
-            expires_at: row.get(7)?,
-            last_activity: row.get(8)?,
-            created_at: row.get(9)?,
-            device_info,
-            ip_address: row.get(11)?,
-            user_agent: row.get(12)?,
-            location: row.get(13)?,
-            two_factor_verified: row.get(14)?,
-            session_timeout_minutes: row.get(15)?,
-        })
+        let mut sessions = Vec::new();
+        for r in rows {
+            let (id, user_id, username, email, role, created_ms, expires_ms, activity_ms) = r?;
+            sessions.push(UserSession {
+                token: id.clone(),
+                id,
+                user_id,
+                username,
+                email,
+                role,
+                created_at: ms_to_rfc3339(created_ms),
+                expires_at: ms_to_rfc3339(expires_ms),
+                last_activity: ms_to_rfc3339(activity_ms),
+            });
+        }
+        Ok(sessions)
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::domains::auth::domain::models::auth::UserRole;
+// ── helpers ─────────────────────────────────────────────────────────────────
 
-    #[tokio::test]
-    async fn test_create_session_hashes_tokens() {
-        std::env::set_var("JWT_SECRET", "test_jwt_secret_32_bytes_long__ok");
-        let db = Arc::new(Database::new_in_memory().await.expect("create db"));
-        let repo = SessionRepository::new(db.clone());
-        let now = chrono::Utc::now().timestamp_millis();
-
-        let conn = db.get_connection().expect("connection");
-        let expected_columns = [
-            ("device_info", "TEXT"),
-            ("ip_address", "TEXT"),
-            ("user_agent", "TEXT"),
-            ("location", "TEXT"),
-            ("two_factor_verified", "INTEGER NOT NULL DEFAULT 0"),
-            ("session_timeout_minutes", "INTEGER"),
-        ];
-
-        for (column, definition) in expected_columns {
-            let exists: i64 = conn
-                .query_row(
-                    "SELECT COUNT(*) FROM pragma_table_info('user_sessions') WHERE name = ?1",
-                    [column],
-                    |row| row.get(0),
-                )
-                .expect("check user_sessions column");
-            if exists == 0 {
-                conn.execute(
-                    &format!(
-                        "ALTER TABLE user_sessions ADD COLUMN {} {}",
-                        column, definition
-                    ),
-                    [],
-                )
-                .expect("add missing user_sessions column");
-            }
-        }
-
-        conn.execute(
-            "INSERT INTO users
-             (id, email, username, password_hash, full_name, role, is_active, created_at, updated_at)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?8)",
-            rusqlite::params![
-                "user-123",
-                "tester@example.com",
-                "tester",
-                "test-password-hash",
-                "Test User",
-                "admin",
-                1,
-                now
-            ],
-        )
-        .expect("insert user fixture");
-        drop(conn);
-
-        let session = UserSession::new(
-            "user-123".to_string(),
-            "tester".to_string(),
-            "tester@example.com".to_string(),
-            UserRole::Admin,
-            "token-value".to_string(),
-            Some("refresh-token".to_string()),
-            3600,
-        );
-
-        repo.create_session(&session).await.expect("create session");
-
-        let conn = db.get_connection().expect("connection");
-        let (stored_token, stored_refresh): (String, Option<String>) = conn
-            .query_row(
-                "SELECT token, refresh_token FROM user_sessions WHERE user_id = ?",
-                [session.user_id],
-                |row| Ok((row.get(0)?, row.get(1)?)),
-            )
-            .expect("query token");
-
-        let expected_token = token::hash_token_with_env(&session.token).expect("hash token");
-        assert_eq!(stored_token, expected_token);
-        assert_ne!(stored_token, session.token);
-
-        let expected_refresh =
-            token::hash_token_with_env("refresh-token").expect("hash refresh token");
-        assert_eq!(stored_refresh.as_deref(), Some(expected_refresh.as_str()));
+fn parse_role(s: &str) -> UserRole {
+    match s {
+        "admin" => UserRole::Admin,
+        "supervisor" => UserRole::Supervisor,
+        "technician" => UserRole::Technician,
+        _ => UserRole::Viewer,
     }
+}
+
+fn rfc3339_to_ms(s: &str) -> Result<i64, AppError> {
+    DateTime::parse_from_rfc3339(s)
+        .map(|dt| dt.timestamp_millis())
+        .map_err(|e| AppError::Validation(format!("Invalid timestamp '{}': {}", s, e)))
+}
+
+fn ms_to_rfc3339(ms: i64) -> String {
+    Utc.timestamp_millis_opt(ms)
+        .single()
+        .unwrap_or_else(Utc::now)
+        .to_rfc3339()
 }

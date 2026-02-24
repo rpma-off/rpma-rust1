@@ -33,7 +33,7 @@ impl Database {
             "clients",
             "interventions",
             "intervention_steps",
-            "user_sessions",
+            "sessions",
             "user_consent",
             "settings",
             "client_stats",
