@@ -79,7 +79,7 @@ export class AuthService {
    */
        static async login(credentials: LoginCredentials): Promise<AuthResponse<UserSession>> {
          try {
-       logger.info(LogContext.AUTH, 'AuthService.login called', { email: credentials.email, passwordLength: credentials.password.length });
+       logger.info(LogContext.AUTH, 'AuthService.login called', { email: credentials.email });
        logger.debug(LogContext.AUTH, 'Calling ipcClient for auth_login');
          const userSession = await ipcClient.auth.login(credentials.email, credentials.password);
        logger.info(LogContext.AUTH, 'AuthService.login response', {
@@ -189,8 +189,6 @@ export class TaskService {
     */
     static async getTasks(filters: TaskFilters = {}, token: string): Promise<ApiResponse<TaskListResponse>> {
       try {
-         console.log('TaskService.getTasks called with filters:', filters);
-         console.log('Token length:', token.length);
 
          // Convert TaskFilters to TaskQuery
            const taskQuery = {
@@ -207,7 +205,6 @@ export class TaskService {
            sort_order: 'desc' as const
          };
 
-          console.log('Converted TaskQuery:', taskQuery);
            const taskList = await ipcClient.tasks.list(taskQuery, token);
 
             // Convert the response to TaskListResponse format
@@ -304,7 +301,6 @@ export class TaskService {
            statistics: undefined // Not provided by ipcClient.tasks.list
          };
 
-         console.log('Converted data length:', convertedTasks.length);
          return { success: true, data: taskListResponse };
      } catch (error) {
        console.error('Exception in TaskService.getTasks:', error);

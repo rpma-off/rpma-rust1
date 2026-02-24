@@ -155,6 +155,7 @@ pub async fn check_task_assignment(
     };
 
     let can_assign = matches!(status, AssignmentStatus::Available);
+    let assigned_user_label = current_assignee.cloned().unwrap_or_else(|| "unknown".to_string());
 
     // Build validation result
     let _validation_result = ValidationResult {
@@ -169,7 +170,7 @@ pub async fn check_task_assignment(
             }
             AssignmentStatus::Assigned => vec![format!(
                 "Task is already assigned to user: {}",
-                current_assignee.as_ref().unwrap()
+                assigned_user_label.as_str()
             )],
             AssignmentStatus::Available => vec![],
         },
@@ -189,7 +190,7 @@ pub async fn check_task_assignment(
             }
             AssignmentStatus::Assigned => format!(
                 "Task is already assigned to user: {}",
-                current_assignee.as_ref().unwrap()
+                assigned_user_label.as_str()
             ),
             AssignmentStatus::Available => "".to_string(),
         })

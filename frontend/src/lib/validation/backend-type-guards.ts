@@ -268,7 +268,6 @@ export const UserSessionSchema = z.object({
   email: z.string(),
   role: UserRoleSchema,
   token: z.string(),
-  refresh_token: z.string().nullable(),
   expires_at: z.union([z.string(), z.number()]).transform(val =>
     typeof val === 'number' ? new Date(val).toISOString() : val
   ),
@@ -278,17 +277,6 @@ export const UserSessionSchema = z.object({
   created_at: z.union([z.string(), z.number()]).transform(val =>
     typeof val === 'number' ? new Date(val).toISOString() : val
   ),
-  device_info: z.object({
-    device_type: z.string(),
-    os: z.string(),
-    browser: z.string().nullable(),
-    device_name: z.string().nullable(),
-  }).nullable(),
-  ip_address: z.string().nullable(),
-  user_agent: z.string().nullable(),
-  location: z.string().nullable(),
-  two_factor_verified: z.boolean(),
-  session_timeout_minutes: z.number().nullable(),
 });
 
 // Intervention schemas

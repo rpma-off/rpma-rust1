@@ -23,19 +23,32 @@ pub async fn ui_window_close(window: Window) -> Result<(), String> {
     window.close().map_err(|e| e.to_string())
 }
 
-/// Open URL in system default browser
-#[command]
-pub async fn ui_shell_open_url(url: String) -> Result<(), String> {
-    // Validate URL format
+/// Validate a URL for safe external opening.
+/// Returns `Ok(())` if the URL is safe, or `Err` with a descriptive message otherwise.
+fn validate_open_url(url: &str) -> Result<(), String> {
     if url.is_empty() {
         return Err("URL cannot be empty".to_string());
     }
-    // Basic URL validation - should start with http:// or https://
-    if !url.starts_with("http://") && !url.starts_with("https://") {
-        return Err("Invalid URL format - must start with http:// or https://".to_string());
+    // Only allow HTTPS URLs to prevent protocol smuggling and open redirects
+    if !url.starts_with("https://") {
+        return Err("Invalid URL format - only HTTPS URLs are allowed".to_string());
     }
-    // Additional validation could include checking for valid domain, etc.
+    // Reject URLs with embedded credentials (e.g. https://user:pass@host).
+    // Only check the authority component (between "https://" and the first "/" or end).
+    let authority = url
+        .strip_prefix("https://")
+        .and_then(|s| s.split('/').next())
+        .unwrap_or("");
+    if authority.contains('@') {
+        return Err("URLs with embedded credentials are not allowed".to_string());
+    }
+    Ok(())
+}
 
+/// Open URL in system default browser
+#[command]
+pub async fn ui_shell_open_url(url: String) -> Result<(), String> {
+    validate_open_url(&url)?;
     open::that(&url).map_err(|e| format!("Failed to open URL: {}", e))
 }
 
@@ -185,4 +198,57 @@ fn get_sync_status_simple(
     );
 
     Ok(serde_json::Value::Object(stats))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::validate_open_url;
+
+    #[test]
+    fn test_shell_open_url_rejects_empty() {
+        let result = validate_open_url("");
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "URL cannot be empty");
+    }
+
+    #[test]
+    fn test_shell_open_url_rejects_http() {
+        let result = validate_open_url("http://example.com");
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Invalid URL format - only HTTPS URLs are allowed");
+    }
+
+    #[test]
+    fn test_shell_open_url_rejects_credentials_in_authority() {
+        let result = validate_open_url("https://user:pass@example.com");
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "URLs with embedded credentials are not allowed");
+    }
+
+    #[test]
+    fn test_shell_open_url_accepts_https() {
+        let result = validate_open_url("https://example.com/path?query=1");
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_shell_open_url_accepts_email_in_query_param() {
+        // Email addresses in query parameters must not be rejected
+        let result = validate_open_url("https://example.com/contact?email=user@domain.com");
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_shell_open_url_rejects_javascript_protocol() {
+        let result = validate_open_url("javascript:alert(1)");
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Invalid URL format - only HTTPS URLs are allowed");
+    }
+
+    #[test]
+    fn test_shell_open_url_rejects_file_protocol() {
+        let result = validate_open_url("file:///etc/passwd");
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Invalid URL format - only HTTPS URLs are allowed");
+    }
 }

@@ -2,9 +2,48 @@ import { invoke as tauriInvoke } from '@tauri-apps/api/core';
 import { recordMetric } from './metrics';
 import { logger } from '../logging';
 import { performanceMonitor } from '@/domains/analytics/services/performance-monitor';
+import { getSessionToken } from '@/domains/auth/services/sessionToken';
 import { LogDomain, CorrelationContext } from '../logging/types';
 import type { ApiResponse } from '@/types/api';
 import type { JsonObject, JsonValue } from '@/types/json';
+
+/**
+ * IPC commands that do not require a session token.
+ * All other commands are considered protected and will have the session_token
+ * auto-injected into the args before being sent to the backend.
+ */
+const PUBLIC_COMMANDS = new Set([
+  // Auth - no session required (or handled via separate token param)
+  'auth_login',
+  'auth_create_account',
+  'auth_validate_session',
+  'auth_refresh_token',
+  'auth_logout',
+  // Bootstrap - pre-auth setup
+  'has_admins',
+  'bootstrap_first_admin',
+  // UI window controls - no auth needed
+  'ui_window_minimize',
+  'ui_window_maximize',
+  'ui_window_close',
+  // Navigation - no auth needed
+  'navigation_update',
+  'navigation_go_back',
+  'navigation_go_forward',
+  'navigation_get_current',
+  'navigation_add_to_history',
+  // Shell / GPS
+  'shortcuts_register',
+  'ui_shell_open_url',
+  'ui_gps_get_current_position',
+  'ui_initiate_customer_call',
+  // System info / health
+  'health_check',
+  'get_health_status',
+  'get_app_info',
+  'get_device_info',
+  'get_application_metrics',
+]);
 
 const KNOWN_CLIENT_ERRORS = new Set([
   'client introuvable. veuillez sélectionner un client existant.',
@@ -98,6 +137,26 @@ export async function safeInvoke<T>(
     ...(args ?? {}),
     correlation_id: correlationId,
   };
+
+  // Auto-inject session_token for protected commands when not already supplied
+  const isProtected = !PUBLIC_COMMANDS.has(command);
+  const hasExplicitToken =
+    argsWithCorrelation.session_token !== null && argsWithCorrelation.session_token !== undefined ||
+    argsWithCorrelation.sessionToken !== null && argsWithCorrelation.sessionToken !== undefined;
+  if (isProtected && !hasExplicitToken) {
+    const token = await getSessionToken();
+    if (token) {
+      argsWithCorrelation.session_token = token;
+    } else {
+      const authError: EnhancedError = new Error(
+        "Erreur d'authentification. Veuillez vous reconnecter."
+      );
+      authError.code = 'AUTHENTICATION';
+      authError.correlationId = correlationId;
+      authError.alreadyLogged = false;
+      throw authError;
+    }
+  }
 
   try {
     // Log IPC call start

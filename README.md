@@ -1,58 +1,117 @@
-# RPMA v2
+<div align="center">
 
-![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
-![License](https://img.shields.io/badge/license-Proprietary-red.svg)
-![Tauri](https://img.shields.io/badge/Tauri-2.1.0-ffcd00.svg)
-![Next.js](https://img.shields.io/badge/Next.js-14.2-black.svg)
-![Rust](https://img.shields.io/badge/Rust-1.85.0-orange.svg)
+# 🛡️ RPMA v2
 
-**RPMA v2** (Repair Management Application version 2) est une application de bureau **offline-first** pour la gestion des interventions de PPF (Paint Protection Film) dans les ateliers automobiles. Elle permet de gérer le cycle complet des interventions, de la création de tâches à la documentation, en passant par le suivi du workflow et la gestion des stocks.
+### Repair Management Application — *Powered by [Raye Pas Mon Auto](https://www.rayepasmonauto.com/)*
+
+<br/>
+
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg?style=for-the-badge)](.)
+[![License](https://img.shields.io/badge/license-Proprietary-red.svg?style=for-the-badge)](.)
+[![Tauri](https://img.shields.io/badge/Tauri-2.1.0-ffcd00.svg?style=for-the-badge&logo=tauri)](https://tauri.app)
+[![Next.js](https://img.shields.io/badge/Next.js-14.2-black.svg?style=for-the-badge&logo=next.js)](https://nextjs.org)
+[![Rust](https://img.shields.io/badge/Rust-1.85.0-orange.svg?style=for-the-badge&logo=rust)](https://www.rust-lang.org)
+
+<br/>
+
+> **Application de bureau offline-first** pour la gestion des interventions PPF (Paint Protection Film)  
+> conçue pour les ateliers automobiles [Raye Pas Mon Auto](https://www.rayepasmonauto.com/).
+
+<br/>
+
+[🚀 Démarrage rapide](#-démarrage-rapide) • [🏗️ Architecture](#️-architecture) • [📋 Fonctionnalités](#-fonctionnalités-principales) • [📖 Documentation](#-documentation) • [🤝 Contribuer](#-contribution)
+
+</div>
 
 ---
 
-## 🎯 Fonctionnalités Principales
+## 🌟 Contexte Métier — Raye Pas Mon Auto
 
-- **Gestion des Tâches** - Création, assignation, suivi des interventions avec vues multiples (cartes, tableau, calendrier, Kanban)
-- **Workflow PPF** - Orchestration des interventions en 4 étapes : Préparation → Installation → Inspection → Finalisation
-- **Documentation Photo** - Capture et organisation des photos par étape (avant, pendant, après)
-- **Gestion des Clients** - Base de données clients avec historique des interventions
-- **Inventaire & Matériaux** - Suivi des stocks, consommation, alertes de niveau bas
-- **Calendrier & Planification** - Planification des tâches, détection de conflits, disponibilité des techniciens
-- **Devis & Facturation** - Génération et suivi des devis
-- **Rapports & Analytics** - Tableaux de bord, métriques de performance, rapports de conformité
-- **Gestion des Utilisateurs** - Contrôle d'accès basé sur les rôles (Admin, Superviseur, Technicien, Lecteur)
-- **Audit & Sécurité** - Journal d'audit complet, authentification 2FA, surveillance de sécurité
+[**Raye Pas Mon Auto**](https://www.rayepasmonauto.com/) est un réseau d'ateliers spécialisés dans la pose de **Film de Protection de Peinture (PPF)** pour véhicules citadins. Leur mission : démocratiser une technologie premium jusqu'ici réservée aux voitures de luxe.
+
+| Pilier | Description |
+|--------|-------------|
+| ⚡ **Rapide** | Pose en moins de 5h30 — déposez le matin, récupérez l'après-midi |
+| 💶 **Accessible** | Packs clairs, prix fixes, sans devis à rallonge |
+| 🏆 **Impeccable** | Auto-cicatrisation, résistance UV, hydrophobie — qualité industrielle |
+
+### Qu'est-ce que le PPF ?
+
+Le **Film de Protection de Peinture** est un film transparent ultra-résistant appliqué sur la carrosserie. Il absorbe les chocs, rayures et éclats, tout en restant totalement invisible. Ses propriétés clés :
+
+- **Auto-cicatrisation** — les micro-rayures disparaissent avec la chaleur, sans intervention
+- **Hydrophobie** — l'eau et la saleté glissent naturellement sur la surface
+- **Durabilité** — garanti 7 à 10 ans, résistant aux UV, réversible sans laisser de trace
+- **Impact écologique** — un véhicule protégé est un véhicule conservé plus longtemps
+
+> RPMA v2 est l'outil de gestion interne qui pilote l'ensemble du cycle de vie des interventions PPF dans les ateliers du réseau.
+
+---
+
+## 📋 Fonctionnalités Principales
+
+<table>
+<tr>
+<td width="50%">
+
+**🔧 Gestion des interventions**
+- Création, assignation et suivi des tâches
+- Workflow PPF en 4 étapes : Inspection → Préparation → Installation → Finalisation
+- Documentation photo par intervention et par étape
+- Exportation CSV des données
+
+</td>
+<td width="50%">
+
+**👥 Gestion clients & stocks**
+- Base clients avec historique complet
+- Inventaire matériaux, alertes de niveau bas
+- Suivi de consommation en temps réel
+- Génération et export PDF de devis
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+**📅 Planification & rapports**
+- Calendrier avec détection de conflits
+- Tableaux de bord et métriques analytics
+- Exportations multi-formats
+
+</td>
+<td width="50%">
+
+**🔒 Sécurité & administration**
+- RBAC 4 rôles : `admin`, `supervisor`, `technician`, `viewer`
+- Sessions UUID + hashage Argon2
+- Journal d'audit complet
+- Monitoring et commandes système
+
+</td>
+</tr>
+</table>
 
 ---
 
 ## 🛠️ Stack Technique
 
-### Frontend
-- **Next.js 14** - Framework React avec App Router (40+ pages)
-- **TypeScript 5.3** - Typage statique
-- **Tailwind CSS 3.4** - Styling utilitaire
-- **Radix UI** - Composants UI headless (40+ composants)
-- **TanStack Query 5.90** - Gestion d'état serveur
-- **Zustand 5.0** - Gestion d'état client
+### Vue d'ensemble
 
-### Backend
-- **Rust 1.85** - Logique métier, opérations de base de données
-- **Tauri 2.1** - Runtime d'application de bureau (alternative légère à Electron)
-- **rusqlite 0.32** - Pilote de base de données SQLite
-- **r2d2 0.8** - Pool de connexions
-- **tokio 1.42** - Runtime asynchrone
-
-### Base de Données
-- **SQLite** en mode WAL - Base de données relationnelle intégrée
-- **35 migrations** SQL - Gestion de version du schéma
-- **FTS5** - Recherche en texte intégral
-- **Indexation complète** - Optimisation des requêtes
-
-### Sécurité
-- **Argon2** - Hachage des mots de passe
-- **JWT** - Gestion de sessions
-- **TOTP** - Authentification à deux facteurs
-- **RBAC** - Contrôle d'accès basé sur les rôles
+| Couche | Technologie | Version |
+|--------|-------------|---------|
+| **UI Framework** | Next.js (App Router) | 14.2 |
+| **Runtime UI** | React + TypeScript | 18 / 5 |
+| **Styles** | Tailwind CSS | 3.4 |
+| **Composants** | Radix UI / shadcn | — |
+| **State Management** | Zustand | 5 |
+| **Server State** | TanStack Query | 5 |
+| **Runtime desktop** | Tauri | 2.x |
+| **Backend** | Rust | 1.85 (MSRV) |
+| **Base de données** | SQLite (WAL mode) | — |
+| **ORM / Pool** | rusqlite + r2d2 | — |
+| **Async runtime** | tokio | — |
+| **Auth** | Argon2 + Sessions UUID | — |
 
 ---
 
@@ -61,84 +120,50 @@
 RPMA v2 suit une architecture **4 couches** avec **Domain-Driven Design (DDD)** :
 
 ```
-┌─────────────────────────────────────────────────────┐
-│          Frontend (Next.js/React/TypeScript)       │
-│              - 40+ pages                            │
-│              - 179+ composants                      │
-│              - 30+ hooks personnalisés             │
-└────────────────────┬────────────────────────────────┘
-                     │ Appels IPC (Tauri)
-                     ▼
-┌─────────────────────────────────────────────────────┐
-│            IPC Commands (Rust)                      │
-│              - 65+ commandes                         │
-│              - Middleware d'authentification       │
-│              - Validation des entrées               │
-└────────────────────┬────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────┐
-│            Services (Logique Métier)                │
-│              - 88 services                          │
-│              - Business logic                       │
-│              - Publication d'événements            │
-└────────────────────┬────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────┐
-│          Repositories (Accès aux données)           │
-│              - 20 repositories                      │
-│              - LRU caching                          │
-│              - Requêtes en streaming                │
-└────────────────────┬────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────┐
-│              Base de données SQLite                 │
-│              - Mode WAL                             │
-│              - Pool de connexions                   │
-│              - Système de migrations               │
-└─────────────────────────────────────────────────────┘
+┌─────────────────────────────────────┐
+│        Frontend (Next.js/React)      │  ← App Router, Zustand, TanStack Query
+├─────────────────────────────────────┤
+│         IPC Layer (Tauri)            │  ← safeInvoke, contrats typés, AuthMiddleware
+├─────────────────────────────────────┤
+│   Commandes Rust + Services/Repos    │  ← domains/*/ipc, services, repositories
+├─────────────────────────────────────┤
+│        SQLite (WAL + migrations)     │  ← 41 migrations, schéma versionné
+└─────────────────────────────────────┘
 ```
 
-### Bounded Contexts (Backend)
+> **Règle d'or** : aucun accès direct à la DB depuis les handlers IPC. Les handlers sont de simples adaptateurs qui délèguent aux services.
 
-Le backend utilise **16 bounded contexts** sous `src-tauri/src/domains/` :
+### Bounded Contexts
 
-- `tasks` - Gestion des tâches
-- `clients` - Gestion des clients
-- `interventions` - Workflow des interventions
-- `inventory` - Inventaire et matériaux
-- `quotes` - Devis et tarification
-- `calendar` - Calendrier et planification
-- `reports` - Génération de rapports
-- `analytics` - Analytics et métriques
-- `auth` - Authentification et sessions
-- `users` - Gestion des utilisateurs
-- `notifications` - Système de notifications
-- `settings` - Configuration de l'application
-- `audit` - Journal d'audit
-- `documents` - Stockage de documents
-- `sync` - Synchronisation offline-first
-- `security` - Surveillance de sécurité
+<details>
+<summary><b>Backend — <code>src-tauri/src/domains/</code> (15 contextes)</b></summary>
 
-### Domaines Frontend
+| Domaine | Responsabilité |
+|---------|----------------|
+| `auth` | Authentification, sessions, RBAC |
+| `interventions` | Cycle de vie complet des interventions PPF |
+| `tasks` | Gestion et suivi des tâches |
+| `clients` | Base clients, historique |
+| `inventory` | Stocks, matériaux, alertes |
+| `quotes` | Devis, génération PDF |
+| `calendar` | Planification, conflits |
+| `documents` | Documentation photo |
+| `reports` | Rapports, exports |
+| `analytics` | Métriques, tableaux de bord |
+| `audit` | Journal d'audit |
+| `notifications` | Alertes et notifications |
+| `settings` | Configuration atelier |
+| `users` | Gestion des utilisateurs |
+| `sync` | Synchronisation offline |
 
-Le frontend organise ses fonctionnalités en **13 domaines** sous `frontend/src/domains/` :
+</details>
 
-- `auth` - Authentification
-- `tasks` - Gestion des tâches
-- `clients` - Gestion des clients
-- `interventions` - Workflow des interventions
-- `inventory` - Inventaire
-- `quotes` - Devis
-- `reports` - Rapports
-- `analytics` - Analytics
-- `admin` - Panneau d'administration
-- `users` - Utilisateurs
-- `notifications` - Notifications
-- `settings` - Paramètres
-- `workflow` - Gestion des workflows
+<details>
+<summary><b>Frontend — <code>frontend/src/domains/</code> (20 domaines)</b></summary>
+
+`admin` · `analytics` · `audit` · `auth` · `bootstrap` · `calendar` · `clients` · `dashboard` · `documents` · `interventions` · `inventory` · `notifications` · `performance` · `quotes` · `reports` · `settings` · `sync` · `tasks` · `users` · `workflow`
+
+</details>
 
 ---
 
@@ -146,65 +171,85 @@ Le frontend organise ses fonctionnalités en **13 domaines** sous `frontend/src/
 
 ### Prérequis
 
-- **Node.js 18+** et **npm**
-- **Rust 1.85+** (MSRV)
-- **Git**
+| Outil | Version minimale |
+|-------|-----------------|
+| Node.js | 18+ |
+| npm | 9+ |
+| Rust | 1.85+ (MSRV) |
+| Git | — |
 
 ### Installation
 
 ```bash
-# Cloner le dépôt
+# 1. Cloner le dépôt
 git clone <repository-url>
 cd rpma-rust
 
-# Installer les dépendances
+# 2. Installer les dépendances Node
 npm install
 
-# Synchroniser les types TypeScript depuis Rust
+# 3. Synchroniser les types TypeScript depuis les modèles Rust
 npm run types:sync
 ```
 
 ### Développement
 
 ```bash
-# Démarrer le frontend et le backend en parallèle
+# Démarrer frontend + backend en parallèle (recommandé)
 npm run dev
 
 # Frontend uniquement (port 3000)
 npm run frontend:dev
-
-# Backend uniquement
-npm run backend:dev
 ```
 
 ### Build Production
 
 ```bash
-# Build complet (frontend + backend)
+# Build complet (frontend + Tauri)
 npm run build
 
 # Frontend uniquement
 npm run frontend:build
 
-# Backend uniquement (release)
+# Backend Rust en release
 npm run backend:build:release
 ```
 
-### Tests
+---
+
+## 🧪 Tests & Validation
+
+### Frontend
 
 ```bash
-# Tous les tests
-npm test
+npm run frontend:lint          # ESLint
+npm run frontend:type-check    # TypeScript strict
+cd frontend && npm test        # Tests unitaires
+cd frontend && npm run test:e2e       # Tests end-to-end
+cd frontend && npm run test:coverage  # Rapport de couverture
+```
 
-# Frontend (Jest + Playwright)
-cd frontend && npm test
-cd frontend && npm run test:e2e
+### Backend Rust
 
-# Backend (Rust)
-cd src-tauri && cargo test
+```bash
+npm run backend:check          # Vérification compilation
+npm run backend:clippy         # Linter Rust
+npm run backend:fmt            # Formatage
+cd src-tauri && cargo test --lib          # Tests unitaires
+cd src-tauri && cargo test migration      # Tests migrations
+cd src-tauri && cargo test performance    # Tests performance
+```
 
-# Couverture des tests
-cd frontend && npm run test:coverage
+### Types & Sécurité
+
+```bash
+npm run types:sync             # Sync types Rust → TypeScript
+npm run types:validate         # Validation des types
+npm run types:drift-check      # Vérifier la dérive avant commit
+
+npm run validate:bounded-contexts   # Vérifier l'isolation des domaines
+npm run security:audit              # Audit des dépendances
+node scripts/ipc-authorization-audit.js  # Audit des autorisations IPC
 ```
 
 ---
@@ -213,287 +258,125 @@ cd frontend && npm run test:coverage
 
 ```
 rpma-rust/
-├── frontend/                    # Application Next.js
+├── frontend/                        # Application Next.js
+│   └── src/
+│       ├── app/                     # App Router — pages et layouts
+│       ├── components/              # Composants UI partagés
+│       ├── domains/                 # 20 domaines fonctionnels
+│       ├── hooks/                   # Hooks React partagés
+│       ├── lib/                     # Utilitaires + client IPC (safeInvoke)
+│       ├── shared/                  # UI commune (design system)
+│       └── types/                   # ⚠️ Auto-générés — ne pas modifier
+│
+├── src-tauri/                       # Backend Rust + Tauri
 │   ├── src/
-│   │   ├── app/               # 40+ pages (App Router)
-│   │   ├── components/        # 179+ composants React
-│   │   ├── domains/           # 13 domaines fonctionnels
-│   │   ├── hooks/             # 30+ hooks personnalisés
-│   │   ├── lib/               # Utilitaires et IPC client
-│   │   ├── shared/            # Composants et utilitaires partagés
-│   │   └── types/             # Types TypeScript auto-générés
-│   ├── public/                # Assets statiques
-│   ├── tests/                 # Tests E2E (Playwright)
-│   └── package.json           # Dépendances frontend
+│   │   ├── main.rs                  # Point d'entrée Tauri
+│   │   ├── commands/                # Commandes transversales
+│   │   ├── domains/                 # 15 bounded contexts
+│   │   ├── db/                      # Connexion DB + schema.sql
+│   │   └── shared/                  # Utilitaires partagés Rust
+│   ├── migrations/                  # Migrations 002 → 041
+│   └── Cargo.toml
 │
-├── src-tauri/                  # Backend Rust/Tauri
-│   ├── src/
-│   │   ├── main.rs            # Point d'entrée
-│   │   ├── commands/          # 65+ commandes IPC
-│   │   ├── domains/           # 16 bounded contexts
-│   │   ├── models/            # 21 modèles de données
-│   │   ├── repositories/      # 20 repositories
-│   │   ├── services/          # 88 services métier
-│   │   ├── db/                # Gestion de base de données
-│   │   └── sync/              # Synchronisation offline
-│   ├── migrations/            # 35 migrations SQL
-│   ├── tests/                 # Tests Rust
-│   └── Cargo.toml             # Dépendances Rust
+├── docs/
+│   ├── agent-pack/                  # Documentation d'onboarding (10 docs)
+│   └── adr/                         # Architectural Decision Records
 │
-├── scripts/                    # Scripts de build et validation (32 scripts)
-│   ├── write-types.js         # Génération des types TS
-│   ├── validate-types.js      # Validation des types
-│   ├── security-audit.js      # Audit de sécurité
-│   └── architecture-check.js # Validation de l'architecture
-│
-├── docs/                       # Documentation
-│   ├── agent-pack/            # Documentation détaillée (10 fichiers)
-│   └── adr/                   # Architectural Decision Records (8 ADRs)
-│
-├── AGENTS.md                   # Guide développeur complet
-├── package.json                # Scripts npm racine
-├── Cargo.toml                  # Workspace Cargo
-└── tsconfig.json               # Configuration TypeScript
+├── scripts/                         # Scripts de build et validation
+├── AGENTS.md                        # Guide développeur complet
+├── package.json                     # Scripts npm workspace racine
+└── Cargo.toml                       # Workspace Cargo
 ```
 
 ---
 
-## 📚 Documentation
+## 📖 Documentation
 
-### Documentation Développeur
-
-- **[docs/agent-pack/](./docs/agent-pack/)** - Pack de documentation pour onboarding
-  - [README.md](./docs/agent-pack/README.md) - Index et guide de démarrage rapide
-  - [00_PROJECT_OVERVIEW.md](./docs/agent-pack/00_PROJECT_OVERVIEW.md) - Vue d'ensemble du projet
-  - [01_DOMAIN_MODEL.md](./docs/agent-pack/01_DOMAIN_MODEL.md) - Modèle de domaine complet
-  - [02_ARCHITECTURE_AND_DATAFLOWS.md](./docs/agent-pack/02_ARCHITECTURE_AND_DATAFLOWS.md) - Architecture et flux de données
-  - [03_FRONTEND_GUIDE.md](./docs/agent-pack/03_FRONTEND_GUIDE.md) - Guide frontend
-  - [04_BACKEND_GUIDE.md](./docs/agent-pack/04_BACKEND_GUIDE.md) - Guide backend
-  - [05_IPC_API_AND_CONTRACTS.md](./docs/agent-pack/05_IPC_API_AND_CONTRACTS.md) - API IPC complète
-  - [06_SECURITY_AND_RBAC.md](./docs/agent-pack/06_SECURITY_AND_RBAC.md) - Sécurité et RBAC
-  - [07_DATABASE_AND_MIGRATIONS.md](./docs/agent-pack/07_DATABASE_AND_MIGRATIONS.md) - Base de données et migrations
-  - [08_DEV_WORKFLOWS_AND_TOOLING.md](./docs/agent-pack/08_DEV_WORKFLOWS_AND_TOOLING.md) - Workflows de développement
-  - [09_USER_FLOWS_AND_UX.md](./docs/agent-pack/09_USER_FLOWS_AND_UX.md) - Flows utilisateurs et UX
-
-### Architectural Decision Records
-
-- **[docs/adr/](./docs/adr/)** - Décisions architecturales
-  - [001-module-boundaries.md](./docs/adr/001-module-boundaries.md) - Règles des bounded contexts
-  - [002-transaction-boundaries.md](./docs/adr/002-transaction-boundaries.md) - Gestion des transactions
-  - [003-error-contract.md](./docs/adr/003-error-contract.md) - Contrat d'erreur
-  - [004-domain-events.md](./docs/adr/004-domain-events.md) - Système d'événements de domaine
-  - [005-ipc-mapping.md](./docs/adr/005-ipc-mapping.md) - Mapping des commandes IPC
-  - [006-rbac-policy.md](./docs/adr/006-rbac-policy.md) - Politique RBAC
-  - [007-logging-correlation.md](./docs/adr/007-logging-correlation.md) - Logging et corrélations
-  - [008-offline-first.md](./docs/adr/008-offline-first.md) - Stratégie offline-first
-
-### Documentation IPC Client
-
-- **[frontend/src/lib/ipc/README.md](./frontend/src/lib/ipc/README.md)** - Guide complet du client IPC
-  - Architecture
-  - Migration legacy → nouveau
-  - Comportement de cache
-  - Patterns d'utilisation
+| Document | Description |
+|----------|-------------|
+| [📦 Agent Pack](./docs/agent-pack/README.md) | Index d'onboarding — commencer ici |
+| [🗺️ Domain Model](./docs/agent-pack/01_DOMAIN_MODEL.md) | Entités, relations, invariants |
+| [🏛️ Architecture & Dataflows](./docs/agent-pack/02_ARCHITECTURE_AND_DATAFLOWS.md) | Flux de données, event bus |
+| [🖥️ Frontend Guide](./docs/agent-pack/03_FRONTEND_GUIDE.md) | Structure, patterns, state |
+| [⚙️ Backend Guide](./docs/agent-pack/04_BACKEND_GUIDE.md) | Commandes Rust, error handling |
+| [🔌 IPC API](./docs/agent-pack/05_IPC_API_AND_CONTRACTS.md) | Contrats, top 30 commandes |
+| [🔒 Sécurité & RBAC](./docs/agent-pack/06_SECURITY_AND_RBAC.md) | Auth, sessions, rôles |
+| [🗄️ Base de données](./docs/agent-pack/07_DATABASE_AND_MIGRATIONS.md) | SQLite WAL, migrations |
+| [🛠️ Dev Workflows](./docs/agent-pack/08_DEV_WORKFLOWS_AND_TOOLING.md) | Scripts, checklists quotidiennes |
+| [👤 User Flows & UX](./docs/agent-pack/09_USER_FLOWS_AND_UX.md) | Parcours utilisateur, routes |
+| [📐 ADR](./docs/adr/) | Décisions architecturales (ADR-001 → 008) |
+| [🔌 IPC Client](./frontend/src/lib/ipc/README.md) | Guide du client IPC interne |
 
 ---
 
-## 🔒 Règles de Développement
+## 📐 Règles de Développement
 
-### Architecture - TOUJOURS respecter
-- ✅ TOUJOURS suivre l'architecture 4 couches : Frontend → Commands → Services → Repositories → DB
-- ❌ JAMAIS sauter de couches (pas d'accès direct à la DB depuis les services)
-- ❌ JAMAIS mettre de logique métier dans les handlers de commandes IPC
-- ❌ JAMAIS importer entre domaines en interne (utiliser l'API publique `api/index.ts`)
-- ✅ TOUJOURS placer les nouvelles fonctionnalités backend dans le bounded context approprié sous `src-tauri/src/domains/`
-- ✅ TOUJOURS valider les bounded contexts : `npm run validate:bounded-contexts`
+### ✅ Architecture
 
-### Sécurité des Types - TOUJOURS respecter
-- ❌ JAMAIS éditer manuellement les fichiers sous `frontend/src/types/` - ils sont auto-générés
-- ✅ TOUJOURS exécuter `npm run types:sync` après modification d'un modèle Rust qui dérive `ts-rs::TS`
-- ✅ TOUJOURS exécuter `npm run types:drift-check` avant commit
+- Toujours respecter l'architecture **4 couches** sans court-circuit
+- **Interdiction** d'accéder directement à la DB depuis les handlers IPC
+- **Interdiction** d'importer entre domaines en interne — passer par l'event bus
+- Valider les bounded contexts avant chaque PR : `npm run validate:bounded-contexts`
 
-### Sécurité - TOUJOURS respecter
-- ✅ TOUJOURS valider `session_token` dans chaque commande IPC protégée
-- ✅ TOUJOURS appliquer les permissions RBAC avant d'exécuter des opérations protégées
-- ❌ JAMAIS committer de secrets, tokens ou credentials dans Git
-- ✅ TOUJOURS exécuter `npm run security:audit` avant soumission de code
+### ✅ Types TypeScript
 
-### Base de Données - TOUJOURS respecter
-- ✅ TOUJOURS utiliser des fichiers de migration numérotés pour les changements de schéma
-- ✅ TOUJOURS rendre les migrations idempotentes (`IF NOT EXISTS`, `IF EXISTS`)
-- ❌ JAMAIS modifier le schéma de la base de données hors des fichiers de migration
-- ✅ TOUJOURS valider les migrations : `node scripts/validate-migration-system.js`
+- Ne **jamais** modifier manuellement `frontend/src/types/` (fichiers auto-générés)
+- Exécuter `npm run types:sync` après toute modification des modèles Rust
+- Exécuter `npm run types:drift-check` avant chaque commit
 
-### Qualité du Code - TOUJOURS respecter
-- ✅ TOUJOURS exécuter `npm run quality:check` avant chaque commit
-- ✅ TOUJOURS utiliser l'encodage UTF-8 pour tous les fichiers source
-- ✅ TOUJOURS utiliser les commits conventionnels : `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, `perf:`, `security:`
-- ❌ JAMAIS pousser directement vers `main` (enforcé par le hook `git:guard-main`)
+### ✅ Sécurité
+
+- Valider le `session_token` sur chaque commande IPC protégée
+- Appliquer les permissions RBAC avant toute opération sensible
+- Ne **jamais** committer de secrets, tokens ou clés
+
+### ✅ Base de Données
+
+- Utiliser des migrations **numérotées** séquentiellement
+- Rendre les migrations **idempotentes** (`IF NOT EXISTS`, `IF EXISTS`)
+- Ne jamais modifier le schéma hors des fichiers de migration
 
 ---
 
-## 🧪 Tests
+## 🤝 Contribution
 
-### Types de Tests
-
-- **Tests unitaires** - Services, repositories, hooks
-- **Tests d'intégration** - Commandes IPC et workflows critiques
-- **Tests composants** - Composants UI avec logique complexe
-- **Tests E2E** - Flows utilisateurs critiques
-
-### Gates de Test
-
-#### Frontend
 ```bash
-npm run frontend:lint          # Doit passer
-npm run frontend:type-check    # Doit passer
-npm test                       # Doit passer
-npm run test:e2e              # Doit passer
+# 1. Créer une branche feature
+git checkout -b feature/ma-fonctionnalite
+
+# 2. Développer + tester
+npm run dev
+
+# 3. Vérifier avant commit
+npm run types:drift-check
+npm run validate:bounded-contexts
+npm run security:audit
+
+# 4. Commiter avec message conventionnel
+git commit -m "feat: description de la fonctionnalité"
+
+# 5. Pousser et ouvrir une Pull Request
+git push origin feature/ma-fonctionnalite
 ```
 
-#### Backend
-```bash
-npm run backend:check          # Doit passer
-npm run backend:clippy         # Doit passer
-npm run backend:fmt            # Doit passer
-cd src-tauri && cargo test    # Doit passer
-```
-
-#### Types
-```bash
-npm run types:sync             # Régénère
-npm run types:validate         # Doit passer
-npm run types:drift-check      # Doit passer
-```
-
-#### Sécurité
-```bash
-npm run security:audit         # Doit passer
-node scripts/ipc-authorization-audit.js  # Doit passer
-```
-
-### Exigences de Couverture
-
-- Chaque correction de bug nécessite un test de régression
-- Chaque nouvelle fonctionnalité nécessite des tests pour :
-  - ✅ Chemin succès
-  - ❌ Échecs de validation
-  - 🔒 Échecs de permissions (pour les fonctionnalités protégées)
+**Checklist PR obligatoire :**
+- [ ] Tous les tests passent (frontend + backend)
+- [ ] Types synchronisés (`types:sync` + `types:drift-check`)
+- [ ] Audit sécurité IPC passé
+- [ ] Architecture validée (`validate:bounded-contexts`)
+- [ ] Messages de commit en format conventionnel
 
 ---
 
-## 🔧 Commandes Utiles
+## 📄 Licence
 
-### Développement
-```bash
-npm run dev                    # Frontend + Backend
-npm run types:sync             # Régénère les types TS depuis Rust (CRITIQUE)
-npm run quality:check           # Tous les contrôles de qualité
-```
-
-### Build
-```bash
-npm run build                  # Build production
-npm run frontend:build         # Build frontend uniquement
-npm run backend:build          # Build backend uniquement
-npm run backend:build:release  # Build backend release
-```
-
-### Qualité & Validation
-```bash
-npm run frontend:lint          # ESLint
-npm run frontend:type-check    # Vérification TypeScript
-npm run backend:check          # Cargo check
-npm run backend:clippy         # Rust linting
-npm run backend:fmt            # Formatage Rust
-npm run validate:bounded-contexts  # Validation des domaines
-npm run architecture:check         # Vérification des règles d'architecture
-npm run security:audit            # Audit de sécurité
-```
-
-### Types
-```bash
-npm run types:sync             # Régénère les types
-npm run types:validate         # Valide la cohérence des types
-npm run types:drift-check      # Vérifie les dérives de types
-```
-
-### Tests
-```bash
-npm test                       # Tous les tests
-cd frontend && npm test        # Tests frontend
-cd frontend && npm run test:e2e # Tests E2E (Playwright)
-cd frontend && npm run test:coverage # Couverture
-cd src-tauri && cargo test    # Tests Rust
-```
+Ce logiciel est **propriétaire**. Tous droits réservés — [Raye Pas Mon Auto](https://www.rayepasmonauto.com/).
 
 ---
 
-## 📊 Statistiques du Projet
+<div align="center">
 
-| Métrique | Nombre |
-|----------|--------|
-| Pages frontend (App Router) | 40+ |
-| Composants React | 179+ |
-| Hooks personnalisés | 30+ |
-| Domaines frontend | 13 |
-| Domaines backend | 16 |
-| Modèles de données (Rust) | 21 |
-| Commandes IPC | 65+ |
-| Services (Rust) | 88 |
-| Repositories | 20 |
-| Migrations SQL | 35 |
-| Scripts de validation | 32 |
-| Fichiers de documentation | 18+ |
-| Packages npm | 124 |
-| Dépendances Rust | 50+ |
+**RPMA v2** — La solution de gestion PPF moderne, offline-first et sécurisée  
+au service du réseau [Raye Pas Mon Auto](https://www.rayepasmonauto.com/) · ✉️ [Rayepasmonauto@gmail.com](mailto:Rayepasmonauto@gmail.com)
 
----
-
-## 👥 Contribution
-
-### Processus de Contribution
-
-1. **Forker** le dépôt
-2. **Créer une branche** (`git checkout -b feature/ma-fonctionnalite`)
-3. **Commiter** avec des messages conventionnels (`feat: add xyz`, `fix: correct abc`)
-4. **Pusher** vers la branche (`git push origin feature/ma-fonctionnalite`)
-5. **Ouvrir une Pull Request**
-
-### Checklist PR
-
-Avant d'ouvrir une PR, vérifiez :
-
-- [ ] Les tests passent (`npm test`)
-- [ ] Le linting passe (`npm run quality:check`)
-- [ ] Les types sont synchronisés (`npm run types:sync && npm run types:drift-check`)
-- [ ] L'audit de sécurité passe (`npm run security:audit`)
-- [ ] L'architecture est validée (`npm run validate:bounded-contexts`)
-- [ ] La documentation est mise à jour (si nécessaire)
-- [ ] Les tests de couverture sont ajoutés pour les nouvelles fonctionnalités
-
-### Communication
-
-- Pour les questions techniques : [docs/agent-pack/](./docs/agent-pack/)
-- Pour signaler un bug : créer une issue avec le template bug
-- Pour proposer une fonctionnalité : créer une issue avec le template feature request
-
----
-
-## 📝 Licence
-
-Propriétaire - Tous droits réservés.
-
----
-
-## 🤝 Support
-
-Pour toute question ou problème, veuillez consulter :
-
-1 . Le [pack de documentation](./docs/agent-pack/)
-2. Les [Architectural Decision Records](./docs/adr/)
-3. La documentation du [client IPC](./frontend/src/lib/ipc/README.md)
-
----
-
-**RPMA v2** - Une solution de gestion d'interventions PPF moderne, offline-first et sécurisée.
+</div>

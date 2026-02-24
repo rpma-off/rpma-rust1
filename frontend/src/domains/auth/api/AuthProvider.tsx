@@ -111,8 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               const refreshedSession = await authIpc.refreshToken(session.refreshToken);
               await AuthSecureStorage.storeSession(
                 refreshedSession.token,
-                refreshedSession as unknown as Record<string, unknown>,
-                refreshedSession.refresh_token || undefined
+                refreshedSession as unknown as Record<string, unknown>
               );
 
               setState({
@@ -185,8 +184,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           await AuthSecureStorage.storeSession(
             refreshedSession.token,
-            refreshedSession as unknown as Record<string, unknown>,
-            refreshedSession.refresh_token || undefined
+            refreshedSession as unknown as Record<string, unknown>
           );
 
           setState(prev => ({
@@ -212,8 +210,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       await AuthSecureStorage.storeSession(
         userSession.token,
-        userSession as unknown as Record<string, unknown>,
-        userSession.refresh_token || undefined
+        userSession as unknown as Record<string, unknown>
       );
 
       setState({
@@ -252,8 +249,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       await AuthSecureStorage.storeSession(
         userSession.token,
-        userSession as unknown as Record<string, unknown>,
-        userSession.refresh_token || undefined
+        userSession as unknown as Record<string, unknown>
       );
 
       setState({

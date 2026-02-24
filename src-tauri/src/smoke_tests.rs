@@ -1,13 +1,10 @@
 //! Smoke tests for core services and migrations.
 
-use crate::domains::auth::infrastructure::two_factor::TwoFactorService;
 use crate::domains::tasks::infrastructure::task_validation::TaskValidationService;
 use crate::test_utils::TestDatabase;
-use base64::{engine::general_purpose, Engine as _};
 use chrono::Utc;
 use rusqlite::params;
 use std::sync::Arc;
-use totp_rs::{Algorithm, TOTP};
 
 fn insert_user(db: &crate::db::Database, user_id: &str, role: &str, is_active: bool) {
     let conn = db.get_connection().expect("Failed to get connection");
@@ -27,141 +24,6 @@ fn insert_user(db: &crate::db::Database, user_id: &str, role: &str, is_active: b
         ],
     )
     .expect("Failed to insert user");
-}
-
-fn ensure_two_factor_columns(db: &crate::db::Database) {
-    let conn = db.get_connection().expect("Failed to get connection");
-
-    let has_enabled: i64 = conn
-        .query_row(
-            "SELECT COUNT(*) FROM pragma_table_info('users') WHERE name='two_factor_enabled'",
-            [],
-            |row| row.get(0),
-        )
-        .unwrap_or(0);
-    if has_enabled == 0 {
-        conn.execute(
-            "ALTER TABLE users ADD COLUMN two_factor_enabled INTEGER NOT NULL DEFAULT 0",
-            [],
-        )
-        .expect("Failed to add two_factor_enabled column");
-    }
-
-    let has_secret: i64 = conn
-        .query_row(
-            "SELECT COUNT(*) FROM pragma_table_info('users') WHERE name='two_factor_secret'",
-            [],
-            |row| row.get(0),
-        )
-        .unwrap_or(0);
-    if has_secret == 0 {
-        conn.execute("ALTER TABLE users ADD COLUMN two_factor_secret TEXT", [])
-            .expect("Failed to add two_factor_secret column");
-    }
-
-    let has_backup: i64 = conn
-        .query_row(
-            "SELECT COUNT(*) FROM pragma_table_info('users') WHERE name='backup_codes'",
-            [],
-            |row| row.get(0),
-        )
-        .unwrap_or(0);
-    if has_backup == 0 {
-        conn.execute("ALTER TABLE users ADD COLUMN backup_codes TEXT", [])
-            .expect("Failed to add backup_codes column");
-    }
-
-    let has_verified_at: i64 = conn
-        .query_row(
-            "SELECT COUNT(*) FROM pragma_table_info('users') WHERE name='verified_at'",
-            [],
-            |row| row.get(0),
-        )
-        .unwrap_or(0);
-    if has_verified_at == 0 {
-        conn.execute("ALTER TABLE users ADD COLUMN verified_at TEXT", [])
-            .expect("Failed to add verified_at column");
-    }
-}
-
-fn seed_two_factor_config(
-    db: &crate::db::Database,
-    user_id: &str,
-    enabled: bool,
-    secret: Option<String>,
-    backup_codes: Vec<String>,
-    verified_at: Option<String>,
-) {
-    let conn = db.get_connection().expect("Failed to get connection");
-    let backup_codes_json =
-        serde_json::to_string(&backup_codes).expect("Failed to serialize backup codes");
-    conn.execute(
-        "UPDATE users SET two_factor_enabled = ?1, two_factor_secret = ?2, backup_codes = ?3, verified_at = ?4, updated_at = ?5 WHERE id = ?6",
-        params![
-            enabled as i32,
-            secret,
-            backup_codes_json,
-            verified_at,
-            Utc::now().timestamp_millis(),
-            user_id
-        ],
-    )
-    .expect("Failed to update two-factor config");
-}
-
-fn encrypt_secret_base64(secret: &[u8]) -> String {
-    let key = b"development_key_not_secure";
-    let encrypted: Vec<u8> = secret
-        .iter()
-        .enumerate()
-        .map(|(i, &byte)| byte ^ key[i % key.len()])
-        .collect();
-    general_purpose::STANDARD.encode(encrypted)
-}
-
-fn totp_for_secret(secret: &[u8]) -> TOTP {
-    TOTP::new(
-        Algorithm::SHA1,
-        6,
-        1,
-        30,
-        secret.to_vec(),
-        Some("RPMA".to_string()),
-        "test-user".to_string(),
-    )
-    .expect("Failed to create TOTP")
-}
-
-#[tokio::test]
-async fn smoke_two_factor_verify_code() {
-    let test_db = TestDatabase::new().expect("Failed to create test database");
-    let db = test_db.db();
-    let service = TwoFactorService::new(Arc::clone(&db));
-
-    ensure_two_factor_columns(db.as_ref());
-    insert_user(db.as_ref(), "twofactor-user", "technician", true);
-
-    let secret_bytes = b"0123456789ABCDEF0123456789ABCDEF".to_vec();
-    let encrypted_secret = encrypt_secret_base64(&secret_bytes);
-    seed_two_factor_config(
-        db.as_ref(),
-        "twofactor-user",
-        true,
-        Some(encrypted_secret),
-        vec![],
-        Some(Utc::now().to_rfc3339()),
-    );
-
-    let totp = totp_for_secret(&secret_bytes);
-    let valid_code = totp
-        .generate_current()
-        .expect("Should generate current TOTP code");
-
-    let result = service
-        .verify_code("twofactor-user", &valid_code)
-        .await
-        .expect("Verification should not error");
-    assert!(result, "Valid TOTP code should verify successfully");
 }
 
 #[test]
@@ -267,7 +129,7 @@ fn smoke_migration_harness_full() {
         "task_history",
         "clients",
         "users",
-        "user_sessions",
+        "sessions",
         "user_settings",
         "cache_metadata",
         "cache_statistics",

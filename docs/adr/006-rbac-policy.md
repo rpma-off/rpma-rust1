@@ -4,12 +4,12 @@
 Accepted
 
 ## Context
-The application supports multiple user roles (Admin, Manager, Technician, Viewer) with different access levels.
+The application supports multiple user roles (Admin, Supervisor, Technician, Viewer) with different access levels.
 
 ## Decision
 - All protected IPC commands require a `session_token` parameter.
 - The `authenticate!` macro validates the session token and returns the current user.
-- Role-based checks are performed at the command handler level using validators in `commands/validators.rs`.
+- Role-based checks are performed at the command handler level using helpers in `src-tauri/src/shared/auth_middleware.rs`.
 - Session tokens are validated on every protected endpoint.
 
 ## Consequences

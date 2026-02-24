@@ -19,7 +19,6 @@
 //! - **MaterialService**: Database
 //! - **AnalyticsService**: Database
 //! - **SessionService**: Database
-//! - **TwoFactorService**: Database
 //! - **CacheService**: Self-contained (uses internal caching)
 //! - **ReportJobService**: Database, CacheService
 //! - **PerformanceMonitorService**: Database
@@ -132,11 +131,7 @@ impl ServiceBuilder {
         );
 
         // Initialize Two Factor Service (depends on DB)
-        let two_factor_service = Arc::new(
-            crate::domains::auth::infrastructure::two_factor::TwoFactorService::new(
-                self.db.clone(),
-            ),
-        );
+        // REMOVED — 2FA has been replaced by plain UUID sessions
 
         // Initialize Photo Service (depends on DB and StorageSettings)
         let default_storage_settings = StorageSettings::default();
@@ -258,7 +253,6 @@ impl ServiceBuilder {
             analytics_service,
             auth_service,
             session_service,
-            two_factor_service,
             settings_service,
             user_service,
             cache_service,
@@ -279,16 +273,8 @@ impl ServiceBuilder {
 mod tests {
     use super::*;
 
-    fn set_test_jwt_secret() {
-        std::env::set_var("JWT_SECRET", "test_secret_key_that_is_long_enough");
-    }
-
     #[tokio::test]
     async fn test_service_builder_creation() {
-        // This test verifies that ServiceBuilder can be created
-        // Actual integration would require a database connection
-        // For now, we just ensure the struct compiles correctly
-        set_test_jwt_secret();
         let db = Arc::new(Database::new_in_memory().await.expect("create db"));
         let repositories = Arc::new(Repositories::new(db.clone(), 1000).await);
         let app_data_dir = std::path::PathBuf::from("/tmp/test");
@@ -299,7 +285,6 @@ mod tests {
 
     #[tokio::test]
     async fn test_event_bus_initialization() {
-        set_test_jwt_secret();
         let db = Arc::new(Database::new_in_memory().await.expect("create db"));
         let repositories = Arc::new(Repositories::new(db.clone(), 1000).await);
         let app_data_dir = std::path::PathBuf::from("/tmp/test");
@@ -316,7 +301,6 @@ mod tests {
 
     #[tokio::test]
     async fn test_websocket_handler_registration() {
-        set_test_jwt_secret();
         let db = Arc::new(Database::new_in_memory().await.expect("create db"));
         let repositories = Arc::new(Repositories::new(db.clone(), 1000).await);
         let app_data_dir = std::path::PathBuf::from("/tmp/test");

@@ -34,14 +34,11 @@ export const authenticateRequest = async (request: Request): Promise<Authenticat
   try {
     // Extract token from Authorization header
     const authHeader = request.headers.get('Authorization');
-    console.log('Auth header present:', !!authHeader);
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('No Bearer token found');
       return null;
     }
 
     const token = authHeader.substring(7);
-    console.log('Token length:', token.length);
 
     // Validate JWT token
     if (!JWT_SECRET) {
@@ -54,7 +51,6 @@ export const authenticateRequest = async (request: Request): Promise<Authenticat
       textEncoder.encode(JWT_SECRET)
     );
     const claims = decoded as unknown as JwtClaims;
-    console.log('JWT decoded successfully:', { sub: claims.sub, email: claims.email, role: claims.role });
 
     return {
       id: claims.sub,

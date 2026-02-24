@@ -2,60 +2,55 @@
 
 ## What RPMA v2 is
 
-RPMA v2 is an offline-first desktop application for PPF operations (tasking, execution, inventory, quotes, documents, users, and reporting).
+RPMA v2 is an offline-first desktop application for managing PPF interventions: tasks, scheduling, execution workflow steps, photos/documents, inventory, quotes, reporting, and user administration.
 
-- Runtime: Tauri v2 (`src-tauri/src/main.rs`)
-- Frontend: Next.js 14 App Router (`frontend/src/app`)
-- Backend: Rust bounded contexts (`src-tauri/src/domains/*`)
-- Data: local SQLite in WAL mode (`src-tauri/src/db`, initialized in `src-tauri/src/main.rs`)
-
-Primary users in code and RBAC:
-- `admin`
-- `supervisor`
-- `technician`
-- `viewer`
-
-Role enum source: `src-tauri/src/domains/auth/domain/models/auth.rs`.
+Primary users (RBAC):
+- admin
+- supervisor
+- technician
+- viewer
+Role enum: `src-tauri/src/domains/auth/domain/models/auth.rs`.
 
 ## Offline-first boundaries and source of truth
 
-- Local SQLite database is the runtime source of truth.
-- Sync is optional and queued (`src-tauri/src/domains/sync/*`).
-- Domain events are in-process (`src-tauri/src/shared/event_bus/*`).
-- App startup creates/opens `rpma.db` in Tauri app data directory and runs init/migrations (`src-tauri/src/main.rs`).
+- Local SQLite database is the runtime source of truth. The file is created in the Tauri app data directory as `rpma.db` (`src-tauri/src/main.rs`).
+- Sync is optional and queued in `sync_queue` with background processing (`src-tauri/src/domains/sync/infrastructure/sync/*`).
+- In-process domain events are published via the event bus and websocket handler (`src-tauri/src/shared/services/event_bus.rs`, `src-tauri/src/shared/services/websocket_event_handler.rs`).
 
 ## Tech stack summary
 
 | Layer | Stack | Code pointers |
 |---|---|---|
 | Desktop shell | Tauri 2 | `src-tauri/src/main.rs`, `src-tauri/tauri.conf.json` |
-| Frontend | Next.js 14 + React 18 + TS | `frontend/src/app/layout.tsx`, `frontend/src/app/RootClientLayout.tsx` |
-| Frontend state | React Query + Zustand | `frontend/src/app/providers.tsx`, `frontend/src/domains/*/stores` |
-| IPC client | `safeInvoke` wrapper + domain IPC modules | `frontend/src/lib/ipc/utils.ts`, `frontend/src/lib/ipc/client.ts`, `frontend/src/domains/*/ipc` |
-| Backend | Rust (bounded contexts) | `src-tauri/src/domains/*` |
+| Frontend | Next.js 14 + React 18 + TypeScript | `frontend/src/app/layout.tsx`, `frontend/src/app/RootClientLayout.tsx` |
+| Frontend state | React Query + Context + Zustand | `frontend/src/app/providers.tsx`, `frontend/src/domains/auth/api/AuthProvider.tsx`, `frontend/src/lib/stores/layoutStore.ts` |
+| IPC client | `safeInvoke` + command registry + domain IPC wrappers | `frontend/src/lib/ipc/utils.ts`, `frontend/src/lib/ipc/commands.ts`, `frontend/src/domains/*/ipc` |
+| Backend | Rust bounded contexts | `src-tauri/src/domains/*` |
 | DB | SQLite + r2d2 pool + WAL | `src-tauri/src/db/connection.rs`, `src-tauri/src/db/migrations.rs` |
 | Type sharing | `ts-rs` export to TS | `src-tauri/src/bin/export-types.rs`, `scripts/write-types.js`, `frontend/src/lib/backend.ts` |
 
 ## Top-level modules (current)
 
 Backend bounded contexts under `src-tauri/src/domains/`:
-- `auth`, `users`, `tasks`, `clients`, `interventions`, `documents`, `inventory`, `quotes`
-- `calendar`, `reports`, `analytics`, `notifications`, `settings`, `audit`, `sync`
+- analytics, audit, auth, calendar, clients, documents, interventions, inventory, notifications, quotes, reports, settings, sync, tasks, users
+
+Backend non-domain command surfaces:
+- `src-tauri/src/commands/*` (system, ui, navigation, performance, websocket, ipc_optimization)
 
 Frontend feature domains under `frontend/src/domains/` mirror business areas and expose `api/`, `ipc/`, `services/`, `hooks/`, `components/`.
 
 ## Golden paths
 
-### Add a feature end-to-end
-1. Backend domain model/application/infrastructure/ipc in `src-tauri/src/domains/<domain>/`.
-2. Register command in `src-tauri/src/main.rs` `generate_handler![...]`.
-3. If exported Rust types changed: run `npm run types:sync`.
-4. Add/update frontend domain IPC wrapper (`frontend/src/domains/<domain>/ipc/*.ts`) and consumer hooks/components.
+Add a feature end-to-end:
+1. Add domain model/application/infrastructure code in `src-tauri/src/domains/<domain>/`.
+2. Expose an IPC command in `src-tauri/src/domains/<domain>/ipc/*` and register it in `src-tauri/src/main.rs`.
+3. If exported Rust types changed, run `npm run types:sync`.
+4. Add/update frontend IPC wrapper in `frontend/src/domains/<domain>/ipc/*.ts` and call it from UI/hooks.
 
-### Find command handler and caller
-- Rust registration: `src-tauri/src/main.rs`
-- Rust implementation: `src-tauri/src/domains/*/ipc/**/*.rs`
-- Frontend caller(s): `frontend/src/domains/*/ipc/*.ts` and `frontend/src/lib/ipc/client.ts`
+Find a command handler and caller:
+- Command registration: `src-tauri/src/main.rs`.
+- Command implementation: `src-tauri/src/domains/*/ipc/**/*.rs` or `src-tauri/src/commands/*.rs`.
+- Frontend caller: `frontend/src/domains/*/ipc/*.ts` or `frontend/src/lib/ipc/client.ts`.
 
 ## Internal navigation
 
@@ -71,4 +66,4 @@ Frontend feature domains under `frontend/src/domains/` mirror business areas and
 
 ## DOC vs CODE mismatch
 
-- Some ADR text still mentions `Manager`; code role enum uses `Supervisor` (`src-tauri/src/domains/auth/domain/models/auth.rs`, `docs/adr/006-rbac-policy.md`).
+- ADR 006 mentions `Manager`; runtime role enum and RBAC helpers use `Supervisor`.

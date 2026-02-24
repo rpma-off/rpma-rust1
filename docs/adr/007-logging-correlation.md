@@ -4,11 +4,11 @@
 Accepted
 
 ## Context
-Distributed tracing across IPC → application → infrastructure layers requires a consistent correlation ID.
+Distributed tracing across IPC -> application -> infrastructure layers requires a consistent correlation ID.
 
 ## Decision
 - Each IPC command accepts an optional `correlation_id` parameter.
-- `init_correlation_context` generates or reuses a correlation ID at the command boundary.
+- `init_correlation_context` generates or reuses a correlation ID at the command boundary (`src-tauri/src/shared/ipc/correlation.rs`).
 - The correlation ID is propagated through `tracing::Span` instrumentation.
 - `ApiResponse::with_correlation_id` attaches the ID to responses for frontend debugging.
 - `update_correlation_context_user` enriches the context with the authenticated user ID.

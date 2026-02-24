@@ -54,6 +54,14 @@ path = "tests/commands/intervention_commands_test.rs"
 name = "task_commands_test"
 path = "tests/commands/task_commands_test.rs"
 
+[[test]]
+name = "ipc_contract_test"
+path = "tests/commands/ipc_contract_test.rs"
+
+[[test]]
+name = "golden_flows_test"
+path = "tests/commands/golden_flows_test.rs"
+
 [build-dependencies]
 tauri-build = { version = "2.0", features = [] }
 
@@ -126,7 +134,6 @@ async-stream = "0.3"
 
 # Password hashing
 argon2 = { version = "0.5", features = ["std"] }
-jsonwebtoken = "9.3"
 hmac = "0.12"
 sha2 = "0.10"
 base64 = "0.22"
@@ -157,9 +164,6 @@ printpdf = "0.7"
 
 # Geospatial operations
 geo = "0.28"
-
-# Two-factor authentication
-totp-rs = { version = "5.5", features = ["qr"] }
 
 [features]
 default = ["custom-protocol"]
