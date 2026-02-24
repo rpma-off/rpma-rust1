@@ -1,150 +1,118 @@
 # RPMA v2
 
-![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)
 ![License](https://img.shields.io/badge/license-Proprietary-red.svg)
 ![Tauri](https://img.shields.io/badge/Tauri-2.1.0-ffcd00.svg)
 ![Next.js](https://img.shields.io/badge/Next.js-14.2-black.svg)
 ![Rust](https://img.shields.io/badge/Rust-1.85.0-orange.svg)
 
-**RPMA v2** (Repair Management Application version 2) est une application de bureau **offline-first** pour la gestion des interventions de PPF (Paint Protection Film) dans les ateliers automobiles. Elle permet de gérer le cycle complet des interventions, de la création de tâches à la documentation, en passant par le suivi du workflow et la gestion des stocks.
+**RPMA v2** (Repair Management Application version 2) est une application de bureau **offline-first** pour la gestion des interventions de PPF (Paint Protection Film) dans les ateliers automobiles. Elle permet de g�rer le cycle complet des interventions, de la cr�ation de t�ches � la documentation, en passant par le suivi du workflow et la gestion des stocks.
 
 ---
 
-## 🎯 Fonctionnalités Principales
+## ?? Fonctionnalit�s principales
 
-- **Gestion des Tâches** - Création, assignation, suivi des interventions avec vues multiples (cartes, tableau, calendrier, Kanban)
-- **Workflow PPF** - Orchestration des interventions en 4 étapes : Préparation → Installation → Inspection → Finalisation
-- **Documentation Photo** - Capture et organisation des photos par étape (avant, pendant, après)
-- **Gestion des Clients** - Base de données clients avec historique des interventions
-- **Inventaire & Matériaux** - Suivi des stocks, consommation, alertes de niveau bas
-- **Calendrier & Planification** - Planification des tâches, détection de conflits, disponibilité des techniciens
-- **Devis & Facturation** - Génération et suivi des devis
-- **Rapports & Analytics** - Tableaux de bord, métriques de performance, rapports de conformité
-- **Gestion des Utilisateurs** - Contrôle d'accès basé sur les rôles (Admin, Superviseur, Technicien, Lecteur)
-- **Audit & Sécurité** - Journal d'audit complet, authentification 2FA, surveillance de sécurité
+- **Gestion des t�ches** : cr�ation, assignation, suivi, statistiques et export CSV
+- **Workflow PPF** : orchestration en �tapes (inspection ? pr�paration ? installation ? finalisation)
+- **Documentation photo** : capture et organisation des photos par intervention/�tape
+- **Gestion des clients** : base clients et historique des interventions
+- **Inventaire & mat�riaux** : suivi des stocks, consommation, alertes de niveau bas
+- **Calendrier & planification** : planification des t�ches, d�tection de conflits
+- **Devis** : g�n�ration, suivi et export PDF
+- **Rapports & analytics** : tableaux de bord, m�triques et exportations
+- **Gestion des utilisateurs** : contr�le d'acc�s par r�les (admin, supervisor, technician, viewer)
+- **Audit & s�curit�** : journal d'audit et commandes de monitoring
 
 ---
 
-## 🛠️ Stack Technique
+## ??? Stack technique
 
 ### Frontend
-- **Next.js 14** - Framework React avec App Router (40+ pages)
-- **TypeScript 5.3** - Typage statique
-- **Tailwind CSS 3.4** - Styling utilitaire
-- **Radix UI** - Composants UI headless (40+ composants)
-- **TanStack Query 5.90** - Gestion d'état serveur
-- **Zustand 5.0** - Gestion d'état client
+- **Next.js 14** (App Router)
+- **React 18** + **TypeScript 5**
+- **Tailwind CSS 3.4**
+- **Radix UI / shadcn** (primitives UI)
+- **TanStack Query 5**
+- **Zustand 5**
 
 ### Backend
-- **Rust 1.85** - Logique métier, opérations de base de données
-- **Tauri 2.1** - Runtime d'application de bureau (alternative légère à Electron)
-- **rusqlite 0.32** - Pilote de base de données SQLite
-- **r2d2 0.8** - Pool de connexions
-- **tokio 1.42** - Runtime asynchrone
+- **Rust 1.85**
+- **Tauri 2.x**
+- **rusqlite** + **r2d2** (pool SQLite)
+- **tokio**
 
-### Base de Données
-- **SQLite** en mode WAL - Base de données relationnelle intégrée
-- **35 migrations** SQL - Gestion de version du schéma
-- **FTS5** - Recherche en texte intégral
-- **Indexation complète** - Optimisation des requêtes
+### Base de donn�es
+- **SQLite** en mode WAL
+- Sch�ma de base: `src-tauri/src/db/schema.sql`
+- Migrations int�gr�es: `src-tauri/migrations/*.sql` (002 ? 041)
 
-### Sécurité
-- **Argon2** - Hachage des mots de passe
-- **JWT** - Gestion de sessions
-- **TOTP** - Authentification à deux facteurs
-- **RBAC** - Contrôle d'accès basé sur les rôles
+### S�curit�
+- **Argon2** (hashage des mots de passe)
+- **Sessions UUID** (table `sessions`, migration 041)
+- **RBAC** via `AuthMiddleware`
 
 ---
 
-## 🏗️ Architecture
+## ??? Architecture
 
 RPMA v2 suit une architecture **4 couches** avec **Domain-Driven Design (DDD)** :
 
 ```
-┌─────────────────────────────────────────────────────┐
-│          Frontend (Next.js/React/TypeScript)       │
-│              - 40+ pages                            │
-│              - 179+ composants                      │
-│              - 30+ hooks personnalisés             │
-└────────────────────┬────────────────────────────────┘
-                     │ Appels IPC (Tauri)
-                     ▼
-┌─────────────────────────────────────────────────────┐
-│            IPC Commands (Rust)                      │
-│              - 65+ commandes                         │
-│              - Middleware d'authentification       │
-│              - Validation des entrées               │
-└────────────────────┬────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────┐
-│            Services (Logique Métier)                │
-│              - 88 services                          │
-│              - Business logic                       │
-│              - Publication d'événements            │
-└────────────────────┬────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────┐
-│          Repositories (Accès aux données)           │
-│              - 20 repositories                      │
-│              - LRU caching                          │
-│              - Requêtes en streaming                │
-└────────────────────┬────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────┐
-│              Base de données SQLite                 │
-│              - Mode WAL                             │
-│              - Pool de connexions                   │
-│              - Système de migrations               │
-└─────────────────────────────────────────────────────┘
+Frontend (Next.js/React)
+  -> IPC (Tauri) via safeInvoke
+    -> Commandes Rust (domains/*/ipc, commands/*)
+      -> Services / Repositories
+        -> SQLite (WAL + migrations)
 ```
 
 ### Bounded Contexts (Backend)
 
-Le backend utilise **16 bounded contexts** sous `src-tauri/src/domains/` :
-
-- `tasks` - Gestion des tâches
-- `clients` - Gestion des clients
-- `interventions` - Workflow des interventions
-- `inventory` - Inventaire et matériaux
-- `quotes` - Devis et tarification
-- `calendar` - Calendrier et planification
-- `reports` - Génération de rapports
-- `analytics` - Analytics et métriques
-- `auth` - Authentification et sessions
-- `users` - Gestion des utilisateurs
-- `notifications` - Système de notifications
-- `settings` - Configuration de l'application
-- `audit` - Journal d'audit
-- `documents` - Stockage de documents
-- `sync` - Synchronisation offline-first
-- `security` - Surveillance de sécurité
+Bounded contexts sous `src-tauri/src/domains/` :
+- `analytics`
+- `audit`
+- `auth`
+- `calendar`
+- `clients`
+- `documents`
+- `interventions`
+- `inventory`
+- `notifications`
+- `quotes`
+- `reports`
+- `settings`
+- `sync`
+- `tasks`
+- `users`
 
 ### Domaines Frontend
 
-Le frontend organise ses fonctionnalités en **13 domaines** sous `frontend/src/domains/` :
-
-- `auth` - Authentification
-- `tasks` - Gestion des tâches
-- `clients` - Gestion des clients
-- `interventions` - Workflow des interventions
-- `inventory` - Inventaire
-- `quotes` - Devis
-- `reports` - Rapports
-- `analytics` - Analytics
-- `admin` - Panneau d'administration
-- `users` - Utilisateurs
-- `notifications` - Notifications
-- `settings` - Paramètres
-- `workflow` - Gestion des workflows
+Domaines sous `frontend/src/domains/` :
+- `admin`
+- `analytics`
+- `audit`
+- `auth`
+- `bootstrap`
+- `calendar`
+- `clients`
+- `dashboard`
+- `documents`
+- `interventions`
+- `inventory`
+- `notifications`
+- `performance`
+- `quotes`
+- `reports`
+- `settings`
+- `sync`
+- `tasks`
+- `users`
+- `workflow`
 
 ---
 
-## 🚀 Démarrage Rapide
+## ?? D�marrage rapide
 
-### Prérequis
+### Pr�requis
 
 - **Node.js 18+** et **npm**
 - **Rust 1.85+** (MSRV)
@@ -153,31 +121,28 @@ Le frontend organise ses fonctionnalités en **13 domaines** sous `frontend/src/
 ### Installation
 
 ```bash
-# Cloner le dépôt
+# Cloner le d�p�t
 git clone <repository-url>
 cd rpma-rust
 
-# Installer les dépendances
+# Installer les d�pendances
 npm install
 
 # Synchroniser les types TypeScript depuis Rust
 npm run types:sync
 ```
 
-### Développement
+### D�veloppement
 
 ```bash
-# Démarrer le frontend et le backend en parallèle
+# D�marrer le frontend et le backend en parall�le
 npm run dev
 
 # Frontend uniquement (port 3000)
 npm run frontend:dev
-
-# Backend uniquement
-npm run backend:dev
 ```
 
-### Build Production
+### Build production
 
 ```bash
 # Build complet (frontend + backend)
@@ -193,307 +158,158 @@ npm run backend:build:release
 ### Tests
 
 ```bash
-# Tous les tests
-npm test
-
-# Frontend (Jest + Playwright)
+# Frontend
 cd frontend && npm test
 cd frontend && npm run test:e2e
-
-# Backend (Rust)
-cd src-tauri && cargo test
-
-# Couverture des tests
 cd frontend && npm run test:coverage
+
+# Backend
+cd src-tauri && cargo test --lib
+cd src-tauri && cargo test migration
+cd src-tauri && cargo test performance
 ```
 
 ---
 
-## 📁 Structure du Projet
+## ?? Structure du projet
 
 ```
 rpma-rust/
-├── frontend/                    # Application Next.js
-│   ├── src/
-│   │   ├── app/               # 40+ pages (App Router)
-│   │   ├── components/        # 179+ composants React
-│   │   ├── domains/           # 13 domaines fonctionnels
-│   │   ├── hooks/             # 30+ hooks personnalisés
-│   │   ├── lib/               # Utilitaires et IPC client
-│   │   ├── shared/            # Composants et utilitaires partagés
-│   │   └── types/             # Types TypeScript auto-générés
-│   ├── public/                # Assets statiques
-│   ├── tests/                 # Tests E2E (Playwright)
-│   └── package.json           # Dépendances frontend
-│
-├── src-tauri/                  # Backend Rust/Tauri
-│   ├── src/
-│   │   ├── main.rs            # Point d'entrée
-│   │   ├── commands/          # 65+ commandes IPC
-│   │   ├── domains/           # 16 bounded contexts
-│   │   ├── models/            # 21 modèles de données
-│   │   ├── repositories/      # 20 repositories
-│   │   ├── services/          # 88 services métier
-│   │   ├── db/                # Gestion de base de données
-│   │   └── sync/              # Synchronisation offline
-│   ├── migrations/            # 35 migrations SQL
-│   ├── tests/                 # Tests Rust
-│   └── Cargo.toml             # Dépendances Rust
-│
-├── scripts/                    # Scripts de build et validation (32 scripts)
-│   ├── write-types.js         # Génération des types TS
-│   ├── validate-types.js      # Validation des types
-│   ├── security-audit.js      # Audit de sécurité
-│   └── architecture-check.js # Validation de l'architecture
-│
-├── docs/                       # Documentation
-│   ├── agent-pack/            # Documentation détaillée (10 fichiers)
-│   └── adr/                   # Architectural Decision Records (8 ADRs)
-│
-├── AGENTS.md                   # Guide développeur complet
-├── package.json                # Scripts npm racine
-├── Cargo.toml                  # Workspace Cargo
-└── tsconfig.json               # Configuration TypeScript
++-- frontend/                    # Application Next.js
+�   +-- src/
+�   �   +-- app/                 # App Router pages
+�   �   +-- components/          # Composants partag�s
+�   �   +-- domains/             # Domaines fonctionnels
+�   �   +-- hooks/               # Hooks partag�s
+�   �   +-- lib/                 # Utilitaires + IPC client
+�   �   +-- shared/              # UI partag�e
+�   �   +-- types/               # Types TS auto-g�n�r�s
+�   +-- package.json
+�
++-- src-tauri/                   # Backend Rust/Tauri
+�   +-- src/
+�   �   +-- main.rs              # Point d'entr�e
+�   �   +-- commands/            # Commandes non-domaines
+�   �   +-- domains/             # Bounded contexts
+�   �   +-- db/                  # Base de donn�es + migrations
+�   �   +-- shared/              # Utilitaires partag�s
+�   +-- migrations/              # Migrations SQLite int�gr�es
+�   +-- Cargo.toml
+�
++-- docs/
+�   +-- agent-pack/              # Documentation d'onboarding
+�   +-- adr/                     # Architectural Decision Records
+�
++-- scripts/                     # Scripts de build et validation
++-- AGENTS.md                    # Guide d�veloppeur complet
++-- package.json                 # Scripts npm racine
++-- Cargo.toml                   # Workspace Cargo
 ```
 
 ---
 
-## 📚 Documentation
+## ?? Documentation
 
-### Documentation Développeur
+### Documentation d�veloppeur
 
-- **[docs/agent-pack/](./docs/agent-pack/)** - Pack de documentation pour onboarding
-  - [README.md](./docs/agent-pack/README.md) - Index et guide de démarrage rapide
-  - [00_PROJECT_OVERVIEW.md](./docs/agent-pack/00_PROJECT_OVERVIEW.md) - Vue d'ensemble du projet
-  - [01_DOMAIN_MODEL.md](./docs/agent-pack/01_DOMAIN_MODEL.md) - Modèle de domaine complet
-  - [02_ARCHITECTURE_AND_DATAFLOWS.md](./docs/agent-pack/02_ARCHITECTURE_AND_DATAFLOWS.md) - Architecture et flux de données
-  - [03_FRONTEND_GUIDE.md](./docs/agent-pack/03_FRONTEND_GUIDE.md) - Guide frontend
-  - [04_BACKEND_GUIDE.md](./docs/agent-pack/04_BACKEND_GUIDE.md) - Guide backend
-  - [05_IPC_API_AND_CONTRACTS.md](./docs/agent-pack/05_IPC_API_AND_CONTRACTS.md) - API IPC complète
-  - [06_SECURITY_AND_RBAC.md](./docs/agent-pack/06_SECURITY_AND_RBAC.md) - Sécurité et RBAC
-  - [07_DATABASE_AND_MIGRATIONS.md](./docs/agent-pack/07_DATABASE_AND_MIGRATIONS.md) - Base de données et migrations
-  - [08_DEV_WORKFLOWS_AND_TOOLING.md](./docs/agent-pack/08_DEV_WORKFLOWS_AND_TOOLING.md) - Workflows de développement
-  - [09_USER_FLOWS_AND_UX.md](./docs/agent-pack/09_USER_FLOWS_AND_UX.md) - Flows utilisateurs et UX
+- **[docs/agent-pack/](./docs/agent-pack/)** - Pack d'onboarding
+- **[docs/agent-pack/README.md](./docs/agent-pack/README.md)** - Index et guide de d�marrage rapide
 
 ### Architectural Decision Records
 
-- **[docs/adr/](./docs/adr/)** - Décisions architecturales
-  - [001-module-boundaries.md](./docs/adr/001-module-boundaries.md) - Règles des bounded contexts
-  - [002-transaction-boundaries.md](./docs/adr/002-transaction-boundaries.md) - Gestion des transactions
-  - [003-error-contract.md](./docs/adr/003-error-contract.md) - Contrat d'erreur
-  - [004-domain-events.md](./docs/adr/004-domain-events.md) - Système d'événements de domaine
-  - [005-ipc-mapping.md](./docs/adr/005-ipc-mapping.md) - Mapping des commandes IPC
-  - [006-rbac-policy.md](./docs/adr/006-rbac-policy.md) - Politique RBAC
-  - [007-logging-correlation.md](./docs/adr/007-logging-correlation.md) - Logging et corrélations
-  - [008-offline-first.md](./docs/adr/008-offline-first.md) - Stratégie offline-first
+- **[docs/adr/](./docs/adr/)** - D�cisions architecturales
 
 ### Documentation IPC Client
 
 - **[frontend/src/lib/ipc/README.md](./frontend/src/lib/ipc/README.md)** - Guide complet du client IPC
-  - Architecture
-  - Migration legacy → nouveau
-  - Comportement de cache
-  - Patterns d'utilisation
 
 ---
 
-## 🔒 Règles de Développement
+## ?? R�gles de d�veloppement
 
-### Architecture - TOUJOURS respecter
-- ✅ TOUJOURS suivre l'architecture 4 couches : Frontend → Commands → Services → Repositories → DB
-- ❌ JAMAIS sauter de couches (pas d'accès direct à la DB depuis les services)
-- ❌ JAMAIS mettre de logique métier dans les handlers de commandes IPC
-- ❌ JAMAIS importer entre domaines en interne (utiliser l'API publique `api/index.ts`)
-- ✅ TOUJOURS placer les nouvelles fonctionnalités backend dans le bounded context approprié sous `src-tauri/src/domains/`
-- ✅ TOUJOURS valider les bounded contexts : `npm run validate:bounded-contexts`
+### Architecture
+- ? Toujours suivre l'architecture 4 couches.
+- ? Ne pas acc�der directement � la DB depuis les handlers IPC.
+- ? Ne pas importer entre domaines en interne.
+- ? Toujours valider les bounded contexts : `npm run validate:bounded-contexts`.
 
-### Sécurité des Types - TOUJOURS respecter
-- ❌ JAMAIS éditer manuellement les fichiers sous `frontend/src/types/` - ils sont auto-générés
-- ✅ TOUJOURS exécuter `npm run types:sync` après modification d'un modèle Rust qui dérive `ts-rs::TS`
-- ✅ TOUJOURS exécuter `npm run types:drift-check` avant commit
+### Types
+- ? Ne jamais modifier manuellement `frontend/src/types/`.
+- ? Ex�cuter `npm run types:sync` apr�s modification des mod�les Rust.
+- ? Ex�cuter `npm run types:drift-check` avant commit.
 
-### Sécurité - TOUJOURS respecter
-- ✅ TOUJOURS valider `session_token` dans chaque commande IPC protégée
-- ✅ TOUJOURS appliquer les permissions RBAC avant d'exécuter des opérations protégées
-- ❌ JAMAIS committer de secrets, tokens ou credentials dans Git
-- ✅ TOUJOURS exécuter `npm run security:audit` avant soumission de code
+### S�curit�
+- ? Valider `session_token` sur chaque commande IPC prot�g�e.
+- ? Appliquer les permissions RBAC avant d'ex�cuter des op�rations prot�g�es.
+- ? Ne jamais committer de secrets.
 
-### Base de Données - TOUJOURS respecter
-- ✅ TOUJOURS utiliser des fichiers de migration numérotés pour les changements de schéma
-- ✅ TOUJOURS rendre les migrations idempotentes (`IF NOT EXISTS`, `IF EXISTS`)
-- ❌ JAMAIS modifier le schéma de la base de données hors des fichiers de migration
-- ✅ TOUJOURS valider les migrations : `node scripts/validate-migration-system.js`
-
-### Qualité du Code - TOUJOURS respecter
-- ✅ TOUJOURS exécuter `npm run quality:check` avant chaque commit
-- ✅ TOUJOURS utiliser l'encodage UTF-8 pour tous les fichiers source
-- ✅ TOUJOURS utiliser les commits conventionnels : `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, `perf:`, `security:`
-- ❌ JAMAIS pousser directement vers `main` (enforcé par le hook `git:guard-main`)
+### Base de donn�es
+- ? Utiliser des migrations num�rot�es.
+- ? Rendre les migrations idempotentes (`IF NOT EXISTS`, `IF EXISTS`).
+- ? Ne pas modifier le sch�ma hors migrations.
 
 ---
 
-## 🧪 Tests
+## ?? Tests et validation
 
-### Types de Tests
-
-- **Tests unitaires** - Services, repositories, hooks
-- **Tests d'intégration** - Commandes IPC et workflows critiques
-- **Tests composants** - Composants UI avec logique complexe
-- **Tests E2E** - Flows utilisateurs critiques
-
-### Gates de Test
-
-#### Frontend
+### Frontend
 ```bash
-npm run frontend:lint          # Doit passer
-npm run frontend:type-check    # Doit passer
-npm test                       # Doit passer
-npm run test:e2e              # Doit passer
+npm run frontend:lint
+npm run frontend:type-check
+cd frontend && npm test
+cd frontend && npm run test:e2e
 ```
 
-#### Backend
+### Backend
 ```bash
-npm run backend:check          # Doit passer
-npm run backend:clippy         # Doit passer
-npm run backend:fmt            # Doit passer
-cd src-tauri && cargo test    # Doit passer
-```
-
-#### Types
-```bash
-npm run types:sync             # Régénère
-npm run types:validate         # Doit passer
-npm run types:drift-check      # Doit passer
-```
-
-#### Sécurité
-```bash
-npm run security:audit         # Doit passer
-node scripts/ipc-authorization-audit.js  # Doit passer
-```
-
-### Exigences de Couverture
-
-- Chaque correction de bug nécessite un test de régression
-- Chaque nouvelle fonctionnalité nécessite des tests pour :
-  - ✅ Chemin succès
-  - ❌ Échecs de validation
-  - 🔒 Échecs de permissions (pour les fonctionnalités protégées)
-
----
-
-## 🔧 Commandes Utiles
-
-### Développement
-```bash
-npm run dev                    # Frontend + Backend
-npm run types:sync             # Régénère les types TS depuis Rust (CRITIQUE)
-npm run quality:check           # Tous les contrôles de qualité
-```
-
-### Build
-```bash
-npm run build                  # Build production
-npm run frontend:build         # Build frontend uniquement
-npm run backend:build          # Build backend uniquement
-npm run backend:build:release  # Build backend release
-```
-
-### Qualité & Validation
-```bash
-npm run frontend:lint          # ESLint
-npm run frontend:type-check    # Vérification TypeScript
-npm run backend:check          # Cargo check
-npm run backend:clippy         # Rust linting
-npm run backend:fmt            # Formatage Rust
-npm run validate:bounded-contexts  # Validation des domaines
-npm run architecture:check         # Vérification des règles d'architecture
-npm run security:audit            # Audit de sécurité
+npm run backend:check
+npm run backend:clippy
+npm run backend:fmt
+cd src-tauri && cargo test --lib
 ```
 
 ### Types
 ```bash
-npm run types:sync             # Régénère les types
-npm run types:validate         # Valide la cohérence des types
-npm run types:drift-check      # Vérifie les dérives de types
+npm run types:sync
+npm run types:validate
+npm run types:drift-check
 ```
 
-### Tests
+### S�curit�
 ```bash
-npm test                       # Tous les tests
-cd frontend && npm test        # Tests frontend
-cd frontend && npm run test:e2e # Tests E2E (Playwright)
-cd frontend && npm run test:coverage # Couverture
-cd src-tauri && cargo test    # Tests Rust
+npm run security:audit
+node scripts/ipc-authorization-audit.js
 ```
 
 ---
 
-## 📊 Statistiques du Projet
+## ?? Contribution
 
-| Métrique | Nombre |
-|----------|--------|
-| Pages frontend (App Router) | 40+ |
-| Composants React | 179+ |
-| Hooks personnalisés | 30+ |
-| Domaines frontend | 13 |
-| Domaines backend | 16 |
-| Modèles de données (Rust) | 21 |
-| Commandes IPC | 65+ |
-| Services (Rust) | 88 |
-| Repositories | 20 |
-| Migrations SQL | 35 |
-| Scripts de validation | 32 |
-| Fichiers de documentation | 18+ |
-| Packages npm | 124 |
-| Dépendances Rust | 50+ |
+1. Cr�er une branche (`git checkout -b feature/ma-fonctionnalite`)
+2. Commiter avec des messages conventionnels (`feat:`, `fix:`, `docs:`)
+3. Pusher la branche (`git push origin feature/ma-fonctionnalite`)
+4. Ouvrir une Pull Request
+
+Avant PR :
+- Tests passent
+- Types synchronis�s
+- Audit s�curit� pass�
+- Architecture valid�e
 
 ---
 
-## 👥 Contribution
+## ?? Licence
 
-### Processus de Contribution
-
-1. **Forker** le dépôt
-2. **Créer une branche** (`git checkout -b feature/ma-fonctionnalite`)
-3. **Commiter** avec des messages conventionnels (`feat: add xyz`, `fix: correct abc`)
-4. **Pusher** vers la branche (`git push origin feature/ma-fonctionnalite`)
-5. **Ouvrir une Pull Request**
-
-### Checklist PR
-
-Avant d'ouvrir une PR, vérifiez :
-
-- [ ] Les tests passent (`npm test`)
-- [ ] Le linting passe (`npm run quality:check`)
-- [ ] Les types sont synchronisés (`npm run types:sync && npm run types:drift-check`)
-- [ ] L'audit de sécurité passe (`npm run security:audit`)
-- [ ] L'architecture est validée (`npm run validate:bounded-contexts`)
-- [ ] La documentation est mise à jour (si nécessaire)
-- [ ] Les tests de couverture sont ajoutés pour les nouvelles fonctionnalités
-
-### Communication
-
-- Pour les questions techniques : [docs/agent-pack/](./docs/agent-pack/)
-- Pour signaler un bug : créer une issue avec le template bug
-- Pour proposer une fonctionnalité : créer une issue avec le template feature request
+Propri�taire - Tous droits r�serv�s.
 
 ---
 
-## 📝 Licence
+## Support
 
-Propriétaire - Tous droits réservés.
-
----
-
-## 🤝 Support
-
-Pour toute question ou problème, veuillez consulter :
-
-1 . Le [pack de documentation](./docs/agent-pack/)
+1. Le [pack de documentation](./docs/agent-pack/)
 2. Les [Architectural Decision Records](./docs/adr/)
 3. La documentation du [client IPC](./frontend/src/lib/ipc/README.md)
 
 ---
 
-**RPMA v2** - Une solution de gestion d'interventions PPF moderne, offline-first et sécurisée.
+**RPMA v2** - Une solution de gestion d'interventions PPF moderne, offline-first et s�curis�e.
