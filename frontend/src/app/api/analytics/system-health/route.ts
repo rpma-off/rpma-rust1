@@ -21,8 +21,12 @@ async function handleGet(_request: NextRequest, _context?: unknown) {
       );
     }
 
+    // Extract session token from Authorization header
+    const authHeader = _request.headers.get('Authorization');
+    const sessionToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : '';
+
     // Get system health metrics
-    const result = await analyticsService.getSystemHealthMetrics('');
+    const result = await analyticsService.getSystemHealthMetrics(sessionToken);
 
     if (result.error) {
       return NextResponse.json(
