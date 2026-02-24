@@ -32,15 +32,16 @@ async fn create_test_db() -> Database {
             deleted_at INTEGER
         );
         
-        -- User sessions table
-        CREATE TABLE IF NOT EXISTS user_sessions (
-            token TEXT PRIMARY KEY,
+        -- Sessions table (UUID-based, replaces old JWT user_sessions)
+        CREATE TABLE IF NOT EXISTS sessions (
+            id TEXT PRIMARY KEY,
             user_id TEXT NOT NULL,
-            expires_at INTEGER NOT NULL,
+            username TEXT NOT NULL DEFAULT '',
+            email TEXT NOT NULL DEFAULT '',
+            role TEXT NOT NULL DEFAULT 'viewer',
             created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
-            last_used_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
-            ip_address TEXT,
-            user_agent TEXT,
+            expires_at INTEGER NOT NULL,
+            last_activity INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
         
@@ -196,14 +197,14 @@ fn create_test_user_with_session(db: &Database) -> (String, String) {
 
     db.execute(
         r#"
-        INSERT INTO user_sessions (token, user_id, expires_at, created_at, last_used_at)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO sessions (id, user_id, username, email, role, created_at, expires_at, last_activity)
+        VALUES (?, ?, '', '', 'viewer', ?, ?, ?)
     "#,
         params![
             session_token,
             user_id,
-            expires_at,
             Utc::now().timestamp_millis(),
+            expires_at,
             Utc::now().timestamp_millis()
         ],
     )
@@ -356,14 +357,14 @@ async fn test_user_settings_with_authentication_integration() {
         .db
         .execute(
             r#"
-        INSERT INTO user_sessions (token, user_id, expires_at, created_at, last_used_at)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO sessions (id, user_id, username, email, role, created_at, expires_at, last_activity)
+        VALUES (?, ?, '', '', 'viewer', ?, ?, ?)
     "#,
             params![
                 session_token,
                 user_id,
-                expires_at,
                 Utc::now().timestamp_millis(),
+                expires_at,
                 Utc::now().timestamp_millis()
             ],
         )
@@ -373,7 +374,7 @@ async fn test_user_settings_with_authentication_integration() {
     let initial_sessions: i64 = settings_service
         .db
         .query_single_value(
-            "SELECT COUNT(*) FROM user_sessions WHERE user_id = ?",
+            "SELECT COUNT(*) FROM sessions WHERE user_id = ?",
             params![user_id],
         )
         .unwrap_or(0);
@@ -394,7 +395,7 @@ async fn test_user_settings_with_authentication_integration() {
         let final_sessions: i64 = settings_service
             .db
             .query_single_value(
-                "SELECT COUNT(*) FROM user_sessions WHERE user_id = ?",
+                "SELECT COUNT(*) FROM sessions WHERE user_id = ?",
                 params![user_id],
             )
             .unwrap_or(0);

@@ -1,575 +1,185 @@
-//! Integration tests for session repository
-//!
-//! Tests session repository with actual database interactions including:
-//! - Session lifecycle management
-//! - Session expiration handling
-//! - Security event integration
-//! - Performance under load
+//! Integration tests for the new sessions repository.
 
 use crate::domains::auth::domain::models::auth::{UserRole, UserSession};
 use crate::domains::auth::infrastructure::session_repository::SessionRepository;
-use crate::{test_client, test_db, test_intervention, test_task};
+use crate::test_db;
 use chrono::Utc;
+use std::sync::Arc;
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    fn create_session_repository() -> SessionRepository {
-        let test_db = test_db!();
-        SessionRepository::new(test_db.db())
+    fn make_repo() -> (SessionRepository, crate::test_utils::TestDatabase) {
+        let db = test_db!();
+        let repo = SessionRepository::new(Arc::new(db.db().clone()));
+        (repo, db)
     }
 
-    fn create_test_user() -> (String, String) {
-        let user_id = uuid::Uuid::new_v4().to_string();
-        let username = format!("test_user_{}", user_id[0..8].to_string());
-        (user_id, username)
+    fn make_session(user_id: &str, username: &str) -> UserSession {
+        UserSession::new(
+            user_id.to_string(),
+            username.to_string(),
+            format!("{}@example.com", username),
+            UserRole::Technician,
+            uuid::Uuid::new_v4().to_string(),
+            8 * 3600,
+        )
     }
 
-    #[test]
-    fn test_create_session_success() {
-        let repo = create_session_repository();
-        let (user_id, username) = create_test_user();
-
-        let session = UserSession {
-            id: uuid::Uuid::new_v4().to_string(),
-            user_id: user_id.clone(),
-            token: "test_token_12345".to_string(),
-            expires_at: (chrono::Utc::now() + chrono::Duration::hours(1)).timestamp(),
-            ip_address: Some("192.168.1.100".to_string()),
-            user_agent: Some("Mozilla/5.0...".to_string()),
-            created_at: chrono::Utc::now().timestamp(),
-            updated_at: chrono::Utc::now().timestamp(),
-            last_activity: chrono::Utc::now().timestamp(),
-        };
-
-        let result = repo.create(&session);
-
-        assert!(result.is_ok(), "Session creation should succeed");
-        let created = result.unwrap();
-
-        assert_eq!(created.user_id, user_id);
-        assert_eq!(created.token, "test_token_12345");
-        assert!(created.expires_at > chrono::Utc::now().timestamp());
-    }
-
-    #[test]
-    fn test_get_session_by_token() {
-        let repo = create_session_repository();
-        let (user_id, _) = create_test_user();
-
-        let session = UserSession {
-            id: uuid::Uuid::new_v4().to_string(),
-            user_id: user_id.clone(),
-            token: "test_token_67890".to_string(),
-            expires_at: (chrono::Utc::now() + chrono::Duration::hours(2)).timestamp(),
-            ip_address: Some("192.168.1.101".to_string()),
-            user_agent: None,
-            created_at: chrono::Utc::now().timestamp(),
-            updated_at: chrono::Utc::now().timestamp(),
-            last_activity: chrono::Utc::now().timestamp(),
-        };
-
-        let created = repo.create(&session).expect("Should create session");
-
-        // Retrieve by token
-        let retrieved = repo
-            .get_by_token(&session.token)
-            .expect("Should retrieve session");
-
-        assert_eq!(retrieved.id, created.id);
-        assert_eq!(retrieved.user_id, user_id);
-        assert_eq!(retrieved.token, session.token);
-        assert_eq!(retrieved.ip_address, Some("192.168.1.101".to_string()));
+    fn insert_user(db: &crate::db::Database, user_id: &str) {
+        let conn = db.get_connection().expect("conn");
+        conn.execute(
+            "INSERT INTO users (id, email, username, password_hash, full_name, role, is_active, created_at, updated_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+            rusqlite::params![
+                user_id,
+                format!("{}@test.com", user_id),
+                format!("user_{}", user_id),
+                "hash",
+                "Test User",
+                "technician",
+                1,
+                Utc::now().timestamp_millis(),
+                Utc::now().timestamp_millis(),
+            ],
+        ).expect("insert user");
     }
 
     #[test]
-    fn test_get_session_invalid_token() {
-        let repo = create_session_repository();
+    fn test_insert_and_find_session() {
+        let (repo, db) = make_repo();
+        insert_user(&db.db(), "user-001");
+        let session = make_session("user-001", "tester");
 
-        let result = repo.get_by_token("nonexistent_token");
-        assert!(result.is_err(), "Should fail for nonexistent token");
+        repo.insert_session(&session).expect("insert");
+
+        let now_ms = Utc::now().timestamp_millis();
+        let found = repo.find_valid_session(&session.token, now_ms).expect("find");
+        assert!(found.is_some(), "Session should be found");
+        let found = found.unwrap();
+        assert_eq!(found.user_id, "user-001");
+        assert_eq!(found.token, session.token);
+        assert_eq!(found.id, session.id);
     }
 
     #[test]
-    fn test_get_sessions_by_user() {
-        let repo = create_session_repository();
-        let (user_id, _) = create_test_user();
+    fn test_find_expired_session_returns_none() {
+        let (repo, db) = make_repo();
+        insert_user(&db.db(), "user-002");
+        let session = make_session("user-002", "expired_user");
 
-        // Create multiple sessions for user
-        let sessions: Vec<_> = (0..3)
-            .map(|i| UserSession {
-                id: uuid::Uuid::new_v4().to_string(),
-                user_id: user_id.clone(),
-                token: format!("token_{}", i),
-                expires_at: (chrono::Utc::now() + chrono::Duration::hours(1)).timestamp(),
-                ip_address: Some(format!("192.168.1.{}", 100 + i)),
-                user_agent: None,
-                created_at: chrono::Utc::now().timestamp(),
-                updated_at: chrono::Utc::now().timestamp(),
-                last_activity: chrono::Utc::now().timestamp(),
-            })
-            .collect();
+        repo.insert_session(&session).expect("insert");
 
-        // Create sessions
-        for session in &sessions {
-            repo.create(session).expect("Should create session");
-        }
-
-        // Retrieve all sessions for user
-        let user_sessions = repo
-            .get_by_user_id(&user_id)
-            .expect("Should get user sessions");
-
-        assert_eq!(user_sessions.len(), 3);
-        let session_tokens: Vec<_> = user_sessions.iter().map(|s| s.token.clone()).collect();
-        for session in &sessions {
-            assert!(session_tokens.contains(&session.token));
-        }
+        // Query with a future "now" so the session looks expired
+        let future_ms = Utc::now().timestamp_millis() + 9 * 3600 * 1000; // 9h from now
+        let found = repo.find_valid_session(&session.token, future_ms).expect("find");
+        assert!(found.is_none(), "Session should appear expired");
     }
 
     #[test]
-    fn test_update_session_activity() {
-        let repo = create_session_repository();
-        let (user_id, _) = create_test_user();
+    fn test_update_last_activity() {
+        let (repo, db) = make_repo();
+        insert_user(&db.db(), "user-003");
+        let session = make_session("user-003", "active_user");
 
-        let session = UserSession {
-            id: uuid::Uuid::new_v4().to_string(),
-            user_id: user_id.clone(),
-            token: "activity_test_token".to_string(),
-            expires_at: (chrono::Utc::now() + chrono::Duration::hours(1)).timestamp(),
-            ip_address: None,
-            user_agent: None,
-            created_at: chrono::Utc::now().timestamp(),
-            updated_at: chrono::Utc::now().timestamp(),
-            last_activity: chrono::Utc::now().timestamp() - 3600, // 1 hour ago
-        };
+        repo.insert_session(&session).expect("insert");
 
-        let created = repo.create(&session).expect("Should create session");
-        let original_last_activity = created.last_activity;
+        let new_time = Utc::now().timestamp_millis() + 1000;
+        repo.update_last_activity(&session.token, new_time).expect("update");
 
-        // Update activity
-        std::thread::sleep(std::time::Duration::from_millis(100));
-        let updated = repo
-            .update_activity(&created.id, "192.168.1.200", "New User Agent")
-            .expect("Should update activity");
-
-        assert_eq!(updated.id, created.id);
-        assert_eq!(updated.ip_address, Some("192.168.1.200".to_string()));
-        assert_eq!(updated.user_agent, Some("New User Agent".to_string()));
-        assert!(updated.last_activity > original_last_activity);
-        assert!(updated.updated_at > created.updated_at);
-    }
-
-    #[test]
-    fn test_session_expiration() {
-        let repo = create_session_repository();
-        let (user_id, _) = create_test_user();
-
-        let session = UserSession {
-            id: uuid::Uuid::new_v4().to_string(),
-            user_id: user_id.clone(),
-            token: "expired_token".to_string(),
-            expires_at: (chrono::Utc::now() - chrono::Duration::minutes(30)).timestamp(), // Expired
-            ip_address: None,
-            user_agent: None,
-            created_at: chrono::Utc::now().timestamp() - 3600,
-            updated_at: chrono::Utc::now().timestamp() - 3600,
-            last_activity: chrono::Utc::now().timestamp() - 3600,
-        };
-
-        let created = repo.create(&session).expect("Should create session");
-
-        // Try to retrieve expired session
-        let result = repo.get_by_token(&created.token);
-
-        // Should either return error or filter out expired sessions
-        match result {
-            Ok(session) => {
-                // If session is returned, it should be marked as expired
-                assert!(session.expires_at < chrono::Utc::now().timestamp());
-            }
-            Err(_) => {
-                // Or it should be filtered out completely
-                assert!(true, "Expired session should not be returned");
-            }
-        }
+        let conn = db.db().get_connection().expect("conn");
+        let stored: i64 = conn
+            .query_row(
+                "SELECT last_activity FROM sessions WHERE id = ?1",
+                rusqlite::params![session.token],
+                |row| row.get(0),
+            )
+            .expect("query");
+        assert_eq!(stored, new_time);
     }
 
     #[test]
     fn test_delete_session() {
-        let repo = create_session_repository();
-        let (user_id, _) = create_test_user();
+        let (repo, db) = make_repo();
+        insert_user(&db.db(), "user-004");
+        let session = make_session("user-004", "delete_user");
 
-        let session = UserSession {
-            id: uuid::Uuid::new_v4().to_string(),
-            user_id: user_id.clone(),
-            token: "delete_test_token".to_string(),
-            expires_at: (chrono::Utc::now() + chrono::Duration::hours(1)).timestamp(),
-            ip_address: None,
-            user_agent: None,
-            created_at: chrono::Utc::now().timestamp(),
-            updated_at: chrono::Utc::now().timestamp(),
-            last_activity: chrono::Utc::now().timestamp(),
-        };
+        repo.insert_session(&session).expect("insert");
+        repo.delete_session(&session.token).expect("delete");
 
-        let created = repo.create(&session).expect("Should create session");
-
-        // Delete session
-        let result = repo.delete(&created.id);
-        assert!(result.is_ok(), "Delete should succeed");
-
-        // Verify deletion
-        let retrieve_result = repo.get_by_token(&created.token);
-        assert!(
-            retrieve_result.is_err(),
-            "Deleted session should not be retrievable"
-        );
+        let now_ms = Utc::now().timestamp_millis();
+        let found = repo.find_valid_session(&session.token, now_ms).expect("find");
+        assert!(found.is_none(), "Deleted session should not be found");
     }
 
     #[test]
-    fn test_delete_all_user_sessions() {
-        let repo = create_session_repository();
-        let (user_id, _) = create_test_user();
+    fn test_delete_user_sessions() {
+        let (repo, db) = make_repo();
+        insert_user(&db.db(), "user-005");
+        let s1 = make_session("user-005", "multi_user");
+        let s2 = make_session("user-005", "multi_user");
+        let s3 = make_session("user-005", "multi_user");
 
-        // Create multiple sessions for user
-        let session_ids: Vec<_> = (0..3)
-            .map(|i| {
-                let session = UserSession {
-                    id: uuid::Uuid::new_v4().to_string(),
-                    user_id: user_id.clone(),
-                    token: format!("multi_token_{}", i),
-                    expires_at: (chrono::Utc::now() + chrono::Duration::hours(1)).timestamp(),
-                    ip_address: None,
-                    user_agent: None,
-                    created_at: chrono::Utc::now().timestamp(),
-                    updated_at: chrono::Utc::now().timestamp(),
-                    last_activity: chrono::Utc::now().timestamp(),
-                };
+        repo.insert_session(&s1).expect("insert s1");
+        repo.insert_session(&s2).expect("insert s2");
+        repo.insert_session(&s3).expect("insert s3");
 
-                let created = repo.create(&session).expect("Should create session");
-                created.id
-            })
-            .collect();
-
-        // Delete all user sessions
-        let result = repo.delete_all_for_user(&user_id);
-        assert!(result.is_ok(), "Delete all should succeed");
-
-        // Verify all sessions are deleted
-        for session_id in &session_ids {
-            let conn = repo.get_connection().expect("Should get connection");
-            let count: i64 = conn
-                .query_row(
-                    "SELECT COUNT(*) FROM user_sessions WHERE id = ?1",
-                    [session_id],
-                    |row| row.get(0),
-                )
-                .expect("Should check session existence");
-            assert_eq!(count, 0, "Session should be deleted");
-        }
+        let deleted = repo.delete_user_sessions("user-005").expect("delete all");
+        assert_eq!(deleted, 3);
     }
 
     #[test]
-    fn test_cleanup_expired_sessions() {
-        let repo = create_session_repository();
-        let (user_id1, _) = create_test_user();
-        let (user_id2, _) = create_test_user();
+    fn test_delete_user_sessions_except() {
+        let (repo, db) = make_repo();
+        insert_user(&db.db(), "user-006");
+        let keep = make_session("user-006", "keep_user");
+        let other = make_session("user-006", "keep_user");
 
-        // Create expired sessions
-        let expired_sessions: Vec<_> = (0..5)
-            .map(|i| UserSession {
-                id: uuid::Uuid::new_v4().to_string(),
-                user_id: if i % 2 == 0 {
-                    user_id1.clone()
-                } else {
-                    user_id2.clone()
-                },
-                token: format!("expired_token_{}", i),
-                expires_at: (chrono::Utc::now() - chrono::Duration::hours(2)).timestamp(),
-                ip_address: None,
-                user_agent: None,
-                created_at: chrono::Utc::now().timestamp() - 7200,
-                updated_at: chrono::Utc::now().timestamp() - 7200,
-                last_activity: chrono::Utc::now().timestamp() - 7200,
-            })
-            .collect();
+        repo.insert_session(&keep).expect("insert keep");
+        repo.insert_session(&other).expect("insert other");
 
-        // Create valid sessions
-        let valid_sessions: Vec<_> = (5..8)
-            .map(|i| UserSession {
-                id: uuid::Uuid::new_v4().to_string(),
-                user_id: user_id1.clone(),
-                token: format!("valid_token_{}", i),
-                expires_at: (chrono::Utc::now() + chrono::Duration::hours(2)).timestamp(),
-                ip_address: None,
-                user_agent: None,
-                created_at: chrono::Utc::now().timestamp(),
-                updated_at: chrono::Utc::now().timestamp(),
-                last_activity: chrono::Utc::now().timestamp(),
-            })
-            .collect();
+        let deleted = repo.delete_user_sessions_except("user-006", &keep.token).expect("delete except");
+        assert_eq!(deleted, 1);
 
-        // Create all sessions
-        for session in expired_sessions.iter().chain(valid_sessions.iter()) {
-            repo.create(session).expect("Should create session");
-        }
-
-        // Cleanup expired sessions
-        let cleanup_count = repo
-            .cleanup_expired()
-            .expect("Should cleanup expired sessions");
-        assert_eq!(cleanup_count, 5, "Should cleanup 5 expired sessions");
-
-        // Verify expired sessions are deleted and valid ones remain
-        for session in &expired_sessions {
-            let result = repo.get_by_token(&session.token);
-            assert!(result.is_err(), "Expired session should be deleted");
-        }
-
-        for session in &valid_sessions {
-            let result = repo.get_by_token(&session.token);
-            assert!(result.is_ok(), "Valid session should remain");
-        }
+        let now_ms = Utc::now().timestamp_millis();
+        let found = repo.find_valid_session(&keep.token, now_ms).expect("find kept");
+        assert!(found.is_some(), "Kept session should still exist");
     }
 
     #[test]
-    fn test_session_statistics() {
-        let repo = create_session_repository();
-        let (user_id1, _) = create_test_user();
-        let (user_id2, _) = create_test_user();
-        let (user_id3, _) = create_test_user();
+    fn test_cleanup_expired() {
+        let (repo, db) = make_repo();
+        insert_user(&db.db(), "user-007");
+        let session = make_session("user-007", "cleanup_user");
+        repo.insert_session(&session).expect("insert");
 
-        // Create sessions for different users
-        let now = chrono::Utc::now();
+        // Manually expire it
+        let conn = db.db().get_connection().expect("conn");
+        conn.execute(
+            "UPDATE sessions SET expires_at = ?1 WHERE id = ?2",
+            rusqlite::params![
+                Utc::now().timestamp_millis() - 1000,
+                session.token,
+            ],
+        ).expect("expire");
 
-        // User 1: 3 sessions
-        for i in 0..3 {
-            let session = UserSession {
-                id: uuid::Uuid::new_v4().to_string(),
-                user_id: user_id1.clone(),
-                token: format!("user1_token_{}", i),
-                expires_at: (now + chrono::Duration::hours(1)).timestamp(),
-                ip_address: Some("192.168.1.100".to_string()),
-                user_agent: None,
-                created_at: now.timestamp(),
-                updated_at: now.timestamp(),
-                last_activity: now.timestamp(),
-            };
-            repo.create(&session).expect("Should create session");
-        }
-
-        // User 2: 2 sessions
-        for i in 0..2 {
-            let session = UserSession {
-                id: uuid::Uuid::new_v4().to_string(),
-                user_id: user_id2.clone(),
-                token: format!("user2_token_{}", i),
-                expires_at: (now + chrono::Duration::hours(1)).timestamp(),
-                ip_address: Some("192.168.1.101".to_string()),
-                user_agent: None,
-                created_at: now.timestamp(),
-                updated_at: now.timestamp(),
-                last_activity: now.timestamp(),
-            };
-            repo.create(&session).expect("Should create session");
-        }
-
-        // User 3: 1 expired session
-        let expired_session = UserSession {
-            id: uuid::Uuid::new_v4().to_string(),
-            user_id: user_id3.clone(),
-            token: "user3_expired_token".to_string(),
-            expires_at: (now - chrono::Duration::hours(1)).timestamp(),
-            ip_address: Some("192.168.1.102".to_string()),
-            user_agent: None,
-            created_at: now.timestamp(),
-            updated_at: now.timestamp(),
-            last_activity: now.timestamp(),
-        };
-        repo.create(&expired_session)
-            .expect("Should create session");
-
-        // Get statistics
-        let stats = repo.get_statistics().expect("Should get statistics");
-
-        assert_eq!(stats.total_sessions, 6);
-        assert_eq!(stats.active_sessions, 5); // Excluding expired
-        assert_eq!(stats.unique_users, 3);
-        assert_eq!(stats.sessions_today, 6); // All created today
+        let removed = repo.cleanup_expired(Utc::now().timestamp_millis()).expect("cleanup");
+        assert_eq!(removed, 1);
     }
 
     #[test]
-    fn test_concurrent_session_creation() {
-        let repo = create_session_repository();
-        let (user_id, _) = create_test_user();
+    fn test_list_user_sessions() {
+        let (repo, db) = make_repo();
+        insert_user(&db.db(), "user-008");
+        let s1 = make_session("user-008", "list_user");
+        let s2 = make_session("user-008", "list_user");
 
-        // Create sessions concurrently
-        let handles: Vec<_> = (0..5)
-            .map(|i| {
-                let repo_clone = repo.clone(); // This would require Clone implementation
-                std::thread::spawn(move || {
-                    let session = UserSession {
-                        id: uuid::Uuid::new_v4().to_string(),
-                        user_id: user_id.clone(),
-                        token: format!("concurrent_token_{}", i),
-                        expires_at: (chrono::Utc::now() + chrono::Duration::hours(1)).timestamp(),
-                        ip_address: Some(format!("192.168.1.{}", 100 + i)),
-                        user_agent: None,
-                        created_at: chrono::Utc::now().timestamp(),
-                        updated_at: chrono::Utc::now().timestamp(),
-                        last_activity: chrono::Utc::now().timestamp(),
-                    };
+        repo.insert_session(&s1).expect("insert s1");
+        repo.insert_session(&s2).expect("insert s2");
 
-                    repo_clone.create(&session)
-                })
-            })
-            .collect();
-
-        // Wait for all sessions to be created
-        let mut created_count = 0;
-        for handle in handles {
-            match handle.join().unwrap() {
-                Ok(_) => created_count += 1,
-                Err(_) => {} // Handle errors if any
-            }
-        }
-
-        assert_eq!(
-            created_count, 5,
-            "All concurrent sessions should be created"
-        );
-
-        // Verify all sessions exist
-        let user_sessions = repo
-            .get_by_user_id(&user_id)
-            .expect("Should get user sessions");
-        assert_eq!(user_sessions.len(), 5);
-    }
-
-    #[test]
-    fn test_session_security_validation() {
-        let repo = create_session_repository();
-        let (user_id, _) = create_test_user();
-
-        // Test session with suspicious characteristics
-        let suspicious_session = UserSession {
-            id: uuid::Uuid::new_v4().to_string(),
-            user_id: user_id.clone(),
-            token: "suspicious_token".to_string(),
-            expires_at: (chrono::Utc::now() + chrono::Duration::hours(1)).timestamp(),
-            ip_address: Some("192.168.1.999".to_string()), // Suspicious IP
-            user_agent: Some("Bot/1.0".to_string()),       // Suspicious user agent
-            created_at: chrono::Utc::now().timestamp(),
-            updated_at: chrono::Utc::now().timestamp(),
-            last_activity: chrono::Utc::now().timestamp(),
-        };
-
-        let created = repo
-            .create(&suspicious_session)
-            .expect("Should create session");
-
-        // Verify session is stored but flagged for security review
-        let retrieved = repo
-            .get_by_token(&created.token)
-            .expect("Should retrieve session");
-
-        assert_eq!(retrieved.id, created.id);
-        assert_eq!(retrieved.ip_address, Some("192.168.1.999".to_string()));
-        assert_eq!(retrieved.user_agent, Some("Bot/1.0".to_string()));
-
-        // Check if security monitoring would flag this
-        let security_events = repo
-            .get_security_events(&user_id)
-            .expect("Should get security events");
-
-        // Security events should include this suspicious session
-        let has_suspicious_event = security_events
-            .iter()
-            .any(|event| event.contains("suspicious") || event.contains("192.168.1.999"));
-
-        if !has_suspicious_event {
-            // Create security event manually for testing
-            repo.log_security_event(
-                &user_id,
-                "suspicious_session",
-                "Session created from suspicious IP address",
-            )
-            .expect("Should log security event");
-        }
-    }
-
-    #[test]
-    fn test_session_foreign_key_constraints() {
-        let repo = create_session_repository();
-        let nonexistent_user_id = uuid::Uuid::new_v4().to_string();
-
-        let session = UserSession {
-            id: uuid::Uuid::new_v4().to_string(),
-            user_id: nonexistent_user_id,
-            token: "fk_test_token".to_string(),
-            expires_at: (chrono::Utc::now() + chrono::Duration::hours(1)).timestamp(),
-            ip_address: None,
-            user_agent: None,
-            created_at: chrono::Utc::now().timestamp(),
-            updated_at: chrono::Utc::now().timestamp(),
-            last_activity: chrono::Utc::now().timestamp(),
-        };
-
-        let result = repo.create(&session);
-        assert!(result.is_err(), "Should fail with foreign key constraint");
-    }
-
-    #[test]
-    fn test_session_data_integrity() {
-        let repo = create_session_repository();
-        let (user_id, _) = create_test_user();
-
-        let session = UserSession {
-            id: uuid::Uuid::new_v4().to_string(),
-            user_id: user_id.clone(),
-            token: "integrity_test_token".to_string(),
-            expires_at: (chrono::Utc::now() + chrono::Duration::hours(1)).timestamp(),
-            ip_address: Some("192.168.1.150".to_string()),
-            user_agent: Some("Test Browser/1.0".to_string()),
-            created_at: chrono::Utc::now().timestamp(),
-            updated_at: chrono::Utc::now().timestamp(),
-            last_activity: chrono::Utc::now().timestamp(),
-        };
-
-        let created = repo.create(&session).expect("Should create session");
-
-        // Verify data integrity
-        let conn = repo.get_connection().expect("Should get connection");
-
-        // Check session exists
-        let session_count: i64 = conn
-            .query_row(
-                "SELECT COUNT(*) FROM user_sessions WHERE id = ?1",
-                [&created.id],
-                |row| row.get(0),
-            )
-            .expect("Should count session");
-        assert_eq!(session_count, 1, "Session should exist");
-
-        // Verify foreign key constraint
-        let mut stmt = conn
-            .prepare(
-                "
-            SELECT COUNT(*) FROM user_sessions s 
-            LEFT JOIN users u ON s.user_id = u.id 
-            WHERE s.user_id = ?1 AND u.id IS NULL
-        ",
-            )
-            .expect("Should prepare FK check query");
-
-        let orphaned_sessions: i64 = stmt
-            .query_row([&user_id], |row| row.get(0))
-            .expect("Should check FK constraints");
-
-        assert_eq!(
-            orphaned_sessions, 0,
-            "Should have no orphaned user references"
-        );
+        let now_ms = Utc::now().timestamp_millis();
+        let sessions = repo.list_user_sessions("user-008", now_ms).expect("list");
+        assert_eq!(sessions.len(), 2);
     }
 }

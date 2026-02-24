@@ -60,7 +60,7 @@ impl DashboardRepository {
 
         if let Ok(mut stmt) = conn.prepare(
             "SELECT s.user_id, u.username, s.last_activity
-             FROM user_sessions s
+             FROM sessions s
              JOIN users u ON s.user_id = u.id
              ORDER BY s.last_activity DESC
              LIMIT ?1",
@@ -70,7 +70,11 @@ impl DashboardRepository {
                     "id": format!("session_{}", row.get::<_, String>(0)?),
                     "type": "user_login",
                     "description": format!("{} s'est connecté", row.get::<_, String>(1)?),
-                    "timestamp": row.get::<_, String>(2)?,
+                    "timestamp": row.get::<_, i64>(2).map(|ms| {
+                        chrono::DateTime::<chrono::Utc>::from_timestamp_millis(ms)
+                            .map(|dt| dt.to_rfc3339())
+                            .unwrap_or_default()
+                    })?,
                     "user": row.get::<_, String>(1)?,
                     "severity": "low"
                 }))

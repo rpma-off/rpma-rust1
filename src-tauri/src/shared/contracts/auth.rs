@@ -5,6 +5,5 @@
 //! cross-domain dependency on `auth::domain`.
 
 pub use crate::domains::auth::domain::models::auth::{
-    DeviceInfo, SessionTimeoutConfig, TwoFactorConfig, TwoFactorSetup, UserAccount, UserRole,
-    UserSession,
+    SessionTimeoutConfig, UserAccount, UserRole, UserSession,
 };

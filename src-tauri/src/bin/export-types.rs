@@ -85,7 +85,7 @@ use rpma_ppf_intervention::domains::tasks::domain::models::task::{
     TaskWithDetails, UpdateTaskRequest,
 };
 use rpma_ppf_intervention::shared::contracts::auth::{
-    DeviceInfo, UserAccount, UserRole, UserSession,
+    UserAccount, UserRole, UserSession,
 };
 use rpma_ppf_intervention::shared::contracts::common::{
     FilmType, GpsLocation, LightingCondition, TimestampString, WeatherCondition, WorkLocation,
@@ -137,9 +137,9 @@ fn main() {
     type_definitions.push_str("export type JsonObject = { [key: string]: JsonValue };\n");
     type_definitions.push_str("export type JsonArray = JsonValue[];\n\n");
 
-    // Export additional types with ts-rs
+    // Export UserSession with ts-rs
     type_definitions
-        .push_str(&DeviceInfo::export_to_string().expect("Failed to export DeviceInfo type"));
+        .push_str(&UserSession::export_to_string().expect("Failed to export UserSession type"));
     type_definitions.push_str("\n\n");
 
     // Error types (ts-rs exports)
@@ -1122,7 +1122,6 @@ fn main() {
     let exported_types = vec![
         "ApiError",
         "CompressedApiResponse",
-        "DeviceInfo",
         "UserAccount",
         "UserRole",
         "UserSession",
