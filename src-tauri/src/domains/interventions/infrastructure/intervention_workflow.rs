@@ -8,6 +8,7 @@
 
 use crate::db::Database;
 use crate::db::{InterventionError, InterventionResult};
+use crate::shared::logging::{LogDomain, RPMARequestLogger};
 use crate::domains::interventions::domain::models::intervention::{
     Intervention, InterventionStatus,
 };
