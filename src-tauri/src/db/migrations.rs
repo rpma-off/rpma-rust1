@@ -2672,4 +2672,86 @@ mod tests {
         db.migrate(38)
             .expect("Second migration 038 run must be idempotent");
     }
+
+    /// Regression test: migration 039 must succeed even when material_categories is absent.
+    ///
+    /// Simulates a DB that has schema_version at 38 but is missing the
+    /// material_categories table (e.g. due to a partial earlier migration run).
+    #[test]
+    fn test_migration_039_succeeds_without_material_categories() {
+        let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+        let db = Database::new(temp_file.path(), "").expect("Failed to create database");
+
+        // Initialise base schema. schema.sql pre-populates schema_version up to its
+        // declared baseline (currently 1..39), so we must remove version 39 to allow
+        // migrate(39) to actually execute rather than treat it as already applied.
+        db.init().expect("Failed to init schema");
+
+        // Drop the table to simulate a DB where migration 024 was skipped/partial
+        {
+            let conn = db.get_connection().expect("Failed to get connection");
+            conn.execute_batch("DROP TABLE IF EXISTS material_categories;")
+                .expect("Failed to drop material_categories");
+        }
+
+        // Reset schema_version to 1..38: schema.sql already inserted 1..39, so
+        // delete version 39 to force migrate(39) to run.
+        {
+            let conn = db.get_connection().expect("Failed to get connection");
+            conn.execute(
+                "DELETE FROM schema_version WHERE version >= 39",
+                [],
+            )
+            .expect("Failed to remove schema_version 39+");
+        }
+
+        // Applying migration 039 must not panic or return an error
+        db.migrate(39)
+            .expect("Migration 039 must succeed even when material_categories was absent");
+
+        // Verify material_categories and its indexes now exist
+        let conn = db.get_connection().expect("Failed to get connection");
+
+        let table_exists: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='material_categories'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("Failed to query sqlite_master for table");
+        assert_eq!(
+            table_exists, 1,
+            "material_categories table must exist after migration 039"
+        );
+
+        let index_exists: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='index' AND name='idx_material_categories_created_by'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("Failed to query sqlite_master for index");
+        assert_eq!(
+            index_exists, 1,
+            "idx_material_categories_created_by index must exist after migration 039"
+        );
+    }
+
+    /// Idempotency test: running migration 039 twice must not error.
+    #[test]
+    fn test_migration_039_is_idempotent() {
+        let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+        let db = Database::new(temp_file.path(), "").expect("Failed to create database");
+
+        db.init().expect("Failed to init schema");
+
+        // First run: apply all migrations up to 39
+        let latest = Database::get_latest_migration_version();
+        db.migrate(latest)
+            .expect("First migration run must succeed");
+
+        // Second run: migrate(39) again must be a no-op (current_version >= 39)
+        db.migrate(39)
+            .expect("Second migration 039 run must be idempotent");
+    }
 }
