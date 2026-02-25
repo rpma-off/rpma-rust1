@@ -537,7 +537,7 @@ pub async fn delay_task(
 
     // Use CalendarService.schedule_task to update both task and calendar_events atomically
     let calendar_service =
-        crate::domains::calendar::infrastructure::calendar::CalendarService::new(state.db.clone());
+        crate::shared::services::cross_domain::CalendarService::new(state.db.clone());
     calendar_service
         .schedule_task(
             request.task_id.clone(),

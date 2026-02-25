@@ -252,7 +252,7 @@ pub async fn get_client_task_summary(
     client_id: &str,
     state: &AppState<'_>,
     correlation_id: Option<String>,
-) -> Result<ApiResponse<crate::domains::clients::infrastructure::client::ClientStat>, AppError> {
+) -> Result<ApiResponse<crate::shared::services::cross_domain::ClientStat>, AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
     debug!("Getting task summary for client {}", client_id);
 

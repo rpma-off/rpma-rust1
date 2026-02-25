@@ -5,10 +5,13 @@
 //! They are not tied to any specific bounded context.
 
 pub mod cache;
+pub mod cross_domain;
+pub mod document_storage;
 pub mod domain_event;
 pub mod event_bus;
 pub mod event_system;
 pub mod performance_monitor;
+pub mod security_monitor;
 pub mod system;
 pub mod validation;
 pub mod websocket_event_handler;

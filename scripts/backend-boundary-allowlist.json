@@ -1,27 +1,5 @@
 {
-  "allowed": [
-    "auth/infrastructure/auth.rs -> audit::infrastructure",
-    "clients/ipc/client.rs -> tasks::infrastructure",
-    "interventions/infrastructure/intervention_data.rs -> tasks::infrastructure",
-    "interventions/infrastructure/intervention_workflow.rs -> tasks::infrastructure",
-    "reports/infrastructure/pdf_generation.rs -> documents::infrastructure",
-    "reports/infrastructure/reports/export_service.rs -> clients::infrastructure",
-    "reports/infrastructure/reports/export_service.rs -> documents::infrastructure",
-    "reports/infrastructure/reports/export_service.rs -> interventions::infrastructure",
-    "reports/infrastructure/reports/search_service.rs -> interventions::infrastructure",
-    "reports/infrastructure/reports/seasonal_report.rs -> analytics::infrastructure",
-    "reports/ipc/reports/export/file_operations.rs -> documents::infrastructure",
-    "reports/ipc/reports/export/intervention_export.rs -> clients::infrastructure",
-    "reports/ipc/reports/export/intervention_export.rs -> interventions::infrastructure",
-    "settings/infrastructure/settings.rs -> auth::infrastructure",
-    "tasks/infrastructure/task_validation.rs -> settings::infrastructure",
-    "tasks/infrastructure/workflow_cleanup.rs -> interventions::infrastructure",
-    "tasks/infrastructure/workflow_progression.rs -> interventions::infrastructure",
-    "tasks/infrastructure/workflow_strategy.rs -> interventions::infrastructure",
-    "tasks/infrastructure/workflow_validation.rs -> interventions::infrastructure",
-    "tasks/ipc/task/client_integration.rs -> clients::infrastructure",
-    "tasks/ipc/task/facade.rs -> calendar::infrastructure"
-  ],
+  "allowed": [],
   "allowed_structure": [
     "interventions/mod.rs pub mod infrastructure"
   ]

@@ -21,9 +21,9 @@ pub async fn get_intervention_with_details(
     intervention_id: &str,
     db: &crate::db::Database,
     intervention_service: Option<
-        &crate::domains::interventions::infrastructure::intervention::InterventionService,
+        &crate::shared::services::cross_domain::InterventionService,
     >,
-    client_service: Option<&crate::domains::clients::infrastructure::client::ClientService>,
+    client_service: Option<&crate::shared::services::cross_domain::ClientService>,
 ) -> AppResult<CompleteInterventionData> {
     ExportReportService::get_intervention_with_details(
         intervention_id,
