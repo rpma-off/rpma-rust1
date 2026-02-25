@@ -29,4 +29,10 @@ export {
 } from '../ipc/calendar';
 
 // Components
-export * from '../components';
+export { CalendarHeader } from '../components/CalendarHeader';
+export { CalendarView } from '../components/CalendarView';
+export { MonthView } from '../components/MonthView';
+export { WeekView } from '../components/WeekView';
+export { DayView } from '../components/DayView';
+export { AgendaView } from '../components/AgendaView';
+export { CalendarFilters } from '../components/CalendarFilters';

@@ -2,22 +2,35 @@
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Calendar, Car, User, Shield, Eye, Edit, Trash2, RefreshCw, Download, Upload, Grid, List, AlertCircle, Filter, ChevronRight, SearchX } from 'lucide-react';
-import { CalendarView } from '@/domains/workflow';
-import { KanbanBoard, taskGateway, TaskWithDetails, TaskStatus, useTasks } from '@/domains/tasks';
-import { Card, CardContent } from '@/shared/ui/ui/card';
-import { Button } from '@/shared/ui/ui/button';
-import { Badge } from '@/shared/ui/ui/badge';
-import { Input } from '@/shared/ui/ui/input';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/shared/ui/ui/alert-dialog';
-import { TaskCardSkeleton } from '@/shared/ui/ui/skeleton';
-import { VirtualizedTable } from '@/shared/ui/ui/virtualized-table';
-import { FloatingActionButton, PullToRefresh } from '@/shared/ui/ui/mobile-components';
+import type { TaskWithDetails, TaskStatus } from '@/domains/tasks/facade';
+import { taskGateway, useTasks, getTaskDisplayTitle, getTaskDisplayStatus } from '@/domains/tasks/facade';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  FloatingActionButton,
+  Input,
+  PullToRefresh,
+  TaskCardSkeleton,
+  VirtualizedTable,
+} from '@/shared/ui/facade';
 import { cn, enhancedToast, getUserFullName, logger } from '@/shared/utils';
-import { getTaskDisplayTitle, getTaskDisplayStatus } from '@/domains/tasks/utils/display';
 
 import { useAuth } from '@/domains/auth';
+import { technicianService } from '@/domains/users/services';
 import { useDebounce, useTranslation } from '@/shared/hooks';
 
 // TypeScript interfaces
@@ -28,11 +41,15 @@ import { useDebounce, useTranslation } from '@/shared/hooks';
 //   created_at: string;
 // }
 
-interface TechnicianUser {
-  id: string;
-  name: string;
-  role: string;
-}
+const CalendarView = dynamic(
+  () => import('@/domains/workflow/facade').then((mod) => mod.CalendarView),
+  { ssr: false, loading: () => <div className="h-full w-full animate-pulse rounded-[10px] bg-muted/20" /> }
+);
+
+const KanbanBoard = dynamic(
+  () => import('@/domains/tasks/facade').then((mod) => mod.KanbanBoard),
+  { ssr: false, loading: () => <div className="h-full w-full animate-pulse rounded-[10px] bg-muted/20" /> }
+);
 
 // Loading skeleton component - now using standardized SkeletonCard
 
@@ -764,34 +781,17 @@ export default function TasksPage() {
   // Fetch technicians (simplified version - keeping for filters)
   const fetchTechnicians = useCallback(async () => {
     try {
-      const response = await fetch('/api/technicians', {
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-        },
-      });
-
-      if (!response.ok) {
-        console.warn('Could not fetch technicians - falling back to empty array');
-        setTechnicians([]);
-        return;
-      }
-
-      const technicians = await response.json();
-      const technicianList = Array.isArray(technicians) ? technicians : [];
-
-      // Transform to expected format
-      const technicianUsers = technicianList.map((tech: TechnicianUser) => ({
+      const technicians = await technicianService.getTechnicians();
+      const technicianUsers = technicians.map((tech) => ({
         id: tech.id,
         name: tech.name
       }));
-
       setTechnicians(technicianUsers);
-
     } catch (err) {
       console.error('Failed to fetch technicians:', err);
       setTechnicians([]);
     }
-  }, [user?.token]);
+  }, []);
 
   // Update task status via backend
   const _handleStatusChange = useCallback(async (taskId: string, newStatus: TaskStatus) => {

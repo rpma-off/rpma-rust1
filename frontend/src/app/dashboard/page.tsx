@@ -2,12 +2,17 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { useAuth } from '@/domains/auth';
-import { CalendarDashboard } from '@/domains/workflow';
 import { ErrorBoundary } from '@/shared/ui/ui/error-boundary';
 import { PageShell } from '@/shared/ui/layout/PageShell';
 import { LoadingState } from '@/shared/ui/layout/LoadingState';
 import { useTranslation } from '@/shared/hooks/useTranslation';
+
+const CalendarDashboard = dynamic(
+  () => import('@/domains/workflow/facade').then((mod) => mod.CalendarDashboard),
+  { ssr: false, loading: () => <LoadingState /> }
+);
 
 export default function DashboardPage() {
   const router = useRouter();

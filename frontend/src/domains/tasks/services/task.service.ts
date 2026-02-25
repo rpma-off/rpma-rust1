@@ -4,7 +4,19 @@ import type { ServiceResponse } from '@/types/unified.types';
 import { ipcClient } from '@/lib/ipc';
 import { taskIpc } from '../ipc/task.ipc';
 import { AuthSecureStorage } from '@/lib/secureStorage';
-import type { CreateTaskInput, UpdateTaskInput, TaskQueryInput } from '@/lib/validation/api-schemas';
+import {
+  CreateTaskSchema,
+  UpdateTaskSchema,
+  TaskQuerySchema,
+  validateAndSanitizeInput,
+  type CreateTaskInput,
+  type UpdateTaskInput,
+  type TaskQueryInput,
+} from '@/lib/validation/api-schemas';
+import {
+  generateUniqueTaskNumber,
+  isValidTaskNumberFormat,
+} from '../utils/number-generator';
 
 /**
  * Frontend Task Service - Client-side task management
@@ -39,6 +51,51 @@ export class TaskService {
 
   private toJsonValue(value: unknown): JsonValue {
     return value as JsonValue;
+  }
+
+  private async getSessionToken(): Promise<string> {
+    const session = await AuthSecureStorage.getSession();
+    if (!session.token) {
+      throw new Error('Authentication required');
+    }
+    return session.token;
+  }
+
+  private buildUpdateRequest(partial: Partial<UpdateTaskRequest>): UpdateTaskRequest {
+    return {
+      id: null,
+      title: null,
+      description: null,
+      priority: null,
+      status: null,
+      vehicle_plate: null,
+      vehicle_model: null,
+      vehicle_year: null,
+      vehicle_make: null,
+      vin: null,
+      ppf_zones: null,
+      custom_ppf_zones: null,
+      client_id: null,
+      customer_name: null,
+      customer_email: null,
+      customer_phone: null,
+      customer_address: null,
+      external_id: null,
+      lot_film: null,
+      checklist_completed: null,
+      scheduled_date: null,
+      start_time: null,
+      end_time: null,
+      date_rdv: null,
+      heure_rdv: null,
+      template_id: null,
+      workflow_id: null,
+      estimated_duration: null,
+      notes: null,
+      tags: null,
+      technician_id: null,
+      ...partial,
+    };
   }
 
 
@@ -89,12 +146,8 @@ export class TaskService {
    */
   async getTasks(query?: Partial<TaskQuery>): Promise<ServiceResponse<{ data: TaskWithDetails[], pagination: PaginationInfo }>> {
     try {
-      const session = await AuthSecureStorage.getSession();
-      if (!session.token) {
-        return { success: false, error: 'Authentication required', status: 401 };
-      }
-
-      const result = await taskIpc.list(query || {}, session.token);
+      const sessionToken = await this.getSessionToken();
+      const result = await taskIpc.list(query || {}, sessionToken);
       return { success: true, data: { data: result.data as TaskWithDetails[], pagination: result.pagination }, status: 200 };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -131,12 +184,8 @@ export class TaskService {
    */
   async createTask(data: CreateTaskRequest): Promise<ServiceResponse<{ id: string }>> {
     try {
-      const session = await AuthSecureStorage.getSession();
-      if (!session.token) {
-        return { success: false, error: 'Authentication required', status: 401 };
-      }
-
-      const result = await taskIpc.create(data, session.token);
+      const sessionToken = await this.getSessionToken();
+      const result = await taskIpc.create(data, sessionToken);
       return { success: true, data: { id: result.id }, status: 200 };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -174,12 +223,8 @@ export class TaskService {
    */
   async updateTask(id: string, data: UpdateTaskRequest): Promise<ServiceResponse<{ id: string }>> {
     try {
-      const session = await AuthSecureStorage.getSession();
-      if (!session.token) {
-        return { success: false, error: 'Authentication required', status: 401 };
-      }
-
-      await taskIpc.update(id, data, session.token);
+      const sessionToken = await this.getSessionToken();
+      await taskIpc.update(id, data, sessionToken);
       return { success: true, data: { id }, status: 200 };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -196,22 +241,10 @@ export class TaskService {
    */
   async assignTask(taskId: string, technicianId: string): Promise<ServiceResponse<TaskWithDetails>> {
     try {
-      const response = await fetch(`/api/tasks/${taskId}/assign`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ technicianId }),
-      });
-
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        const errorMessage = (data as { error?: string } | null)?.error || 'Failed to assign task';
-        return { success: false, error: errorMessage, status: response.status };
-      }
-
-      return { success: true, data: data as TaskWithDetails, status: response.status };
+      const sessionToken = await this.getSessionToken();
+      const updateData = this.buildUpdateRequest({ technician_id: technicianId });
+      const result = await taskIpc.update(taskId, updateData, sessionToken);
+      return { success: true, data: result as TaskWithDetails, status: 200 };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       return { success: false, error: err.message, status: 500 };
@@ -227,25 +260,24 @@ export class TaskService {
    */
   async markTaskInvalid(taskId: string, reason?: string): Promise<ServiceResponse<unknown>> {
     try {
-      const response = await fetch('/api/tasks/mark-invalid', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          taskId,
-          reason: reason || undefined,
-        }),
-      });
-
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        const errorMessage = (data as { error?: string } | null)?.error || 'Erreur lors du marquage de la tâche comme invalide';
-        return { success: false, error: errorMessage, status: response.status };
+      const sessionToken = await this.getSessionToken();
+      const task = await taskIpc.get(taskId, sessionToken);
+      if (!task) {
+        return { success: false, error: 'Task not found', status: 404 };
       }
 
-      return { success: true, data, status: response.status };
+      const existingNotes = task.notes ? String(task.notes) : '';
+      const appendedNotes = reason
+        ? `${existingNotes}${existingNotes ? '\n' : ''}Invalid: ${reason}`
+        : existingNotes || null;
+
+      const updateData = this.buildUpdateRequest({
+        status: 'invalid',
+        notes: appendedNotes,
+      });
+
+      await taskIpc.update(taskId, updateData, sessionToken);
+      return { success: true, data: { id: taskId }, status: 200 };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       return { success: false, error: err.message, status: 500 };
@@ -269,12 +301,8 @@ export class TaskService {
    * ```
    */
   async deleteTask(id: string): Promise<void> {
-    const session = await AuthSecureStorage.getSession();
-    if (!session.token) {
-      throw new Error('Authentication required');
-    }
-
-    await taskIpc.delete(id, session.token);
+    const sessionToken = await this.getSessionToken();
+    await taskIpc.delete(id, sessionToken);
   }
 
   /**
@@ -288,13 +316,10 @@ export class TaskService {
    */
   async updateTaskStepData(taskId: string, stepId: string, data: unknown, _userId?: string, _updatedAt?: string): Promise<ServiceResponse<unknown>> {
     try {
-      const session = await AuthSecureStorage.getSession();
-      if (!session.token) {
-        return { success: false, error: 'Authentication required', status: 401 };
-      }
+      const sessionToken = await this.getSessionToken();
 
       // First, get the active intervention for this task
-      const interventionResponse = await ipcClient.interventions.getActiveByTask(taskId, session.token);
+      const interventionResponse = await ipcClient.interventions.getActiveByTask(taskId, sessionToken);
       let interventionId: string | null = null;
 
       if (interventionResponse && typeof interventionResponse === 'object') {
@@ -349,7 +374,7 @@ export class TaskService {
         collected_data: this.toJsonValue(stepProgressData),
         notes: typeof stepProgressData.notes === 'string' ? stepProgressData.notes : null,
         photos: null,
-      }, session.token);
+      }, sessionToken);
 
       return {
         success: true,
@@ -376,13 +401,10 @@ export class TaskService {
     _userId?: string
   ): Promise<ServiceResponse<{ stepData: unknown; lastUpdated: string | null; taskStatus: string | null }>> {
     try {
-      const session = await AuthSecureStorage.getSession();
-      if (!session.token) {
-        return { success: false, error: 'Authentication required', status: 401 };
-      }
+      const sessionToken = await this.getSessionToken();
 
       // Get step data directly using intervention service
-      const stepData = await ipcClient.interventions.getStep(stepId, session.token);
+      const stepData = await ipcClient.interventions.getStep(stepId, sessionToken);
 
       // Step exists, return success
       return {
@@ -419,12 +441,8 @@ export class TaskService {
    */
   async getTaskById(id: string): Promise<ServiceResponse<TaskWithDetails>> {
     try {
-      const session = await AuthSecureStorage.getSession();
-      if (!session.token) {
-        return { success: false, error: 'Authentication required', status: 401 };
-      }
-
-      const result = await taskIpc.get(id, session.token);
+      const sessionToken = await this.getSessionToken();
+      const result = await taskIpc.get(id, sessionToken);
 
       if (result === null) {
         return { success: false, error: 'Task not found', status: 404 };
@@ -442,18 +460,11 @@ export class TaskService {
    */
   async generateTaskNumber(): Promise<ServiceResponse<{ task_number: string }>> {
     try {
-      const response = await fetch('/api/tasks/generate-number', {
-        method: 'GET',
-      });
-
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        const errorMessage = (data as { error?: string } | null)?.error || 'Failed to generate task number';
-        return { success: false, error: errorMessage, status: response.status };
+      const result = generateUniqueTaskNumber({ maxRetries: 1 }, null);
+      if (!result.success || !result.taskNumber) {
+        return { success: false, error: result.error || 'Failed to generate task number', status: 500 };
       }
-
-      return { success: true, data: data as { task_number: string }, status: response.status };
+      return { success: true, data: { task_number: result.taskNumber }, status: 200 };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       return { success: false, error: err.message, status: 500 };
@@ -465,22 +476,8 @@ export class TaskService {
    */
   async validateTaskNumber(taskNumber: string): Promise<ServiceResponse<{ task_number: string; is_valid: boolean }>> {
     try {
-      const response = await fetch('/api/tasks/generate-number', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ task_number: taskNumber }),
-      });
-
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        const errorMessage = (data as { error?: string } | null)?.error || 'Failed to validate task number';
-        return { success: false, error: errorMessage, status: response.status };
-      }
-
-      return { success: true, data: data as { task_number: string; is_valid: boolean }, status: response.status };
+      const isValid = isValidTaskNumberFormat(taskNumber);
+      return { success: true, data: { task_number: taskNumber, is_valid: isValid }, status: 200 };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       return { success: false, error: err.message, status: 500 };
@@ -492,35 +489,22 @@ export class TaskService {
    */
   async getValidatedTasks(query: Partial<TaskQueryInput> = {}): Promise<ServiceResponse<unknown>> {
     try {
-      const session = await AuthSecureStorage.getSession();
-      if (!session.token) {
-        return { success: false, error: 'Authentication required', status: 401 };
-      }
+      const sessionToken = await this.getSessionToken();
+      const validated = validateAndSanitizeInput(TaskQuerySchema, query);
+      const limit = validated.limit ?? 20;
+      const offset = validated.offset ?? 0;
+      const page = Math.floor(offset / limit) + 1;
+      const result = await taskIpc.list({
+        page,
+        limit,
+        status: validated.status ?? null,
+        priority: validated.priority ?? null,
+        technician_id: validated.technician_id ?? null,
+        client_id: validated.client_id ?? null,
+        search: validated.search ?? null,
+      }, sessionToken);
 
-      const params = new URLSearchParams();
-      Object.entries(query).forEach(([key, value]) => {
-        if (value === undefined || value === null || value === '') {
-          return;
-        }
-        params.set(key, String(value));
-      });
-
-      const url = params.toString() ? `/api/tasks/validated?${params.toString()}` : '/api/tasks/validated';
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${session.token}`,
-        },
-      });
-
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        const errorMessage = (data as { error?: string } | null)?.error || 'Failed to fetch tasks';
-        return { success: false, error: errorMessage, status: response.status };
-      }
-
-      return { success: true, data, status: response.status };
+      return { success: true, data: result, status: 200 };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       return { success: false, error: err.message, status: 500 };
@@ -532,28 +516,10 @@ export class TaskService {
    */
   async createValidatedTask(data: CreateTaskInput): Promise<ServiceResponse<unknown>> {
     try {
-      const session = await AuthSecureStorage.getSession();
-      if (!session.token) {
-        return { success: false, error: 'Authentication required', status: 401 };
-      }
-
-      const response = await fetch('/api/tasks/validated', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.token}`,
-        },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        const errorMessage = (result as { error?: string } | null)?.error || 'Failed to create task';
-        return { success: false, error: errorMessage, status: response.status };
-      }
-
-      return { success: true, data: result, status: response.status };
+      const sessionToken = await this.getSessionToken();
+      const validated = validateAndSanitizeInput(CreateTaskSchema, data);
+      const result = await taskIpc.create(validated as CreateTaskRequest, sessionToken);
+      return { success: true, data: result, status: 200 };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       return { success: false, error: err.message, status: 500 };
@@ -565,28 +531,17 @@ export class TaskService {
    */
   async updateValidatedTask(taskId: string, data: UpdateTaskInput): Promise<ServiceResponse<unknown>> {
     try {
-      const session = await AuthSecureStorage.getSession();
-      if (!session.token) {
-        return { success: false, error: 'Authentication required', status: 401 };
-      }
-
-      const response = await fetch(`/api/tasks/validated?id=${encodeURIComponent(taskId)}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.token}`,
-        },
-        body: JSON.stringify(data),
+      const sessionToken = await this.getSessionToken();
+      const validated = validateAndSanitizeInput(UpdateTaskSchema, data);
+      const updateData = this.buildUpdateRequest({
+        title: validated.title ?? null,
+        description: validated.description ?? null,
+        status: validated.status ?? null,
+        priority: validated.priority ?? null,
+        technician_id: validated.assigned_to ?? null,
       });
-
-      const result = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        const errorMessage = (result as { error?: string } | null)?.error || 'Failed to update task';
-        return { success: false, error: errorMessage, status: response.status };
-      }
-
-      return { success: true, data: result, status: response.status };
+      const result = await taskIpc.update(taskId, updateData, sessionToken);
+      return { success: true, data: result, status: 200 };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       return { success: false, error: err.message, status: 500 };
@@ -598,26 +553,9 @@ export class TaskService {
    */
   async syncTaskWorkflow(taskId: string): Promise<ServiceResponse<unknown>> {
     try {
-      const session = await AuthSecureStorage.getSession();
-      if (!session.token) {
-        return { success: false, error: 'Authentication required', status: 401 };
-      }
-
-      const response = await fetch(`/api/tasks/${taskId}/sync-workflow`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${session.token}`,
-        },
-      });
-
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        const errorMessage = (data as { error?: string } | null)?.error || 'Failed to sync task workflow';
-        return { success: false, error: errorMessage, status: response.status };
-      }
-
-      return { success: true, data, status: response.status };
+      const { TaskWorkflowSyncService } = await import('./task-workflow-sync.service');
+      const result = await TaskWorkflowSyncService.syncTaskWithWorkflow(taskId);
+      return { success: true, data: result, status: 200 };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       return { success: false, error: err.message, status: 500 };
@@ -629,26 +567,9 @@ export class TaskService {
    */
   async getTaskWorkflowProgress(taskId: string): Promise<ServiceResponse<unknown>> {
     try {
-      const session = await AuthSecureStorage.getSession();
-      if (!session.token) {
-        return { success: false, error: 'Authentication required', status: 401 };
-      }
-
-      const response = await fetch(`/api/tasks/${taskId}/sync-workflow`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${session.token}`,
-        },
-      });
-
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        const errorMessage = (data as { error?: string } | null)?.error || 'Failed to fetch workflow progress';
-        return { success: false, error: errorMessage, status: response.status };
-      }
-
-      return { success: true, data, status: response.status };
+      const { TaskWorkflowSyncService } = await import('./task-workflow-sync.service');
+      const result = await TaskWorkflowSyncService.getTaskWithWorkflowProgress(taskId);
+      return { success: true, data: result, status: 200 };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       return { success: false, error: err.message, status: 500 };
@@ -660,26 +581,9 @@ export class TaskService {
    */
   async syncAllTaskWorkflows(): Promise<ServiceResponse<unknown>> {
     try {
-      const session = await AuthSecureStorage.getSession();
-      if (!session.token) {
-        return { success: false, error: 'Authentication required', status: 401 };
-      }
-
-      const response = await fetch('/api/tasks/sync-all-workflows', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${session.token}`,
-        },
-      });
-
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        const errorMessage = (data as { error?: string } | null)?.error || 'Failed to sync workflows';
-        return { success: false, error: errorMessage, status: response.status };
-      }
-
-      return { success: true, data, status: response.status };
+      const { TaskWorkflowSyncService } = await import('./task-workflow-sync.service');
+      const result = await TaskWorkflowSyncService.syncAllTasksWithWorkflows();
+      return { success: true, data: result, status: 200 };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       return { success: false, error: err.message, status: 500 };
@@ -691,3 +595,4 @@ export const taskService = TaskService.getInstance();
 
 // Re-export types for convenience
 export type { TaskWithDetails };
+

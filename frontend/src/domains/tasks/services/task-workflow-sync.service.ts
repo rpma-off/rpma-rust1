@@ -3,6 +3,7 @@ import { ipcClient } from '@/lib/ipc/client';
 import { taskService } from './task.service';
 import type { Intervention } from '@/lib/backend';
 import type { TaskWithDetails } from '@/types/task.types';
+import { AuthSecureStorage } from '@/lib/secureStorage';
 
 interface ActiveInterventionResponse {
   type: string;
@@ -23,11 +24,20 @@ export interface TaskWithWorkflowProgress {
 }
 
 export class TaskWorkflowSyncService {
+  private static async getSessionToken(): Promise<string> {
+    const session = await AuthSecureStorage.getSession();
+    if (!session.token) {
+      throw new Error('Authentication required');
+    }
+    return session.token;
+  }
+
   /**
    * Sync a specific task with its associated workflow/intervention
    */
   static async syncTaskWithWorkflow(taskId: string): Promise<TaskWithWorkflowProgress> {
     try {
+      const sessionToken = await this.getSessionToken();
       // Get the task details
       const taskResponse = await taskService.getTaskById(taskId);
       if (!taskResponse.success || !taskResponse.data) {
@@ -37,7 +47,7 @@ export class TaskWorkflowSyncService {
       const task = taskResponse.data;
 
       // Get the active intervention for this task
-      const interventionResponse = await ipcClient.interventions.getActiveByTask(taskId, '') as ActiveInterventionResponse;
+      const interventionResponse = await ipcClient.interventions.getActiveByTask(taskId, sessionToken) as ActiveInterventionResponse;
       if (!interventionResponse || interventionResponse.type !== 'ActiveRetrieved' || !interventionResponse.intervention) {
         // No active intervention, return task with sync status
         return {
@@ -50,7 +60,7 @@ export class TaskWorkflowSyncService {
       const intervention = interventionResponse.intervention;
 
       // Get workflow progress
-      const progressResponse = await ipcClient.interventions.getProgress(intervention.id, '');
+      const progressResponse = await ipcClient.interventions.getProgress(intervention.id, sessionToken);
       if (!progressResponse || !progressResponse.steps) {
         throw new Error(`Failed to get progress for intervention ${intervention.id}`);
       }

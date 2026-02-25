@@ -11,19 +11,27 @@ import { useRouter } from 'next/navigation';
 import { Activity, CheckCircle, Clock, TrendingUp, User, MapPin, Target, Link, SearchX } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/ui/card';
-import { Badge } from '@/shared/ui/ui/badge';
-import { Progress } from '@/shared/ui/ui/progress';
-import { Button } from '@/shared/ui/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/ui/tabs';
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  PageShell,
+  Progress,
+  StatCard,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/shared/ui/facade';
 import { interventionDashboard } from '@/domains/interventions';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { getStatusLabel } from '@/shared/utils';
-import { PageShell } from '@/shared/ui/layout/PageShell';
-import { StatCard } from '@/shared/ui/ui/page-header';
-import { LoadingState } from '@/shared/ui/layout/LoadingState';
-import { ErrorState } from '@/shared/ui/layout/ErrorState';
-import { EmptyState } from '@/shared/ui/layout/EmptyState';
 
 export default function InterventionsDashboard() {
   const { user, loading: authLoading } = useAuth();

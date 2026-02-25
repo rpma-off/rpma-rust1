@@ -28,27 +28,4 @@ export const ROUTES = {
     DATABASE_SETUP: '/admin/database-setup',
     CONFIGURATION: '/admin/configuration',
   },
-  API: {
-    AUTH: {
-      LOGIN: '/api/auth/login',
-      LOGOUT: '/api/auth/logout',
-      SESSION: '/api/auth/session',
-      SIGNUP: '/api/auth/signup',
-    },
-    CLIENTS: '/api/clients',
-    CLIENT_DETAIL: (id: string) => `/api/clients/${id}`,
-    CLIENT_SEARCH: '/api/clients/search',
-    CLIENT_STATS: '/api/clients/stats',
-    ADMIN: {
-      CONFIGURATION: '/api/admin/configuration',
-      ANALYTICS: '/api/admin/analytics',
-      AUDIT: '/api/admin/audit',
-      LOGS: '/api/admin/logs',
-      USERS: '/api/admin/users',
-      TASKS: '/api/admin/tasks',
-      STATISTICS: '/api/admin/statistics',
-    },
-    SETTINGS: '/api/settings',
-    CONFIGURATION: '/api/configuration',
-  },
 };
