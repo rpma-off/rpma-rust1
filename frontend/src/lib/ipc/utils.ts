@@ -126,10 +126,10 @@ export async function safeInvoke<T>(
   const startTime = performance.now();
 
   const providedCorrelationId = typeof args?.correlation_id === 'string' ? args.correlation_id : undefined;
+  const correlationId = providedCorrelationId ?? CorrelationContext.generateNew();
   if (providedCorrelationId) {
     CorrelationContext.set({ correlation_id: providedCorrelationId });
   }
-  const correlationId = providedCorrelationId || CorrelationContext.getCurrentId() || CorrelationContext.generateNew();
   let effectiveCorrelationId = correlationId;
 
   // Ensure correlation ID is in the args

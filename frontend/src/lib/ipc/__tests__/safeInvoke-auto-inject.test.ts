@@ -151,5 +151,51 @@ describe('safeInvoke – session_token auto-injection', () => {
       expect(mockGetSessionToken).not.toHaveBeenCalled();
     });
   });
+
+  describe('correlation_id generation', () => {
+    const { CorrelationContext: mockCorrelationContext } = jest.requireMock('@/lib/logging/types') as {
+      CorrelationContext: { set: jest.Mock; getCurrentId: jest.Mock; generateNew: jest.Mock };
+    };
+
+    it('generates a fresh correlation_id when none is provided in args', async () => {
+      mockGetSessionToken.mockResolvedValue('token');
+      mockCorrelationContext.generateNew.mockReturnValue('generated-id');
+
+      await safeInvoke('task_crud', {});
+
+      expect(mockCorrelationContext.generateNew).toHaveBeenCalled();
+      expect(mockInvoke).toHaveBeenCalledWith(
+        'task_crud',
+        expect.objectContaining({ correlation_id: 'generated-id' })
+      );
+    });
+
+    it('uses the provided correlation_id from args without generating a new one', async () => {
+      mockGetSessionToken.mockResolvedValue('token');
+
+      await safeInvoke('task_crud', { correlation_id: 'explicit-corr-id' });
+
+      expect(mockCorrelationContext.generateNew).not.toHaveBeenCalled();
+      expect(mockCorrelationContext.set).toHaveBeenCalledWith({ correlation_id: 'explicit-corr-id' });
+      expect(mockInvoke).toHaveBeenCalledWith(
+        'task_crud',
+        expect.objectContaining({ correlation_id: 'explicit-corr-id' })
+      );
+    });
+
+    it('always generates a new correlation_id even when getCurrentId would return a stale value', async () => {
+      mockGetSessionToken.mockResolvedValue('token');
+      mockCorrelationContext.getCurrentId.mockReturnValue('stale-id');
+      mockCorrelationContext.generateNew.mockReturnValue('fresh-id');
+
+      await safeInvoke('task_crud', {});
+
+      // Should use fresh generated ID, not stale getCurrentId value
+      expect(mockInvoke).toHaveBeenCalledWith(
+        'task_crud',
+        expect.objectContaining({ correlation_id: 'fresh-id' })
+      );
+    });
+  });
 });
 
