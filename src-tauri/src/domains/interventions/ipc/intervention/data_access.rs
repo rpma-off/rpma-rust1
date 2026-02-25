@@ -8,6 +8,7 @@
 
 use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
+use crate::domains::interventions::InterventionsFacade;
 use tracing::{error, info, instrument};
 
 /// Get a specific intervention by ID
@@ -29,6 +30,8 @@ pub async fn intervention_get(
 
     info!(intervention_id = %id, "Getting intervention");
 
+    let facade = InterventionsFacade::new(state.intervention_service.clone());
+
     // Check if user has access to this intervention
     let intervention = state
         .intervention_service
@@ -39,18 +42,7 @@ pub async fn intervention_get(
         })?
         .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", id)))?;
 
-    // Check permissions
-    if intervention.technician_id.as_ref() != Some(&session.user_id)
-        && !matches!(
-            session.role,
-            crate::shared::contracts::auth::UserRole::Admin
-                | crate::shared::contracts::auth::UserRole::Supervisor
-        )
-    {
-        return Err(AppError::Authorization(
-            "Not authorized to view this intervention".to_string(),
-        ));
-    }
+    facade.check_intervention_access(&session.user_id, &session.role, &intervention)?;
 
     Ok(ApiResponse::success(intervention).with_correlation_id(Some(correlation_id.clone())))
 }
@@ -74,23 +66,15 @@ pub async fn intervention_get_active_by_task(
 
     info!(task_id = %task_id, "Getting active interventions for task");
 
+    let facade = InterventionsFacade::new(state.intervention_service.clone());
+
     // Check task access
     let task_access = state
         .task_service
         .check_task_assignment(&task_id, &session.user_id)
         .unwrap_or(false);
 
-    if !task_access
-        && !matches!(
-            session.role,
-            crate::shared::contracts::auth::UserRole::Admin
-                | crate::shared::contracts::auth::UserRole::Supervisor
-        )
-    {
-        return Err(AppError::Authorization(
-            "Not authorized to view interventions for this task".to_string(),
-        ));
-    }
+    facade.check_task_intervention_access(&session.role, task_access)?;
 
     match state
         .intervention_service
@@ -129,23 +113,15 @@ pub async fn intervention_get_latest_by_task(
 
     info!(task_id = %task_id, "Getting latest intervention for task");
 
+    let facade = InterventionsFacade::new(state.intervention_service.clone());
+
     // Check task access
     let task_access = state
         .task_service
         .check_task_assignment(&task_id, &session.user_id)
         .unwrap_or(false);
 
-    if !task_access
-        && !matches!(
-            session.role,
-            crate::shared::contracts::auth::UserRole::Admin
-                | crate::shared::contracts::auth::UserRole::Supervisor
-        )
-    {
-        return Err(AppError::Authorization(
-            "Not authorized to view interventions for this task".to_string(),
-        ));
-    }
+    facade.check_task_intervention_access(&session.role, task_access)?;
 
     state
         .intervention_service
@@ -177,6 +153,8 @@ pub async fn intervention_get_step(
 
     info!(intervention_id = %intervention_id, step_id = %step_id, "Getting intervention step");
 
+    let facade = InterventionsFacade::new(state.intervention_service.clone());
+
     // Check intervention access
     let intervention = state
         .intervention_service
@@ -187,19 +165,9 @@ pub async fn intervention_get_step(
         })?
         .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", intervention_id)))?;
 
-    if intervention.technician_id.as_ref() != Some(&session.user_id)
-        && !matches!(
-            session.role,
-            crate::shared::contracts::auth::UserRole::Admin
-                | crate::shared::contracts::auth::UserRole::Supervisor
-        )
-    {
-        return Err(AppError::Authorization(
-            "Not authorized to view this intervention step".to_string(),
-        ));
-    }
+    facade.check_intervention_access(&session.user_id, &session.role, &intervention)?;
 
-    let _step = state
+    let step = state
         .intervention_service
         .get_step(&step_id)
         .map_err(|e| {
@@ -208,14 +176,5 @@ pub async fn intervention_get_step(
         })?
         .ok_or_else(|| AppError::NotFound(format!("Step {} not found", step_id)))?;
 
-    let response = state
-        .intervention_service
-        .get_step(&step_id)
-        .map_err(|e| {
-            error!(error = %e, step_id = %step_id, "Failed to get intervention step");
-            AppError::Database("Failed to get intervention step".to_string())
-        })?
-        .ok_or_else(|| AppError::NotFound(format!("Step {} not found", step_id)))?;
-
-    Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone())))
+    Ok(ApiResponse::success(step).with_correlation_id(Some(correlation_id.clone())))
 }

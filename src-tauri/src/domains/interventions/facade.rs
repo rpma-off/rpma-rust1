@@ -1,6 +1,8 @@
 use std::sync::Arc;
 
+use crate::domains::interventions::domain::models::intervention::Intervention;
 use crate::domains::interventions::infrastructure::intervention::InterventionService;
+use crate::shared::contracts::auth::UserRole;
 use crate::shared::ipc::errors::AppError;
 
 /// Facade for the Interventions bounded context.
@@ -43,6 +45,42 @@ impl InterventionsFacade {
         if task_id.trim().is_empty() {
             return Err(AppError::Validation(
                 "task_id is required for intervention operations".to_string(),
+            ));
+        }
+        Ok(())
+    }
+
+    /// Enforce that the current user may access the given intervention.
+    ///
+    /// Only the assigned technician, admins, and supervisors are allowed.
+    pub fn check_intervention_access(
+        &self,
+        user_id: &str,
+        role: &UserRole,
+        intervention: &Intervention,
+    ) -> Result<(), AppError> {
+        if intervention.technician_id.as_deref() != Some(user_id)
+            && !matches!(role, UserRole::Admin | UserRole::Supervisor)
+        {
+            return Err(AppError::Authorization(
+                "Not authorized to view this intervention".to_string(),
+            ));
+        }
+        Ok(())
+    }
+
+    /// Enforce that the current user may access interventions belonging to a task.
+    ///
+    /// The caller must pass the result of `task_service.check_task_assignment` as
+    /// `is_assigned_to_task`. Admins and supervisors are always allowed through.
+    pub fn check_task_intervention_access(
+        &self,
+        role: &UserRole,
+        is_assigned_to_task: bool,
+    ) -> Result<(), AppError> {
+        if !is_assigned_to_task && !matches!(role, UserRole::Admin | UserRole::Supervisor) {
+            return Err(AppError::Authorization(
+                "Not authorized to view interventions for this task".to_string(),
             ));
         }
         Ok(())
