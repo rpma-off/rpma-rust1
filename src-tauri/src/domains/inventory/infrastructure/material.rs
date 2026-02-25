@@ -232,6 +232,34 @@ impl MaterialService {
             .ok_or_else(|| MaterialError::NotFound(format!("Material {} not found", id)))
     }
 
+    /// Get multiple materials by IDs in a single query
+    pub fn get_materials_by_ids(&self, ids: &[&str]) -> MaterialResult<HashMap<String, Material>> {
+        if ids.is_empty() {
+            return Ok(HashMap::new());
+        }
+
+        let placeholders: Vec<&str> = ids.iter().map(|_| "?").collect();
+        let sql = format!(
+            "SELECT * FROM materials WHERE id IN ({})",
+            placeholders.join(", ")
+        );
+
+        let params: Vec<Box<dyn rusqlite::types::ToSql>> = ids
+            .iter()
+            .map(|id| Box::new(id.to_string()) as Box<dyn rusqlite::types::ToSql>)
+            .collect();
+
+        let materials: Vec<Material> = self
+            .db
+            .query_as(&sql, rusqlite::params_from_iter(params.iter()))?;
+
+        let map = materials
+            .into_iter()
+            .map(|m| (m.id.clone(), m))
+            .collect();
+        Ok(map)
+    }
+
     /// Get transaction history for a material
     pub fn get_transaction_history(
         &self,

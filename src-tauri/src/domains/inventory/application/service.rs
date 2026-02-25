@@ -115,18 +115,23 @@ impl InventoryService {
             return Ok(0);
         }
 
+        let material_ids: Vec<&str> = consumptions
+            .iter()
+            .map(|c| c.material_id.as_str())
+            .collect();
+        let materials = self
+            .gateway
+            .get_materials_by_ids(&material_ids)
+            .map_err(InventoryError::from)?;
+
         let mut transactions = Vec::new();
         for consumption in consumptions {
-            let material = self
-                .gateway
-                .get_material(&consumption.material_id)
-                .map_err(InventoryError::from)?
-                .ok_or_else(|| {
-                    InventoryError::NotFound(format!(
-                        "Material {} not found",
-                        consumption.material_id
-                    ))
-                })?;
+            let material = materials.get(&consumption.material_id).ok_or_else(|| {
+                InventoryError::NotFound(format!(
+                    "Material {} not found",
+                    consumption.material_id
+                ))
+            })?;
 
             let total_used = consumption.quantity_used + consumption.waste_quantity;
             let mut transaction = InventoryTransaction::new(

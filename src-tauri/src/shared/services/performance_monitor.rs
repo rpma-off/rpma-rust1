@@ -4,7 +4,7 @@ use crate::db::Database;
 use crate::shared::db::performance_repository::PerformanceRepository;
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 use tracing::{debug, warn};
@@ -38,7 +38,7 @@ pub struct PerformanceStats {
 #[derive(Debug)]
 pub struct PerformanceMonitorService {
     db: Database,
-    metrics_cache: Arc<Mutex<Vec<PerformanceMetric>>>,
+    metrics_cache: Arc<Mutex<VecDeque<PerformanceMetric>>>,
     stats_cache: Arc<Mutex<Option<PerformanceStats>>>,
     stats_last_updated: Arc<Mutex<Option<DateTime<Utc>>>>,
 }
@@ -47,7 +47,7 @@ impl PerformanceMonitorService {
     pub fn new(db: Database) -> Self {
         Self {
             db,
-            metrics_cache: Arc::new(Mutex::new(Vec::new())),
+            metrics_cache: Arc::new(Mutex::new(VecDeque::new())),
             stats_cache: Arc::new(Mutex::new(None)),
             stats_last_updated: Arc::new(Mutex::new(None)),
         }
@@ -64,10 +64,10 @@ impl PerformanceMonitorService {
         // Add to cache
         {
             let mut cache = self.metrics_cache.lock().unwrap();
-            cache.push(metric.clone());
+            cache.push_back(metric.clone());
             // Keep only last 1000 metrics in memory
             if cache.len() > 1000 {
-                cache.remove(0);
+                cache.pop_front();
             }
         }
 
