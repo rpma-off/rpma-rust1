@@ -1,200 +1,191 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { ArrowRight, Clock } from 'lucide-react';
 import { Button } from '@/shared/ui/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/ui/card';
-import { ArrowRight, CheckCircle, Clock, AlertCircle, Shield, Sparkles } from 'lucide-react';
-import { usePPFWorkflow } from '@/domains/interventions';
-import { getPPFStepPath } from '@/domains/interventions';
-import { useTranslation } from '@/shared/hooks/useTranslation';
+import { cn } from '@/lib/utils';
+import type { StepType } from '@/lib/backend';
+import {
+  PPF_STEP_CONFIG,
+  PpfWorkflowLayout,
+  usePpfWorkflow,
+  getPPFStepPath,
+} from '@/domains/interventions';
 
 export default function PPFWorkflowPage() {
-  const { t } = useTranslation();
   const router = useRouter();
-  const { taskId, currentStep, steps, canAdvanceToStep } = usePPFWorkflow();
+  const { taskId, task, steps, currentStep, canAccessStep, intervention } = usePpfWorkflow();
 
-  // Automatically navigate to the current step if it exists
-  useEffect(() => {
-    if (currentStep && currentStep.id) {
-      router.replace(`/tasks/${taskId}/workflow/ppf/${getPPFStepPath(currentStep.id)}`);
-    }
-  }, [currentStep, router, taskId]);
+  const orderedSteps = steps.length
+    ? steps
+    : (Object.keys(PPF_STEP_CONFIG) as StepType[]).map((stepId, index) => ({
+        id: stepId,
+        title: PPF_STEP_CONFIG[stepId].label,
+        description: PPF_STEP_CONFIG[stepId].description,
+        status: index === 0 ? 'in_progress' : 'pending',
+        order: index + 1,
+      }));
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case 'current':
-        return <Clock className="h-5 w-5 text-blue-500" />;
-      case 'available':
-        return <ArrowRight className="h-5 w-5 text-yellow-500" />;
-      default:
-        return <AlertCircle className="h-5 w-5 text-gray-500" />;
-    }
-  };
+  const completedCount = orderedSteps.filter((step) => step.status === 'completed').length;
+  const totalSteps = orderedSteps.length;
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'border-green-500/20 bg-green-500/5';
-      case 'current':
-        return 'border-blue-500/20 bg-blue-500/5';
-      case 'available':
-        return 'border-yellow-500/20 bg-yellow-500/5';
-      default:
-        return 'border-gray-500/20 bg-gray-500/5';
-    }
-  };
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
-  };
-
-  const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0
-    }
-  };
+  const surfaceInfo = task?.ppf_zones?.length ? `${task.ppf_zones.length} zones` : '—';
+  const scheduledDate = task?.scheduled_date
+    ? new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short' }).format(new Date(task.scheduled_date))
+    : null;
 
   return (
-    <motion.div
-      className="space-y-8"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      {/* Hero Section */}
-      <motion.div
-        className="text-center space-y-4"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
-        <div className="flex items-center justify-center space-x-3 mb-4">
-          <div className="p-3 bg-primary/10 rounded-full">
-            <Shield className="h-8 w-8 text-primary" />
+    <PpfWorkflowLayout>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <div className="text-xl font-extrabold text-foreground">
+            🛡 Workflow PPF — {task?.vehicle_make ?? ''} {task?.vehicle_model ?? ''}
           </div>
-          <Sparkles className="h-6 w-6 text-primary animate-pulse" />
+          <div className="text-sm text-muted-foreground">
+            Sélectionnez une étape pour commencer ou reprendre l&apos;intervention
+          </div>
         </div>
-        <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-3">
-          {t('interventions.title')}
-        </h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          {t('common.loading')}
-        </p>
-      </motion.div>
+        <div className="rounded-full bg-[hsl(var(--rpma-surface))] px-3 py-1 text-xs text-muted-foreground shadow-sm">
+          Sauvegarde auto activée
+        </div>
+      </div>
 
-      {/* Steps Grid */}
-      <motion.div
-        className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-6xl mx-auto"
-        variants={containerVariants}
-      >
-        {steps.map((step, index) => {
-          const status =
-            step.status === 'completed'
-              ? 'completed'
-              : step.id === currentStep?.id
-                ? 'current'
-                : canAdvanceToStep(step.id)
-                  ? 'available'
-                  : 'locked';
-          const isAccessible = status !== 'locked';
+      <div className="rounded-xl border-l-4 border-emerald-500 bg-white p-4 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-600 text-2xl text-white">
+              🚗
+            </div>
+            <div>
+              <div className="mb-1 flex flex-wrap items-center gap-2 text-[11px] font-semibold">
+                {task?.priority && (
+                  <span className="rounded-full bg-red-50 px-2 py-0.5 text-red-600">
+                    Priorité {task.priority}
+                  </span>
+                )}
+                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700">PPF Intégral</span>
+                {scheduledDate && (
+                  <span className="rounded-full bg-blue-50 px-2 py-0.5 text-blue-700">
+                    Planifiée · {scheduledDate}
+                  </span>
+                )}
+              </div>
+              <div className="text-base font-extrabold text-foreground">
+                {task?.vehicle_make ?? 'Véhicule'} {task?.vehicle_model ?? ''}{' '}
+                {task?.vehicle_year ? `· ${task.vehicle_year}` : ''}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Client : {task?.customer_name ?? '—'} · {task?.customer_phone ?? '—'}
+              </div>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-extrabold text-emerald-600">{surfaceInfo}</div>
+            <div className="text-xs text-muted-foreground">
+              Surface totale · {task?.ppf_zones?.length ?? 0} zones
+            </div>
+            <div className="text-xs font-semibold text-emerald-600">
+              {intervention?.status === 'completed' ? 'Intervention terminée' : 'Devis validé'}
+            </div>
+          </div>
+        </div>
+        <div className="mt-3">
+          <div className="mb-1 flex justify-between text-xs text-muted-foreground">
+            <span>Progression globale</span>
+            <span>
+              {completedCount} / {totalSteps} étapes
+            </span>
+          </div>
+          <div className="flex gap-1">
+            {orderedSteps.map((step) => {
+              const isDone = step.status === 'completed';
+              const isActive = step.id === currentStep?.id;
+              return (
+                <div
+                  key={`pill-${step.id}`}
+                  className={cn(
+                    'h-1 flex-1 rounded-full',
+                    isDone && 'bg-emerald-600',
+                    isActive && 'bg-blue-500',
+                    !isDone && !isActive && 'bg-[hsl(var(--rpma-border))]'
+                  )}
+                />
+              );
+            })}
+          </div>
+          <div className="mt-2 flex flex-wrap justify-between text-[10px] text-muted-foreground">
+            {orderedSteps.map((step) => (
+              <span key={`label-${step.id}`} className={step.id === currentStep?.id ? 'text-blue-600' : undefined}>
+                {PPF_STEP_CONFIG[step.id]?.label ?? step.title}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-700">
+        L&apos;intervention démarre à l&apos;Étape 1 — Inspection. Chaque étape doit être complétée dans l&apos;ordre. Les données sont sauvegardées automatiquement en local (offline-first).
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {orderedSteps.map((step) => {
+          const config = PPF_STEP_CONFIG[step.id];
+          const Icon = config.icon;
+          const isDone = step.status === 'completed';
+          const isActive = step.id === currentStep?.id;
+          const isLocked = !canAccessStep(step.id) && !isDone && !isActive;
+
+          const cardStyles = cn(
+            'rounded-xl border bg-white p-4 shadow-sm transition',
+            isActive && 'border-emerald-500 ring-1 ring-emerald-100',
+            isLocked && 'opacity-55 cursor-not-allowed'
+          );
 
           return (
-            <motion.div
+            <div
               key={step.id}
-              variants={cardVariants}
-              whileHover={isAccessible ? { scale: 1.02 } : {}}
-              whileTap={isAccessible ? { scale: 0.98 } : {}}
+              className={cardStyles}
+              role="button"
+              tabIndex={isLocked ? -1 : 0}
+              onClick={() => {
+                if (isLocked) return;
+                router.push(`/tasks/${taskId}/workflow/ppf/${getPPFStepPath(step.id)}`);
+              }}
             >
-              <Card
-                className={`group relative overflow-hidden transition-all duration-300 ${
-                  getStatusColor(status)
-                } ${
-                  isAccessible
-                    ? 'hover:shadow-[var(--rpma-shadow-soft)] cursor-pointer border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))]'
-                    : 'opacity-60 cursor-not-allowed'
-                } backdrop-blur-sm`}
-                onClick={() =>
-                  isAccessible &&
-                  router.push(`/tasks/${taskId}/workflow/ppf/${getPPFStepPath(step.id)}`)
-                }
-              >
-                {/* Step Number Badge */}
-                <div className="absolute top-4 right-4 w-8 h-8 bg-background/80 rounded-full flex items-center justify-center text-sm font-bold text-foreground border border-border">
-                  {index + 1}
-                </div>
-
-                {/* Background Gradient Effect */}
-                <div className="absolute inset-0 bg-[hsl(var(--rpma-surface))] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                <CardHeader className="relative z-10 pb-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <CardTitle className="text-xl md:text-2xl text-foreground group-hover:text-primary transition-colors duration-300">
-                      {step.title}
-                    </CardTitle>
-                    <div className={`p-2 rounded-full transition-all duration-300 ${
-                      status === 'completed' ? 'bg-green-500/20' :
-                      status === 'current' ? 'bg-blue-500/20' :
-                      status === 'available' ? 'bg-yellow-500/20' :
-                      'bg-gray-500/20'
-                    }`}>
-                      {getStatusIcon(status)}
-                    </div>
-                  </div>
-                  <CardDescription className="text-muted-foreground text-base leading-relaxed">
-                    {step.description}
-                  </CardDescription>
-                </CardHeader>
-
-                <CardContent className="relative z-10 pt-0">
-                  <Button
-                    disabled={!isAccessible}
-                    className={`w-full h-12 text-base font-medium transition-all duration-300 ${
-                      status === 'current'
-                        ? 'bg-primary hover:bg-primary/90 shadow-lg shadow-accent/25'
-                        : 'hover:bg-muted border-border hover:border-primary/50'
-                    }`}
-                    variant={status === 'current' ? 'default' : 'outline'}
-                  >
-                    <span className="flex items-center justify-center space-x-2">
-                      <span>
-                        {status === 'completed' ? t('common.view') :
-                         status === 'current' ? t('common.next') :
-                         status === 'available' ? t('interventions.startIntervention') : 'Verrouillé'}
-                      </span>
-                      <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-                    </span>
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
+              <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-xl text-blue-700">
+                <Icon className="h-5 w-5" />
+              </div>
+              <div className="text-sm font-extrabold text-foreground">{config.label}</div>
+              <div className="mt-2 text-xs text-muted-foreground">{config.description}</div>
+              <div className="my-3 h-px bg-[hsl(var(--rpma-border))]" />
+              <div className="mb-3 flex items-center gap-2 text-[11px] text-muted-foreground">
+                <Clock className="h-3.5 w-3.5" />
+                {config.duration}
+              </div>
+              <div className="mb-3 flex gap-1">
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <div
+                    key={`mini-${step.id}-${index}`}
+                    className={cn(
+                      'h-1 flex-1 rounded-full',
+                      isDone || isActive
+                        ? index < 2
+                          ? 'bg-emerald-600'
+                          : 'bg-[hsl(var(--rpma-border))]'
+                        : 'bg-[hsl(var(--rpma-border))]'
+                    )}
+                  />
+                ))}
+              </div>
+              <Button className="w-full" variant={isActive ? 'default' : 'outline'} disabled={isLocked}>
+                {isLocked ? 'Verrouillé' : isDone ? 'Consulter' : 'Commencer'}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
           );
         })}
-      </motion.div>
-
-      {/* Progress Summary */}
-      <motion.div
-        className="text-center pt-8 border-t border-[hsl(var(--rpma-border))]"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.8, duration: 0.6 }}
-      >
-        <p className="text-muted-foreground text-sm">
-          {t('interventions.steps')}
-        </p>
-      </motion.div>
-    </motion.div>
+      </div>
+    </PpfWorkflowLayout>
   );
 }

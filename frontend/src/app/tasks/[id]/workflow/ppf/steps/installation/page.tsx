@@ -1,550 +1,437 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import { Button } from '@/shared/ui/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/ui/card';
-import { Input } from '@/shared/ui/ui/input';
-import { Label } from '@/shared/ui/ui/label';
-import { Badge } from '@/shared/ui/ui/badge';
-import { ArrowRight, Play, Pause, Square, Package, Timer, CheckCircle2, Camera, Layers } from 'lucide-react';
-import { usePPFWorkflow } from '@/domains/interventions';
-import { getNextPPFStepId, getPPFStepPath } from '@/domains/interventions';
-import { PhotoUpload } from '@/domains/workflow';
-import { useTranslation } from '@/shared/hooks/useTranslation';
+import {
+  PpfChecklist,
+  PpfPhotoGrid,
+  PpfQualitySlider,
+  PpfStepHero,
+  PpfWorkflowLayout,
+  PpfZoneTracker,
+  getNextPPFStepId,
+  getPPFStepPath,
+  usePpfWorkflow,
+} from '@/domains/interventions';
+import type { StepType } from '@/lib/backend';
 
-interface ZoneTimer {
+const ZONE_CHECKLIST = [
+  { id: 'surface_ready', title: 'Surface dégraissée et sèche', required: true },
+  { id: 'film_ready', title: 'Film prédécoupé et vérifié', required: true },
+  { id: 'solution_applied', title: 'Solution d’installation appliquée', required: true },
+  { id: 'pose_ok', title: 'Pose film — pas de bulles ni plis', required: true },
+  { id: 'edges_sealed', title: 'Chauffage bords + squeegee final', required: true },
+];
+
+const ZONE_PRESETS: Record<string, { name: string; area: string; film: string }> = {
+  hood: { name: 'Capot', area: '2.4 m²', film: '200µ' },
+  left_fender: { name: 'Aile avant G', area: '1.2 m²', film: '150µ' },
+  right_fender: { name: 'Aile avant D', area: '1.2 m²', film: '150µ' },
+  bumper: { name: 'Pare-choc av.', area: '0.9 m²', film: '150µ' },
+  mirrors: { name: 'Rétroviseurs', area: '0.3 m² × 2', film: '100µ' },
+  sills: { name: 'Seuils de porte', area: '1.0 m²', film: '150µ' },
+};
+
+const DEFAULT_ZONES = [
+  { id: 'hood', ...ZONE_PRESETS.hood },
+  { id: 'left_fender', ...ZONE_PRESETS.left_fender },
+  { id: 'right_fender', ...ZONE_PRESETS.right_fender },
+  { id: 'bumper', ...ZONE_PRESETS.bumper },
+  { id: 'mirrors', ...ZONE_PRESETS.mirrors },
+  { id: 'sills', ...ZONE_PRESETS.sills },
+];
+
+type ZoneDraft = {
+  id: string;
   name: string;
-  status: 'pending' | 'in_progress' | 'completed';
-  startTime: number | null;
-  endTime: number | null;
-  duration: number; // in minutes
-  materialLot: string;
-}
+  area?: string;
+  film?: string;
+  status?: 'pending' | 'in_progress' | 'completed';
+  checklist?: Record<string, boolean>;
+  quality_score?: number | null;
+  photos?: string[];
+};
 
-type InstallationCollectedData = {
-  zones?: Array<{
-    name: string;
-    status?: ZoneTimer['status'];
-    duration_min?: number;
-    material_lot?: string;
-  }>;
+type InstallationDraft = {
+  zones?: ZoneDraft[];
+  activeZoneId?: string | null;
+  notes?: string;
+};
+
+const buildZoneList = (zones: string[] | null | undefined): ZoneDraft[] => {
+  if (!zones || zones.length === 0) {
+    return DEFAULT_ZONES.map((zone) => ({
+      ...zone,
+      status: 'pending',
+      checklist: {},
+      quality_score: 8.5,
+      photos: [],
+    }));
+  }
+
+  return zones.map((zone, index) => {
+    const key = zone.toLowerCase().replace(/\s+/g, '_');
+    const preset = ZONE_PRESETS[key];
+    return {
+      id: key || `zone-${index + 1}`,
+      name: preset?.name ?? zone,
+      area: preset?.area ?? '—',
+      film: preset?.film ?? 'Film PPF',
+      status: 'pending',
+      checklist: {},
+      quality_score: 8.5,
+      photos: [],
+    };
+  });
 };
 
 export default function InstallationStepPage() {
-  const { t } = useTranslation();
   const router = useRouter();
-  const { taskId, advanceToStep, task, stepsData, steps, currentStep } = usePPFWorkflow();
-  const [isCompleting, setIsCompleting] = useState(false);
+  const { taskId, task, steps, getStepRecord, saveDraft, validateStep } = usePpfWorkflow();
+  const stepRecord = getStepRecord('installation' as StepType);
+  const autosaveReady = useRef(false);
 
-  const [zones, setZones] = useState<ZoneTimer[]>([]);
-  const [globalMaterialLot, setGlobalMaterialLot] = useState('');
-  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
-  const [currentTime, setCurrentTime] = useState(Date.now());
+  const [zones, setZones] = useState<ZoneDraft[]>([]);
+  const [activeZoneId, setActiveZoneId] = useState<string | null>(null);
+  const [notes, setNotes] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
 
   useEffect(() => {
-    if (!steps.length) return;
-    const hasInstallation = steps.some(step => step.id === 'installation');
-    if (!hasInstallation) {
-      const targetId = currentStep?.id ?? steps[0]?.id;
-      const targetPath = targetId ? getPPFStepPath(targetId) : null;
-      router.replace(
-        targetPath ? `/tasks/${taskId}/workflow/ppf/${targetPath}` : `/tasks/${taskId}/workflow/ppf`
-      );
-    }
-  }, [steps, currentStep, router, taskId]);
-
-  // Initialize zones from task data and load existing data
-  useEffect(() => {
-    if (task?.ppf_zones && zones.length === 0) {
-      const initialZones = task.ppf_zones.map((zoneName: string) => ({
-        name: zoneName,
-        status: 'pending' as const,
-        startTime: null,
-        endTime: null,
-        duration: 0,
-        materialLot: ''
-      }));
-      setZones(initialZones);
-    }
-  }, [task?.ppf_zones, zones.length]);
-
-  // Load existing data when component mounts
-  useEffect(() => {
-    // Find the installation step data
-    const installationStep = stepsData?.steps?.find((step) => step.step_type === 'installation');
-    const collectedData = installationStep?.collected_data as InstallationCollectedData | undefined;
-    if (collectedData) {
-      // Restore zones data from collected_data
-      if (collectedData.zones) {
-        const restoredZones = collectedData.zones.map((zoneData) => ({
-          name: zoneData.name,
-          status: zoneData.status || 'pending',
-          startTime: null,
-          endTime: null,
-          duration: zoneData.duration_min || 0,
-          materialLot: zoneData.material_lot || ''
-        }));
-        setZones(restoredZones);
-      }
-
-      // Restore photos from photo_urls if available
-      if (installationStep?.photo_urls && Array.isArray(installationStep.photo_urls)) {
-        setUploadedPhotos(installationStep.photo_urls);
-      }
-    }
-  }, [stepsData]);
-
-  // Update current time every second for active timers
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(Date.now());
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Auto-populate material lots from global material lot
-  useEffect(() => {
-    if (globalMaterialLot.trim()) {
-      setZones(prev => prev.map(zone => ({
+    const collected = (stepRecord?.collected_data ?? {}) as InstallationDraft;
+    const baseZones = buildZoneList(task?.ppf_zones ?? null);
+    const savedZones = Array.isArray(collected.zones) ? collected.zones : [];
+    const merged = baseZones.map((zone) => {
+      const saved = savedZones.find((item) => item.id === zone.id || item.name === zone.name);
+      return {
         ...zone,
-        materialLot: zone.materialLot || globalMaterialLot // Only set if empty
-      })));
-    }
-  }, [globalMaterialLot]);
-
-  const startTimer = (zoneIndex: number) => {
-    setZones(prev => prev.map((zone, index) => {
-      if (index === zoneIndex && zone.status === 'pending') {
-        return {
-          ...zone,
-          status: 'in_progress',
-          startTime: Date.now()
-        };
-      }
-      return zone;
-    }));
-  };
-
-  const pauseTimer = (zoneIndex: number) => {
-    setZones(prev => prev.map((zone, index) => {
-      if (index === zoneIndex && zone.status === 'in_progress' && zone.startTime) {
-        const elapsed = Math.floor((currentTime - zone.startTime) / 1000 / 60); // minutes
-        return {
-          ...zone,
-          status: 'pending',
-          duration: zone.duration + elapsed,
-          startTime: null
-        };
-      }
-      return zone;
-    }));
-  };
-
-  const stopTimer = (zoneIndex: number) => {
-    setZones(prev => prev.map((zone, index) => {
-      if (index === zoneIndex && zone.status === 'in_progress' && zone.startTime) {
-        const elapsed = Math.floor((currentTime - zone.startTime) / 1000 / 60); // minutes
-        return {
-          ...zone,
-          status: 'completed',
-          duration: zone.duration + elapsed,
-          endTime: currentTime,
-          startTime: null
-        };
-      }
-      return zone;
-    }));
-  };
-
-  const updateMaterialLot = (zoneIndex: number, materialLot: string) => {
-    setZones(prev => prev.map((zone, index) =>
-      index === zoneIndex ? { ...zone, materialLot } : zone
-    ));
-  };
-
-  const formatDuration = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    if (hours > 0) {
-      return `${hours}h ${mins}m`;
-    }
-    return `${mins}m`;
-  };
-
-  const getZoneStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'bg-yellow-500/20 text-yellow-400';
-      case 'in_progress': return 'bg-blue-500/20 text-blue-400';
-      case 'completed': return 'bg-green-500/20 text-green-400';
-      default: return 'bg-gray-500/20 text-gray-400';
-    }
-  };
-
-  const allZonesCompleted = zones.every(zone => zone.status === 'completed');
-  const allMaterialLotsFilled = zones.every(zone => zone.materialLot.trim() !== '');
-  const canProceed = allZonesCompleted && allMaterialLotsFilled;
-
-  const handleCompleteInstallation = async () => {
-    setIsCompleting(true);
-    try {
-      const collectedData = {
-        zones: zones.map(zone => ({
-          name: zone.name,
-          status: zone.status,
-          duration_min: zone.duration,
-          material_lot: zone.materialLot
-        }))
+        ...saved,
+        status: saved?.status ?? zone.status ?? 'pending',
+        checklist: saved?.checklist ?? zone.checklist ?? {},
+        photos: saved?.photos ?? zone.photos ?? [],
       };
+    });
 
-      await advanceToStep('installation', collectedData, uploadedPhotos.length > 0 ? uploadedPhotos : undefined);
+    savedZones
+      .filter((saved) => !merged.some((zone) => zone.id === saved.id))
+      .forEach((saved) => merged.push({ ...saved }));
 
+    const activeCandidate =
+      collected.activeZoneId ??
+      merged.find((zone) => zone.status === 'in_progress')?.id ??
+      merged.find((zone) => zone.status !== 'completed')?.id ??
+      merged[0]?.id ??
+      null;
+
+    const adjustedZones = activeCandidate
+      ? merged.map((zone) =>
+          zone.id === activeCandidate && zone.status === 'pending'
+            ? { ...zone, status: 'in_progress' }
+            : zone
+        )
+      : merged;
+
+    setZones(adjustedZones);
+    setActiveZoneId(activeCandidate);
+    setNotes(collected.notes ?? '');
+  }, [stepRecord?.id, task?.ppf_zones]);
+
+  const allPhotos = useMemo(() => {
+    const set = new Set<string>();
+    zones.forEach((zone) => {
+      zone.photos?.forEach((photo) => set.add(photo));
+    });
+    return Array.from(set);
+  }, [zones]);
+
+  useEffect(() => {
+    if (!autosaveReady.current) {
+      autosaveReady.current = true;
+      return;
+    }
+    const timeout = setTimeout(() => {
+      void saveDraft(
+        'installation',
+        {
+          zones,
+          activeZoneId,
+          notes,
+        },
+        { photos: allPhotos }
+      );
+    }, 800);
+    return () => clearTimeout(timeout);
+  }, [zones, activeZoneId, notes, allPhotos, saveDraft]);
+
+  const activeZone = zones.find((zone) => zone.id === activeZoneId) ?? zones[0];
+  const completedZones = zones.filter((zone) => zone.status === 'completed').length;
+  const zonesWithPhotos = zones.filter((zone) => (zone.photos?.length ?? 0) > 0).length;
+  const zoneScores = zones.map((zone) => zone.quality_score).filter((score): score is number => typeof score === 'number');
+  const averageScore = zoneScores.length > 0 ? zoneScores.reduce((acc, score) => acc + score, 0) / zoneScores.length : null;
+
+  const zoneChecklistComplete = (zone?: ZoneDraft) =>
+    ZONE_CHECKLIST.every((item) => Boolean(zone?.checklist?.[item.id]));
+
+  const canValidateZone = activeZone
+    ? zoneChecklistComplete(activeZone) &&
+      typeof activeZone.quality_score === 'number' &&
+      (activeZone.photos?.length ?? 0) >= 1
+    : false;
+
+  const canValidate =
+    zones.length > 0 &&
+    zones.every((zone) => zone.status === 'completed') &&
+    zones.every((zone) => zoneChecklistComplete(zone)) &&
+    zones.every((zone) => typeof zone.quality_score === 'number') &&
+    zones.every((zone) => (zone.photos?.length ?? 0) >= 1);
+
+  const summaryText = `${completedZones}/${zones.length || 1} zones · ${zonesWithPhotos}/${zones.length || 1} photos`;
+
+  const stepLabel = `ÉTAPE 3 / ${steps.length || 4}`;
+  const completedBadges = steps
+    .filter((step) => step.status === 'completed')
+    .map((step) => `✓ ${step.title}`);
+  const badge = completedBadges.length ? completedBadges.join(' · ') : undefined;
+
+  const handleSelectZone = (zoneId: string) => {
+    setActiveZoneId(zoneId);
+    setZones((prev) =>
+      prev.map((zone) => {
+        if (zone.id === zoneId) {
+          return zone.status === 'completed' ? zone : { ...zone, status: 'in_progress' };
+        }
+        if (zone.status === 'in_progress') {
+          return { ...zone, status: 'pending' };
+        }
+        return zone;
+      })
+    );
+  };
+
+  const handleToggleChecklist = (id: string) => {
+    if (!activeZone) return;
+    setZones((prev) =>
+      prev.map((zone) => {
+        if (zone.id !== activeZone.id) return zone;
+        const checklist = { ...(zone.checklist ?? {}) };
+        checklist[id] = !checklist[id];
+        return { ...zone, checklist };
+      })
+    );
+  };
+
+  const handleQualityChange = (value: number) => {
+    if (!activeZone) return;
+    setZones((prev) =>
+      prev.map((zone) =>
+        zone.id === activeZone.id ? { ...zone, quality_score: value } : zone
+      )
+    );
+  };
+
+  const handlePhotosChange = (nextPhotos: string[]) => {
+    if (!activeZone) return;
+    setZones((prev) =>
+      prev.map((zone) =>
+        zone.id === activeZone.id ? { ...zone, photos: nextPhotos } : zone
+      )
+    );
+  };
+
+  const handleValidateZone = () => {
+    if (!activeZone || !canValidateZone) return;
+    setZones((prev) => {
+      const updated = prev.map((zone) =>
+        zone.id === activeZone.id ? { ...zone, status: 'completed' } : zone
+      );
+      const nextZone = updated.find((zone) => zone.status === 'pending');
+      if (nextZone) {
+        setActiveZoneId(nextZone.id);
+        return updated.map((zone) =>
+          zone.id === nextZone.id ? { ...zone, status: 'in_progress' } : zone
+        );
+      }
+      return updated;
+    });
+  };
+
+  const handleSaveDraft = async () => {
+    setIsSaving(true);
+    try {
+      await saveDraft(
+        'installation',
+        { zones, activeZoneId, notes },
+        { photos: allPhotos, showToast: true, invalidate: true }
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleValidate = async () => {
+    if (!canValidate || isValidating) return;
+    setIsValidating(true);
+    try {
+      await validateStep('installation', { zones, activeZoneId, notes }, allPhotos);
       const nextStepId = getNextPPFStepId(steps, 'installation');
       if (nextStepId) {
         router.push(`/tasks/${taskId}/workflow/ppf/${getPPFStepPath(nextStepId)}`);
       } else {
         router.push(`/tasks/${taskId}/workflow/ppf`);
       }
-    } catch (error) {
-      console.error('Error completing installation:', error);
     } finally {
-      setIsCompleting(false);
-    }
-  };
-
-  if (!task) {
-    return <div>{t('common.loading')}</div>;
-  }
-
-  const stepIndex = steps.findIndex(step => step.id === 'installation');
-  const stepLabel = stepIndex >= 0 ? `${t('interventions.steps')} ${stepIndex + 1}/${steps.length}` : t('interventions.steps');
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
-  };
-
-  const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0
+      setIsValidating(false);
     }
   };
 
   return (
-    <motion.div
-      className="space-y-8"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
+    <PpfWorkflowLayout
+      stepId="installation"
+      actionBar={{
+        summary: summaryText,
+        onSaveDraft: handleSaveDraft,
+        onValidate: handleValidate,
+        validateLabel: 'Installation',
+        saveDisabled: isSaving,
+        validateDisabled: !canValidate || isValidating,
+      }}
     >
-      {/* Header Section */}
-      <motion.div
-        className="text-center space-y-4"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
-        <div className="flex items-center justify-center space-x-3 mb-4">
-          <div className="p-3 bg-orange-500/10 rounded-full">
-            <Layers className="h-8 w-8 text-orange-500" />
-          </div>
-          <div className="text-sm bg-orange-500/10 text-orange-400 px-3 py-1 rounded-full font-medium">
-            {stepLabel}
-          </div>
-        </div>
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-          Installation du PPF
-        </h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          Application professionnelle du film protecteur avec suivi pr�cis des zones
-        </p>
-      </motion.div>
-
-      <motion.div
-        className="grid grid-cols-1 xl:grid-cols-3 gap-8"
-        variants={containerVariants}
-      >
-        {/* Global Material Lot */}
-        <motion.div variants={cardVariants}>
-        <Card className="group hover:shadow-[var(--rpma-shadow-soft)] transition-all duration-300 border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))]">
-          <CardHeader className="pb-4">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-indigo-500/10 rounded-lg">
-                <Package className="h-5 w-5 text-indigo-500" />
-              </div>
-              <div>
-                <CardTitle className="text-xl text-foreground group-hover:text-indigo-400 transition-colors">
-                  Lot de Mat�riel Global
-                </CardTitle>
-                <CardDescription className="text-muted-foreground">
-                  Num�ro de lot du film PPF utilis� (optionnel)
-                </CardDescription>
-              </div>
+      <PpfStepHero
+        stepLabel={stepLabel}
+        title="🎯 Installation du Film PPF"
+        subtitle="Application zone par zone avec contrôle qualité continu"
+        badge={badge}
+        rightSlot={
+          <div>
+            <div className="text-[10px] uppercase font-semibold text-white/70">Progression</div>
+            <div className="text-2xl font-extrabold">
+              {completedZones} / {zones.length || 1} zones
             </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="max-w-sm">
-              <Input
-                placeholder="Ex: LOT-2024-001"
-                value={globalMaterialLot}
-                onChange={(e) => setGlobalMaterialLot(e.target.value)}
-                className="bg-[hsl(var(--rpma-surface))] border-[hsl(var(--rpma-border))] h-12 text-base transition-all duration-200 focus:border-indigo-500/50"
-              />
-              <p className="text-xs text-muted-foreground mt-2">
-                Ce num�ro sera utilis� comme valeur par d�faut pour toutes les zones
-              </p>
+            <div className="text-[10px] text-white/60">
+              {averageScore ? `${averageScore.toFixed(1)} / 10` : 'Score qualité'}
             </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+          </div>
+        }
+        progressSegments={{
+          total: Math.min(zones.length || 4, 6),
+          filled: Math.min(completedZones, 6),
+        }}
+        gradientClassName="bg-gradient-to-r from-emerald-600 to-emerald-800"
+      />
 
-      {/* Zone Timers */}
-      <motion.div variants={cardVariants}>
-        <Card className="group hover:shadow-[var(--rpma-shadow-soft)] transition-all duration-300 border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))]">
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-orange-500/10 rounded-lg">
-                  <Timer className="h-5 w-5 text-orange-500" />
-                </div>
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="space-y-4">
+          <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
+            <PpfZoneTracker
+              zones={zones.map((zone) => ({
+                id: zone.id,
+                name: zone.name,
+                area: zone.area,
+                film: zone.film,
+                status: zone.status ?? 'pending',
+                score: zone.quality_score ?? null,
+              }))}
+              activeZoneId={activeZone?.id}
+              onSelect={handleSelectZone}
+            />
+          </div>
+
+          {activeZone && (
+            <div className="rounded-xl border-2 border-blue-500 bg-white p-4 shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-xl text-foreground group-hover:text-orange-400 transition-colors">
-                    Suivi des Zones
-                  </CardTitle>
-                  <CardDescription className="text-muted-foreground">
-                    Chronom�trage pr�cis de l&apos;application par zone
-                  </CardDescription>
-                </div>
-              </div>
-              <div className={`px-4 py-2 rounded-full text-sm font-medium ${
-                allZonesCompleted
-                  ? 'bg-green-500/20 text-green-400'
-                  : 'bg-orange-500/20 text-orange-400'
-              }`}>
-                {zones.filter(z => z.status === 'completed').length}/{zones.length}
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="space-y-4">
-              {zones.map((zone, index) => (
-                <motion.div
-                  key={zone.name}
-                  className={`p-6 rounded-lg border transition-all duration-200 ${
-                    zone.status === 'completed'
-                      ? 'bg-green-500/5 border-green-500/30 hover:bg-green-500/10'
-                      : zone.status === 'in_progress'
-                      ? 'bg-blue-500/5 border-blue-500/30 hover:bg-blue-500/10'
-                      : 'bg-[hsl(var(--rpma-surface))] border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))]/30 hover:bg-[hsl(var(--rpma-surface))]'
-                  }`}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1, duration: 0.3 }}
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-3 h-3 rounded-full ${
-                        zone.status === 'completed' ? 'bg-green-500' :
-                        zone.status === 'in_progress' ? 'bg-blue-500' : 'bg-yellow-500'
-                      }`}></div>
-                      <h3 className="text-lg font-semibold text-foreground">{zone.name}</h3>
-                      <Badge className={`text-xs ${getZoneStatusColor(zone.status)}`}>
-                        {zone.status === 'pending' ? 'En attente' :
-                         zone.status === 'in_progress' ? 'En cours' : 'Termin�'}
-                      </Badge>
-                    </div>
-                    {zone.duration > 0 && (
-                      <div className="text-right">
-                        <p className="text-sm text-muted-foreground">Dur�e totale</p>
-                        <p className="text-lg font-mono font-bold text-foreground">
-                          {formatDuration(zone.duration)}
-                        </p>
-                      </div>
-                    )}
+                  <div className="mb-1 inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                    Zone active
                   </div>
+                  <div className="text-sm font-semibold text-foreground">
+                    {activeZone.name} · {activeZone.area}
+                  </div>
+                </div>
+                <Button size="sm" onClick={handleValidateZone} disabled={!canValidateZone}>
+                  Valider cette zone
+                </Button>
+              </div>
 
-                  {/* Timer Display */}
-                  {zone.status === 'in_progress' && zone.startTime && (
-                    <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Timer className="h-4 w-4 text-blue-400" />
-                          <span className="text-sm font-medium text-blue-400">Chronom�tre actif</span>
-                        </div>
-                        <div className="text-lg font-mono font-bold text-blue-300">
-                          {formatDuration(Math.floor((currentTime - zone.startTime) / 1000 / 60) + zone.duration)}
-                        </div>
-                      </div>
-                    </div>
-                  )}
+              <div className="mb-4">
+                <PpfChecklist
+                  items={ZONE_CHECKLIST}
+                  values={activeZone.checklist ?? {}}
+                  onToggle={handleToggleChecklist}
+                />
+              </div>
 
-                  {/* Material Lot Input */}
-                  <div className="mb-4">
-                    <Label htmlFor={`material-${index}`} className="text-sm font-medium text-foreground mb-2 block">
-                      Lot de Mat�riel
-                    </Label>
-                    <Input
-                      id={`material-${index}`}
-                      placeholder={globalMaterialLot || "Ex: LOT-2024-001"}
-                      value={zone.materialLot}
-                      onChange={(e) => updateMaterialLot(index, e.target.value)}
-                      className="bg-[hsl(var(--rpma-surface))] border-[hsl(var(--rpma-border))] h-10 text-sm transition-all duration-200 focus:border-orange-500/50"
-                      disabled={zone.status === 'completed'}
+              <PpfQualitySlider
+                value={typeof activeZone.quality_score === 'number' ? activeZone.quality_score : 8.5}
+                onChange={handleQualityChange}
+              />
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-4">
+          {activeZone && (
+            <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
+              <div className="mb-2 flex items-center justify-between">
+                <div className="text-sm font-semibold text-foreground">📷 Photos Après Pose</div>
+                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                  {activeZone.name}
+                </span>
+              </div>
+              <PpfPhotoGrid
+                taskId={taskId}
+                stepId="installation"
+                type="after"
+                photos={activeZone.photos ?? []}
+                minPhotos={1}
+                maxPhotos={6}
+                requiredLabels={[activeZone.name]}
+                onChange={handlePhotosChange}
+                title="Photo zone active"
+                hint="Ajoutez au moins 1 photo"
+              />
+            </div>
+          )}
+
+          <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
+            <div className="mb-3 text-sm font-semibold text-foreground">🏆 Scores Qualité</div>
+            <div className="space-y-3 text-xs">
+              {zones.map((zone) => (
+                <div key={`score-${zone.id}`}>
+                  <div className="flex items-center justify-between">
+                    <span>{zone.name}</span>
+                    <span className={zone.status === 'completed' ? 'font-semibold text-emerald-600' : 'text-muted-foreground'}>
+                      {typeof zone.quality_score === 'number' ? `${zone.quality_score.toFixed(1)} / 10` : '—'}
+                    </span>
+                  </div>
+                  <div className="mt-1 h-1 w-full rounded-full bg-[hsl(var(--rpma-border))]">
+                    <div
+                      className="h-1 rounded-full bg-emerald-500"
+                      style={{
+                        width: typeof zone.quality_score === 'number' ? `${zone.quality_score * 10}%` : '0%',
+                      }}
                     />
                   </div>
-
-                  {/* Timer Controls */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex space-x-2">
-                      {zone.status === 'pending' && (
-                        <Button
-                          onClick={() => startTimer(index)}
-                          size="sm"
-                          className="bg-green-600 hover:bg-green-700 text-white"
-                        >
-                          <Play className="h-4 w-4 mr-1" />
-                          D�marrer
-                        </Button>
-                      )}
-
-                      {zone.status === 'in_progress' && (
-                        <>
-                          <Button
-                            onClick={() => pauseTimer(index)}
-                            size="sm"
-                            variant="outline"
-                            className="border-yellow-500/50 text-yellow-400 hover:bg-yellow-500/10"
-                          >
-                            <Pause className="h-4 w-4 mr-1" />
-                            Pause
-                          </Button>
-                          <Button
-                            onClick={() => stopTimer(index)}
-                            size="sm"
-                            className="bg-red-600 hover:bg-red-700 text-white"
-                          >
-                            <Square className="h-4 w-4 mr-1" />
-                            Terminer
-                          </Button>
-                        </>
-                      )}
-
-                      {zone.status === 'completed' && (
-                        <div className="flex items-center space-x-2 text-green-400">
-                          <CheckCircle2 className="h-4 w-4" />
-                          <span className="text-sm font-medium">Zone termin�e</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {zone.status === 'completed' && zone.duration > 0 && (
-                      <div className="text-right">
-                        <p className="text-xs text-muted-foreground">Dur�e finale</p>
-                        <p className="text-sm font-mono font-bold text-green-400">
-                          {formatDuration(zone.duration)}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
+                </div>
               ))}
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Photo Documentation */}
-      <motion.div variants={cardVariants}>
-        <Card className="group hover:shadow-[var(--rpma-shadow-soft)] transition-all duration-300 border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))]">
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-green-500/10 rounded-lg">
-                  <Camera className="h-5 w-5 text-green-500" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl text-foreground group-hover:text-green-400 transition-colors">
-                    Photos d&apos;installation
-                  </CardTitle>
-                  <CardDescription className="text-muted-foreground">
-                    Documentation visuelle de l&apos;application (optionnel)
-                  </CardDescription>
-                </div>
+              <div className="border-t border-[hsl(var(--rpma-border))] pt-2 text-sm font-semibold">
+                Moyenne actuelle : {averageScore ? `${averageScore.toFixed(1)} / 10` : '—'}
               </div>
-              {uploadedPhotos.length > 0 && (
-                <div className="flex items-center space-x-2 bg-green-500/10 px-3 py-1 rounded-full">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  <span className="text-sm font-medium text-green-400">
-                    {uploadedPhotos.length} photo{uploadedPhotos.length > 1 ? 's' : ''}
-                  </span>
-                </div>
-              )}
             </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <PhotoUpload
-              taskId={taskId}
-              stepId="installation"
-              type="before"
-              maxFiles={12}
-              minPhotos={0}
-              onUploadComplete={(urls: string[]) => setUploadedPhotos(urls)}
-              title="Photos d'installation"
-              uploadButtonText="Ajouter des photos"
-            />
-          </CardContent>
-        </Card>
-        </motion.div>
-      </motion.div>
-
-      {/* Navigation */}
-      <motion.div
-        className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-8 border-t border-[hsl(var(--rpma-border))]"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8, duration: 0.4 }}
-      >
-        <div className="text-center sm:text-left">
-          <div className="flex items-center space-x-2 mb-2">
-            <div className={`w-3 h-3 rounded-full ${
-              canProceed ? 'bg-green-500' : 'bg-yellow-500'
-            }`}></div>
-            <p className={`text-sm font-medium ${
-              canProceed ? 'text-green-400' : 'text-yellow-400'
-            }`}>
-              {canProceed ? 'Pr�t pour la finalisation' : 'Compl�tez toutes les zones'}
-            </p>
           </div>
-          <p className="text-muted-foreground text-sm">
-            Zones: {zones.filter(z => z.status === 'completed').length}/{zones.length} �
-            Lots: {zones.filter(z => z.materialLot.trim() !== '').length}/{zones.length}
-          </p>
+
+          <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
+            <label className="mb-2 block text-xs font-semibold text-foreground">Notes installation</label>
+            <textarea
+              className="w-full rounded-md border border-[hsl(var(--rpma-border))] px-3 py-2 text-sm"
+              rows={3}
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+              placeholder="Observations zone par zone..."
+            />
+          </div>
         </div>
-        <Button
-          onClick={handleCompleteInstallation}
-          disabled={!canProceed || isCompleting}
-          className={`min-w-40 h-12 text-base font-medium transition-all duration-300 ${
-            canProceed
-              ? 'bg-orange-600 hover:bg-orange-700 shadow-lg shadow-orange-600/25 hover:shadow-xl hover:shadow-orange-600/30'
-              : 'bg-gray-600 cursor-not-allowed'
-          }`}
-        >
-          <span className="flex items-center justify-center space-x-2">
-            <span>{isCompleting ? t('common.loading') : t('common.next')}</span>
-            <ArrowRight className={`h-5 w-5 transition-transform ${isCompleting ? '' : 'group-hover:translate-x-1'}`} />
-          </span>
-        </Button>
-      </motion.div>
-    </motion.div>
+      </div>
+    </PpfWorkflowLayout>
   );
 }

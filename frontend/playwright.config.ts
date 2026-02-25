@@ -2,6 +2,8 @@ import { defineConfig, devices } from '@playwright/test'
 
 const runAllBrowsers = process.env.PLAYWRIGHT_ALL_BROWSERS === 'true' || process.env.PLAYWRIGHT_ALL_BROWSERS === '1'
 const WEB_SERVER_TIMEOUT_MS = 180000
+const WEB_SERVER_PORT = Number(process.env.PLAYWRIGHT_PORT ?? 43199)
+const reuseExistingServer = process.env.PLAYWRIGHT_REUSE_SERVER === 'true'
 const defaultProjects = [
   {
     name: 'chromium',
@@ -24,17 +26,18 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${WEB_SERVER_PORT}`,
     trace: 'on-first-retry',
   },
   webServer: {
-    command: 'npm run dev:next',
-    port: 3000,
-    reuseExistingServer: !process.env.CI,
+    command: `npm run dev:next -- --port ${WEB_SERVER_PORT}`,
+    port: WEB_SERVER_PORT,
+    reuseExistingServer,
     timeout: WEB_SERVER_TIMEOUT_MS,
     env: {
       NEXT_PUBLIC_IPC_MOCK: 'true',
-      NODE_ENV: 'test'
+      NODE_ENV: 'test',
+      PORT: WEB_SERVER_PORT.toString(),
     }
   },
   projects: runAllBrowsers
