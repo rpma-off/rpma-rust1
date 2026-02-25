@@ -54,7 +54,7 @@ export function useInterventionSync({
         console.log('IPC result for active intervention:', result);
 
         // getActiveByTask now returns the tagged union directly
-        const responseData = result as { type: string; intervention: Record<string, unknown> };
+        const responseData = result as unknown as { type: string; intervention: Record<string, unknown> };
 
         if (responseData?.type === 'ActiveRetrieved' && responseData.intervention) {
           console.log('Successfully retrieved active intervention:', responseData.intervention.id);

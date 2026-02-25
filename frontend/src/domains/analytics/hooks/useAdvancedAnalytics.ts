@@ -275,6 +275,7 @@ export const useAdvancedAnalytics = <T extends AnalyticsData>(
 
     try {
       // Dynamic import of D3.js to avoid SSR issues
+      // @ts-expect-error d3 may not have type declarations installed
       const d3Module = await import('d3');
       const d3 = d3Module.default || d3Module;
 
@@ -345,6 +346,7 @@ export const useAdvancedAnalytics = <T extends AnalyticsData>(
   // Check if D3.js is available
   const checkD3Availability = useCallback(async () => {
     try {
+      // @ts-expect-error d3 may not have type declarations installed
       await import('d3');
       setIsD3Available(true);
       return true;

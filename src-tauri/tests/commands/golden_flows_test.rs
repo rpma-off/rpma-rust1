@@ -31,9 +31,7 @@ fn golden_authorization_error_has_correct_code_and_status() {
 
 #[test]
 fn golden_task_invalid_transition_error() {
-    let err = AppError::TaskInvalidTransition(
-        "Cannot move from Draft to Completed".to_string(),
-    );
+    let err = AppError::TaskInvalidTransition("Cannot move from Draft to Completed".to_string());
 
     assert_eq!(err.code(), "TASK_INVALID_TRANSITION");
     assert_eq!(err.http_status(), 409);
@@ -44,9 +42,8 @@ fn golden_task_invalid_transition_error() {
 
 #[test]
 fn golden_intervention_already_active_error() {
-    let err = AppError::InterventionAlreadyActive(
-        "Intervention INT-001 is already active".to_string(),
-    );
+    let err =
+        AppError::InterventionAlreadyActive("Intervention INT-001 is already active".to_string());
 
     assert_eq!(err.code(), "INTERVENTION_ALREADY_ACTIVE");
     assert_eq!(err.http_status(), 400);
@@ -80,7 +77,10 @@ fn golden_server_errors_never_leak_internals() {
         let msg = sanitized.to_string();
 
         assert!(
-            !msg.contains("SQLITE") && !msg.contains("panic") && !msg.contains("/etc") && !msg.contains("10.0.0"),
+            !msg.contains("SQLITE")
+                && !msg.contains("panic")
+                && !msg.contains("/etc")
+                && !msg.contains("10.0.0"),
             "Error code {} leaked internals: {}",
             code,
             msg,

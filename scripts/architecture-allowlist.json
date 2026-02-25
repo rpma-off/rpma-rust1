@@ -78,6 +78,8 @@
     "Cross-domain access: tasks/infrastructure/workflow_progression.rs imports interventions::domain; cross-domain communication must go through event bus/shared contracts",
     "Cross-domain access: tasks/infrastructure/workflow_progression.rs imports interventions::infrastructure; cross-domain communication must go through event bus/shared contracts",
     "Cross-domain access: tasks/infrastructure/workflow_strategy.rs imports interventions::domain; cross-domain communication must go through event bus/shared contracts",
+    "Cross-domain access: tasks/infrastructure/workflow_strategy.rs imports interventions::infrastructure; cross-domain communication must go through event bus/shared contracts",
+    "Public API rule: interventions/mod.rs should not expose pub mod declarations (except domain)",
     "Cross-domain access: tasks/infrastructure/workflow_strategy_tests.rs imports interventions::domain; cross-domain communication must go through event bus/shared contracts",
     "Cross-domain access: tasks/infrastructure/workflow_validation.rs imports interventions::domain; cross-domain communication must go through event bus/shared contracts",
     "Cross-domain access: tasks/infrastructure/workflow_validation.rs imports interventions::infrastructure; cross-domain communication must go through event bus/shared contracts",

@@ -215,14 +215,20 @@ mod tests {
     fn test_shell_open_url_rejects_http() {
         let result = validate_open_url("http://example.com");
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), "Invalid URL format - only HTTPS URLs are allowed");
+        assert_eq!(
+            result.unwrap_err(),
+            "Invalid URL format - only HTTPS URLs are allowed"
+        );
     }
 
     #[test]
     fn test_shell_open_url_rejects_credentials_in_authority() {
         let result = validate_open_url("https://user:pass@example.com");
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), "URLs with embedded credentials are not allowed");
+        assert_eq!(
+            result.unwrap_err(),
+            "URLs with embedded credentials are not allowed"
+        );
     }
 
     #[test]
@@ -242,13 +248,19 @@ mod tests {
     fn test_shell_open_url_rejects_javascript_protocol() {
         let result = validate_open_url("javascript:alert(1)");
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), "Invalid URL format - only HTTPS URLs are allowed");
+        assert_eq!(
+            result.unwrap_err(),
+            "Invalid URL format - only HTTPS URLs are allowed"
+        );
     }
 
     #[test]
     fn test_shell_open_url_rejects_file_protocol() {
         let result = validate_open_url("file:///etc/passwd");
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), "Invalid URL format - only HTTPS URLs are allowed");
+        assert_eq!(
+            result.unwrap_err(),
+            "Invalid URL format - only HTTPS URLs are allowed"
+        );
     }
 }

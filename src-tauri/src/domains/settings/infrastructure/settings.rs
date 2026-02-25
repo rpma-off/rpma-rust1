@@ -976,14 +976,11 @@ impl SettingsService {
             return Err(AppError::NotFound("User account not found".to_string()));
         }
 
-        tx.execute(
-            "DELETE FROM sessions WHERE user_id = ?",
-            params![user_id],
-        )
-        .map_err(|e| {
-            error!("Failed to revoke sessions for {}: {}", user_id, e);
-            AppError::Database("Failed to revoke sessions".to_string())
-        })?;
+        tx.execute("DELETE FROM sessions WHERE user_id = ?", params![user_id])
+            .map_err(|e| {
+                error!("Failed to revoke sessions for {}: {}", user_id, e);
+                AppError::Database("Failed to revoke sessions".to_string())
+            })?;
 
         tx.execute(
             "DELETE FROM user_settings WHERE user_id = ?",

@@ -55,7 +55,9 @@ mod tests {
         repo.insert_session(&session).expect("insert");
 
         let now_ms = Utc::now().timestamp_millis();
-        let found = repo.find_valid_session(&session.token, now_ms).expect("find");
+        let found = repo
+            .find_valid_session(&session.token, now_ms)
+            .expect("find");
         assert!(found.is_some(), "Session should be found");
         let found = found.unwrap();
         assert_eq!(found.user_id, "user-001");
@@ -73,7 +75,9 @@ mod tests {
 
         // Query with a future "now" so the session looks expired
         let future_ms = Utc::now().timestamp_millis() + 9 * 3600 * 1000; // 9h from now
-        let found = repo.find_valid_session(&session.token, future_ms).expect("find");
+        let found = repo
+            .find_valid_session(&session.token, future_ms)
+            .expect("find");
         assert!(found.is_none(), "Session should appear expired");
     }
 
@@ -86,7 +90,8 @@ mod tests {
         repo.insert_session(&session).expect("insert");
 
         let new_time = Utc::now().timestamp_millis() + 1000;
-        repo.update_last_activity(&session.token, new_time).expect("update");
+        repo.update_last_activity(&session.token, new_time)
+            .expect("update");
 
         let conn = db.db().get_connection().expect("conn");
         let stored: i64 = conn
@@ -109,7 +114,9 @@ mod tests {
         repo.delete_session(&session.token).expect("delete");
 
         let now_ms = Utc::now().timestamp_millis();
-        let found = repo.find_valid_session(&session.token, now_ms).expect("find");
+        let found = repo
+            .find_valid_session(&session.token, now_ms)
+            .expect("find");
         assert!(found.is_none(), "Deleted session should not be found");
     }
 
@@ -139,11 +146,15 @@ mod tests {
         repo.insert_session(&keep).expect("insert keep");
         repo.insert_session(&other).expect("insert other");
 
-        let deleted = repo.delete_user_sessions_except("user-006", &keep.token).expect("delete except");
+        let deleted = repo
+            .delete_user_sessions_except("user-006", &keep.token)
+            .expect("delete except");
         assert_eq!(deleted, 1);
 
         let now_ms = Utc::now().timestamp_millis();
-        let found = repo.find_valid_session(&keep.token, now_ms).expect("find kept");
+        let found = repo
+            .find_valid_session(&keep.token, now_ms)
+            .expect("find kept");
         assert!(found.is_some(), "Kept session should still exist");
     }
 
@@ -158,13 +169,13 @@ mod tests {
         let conn = db.db().get_connection().expect("conn");
         conn.execute(
             "UPDATE sessions SET expires_at = ?1 WHERE id = ?2",
-            rusqlite::params![
-                Utc::now().timestamp_millis() - 1000,
-                session.token,
-            ],
-        ).expect("expire");
+            rusqlite::params![Utc::now().timestamp_millis() - 1000, session.token,],
+        )
+        .expect("expire");
 
-        let removed = repo.cleanup_expired(Utc::now().timestamp_millis()).expect("cleanup");
+        let removed = repo
+            .cleanup_expired(Utc::now().timestamp_millis())
+            .expect("cleanup");
         assert_eq!(removed, 1);
     }
 
