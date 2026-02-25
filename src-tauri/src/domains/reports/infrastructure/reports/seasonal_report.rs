@@ -210,7 +210,7 @@ pub async fn generate_seasonal_report(year: i32, db: &Database) -> AppResult<Sea
     let mut completion_predictions = Vec::new();
     for pattern in &seasonal_patterns {
         completion_predictions.push(
-            crate::domains::analytics::infrastructure::prediction::CompletionTimePrediction {
+            crate::shared::services::cross_domain::CompletionTimePrediction {
                 predicted_duration_minutes: pattern.average_duration_minutes,
                 confidence_interval: (
                     pattern.average_duration_minutes * 0.8,

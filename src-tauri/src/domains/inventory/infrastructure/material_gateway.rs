@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::domains::inventory::domain::models::material::{
@@ -34,6 +35,10 @@ impl MaterialGateway {
 
     pub fn get_material(&self, material_id: &str) -> MaterialResult<Option<Material>> {
         self.service.get_material(material_id)
+    }
+
+    pub fn get_materials_by_ids(&self, ids: &[&str]) -> MaterialResult<HashMap<String, Material>> {
+        self.service.get_materials_by_ids(ids)
     }
 
     pub fn update_stock(&self, request: UpdateStockRequest) -> MaterialResult<Material> {

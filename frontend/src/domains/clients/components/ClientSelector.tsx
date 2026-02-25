@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Check, ChevronsUpDown, Plus, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Client } from '@/lib/backend';
-import { useApi } from '@/lib/utils/use-api';
+import { AuthSecureStorage } from '@/lib/secureStorage';
+import { clientIpc } from '../ipc/client.ipc';
 
 interface ClientSelectorProps {
   value?: string;
@@ -30,29 +31,26 @@ export function ClientSelector({
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { apiGet } = useApi();
-
   const selectedClient = clients.find(client => client.id === value);
 
   const fetchClients = useCallback(async (query: string = '') => {
     try {
       setLoading(true);
+      const session = await AuthSecureStorage.getSession();
+      if (!session.token) {
+        throw new Error('Authentication required');
+      }
       if (query.trim()) {
-        const response = await apiGet(`/api/clients/search?q=${encodeURIComponent(query)}&limit=20`);
-        if (response.ok) {
-          const data = await response.json();
-          setClients(data);
-        } else {
-          throw new Error('Failed to search clients');
-        }
+        const data = await clientIpc.search(query, 20, session.token);
+        setClients(data);
       } else {
-        const response = await apiGet('/api/clients?pageSize=100&sortBy=name&sortOrder=asc');
-        if (response.ok) {
-          const data = await response.json();
-          setClients(data.items || []);
-        } else {
-          throw new Error('Failed to fetch clients');
-        }
+        const result = await clientIpc.list({
+          page: 1,
+          limit: 100,
+          sort_by: 'name',
+          sort_order: 'asc',
+        }, session.token);
+        setClients(result.data || []);
       }
     } catch (error) {
       console.error('Error fetching clients:', error);
@@ -60,7 +58,7 @@ export function ClientSelector({
     } finally {
       setLoading(false);
     }
-  }, [apiGet]);
+  }, []);
 
   useEffect(() => {
     fetchClients(searchQuery);

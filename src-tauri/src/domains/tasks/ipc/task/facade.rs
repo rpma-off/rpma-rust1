@@ -7,6 +7,7 @@ use crate::authenticate;
 use crate::check_task_permission;
 use crate::commands::{ApiResponse, AppError, AppState, TaskAction};
 use crate::domains::tasks::domain::models::task::Task;
+use crate::domains::tasks::TasksFacade;
 use crate::shared::services::validation::ValidationService;
 use serde::Deserialize;
 use std::fmt::Debug;
@@ -120,15 +121,6 @@ pub struct BulkImportResponse {
     pub duplicates_skipped: u32,
 }
 
-fn append_note(existing_notes: Option<&str>, entry: &str) -> String {
-    match existing_notes {
-        Some(existing) if !existing.trim().is_empty() => {
-            format!("{}\n{}", existing.trim_end(), entry)
-        }
-        _ => entry.to_string(),
-    }
-}
-
 /// Add a timestamped note to a task.
 #[tracing::instrument(skip(state))]
 #[tauri::command]
@@ -154,13 +146,12 @@ pub async fn add_task_note(
 
     check_task_permissions(&current_user, &task, "edit")?;
 
-    let note_entry = format!(
-        "[{}][note][{}] {}",
-        chrono::Utc::now().to_rfc3339(),
-        current_user.user_id,
-        note
+    let facade = TasksFacade::new(
+        state.task_service.clone(),
+        state.task_import_service.clone(),
     );
-    let updated_notes = append_note(task.notes.as_deref(), &note_entry);
+    let note_entry = facade.format_note_entry(&current_user.user_id, note);
+    let updated_notes = facade.append_note(task.notes.as_deref(), &note_entry);
 
     let update_request = crate::domains::tasks::domain::models::task::UpdateTaskRequest {
         id: Some(task.id.clone()),
@@ -303,15 +294,13 @@ pub async fn report_task_issue(
 
     check_task_permissions(&current_user, &task, "edit")?;
 
-    let issue_entry = format!(
-        "[{}][issue:{}][severity:{}][{}] {}",
-        chrono::Utc::now().to_rfc3339(),
-        issue_type,
-        severity,
-        current_user.user_id,
-        description
+    let facade = TasksFacade::new(
+        state.task_service.clone(),
+        state.task_import_service.clone(),
     );
-    let updated_notes = append_note(task.notes.as_deref(), &issue_entry);
+    let issue_entry =
+        facade.format_issue_entry(&current_user.user_id, issue_type, &severity, description);
+    let updated_notes = facade.append_note(task.notes.as_deref(), &issue_entry);
 
     let update_request = crate::domains::tasks::domain::models::task::UpdateTaskRequest {
         id: Some(task.id.clone()),
@@ -548,7 +537,7 @@ pub async fn delay_task(
 
     // Use CalendarService.schedule_task to update both task and calendar_events atomically
     let calendar_service =
-        crate::domains::calendar::infrastructure::calendar::CalendarService::new(state.db.clone());
+        crate::shared::services::cross_domain::CalendarService::new(state.db.clone());
     calendar_service
         .schedule_task(
             request.task_id.clone(),

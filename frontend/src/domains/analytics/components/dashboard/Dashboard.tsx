@@ -32,9 +32,18 @@ import { StatsGrid } from './StatsGrid';
 import { PerformanceMetrics } from './PerformanceMetrics';
 import { QuickActions } from './QuickActions';
 import { RecentTasksPreview } from './RecentTasksPreview';
-import { WorkflowExecutionDashboard } from '@/domains/workflow';
-import { QualityAssuranceDashboard } from '@/domains/admin';
-import { PhotoDocumentationDashboard } from '@/domains/admin';
+const WorkflowExecutionDashboard = dynamic(
+  () => import('@/domains/workflow').then((mod) => mod.WorkflowExecutionDashboard),
+  { ssr: false, loading: () => <div className="animate-pulse bg-[hsl(var(--rpma-surface))] h-48 rounded-lg" /> }
+);
+const QualityAssuranceDashboard = dynamic(
+  () => import('@/domains/admin').then((mod) => mod.QualityAssuranceDashboard),
+  { ssr: false, loading: () => <div className="animate-pulse bg-[hsl(var(--rpma-surface))] h-48 rounded-lg" /> }
+);
+const PhotoDocumentationDashboard = dynamic(
+  () => import('@/domains/admin').then((mod) => mod.PhotoDocumentationDashboard),
+  { ssr: false, loading: () => <div className="animate-pulse bg-[hsl(var(--rpma-surface))] h-48 rounded-lg" /> }
+);
 
 // Import types
 import { DashboardTask, TaskStatus, Priority, DashboardProps, ViewMode, DashboardStats } from './types';

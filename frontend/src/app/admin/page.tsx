@@ -20,11 +20,26 @@ import {
   Search,
   Download
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/ui/card';
-import { Button } from '@/shared/ui/ui/button';
-import { Badge } from '@/shared/ui/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/ui/tabs';
-import { Input } from '@/shared/ui/ui/input';
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  EmptyState,
+  ErrorState,
+  Input,
+  LoadingState,
+  PageHeader,
+  PageShell,
+  StatCard,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/shared/ui/facade';
 import { useAuth } from '@/domains/auth';
 import { useRouter } from 'next/navigation';
 import { ipcClient, convertTimestamps } from '@/shared/utils';
@@ -33,11 +48,6 @@ import { WorkflowExecutionDashboard } from '@/domains/workflow';
 import { QualityAssuranceDashboard } from '@/domains/admin';
 import { PhotoDocumentationDashboard } from '@/domains/admin';
 import { SecurityDashboard } from '@/domains/admin';
-import { PageShell } from '@/shared/ui/layout/PageShell';
-import { PageHeader, StatCard } from '@/shared/ui/ui/page-header';
-import { ErrorState } from '@/shared/ui/layout/ErrorState';
-import { EmptyState } from '@/shared/ui/layout/EmptyState';
-import { LoadingState } from '@/shared/ui/layout/LoadingState';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 
 interface SystemStats {

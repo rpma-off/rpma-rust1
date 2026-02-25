@@ -4,6 +4,7 @@
 //! profile updates, password changes, data export, and account deletion.
 
 use crate::commands::{ApiResponse, AppError, AppState};
+use crate::domains::settings::application::{apply_profile_updates, build_export_payload};
 use crate::domains::settings::ipc::settings::core::handle_settings_error;
 
 use serde::Deserialize;
@@ -67,31 +68,6 @@ pub struct UploadUserAvatarRequest {
     pub correlation_id: Option<String>,
 }
 
-fn normalize_optional_string(value: Option<String>) -> Option<String> {
-    value.and_then(|v| {
-        let trimmed = v.trim();
-        if trimmed.is_empty() {
-            None
-        } else {
-            Some(trimmed.to_string())
-        }
-    })
-}
-
-fn build_export_payload(
-    user_identity: serde_json::Value,
-    settings: &crate::domains::settings::domain::models::settings::UserSettings,
-    consent: Option<serde_json::Value>,
-) -> serde_json::Value {
-    json!({
-        "exported_at": chrono::Utc::now().to_rfc3339(),
-        "user": user_identity,
-        "profile": settings.profile,
-        "settings": settings,
-        "consent": consent
-    })
-}
-
 /// Get user settings
 #[tracing::instrument(skip_all)]
 #[tauri::command]
@@ -131,42 +107,22 @@ pub async fn update_user_profile(
 
     let user = authenticate!(&request.session_token, &state);
     crate::commands::update_correlation_context_user(&user.id);
-    let mut profile_settings = state
+    let existing_profile = state
         .settings_service
         .get_user_settings(&user.id)
         .map_err(|e| handle_settings_error(e, "Load existing user profile"))?
         .profile;
 
-    if let Some(full_name) = normalize_optional_string(request.full_name) {
-        profile_settings.full_name = full_name;
-    } else if request.first_name.is_some() || request.last_name.is_some() {
-        let mut parts = profile_settings.full_name.split_whitespace();
-        let existing_first = parts.next().unwrap_or("").to_string();
-        let existing_last = parts.collect::<Vec<_>>().join(" ");
-
-        let next_first = normalize_optional_string(request.first_name).unwrap_or(existing_first);
-        let next_last = normalize_optional_string(request.last_name).unwrap_or(existing_last);
-        let combined = format!("{} {}", next_first, next_last).trim().to_string();
-        if !combined.is_empty() {
-            profile_settings.full_name = combined;
-        }
-    }
-
-    if let Some(email) = normalize_optional_string(request.email) {
-        profile_settings.email = email;
-    }
-
-    if request.phone.is_some() {
-        profile_settings.phone = normalize_optional_string(request.phone);
-    }
-
-    if request.avatar_url.is_some() {
-        profile_settings.avatar_url = normalize_optional_string(request.avatar_url);
-    }
-
-    if request.notes.is_some() {
-        profile_settings.notes = normalize_optional_string(request.notes);
-    }
+    let profile_settings = apply_profile_updates(
+        existing_profile,
+        request.full_name,
+        request.first_name,
+        request.last_name,
+        request.email,
+        request.phone,
+        request.avatar_url,
+        request.notes,
+    );
 
     state
         .settings_service

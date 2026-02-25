@@ -301,7 +301,7 @@ async fn handle_client_retrieval(
 /// Handle client retrieval with tasks
 async fn handle_client_with_tasks_retrieval(
     client_service: std::sync::Arc<crate::domains::clients::infrastructure::client::ClientService>,
-    task_service: std::sync::Arc<crate::domains::tasks::infrastructure::task::TaskService>,
+    task_service: std::sync::Arc<crate::shared::services::cross_domain::TaskService>,
     id: &str,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
@@ -459,7 +459,7 @@ async fn handle_client_listing(
 /// Handle client listing with tasks
 async fn handle_client_listing_with_tasks(
     client_service: std::sync::Arc<crate::domains::clients::infrastructure::client::ClientService>,
-    task_service: std::sync::Arc<crate::domains::tasks::infrastructure::task::TaskService>,
+    task_service: std::sync::Arc<crate::shared::services::cross_domain::TaskService>,
     filters: crate::domains::clients::domain::models::client::ClientQuery,
     limit_tasks: Option<i32>,
     correlation_id: Option<String>,
