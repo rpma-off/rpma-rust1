@@ -428,7 +428,7 @@ impl SearchReportService {
         };
 
         let interventions = if include_interventions {
-            let repo = crate::domains::interventions::infrastructure::intervention_repository::InterventionRepository::new(
+            let repo = crate::shared::services::cross_domain::InterventionRepository::new(
                 std::sync::Arc::new(_db.clone()),
             );
 

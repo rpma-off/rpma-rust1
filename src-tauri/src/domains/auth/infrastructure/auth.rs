@@ -1,6 +1,6 @@
 //! Local authentication service for secure session management
 
-use crate::domains::audit::infrastructure::security_monitor::SecurityMonitorService;
+use crate::shared::services::security_monitor::SecurityMonitorService;
 use crate::domains::auth::application::SignupRequest;
 use crate::domains::auth::domain::models::auth::{UserAccount, UserRole, UserSession};
 use crate::domains::auth::infrastructure::rate_limiter::RateLimiterService;

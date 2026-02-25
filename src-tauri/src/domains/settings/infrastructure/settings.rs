@@ -881,7 +881,7 @@ impl SettingsService {
         current_password: &str,
         new_password: &str,
         current_session_token: &str,
-        auth_service: &crate::domains::auth::infrastructure::auth::AuthService,
+        auth_service: &crate::shared::services::cross_domain::AuthService,
     ) -> Result<(), AppError> {
         let conn = self.db.get_connection().map_err(|e| {
             error!("Failed to get database connection: {}", e);
@@ -1251,7 +1251,7 @@ impl SettingsService {
 #[cfg(test)]
 mod tests {
     use super::SettingsService;
-    use crate::domains::auth::infrastructure::auth::AuthService;
+    use crate::shared::services::cross_domain::AuthService;
     use crate::shared::contracts::auth::{UserAccount, UserRole};
     use chrono::Utc;
     use rusqlite::params;

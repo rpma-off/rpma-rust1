@@ -6,7 +6,7 @@
 //! to separate threads, maintaining UI responsiveness.
 
 use crate::commands::{AppError, AppResult};
-use crate::domains::documents::infrastructure::document_storage::DocumentStorageService;
+use crate::shared::services::document_storage::DocumentStorageService;
 use crate::domains::reports::domain::models::reports::CompleteInterventionData;
 use crate::shared::services::worker_pool::{WorkerPool, WorkerTask};
 use chrono::Utc;

@@ -4,7 +4,7 @@
 //! including path validation, disk space checks, and atomic file operations.
 
 use crate::commands::AppResult;
-use crate::domains::documents::infrastructure::document_storage::DocumentStorageService;
+use crate::shared::services::document_storage::DocumentStorageService;
 use crate::domains::reports::domain::models::reports::CompleteInterventionData;
 use crate::domains::reports::infrastructure::pdf_generation::PdfGenerationService;
 use crate::memory_management_helpers;

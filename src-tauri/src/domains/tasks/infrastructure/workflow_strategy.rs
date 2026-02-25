@@ -1,5 +1,5 @@
-//! Workflow strategy types — re-exported from interventions domain.
+//! Workflow strategy types — re-exported from the shared workflow module.
 //!
 //! The canonical implementation lives in
-//! `crate::domains::interventions::infrastructure::workflow_strategy`.
-pub use crate::domains::interventions::infrastructure::workflow_strategy::*;
+//! `crate::shared::workflow::workflow_strategy`.
+pub use crate::shared::workflow::workflow_strategy::*;

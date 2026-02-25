@@ -6,7 +6,7 @@
 
 use crate::commands::{AppError, AppResult, AppState};
 use crate::db::Database;
-use crate::domains::documents::infrastructure::document_storage::DocumentStorageService;
+use crate::shared::services::document_storage::DocumentStorageService;
 use crate::domains::reports::domain::models::reports::*;
 use crate::domains::reports::infrastructure::pdf_generation::PdfGenerationService;
 use crate::domains::reports::infrastructure::reports::validation::{
@@ -47,9 +47,9 @@ impl ExportReportService {
         intervention_id: &str,
         db: &Database,
         intervention_service: Option<
-            &crate::domains::interventions::infrastructure::intervention::InterventionService,
+            &crate::shared::services::cross_domain::InterventionService,
         >,
-        client_service: Option<&crate::domains::clients::infrastructure::client::ClientService>,
+        client_service: Option<&crate::shared::services::cross_domain::ClientService>,
     ) -> AppResult<CompleteInterventionData> {
         debug!(
             "get_intervention_with_details: Starting for intervention_id: {}",
@@ -62,7 +62,7 @@ impl ExportReportService {
             Some(svc) => svc,
             None => {
                 owned_intervention_service =
-                    crate::domains::interventions::infrastructure::intervention::InterventionService::new(std::sync::Arc::new(
+                    crate::shared::services::cross_domain::InterventionService::new(std::sync::Arc::new(
                         db.clone(),
                     ));
                 &owned_intervention_service
@@ -77,7 +77,7 @@ impl ExportReportService {
                 #[allow(deprecated)]
                 {
                     owned_client_service =
-                        crate::domains::clients::infrastructure::client::ClientService::new_with_db(
+                        crate::shared::services::cross_domain::ClientService::new_with_db(
                             std::sync::Arc::new(db.clone()),
                         );
                 }
