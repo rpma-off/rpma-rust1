@@ -126,25 +126,30 @@ where
 
     /// Get a value from the cache
     pub fn get(&self, key: &K) -> Option<V> {
+        let (result, hit) = {
+            let mut cache = self.cache.lock();
+            if let Some(entry) = cache.get_mut(key) {
+                if entry.is_expired() {
+                    cache.pop(key);
+                    (None, false)
+                } else {
+                    entry.access();
+                    (Some(entry.value().clone()), true)
+                }
+            } else {
+                (None, false)
+            }
+        };
+
         let mut stats = self.stats.lock();
         stats.gets += 1;
-
-        let mut cache = self.cache.lock();
-        if let Some(entry) = cache.get_mut(key) {
-            if entry.is_expired() {
-                // Remove expired entry
-                cache.pop(key);
-                stats.misses += 1;
-                None
-            } else {
-                entry.access();
-                stats.hits += 1;
-                Some(entry.value().clone())
-            }
+        if hit {
+            stats.hits += 1;
         } else {
             stats.misses += 1;
-            None
         }
+
+        result
     }
 
     /// Insert a value into the cache
@@ -154,13 +159,15 @@ where
 
     /// Insert a value with custom TTL
     pub fn insert_with_ttl(&self, key: K, value: V, ttl: Duration) {
+        let entry = CacheEntry::new(value, ttl);
+        let evicted = {
+            let mut cache = self.cache.lock();
+            cache.put(key, entry).is_some()
+        };
+
         let mut stats = self.stats.lock();
         stats.sets += 1;
-
-        let entry = CacheEntry::new(value, ttl);
-        let mut cache = self.cache.lock();
-
-        if let Some(_) = cache.put(key, entry) {
+        if evicted {
             stats.evictions += 1;
         }
     }

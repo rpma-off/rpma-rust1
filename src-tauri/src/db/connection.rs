@@ -6,7 +6,7 @@
 use r2d2::{Pool, PooledConnection};
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{Connection, OpenFlags};
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use tracing::{debug, warn};
@@ -287,23 +287,23 @@ pub struct DynamicPoolManager {
 
 #[derive(Debug)]
 struct LoadMonitor {
-    connection_wait_times: std::sync::Mutex<Vec<std::time::Duration>>,
+    connection_wait_times: std::sync::Mutex<VecDeque<std::time::Duration>>,
     max_samples: usize,
 }
 
 impl LoadMonitor {
     fn new(max_samples: usize) -> Self {
         Self {
-            connection_wait_times: std::sync::Mutex::new(Vec::new()),
+            connection_wait_times: std::sync::Mutex::new(VecDeque::new()),
             max_samples,
         }
     }
 
     fn record_wait_time(&self, duration: std::time::Duration) {
         let mut times = self.connection_wait_times.lock().unwrap();
-        times.push(duration);
+        times.push_back(duration);
         if times.len() > self.max_samples {
-            times.remove(0); // Remove oldest sample
+            times.pop_front();
         }
     }
 
