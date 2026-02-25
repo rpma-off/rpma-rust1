@@ -221,7 +221,7 @@ pub async fn intervention_advance_step(
         .map(|response| ApiResponse::success(response.step).with_correlation_id(Some(correlation_id.clone())))
         .map_err(|e| {
             error!(error = %e, intervention_id = %intervention_id, step_id = %step_id, "Failed to advance intervention step");
-            AppError::Database("Failed to advance intervention step".to_string())
+            AppError::from(e)
         })
 }
 
@@ -317,7 +317,7 @@ pub async fn intervention_progress(
                 .get_progress(&intervention_id)
                 .map_err(|e| {
                     error!(error = %e, "Failed to get intervention progress");
-                    AppError::Database("Failed to get intervention progress".to_string())
+                    AppError::from(e)
                 })?;
 
             // Get steps for the response
@@ -326,7 +326,7 @@ pub async fn intervention_progress(
                 .get_intervention_steps(&intervention_id)
                 .map_err(|e| {
                     error!(error = %e, "Failed to get intervention steps");
-                    AppError::Database("Failed to get intervention steps".to_string())
+                    AppError::from(e)
                 })?;
 
             Ok(
@@ -384,7 +384,7 @@ pub async fn intervention_progress(
                 .await
                 .map_err(|e| {
                     error!(error = %e, "Failed to advance step");
-                    AppError::Database("Failed to advance step".to_string())
+                    AppError::from(e)
                 })?;
 
             Ok(
@@ -448,7 +448,7 @@ pub async fn intervention_progress(
                 .await
                 .map_err(|e| {
                     error!(error = %e, "Failed to save progress");
-                    AppError::Database("Failed to save progress".to_string())
+                    AppError::from(e)
                 })?;
 
             Ok(

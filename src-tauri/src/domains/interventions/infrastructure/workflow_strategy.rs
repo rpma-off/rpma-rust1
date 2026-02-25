@@ -181,8 +181,8 @@ impl WorkflowStrategy for StandardPPFStrategy {
             WorkflowStepConfig {
                 name: "Inspection".to_string(),
                 step_type: StepType::Inspection,
-                requires_photos: true,
-                min_photos_required: 4,
+                requires_photos: false,
+                min_photos_required: 0,
                 max_photos_allowed: 10,
                 is_mandatory: true,
                 estimated_duration_seconds: Some(900), // 15 minutes
@@ -196,8 +196,8 @@ impl WorkflowStrategy for StandardPPFStrategy {
             WorkflowStepConfig {
                 name: "Préparation".to_string(),
                 step_type: StepType::Preparation,
-                requires_photos: true,
-                min_photos_required: 2,
+                requires_photos: false,
+                min_photos_required: 0,
                 max_photos_allowed: 8,
                 is_mandatory: true,
                 estimated_duration_seconds: Some(1800), // 30 minutes
@@ -211,8 +211,8 @@ impl WorkflowStrategy for StandardPPFStrategy {
             WorkflowStepConfig {
                 name: "Installation".to_string(),
                 step_type: StepType::Installation,
-                requires_photos: true,
-                min_photos_required: 6,
+                requires_photos: false,
+                min_photos_required: 0,
                 max_photos_allowed: 15,
                 is_mandatory: true,
                 estimated_duration_seconds: Some(3600), // 60 minutes
@@ -227,8 +227,8 @@ impl WorkflowStrategy for StandardPPFStrategy {
                 name: "Finalisation".to_string(),
 
                 step_type: StepType::Finalization,
-                requires_photos: true,
-                min_photos_required: 4,
+                requires_photos: false,
+                min_photos_required: 0,
                 max_photos_allowed: 10,
                 is_mandatory: true,
                 estimated_duration_seconds: Some(900), // 15 minutes
@@ -308,8 +308,8 @@ impl WorkflowStrategy for ExpressPPFStrategy {
             WorkflowStepConfig {
                 name: "Inspection".to_string(),
                 step_type: StepType::Inspection,
-                requires_photos: true,
-                min_photos_required: 2,
+                requires_photos: false,
+                min_photos_required: 0,
                 max_photos_allowed: 6,
                 is_mandatory: true,
                 estimated_duration_seconds: Some(300), // 5 minutes
@@ -322,8 +322,8 @@ impl WorkflowStrategy for ExpressPPFStrategy {
             WorkflowStepConfig {
                 name: "Installation".to_string(),
                 step_type: StepType::Installation,
-                requires_photos: true,
-                min_photos_required: 4,
+                requires_photos: false,
+                min_photos_required: 0,
                 max_photos_allowed: 10,
                 is_mandatory: true,
                 estimated_duration_seconds: Some(1800), // 30 minutes
@@ -336,8 +336,8 @@ impl WorkflowStrategy for ExpressPPFStrategy {
             WorkflowStepConfig {
                 name: "Finalisation".to_string(),
                 step_type: StepType::Finalization,
-                requires_photos: true,
-                min_photos_required: 2,
+                requires_photos: false,
+                min_photos_required: 0,
                 max_photos_allowed: 6,
                 is_mandatory: true,
                 estimated_duration_seconds: Some(300), // 5 minutes
