@@ -155,7 +155,9 @@ pub async fn check_task_assignment(
     };
 
     let can_assign = matches!(status, AssignmentStatus::Available);
-    let assigned_user_label = current_assignee.cloned().unwrap_or_else(|| "unknown".to_string());
+    let assigned_user_label = current_assignee
+        .cloned()
+        .unwrap_or_else(|| "unknown".to_string());
 
     // Build validation result
     let _validation_result = ValidationResult {

@@ -150,7 +150,7 @@ impl InterventionPdfReport {
 
         doc.push(
             elements::Paragraph::new(&format!(
-                "GÃƒÂ©nÃƒÂ©rÃƒÂ© le: {}",
+                "Généré le: {}",
                 Utc::now().format("%d/%m/%Y %H:%M")
             ))
             .aligned(Alignment::Center),
@@ -162,7 +162,7 @@ impl InterventionPdfReport {
     /// Add intervention summary section
     fn add_intervention_summary(&self, doc: &mut Document) {
         doc.push(
-            elements::Paragraph::new("RÃƒâ€°SUMÃƒâ€° DE L'INTERVENTION")
+            elements::Paragraph::new("RÉSUMÉ DE L'INTERVENTION")
                 .styled(style::Style::new().bold().with_font_size(16)),
         );
 
@@ -170,11 +170,11 @@ impl InterventionPdfReport {
 
         // Status with emoji
         let status_text = match self.intervention.status {
-            InterventionStatus::Completed => "Ã¢Å“â€¦ TerminÃƒÂ©e",
-            InterventionStatus::InProgress => "Ã°Å¸â€â€ž En cours",
-            InterventionStatus::Pending => "Ã¢ÂÂ³ En attente",
-            InterventionStatus::Paused => "Ã¢ÂÂ¸Ã¯Â¸Â En pause",
-            InterventionStatus::Cancelled => "Ã¢ÂÅ’ AnnulÃƒÂ©e",
+            InterventionStatus::Completed => "✅ Terminée",
+            InterventionStatus::InProgress => "[..] En cours",
+            InterventionStatus::Pending => "[..] En attente",
+            InterventionStatus::Paused => "[||] En pause",
+            InterventionStatus::Cancelled => "[X] Annulee",
         };
 
         doc.push(elements::Paragraph::new(&format!(
@@ -188,7 +188,7 @@ impl InterventionPdfReport {
             .technician_name
             .as_ref()
             .map(|name| name.as_str())
-            .unwrap_or("Non assignÃƒÂ©");
+            .unwrap_or("Non assigné");
         doc.push(elements::Paragraph::new(&format!(
             "Technicien: {}",
             technician_text
@@ -197,13 +197,13 @@ impl InterventionPdfReport {
         // Duration information
         if let Some(actual) = self.intervention.actual_duration {
             doc.push(elements::Paragraph::new(&format!(
-                "DurÃƒÂ©e rÃƒÂ©elle: {} minutes",
+                "Durée réelle: {} minutes",
                 actual
             )));
         }
         if let Some(estimated) = self.intervention.estimated_duration {
             doc.push(elements::Paragraph::new(&format!(
-                "DurÃƒÂ©e estimÃƒÂ©e: {} minutes",
+                "Durée estimée: {} minutes",
                 estimated
             )));
         }
@@ -212,7 +212,7 @@ impl InterventionPdfReport {
         if let Some(score) = self.intervention.quality_score {
             let stars = Self::score_to_stars(score);
             doc.push(elements::Paragraph::new(&format!(
-                "Score qualitÃƒÂ©: {} ({}/100)",
+                "Score qualité: {} ({}/100)",
                 stars, score
             )));
         }
@@ -243,10 +243,7 @@ impl InterventionPdfReport {
             }
 
             if let Some(phone) = &client.phone {
-                doc.push(elements::Paragraph::new(&format!(
-                    "TÃƒÂ©lÃƒÂ©phone: {}",
-                    phone
-                )));
+                doc.push(elements::Paragraph::new(&format!("Téléphone: {}", phone)));
             }
 
             doc.push(elements::Break::new(1.0));
@@ -256,7 +253,7 @@ impl InterventionPdfReport {
     /// Add vehicle information section
     fn add_vehicle_section(&self, doc: &mut Document) {
         doc.push(
-            elements::Paragraph::new("INFORMATIONS VÃƒâ€°HICULE")
+            elements::Paragraph::new("INFORMATIONS VÉHICULE")
                 .styled(style::Style::new().bold().with_font_size(16)),
         );
 
@@ -270,7 +267,7 @@ impl InterventionPdfReport {
         if let Some(make) = &self.intervention.vehicle_make {
             if let Some(model) = &self.intervention.vehicle_model {
                 doc.push(elements::Paragraph::new(&format!(
-                    "ModÃƒÂ¨le: {} {}",
+                    "Modèle: {} {}",
                     make, model
                 )));
             } else {
@@ -279,7 +276,7 @@ impl InterventionPdfReport {
         }
 
         if let Some(year) = self.intervention.vehicle_year {
-            doc.push(elements::Paragraph::new(&format!("AnnÃƒÂ©e: {}", year)));
+            doc.push(elements::Paragraph::new(&format!("Année: {}", year)));
         }
 
         if let Some(vin) = &self.intervention.vehicle_vin {
@@ -304,15 +301,15 @@ impl InterventionPdfReport {
 
         if let Some(weather) = &self.intervention.weather_condition {
             let weather_text = match weather {
-                WeatherCondition::Sunny => "Ã¢Ëœâ‚¬Ã¯Â¸Â EnsoleillÃƒÂ©",
-                WeatherCondition::Cloudy => "Ã¢ËœÂÃ¯Â¸Â Nuageux",
-                WeatherCondition::Rainy => "Ã°Å¸Å’Â§Ã¯Â¸Â Pluvieux",
-                WeatherCondition::Windy => "Ã°Å¸â€™Â¨ Venteux",
-                WeatherCondition::Foggy => "Ã°Å¸Å’Â«Ã¯Â¸Â Brumeux",
-                WeatherCondition::Other => "Ã¢Ââ€œ Autre",
+                WeatherCondition::Sunny => "Ensoleille",
+                WeatherCondition::Cloudy => "Nuageux",
+                WeatherCondition::Rainy => "Pluvieux",
+                WeatherCondition::Windy => "💨 Venteux",
+                WeatherCondition::Foggy => "Brumeux",
+                WeatherCondition::Other => "Autre",
             };
             doc.push(elements::Paragraph::new(&format!(
-                "MÃƒÂ©tÃƒÂ©o: {}",
+                "Météo: {}",
                 weather_text
             )));
         }
@@ -324,16 +321,16 @@ impl InterventionPdfReport {
                 LightingCondition::Mixed => "Mixte",
             };
             doc.push(elements::Paragraph::new(&format!(
-                "Ãƒâ€°clairage: {}",
+                "Éclairage: {}",
                 lighting_text
             )));
         }
 
         if let Some(location) = &self.intervention.work_location {
             let location_text = match location {
-                WorkLocation::Indoor => "Ã°Å¸ÂÂ  IntÃƒÂ©rieur",
-                WorkLocation::Outdoor => "Ã°Å¸Å’Â¤Ã¯Â¸Â ExtÃƒÂ©rieur",
-                WorkLocation::SemiCovered => "Ã¢â€ºÂº Semi-couvert",
+                WorkLocation::Indoor => "Interieur",
+                WorkLocation::Outdoor => "Exterieur",
+                WorkLocation::SemiCovered => "⛺ Semi-couvert",
             };
             doc.push(elements::Paragraph::new(&format!(
                 "Lieu: {}",
@@ -343,14 +340,14 @@ impl InterventionPdfReport {
 
         if let Some(temp) = self.intervention.temperature_celsius {
             doc.push(elements::Paragraph::new(&format!(
-                "TempÃƒÂ©rature: {:.1}Ã‚Â°C",
+                "Température: {:.1}°C",
                 temp
             )));
         }
 
         if let Some(humidity) = self.intervention.humidity_percentage {
             doc.push(elements::Paragraph::new(&format!(
-                "HumiditÃƒÂ©: {:.1}%",
+                "Humidité: {:.1}%",
                 humidity
             )));
         }
@@ -361,7 +358,7 @@ impl InterventionPdfReport {
     /// Add materials section
     fn add_materials_section(&self, doc: &mut Document) {
         doc.push(
-            elements::Paragraph::new("MATÃƒâ€°RIAUX UTILISÃƒâ€°S")
+            elements::Paragraph::new("MATÉRIAUX UTILISÉS")
                 .styled(style::Style::new().bold().with_font_size(16)),
         );
 
@@ -372,7 +369,7 @@ impl InterventionPdfReport {
                 FilmType::Standard => "Standard",
                 FilmType::Premium => "Premium",
                 FilmType::Matte => "Mat",
-                FilmType::Colored => "ColorÃƒÂ©",
+                FilmType::Colored => "Coloré",
             };
             doc.push(elements::Paragraph::new(&format!(
                 "Type de film: {}",
@@ -385,13 +382,13 @@ impl InterventionPdfReport {
         }
 
         if let Some(model) = &self.intervention.film_model {
-            doc.push(elements::Paragraph::new(&format!("ModÃƒÂ¨le: {}", model)));
+            doc.push(elements::Paragraph::new(&format!("Modèle: {}", model)));
         }
 
         if let Some(zones) = &self.intervention.ppf_zones_config {
             if !zones.is_empty() {
                 doc.push(elements::Paragraph::new(&format!(
-                    "Zones traitÃƒÂ©es: {}",
+                    "Zones traitées: {}",
                     zones.join(", ")
                 )));
             }
@@ -400,7 +397,7 @@ impl InterventionPdfReport {
         // Materials consumption table would go here
         // For now, just show total count
         doc.push(elements::Paragraph::new(&format!(
-            "Consommations enregistrÃƒÂ©es: {}",
+            "Consommations enregistrées: {}",
             self.materials.len()
         )));
 
@@ -410,7 +407,7 @@ impl InterventionPdfReport {
     /// Add workflow steps section (ALL steps, no truncation)
     fn add_workflow_steps(&self, doc: &mut Document) {
         doc.push(
-            elements::Paragraph::new("Ãƒâ€°TAPES DU WORKFLOW")
+            elements::Paragraph::new("ÉTAPES DU WORKFLOW")
                 .styled(style::Style::new().bold().with_font_size(16)),
         );
 
@@ -418,17 +415,17 @@ impl InterventionPdfReport {
 
         for step in &self.steps {
             let status_icon = match step.step_status {
-                StepStatus::Completed => "Ã¢Å“â€¦",
-                StepStatus::InProgress => "Ã°Å¸â€â€ž",
-                StepStatus::Pending => "Ã¢ÂÂ³",
-                StepStatus::Paused => "Ã¢ÂÂ¸Ã¯Â¸Â",
-                StepStatus::Failed => "Ã¢ÂÅ’",
-                StepStatus::Skipped => "Ã¢ÂÂ­Ã¯Â¸Â",
-                StepStatus::Rework => "Ã°Å¸â€â€ž",
+                StepStatus::Completed => "✅",
+                StepStatus::InProgress => "[..]",
+                StepStatus::Pending => "[..]",
+                StepStatus::Paused => "[||]",
+                StepStatus::Failed => "[X]",
+                StepStatus::Skipped => "[>>]",
+                StepStatus::Rework => "[..]",
             };
 
             let step_header = format!(
-                "Ãƒâ€°tape {}: {} - {} {}",
+                "Étape {}: {} - {} {}",
                 step.step_number,
                 step.step_name,
                 status_icon,
@@ -440,7 +437,7 @@ impl InterventionPdfReport {
             // Duration
             if let Some(duration) = step.duration_seconds {
                 doc.push(elements::Paragraph::new(&format!(
-                    "DurÃƒÂ©e: {} secondes",
+                    "Durée: {} secondes",
                     duration
                 )));
             }
@@ -471,7 +468,7 @@ impl InterventionPdfReport {
     /// Add quality control section
     fn add_quality_control(&self, doc: &mut Document) {
         doc.push(
-            elements::Paragraph::new("CONTRÃƒâ€LE QUALITÃƒâ€°")
+            elements::Paragraph::new("CONTROLE QUALITE")
                 .styled(style::Style::new().bold().with_font_size(16)),
         );
 
@@ -480,7 +477,7 @@ impl InterventionPdfReport {
         if let Some(score) = self.intervention.quality_score {
             let stars = Self::score_to_stars(score);
             doc.push(elements::Paragraph::new(&format!(
-                "Score qualitÃƒÂ© global: {} ({}/100)",
+                "Score qualité global: {} ({}/100)",
                 stars, score
             )));
         }
@@ -529,7 +526,7 @@ impl InterventionPdfReport {
                 .photo_category
                 .as_ref()
                 .map(|c| format!("{:?}", c))
-                .unwrap_or_else(|| "Non catÃƒÂ©gorisÃƒÂ©".to_string());
+                .unwrap_or_else(|| "Non catégorisé".to_string());
             *category_counts.entry(category).or_insert(0) += 1;
         }
 
@@ -548,7 +545,7 @@ impl InterventionPdfReport {
             .count();
         if with_gps > 0 {
             doc.push(elements::Paragraph::new(&format!(
-                "Photos avec gÃƒÂ©olocalisation: {}",
+                "Photos avec géolocalisation: {}",
                 with_gps
             )));
         }
@@ -571,9 +568,7 @@ impl InterventionPdfReport {
         }
 
         if self.intervention.customer_signature.is_some() {
-            doc.push(elements::Paragraph::new(
-                "Ã¢Å“â€¦ SignÃƒÂ©e ÃƒÂ©lectroniquement",
-            ));
+            doc.push(elements::Paragraph::new("✅ Signée électroniquement"));
         }
 
         doc.push(elements::Break::new(1.0));
@@ -585,7 +580,7 @@ impl InterventionPdfReport {
 
         doc.push(
             elements::Paragraph::new(&format!(
-                "Rapport gÃƒÂ©nÃƒÂ©rÃƒÂ© le: {}",
+                "Rapport généré le: {}",
                 Utc::now().format("%d/%m/%Y %H:%M:%S")
             ))
             .aligned(Alignment::Center),
@@ -600,18 +595,18 @@ impl InterventionPdfReport {
     /// Helper function to convert score to star rating
     fn score_to_stars(score: i32) -> String {
         let stars = (score as f32 / 20.0).round() as i32; // Convert to 0-5 scale
-        "Ã¢Â­Â".repeat(stars as usize)
+        "*".repeat(stars as usize)
     }
 
     /// Helper function to convert step status to text
     fn step_status_to_text(status: &StepStatus) -> &'static str {
         match status {
-            StepStatus::Completed => "TerminÃƒÂ©",
+            StepStatus::Completed => "Terminé",
             StepStatus::InProgress => "En cours",
             StepStatus::Pending => "En attente",
             StepStatus::Paused => "En pause",
-            StepStatus::Failed => "Ãƒâ€°chec",
-            StepStatus::Skipped => "IgnorÃƒÂ©",
+            StepStatus::Failed => "Échec",
+            StepStatus::Skipped => "Ignoré",
             StepStatus::Rework => "Retravail",
         }
     }

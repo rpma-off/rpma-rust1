@@ -2698,11 +2698,8 @@ mod tests {
         // so we delete it to force migrate(39) to execute.
         {
             let conn = db.get_connection().expect("Failed to get connection");
-            conn.execute(
-                "DELETE FROM schema_version WHERE version >= 39",
-                [],
-            )
-            .expect("Failed to remove schema_version 39+");
+            conn.execute("DELETE FROM schema_version WHERE version >= 39", [])
+                .expect("Failed to remove schema_version 39+");
         }
 
         // Applying migration 039 must not panic or return an error

@@ -84,9 +84,7 @@ use rpma_ppf_intervention::domains::tasks::domain::models::task::{
     TaskListResponse, TaskPhoto, TaskPriority, TaskQuery, TaskStatistics, TaskStatus,
     TaskWithDetails, UpdateTaskRequest,
 };
-use rpma_ppf_intervention::shared::contracts::auth::{
-    UserAccount, UserRole, UserSession,
-};
+use rpma_ppf_intervention::shared::contracts::auth::{UserAccount, UserRole, UserSession};
 use rpma_ppf_intervention::shared::contracts::common::{
     FilmType, GpsLocation, LightingCondition, TimestampString, WeatherCondition, WorkLocation,
 };

@@ -120,9 +120,15 @@ fn server_errors_map_to_500() {
 
 #[test]
 fn task_conflict_errors_map_to_409() {
-    assert_eq!(AppError::TaskInvalidTransition("x".into()).http_status(), 409);
+    assert_eq!(
+        AppError::TaskInvalidTransition("x".into()).http_status(),
+        409
+    );
     assert_eq!(AppError::TaskDuplicateNumber("x".into()).http_status(), 409);
-    assert_eq!(AppError::TaskAssignmentConflict("x".into()).http_status(), 409);
+    assert_eq!(
+        AppError::TaskAssignmentConflict("x".into()).http_status(),
+        409
+    );
 }
 
 // ── Client vs server error classification ───────────────────────────
@@ -141,7 +147,11 @@ fn client_errors_are_classified_correctly() {
 
     for err in client_errors {
         assert!(err.is_client_error(), "{:?} should be a client error", err);
-        assert!(!err.is_server_error(), "{:?} should not be a server error", err);
+        assert!(
+            !err.is_server_error(),
+            "{:?} should not be a server error",
+            err
+        );
     }
 }
 
@@ -159,7 +169,11 @@ fn server_errors_are_classified_correctly() {
 
     for err in server_errors {
         assert!(err.is_server_error(), "{:?} should be a server error", err);
-        assert!(!err.is_client_error(), "{:?} should not be a client error", err);
+        assert!(
+            !err.is_client_error(),
+            "{:?} should not be a client error",
+            err
+        );
     }
 }
 
@@ -189,8 +203,16 @@ fn internal_error_sanitization_hides_stack_trace() {
 
     match sanitized {
         AppError::Internal(msg) => {
-            assert!(!msg.contains("panic"), "Internal error leaked details: {}", msg);
-            assert!(!msg.contains("auth.rs"), "Internal error leaked file path: {}", msg);
+            assert!(
+                !msg.contains("panic"),
+                "Internal error leaked details: {}",
+                msg
+            );
+            assert!(
+                !msg.contains("auth.rs"),
+                "Internal error leaked file path: {}",
+                msg
+            );
         }
         _ => panic!("Expected Internal variant"),
     }
@@ -203,7 +225,11 @@ fn io_error_sanitization_hides_file_path() {
 
     match sanitized {
         AppError::Io(msg) => {
-            assert!(!msg.contains("/home"), "I/O error leaked file path: {}", msg);
+            assert!(
+                !msg.contains("/home"),
+                "I/O error leaked file path: {}",
+                msg
+            );
         }
         _ => panic!("Expected Io variant"),
     }
