@@ -170,6 +170,7 @@ pub async fn auth_validate_session(
         AppError::Authentication(format!("Session validation failed: {}", e))
     })?;
 
+    crate::commands::update_correlation_context_user(&session.user_id);
     debug!("Session validation successful");
     Ok(ApiResponse::success(session).with_correlation_id(Some(correlation_id)))
 }
