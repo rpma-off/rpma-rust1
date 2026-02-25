@@ -200,8 +200,7 @@ fn main() {
         .push_str(&CalendarTask::export_to_string().expect("Failed to export CalendarTask type"));
     type_definitions.push_str("\n");
     type_definitions.push_str(
-        &CalendarTaskStatus::export_to_string()
-            .expect("Failed to export CalendarTaskStatus type"),
+        &CalendarTaskStatus::export_to_string().expect("Failed to export CalendarTaskStatus type"),
     );
     type_definitions.push_str("\n");
     type_definitions.push_str(
