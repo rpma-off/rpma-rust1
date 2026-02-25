@@ -30,9 +30,12 @@ function stripRustComments(contents) {
 function loadAllowlist() {
   try {
     const parsed = JSON.parse(fs.readFileSync(allowlistPath, 'utf8'));
-    return new Set(parsed.allowed || []);
+    return {
+      imports: new Set(parsed.allowed || []),
+      structure: new Set(parsed.allowed_structure || []),
+    };
   } catch {
-    return new Set();
+    return { imports: new Set(), structure: new Set() };
   }
 }
 
@@ -57,7 +60,7 @@ function checkCrossDomainInfrastructureImports() {
   return [...new Set(violations)];
 }
 
-function checkDomainFacadeAndVisibility() {
+function checkDomainFacadeAndVisibility(structureAllowlist) {
   const violations = [];
   const domainDirs = fs.readdirSync(domainsRoot, { withFileTypes: true }).filter((e) => e.isDirectory());
 
@@ -73,7 +76,10 @@ function checkDomainFacadeAndVisibility() {
       violations.push(`${dir.name}/mod.rs must re-export exactly one facade with pub(crate) use`);
     }
     if (/^\s*pub\s+mod\s+infrastructure\s*;\s*$/m.test(contents)) {
-      violations.push(`${dir.name}/mod.rs must not expose infrastructure as public module`);
+      const key = `${dir.name}/mod.rs pub mod infrastructure`;
+      if (!structureAllowlist.has(key)) {
+        violations.push(`${dir.name}/mod.rs must not expose infrastructure as public module`);
+      }
     }
   }
 
@@ -88,8 +94,8 @@ function main() {
 
   const allowlist = loadAllowlist();
   const infraViolations = checkCrossDomainInfrastructureImports();
-  const newInfraViolations = infraViolations.filter((v) => !allowlist.has(v));
-  const structureViolations = checkDomainFacadeAndVisibility();
+  const newInfraViolations = infraViolations.filter((v) => !allowlist.imports.has(v));
+  const structureViolations = checkDomainFacadeAndVisibility(allowlist.structure);
 
   if (newInfraViolations.length > 0 || structureViolations.length > 0) {
     console.error('Backend module boundary enforcement failed.');
