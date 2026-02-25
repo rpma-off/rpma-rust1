@@ -117,7 +117,7 @@ export const ipcClient = {
       invoke('initialize_notification_service', { config, session_token: sessionToken }),
     send: (request: JsonObject, sessionToken: string) =>
       invoke('send_notification', { request, session_token: sessionToken }),
-    testConfig: (recipient: string, channel: 'email' | 'sms', sessionToken: string) =>
+    testConfig: (recipient: string, channel: 'Email' | 'Sms' | 'Push', sessionToken: string) =>
       invoke('test_notification_config', { recipient, channel, session_token: sessionToken }),
     getStatus: (sessionToken: string) =>
       invoke('get_notification_status', { session_token: sessionToken }),
@@ -352,3 +352,4 @@ export function useIpcClient() {
 export function initMockIpc(): void {
   installMockControls();
 }
+
