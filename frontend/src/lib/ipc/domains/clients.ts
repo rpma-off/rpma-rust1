@@ -19,7 +19,7 @@ export const clientOperations = {
     const validator = ResponseHandlers.discriminatedUnion('Created', validateClient);
     const rawResult = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
       request: {
-        action: { action: 'Create', data },
+        action: { action: 'Create', data: data as JsonValue },
         session_token: sessionToken,
       },
     }, validator);
@@ -44,7 +44,7 @@ export const clientOperations = {
     const validator = ResponseHandlers.discriminatedUnion('Updated', validateClient);
     const rawResult = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
       request: {
-        action: { action: 'Update', id, data },
+        action: { action: 'Update', id, data: data as JsonValue },
         session_token: sessionToken,
       },
     }, validator);
@@ -67,7 +67,7 @@ export const clientOperations = {
     const validator = ResponseHandlers.list((r: JsonValue) => validateClientListResponse(r));
     const rawResult = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
       request: {
-        action: { action: 'List', filters },
+        action: { action: 'List', filters: filters as JsonValue },
         session_token: sessionToken,
       },
     }, validator);
@@ -109,7 +109,7 @@ export const clientOperations = {
       const validator = ResponseHandlers.list((r: JsonValue) => validateClientListResponse(r));
       const rawResult = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
         request: {
-          action: { action: 'List', filters },
+          action: { action: 'List', filters: filters as JsonValue },
           session_token: sessionToken,
         },
       }, validator);

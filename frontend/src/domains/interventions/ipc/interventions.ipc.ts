@@ -34,7 +34,7 @@ export const interventionsIpc = {
     });
 
     if (result === null || typeof result !== 'object') {
-      return result;
+      throw new Error('Invalid response: expected object');
     }
     if ('type' in result) {
       const workflowResponse = result as unknown as { type: string; intervention: Intervention; steps: InterventionStep[] };
@@ -52,7 +52,7 @@ export const interventionsIpc = {
     });
 
     if (result === null || typeof result !== 'object') {
-      return result;
+      throw new Error('Invalid response: expected object');
     }
     if ('type' in result) {
       const workflowResponse = result as unknown as { type: string; intervention: Intervention };
@@ -78,8 +78,8 @@ export const interventionsIpc = {
       }
     }
 
-    console.warn('[IPC] getActiveByTask unexpected structure, returning as-is:', result);
-    return result;
+    console.warn('[IPC] getActiveByTask unexpected structure');
+    return { intervention: null };
   },
 
   getLatestByTask: async (taskId: string, sessionToken: string) => {
@@ -95,8 +95,8 @@ export const interventionsIpc = {
       };
     }
 
-    console.warn('[IPC] getLatestByTask unexpected structure, returning as-is:', result);
-    return result;
+    console.warn('[IPC] getLatestByTask unexpected structure');
+    return { intervention: null };
   },
 
   advanceStep: async (stepData: AdvanceStepRequest, sessionToken: string) => {
@@ -115,7 +115,7 @@ export const interventionsIpc = {
     });
 
     if (result === null || typeof result !== 'object') {
-      return result;
+      throw new Error('Invalid response: expected object');
     }
     if ('type' in result) {
       const progressResponse = result as unknown as {
@@ -138,7 +138,7 @@ export const interventionsIpc = {
     });
 
     if (result === null || typeof result !== 'object') {
-      return result;
+      throw new Error('Invalid response: expected object');
     }
     if ('type' in result) {
       const progressResponse = result as unknown as { type: string; step: InterventionStep };
@@ -156,7 +156,7 @@ export const interventionsIpc = {
     });
 
     if (result === null || typeof result !== 'object') {
-      return result;
+      throw new Error('Invalid response: expected object');
     }
     if ('type' in result) {
       const progressResponse = result as unknown as {
@@ -186,12 +186,12 @@ export const interventionsIpc = {
         current_phase: data.current_phase,
         notes: data.notes,
         temporary_data: data.temporary_data,
-      },
+      } as unknown as JsonObject,
       sessionToken: sessionToken
     });
 
     if (result === null || typeof result !== 'object') {
-      return result;
+      throw new Error('Invalid response: expected object');
     }
     if ('type' in result) {
       const progressResponse = result as unknown as { type: string; step: InterventionStep };
@@ -209,7 +209,7 @@ export const interventionsIpc = {
     });
 
     if (result === null || typeof result !== 'object') {
-      return result;
+      throw new Error('Invalid response: expected object');
     }
     if ('type' in result) {
       const workflowResponse = result as unknown as { type: string; intervention: Intervention };
@@ -227,7 +227,7 @@ export const interventionsIpc = {
     });
 
     if (result === null || typeof result !== 'object') {
-      return result;
+      throw new Error('Invalid response: expected object');
     }
     if ('type' in result) {
       const workflowResponse = result as unknown as {
@@ -260,7 +260,7 @@ export const interventionsIpc = {
     });
 
     if (result === null || typeof result !== 'object') {
-      return result;
+      throw new Error('Invalid response: expected object');
     }
     if ('type' in result) {
       const managementResponse = result as unknown as { type: string; interventions: Intervention[]; total: number };

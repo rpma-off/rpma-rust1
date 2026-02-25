@@ -112,16 +112,9 @@ function buildSession(user: MockUser): UserSession {
     email: user.email,
     role: user.role,
     token,
-    refresh_token: null,
     expires_at: nowIso(),
     last_activity: nowIso(),
     created_at: nowIso(),
-    device_info: null,
-    ip_address: null,
-    user_agent: null,
-    location: null,
-    two_factor_verified: false,
-    session_timeout_minutes: 240
   };
   return session;
 }

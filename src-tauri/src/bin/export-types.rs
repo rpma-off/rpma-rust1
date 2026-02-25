@@ -5,7 +5,8 @@ use ts_rs::TS;
 
 // Import models from canonical domain paths
 use rpma_ppf_intervention::domains::calendar::domain::models::calendar::{
-    CalendarDateRange, CalendarFilter, CalendarTask, ConflictDetection,
+    CalendarDateRange, CalendarFilter, CalendarTask, CalendarTaskPriority, CalendarTaskStatus,
+    ConflictDetection,
 };
 use rpma_ppf_intervention::domains::calendar::domain::models::calendar_event::{
     CalendarEvent, CreateEventInput, EventParticipant, EventStatus, EventType, ParticipantStatus,
@@ -197,6 +198,16 @@ fn main() {
     type_definitions.push_str("\n");
     type_definitions
         .push_str(&CalendarTask::export_to_string().expect("Failed to export CalendarTask type"));
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &CalendarTaskStatus::export_to_string()
+            .expect("Failed to export CalendarTaskStatus type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &CalendarTaskPriority::export_to_string()
+            .expect("Failed to export CalendarTaskPriority type"),
+    );
     type_definitions.push_str("\n");
     type_definitions.push_str(
         &CalendarFilter::export_to_string().expect("Failed to export CalendarFilter type"),
@@ -1156,6 +1167,8 @@ fn main() {
         "UserSession",
         "CalendarEvent",
         "CalendarTask",
+        "CalendarTaskStatus",
+        "CalendarTaskPriority",
         "CalendarFilter",
         "ConflictDetection",
         "CalendarDateRange",
