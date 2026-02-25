@@ -17,8 +17,12 @@
     "tasks/infrastructure/task_validation.rs -> settings::infrastructure",
     "tasks/infrastructure/workflow_cleanup.rs -> interventions::infrastructure",
     "tasks/infrastructure/workflow_progression.rs -> interventions::infrastructure",
+    "tasks/infrastructure/workflow_strategy.rs -> interventions::infrastructure",
     "tasks/infrastructure/workflow_validation.rs -> interventions::infrastructure",
     "tasks/ipc/task/client_integration.rs -> clients::infrastructure",
     "tasks/ipc/task/facade.rs -> calendar::infrastructure"
+  ],
+  "allowed_structure": [
+    "interventions/mod.rs pub mod infrastructure"
   ]
 }

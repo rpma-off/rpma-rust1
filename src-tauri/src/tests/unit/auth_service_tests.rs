@@ -20,7 +20,6 @@ use chrono::Utc;
 use std::sync::Arc;
 use tempfile::TempDir;
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -527,7 +526,10 @@ mod tests {
                     .expect("Failed to get connection");
                 conn.execute(
                     "UPDATE sessions SET expires_at = ?1 WHERE id = ?2",
-                    [Utc::now().timestamp_millis() - 3_600_000, session.token.as_str()],
+                    [
+                        Utc::now().timestamp_millis() - 3_600_000,
+                        session.token.as_str(),
+                    ],
                 )
                 .expect("Failed to expire session");
             }

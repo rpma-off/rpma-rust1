@@ -9,12 +9,12 @@ use ts_rs::TS;
 /// A simplified session stored as a UUID in SQLite (no JWT, no 2FA).
 #[derive(Clone, Serialize, Deserialize, Debug, TS)]
 pub struct UserSession {
-    pub id: String,          // UUID — also the session token
+    pub id: String, // UUID — also the session token
     pub user_id: String,
     pub username: String,
     pub email: String,
     pub role: UserRole,
-    pub token: String,       // alias of id
+    pub token: String,         // alias of id
     pub expires_at: String,    // RFC3339
     pub last_activity: String, // RFC3339
     pub created_at: String,    // RFC3339
@@ -68,8 +68,8 @@ pub struct SessionTimeoutConfig {
 impl Default for SessionTimeoutConfig {
     fn default() -> Self {
         Self {
-            default_timeout_minutes: 480,  // 8 hours
-            max_timeout_minutes: 1440,     // 24 hours
+            default_timeout_minutes: 480, // 8 hours
+            max_timeout_minutes: 1440,    // 24 hours
             enforce_timeout: true,
         }
     }

@@ -39,7 +39,14 @@ impl SessionService {
         role: UserRole,
     ) -> Result<UserSession, AppError> {
         let token = uuid::Uuid::new_v4().to_string();
-        let session = UserSession::new(user_id, username.clone(), email, role, token, SESSION_DURATION_SECONDS);
+        let session = UserSession::new(
+            user_id,
+            username.clone(),
+            email,
+            role,
+            token,
+            SESSION_DURATION_SECONDS,
+        );
         self.repository.insert_session(&session)?;
         info!("Created new session for user: {}", username);
         Ok(session)
@@ -70,21 +77,32 @@ impl SessionService {
 
     /// Get active sessions for a user.
     #[instrument(skip(self), err)]
-    pub async fn get_user_active_sessions(&self, user_id: &str) -> Result<Vec<UserSession>, AppError> {
+    pub async fn get_user_active_sessions(
+        &self,
+        user_id: &str,
+    ) -> Result<Vec<UserSession>, AppError> {
         let now_ms = Utc::now().timestamp_millis();
         self.repository.list_user_sessions(user_id, now_ms)
     }
 
     /// Revoke all sessions for a user except the current session.
     #[instrument(skip(self), err)]
-    pub async fn revoke_all_sessions_except_current(&self, user_id: &str, current_token: &str) -> Result<u32, AppError> {
-        let n = self.repository.delete_user_sessions_except(user_id, current_token)?;
+    pub async fn revoke_all_sessions_except_current(
+        &self,
+        user_id: &str,
+        current_token: &str,
+    ) -> Result<u32, AppError> {
+        let n = self
+            .repository
+            .delete_user_sessions_except(user_id, current_token)?;
         info!("Revoked {} other sessions for user: {}", n, user_id);
         Ok(n as u32)
     }
 
     /// Get session timeout configuration (fixed value — no longer configurable).
-    pub async fn get_session_timeout_config(&self) -> crate::domains::auth::domain::models::auth::SessionTimeoutConfig {
+    pub async fn get_session_timeout_config(
+        &self,
+    ) -> crate::domains::auth::domain::models::auth::SessionTimeoutConfig {
         crate::domains::auth::domain::models::auth::SessionTimeoutConfig::default()
     }
 

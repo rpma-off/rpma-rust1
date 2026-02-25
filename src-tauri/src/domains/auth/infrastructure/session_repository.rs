@@ -46,7 +46,11 @@ impl SessionRepository {
 
     /// Find a session by token that has not yet expired.
     #[instrument(skip(self), err)]
-    pub fn find_valid_session(&self, token: &str, now_ms: i64) -> Result<Option<UserSession>, AppError> {
+    pub fn find_valid_session(
+        &self,
+        token: &str,
+        now_ms: i64,
+    ) -> Result<Option<UserSession>, AppError> {
         let conn = self.db.get_connection()?;
         let row = conn
             .query_row(
@@ -70,19 +74,21 @@ impl SessionRepository {
             )
             .optional()?;
 
-        Ok(row.map(|(id, user_id, username, email, role, created_ms, expires_ms, activity_ms)| {
-            UserSession {
-                token: id.clone(),
-                id,
-                user_id,
-                username,
-                email,
-                role,
-                created_at: ms_to_rfc3339(created_ms),
-                expires_at: ms_to_rfc3339(expires_ms),
-                last_activity: ms_to_rfc3339(activity_ms),
-            }
-        }))
+        Ok(row.map(
+            |(id, user_id, username, email, role, created_ms, expires_ms, activity_ms)| {
+                UserSession {
+                    token: id.clone(),
+                    id,
+                    user_id,
+                    username,
+                    email,
+                    role,
+                    created_at: ms_to_rfc3339(created_ms),
+                    expires_at: ms_to_rfc3339(expires_ms),
+                    last_activity: ms_to_rfc3339(activity_ms),
+                }
+            },
+        ))
     }
 
     /// Update last_activity for a session.
@@ -117,7 +123,11 @@ impl SessionRepository {
 
     /// Delete all sessions for a user except one specific session (keep current).
     #[instrument(skip(self), err)]
-    pub fn delete_user_sessions_except(&self, user_id: &str, keep_token: &str) -> Result<usize, AppError> {
+    pub fn delete_user_sessions_except(
+        &self,
+        user_id: &str,
+        keep_token: &str,
+    ) -> Result<usize, AppError> {
         let conn = self.db.get_connection()?;
         let n = conn.execute(
             "DELETE FROM sessions WHERE user_id = ?1 AND id != ?2",
@@ -142,7 +152,11 @@ impl SessionRepository {
 
     /// List active sessions for a user.
     #[instrument(skip(self), err)]
-    pub fn list_user_sessions(&self, user_id: &str, now_ms: i64) -> Result<Vec<UserSession>, AppError> {
+    pub fn list_user_sessions(
+        &self,
+        user_id: &str,
+        now_ms: i64,
+    ) -> Result<Vec<UserSession>, AppError> {
         let conn = self.db.get_connection()?;
         let mut stmt = conn.prepare(
             "SELECT id, user_id, username, email, role, created_at, expires_at, last_activity

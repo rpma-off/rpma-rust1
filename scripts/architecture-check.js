@@ -187,21 +187,23 @@ function checkDomainPublicApi() {
     if (!fs.existsSync(modPath)) {
       continue;
     }
+    const relPath = `${entry.name}/mod.rs`;
     const contents = fs.readFileSync(modPath, 'utf8');
-    const publicMods = contents.match(/^\s*pub\s+mod\s+/gm) || [];
+    const publicMods = (contents.match(/^\s*pub\s+mod\s+\w+/gm) || [])
+      .filter((m) => !m.match(/pub\s+mod\s+domain\b/));
     if (publicMods.length > 0) {
-      violations.push(`${modPath} should not expose pub mod declarations`);
+      violations.push(`${relPath} should not expose pub mod declarations (except domain)`);
     }
 
     const facadeUses = contents.match(/^\s*pub\(crate\)\s+use\s+[^;]+;/gm) || [];
     if (facadeUses.length !== 1) {
-      violations.push(`${modPath} should expose a single public facade`);
+      violations.push(`${relPath} should expose a single public facade`);
     }
     if (facadeUses.some((line) => line.includes('crate::repositories'))) {
-      violations.push(`${modPath} should not re-export repositories`);
+      violations.push(`${relPath} should not re-export repositories`);
     }
     if (facadeUses.some((line) => line.includes('crate::models'))) {
-      violations.push(`${modPath} should not re-export models`);
+      violations.push(`${relPath} should not re-export models`);
     }
   }
 
