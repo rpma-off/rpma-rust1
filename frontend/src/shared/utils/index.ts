@@ -28,6 +28,8 @@ export {
   ppfZoneLabels,
 } from '@/lib/i18n/status-labels';
 
+export { LOCAL_IMAGE_FALLBACK_SRC, resolveLocalImageUrl, shouldUseUnoptimizedImage } from '@/shared/utils/media';
+
 
 
 

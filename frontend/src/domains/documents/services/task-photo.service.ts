@@ -61,15 +61,18 @@ export class TaskPhotoService {
   }
 
   private static mapPhotoResponse(raw: Record<string, unknown>): TaskPhoto {
+    const rawUrl = raw.url || raw.storage_url;
+    const rawFilePath = raw.file_path || raw.file_name || '';
+
     return {
       id: String(raw.id || ''),
       task_id: String(raw.task_id || raw.intervention_id || ''),
       photo_type: (raw.photo_type as TaskPhoto['photo_type']) || 'during',
       step_id: raw.step_id ? String(raw.step_id) : undefined,
-      file_path: String(raw.file_path || raw.file_name || ''),
+      file_path: String(rawFilePath),
       file_size: typeof raw.file_size === 'number' ? raw.file_size : 0,
       mime_type: String(raw.mime_type || 'image/jpeg'),
-      url: String(raw.file_path || raw.url || ''),
+      url: String(rawUrl || rawFilePath),
       description: raw.description ? String(raw.description) : undefined,
       taken_at: raw.taken_at ? String(raw.taken_at) : undefined,
       created_at: String(raw.created_at || new Date().toISOString()),

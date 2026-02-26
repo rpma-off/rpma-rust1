@@ -9,24 +9,33 @@ interface AppShellProps {
 }
 
 export function AppShell({ children }: AppShellProps) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    try {
-      return localStorage.getItem('rpma-sidebar-open') !== 'false';
-    } catch {
-      return true;
-    }
-  });
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [hasLoadedSidebarPreference, setHasLoadedSidebarPreference] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    try {
+      const storedValue = localStorage.getItem('rpma-sidebar-open');
+      if (storedValue !== null) {
+        setIsSidebarOpen(storedValue !== 'false');
+      }
+    } catch (error) {
+      console.warn('Failed to read sidebar state from localStorage:', error);
+    } finally {
+      setHasLoadedSidebarPreference(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!hasLoadedSidebarPreference) return;
     try {
       localStorage.setItem('rpma-sidebar-open', String(isSidebarOpen));
     } catch (error) {
       console.warn('Failed to save sidebar state to localStorage:', error);
     }
-  }, [isSidebarOpen]);
+  }, [hasLoadedSidebarPreference, isSidebarOpen]);
 
   return (
     <div className="h-screen flex flex-col bg-[hsl(var(--rpma-surface))]">

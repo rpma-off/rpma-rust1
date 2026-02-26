@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/use-toast';
 import Image from 'next/image';
 import { ipcClient } from '@/lib/ipc';
 import { useAuth } from '@/domains/auth';
+import { resolveLocalImageUrl, shouldUseUnoptimizedImage } from '@/shared/utils';
 
 import { Camera, Trash2, Upload, ImageIcon } from 'lucide-react';
 import { Photo } from '@/lib/backend';
@@ -272,6 +273,9 @@ export function TaskPhotos({ taskId, interventionId }: TaskPhotosProps) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredPhotos.map((photo, index) => (
+            (() => {
+              const displaySrc = resolveLocalImageUrl(photo.storage_url || photo.file_path);
+              return (
             <Card
               key={photo.id}
               data-photo-id={photo.id}
@@ -290,10 +294,11 @@ export function TaskPhotos({ taskId, interventionId }: TaskPhotosProps) {
             >
               <div className="relative aspect-square">
                 <Image
-                  src={photo.storage_url || photo.file_path}
+                  src={displaySrc}
                    alt={`${photo.photo_type || 'Unknown'} photo uploaded on ${new Date(photo.created_at as unknown as string).toLocaleDateString()}`}
                   fill
                   className="w-full h-full object-cover"
+                  unoptimized={shouldUseUnoptimizedImage(displaySrc)}
                 />
                 <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all flex items-center justify-center opacity-0 hover:opacity-100">
                   <Button
@@ -327,6 +332,8 @@ export function TaskPhotos({ taskId, interventionId }: TaskPhotosProps) {
 
               </CardHeader>
             </Card>
+              );
+            })()
           ))}
         </div>
       )}

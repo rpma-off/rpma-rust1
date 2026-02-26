@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { X, ChevronLeft, ChevronRight, Download, Trash2 } from 'lucide-react';
 import { Photo } from '@/lib/ipc/types/index';
 import { usePhotos } from '../hooks';
+import { resolveLocalImageUrl } from '@/shared/utils';
 
 interface PhotoViewerProps {
   photos: Photo[];
@@ -62,7 +63,7 @@ export function PhotoViewer({ photos, initialIndex = 0, interventionId, isOpen, 
 
           <div className="relative bg-black aspect-[4/3] flex items-center justify-center">
             <img
-              src={`file://${currentPhoto.file_path}`}
+              src={resolveLocalImageUrl(currentPhoto.file_path)}
               alt={currentPhoto.photo_type || 'Photo'}
               className="max-w-full max-h-full object-contain"
             />
