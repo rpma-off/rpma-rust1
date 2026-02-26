@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, AlertCircle, Home, Calendar, Car, User, Gauge, CheckCircle, Settings } from 'lucide-react';
-import { Badge, Button, TaskErrorBoundary } from '@/shared/ui';
-import { TaskAttachments, TaskOverview, TaskTimeline, ActionsCard, taskGateway, TaskWithDetails } from '@/domains/tasks';
-import { bigintToNumber, handleError, LogDomain, taskStatusLabels } from '@/shared/utils';
+import { ArrowLeft, AlertCircle, Settings } from 'lucide-react';
+import { Button, TaskErrorBoundary } from '@/shared/ui';
+import { TaskAttachments, TaskOverview, TaskTimeline, taskGateway, TaskWithDetails } from '@/domains/tasks';
+import { TaskHeaderBand, TaskStepperBand, StatusBadge } from '@/domains/tasks/components/TaskDetail';
+import EnhancedActionsCard from '@/domains/tasks/components/TaskActions/EnhancedActionsCard';
+import { bigintToNumber, handleError, LogDomain } from '@/shared/utils';
 import { getTaskDisplayTitle } from '@/domains/tasks/utils/display';
 import { toast } from 'sonner';
 import { useAuth } from '@/domains/auth';
@@ -32,6 +34,10 @@ export default function TaskDetailPage() {
   const [isAssignedToCurrentUser, setIsAssignedToCurrentUser] = useState(false);
   const [isTaskAvailable, setIsTaskAvailable] = useState(true);
   const [activeSection, setActiveSection] = useState<string>(QUICK_NAV_SECTIONS[0].id);
+
+  const isInProgress = task?.status === 'in_progress';
+  const isCompleted = task?.status === 'completed';
+  const canStartTask = task?.status === 'pending' || task?.status === 'draft';
 
   useEffect(() => {
     if (!taskId) return;
@@ -179,16 +185,75 @@ export default function TaskDetailPage() {
     return total > 0 ? Math.round((progress / total) * 100) : 0;
   }, [task]);
 
-  const statusMeta = {
-    label: taskStatusLabels[task?.status || ''] || task?.status || t('tasks.statusDraft'),
-    color:
-      task?.status === 'completed'
-        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
-        : task?.status === 'in_progress'
-          ? 'bg-blue-500/20 text-blue-300 border-blue-500/50'
-          : task?.status === 'pending'
-            ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
-            : 'bg-gray-500/20 text-gray-300 border-gray-500/50'
+  const workflowSteps = useMemo(() => {
+    const hasBeforePhotos = task?.photos_before && task.photos_before.length > 0;
+    const hasAfterPhotos = task?.photos_after && task.photos_after.length > 0;
+    const hasChecklist = task?.checklist_items && task.checklist_items.length > 0;
+    const checklistCompleted = task?.checklist_items?.filter(item => item.is_completed).length === task?.checklist_items?.length;
+
+    return [
+      {
+        id: 'photos_before',
+        label: 'Photos Avant',
+        status: (hasBeforePhotos ? 'completed' : 'pending') as 'completed' | 'in_progress' | 'pending',
+        count: task?.photos_before?.length,
+      },
+      {
+        id: 'workflow',
+        label: 'Workflow',
+        status: (isInProgress ? 'in_progress' : isCompleted ? 'completed' : 'pending') as 'completed' | 'in_progress' | 'pending',
+      },
+      {
+        id: 'photos_after',
+        label: 'Photos Après',
+        status: (hasAfterPhotos ? 'completed' : 'pending') as 'completed' | 'in_progress' | 'pending',
+        count: task?.photos_after?.length,
+      },
+      {
+        id: 'checklist',
+        label: 'Validation',
+        status: (checklistCompleted ? 'completed' : hasChecklist ? 'in_progress' : 'pending') as 'completed' | 'in_progress' | 'pending',
+        count: task?.checklist_items?.filter(item => item.is_completed).length,
+      },
+    ];
+   }, [task, isInProgress, isCompleted]);
+
+  const handlePrimaryAction = () => {
+    if (isCompleted) {
+      router.push(`/tasks/${taskId}/completed`);
+    } else if (isInProgress) {
+      router.push(`/tasks/${taskId}/workflow/ppf`);
+    } else if (canStartTask) {
+      // The EnhancedActionsCard will handle starting the workflow internally
+      toast.info('Démarrage de l\'intervention...');
+    }
+  };
+
+  const handleSecondaryAction = (actionId: string) => {
+    switch (actionId) {
+      case 'workflow':
+        if (isInProgress || isCompleted) {
+          router.push(`/tasks/${taskId}/workflow/ppf`);
+        }
+        break;
+      case 'photos':
+        router.push(`/tasks/${taskId}/photos`);
+        break;
+      case 'checklist':
+        router.push(`/tasks/${taskId}/checklist`);
+        break;
+      case 'call':
+        if (task?.customer_phone) {
+          window.location.href = `tel:${task.customer_phone}`;
+        }
+        break;
+      case 'message':
+      case 'edit':
+      case 'delay':
+      case 'report':
+        toast.info(`Action "${actionId}" en cours de développement`);
+        break;
+    }
   };
 
   const showMobileActionBar = !!task && task.status !== 'completed';
@@ -250,92 +315,59 @@ export default function TaskDetailPage() {
   return (
     <TaskErrorBoundary>
       <div className="min-h-screen bg-[hsl(var(--rpma-surface))]">
-        <div className="border-b border-[hsl(var(--rpma-border))] bg-gradient-to-br from-[hsl(var(--rpma-surface))] via-[hsl(var(--rpma-surface))] to-background/80 shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6 space-y-5">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
+        {/* Enhanced Header with TaskHeaderBand */}
+        <TaskHeaderBand
+          stepLabel={isCompleted ? 'TERMINÉ' : isInProgress ? 'EN COURS' : 'PLANIFIÉ'}
+          title={getTaskDisplayTitle(task)}
+          subtitle={
+            `${task?.vehicle_make || ''} ${task?.vehicle_model || ''} ${task?.vehicle_year ? `· ${task.vehicle_year}` : ''} · ${task?.customer_name || 'Client non spécifié'}`
+          }
+          temperature={null}
+          humidity={null}
+          surfaceValue={task?.ppf_zones?.length ? `${task.ppf_zones.length}` : '—'}
+          surfaceLabel="zones PPF"
+          hasEnvironmentalData={false}
+        />
+
+        {/* Workflow Stepper */}
+        <TaskStepperBand
+          steps={workflowSteps}
+          totalProgress={progressValue}
+        />
+
+        {/* Quick Navigation */}
+        <div className="sticky top-0 z-30 bg-[hsl(var(--rpma-surface))]/95 backdrop-blur supports-[backdrop-filter]:bg-[hsl(var(--rpma-surface))]/80 border-b border-[hsl(var(--rpma-border))] shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
                 <Button
                   onClick={() => router.back()}
                   variant="ghost"
                   size="sm"
-                  className="text-border-light hover:text-foreground hover:bg-border/20 border border-border/30 hover:border-primary/50 transition-colors"
+                  className="text-muted-foreground hover:text-foreground hover:bg-accent/5"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  <span className="hidden sm:inline">{t('common.back')}</span>
+                  {t('common.back')}
                 </Button>
-
-                <nav className="hidden sm:flex items-center gap-2 text-xs md:text-sm text-border-light">
-                  <a href="/dashboard" className="flex items-center hover:text-foreground transition-colors p-1 rounded hover:bg-border/20">
-                    <Home className="w-3 h-3 md:w-4 md:h-4 mr-1" />
-                    <span>{t('nav.dashboard')}</span>
-                  </a>
-                  <span className="text-border/50">/</span>
-                  <a href="/tasks" className="hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-border/20">{t('nav.tasks')}</a>
-                  <span className="text-border/50">/</span>
-                  <span className="text-foreground font-medium px-2 py-1 bg-border/20 rounded">{getTaskDisplayTitle(task)}</span>
-                </nav>
+                 <StatusBadge status={(task.status as 'completed' | 'in_progress' | 'pending' | 'scheduled' | 'on_hold' | 'cancelled' | 'failed' | 'overdue' | 'draft') || 'pending'} size="sm" />
               </div>
 
-              <Badge variant="outline" className={`px-3 py-1.5 text-xs sm:text-sm font-semibold ${statusMeta.color}`}>
-                {statusMeta.label}
-              </Badge>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-4 items-start">
-              <div className="space-y-3 min-w-0">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground leading-tight tracking-tight">{getTaskDisplayTitle(task)}</h1>
-                <div className="flex flex-wrap items-center gap-2 text-sm text-border-light">
-                  <span className="inline-flex items-center gap-1.5"><Car className="w-3.5 h-3.5 text-accent" />
-                    {task.vehicle_make && task.vehicle_model ? `${task.vehicle_make} ${task.vehicle_model}` : t('tasks.vehicleNotSpecified')}
-                  </span>
-                  {task.vehicle_plate && (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-md bg-gradient-to-br from-border/20 to-border/30 text-foreground font-semibold border border-border/40 shadow-sm">
-                      {task.vehicle_plate}
-                    </span>
-                  )}
-                  <span className="inline-flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-accent" />{t('tasks.planned')}: {formatDate(task.scheduled_date)}</span>
-                </div>
-                <div className="flex flex-wrap items-center gap-3 text-sm">
-                  <span className="inline-flex items-center gap-1.5 text-border-light"><User className="w-3.5 h-3.5 text-accent" />
-                    {t('tasks.client')}: <span className="text-foreground font-medium">{task.customer_name || t('tasks.customerNotSpecified')}</span>
-                  </span>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))] p-4 space-y-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-shadow duration-200">
-                <div className="flex items-center justify-between text-xs uppercase tracking-wide text-border-light">
-                  <span className="inline-flex items-center gap-1.5"><Gauge className="w-3.5 h-3.5 text-accent" /> {t('tasks.progress')}</span>
-                  <span className="text-foreground font-semibold text-sm tabular-nums">{progressValue}%</span>
-                </div>
-                <div className="h-2.5 rounded-full bg-border/60 overflow-hidden shadow-inner">
-                  <div className="h-full bg-gradient-to-r from-[hsl(var(--rpma-teal))] to-accent transition-all duration-500 ease-out" style={{ width: `${progressValue}%` }} />
-                </div>
-                {progressValue === 100 && (
-                  <p className="text-xs text-accent font-medium flex items-center gap-1">
-                    <CheckCircle className="w-3.5 h-3.5" />
-                    {t('tasks.completed')}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="sticky top-16 z-20 -mx-1 px-1 py-1 rounded-xl bg-[hsl(var(--rpma-surface))]/95 backdrop-blur supports-[backdrop-filter]:bg-[hsl(var(--rpma-surface))]/80 border border-[hsl(var(--rpma-border))] shadow-sm">
               <div className="flex flex-wrap gap-2">
                 {QUICK_NAV_SECTIONS.map(section => (
                   <button
                     key={section.id}
                     type="button"
-                    onClick={() => {
-                      const target = document.getElementById(section.id);
-                      if (!target) return;
-                      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-                      target.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
-                    }}
+                     onClick={() => {
+                       const target = document.getElementById(section.id);
+                       if (!target) return;
+                       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                       target.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' } as ScrollIntoViewOptions);
+                     }}
                     aria-current={activeSection === section.id ? 'page' : undefined}
                     className={`px-3 py-1.5 text-xs sm:text-sm rounded-full border transition-all duration-200 ${
                       activeSection === section.id
                         ? 'border-primary/40 bg-primary/15 text-primary shadow-sm'
-                        : 'border-border/70 bg-background/70 text-border-light hover:text-foreground hover:border-primary/30 hover:bg-background'
+                        : 'border-border/70 bg-background/70 text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-background'
                     }`}
                   >
                     {t(section.label)}
@@ -347,58 +379,76 @@ export default function TaskDetailPage() {
         </div>
 
         <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 md:py-7 lg:py-9 space-y-6 ${showMobileActionBar ? 'pb-28 md:pb-9' : ''}`}>
-          <section id="task-actions" className="hidden md:block rounded-xl border border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))] p-4 md:p-5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-shadow duration-200">
-            <ActionsCard
-              task={task}
-              isAssignedToCurrentUser={isAssignedToCurrentUser}
-              isAvailable={isTaskAvailable}
-              canStartTask={task.status === 'pending' || task.status === 'draft'}
-            />
-          </section>
+          <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6">
+            {/* Main Content Area */}
+            <main className="space-y-6">
+              {/* Enhanced Actions Section */}
+              <section id="task-actions" className="scroll-mt-28">
+                <EnhancedActionsCard
+                  task={task}
+                  isAssignedToCurrentUser={isAssignedToCurrentUser}
+                  isAvailable={isTaskAvailable}
+                  canStartTask={task.status === 'pending' || task.status === 'draft'}
+                  onPrimaryAction={handlePrimaryAction}
+                  onSecondaryAction={handleSecondaryAction}
+                />
+              </section>
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
-            <main className="xl:col-span-2 space-y-4 md:space-y-6 lg:space-y-8">
-              <section id="task-overview" className="scroll-mt-28 rounded-xl border border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))] p-4 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-shadow duration-200">
+              {/* Task Overview */}
+              <section id="task-overview" className="scroll-mt-28 rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
                 <TaskOverview task={task} defaultExpandedSections={['notes-operationnelles']} />
               </section>
 
-              <section id="task-attachments" className="scroll-mt-28 rounded-xl border border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))] p-4 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-shadow duration-200">
+              {/* Task Attachments */}
+              <section id="task-attachments" className="scroll-mt-28 rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
                 <TaskAttachments taskId={taskId} />
               </section>
 
-              <section id="task-timeline" className="scroll-mt-28 rounded-xl border border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))] p-4 md:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-shadow duration-200">
+              {/* Task Timeline */}
+              <section id="task-timeline" className="scroll-mt-28 rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
                 <TaskTimeline taskId={taskId} />
               </section>
             </main>
 
-            <aside id="task-admin" className="space-y-4 md:space-y-6">
-              <div className="xl:sticky xl:top-24 rounded-xl border border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))] p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+            {/* Sidebar */}
+            <aside className="space-y-6">
+              {/* Admin Info */}
+              <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
                 <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                   <Settings className="w-4 h-4 text-accent" />
                   {t('tasks.administration')}
                 </h3>
 
-                <details className="group md:hidden">
-                  <summary className="list-none cursor-pointer rounded-lg border border-border/60 px-3 py-2 text-sm text-border-light hover:text-foreground hover:border-primary/40 transition-all duration-200 hover:bg-background/50">
-                    {t('tasks.showAdminInfo')}
-                  </summary>
-                  <dl className="mt-3 space-y-2.5 text-sm">
-                    <div className="flex justify-between gap-3 py-1"><dt className="text-border-light">{t('tasks.taskId')}</dt><dd className="font-mono text-foreground text-xs">{task.id?.slice(-8) || t('common.noData')}</dd></div>
-                    <div className="flex justify-between gap-3 py-1"><dt className="text-border-light">{t('tasks.createdOn')}</dt><dd className="text-foreground">{formatDate(task.created_at as unknown as string)}</dd></div>
-                    <div className="flex justify-between gap-3 py-1"><dt className="text-border-light">{t('tasks.updated')}</dt><dd className="text-foreground">{formatDate(task.updated_at as unknown as string)}</dd></div>
-                    {task.external_id && <div className="flex justify-between gap-3 py-1"><dt className="text-border-light">{t('tasks.externalRef')}</dt><dd className="text-foreground">{task.external_id}</dd></div>}
-                    {task.task_number && <div className="flex justify-between gap-3 py-1"><dt className="text-border-light">{t('tasks.taskNum')}</dt><dd className="text-foreground">{task.task_number}</dd></div>}
-                  </dl>
-                </details>
-
-                <dl className="hidden md:block space-y-2.5 text-sm">
-                  <div className="flex justify-between gap-3 py-1 hover:bg-background/50 -mx-1 px-1 rounded transition-colors"><dt className="text-border-light">{t('tasks.taskId')}</dt><dd className="font-mono text-foreground text-xs">{task.id?.slice(-8) || t('common.noData')}</dd></div>
-                  <div className="flex justify-between gap-3 py-1 hover:bg-background/50 -mx-1 px-1 rounded transition-colors"><dt className="text-border-light">{t('tasks.createdOn')}</dt><dd className="text-foreground">{formatDate(task.created_at as unknown as string)}</dd></div>
-                  <div className="flex justify-between gap-3 py-1 hover:bg-background/50 -mx-1 px-1 rounded transition-colors"><dt className="text-border-light">{t('tasks.updated')}</dt><dd className="text-foreground">{formatDate(task.updated_at as unknown as string)}</dd></div>
-                  {task.external_id && <div className="flex justify-between gap-3 py-1 hover:bg-background/50 -mx-1 px-1 rounded transition-colors"><dt className="text-border-light">{t('tasks.externalRef')}</dt><dd className="text-foreground">{task.external_id}</dd></div>}
-                  {task.task_number && <div className="flex justify-between gap-3 py-1 hover:bg-background/50 -mx-1 px-1 rounded transition-colors"><dt className="text-border-light">{t('tasks.taskNum')}</dt><dd className="text-foreground">{task.task_number}</dd></div>}
+                <dl className="space-y-2.5 text-sm">
+                  <div className="flex justify-between gap-3 py-1 hover:bg-background/50 -mx-1 px-1 rounded transition-colors">
+                    <dt className="text-muted-foreground">{t('tasks.taskId')}</dt>
+                    <dd className="font-mono text-foreground text-xs">{task.id?.slice(-8) || t('common.noData')}</dd>
+                  </div>
+                  <div className="flex justify-between gap-3 py-1 hover:bg-background/50 -mx-1 px-1 rounded transition-colors">
+                    <dt className="text-muted-foreground">{t('tasks.createdOn')}</dt>
+                    <dd className="text-foreground">{formatDate(task.created_at as unknown as string)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-3 py-1 hover:bg-background/50 -mx-1 px-1 rounded transition-colors">
+                    <dt className="text-muted-foreground">{t('tasks.updated')}</dt>
+                    <dd className="text-foreground">{formatDate(task.updated_at as unknown as string)}</dd>
+                  </div>
+                  {task.external_id && (
+                    <div className="flex justify-between gap-3 py-1 hover:bg-background/50 -mx-1 px-1 rounded transition-colors">
+                      <dt className="text-muted-foreground">{t('tasks.externalRef')}</dt>
+                      <dd className="text-foreground">{task.external_id}</dd>
+                    </div>
+                  )}
+                  {task.task_number && (
+                    <div className="flex justify-between gap-3 py-1 hover:bg-background/50 -mx-1 px-1 rounded transition-colors">
+                      <dt className="text-muted-foreground">{t('tasks.taskNum')}</dt>
+                      <dd className="text-foreground">{task.task_number}</dd>
+                    </div>
+                  )}
                   {task.template_id && (
-                    <div className="flex justify-between gap-3 py-1 hover:bg-background/50 -mx-1 px-1 rounded transition-colors"><dt className="text-border-light">{t('tasks.template')}</dt><dd className="font-mono text-foreground text-xs">{task.template_id.slice(-8)}</dd></div>
+                    <div className="flex justify-between gap-3 py-1 hover:bg-background/50 -mx-1 px-1 rounded transition-colors">
+                      <dt className="text-muted-foreground">{t('tasks.template')}</dt>
+                      <dd className="font-mono text-foreground text-xs">{task.template_id.slice(-8)}</dd>
+                    </div>
                   )}
                 </dl>
               </div>
@@ -408,11 +458,13 @@ export default function TaskDetailPage() {
 
         {showMobileActionBar && (
           <div className="md:hidden fixed inset-x-0 bottom-0 z-40 border-t border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))]/95 backdrop-blur supports-[backdrop-filter]:bg-[hsl(var(--rpma-surface))]/85 pb-[calc(env(safe-area-inset-bottom)+8px)] px-3 pt-2 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
-            <ActionsCard
+            <EnhancedActionsCard
               task={task}
               isAssignedToCurrentUser={isAssignedToCurrentUser}
               isAvailable={isTaskAvailable}
               canStartTask={task.status === 'pending' || task.status === 'draft'}
+              onPrimaryAction={handlePrimaryAction}
+              onSecondaryAction={handleSecondaryAction}
               compact
               mobileDocked
             />
