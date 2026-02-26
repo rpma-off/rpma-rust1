@@ -1,7 +1,22 @@
-import type { UserSession, Task, Client, ClientStatistics, TaskStatistics, UserAccount } from '@/lib/backend';
+import type {
+  UserSession,
+  Task,
+  Client,
+  ClientStatistics,
+  TaskStatistics,
+  UserAccount,
+  StepType,
+  InterventionProgress,
+} from '@/lib/backend';
 import type { Material, Supplier, MaterialCategory, InventoryStats, MaterialStats, MaterialConsumption, InterventionMaterialSummary } from '@/shared/types';
 import type { JsonObject } from '@/types/json';
-import { defaultFixtures, type MockFixtures, type MockUser } from './fixtures';
+import {
+  defaultFixtures,
+  type MockFixtures,
+  type MockUser,
+  type MockIntervention,
+  type MockInterventionStep,
+} from './fixtures';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyRecord = Record<string, any>;
@@ -15,18 +30,21 @@ export interface MockState {
   sessions: UserSession[];
   clients: Client[];
   tasks: Task[];
+  interventions: MockIntervention[];
+  interventionSteps: MockInterventionStep[];
   materials: Material[];
   suppliers: Supplier[];
   categories: MaterialCategory[];
   materialConsumptions: MaterialConsumption[];
+  photos: AnyRecord[];
 }
-
-let state: MockState = createState(defaultFixtures);
 
 const delayNext = new Map<string, DelayEntry>();
 const failNext = new Map<string, FailureEntry>();
 
 const nowIso = () => new Date().toISOString();
+
+let state: MockState;
 
 function readPersistedSessions(): UserSession[] {
   if (typeof window === 'undefined') return [];
@@ -51,15 +69,24 @@ function persistSessions(sessions: UserSession[]): void {
 
 function createState(fixtures: MockFixtures): MockState {
   const persistedSessions = readPersistedSessions();
+  const interventions = fixtures.interventions && fixtures.interventions.length > 0
+    ? [...fixtures.interventions]
+    : fixtures.tasks.map(task => normalizeIntervention(task));
+  const interventionSteps = fixtures.interventionSteps && fixtures.interventionSteps.length > 0
+    ? [...fixtures.interventionSteps]
+    : interventions.flatMap(intervention => buildInterventionSteps(intervention.id));
   return {
     users: [...fixtures.users],
     sessions: fixtures.sessions.length > 0 ? [...fixtures.sessions] : persistedSessions,
     clients: [...fixtures.clients],
     tasks: [...fixtures.tasks],
+    interventions,
+    interventionSteps,
     materials: [...fixtures.materials],
     suppliers: [...fixtures.suppliers],
     categories: [...fixtures.categories],
-    materialConsumptions: []
+    materialConsumptions: [],
+    photos: []
   };
 }
 
@@ -73,6 +100,8 @@ export function seedDb(partial: Partial<MockFixtures>): void {
   if (partial.sessions) state.sessions = [...partial.sessions];
   if (partial.clients) state.clients = [...partial.clients];
   if (partial.tasks) state.tasks = [...partial.tasks];
+  if (partial.interventions) state.interventions = [...partial.interventions];
+  if (partial.interventionSteps) state.interventionSteps = [...partial.interventionSteps];
   if (partial.materials) state.materials = [...partial.materials];
   if (partial.suppliers) state.suppliers = [...partial.suppliers];
   if (partial.categories) state.categories = [...partial.categories];
@@ -235,6 +264,198 @@ function normalizeTask(input: Partial<Task>): Task {
     last_synced_at: input.last_synced_at ?? now
   };
 }
+
+const PPF_STEP_DEFS: Array<{
+  step_type: StepType;
+  step_name: string;
+  description: string;
+  min_photos_required: number;
+  max_photos_allowed: number;
+  estimated_duration_seconds: number;
+}> = [
+  {
+    step_type: 'inspection',
+    step_name: 'Inspection',
+    description: 'Inspection initiale et photos avant pose',
+    min_photos_required: 4,
+    max_photos_allowed: 8,
+    estimated_duration_seconds: 12 * 60
+  },
+  {
+    step_type: 'preparation',
+    step_name: 'Préparation',
+    description: 'Nettoyage, dégraissage et découpe film',
+    min_photos_required: 0,
+    max_photos_allowed: 6,
+    estimated_duration_seconds: 18 * 60
+  },
+  {
+    step_type: 'installation',
+    step_name: 'Installation',
+    description: 'Pose du film PPF zone par zone',
+    min_photos_required: 1,
+    max_photos_allowed: 12,
+    estimated_duration_seconds: 45 * 60
+  },
+  {
+    step_type: 'finalization',
+    step_name: 'Finalisation',
+    description: 'Contrôle qualité final et photos',
+    min_photos_required: 3,
+    max_photos_allowed: 8,
+    estimated_duration_seconds: 8 * 60
+  }
+];
+
+function normalizeIntervention(task: Task, overrides: Partial<MockIntervention> = {}): MockIntervention {
+  const now = nowIso();
+  return {
+    id: overrides.id || `intervention-${task.id}`,
+    task_id: task.id,
+    task_number: task.task_number ?? null,
+    status: overrides.status || 'in_progress',
+    vehicle_plate: task.vehicle_plate || 'UNKNOWN',
+    vehicle_model: task.vehicle_model ?? null,
+    vehicle_make: task.vehicle_make ?? null,
+    vehicle_year: task.vehicle_year ? Number(task.vehicle_year) : null,
+    vehicle_color: null,
+    vehicle_vin: task.vin ?? null,
+    client_id: task.client_id ?? null,
+    client_name: task.customer_name ?? null,
+    client_email: task.customer_email ?? null,
+    client_phone: task.customer_phone ?? null,
+    technician_id: task.technician_id ?? null,
+    technician_name: null,
+    intervention_type: 'ppf',
+    current_step: 0,
+    completion_percentage: 0,
+    ppf_zones_config: task.ppf_zones ?? null,
+    ppf_zones_extended: null,
+    film_type: null,
+    film_brand: task.lot_film ?? null,
+    film_model: null,
+    scheduled_at: task.scheduled_date ?? now,
+    started_at: now,
+    completed_at: null,
+    paused_at: null,
+    estimated_duration: task.estimated_duration ?? null,
+    actual_duration: null,
+    weather_condition: null,
+    lighting_condition: null,
+    work_location: null,
+    temperature_celsius: 22,
+    humidity_percentage: 45,
+    start_location_lat: null,
+    start_location_lon: null,
+    start_location_accuracy: null,
+    end_location_lat: null,
+    end_location_lon: null,
+    end_location_accuracy: null,
+    customer_satisfaction: null,
+    quality_score: null,
+    final_observations: null,
+    customer_signature: null,
+    customer_comments: null,
+    metadata: null,
+    notes: null,
+    special_instructions: null,
+    device_info: null,
+    app_version: 'mock',
+    synced: true,
+    last_synced_at: now,
+    sync_error: null,
+    created_at: now,
+    updated_at: now,
+    created_by: null,
+    updated_by: null,
+    ...overrides
+  };
+}
+
+function buildInterventionSteps(interventionId: string): MockInterventionStep[] {
+  const now = nowIso();
+  return PPF_STEP_DEFS.map((def, index) => ({
+    id: `${interventionId}-step-${def.step_type}`,
+    intervention_id: interventionId,
+    step_number: index + 1,
+    step_name: def.step_name,
+    step_type: def.step_type,
+    step_status: index === 0 ? 'in_progress' : 'pending',
+    description: def.description,
+    instructions: null,
+    quality_checkpoints: null,
+    is_mandatory: true,
+    requires_photos: def.min_photos_required > 0,
+    min_photos_required: def.min_photos_required,
+    max_photos_allowed: def.max_photos_allowed,
+    started_at: index === 0 ? now : null,
+    completed_at: null,
+    paused_at: null,
+    duration_seconds: null,
+    estimated_duration_seconds: def.estimated_duration_seconds,
+    step_data: null,
+    collected_data: null,
+    measurements: null,
+    observations: null,
+    photo_count: 0,
+    required_photos_completed: false,
+    photo_urls: [],
+    validation_data: null,
+    validation_errors: null,
+    validation_score: null,
+    requires_supervisor_approval: false,
+    approved_by: null,
+    approved_at: null,
+    rejection_reason: null,
+    location_lat: null,
+    location_lon: null,
+    location_accuracy: null,
+    device_timestamp: now,
+    server_timestamp: now,
+    title: def.step_name,
+    notes: null,
+    synced: true,
+    last_synced_at: now,
+    created_at: now,
+    updated_at: now
+  }));
+}
+
+function buildProgress(interventionId: string, steps: MockInterventionStep[]): InterventionProgress {
+  const totalSteps = steps.length;
+  const completedSteps = steps.filter(step => step.step_status === 'completed').length;
+  const completionPercentage = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
+  const hasInProgress = steps.some(step => step.step_status === 'in_progress');
+  const status = completionPercentage >= 100 ? 'completed' : hasInProgress ? 'in_progress' : 'pending';
+
+  return {
+    intervention_id: interventionId,
+    current_step: completedSteps,
+    total_steps: totalSteps,
+    completed_steps: completedSteps,
+    completion_percentage: completionPercentage,
+    estimated_time_remaining: null,
+    status
+  };
+}
+
+function syncInterventionProgress(interventionId: string): void {
+  const steps = state.interventionSteps.filter(step => step.intervention_id === interventionId);
+  const progress = buildProgress(interventionId, steps);
+  const index = state.interventions.findIndex(intervention => intervention.id === interventionId);
+  if (index === -1) return;
+  const current = state.interventions[index];
+  state.interventions[index] = {
+    ...current,
+    current_step: progress.completed_steps,
+    completion_percentage: progress.completion_percentage,
+    status: progress.status,
+    completed_at: progress.status === 'completed' ? nowIso() : current.completed_at,
+    updated_at: nowIso()
+  };
+}
+
+state = createState(defaultFixtures);
 
 function normalizeMaterial(input: Partial<Material>): Material {
   const now = nowIso();
@@ -958,6 +1179,250 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
         default:
           return { type: 'NotFound' };
       }
+    }
+    case 'document_get_photos': {
+      const req = ((args?.request ?? args) ?? {}) as AnyRecord;
+      const filtered = state.photos.filter(photo =>
+        (!req.intervention_id || photo.intervention_id === req.intervention_id) &&
+        (!req.step_id || photo.step_id === req.step_id)
+      );
+      return { photos: filtered, total: filtered.length };
+    }
+    case 'document_store_photo': {
+      const storeRequest = ((args?.request ?? args) ?? {}) as AnyRecord;
+      const now = nowIso();
+      const id = generateId('photo');
+      const fileName = storeRequest.file_name || `${id}.jpg`;
+      const photo = {
+        id,
+        intervention_id: storeRequest.intervention_id,
+        step_id: storeRequest.step_id ?? null,
+        step_number: storeRequest.step_number ?? null,
+        file_path: `mock://${id}/${fileName}`,
+        file_name: fileName,
+        file_size: 0,
+        mime_type: storeRequest.mime_type || 'image/jpeg',
+        width: null,
+        height: null,
+        photo_type: storeRequest.photo_type ?? null,
+        photo_category: null,
+        photo_angle: null,
+        zone: storeRequest.zone ?? null,
+        title: null,
+        description: storeRequest.description ?? null,
+        notes: null,
+        annotations: null,
+        gps_location_lat: null,
+        gps_location_lon: null,
+        gps_location_accuracy: null,
+        quality_score: null,
+        blur_score: null,
+        exposure_score: null,
+        composition_score: null,
+        is_required: storeRequest.is_required ?? false,
+        is_approved: false,
+        approved_by: null,
+        approved_at: null,
+        rejection_reason: null,
+        synced: true,
+        storage_url: null,
+        upload_retry_count: 0,
+        upload_error: null,
+        last_synced_at: null,
+        captured_at: null,
+        uploaded_at: now,
+        created_at: now,
+        updated_at: now
+      };
+      state.photos.push(photo);
+      return { photo, file_path: photo.file_path };
+    }
+    case 'document_delete_photo': {
+      const photoId = args?.photo_id as string;
+      state.photos = state.photos.filter(photo => photo.id !== photoId);
+      return null;
+    }
+    case 'intervention_workflow': {
+      const action = (args?.action || {}) as AnyRecord;
+      switch (action.action) {
+        case 'Start': {
+          const data = (action.data || {}) as AnyRecord;
+          const task = state.tasks.find(t => t.id === data.task_id) || normalizeTask({ id: data.task_id });
+          const intervention = normalizeIntervention(task, { status: 'in_progress' });
+          const steps = buildInterventionSteps(intervention.id);
+          state.interventions.push(intervention);
+          state.interventionSteps.push(...steps);
+          syncInterventionProgress(intervention.id);
+          return { type: 'Started', intervention, steps };
+        }
+        case 'Get': {
+          const intervention = state.interventions.find(i => i.id === action.id);
+          return intervention ? { type: 'Retrieved', intervention } : { type: 'NotFound' };
+        }
+        case 'GetActiveByTask': {
+          const taskId = action.task_id ?? action.taskId;
+          const interventions = state.interventions.filter(
+            i => i.task_id === taskId && i.status !== 'completed'
+          );
+          return { type: 'ActiveByTask', interventions };
+        }
+        case 'Update': {
+          const index = state.interventions.findIndex(i => i.id === action.id);
+          if (index === -1) return { type: 'NotFound' };
+          state.interventions[index] = {
+            ...state.interventions[index],
+            ...(action.data || {}),
+            updated_at: nowIso()
+          };
+          return { type: 'Updated', intervention: state.interventions[index] };
+        }
+        case 'Finalize': {
+          const data = (action.data || {}) as AnyRecord;
+          const index = state.interventions.findIndex(i => i.id === data.intervention_id);
+          if (index === -1) return { type: 'NotFound' };
+          const now = nowIso();
+          state.interventionSteps = state.interventionSteps.map(step =>
+            step.intervention_id === data.intervention_id
+              ? { ...step, step_status: 'completed', completed_at: now, updated_at: now }
+              : step
+          );
+          state.interventions[index] = {
+            ...state.interventions[index],
+            status: 'completed',
+            completion_percentage: 100,
+            current_step: state.interventionSteps.filter(s => s.intervention_id === data.intervention_id).length,
+            completed_at: now,
+            customer_satisfaction: data.customer_satisfaction ?? null,
+            quality_score: data.quality_score ?? null,
+            final_observations: data.final_observations ?? null,
+            customer_signature: data.customer_signature ?? null,
+            customer_comments: data.customer_comments ?? null,
+            updated_at: now
+          };
+          const intervention = state.interventions[index];
+          return {
+            type: 'Finalized',
+            intervention,
+            metrics: {
+              total_duration_minutes: 60,
+              efficiency_score: null,
+              quality_score: data.quality_score ?? null,
+              certificates_generated: false
+            }
+          };
+        }
+        default:
+          return { type: 'NotFound' };
+      }
+    }
+    case 'intervention_progress': {
+      const action = (args?.action || {}) as AnyRecord;
+      switch (action.action) {
+        case 'Get': {
+          const steps = state.interventionSteps.filter(step => step.intervention_id === action.intervention_id);
+          const progress = buildProgress(action.intervention_id, steps);
+          return { type: 'Retrieved', progress, steps };
+        }
+        case 'AdvanceStep': {
+          const stepIndex = state.interventionSteps.findIndex(step => step.id === action.step_id);
+          if (stepIndex === -1) return { type: 'NotFound' };
+          const now = nowIso();
+          const step = state.interventionSteps[stepIndex];
+          const nextPhotos = action.photos ?? step.photo_urls ?? [];
+          const updatedStep = {
+            ...step,
+            collected_data: action.collected_data ?? step.collected_data,
+            notes: action.notes ?? step.notes,
+            photo_urls: nextPhotos,
+            photo_count: nextPhotos.length,
+            required_photos_completed: nextPhotos.length >= step.min_photos_required,
+            step_status: 'completed',
+            completed_at: now,
+            updated_at: now
+          };
+          state.interventionSteps[stepIndex] = updatedStep;
+          const nextStepIndex = state.interventionSteps.findIndex(
+            s => s.intervention_id === step.intervention_id && s.step_number === step.step_number + 1
+          );
+          let nextStep: MockInterventionStep | null = null;
+          if (nextStepIndex !== -1) {
+            const next = state.interventionSteps[nextStepIndex];
+            nextStep = {
+              ...next,
+              step_status: next.step_status === 'pending' ? 'in_progress' : next.step_status,
+              started_at: next.started_at ?? now,
+              updated_at: now
+            };
+            state.interventionSteps[nextStepIndex] = nextStep;
+          }
+          syncInterventionProgress(step.intervention_id);
+          const progress = buildProgress(step.intervention_id, state.interventionSteps.filter(s => s.intervention_id === step.intervention_id));
+          return { type: 'StepAdvanced', step: updatedStep, next_step: nextStep, progress_percentage: progress.completion_percentage };
+        }
+        case 'SaveStepProgress': {
+          const stepIndex = state.interventionSteps.findIndex(step => step.id === action.step_id);
+          if (stepIndex === -1) return { type: 'NotFound' };
+          const now = nowIso();
+          const step = state.interventionSteps[stepIndex];
+          const nextPhotos = action.photos ?? step.photo_urls ?? [];
+          const updatedStep = {
+            ...step,
+            collected_data: action.collected_data ?? step.collected_data,
+            notes: action.notes ?? step.notes,
+            photo_urls: nextPhotos,
+            photo_count: nextPhotos.length,
+            required_photos_completed: nextPhotos.length >= step.min_photos_required,
+            updated_at: now
+          };
+          state.interventionSteps[stepIndex] = updatedStep;
+          return { type: 'StepProgressSaved', step: updatedStep };
+        }
+        case 'GetStep': {
+          const step = state.interventionSteps.find(s => s.id === action.step_id);
+          return step ? { type: 'StepRetrieved', step } : { type: 'NotFound' };
+        }
+        default:
+          return { type: 'NotFound' };
+      }
+    }
+    case 'intervention_get_active_by_task': {
+      const taskId = args?.task_id ?? args?.taskId;
+      const intervention = state.interventions.find(i => i.task_id === taskId && i.status !== 'completed') || null;
+      return { intervention };
+    }
+    case 'intervention_get_latest_by_task': {
+      const taskId = args?.taskId ?? args?.task_id;
+      const intervention = state.interventions.find(i => i.task_id === taskId) || null;
+      return { data: intervention };
+    }
+    case 'intervention_get_progress': {
+      const interventionId = args?.intervention_id;
+      const steps = state.interventionSteps.filter(step => step.intervention_id === interventionId);
+      const progress = buildProgress(interventionId, steps);
+      return { steps, progress_percentage: progress.completion_percentage };
+    }
+    case 'intervention_get_step': {
+      const stepId = args?.step_id;
+      return state.interventionSteps.find(step => step.id === stepId) || null;
+    }
+    case 'intervention_save_step_progress': {
+      const request = (args?.request ?? {}) as AnyRecord;
+      const stepIndex = state.interventionSteps.findIndex(step => step.id === request.step_id);
+      if (stepIndex === -1) return null;
+      const now = nowIso();
+      const step = state.interventionSteps[stepIndex];
+      const nextPhotos = request.photos ?? step.photo_urls ?? [];
+      const updatedStep = {
+        ...step,
+        collected_data: request.collected_data ?? step.collected_data,
+        notes: request.notes ?? step.notes,
+        photo_urls: nextPhotos,
+        photo_count: nextPhotos.length,
+        required_photos_completed: nextPhotos.length >= step.min_photos_required,
+        updated_at: now
+      };
+      state.interventionSteps[stepIndex] = updatedStep;
+      return updatedStep;
     }
     case 'material_list': {
       return state.materials;

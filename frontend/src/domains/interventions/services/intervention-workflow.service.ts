@@ -39,6 +39,14 @@ export interface AdvanceStepDTO {
 }
 
 export class InterventionWorkflowService {
+  private static notImplemented<T>(message: string): ApiResponse<T> {
+    return {
+      success: false,
+      error: new ApiError(message, 'NOT_IMPLEMENTED'),
+      data: undefined
+    };
+  }
+
   private static log(operation: string, data: Record<string, unknown>, level: 'info' | 'warn' | 'error' = 'info') {
     const timestamp = new Date().toISOString();
     const logData = {
@@ -190,42 +198,7 @@ export class InterventionWorkflowService {
   }
 
   static async getInterventions(_filters: unknown): Promise<ApiResponse<ListResponse<PPFIntervention>>> {
-    try {
-      // Mock implementation
-      const data = [
-        {
-          id: 'intervention-1',
-          taskId: 'task-1',
-          steps: [],
-          status: 'in_progress',
-          progress: 50,
-          currentStep: 1,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          technician_id: 'tech-1',
-          client_id: 'client-1',
-          vehicle_make: 'Toyota',
-          vehicle_model: 'Camry',
-          vehicle_year: 2020,
-          vehicle_vin: 'VIN123',
-        },
-      ];
-      return {
-        success: true,
-        data: {
-          data: data as PPFIntervention[],
-          pagination: { page: 1, limit: 10, total: data.length, pageSize: 10, totalPages: 1, hasNext: false, hasPrev: false },
-          statistics: undefined
-        },
-        error: undefined
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? new ApiError(error.message, 'INTERNAL_ERROR') : new ApiError('Failed to get interventions', 'INTERNAL_ERROR'),
-        data: undefined
-      };
-    }
+    return this.notImplemented('Intervention list is not implemented in this service. Use interventionsIpc.list directly.');
   }
 
   static async advanceStep(interventionId: string, stepData: unknown, sessionToken: string): Promise<ApiResponse<unknown>> {
@@ -273,23 +246,13 @@ export class InterventionWorkflowService {
   }
 
   static async pauseWorkflow(workflowId: string, userId: string, reason?: string, notes?: string): Promise<ApiResponse<void>> {
-    try {
-      // Mock implementation
-      console.log('Pausing workflow', workflowId, userId, reason, notes);
-      return { success: true, data: undefined };
-    } catch (error) {
-      return { success: false, error: error instanceof Error ? new ApiError(error.message, 'INTERNAL_ERROR') : new ApiError('Failed to pause workflow', 'INTERNAL_ERROR'), data: undefined };
-    }
+    this.log('pauseWorkflow.notImplemented', { workflowId, userId, reason, notes }, 'warn');
+    return this.notImplemented('Pause workflow is not implemented by the backend IPC.');
   }
 
   static async resumeWorkflow(workflowId: string, userId: string, reason?: string): Promise<ApiResponse<void>> {
-    try {
-      // Mock implementation
-      console.log('Resuming workflow', workflowId, userId, reason);
-      return { success: true, data: undefined };
-    } catch (error) {
-      return { success: false, error: error instanceof Error ? new ApiError(error.message, 'INTERNAL_ERROR') : new ApiError('Failed to resume workflow', 'INTERNAL_ERROR'), data: undefined };
-    }
+    this.log('resumeWorkflow.notImplemented', { workflowId, userId, reason }, 'warn');
+    return this.notImplemented('Resume workflow is not implemented by the backend IPC.');
   }
 
   static async saveStepProgress(
@@ -340,13 +303,8 @@ export class InterventionWorkflowService {
   }
 
   static async skipStep(workflowId: string, stepId: string, userId: string, reason?: string): Promise<ApiResponse<void>> {
-    try {
-      // Mock implementation
-      console.log('Skipping step', workflowId, stepId, userId, reason);
-      return { success: true, data: undefined };
-    } catch (error) {
-      return { success: false, error: error instanceof Error ? new ApiError(error.message, 'INTERNAL_ERROR') : new ApiError('Failed to skip step', 'INTERNAL_ERROR'), data: undefined };
-    }
+    this.log('skipStep.notImplemented', { workflowId, stepId, userId, reason }, 'warn');
+    return this.notImplemented('Skip step is not implemented by the backend IPC.');
   }
 
   static async getActive(sessionToken: string): Promise<Record<string, unknown>[]> {

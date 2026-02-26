@@ -6,15 +6,26 @@ const buildContentSecurityPolicy = (isDev: boolean) => {
     "'self'",
     'tauri:',
     'ipc:',
+    'http://ipc.localhost',
+    'https://ipc.localhost',
     isDev ? 'http://localhost:*' : '',
     isDev ? 'ws://localhost:*' : '',
+    isDev ? 'wss://localhost:*' : '',
+  ].filter(Boolean).join(' ');
+  const imgSrc = [
+    "'self'",
+    'data:',
+    'blob:',
+    'asset:',
+    'https://asset.localhost',
+    isDev ? 'http://localhost:*' : '',
   ].filter(Boolean).join(' ');
 
   return [
     "default-src 'self'",
     `script-src ${scriptSrc}`,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob:",
+    `img-src ${imgSrc}`,
     "font-src 'self' data:",
     `connect-src ${connectSrc}`,
     "frame-ancestors 'none'",

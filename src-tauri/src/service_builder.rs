@@ -133,8 +133,19 @@ impl ServiceBuilder {
         // Initialize Two Factor Service (depends on DB)
         // REMOVED — 2FA has been replaced by plain UUID sessions
 
-        // Initialize Photo Service (depends on DB and StorageSettings)
-        let default_storage_settings = StorageSettings::default();
+        // Initialize Photo Service (depends on DB and StorageSettings).
+        // Force local photo storage under the app data directory to avoid writing
+        // uploads into the repo root during `tauri dev` (which can trigger backend rebuilds).
+        let mut default_storage_settings = StorageSettings::default();
+        let photo_storage_path = self.app_data_dir.join("photos");
+        default_storage_settings.photo_storage_type = "local".to_string();
+        default_storage_settings.local_storage_path =
+            Some(photo_storage_path.to_string_lossy().to_string());
+        tracing::info!(
+            photo_storage_provider = %default_storage_settings.photo_storage_type,
+            photo_storage_path = %photo_storage_path.display(),
+            "Configured photo storage path"
+        );
         let photo_service = Arc::new(
             crate::domains::documents::infrastructure::photo::PhotoService::new(
                 db_instance.clone(),

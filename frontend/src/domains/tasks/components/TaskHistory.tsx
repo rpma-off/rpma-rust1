@@ -1,94 +1,45 @@
 import { format } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Edit3, Trash, UserPlus, Check, History, AlertCircle } from 'lucide-react';
+import { Check, History, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/domains/auth';
-import { taskService } from '../services/task.service';
-import { TaskWithDetails } from '@/types/task.types';
-
-type ChangeLog = {
-  id: string;
-  action: string;
-  changed_at: string;
-  changed_by: {
-    id: string;
-    full_name: string;
-    email: string;
-  };
-  change_detail: {
-    before?: {
-      status?: string;
-      technician_id?: string;
-      scheduled_at?: string;
-      [key: string]: unknown;
-    };
-    after?: {
-      status?: string;
-      technician_id?: string;
-      scheduled_at?: string;
-      [key: string]: unknown;
-    };
-  };
-};
+import { taskGateway } from '../api/taskGateway';
+import type { TaskHistoryEntry } from '../api/types';
 
 interface TaskHistoryProps {
   taskId: string;
 }
 
+function toDate(value: number | string): Date {
+  const numeric = typeof value === 'number' ? value : Number(value);
+  if (!Number.isNaN(numeric)) {
+    return new Date(numeric < 1_000_000_000_000 ? numeric * 1000 : numeric);
+  }
+  return new Date(value);
+}
+
+function formatStatusLabel(status?: string | null): string {
+  return (status || 'unknown').split('_').join(' ');
+}
+
+function entryTitle(entry: TaskHistoryEntry): string {
+  if (!entry.old_status) {
+    return `Creation (${formatStatusLabel(entry.new_status)})`;
+  }
+  return `${formatStatusLabel(entry.old_status)} -> ${formatStatusLabel(entry.new_status)}`;
+}
+
 export function TaskHistory({ taskId }: TaskHistoryProps) {
   const { user } = useAuth();
 
-  const { data: changeLogs, isLoading, error } = useQuery<ChangeLog[]>({
+  const { data: historyEntries, isLoading, error } = useQuery<TaskHistoryEntry[]>({
     queryKey: ['tasks', taskId, 'history'],
     queryFn: async () => {
-      if (!user?.token) throw new Error('Utilisateur non authentifié');
-
-      const response = await taskService.getTaskById(taskId);
-      const history = (response.data as TaskWithDetails & { history?: unknown[] }).history || [];
-      return history as ChangeLog[];
-    }
+      if (!user?.token) throw new Error('Utilisateur non authentifie');
+      return taskGateway.getTaskHistory(taskId, user.token);
+    },
+    enabled: !!user?.token
   });
-
-  const formatChangeDetail = (log: ChangeLog) => {
-    const { action, change_detail } = log;
-
-    switch (action) {
-      case 'create':
-        return 'La tâche a été créée';
-
-      case 'update': {
-        const changes: string[] = [];
-
-        if (change_detail.before?.status !== change_detail.after?.status) {
-          changes.push(`statut: "${change_detail.before?.status}" -> "${change_detail.after?.status}"`);
-        }
-
-        if (change_detail.before?.technician_id !== change_detail.after?.technician_id) {
-          const before = change_detail.before?.technician_id ? 'assignée' : 'non assignée';
-          const after = change_detail.after?.technician_id ? 'assignée' : 'non assignée';
-          changes.push(`affectation technicien: ${before} -> ${after}`);
-        }
-
-        if (change_detail.before?.scheduled_at !== change_detail.after?.scheduled_at) {
-          const before = change_detail.before?.scheduled_at
-            ? format(new Date(change_detail.before.scheduled_at), 'dd/MM/yyyy')
-            : 'non défini';
-          const after = change_detail.after?.scheduled_at
-            ? format(new Date(change_detail.after.scheduled_at), 'dd/MM/yyyy')
-            : 'non défini';
-          changes.push(`date planifiée: "${before}" -> "${after}"`);
-        }
-
-        return changes.length > 0 ? changes.join(', ') : 'Les détails ont été mis à jour';
-      }
-
-      case 'delete':
-        return 'La tâche a été supprimée';
-
-      default:
-        return JSON.stringify(change_detail, null, 2);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -121,11 +72,11 @@ export function TaskHistory({ taskId }: TaskHistoryProps) {
     );
   }
 
-  if (!changeLogs || changeLogs.length === 0) {
+  if (!historyEntries || historyEntries.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
         <History className="h-12 w-12 mx-auto mb-4 opacity-30" />
-        <p>Aucun événement disponible pour cette tâche.</p>
+        <p>Aucun evenement disponible pour cette tache.</p>
       </div>
     );
   }
@@ -136,30 +87,34 @@ export function TaskHistory({ taskId }: TaskHistoryProps) {
         <div className="absolute left-5 top-0 bottom-0 w-px bg-border -ml-px" />
 
         <div className="relative space-y-6">
-          {changeLogs.map(log => (
-            <div key={log.id} className="relative flex items-start group">
+          {historyEntries.map(entry => (
+            <div key={entry.id} className="relative flex items-start group">
               <div className="absolute left-0 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-background border-2 border-primary">
-                {getActionIcon(log.action)}
+                {entry.new_status === 'completed' ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <History className="h-4 w-4" />
+                )}
               </div>
 
               <div className="ml-16">
                 <div className="flex items-center space-x-2">
-                  <h4 className="font-medium">{log.changed_by.full_name || 'Système'}</h4>
+                  <h4 className="font-medium">{entry.changed_by || 'Systeme'}</h4>
                   <span className="text-sm text-muted-foreground">
-                    {format(new Date(log.changed_at), 'dd/MM/yyyy HH:mm')}
+                    {format(toDate(entry.changed_at), 'dd/MM/yyyy HH:mm')}
                   </span>
                 </div>
 
                 <div className="mt-1 rounded-md border bg-card p-4">
                   <div className="flex items-center">
-                    <span className="font-medium capitalize">{log.action.replace(/([A-Z])/g, ' $1').toLowerCase()}</span>
+                    <span className="font-medium">Changement de statut</span>
                     <span className="mx-2 text-muted-foreground">&bull;</span>
-                    <span className="text-sm text-muted-foreground">{formatChangeDetail(log)}</span>
+                    <span className="text-sm text-muted-foreground">{entryTitle(entry)}</span>
                   </div>
 
-                  {log.action === 'update' && log.change_detail && (
+                  {entry.reason && (
                     <div className="mt-3 text-sm bg-muted/20 p-3 rounded-md overflow-x-auto">
-                      <pre className="text-xs">{JSON.stringify(log.change_detail, null, 2)}</pre>
+                      <p className="text-xs whitespace-pre-wrap">{entry.reason}</p>
                     </div>
                   )}
                 </div>
@@ -170,23 +125,4 @@ export function TaskHistory({ taskId }: TaskHistoryProps) {
       </div>
     </div>
   );
-}
-
-function getActionIcon(action: string) {
-  const iconProps = { className: 'h-4 w-4' };
-
-  switch (action) {
-    case 'create':
-      return <Plus {...iconProps} />;
-    case 'update':
-      return <Edit3 {...iconProps} />;
-    case 'delete':
-      return <Trash {...iconProps} />;
-    case 'assign':
-      return <UserPlus {...iconProps} />;
-    case 'complete':
-      return <Check {...iconProps} />;
-    default:
-      return <History {...iconProps} />;
-  }
 }

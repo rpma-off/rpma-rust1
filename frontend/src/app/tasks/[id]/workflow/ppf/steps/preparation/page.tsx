@@ -1,553 +1,292 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { Button } from '@/shared/ui/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/ui/card';
-import { Input } from '@/shared/ui/ui/input';
-import { Label } from '@/shared/ui/ui/label';
-import { Checkbox } from '@/shared/ui/ui/checkbox';
-import { ArrowRight, CheckCircle, Thermometer, Droplets, Wrench, AlertTriangle, Camera } from 'lucide-react';
-import { usePPFWorkflow } from '@/domains/interventions';
-import { getNextPPFStepId, getPPFStepPath } from '@/domains/interventions';
-import { PhotoUpload } from '@/domains/workflow';
-import { useTranslation } from '@/shared/hooks/useTranslation';
+import {
+  PpfChecklist,
+  PpfPhotoGrid,
+  PpfStepHero,
+  PpfWorkflowLayout,
+  getNextPPFStepId,
+  getPPFStepPath,
+  usePpfWorkflow,
+} from '@/domains/interventions';
+import type { StepType } from '@/lib/backend';
 
-interface PreparationChecklistItem {
-  id: string;
-  label: string;
-  description: string;
-  completed: boolean;
-}
-
-interface EnvironmentData {
-  temperatureCelsius: number | null;
-  humidityPercent: number | null;
-}
-
-type PreparationCollectedData = {
-  checklist?: Record<string, boolean>;
-  environment?: {
-    temp_celsius?: number | null;
-    humidity_percent?: number | null;
-  };
-};
-
-const defaultChecklist: PreparationChecklistItem[] = [
+const SURFACE_CHECKLIST = [
   {
     id: 'wash',
-    label: 'Lavage du véhicule',
-    description: 'Nettoyage complet de la surface avec shampooing pH neutre',
-    completed: false
+    title: 'Lavage complet du véhicule',
+    description: 'Nettoyage pH neutre, rinçage sans traces',
+    required: true,
   },
   {
     id: 'clay_bar',
-    label: 'Clay Bar',
-    description: 'Traitement avec clay bar pour éliminer les contaminants',
-    completed: false
+    title: 'Décontamination (clay bar)',
+    description: 'Éliminer particules et résidus incrustés',
+    required: true,
   },
   {
     id: 'degrease',
-    label: 'Dégraissage',
-    description: 'Application de dégraissant pour préparation de surface',
-    completed: false
+    title: 'Dégraissage des zones PPF',
+    description: 'IPA 70% sur capot, ailes, pare-choc',
+    required: true,
   },
   {
     id: 'masking',
-    label: 'Masquage',
-    description: 'Protection des zones non traitées (joints, poignées, etc.)',
-    completed: false
-  }
+    title: 'Masquage zones sensibles',
+    description: 'Joints, poignées, capteurs',
+    required: true,
+  },
+  {
+    id: 'drying',
+    title: 'Séchage complet',
+    description: 'Microfibre + air comprimé',
+    required: true,
+  },
+  {
+    id: 'final_check',
+    title: 'Contrôle surface',
+    description: 'Aucune poussière ou résidu',
+    required: true,
+  },
 ];
 
+const CUT_CHECKLIST = [
+  { id: 'hood', title: 'Capot prédécoupé', description: 'Film 200µ' },
+  { id: 'left_fender', title: 'Aile avant G', description: 'Film 150µ' },
+  { id: 'right_fender', title: 'Aile avant D', description: 'Film 150µ' },
+  { id: 'bumper', title: 'Pare-choc avant', description: 'Film 150µ' },
+  { id: 'mirrors', title: 'Rétroviseurs', description: 'Film 100µ' },
+  { id: 'sills', title: 'Seuils de porte', description: 'Film 150µ' },
+];
+
+const MATERIALS_CHECKLIST = [
+  { id: 'ppf_200', title: 'Film PPF 200µ (capot)' },
+  { id: 'ppf_150', title: 'Film PPF 150µ (ailes/pare-choc)' },
+  { id: 'ppf_100', title: 'Film PPF 100µ (rétros)' },
+  { id: 'solution', title: 'Solution d’application 1L' },
+  { id: 'squeegee', title: 'Squeegee pro (dur)' },
+  { id: 'heatgun', title: 'Pistolet chaleur' },
+  { id: 'knife', title: 'Cutter précision' },
+  { id: 'microfiber', title: 'Microfibres (x10)' },
+];
+
+const CUT_ROWS = [
+  { id: 'hood', label: 'Capot', surface: '2.4 m²', film: '200µ' },
+  { id: 'left_fender', label: 'Aile G', surface: '1.2 m²', film: '150µ' },
+  { id: 'right_fender', label: 'Aile D', surface: '1.2 m²', film: '150µ' },
+  { id: 'bumper', label: 'Pare-choc', surface: '0.9 m²', film: '150µ' },
+  { id: 'mirrors', label: 'Rétros', surface: '0.3 m²', film: '100µ' },
+  { id: 'sills', label: 'Seuils', surface: '1.0 m²', film: '150µ' },
+];
+
+type PreparationDraft = {
+  surfaceChecklist?: Record<string, boolean>;
+  cutChecklist?: Record<string, boolean>;
+  materialsChecklist?: Record<string, boolean>;
+  notes?: string;
+};
+
 export default function PreparationStepPage() {
-  const { t } = useTranslation();
   const router = useRouter();
-  const { taskId, advanceToStep, stepsData, steps, currentStep } = usePPFWorkflow();
-  const [isCompleting, setIsCompleting] = useState(false);
+  const { taskId, steps, getStepRecord, saveDraft, validateStep, intervention } = usePpfWorkflow();
+  const stepRecord = getStepRecord('preparation' as StepType);
+  const autosaveReady = useRef(false);
 
-  const [checklist, setChecklist] = useState<PreparationChecklistItem[]>(defaultChecklist);
-  const [environment, setEnvironment] = useState<EnvironmentData>({
-    temperatureCelsius: null,
-    humidityPercent: null
-  });
-  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
+  const [surfaceChecklist, setSurfaceChecklist] = useState<Record<string, boolean>>({});
+  const [cutChecklist, setCutChecklist] = useState<Record<string, boolean>>({});
+  const [materialsChecklist, setMaterialsChecklist] = useState<Record<string, boolean>>({});
+  const [notes, setNotes] = useState('');
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
 
   useEffect(() => {
-    if (!steps.length) return;
-    const hasPreparation = steps.some(step => step.id === 'preparation');
-    if (!hasPreparation) {
-      const targetId = currentStep?.id ?? steps[0]?.id;
-      const targetPath = targetId ? getPPFStepPath(targetId) : null;
-      router.replace(
-        targetPath ? `/tasks/${taskId}/workflow/ppf/${targetPath}` : `/tasks/${taskId}/workflow/ppf`
+    const collected = (stepRecord?.collected_data ?? {}) as PreparationDraft;
+    setSurfaceChecklist(collected.surfaceChecklist ?? {});
+    setCutChecklist(collected.cutChecklist ?? {});
+    setMaterialsChecklist(collected.materialsChecklist ?? {});
+    setNotes(collected.notes ?? '');
+    setPhotos(stepRecord?.photo_urls ?? []);
+  }, [stepRecord?.id, stepRecord?.photo_urls]);
+
+  useEffect(() => {
+    if (!autosaveReady.current) {
+      autosaveReady.current = true;
+      return;
+    }
+    const timeout = setTimeout(() => {
+      void saveDraft(
+        'preparation',
+        {
+          surfaceChecklist,
+          cutChecklist,
+          materialsChecklist,
+          notes,
+        },
+        { photos }
       );
-    }
-  }, [steps, currentStep, router, taskId]);
+    }, 800);
+    return () => clearTimeout(timeout);
+  }, [surfaceChecklist, cutChecklist, materialsChecklist, notes, photos, saveDraft]);
 
-  // Load existing data when component mounts
-  useEffect(() => {
-    // Find preparation step data
-    const preparationStep = stepsData?.steps?.find((step) => step.step_type === 'preparation');
-    const collectedData = preparationStep?.collected_data as PreparationCollectedData | undefined;
-    if (collectedData) {
-      // Restore checklist from collected_data
-      if (collectedData.checklist) {
-        const restoredChecklist = defaultChecklist.map(item => ({
-          ...item,
-          completed: collectedData.checklist?.[item.id] || false
-        }));
-        setChecklist(restoredChecklist);
-      }
+  const surfaceCompleted = SURFACE_CHECKLIST.filter((item) => surfaceChecklist[item.id]).length;
+  const surfaceTotal = SURFACE_CHECKLIST.length;
+  const cutCompleted = CUT_CHECKLIST.filter((item) => cutChecklist[item.id]).length;
+  const cutTotal = CUT_CHECKLIST.length;
+  const canValidate = surfaceCompleted === surfaceTotal && cutCompleted === cutTotal;
 
-      // Restore environment data
-      if (collectedData.environment) {
-        setEnvironment({
-          temperatureCelsius: collectedData.environment.temp_celsius || null,
-          humidityPercent: collectedData.environment.humidity_percent || null
-        });
-      }
+  const summaryText = `${surfaceCompleted}/${surfaceTotal} dégraissage · ${cutCompleted}/${cutTotal} films découpés`;
 
-      // Restore photos from photo_urls if available
-      if (preparationStep?.photo_urls && Array.isArray(preparationStep.photo_urls)) {
-        setUploadedPhotos(preparationStep.photo_urls);
-      }
-    }
-  }, [stepsData]);
+  const stepLabel = `ÉTAPE 2 / ${steps.length || 4}`;
+  const inspectionDone = steps.find((step) => step.id === 'inspection')?.status === 'completed';
 
-  const handleChecklistChange = (itemId: string, completed: boolean) => {
-    setChecklist(prev =>
-      prev.map(item =>
-        item.id === itemId ? { ...item, completed } : item
-      )
-    );
-  };
-
-  const handleEnvironmentChange = (field: keyof EnvironmentData, value: string) => {
-    const numValue = value === '' ? null : parseFloat(value);
-    setEnvironment(prev => ({
-      ...prev,
-      [field]: numValue
-    }));
-  };
-
-  const allChecklistCompleted = checklist.every(item => item.completed);
-  const environmentValid = environment.temperatureCelsius !== null &&
-                          environment.humidityPercent !== null &&
-                          environment.temperatureCelsius >= 10 && environment.temperatureCelsius <= 35 &&
-                          environment.humidityPercent >= 20 && environment.humidityPercent <= 80;
-
-  const canProceed = allChecklistCompleted && environmentValid;
-
-  const handleCompletePreparation = async () => {
-    if (isCompleting) return; // Prevent multiple calls
-    
-    setIsCompleting(true);
+  const handleSaveDraft = async () => {
+    setIsSaving(true);
     try {
-      const collectedData = {
-        checklist: checklist.reduce((acc, item) => ({
-          ...acc,
-          [item.id]: item.completed
-        }), {}),
-        environment: {
-          temp_celsius: environment.temperatureCelsius,
-          humidity_percent: environment.humidityPercent
-        }
-      };
+      await saveDraft(
+        'preparation',
+        { surfaceChecklist, cutChecklist, materialsChecklist, notes },
+        { photos, showToast: true, invalidate: true }
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
-      // Complete preparation step with collected data and photos
-      await advanceToStep('preparation', collectedData, uploadedPhotos.length > 0 ? uploadedPhotos : undefined);
-
+  const handleValidate = async () => {
+    if (!canValidate || isValidating) return;
+    setIsValidating(true);
+    try {
+      await validateStep('preparation', { surfaceChecklist, cutChecklist, materialsChecklist, notes }, photos);
       const nextStepId = getNextPPFStepId(steps, 'preparation');
       if (nextStepId) {
         router.push(`/tasks/${taskId}/workflow/ppf/${getPPFStepPath(nextStepId)}`);
       } else {
         router.push(`/tasks/${taskId}/workflow/ppf`);
       }
-    } catch (error) {
-      console.error('Error completing preparation:', error);
     } finally {
-      setIsCompleting(false);
-    }
-  };
-
-  const stepIndex = steps.findIndex(step => step.id === 'preparation');
-  const stepLabel = stepIndex >= 0 ? `${t('interventions.steps')} ${stepIndex + 1}/${steps.length}` : t('interventions.steps');
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
-  };
-
-  const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0
+      setIsValidating(false);
     }
   };
 
   return (
-    <motion.div
-      className="space-y-8"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
+    <PpfWorkflowLayout
+      stepId="preparation"
+      actionBar={{
+        summary: summaryText,
+        onSaveDraft: handleSaveDraft,
+        onValidate: handleValidate,
+        validateLabel: 'Préparation',
+        saveDisabled: isSaving,
+        validateDisabled: !canValidate || isValidating,
+      }}
     >
-      {/* Header Section */}
-      <motion.div
-        className="text-center space-y-4"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
-        <div className="flex items-center justify-center space-x-3 mb-4">
-          <div className="p-3 bg-purple-500/10 rounded-full">
-            <Wrench className="h-8 w-8 text-purple-500" />
+      <PpfStepHero
+        stepLabel={stepLabel}
+        title="🛠️ Préparation de surface"
+        subtitle="Préparation méticuleuse des zones et contrôle des matériaux"
+        badge={inspectionDone ? '✓ Inspection' : undefined}
+        rightSlot={
+          <div>
+            <div className="text-[10px] uppercase font-semibold text-white/70">Durée estimée</div>
+            <div className="text-2xl font-extrabold">~18 min</div>
+            <div className="text-[10px] text-white/60">Étape 2</div>
           </div>
-          <div className="text-sm bg-purple-500/10 text-purple-400 px-3 py-1 rounded-full font-medium">
-            {stepLabel}
-          </div>
-        </div>
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-          Préparation de surface
-        </h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          Préparation méticuleuse de la surface et contrôle des conditions environnementales
-        </p>
-      </motion.div>
+        }
+        progressSegments={{ total: 4, filled: 2 }}
+        gradientClassName="bg-gradient-to-r from-violet-500 to-purple-700"
+      />
 
-      {/* Progress Indicator */}
-      <motion.div
-        className="flex items-center justify-center space-x-4 mb-8"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3, duration: 0.4 }}
-      >
-        <div className="flex items-center space-x-2">
-          <CheckCircle className="h-5 w-5 text-green-500" />
-          <span className="text-sm text-green-400">Inspection</span>
-        </div>
-        <div className="w-8 h-px bg-purple-500"></div>
-        <div className="flex items-center space-x-2">
-          <div className="w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center">
-            <span className="text-xs font-bold text-white">2</span>
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="space-y-4">
+          <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
+            <div className="mb-3 flex items-center justify-between">
+              <div className="text-sm font-semibold text-foreground">✅ Checklist Préparation</div>
+              <span className="rounded-full bg-[hsl(var(--rpma-surface))] px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                {surfaceCompleted} / {surfaceTotal}
+              </span>
+            </div>
+            <PpfChecklist
+              items={SURFACE_CHECKLIST}
+              values={surfaceChecklist}
+              onToggle={(id) => setSurfaceChecklist((prev) => ({ ...prev, [id]: !prev[id] }))}
+            />
           </div>
-          <span className="text-sm font-medium text-purple-400">Préparation</span>
-        </div>
-        <div className="w-8 h-px bg-gray-600"></div>
-        <div className="flex items-center space-x-2">
-          <div className="w-5 h-5 bg-gray-600 rounded-full flex items-center justify-center">
-            <span className="text-xs text-gray-400">3</span>
-          </div>
-          <span className="text-sm text-gray-400">Installation</span>
-        </div>
-      </motion.div>
 
-      <motion.div
-        className="grid grid-cols-1 xl:grid-cols-3 gap-8"
-        variants={containerVariants}
-      >
-        {/* Preparation Checklist */}
-        <motion.div variants={cardVariants}>
-          <Card className="group hover:shadow-[var(--rpma-shadow-soft)] transition-all duration-300 border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))] h-full">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-purple-500/10 rounded-lg">
-                    <CheckCircle className="h-5 w-5 text-purple-500" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-xl text-foreground group-hover:text-purple-400 transition-colors">
-                      Checklist de préparation
-                    </CardTitle>
-                    <CardDescription className="text-muted-foreground">
-                      Procédures de préparation de surface
-                    </CardDescription>
-                  </div>
-                </div>
-                <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  allChecklistCompleted
-                    ? 'bg-green-500/20 text-green-400'
-                    : 'bg-purple-500/20 text-purple-400'
-                }`}>
-                  {checklist.filter(item => item.completed).length}/{checklist.length}
-                </div>
+          <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
+            <div className="mb-3 text-sm font-semibold text-foreground">✂️ Pré-découpe Film PPF</div>
+            <div className="overflow-hidden rounded-lg border border-[hsl(var(--rpma-border))]">
+              <div className="grid grid-cols-[2fr_70px_70px_90px] gap-3 bg-[hsl(var(--rpma-surface))] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                <span>Zone</span>
+                <span>Surface</span>
+                <span>Film</span>
+                <span>Statut</span>
               </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="space-y-3">
-                {checklist.map((item, index) => (
-                  <motion.div
-                    key={item.id}
-                    className={`flex items-start space-x-4 p-4 rounded-lg border transition-all duration-200 ${
-                      item.completed
-                        ? 'bg-green-500/5 border-green-500/30 hover:bg-green-500/10'
-                        : 'bg-[hsl(var(--rpma-surface))] border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))]/30 hover:bg-[hsl(var(--rpma-surface))]'
-                    }`}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1, duration: 0.3 }}
+              {CUT_ROWS.map((row) => {
+                const isReady = Boolean(cutChecklist[row.id]);
+                return (
+                  <div
+                    key={row.id}
+                    className="grid grid-cols-[2fr_70px_70px_90px] gap-3 border-t border-[hsl(var(--rpma-border))] px-3 py-2 text-xs"
                   >
-                    <Checkbox
-                      id={item.id}
-                      checked={item.completed}
-                      onCheckedChange={(checked) => handleChecklistChange(item.id, checked as boolean)}
-                      className="mt-1 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <label
-                        htmlFor={item.id}
-                        className={`text-sm font-medium cursor-pointer block ${
-                          item.completed ? 'text-green-400' : 'text-foreground'
-                        }`}
-                      >
-                        {item.label}
-                      </label>
-                      <p className={`text-xs mt-1 leading-relaxed ${
-                        item.completed ? 'text-[hsl(var(--rpma-teal))]' : 'text-muted-foreground'
-                      }`}>
-                        {item.description}
-                      </p>
-                    </div>
-                    {item.completed && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="flex-shrink-0"
-                      >
-                        <CheckCircle className="h-5 w-5 text-green-500" />
-                      </motion.div>
-                    )}
-                  </motion.div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Environment Data */}
-        <motion.div variants={cardVariants}>
-          <Card className="group hover:shadow-[var(--rpma-shadow-soft)] transition-all duration-300 border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))] h-full">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-500/10 rounded-lg">
-                    <Thermometer className="h-5 w-5 text-blue-500" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-xl text-foreground group-hover:text-blue-400 transition-colors">
-                      Conditions environnementales
-                    </CardTitle>
-                    <CardDescription className="text-muted-foreground">
-                      Contrôle des paramètres pour une application optimale
-                    </CardDescription>
-                  </div>
-                </div>
-                {environmentValid && (
-                  <div className="flex items-center space-x-2 bg-green-500/10 px-3 py-1 rounded-full">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="text-sm font-medium text-green-400">Optimal</span>
-                  </div>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="space-y-6">
-                <div className="space-y-3">
-                  <Label htmlFor="temperature" className="flex items-center text-foreground font-medium">
-                    <Thermometer className="h-4 w-4 mr-2 text-red-400" />
-                    Température (°C)
-                  </Label>
-                  <Input
-                    id="temperature"
-                    type="number"
-                    min="10"
-                    max="35"
-                    step="0.1"
-                    placeholder="22.5"
-                    value={environment.temperatureCelsius || ''}
-                    onChange={(e) => handleEnvironmentChange('temperatureCelsius', e.target.value)}
-                    className={`bg-[hsl(var(--rpma-surface))] border-[hsl(var(--rpma-border))] h-12 text-base transition-all duration-200 ${
-                      environment.temperatureCelsius !== null &&
-                      (environment.temperatureCelsius < 15 || environment.temperatureCelsius > 25)
-                        ? 'border-yellow-500/50 focus:border-yellow-500'
-                        : environment.temperatureCelsius !== null &&
-                          environment.temperatureCelsius >= 15 && environment.temperatureCelsius <= 25
-                        ? 'border-green-500/50 focus:border-green-500'
-                        : ''
-                    }`}
-                  />
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground">
-                      Recommandé: 15-25°C
-                    </p>
-                    {environment.temperatureCelsius !== null && (
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        environment.temperatureCelsius >= 15 && environment.temperatureCelsius <= 25
-                          ? 'bg-green-500/20 text-green-400'
-                          : 'bg-yellow-500/20 text-yellow-400'
-                      }`}>
-                        {environment.temperatureCelsius >= 15 && environment.temperatureCelsius <= 25 ? 'Optimal' : 'Ajuster'}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <Label htmlFor="humidity" className="flex items-center text-foreground font-medium">
-                    <Droplets className="h-4 w-4 mr-2 text-blue-400" />
-                    Humidité (%)
-                  </Label>
-                  <Input
-                    id="humidity"
-                    type="number"
-                    min="20"
-                    max="80"
-                    step="1"
-                    placeholder="45"
-                    value={environment.humidityPercent || ''}
-                    onChange={(e) => handleEnvironmentChange('humidityPercent', e.target.value)}
-                    className={`bg-[hsl(var(--rpma-surface))] border-[hsl(var(--rpma-border))] h-12 text-base transition-all duration-200 ${
-                      environment.humidityPercent !== null &&
-                      (environment.humidityPercent < 30 || environment.humidityPercent > 60)
-                        ? 'border-yellow-500/50 focus:border-yellow-500'
-                        : environment.humidityPercent !== null &&
-                          environment.humidityPercent >= 30 && environment.humidityPercent <= 60
-                        ? 'border-green-500/50 focus:border-green-500'
-                        : ''
-                    }`}
-                  />
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground">
-                      Recommandé: 30-60%
-                    </p>
-                    {environment.humidityPercent !== null && (
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        environment.humidityPercent >= 30 && environment.humidityPercent <= 60
-                          ? 'bg-green-500/20 text-green-400'
-                          : 'bg-yellow-500/20 text-yellow-400'
-                      }`}>
-                        {environment.humidityPercent >= 30 && environment.humidityPercent <= 60 ? 'Optimal' : 'Ajuster'}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {!environmentValid && (environment.temperatureCelsius !== null || environment.humidityPercent !== null) && (
-                  <motion.div
-                    className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <div className="flex items-start space-x-3">
-                      <AlertTriangle className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium text-yellow-400 mb-1">
-                          Conditions non optimales
-                        </p>
-                        <p className="text-sm text-yellow-300/80">
-                          Les conditions environnementales sont hors des plages recommandées. L&apos;application du PPF peut être compromise.
-                        </p>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Photo Documentation */}
-        <motion.div variants={cardVariants}>
-          <Card className="group hover:shadow-[var(--rpma-shadow-soft)] transition-all duration-300 border-[hsl(var(--rpma-border))] hover:border-[hsl(var(--rpma-teal))] h-full">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-green-500/10 rounded-lg">
-                    <Camera className="h-5 w-5 text-green-500" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-xl text-foreground group-hover:text-green-400 transition-colors">
-                      Photos de préparation
-                    </CardTitle>
-                    <CardDescription className="text-muted-foreground">
-                      Documentation visuelle (optionnel)
-                    </CardDescription>
-                  </div>
-                </div>
-                {uploadedPhotos.length > 0 && (
-                  <div className="flex items-center space-x-2 bg-green-500/10 px-3 py-1 rounded-full">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="text-sm font-medium text-green-400">
-                      {uploadedPhotos.length} photo{uploadedPhotos.length > 1 ? 's' : ''}
+                    <span>{row.label}</span>
+                    <span>{row.surface}</span>
+                    <span>{row.film}</span>
+                    <span className={isReady ? 'text-emerald-600' : 'text-muted-foreground'}>
+                      {isReady ? '✓ Prêt' : 'À faire'}
                     </span>
                   </div>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <PhotoUpload
-                taskId={taskId}
-                stepId="preparation"
-                type="before"
-                maxFiles={6}
-                minPhotos={0}
-                onUploadComplete={(urls: string[]) => setUploadedPhotos(urls)}
-                title="Photos de préparation"
-                uploadButtonText="Ajouter des photos"
+                );
+              })}
+            </div>
+            <div className="mt-3">
+              <PpfChecklist
+                items={CUT_CHECKLIST}
+                values={cutChecklist}
+                onToggle={(id) => setCutChecklist((prev) => ({ ...prev, [id]: !prev[id] }))}
               />
-            </CardContent>
-          </Card>
-        </motion.div>
-      </motion.div>
-
-      {/* Navigation */}
-      <motion.div
-        className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-8 border-t border-[hsl(var(--rpma-border))]"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8, duration: 0.4 }}
-      >
-        <div className="text-center sm:text-left">
-          <div className="flex items-center space-x-2 mb-2">
-            <div className={`w-3 h-3 rounded-full ${
-              canProceed ? 'bg-green-500' : 'bg-yellow-500'
-            }`}></div>
-            <p className={`text-sm font-medium ${
-              canProceed ? 'text-green-400' : 'text-yellow-400'
-            }`}>
-              {canProceed ? 'Prêt pour l\'installation' : 'Complétez toutes les étapes requises'}
-            </p>
+            </div>
           </div>
-          <p className="text-muted-foreground text-sm">
-            Checklist: {checklist.filter(item => item.completed).length}/{checklist.length} •
-            Environnement: {environmentValid ? 'Optimal' : 'À ajuster'}
-          </p>
         </div>
-        <Button
-          onClick={handleCompletePreparation}
-          disabled={!canProceed || isCompleting}
-          className={`min-w-40 h-12 text-base font-medium transition-all duration-300 ${
-            canProceed
-              ? 'bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-600/25 hover:shadow-xl hover:shadow-purple-600/30'
-              : 'bg-gray-600 cursor-not-allowed'
-          }`}
-        >
-          <span className="flex items-center justify-center space-x-2">
-            <span>{isCompleting ? t('common.loading') : t('common.next')}</span>
-            <ArrowRight className={`h-5 w-5 transition-transform ${isCompleting ? '' : 'group-hover:translate-x-1'}`} />
-          </span>
-        </Button>
-      </motion.div>
-    </motion.div>
+
+        <div className="space-y-4">
+          <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
+            <div className="mb-3 text-sm font-semibold text-foreground">📦 Vérification Matériaux</div>
+            <PpfChecklist
+              items={MATERIALS_CHECKLIST}
+              values={materialsChecklist}
+              onToggle={(id) => setMaterialsChecklist((prev) => ({ ...prev, [id]: !prev[id] }))}
+            />
+          </div>
+
+          <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
+            <label className="mb-2 block text-xs font-semibold text-foreground">Notes préparation</label>
+            <textarea
+              className="w-full rounded-md border border-[hsl(var(--rpma-border))] px-3 py-2 text-sm"
+              rows={4}
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+              placeholder="Observations sur la préparation..."
+            />
+          </div>
+
+          <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
+            <PpfPhotoGrid
+              taskId={taskId}
+              interventionId={intervention?.id}
+              stepId="preparation"
+              type="before"
+              photos={photos}
+              minPhotos={0}
+              onChange={setPhotos}
+              title="📷 Photos de préparation"
+              hint="Documentation visuelle (optionnel)"
+            />
+          </div>
+        </div>
+      </div>
+    </PpfWorkflowLayout>
   );
 }

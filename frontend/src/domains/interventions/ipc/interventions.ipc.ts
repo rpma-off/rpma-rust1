@@ -17,15 +17,6 @@ import type {
   FinalizeInterventionRequest
 } from '@/lib/backend';
 
-interface SaveStepProgressAction {
-  intervention_id: unknown;
-  step_id: unknown;
-  progress_percentage: unknown;
-  current_phase: unknown;
-  notes: unknown;
-  temporary_data: unknown;
-}
-
 export const interventionsIpc = {
   start: async (data: StartInterventionRequest, sessionToken: string) => {
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_WORKFLOW, {
@@ -176,16 +167,13 @@ export const interventionsIpc = {
   },
 
   saveStepProgress: async (stepData: SaveStepProgressRequest, sessionToken: string) => {
-    const data = stepData as unknown as SaveStepProgressAction;
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_PROGRESS, {
       action: {
         action: 'SaveStepProgress',
-        intervention_id: data.intervention_id,
-        step_id: data.step_id,
-        progress_percentage: data.progress_percentage,
-        current_phase: data.current_phase,
-        notes: data.notes,
-        temporary_data: data.temporary_data,
+        step_id: stepData.step_id,
+        collected_data: stepData.collected_data,
+        notes: stepData.notes,
+        photos: stepData.photos,
       } as unknown as JsonObject,
       sessionToken: sessionToken
     });

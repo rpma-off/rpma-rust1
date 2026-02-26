@@ -30,5 +30,8 @@ docs/duplication-report.json
 migration-tests/results/
 maintainability-report.json
 
+# Local photo uploads (legacy repo-root path during dev)
+/photos/
+
 start_dev.bat
 stop_dev.bat

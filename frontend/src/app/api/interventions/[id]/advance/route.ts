@@ -14,6 +14,7 @@ import { interventionWorkflowService } from '@/domains/interventions/server';
 import type { AdvanceStepDTO } from '@/types/ppf-intervention';
 import { handleApiError } from '@/lib/api-error';
 import { ApiResponseFactory, HttpStatus } from '@/lib/http-status';
+import type { AdvanceStepRequest } from '@/lib/backend';
 
 // Sch�ma de validation pour avancer une �tape - red�fini pour �viter le bug
 const AdvanceStepSchema = z.object({
@@ -117,7 +118,37 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
 
     // 7. Appel du service m�tier
-    const result = await workflowService.advanceStep(interventionId, dto, '');
+    const stepsResult = await workflowService.getInterventionSteps(interventionId, sessionToken);
+    if (!stepsResult.success || !stepsResult.data) {
+      return NextResponse.json(ApiResponseFactory.error(
+        'Unable to load intervention steps',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      ));
+    }
+
+    const matchedStep = stepsResult.data.data.find((step) => {
+      const candidate = step as { step_number?: number };
+      return candidate.step_number === dto.stepNumber;
+    });
+
+    if (!matchedStep?.id) {
+      return NextResponse.json(ApiResponseFactory.error(
+        `Step ${dto.stepNumber} not found`,
+        HttpStatus.NOT_FOUND
+      ));
+    }
+
+    const advancePayload: AdvanceStepRequest = {
+      intervention_id: interventionId,
+      step_id: matchedStep.id,
+      collected_data: (dto.data as AdvanceStepRequest['collected_data']) ?? {},
+      photos: validationResult.data.photo_urls ?? null,
+      notes: validationResult.data.notes ?? null,
+      quality_check_passed: true,
+      issues: null,
+    };
+
+    const result = await workflowService.advanceStep(interventionId, advancePayload, sessionToken);
 
     if (!result.success) {
       return NextResponse.json(ApiResponseFactory.error(

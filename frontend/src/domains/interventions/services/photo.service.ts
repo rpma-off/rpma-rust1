@@ -47,11 +47,12 @@ export class PPFPhotoService {
   }
 
   private static mapPhotoResponse(photo: Record<string, unknown>, interventionId: string): PPFPhoto {
+    const preferredUrl = photo.url || photo.storage_url || photo.file_path || '';
     return {
       id: String(photo.id || ''),
       interventionId: String(photo.intervention_id || interventionId),
       stepId: String(photo.step_id || ''),
-      url: String(photo.file_path || photo.url || ''),
+      url: String(preferredUrl),
       filename: String(photo.file_name || photo.filename || ''),
       uploadedAt: photo.created_at ? new Date(String(photo.created_at)) : new Date(),
       angle: photo.angle ? String(photo.angle) : undefined,
@@ -63,9 +64,14 @@ export class PPFPhotoService {
   static async uploadPhoto(interventionId: string, _stepNumber: number, file: File): Promise<PPFPhoto> {
     try {
       const token = await this.getSessionToken();
+      const buffer = await file.arrayBuffer();
       const result = await ipcClient.photos.upload(
         interventionId,
-        file.name,
+        {
+          name: file.name,
+          mimeType: file.type || 'application/octet-stream',
+          bytes: new Uint8Array(buffer),
+        },
         'intervention',
         token
       );

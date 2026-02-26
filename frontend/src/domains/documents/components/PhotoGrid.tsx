@@ -2,6 +2,7 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Photo } from '@/lib/ipc/types/index';
+import { resolveLocalImageUrl } from '@/shared/utils';
 
 interface PhotoGridProps {
   photos: Photo[];
@@ -34,7 +35,7 @@ export function PhotoGrid({ photos, onPhotoClick, selectedPhotoId }: PhotoGridPr
         >
           <div className="relative aspect-square bg-[hsl(var(--rpma-surface-light))]">
             <img
-              src={`file://${photo.file_path}`}
+              src={resolveLocalImageUrl(photo.file_path)}
               alt={photo.photo_type || 'Photo'}
               className="w-full h-full object-cover"
             />

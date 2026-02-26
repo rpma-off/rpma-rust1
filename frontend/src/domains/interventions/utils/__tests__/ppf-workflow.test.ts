@@ -1,5 +1,5 @@
 import type { InterventionStep } from '@/lib/backend';
-import { buildPPFStepsFromData, DEFAULT_PPF_STEP_ORDER, getCurrentPPFStepId } from '../ppf-workflow';
+import { buildPPFStepsFromData, DEFAULT_PPF_STEP_ORDER, getCurrentPPFStepId, getFirstAllowedPPFStepId } from '../ppf-workflow';
 
 const createStep = (overrides: Partial<InterventionStep>): InterventionStep => ({
   id: overrides.id ?? `step-${overrides.step_type ?? 'inspection'}`,
@@ -75,5 +75,32 @@ describe('ppf-workflow helpers', () => {
 
     const current = getCurrentPPFStepId(stepsData, 'in_progress');
     expect(current).toBe('installation');
+  });
+
+  it('returns the first allowed step based on completion order', () => {
+    const stepsData = [
+      createStep({ step_type: 'inspection', step_number: 1, step_status: 'completed' }),
+      createStep({ step_type: 'preparation', step_number: 2, step_status: 'pending' }),
+      createStep({ step_type: 'installation', step_number: 3, step_status: 'pending' }),
+    ];
+
+    const derivedSteps = buildPPFStepsFromData(stepsData);
+    const allowed = getFirstAllowedPPFStepId(derivedSteps);
+
+    expect(allowed).toBe('preparation');
+  });
+
+  it('returns null when all steps are completed', () => {
+    const stepsData = [
+      createStep({ step_type: 'inspection', step_number: 1, step_status: 'completed' }),
+      createStep({ step_type: 'preparation', step_number: 2, step_status: 'completed' }),
+      createStep({ step_type: 'installation', step_number: 3, step_status: 'completed' }),
+      createStep({ step_type: 'finalization', step_number: 4, step_status: 'completed' }),
+    ];
+
+    const derivedSteps = buildPPFStepsFromData(stepsData);
+    const allowed = getFirstAllowedPPFStepId(derivedSteps);
+
+    expect(allowed).toBeNull();
   });
 });

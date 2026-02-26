@@ -167,7 +167,17 @@ class WorkflowServiceAdapter {
     const sessionToken = await getSessionToken();
     const urls: string[] = [];
     for (const file of files) {
-      const result = await ipcClient.photos.upload(workflowId, file.name, 'during', sessionToken);
+      const buffer = await file.arrayBuffer();
+      const result = await ipcClient.photos.upload(
+        workflowId,
+        {
+          name: file.name,
+          mimeType: file.type || 'application/octet-stream',
+          bytes: new Uint8Array(buffer),
+        },
+        'during',
+        sessionToken
+      );
       const resultObj = result as unknown as Record<string, unknown>;
       if (resultObj && 'file_path' in resultObj) {
         urls.push(resultObj.file_path as string);

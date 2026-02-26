@@ -15,6 +15,7 @@ use tracing::{debug, error, info, warn};
 
 // Re-export specialized modules for internal use
 pub use super::queries::*;
+pub use super::history::*;
 pub use super::validation::validate_task_assignment_change;
 pub use super::validation::*;
 

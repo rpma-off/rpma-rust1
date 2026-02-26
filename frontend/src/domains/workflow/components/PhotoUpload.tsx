@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { useDropzone } from 'react-dropzone';
 import { usePhotoUpload } from '@/domains/documents';
+import { resolveLocalImageUrl, shouldUseUnoptimizedImage, LOCAL_IMAGE_FALLBACK_SRC } from '@/shared/utils';
 
 import { PhotoUploadProps, UploadItem, Photo } from '@/types/photo.types';
 
@@ -392,19 +393,22 @@ export function PhotoUpload({
           <h4 className="text-sm font-medium mb-3">Uploaded Photos</h4>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {existingPhotos.map((photo: Photo) => (
+              (() => {
+                const displaySrc = resolveLocalImageUrl(photo.storage_url || photo.file_path);
+                return (
               <div key={photo.id} className="relative group">
                 <div className="relative w-full h-32">
                   <Image
-                    src={photo.storage_url || photo.file_path}
+                    src={displaySrc}
                     alt={photo.file_name || photo.title || 'Uploaded photo'}
                     fill
                     className="object-cover rounded-lg border"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.onerror = null;
-                      target.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+                      target.src = LOCAL_IMAGE_FALLBACK_SRC;
                     }}
-                    unoptimized={(photo.storage_url || photo.file_path).startsWith('data:')}
+                    unoptimized={shouldUseUnoptimizedImage(displaySrc)}
                   />
                 </div>
                 
@@ -414,7 +418,7 @@ export function PhotoUpload({
                     <Button
                       size="sm"
                       variant="secondary"
-                      onClick={() => setPreviewPhoto(photo.storage_url || photo.file_path)}
+                      onClick={() => setPreviewPhoto(displaySrc)}
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
@@ -437,6 +441,8 @@ export function PhotoUpload({
                   </div>
                 )}
               </div>
+                );
+              })()
             ))}
           </div>
         </div>
@@ -455,11 +461,12 @@ export function PhotoUpload({
               <X className="h-6 w-6" />
             </Button>
             <Image
-              src={previewPhoto}
+              src={resolveLocalImageUrl(previewPhoto)}
               alt="Photo preview"
               width={800}
               height={600}
               className="max-w-full max-h-full object-contain"
+              unoptimized={shouldUseUnoptimizedImage(resolveLocalImageUrl(previewPhoto))}
             />
           </div>
         </div>

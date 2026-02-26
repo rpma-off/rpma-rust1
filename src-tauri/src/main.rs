@@ -262,6 +262,7 @@ fn main() {
             domains::reports::ipc::reports::get_operational_intelligence_report,
             domains::tasks::ipc::task::check_task_assignment,
             domains::tasks::ipc::task::check_task_availability,
+            domains::tasks::ipc::task::get_task_history,
             domains::tasks::ipc::task::validate_task_assignment_change,
             domains::calendar::ipc::calendar::get_events,
             domains::calendar::ipc::calendar::get_event_by_id,

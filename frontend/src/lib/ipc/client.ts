@@ -894,28 +894,40 @@ export const ipcClient = {
 
     // Photo operations
     photos: {
-       list: (interventionId: string, sessionToken: string) =>
-         safeInvoke<Photo[]>('photo_crud', {
-           List: { intervention_id: interventionId },
-           session_token: sessionToken
-         }),
+       list: async (interventionId: string, sessionToken: string): Promise<Photo[]> => {
+         const response = await safeInvoke<{photos: Photo[], total: number}>('document_get_photos', {
+           session_token: sessionToken,
+           request: { intervention_id: interventionId }
+         });
+         return response.photos ?? [];
+       },
 
-       upload: (interventionId: string, filePath: string, photoType: string, sessionToken: string) =>
-         safeInvoke<Photo>('photo_crud', {
-           Store: {
+       upload: async (
+         interventionId: string,
+         file: { name: string; mimeType: string; bytes: Uint8Array },
+         photoType: string,
+         sessionToken: string
+       ): Promise<Photo> => {
+         const response = await safeInvoke<{photo: Photo, file_path: string}>('document_store_photo', {
+           sessionToken: sessionToken,
+           session_token: sessionToken,
+           request: {
              intervention_id: interventionId,
-             file_name: filePath,
-             mime_type: 'image/jpeg',
+             file_name: file.name,
+             mime_type: file.mimeType,
              photo_type: photoType,
              is_required: false
            },
-           session_token: sessionToken
-         }),
+           imageData: Array.from(file.bytes),
+           image_data: Array.from(file.bytes)
+         });
+         return response.photo;
+       },
 
        delete: (photoId: string, sessionToken: string) =>
-         safeInvoke<void>('photo_crud', {
-           Delete: { id: photoId },
-           session_token: sessionToken
+         safeInvoke<void>('document_delete_photo', {
+           session_token: sessionToken,
+           photo_id: photoId
          }),
     },
 

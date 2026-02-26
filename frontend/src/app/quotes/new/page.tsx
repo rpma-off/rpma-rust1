@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useCreateQuote } from '@/domains/quotes';
+import { ClientSelector } from '@/domains/clients';
 import { PageShell } from '@/shared/ui/layout/PageShell';
 import type { CreateQuoteRequest, CreateQuoteItemRequest, QuoteItemKind } from '@/shared/types';
 
@@ -50,9 +51,15 @@ export default function NewQuotePage() {
     setItems(prev => prev.filter((_, i) => i !== index));
   };
 
+  const [clientError, setClientError] = useState<string | null>(null);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!clientId.trim()) return;
+    if (!clientId.trim()) {
+      setClientError('Veuillez sélectionner un client existant.');
+      return;
+    }
+    setClientError(null);
 
     const data: CreateQuoteRequest = {
       client_id: clientId,
@@ -101,16 +108,18 @@ export default function NewQuotePage() {
             <h2 className="text-lg font-semibold text-gray-900">Client</h2>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                ID Client *
+                Client *
               </label>
-              <input
-                type="text"
-                value={clientId}
-                onChange={e => setClientId(e.target.value)}
-                required
-                placeholder="ID du client"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              <ClientSelector
+                value={clientId || undefined}
+                onValueChange={(id) => {
+                  setClientId(id ?? '');
+                  if (id) setClientError(null);
+                }}
               />
+              {clientError && (
+                <p className="mt-1 text-sm text-red-600">{clientError}</p>
+              )}
             </div>
           </div>
 

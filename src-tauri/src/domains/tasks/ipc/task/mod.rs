@@ -6,6 +6,7 @@
 // Refactored task command modules
 pub mod client_integration;
 pub mod facade;
+pub mod history;
 pub mod queries;
 pub mod statistics;
 pub mod validation;

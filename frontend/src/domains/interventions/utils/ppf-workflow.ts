@@ -130,3 +130,23 @@ export const getNextPPFStepId = (
   }
   return steps[currentIndex + 1]?.id ?? null;
 };
+
+export const getFirstAllowedPPFStepId = (
+  steps: Array<{ id: StepType; status: PPFDerivedStepStatus; order: number }>
+): StepType | null => {
+  if (!steps.length) return null;
+  const ordered = [...steps].sort((a, b) => a.order - b.order);
+
+  for (let index = 0; index < ordered.length; index += 1) {
+    const step = ordered[index];
+    const prev = ordered[index - 1];
+    const prevCompleted = index === 0 ? true : prev?.status === 'completed';
+
+    if (prevCompleted && step.status !== 'completed') {
+      return step.id;
+    }
+  }
+
+  const allCompleted = ordered.every(step => step.status === 'completed');
+  return allCompleted ? null : ordered[0]?.id ?? null;
+};

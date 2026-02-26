@@ -1,4 +1,4 @@
-import type { UserSession, UserRole, Task, Client } from '@/lib/backend';
+import type { UserSession, UserRole, Task, Client, Intervention, InterventionStep } from '@/lib/backend';
 import type { Material, Supplier, MaterialCategory } from '@/shared/types';
 
 export interface MockUser {
@@ -18,7 +18,21 @@ export interface MockFixtures {
   materials: Material[];
   suppliers: Supplier[];
   categories: MaterialCategory[];
+  interventions?: MockIntervention[];
+  interventionSteps?: MockInterventionStep[];
 }
+
+export type MockIntervention = Omit<Intervention, 'created_at' | 'updated_at' | 'last_synced_at'> & {
+  created_at: string;
+  updated_at: string;
+  last_synced_at: string | null;
+};
+
+export type MockInterventionStep = Omit<InterventionStep, 'created_at' | 'updated_at' | 'last_synced_at'> & {
+  created_at: string;
+  updated_at: string;
+  last_synced_at: string | null;
+};
 
 const nowIso = () => new Date().toISOString();
 

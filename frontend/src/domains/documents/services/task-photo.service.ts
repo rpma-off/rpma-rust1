@@ -43,6 +43,15 @@ export interface TaskPhotoUploadResult {
 }
 
 export class TaskPhotoService {
+  private static async buildUploadFile(file: File): Promise<{ name: string; mimeType: string; bytes: Uint8Array }> {
+    const buffer = await file.arrayBuffer();
+    return {
+      name: file.name,
+      mimeType: file.type || 'application/octet-stream',
+      bytes: new Uint8Array(buffer),
+    };
+  }
+
   private static async getSessionToken(): Promise<string> {
     const session = await AuthSecureStorage.getSession();
     if (!session.token) {
@@ -52,15 +61,18 @@ export class TaskPhotoService {
   }
 
   private static mapPhotoResponse(raw: Record<string, unknown>): TaskPhoto {
+    const rawUrl = raw.url || raw.storage_url;
+    const rawFilePath = raw.file_path || raw.file_name || '';
+
     return {
       id: String(raw.id || ''),
       task_id: String(raw.task_id || raw.intervention_id || ''),
       photo_type: (raw.photo_type as TaskPhoto['photo_type']) || 'during',
       step_id: raw.step_id ? String(raw.step_id) : undefined,
-      file_path: String(raw.file_path || raw.file_name || ''),
+      file_path: String(rawFilePath),
       file_size: typeof raw.file_size === 'number' ? raw.file_size : 0,
       mime_type: String(raw.mime_type || 'image/jpeg'),
-      url: String(raw.file_path || raw.url || ''),
+      url: String(rawUrl || rawFilePath),
       description: raw.description ? String(raw.description) : undefined,
       taken_at: raw.taken_at ? String(raw.taken_at) : undefined,
       created_at: String(raw.created_at || new Date().toISOString()),
@@ -96,12 +108,8 @@ export class TaskPhotoService {
   static async createTaskPhoto(data: CreateTaskPhotoData): Promise<{ data: TaskPhoto; error: null } | { data: null; error: Error }> {
     try {
       const token = await this.getSessionToken();
-      const result = await ipcClient.photos.upload(
-        data.task_id,
-        data.file.name,
-        data.photo_type,
-        token
-      );
+      const uploadFile = await this.buildUploadFile(data.file);
+      const result = await ipcClient.photos.upload(data.task_id, uploadFile, data.photo_type, token);
 
       const raw = result as unknown as Record<string, unknown>;
       const photo = this.mapPhotoResponse({ ...raw, task_id: data.task_id, step_id: data.step_id, description: data.description });

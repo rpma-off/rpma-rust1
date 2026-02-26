@@ -123,20 +123,41 @@ export function WorkflowProvider({
     workflowServiceRef.current = getWorkflowServiceInstance();
   }
   const workflowService = workflowServiceRef.current;
+  const mapPpfStepToWorkflowExecutionStep = useCallback((step: NonNullable<PPFInterventionData['steps']>[number]): WorkflowExecutionStep => ({
+    id: step.id,
+    workflowExecutionId: step.intervention_id || step.interventionId || '',
+    stepId: step.id,
+    stepOrder: step.step_number || step.stepNumber || 0,
+    status: (step.status || 'pending') as WorkflowStepStatus,
+    startedAt: step.started_at || step.startedAt || null,
+    completedAt: step.completed_at || step.completedAt || null,
+    durationSeconds: step.duration_seconds || 0,
+    notes: step.description || undefined,
+    photos: step.photos?.map(p => p.url) || [],
+    checklistCompletion: (step.collected_data as Record<string, unknown>) || {},
+    startedBy: step.approved_by || null,
+    completedBy: step.approved_by || null,
+    createdAt: step.created_at || '',
+    updatedAt: step.updated_at || '',
+    data: (step.collected_data as Record<string, unknown>) || {},
+  }), []);
+
   // Prevent duplicate loads in StrictMode/dev due to double-invoked effects
   const loadInProgressRef = useRef<string | null>(null);
   const lastLoadedTaskRef = useRef<string | null>(null);
 
   // Helper to map PPFInterventionData to WorkflowExecution
   const mapPPFInterventionToWorkflowExecution = useCallback((ppfIntervention: PPFInterventionData): WorkflowExecution => {
+    const mappedSteps = (ppfIntervention.steps || []).map(mapPpfStepToWorkflowExecutionStep);
+    const currentStep = mappedSteps.find(step => step.status === 'in_progress') || null;
     return {
       id: ppfIntervention.id,
       workflowId: ppfIntervention.id, // Use intervention ID as workflow ID
       taskId: ppfIntervention.taskId,
       templateId: 'ppf-workflow-template',
       status: ppfIntervention.status as unknown as WorkflowExecutionStatus,
-      currentStepId: ppfIntervention.completed_steps_count?.toString() || null,
-      steps: [], // TODO: Map PPFInterventionStep[] to WorkflowExecutionStep[]
+      currentStepId: currentStep?.id || mappedSteps.find(step => step.status !== 'completed')?.id || null,
+      steps: mappedSteps,
       startedAt: ppfIntervention.actual_start || ppfIntervention.scheduled_start || '',
       completedAt: ppfIntervention.intervention_completed_at || undefined,
       createdBy: ppfIntervention.created_by || '',
@@ -144,7 +165,7 @@ export function WorkflowProvider({
       createdAt: ppfIntervention.created_at || '',
       updatedAt: ppfIntervention.updated_at || ''
     };
-  }, []);
+  }, [mapPpfStepToWorkflowExecutionStep]);
 
   const loadWorkflow = useCallback(async (taskId: string) => {
     if (!user) return;
@@ -188,25 +209,7 @@ export function WorkflowProvider({
     if (initialWorkflow) {
       console.log('✨ WorkflowContext: Using initial workflow from props.');
       setWorkflow(mapPPFInterventionToWorkflowExecution(initialWorkflow));
-      setSteps(initialWorkflow.steps?.map(step => ({
-        id: step.id,
-        workflowExecutionId: step.intervention_id || '',
-        stepId: step.id,
-        stepOrder: step.step_number || 0,
-        status: (step.status || 'pending') as WorkflowStepStatus,
-        startedAt: step.started_at || null,
-        completedAt: step.completed_at || null,
-        durationSeconds: step.duration_seconds || 0,
-        notes: step.description || undefined,
-        photos: step.photos?.map(p => p.url) || [],
-        checklistCompletion: (step.collected_data as Record<string, unknown>) || {},
-        startedBy: step.approved_by || null,
-        completedBy: step.approved_by || null,
-        createdAt: step.created_at || '',
-        updatedAt: step.updated_at || '',
-        sopTemplateStep: null,
-        checklistItems: [],
-      })) || []);
+      setSteps(initialWorkflow.steps?.map(mapPpfStepToWorkflowExecutionStep) || []);
     } else if (taskId && user) {
       // Avoid immediate duplicate loads for the same task
       if (lastLoadedTaskRef.current !== taskId) {
@@ -215,7 +218,7 @@ export function WorkflowProvider({
     }
     // We intentionally exclude `steps` from deps to avoid infinite loops
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [taskId, user, loadWorkflow, initialWorkflow, mapPPFInterventionToWorkflowExecution]);
+  }, [taskId, user, loadWorkflow, initialWorkflow, mapPPFInterventionToWorkflowExecution, mapPpfStepToWorkflowExecutionStep]);
 
   // Update current step when workflow changes
   useEffect(() => {

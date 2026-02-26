@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Download, Trash2, ZoomIn } from 'lucide-react';
 import { usePhotos } from '../hooks';
 import type { Photo } from '@/lib/ipc/types/index';
+import { resolveLocalImageUrl } from '@/shared/utils';
 
 interface PhotoGalleryProps {
   interventionId: string;
@@ -55,7 +56,7 @@ export function PhotoGallery({ interventionId, onPhotoClick, onDelete }: PhotoGa
         <Card key={photo.id} className="rpma-shell overflow-hidden">
           <div className="relative aspect-square bg-[hsl(var(--rpma-surface-light))]">
             <img
-              src={`file://${photo.file_path}`}
+              src={resolveLocalImageUrl(photo.file_path)}
               alt={photo.photo_type || 'Photo'}
               className="w-full h-full object-cover cursor-pointer"
               onClick={() => onPhotoClick?.(photo)}

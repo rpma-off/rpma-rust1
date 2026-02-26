@@ -5,11 +5,12 @@
  * @date 2025-01-20
  */
 
- import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
  export const dynamic = 'force-dynamic';
 import { z } from 'zod';
 import { interventionWorkflowService } from '@/domains/interventions/server';
+import type { FinalizeInterventionRequest } from '@/lib/backend';
 
 // Sch�ma de validation pour finaliser une intervention
 const FinalizeInterventionSchema = z.object({
@@ -110,7 +111,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
 
     // V�rifier que l'intervention est en status FINALIZING
-    if (interventionCheck.data?.status !== 'finalizing') {
+    if (interventionCheck.data?.status === 'completed') {
       return NextResponse.json(
         { 
           error: 'Intervention is not ready for finalization',
@@ -152,7 +153,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
 
     // 8. Appel du service m�tier
-    const result = await workflowService.finalizeIntervention(interventionId, dto, '');
+    const finalizePayload: FinalizeInterventionRequest = {
+      intervention_id: interventionId,
+      collected_data: validationResult.data as unknown as FinalizeInterventionRequest['collected_data'],
+      photos: validationResult.data.final_photo_urls ?? null,
+      customer_satisfaction: validationResult.data.customer_satisfaction ?? null,
+      quality_score: validationResult.data.quality_score ?? null,
+      final_observations: validationResult.data.final_observations ?? null,
+      customer_signature: validationResult.data.customer_signature ?? null,
+      customer_comments: validationResult.data.customer_comments ?? null,
+    };
+
+    const result = await workflowService.finalizeIntervention(interventionId, finalizePayload, sessionToken);
 
     if (!result.success) {
       return NextResponse.json(
@@ -165,9 +177,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
 
     // 9. Retour de la r�ponse de succ�s avec r�sum� complet
-    const typedData = result.data as {
-      intervention: { intervention_completed_at: string };
-      completion_summary: { efficiency_rating: number; quality_score: number };
+    const typedData = (result.data ?? {}) as {
+      intervention?: { intervention_completed_at?: string };
+      completionSummary?: { efficiencyRating?: number; qualityScore?: number };
+      completion_summary?: { efficiency_rating?: number; quality_score?: number };
       certificates?: Record<string, unknown>;
     };
     return NextResponse.json(
@@ -177,9 +190,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         message: 'Intervention finalized successfully',
         summary: {
           intervention_id: interventionId,
-          completion_time: typedData.intervention.intervention_completed_at,
-          efficiency_rating: typedData.completion_summary.efficiency_rating,
-          quality_score: typedData.completion_summary.quality_score,
+          completion_time: typedData.intervention?.intervention_completed_at ?? null,
+          efficiency_rating: typedData.completion_summary?.efficiency_rating ?? typedData.completionSummary?.efficiencyRating ?? null,
+          quality_score: typedData.completion_summary?.quality_score ?? typedData.completionSummary?.qualityScore ?? null,
           certificates_generated: !!typedData.certificates
         }
       },
