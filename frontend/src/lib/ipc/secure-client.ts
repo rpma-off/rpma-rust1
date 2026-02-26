@@ -468,25 +468,28 @@ export const createSecureIpcClient = (currentUser: UserAccount | null) => {
 
     // Photos operations with permission checks
     photos: {
-      upload: (interventionId: string, filePath: string, photoType: string, sessionToken: string) =>
-        withPermissionCheck(currentUser, 'photo:upload', () =>
-          safeInvoke<Photo>('photo_crud', {
-            Store: {
+      upload: async (interventionId: string, filePath: string, photoType: string, sessionToken: string): Promise<Photo> => {
+        const response = await withPermissionCheck(currentUser, 'photo:upload', () =>
+          safeInvoke<{photo: Photo, file_path: string}>('document_store_photo', {
+            session_token: sessionToken,
+            request: {
               intervention_id: interventionId,
               file_name: filePath,
               mime_type: 'image/jpeg',
               photo_type: sanitizeInput(photoType),
               is_required: false
             },
-            session_token: sessionToken
+            image_data: []
           })
-        ),
+        );
+        return response.photo;
+      },
 
       delete: (photoId: string, sessionToken: string) =>
         withPermissionCheck(currentUser, 'photo:delete', () =>
-          safeInvoke<void>('photo_crud', {
-            Delete: { id: photoId },
-            session_token: sessionToken
+          safeInvoke<void>('document_delete_photo', {
+            session_token: sessionToken,
+            photo_id: photoId
           })
         ),
     },

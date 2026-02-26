@@ -894,28 +894,33 @@ export const ipcClient = {
 
     // Photo operations
     photos: {
-       list: (interventionId: string, sessionToken: string) =>
-         safeInvoke<Photo[]>('photo_crud', {
-           List: { intervention_id: interventionId },
-           session_token: sessionToken
-         }),
+       list: async (interventionId: string, sessionToken: string): Promise<Photo[]> => {
+         const response = await safeInvoke<{photos: Photo[], total: number}>('document_get_photos', {
+           session_token: sessionToken,
+           request: { intervention_id: interventionId }
+         });
+         return response.photos ?? [];
+       },
 
-       upload: (interventionId: string, filePath: string, photoType: string, sessionToken: string) =>
-         safeInvoke<Photo>('photo_crud', {
-           Store: {
+       upload: async (interventionId: string, filePath: string, photoType: string, sessionToken: string): Promise<Photo> => {
+         const response = await safeInvoke<{photo: Photo, file_path: string}>('document_store_photo', {
+           session_token: sessionToken,
+           request: {
              intervention_id: interventionId,
              file_name: filePath,
              mime_type: 'image/jpeg',
              photo_type: photoType,
              is_required: false
            },
-           session_token: sessionToken
-         }),
+           image_data: []
+         });
+         return response.photo;
+       },
 
        delete: (photoId: string, sessionToken: string) =>
-         safeInvoke<void>('photo_crud', {
-           Delete: { id: photoId },
-           session_token: sessionToken
+         safeInvoke<void>('document_delete_photo', {
+           session_token: sessionToken,
+           photo_id: photoId
          }),
     },
 

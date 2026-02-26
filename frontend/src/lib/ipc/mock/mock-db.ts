@@ -1180,66 +1180,66 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
           return { type: 'NotFound' };
       }
     }
-    case 'photo_crud': {
-      const request = (args ?? {}) as AnyRecord;
-      if (request.List) {
-        const listRequest = request.List as AnyRecord;
-        return state.photos.filter(photo => photo.intervention_id === listRequest.intervention_id);
-      }
-      if (request.Store) {
-        const storeRequest = request.Store as AnyRecord;
-        const now = nowIso();
-        const id = generateId('photo');
-        const fileName = storeRequest.file_name || `${id}.jpg`;
-        const photo = {
-          id,
-          intervention_id: storeRequest.intervention_id,
-          step_id: storeRequest.step_id ?? null,
-          step_number: storeRequest.step_number ?? null,
-          file_path: `mock://${id}/${fileName}`,
-          file_name: fileName,
-          file_size: 0,
-          mime_type: storeRequest.mime_type || 'image/jpeg',
-          width: null,
-          height: null,
-          photo_type: storeRequest.photo_type ?? null,
-          photo_category: null,
-          photo_angle: null,
-          zone: storeRequest.zone ?? null,
-          title: null,
-          description: storeRequest.description ?? null,
-          notes: null,
-          annotations: null,
-          gps_location_lat: null,
-          gps_location_lon: null,
-          gps_location_accuracy: null,
-          quality_score: null,
-          blur_score: null,
-          exposure_score: null,
-          composition_score: null,
-          is_required: storeRequest.is_required ?? false,
-          is_approved: false,
-          approved_by: null,
-          approved_at: null,
-          rejection_reason: null,
-          synced: true,
-          storage_url: null,
-          upload_retry_count: 0,
-          upload_error: null,
-          last_synced_at: null,
-          captured_at: null,
-          uploaded_at: now,
-          created_at: now,
-          updated_at: now
-        };
-        state.photos.push(photo);
-        return photo;
-      }
-      if (request.Delete) {
-        const deleteRequest = request.Delete as AnyRecord;
-        state.photos = state.photos.filter(photo => photo.id !== deleteRequest.id);
-        return null;
-      }
+    case 'document_get_photos': {
+      const req = ((args?.request ?? args) ?? {}) as AnyRecord;
+      const filtered = state.photos.filter(photo =>
+        (!req.intervention_id || photo.intervention_id === req.intervention_id) &&
+        (!req.step_id || photo.step_id === req.step_id)
+      );
+      return { photos: filtered, total: filtered.length };
+    }
+    case 'document_store_photo': {
+      const storeRequest = ((args?.request ?? args) ?? {}) as AnyRecord;
+      const now = nowIso();
+      const id = generateId('photo');
+      const fileName = storeRequest.file_name || `${id}.jpg`;
+      const photo = {
+        id,
+        intervention_id: storeRequest.intervention_id,
+        step_id: storeRequest.step_id ?? null,
+        step_number: storeRequest.step_number ?? null,
+        file_path: `mock://${id}/${fileName}`,
+        file_name: fileName,
+        file_size: 0,
+        mime_type: storeRequest.mime_type || 'image/jpeg',
+        width: null,
+        height: null,
+        photo_type: storeRequest.photo_type ?? null,
+        photo_category: null,
+        photo_angle: null,
+        zone: storeRequest.zone ?? null,
+        title: null,
+        description: storeRequest.description ?? null,
+        notes: null,
+        annotations: null,
+        gps_location_lat: null,
+        gps_location_lon: null,
+        gps_location_accuracy: null,
+        quality_score: null,
+        blur_score: null,
+        exposure_score: null,
+        composition_score: null,
+        is_required: storeRequest.is_required ?? false,
+        is_approved: false,
+        approved_by: null,
+        approved_at: null,
+        rejection_reason: null,
+        synced: true,
+        storage_url: null,
+        upload_retry_count: 0,
+        upload_error: null,
+        last_synced_at: null,
+        captured_at: null,
+        uploaded_at: now,
+        created_at: now,
+        updated_at: now
+      };
+      state.photos.push(photo);
+      return { photo, file_path: photo.file_path };
+    }
+    case 'document_delete_photo': {
+      const photoId = args?.photo_id as string;
+      state.photos = state.photos.filter(photo => photo.id !== photoId);
       return null;
     }
     case 'intervention_workflow': {
