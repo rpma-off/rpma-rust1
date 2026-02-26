@@ -242,21 +242,13 @@ export async function PUT(
     }
 
     // 6. Mise à jour du progr�s
-    const updateResult = await updateInterventionProgress(
-      workflowService,
-      interventionId,
-      updateData
+    return NextResponse.json(
+      {
+        error: 'Progress update endpoint not implemented',
+        code: 'NOT_IMPLEMENTED'
+      },
+      { status: 501 }
     );
-
-    if (!updateResult.success) {
-      return NextResponse.json(
-        {
-          error: updateResult.error || 'Failed to update progress',
-          code: 'PROGRESS_UPDATE_ERROR'
-        },
-        { status: 500 }
-      );
-    }
 
     // 7. R�cup�ration des donn�es mises à jour
     const updatedInterventionResult = await workflowService.getInterventionById(interventionId, sessionToken);
@@ -340,7 +332,7 @@ async function calculateProgressData(intervention: PPFInterventionData, steps: P
   const stepBreakdown = await Promise.all(
     steps.map(async (step, index) => {
       const stepNumber = index + 1;
-      const photosCount = await getStepPhotosCount(step.id);
+      const photosCount = getStepPhotosCount(step);
       const photosRequired = getRequiredPhotosForStep(step.step_type ?? null);
 
       return {
@@ -447,15 +439,8 @@ function estimateTimeRemaining(steps: PPFInterventionStep[], currentStep: number
 /**
  * R�cup�re le nombre de photos pour une �tape
  */
-async function getStepPhotosCount(_stepId: string): Promise<number> {
-  try {
-    // TODO: Impl�menter la vraie logique de comptage des photos
-    // Pour l'instant, on retourne un nombre fictif
-    return Math.floor(Math.random() * 5);
-  } catch (error) {
-    console.error('Error counting step photos:', error);
-    return 0;
-  }
+function getStepPhotosCount(step: PPFInterventionStep): number {
+  return typeof step.photo_count === 'number' ? step.photo_count : 0;
 }
 
 /**
@@ -536,4 +521,5 @@ function generateRecommendations(steps: PPFInterventionStep[], intervention: PPF
 
   return recommendations;
 }
+
 

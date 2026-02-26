@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { taskPhotoService } from '../server';
-import { offlineQueueService } from '@/lib/offline/queue';
 
 import { PhotoUploadProps as PhotoUploadOptions, UploadItem as PhotoUploadProgress } from '@/types/photo.types';
 
@@ -139,11 +138,6 @@ export function usePhotoUpload(
       }
 
       const uploadId = uuidv4();
-      const localPath = `local://${uploadId}/${file.name}`;
-
-      // Create a local URL for the file
-      const objectUrl = URL.createObjectURL(file);
-
       // Add to uploads state
       setUploads((prev) => [
         ...prev,
@@ -152,34 +146,19 @@ export function usePhotoUpload(
           file,
           status: 'queued',
           progress: 0,
-          localPath: objectUrl,
         },
       ]);
 
-      // If offline, add to queue
+      // Offline photo sync is not implemented yet; fail explicitly instead of pretending success.
       if (!isOnline) {
-        await offlineQueueService.addAction('PHOTO_UPLOAD', {
-          taskId: effectiveTaskId,
-          type: effectiveType,
-          file: {
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            lastModified: file.lastModified,
-          },
-          localPath: objectUrl,
-        });
-
-        // Update status to queued
         setUploads((prev) =>
           prev.map((u) =>
             u.id === uploadId
-              ? { ...u, status: 'queued' as const }
+              ? { ...u, status: 'error' as const, error: 'Upload photo indisponible hors ligne' }
               : u
           )
         );
-
-        return localPath;
+        throw new Error('Upload photo indisponible hors ligne');
       }
 
       // If online, process immediately using service
@@ -228,9 +207,6 @@ export function usePhotoUpload(
           )
         );
 
-        // Clean up object URL
-        URL.revokeObjectURL(objectUrl);
-
         return publicUrl;
       } catch (error) {
         console.error('Error uploading file:', error);
@@ -247,21 +223,6 @@ export function usePhotoUpload(
               : u
           )
         );
-
-        // If there's an error and we're online, add to queue for retry
-        if (isOnline) {
-          await offlineQueueService.addAction('PHOTO_UPLOAD', {
-            taskId: effectiveTaskId,
-            type: effectiveType,
-            file: {
-              name: file.name,
-              type: file.type,
-              size: file.size,
-              lastModified: file.lastModified,
-            },
-            localPath: objectUrl,
-          });
-        }
 
         throw error;
       }

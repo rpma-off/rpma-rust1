@@ -59,7 +59,7 @@ type FinalizationDraft = {
 
 export default function FinalizationStepPage() {
   const router = useRouter();
-  const { taskId, steps, getStepRecord, saveDraft, validateStep } = usePpfWorkflow();
+  const { taskId, steps, getStepRecord, saveDraft, validateStep, intervention } = usePpfWorkflow();
   const stepRecord = getStepRecord('finalization' as StepType);
   const autosaveReady = useRef(false);
 
@@ -192,6 +192,7 @@ export default function FinalizationStepPage() {
           <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
             <PpfPhotoGrid
               taskId={taskId}
+              interventionId={intervention?.id}
               stepId="finalization"
               type="after"
               photos={photos}

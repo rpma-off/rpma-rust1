@@ -63,9 +63,14 @@ export class PPFPhotoService {
   static async uploadPhoto(interventionId: string, _stepNumber: number, file: File): Promise<PPFPhoto> {
     try {
       const token = await this.getSessionToken();
+      const buffer = await file.arrayBuffer();
       const result = await ipcClient.photos.upload(
         interventionId,
-        file.name,
+        {
+          name: file.name,
+          mimeType: file.type || 'application/octet-stream',
+          bytes: new Uint8Array(buffer),
+        },
         'intervention',
         token
       );

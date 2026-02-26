@@ -66,7 +66,17 @@ export function TaskPhotos({ taskId, interventionId }: TaskPhotosProps) {
         });
         return;
       }
-      await ipcClient.photos.upload(interventionId, (file as { path?: string }).path || file.name, type, user.token);
+      const buffer = await file.arrayBuffer();
+      await ipcClient.photos.upload(
+        interventionId,
+        {
+          name: (file as { path?: string }).path || file.name,
+          mimeType: file.type || 'application/octet-stream',
+          bytes: new Uint8Array(buffer),
+        },
+        type.toLowerCase(),
+        user.token
+      );
 
       toast({
         title: 'Succès',

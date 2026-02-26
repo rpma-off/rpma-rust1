@@ -198,6 +198,11 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
         // Only log as error if it's not a "not found" case
         if (!errorMessage.includes('not found') && !errorMessage.includes('NotFound')) {
           console.error('Intervention fetch error:', error);
+          const cached = queryClient.getQueryData<PPFInterventionData | null>(interventionKeys.ppfIntervention(taskId));
+          if (cached?.intervention) {
+            console.warn('Using cached intervention data after transient fetch error');
+            return cached;
+          }
         }
         
         return null;
@@ -213,6 +218,8 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000), // Exponential backoff
     staleTime: 0, // Always refetch on invalidation
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    placeholderData: (previousData) => previousData,
+    refetchOnWindowFocus: false,
   });
 
   // Get steps for the intervention
@@ -220,10 +227,23 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     queryKey: interventionKeys.ppfInterventionSteps(interventionData?.intervention?.id || ''),
     queryFn: async (): Promise<PPFStepsData | null> => {
       if (!session?.token || !interventionData?.intervention?.id) return null;
-      const result = await interventionsIpc.getProgress(interventionData.intervention.id, session.token);
-      return result as PPFStepsData;
+      try {
+        const result = await interventionsIpc.getProgress(interventionData.intervention.id, session.token);
+        return result as PPFStepsData;
+      } catch (error) {
+        const cached = queryClient.getQueryData<PPFStepsData | null>(
+          interventionKeys.ppfInterventionSteps(interventionData.intervention.id)
+        );
+        if (cached?.steps?.length) {
+          console.warn('Using cached step progress after transient fetch error');
+          return cached;
+        }
+        throw error;
+      }
     },
-    enabled: !!session?.token && !!interventionData?.intervention?.id
+    enabled: !!session?.token && !!interventionData?.intervention?.id,
+    placeholderData: (previousData) => previousData,
+    refetchOnWindowFocus: false,
   });
 
   // Get task data for ppf_zones
@@ -234,7 +254,9 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
       const result = await ipcClient.tasks.get(taskId, session.token);
       return result as Task;
     },
-    enabled: !!session?.token && !!taskId
+    enabled: !!session?.token && !!taskId,
+    placeholderData: (previousData) => previousData,
+    refetchOnWindowFocus: false,
   });
 
   const isLoading = interventionLoading || stepsLoading || taskLoading;

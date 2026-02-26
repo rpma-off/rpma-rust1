@@ -902,17 +902,24 @@ export const ipcClient = {
          return response.photos ?? [];
        },
 
-       upload: async (interventionId: string, filePath: string, photoType: string, sessionToken: string): Promise<Photo> => {
+       upload: async (
+         interventionId: string,
+         file: { name: string; mimeType: string; bytes: Uint8Array },
+         photoType: string,
+         sessionToken: string
+       ): Promise<Photo> => {
          const response = await safeInvoke<{photo: Photo, file_path: string}>('document_store_photo', {
+           sessionToken: sessionToken,
            session_token: sessionToken,
            request: {
              intervention_id: interventionId,
-             file_name: filePath,
-             mime_type: 'image/jpeg',
+             file_name: file.name,
+             mime_type: file.mimeType,
              photo_type: photoType,
              is_required: false
            },
-           image_data: []
+           imageData: Array.from(file.bytes),
+           image_data: Array.from(file.bytes)
          });
          return response.photo;
        },

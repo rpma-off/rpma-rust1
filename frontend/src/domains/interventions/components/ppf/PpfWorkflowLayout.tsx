@@ -38,12 +38,14 @@ export function PpfWorkflowLayout({ stepId, actionBar, children }: PpfWorkflowLa
     task,
     intervention,
     steps,
+    stepsData,
     currentStep,
     allowedStepId,
     canAccessStep,
     isLoading,
     error,
   } = usePpfWorkflow();
+  const hasBackendSteps = Boolean(stepsData?.steps && stepsData.steps.length > 0);
 
   const stepLabel = useMemo(() => {
     if (!currentStep) return 'Workflow complété';
@@ -103,7 +105,9 @@ export function PpfWorkflowLayout({ stepId, actionBar, children }: PpfWorkflowLa
   );
 
   useEffect(() => {
-    if (!stepId || isLoading) return;
+    // Do not redirect while workflow steps are still hydrating; the fallback default steps
+    // would otherwise send the user back to step 1 on transient remounts/reloads.
+    if (!stepId || isLoading || !intervention || !hasBackendSteps) return;
     if (!canAccessStep(stepId)) {
       const redirectStep = allowedStepId ?? steps[0]?.id;
       if (redirectStep) {
@@ -112,7 +116,7 @@ export function PpfWorkflowLayout({ stepId, actionBar, children }: PpfWorkflowLa
         router.replace(`/tasks/${taskId}/workflow/ppf`);
       }
     }
-  }, [allowedStepId, canAccessStep, isLoading, router, stepId, steps, taskId]);
+  }, [allowedStepId, canAccessStep, hasBackendSteps, intervention, isLoading, router, stepId, steps, taskId]);
 
   if (isLoading) {
     return (

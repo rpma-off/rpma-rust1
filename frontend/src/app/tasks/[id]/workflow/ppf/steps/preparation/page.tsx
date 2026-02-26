@@ -90,7 +90,7 @@ type PreparationDraft = {
 
 export default function PreparationStepPage() {
   const router = useRouter();
-  const { taskId, steps, getStepRecord, saveDraft, validateStep } = usePpfWorkflow();
+  const { taskId, steps, getStepRecord, saveDraft, validateStep, intervention } = usePpfWorkflow();
   const stepRecord = getStepRecord('preparation' as StepType);
   const autosaveReady = useRef(false);
 
@@ -275,6 +275,7 @@ export default function PreparationStepPage() {
           <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
             <PpfPhotoGrid
               taskId={taskId}
+              interventionId={intervention?.id}
               stepId="preparation"
               type="before"
               photos={photos}

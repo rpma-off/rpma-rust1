@@ -254,9 +254,9 @@ export default function InspectionStepPage() {
           <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
               <div className="text-sm font-semibold text-foreground">🌡 Conditions Atelier</div>
-              <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-                ● Live
-              </span>
+                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                    ● Mesure atelier
+                  </span>
             </div>
             <div className="flex items-center gap-4 rounded-md border border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))] px-3 py-2">
               <div className="flex flex-col items-center gap-0.5">
@@ -314,6 +314,7 @@ export default function InspectionStepPage() {
           <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
             <PpfPhotoGrid
               taskId={taskId}
+              interventionId={intervention?.id}
               stepId="inspection"
               type="before"
               photos={photos}

@@ -43,6 +43,15 @@ export interface TaskPhotoUploadResult {
 }
 
 export class TaskPhotoService {
+  private static async buildUploadFile(file: File): Promise<{ name: string; mimeType: string; bytes: Uint8Array }> {
+    const buffer = await file.arrayBuffer();
+    return {
+      name: file.name,
+      mimeType: file.type || 'application/octet-stream',
+      bytes: new Uint8Array(buffer),
+    };
+  }
+
   private static async getSessionToken(): Promise<string> {
     const session = await AuthSecureStorage.getSession();
     if (!session.token) {
@@ -96,12 +105,8 @@ export class TaskPhotoService {
   static async createTaskPhoto(data: CreateTaskPhotoData): Promise<{ data: TaskPhoto; error: null } | { data: null; error: Error }> {
     try {
       const token = await this.getSessionToken();
-      const result = await ipcClient.photos.upload(
-        data.task_id,
-        data.file.name,
-        data.photo_type,
-        token
-      );
+      const uploadFile = await this.buildUploadFile(data.file);
+      const result = await ipcClient.photos.upload(data.task_id, uploadFile, data.photo_type, token);
 
       const raw = result as unknown as Record<string, unknown>;
       const photo = this.mapPhotoResponse({ ...raw, task_id: data.task_id, step_id: data.step_id, description: data.description });

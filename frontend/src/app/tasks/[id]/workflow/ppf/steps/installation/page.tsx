@@ -88,7 +88,7 @@ const buildZoneList = (zones: string[] | null | undefined): ZoneDraft[] => {
 
 export default function InstallationStepPage() {
   const router = useRouter();
-  const { taskId, task, steps, getStepRecord, saveDraft, validateStep } = usePpfWorkflow();
+  const { taskId, task, steps, getStepRecord, saveDraft, validateStep, intervention } = usePpfWorkflow();
   const stepRecord = getStepRecord('installation' as StepType);
   const autosaveReady = useRef(false);
 
@@ -380,6 +380,7 @@ export default function InstallationStepPage() {
               </div>
               <PpfPhotoGrid
                 taskId={taskId}
+                interventionId={intervention?.id}
                 stepId="installation"
                 type="after"
                 photos={activeZone.photos ?? []}

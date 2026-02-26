@@ -4,9 +4,11 @@ import React, { useRef, useState } from 'react';
 import { Camera, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePhotoUpload } from '@/domains/documents';
+import { toast } from 'sonner';
 
 type PpfPhotoGridProps = {
   taskId: string;
+  interventionId?: string | null;
   stepId: string;
   type?: 'before' | 'after' | 'during';
   photos: string[];
@@ -20,6 +22,7 @@ type PpfPhotoGridProps = {
 
 export function PpfPhotoGrid({
   taskId,
+  interventionId,
   stepId,
   type = 'before',
   photos,
@@ -30,19 +33,22 @@ export function PpfPhotoGrid({
   title,
   hint,
 }: PpfPhotoGridProps) {
+  const uploadEntityId = interventionId ?? taskId;
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const { uploadPhotos, isOnline } = usePhotoUpload(taskId, type);
+  const { uploadPhotos, isOnline } = usePhotoUpload(uploadEntityId, type);
 
   const handleSelectFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     setIsUploading(true);
     try {
-      const uploaded = await uploadPhotos(Array.from(files), { taskId, type, stepId });
+      const uploaded = await uploadPhotos(Array.from(files), { taskId: uploadEntityId, type, stepId });
       if (uploaded.length > 0) {
         const nextPhotos = [...photos, ...uploaded].slice(0, maxPhotos);
         onChange(nextPhotos);
       }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erreur lors du téléversement des photos');
     } finally {
       setIsUploading(false);
       if (inputRef.current) {
@@ -83,7 +89,7 @@ export function PpfPhotoGrid({
         {hint && <span className="text-[10px] text-muted-foreground">{hint}</span>}
         {!isOnline && (
           <span className="text-[10px] font-semibold text-orange-600">
-            Mode hors-ligne: sauvegarde locale
+            Mode hors ligne: capture non synchronisée non supportée pour l&apos;instant
           </span>
         )}
       </button>
