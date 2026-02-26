@@ -133,6 +133,9 @@ export function useCreateQuote() {
       try {
         setLoading(true);
         setError(null);
+        if (process.env.NODE_ENV === 'development') {
+          console.debug('[quote_create] payload keys:', Object.keys(data));
+        }
         const result = await ipcClient.quotes.create(
           data as unknown as JsonObject,
           user.token,
