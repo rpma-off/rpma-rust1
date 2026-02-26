@@ -19,6 +19,7 @@ export const IPC_COMMANDS = {
   TASK_CRUD: 'task_crud',
   CHECK_TASK_ASSIGNMENT: 'check_task_assignment',
   CHECK_TASK_AVAILABILITY: 'check_task_availability',
+  GET_TASK_HISTORY: 'get_task_history',
   VALIDATE_TASK_ASSIGNMENT_CHANGE: 'validate_task_assignment_change',
   EDIT_TASK: 'edit_task',
   ADD_TASK_NOTE: 'add_task_note',

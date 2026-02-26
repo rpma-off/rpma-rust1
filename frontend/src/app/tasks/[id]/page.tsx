@@ -7,6 +7,7 @@ import { Button, TaskErrorBoundary } from '@/shared/ui';
 import { TaskAttachments, TaskOverview, TaskTimeline, taskGateway, TaskWithDetails } from '@/domains/tasks';
 import { TaskHeaderBand, TaskStepperBand, StatusBadge } from '@/domains/tasks/components/TaskDetail';
 import EnhancedActionsCard from '@/domains/tasks/components/TaskActions/EnhancedActionsCard';
+import { InterventionWorkflowService } from '@/domains/interventions/services/intervention-workflow.service';
 import { bigintToNumber, handleError, LogDomain } from '@/shared/utils';
 import { getTaskDisplayTitle } from '@/domains/tasks/utils/display';
 import { toast } from 'sonner';
@@ -33,6 +34,7 @@ export default function TaskDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [isAssignedToCurrentUser, setIsAssignedToCurrentUser] = useState(false);
   const [isTaskAvailable, setIsTaskAvailable] = useState(true);
+  const [isStartingIntervention, setIsStartingIntervention] = useState(false);
   const [activeSection, setActiveSection] = useState<string>(QUICK_NAV_SECTIONS[0].id);
 
   const isInProgress = task?.status === 'in_progress';
@@ -69,10 +71,10 @@ export default function TaskDetailPage() {
         if (result.data && user?.token) {
           try {
             const assignmentCheck = await taskGateway.checkTaskAssignment(result.data.id, user.user_id, user.token);
-            setIsAssignedToCurrentUser((assignmentCheck as { assigned?: boolean })?.assigned || false);
+            setIsAssignedToCurrentUser(assignmentCheck.status === 'assigned');
 
             const availabilityCheck = await taskGateway.checkTaskAvailability(result.data.id, user.token);
-            setIsTaskAvailable((availabilityCheck as { available?: boolean })?.available !== false);
+            setIsTaskAvailable(availabilityCheck.status === 'available');
           } catch (validationErr) {
             const validationError = validationErr as Error;
             console.warn('Task validation failed:', {
@@ -218,14 +220,66 @@ export default function TaskDetailPage() {
     ];
    }, [task, isInProgress, isCompleted]);
 
-  const handlePrimaryAction = () => {
+  const handlePrimaryAction = async () => {
     if (isCompleted) {
       router.push(`/tasks/${taskId}/completed`);
     } else if (isInProgress) {
       router.push(`/tasks/${taskId}/workflow/ppf`);
     } else if (canStartTask) {
-      // The EnhancedActionsCard will handle starting the workflow internally
-      toast.info('Démarrage de l\'intervention...');
+      if (!task) return;
+      if (!user?.token) {
+        toast.error(t('errors.sessionExpired'));
+        return;
+      }
+
+      try {
+        setIsStartingIntervention(true);
+
+        const interventionData = {
+          task_id: task.id,
+          intervention_number: null,
+          intervention_type: 'ppf',
+          priority: task.priority || 'medium',
+          ppf_zones: task.ppf_zones || [],
+          custom_ppf_zones: task.custom_ppf_zones || null,
+          film_type: 'standard',
+          film_brand: null,
+          film_model: null,
+          weather_condition: 'sunny',
+          lighting_condition: 'natural',
+          work_location: 'outdoor',
+          temperature: null,
+          humidity: null,
+          technician_id: task.technician_id || user.user_id,
+          assistant_ids: null,
+          scheduled_start: new Date().toISOString(),
+          estimated_duration: task.estimated_duration || 120,
+          gps_coordinates: null,
+          address: task.customer_address || null,
+          notes: task.notes || null,
+          customer_requirements: null,
+          special_instructions: null
+        };
+
+        const response = await InterventionWorkflowService.startIntervention(task.id, interventionData, user.token);
+        if (!response.success) {
+          throw new Error(response.error?.message || 'Impossible de démarrer l\'intervention');
+        }
+
+        setTask(prev => (prev ? { ...prev, status: 'in_progress' } : prev));
+        toast.success('Intervention démarrée avec succès');
+        router.push(`/tasks/${taskId}/workflow/ppf`);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Erreur au démarrage de l\'intervention';
+        toast.error(message);
+        handleError(err, 'Failed to start intervention from task detail page', {
+          domain: LogDomain.TASK,
+          component: 'TaskDetailPage',
+          showToast: false
+        });
+      } finally {
+        setIsStartingIntervention(false);
+      }
     }
   };
 
@@ -391,6 +445,7 @@ export default function TaskDetailPage() {
                   canStartTask={task.status === 'pending' || task.status === 'draft'}
                   onPrimaryAction={handlePrimaryAction}
                   onSecondaryAction={handleSecondaryAction}
+                  isPending={isStartingIntervention}
                 />
               </section>
 
@@ -465,6 +520,7 @@ export default function TaskDetailPage() {
               canStartTask={task.status === 'pending' || task.status === 'draft'}
               onPrimaryAction={handlePrimaryAction}
               onSecondaryAction={handleSecondaryAction}
+              isPending={isStartingIntervention}
               compact
               mobileDocked
             />

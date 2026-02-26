@@ -3,6 +3,11 @@ import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import { validateTask, validateTaskListResponse } from '@/lib/validation/backend-type-guards';
 import type { JsonObject, JsonValue } from '@/types/json';
 import type {
+  TaskAssignmentCheckResponse,
+  TaskAvailabilityCheckResponse,
+  TaskHistoryEntry,
+} from '../api/types';
+import type {
   Task,
   CreateTaskRequest,
   UpdateTaskRequest,
@@ -89,13 +94,18 @@ export const taskIpc = {
       }
     }).then(result => extractAndValidate(result) as TaskStatistics),
 
-  checkTaskAssignment: (taskId: string, userId: string, sessionToken: string): Promise<JsonValue> =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.CHECK_TASK_ASSIGNMENT, {
+  checkTaskAssignment: (taskId: string, userId: string, sessionToken: string): Promise<TaskAssignmentCheckResponse> =>
+    safeInvoke<TaskAssignmentCheckResponse>(IPC_COMMANDS.CHECK_TASK_ASSIGNMENT, {
       request: { task_id: taskId, user_id: userId, session_token: sessionToken }
     }),
 
-  checkTaskAvailability: (taskId: string, sessionToken: string): Promise<JsonValue> =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.CHECK_TASK_AVAILABILITY, {
+  checkTaskAvailability: (taskId: string, sessionToken: string): Promise<TaskAvailabilityCheckResponse> =>
+    safeInvoke<TaskAvailabilityCheckResponse>(IPC_COMMANDS.CHECK_TASK_AVAILABILITY, {
+      request: { task_id: taskId, session_token: sessionToken }
+    }),
+
+  getTaskHistory: (taskId: string, sessionToken: string): Promise<TaskHistoryEntry[]> =>
+    safeInvoke<TaskHistoryEntry[]>(IPC_COMMANDS.GET_TASK_HISTORY, {
       request: { task_id: taskId, session_token: sessionToken }
     }),
 
