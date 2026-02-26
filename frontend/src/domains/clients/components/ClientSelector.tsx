@@ -10,7 +10,7 @@ import { Check, ChevronsUpDown, Plus, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Client } from '@/lib/backend';
 import { AuthSecureStorage } from '@/lib/secureStorage';
-import { clientIpc } from '../ipc/client.ipc';
+import { ipcClient } from '@/lib/ipc';
 
 interface ClientSelectorProps {
   value?: string;
@@ -31,7 +31,8 @@ export function ClientSelector({
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const selectedClient = clients.find(client => client.id === value);
+  const safeClients = Array.isArray(clients) ? clients : [];
+  const selectedClient = safeClients.find(client => client.id === value);
 
   const fetchClients = useCallback(async (query: string = '') => {
     try {
@@ -40,18 +41,14 @@ export function ClientSelector({
       if (!session.token) {
         throw new Error('Authentication required');
       }
-      if (query.trim()) {
-        const data = await clientIpc.search(query, 20, session.token);
-        setClients(data);
-      } else {
-        const result = await clientIpc.list({
-          page: 1,
-          limit: 100,
-          sort_by: 'name',
-          sort_order: 'asc',
-        }, session.token);
-        setClients(result.data || []);
-      }
+      const result = await ipcClient.clients.list({
+        page: 1,
+        limit: query.trim() ? 20 : 100,
+        search: query.trim() || undefined,
+        sort_by: 'name',
+        sort_order: 'asc',
+      }, session.token);
+      setClients(Array.isArray(result.data) ? result.data : []);
     } catch (error) {
       console.error('Error fetching clients:', error);
       setClients([]);
@@ -155,7 +152,7 @@ export function ClientSelector({
               )}
             </CommandEmpty>
             <CommandGroup>
-              {clients.map((client) => (
+              {safeClients.map((client) => (
                 <CommandItem
                   key={client.id}
                   value={client.id}

@@ -40,13 +40,16 @@ export const clientIpc = {
       }
     }, (data: JsonValue) => extractAndValidate(data, validateClient, { handleNotFound: true }) as Client | null),
 
-  search: (query: string, limit: number, sessionToken: string): Promise<Client[]> =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
+  search: async (query: string, limit: number, sessionToken: string): Promise<Client[]> => {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
       request: {
         action: { action: 'Search', query, limit },
         session_token: sessionToken
       }
-    }).then(result => extractAndValidate(result) as Client[]),
+    });
+    const payload = extractAndValidate(result) as JsonValue;
+    return unwrapTaggedArray<Client>(payload, 'SearchResults', 'client search');
+  },
 
   list: async (filters: Partial<ClientQuery>, sessionToken: string): Promise<ClientListResponse> => {
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
@@ -65,7 +68,12 @@ export const clientIpc = {
         session_token: sessionToken
       }
     });
-    return extractAndValidate(result) as ClientListResponse;
+    const payload = extractAndValidate(result) as JsonValue;
+    const listResponse = unwrapTaggedObject(payload, 'List', 'client list');
+    if (!validateClientListResponse(listResponse)) {
+      throw new Error('Invalid client list response payload');
+    }
+    return listResponse;
   },
 
   listWithTasks: async (filters: Partial<ClientQuery>, limitTasks: number, sessionToken: string): Promise<ClientWithTasks[]> => {
@@ -86,7 +94,8 @@ export const clientIpc = {
         session_token: sessionToken
       }
     });
-    return extractAndValidate(result) as ClientWithTasks[];
+    const payload = extractAndValidate(result) as JsonValue;
+    return unwrapTaggedArray<ClientWithTasks>(payload, 'ListWithTasks', 'client list with tasks');
   },
 
   stats: (sessionToken: string): Promise<ClientStatistics> =>
@@ -118,3 +127,38 @@ export const clientIpc = {
     invalidatePattern('client:');
   },
 };
+
+type TaggedPayload = {
+  type: string;
+  data?: JsonValue;
+};
+
+function isTaggedPayload(value: JsonValue): value is TaggedPayload {
+  return typeof value === 'object' && value !== null && 'type' in value && typeof (value as { type?: unknown }).type === 'string';
+}
+
+function unwrapTaggedObject(value: JsonValue, expectedType: string, context: string): JsonValue {
+  // Some IPC paths already return the inner payload (no { type, data } envelope).
+  // Callers validate the returned object shape separately.
+  if (!isTaggedPayload(value)) {
+    return value;
+  }
+  if (value.type !== expectedType) {
+    throw new Error(`Invalid ${context} response type: expected ${expectedType}, received ${value.type}`);
+  }
+  if (!('data' in value)) {
+    throw new Error(`Invalid ${context} response: missing data`);
+  }
+  return value.data as JsonValue;
+}
+
+function unwrapTaggedArray<T>(value: JsonValue, expectedType: string, context: string): T[] {
+  if (Array.isArray(value)) {
+    return value as T[];
+  }
+  const data = unwrapTaggedObject(value, expectedType, context);
+  if (!Array.isArray(data)) {
+    throw new Error(`Invalid ${context} response: expected array payload`);
+  }
+  return data as T[];
+}
