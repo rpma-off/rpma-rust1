@@ -1,4 +1,4 @@
 /**
  * @deprecated Import from @/domains/calendar instead
  */
-export { WorkflowCalendarView as CalendarView } from '@/domains/calendar';
+export { CalendarView } from '@/domains/calendar';
