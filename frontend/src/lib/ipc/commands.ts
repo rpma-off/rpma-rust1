@@ -68,8 +68,13 @@ export const IPC_COMMANDS = {
   GET_AVAILABLE_REPORT_TYPES: 'get_available_report_types',
   SEARCH_RECORDS: 'search_records',
 
-  // Photo commands
-  PHOTO_CRUD: 'photo_crud',
+  // Document / Photo commands (backed by the documents bounded context)
+  DOCUMENT_STORE_PHOTO: 'document_store_photo',
+  DOCUMENT_GET_PHOTOS: 'document_get_photos',
+  DOCUMENT_GET_PHOTO: 'document_get_photo',
+  DOCUMENT_DELETE_PHOTO: 'document_delete_photo',
+  DOCUMENT_GET_PHOTO_DATA: 'document_get_photo_data',
+  DOCUMENT_UPDATE_PHOTO_METADATA: 'document_update_photo_metadata',
 
   // Intervention commands
   INTERVENTION_WORKFLOW: 'intervention_workflow',
