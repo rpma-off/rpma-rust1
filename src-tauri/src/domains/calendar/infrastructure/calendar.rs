@@ -214,6 +214,12 @@ impl CalendarService {
         new_end: Option<String>,
         user_id: &str,
     ) -> Result<(), AppError> {
+        if task_id.trim().is_empty() {
+            return Err(AppError::Validation("task_id is required".to_string()));
+        }
+        if new_date.trim().is_empty() {
+            return Err(AppError::Validation("new_date is required".to_string()));
+        }
         let now = chrono::Utc::now().timestamp_millis();
         let task_id_clone = task_id.clone();
         let new_date_clone = new_date.clone();
