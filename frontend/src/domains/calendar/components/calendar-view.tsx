@@ -104,7 +104,7 @@ export function CalendarView() {
           onNextWeek={goToNext}
         />
 
-        <div className="flex min-w-full w-max">
+        <div className="flex flex-1 min-w-full" style={{ minHeight: 0 }}>
           <CalendarHoursColumn
             onScroll={handleHoursScroll}
             scrollRef={hoursScrollRef}

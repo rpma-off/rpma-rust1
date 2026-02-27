@@ -24,7 +24,8 @@ import { useCalendarStore } from "@/domains/calendar/stores/calendarStore";
 import { useAuth } from "@/domains/auth";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/shared/hooks/useTranslation";
-import type { CreateEventInput } from "@/types/calendar";
+import { calendarEvents } from "@/domains/calendar/ipc/calendar";
+import type { CreateEventInput } from "@/lib/backend";
 
 interface CreateEventDialogProps {
   open: boolean;
@@ -35,7 +36,7 @@ export function CreateEventDialog({
   open,
   onOpenChange,
 }: CreateEventDialogProps) {
-  const { addEvent, goToDate } = useCalendarStore();
+  const { goToDate } = useCalendarStore();
   const { user } = useAuth();
   const { t } = useTranslation();
   const sessionToken = user?.token || "";
@@ -55,9 +56,12 @@ export function CreateEventDialog({
       return;
     }
 
-    // Combine date and time to create ISO datetime strings
-    const startDateTime = new Date(`${format(date, "yyyy-MM-dd")}T${startTime}`);
-    const endDateTime = new Date(`${format(date, "yyyy-MM-dd")}T${endTime}`);
+    // Build ISO datetime strings without converting through UTC (timezone-safe).
+    // Using the local date string directly avoids off-by-one day errors for
+    // users in non-UTC timezones.
+    const dateStr = format(date, "yyyy-MM-dd");
+    const startDatetime = `${dateStr}T${startTime}:00`;
+    const endDatetime = `${dateStr}T${endTime}:00`;
 
     const participantsList = participants
       .split(",")
@@ -66,21 +70,29 @@ export function CreateEventDialog({
 
     const newEvent: CreateEventInput = {
       title,
-      startDatetime: startDateTime.toISOString(),
-      endDatetime: endDateTime.toISOString(),
+      description: null,
+      startDatetime,
+      endDatetime,
       allDay: false,
-      timezone: timezone || "GMT+7 Pontianak",
+      timezone: timezone || "UTC",
       eventType: "meeting",
+      category: null,
+      taskId: null,
+      clientId: null,
+      technicianId: null,
+      location: null,
       participants: participantsList.length > 0
-        ? participantsList.map((p) => ({ id: p, name: p, status: "accepted" as const }))
-        : [{ id: "user1", name: "User", status: "accepted" as const }],
-      meetingLink: meetingLink || undefined,
+        ? participantsList.map((p) => ({ id: p, name: p, email: null, status: "accepted" as const }))
+        : [{ id: "user1", name: "User", email: null, status: "accepted" as const }],
+      meetingLink: meetingLink || null,
       isVirtual: !!meetingLink,
       reminders: [30], // 30 minutes before
+      color: null,
       tags: [],
+      notes: null,
     };
 
-    await addEvent({ ...newEvent });
+    await calendarEvents.createEvent(newEvent, sessionToken);
     goToDate(date);
 
     setTitle("");
