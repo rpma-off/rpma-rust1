@@ -103,6 +103,13 @@ impl CalendarService {
         new_start: Option<String>,
         new_end: Option<String>,
     ) -> Result<ConflictDetection, AppError> {
+        if task_id.trim().is_empty() {
+            return Err(AppError::Validation("task_id is required".to_string()));
+        }
+        if new_date.trim().is_empty() {
+            return Err(AppError::Validation("new_date is required".to_string()));
+        }
+
         let conn = self
             .db
             .get_connection()
@@ -214,6 +221,18 @@ impl CalendarService {
         new_end: Option<String>,
         user_id: &str,
     ) -> Result<(), AppError> {
+        // Validate required fields
+        if task_id.trim().is_empty() {
+            return Err(AppError::Validation("task_id is required".to_string()));
+        }
+        if new_date.trim().is_empty() {
+            return Err(AppError::Validation("new_date is required".to_string()));
+        }
+        // Validate date format and logical date value using chrono
+        chrono::NaiveDate::parse_from_str(&new_date, "%Y-%m-%d").map_err(|_| {
+            AppError::Validation("new_date must be a valid date in YYYY-MM-DD format".to_string())
+        })?;
+
         let now = chrono::Utc::now().timestamp_millis();
         let task_id_clone = task_id.clone();
         let new_date_clone = new_date.clone();

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { format } from 'date-fns';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
 import { TaskCard } from './TaskCard';
 import type { CalendarTask } from '@/lib/backend';
@@ -20,7 +21,7 @@ export const DayView: React.FC<DayViewProps> = ({
   className = '',
 }) => {
   const dayTasks = useMemo(() => {
-    const dateString = currentDate.toISOString().split('T')[0];
+    const dateString = format(currentDate, 'yyyy-MM-dd');
     return tasks.filter(task => task.scheduled_date === dateString);
   }, [tasks, currentDate]);
 
