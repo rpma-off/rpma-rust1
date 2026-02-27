@@ -65,6 +65,19 @@ impl ClientService {
         // Validate request
         CreateClientRequest::validate(&req)?;
 
+        // Check for duplicate email
+        if let Some(ref email) = req.email {
+            if self
+                .client_repo
+                .find_by_email(email)
+                .await
+                .map_err(|e| format!("Failed to check email duplicates: {}", e))?
+                .is_some()
+            {
+                return Err("A client with this email address already exists".to_string());
+            }
+        }
+
         // Create client instance
         let now = Utc::now().timestamp_millis();
         let client = Client {
@@ -481,7 +494,7 @@ impl ClientService {
 
         // Get new clients this month
         let now = Utc::now();
-        let start_of_month = now.with_day(0).unwrap_or(now).timestamp_millis();
+        let start_of_month = now.with_day(1).unwrap_or(now).timestamp_millis();
         let new_clients_this_month = all_clients
             .iter()
             .filter(|c| c.created_at >= start_of_month)
