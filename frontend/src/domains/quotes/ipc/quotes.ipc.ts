@@ -1,5 +1,4 @@
 import { safeInvoke } from '@/lib/ipc/core';
-import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import type { JsonObject } from '@/types/json';
 
 export const quotesIpc = {
