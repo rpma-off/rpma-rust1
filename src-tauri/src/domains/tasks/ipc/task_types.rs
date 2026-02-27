@@ -3,5 +3,5 @@
 //! This module re-exports types from the application layer for backward compatibility.
 
 pub use crate::domains::tasks::application::{
-    TaskFilter, TaskQuery, TaskStatistics, TaskStats, TaskWithClient,
+    TaskFilter, TaskStatistics,
 };

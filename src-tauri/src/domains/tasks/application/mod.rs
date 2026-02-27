@@ -2,4 +2,4 @@
 
 pub mod contracts;
 
-pub use contracts::{TaskFilter, TaskQuery, TaskStatistics, TaskStats, TaskWithClient};
+pub use contracts::{TaskFilter, TaskStatistics};

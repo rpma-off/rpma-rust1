@@ -25,8 +25,3 @@ pub(crate) fn ensure_intervention_permission(session: &UserSession) -> Result<()
     Ok(())
 }
 
-// Re-export all commands for backward compatibility
-pub use data_access::*;
-pub use queries::*;
-pub use relationships::*;
-pub use workflow::*;

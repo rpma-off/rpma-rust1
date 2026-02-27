@@ -4,10 +4,6 @@ pub mod generation;
 mod search;
 pub(crate) mod utils;
 
-// Re-export main command functions for backward compatibility
-pub use core::*;
-pub use search::*;
-
 // Create wrapper commands for Tauri registration
 #[tracing::instrument(skip_all)]
 #[tauri::command]

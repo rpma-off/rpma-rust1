@@ -3,6 +3,6 @@
 pub mod contracts;
 
 pub use contracts::{
-    apply_profile_updates, build_export_payload, normalize_profile_field,
-    UpdateSecuritySettingsRequest, UpdateUserSecurityRequest,
+    apply_profile_updates, build_export_payload, UpdateSecuritySettingsRequest,
+    UpdateUserSecurityRequest,
 };

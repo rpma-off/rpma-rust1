@@ -7,7 +7,7 @@
 use crate::commands::{AppResult, AppState};
 use crate::domains::reports::domain::models::reports::*;
 
-use tracing::{debug, error, info, instrument};
+use tracing::{error, info, instrument};
 
 use super::{auth, file_operations, validation};
 

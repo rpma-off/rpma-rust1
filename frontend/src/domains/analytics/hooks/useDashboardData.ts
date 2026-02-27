@@ -15,12 +15,17 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/domains/auth';
 import { dashboardApiService, DashboardFilters, DashboardData, TechnicianSummary } from '../server';
 import { TaskWithDetails } from '@/types/task.types';
-import { DashboardTask, transformTask, RawTaskData } from '@/domains/analytics/components/dashboard/types';
+import { DashboardTask } from '@/domains/analytics/components/dashboard/types';
 import { handleFetchError, FetchError } from '@/lib/utils/fetch-error-handler';
 import { useLogger } from '@/shared/hooks/useLogger';
 import { LogDomain } from '@/lib/logging/types';
 import { normalizeError } from '@/types/utility.types';
 import { ipcClient } from '@/lib/ipc';
+import {
+  createInitialDashboardState,
+  transformDashboardTasks,
+  buildDashboardFilters
+} from './useDashboardData.helpers';
 
 export interface DashboardState {
   // Data
@@ -100,18 +105,7 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): [Dashbo
   });
 
   // State
-  const [state, setState] = useState<DashboardState>({
-    tasks: [],
-    stats: null,
-    technicians: [],
-    isLoading: true,
-    isRefreshing: false,
-    isLoadingTechnicians: false,
-    error: null,
-    connectionStatus: 'online',
-    lastUpdated: null,
-    cacheStats: null
-  });
+  const [state, setState] = useState<DashboardState>(createInitialDashboardState);
 
     // Refs for cleanup and intervals
     const refreshInterval = useRef<NodeJS.Timeout | null>(null);
@@ -121,55 +115,16 @@ export function useDashboardData(options: UseDashboardDataOptions = {}): [Dashbo
   const buildFilters = useCallback((): DashboardFilters => {
     if (!user?.id) throw new Error('User not authenticated');
 
-    return {
-      isAdmin: isAdmin,
-      userId: user.id,
+    return buildDashboardFilters(user.id, isAdmin, {
       selectedTechnicianId: opts.selectedTechnicianId,
-      status: opts.statusFilter,
-      search: opts.searchQuery
-    };
+      statusFilter: opts.statusFilter,
+      searchQuery: opts.searchQuery
+    });
   }, [user?.id, isAdmin, opts.selectedTechnicianId, opts.statusFilter, opts.searchQuery]);
 
   // Transform tasks for dashboard consumption
   const transformTasks = useCallback((tasks: TaskWithDetails[]): DashboardTask[] => {
-    return tasks.map((task: TaskWithDetails) => {
-      try {
-        // Look up technician data from the technicians array
-        const technician = state.technicians.find(t => t.id === task.technician_id) || null;
-
-        // Map TaskWithDetails to RawTaskData format expected by transformTask
-        const rawTask: RawTaskData = {
-          id: task.id,
-          title: task.title,
-          vehicle_plate: task.vehicle_plate,
-          vehicle_model: task.vehicle_model,
-          vehicle_year: task.vehicle_year,
-          ppf_zones: task.ppf_zones,
-           technician: technician ? {
-             id: technician.id,
-             name: technician.name,
-             email: technician.email,
-             initials: technician.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
-           } : null,
-          status: task.status,
-          start_time: task.start_time,
-          end_time: task.end_time,
-          scheduled_date: task.scheduled_date,
-          checklist_completed: task.checklist_completed || false,
-          photos_before: task.photos_before || [], // Use actual photo data if available
-          photos_after: task.photos_after || [],
-          checklist_items: task.checklist_items || [],
-          created_at: task.created_at as unknown as string,
-          updated_at: task.updated_at as unknown as string,
-          customer_name: task.customer_name
-        };
-        return transformTask(rawTask);
-      } catch (error: unknown) {
-        const normalizedError = normalizeError(error);
-        logError('Failed to transform task', normalizedError, { taskId: task.id });
-        return null;
-      }
-    }).filter((task): task is DashboardTask => task !== null);
+    return transformDashboardTasks(tasks, state.technicians, logError);
   }, [state.technicians, logError]);
 
   // Connection monitoring
