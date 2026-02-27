@@ -37,10 +37,10 @@
     "@commitlint/config-conventional": "^18.4.3",
     "@playwright/test": "^1.40.0",
     "@tauri-apps/cli": "^2.0.0",
+    "@tauri-apps/plugin-shell": "^2.3.5",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
-
     "@types/dompurify": "^3.0.5",
     "@types/jest": "^30.0.0",
     "@types/leaflet": "^1.9.21",
@@ -83,7 +83,6 @@
     "@radix-ui/react-separator": "^1.1.8",
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-tabs": "^1.1.13",
-
     "@radix-ui/react-tooltip": "^1.2.8",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.75.0",
@@ -91,7 +90,6 @@
     "@tanstack/react-virtual": "^3.13.12",
     "@tauri-apps/api": "^2.8.0",
     "@tauri-apps/plugin-dialog": "^2.2.0",
-
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
@@ -100,7 +98,6 @@
     "framer-motion": "^12.23.24",
     "jose": "^5.10.0",
     "leaflet": "^1.9.4",
-
     "lucide-react": "^0.552.0",
     "next": "^14.2.35",
     "next-themes": "^0.4.6",
