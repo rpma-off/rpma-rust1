@@ -8,6 +8,20 @@ import type { ApiResponse } from '@/types/api';
 import type { JsonObject, JsonValue } from '@/types/json';
 
 /**
+ * IPC commands that have no backend handler registered in main.rs.
+ * Calling them will produce a Tauri "command not found" error.
+ * safeInvoke short-circuits these with a clear, descriptive error.
+ */
+export const NOT_IMPLEMENTED_COMMANDS = new Set([
+  'auth_refresh_token',
+  'enable_2fa',
+  'verify_2fa_setup',
+  'disable_2fa',
+  'regenerate_backup_codes',
+  'is_2fa_enabled',
+]);
+
+/**
  * IPC commands that do not require a session token.
  * All other commands are considered protected and will have the session_token
  * auto-injected into the args before being sent to the backend.
@@ -129,6 +143,17 @@ export async function safeInvoke<T>(
   timeoutMs: number = 120000 // Increased to 120 seconds to handle database locking
 ): Promise<T> {
   const startTime = performance.now();
+
+  // Guard: reject calls to commands with no backend handler
+  if (NOT_IMPLEMENTED_COMMANDS.has(command)) {
+    const notImplError: EnhancedError = new Error(
+      `La commande « ${command} » n'est pas encore implémentée côté backend.`
+    );
+    notImplError.code = 'NOT_IMPLEMENTED';
+    notImplError.correlationId = typeof args?.correlation_id === 'string' ? args.correlation_id : undefined;
+    notImplError.alreadyLogged = false;
+    throw notImplError;
+  }
 
   const providedCorrelationId = typeof args?.correlation_id === 'string' ? args.correlation_id : undefined;
   const correlationId = providedCorrelationId ?? CorrelationContext.generateNew();

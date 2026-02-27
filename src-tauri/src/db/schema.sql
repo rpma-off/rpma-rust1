@@ -783,29 +783,31 @@ CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 CREATE INDEX IF NOT EXISTS idx_users_active ON users(is_active) WHERE is_active = 1;
 CREATE INDEX IF NOT EXISTS idx_users_role_active ON users(role, is_active);
 
--- Table 7.5: user_sessions
-CREATE TABLE IF NOT EXISTS user_sessions (
-  id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL,
-  username TEXT NOT NULL,
-  email TEXT NOT NULL,
-  role TEXT NOT NULL,
-  token TEXT NOT NULL,
-  refresh_token TEXT,
-  expires_at TEXT NOT NULL,
-  last_activity TEXT NOT NULL,
-  created_at TEXT NOT NULL,
-  updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
-  FOREIGN KEY (user_id) REFERENCES users (id)
+-- Table 7.5: sessions (replaces old user_sessions — kept in sync with migration 041)
+CREATE TABLE IF NOT EXISTS sessions (
+  id            TEXT    PRIMARY KEY,  -- UUID session token
+  user_id       TEXT    NOT NULL,
+  username      TEXT    NOT NULL,
+  email         TEXT    NOT NULL,
+  role          TEXT    NOT NULL,
+  created_at    INTEGER NOT NULL,     -- epoch milliseconds
+  expires_at    INTEGER NOT NULL,     -- epoch milliseconds
+  last_activity INTEGER NOT NULL,     -- epoch milliseconds
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Indexes for user_sessions
-CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
-CREATE INDEX IF NOT EXISTS idx_user_sessions_token ON user_sessions(token);
-CREATE INDEX IF NOT EXISTS idx_user_sessions_expires_at ON user_sessions(expires_at);
-CREATE INDEX IF NOT EXISTS idx_user_sessions_last_activity_user ON user_sessions(last_activity DESC, user_id);
-CREATE INDEX IF NOT EXISTS idx_user_sessions_user_expires_activity
-  ON user_sessions(user_id, expires_at, last_activity DESC);
+-- Indexes for sessions
+CREATE INDEX IF NOT EXISTS idx_sessions_user_id    ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
+
+-- Trigger: enforce valid roles (kept in sync with migration 041)
+CREATE TRIGGER IF NOT EXISTS validate_sessions_role
+BEFORE INSERT ON sessions
+FOR EACH ROW
+WHEN NEW.role NOT IN ('admin', 'supervisor', 'technician', 'viewer')
+BEGIN
+    SELECT RAISE(ABORT, 'Invalid role value for sessions table');
+END;
 
 -- Table 8: audit_logs (optionnel)
 CREATE TABLE IF NOT EXISTS audit_logs (
@@ -1529,17 +1531,17 @@ CREATE INDEX IF NOT EXISTS idx_events_date_range ON calendar_events(start_dateti
 CREATE INDEX IF NOT EXISTS idx_events_status_technician ON calendar_events(status, technician_id);
 
 -- Views
--- View for optimized client statistics (kept in sync with migration 021)
+-- View for optimized client statistics (kept in sync with migration 042)
 CREATE VIEW IF NOT EXISTS client_statistics AS
 SELECT
   c.id,
   c.name,
   c.customer_type,
   c.created_at,
-  COUNT(DISTINCT t.id) as total_tasks,
-  COUNT(DISTINCT CASE WHEN t.status = 'in_progress' THEN t.id END) as active_tasks,
-  COUNT(DISTINCT CASE WHEN t.status = 'completed' THEN t.id END) as completed_tasks,
-  MAX(CASE WHEN t.status IN ('completed', 'in_progress') THEN t.updated_at END) as last_task_date
+  COALESCE(COUNT(DISTINCT t.id), 0) as total_tasks,
+  COALESCE(COUNT(DISTINCT CASE WHEN t.status IN ('pending', 'in_progress') THEN t.id END), 0) as active_tasks,
+  COALESCE(COUNT(DISTINCT CASE WHEN t.status = 'completed' THEN t.id END), 0) as completed_tasks,
+  MAX(t.updated_at) as last_task_date
 FROM clients c
 LEFT JOIN tasks t ON t.client_id = c.id AND t.deleted_at IS NULL
 WHERE c.deleted_at IS NULL
