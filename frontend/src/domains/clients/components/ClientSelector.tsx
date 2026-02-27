@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useId, useCallback } from 'react';
+import React, { useState, useEffect, useId, useCallback, useRef, useMemo } from 'react';
 import { KeyboardNavigation } from '@/lib/accessibility.ts';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, ChevronsUpDown, Plus, User } from 'lucide-react';
+import { Check, ChevronsUpDown, Plus, User, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Client } from '@/lib/backend';
 import { AuthSecureStorage } from '@/lib/secureStorage';
@@ -31,8 +31,13 @@ export function ClientSelector({
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const safeClients = Array.isArray(clients) ? clients : [];
-  const selectedClient = safeClients.find(client => client.id === value);
+  const [selectedClientCache, setSelectedClientCache] = useState<Client | null>(null);
+  const [selectedInvalid, setSelectedInvalid] = useState(false);
+  const onValueChangeRef = useRef(onValueChange);
+  useEffect(() => { onValueChangeRef.current = onValueChange; }, [onValueChange]);
+
+  const safeClients = useMemo(() => Array.isArray(clients) ? clients : [], [clients]);
+  const selectedClient = safeClients.find(client => client.id === value) ?? selectedClientCache;
 
   const fetchClients = useCallback(async (query: string = '') => {
     try {
@@ -57,11 +62,54 @@ export function ClientSelector({
     }
   }, []);
 
+  // When value is set but not found in the list, fetch the client by ID
+  useEffect(() => {
+    if (!value) {
+      setSelectedClientCache(null);
+      setSelectedInvalid(false);
+      return;
+    }
+    const foundInList = safeClients.find(c => c.id === value);
+    if (foundInList) {
+      setSelectedClientCache(foundInList);
+      setSelectedInvalid(false);
+      return;
+    }
+    if (loading) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const session = await AuthSecureStorage.getSession();
+        if (!session.token) return;
+        const client = await ipcClient.clients.get(value, session.token);
+        if (cancelled) return;
+        if (client) {
+          setSelectedClientCache(client);
+          setSelectedInvalid(false);
+        } else {
+          setSelectedClientCache(null);
+          setSelectedInvalid(true);
+          // Clear the invalid selection so the parent knows
+          onValueChangeRef.current(undefined);
+        }
+      } catch {
+        if (!cancelled) {
+          setSelectedClientCache(null);
+          setSelectedInvalid(false);
+        }
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [value, loading, safeClients]);
+
   useEffect(() => {
     fetchClients(searchQuery);
   }, [searchQuery, fetchClients]);
 
   const handleSelect = (clientId: string) => {
+    setSelectedInvalid(false);
     onValueChange(clientId === value ? undefined : clientId);
     setOpen(false);
   };
@@ -102,7 +150,7 @@ export function ClientSelector({
           aria-haspopup="listbox"
           aria-controls={open ? listboxId : undefined}
           aria-autocomplete="list"
-          className={cn("w-full justify-between", className)}
+          className={cn("w-full justify-between", selectedInvalid && "border-destructive", className)}
           disabled={disabled}
           onKeyDown={handleKeyDown}
         >
@@ -110,6 +158,11 @@ export function ClientSelector({
             <div className="flex items-center gap-2">
               <User className="h-4 w-4" />
               <span>{selectedClient.name}</span>
+            </div>
+          ) : selectedInvalid ? (
+            <div className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-4 w-4" />
+              <span>Client introuvable</span>
             </div>
           ) : (
             <span className="text-muted-foreground">{placeholder}</span>
@@ -198,3 +251,4 @@ export function ClientSelector({
     </Popover>
   );
 }
+
