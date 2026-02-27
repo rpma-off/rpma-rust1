@@ -1436,10 +1436,10 @@ export const ipcClient = {
       safeInvoke<string>('health_check'),
 
     getHealthStatus: () =>
-      safeInvoke<JsonValue>('get_health_status'),
+      safeInvoke<JsonValue>('health_check'),
 
     getApplicationMetrics: () =>
-      safeInvoke<JsonValue>('get_application_metrics'),
+      safeInvoke<JsonValue>('get_performance_stats'),
 
     getDatabaseStatus: (sessionToken: string) =>
       safeInvoke<JsonValue>('diagnose_database', { session_token: sessionToken }),

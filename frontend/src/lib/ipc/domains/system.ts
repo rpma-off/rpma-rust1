@@ -7,10 +7,10 @@ import type { JsonValue } from '@/types/json';
  */
 export const systemOperations = {
   getHealthStatus: () =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.GET_HEALTH_STATUS),
+    safeInvoke<JsonValue>(IPC_COMMANDS.HEALTH_CHECK),
 
   getApplicationMetrics: () =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.GET_APPLICATION_METRICS),
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_PERFORMANCE_STATS),
 
   getDatabaseStatus: (sessionToken: string) =>
     safeInvoke<JsonValue>(IPC_COMMANDS.DIAGNOSE_DATABASE, { session_token: sessionToken }),

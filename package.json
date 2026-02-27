@@ -53,6 +53,8 @@
     "clean": "npm run frontend:clean && cd src-tauri && cargo clean",
     "frontend:clean": "cd frontend && rm -rf node_modules .next out",
     "fix:encoding": "node scripts/fix-encoding.js",
+    "ipc:consistency-check": "node scripts/ipc-consistency-check.js",
+    "ipc:production-gate": "node scripts/ipc-production-gate.js",
     "git:start-feature": "node scripts/git-workflow.js start-feature",
     "git:sync-feature": "node scripts/git-workflow.js sync-feature",
     "git:finish-feature": "node scripts/git-workflow.js finish-feature",
