@@ -214,12 +214,12 @@ describe('safeInvoke – session_token auto-injection', () => {
 
     it('rejects all known NOT_IMPLEMENTED commands', async () => {
       for (const cmd of NOT_IMPLEMENTED_COMMANDS) {
+        mockInvoke.mockClear();
         await expect(safeInvoke(cmd, {})).rejects.toMatchObject({
           code: 'NOT_IMPLEMENTED',
         });
+        expect(mockInvoke).not.toHaveBeenCalled();
       }
-
-      expect(mockInvoke).not.toHaveBeenCalled();
     });
   });
 });
