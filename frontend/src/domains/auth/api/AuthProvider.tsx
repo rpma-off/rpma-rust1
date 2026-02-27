@@ -106,38 +106,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               isAuthenticating: false,
             });
             loadProfile(validatedSession);
-          } else if (session.refreshToken) {
-            try {
-              const refreshedSession = await authIpc.refreshToken(session.refreshToken);
-              await AuthSecureStorage.storeSession(
-                refreshedSession.token,
-                refreshedSession as unknown as Record<string, unknown>
-              );
-
-              setState({
-                user: refreshedSession,
-                profile: null,
-                loading: false,
-                isAuthenticating: false,
-              });
-              loadProfile(refreshedSession);
-            } catch (error) {
-              logger.error(LogContext.AUTH, 'Auto token refresh failed', {
-                error: error instanceof Error ? error.message : String(error),
-              });
-              await AuthSecureStorage.clearSession();
-              toast.error('Erreur lors du renouvellement de session. Veuillez vous reconnecter.');
-              setState({
-                user: null,
-                profile: null,
-                loading: false,
-                isAuthenticating: false,
-              });
-            }
           } else {
-            logger.info(LogContext.AUTH, 'No refresh token available, clearing session');
+            logger.info(LogContext.AUTH, 'Session validation failed, clearing session');
             await AuthSecureStorage.clearSession();
-            toast.error('Votre session a expire. Veuillez vous reconnecter.');
+            toast.error('Votre session a expiré. Veuillez vous reconnecter.');
             setState({
               user: null,
               profile: null,
@@ -166,41 +138,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     loadStoredSession();
   }, [loadProfile]);
-
-  useEffect(() => {
-    if (!state.user) return;
-
-    let isRefreshing = false;
-
-    const refreshInterval = setInterval(async () => {
-      if (isRefreshing) return;
-
-      try {
-        isRefreshing = true;
-        const session = await AuthSecureStorage.getSession();
-
-        if (session.refreshToken) {
-          const refreshedSession = await authIpc.refreshToken(session.refreshToken);
-
-          await AuthSecureStorage.storeSession(
-            refreshedSession.token,
-            refreshedSession as unknown as Record<string, unknown>
-          );
-
-          setState(prev => ({
-            ...prev,
-            user: refreshedSession || null,
-          }));
-        }
-      } catch (error) {
-        console.error('Failed to refresh token:', error);
-      } finally {
-        isRefreshing = false;
-      }
-    }, 50 * 60 * 1000);
-
-    return () => clearInterval(refreshInterval);
-  }, [state.user]);
 
   const signIn = useCallback(async (email: string, password: string): Promise<AuthResponse<UserSession>> => {
     setState(prev => ({ ...prev, isAuthenticating: true }));

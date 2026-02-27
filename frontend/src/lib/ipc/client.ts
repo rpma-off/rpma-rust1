@@ -296,7 +296,7 @@ export const ipcClient = {
      * @returns Promise resolving to user session data if valid
      */
     validateSession: (token: string) =>
-      cachedInvoke(`auth:session:${token}`, 'auth_validate_session', { token }, validateUserSession, 30000),
+      cachedInvoke(`auth:session:${token}`, 'auth_validate_session', { session_token: token }, validateUserSession, 30000),
 
     /**
      * Enables 2FA for the current user
