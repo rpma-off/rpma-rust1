@@ -16,6 +16,7 @@ interface UseTaskFormStepsProps {
   canProceedToNextStep: (step: FormStep) => boolean;
   setCurrentStep: (step: FormStep) => void;
   setFormErrors: (errors: Record<string, string>) => void;
+  onStepComplete?: (step: FormStep) => void;
 }
 
 export const useTaskFormSteps = ({
@@ -28,9 +29,9 @@ export const useTaskFormSteps = ({
   sessionToken,
   canProceedToNextStep,
   setCurrentStep,
-  setFormErrors
+  setFormErrors,
+  onStepComplete
 }: UseTaskFormStepsProps) => {
-  // Memoized step navigation handlers
   const handleNextStep = useCallback(() => {
     const currentIndex = stepsConfig.findIndex(s => s.id === currentStep);
     if (currentIndex < stepsConfig.length - 1) {
@@ -38,9 +39,10 @@ export const useTaskFormSteps = ({
       if (canProceedToNextStep(currentStep)) {
         setCurrentStep(nextStep.id);
         setFormErrors({});
+        onStepComplete?.(currentStep);
       }
     }
-  }, [currentStep, stepsConfig, canProceedToNextStep, setCurrentStep, setFormErrors]);
+  }, [currentStep, stepsConfig, canProceedToNextStep, setCurrentStep, setFormErrors, onStepComplete]);
 
   const handlePreviousStep = useCallback(() => {
     const currentIndex = stepsConfig.findIndex(s => s.id === currentStep);
@@ -58,7 +60,6 @@ export const useTaskFormSteps = ({
     }
   }, [canProceedToNextStep, setCurrentStep, setFormErrors]);
 
-  // Memoized step content rendering
   const renderStepContent = useCallback(() => {
     const stepProps = {
       formData,
