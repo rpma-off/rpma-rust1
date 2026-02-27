@@ -555,14 +555,19 @@ pub async fn calendar_schedule_task(
     {
         Ok(result) => {
             if result.has_conflict {
+                // Surface conflicts as a structured Validation error so the
+                // frontend error-handler can present them consistently.
                 info!("Task {} has scheduling conflicts", request.task_id);
-            } else {
-                info!(
-                    "Task {} scheduled successfully{}",
-                    request.task_id,
-                    if force { " (force mode)" } else { "" }
-                );
+                let msg = result.message.unwrap_or_else(|| {
+                    format!("Scheduling conflict: {} task(s) overlap", result.conflicting_tasks.len())
+                });
+                return Err(AppError::Validation(msg));
             }
+            info!(
+                "Task {} scheduled successfully{}",
+                request.task_id,
+                if force { " (force mode)" } else { "" }
+            );
             Ok(ApiResponse::success(result).with_correlation_id(Some(correlation_id.clone())))
         }
         Err(e) => {

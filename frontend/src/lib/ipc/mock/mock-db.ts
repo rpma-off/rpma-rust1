@@ -1340,7 +1340,7 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
             completed_at: now,
             updated_at: now
           };
-          state.interventionSteps[stepIndex] = updatedStep;
+          state.interventionSteps[stepIndex] = updatedStep as MockInterventionStep;
           const nextStepIndex = state.interventionSteps.findIndex(
             s => s.intervention_id === step.intervention_id && s.step_number === step.step_number + 1
           );
@@ -1396,7 +1396,7 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
       return { data: intervention };
     }
     case 'intervention_get_progress': {
-      const interventionId = args?.intervention_id;
+      const interventionId = (args?.intervention_id ?? '') as string;
       const steps = state.interventionSteps.filter(step => step.intervention_id === interventionId);
       const progress = buildProgress(interventionId, steps);
       return { steps, progress_percentage: progress.completion_percentage };

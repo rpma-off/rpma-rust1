@@ -2,40 +2,13 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Search, FileText, Send, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Plus, Search, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { useQuotesList } from '@/domains/quotes';
+import { useQuotesList, QuoteStatusBadge } from '@/domains/quotes';
+import { formatCents } from '@/domains/quotes/utils/formatting';
 import { PageShell } from '@/shared/ui/layout/PageShell';
 import type { QuoteStatus } from '@/shared/types';
-
-const STATUS_COLORS: Record<QuoteStatus, string> = {
-  draft: 'bg-gray-100 text-gray-800',
-  sent: 'bg-blue-100 text-blue-800',
-  accepted: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
-  expired: 'bg-yellow-100 text-yellow-800',
-};
-
-const STATUS_ICONS: Record<QuoteStatus, typeof FileText> = {
-  draft: FileText,
-  sent: Send,
-  accepted: CheckCircle,
-  rejected: XCircle,
-  expired: Clock,
-};
-
-const STATUS_LABELS: Record<QuoteStatus, string> = {
-  draft: 'Brouillon',
-  sent: 'Envoyé',
-  accepted: 'Accepté',
-  rejected: 'Refusé',
-  expired: 'Expiré',
-};
-
-function formatCents(cents: number): string {
-  return (cents / 100).toFixed(2) + ' €';
-}
 
 export default function QuotesPage() {
   const router = useRouter();
@@ -195,7 +168,6 @@ export default function QuotesPage() {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {quotes.map(quote => {
-                  const StatusIcon = STATUS_ICONS[quote.status];
                   return (
                     <tr
                       key={quote.id}
@@ -206,12 +178,7 @@ export default function QuotesPage() {
                         {quote.quote_number}
                       </td>
                       <td className="whitespace-nowrap px-6 py-4">
-                        <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[quote.status]}`}
-                        >
-                          <StatusIcon className="h-3 w-3" />
-                          {STATUS_LABELS[quote.status]}
-                        </span>
+                        <QuoteStatusBadge status={quote.status} />
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                         {[quote.vehicle_make, quote.vehicle_model, quote.vehicle_plate]

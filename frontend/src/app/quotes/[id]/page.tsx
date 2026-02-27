@@ -13,29 +13,11 @@ import {
   useQuoteItems,
   useQuoteStatus,
   useQuoteExportPdf,
+  QuoteStatusBadge,
 } from '@/domains/quotes';
+import { formatCents } from '@/domains/quotes/utils/formatting';
 import { PageShell } from '@/shared/ui/layout/PageShell';
-import type { QuoteStatus, CreateQuoteItemRequest, QuoteItemKind } from '@/shared/types';
-
-const STATUS_COLORS: Record<QuoteStatus, string> = {
-  draft: 'bg-gray-100 text-gray-800',
-  sent: 'bg-blue-100 text-blue-800',
-  accepted: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
-  expired: 'bg-yellow-100 text-yellow-800',
-};
-
-const STATUS_LABELS: Record<QuoteStatus, string> = {
-  draft: 'Brouillon',
-  sent: 'Envoyé',
-  accepted: 'Accepté',
-  rejected: 'Refusé',
-  expired: 'Expiré',
-};
-
-function formatCents(cents: number): string {
-  return (cents / 100).toFixed(2) + ' €';
-}
+import type { CreateQuoteItemRequest, QuoteItemKind } from '@/shared/types';
 
 export default function QuoteDetailPage() {
   const params = useParams();
@@ -163,11 +145,7 @@ export default function QuoteDetailPage() {
               <h1 className="text-2xl font-bold text-gray-900">
                 {quote.quote_number}
               </h1>
-              <span
-                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[quote.status]}`}
-              >
-                {STATUS_LABELS[quote.status]}
-              </span>
+              <QuoteStatusBadge status={quote.status} showIcon={false} />
             </div>
           </div>
           <div className="flex items-center gap-2">

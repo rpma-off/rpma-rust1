@@ -97,14 +97,14 @@ export function CalendarView() {
         open={sheetOpen}
         onOpenChange={setSheetOpen}
       />
-      <div className="flex flex-col h-full overflow-x-auto w-full">
+      <div className="flex flex-col flex-1 overflow-x-auto w-full" style={{ minHeight: 0 }}>
         <CalendarWeekHeader
           weekDays={weekDays}
           onPreviousWeek={goToPrevious}
           onNextWeek={goToNext}
         />
 
-        <div className="flex min-w-full w-max">
+        <div className="flex flex-1 min-w-full" style={{ minHeight: 0 }}>
           <CalendarHoursColumn
             onScroll={handleHoursScroll}
             scrollRef={hoursScrollRef}

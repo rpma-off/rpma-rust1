@@ -29,7 +29,7 @@ export const authIpc = {
     safeInvoke<void>(IPC_COMMANDS.AUTH_LOGOUT, { token }),
 
   validateSession: (token: string): Promise<UserSession> =>
-    cachedInvoke(`auth:session:${token}`, IPC_COMMANDS.AUTH_VALIDATE_SESSION, { token }, validateUserSession, 30000),
+    cachedInvoke(`auth:session:${token}`, IPC_COMMANDS.AUTH_VALIDATE_SESSION, { session_token: token }, validateUserSession, 30000),
 
   enable2FA: (sessionToken: string): Promise<JsonValue> =>
     safeInvoke<JsonValue>(IPC_COMMANDS.ENABLE_2FA, { session_token: sessionToken }),

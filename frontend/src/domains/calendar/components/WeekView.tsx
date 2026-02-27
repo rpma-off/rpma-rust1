@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { format } from 'date-fns';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
 import { TaskCard } from './TaskCard';
 import type { CalendarTask } from '@/lib/backend';
@@ -27,7 +28,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
     for (let i = 0; i < 7; i++) {
       const date = new Date(startOfWeek);
       date.setDate(startOfWeek.getDate() + i);
-      const dateString = date.toISOString().split('T')[0];
+      const dateString = format(date, 'yyyy-MM-dd');
       const dayTasks = tasks.filter(task => task.scheduled_date === dateString);
 
       weekDays.push({

@@ -79,7 +79,7 @@ export const useCalendarStore = create<CalendarState>()(
       eventTypeFilter: 'all',
       
       setCurrentView: (view) => set({ currentView: view }),
-      setCurrentDate: (date) => set({ currentDate: date }),
+      setCurrentDate: (date) => set({ currentDate: date ?? new Date() }),
       setSelectedDate: (date) => set({ selectedDate: date }),
       setSelectedEventId: (id) => set({ selectedEventId: id }),
       setFilters: (newFilters) => set((state) => ({
@@ -154,7 +154,7 @@ export const useCalendarStore = create<CalendarState>()(
       },
       
       goToDate: (date: Date | undefined) => {
-        set({ currentDate: date });
+        set({ currentDate: date ?? new Date() });
       },
       
       getWeekDays: () => {

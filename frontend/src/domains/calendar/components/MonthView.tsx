@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { format } from 'date-fns';
 import { TaskCard } from './TaskCard';
 import type { CalendarTask } from '@/lib/backend';
 
@@ -38,7 +39,7 @@ export const MonthView: React.FC<MonthViewProps> = ({
 
     for (let day = 1; day <= lastDay.getDate(); day++) {
       const date = new Date(year, month, day);
-      const dateString = date.toISOString().split('T')[0];
+      const dateString = format(date, 'yyyy-MM-dd');
       const dayTasks = tasks.filter(task => task.scheduled_date === dateString);
       days.push({
         date,

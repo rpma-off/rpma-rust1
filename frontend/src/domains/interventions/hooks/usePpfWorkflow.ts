@@ -111,7 +111,7 @@ export function usePpfWorkflow(taskIdOverride?: string) {
         return;
       }
 
-      await workflow.advanceToStep(stepType, collectedData as JsonValue, photos);
+      await workflow.advanceToStep(stepType, collectedData as never, photos);
 
       if (intervention?.id) {
         await queryClient.refetchQueries({ queryKey: interventionKeys.ppfInterventionSteps(intervention.id) });

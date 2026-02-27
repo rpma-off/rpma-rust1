@@ -39,10 +39,9 @@ const PUBLIC_COMMANDS = new Set([
   'ui_initiate_customer_call',
   // System info / health
   'health_check',
-  'get_health_status',
   'get_app_info',
   'get_device_info',
-  'get_application_metrics',
+  'get_performance_stats',
 ]);
 
 const KNOWN_CLIENT_ERRORS = new Set([
@@ -64,18 +63,24 @@ function getUserFriendlyErrorMessage(errorCode: string, originalMessage: string)
 
   switch (errorCode) {
     case 'VALIDATION':
+    case 'VALIDATION_ERROR':
       return 'Les données saisies ne sont pas valides. Veuillez vérifier et réessayer.';
     case 'AUTHENTICATION':
+    case 'AUTH_INVALID':
       return 'Erreur d\'authentification. Veuillez vous reconnecter.';
     case 'AUTHORIZATION':
+    case 'AUTH_FORBIDDEN':
       return 'Vous n\'avez pas les permissions nécessaires pour cette action.';
     case 'NOT_FOUND':
       return 'L\'élément demandé n\'a pas été trouvé.';
     case 'DATABASE':
+    case 'DATABASE_ERROR':
       return 'Erreur de base de données. Veuillez réessayer plus tard.';
     case 'INTERNAL':
+    case 'INTERNAL_ERROR':
       return 'Erreur interne du serveur. Veuillez contacter le support si le problème persiste.';
     case 'NETWORK':
+    case 'NETWORK_ERROR':
       return 'Erreur de connexion réseau. Vérifiez votre connexion internet.';
     case 'RATE_LIMIT':
       return 'Trop de requêtes. Veuillez patienter avant de réessayer.';

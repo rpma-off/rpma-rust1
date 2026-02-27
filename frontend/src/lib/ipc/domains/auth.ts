@@ -49,7 +49,7 @@ export const authOperations = {
    * @returns Promise resolving to user session data if valid
    */
   validateSession: (token: string): Promise<UserSession> =>
-    cachedInvoke(`auth:session:${token}`, IPC_COMMANDS.AUTH_VALIDATE_SESSION, { token }, validateUserSession, 30000),
+    cachedInvoke(`auth:session:${token}`, IPC_COMMANDS.AUTH_VALIDATE_SESSION, { session_token: token }, validateUserSession, 30000),
 
   /**
    * Enables 2FA for the current user
