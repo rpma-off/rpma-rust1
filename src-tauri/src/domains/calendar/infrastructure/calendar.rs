@@ -228,20 +228,10 @@ impl CalendarService {
         if new_date.trim().is_empty() {
             return Err(AppError::Validation("new_date is required".to_string()));
         }
-        // Validate date format (YYYY-MM-DD)
-        if !new_date
-            .chars()
-            .enumerate()
-            .all(|(i, c)| match i {
-                4 | 7 => c == '-',
-                _ => c.is_ascii_digit(),
-            })
-            || new_date.len() != 10
-        {
-            return Err(AppError::Validation(
-                "new_date must be in YYYY-MM-DD format".to_string(),
-            ));
-        }
+        // Validate date format and logical date value using chrono
+        chrono::NaiveDate::parse_from_str(&new_date, "%Y-%m-%d").map_err(|_| {
+            AppError::Validation("new_date must be a valid date in YYYY-MM-DD format".to_string())
+        })?;
 
         let now = chrono::Utc::now().timestamp_millis();
         let task_id_clone = task_id.clone();

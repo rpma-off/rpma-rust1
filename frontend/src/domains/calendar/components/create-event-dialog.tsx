@@ -74,7 +74,7 @@ export function CreateEventDialog({
       startDatetime,
       endDatetime,
       allDay: false,
-      timezone: timezone || "UTC",
+      timezone: timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
       eventType: "meeting",
       category: null,
       taskId: null,
@@ -83,7 +83,7 @@ export function CreateEventDialog({
       location: null,
       participants: participantsList.length > 0
         ? participantsList.map((p) => ({ id: p, name: p, email: null, status: "accepted" as const }))
-        : [{ id: "user1", name: "User", email: null, status: "accepted" as const }],
+        : null,
       meetingLink: meetingLink || null,
       isVirtual: !!meetingLink,
       reminders: [30], // 30 minutes before
