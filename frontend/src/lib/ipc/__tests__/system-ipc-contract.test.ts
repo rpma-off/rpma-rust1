@@ -18,13 +18,13 @@ describe('systemOperations IPC contract tests', () => {
   it('calls safeInvoke with correct parameters for getHealthStatus', async () => {
     await systemOperations.getHealthStatus();
 
-    expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.GET_HEALTH_STATUS);
+    expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.HEALTH_CHECK);
   });
 
   it('calls safeInvoke with correct parameters for getApplicationMetrics', async () => {
     await systemOperations.getApplicationMetrics();
 
-    expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.GET_APPLICATION_METRICS);
+    expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.GET_PERFORMANCE_STATS);
   });
 
   it('calls safeInvoke with correct parameters for getDatabaseStatus', async () => {

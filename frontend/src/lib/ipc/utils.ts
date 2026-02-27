@@ -39,10 +39,9 @@ const PUBLIC_COMMANDS = new Set([
   'ui_initiate_customer_call',
   // System info / health
   'health_check',
-  'get_health_status',
   'get_app_info',
   'get_device_info',
-  'get_application_metrics',
+  'get_performance_stats',
 ]);
 
 const KNOWN_CLIENT_ERRORS = new Set([
