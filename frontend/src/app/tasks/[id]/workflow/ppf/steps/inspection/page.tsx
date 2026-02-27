@@ -91,10 +91,8 @@ export default function InspectionStepPage() {
           )
             ? (defect.type as Defect['type'])
             : 'scratch',
-          severity: (['low', 'medium', 'high'] as const).includes(
-            (defect.severity ?? '') as Defect['severity']
-          )
-            ? (defect.severity as Defect['severity'])
+          severity: (defect.severity === 'low' || defect.severity === 'medium' || defect.severity === 'high')
+            ? defect.severity
             : 'low',
         }))
       : [];

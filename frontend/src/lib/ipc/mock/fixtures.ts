@@ -22,16 +22,26 @@ export interface MockFixtures {
   interventionSteps?: MockInterventionStep[];
 }
 
-export type MockIntervention = Omit<Intervention, 'created_at' | 'updated_at' | 'last_synced_at'> & {
+export type MockIntervention = Omit<Intervention, 'created_at' | 'updated_at' | 'last_synced_at' | 'scheduled_at' | 'started_at' | 'completed_at' | 'paused_at'> & {
   created_at: string;
   updated_at: string;
   last_synced_at: string | null;
+  scheduled_at: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  paused_at: string | null;
 };
 
-export type MockInterventionStep = Omit<InterventionStep, 'created_at' | 'updated_at' | 'last_synced_at'> & {
+export type MockInterventionStep = Omit<InterventionStep, 'created_at' | 'updated_at' | 'last_synced_at' | 'started_at' | 'completed_at' | 'paused_at' | 'approved_at' | 'device_timestamp' | 'server_timestamp'> & {
   created_at: string;
   updated_at: string;
   last_synced_at: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  paused_at: string | null;
+  approved_at: string | null;
+  device_timestamp: string;
+  server_timestamp: string;
 };
 
 const nowIso = () => new Date().toISOString();

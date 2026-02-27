@@ -103,6 +103,13 @@ impl CalendarService {
         new_start: Option<String>,
         new_end: Option<String>,
     ) -> Result<ConflictDetection, AppError> {
+        if task_id.trim().is_empty() {
+            return Err(AppError::Validation("task_id is required".to_string()));
+        }
+        if new_date.trim().is_empty() {
+            return Err(AppError::Validation("new_date is required".to_string()));
+        }
+
         let conn = self
             .db
             .get_connection()

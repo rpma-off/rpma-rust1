@@ -3,41 +3,50 @@ import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import type { Photo } from '@/lib/ipc/types/index';
 
 export const documentsIpc = {
-  listPhotos: (interventionId: string, sessionToken: string): Promise<Photo[]> =>
-    safeInvoke<Photo[]>(IPC_COMMANDS.PHOTO_CRUD, {
-      action: { List: { intervention_id: interventionId } },
-      session_token: sessionToken
-    }),
+  listPhotos: async (interventionId: string, sessionToken: string): Promise<Photo[]> => {
+    const response = await safeInvoke<{ photos: Photo[]; total: number }>(
+      IPC_COMMANDS.DOCUMENT_GET_PHOTOS,
+      {
+        session_token: sessionToken,
+        request: { intervention_id: interventionId },
+      }
+    );
+    return response?.photos ?? [];
+  },
 
-  uploadPhoto: (
+  uploadPhoto: async (
     interventionId: string,
     filePath: string,
     photoType: string,
     sessionToken: string
-  ): Promise<Photo> =>
-    safeInvoke<Photo>(IPC_COMMANDS.PHOTO_CRUD, {
-      action: {
-        Store: {
+  ): Promise<Photo> => {
+    const response = await safeInvoke<{ photo: Photo; file_path: string }>(
+      IPC_COMMANDS.DOCUMENT_STORE_PHOTO,
+      {
+        session_token: sessionToken,
+        request: {
           intervention_id: interventionId,
           file_name: filePath,
           mime_type: 'image/jpeg',
           photo_type: photoType,
-          is_required: false
-        }
-      },
-      session_token: sessionToken
-    }),
+          is_required: false,
+        },
+        image_data: [],
+      }
+    );
+    return response.photo;
+  },
 
   deletePhoto: (photoId: string, sessionToken: string): Promise<void> =>
-    safeInvoke<void>(IPC_COMMANDS.PHOTO_CRUD, {
-      action: { Delete: { id: photoId } },
-      session_token: sessionToken
+    safeInvoke<void>(IPC_COMMANDS.DOCUMENT_DELETE_PHOTO, {
+      session_token: sessionToken,
+      photo_id: photoId,
     }),
 
   getPhoto: (photoId: string, sessionToken: string): Promise<Photo> =>
-    safeInvoke<Photo>(IPC_COMMANDS.PHOTO_CRUD, {
-      action: { Get: { id: photoId } },
-      session_token: sessionToken
+    safeInvoke<Photo>(IPC_COMMANDS.DOCUMENT_GET_PHOTO, {
+      session_token: sessionToken,
+      photo_id: photoId,
     }),
-
 };
+

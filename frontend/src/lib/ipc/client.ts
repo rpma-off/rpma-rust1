@@ -1489,22 +1489,22 @@ export const ipcClient = {
       }),
 
     getEventById: (id: string, sessionToken: string) =>
-      safeInvoke('get_event_by_id', { id, session_token: sessionToken }),
+      safeInvoke('get_event_by_id', { request: { id, session_token: sessionToken } }),
 
     createEvent: (eventData: CreateEventInput, sessionToken: string) =>
-      safeInvoke('create_event', { event_data: eventData as unknown as JsonObject, session_token: sessionToken }),
+      safeInvoke('create_event', { request: { event_data: eventData as unknown as JsonObject, session_token: sessionToken } }),
 
     updateEvent: (id: string, eventData: UpdateEventInput, sessionToken: string) =>
-      safeInvoke('update_event', { id, event_data: eventData as unknown as JsonObject, session_token: sessionToken }),
+      safeInvoke('update_event', { request: { id, event_data: eventData as unknown as JsonObject, session_token: sessionToken } }),
 
     deleteEvent: (id: string, sessionToken: string) =>
-      safeInvoke('delete_event', { id, session_token: sessionToken }),
+      safeInvoke('delete_event', { request: { id, session_token: sessionToken } }),
 
     getEventsForTechnician: (technicianId: string, sessionToken: string) =>
-      safeInvoke('get_events_for_technician', { technician_id: technicianId, session_token: sessionToken }),
+      safeInvoke('get_events_for_technician', { request: { technician_id: technicianId, session_token: sessionToken } }),
 
      getEventsForTask: (taskId: string, sessionToken: string) =>
-       safeInvoke('get_events_for_task', { task_id: taskId, session_token: sessionToken }),
+       safeInvoke('get_events_for_task', { request: { task_id: taskId, session_token: sessionToken } }),
    },
 
   // Intervention operations
