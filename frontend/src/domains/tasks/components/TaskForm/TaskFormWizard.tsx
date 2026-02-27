@@ -8,21 +8,10 @@ import { useTaskForm } from './useTaskForm';
 import { FormStep, TaskFormProps, ENHANCED_STEPS as STEPS_CONFIG } from './types';
 import { TaskFormHeader } from './TaskFormHeader';
 import { TaskFormProgress } from './TaskFormProgress';
-import { TaskFormNavigation } from './TaskFormNavigation';
-import { TaskFormSubmit } from './TaskFormSubmit';
-import { TaskFormAutoSaveStatus } from './TaskFormAutoSaveStatus';
+import { TaskActionBar } from './TaskActionBar';
 import { useTaskFormSubmission } from './TaskFormSubmission';
 import { useTaskFormSteps } from './TaskFormSteps';
 
-/**
- * Enhanced Task Creation Form Wizard
- *
- * Main orchestration component that coordinates:
- * - Form state management via useTaskForm
- * - Step navigation and rendering via useTaskFormSteps
- * - Form submission via useTaskFormSubmission
- * - Authentication and loading states
- */
 const TaskFormWizard: React.FC<TaskFormProps> = React.memo(({
   onSuccess,
   initialData,
@@ -35,12 +24,11 @@ const TaskFormWizard: React.FC<TaskFormProps> = React.memo(({
   const sessionToken = user?.token;
   const [currentStep, setCurrentStep] = useState<FormStep>('vehicle');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [autoSaveEnabled, setAutoSaveEnabled] = useState(false);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
+  const [completedSteps, setCompletedSteps] = useState<Set<FormStep>>(new Set());
 
-  // Get clientId from URL params if present
   const clientIdFromUrl = searchParams?.get('clientId');
 
-  // Merge initial data with clientId from URL
   const mergedInitialData = useMemo(() => {
     const data = { ...initialData };
     if (clientIdFromUrl && !data.client_id) {
@@ -65,25 +53,30 @@ const TaskFormWizard: React.FC<TaskFormProps> = React.memo(({
     clearDraft,
   } = useTaskForm(user?.user_id, mergedInitialData);
 
-  // Memoized step configuration to prevent unnecessary re-renders
   const stepsConfig = useMemo(() => STEPS_CONFIG, []);
 
-  // Auto-save functionality with useCallback
   useEffect(() => {
     if (autoSaveEnabled && isDirty && !loading) {
       const timer = setTimeout(() => {
         autoSave();
-      }, 2000); // Auto-save after 2 seconds of inactivity
-
+      }, 2000);
       return () => clearTimeout(timer);
     }
     return () => {};
   }, [autoSaveEnabled, isDirty, loading, autoSave]);
 
-  // Form change handler
+  useEffect(() => {
+    const newlyCompleted = new Set<FormStep>();
+    stepsConfig.forEach(step => {
+      if (canProceedToNextStep(step.id)) {
+        newlyCompleted.add(step.id);
+      }
+    });
+    setCompletedSteps(newlyCompleted);
+  }, [formData, stepsConfig, canProceedToNextStep]);
+
   const handleFormChange = useCallback((changes: Partial<typeof formData>) => {
     updateFormData(changes);
-    // Clear errors for changed fields
     const newErrors = { ...formErrors };
     Object.keys(changes).forEach(key => {
       if (newErrors[key]) {
@@ -93,7 +86,6 @@ const TaskFormWizard: React.FC<TaskFormProps> = React.memo(({
     setFormErrors(newErrors);
   }, [updateFormData, formErrors, setFormErrors]);
 
-  // Use the submission hook
   const { handleSubmit } = useTaskFormSubmission({
     formData,
     validateStep,
@@ -106,7 +98,10 @@ const TaskFormWizard: React.FC<TaskFormProps> = React.memo(({
     }
   });
 
-  // Use the steps hook
+  const handleStepComplete = useCallback((step: FormStep) => {
+    setCompletedSteps(prev => new Set([...prev, step]));
+  }, []);
+
   const {
     renderStepContent,
     handleNextStep,
@@ -122,16 +117,17 @@ const TaskFormWizard: React.FC<TaskFormProps> = React.memo(({
     sessionToken,
     canProceedToNextStep,
     setCurrentStep,
-    setFormErrors
+    setFormErrors,
+    onStepComplete: handleStepComplete
   });
 
   if (authLoading) {
     return (
-      <div className={`bg-muted rounded-lg shadow-lg p-8 ${className}`}>
+      <div className={`bg-slate-50 rounded-lg shadow-lg p-8 ${className}`}>
         <div className="flex items-center justify-center py-12">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 border-2 border-[hsl(var(--rpma-teal))] border-t-transparent rounded-full animate-spin" />
-            <span className="text-white text-lg font-medium">Verifying authentication...</span>
+            <div className="w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+            <span className="text-slate-900 text-lg font-medium">Vérification de l'authentification...</span>
           </div>
         </div>
       </div>
@@ -140,49 +136,56 @@ const TaskFormWizard: React.FC<TaskFormProps> = React.memo(({
 
   if (!user?.user_id || !session) {
     return (
-      <div className={`bg-muted rounded-lg shadow-lg p-8 ${className}`}>
+      <div className={`bg-slate-50 rounded-lg shadow-lg p-8 ${className}`}>
         <div className="text-center py-12">
-          <div className="text-red-400 mb-4">
+          <div className="text-red-500 mb-4">
             <svg className="w-16 h-16 mx-auto mb-4" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
             </svg>
           </div>
-          <h3 className="text-xl font-bold text-white mb-2">Authentication Required</h3>
-          <p className="text-muted-foreground mb-6">
-            You must be logged in to create a task. Please log in and try again.
+          <h3 className="text-xl font-bold text-slate-900 mb-2">Authentification requise</h3>
+          <p className="text-slate-600 mb-6">
+            Vous devez être connecté pour créer une tâche. Veuillez vous connecter et réessayer.
           </p>
           <button
             onClick={() => window.location.href = '/login'}
-            className="bg-[hsl(var(--rpma-teal))] text-foreground px-6 py-3 rounded-lg font-medium hover:bg-[hsl(var(--rpma-teal))]-hover transition-colors duration-200"
+            className="bg-emerald-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-emerald-700 transition-colors duration-200"
           >
-            Log In
+            Se connecter
           </button>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className={`bg-border/5 rounded-xl border border-border/20 shadow-xl ${className}`}>
-      <TaskFormHeader
-        isEditing={isEditing}
-        taskNumber={taskNumber}
-        showHeader={showHeader}
-      />
+  const currentStepIndex = stepsConfig.findIndex(s => s.id === currentStep);
 
-      <form onSubmit={handleSubmit} className="p-4 md:p-6">
+  return (
+    <div className={`bg-white rounded-xl border border-slate-200 shadow-xl ${className}`}>
+      {showHeader && (
+        <TaskFormHeader
+          isEditing={isEditing}
+          taskNumber={taskNumber}
+          showHeader={showHeader}
+          currentStepLabel={`Étape ${currentStepIndex + 1}/${stepsConfig.length}`}
+          stepsCount={stepsConfig.length}
+          currentStepIndex={currentStepIndex}
+        />
+      )}
+
+      <form onSubmit={handleSubmit} className="flex flex-col min-h-[600px]">
         <TaskFormProgress
           currentStep={currentStep}
           canProceedToNextStep={canProceedToNextStep}
           onStepClick={handleStepClick}
+          completedSteps={completedSteps}
         />
 
-        {/* Current Step Content */}
-        <div className="min-h-[300px] sm:min-h-[400px]">
+        <div className="flex-1 px-4 md:px-6">
           {renderStepContent()}
         </div>
 
-        <TaskFormNavigation
+        <TaskActionBar
           currentStep={currentStep}
           canProceedToNextStep={canProceedToNextStep}
           onNextStep={handleNextStep}
@@ -192,34 +195,22 @@ const TaskFormWizard: React.FC<TaskFormProps> = React.memo(({
           isDirty={isDirty}
           onAutoSave={autoSave}
           loading={loading}
+          onSubmit={handleSubmit}
         />
 
-        <TaskFormSubmit
-          currentStep={currentStep}
-          loading={loading}
-          canProceedToNextStep={canProceedToNextStep}
-        />
-
-        {/* Enhanced Error Display */}
         {error && (
-          <div className="mt-4 bg-red-500/10 border border-red-500/30 rounded-xl p-4 backdrop-blur-sm">
+          <div className="mx-4 mb-4 md:mx-6 bg-red-500/10 border border-red-500/30 rounded-xl p-4 backdrop-blur-sm">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 mt-0.5">
-                <X className="w-5 h-5 text-red-400" />
+                <X className="w-5 h-5 text-red-500" />
               </div>
               <div className="flex-1">
-                <h4 className="text-sm font-medium text-red-400 mb-1">Erreur de validation</h4>
-                <p className="text-red-300 text-sm">{error}</p>
+                <h4 className="text-sm font-medium text-red-500 mb-1">Erreur de validation</h4>
+                <p className="text-red-600 text-sm">{error}</p>
               </div>
             </div>
           </div>
         )}
-
-        <TaskFormAutoSaveStatus
-          autoSaveEnabled={autoSaveEnabled}
-          isDirty={isDirty}
-          lastSaved={lastSaved}
-        />
       </form>
     </div>
   );

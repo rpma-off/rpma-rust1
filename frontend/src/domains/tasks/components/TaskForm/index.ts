@@ -5,6 +5,10 @@ export { useTaskForm } from './useTaskForm';
 export { useTaskFormSteps } from './TaskFormSteps';
 export { useTaskFormSubmission } from './TaskFormSubmission';
 
+// New Enhanced Components
+export { TaskSummaryCard } from './TaskSummaryCard';
+export { TaskActionBar } from './TaskActionBar';
+
 // Form Steps
 export { VehicleStep } from './steps/VehicleStep';
 export { CustomerStep } from './steps/CustomerStep';
