@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import {
   Shield,
   Users,
@@ -44,11 +45,27 @@ import { useAuth } from '@/domains/auth';
 import { useRouter } from 'next/navigation';
 import { ipcClient, convertTimestamps } from '@/shared/utils';
 import type { CreateUserRequest, UserAccount } from '@/shared/types';
-import { WorkflowExecutionDashboard } from '@/domains/workflow';
-import { QualityAssuranceDashboard } from '@/domains/admin';
-import { PhotoDocumentationDashboard } from '@/domains/admin';
-import { SecurityDashboard } from '@/domains/admin';
 import { useTranslation } from '@/shared/hooks/useTranslation';
+
+const WorkflowExecutionDashboard = dynamic(
+  () => import('@/domains/workflow/components/WorkflowExecutionDashboard').then((mod) => ({ default: mod.WorkflowExecutionDashboard })),
+  { loading: () => <LoadingState />, ssr: false }
+);
+
+const QualityAssuranceDashboard = dynamic(
+  () => import('@/domains/admin/components/QualityAssuranceDashboard').then((mod) => ({ default: mod.QualityAssuranceDashboard })),
+  { loading: () => <LoadingState />, ssr: false }
+);
+
+const PhotoDocumentationDashboard = dynamic(
+  () => import('@/domains/admin/components/PhotoDocumentationDashboard').then((mod) => ({ default: mod.PhotoDocumentationDashboard })),
+  { loading: () => <LoadingState />, ssr: false }
+);
+
+const SecurityDashboard = dynamic(
+  () => import('@/domains/admin/components/SecurityDashboard').then((mod) => ({ default: mod.SecurityDashboard })),
+  { loading: () => <LoadingState />, ssr: false }
+);
 
 interface SystemStats {
   totalUsers: number;
