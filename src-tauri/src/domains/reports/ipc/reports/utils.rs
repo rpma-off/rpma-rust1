@@ -279,7 +279,7 @@ pub fn format_report_data_for_csv(report_data: &serde_json::Value) -> String {
             csv_lines.push("Field,Value".to_string());
 
             let mut entries: Vec<_> = map.iter().collect();
-            entries.sort_by_key(|(k, _)| k.clone());
+            entries.sort_by_key(|(k, _)| *k);
 
             for (key, value) in entries {
                 csv_lines.push(format!(

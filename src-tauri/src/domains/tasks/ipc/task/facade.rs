@@ -7,17 +7,12 @@ use crate::authenticate;
 use crate::check_task_permission;
 use crate::commands::{ApiResponse, AppError, AppState, TaskAction};
 use crate::domains::tasks::domain::models::task::Task;
+use crate::domains::tasks::ipc::task::queries::{get_task_statistics, get_tasks_with_clients};
 use crate::domains::tasks::TasksFacade;
 use crate::shared::services::validation::ValidationService;
 use serde::Deserialize;
 use std::fmt::Debug;
 use tracing::{debug, error, info, warn};
-
-// Re-export specialized modules for internal use
-pub use super::queries::*;
-pub use super::history::*;
-pub use super::validation::validate_task_assignment_change;
-pub use super::validation::*;
 
 /// Task request structure
 #[derive(Deserialize, Debug)]
@@ -348,8 +343,6 @@ pub async fn report_task_issue(
 }
 
 // Delegate to validation module
-pub use super::validation::check_task_assignment;
-pub use super::validation::check_task_availability;
 
 // Explicit import for TaskFilter
 use crate::domains::tasks::ipc::task_types::TaskFilter;

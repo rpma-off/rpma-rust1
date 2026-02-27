@@ -28,7 +28,7 @@ impl StreamingTaskRepository {
         status: Option<String>,
         technician_id: Option<String>,
         client_id: Option<String>,
-        chunk_size: usize,
+        _chunk_size: usize,
     ) -> Result<ChunkedQuery<Task, impl Fn(&rusqlite::Row) -> Result<Task, rusqlite::Error>>, String>
     {
         use crate::db::FromSqlRow;

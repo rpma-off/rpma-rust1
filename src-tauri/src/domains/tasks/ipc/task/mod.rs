@@ -12,4 +12,3 @@ pub mod statistics;
 pub mod validation;
 
 // Re-export the main facade for backward compatibility
-pub use facade::*;

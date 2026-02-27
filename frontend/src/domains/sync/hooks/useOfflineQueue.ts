@@ -3,6 +3,7 @@ import { createPermissionChecker, Permission } from '@/lib/rbac';
 import type { UserAccount } from '@/lib/backend';
 import { displayError, displaySuccess, displayInfo, createError } from '@/lib/utils/errorHandling';
 import { ErrorCategory, ErrorSeverity } from '@/lib/utils/errorHandling';
+import { computeQueueStats, loadPersistedQueue, persistQueue } from './useOfflineQueue.utils';
 
 // Queue operation types
 export enum OperationType {
@@ -57,6 +58,8 @@ export interface OfflineQueueOptions {
   autoProcess?: boolean;
 }
 
+const OFFLINE_QUEUE_STORAGE_KEY = 'offline-queue';
+
 export const useOfflineQueue = (
   user: Record<string, unknown> | null,
   options: OfflineQueueOptions = {}
@@ -84,42 +87,24 @@ export const useOfflineQueue = (
 
   // Load persisted queue on mount
   useEffect(() => {
-    const savedQueue = localStorage.getItem('offline-queue');
-    if (savedQueue) {
-      try {
-        const parsedQueue = JSON.parse(savedQueue);
-        setQueue(parsedQueue);
-        updateStats(parsedQueue);
-      } catch (_error) {
-        displayError('Failed to load offline queue');
-      }
+    try {
+      const parsedQueue = loadPersistedQueue<QueueOperation>(OFFLINE_QUEUE_STORAGE_KEY);
+      setQueue(parsedQueue);
+      updateStats(parsedQueue);
+    } catch (_error) {
+      displayError('Failed to load offline queue');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Save queue to localStorage
   useEffect(() => {
-    if (queue.length > 0) {
-      localStorage.setItem('offline-queue', JSON.stringify(queue));
-    } else {
-      localStorage.removeItem('offline-queue');
-    }
+    persistQueue(OFFLINE_QUEUE_STORAGE_KEY, queue);
   }, [queue]);
 
   // Update stats when queue changes
   const updateStats = useCallback((operations: QueueOperation[]) => {
-    const newStats = operations.reduce(
-      (acc, op) => ({
-        total: acc.total + 1,
-        pending: acc.pending + (op.status === OperationStatus.PENDING ? 1 : 0),
-        processing: acc.processing + (op.status === OperationStatus.PROCESSING ? 1 : 0),
-        completed: acc.completed + (op.status === OperationStatus.COMPLETED ? 1 : 0),
-        failed: acc.failed + (op.status === OperationStatus.FAILED ? 1 : 0),
-      }),
-      { total: 0, pending: 0, processing: 0, completed: 0, failed: 0 }
-    );
-    
-    setStats(newStats);
+    setStats(computeQueueStats(operations));
   }, []);
 
   // Monitor online status

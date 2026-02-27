@@ -1,4 +1,5 @@
 mod facade;
+#[cfg(test)]
 pub(crate) use facade::DocumentsFacade;
 pub(crate) mod application;
 pub mod domain;

@@ -3,7 +3,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Calendar, Car, User, Shield, Eye, Edit, Trash2, RefreshCw, Download, Upload, Grid, List, AlertCircle, Filter, ChevronRight, SearchX } from 'lucide-react';
 import type { TaskWithDetails, TaskStatus } from '@/domains/tasks/facade';
 import { taskGateway, useTasks, getTaskDisplayTitle, getTaskDisplayStatus } from '@/domains/tasks/facade';
@@ -94,12 +93,7 @@ const TaskCard = React.memo(({
   }, []);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.2 }}
-    >
+    <div className="animate-fadeIn">
       <Card className="hover:shadow-sm transition-all duration-200 border border-[hsl(var(--rpma-border))] hover:border-primary/30 bg-white rounded-[10px]">
         <CardContent className="p-4 md:p-5">
           <div className="flex flex-col gap-4">
@@ -236,7 +230,7 @@ const TaskCard = React.memo(({
           </div>
         </CardContent>
       </Card>
-    </motion.div>
+    </div>
   );
 });
 
@@ -503,12 +497,7 @@ const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const activeFiltersCount = [statusFilter, dateFilter, technicianFilter, ppfZoneFilter].filter(f => f !== 'all').length;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
-      className="bg-white border border-[hsl(var(--rpma-border))] rounded-[10px] p-4 mb-4 shadow-[var(--rpma-shadow-soft)]"
-    >
+    <div className="animate-fadeIn bg-white border border-[hsl(var(--rpma-border))] rounded-[10px] p-4 mb-4 shadow-[var(--rpma-shadow-soft)]">
       <div className="flex flex-col gap-4">
         <div className="flex flex-col md:flex-row md:items-center gap-3">
           <div className="relative flex-1 max-w-md">
@@ -650,7 +639,7 @@ const debouncedSearchTerm = useDebounce(searchTerm, 300);
           </Button>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 });
 
@@ -1169,7 +1158,7 @@ export default function TasksPage() {
               <KanbanBoard />
             </div>
           ) : (
-            <AnimatePresence>
+            <div className="space-y-2">
               {filteredTasks.map((task) => (
                 <TaskCard
                   key={task.id}
@@ -1179,7 +1168,7 @@ export default function TasksPage() {
                   onDelete={handleDeleteTask}
                 />
               ))}
-            </AnimatePresence>
+            </div>
           )}
         </PullToRefresh>
 
