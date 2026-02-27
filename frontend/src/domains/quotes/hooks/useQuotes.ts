@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/domains/auth';
-import { ipcClient } from '@/lib/ipc';
+import { quotesIpc } from '@/domains/quotes/ipc/quotes.ipc';
 import type { JsonObject } from '@/types/json';
 import type {
   Quote,
@@ -45,7 +45,7 @@ export function useQuotesList(options: UseQuotesListOptions = {}) {
     try {
       setLoading(true);
       setError(null);
-      const result = await ipcClient.quotes.list(filters, user.token);
+      const result = await quotesIpc.list(filters, user.token);
       const response = result as unknown as ApiResponse<QuoteListResponse>;
       if (response?.success && response.data) {
         setQuotes(response.data.data);
@@ -99,7 +99,7 @@ export function useQuote(id: string | null) {
     try {
       setLoading(true);
       setError(null);
-      const result = await ipcClient.quotes.get(id, user.token);
+      const result = await quotesIpc.get(id, user.token);
       const response = result as unknown as ApiResponse<Quote>;
       if (response?.success && response.data) {
         setQuote(response.data);
@@ -136,7 +136,7 @@ export function useCreateQuote() {
         if (process.env.NODE_ENV === 'development') {
           console.debug('[quote_create] payload keys:', Object.keys(data));
         }
-        const result = await ipcClient.quotes.create(
+        const result = await quotesIpc.create(
           data as unknown as JsonObject,
           user.token,
         );
@@ -174,7 +174,7 @@ export function useUpdateQuote() {
       try {
         setLoading(true);
         setError(null);
-        const result = await ipcClient.quotes.update(
+        const result = await quotesIpc.update(
           id,
           data as unknown as JsonObject,
           user.token,
@@ -211,7 +211,7 @@ export function useDeleteQuote() {
       if (!user?.token) return false;
       try {
         setLoading(true);
-        const result = await ipcClient.quotes.delete(id, user.token);
+        const result = await quotesIpc.delete(id, user.token);
         const response = result as unknown as ApiResponse<boolean>;
         return response?.success ?? false;
       } catch {
@@ -237,7 +237,7 @@ export function useQuoteItems() {
       if (!user?.token) return null;
       try {
         setLoading(true);
-        const result = await ipcClient.quotes.addItem(
+        const result = await quotesIpc.addItem(
           quoteId,
           item as unknown as JsonObject,
           user.token,
@@ -258,7 +258,7 @@ export function useQuoteItems() {
       if (!user?.token) return null;
       try {
         setLoading(true);
-        const result = await ipcClient.quotes.updateItem(
+        const result = await quotesIpc.updateItem(
           quoteId,
           itemId,
           data as unknown as JsonObject,
@@ -280,7 +280,7 @@ export function useQuoteItems() {
       if (!user?.token) return null;
       try {
         setLoading(true);
-        const result = await ipcClient.quotes.deleteItem(quoteId, itemId, user.token);
+        const result = await quotesIpc.deleteItem(quoteId, itemId, user.token);
         const response = result as unknown as ApiResponse<Quote>;
         return response?.success ? (response.data ?? null) : null;
       } catch {
@@ -306,7 +306,7 @@ export function useQuoteStatus() {
       if (!user?.token) return null;
       try {
         setLoading(true);
-        const result = await ipcClient.quotes.markSent(id, user.token);
+        const result = await quotesIpc.markSent(id, user.token);
         const response = result as unknown as ApiResponse<Quote>;
         return response?.success ? (response.data ?? null) : null;
       } catch {
@@ -323,7 +323,7 @@ export function useQuoteStatus() {
       if (!user?.token) return null;
       try {
         setLoading(true);
-        const result = await ipcClient.quotes.markAccepted(id, user.token);
+        const result = await quotesIpc.markAccepted(id, user.token);
         const response = result as unknown as ApiResponse<QuoteAcceptResponse>;
         return response?.success ? (response.data ?? null) : null;
       } catch {
@@ -340,7 +340,7 @@ export function useQuoteStatus() {
       if (!user?.token) return null;
       try {
         setLoading(true);
-        const result = await ipcClient.quotes.markRejected(id, user.token);
+        const result = await quotesIpc.markRejected(id, user.token);
         const response = result as unknown as ApiResponse<Quote>;
         return response?.success ? (response.data ?? null) : null;
       } catch {
@@ -366,7 +366,7 @@ export function useQuoteExportPdf() {
       if (!user?.token) return null;
       try {
         setLoading(true);
-        const result = await ipcClient.quotes.exportPdf(id, user.token);
+        const result = await quotesIpc.exportPdf(id, user.token);
         const response = result as unknown as ApiResponse<QuoteExportResponse>;
         return response?.success ? (response.data ?? null) : null;
       } catch {

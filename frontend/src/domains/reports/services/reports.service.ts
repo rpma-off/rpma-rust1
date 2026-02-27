@@ -528,8 +528,8 @@ export class ReportsService {
         const result = await safeInvoke<InterventionReportResult>(
           'export_intervention_report',
           {
-            interventionId: interventionId,
-            sessionToken: session.token
+            intervention_id: interventionId,
+            session_token: session.token
           }
         );
 
@@ -650,9 +650,9 @@ export class ReportsService {
       const result = await safeInvoke<string>(
         'save_intervention_report',
         {
-          interventionId: interventionId,
-          filePath: filePath,
-          sessionToken: session.token
+          intervention_id: interventionId,
+          file_path: filePath,
+          session_token: session.token
         }
       );
 
