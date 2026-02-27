@@ -97,7 +97,7 @@ export function CalendarView() {
         open={sheetOpen}
         onOpenChange={setSheetOpen}
       />
-      <div className="flex flex-col h-full overflow-x-auto w-full">
+      <div className="flex flex-col flex-1 overflow-x-auto w-full" style={{ minHeight: 0 }}>
         <CalendarWeekHeader
           weekDays={weekDays}
           onPreviousWeek={goToPrevious}
