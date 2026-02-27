@@ -102,7 +102,7 @@ export default function InstallationStepPage() {
     const collected = (stepRecord?.collected_data ?? {}) as InstallationDraft;
     const baseZones = buildZoneList(task?.ppf_zones ?? null);
     const savedZones = Array.isArray(collected.zones) ? collected.zones : [];
-    const merged = baseZones.map((zone) => {
+    const merged: ZoneDraft[] = baseZones.map((zone) => {
       const saved = savedZones.find((item) => item.id === zone.id || item.name === zone.name);
       return {
         ...zone,
@@ -115,7 +115,7 @@ export default function InstallationStepPage() {
 
     savedZones
       .filter((saved) => !merged.some((zone) => zone.id === saved.id))
-      .forEach((saved) => merged.push({ ...saved }));
+      .forEach((saved) => merged.push({ status: 'pending', checklist: {}, photos: [], ...saved }));
 
     const activeCandidate =
       collected.activeZoneId ??
@@ -132,7 +132,7 @@ export default function InstallationStepPage() {
         )
       : merged;
 
-    setZones(adjustedZones);
+    setZones(adjustedZones as ZoneDraft[]);
     setActiveZoneId(activeCandidate);
     setNotes(collected.notes ?? '');
   }, [stepRecord?.id, task?.ppf_zones]);
@@ -243,13 +243,13 @@ export default function InstallationStepPage() {
     if (!activeZone || !canValidateZone) return;
     setZones((prev) => {
       const updated = prev.map((zone) =>
-        zone.id === activeZone.id ? { ...zone, status: 'completed' } : zone
+        zone.id === activeZone.id ? { ...zone, status: 'completed' as const } : zone
       );
       const nextZone = updated.find((zone) => zone.status === 'pending');
       if (nextZone) {
         setActiveZoneId(nextZone.id);
         return updated.map((zone) =>
-          zone.id === nextZone.id ? { ...zone, status: 'in_progress' } : zone
+          zone.id === nextZone.id ? { ...zone, status: 'in_progress' as const } : zone
         );
       }
       return updated;

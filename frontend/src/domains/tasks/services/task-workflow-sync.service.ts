@@ -1,6 +1,5 @@
 // Task Workflow Sync Service
 import { ipcClient } from '@/lib/ipc/client';
-import { taskService } from './task.service';
 import type { Intervention } from '@/lib/backend';
 import type { TaskWithDetails } from '@/types/task.types';
 import { AuthSecureStorage } from '@/lib/secureStorage';
@@ -39,12 +38,10 @@ export class TaskWorkflowSyncService {
     try {
       const sessionToken = await this.getSessionToken();
       // Get the task details
-      const taskResponse = await taskService.getTaskById(taskId);
-      if (!taskResponse.success || !taskResponse.data) {
-        throw new Error(`Failed to get task ${taskId}: ${taskResponse.error || 'Unknown error'}`);
+      const task = (await ipcClient.tasks.get(taskId, sessionToken)) as TaskWithDetails | null;
+      if (!task) {
+        throw new Error(`Failed to get task ${taskId}: not found`);
       }
-
-      const task = taskResponse.data;
 
       // Get the active intervention for this task
       const interventionResponse = await ipcClient.interventions.getActiveByTask(taskId, sessionToken) as ActiveInterventionResponse;
@@ -94,13 +91,14 @@ export class TaskWorkflowSyncService {
    */
   static async syncAllTasksWithWorkflows(): Promise<TaskWithWorkflowProgress[]> {
     try {
+      const sessionToken = await this.getSessionToken();
       // Get all tasks (you might want to add pagination/filtering)
-      const tasksResponse = await taskService.getTasks();
-      if (!tasksResponse.success || !tasksResponse.data) {
-        throw new Error(`Failed to get tasks: ${tasksResponse.error || 'Unknown error'}`);
+      const tasksResponse = await ipcClient.tasks.list({}, sessionToken);
+      if (!tasksResponse || !tasksResponse.data) {
+        throw new Error('Failed to get tasks');
       }
 
-      const tasks = tasksResponse.data.data || [];
+      const tasks = (tasksResponse.data || []) as TaskWithDetails[];
       const results: TaskWithWorkflowProgress[] = [];
 
       // Sync each task (consider batching for performance)

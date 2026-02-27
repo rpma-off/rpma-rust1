@@ -1,7 +1,7 @@
 import React from 'react';
 import { CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { PPF_STEP_CONFIG } from '@/domains/interventions/components/ppf/ppfWorkflow.config';
+import { PPF_STEP_CONFIG } from '@/domains/interventions';
 
 type WorkflowStepStatus = 'completed' | 'in_progress' | 'pending';
 
