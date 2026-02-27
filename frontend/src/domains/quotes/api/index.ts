@@ -15,3 +15,15 @@ export {
 } from '../hooks/useQuotes';
 
 export type { QuotesDomainContextValue } from './types';
+
+export {
+  QuoteStatusBadge,
+  QuoteItemsTable,
+  QuoteTotals,
+  STATUS_LABELS,
+} from '../components';
+export type {
+  QuoteStatusBadgeProps,
+  QuoteItemsTableProps,
+  QuoteTotalsProps,
+} from '../components';
