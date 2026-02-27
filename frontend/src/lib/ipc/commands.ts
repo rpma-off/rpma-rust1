@@ -28,6 +28,8 @@ export const IPC_COMMANDS = {
   REPORT_TASK_ISSUE: 'report_task_issue',
   EXPORT_TASKS_CSV: 'export_tasks_csv',
   IMPORT_TASKS_BULK: 'import_tasks_bulk',
+  TASK_TRANSITION_STATUS: 'task_transition_status',
+  TASK_GET_STATUS_DISTRIBUTION: 'task_get_status_distribution',
 
   // Client commands
   CLIENT_CRUD: 'client_crud',

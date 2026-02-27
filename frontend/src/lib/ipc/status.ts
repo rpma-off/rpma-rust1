@@ -1,4 +1,5 @@
 import { safeInvoke } from './utils';
+import { IPC_COMMANDS } from './commands';
 import type {
   StatusTransitionRequest,
   StatusDistribution
@@ -9,13 +10,13 @@ export const statusApi = {
    * Transition a task to a new status
    */
   transitionStatus: async (request: StatusTransitionRequest, sessionToken: string) => {
-    return safeInvoke('task_transition_status', { session_token: sessionToken, request });
+    return safeInvoke(IPC_COMMANDS.TASK_TRANSITION_STATUS, { session_token: sessionToken, request });
   },
 
   /**
    * Get status distribution for all tasks
    */
   getStatusDistribution: async (sessionToken: string): Promise<StatusDistribution> => {
-    return safeInvoke('task_get_status_distribution', { session_token: sessionToken });
+    return safeInvoke(IPC_COMMANDS.TASK_GET_STATUS_DISTRIBUTION, { session_token: sessionToken });
   },
 };

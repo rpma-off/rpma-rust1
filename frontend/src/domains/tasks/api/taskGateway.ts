@@ -1,6 +1,8 @@
 import { TaskService } from '../services/task.service';
 import { taskIpc } from '../ipc/task.ipc';
+import { statusApi } from '@/lib/ipc/status';
 import type { JsonObject } from '@/types/json';
+import type { StatusTransitionRequest } from '@/lib/backend';
 import type {
   TaskAssignmentCheckResponse,
   TaskAvailabilityCheckResponse,
@@ -25,6 +27,26 @@ export const taskGateway = {
 
   editTask: (taskId: string, updates: JsonObject, sessionToken: string) =>
     taskIpc.editTask(taskId, updates, sessionToken),
+
+  addTaskNote: (taskId: string, note: string, sessionToken: string) =>
+    taskIpc.addTaskNote(taskId, note, sessionToken),
+
+  sendTaskMessage: (taskId: string, message: string, messageType: string, sessionToken: string) =>
+    taskIpc.sendTaskMessage(taskId, message, messageType, sessionToken),
+
+  delayTask: (taskId: string, newDate: string, reason: string, sessionToken: string) =>
+    taskIpc.delayTask(taskId, newDate, reason, sessionToken),
+
+  reportTaskIssue: (
+    taskId: string,
+    issueType: string,
+    severity: string,
+    description: string,
+    sessionToken: string
+  ) => taskIpc.reportTaskIssue(taskId, issueType, severity, description, sessionToken),
+
+  transitionStatus: (request: StatusTransitionRequest, sessionToken: string) =>
+    statusApi.transitionStatus(request, sessionToken),
 
   exportTasksCsv: (
     options: Parameters<typeof taskIpc.exportTasksCsv>[0],
