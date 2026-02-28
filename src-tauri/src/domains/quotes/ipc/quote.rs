@@ -369,7 +369,7 @@ pub async fn quote_export_pdf(
 
     // Generate PDF
     let pdf_dir = state.app_data_dir.join("quotes");
-    std::fs::create_dir_all(&pdf_dir).map_err(|e| {
+    tokio::fs::create_dir_all(&pdf_dir).await.map_err(|e| {
         error!("Failed to create quotes directory: {}", e);
         AppError::Io("Failed to create export directory".to_string())
     })?;
@@ -377,10 +377,17 @@ pub async fn quote_export_pdf(
     let file_name = format!("{}.pdf", quote.quote_number);
     let file_path = pdf_dir.join(&file_name);
 
-    generate_quote_pdf(&quote, &file_path).map_err(|e| {
-        error!("Failed to generate PDF: {}", e);
-        AppError::Internal("PDF generation failed".to_string())
-    })?;
+    let file_path_for_pdf = file_path.clone();
+    tokio::task::spawn_blocking(move || generate_quote_pdf(&quote, &file_path_for_pdf))
+        .await
+        .map_err(|e| {
+            error!("Failed to join PDF generation task: {}", e);
+            AppError::Internal("PDF generation failed".to_string())
+        })?
+        .map_err(|e| {
+            error!("Failed to generate PDF: {}", e);
+            AppError::Internal("PDF generation failed".to_string())
+        })?;
 
     info!(quote_id = %request.id, path = %file_path.display(), "Quote PDF exported");
 
@@ -394,7 +401,7 @@ pub async fn quote_export_pdf(
 fn generate_quote_pdf(
     quote: &Quote,
     path: &std::path::Path,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> std::io::Result<()> {
     use std::io::Write;
 
     // Minimal PDF generation (plain text-based PDF)

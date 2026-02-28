@@ -196,7 +196,7 @@ impl PhotoService {
         };
 
         // Get file metadata
-        let metadata = std::fs::metadata(&file_path)?;
+        let metadata = tokio::fs::metadata(&file_path).await?;
         let file_size = metadata.len() as i64;
 
         // Extract image dimensions and quality scores
