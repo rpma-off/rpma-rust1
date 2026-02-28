@@ -20,6 +20,7 @@ path = "src/main.rs"
 [[bin]]
 name = "export-types"
 path = "src/bin/export-types.rs"
+required-features = ["export-types"]
 
 
 [[bench]]
@@ -169,6 +170,7 @@ geo = "0.28"
 default = ["custom-protocol"]
 custom-protocol = ["tauri/custom-protocol"]
 sqlcipher = []  # Optional feature for SQLCipher encryption support
+export-types = [] # Opens domain visibility for the export-types binary (ts-rs)
 legacy-tests = [] # Enable legacy integration/performance/proptest modules
 
 [dev-dependencies]
