@@ -108,7 +108,7 @@ impl SessionRepository {
         let conn = self.db.get_connection()?;
         let n = conn.execute("DELETE FROM sessions WHERE id = ?1", params![token])?;
         if n > 0 {
-            info!("Deleted session: {}", token);
+            info!("Deleted session");
         }
         Ok(())
     }
