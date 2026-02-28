@@ -1,16 +1,12 @@
-'use client';
-
-import React from 'react';
-import { useParams } from 'next/navigation';
 import { PPFWorkflowProvider } from '@/domains/interventions';
 
 interface PPFWorkflowLayoutProps {
   children: React.ReactNode;
+  params: {
+    id: string;
+  };
 }
 
-export default function PPFWorkflowLayout({ children }: PPFWorkflowLayoutProps) {
-  const params = useParams();
-  const taskId = params.id as string;
-
-  return <PPFWorkflowProvider taskId={taskId}>{children}</PPFWorkflowProvider>;
+export default function PPFWorkflowLayout({ children, params }: PPFWorkflowLayoutProps) {
+  return <PPFWorkflowProvider taskId={params.id}>{children}</PPFWorkflowProvider>;
 }
