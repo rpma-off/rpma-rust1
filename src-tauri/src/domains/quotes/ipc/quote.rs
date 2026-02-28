@@ -377,9 +377,8 @@ pub async fn quote_export_pdf(
     let file_name = format!("{}.pdf", quote.quote_number);
     let file_path = pdf_dir.join(&file_name);
 
-    let quote_for_pdf = quote.clone();
     let file_path_for_pdf = file_path.clone();
-    tokio::task::spawn_blocking(move || generate_quote_pdf(&quote_for_pdf, &file_path_for_pdf))
+    tokio::task::spawn_blocking(move || generate_quote_pdf(&quote, &file_path_for_pdf))
         .await
         .map_err(|e| {
             error!("Failed to join PDF generation task: {}", e);
@@ -402,7 +401,7 @@ pub async fn quote_export_pdf(
 fn generate_quote_pdf(
     quote: &Quote,
     path: &std::path::Path,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+) -> std::io::Result<()> {
     use std::io::Write;
 
     // Minimal PDF generation (plain text-based PDF)

@@ -39,7 +39,7 @@ pub async fn get_device_info(
             )
         })
         .await
-        .map_err(|e| format!("Failed to gather device info: {}", e))?;
+        .map_err(|e| format!("Device info task failed or was cancelled: {}", e))?;
 
         Ok(DeviceInfo {
             hostname,
