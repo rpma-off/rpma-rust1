@@ -1574,19 +1574,22 @@ WHERE t.scheduled_date IS NOT NULL
 
 -- Schema Version Management
 -- This table tracks which database migrations have been applied
--- The current schema.sql represents version 39 of the database schema
+-- The current schema.sql represents version 43 of the database schema
 CREATE TABLE IF NOT EXISTS schema_version (
     version INTEGER PRIMARY KEY,
     applied_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
 );
 
--- Initialize baseline schema versions 1..39 to keep version history contiguous.
+-- Initialize baseline schema versions 1..43 to keep version history contiguous.
+-- schema.sql already incorporates all changes from migrations 040-043, so fresh
+-- databases must not attempt to re-run those migrations (040 references the old
+-- user_sessions table which no longer exists in the baseline schema).
 WITH RECURSIVE baseline_versions(version) AS (
     SELECT 1
     UNION ALL
     SELECT version + 1
     FROM baseline_versions
-    WHERE version < 39
+    WHERE version < 43
 )
 INSERT OR IGNORE INTO schema_version (version)
 SELECT version FROM baseline_versions;
