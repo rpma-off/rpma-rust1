@@ -63,7 +63,7 @@ impl SessionService {
     #[instrument(skip(self), err)]
     pub async fn revoke_session(&self, token: &str) -> Result<(), AppError> {
         self.repository.delete_session(token)?;
-        info!("Revoked session: {}", token);
+        info!("Revoked session");
         Ok(())
     }
 

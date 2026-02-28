@@ -31,7 +31,7 @@ pub struct UserCrudRequest {
 
 /// User CRUD operations
 #[tauri::command]
-#[instrument(skip(state))]
+#[instrument(skip(state, request))]
 pub async fn user_crud(
     request: UserCrudRequest,
     state: AppState<'_>,
