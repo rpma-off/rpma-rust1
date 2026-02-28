@@ -263,6 +263,7 @@ impl Database {
             31 => self.apply_migration_31(),
             32 => self.apply_migration_32(),
             33 => self.apply_migration_33(),
+            40 => self.apply_migration_40(),
             _ => {
                 // Try to apply generic SQL migration for all other versions
                 // This covers 3-5, 7, 10, 13-15, 19-23, 34, 35, and any future SQL-only migrations
@@ -2579,6 +2580,67 @@ impl Database {
         tracing::info!("Migration 33: Task workflow FKs added successfully");
         Ok(())
     }
+
+    /// Migration 040: Add indexes for recent activity and reference lookups.
+    ///
+    /// Custom handler because the original SQL references `user_sessions`, which only
+    /// exists on databases that have not yet applied migration 041.  Fresh databases
+    /// initialised from the current schema.sql start with the `sessions` table instead,
+    /// so attempting `CREATE INDEX … ON user_sessions(…)` would crash.
+    ///
+    /// Resolution: skip the `user_sessions` index when the table is absent (it will be
+    /// dropped by migration 041 anyway), and always apply the idempotent
+    /// `inventory_transactions` index.
+    fn apply_migration_40(&self) -> DbResult<()> {
+        let conn = self.get_connection()?;
+        tracing::info!("Migration 040: Adding activity and reference indexes");
+
+        // Only create the user_sessions index if the table still exists.
+        // On fresh databases the table never existed; on upgraded databases it will
+        // be dropped by migration 041 immediately after this step.
+        let user_sessions_exists: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='user_sessions'",
+                [],
+                |row| row.get(0),
+            )
+            .map_err(|e| e.to_string())?;
+
+        if user_sessions_exists > 0 {
+            conn.execute_batch(
+                "CREATE INDEX IF NOT EXISTS idx_user_sessions_last_activity_user \
+                 ON user_sessions(last_activity DESC, user_id);",
+            )
+            .map_err(|e| {
+                format!("Migration 040: failed to create user_sessions index: {}", e)
+            })?;
+        } else {
+            tracing::info!(
+                "Migration 040: user_sessions table absent, skipping its index (fresh DB or already migrated)"
+            );
+        }
+
+        // This index is safe regardless of DB age.
+        conn.execute_batch(
+            "CREATE INDEX IF NOT EXISTS idx_inventory_transactions_reference_type_number \
+             ON inventory_transactions(reference_type, reference_number);",
+        )
+        .map_err(|e| {
+            format!(
+                "Migration 040: failed to create inventory_transactions index: {}",
+                e
+            )
+        })?;
+
+        conn.execute(
+            "INSERT INTO schema_version (version) VALUES (?1)",
+            params![40],
+        )
+        .map_err(|e| e.to_string())?;
+
+        tracing::info!("Migration 040: completed successfully");
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -2750,5 +2812,138 @@ mod tests {
         // Second run: migrate(39) again must be a no-op (current_version >= 39)
         db.migrate(39)
             .expect("Second migration 039 run must be idempotent");
+    }
+
+    /// Regression test: migration 040 must succeed on a fresh DB where user_sessions
+    /// never existed (schema.sql starts with the `sessions` table instead).
+    ///
+    /// This guards against the startup crash:
+    ///   "Failed to execute migration SQL for version 40: no such table: main.user_sessions"
+    #[test]
+    fn test_migration_040_succeeds_on_fresh_db() {
+        let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+        let db = Database::new(temp_file.path(), "").expect("Failed to create database");
+
+        // schema.sql now marks versions 1..43 as baseline; remove 40..43 so that
+        // migrate(40) actually executes.
+        db.init().expect("Failed to init schema");
+        {
+            let conn = db.get_connection().expect("Failed to get connection");
+            conn.execute("DELETE FROM schema_version WHERE version >= 40", [])
+                .expect("Failed to remove schema_version 40+");
+        }
+
+        // On a fresh DB user_sessions does not exist — the custom handler must
+        // skip that index gracefully and still record version 40.
+        db.migrate(40)
+            .expect("Migration 040 must succeed on a fresh DB without user_sessions");
+
+        // Confirm that the inventory_transactions index was created.
+        let conn = db.get_connection().expect("Failed to get connection");
+        let index_exists: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master \
+                 WHERE type='index' AND name='idx_inventory_transactions_reference_type_number'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("Failed to query sqlite_master for index");
+        assert_eq!(
+            index_exists, 1,
+            "idx_inventory_transactions_reference_type_number must exist after migration 040"
+        );
+
+        // Confirm version 40 is recorded.
+        let version_recorded: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM schema_version WHERE version = 40",
+                [],
+                |row| row.get(0),
+            )
+            .expect("Failed to query schema_version");
+        assert_eq!(version_recorded, 1, "schema_version must include 40");
+    }
+
+    /// Regression test: migration 040 must also succeed on an older DB that still has
+    /// the user_sessions table (upgrade path).
+    #[test]
+    fn test_migration_040_succeeds_with_user_sessions() {
+        let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+        let db = Database::new(temp_file.path(), "").expect("Failed to create database");
+
+        db.init().expect("Failed to init schema");
+
+        // Simulate an older DB: create user_sessions and set schema_version to 39.
+        {
+            let conn = db.get_connection().expect("Failed to get connection");
+            conn.execute_batch(
+                "CREATE TABLE IF NOT EXISTS user_sessions (
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT NOT NULL,
+                    last_activity INTEGER NOT NULL DEFAULT 0
+                );",
+            )
+            .expect("Failed to create user_sessions");
+            conn.execute("DELETE FROM schema_version WHERE version >= 40", [])
+                .expect("Failed to reset schema_version to 39");
+        }
+
+        // Migration 040 should create the index on user_sessions without error.
+        db.migrate(40)
+            .expect("Migration 040 must succeed when user_sessions is present");
+
+        let conn = db.get_connection().expect("Failed to get connection");
+        let index_exists: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master \
+                 WHERE type='index' AND name='idx_user_sessions_last_activity_user'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("Failed to query sqlite_master for index");
+        assert_eq!(
+            index_exists, 1,
+            "idx_user_sessions_last_activity_user must exist after migration 040 on an upgraded DB"
+        );
+    }
+
+    /// Idempotency test: running migration 040 twice must not error.
+    #[test]
+    fn test_migration_040_is_idempotent() {
+        let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+        let db = Database::new(temp_file.path(), "").expect("Failed to create database");
+
+        db.init().expect("Failed to init schema");
+
+        // First run: apply all migrations up to latest
+        let latest = Database::get_latest_migration_version();
+        db.migrate(latest)
+            .expect("First migration run must succeed");
+
+        // Second run: migrate(40) again must be a no-op (current_version >= 40)
+        db.migrate(40)
+            .expect("Second migration 040 run must be idempotent");
+    }
+
+    /// Full fresh-DB integration test: init + all migrations must complete without error.
+    ///
+    /// This is the primary guard against startup crashes on a brand-new installation.
+    #[test]
+    fn test_fresh_db_init_and_full_migration_succeeds() {
+        let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+        let db = Database::new(temp_file.path(), "").expect("Failed to create database");
+
+        db.init().expect("Failed to init schema on fresh DB");
+
+        let latest = Database::get_latest_migration_version();
+        db.migrate(latest)
+            .expect("Full migration sequence must succeed on a fresh DB");
+
+        // Confirm the DB reached the latest version.
+        let version = db.get_version().expect("Failed to get version");
+        assert_eq!(
+            version, latest,
+            "DB version must equal the latest migration version after a full run"
+        );
     }
 }
