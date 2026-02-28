@@ -9,22 +9,24 @@ import {
   Skeleton,
 } from '@/shared/ui/facade';
 import { AlertTriangle } from 'lucide-react';
-import { taskGateway, type TaskWithDetails } from '@/domains/tasks/facade';
-import { toast } from 'sonner';
-import { reportsService } from '@/domains/reports';
-import { getUserFullName } from '@/shared/utils';
-import { useCustomerInfo, useCustomerDisplayName } from '@/domains/tasks';
-import { useInterventionData, useWorkflowStepData } from '@/domains/interventions';
-import type { Intervention } from '@/shared/types';
-import { useQueryClient } from '@tanstack/react-query';
-import { useTranslation } from '@/shared/hooks';
 import {
+  taskGateway,
+  type TaskWithDetails,
+  useCustomerInfo,
+  useCustomerDisplayName,
   CompletedHero,
   WorkflowCompletionTimeline,
   CompletedActionBar,
   CompletedSidebar,
-} from '@/domains/tasks/components/completed';
-import { SummaryStats } from '@/domains/tasks/components/completed/SummaryStats';
+  SummaryStats,
+} from '@/domains/tasks';
+import { toast } from 'sonner';
+import { reportsService } from '@/domains/reports';
+import { getUserFullName } from '@/shared/utils';
+import { useInterventionData, useWorkflowStepData, PPF_STEP_CONFIG } from '@/domains/interventions';
+import type { Intervention } from '@/shared/types';
+import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from '@/shared/hooks';
 import {
   Card,
   CardContent,
@@ -43,7 +45,6 @@ import {
   MessageSquare,
   Signature,
 } from 'lucide-react';
-import { PPF_STEP_CONFIG } from '@/domains/interventions/components/ppf/ppfWorkflow.config';
 
 export default function TaskCompletedPage() {
   const router = useRouter();

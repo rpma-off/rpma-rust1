@@ -4,8 +4,8 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { Plus, Search, Calendar, Car, User, Shield, Eye, Edit, Trash2, RefreshCw, Download, Upload, Grid, List, AlertCircle, Filter, ChevronRight, SearchX } from 'lucide-react';
-import type { TaskWithDetails, TaskStatus } from '@/domains/tasks/facade';
-import { taskGateway, useTasks, getTaskDisplayTitle, getTaskDisplayStatus } from '@/domains/tasks/facade';
+import type { TaskWithDetails, TaskStatus } from '@/domains/tasks';
+import { taskGateway, useTasks, getTaskDisplayTitle, getTaskDisplayStatus } from '@/domains/tasks';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,7 +29,7 @@ import {
 import { cn, enhancedToast, getUserFullName, logger } from '@/shared/utils';
 
 import { useAuth } from '@/domains/auth';
-import { technicianService } from '@/domains/users/services';
+import { technicianService } from '@/domains/users';
 import { useDebounce, useTranslation } from '@/shared/hooks';
 
 // TypeScript interfaces
@@ -41,12 +41,12 @@ import { useDebounce, useTranslation } from '@/shared/hooks';
 // }
 
 const CalendarView = dynamic(
-  () => import('@/domains/workflow/facade').then((mod) => mod.CalendarView),
+  () => import('@/domains/workflow').then((mod) => mod.CalendarView),
   { ssr: false, loading: () => <div className="h-full w-full animate-pulse rounded-[10px] bg-muted/20" /> }
 );
 
 const KanbanBoard = dynamic(
-  () => import('@/domains/tasks/facade').then((mod) => mod.KanbanBoard),
+  () => import('@/domains/tasks').then((mod) => mod.KanbanBoard),
   { ssr: false, loading: () => <div className="h-full w-full animate-pulse rounded-[10px] bg-muted/20" /> }
 );
 

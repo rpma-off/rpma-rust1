@@ -42,7 +42,7 @@ export { PpfDefectsPanel } from '../components/ppf/PpfDefectsPanel';
 export { PpfZoneTracker } from '../components/ppf/PpfZoneTracker';
 export { PpfQualitySlider } from '../components/ppf/PpfQualitySlider';
 export { PPF_STEP_CONFIG } from '../components/ppf/ppfWorkflow.config';
-export { WorkflowNavigationButton } from '../components/WorkflowNavigationButton';
+export { WorkflowNavigationButton } from '../components/workflow/WorkflowNavigationButton';
 export type { Defect } from '../components/workflow/ppf/VehicleDiagram';
 
 export {

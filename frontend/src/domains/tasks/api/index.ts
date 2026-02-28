@@ -18,6 +18,15 @@ export { WorkflowProgressCard } from '../components/WorkflowProgressCard';
 export { ActionsCard, ActionButtons } from '../components/TaskActions';
 export { QuickAddDialog } from '../components/QuickAddDialog';
 export { FilterDrawer } from '../components/FilterDrawer';
+export { TaskHeaderBand, TaskStepperBand, StatusBadge } from '../components/TaskDetail';
+export { EnhancedActionsCard } from '../components/TaskActions';
+export {
+  CompletedHero,
+  WorkflowCompletionTimeline,
+  CompletedActionBar,
+  CompletedSidebar,
+  SummaryStats,
+} from '../components/completed';
 
 export * from '../components/TaskForm';
 
@@ -39,6 +48,7 @@ export { useTaskFilters } from '../hooks/useTaskFilters';
 export { useTaskFiltering } from '../hooks/useTaskFiltering';
 export { useWorkflowStepAutoSave } from '../hooks/useWorkflowStepAutoSave';
 export { taskGateway } from './taskGateway';
+export { getTaskDisplayTitle, getTaskDisplayStatus } from '../utils/display';
 
 export type {
   Task,

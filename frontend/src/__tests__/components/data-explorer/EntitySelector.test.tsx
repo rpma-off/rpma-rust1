@@ -1,9 +1,9 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { EntitySelector } from '@/domains/reports/components/data-explorer/EntitySelector';
-import { useEntityCounts } from '@/hooks/useEntityCounts';
+import { useEntityCounts } from '@/shared/hooks/useEntityCounts';
 
-jest.mock('@/hooks/useEntityCounts');
+jest.mock('@/shared/hooks/useEntityCounts');
 const mockUseEntityCounts = useEntityCounts as jest.MockedFunction<typeof useEntityCounts>;
 
 describe('EntitySelector', () => {
