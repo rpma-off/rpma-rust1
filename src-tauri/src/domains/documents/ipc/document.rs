@@ -8,6 +8,7 @@ use crate::domains::documents::domain::models::photo::Photo;
 use crate::domains::documents::infrastructure::photo::{
     GetPhotosRequest, GetPhotosResponse, PhotoMetadataUpdate, StorePhotoRequest, StorePhotoResponse,
 };
+use crate::shared::contracts::auth::UserRole;
 use tracing::{error, info, instrument};
 
 /// Store a new photo for an intervention step.
@@ -21,7 +22,7 @@ pub async fn document_store_photo(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<StorePhotoResponse>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let _current_user = authenticate!(&session_token, &state);
+    let _current_user = authenticate!(&session_token, &state, UserRole::Technician);
     crate::commands::update_correlation_context_user(&_current_user.user_id);
 
     match state.photo_service.store_photo(request, image_data).await {
@@ -94,7 +95,7 @@ pub async fn document_delete_photo(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<()>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let _current_user = authenticate!(&session_token, &state);
+    let _current_user = authenticate!(&session_token, &state, UserRole::Technician);
     crate::commands::update_correlation_context_user(&_current_user.user_id);
 
     match state.photo_service.delete_photo(&photo_id) {
@@ -144,7 +145,7 @@ pub async fn document_update_photo_metadata(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<Photo>, crate::commands::AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let _current_user = authenticate!(&session_token, &state);
+    let _current_user = authenticate!(&session_token, &state, UserRole::Technician);
     crate::commands::update_correlation_context_user(&_current_user.user_id);
 
     match state
