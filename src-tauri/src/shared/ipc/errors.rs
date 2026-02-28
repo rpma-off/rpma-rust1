@@ -552,6 +552,10 @@ mod tests {
             "Database display leaked SQL internals: {}",
             db
         );
+        assert_eq!(
+            db,
+            "Database error: A database error occurred. Please try again."
+        );
 
         let internal =
             AppError::Internal("thread 'main' panicked at src/main.rs:12".to_string()).to_string();
@@ -559,6 +563,23 @@ mod tests {
             !internal.contains("panicked"),
             "Internal display leaked stack trace: {}",
             internal
+        );
+        assert_eq!(
+            internal,
+            "Internal error: An internal error occurred. Please try again."
+        );
+
+        let internal_unwrap =
+            AppError::Internal("called `Option::unwrap()` on a `None` value".to_string())
+                .to_string();
+        assert!(
+            !internal_unwrap.contains("unwrap"),
+            "Internal display leaked panic details: {}",
+            internal_unwrap
+        );
+        assert_eq!(
+            internal_unwrap,
+            "Internal error: An internal error occurred. Please try again."
         );
 
         let io =
@@ -568,6 +589,7 @@ mod tests {
             "I/O display leaked file path: {}",
             io
         );
+        assert_eq!(io, "I/O error: A file operation error occurred.");
     }
 
     #[test]
