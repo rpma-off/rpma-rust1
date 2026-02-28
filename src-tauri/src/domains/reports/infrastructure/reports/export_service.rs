@@ -286,7 +286,8 @@ impl ExportReportService {
         .await?;
 
         // Get file size
-        let file_size = std::fs::metadata(&output_path)
+        let file_size = tokio::fs::metadata(&output_path)
+            .await
             .map(|m| m.len())
             .unwrap_or(0);
 
@@ -374,12 +375,13 @@ impl ExportReportService {
         ));
 
         // Write to file
-        std::fs::write(&output_path, content).map_err(|e| {
+        tokio::fs::write(&output_path, content).await.map_err(|e| {
             AppError::Internal(format!("Failed to write fallback text file: {}", e))
         })?;
 
         // Get file size
-        let file_size = std::fs::metadata(&output_path)
+        let file_size = tokio::fs::metadata(&output_path)
+            .await
             .map(|m| m.len())
             .unwrap_or(0);
 

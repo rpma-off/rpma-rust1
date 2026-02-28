@@ -30,10 +30,16 @@ pub async fn get_device_info(
 
     // Add 3 second timeout
     timeout(Duration::from_secs(3), async {
-        let hostname = get_hostname().ok();
-        let platform = get_platform();
-        let arch = get_arch();
-        let id = get_device_id().ok();
+        let (hostname, platform, arch, id) = tokio::task::spawn_blocking(|| {
+            (
+                get_hostname().ok(),
+                get_platform(),
+                get_arch(),
+                get_device_id().ok(),
+            )
+        })
+        .await
+        .map_err(|e| format!("Failed to gather device info: {}", e))?;
 
         Ok(DeviceInfo {
             hostname,
