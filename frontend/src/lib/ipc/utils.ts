@@ -52,10 +52,7 @@ const PUBLIC_COMMANDS = new Set([
   'ui_gps_get_current_position',
   'ui_initiate_customer_call',
   // System info / health
-  'health_check',
   'get_app_info',
-  'get_device_info',
-  'get_performance_stats',
 ]);
 
 const KNOWN_CLIENT_ERRORS = new Set([

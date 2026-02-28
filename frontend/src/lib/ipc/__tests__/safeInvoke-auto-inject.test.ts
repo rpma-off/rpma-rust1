@@ -61,6 +61,30 @@ describe('safeInvoke – session_token auto-injection', () => {
       );
     });
 
+    it('injects session_token for health and telemetry commands that are no longer public', async () => {
+      mockGetSessionToken.mockResolvedValue('my-session-token');
+
+      await safeInvoke('health_check');
+      await safeInvoke('get_device_info');
+      await safeInvoke('get_performance_stats');
+
+      expect(mockInvoke).toHaveBeenNthCalledWith(
+        1,
+        'health_check',
+        expect.objectContaining({ session_token: 'my-session-token' })
+      );
+      expect(mockInvoke).toHaveBeenNthCalledWith(
+        2,
+        'get_device_info',
+        expect.objectContaining({ session_token: 'my-session-token' })
+      );
+      expect(mockInvoke).toHaveBeenNthCalledWith(
+        3,
+        'get_performance_stats',
+        expect.objectContaining({ session_token: 'my-session-token' })
+      );
+    });
+
     it('does not overwrite an explicitly provided session_token (snake_case)', async () => {
       mockGetSessionToken.mockResolvedValue('auto-token');
 
@@ -223,4 +247,3 @@ describe('safeInvoke – session_token auto-injection', () => {
     });
   });
 });
-

@@ -194,11 +194,13 @@ pub async fn user_crud(
 /// Get database status
 #[tauri::command]
 #[instrument(skip(state))]
-pub fn get_database_status(
-    state: AppState,
+pub async fn get_database_status(
+    session_token: String,
+    state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
-    let correlation_id = init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state, UserRole::Viewer);
+    let correlation_id = init_correlation_context(&correlation_id, Some(&current_user.user_id));
     debug!("Database status requested");
 
     let status = crate::shared::services::system::SystemService::get_database_status(&state.db)
@@ -214,11 +216,13 @@ pub fn get_database_status(
 /// Get database connection pool statistics
 #[tauri::command]
 #[instrument(skip(state))]
-pub fn get_database_pool_stats(
-    state: AppState,
+pub async fn get_database_pool_stats(
+    session_token: String,
+    state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
-    let correlation_id = init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state, UserRole::Viewer);
+    let correlation_id = init_correlation_context(&correlation_id, Some(&current_user.user_id));
     debug!("Database pool statistics requested");
 
     let db = &state.db;
