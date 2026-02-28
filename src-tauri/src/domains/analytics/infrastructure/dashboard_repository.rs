@@ -20,21 +20,27 @@ impl DashboardRepository {
         Self { db }
     }
 
-    /// Count tasks matching an optional WHERE condition
-    pub fn count_tasks(&self, where_condition: Option<&str>) -> Result<i64, String> {
+    /// Count tasks optionally filtered by a minimum created_at timestamp.
+    ///
+    /// Uses parameterized queries to avoid SQL injection.
+    pub fn count_tasks(&self, created_after: Option<&str>) -> Result<i64, String> {
         let conn = self
             .db
             .get_connection()
             .map_err(|e| format!("Failed to get connection: {}", e))?;
 
-        let query = match where_condition {
-            Some(condition) => format!("SELECT COUNT(*) FROM tasks WHERE {}", condition),
-            None => "SELECT COUNT(*) FROM tasks".to_string(),
+        let count: i64 = match created_after {
+            Some(cutoff) => conn
+                .query_row(
+                    "SELECT COUNT(*) FROM tasks WHERE created_at >= ?1",
+                    params![cutoff],
+                    |row| row.get(0),
+                )
+                .map_err(|e| format!("Failed to count tasks: {}", e))?,
+            None => conn
+                .query_row("SELECT COUNT(*) FROM tasks", [], |row| row.get(0))
+                .map_err(|e| format!("Failed to count tasks: {}", e))?,
         };
-
-        let count: i64 = conn
-            .query_row(&query, [], |row| row.get(0))
-            .map_err(|e| format!("Failed to count tasks: {}", e))?;
 
         Ok(count)
     }
