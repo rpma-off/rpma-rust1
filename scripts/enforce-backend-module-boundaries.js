@@ -33,9 +33,10 @@ function loadAllowlist() {
     return {
       imports: new Set(parsed.allowed || []),
       structure: new Set(parsed.allowed_structure || []),
+      ipc_infra: new Set(parsed.allowed_ipc_infra || []),
     };
   } catch {
-    return { imports: new Set(), structure: new Set() };
+    return { imports: new Set(), structure: new Set(), ipc_infra: new Set() };
   }
 }
 
@@ -75,15 +76,57 @@ function checkDomainFacadeAndVisibility(structureAllowlist) {
     if (!/^\s*pub\(crate\)\s+use\s+facade::[A-Za-z0-9_]+;\s*$/m.test(contents)) {
       violations.push(`${dir.name}/mod.rs must re-export exactly one facade with pub(crate) use`);
     }
-    if (/^\s*pub\s+mod\s+infrastructure\s*;\s*$/m.test(contents)) {
-      const key = `${dir.name}/mod.rs pub mod infrastructure`;
-      if (!structureAllowlist.has(key)) {
-        violations.push(`${dir.name}/mod.rs must not expose infrastructure as public module`);
+    // Check for pub mod domain without feature gate
+    // Only flag if the pub mod domain line is NOT preceded by a cfg(feature) attribute
+    const lines = contents.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      if (/^\s*pub\s+mod\s+domain\s*;\s*$/.test(lines[i])) {
+        const prevLine = i > 0 ? lines[i - 1] : '';
+        if (!/^\s*#\[cfg\(feature\s*=\s*"export-types"\)\]\s*$/.test(prevLine)) {
+          const key = `${dir.name}/mod.rs pub mod domain`;
+          if (!structureAllowlist.has(key)) {
+            violations.push(`${dir.name}/mod.rs must not expose domain as unconditional public module (use feature gate or pub(crate))`);
+          }
+        }
+      }
+      if (/^\s*pub\s+mod\s+infrastructure\s*;\s*$/.test(lines[i])) {
+        const prevLine = i > 0 ? lines[i - 1] : '';
+        if (!/^\s*#\[cfg\(feature\s*=\s*"export-types"\)\]\s*$/.test(prevLine)) {
+          const key = `${dir.name}/mod.rs pub mod infrastructure`;
+          if (!structureAllowlist.has(key)) {
+            violations.push(`${dir.name}/mod.rs must not expose infrastructure as unconditional public module (use feature gate or pub(crate))`);
+          }
+        }
       }
     }
   }
 
   return violations;
+}
+
+function checkIpcInfrastructureLeakage(ipcInfraAllowlist) {
+  const violations = [];
+  const domainDirs = fs.readdirSync(domainsRoot, { withFileTypes: true }).filter((e) => e.isDirectory());
+
+  for (const dir of domainDirs) {
+    const ipcDir = path.join(domainsRoot, dir.name, 'ipc');
+    if (!fs.existsSync(ipcDir)) continue;
+
+    const ipcFiles = listFiles(ipcDir).filter((f) => f.endsWith('.rs'));
+    for (const file of ipcFiles) {
+      const relative = path.relative(domainsRoot, file).replace(/\\/g, '/');
+      const contents = stripRustComments(fs.readFileSync(file, 'utf8'));
+      const infraPattern = /use\s+crate::domains::[a-zA-Z0-9_]+::infrastructure\b/g;
+      for (const match of contents.matchAll(infraPattern)) {
+        const key = relative;
+        if (!ipcInfraAllowlist.has(key)) {
+          violations.push(`${relative}: IPC handler imports infrastructure directly (${match[0].trim()})`);
+        }
+      }
+    }
+  }
+
+  return [...new Set(violations)];
 }
 
 function main() {
@@ -96,8 +139,11 @@ function main() {
   const infraViolations = checkCrossDomainInfrastructureImports();
   const newInfraViolations = infraViolations.filter((v) => !allowlist.imports.has(v));
   const structureViolations = checkDomainFacadeAndVisibility(allowlist.structure);
+  const ipcLeakageViolations = checkIpcInfrastructureLeakage(allowlist.ipc_infra);
 
-  if (newInfraViolations.length > 0 || structureViolations.length > 0) {
+  const hasFailures = newInfraViolations.length > 0 || structureViolations.length > 0 || ipcLeakageViolations.length > 0;
+
+  if (hasFailures) {
     console.error('Backend module boundary enforcement failed.');
 
     if (newInfraViolations.length > 0) {
@@ -110,6 +156,13 @@ function main() {
     if (structureViolations.length > 0) {
       console.error('\nInvalid domain module guard pattern:');
       for (const violation of structureViolations) {
+        console.error(`- ${violation}`);
+      }
+    }
+
+    if (ipcLeakageViolations.length > 0) {
+      console.error('\nIPC layer infrastructure leakage:');
+      for (const violation of ipcLeakageViolations) {
         console.error(`- ${violation}`);
       }
     }
