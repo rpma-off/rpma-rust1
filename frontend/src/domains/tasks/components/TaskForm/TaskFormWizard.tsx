@@ -127,7 +127,7 @@ const TaskFormWizard: React.FC<TaskFormProps> = React.memo(({
         <div className="flex items-center justify-center py-12">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
-            <span className="text-slate-900 text-lg font-medium">Vérification de l'authentification...</span>
+            <span className="text-slate-900 text-lg font-medium">Vérification de l&apos;authentification...</span>
           </div>
         </div>
       </div>

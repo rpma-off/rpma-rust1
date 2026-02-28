@@ -8,6 +8,12 @@ pub mod queries;
 pub mod relationships;
 pub mod workflow;
 
+// Re-export all commands for backward compatibility
+pub use data_access::*;
+pub use queries::*;
+pub use relationships::*;
+pub use workflow::*;
+
 use crate::commands::AppError;
 use crate::shared::auth_middleware::AuthMiddleware;
 use crate::shared::contracts::auth::{UserRole, UserSession};
