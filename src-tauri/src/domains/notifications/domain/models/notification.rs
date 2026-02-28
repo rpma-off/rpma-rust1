@@ -430,3 +430,63 @@ impl NotificationMessage {
         }
     }
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct Notification {
+    pub id: String,
+    #[ts(type = "string")]
+    pub created_at: DateTime<Utc>,
+    pub r#type: String,
+    pub title: String,
+    pub message: String,
+    pub entity_type: String,
+    pub entity_id: String,
+    pub entity_url: String,
+    pub read: bool,
+    pub user_id: String,
+}
+
+impl Notification {
+    pub fn new(
+        user_id: String,
+        r#type: String,
+        title: String,
+        message: String,
+        entity_type: String,
+        entity_id: String,
+        entity_url: String,
+    ) -> Self {
+        Self {
+            id: uuid::Uuid::new_v4().to_string(),
+            created_at: Utc::now(),
+            r#type,
+            title,
+            message,
+            entity_type,
+            entity_id,
+            entity_url,
+            read: false,
+            user_id,
+        }
+    }
+}
+
+impl FromSqlRow for Notification {
+    fn from_row(row: &Row) -> SqliteResult<Self> {
+        let created_at_ts: i64 = row.get("created_at")?;
+        let created_at = DateTime::from_timestamp(created_at_ts, 0).unwrap_or_else(|| Utc::now());
+
+        Ok(Self {
+            id: row.get("id")?,
+            created_at,
+            r#type: row.get("type")?,
+            title: row.get("title")?,
+            message: row.get("message")?,
+            entity_type: row.get("entity_type")?,
+            entity_id: row.get("entity_id")?,
+            entity_url: row.get("entity_url")?,
+            read: row.get::<_, i32>("read")? == 1,
+            user_id: row.get("user_id")?,
+        })
+    }
+}

@@ -6,6 +6,7 @@
 use crate::authenticate;
 use crate::check_task_permission;
 use crate::commands::{ApiResponse, AppError, AppState, TaskAction};
+use crate::domains::notifications::infrastructure::notification_helper::NotificationHelper;
 use crate::domains::tasks::domain::models::task::Task;
 use crate::domains::tasks::ipc::task::queries::{get_task_statistics, get_tasks_with_clients};
 use crate::domains::tasks::TasksFacade;
@@ -841,6 +842,26 @@ pub async fn task_crud(
                         error!("Task creation failed: {}", e);
                         AppError::Database(format!("Failed to create task: {}", e))
                     })?;
+
+                // Create notification for assigned technician
+                if let Some(technician_id) = &task.technician_id {
+                    if technician_id != &current_user.user_id {
+                        let db = &state.repositories.db;
+                        let cache = &state.repositories.cache;
+                        if let Err(e) = NotificationHelper::create_task_assigned(
+                            db,
+                            cache,
+                            technician_id,
+                            &task.id,
+                            &task.title,
+                        )
+                        .await
+                        {
+                            error!("Failed to create task assignment notification: {}", e);
+                        }
+                    }
+                }
+
                 Ok(
                     crate::commands::ApiResponse::success(crate::commands::TaskResponse::Created(
                         task,
@@ -873,6 +894,9 @@ pub async fn task_crud(
             // Add role check for task update
             check_task_permission!(&current_user.role, "update");
 
+            // Check if status is being updated for notification
+            let status_updated = data.status.is_some();
+
             // Add input validation for update
             let validator = ValidationService::new();
             let validated_action = validator
@@ -899,6 +923,45 @@ pub async fn task_crud(
                         error!("Task update failed: {}", e);
                         AppError::Database(format!("Failed to update task: {}", e))
                     })?;
+
+                // Create notification for assigned technician if reassigned
+                if let Some(technician_id) = &task.technician_id {
+                    if technician_id != &current_user.user_id {
+                        let db = &state.repositories.db;
+                        let cache = &state.repositories.cache;
+                        if let Err(e) = NotificationHelper::create_task_assigned(
+                            db,
+                            cache,
+                            technician_id,
+                            &task.id,
+                            &task.title,
+                        )
+                        .await
+                        {
+                            error!("Failed to create task assignment notification: {}", e);
+                        }
+                    }
+                }
+
+                // Create notification for status change
+                if status_updated {
+                    let db = &state.repositories.db;
+                    let cache = &state.repositories.cache;
+                    let status = task.status.to_string();
+                    if let Err(e) = NotificationHelper::create_task_updated(
+                        db,
+                        cache,
+                        &current_user.user_id,
+                        &task.id,
+                        &task.title,
+                        &status,
+                    )
+                    .await
+                    {
+                        error!("Failed to create task update notification: {}", e);
+                    }
+                }
+
                 Ok(
                     crate::commands::ApiResponse::success(crate::commands::TaskResponse::Updated(
                         task,
