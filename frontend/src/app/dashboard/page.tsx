@@ -10,7 +10,7 @@ import { LoadingState } from '@/shared/ui/layout/LoadingState';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 
 const CalendarDashboard = dynamic(
-  () => import('@/domains/workflow').then((mod) => mod.CalendarDashboard),
+  () => import('@/domains/calendar').then((mod) => mod.CalendarDashboard),
   { ssr: false, loading: () => <LoadingState /> }
 );
 

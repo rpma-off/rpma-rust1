@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/domains/auth';
 
 const CalendarDashboard = dynamic(
-  () => import('@/domains/workflow').then((module) => module.CalendarDashboard)
+  () => import('@/domains/calendar').then((module) => module.CalendarDashboard)
 );
 
 export default function Home() {

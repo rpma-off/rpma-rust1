@@ -36,3 +36,4 @@ export { WeekView } from '../components/WeekView';
 export { DayView } from '../components/DayView';
 export { AgendaView } from '../components/AgendaView';
 export { CalendarFilters } from '../components/CalendarFilters';
+export { CalendarDashboard } from '../components/CalendarDashboard';

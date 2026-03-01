@@ -41,7 +41,7 @@ import { useDebounce, useTranslation } from '@/shared/hooks';
 // }
 
 const CalendarView = dynamic(
-  () => import('@/domains/workflow').then((mod) => mod.CalendarView),
+  () => import('@/domains/calendar').then((mod) => mod.CalendarView),
   { ssr: false, loading: () => <div className="h-full w-full animate-pulse rounded-[10px] bg-muted/20" /> }
 );
 

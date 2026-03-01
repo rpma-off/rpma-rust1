@@ -48,7 +48,7 @@ import type { CreateUserRequest, UserAccount } from '@/shared/types';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 
 const WorkflowExecutionDashboard = dynamic(
-  () => import('@/domains/workflow').then((mod) => ({ default: mod.WorkflowExecutionDashboard })),
+  () => import('@/domains/interventions').then((mod) => ({ default: mod.WorkflowExecutionDashboard })),
   { loading: () => <LoadingState />, ssr: false }
 );
 
