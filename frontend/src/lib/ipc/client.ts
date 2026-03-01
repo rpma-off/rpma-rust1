@@ -1163,7 +1163,7 @@ export const ipcClient = {
     send: (request: SendNotificationRequest, sessionToken: string) =>
       safeInvoke<void>('send_notification', { request, session_token: sessionToken }),
 
-    testConfig: (recipient: string, channel: 'email' | 'sms', sessionToken: string) =>
+    testConfig: (recipient: string, channel: 'Email' | 'Sms' | 'Push', sessionToken: string) =>
       safeInvoke<string>('test_notification_config', { recipient, channel, session_token: sessionToken }),
 
     getStatus: (sessionToken: string) =>
@@ -1825,3 +1825,4 @@ export const ipcClient = {
 export function useIpcClient() {
   return ipcClient;
 }
+

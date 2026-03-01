@@ -5,6 +5,7 @@
 
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::settings::infrastructure::consent::ConsentService;
+use crate::domains::settings::ipc::settings::core::settings_user_id;
 
 use serde::Deserialize;
 use std::sync::Arc;
@@ -40,11 +41,11 @@ pub async fn get_data_consent(
     info!("Getting data consent information");
 
     let user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&user.user_id);
+    crate::commands::update_correlation_context_user(&settings_user_id(&user));
     let consent_service = ConsentService::new(Arc::new((*state.db).clone()));
 
     let consent = consent_service
-        .get_consent(&user.id)
+        .get_consent(&settings_user_id(&user))
         .map_err(|e| AppError::Database(format!("Failed to get consent data: {}", e)))?;
 
     Ok(ApiResponse::success(consent).with_correlation_id(Some(correlation_id.clone())))
@@ -62,12 +63,12 @@ pub async fn update_data_consent(
     info!("Updating data consent preferences");
 
     let user = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&user.user_id);
+    crate::commands::update_correlation_context_user(&settings_user_id(&user));
     let consent_service = ConsentService::new(Arc::new((*state.db).clone()));
 
     let consent = consent_service
         .update_consent(
-            &user.user_id,
+            &settings_user_id(&user),
             request.analytics_consent,
             request.marketing_consent,
             request.third_party_sharing,
@@ -101,3 +102,5 @@ mod tests {
         assert_eq!(consent.consent_version, "1.0");
     }
 }
+
+

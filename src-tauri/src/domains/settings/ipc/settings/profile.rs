@@ -5,7 +5,7 @@
 
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::settings::application::{apply_profile_updates, build_export_payload};
-use crate::domains::settings::ipc::settings::core::handle_settings_error;
+use crate::domains::settings::ipc::settings::core::{handle_settings_error, settings_user_id};
 
 use serde::Deserialize;
 use serde_json::json;
@@ -82,11 +82,11 @@ pub async fn get_user_settings(
     info!("Getting user settings");
 
     let user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&user.id);
+    crate::commands::update_correlation_context_user(&settings_user_id(&user));
 
     state
         .settings_service
-        .get_user_settings(&user.id)
+        .get_user_settings(&settings_user_id(&user))
         .map(|v| ApiResponse::success(v).with_correlation_id(Some(correlation_id.clone())))
         .map_err(|e| handle_settings_error(e, "Get user settings"))
 }
@@ -106,10 +106,10 @@ pub async fn update_user_profile(
     info!("Updating user profile");
 
     let user = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&user.id);
+    crate::commands::update_correlation_context_user(&settings_user_id(&user));
     let existing_profile = state
         .settings_service
-        .get_user_settings(&user.id)
+        .get_user_settings(&settings_user_id(&user))
         .map_err(|e| handle_settings_error(e, "Load existing user profile"))?
         .profile;
 
@@ -126,7 +126,7 @@ pub async fn update_user_profile(
 
     state
         .settings_service
-        .update_user_profile(&user.id, &profile_settings)
+        .update_user_profile(&settings_user_id(&user), &profile_settings)
         .map(|_| {
             ApiResponse::success(profile_settings).with_correlation_id(Some(correlation_id.clone()))
         })
@@ -145,12 +145,12 @@ pub async fn change_user_password(
     info!("Changing user password");
 
     let user = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&user.id);
+    crate::commands::update_correlation_context_user(&settings_user_id(&user));
 
     state
         .settings_service
         .change_user_password(
-            &user.id,
+            &settings_user_id(&user),
             &request.current_password,
             &request.new_password,
             &request.session_token,
@@ -176,20 +176,20 @@ pub async fn export_user_data(
     info!("Exporting user data");
 
     let user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&user.id);
+    crate::commands::update_correlation_context_user(&settings_user_id(&user));
     let settings = state
         .settings_service
-        .get_user_settings(&user.id)
+        .get_user_settings(&settings_user_id(&user))
         .map_err(|e| handle_settings_error(e, "Load user settings for export"))?;
 
     let account = state
         .auth_service
-        .get_user(&user.id)
+        .get_user(&settings_user_id(&user))
         .map_err(|e| AppError::Database(format!("Failed to load user account: {}", e)))?;
 
     let consent = state
         .settings_service
-        .get_user_consent(&user.id)
+        .get_user_consent(&settings_user_id(&user))
         .map_err(|e| handle_settings_error(e, "Load user consent for export"))?;
 
     let user_identity = match account {
@@ -208,7 +208,7 @@ pub async fn export_user_data(
             "updated_at": account.updated_at
         }),
         None => json!({
-            "id": user.user_id,
+            "id": settings_user_id(&user),
             "email": user.email,
             "username": user.username,
             "role": user.role
@@ -233,7 +233,7 @@ pub async fn delete_user_account(
     info!("Deleting user account");
 
     let user = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&user.id);
+    crate::commands::update_correlation_context_user(&settings_user_id(&user));
 
     // Validate confirmation
     if request.confirmation != "DELETE" {
@@ -244,7 +244,7 @@ pub async fn delete_user_account(
 
     state
         .settings_service
-        .delete_user_account(&user.id)
+        .delete_user_account(&settings_user_id(&user))
         .map(|_| {
             ApiResponse::success("Account deleted successfully".to_string())
                 .with_correlation_id(Some(correlation_id.clone()))
@@ -264,11 +264,11 @@ pub async fn upload_user_avatar(
     info!("Uploading user avatar");
 
     let user = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&user.id);
+    crate::commands::update_correlation_context_user(&settings_user_id(&user));
 
     state
         .settings_service
-        .upload_avatar(&user.id, &request.avatar_data, &request.mime_type)
+        .upload_avatar(&settings_user_id(&user), &request.avatar_data, &request.mime_type)
         .map(|data_url| {
             ApiResponse::success(data_url).with_correlation_id(Some(correlation_id.clone()))
         })
@@ -298,3 +298,5 @@ mod tests {
         assert_eq!(payload["consent"]["data"]["analytics_consent"], true);
     }
 }
+
+

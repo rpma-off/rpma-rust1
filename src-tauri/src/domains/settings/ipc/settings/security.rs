@@ -6,7 +6,7 @@
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::settings::domain::models::settings::UserSecuritySettings;
 use crate::domains::settings::ipc::settings::core::{
-    handle_settings_error, load_app_settings, update_app_settings,
+    handle_settings_error, load_app_settings, settings_user_id, update_app_settings,
 };
 
 use tracing::info;
@@ -29,7 +29,7 @@ pub async fn update_security_settings(
     info!("Updating security settings");
 
     let user = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&user.user_id);
+    crate::commands::update_correlation_context_user(&settings_user_id(&user));
 
     // Only admins can update system security settings
     if !matches!(user.role, crate::shared::contracts::auth::UserRole::Admin) {
@@ -79,11 +79,11 @@ pub async fn update_user_security(
     info!("Updating user security settings");
 
     let user = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&user.user_id);
+    crate::commands::update_correlation_context_user(&settings_user_id(&user));
 
     let mut security_settings: UserSecuritySettings = state
         .settings_service
-        .get_user_settings(&user.id)
+        .get_user_settings(&settings_user_id(&user))
         .map_err(|e| handle_settings_error(e, "Load user security settings"))?
         .security;
 
@@ -96,10 +96,12 @@ pub async fn update_user_security(
 
     state
         .settings_service
-        .update_user_security(&user.id, &security_settings)
+        .update_user_security(&settings_user_id(&user), &security_settings)
         .map(|_| {
             ApiResponse::success("Security settings updated successfully".to_string())
                 .with_correlation_id(Some(correlation_id.clone()))
         })
         .map_err(|e| handle_settings_error(e, "Update user security"))
 }
+
+

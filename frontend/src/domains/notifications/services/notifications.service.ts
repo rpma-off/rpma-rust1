@@ -46,7 +46,7 @@ export class NotificationService {
     }, sessionToken);
   }
 
-  static async testNotificationConfig(recipient: string, channel: 'email' | 'sms', sessionToken: string): Promise<string> {
+  static async testNotificationConfig(recipient: string, channel: 'Email' | 'Sms' | 'Push', sessionToken: string): Promise<string> {
     return ipcClient.notifications.testConfig(recipient, channel, sessionToken);
   }
 
@@ -56,3 +56,4 @@ export class NotificationService {
 }
 
 export const notificationService = NotificationService;
+

@@ -28,6 +28,13 @@ import { ipcClient } from '@/lib/ipc';
 import { UserSession } from '@/lib/backend';
 import { UserAccount } from '@/types';
 
+export async function sendTestNotification(
+  recipient: string,
+  sessionToken: string
+): Promise<string> {
+  return ipcClient.notifications.testConfig(recipient, 'Email', sessionToken);
+}
+
 // Notification settings form schema
 const notificationsSchema = z.object({
   // Channels
@@ -183,20 +190,19 @@ export function NotificationsTab({ user }: NotificationsSettingsTabProps) {
         throw new Error('No email address available for current user');
       }
 
+      setSaveError(null);
+
       // Send test notification using the configured notification channel
-      await ipcClient.notifications.testConfig(
-        user.email,
-        'email', // Default to email for testing
-        user.token
-      );
+      await sendTestNotification(user.email, user.token);
 
       setTestNotificationSent(true);
       setTimeout(() => setTestNotificationSent(false), 3000);
 
       logInfo('Test notification sent successfully');
     } catch (error) {
-      logError('Test notification failed', { error: error instanceof Error ? error.message : error });
-      throw error; // Re-throw to show error to user
+      const errorMessage = error instanceof Error ? error.message : 'Test notification failed';
+      setSaveError(errorMessage);
+      logError('Test notification failed', { error: errorMessage });
     }
   };
 
@@ -698,6 +704,7 @@ export function NotificationsTab({ user }: NotificationsSettingsTabProps) {
                 </div>
                 <Button
                   variant="outline"
+                  type="button"
                   onClick={handleTestNotification}
                   className="flex items-center gap-2"
                 >

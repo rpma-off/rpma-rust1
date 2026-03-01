@@ -5,6 +5,7 @@
 
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::settings::domain::models::settings::{AppSettings, SystemConfiguration};
+use crate::shared::contracts::auth::UserSession;
 
 use std::sync::Mutex;
 
@@ -97,7 +98,7 @@ pub fn update_system_config(new_config: SystemConfiguration) -> Result<(), Strin
 pub fn authenticate_user(
     session_token: &str,
     state: &AppState,
-) -> Result<crate::shared::contracts::auth::UserSession, AppError> {
+) -> Result<UserSession, AppError> {
     state
         .auth_service
         .validate_session(session_token)
@@ -106,7 +107,7 @@ pub fn authenticate_user(
 
 /// Validate settings update permissions
 pub fn validate_settings_permissions(
-    user: &crate::shared::contracts::auth::UserSession,
+    user: &UserSession,
     required_role: crate::shared::contracts::auth::UserRole,
 ) -> Result<(), AppError> {
     if !matches!(user.role, crate::shared::contracts::auth::UserRole::Admin)
@@ -123,4 +124,32 @@ pub fn validate_settings_permissions(
 pub fn handle_settings_error<E: std::fmt::Display>(error: E, operation: &str) -> AppError {
     tracing::error!("Settings operation '{}' failed: {}", operation, error);
     AppError::Database(format!("{} failed: {}", operation, error))
+}
+
+/// Extract the canonical user ID for settings operations.
+pub fn settings_user_id(user: &UserSession) -> &str {
+    &user.user_id
+}
+
+#[cfg(test)]
+mod tests {
+    use super::settings_user_id;
+    use crate::shared::contracts::auth::{UserRole, UserSession};
+
+    #[test]
+    fn settings_user_id_uses_user_id_field() {
+        let session = UserSession {
+            id: "session-token".to_string(),
+            user_id: "user-123".to_string(),
+            username: "tester".to_string(),
+            email: "tester@example.com".to_string(),
+            role: UserRole::Technician,
+            token: "session-token".to_string(),
+            expires_at: "2099-01-01T00:00:00Z".to_string(),
+            last_activity: "2099-01-01T00:00:00Z".to_string(),
+            created_at: "2099-01-01T00:00:00Z".to_string(),
+        };
+
+        assert_eq!(settings_user_id(&session), "user-123");
+    }
 }
