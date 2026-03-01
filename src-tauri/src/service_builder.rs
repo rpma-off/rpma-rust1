@@ -163,12 +163,20 @@ impl ServiceBuilder {
             material_service.clone(),
         ));
 
+        // Quote service currently depends on the event_system bus implementation.
+        let quote_event_bus =
+            Arc::new(crate::shared::services::event_system::InMemoryEventBus::new());
+
+        // Initialize Event Bus (self-contained, thread-safe)
+        let event_bus = Arc::new(InMemoryEventBus::new());
+        set_global_event_bus(event_bus.clone());
+
         // Initialize Quote Service (depends on QuoteRepository and DB)
         let quote_service = Arc::new(
             crate::domains::quotes::infrastructure::quote::QuoteService::new(
                 self.repositories.quote.clone(),
                 self.db.clone(),
-                event_bus.clone(),
+                quote_event_bus,
             ),
         );
 
@@ -207,10 +215,6 @@ impl ServiceBuilder {
             ),
         );
 
-        // Initialize Event Bus (self-contained, thread-safe)
-        let event_bus = Arc::new(InMemoryEventBus::new());
-        set_global_event_bus(event_bus.clone());
-
         // Register WebSocket Event Handler for real-time updates
         let websocket_handler = WebSocketEventHandler::new();
         event_bus.register_handler(websocket_handler);
@@ -226,15 +230,15 @@ impl ServiceBuilder {
         register_handler(inventory_service.intervention_finalized_handler());
 
         // Register Quote Event Handlers
-        let quote_accepted_handler = crate::domains::interventions::application::QuoteAcceptedHandler::new(
+        let quote_accepted_handler = crate::domains::interventions::application::quote_event_handlers::QuoteAcceptedHandler::new(
             intervention_workflow_service.clone(),
         );
-        event_bus.register_handler(quote_accepted_handler);
+        register_handler(Arc::new(quote_accepted_handler));
 
-        let quote_converted_handler = crate::domains::interventions::application::QuoteConvertedHandler::new(
+        let quote_converted_handler = crate::domains::interventions::application::quote_event_handlers::QuoteConvertedHandler::new(
             intervention_workflow_service.clone(),
         );
-        event_bus.register_handler(quote_converted_handler);
+        register_handler(Arc::new(quote_converted_handler));
 
         // Note: Additional handlers can be registered here:
         // - SecurityMonitorHandler for security events
