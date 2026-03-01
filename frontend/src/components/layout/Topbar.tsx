@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Menu, Search, X, CalendarDays, Wrench, FileText, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/shared/hooks/useTranslation';
-import { NotificationBell } from '@/domains/notifications/components/NotificationBell';
+import { NotificationBell } from '@/domains/notifications';
 
 interface TopbarProps {
   onMenuToggle: () => void;

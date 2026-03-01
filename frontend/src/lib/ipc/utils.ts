@@ -1,8 +1,7 @@
 import { invoke as tauriInvoke } from '@tauri-apps/api/core';
 import { recordMetric } from './metrics';
 import { logger } from '../logging';
-import { performanceMonitor } from '@/domains/analytics/services/performance-monitor';
-import { getSessionToken } from '@/domains/auth/services/sessionToken';
+import { getSessionToken } from '@/domains/auth';
 import { LogDomain, CorrelationContext } from '../logging/types';
 import type { ApiResponse } from '@/types/api';
 import type { JsonObject, JsonValue } from '@/types/json';
@@ -300,14 +299,6 @@ export async function safeInvoke<T>(
       timestamp: Date.now(),
     });
 
-    // Record in performance monitor
-    performanceMonitor.recordMetric({
-      command,
-      duration,
-      success: true,
-      timestamp: Date.now(),
-    });
-
     return data;
 
   } catch (error) {
@@ -353,15 +344,6 @@ export async function safeInvoke<T>(
 
     // Record metric
     recordMetric({
-      command,
-      duration,
-      success: false,
-      error: errorMessage,
-      timestamp: Date.now(),
-    });
-
-    // Record in performance monitor
-    performanceMonitor.recordMetric({
       command,
       duration,
       success: false,

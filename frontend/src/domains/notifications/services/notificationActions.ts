@@ -1,5 +1,5 @@
-import { notificationApi, type GetNotificationsResponse, type SuccessResponse } from '@/lib/ipc/notification';
-import { getSessionToken } from '@/domains/auth/services/sessionToken';
+import { notificationApi } from '@/lib/ipc/notification';
+import { getSessionToken } from '@/domains/auth';
 import { toast } from 'sonner';
 
 export async function getNotifications() {

@@ -1,4 +1,4 @@
-import { bootstrapIpc } from '@/domains/bootstrap/server';
+import { bootstrapIpc } from '@/domains/bootstrap';
 
 export const authBootstrap = {
   hasAdmins: () => bootstrapIpc.hasAdmins(),

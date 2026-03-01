@@ -13,16 +13,13 @@ jest.mock('@tauri-apps/api/core', () => ({
   invoke: jest.fn(),
 }));
 
-jest.mock('@/domains/auth/services/sessionToken', () => ({
+jest.mock('@/domains/auth', () => ({
   getSessionToken: jest.fn(),
 }));
 
 jest.mock('../metrics', () => ({ recordMetric: jest.fn() }));
 jest.mock('@/lib/logging', () => ({
   logger: { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() },
-}));
-jest.mock('@/domains/analytics/services/performance-monitor', () => ({
-  performanceMonitor: { recordMetric: jest.fn() },
 }));
 jest.mock('@/lib/logging/types', () => ({
   LogDomain: { API: 'api' },
@@ -39,7 +36,7 @@ import { NOT_IMPLEMENTED_COMMANDS } from '../utils';
 // Retrieve mock references after all jest.mock calls
 const { invoke: mockInvoke } = jest.requireMock('@tauri-apps/api/core') as { invoke: jest.Mock };
 const { getSessionToken: mockGetSessionToken } = jest.requireMock(
-  '@/domains/auth/services/sessionToken'
+  '@/domains/auth'
 ) as { getSessionToken: jest.Mock };
 
 describe('safeInvoke – session_token auto-injection', () => {
