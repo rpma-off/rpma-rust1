@@ -49,6 +49,15 @@ export { useTaskFiltering } from '../hooks/useTaskFiltering';
 export { useWorkflowStepAutoSave } from '../hooks/useWorkflowStepAutoSave';
 export { taskGateway } from './taskGateway';
 export { getTaskDisplayTitle, getTaskDisplayStatus } from '../utils/display';
+export {
+  getStatusBadgeClass,
+  getStatusVariant,
+  formatTaskDateTime,
+  formatDateShort,
+  mapTaskErrorToUserMessage,
+} from '../utils/task-presentation';
+export { downloadTasksCsv, importTasksFromCsv } from '../services/task-csv.service';
+export type { ExportCsvOptions } from '../services/task-csv.service';
 
 export type {
   Task,

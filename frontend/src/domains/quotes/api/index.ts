@@ -31,3 +31,6 @@ export type {
   QuoteTotalsProps,
   QuoteAttachmentsManagerProps,
 } from '../components';
+
+export { computeQuoteStats } from '../utils/quote-stats';
+export type { QuotePageStats } from '../utils/quote-stats';

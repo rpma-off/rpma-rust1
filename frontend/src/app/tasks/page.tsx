@@ -5,7 +5,19 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { Plus, Search, Calendar, Car, User, Shield, Eye, Edit, Trash2, RefreshCw, Download, Upload, Grid, List, AlertCircle, Filter, ChevronRight, SearchX } from 'lucide-react';
 import type { TaskWithDetails, TaskStatus } from '@/domains/tasks';
-import { taskGateway, useTasks, getTaskDisplayTitle, getTaskDisplayStatus } from '@/domains/tasks';
+import {
+  taskGateway,
+  useTasks,
+  getTaskDisplayTitle,
+  getTaskDisplayStatus,
+  getStatusBadgeClass,
+  getStatusVariant,
+  formatTaskDateTime,
+  formatDateShort,
+  mapTaskErrorToUserMessage,
+  downloadTasksCsv,
+  importTasksFromCsv,
+} from '@/domains/tasks';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,32 +76,12 @@ const TaskCard = React.memo(({
   onEdit: (task: TaskWithDetails) => void;
   onDelete: (task: TaskWithDetails) => void;
 }) => {
-  const getStatusColor = useCallback((status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'workflow-draft';
-      case 'in_progress':
-        return 'workflow-inProgress';
-      case 'completed':
-        return 'workflow-completed';
-      case 'cancelled':
-        return 'destructive';
-      default:
-        return 'secondary';
-    }
-  }, []);
-
   const getStatusLabel = useCallback((status: string) => {
     return getTaskDisplayStatus(status as TaskStatus);
   }, []);
 
   const formatDate = useCallback((dateString: string | null) => {
-    if (!dateString) return 'Non planifiée';
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    return formatDateShort(dateString);
   }, []);
 
   return (
@@ -103,7 +95,7 @@ const TaskCard = React.memo(({
                 {getTaskDisplayTitle(task)}
               </h3>
               <Badge
-                variant={getStatusColor(task.status || 'pending') as "workflow-draft" | "workflow-inProgress" | "workflow-completed" | "workflow-cancelled" | "secondary"}
+                variant={getStatusVariant(task.status || 'pending') as "workflow-draft" | "workflow-inProgress" | "workflow-completed" | "workflow-cancelled" | "secondary"}
                 className="shrink-0 text-xs px-2 py-1"
               >
                 {getStatusLabel(task.status || 'pending')}
@@ -248,32 +240,13 @@ const TaskTable = React.memo(({
   onEdit: (task: TaskWithDetails) => void;
   onDelete: (task: TaskWithDetails) => void;
 }) => {
-  const getStatusColor = useCallback((status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'workflow-draft';
-      case 'in_progress':
-        return 'workflow-inProgress';
-      case 'completed':
-        return 'workflow-completed';
-      case 'cancelled':
-        return 'destructive';
-      default:
-        return 'secondary';
-    }
-  }, []);
-
   const getStatusLabel = useCallback((status: string) => {
     return getTaskDisplayStatus(status as TaskStatus);
   }, []);
 
   const formatDate = useCallback((dateString: string | null) => {
     if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    return formatDateShort(dateString);
   }, []);
 
   const columns = [
@@ -366,7 +339,7 @@ const TaskTable = React.memo(({
       sortable: true,
       render: (value: unknown) => (
         <Badge
-          variant={getStatusColor((value as string) || 'pending') as "workflow-draft" | "workflow-inProgress" | "workflow-completed" | "workflow-cancelled" | "secondary"}
+          variant={getStatusVariant((value as string) || 'pending') as "workflow-draft" | "workflow-inProgress" | "workflow-completed" | "workflow-cancelled" | "secondary"}
           className="text-xs"
         >
           {getStatusLabel((value as string) || 'pending')}
@@ -740,33 +713,6 @@ export default function TasksPage() {
     { key: 'archived', label: t('tasks.statusArchived'), count: tasks.filter(t => t.status === 'archived').length, filter: 'archived' },
   ]), [tasks, t]);
 
-  const formatTaskDate = (task: TaskWithDetails) => {
-    if (!task.scheduled_date) return 'Date Ã  définir';
-    const date = new Date(task.scheduled_date);
-    const dateText = date.toLocaleDateString('fr-FR', { month: 'numeric', day: 'numeric', year: '2-digit' });
-    const timeText = task.start_time || task.heure_rdv;
-    return timeText ? `${dateText} ${timeText}` : dateText;
-  };
-
-  const getStatusBadgeClass = (status: TaskStatus) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-emerald-500 text-white';
-      case 'in_progress':
-        return 'bg-amber-500 text-white';
-      case 'scheduled':
-        return 'bg-blue-500 text-white';
-      case 'cancelled':
-        return 'bg-slate-400 text-white';
-      case 'draft':
-        return 'bg-slate-500 text-white';
-      case 'archived':
-        return 'bg-slate-500 text-white';
-      default:
-        return 'bg-slate-400 text-white';
-    }
-  };
-
   // Fetch technicians (simplified version - keeping for filters)
   const fetchTechnicians = useCallback(async () => {
     try {
@@ -846,23 +792,7 @@ export default function TasksPage() {
         component: 'TasksPage'
       });
 
-      // Extract meaningful error message for user
-      let userErrorMessage = 'Erreur lors de la suppression de la tâche';
-      if (err instanceof Error) {
-        if (err.message.includes('Network')) {
-          userErrorMessage = 'Erreur de réseau - vérifiez votre connexion';
-        } else if (err.message.includes('401')) {
-          userErrorMessage = 'Non autorisé - veuillez vous reconnecter';
-        } else if (err.message.includes('403')) {
-          userErrorMessage = 'Accès interdit - permissions insuffisantes';
-        } else if (err.message.includes('404')) {
-          userErrorMessage = 'Tâche introuvable - elle a peut-être déjÃ  été supprimée';
-        } else if (err.message.includes('500')) {
-          userErrorMessage = 'Erreur serveur - veuillez réessayer plus tard';
-        }
-      }
-
-      enhancedToast.error(userErrorMessage, {
+      enhancedToast.error(mapTaskErrorToUserMessage(err), {
         action: {
           label: 'Réessayer',
           onClick: () => handleDeleteTask(task)
@@ -889,25 +819,7 @@ export default function TasksPage() {
         return;
       }
 
-      const csvData = await taskGateway.exportTasksCsv({
-        include_notes: true,
-        date_range: selectedDateRange ? {
-          start_date: selectedDateRange.from?.toISOString(),
-          end_date: selectedDateRange.to?.toISOString(),
-        } : undefined
-      }, user.token);
-
-      // Create and download CSV file
-      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `tasks_export_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
+      await downloadTasksCsv({ includeNotes: true, dateRange: selectedDateRange }, user.token);
       enhancedToast.success('Export terminé avec succès');
     } catch (error) {
       console.error('Export failed:', error);
@@ -922,41 +834,10 @@ export default function TasksPage() {
         return;
       }
 
-      // Create file input
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = '.csv';
-      input.onchange = async (e) => {
-        const file = (e.target as HTMLInputElement).files?.[0];
-        if (!file) return;
-
-        try {
-          const text = await file.text();
-          const lines = text.split('\n').filter(line => line.trim());
-
-          if (lines.length < 2) {
-            enhancedToast.error('Fichier CSV invalide ou vide');
-            return;
-          }
-
-          const result = await taskGateway.importTasksBulk({
-            csv_lines: lines,
-            skip_duplicates: true,
-            update_existing: false
-          }, user.token);
-
-          enhancedToast.success(`${result.successful} tâches importées avec succès`);
-          refetch(); // Refresh the task list
-        } catch (error) {
-          console.error('Import failed:', error);
-          enhancedToast.error('Erreur lors de l\'import');
-        }
-      };
-
-      input.click();
+      await importTasksFromCsv(user.token, () => refetch());
     } catch (error) {
-      console.error('Import setup failed:', error);
-      enhancedToast.error('Erreur lors de la configuration de l\'import');
+      console.error('Import failed:', error);
+      enhancedToast.error('Erreur lors de l\'import');
     }
   }, [refetch, user?.token]);
 
@@ -1124,7 +1005,7 @@ export default function TasksPage() {
                         <input type="checkbox" className="h-4 w-4 rounded border-border" aria-label={`Select ${task.task_number}`} />
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {formatTaskDate(task)}
+                        {formatTaskDateTime(task)}
                       </div>
                       <div className="flex flex-col gap-1">
                         <div className="text-sm font-semibold text-foreground">

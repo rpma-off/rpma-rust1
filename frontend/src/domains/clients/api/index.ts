@@ -6,6 +6,8 @@ export { ClientsProvider, useClientsContext } from './ClientsProvider';
 export { useClients } from '../hooks/useClients';
 export { useClient } from '../hooks/useClient';
 export { useClientStats } from '../hooks/useClientStats';
+export { computeClientStats } from '../utils/client-stats';
+export type { LocalClientStats } from '../utils/client-stats';
 
 export { ClientCard } from '../components/ClientCard';
 export { ClientDetail } from '../components/ClientDetail';

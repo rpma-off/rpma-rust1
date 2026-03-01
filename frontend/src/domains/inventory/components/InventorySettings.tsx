@@ -17,8 +17,7 @@ import { toast } from 'sonner';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useAuth } from '@/domains/auth';
 import type { MaterialCategory } from '@/shared/types';
-import { safeInvoke } from '@/lib/ipc/core';
-import { IPC_COMMANDS } from '@/lib/ipc/commands';
+import { inventoryIpc } from '../ipc/inventory.ipc';
 
 export function InventorySettings() {
   const { t } = useTranslation();
@@ -46,10 +45,7 @@ export function InventorySettings() {
     try {
       setLoading(true);
       setError(null);
-      const result = await safeInvoke<MaterialCategory[]>(IPC_COMMANDS.MATERIAL_LIST_CATEGORIES, {
-        sessionToken: user.token,
-        activeOnly: true,
-      });
+      const result = await inventoryIpc.category.listCategories(user.token);
       setCategories(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -78,15 +74,12 @@ export function InventorySettings() {
 
     try {
       setSaving(true);
-      await safeInvoke(IPC_COMMANDS.MATERIAL_CREATE_CATEGORY, {
-        sessionToken: user.token,
-        request: {
+      await inventoryIpc.category.createCategory({
           name: formData.name,
-          code: formData.code || null,
-          description: formData.description || null,
-          color: formData.color || null,
-        },
-      });
+          code: formData.code || undefined,
+          description: formData.description || undefined,
+          color: formData.color || undefined,
+        }, user.token);
       toast.success(t('inventory.categoryCreated'));
       setShowForm(false);
       setFormData({ name: '', code: '', description: '', color: '' });

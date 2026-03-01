@@ -1,13 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { UserList } from '@/domains/users';
-import { UserForm } from '@/domains/users';
-import { UserAccount } from '@/shared/types';
-import { convertTimestamps } from '@/shared/utils';
+import { useState } from 'react';
+import { UserList, UserForm, useUserList } from '@/domains/users';
+import type { UserAccount } from '@/shared/types';
 import { useAuth } from '@/domains/auth';
-import { logger, LogContext } from '@/shared/utils';
-import { ipcClient } from '@/shared/utils';
 import { PageHeader, HeaderActionButton } from '@/shared/ui/ui/page-header';
 import { PageShell } from '@/shared/ui/layout/PageShell';
 import { LoadingState } from '@/shared/ui/layout/LoadingState';
@@ -18,41 +14,9 @@ import { useTranslation } from '@/shared/hooks/useTranslation';
 export default function UsersPage() {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
-  const [users, setUsers] = useState<UserAccount[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { users, loading, error, refetch } = useUserList();
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState<UserAccount | null>(null);
-
-  const loadUsers = useCallback(async () => {
-    try {
-      logger.debug(LogContext.API, 'loadUsers: Starting to load users');
-      setLoading(true);
-
-      if (!user || !user.token) {
-        logger.debug(LogContext.API, 'loadUsers: No authenticated user, setting error');
-        setError(t('errors.unauthorized'));
-        return;
-      }
-
-      logger.debug(LogContext.API, 'loadUsers: Calling ipcClient.users.list');
-      const userListResponse = await ipcClient.users.list(50, 0, user.token);
-      logger.info(LogContext.API, 'loadUsers: Received user list', { users: userListResponse.data });
-
-      setUsers(userListResponse.data.map(user => convertTimestamps(user)) as unknown as UserAccount[]);
-    } catch (err) {
-      logger.error(LogContext.API, 'loadUsers: Error occurred', { error: err });
-      setError(err instanceof Error ? err.message : 'Unknown error');
-     } finally {
-      setLoading(false);
-    }
-  }, [user, t]);
-
-  useEffect(() => {
-    if (user && user.token) {
-      loadUsers();
-    }
-  }, [user, loadUsers]);
 
   // Show loading while checking authentication
   if (authLoading) {
@@ -77,8 +41,8 @@ export default function UsersPage() {
     setShowForm(true);
   };
 
-  const handleEditUser = (user: UserAccount) => {
-    setEditingUser(user);
+  const handleEditUser = (userToEdit: UserAccount) => {
+    setEditingUser(userToEdit);
     setShowForm(true);
   };
 
@@ -90,7 +54,7 @@ export default function UsersPage() {
   const handleFormSuccess = () => {
     setShowForm(false);
     setEditingUser(null);
-    loadUsers(); // Reload the list
+    refetch();
   };
 
   if (loading) {
@@ -104,7 +68,7 @@ export default function UsersPage() {
   if (error) {
     return (
       <PageShell>
-        <ErrorState message={error} onRetry={loadUsers} />
+        <ErrorState message={error} onRetry={refetch} />
       </PageShell>
     );
   }
@@ -127,7 +91,7 @@ export default function UsersPage() {
       <UserList
         users={users}
         onEdit={handleEditUser}
-        onRefresh={loadUsers}
+        onRefresh={refetch}
       />
 
       {showForm && (

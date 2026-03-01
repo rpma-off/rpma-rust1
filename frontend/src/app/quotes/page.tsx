@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Plus, Search, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { useQuotesList, QuoteStatusBadge } from '@/domains/quotes';
+import { useQuotesList, QuoteStatusBadge, computeQuoteStats } from '@/domains/quotes';
 import { formatCents } from '@/domains/quotes/utils/formatting';
 import { PageShell } from '@/shared/ui/layout/PageShell';
 import type { QuoteStatus } from '@/shared/types';
@@ -31,14 +31,7 @@ export default function QuotesPage() {
     });
   };
 
-  const stats = useMemo(() => {
-    return {
-      total,
-      draft: quotes.filter(q => q.status === 'draft').length,
-      sent: quotes.filter(q => q.status === 'sent').length,
-      accepted: quotes.filter(q => q.status === 'accepted').length,
-    };
-  }, [quotes, total]);
+  const stats = useMemo(() => computeQuoteStats(quotes, total), [quotes, total]);
 
   useEffect(() => {
     if (error?.message) {

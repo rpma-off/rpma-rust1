@@ -3,7 +3,7 @@
 import { useState, useCallback, useMemo, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/domains/auth';
-import { clientService, useClients } from '@/domains/clients';
+import { clientService, useClients, computeClientStats } from '@/domains/clients';
 import { Plus, Search, SearchX, User, Building, ChevronDown, ArrowUpDown, AlertCircle, Users, FileText } from 'lucide-react';
 import Link from 'next/link';
 import type { Client, ClientWithTasks } from '@/shared/types';
@@ -36,26 +36,7 @@ export default function ClientsPage() {
 
   // Client filters are handled centrally in AppNavigation component
 
-  const clientStats = useMemo(() => {
-    return clients.reduce((acc, client) => {
-      acc.total += 1;
-      if ((client.tasks || []).length > 0) {
-        acc.withTasks += 1;
-      }
-      if (client.customer_type === 'individual') {
-        acc.individual += 1;
-      }
-      if (client.customer_type === 'business') {
-        acc.business += 1;
-      }
-      return acc;
-    }, {
-      total: 0,
-      withTasks: 0,
-      individual: 0,
-      business: 0
-    });
-  }, [clients]);
+  const clientStats = useMemo(() => computeClientStats(clients), [clients]);
 
   // Handle search
   const handleSearch = useCallback((query: string) => {
