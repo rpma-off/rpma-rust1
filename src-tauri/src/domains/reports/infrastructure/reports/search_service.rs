@@ -5,7 +5,7 @@
 use crate::commands::{AppError, AppResult, AppState};
 use crate::db::Database;
 use crate::domains::reports::domain::models::reports::*;
-use crate::domains::sync::domain::models::sync::EntityType;
+use crate::shared::services::cross_domain::SyncEntityType;
 use rusqlite::types::Value;
 use std::collections::HashMap;
 
@@ -162,7 +162,7 @@ fn search_tasks_with_db(
 
         Ok(SearchResult {
             id,
-            entity_type: EntityType::Task,
+            entity_type: SyncEntityType::Task,
             title: resolved_title,
             subtitle,
             status,
@@ -231,7 +231,7 @@ fn search_clients_with_db(
 
         Ok(SearchResult {
             id,
-            entity_type: EntityType::Client,
+            entity_type: SyncEntityType::Client,
             title: if name.trim().is_empty() {
                 "Unnamed Client".to_string()
             } else {
@@ -325,7 +325,7 @@ fn search_interventions_with_db(
 
         Ok(SearchResult {
             id: id.clone(),
-            entity_type: EntityType::Intervention,
+            entity_type: SyncEntityType::Intervention,
             title: vehicle_plate.unwrap_or_else(|| format!("Intervention {}", id)),
             subtitle: format!("{subtitle_left} | {subtitle_right}"),
             status,
@@ -398,7 +398,7 @@ impl SearchReportService {
                 .any(|t| t.eq_ignore_ascii_case("interventions"));
 
         let tasks = if include_tasks {
-            _db.query_as::<crate::domains::tasks::domain::models::task::Task>(
+            _db.query_as::<crate::shared::services::cross_domain::Task>(
                 "SELECT * FROM tasks WHERE deleted_at IS NULL AND (title LIKE ? OR task_number LIKE ? OR COALESCE(customer_name, '') LIKE ?) ORDER BY updated_at DESC LIMIT ?",
                 rusqlite::params![
                     format!("%{}%", _query),
@@ -413,7 +413,7 @@ impl SearchReportService {
         };
 
         let clients = if include_clients {
-            _db.query_as::<crate::domains::clients::domain::models::client::Client>(
+            _db.query_as::<crate::shared::services::cross_domain::Client>(
                 "SELECT * FROM clients WHERE deleted_at IS NULL AND (name LIKE ? OR COALESCE(email, '') LIKE ? OR COALESCE(phone, '') LIKE ?) ORDER BY updated_at DESC LIMIT ?",
                 rusqlite::params![
                     format!("%{}%", _query),
@@ -450,3 +450,5 @@ impl SearchReportService {
         })
     }
 }
+
+

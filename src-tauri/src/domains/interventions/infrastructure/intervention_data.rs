@@ -15,7 +15,7 @@ use crate::domains::interventions::domain::models::step::{InterventionStep, Step
 use crate::domains::interventions::infrastructure::intervention_calculation::InterventionCalculationService;
 use crate::domains::interventions::infrastructure::intervention_repository::InterventionRepository;
 use crate::domains::interventions::infrastructure::intervention_types::{
-    AdvanceStepRequest, StartInterventionRequest,
+    AdvanceStepRequest, InterventionPhoto, StartInterventionRequest,
 };
 use crate::shared::contracts::common::*;
 use rusqlite::{params, OptionalExtension, Transaction};
@@ -380,10 +380,10 @@ impl InterventionDataService {
     pub fn get_intervention_photos(
         &self,
         intervention_id: &str,
-    ) -> InterventionResult<Vec<crate::domains::documents::domain::models::photo::Photo>> {
+    ) -> InterventionResult<Vec<InterventionPhoto>> {
         let photos = self
             .db
-            .query_as::<crate::domains::documents::domain::models::photo::Photo>(
+            .query_as::<InterventionPhoto>(
                 "SELECT * FROM photos WHERE intervention_id = ? ORDER BY step_number, captured_at",
                 params![intervention_id],
             )?;

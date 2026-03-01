@@ -61,6 +61,40 @@ impl MessageService {
         Ok(saved)
     }
 
+    /// Send a message without exposing domain request types to external callers.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn send_message_raw(
+        &self,
+        message_type: String,
+        recipient_id: Option<String>,
+        recipient_email: Option<String>,
+        recipient_phone: Option<String>,
+        subject: Option<String>,
+        body: String,
+        task_id: Option<String>,
+        client_id: Option<String>,
+        priority: Option<String>,
+        scheduled_at: Option<i64>,
+        correlation_id: Option<String>,
+    ) -> Result<Message, AppError> {
+        let request = SendMessageRequest {
+            message_type,
+            recipient_id,
+            recipient_email,
+            recipient_phone,
+            subject,
+            body,
+            template_id: None,
+            task_id,
+            client_id,
+            priority,
+            scheduled_at,
+            correlation_id,
+        };
+
+        self.send_message(&request).await
+    }
+
     /// Get messages with filtering and pagination
     pub async fn get_messages(
         &self,

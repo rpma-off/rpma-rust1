@@ -3,7 +3,7 @@
 //! This service handles all CRUD operations for clients with validation,
 //! business rules, FTS search, and repository interactions.
 
-use crate::domains::clients::domain::models::client::Client;
+use crate::shared::services::cross_domain::Client;
 use crate::domains::clients::domain::models::client::{
     ClientListResponse, ClientQuery, CreateClientRequest, UpdateClientRequest,
 };
@@ -229,7 +229,7 @@ impl ClientService {
 
         Ok(ClientListResponse {
             data: paginated_clients,
-            pagination: crate::domains::tasks::domain::models::task::PaginationInfo {
+            pagination: crate::shared::services::cross_domain::PaginationInfo {
                 page,
                 limit,
                 total,
@@ -609,3 +609,5 @@ impl crate::db::FromSqlRow for ClientStat {
 fn is_valid_email(email: &str) -> bool {
     email.contains('@') && email.contains('.') && email.len() >= 5
 }
+
+

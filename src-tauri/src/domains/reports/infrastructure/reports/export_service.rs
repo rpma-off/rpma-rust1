@@ -335,11 +335,11 @@ impl ExportReportService {
         content.push_str(&format!(
             "Statut: {}\n",
             match intervention_data.intervention.status {
-                crate::domains::interventions::domain::models::intervention::InterventionStatus::Pending => "En attente",
-                crate::domains::interventions::domain::models::intervention::InterventionStatus::InProgress => "En cours",
-                crate::domains::interventions::domain::models::intervention::InterventionStatus::Paused => "En pause",
-                crate::domains::interventions::domain::models::intervention::InterventionStatus::Completed => "TerminÃƒÂ©e",
-                crate::domains::interventions::domain::models::intervention::InterventionStatus::Cancelled => "AnnulÃƒÂ©e",
+                crate::shared::services::cross_domain::InterventionStatus::Pending => "En attente",
+                crate::shared::services::cross_domain::InterventionStatus::InProgress => "En cours",
+                crate::shared::services::cross_domain::InterventionStatus::Paused => "En pause",
+                crate::shared::services::cross_domain::InterventionStatus::Completed => "TerminÃƒÂ©e",
+                crate::shared::services::cross_domain::InterventionStatus::Cancelled => "AnnulÃƒÂ©e",
             }
         ));
         content.push_str(&format!(
@@ -421,3 +421,4 @@ impl ExportReportService {
         Ok(crate::domains::reports::ipc::reports::utils::format_report_data_for_csv(&json_value))
     }
 }
+

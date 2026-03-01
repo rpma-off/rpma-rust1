@@ -1,6 +1,6 @@
 //! Simple test to verify the workflow strategy pattern works correctly
 
-use crate::domains::interventions::domain::models::intervention::InterventionType;
+use crate::shared::services::cross_domain::{Intervention, InterventionType};
 use crate::domains::tasks::infrastructure::workflow_strategy::{
     EnvironmentConditions, ExpressPPFStrategy, StandardPPFStrategy, WorkflowContext,
     WorkflowStrategy, WorkflowStrategyFactory,
@@ -9,12 +9,11 @@ use crate::domains::tasks::infrastructure::workflow_strategy::{
 #[test]
 fn test_strategy_factory_standard_workflow() {
     // Create a standard intervention (more than 2 zones)
-    let mut intervention =
-        crate::domains::interventions::domain::models::intervention::Intervention::new(
-            "task-123".to_string(),
-            "TASK-001".to_string(),
-            "ABC-123".to_string(),
-        );
+    let mut intervention = Intervention::new(
+        "task-123".to_string(),
+        "TASK-001".to_string(),
+        "ABC-123".to_string(),
+    );
     intervention.intervention_type = InterventionType::Ppf;
     intervention.ppf_zones_config = Some(vec![
         "hood".to_string(),
@@ -44,12 +43,11 @@ fn test_strategy_factory_standard_workflow() {
 #[test]
 fn test_strategy_factory_express_workflow() {
     // Create an express intervention (2 or fewer zones)
-    let mut intervention =
-        crate::domains::interventions::domain::models::intervention::Intervention::new(
-            "task-456".to_string(),
-            "TASK-002".to_string(),
-            "XYZ-789".to_string(),
-        );
+    let mut intervention = Intervention::new(
+        "task-456".to_string(),
+        "TASK-002".to_string(),
+        "XYZ-789".to_string(),
+    );
     intervention.intervention_type = InterventionType::Ppf;
     intervention.ppf_zones_config = Some(vec!["hood".to_string()]);
 
@@ -75,12 +73,11 @@ fn test_strategy_factory_express_workflow() {
 fn test_workflow_step_configuration() {
     let strategy = StandardPPFStrategy::new();
     let context = WorkflowContext {
-        intervention:
-            crate::domains::interventions::domain::models::intervention::Intervention::new(
-                "task-789".to_string(),
-                "TASK-003".to_string(),
-                "DEF-456".to_string(),
-            ),
+        intervention: Intervention::new(
+            "task-789".to_string(),
+            "TASK-003".to_string(),
+            "DEF-456".to_string(),
+        ),
         user_id: "test-user".to_string(),
         environment_conditions: None,
     };
@@ -104,12 +101,11 @@ fn test_environment_aware_instructions() {
 
     // Test with low temperature
     let context_low_temp = WorkflowContext {
-        intervention:
-            crate::domains::interventions::domain::models::intervention::Intervention::new(
-                "task-001".to_string(),
-                "TASK-001".to_string(),
-                "ABC-123".to_string(),
-            ),
+        intervention: Intervention::new(
+            "task-001".to_string(),
+            "TASK-001".to_string(),
+            "ABC-123".to_string(),
+        ),
         user_id: "test-user".to_string(),
         environment_conditions: Some(EnvironmentConditions {
             weather_condition: "sunny".to_string(),
@@ -128,12 +124,11 @@ fn test_environment_aware_instructions() {
 
     // Test with high humidity
     let context_high_humidity = WorkflowContext {
-        intervention:
-            crate::domains::interventions::domain::models::intervention::Intervention::new(
-                "task-002".to_string(),
-                "TASK-002".to_string(),
-                "XYZ-789".to_string(),
-            ),
+        intervention: Intervention::new(
+            "task-002".to_string(),
+            "TASK-002".to_string(),
+            "XYZ-789".to_string(),
+        ),
         user_id: "test-user".to_string(),
         environment_conditions: Some(EnvironmentConditions {
             weather_condition: "sunny".to_string(),
@@ -152,12 +147,11 @@ fn test_environment_aware_instructions() {
 
     // Test with ideal conditions
     let context_ideal = WorkflowContext {
-        intervention:
-            crate::domains::interventions::domain::models::intervention::Intervention::new(
-                "task-003".to_string(),
-                "TASK-003".to_string(),
-                "DEF-456".to_string(),
-            ),
+        intervention: Intervention::new(
+            "task-003".to_string(),
+            "TASK-003".to_string(),
+            "DEF-456".to_string(),
+        ),
         user_id: "test-user".to_string(),
         environment_conditions: Some(EnvironmentConditions {
             weather_condition: "sunny".to_string(),

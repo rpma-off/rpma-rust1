@@ -6,6 +6,7 @@
 use serde::{Deserialize, Serialize};
 
 // Re-export the main types
+#[allow(unused_imports)]
 pub use super::material::{
     Material, MaterialCategory, MaterialConsumption, MaterialConsumptionSummary, MaterialStats,
     MaterialType, Supplier, UnitOfMeasure,

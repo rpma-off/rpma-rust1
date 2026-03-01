@@ -134,7 +134,7 @@ pub async fn get_tasks_with_client_details(
         };
 
         let relationship_status =
-            determine_client_relationship_status(task_with_client, &client_details);
+            determine_client_relationship_status(task_with_client, client_details.is_some());
 
         let enhanced_task = TaskWithClientDetails {
             task: task_with_client.task.clone(),
@@ -165,7 +165,7 @@ pub async fn get_tasks_with_client_details(
 /// Determine the relationship status between task and client
 fn determine_client_relationship_status(
     task_with_client: &crate::domains::tasks::infrastructure::task_client_integration::TaskWithClient,
-    _client_details: &Option<crate::domains::clients::domain::models::client::Client>,
+    _has_client_details: bool,
 ) -> String {
     // Check task status first
     match task_with_client.task.status {

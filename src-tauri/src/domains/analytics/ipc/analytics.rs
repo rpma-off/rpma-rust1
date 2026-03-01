@@ -5,7 +5,7 @@
 
 use crate::authenticate;
 use crate::commands::{ApiResponse, AppState};
-use crate::domains::reports::domain::models::reports::*;
+use crate::domains::analytics::domain::models::AnalyticsSummary;
 use tracing;
 
 /// Get analytics summary for quick overview

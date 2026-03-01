@@ -3,7 +3,7 @@
 use crate::commands::{ApiResponse, AppError, AppState, ClientAction};
 use crate::domains::clients::application::ClientCrudRequest;
 use crate::domains::clients::domain::models::client::ClientWithTasks;
-use crate::domains::tasks::domain::models::task::Task;
+use crate::shared::services::cross_domain::Task;
 use crate::shared::services::validation::ValidationService;
 use tracing::{debug, error, info, instrument, warn};
 
@@ -314,7 +314,7 @@ async fn handle_client_with_tasks_retrieval(
     match client {
         Some(client) => {
             // Get tasks for this client
-            let task_query = crate::domains::tasks::domain::models::task::TaskQuery {
+            let task_query = crate::shared::services::cross_domain::TaskQuery {
                 client_id: Some(id.to_string()),
                 page: Some(1),
                 limit: Some(1000), // Get all tasks for this client
@@ -325,7 +325,7 @@ async fn handle_client_with_tasks_retrieval(
                 from_date: None,
                 to_date: None,
                 sort_by: "created_at".to_string(),
-                sort_order: crate::domains::tasks::domain::models::task::SortOrder::Desc,
+                sort_order: crate::shared::services::cross_domain::SortOrder::Desc,
             };
 
             let tasks_response = task_service
@@ -482,7 +482,7 @@ async fn handle_client_listing_with_tasks(
 
     for client in clients.data {
         // Get tasks for this client
-        let task_query = crate::domains::tasks::domain::models::task::TaskQuery {
+        let task_query = crate::shared::services::cross_domain::TaskQuery {
             client_id: Some(client.id.clone()),
             page: Some(1),
             limit: Some(task_limit),
@@ -493,7 +493,7 @@ async fn handle_client_listing_with_tasks(
             from_date: None,
             to_date: None,
             sort_by: "created_at".to_string(),
-            sort_order: crate::domains::tasks::domain::models::task::SortOrder::Desc,
+            sort_order: crate::shared::services::cross_domain::SortOrder::Desc,
         };
 
         let tasks_response = task_service
@@ -587,3 +587,6 @@ async fn handle_client_statistics(
     }))
     .with_correlation_id(correlation_id.clone()))
 }
+
+
+

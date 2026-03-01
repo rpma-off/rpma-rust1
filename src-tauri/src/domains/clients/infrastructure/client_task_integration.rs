@@ -8,8 +8,8 @@
 //! - Cascade operations for client deletion
 
 use crate::db::Database;
-use crate::domains::clients::domain::models::client::Client;
-use crate::domains::tasks::domain::models::task::Task;
+use crate::shared::services::cross_domain::Client;
+use crate::shared::services::cross_domain::Task;
 use rusqlite::params;
 use std::sync::Arc;
 
@@ -361,3 +361,4 @@ pub struct ClientWorkload {
     pub completed_tasks: i32,
     pub avg_estimated_duration: Option<f64>,
 }
+

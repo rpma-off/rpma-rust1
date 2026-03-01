@@ -32,7 +32,6 @@
 use crate::db::Database;
 use crate::domains::audit::infrastructure::audit_log_handler::AuditLogHandler;
 use crate::domains::audit::infrastructure::audit_service::AuditService;
-use crate::domains::settings::domain::models::settings::StorageSettings;
 use crate::domains::users::infrastructure::user::UserService;
 use crate::shared::app_state::AppStateType;
 use crate::shared::event_bus::{register_handler, set_global_event_bus};
@@ -136,7 +135,8 @@ impl ServiceBuilder {
         // Initialize Photo Service (depends on DB and StorageSettings).
         // Force local photo storage under the app data directory to avoid writing
         // uploads into the repo root during `tauri dev` (which can trigger backend rebuilds).
-        let mut default_storage_settings = StorageSettings::default();
+        let mut default_storage_settings =
+            crate::domains::documents::infrastructure::photo::PhotoStorageSettings::default();
         let photo_storage_path = self.app_data_dir.join("photos");
         default_storage_settings.photo_storage_type = "local".to_string();
         default_storage_settings.local_storage_path =

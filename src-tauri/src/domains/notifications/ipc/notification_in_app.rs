@@ -1,9 +1,8 @@
 //! In-app notification commands for Tauri
 
 use crate::commands::AppState;
+use crate::domains::notifications::application::notification_in_app::NotificationInAppService;
 use crate::domains::notifications::domain::models::notification::Notification;
-use crate::domains::notifications::infrastructure::notification_in_app_repository::NotificationRepository;
-use crate::shared::repositories::base::Repository;
 use serde::{Deserialize, Serialize};
 use tracing::{error, info, instrument};
 
@@ -48,8 +47,9 @@ pub async fn get_notifications(
 
     crate::commands::update_correlation_context_user(&current_user.user_id);
 
-    let repo = NotificationRepository::new(state.db.clone(), state.repositories.cache.clone());
-    let notifications = repo
+    let app_service =
+        NotificationInAppService::new(state.db.clone(), state.repositories.cache.clone());
+    let notifications = app_service
         .find_by_user(&current_user.user_id, 50)
         .await
         .map_err(|e| {
@@ -57,7 +57,7 @@ pub async fn get_notifications(
             "Failed to get notifications".to_string()
         })?;
 
-    let unread_count = repo
+    let unread_count = app_service
         .count_unread(&current_user.user_id)
         .await
         .unwrap_or(0);
@@ -92,8 +92,9 @@ pub async fn mark_notification_read(
         "Authentication failed".to_string()
     })?;
 
-    let repo = NotificationRepository::new(state.db.clone(), state.repositories.cache.clone());
-    repo.mark_read(&id).await.map_err(|e| {
+    let app_service =
+        NotificationInAppService::new(state.db.clone(), state.repositories.cache.clone());
+    app_service.mark_read(&id).await.map_err(|e| {
         error!(error = %e, notification_id = %id, "Failed to mark notification as read");
         "Failed to mark notification as read".to_string()
     })?;
@@ -121,8 +122,9 @@ pub async fn mark_all_notifications_read(
 
     crate::commands::update_correlation_context_user(&current_user.user_id);
 
-    let repo = NotificationRepository::new(state.db.clone(), state.repositories.cache.clone());
-    repo.mark_all_read(&current_user.user_id).await.map_err(|e| {
+    let app_service =
+        NotificationInAppService::new(state.db.clone(), state.repositories.cache.clone());
+    app_service.mark_all_read(&current_user.user_id).await.map_err(|e| {
         error!(error = %e, user_id = %current_user.user_id, "Failed to mark all notifications as read");
         "Failed to mark all notifications as read".to_string()
     })?;
@@ -149,8 +151,9 @@ pub async fn delete_notification(
         "Authentication failed".to_string()
     })?;
 
-    let repo = NotificationRepository::new(state.db.clone(), state.repositories.cache.clone());
-    repo.delete(&id).await.map_err(|e| {
+    let app_service =
+        NotificationInAppService::new(state.db.clone(), state.repositories.cache.clone());
+    app_service.delete(&id).await.map_err(|e| {
         error!(error = %e, notification_id = %id, "Failed to delete notification");
         "Failed to delete notification".to_string()
     })?;
@@ -182,8 +185,9 @@ pub async fn create_notification(
         request.entity_url,
     );
 
-    let repo = NotificationRepository::new(state.db.clone(), state.repositories.cache.clone());
-    let created = repo.save(notification).await.map_err(|e| {
+    let app_service =
+        NotificationInAppService::new(state.db.clone(), state.repositories.cache.clone());
+    let created = app_service.save(notification).await.map_err(|e| {
         error!(error = %e, user_id = %user_id, "Failed to create notification");
         "Failed to create notification".to_string()
     })?;

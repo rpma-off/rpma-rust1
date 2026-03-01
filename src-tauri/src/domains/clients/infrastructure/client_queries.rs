@@ -86,10 +86,10 @@ impl ClientQueriesService {
 
         let sort_order = match query
             .sort_order
-            .unwrap_or(crate::domains::tasks::domain::models::task::SortOrder::Desc)
+            .unwrap_or(crate::shared::services::cross_domain::SortOrder::Desc)
         {
-            crate::domains::tasks::domain::models::task::SortOrder::Asc => "ASC",
-            crate::domains::tasks::domain::models::task::SortOrder::Desc => "DESC",
+            crate::shared::services::cross_domain::SortOrder::Asc => "ASC",
+            crate::shared::services::cross_domain::SortOrder::Desc => "DESC",
         };
 
         sql.push_str(&format!(" ORDER BY {} {}", sort_by_validated, sort_order));
@@ -157,7 +157,7 @@ impl ClientQueriesService {
             .map_err(|e| format!("Failed to count clients: {}", e))?;
 
         let total_pages = ((total as f64) / (limit as f64)).ceil() as i32;
-        let pagination = crate::domains::tasks::domain::models::task::PaginationInfo {
+        let pagination = crate::shared::services::cross_domain::PaginationInfo {
             page,
             limit,
             total,
@@ -252,3 +252,4 @@ impl ClientQueriesService {
             .map_err(|e| format!("Failed to get recently active clients: {}", e))
     }
 }
+
