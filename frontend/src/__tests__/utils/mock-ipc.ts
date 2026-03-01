@@ -78,3 +78,36 @@ export const MOCK_TASK = {
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-01T00:00:00Z',
 } as const;
+
+export const MOCK_TASK_DETAILS = {
+  ...MOCK_TASK,
+  description: 'Full protection for Tesla Model 3',
+  vehicle_plate: 'GOLD-001',
+  vehicle_model: 'Model 3',
+  vehicle_year: '2024',
+  vehicle_make: 'Tesla',
+  ppf_zones: ['hood', 'fenders', 'bumper'],
+  technician_id: 'user-golden-1',
+  estimated_duration: 6,
+} as const;
+
+export const MOCK_TASK_LIST = [
+  MOCK_TASK,
+  { ...MOCK_TASK, id: 'task-golden-2', title: 'Second Golden Task', status: 'in_progress' as const },
+] as const;
+
+export const MOCK_QUOTE = {
+  id: 'quote-golden-1',
+  quote_number: 'QUO-0001',
+  client_id: 'client-golden-1',
+  task_id: 'task-golden-1',
+  status: 'draft' as const,
+  subtotal: 1500,
+  tax_total: 300,
+  total: 1800,
+  items: [],
+  notes: null,
+  valid_until: '2026-06-01T00:00:00Z',
+  created_at: '2026-01-01T00:00:00Z',
+  updated_at: '2026-01-01T00:00:00Z',
+} as const;
