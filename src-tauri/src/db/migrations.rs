@@ -3040,6 +3040,120 @@ mod tests {
             .expect("Second migration 040 run must be idempotent");
     }
 
+    /// Regression test: migration 046 must ensure the legacy signup trigger is absent.
+    #[test]
+    fn test_migration_046_removes_user_settings_signup_trigger() {
+        let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+        let db = Database::new(temp_file.path(), "").expect("Failed to create database");
+
+        db.init().expect("Failed to init schema");
+        let latest = Database::get_latest_migration_version();
+        db.migrate(latest)
+            .expect("Migration run must succeed up to latest");
+
+        let conn = db.get_connection().expect("Failed to get connection");
+        let trigger_exists: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='trigger' AND name='user_insert_create_settings'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("Failed to query sqlite_master for trigger");
+        assert_eq!(
+            trigger_exists, 0,
+            "user_insert_create_settings trigger must be absent after migration 046"
+        );
+    }
+
+    /// Idempotency test: rerunning migrate(046) must remain a no-op.
+    #[test]
+    fn test_migration_046_is_idempotent() {
+        let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+        let db = Database::new(temp_file.path(), "").expect("Failed to create database");
+
+        db.init().expect("Failed to init schema");
+        let latest = Database::get_latest_migration_version();
+        db.migrate(latest)
+            .expect("First migration run must succeed");
+
+        db.migrate(46)
+            .expect("Second migration 046 run must be idempotent");
+    }
+
+    /// Regression test: legacy user_settings schemas must not block users inserts after 046.
+    #[test]
+    fn test_migration_046_unblocks_users_insert_on_legacy_user_settings_schema() {
+        let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+        let db = Database::new(temp_file.path(), "").expect("Failed to create database");
+        db.init().expect("Failed to init schema");
+
+        {
+            let conn = db.get_connection().expect("Failed to get connection");
+            // Simulate old/partial schema drift for user_settings.
+            conn.execute_batch(
+                r#"
+                DROP TABLE IF EXISTS user_settings;
+                CREATE TABLE user_settings (
+                    id TEXT PRIMARY KEY NOT NULL,
+                    user_id TEXT NOT NULL UNIQUE
+                );
+                "#,
+            )
+            .expect("Failed to create legacy user_settings schema");
+            conn.execute("DELETE FROM schema_version WHERE version >= 44", [])
+                .expect("Failed to reset schema version for 044+ replay");
+        }
+
+        // Apply 044/045 so the trigger exists.
+        db.migrate(45)
+            .expect("Migration 045 must apply in legacy-schema test setup");
+
+        {
+            let conn = db.get_connection().expect("Failed to get connection");
+            let result = conn.execute(
+                "INSERT INTO users (id, email, username, password_hash, first_name, last_name, full_name, role, is_active, created_at, updated_at)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 1, (unixepoch() * 1000), (unixepoch() * 1000))",
+                params![
+                    "legacy-trigger-fail-user",
+                    "legacy-trigger-fail@example.com",
+                    "legacy_trigger_fail",
+                    "hash",
+                    "Legacy",
+                    "Fail",
+                    "Legacy Fail",
+                    "viewer",
+                ],
+            );
+            assert!(
+                result.is_err(),
+                "users insert should fail while legacy trigger depends on missing user_settings columns"
+            );
+        }
+
+        // Drop trigger via migration 046 and verify insert now succeeds.
+        db.migrate(46)
+            .expect("Migration 046 must drop signup trigger on legacy schema");
+
+        {
+            let conn = db.get_connection().expect("Failed to get connection");
+            conn.execute(
+                "INSERT INTO users (id, email, username, password_hash, first_name, last_name, full_name, role, is_active, created_at, updated_at)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 1, (unixepoch() * 1000), (unixepoch() * 1000))",
+                params![
+                    "legacy-trigger-pass-user",
+                    "legacy-trigger-pass@example.com",
+                    "legacy_trigger_pass",
+                    "hash",
+                    "Legacy",
+                    "Pass",
+                    "Legacy Pass",
+                    "viewer",
+                ],
+            )
+            .expect("users insert should succeed once migration 046 removes the trigger");
+        }
+    }
+
     #[test]
     fn migrations_fresh_db() {
         let temp_file = NamedTempFile::new().expect("Failed to create temp file");
@@ -3090,7 +3204,7 @@ mod tests {
             assert_eq!(exists, 1, "Expected view '{}' to exist", view);
         }
 
-        for trigger in ["validate_sessions_role", "user_insert_create_settings"] {
+        for trigger in ["validate_sessions_role"] {
             let exists: i64 = conn
                 .query_row(
                     "SELECT COUNT(*) FROM sqlite_master WHERE type='trigger' AND name=?1",

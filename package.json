@@ -63,7 +63,8 @@
     "git:finish-feature": "node scripts/git-workflow.js finish-feature",
     "git:cleanup-feature": "node scripts/git-workflow.js cleanup-feature",
     "git:guard-main": "node scripts/git-workflow.js guard-main",
-    "prepare": "husky"
+    "prepare": "husky",
+    "db:repair-signup-trigger": "node scripts/repair_user_signup_trigger.js"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.1.0",
