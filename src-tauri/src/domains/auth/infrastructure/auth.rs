@@ -271,23 +271,54 @@ impl AuthService {
                 Ok(account)
             }
             Err(e) => {
-                error!("Database error creating account for {}: {}", email, e);
+                let raw_error_message = e.to_string();
+                let contains_user_settings = raw_error_message.contains("user_settings");
+                let contains_no_column = raw_error_message.contains("no such column");
+                let contains_no_table = raw_error_message.contains("no such table");
+
+                match &e {
+                    rusqlite::Error::SqliteFailure(sqlite_err, _) => {
+                        error!(
+                            email = %email,
+                            error_code = ?sqlite_err.code,
+                            extended_code = sqlite_err.extended_code,
+                            contains_user_settings,
+                            contains_no_column,
+                            contains_no_table,
+                            raw_error = %raw_error_message,
+                            "Database error creating account"
+                        );
+                    }
+                    _ => {
+                        error!(
+                            email = %email,
+                            error_code = %"non_sqlite_failure",
+                            extended_code = -1,
+                            contains_user_settings,
+                            contains_no_column,
+                            contains_no_table,
+                            raw_error = %raw_error_message,
+                            "Database error creating account"
+                        );
+                    }
+                }
+
                 let error_msg = match e {
                     rusqlite::Error::SqliteFailure(sqlite_err, _) => {
                         if sqlite_err.code == rusqlite::ErrorCode::ConstraintViolation {
-                            if e.to_string().contains("email") {
+                            if raw_error_message.contains("email") {
                                 "An account with this email already exists".to_string()
-                            } else if e.to_string().contains("username") {
+                            } else if raw_error_message.contains("username") {
                                 "Username is already taken".to_string()
                             } else {
                                 "Account creation failed due to constraint violation".to_string()
                             }
                         } else {
-                            format!("Database constraint error: {}", e)
+                            format!("Database constraint error: {}", raw_error_message)
                         }
                     }
                     _ => {
-                        format!("Failed to create account: {}", e)
+                        format!("Failed to create account: {}", raw_error_message)
                     }
                 };
                 Err(error_msg)
