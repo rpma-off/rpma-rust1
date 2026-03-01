@@ -1,4 +1,4 @@
--- Migration 027: Add Trigger for User Settings Auto-Creation
+-- Migration 045: Add Trigger for User Settings Auto-Creation
 -- Description: Automatically create user_settings when user is created
 -- Author: System
 -- Date: 2025-02-07
@@ -50,7 +50,3 @@ BEGIN
         strftime('%s', 'now') * 1000
     );
 END;
-
--- Log the migration
-INSERT OR IGNORE INTO schema_version (version)
-VALUES (27);

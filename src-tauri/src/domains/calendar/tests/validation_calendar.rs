@@ -55,13 +55,7 @@ async fn schedule_task_rejects_empty_new_date() {
     let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let service = CalendarService::new(db);
     let err = service
-        .schedule_task(
-            "task-1".to_string(),
-            "".to_string(),
-            None,
-            None,
-            "user1",
-        )
+        .schedule_task("task-1".to_string(), "".to_string(), None, None, "user1")
         .await
         .unwrap_err();
     assert!(matches!(err, AppError::Validation(_)));

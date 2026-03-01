@@ -370,62 +370,16 @@ fn main() {
             });
             let repositories = Arc::new(repositories);
 
-            match db_instance.is_initialized() {
-                Ok(true) => {
-                    info!("Database already initialized, checking for migrations");
-                    // For existing databases, check current version and migrate if needed
-                    let current_version = db_instance.get_version()?;
-                    let latest_version = db::Database::get_latest_migration_version();
-                    info!(
-                        "Current version: {}, Target version: {}",
-                        current_version, latest_version
-                    );
-                    if current_version < latest_version {
-                        if let Err(e) = db_instance.migrate(latest_version) {
-                            error!("Failed to apply migrations: {}", e);
-                            return Err(e.into());
-                        }
-                        info!("Database migrations applied successfully");
-                    } else {
-                        info!("Database is already at latest version {}", current_version);
-                    }
-
-                    if let Err(e) = db_instance.ensure_required_views() {
-                        error!("Failed to ensure required views: {}", e);
-                        return Err(e.into());
-                    }
-                }
-                Ok(false) => {
-                    info!("Initializing database schema from schema.sql");
-                    if let Err(e) = db_instance.init() {
-                        error!("Failed to initialize database schema: {}", e);
-                        return Err(e.into());
-                    }
-                    info!("Database schema initialized");
-
-                    let latest_version = db::Database::get_latest_migration_version();
-                    let current_version = db_instance.get_version()?;
-                    if current_version < latest_version {
-                        if let Err(e) = db_instance.migrate(latest_version) {
-                            error!("Failed to apply post-init migrations: {}", e);
-                            return Err(e.into());
-                        }
-                        info!(
-                            "Post-init migrations applied successfully ({} -> {})",
-                            current_version, latest_version
-                        );
-                    }
-
-                    if let Err(e) = db_instance.ensure_required_views() {
-                        error!("Failed to ensure required views: {}", e);
-                        return Err(e.into());
-                    }
-                }
-                Err(e) => {
-                    error!("Failed to check database initialization status: {}", e);
-                    return Err(e.into());
-                }
+            let latest_version = db::Database::get_latest_migration_version();
+            if let Err(e) = db_instance.initialize_or_migrate() {
+                error!("Failed during database initialize/migrate sequence: {}", e);
+                return Err(e.into());
             }
+            let current_version = db_instance.get_version()?;
+            info!(
+                "Database initialize/migrate sequence completed (version {}/{})",
+                current_version, latest_version
+            );
 
             // Verify database health after initialization/migrations
             match db_instance.health_check() {

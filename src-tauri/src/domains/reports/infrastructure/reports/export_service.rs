@@ -6,12 +6,12 @@
 
 use crate::commands::{AppError, AppResult, AppState};
 use crate::db::Database;
-use crate::shared::services::document_storage::DocumentStorageService;
 use crate::domains::reports::domain::models::reports::*;
 use crate::domains::reports::infrastructure::pdf_generation::PdfGenerationService;
 use crate::domains::reports::infrastructure::reports::validation::{
     validate_date_range, validate_filters,
 };
+use crate::shared::services::document_storage::DocumentStorageService;
 use chrono::Utc;
 use std::path::Path;
 use tracing::{debug, error, info, warn};
@@ -46,9 +46,7 @@ impl ExportReportService {
     pub async fn get_intervention_with_details(
         intervention_id: &str,
         db: &Database,
-        intervention_service: Option<
-            &crate::shared::services::cross_domain::InterventionService,
-        >,
+        intervention_service: Option<&crate::shared::services::cross_domain::InterventionService>,
         client_service: Option<&crate::shared::services::cross_domain::ClientService>,
     ) -> AppResult<CompleteInterventionData> {
         debug!(
@@ -62,9 +60,9 @@ impl ExportReportService {
             Some(svc) => svc,
             None => {
                 owned_intervention_service =
-                    crate::shared::services::cross_domain::InterventionService::new(std::sync::Arc::new(
-                        db.clone(),
-                    ));
+                    crate::shared::services::cross_domain::InterventionService::new(
+                        std::sync::Arc::new(db.clone()),
+                    );
                 &owned_intervention_service
             }
         };
@@ -338,8 +336,10 @@ impl ExportReportService {
                 crate::shared::services::cross_domain::InterventionStatus::Pending => "En attente",
                 crate::shared::services::cross_domain::InterventionStatus::InProgress => "En cours",
                 crate::shared::services::cross_domain::InterventionStatus::Paused => "En pause",
-                crate::shared::services::cross_domain::InterventionStatus::Completed => "TerminÃƒÂ©e",
-                crate::shared::services::cross_domain::InterventionStatus::Cancelled => "AnnulÃƒÂ©e",
+                crate::shared::services::cross_domain::InterventionStatus::Completed =>
+                    "TerminÃƒÂ©e",
+                crate::shared::services::cross_domain::InterventionStatus::Cancelled =>
+                    "AnnulÃƒÂ©e",
             }
         ));
         content.push_str(&format!(
@@ -421,4 +421,3 @@ impl ExportReportService {
         Ok(crate::domains::reports::ipc::reports::utils::format_report_data_for_csv(&json_value))
     }
 }
-

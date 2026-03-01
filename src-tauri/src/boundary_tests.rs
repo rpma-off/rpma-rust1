@@ -26,11 +26,11 @@ fn all_domain_facades_accessible_within_crate() {
 /// These types are NOT externally visible (pub) unless `export-types` feature is active.
 #[test]
 fn domain_models_accessible_within_crate() {
-    use crate::domains::tasks::domain::models::task::TaskStatus;
-    use crate::domains::interventions::domain::models::intervention::InterventionStatus;
-    use crate::domains::clients::domain::models::client::Client;
     use crate::domains::auth::domain::models::auth::UserRole;
+    use crate::domains::clients::domain::models::client::Client;
     use crate::domains::documents::domain::models::photo::Photo;
+    use crate::domains::interventions::domain::models::intervention::InterventionStatus;
+    use crate::domains::tasks::domain::models::task::TaskStatus;
 
     // Compile-time proof these types exist and are accessible within the crate.
     let _ = std::any::type_name::<TaskStatus>();
@@ -43,8 +43,8 @@ fn domain_models_accessible_within_crate() {
 /// Verify that infrastructure layers are accessible within the crate (pub(crate)).
 #[test]
 fn infrastructure_accessible_within_crate() {
-    use crate::domains::tasks::infrastructure::task_service::TaskService;
     use crate::domains::interventions::infrastructure::intervention_service::InterventionService;
+    use crate::domains::tasks::infrastructure::task_service::TaskService;
 
     let _ = std::any::type_name::<TaskService>();
     let _ = std::any::type_name::<InterventionService>();

@@ -4,12 +4,12 @@
 //! using genpdf library for automatic pagination and better layout management.
 
 use crate::commands::AppResult;
+use crate::shared::contracts::common::*;
 use crate::shared::services::cross_domain::Client;
-use crate::shared::services::cross_domain::Photo;
 use crate::shared::services::cross_domain::InterventionStatus;
 use crate::shared::services::cross_domain::InterventionStep;
+use crate::shared::services::cross_domain::Photo;
 use crate::shared::services::cross_domain::StepStatus;
-use crate::shared::contracts::common::*;
 
 use chrono::Utc;
 use genpdf::{elements, fonts, style, Alignment, Document, Element, SimplePageDecorator};
@@ -655,4 +655,3 @@ impl InterventionPdfReport {
         Ok(())
     }
 }
-

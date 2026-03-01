@@ -559,7 +559,10 @@ pub async fn calendar_schedule_task(
                 // frontend error-handler can present them consistently.
                 info!("Task {} has scheduling conflicts", request.task_id);
                 let msg = result.message.unwrap_or_else(|| {
-                    format!("Scheduling conflict: {} task(s) overlap", result.conflicting_tasks.len())
+                    format!(
+                        "Scheduling conflict: {} task(s) overlap",
+                        result.conflicting_tasks.len()
+                    )
                 });
                 return Err(AppError::Validation(msg));
             }

@@ -127,10 +127,7 @@ impl InventoryService {
         let mut transactions = Vec::new();
         for consumption in consumptions {
             let material = materials.get(&consumption.material_id).ok_or_else(|| {
-                InventoryError::NotFound(format!(
-                    "Material {} not found",
-                    consumption.material_id
-                ))
+                InventoryError::NotFound(format!("Material {} not found", consumption.material_id))
             })?;
 
             let total_used = consumption.quantity_used + consumption.waste_quantity;

@@ -40,4 +40,3 @@ pub use crate::domains::interventions::domain::models::step::{InterventionStep, 
 pub use crate::domains::inventory::domain::models::material::MaterialConsumption;
 pub use crate::domains::sync::domain::models::sync::EntityType as SyncEntityType;
 pub use crate::domains::tasks::domain::models::task::{PaginationInfo, SortOrder, Task, TaskQuery};
-

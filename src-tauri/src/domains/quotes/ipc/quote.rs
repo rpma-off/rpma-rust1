@@ -398,10 +398,7 @@ pub async fn quote_export_pdf(
 }
 
 /// Generate a minimal PDF for a quote
-fn generate_quote_pdf(
-    quote: &Quote,
-    path: &std::path::Path,
-) -> std::io::Result<()> {
+fn generate_quote_pdf(quote: &Quote, path: &std::path::Path) -> std::io::Result<()> {
     use std::io::Write;
 
     // Minimal PDF generation (plain text-based PDF)
@@ -437,14 +434,8 @@ fn generate_quote_pdf(
         "\nSous-total: {:.2}€\n",
         quote.subtotal as f64 / 100.0
     ));
-    content.push_str(&format!(
-        "TVA: {:.2}€\n",
-        quote.tax_total as f64 / 100.0
-    ));
-    content.push_str(&format!(
-        "Total: {:.2}€\n",
-        quote.total as f64 / 100.0
-    ));
+    content.push_str(&format!("TVA: {:.2}€\n", quote.tax_total as f64 / 100.0));
+    content.push_str(&format!("Total: {:.2}€\n", quote.total as f64 / 100.0));
 
     if let Some(ref terms) = quote.terms {
         content.push_str(&format!("\nConditions:\n{}\n", terms));

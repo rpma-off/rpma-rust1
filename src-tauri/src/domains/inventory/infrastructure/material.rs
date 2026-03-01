@@ -253,10 +253,7 @@ impl MaterialService {
             .db
             .query_as(&sql, rusqlite::params_from_iter(params.iter()))?;
 
-        let map = materials
-            .into_iter()
-            .map(|m| (m.id.clone(), m))
-            .collect();
+        let map = materials.into_iter().map(|m| (m.id.clone(), m)).collect();
         Ok(map)
     }
 

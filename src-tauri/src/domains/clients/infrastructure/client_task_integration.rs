@@ -361,4 +361,3 @@ pub struct ClientWorkload {
     pub completed_tasks: i32,
     pub avg_estimated_duration: Option<f64>,
 }
-

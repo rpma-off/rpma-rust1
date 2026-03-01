@@ -4,10 +4,10 @@
 //! including path validation, disk space checks, and atomic file operations.
 
 use crate::commands::AppResult;
-use crate::shared::services::document_storage::DocumentStorageService;
 use crate::domains::reports::domain::models::reports::CompleteInterventionData;
 use crate::domains::reports::infrastructure::pdf_generation::PdfGenerationService;
 use crate::memory_management_helpers;
+use crate::shared::services::document_storage::DocumentStorageService;
 use std::path::Path;
 use tracing::{error, info, warn};
 
@@ -295,7 +295,8 @@ pub async fn save_pdf_to_path(
                     Ok(dest_metadata) => {
                         if dest_metadata.len() == expected_size {
                             // Clean up temporary file only after successful verification
-                            if let Err(cleanup_err) = tokio::fs::remove_file(&generated_path).await {
+                            if let Err(cleanup_err) = tokio::fs::remove_file(&generated_path).await
+                            {
                                 error!(
                                     "Failed to cleanup temporary file {}: {}",
                                     generated_path, cleanup_err

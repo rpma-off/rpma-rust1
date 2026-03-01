@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use crate::domains::tasks::domain::models::task::{
-    AssignmentCheckResponse, AssignmentStatus, AvailabilityCheckResponse, AvailabilityStatus,
-    Task, TaskStatus, ValidationResult,
+    AssignmentCheckResponse, AssignmentStatus, AvailabilityCheckResponse, AvailabilityStatus, Task,
+    TaskStatus, ValidationResult,
 };
 use crate::domains::tasks::infrastructure::task::TaskService;
 use crate::domains::tasks::infrastructure::task_import::TaskImportService;
@@ -148,8 +148,7 @@ impl TasksFacade {
             false
         };
 
-        let is_currently_assigned_to_other =
-            current_assignee.is_some() && !is_assigned_to_user;
+        let is_currently_assigned_to_other = current_assignee.is_some() && !is_assigned_to_user;
 
         let status = if !has_capacity {
             AssignmentStatus::Unavailable
@@ -162,9 +161,7 @@ impl TasksFacade {
         };
 
         let can_assign = matches!(status, AssignmentStatus::Available);
-        let assigned_user_label = current_assignee
-            .unwrap_or("unknown")
-            .to_string();
+        let assigned_user_label = current_assignee.unwrap_or("unknown").to_string();
 
         let reason = if can_assign {
             None
@@ -174,10 +171,9 @@ impl TasksFacade {
                     "User has {} tasks, maximum allowed is {}",
                     current_task_count, max_tasks_per_user
                 ),
-                AssignmentStatus::Assigned => format!(
-                    "Task is already assigned to user: {}",
-                    assigned_user_label
-                ),
+                AssignmentStatus::Assigned => {
+                    format!("Task is already assigned to user: {}", assigned_user_label)
+                }
                 _ => String::new(),
             })
         };
@@ -208,8 +204,7 @@ impl TasksFacade {
 
         let has_expired = if let Some(scheduled_date_str) = &task.scheduled_date {
             if let Ok(scheduled_date) = chrono::DateTime::parse_from_rfc3339(scheduled_date_str) {
-                scheduled_date < chrono::Utc::now()
-                    && task.status != TaskStatus::Completed
+                scheduled_date < chrono::Utc::now() && task.status != TaskStatus::Completed
             } else {
                 false
             }
@@ -234,9 +229,7 @@ impl TasksFacade {
             AvailabilityStatus::Unavailable => {
                 Some(format!("Task is in status: {:?}", task.status))
             }
-            AvailabilityStatus::Locked => {
-                Some("Task dependencies are not satisfied".to_string())
-            }
+            AvailabilityStatus::Locked => Some("Task dependencies are not satisfied".to_string()),
             AvailabilityStatus::ScheduledConflict => {
                 Some("Task conflicts with existing schedule".to_string())
             }
@@ -319,9 +312,7 @@ impl TasksFacade {
                 .map_err(|e| AppError::db_sanitized("check_old_user_workload", &e))?;
 
             if old_user_workload.len() <= 1 {
-                warnings.push(
-                    "Removing task may leave old user under-utilized".to_string(),
-                );
+                warnings.push("Removing task may leave old user under-utilized".to_string());
             }
         }
 

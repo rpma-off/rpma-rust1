@@ -3,12 +3,12 @@
 //! This service handles all CRUD operations for clients with validation,
 //! business rules, FTS search, and repository interactions.
 
-use crate::shared::services::cross_domain::Client;
 use crate::domains::clients::domain::models::client::{
     ClientListResponse, ClientQuery, CreateClientRequest, UpdateClientRequest,
 };
 use crate::domains::clients::infrastructure::client_repository::ClientRepository;
 use crate::shared::repositories::Repository;
+use crate::shared::services::cross_domain::Client;
 use chrono::{Datelike, Utc};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -609,5 +609,3 @@ impl crate::db::FromSqlRow for ClientStat {
 fn is_valid_email(email: &str) -> bool {
     email.contains('@') && email.contains('.') && email.len() >= 5
 }
-
-

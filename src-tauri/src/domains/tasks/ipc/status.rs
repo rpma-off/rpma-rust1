@@ -38,13 +38,11 @@ pub async fn task_transition_status(
         }
     }
 
-    let task = state
-        .task_service
-        .transition_status(
-            &request.task_id,
-            &request.new_status,
-            request.reason.as_deref(),
-        )?;
+    let task = state.task_service.transition_status(
+        &request.task_id,
+        &request.new_status,
+        request.reason.as_deref(),
+    )?;
 
     Ok(ApiResponse::success(task).with_correlation_id(Some(correlation_id)))
 }

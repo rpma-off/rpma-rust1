@@ -6,8 +6,8 @@
 //! to separate threads, maintaining UI responsiveness.
 
 use crate::commands::{AppError, AppResult};
-use crate::shared::services::document_storage::DocumentStorageService;
 use crate::domains::reports::domain::models::reports::CompleteInterventionData;
+use crate::shared::services::document_storage::DocumentStorageService;
 use crate::shared::services::worker_pool::{WorkerPool, WorkerTask};
 use chrono::Utc;
 use printpdf::*;
@@ -439,11 +439,15 @@ impl PdfGenerationService {
             format!(
                 "Statut: {}",
                 match intervention.status {
-                    crate::shared::services::cross_domain::InterventionStatus::Pending => "En attente",
-                    crate::shared::services::cross_domain::InterventionStatus::InProgress => "En cours",
+                    crate::shared::services::cross_domain::InterventionStatus::Pending =>
+                        "En attente",
+                    crate::shared::services::cross_domain::InterventionStatus::InProgress =>
+                        "En cours",
                     crate::shared::services::cross_domain::InterventionStatus::Paused => "En pause",
-                    crate::shared::services::cross_domain::InterventionStatus::Completed => "TerminÃƒÂ©e",
-                    crate::shared::services::cross_domain::InterventionStatus::Cancelled => "AnnulÃƒÂ©e",
+                    crate::shared::services::cross_domain::InterventionStatus::Completed =>
+                        "TerminÃƒÂ©e",
+                    crate::shared::services::cross_domain::InterventionStatus::Cancelled =>
+                        "AnnulÃƒÂ©e",
                 }
             ),
             format!(
@@ -779,13 +783,20 @@ impl PdfGenerationService {
                     step.step_number,
                     step.step_name,
                     match step.step_status {
-                        crate::shared::services::cross_domain::StepStatus::Completed => "Ã¢Å“â€œ TerminÃƒÂ©",
-                        crate::shared::services::cross_domain::StepStatus::InProgress => "Ã¢Å¸Â³ En cours",
-                        crate::shared::services::cross_domain::StepStatus::Pending => "Ã¢â€”â€¹ En attente",
-                        crate::shared::services::cross_domain::StepStatus::Paused => "Ã¢ÂÂ¸Ã¯Â¸Â En pause",
-                        crate::shared::services::cross_domain::StepStatus::Failed => "Ã¢Å“â€” Ãƒâ€°chec",
-                        crate::shared::services::cross_domain::StepStatus::Skipped => "Ã¢Å Ëœ IgnorÃƒÂ©",
-                        crate::shared::services::cross_domain::StepStatus::Rework => "Ã¢â€ Âº Retravail",
+                        crate::shared::services::cross_domain::StepStatus::Completed =>
+                            "Ã¢Å“â€œ TerminÃƒÂ©",
+                        crate::shared::services::cross_domain::StepStatus::InProgress =>
+                            "Ã¢Å¸Â³ En cours",
+                        crate::shared::services::cross_domain::StepStatus::Pending =>
+                            "Ã¢â€”â€¹ En attente",
+                        crate::shared::services::cross_domain::StepStatus::Paused =>
+                            "Ã¢ÂÂ¸Ã¯Â¸Â En pause",
+                        crate::shared::services::cross_domain::StepStatus::Failed =>
+                            "Ã¢Å“â€” Ãƒâ€°chec",
+                        crate::shared::services::cross_domain::StepStatus::Skipped =>
+                            "Ã¢Å Ëœ IgnorÃƒÂ©",
+                        crate::shared::services::cross_domain::StepStatus::Rework =>
+                            "Ã¢â€ Âº Retravail",
                     }
                 );
                 current_layer.use_text(&step_header, 12.0, Mm(25.0), Mm(*y_position as f32), font);
@@ -1175,24 +1186,14 @@ impl PdfGenerationService {
                 crate::shared::services::cross_domain::StepStatus::Completed => {
                     "Ã¢Å“â€œ TerminÃƒÂ©"
                 }
-                crate::shared::services::cross_domain::StepStatus::InProgress => {
-                    "Ã¢Å¸Â³ En cours"
-                }
-                crate::shared::services::cross_domain::StepStatus::Pending => {
-                    "Ã¢â€”â€¹ En attente"
-                }
+                crate::shared::services::cross_domain::StepStatus::InProgress => "Ã¢Å¸Â³ En cours",
+                crate::shared::services::cross_domain::StepStatus::Pending => "Ã¢â€”â€¹ En attente",
                 crate::shared::services::cross_domain::StepStatus::Paused => {
                     "Ã¢ÂÂ¸Ã¯Â¸Â En pause"
                 }
-                crate::shared::services::cross_domain::StepStatus::Failed => {
-                    "Ã¢Å“â€” Ãƒâ€°chec"
-                }
-                crate::shared::services::cross_domain::StepStatus::Skipped => {
-                    "Ã¢Å Ëœ IgnorÃƒÂ©"
-                }
-                crate::shared::services::cross_domain::StepStatus::Rework => {
-                    "Ã¢â€ Âº Retravail"
-                }
+                crate::shared::services::cross_domain::StepStatus::Failed => "Ã¢Å“â€” Ãƒâ€°chec",
+                crate::shared::services::cross_domain::StepStatus::Skipped => "Ã¢Å Ëœ IgnorÃƒÂ©",
+                crate::shared::services::cross_domain::StepStatus::Rework => "Ã¢â€ Âº Retravail",
             };
 
             let step_line = format!(
@@ -1268,4 +1269,3 @@ impl PdfGenerationService {
         Ok(())
     }
 }
-

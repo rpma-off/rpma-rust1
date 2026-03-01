@@ -3,10 +3,20 @@
 //! This module handles database schema initialization and migration management.
 
 use crate::db::{Database, DbResult};
-use include_dir::{include_dir, Dir};
+use include_dir::{include_dir, Dir, File};
 use rusqlite::params;
 
 static MIGRATIONS_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/migrations");
+
+fn parse_migration_version(name: &str) -> Option<i32> {
+    name.split('_').next()?.parse::<i32>().ok()
+}
+
+fn sorted_migration_files() -> Vec<&'static File<'static>> {
+    let mut files: Vec<_> = MIGRATIONS_DIR.files().collect();
+    files.sort_by_key(|file| file.path().to_string_lossy().into_owned());
+    files
+}
 
 /// Database migration implementation
 impl Database {
@@ -27,16 +37,17 @@ impl Database {
 
         conn.execute_batch(
             r#"
-            CREATE VIEW IF NOT EXISTS client_statistics AS
+            DROP VIEW IF EXISTS client_statistics;
+            CREATE VIEW client_statistics AS
             SELECT
               c.id,
               c.name,
               c.customer_type,
               c.created_at,
-              COUNT(DISTINCT t.id) as total_tasks,
-              COUNT(DISTINCT CASE WHEN t.status = 'in_progress' THEN t.id END) as active_tasks,
-              COUNT(DISTINCT CASE WHEN t.status = 'completed' THEN t.id END) as completed_tasks,
-              MAX(CASE WHEN t.status IN ('completed', 'in_progress') THEN t.updated_at END) as last_task_date
+              COALESCE(COUNT(DISTINCT t.id), 0) as total_tasks,
+              COALESCE(COUNT(DISTINCT CASE WHEN t.status IN ('pending', 'in_progress') THEN t.id END), 0) as active_tasks,
+              COALESCE(COUNT(DISTINCT CASE WHEN t.status = 'completed' THEN t.id END), 0) as completed_tasks,
+              MAX(t.updated_at) as last_task_date
             FROM clients c
             LEFT JOIN tasks t ON t.client_id = c.id AND t.deleted_at IS NULL
             WHERE c.deleted_at IS NULL
@@ -47,7 +58,8 @@ impl Database {
 
         conn.execute_batch(
             r#"
-            CREATE VIEW IF NOT EXISTS calendar_tasks AS
+            DROP VIEW IF EXISTS calendar_tasks;
+            CREATE VIEW calendar_tasks AS
             SELECT 
               t.id,
               t.task_number,
@@ -74,6 +86,32 @@ impl Database {
         )
         .map_err(|e| e.to_string())?;
 
+        Ok(())
+    }
+
+    /// Canonical startup initialization sequence used by runtime startup.
+    pub fn initialize_or_migrate(&self) -> DbResult<()> {
+        if !self.is_initialized()? {
+            self.init()?;
+        }
+
+        let conn = self.get_connection()?;
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS schema_version (
+                 version INTEGER PRIMARY KEY,
+                 applied_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+             )",
+            [],
+        )
+        .map_err(|e| e.to_string())?;
+
+        let latest_version = Self::get_latest_migration_version();
+        let current_version = self.get_version()?;
+        if current_version < latest_version {
+            self.migrate(latest_version)?;
+        }
+
+        self.ensure_required_views()?;
         Ok(())
     }
 
@@ -159,14 +197,11 @@ impl Database {
     pub fn get_latest_migration_version() -> i32 {
         let mut max_version = 0;
 
-        for file in MIGRATIONS_DIR.files() {
+        for file in sorted_migration_files() {
             if let Some(name) = file.path().file_name().and_then(|n| n.to_str()) {
-                // Try to parse version from filename (e.g., "025_add_analytics.sql")
-                if let Some(version_part) = name.split('_').next() {
-                    if let Ok(version) = version_part.parse::<i32>() {
-                        if version > max_version {
-                            max_version = version;
-                        }
+                if let Some(version) = parse_migration_version(name) {
+                    if version > max_version {
+                        max_version = version;
                     }
                 }
             }
@@ -184,47 +219,57 @@ impl Database {
     fn apply_sql_migration(&self, version: i32) -> DbResult<()> {
         let conn = self.get_connection()?;
 
-        // Find the migration file for this version
-        let mut migration_file = None;
-        let prefix = format!("{:03}_", version);
-        let prefix_short = format!("{}_", version);
+        let matches: Vec<_> = sorted_migration_files()
+            .into_iter()
+            .filter(|file| {
+                file.path()
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .and_then(parse_migration_version)
+                    == Some(version)
+            })
+            .collect();
 
-        for file in MIGRATIONS_DIR.files() {
-            if let Some(name) = file.path().file_name().and_then(|n| n.to_str()) {
-                if name.starts_with(&prefix) || name.starts_with(&prefix_short) {
-                    migration_file = Some(file);
-                    break;
-                }
-            }
+        if matches.is_empty() {
+            return Err(format!("No migration file found for version {}", version));
         }
 
-        if let Some(file) = migration_file {
-            tracing::info!("Applying SQL migration file: {:?}", file.path());
+        if matches.len() > 1 {
+            let names = matches
+                .iter()
+                .filter_map(|file| file.path().file_name().and_then(|n| n.to_str()))
+                .collect::<Vec<_>>()
+                .join(", ");
+            return Err(format!(
+                "Multiple migration files found for version {}: {}",
+                version, names
+            ));
+        }
 
-            if let Some(sql_content) = file.contents_utf8() {
-                conn.execute_batch(sql_content).map_err(|e| {
-                    format!(
-                        "Failed to execute migration SQL for version {}: {}",
-                        version, e
-                    )
-                })?;
+        let file = matches[0];
+        tracing::info!("Applying SQL migration file: {:?}", file.path());
 
-                // Record migration
-                conn.execute(
-                    "INSERT INTO schema_version (version) VALUES (?1)",
-                    params![version],
+        if let Some(sql_content) = file.contents_utf8() {
+            conn.execute_batch(sql_content).map_err(|e| {
+                format!(
+                    "Failed to execute migration SQL for version {}: {}",
+                    version, e
                 )
-                .map_err(|e| e.to_string())?;
+            })?;
 
-                Ok(())
-            } else {
-                Err(format!(
-                    "Failed to read migration file content for version {}",
-                    version
-                ))
-            }
+            // Record migration
+            conn.execute(
+                "INSERT INTO schema_version (version) VALUES (?1)",
+                params![version],
+            )
+            .map_err(|e| e.to_string())?;
+
+            Ok(())
         } else {
-            Err(format!("No migration file found for version {}", version))
+            Err(format!(
+                "Failed to read migration file content for version {}",
+                version
+            ))
         }
     }
 
@@ -263,17 +308,10 @@ impl Database {
             31 => self.apply_migration_31(),
             32 => self.apply_migration_32(),
             33 => self.apply_migration_33(),
+            34 => self.apply_migration_34(),
             40 => self.apply_migration_40(),
             _ => {
-                // Try to apply generic SQL migration for all other versions
-                // This covers 3-5, 7, 10, 13-15, 19-23, 34, 35, and any future SQL-only migrations
-                // Note: Versions 2, 6, 8, 9, 24, 25, 26 now have custom handlers for idempotency
-                if version == 24 || version == 25 || version == 26 {
-                    return Err(format!(
-                        "Migration {} should be handled by custom handler",
-                        version
-                    ));
-                }
+                // Try to apply generic SQL migration for all other versions.
                 self.apply_sql_migration(version)
             }
         }
@@ -1902,6 +1940,26 @@ impl Database {
         let conn = self.get_connection()?;
         tracing::info!("Applying migration 30: Add updated_at to user_sessions");
 
+        let user_sessions_exists: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='user_sessions'",
+                [],
+                |row| row.get(0),
+            )
+            .map_err(|e| format!("Failed to check user_sessions table: {}", e))?;
+
+        if user_sessions_exists == 0 {
+            tracing::info!(
+                "Migration 030: user_sessions table absent, skipping ALTER TABLE for fresh/new schema"
+            );
+            conn.execute(
+                "INSERT INTO schema_version (version) VALUES (?1)",
+                params![30],
+            )
+            .map_err(|e| e.to_string())?;
+            return Ok(());
+        }
+
         let updated_at_exists: i64 = conn
             .query_row(
                 "SELECT COUNT(*) FROM pragma_table_info('user_sessions') WHERE name='updated_at'",
@@ -1921,6 +1979,65 @@ impl Database {
         conn.execute(
             "INSERT INTO schema_version (version) VALUES (?1)",
             params![30],
+        )
+        .map_err(|e| e.to_string())?;
+
+        Ok(())
+    }
+
+    fn apply_migration_34(&self) -> DbResult<()> {
+        let conn = self.get_connection()?;
+        tracing::info!("Applying migration 34: Add session activity index");
+
+        let user_sessions_exists: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='user_sessions'",
+                [],
+                |row| row.get(0),
+            )
+            .map_err(|e| format!("Failed to check user_sessions table: {}", e))?;
+
+        if user_sessions_exists > 0 {
+            conn.execute_batch(
+                "CREATE INDEX IF NOT EXISTS idx_user_sessions_user_expires_activity \
+                 ON user_sessions(user_id, expires_at, last_activity DESC);",
+            )
+            .map_err(|e| {
+                format!(
+                    "Migration 034: failed to create user_sessions activity index: {}",
+                    e
+                )
+            })?;
+        } else {
+            let sessions_exists: i64 = conn
+                .query_row(
+                    "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='sessions'",
+                    [],
+                    |row| row.get(0),
+                )
+                .map_err(|e| format!("Failed to check sessions table: {}", e))?;
+
+            if sessions_exists > 0 {
+                conn.execute_batch(
+                    "CREATE INDEX IF NOT EXISTS idx_sessions_user_expires_activity \
+                     ON sessions(user_id, expires_at, last_activity DESC);",
+                )
+                .map_err(|e| {
+                    format!(
+                        "Migration 034: failed to create sessions activity index: {}",
+                        e
+                    )
+                })?;
+            } else {
+                return Err(
+                    "Migration 034: neither user_sessions nor sessions table exists".to_string(),
+                );
+            }
+        }
+
+        conn.execute(
+            "INSERT INTO schema_version (version) VALUES (?1)",
+            params![34],
         )
         .map_err(|e| e.to_string())?;
 
@@ -2611,9 +2728,7 @@ impl Database {
                 "CREATE INDEX IF NOT EXISTS idx_user_sessions_last_activity_user \
                  ON user_sessions(last_activity DESC, user_id);",
             )
-            .map_err(|e| {
-                format!("Migration 040: failed to create user_sessions index: {}", e)
-            })?;
+            .map_err(|e| format!("Migration 040: failed to create user_sessions index: {}", e))?;
         } else {
             tracing::info!(
                 "Migration 040: user_sessions table absent, skipping its index (fresh DB or already migrated)"
@@ -2925,19 +3040,66 @@ mod tests {
             .expect("Second migration 040 run must be idempotent");
     }
 
-    /// Full fresh-DB integration test: init + all migrations must complete without error.
-    ///
-    /// This is the primary guard against startup crashes on a brand-new installation.
     #[test]
-    fn test_fresh_db_init_and_full_migration_succeeds() {
+    fn migrations_fresh_db() {
         let temp_file = NamedTempFile::new().expect("Failed to create temp file");
         let db = Database::new(temp_file.path(), "").expect("Failed to create database");
 
         db.init().expect("Failed to init schema on fresh DB");
 
+        // Force sequential replay from baseline schema state.
+        {
+            let conn = db.get_connection().expect("Failed to get connection");
+            conn.execute("DELETE FROM schema_version", [])
+                .expect("Failed to clear schema_version");
+        }
+
         let latest = Database::get_latest_migration_version();
         db.migrate(latest)
             .expect("Full migration sequence must succeed on a fresh DB");
+        db.ensure_required_views()
+            .expect("Required views must be recreated after migration");
+
+        let conn = db.get_connection().expect("Failed to get connection");
+
+        for table in [
+            "interventions",
+            "tasks",
+            "sessions",
+            "notifications",
+            "schema_version",
+        ] {
+            let exists: i64 = conn
+                .query_row(
+                    "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?1",
+                    params![table],
+                    |row| row.get(0),
+                )
+                .expect("Failed to query sqlite_master for table");
+            assert_eq!(exists, 1, "Expected table '{}' to exist", table);
+        }
+
+        for view in ["client_statistics", "calendar_tasks"] {
+            let exists: i64 = conn
+                .query_row(
+                    "SELECT COUNT(*) FROM sqlite_master WHERE type='view' AND name=?1",
+                    params![view],
+                    |row| row.get(0),
+                )
+                .expect("Failed to query sqlite_master for view");
+            assert_eq!(exists, 1, "Expected view '{}' to exist", view);
+        }
+
+        for trigger in ["validate_sessions_role", "user_insert_create_settings"] {
+            let exists: i64 = conn
+                .query_row(
+                    "SELECT COUNT(*) FROM sqlite_master WHERE type='trigger' AND name=?1",
+                    params![trigger],
+                    |row| row.get(0),
+                )
+                .expect("Failed to query sqlite_master for trigger");
+            assert_eq!(exists, 1, "Expected trigger '{}' to exist", trigger);
+        }
 
         // Confirm the DB reached the latest version.
         let version = db.get_version().expect("Failed to get version");
